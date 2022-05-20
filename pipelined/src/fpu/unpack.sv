@@ -2,7 +2,7 @@
 
 module unpack ( 
     input logic  [`FLEN-1:0]        X, Y, Z,    // inputs from register file
-    input logic  [`FPSIZES/3:0]     FmtE,       // format signal 00 - single 10 - double 11 - quad 10 - half
+    input logic  [`FPSIZES/3:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
     output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
     output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
     output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
@@ -12,6 +12,7 @@ module unpack (
     output logic                    XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
     output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
     output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
+    output logic                    ZOrigDenormE,                   // is the original precision denormalized
     output logic                    XExpMaxE                        // does X have the maximum exponent (NaN or Inf)
 );
  
@@ -47,10 +48,11 @@ module unpack (
         assign XExpMaxE = &XExpE;
         assign YExpMaxE = &YExpE;
         assign ZExpMaxE = &ZExpE;
+
+        assign ZOrigDenormE = 1'b0;
     
 
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
-
         //***need better names for these constants
         // largest format | smaller format
         //----------------------------------
@@ -70,7 +72,8 @@ module unpack (
         //      quad   and half
         //      double and half
 
-        logic  [`LEN1-1:0]   XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed
+        logic  [`LEN1-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed
+        logic               XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
 
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN
         assign XLen1 = &X[`FLEN-1:`LEN1] ? X[`LEN1-1:0] : {1'b0, {`NE1+1{1'b1}}, (`NF1-1)'(0)};
@@ -91,9 +94,15 @@ module unpack (
         // also need to take into account possible zero/denorm/inf/NaN values
 
         // extract the exponent, converting the smaller exponent into the larger precision if nessisary
-        assign XExpE = FmtE ? X[`FLEN-2:`NF] : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
-        assign YExpE = FmtE ? Y[`FLEN-2:`NF] : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
-        assign ZExpE = FmtE ? Z[`FLEN-2:`NF] : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
+        //      - if the original precision had a denormal number convert the exponent value 1
+        assign XExpE = FmtE ? X[`FLEN-2:`NF] : XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
+        assign YExpE = FmtE ? Y[`FLEN-2:`NF] : YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
+        assign ZExpE = FmtE ? Z[`FLEN-2:`NF] : ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
+
+        // is the input (in it's original format) denormalized
+        assign XOrigDenormE = (FmtE ? 0 : |XLen1[`LEN1-2:`NF1]) & ~XFracZero; 
+        assign YOrigDenormE = (FmtE ? 0 : |YLen1[`LEN1-2:`NF1]) & ~YFracZero; 
+        assign ZOrigDenormE = (FmtE ? 0 : |ZLen1[`LEN1-2:`NF1]) & ~ZFracZero; 
 
         // extract the fraction, add trailing zeroes to the mantissa if nessisary
         assign XFracE = FmtE ? X[`NF-1:0] : {XLen1[`NF1-1:0], (`NF-`NF1)'(0)};
@@ -130,8 +139,9 @@ module unpack (
         //      quad   and double and half
         //      quad   and single and half
 
-        logic  [`LEN1-1:0]   XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for larger percision
-        logic  [`LEN2-1:0]   XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for smallest precision
+        logic  [`LEN1-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for larger percision
+        logic  [`LEN2-1:0]  XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for smallest precision
+        logic               XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
         
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for larger precision
         assign XLen1 = &X[`FLEN-1:`LEN1] ? X[`LEN1-1:0] : {1'b0, {`NE1+1{1'b1}}, (`NF1-1)'(0)};
@@ -143,6 +153,75 @@ module unpack (
         assign YLen2 = &Y[`FLEN-1:`LEN2] ? Y[`LEN2-1:0] : {1'b0, {`NE2+1{1'b1}}, (`NF2-1)'(0)};
         assign ZLen2 = &Z[`FLEN-1:`LEN2] ? Z[`LEN2-1:0] : {1'b0, {`NE2+1{1'b1}}, (`NF2-1)'(0)}; 
 
+        // There are 2 case statements
+        //      - one for other singals and one for sgn/exp/frac
+        //      - need two for the dependencies in the expoenent calculation
+        always_comb begin
+            case (FmtE)
+                `FMT: begin // if input is largest precision (`FLEN - ie quad or double)
+
+                    // This is the original format so set OrigDenorm to 0
+                    XOrigDenormE = 1'b0; 
+                    YOrigDenormE = 1'b0; 
+                    ZOrigDenormE = 1'b0; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |X[`FLEN-2:`NF]; 
+                    YExpNonzero = |Y[`FLEN-2:`NF];
+                    ZExpNonzero = |Z[`FLEN-2:`NF];
+
+                    // is the exponent all 1's
+                    XExpMaxE = &X[`FLEN-2:`NF];
+                    YExpMaxE = &Y[`FLEN-2:`NF];
+                    ZExpMaxE = &Z[`FLEN-2:`NF];
+                end
+                `FMT1: begin    // if input is larger precsion (`LEN1 - double or single)
+
+                    // is the input (in it's original format) denormalized
+                    XOrigDenormE = ~|XLen1[`LEN1-2:`NF1] & ~XFracZero; 
+                    YOrigDenormE = ~|YLen1[`LEN1-2:`NF1] & ~YFracZero; 
+                    ZOrigDenormE = ~|ZLen1[`LEN1-2:`NF1] & ~ZFracZero; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |XLen1[`LEN1-2:`NF1]; 
+                    YExpNonzero = |YLen1[`LEN1-2:`NF1];
+                    ZExpNonzero = |ZLen1[`LEN1-2:`NF1];
+
+                    // is the exponent all 1's
+                    XExpMaxE = &XLen1[`LEN1-2:`NF1];
+                    YExpMaxE = &YLen1[`LEN1-2:`NF1];
+                    ZExpMaxE = &ZLen1[`LEN1-2:`NF1];
+                end
+                `FMT2: begin        // if input is smallest precsion (`LEN2 - single or half)
+
+                    // is the input (in it's original format) denormalized
+                    XOrigDenormE = ~|XLen2[`LEN2-2:`NF2] & ~XFracZero; 
+                    YOrigDenormE = ~|YLen2[`LEN2-2:`NF2] & ~YFracZero; 
+                    ZOrigDenormE = ~|ZLen2[`LEN2-2:`NF2] & ~ZFracZero; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |XLen2[`LEN2-2:`NF2]; 
+                    YExpNonzero = |YLen2[`LEN2-2:`NF2];
+                    ZExpNonzero = |ZLen2[`LEN2-2:`NF2];
+
+                    // is the exponent all 1's
+                    XExpMaxE = &XLen2[`LEN2-2:`NF2];
+                    YExpMaxE = &YLen2[`LEN2-2:`NF2];
+                    ZExpMaxE = &ZLen2[`LEN2-2:`NF2];
+                end
+                default: begin
+                    XOrigDenormE = 0; 
+                    YOrigDenormE = 0; 
+                    ZOrigDenormE = 0; 
+                    XExpNonzero = 0; 
+                    YExpNonzero = 0;
+                    ZExpNonzero = 0;
+                    XExpMaxE = 0;
+                    YExpMaxE = 0;
+                    ZExpMaxE = 0;
+                end
+            endcase
+        end
         always_comb begin
             case (FmtE)
                 `FMT: begin // if input is largest precision (`FLEN - ie quad or double)
@@ -160,16 +239,6 @@ module unpack (
                     XFracE = X[`NF-1:0];
                     YFracE = Y[`NF-1:0];
                     ZFracE = Z[`NF-1:0];
-
-                    // is the exponent non-zero
-                    XExpNonzero = |X[`FLEN-2:`NF]; 
-                    YExpNonzero = |Y[`FLEN-2:`NF];
-                    ZExpNonzero = |Z[`FLEN-2:`NF];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &X[`FLEN-2:`NF];
-                    YExpMaxE = &Y[`FLEN-2:`NF];
-                    ZExpMaxE = &Z[`FLEN-2:`NF];
                 end
                 `FMT1: begin    // if input is larger precsion (`LEN1 - double or single)
 
@@ -187,24 +256,14 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
 
                     // convert the larger precision's exponent to use the largest precision's bias
-                    XExpE = {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
-                    YExpE = {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
-                    ZExpE = {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen1[`NF1-1:0], (`NF-`NF1)'(0)};
                     YFracE = {YLen1[`NF1-1:0], (`NF-`NF1)'(0)};
                     ZFracE = {ZLen1[`NF1-1:0], (`NF-`NF1)'(0)};
-
-                    // is the exponent non-zero
-                    XExpNonzero = |XLen1[`LEN1-2:`NF1]; 
-                    YExpNonzero = |YLen1[`LEN1-2:`NF1];
-                    ZExpNonzero = |ZLen1[`LEN1-2:`NF1];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &XLen1[`LEN1-2:`NF1];
-                    YExpMaxE = &YLen1[`LEN1-2:`NF1];
-                    ZExpMaxE = &ZLen1[`LEN1-2:`NF1];
                 end
                 `FMT2: begin        // if input is smallest precsion (`LEN2 - single or half)
 
@@ -222,24 +281,14 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
                     
                     // convert the smallest precision's exponent to use the largest precision's bias
-                    XExpE = {XLen2[`LEN2-2], {`NE-`NE2{~XLen2[`LEN2-2]&~XExpZero|XExpMaxE}}, XLen2[`LEN2-3:`NF2]}; 
-                    YExpE = {YLen2[`LEN2-2], {`NE-`NE2{~YLen2[`LEN2-2]&~YExpZero|YExpMaxE}}, YLen2[`LEN2-3:`NF2]}; 
-                    ZExpE = {ZLen2[`LEN2-2], {`NE-`NE2{~ZLen2[`LEN2-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`LEN2-3:`NF2]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {XLen2[`LEN2-2], {`NE-`NE2{~XLen2[`LEN2-2]&~XExpZero|XExpMaxE}}, XLen2[`LEN2-3:`NF2]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {YLen2[`LEN2-2], {`NE-`NE2{~YLen2[`LEN2-2]&~YExpZero|YExpMaxE}}, YLen2[`LEN2-3:`NF2]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {ZLen2[`LEN2-2], {`NE-`NE2{~ZLen2[`LEN2-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`LEN2-3:`NF2]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen2[`NF2-1:0], (`NF-`NF2)'(0)};
                     YFracE = {YLen2[`NF2-1:0], (`NF-`NF2)'(0)};
                     ZFracE = {ZLen2[`NF2-1:0], (`NF-`NF2)'(0)};
-
-                    // is the exponent non-zero
-                    XExpNonzero = |XLen2[`LEN2-2:`NF2]; 
-                    YExpNonzero = |YLen2[`LEN2-2:`NF2];
-                    ZExpNonzero = |ZLen2[`LEN2-2:`NF2];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &XLen2[`LEN2-2:`NF2];
-                    YExpMaxE = &YLen2[`LEN2-2:`NF2];
-                    ZExpMaxE = &ZLen2[`LEN2-2:`NF2];
                 end
                 default: begin
                     XSgnE = 0;
@@ -251,12 +300,6 @@ module unpack (
                     XFracE = 0;
                     YFracE = 0;
                     ZFracE = 0;
-                    XExpNonzero = 0; 
-                    YExpNonzero = 0;
-                    ZExpNonzero = 0;
-                    XExpMaxE = 0;
-                    YExpMaxE = 0;
-                    ZExpMaxE = 0;
                 end
             endcase
         end
@@ -272,9 +315,10 @@ module unpack (
         //   `Q_FMT  |  `D_FMT  |  `S_FMT  |  `H_FMT     precision's format value - Q=11 D=01 S=00 H=10
 
 
-        logic  [`LEN1-1:0]   XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for double percision
-        logic  [`LEN2-1:0]   XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for single percision
-        logic  [`LEN2-1:0]   XLen3, YLen3, ZLen3; // Remove NaN boxing or NaN, if not properly NaN boxed for half percision
+        logic  [`D_LEN-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for double percision
+        logic  [`S_LEN-1:0]  XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for single percision
+        logic  [`H_LEN-1:0]  XLen3, YLen3, ZLen3; // Remove NaN boxing or NaN, if not properly NaN boxed for half percision
+        logic                XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
         
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for double precision
         assign XLen1 = &X[`Q_LEN-1:`D_LEN] ? X[`D_LEN-1:0] : {1'b0, {`D_NE+1{1'b1}}, (`D_NF-1)'(0)};
@@ -290,6 +334,83 @@ module unpack (
         assign XLen3 = &X[`Q_LEN-1:`H_LEN] ? X[`H_LEN-1:0] : {1'b0, {`H_NE+1{1'b1}}, (`H_NF-1)'(0)};
         assign YLen3 = &Y[`Q_LEN-1:`H_LEN] ? Y[`H_LEN-1:0] : {1'b0, {`H_NE+1{1'b1}}, (`H_NF-1)'(0)};
         assign ZLen3 = &Z[`Q_LEN-1:`H_LEN] ? Z[`H_LEN-1:0] : {1'b0, {`H_NE+1{1'b1}}, (`H_NF-1)'(0)}; 
+
+
+        // There are 2 case statements
+        //      - one for other singals and one for sgn/exp/frac
+        //      - need two for the dependencies in the expoenent calculation
+        always_comb begin
+            case (FmtE)
+                2'b11: begin  // if input is quad percision
+
+                    // This is the original format so set OrigDenorm to 0
+                    XOrigDenormE = 1'b0; 
+                    YOrigDenormE = 1'b0; 
+                    ZOrigDenormE = 1'b0; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |X[`Q_LEN-2:`Q_NF]; 
+                    YExpNonzero = |Y[`Q_LEN-2:`Q_NF];
+                    ZExpNonzero = |Z[`Q_LEN-2:`Q_NF];
+
+                    // is the exponent all 1's
+                    XExpMaxE = &X[`Q_LEN-2:`Q_NF];
+                    YExpMaxE = &Y[`Q_LEN-2:`Q_NF];
+                    ZExpMaxE = &Z[`Q_LEN-2:`Q_NF];
+                end
+                2'b01: begin  // if input is double percision
+
+                    // is the exponent all 1's
+                    XExpMaxE = &XLen1[`D_LEN-2:`D_NF];
+                    YExpMaxE = &YLen1[`D_LEN-2:`D_NF];
+                    ZExpMaxE = &ZLen1[`D_LEN-2:`D_NF];
+
+                    // is the input (in it's original format) denormalized
+                    XOrigDenormE = ~|XLen1[`D_LEN-2:`D_NF] & ~XFracZero; 
+                    YOrigDenormE = ~|YLen1[`D_LEN-2:`D_NF] & ~YFracZero; 
+                    ZOrigDenormE = ~|ZLen1[`D_LEN-2:`D_NF] & ~ZFracZero; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |XLen1[`D_LEN-2:`D_NF]; 
+                    YExpNonzero = |YLen1[`D_LEN-2:`D_NF];
+                    ZExpNonzero = |ZLen1[`D_LEN-2:`D_NF];
+                end
+                2'b00: begin      // if input is single percision
+
+                    // is the exponent all 1's
+                    XExpMaxE = &XLen2[`S_LEN-2:`S_NF];
+                    YExpMaxE = &YLen2[`S_LEN-2:`S_NF];
+                    ZExpMaxE = &ZLen2[`S_LEN-2:`S_NF];
+
+                    // is the input (in it's original format) denormalized
+                    XOrigDenormE = ~|XLen2[`S_LEN-2:`S_NF] & ~XFracZero; 
+                    YOrigDenormE = ~|YLen2[`S_LEN-2:`S_NF] & ~YFracZero; 
+                    ZOrigDenormE = ~|ZLen2[`S_LEN-2:`S_NF] & ~ZFracZero; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |XLen2[`S_LEN-2:`S_NF]; 
+                    YExpNonzero = |YLen2[`S_LEN-2:`S_NF];
+                    ZExpNonzero = |ZLen2[`S_LEN-2:`S_NF];
+                end
+                2'b10: begin      // if input is half percision
+
+                    // is the exponent all 1's
+                    XExpMaxE = &XLen3[`H_LEN-2:`H_NF];
+                    YExpMaxE = &YLen3[`H_LEN-2:`H_NF];
+                    ZExpMaxE = &ZLen3[`H_LEN-2:`H_NF];
+
+                    // is the input (in it's original format) denormalized
+                    XOrigDenormE = ~|XLen3[`H_LEN-2:`H_NF] & ~XFracZero; 
+                    YOrigDenormE = ~|YLen3[`H_LEN-2:`H_NF] & ~YFracZero; 
+                    ZOrigDenormE = ~|ZLen3[`H_LEN-2:`H_NF] & ~ZFracZero; 
+
+                    // is the exponent non-zero
+                    XExpNonzero = |XLen3[`H_LEN-2:`H_NF]; 
+                    YExpNonzero = |YLen3[`H_LEN-2:`H_NF];
+                    ZExpNonzero = |ZLen3[`H_LEN-2:`H_NF];
+                end
+            endcase
+        end
 
         always_comb begin
             case (FmtE)
@@ -308,16 +429,6 @@ module unpack (
                     XFracE = X[`Q_NF-1:0];
                     YFracE = Y[`Q_NF-1:0];
                     ZFracE = Z[`Q_NF-1:0];
-
-                    // is the exponent non-zero
-                    XExpNonzero = |X[`Q_LEN-2:`Q_NF]; 
-                    YExpNonzero = |Y[`Q_LEN-2:`Q_NF];
-                    ZExpNonzero = |Z[`Q_LEN-2:`Q_NF];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &X[`Q_LEN-2:`Q_NF];
-                    YExpMaxE = &Y[`Q_LEN-2:`Q_NF];
-                    ZExpMaxE = &Z[`Q_LEN-2:`Q_NF];
                 end
                 2'b01: begin  // if input is double percision
                     // extract sign bit
@@ -334,24 +445,15 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
                     
                     // convert the double precsion exponent into quad precsion
-                    XExpE = {XLen1[`D_LEN-2], {`Q_NE-`D_NE{~XLen1[`D_LEN-2]&~XExpZero|XExpMaxE}}, XLen1[`D_LEN-3:`D_NF]}; 
-                    YExpE = {YLen1[`D_LEN-2], {`Q_NE-`D_NE{~YLen1[`D_LEN-2]&~YExpZero|YExpMaxE}}, YLen1[`D_LEN-3:`D_NF]}; 
-                    ZExpE = {ZLen1[`D_LEN-2], {`Q_NE-`D_NE{~ZLen1[`D_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`D_LEN-3:`D_NF]}; 
+
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {XLen1[`D_LEN-2], {`Q_NE-`D_NE{~XLen1[`D_LEN-2]&~XExpZero|XExpMaxE}}, XLen1[`D_LEN-3:`D_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {YLen1[`D_LEN-2], {`Q_NE-`D_NE{~YLen1[`D_LEN-2]&~YExpZero|YExpMaxE}}, YLen1[`D_LEN-3:`D_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {ZLen1[`D_LEN-2], {`Q_NE-`D_NE{~ZLen1[`D_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`D_LEN-3:`D_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
-                    XFracE = {XLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
-                    YFracE = {YLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
-                    ZFracE = {ZLen1[`D_NE-1:0], (`Q_NF-`D_NE)'(0)};
-
-                    // is the exponent non-zero
-                    XExpNonzero = |XLen1[`D_LEN-2:`D_NE]; 
-                    YExpNonzero = |YLen1[`D_LEN-2:`D_NE];
-                    ZExpNonzero = |ZLen1[`D_LEN-2:`D_NE];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &XLen1[`D_LEN-2:`D_NE];
-                    YExpMaxE = &YLen1[`D_LEN-2:`D_NE];
-                    ZExpMaxE = &ZLen1[`D_LEN-2:`D_NE];
+                    XFracE = {XLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
+                    YFracE = {YLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
+                    ZFracE = {ZLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
                 end
                 2'b00: begin      // if input is single percision
                     // extract sign bit
@@ -368,24 +470,14 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
                     
                     // convert the single precsion exponent into quad precsion
-                    XExpE = {XLen2[`S_LEN-2], {`Q_NE-`S_NE{~XLen2[`S_LEN-2]&~XExpZero|XExpMaxE}}, XLen2[`S_LEN-3:`S_NF]}; 
-                    YExpE = {YLen2[`S_LEN-2], {`Q_NE-`S_NE{~YLen2[`S_LEN-2]&~YExpZero|YExpMaxE}}, YLen2[`S_LEN-3:`S_NF]}; 
-                    ZExpE = {ZLen2[`S_LEN-2], {`Q_NE-`S_NE{~ZLen2[`S_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`S_LEN-3:`S_NF]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {XLen2[`S_LEN-2], {`Q_NE-`S_NE{~XLen2[`S_LEN-2]&~XExpZero|XExpMaxE}}, XLen2[`S_LEN-3:`S_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {YLen2[`S_LEN-2], {`Q_NE-`S_NE{~YLen2[`S_LEN-2]&~YExpZero|YExpMaxE}}, YLen2[`S_LEN-3:`S_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {ZLen2[`S_LEN-2], {`Q_NE-`S_NE{~ZLen2[`S_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`S_LEN-3:`S_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
                     YFracE = {YLen2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
                     ZFracE = {ZLen2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
-
-                    // is the exponent non-zero
-                    XExpNonzero = |XLen2[`S_LEN-2:`S_NF]; 
-                    YExpNonzero = |YLen2[`S_LEN-2:`S_NF];
-                    ZExpNonzero = |ZLen2[`S_LEN-2:`S_NF];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &XLen2[`S_LEN-2:`S_NF];
-                    YExpMaxE = &YLen2[`S_LEN-2:`S_NF];
-                    ZExpMaxE = &ZLen2[`S_LEN-2:`S_NF];
                 end
                 2'b10: begin      // if input is half percision
                     // extract sign bit
@@ -400,26 +492,16 @@ module unpack (
                     // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
                     // dexp = 0bdd dbbb bbbb 
                     // also need to take into account possible zero/denorm/inf/NaN values
-                    
+
                     // convert the half precsion exponent into quad precsion
-                    XExpE = {XLen3[`H_LEN-2], {`Q_NE-`H_NE{~XLen3[`H_LEN-2]&~XExpZero|XExpMaxE}}, XLen3[`H_LEN-3:`H_NF]}; 
-                    YExpE = {YLen3[`H_LEN-2], {`Q_NE-`H_NE{~YLen3[`H_LEN-2]&~YExpZero|YExpMaxE}}, YLen3[`H_LEN-3:`H_NF]}; 
-                    ZExpE = {ZLen3[`H_LEN-2], {`Q_NE-`H_NE{~ZLen3[`H_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen3[`H_LEN-3:`H_NF]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {XLen3[`H_LEN-2], {`Q_NE-`H_NE{~XLen3[`H_LEN-2]&~XExpZero|XExpMaxE}}, XLen3[`H_LEN-3:`H_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {YLen3[`H_LEN-2], {`Q_NE-`H_NE{~YLen3[`H_LEN-2]&~YExpZero|YExpMaxE}}, YLen3[`H_LEN-3:`H_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {ZLen3[`H_LEN-2], {`Q_NE-`H_NE{~ZLen3[`H_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen3[`H_LEN-3:`H_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
                     YFracE = {YLen3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
                     ZFracE = {ZLen3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
-
-                    // is the exponent non-zero
-                    XExpNonzero = |XLen3[`H_LEN-2:`H_NF]; 
-                    YExpNonzero = |YLen3[`H_LEN-2:`H_NF];
-                    ZExpNonzero = |ZLen3[`H_LEN-2:`H_NF];
-
-                    // is the exponent all 1's
-                    XExpMaxE = &XLen3[`H_LEN-2:`H_NF];
-                    YExpMaxE = &YLen3[`H_LEN-2:`H_NF];
-                    ZExpMaxE = &ZLen3[`H_LEN-2:`H_NF];
                 end
             endcase
         end
