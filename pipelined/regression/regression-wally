@@ -40,7 +40,7 @@ configs = [
     TestCase(
         name="lints",
         variant="all",
-        cmd="./lint-wally &> {}",
+        cmd="./lint-wally | tee {}",
         grepstr="All lints run with no errors or warnings"
     )
 ]
