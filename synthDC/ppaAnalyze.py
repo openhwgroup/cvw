@@ -62,7 +62,7 @@ def getVals(module, freq, var):
         units = " (nW)"
     elif (var == 'denergy'):
         ind = 6
-        units = " (uJ)" #fix check math
+        units = " (pJ)"
     else:
         error
 
@@ -151,10 +151,10 @@ def plotPPA(module, freq, var, ax=None, fits='clsgn'):
 
 def makePlots(mod, freq):
     fig, axs = plt.subplots(2, 2)
-    plotPPA(mod, freq, 'delay', ax=axs[0,0], fits='cgl')
-    plotPPA(mod, freq, 'area', ax=axs[0,1], fits='clg')
+    plotPPA(mod, freq, 'delay', ax=axs[0,0], fits='cg')
+    plotPPA(mod, freq, 'area', ax=axs[0,1], fits='s')
     plotPPA(mod, freq, 'lpower', ax=axs[1,0], fits='c')
-    plotPPA(mod, freq, 'denergy', ax=axs[1,1], fits='glc')
+    plotPPA(mod, freq, 'denergy', ax=axs[1,1], fits='s')
     plt.suptitle(mod + "  (target  " + str(freq) + "MHz)")
     plt.show()
 
@@ -254,8 +254,8 @@ allSynths = getData()
 writeCSV(allSynths)
 # makeCoefTable()
 
-freqPlot('comparator', 8)
+# freqPlot('add', 64)
 
-# makePlots('shifter', 5000)
+makePlots('shifter', 5000)
 
-# plotPPA('comparator', 5000, 'delay', fits='cls')
+# plotPPA('mult', 5000, 'delay', fits='cls')
