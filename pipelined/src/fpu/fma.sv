@@ -486,7 +486,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
 
     normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum, 
-            .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
+            .ZOrigDenormM, .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
 
 
 
@@ -580,6 +580,7 @@ module normalize(
     input logic  [$clog2(3*`NF+7)-1:0]  NormCntM,   // normalization shift count
     input logic  [`FPSIZES/3:0]         FmtM,       // precision 1 = double 0 = single
     input logic                         KillProdM,  // is the product set to zero
+    input logic 			            ZOrigDenormM,
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
     output logic [`NF+2:0]              NormSum,        // normalized sum
     output logic                        SumZero,        // is the sum zero
@@ -603,7 +604,7 @@ module normalize(
     assign SumZero = ~(|SumM);
 
     // calculate the sum's exponent
-    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZOrigDenormM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
 
     //convert the sum's exponent into the propper percision
     if (`FPSIZES == 1) begin
@@ -1083,6 +1084,7 @@ module fmaflags(
     //      - Don't set the underflow flag if the result is exact
 
     assign Underflow = (SumExp[`NE+1] | ((SumExp == 0) & (Round|Guard|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    //                      exp is negitive         result is denorm        exp was denorm but rounded to norm and if given an unbounded exponent it would stay denormal
     assign UnderflowFlag = (FullResultExp[`NE+1] | ((FullResultExp == 0) | ((FullResultExp == 1) & (SumExp == 0) & ~(UfPlus1&UfLSBNormSum)))&(Round|Guard|Sticky))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
     // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed result isn't outputed

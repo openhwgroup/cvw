@@ -10,20 +10,21 @@
 
 
 module fcmp (   
-   input logic                FmtE,           // precision 1 = double 0 = single
-   input logic  [2:0]         FOpCtrlE,       // see above table
-   input logic                XSgnE, YSgnE,   // input signs
-   input logic  [`NE-1:0]     XExpE, YExpE,   // input exponents
-   input logic  [`NF:0]       XManE, YManE,   // input mantissa
-   input logic                XZeroE, YZeroE, // is zero
-   input logic                XNaNE, YNaNE,   // is NaN
-   input logic                XSNaNE, YSNaNE, // is signaling NaN
-   input logic  [`FLEN-1:0]   FSrcXE, FSrcYE, // original, non-converted to double, inputs
-   output logic               CmpNVE,         // invalid flag
-   output logic [`FLEN-1:0]   CmpResE         // compare resilt
+   input logic  [`FPSIZES/3:0]   FmtE,           // precision 1 = double 0 = single
+   input logic  [2:0]            FOpCtrlE,       // see above table
+   input logic                   XSgnE, YSgnE,   // input signs
+   input logic  [`NE-1:0]        XExpE, YExpE,   // input exponents
+   input logic  [`NF:0]          XManE, YManE,   // input mantissa
+   input logic                   XZeroE, YZeroE, // is zero
+   input logic                   XNaNE, YNaNE,   // is NaN
+   input logic                   XSNaNE, YSNaNE, // is signaling NaN
+   input logic  [`FLEN-1:0]      FSrcXE, FSrcYE, // original, non-converted to double, inputs
+   output logic                  CmpNVE,         // invalid flag
+   output logic [`FLEN-1:0]      CmpResE         // compare resilt
    );
 
    logic LTabs, LT, EQ; // is X < or > or = Y
+   logic [`FLEN-1:0] NaNRes;
    logic BothZeroE, EitherNaNE, EitherSNaNE;
    
    assign LTabs= {1'b0, XExpE, XManE} < {1'b0, YExpE, YManE}; // unsigned comparison, treating FP as integers
@@ -65,26 +66,62 @@ module fcmp (
    //    - inf = inf and -inf = -inf
    //    - return 0 if comparison with NaN (unordered)
 
-   logic [`FLEN-1:0] QNaN;
    // fmin/fmax of two NaNs returns a quiet NaN of the appropriate size
    // for IEEE, return the payload of X
    // for RISC-V, return the canonical NaN
-   if(`IEEE754) assign QNaN = FmtE ? {XSgnE, XExpE, 1'b1, XManE[`NF-2:0]} : {{32{1'b1}}, XSgnE, XExpE[7:0], 1'b1, XManE[50:29]};
-   else         assign QNaN = FmtE ? {1'b0, XExpE, 1'b1, 51'b0} : {{32{1'b1}}, 1'b0, XExpE[7:0], 1'b1, 22'b0};
- 
- // when one input is a NaN -output the non-NaN
-   always_comb begin
-      case (FOpCtrlE[2:0])
-         3'b111: CmpResE = XNaNE ? YNaNE ? QNaN : FSrcYE // Min
-                                 : YNaNE ? FSrcXE : LT ? FSrcXE : FSrcYE;
-         3'b101: CmpResE = XNaNE ? YNaNE ? QNaN : FSrcYE // Max
-                                 : YNaNE ? FSrcXE : LT ? FSrcYE : FSrcXE;
-         3'b010: CmpResE = {63'b0, (EQ|BothZeroE) & ~EitherNaNE}; // Equal
-         3'b001: CmpResE = {63'b0, LT & ~BothZeroE & ~EitherNaNE}; // Less than
-         3'b011: CmpResE = {63'b0, (LT|EQ|BothZeroE) & ~EitherNaNE}; // Less than or equal
-         default: CmpResE = 64'b0;
-      endcase
-   end 
 
+   
+   if (`FPSIZES == 1)
+      if(`IEEE754) assign NaNRes = {XSgnE, {`NE{1'b1}}, 1'b1, XManE[`NF-2:0]};
+      else         assign NaNRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+
+   else if (`FPSIZES == 2) 
+      if(`IEEE754) assign NaNRes = FmtE ? {XSgnE, {`NE{1'b1}}, 1'b1, XManE[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, XSgnE, {`NE1{1'b1}}, 1'b1, XManE[`NF-2:`NF-`NF1]};
+      else         assign NaNRes = FmtE ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+   
+   else if (`FPSIZES == 3)
+      always_comb
+            case (FmtE)
+               `FMT:  
+                  if(`IEEE754) NaNRes = {XSgnE, {`NE{1'b1}}, 1'b1, XManE[`NF-2:0]};
+                  else         NaNRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+               `FMT1:
+                  if(`IEEE754) NaNRes = {{`FLEN-`LEN1{1'b1}}, XSgnE, {`NE1{1'b1}}, 1'b1, XManE[`NF-2:`NF-`NF1]};
+                  else         NaNRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
+               `FMT2:
+                  if(`IEEE754) NaNRes = {{`FLEN-`LEN2{1'b1}}, XSgnE, {`NE2{1'b1}}, 1'b1, XManE[`NF-2:`NF-`NF2]};
+                  else         NaNRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
+               default:        NaNRes = (`FLEN)'(0);
+            endcase
+
+   else if (`FPSIZES == 4)
+      always_comb
+            case (FmtE)
+               2'h3:  
+                  if(`IEEE754) NaNRes = {XSgnE, {`NE{1'b1}}, 1'b1, XManE[`NF-2:0]};
+                  else         NaNRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
+               2'h1:  
+                  if(`IEEE754) NaNRes = {{`FLEN-`D_LEN{1'b1}}, XSgnE, {`D_NE{1'b1}}, 1'b1, XManE[`NF-2:`NF-`D_NF]};
+                  else         NaNRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
+               2'h0: 
+                  if(`IEEE754) NaNRes = {{`FLEN-`S_LEN{1'b1}}, XSgnE, {`S_NE{1'b1}}, 1'b1, XManE[`NF-2:`NF-`S_NF]};
+                  else         NaNRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
+               2'h2:
+                  if(`IEEE754) NaNRes = {{`FLEN-`H_LEN{1'b1}}, XSgnE, {`H_NE{1'b1}}, 1'b1, XManE[`NF-2:`NF-`H_NF]};
+                  else         NaNRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
+            endcase
+
+ // when one input is a NaN -output the non-NaN
+   always_comb
+      case (FOpCtrlE[2:0])
+         3'b111: CmpResE = XNaNE ? YNaNE ? NaNRes : FSrcYE // Min
+                                 : YNaNE ? FSrcXE : LT ? FSrcXE : FSrcYE;
+         3'b101: CmpResE = XNaNE ? YNaNE ? NaNRes : FSrcYE // Max
+                                 : YNaNE ? FSrcXE : LT ? FSrcYE : FSrcXE;
+         3'b010: CmpResE = {(`FLEN-1)'(0), (EQ|BothZeroE) & ~EitherNaNE}; // Equal
+         3'b001: CmpResE = {(`FLEN-1)'(0), LT & ~BothZeroE & ~EitherNaNE}; // Less than
+         3'b011: CmpResE = {(`FLEN-1)'(0), (LT|EQ|BothZeroE) & ~EitherNaNE}; // Less than or equal
+         default: CmpResE = (`FLEN)'(0);
+      endcase
    
 endmodule
