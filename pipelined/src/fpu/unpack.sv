@@ -100,9 +100,9 @@ module unpack (
         assign ZExpE = FmtE ? Z[`FLEN-2:`NF] : ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
 
         // is the input (in it's original format) denormalized
-        assign XOrigDenormE = (FmtE ? 0 : |XLen1[`LEN1-2:`NF1]) & ~XFracZero; 
-        assign YOrigDenormE = (FmtE ? 0 : |YLen1[`LEN1-2:`NF1]) & ~YFracZero; 
-        assign ZOrigDenormE = (FmtE ? 0 : |ZLen1[`LEN1-2:`NF1]) & ~ZFracZero; 
+        assign XOrigDenormE = FmtE ? 0 : ~|XLen1[`LEN1-2:`NF1] & ~XFracZero; 
+        assign YOrigDenormE = FmtE ? 0 : ~|YLen1[`LEN1-2:`NF1] & ~YFracZero; 
+        assign ZOrigDenormE = FmtE ? 0 : ~|ZLen1[`LEN1-2:`NF1] & ~ZFracZero; 
 
         // extract the fraction, add trailing zeroes to the mantissa if nessisary
         assign XFracE = FmtE ? X[`NF-1:0] : {XLen1[`NF1-1:0], (`NF-`NF1)'(0)};
