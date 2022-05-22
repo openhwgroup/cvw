@@ -93,8 +93,8 @@ module uartPC16550D(
   logic [10:0] 					rxfifo[15:0];
   logic [7:0] 					txfifo[15:0];
   logic [4:0] 					rxfifotailunwrapped;
-  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-  logic [3:0] 					rxfifoentries, txfifoentries;
+(* mark_debug = "true" *)  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
+(* mark_debug = "true" *)  logic [3:0] 					rxfifoentries, txfifoentries;
   logic [3:0] 					rxbitsexpected, txbitsexpected;
 
   // receive data
@@ -103,8 +103,8 @@ module uartPC16550D(
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
    (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
-  logic 						rxdataready;
-  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
+(* mark_debug = "true" *)  logic 						rxdataready;
+(* mark_debug = "true" *)  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
   logic 						rxfifodmaready;
   logic [8:0] 					rxdata9;
   logic [7:0] 					rxdata;
@@ -119,13 +119,13 @@ module uartPC16550D(
   logic 						txfifoempty, txfifofull, txfifodmaready;
 
   // control signals
-  logic 						fifoenabled, fifodmamodesel, evenparitysel;
+(* mark_debug = "true" *)  logic 						fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
-  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
-  logic 						rxdataavailintr, modemstatusintr, intrpending;
-  logic [2:0] 					intrID;
+(* mark_debug = "true" *)  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
+(* mark_debug = "true" *)  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
+(* mark_debug = "true" *)  logic 						rxdataavailintr, modemstatusintr, intrpending;
+(* mark_debug = "true" *)  logic [2:0] 					intrID;
 
   logic 						baudpulseComb;
 
@@ -326,8 +326,8 @@ module uartPC16550D(
         rxdataready <= #1 1;
       end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
-          if (rxfifotail+1 < rxfifohead) rxfifotail <= #1 rxfifotail + 1;
-          if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
+          if (~rxfifoempty) rxfifotail <= #1 rxfifotail + 1;
+          if (rxfifoempty) rxdataready <= #1 0;
         end else begin
           rxdataready <= #1 0;
           RXBR <= #1 {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
