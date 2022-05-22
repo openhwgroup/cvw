@@ -44,13 +44,13 @@ def getData():
 allSynths = getData()
 arr = [-40, -20, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 14, 20, 40]
 
-widths = [8]
-modules = ['decoder']
+widths = [32, 64, 128]
+modules = ['flopr']
 tech = 'sky90'
 LoT = []
 
-## initial sweep to get estimate of min delay
-# freqs = ['17200']
+# # # initial sweep to get estimate of min delay
+# freqs = ['7500']
 # for module in modules:
 #     for width in widths:
 #         for freq in freqs:
