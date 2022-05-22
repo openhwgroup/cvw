@@ -123,6 +123,19 @@ module ahblite (
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
   assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
+
+  /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
+        000: Single (SINGLE)
+        001: Increment burst of undefined length (INCR)
+        010: 4-beat wrapping burst (WRAP4) [wraps if X in 000X0000] 
+        011: 4-beat incrementing burst (INCR4)
+        100: 8-beat wrapping burst (WRAP8) [wraps if X in 00X00000 changes]
+        101: 8-beat incrementing burst (INCR8)
+        110: 16-beat wrapping burst (WRAP16) [wraps if X in 0X000000]
+        111: 16-beat incrementing burst (INCR16)
+  */
+
+
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported

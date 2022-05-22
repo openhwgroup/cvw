@@ -104,6 +104,7 @@ module fpu (
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
    logic 		  XNormE;                             // is normal
+   logic         ZOrigDenormE;
    logic 		  FmtQ;
    logic 		  FOpCtrlQ;     
 
@@ -176,7 +177,7 @@ module fpu (
    // unpack unit
    //    - splits FP inputs into their various parts
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, 
+   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, .ZOrigDenormE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
@@ -192,7 +193,7 @@ module fpu (
       .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
       .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
       .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-      .FOpCtrlE,
+      .FOpCtrlE, .ZOrigDenormE,
       .FmtE, .FmtM, .FrmM, 
       .FMAFlgM, .FMAResM);
 
@@ -213,12 +214,12 @@ module fpu (
          .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 
    // other FP execution units
-   cvtfp cvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
+   fcvtfp fcvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
    fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
+   fcvtint fcvtint (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
    .CvtResE, .CvtFlgE);
 
    // data to be stored in memory - to IEU

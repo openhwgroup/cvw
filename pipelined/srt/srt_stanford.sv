@@ -11,9 +11,7 @@
 // This Verilog file models a radix 2 SRT divider which
 // produces one quotient digit per cycle.  The divider
 // keeps the partial remainder in carry-save form.
-
-`include "wally-config.vh"
-
+ 
 /////////
 // srt //
 /////////
@@ -328,9 +326,7 @@ module testbench;
 	begin
 	  req <= #5 1;
 	  $display("result was %h, should be %h\n", r, correctr);
-	  //if (abs(correctr - r) > 1) // check if accurate to 1 ulp
-    // giving error "srt_stanford.sv(395): (vopt-7063) Failed to find 'abs' in hierarchical name 'abs'."
-    if (correctr - r > 1) // check if accurate to 1 ulp
+	  if ((correctr - r) > 1) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
 	      $display("failed\n");
