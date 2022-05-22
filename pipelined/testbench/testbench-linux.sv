@@ -27,15 +27,6 @@
 
 `include "wally-config.vh"
 
-`define DEBUG_TRACE 0
-// Debug Levels
-// 0: don't check against QEMU
-// 1: print disagreements with QEMU, but only halt on PCW disagreements
-// 2: halt on any disagreement with QEMU except CSRs
-// 3: halt on all disagreements with QEMU
-// 4: print memory accesses whenever they happen
-// 5: print everything
-
 module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
@@ -45,8 +36,15 @@ module testbench;
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
-  parameter NO_IE_MTIME_CHECKPOINT = 0;
-
+  parameter NO_SPOOFING = 0;
+  parameter DEBUG_TRACE = 0;
+  // Debug Levels
+  // 0: don't check against QEMU
+  // 1: print disagreements with QEMU, but only halt on PCW disagreements
+  // 2: halt on any disagreement with QEMU except CSRs
+  // 3: halt on all disagreements with QEMU
+  // 4: print memory accesses whenever they happen
+  // 5: print everything
 
 
 
@@ -95,7 +93,7 @@ module testbench;
       logic [`XLEN-1:0] ExpectedRegValue``STAGE; \
       logic [`XLEN-1:0] ExpectedIEUAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
       string            ExpectedCSRArray``STAGE[10:0]; \
-      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
+      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0]; // *** might be redundant?
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
   `DECLARE_TRACE_SCANNER_SIGNALS(M)
   //  M-stage expected values
@@ -218,7 +216,7 @@ module testbench;
   /////////////////////////////// Cache Issue ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   logic       probe;
-  if (NO_IE_MTIME_CHECKPOINT)
+  if (NO_SPOOFING)
     assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
                    & testbench.dut.core.InstrM != 32'h14021273
                    & testbench.dut.core.InstrValidM;
@@ -358,7 +356,7 @@ module testbench;
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
-  if(!NO_IE_MTIME_CHECKPOINT) begin
+  if(!NO_SPOOFING) begin
     `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
     `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
     end
@@ -395,7 +393,7 @@ module testbench;
 
   // ========== INITIALIZATION ==========
   initial begin
-    if(!NO_IE_MTIME_CHECKPOINT) begin
+    if(!NO_SPOOFING) begin
       force `MEIP = 0;
       force `SEIP = 0;
       force `UART_IP = 0;
@@ -405,7 +403,7 @@ module testbench;
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
       $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
-    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem); // *** initialize these using zeroes rather than reading from files, see testbench.sv
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
@@ -462,7 +460,7 @@ module testbench;
       release `INSTRET;
     end
     // Get the E-stage trace reader ahead of the M-stage trace reader
-    matchCountE = $fgets(lineE,traceFileE);
+    matchCountE = $fgets(lineE,traceFileE); // *** look at removing?
   end
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -482,7 +480,7 @@ module testbench;
     if (checkInstrM) begin \
       // read 1 line of the trace file \
       matchCount``STAGE = $fgets(line``STAGE, traceFile``STAGE); \
-      if(`DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
+      if(DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
       // extract PC, Instr \
       matchCount``STAGE = $sscanf(line``STAGE, "%x %x %s", ExpectedPC``STAGE, ExpectedInstr``STAGE, text``STAGE); \
       if (`"STAGE`"=="M") begin \
@@ -547,16 +545,16 @@ module testbench;
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
         if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
-          if(!NO_IE_MTIME_CHECKPOINT) begin \
-            $display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, AttemptedInstructionCount); \
+          if(!NO_SPOOFING) begin \
+            $display("%tns, %d instrs: Overwrite UART's Register in memory stage.", $time, AttemptedInstructionCount); \
             force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
           end \
         end else \
-          if(!NO_IE_MTIME_CHECKPOINT) \
+          if(!NO_SPOOFING) \
             release dut.core.ieu.dp.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
-          if(!NO_IE_MTIME_CHECKPOINT) \
+          if(!NO_SPOOFING) \
             force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
       end \
@@ -566,14 +564,14 @@ module testbench;
   `define checkEQ(NAME, VAL, EXPECTED) \
     if(VAL != EXPECTED) begin \
       $display("%tns, %d instrs: %s %x differs from expected %x", $time, AttemptedInstructionCount, NAME, VAL, EXPECTED); \
-      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
+      if ((NAME == "PCW") | (DEBUG_TRACE >= 2)) fault = 1; \
     end
 
   `define checkCSR(CSR) \
     begin \
       if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
         $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, AttemptedInstructionCount, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
-        if(`DEBUG_TRACE >= 3) fault = 1; \
+        if(DEBUG_TRACE >= 3) fault = 1; \
       end \
     end
 
@@ -633,7 +631,7 @@ module testbench;
       if(~dut.core.StallW) begin
         if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, AttemptedInstructionCount);
-          if(!NO_IE_MTIME_CHECKPOINT)
+          if(!NO_SPOOFING)
             release dut.uncore.clint.clint.MTIME;
         end 
         //if (ExpectedIEUAdrM == 'h10000005) begin
@@ -656,15 +654,15 @@ module testbench;
       // turn on waves
       if (AttemptedInstructionCount == INSTR_WAVEON) $stop;
       // end sim
-      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) $stop;
+      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
       fault = 0;
-      if (`DEBUG_TRACE >= 1) begin
+      if (DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
         `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2],InstrCountW)
         #2; // delay 2 ns.
-        if(`DEBUG_TRACE >= 5) begin
+        if(DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, AttemptedInstructionCount, dut.core.ieu.dp.regf.a3, ExpectedRegAdrW);
           $display("%tns, %d instrs: RF[%02d] %016x ? expected value: %016x", $time, AttemptedInstructionCount, ExpectedRegAdrW, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
         end
@@ -674,13 +672,13 @@ module testbench;
           `checkEQ(name, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
-          if(`DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
+          if(DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
           `checkEQ("IEUAdrW",IEUAdrW,ExpectedIEUAdrW)
           if(MemOpW == "MemR" | MemOpW == "MemRW") begin
-            if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+            if(DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
             `checkEQ("ReadDataW",dut.core.ieu.dp.ReadDataW,ExpectedMemReadDataW)
           end else if(MemOpW == "MemW" | MemOpW == "MemRW") begin
-            if(`DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
+            if(DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
             `checkEQ("WriteDataW",ExpectedMemWriteDataW,ExpectedMemWriteDataW)
           end
         end
@@ -702,7 +700,7 @@ module testbench;
             "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
             "mip": begin
                        `checkCSR(`CSR_BASE.csrm.MIP_REGW)
-                       if(!NO_IE_MTIME_CHECKPOINT) begin
+                       if(!NO_SPOOFING) begin
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<11) == 0)
                            force `MEIP = 0;
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<09) == 0)
@@ -718,9 +716,9 @@ module testbench;
         if (fault == 1) begin
           errorCount +=1;
           $display("processed %0d instructions with %0d warnings", AttemptedInstructionCount, warningCount);
-          $stop;
+          $stop; $stop;
         end
-      end // if (`DEBUG_TRACE >= 1)
+      end // if (DEBUG_TRACE >= 1)
     end // if (checkInstrW)
   end // always @ (negedge clk)
 
@@ -734,7 +732,7 @@ module testbench;
   always @(negedge clk) begin
     if(checkInterruptM) begin
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
-        if(!NO_IE_MTIME_CHECKPOINT) begin
+        if(!NO_SPOOFING) begin
           case (interruptCauseVal)
             11: begin
                   force `MEIP = 1;
@@ -765,7 +763,7 @@ module testbench;
       end
     end
   end
-  
+
 
 
 

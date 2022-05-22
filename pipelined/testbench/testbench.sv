@@ -327,11 +327,21 @@ logic [3:0] dummy;
 		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_ENABLED == 1) 
-    initial begin
-      $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
-    end 
+  if (`BPRED_ENABLED == 1)
+    begin
+      genvar adrindex;
+      
+      // Initializing all zeroes into the branch predictor memory.
+      for(adrindex = 0; adrindex < 1024; adrindex++) begin
+        initial begin 
+        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+        #1;
+        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+        release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end
+      end
+    end
 endmodule
 
 module riscvassertions;
