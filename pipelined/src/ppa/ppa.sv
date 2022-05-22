@@ -733,11 +733,47 @@ module ppa_flopenr_128 #(parameter WIDTH = 128) (
     else if (en) q <= #1 d;
 endmodule
 
-module csa #(parameter WIDTH=8) (
+module ppa_csa_8 #(parameter WIDTH = 8) (
   input logic [WIDTH-1:0] a, b, c,
 	output logic [WIDTH-1:0] sum, carry);
 
    assign sum = a ^ b ^ c;
    assign carry = (a & (b | c)) | (b & c);
 
-endmodule // csa
+endmodule
+
+module ppa_csa_16 #(parameter WIDTH = 16) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_32 #(parameter WIDTH = 32) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_64 #(parameter WIDTH = 64) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_128 #(parameter WIDTH = 128) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
