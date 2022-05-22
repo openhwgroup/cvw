@@ -783,3 +783,60 @@ create_debug_port u_ila_0 probe
 set_property port_width 10 [get_debug_ports u_ila_0/probe161]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe161]
 connect_debug_port u_ila_0/probe161 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[1]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[2]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[3]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[4]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[5]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[6]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[7]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[8]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[9]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[10]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 3 [get_debug_ports u_ila_0/probe162]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe162]
+connect_debug_port u_ila_0/probe162 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/intrID[0]} {wallypipelinedsoc/uncore/uart.uart/u/intrID[1]} {wallypipelinedsoc/uncore/uart.uart/u/intrID[2]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe163]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe163]
+connect_debug_port u_ila_0/probe163 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxdataavailintr} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe164]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe164]
+connect_debug_port u_ila_0/probe164 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/fifoenabled} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe165]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe165]
+connect_debug_port u_ila_0/probe165 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifotriggered} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 4 [get_debug_ports u_ila_0/probe166]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe166]
+connect_debug_port u_ila_0/probe166 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[0]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[1]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[2]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[3]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe167]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe167]
+connect_debug_port u_ila_0/probe167 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxdataready} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe168]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe168]
+connect_debug_port u_ila_0/probe168 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/THRE_IP} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe169]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe169]
+connect_debug_port u_ila_0/probe169 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/modemstatusintr} ]]
+
+
+create_debug_port u_ila_0 probe
+set_property port_width 4 [get_debug_ports u_ila_0/probe170]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe170]
+connect_debug_port u_ila_0/probe170 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifohead[0]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifohead[1]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifohead[2]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifohead[3]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 4 [get_debug_ports u_ila_0/probe171]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe171]
+connect_debug_port u_ila_0/probe171 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifotail[0]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifotail[1]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifotail[2]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifotail[3]} ]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe172]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe172]
+connect_debug_port u_ila_0/probe172 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/RXerrIP} ]]
+
