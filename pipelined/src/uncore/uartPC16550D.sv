@@ -326,8 +326,8 @@ module uartPC16550D(
         rxdataready <= #1 1;
       end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
-          if (rxfifotail+1 < rxfifohead) rxfifotail <= #1 rxfifotail + 1;
-          if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
+          if (~rxfifoempty) rxfifotail <= #1 rxfifotail + 1;
+          if (rxfifoempty) rxdataready <= #1 0;
         end else begin
           rxdataready <= #1 0;
           RXBR <= #1 {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
