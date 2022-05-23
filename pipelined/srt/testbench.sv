@@ -40,30 +40,32 @@ module testbench;
   logic         clk;
   logic        req;
   logic         done;
-  logic [51:0] a;
-  logic [51:0] b;
+  logic [62:0] a;
+  logic [62:0] b;
   logic  [51:0] r;
   logic [54:0] rp, rm;   // positive quotient digits
  
   // Test parameters
   parameter MEM_SIZE = 40000;
-  parameter MEM_WIDTH = 52+52+52;
+  parameter MEM_WIDTH = 64+64+64;
  
-  `define memr  51:0
-  `define memb  103:52
-  `define mema  155:104
+  `define memr  62:0
+  `define memb  126:64
+  `define mema  190:128
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
   logic [MEM_WIDTH-1:0] Vec;  // Verilog doesn't allow direct access to a
                             // bit field of an array 
-  logic    [51:0] correctr, nextr, diffn, diffp;
+  logic [62:0] correctr, nextr, diffn, diffp;
+  logic [10:0] rExp;
   integer testnum, errors;
 
   // Divider
   srt  #(52) srt(.clk, .Start(req), 
                 .Stall(1'b0), .Flush(1'b0), 
-                .SrcXFrac(a), .SrcYFrac(b), 
+                .XExp(a[62:52]), .YExp(b[62:52]), .rExp,
+                .SrcXFrac(a[51:0]), .SrcYFrac(b[51:0]), 
                 .SrcA('0), .SrcB('0), .Fmt(2'b00), 
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
                 .Quot(r), .Rem(), .Flags());
@@ -100,12 +102,12 @@ module testbench;
       if (done) 
 	begin
 	  req <= #5 1;
-    diffp = correctr - r;
-    diffn = r - correctr;
-	  if (($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
+    diffp = correctr[51:0] - r;
+    diffn = r - correctr[51:0];
+	  if ((rExp === correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
-	      $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
+	      $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);
 	      $display("failed\n");
 	      $stop;
 	    end

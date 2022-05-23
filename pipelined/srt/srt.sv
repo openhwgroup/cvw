@@ -37,6 +37,7 @@ module srt #(parameter Nf=52) (
   input  logic Flush, // *** multiple pipe stages
   // Floating Point Inputs
   // later add exponents, signs, special cases
+  input  logic [`NE-1:0] XExp, YExp,
   input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
@@ -45,6 +46,7 @@ module srt #(parameter Nf=52) (
   input  logic       Int, // Choose integer inputss
   input  logic       Sqrt, // perform square root, not divide
   output logic [Nf-1:0] Quot, Rem, // *** later handle integers
+  output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
 
@@ -77,6 +79,8 @@ module srt #(parameter Nf=52) (
 
   // Partial Product Generation
   csa csa(WS, WC, Dsel, qp, WSA, WCA);
+
+  expcalc expcalc(.XExp, .YExp, .rExp);
 
   srtpostproc postproc(rp, rm, Quot);
 endmodule
@@ -245,6 +249,20 @@ module csa #(parameter N=56) (
   assign #1 out1 = in1 ^ in2 ^ in3;
   assign #1 out2 = {in1[54:0] & (in2[54:0] | in3[54:0]) | 
 		    (in2[54:0] & in3[54:0]), cin};
+endmodule
+
+
+//////////////
+// expcalc  //
+//////////////
+
+module expcalc(
+  input logic  [`NE-1:0] XExp, YExp,
+  output logic [`NE-1:0] rExp
+);
+
+  assign rExp = XExp - YExp + `BIAS;
+
 endmodule
 
 //////////////
