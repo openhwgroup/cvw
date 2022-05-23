@@ -176,7 +176,8 @@ module plic (
   end
 
   // pending interrupt requests
-  assign nextIntPending = (intPending | requests) & ~intInProgress;
+  //assign nextIntPending = (intPending | requests) & ~intInProgress;
+  assign nextIntPending = requests;
   flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // context-dependent signals

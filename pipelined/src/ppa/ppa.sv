@@ -214,7 +214,39 @@ module ppa_alu #(parameter WIDTH=32) (
   else            assign Result = FullResult;
 endmodule
 
-module ppa_shiftleft #(parameter WIDTH=32) (
+module ppa_shiftleft_8 #(parameter WIDTH=8) (
+  input logic [WIDTH-1:0] a,
+  input logic [$clog2(WIDTH)-1:0] amt,
+  output logic [WIDTH-1:0] y);
+
+  assign y = a << amt;
+endmodule
+
+module ppa_shiftleft_16 #(parameter WIDTH=16) (
+  input logic [WIDTH-1:0] a,
+  input logic [$clog2(WIDTH)-1:0] amt,
+  output logic [WIDTH-1:0] y);
+
+  assign y = a << amt;
+endmodule
+
+module ppa_shiftleft_32 #(parameter WIDTH=32) (
+  input logic [WIDTH-1:0] a,
+  input logic [$clog2(WIDTH)-1:0] amt,
+  output logic [WIDTH-1:0] y);
+
+  assign y = a << amt;
+endmodule
+
+module ppa_shiftleft_64 #(parameter WIDTH=64) (
+  input logic [WIDTH-1:0] a,
+  input logic [$clog2(WIDTH)-1:0] amt,
+  output logic [WIDTH-1:0] y);
+
+  assign y = a << amt;
+endmodule
+
+module ppa_shiftleft_128 #(parameter WIDTH=128) (
   input logic [WIDTH-1:0] a,
   input logic [$clog2(WIDTH)-1:0] amt,
   output logic [WIDTH-1:0] y);
@@ -329,28 +361,130 @@ module ppa_prioritythermometer #(parameter N = 8) (
   end
 endmodule
 
-module ppa_priorityonehot #(parameter N = 8) (
-  input  logic  [N-1:0] a,
-  output logic  [N-1:0] y);
-  logic [N-1:0] nolower;
+module ppa_priorityonehot #(parameter WIDTH = 8) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
 
   // create thermometer code mask
-  ppa_prioritythermometer #(N) maskgen(.a({a[N-2:0], 1'b0}), .y(nolower));
+  ppa_prioritythermometer #(WIDTH) maskgen(.a({a[WIDTH-2:0], 1'b0}), .y(nolower));
   assign y = a & nolower;
 endmodule
 
-module ppa_priorityencoder #(parameter N = 8) (
-  input  logic  [N-1:0] a,
-  output logic  [$clog2(N)-1:0] y);
-  // Carefully crafted so design compiler will synthesize into a fast tree structure
-  //  Rather than linear.
+module ppa_priorityonehot_8 #(parameter WIDTH = 8) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
 
   // create thermometer code mask
+  ppa_priorityonehot #(WIDTH) poh (.*);
+endmodule
+
+module ppa_priorityonehot_16 #(parameter WIDTH = 16) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
+
+  // create thermometer code mask
+  ppa_priorityonehot #(WIDTH) poh (.*);
+endmodule
+
+module ppa_priorityonehot_32 #(parameter WIDTH = 32) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
+
+  // create thermometer code mask
+  ppa_priorityonehot #(WIDTH) poh (.*);
+endmodule
+
+module ppa_priorityonehot_64 #(parameter WIDTH = 64) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
+
+  // create thermometer code mask
+  ppa_priorityonehot #(WIDTH) poh (.*);
+endmodule
+
+module ppa_priorityonehot_128 #(parameter WIDTH = 128) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  logic [WIDTH-1:0] nolower;
+
+  // create thermometer code mask
+  ppa_priorityonehot #(WIDTH) poh (.*);
+endmodule
+
+module ppa_priorityencoder_8 #(parameter WIDTH = 8) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+  ppa_priorityencoder #(WIDTH) pe (.*);
+endmodule
+
+module ppa_priorityencoder_16 #(parameter WIDTH = 16) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+  ppa_priorityencoder #(WIDTH) pe (.*);
+endmodule
+
+module ppa_priorityencoder_32 #(parameter WIDTH = 32) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+  ppa_priorityencoder #(WIDTH) pe (.*);
+endmodule
+
+module ppa_priorityencoder_64 #(parameter WIDTH = 64) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+  ppa_priorityencoder #(WIDTH) pe (.*);
+endmodule
+
+module ppa_priorityencoder_128 #(parameter WIDTH = 128) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+  ppa_priorityencoder #(WIDTH) pe (.*);
+endmodule
+
+module ppa_priorityencoder #(parameter WIDTH = 8) (
+  input  logic  [WIDTH-1:0] a,
+  output logic  [$clog2(WIDTH)-1:0] y);
+
   int i;
   always_comb
-    for (i=0; i<N; i++) begin:pri
+    for (i=0; i<WIDTH; i++) begin:pri
       if (a[i]) y= i;
     end
+endmodule
+
+module ppa_decoder_8 #(parameter WIDTH = 8) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  ppa_decoder #(WIDTH) dec (.*);
+endmodule
+
+module ppa_decoder_16 #(parameter WIDTH = 16) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  ppa_decoder #(WIDTH) dec (.*);
+endmodule
+
+module ppa_decoder_32 #(parameter WIDTH = 32) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  ppa_decoder #(WIDTH) dec (.*);
+endmodule
+
+module ppa_decoder_64 #(parameter WIDTH = 64) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  ppa_decoder #(WIDTH) dec (.*);
+endmodule
+
+module ppa_decoder_128 #(parameter WIDTH = 128) (
+  input  logic  [$clog2(WIDTH)-1:0] a,
+  output logic  [WIDTH-1:0] y);
+  ppa_decoder #(WIDTH) dec (.*);
 endmodule
 
 module ppa_decoder #(parameter WIDTH = 8) (
@@ -362,7 +496,7 @@ module ppa_decoder #(parameter WIDTH = 8) (
   end
 endmodule
 
-module ppa_mux2_1 #(parameter WIDTH = 1) (
+module ppa_mux2_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d0, d1, 
   input  logic             s, 
   output logic [WIDTH-1:0] y);
@@ -404,7 +538,7 @@ endmodule
 
 // *** some way to express data-critical inputs
 
-module ppa_flop #(parameter WIDTH = 8) ( 
+module ppa_flop_8 #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -413,7 +547,43 @@ module ppa_flop #(parameter WIDTH = 8) (
     q <= #1 d;
 endmodule
 
-module ppa_flopr #(parameter WIDTH = 8) ( 
+module ppa_flop_16 #(parameter WIDTH = 16) ( 
+  input  logic             clk,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    q <= #1 d;
+endmodule
+
+module ppa_flop_32 #(parameter WIDTH = 32) ( 
+  input  logic             clk,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    q <= #1 d;
+endmodule
+
+module ppa_flop_64 #(parameter WIDTH = 64) ( 
+  input  logic             clk,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    q <= #1 d;
+endmodule
+
+module ppa_flop_128 #(parameter WIDTH = 128) ( 
+  input  logic             clk,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    q <= #1 d;
+endmodule
+
+module ppa_flopr_8 #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -423,7 +593,47 @@ module ppa_flopr #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module ppa_floprasynnc #(parameter WIDTH = 8) ( 
+module ppa_flopr_16 #(parameter WIDTH = 16) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_flopr_32 #(parameter WIDTH = 32) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_flopr_64 #(parameter WIDTH = 64) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_flopr_128 #(parameter WIDTH = 128) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_floprasync_8 #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -433,7 +643,47 @@ module ppa_floprasynnc #(parameter WIDTH = 8) (
     else       q <= #1 d;
 endmodule
 
-module ppa_flopenr #(parameter WIDTH = 8) (
+module ppa_floprasync_16 #(parameter WIDTH = 16) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk or posedge reset)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_floprasync_32 #(parameter WIDTH = 32) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk or posedge reset)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_floprasync_64 #(parameter WIDTH = 64) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk or posedge reset)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_floprasync_128 #(parameter WIDTH = 128) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk or posedge reset)
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
+endmodule
+
+module ppa_flopenr_8 #(parameter WIDTH = 8) (
   input  logic             clk, reset, en,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
@@ -441,4 +691,89 @@ module ppa_flopenr #(parameter WIDTH = 8) (
   always_ff @(posedge clk)
     if (reset)   q <= #1 0;
     else if (en) q <= #1 d;
+endmodule
+
+module ppa_flopenr_16 #(parameter WIDTH = 16) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
+endmodule
+
+module ppa_flopenr_32 #(parameter WIDTH = 32) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
+endmodule
+
+module ppa_flopenr_64 #(parameter WIDTH = 64) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
+endmodule
+
+module ppa_flopenr_128 #(parameter WIDTH = 128) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
+endmodule
+
+module ppa_csa_8 #(parameter WIDTH = 8) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_16 #(parameter WIDTH = 16) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_32 #(parameter WIDTH = 32) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_64 #(parameter WIDTH = 64) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
+endmodule
+
+module ppa_csa_128 #(parameter WIDTH = 128) (
+  input logic [WIDTH-1:0] a, b, c,
+	output logic [WIDTH-1:0] sum, carry);
+
+   assign sum = a ^ b ^ c;
+   assign carry = (a & (b | c)) | (b & c);
+
 endmodule
