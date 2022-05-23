@@ -328,18 +328,18 @@ logic [3:0] dummy;
 
   // initialize the branch predictor
   if (`BPRED_ENABLED == 1)
-    initial begin
-      integer adrindex;
+    begin
+      genvar adrindex;
       
       // Initializing all zeroes into the branch predictor memory.
       for(adrindex = 0; adrindex < 1024; adrindex++) begin
+        initial begin 
         force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-      end 
-      #1;
-      for(adrindex = 0; adrindex < 1024; adrindex++) begin
+        #1;
         release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end
       end
     end
 endmodule

@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
+
 from distutils.log import error
 from statistics import median
 import subprocess
@@ -10,16 +12,23 @@ import matplotlib.lines as lines
 import numpy as np
 
 
-def getData():
-    bashCommand = "grep 'Critical Path Length' runs/ppa_*/reports/*qor*"
+def getData(mod=None, width=None):
+    specStr = ''
+    if mod != None:
+        specStr = mod
+        if width != None:
+            specStr += ('_'+str(width))
+    specStr += '*'
+
+    bashCommand = "grep 'Critical Path Length' runs/ppa_{}/reports/*qor*".format(specStr)
     outputCPL = subprocess.check_output(['bash','-c', bashCommand])
     linesCPL = outputCPL.decode("utf-8").split('\n')[:-1]
 
-    bashCommand = "grep 'Design Area' runs/ppa_*/reports/*qor*"
+    bashCommand = "grep 'Design Area' runs/ppa_{}/reports/*qor*".format(specStr)
     outputDA = subprocess.check_output(['bash','-c', bashCommand])
     linesDA = outputDA.decode("utf-8").split('\n')[:-1]
 
-    bashCommand = "grep '100' runs/ppa_*/reports/*power*"
+    bashCommand = "grep '100' runs/ppa_{}/reports/*power*".format(specStr)
     outputP = subprocess.check_output(['bash','-c', bashCommand])
     linesP = outputP.decode("utf-8").split('\n')[:-1]
 
@@ -30,7 +39,6 @@ def getData():
     p = re.compile('\d+\.\d+[e-]*\d+')
 
     allSynths = []
-
     for i in range(len(linesCPL)):
         line = linesCPL[i]
         mwm = wm.findall(line)[0][4:-4].split('_')
@@ -42,15 +50,16 @@ def getData():
 
         power = p.findall(linesP[i])
         lpower = float(power[2])
-        denergy = float(power[1])/freq
+        denergy = float(power[1])*delay
 
         oneSynth = [mod, width, freq, delay, area, lpower, denergy]
         allSynths += [oneSynth]
 
     return allSynths
 
-def getVals(module, freq, var):
-    global allSynths
+def getVals(module, var, freq=None):
+    allSynths = getData(mod=module)
+
     if (var == 'delay'):
         ind = 3 
         units = " (ns)"
@@ -68,15 +77,25 @@ def getVals(module, freq, var):
 
     widths = []
     metric = []
-    for oneSynth in allSynths:
-        if (oneSynth[0] == module) & (oneSynth[2] == freq):
-            widths += [oneSynth[1]]
-            m = oneSynth[ind]
-            if (ind==6): m*=1000
-            metric += [m]
+    if (freq != None):
+        for oneSynth in allSynths:
+            if (oneSynth[2] == freq):
+                widths += [oneSynth[1]]
+                metric += [oneSynth[ind]]
+    else:
+        widths = [8, 16, 32, 64, 128]
+        for w in widths:
+            m = 10000 # large number to start
+            for oneSynth in allSynths:
+                if (oneSynth[1] == w):
+                    if (oneSynth[3] < m): 
+                        m = oneSynth[3]
+                        met = oneSynth[ind]
+            metric += [met]
     return widths, metric, units
 
-def writeCSV(allSynths):
+def writeCSV():
+    allSynths = getData()
     file = open("ppaData.csv", "w")
     writer = csv.writer(file)
     writer.writerow(['Module', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (mJ)'])
@@ -112,7 +131,7 @@ def genLegend(fits, coefs, module, r2):
                        lines.Line2D([0], [0], color='steelblue', ls='', marker='o', label=' R^2='+ str(round(r2, 4)))]
     return legend_elements
 
-def plotPPA(module, freq, var, ax=None, fits='clsgn'):
+def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
     '''
     module: string module name
     freq: int freq (MHz)
@@ -120,7 +139,7 @@ def plotPPA(module, freq, var, ax=None, fits='clsgn'):
     fits: constant, linear, square, log2, Nlog2
     plots chosen variable vs width for all matching syntheses with regression
     '''
-    widths, metric, units = getVals(module, freq, var)
+    widths, metric, units = getVals(module, var, freq=freq)
     coefs, r2, funcArr = regress(widths, metric, fits)
 
     xp = np.linspace(8, 140, 200)
@@ -148,15 +167,6 @@ def plotPPA(module, freq, var, ax=None, fits='clsgn'):
     if singlePlot:
         ax.set_title(module + "  (target  " + str(freq) + "MHz)")
         plt.show()
-
-def makePlots(mod, freq):
-    fig, axs = plt.subplots(2, 2)
-    plotPPA(mod, freq, 'delay', ax=axs[0,0], fits='cg')
-    plotPPA(mod, freq, 'area', ax=axs[0,1], fits='s')
-    plotPPA(mod, freq, 'lpower', ax=axs[1,0], fits='c')
-    plotPPA(mod, freq, 'denergy', ax=axs[1,1], fits='s')
-    plt.suptitle(mod + "  (target  " + str(freq) + "MHz)")
-    plt.show()
 
 def regress(widths, var, fits='clsgn'):
 
@@ -210,39 +220,58 @@ def genFuncs(fits='clsgn'):
     return funcArr
 
 def noOutliers(freqs, delays, areas):
-    med = statistics.median(freqs)
     f=[]
     d=[]
     a=[]
-    for i in range(len(freqs)):
-        norm = freqs[i]/med
-        if (norm > 0.25) & (norm<1.75):
-            f += [freqs[i]]
-            d += [delays[i]]
-            a += [areas[i]]
+    try:
+        med = statistics.median(freqs)
+        for i in range(len(freqs)):
+            norm = freqs[i]/med
+            if (norm > 0.25) & (norm<1.75):
+                f += [freqs[i]]
+                d += [delays[i]]
+                a += [areas[i]]
+    except: pass
+    
     return f, d, a
 
 def freqPlot(mod, width):
-    freqs = []
-    delays = []
-    areas = []
+    allSynths = getData(mod=mod, width=width)
+
+    freqsV, delaysV, areasV, freqsA, delaysA, areasA = ([] for i in range(6))
     for oneSynth in allSynths:
         if (mod == oneSynth[0]) & (width == oneSynth[1]):
-            freqs += [oneSynth[2]]
-            delays += [oneSynth[3]]
-            areas += [oneSynth[4]]
+            if (1000/oneSynth[3] < oneSynth[2]):
+                freqsV += [oneSynth[2]]
+                delaysV += [oneSynth[3]]
+                areasV += [oneSynth[4]]
+            else:
+                freqsA += [oneSynth[2]]
+                delaysA += [oneSynth[3]]
+                areasA += [oneSynth[4]]
 
-    freqs, delays, areas = noOutliers(freqs, delays, areas)
+    freqsV, delaysV, areasV = noOutliers(freqsV, delaysV, areasV)
+    freqsA, delaysA, areasA = noOutliers(freqsA, delaysA, areasA)
 
-    adprod = np.multiply(areas, delays)
-    adsq = np.multiply(adprod, delays)
+    adprodA = np.multiply(areasA, delaysA)
+    adsqA = np.multiply(adprodA, delaysA)
+    adprodV = np.multiply(areasV, delaysV)
+    adsqV = np.multiply(adprodV, delaysV)
+
+    legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
+                       lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
 
     f, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True)
-    ax1.scatter(freqs, delays)
-    ax2.scatter(freqs, areas)
-    ax3.scatter(freqs, adprod)
-    ax4.scatter(freqs, adsq)
-    ax4.set_xlabel("Freq (MHz)")
+    ax1.scatter(freqsA, delaysA, color='green')
+    ax1.scatter(freqsV, delaysV, color='blue')
+    ax2.scatter(freqsA, areasA, color='green')
+    ax2.scatter(freqsV, areasV, color='blue')
+    ax3.scatter(freqsA, adprodA, color='green')
+    ax3.scatter(freqsV, adprodV, color='blue')
+    ax4.scatter(freqsA, adsqA, color='green')
+    ax4.scatter(freqsV, adsqV, color='blue')
+    ax1.legend(handles=legend_elements)
+    ax4.set_xlabel("Target Freq (MHz)")
     ax1.set_ylabel('Delay (ns)')
     ax2.set_ylabel('Area (sq microns)')
     ax3.set_ylabel('Area * Delay')
@@ -250,12 +279,19 @@ def freqPlot(mod, width):
     ax1.set_title(mod + '_' + str(width))
     plt.show()
 
-allSynths = getData()
-writeCSV(allSynths)
+def plotPPA(mod, freq=None):
+    fig, axs = plt.subplots(2, 2)
+    oneMetricPlot(mod, 'delay', ax=axs[0,0], fits='clg', freq=freq)
+    oneMetricPlot(mod, 'area', ax=axs[0,1], fits='s', freq=freq)
+    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='c', freq=freq)
+    oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits='s', freq=freq)
+    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else "  min delay"
+    plt.suptitle(mod + titleStr)
+    plt.show()
+
+# writeCSV()
 # makeCoefTable()
 
-# freqPlot('add', 64)
+freqPlot('flopr', 128)
 
-makePlots('shifter', 5000)
-
-# plotPPA('mult', 5000, 'delay', fits='cls')
+# plotPPA('add')

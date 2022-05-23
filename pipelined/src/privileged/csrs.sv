@@ -57,7 +57,7 @@ module csrs #(parameter
     input logic 	     STATUS_TVM,
     input logic [`XLEN-1:0]  CSRWriteValM,
     input logic [1:0] 	     PrivilegeModeW,
-    output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
+    (* mark_debug = "true" *) output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
     (* mark_debug = "true" *) output logic [`XLEN-1:0] SEPC_REGW,      
     output logic [31:0]      SCOUNTEREN_REGW, 
     output logic [`XLEN-1:0] SATP_REGW,

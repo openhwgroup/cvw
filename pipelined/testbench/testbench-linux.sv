@@ -36,7 +36,7 @@ module testbench;
   parameter INSTR_WAVEON = 0; // # of instructions at which to turn on waves in graphical sim
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
-  parameter NO_IE_MTIME_CHECKPOINT = 0;
+  parameter NO_SPOOFING = 0;
   parameter DEBUG_TRACE = 0;
   // Debug Levels
   // 0: don't check against QEMU
@@ -93,7 +93,7 @@ module testbench;
       logic [`XLEN-1:0] ExpectedRegValue``STAGE; \
       logic [`XLEN-1:0] ExpectedIEUAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
       string            ExpectedCSRArray``STAGE[10:0]; \
-      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0];
+      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0]; // *** might be redundant?
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
   `DECLARE_TRACE_SCANNER_SIGNALS(M)
   //  M-stage expected values
@@ -216,7 +216,7 @@ module testbench;
   /////////////////////////////// Cache Issue ///////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   logic       probe;
-  if (NO_IE_MTIME_CHECKPOINT)
+  if (NO_SPOOFING)
     assign probe = testbench.dut.core.PCM == 64'hffffffff80200c8c
                    & testbench.dut.core.InstrM != 32'h14021273
                    & testbench.dut.core.InstrValidM;
@@ -356,7 +356,7 @@ module testbench;
   `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
-  if(!NO_IE_MTIME_CHECKPOINT) begin
+  if(!NO_SPOOFING) begin
     `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
     `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
     end
@@ -393,7 +393,7 @@ module testbench;
 
   // ========== INITIALIZATION ==========
   initial begin
-    if(!NO_IE_MTIME_CHECKPOINT) begin
+    if(!NO_SPOOFING) begin
       force `MEIP = 0;
       force `SEIP = 0;
       force `UART_IP = 0;
@@ -403,7 +403,7 @@ module testbench;
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
       $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
-    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
+    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem); // *** initialize these using zeroes rather than reading from files, see testbench.sv
     $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
@@ -460,7 +460,7 @@ module testbench;
       release `INSTRET;
     end
     // Get the E-stage trace reader ahead of the M-stage trace reader
-    matchCountE = $fgets(lineE,traceFileE);
+    matchCountE = $fgets(lineE,traceFileE); // *** look at removing?
   end
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -545,16 +545,16 @@ module testbench;
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
         if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
-          if(!NO_IE_MTIME_CHECKPOINT) begin \
-            $display("%tns, %d instrs: Overwrite UART's LSR in memory stage.", $time, AttemptedInstructionCount); \
+          if(!NO_SPOOFING) begin \
+            $display("%tns, %d instrs: Overwrite UART's Register in memory stage.", $time, AttemptedInstructionCount); \
             force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
           end \
         end else \
-          if(!NO_IE_MTIME_CHECKPOINT) \
+          if(!NO_SPOOFING) \
             release dut.core.ieu.dp.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
-          if(!NO_IE_MTIME_CHECKPOINT) \
+          if(!NO_SPOOFING) \
             force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
       end \
@@ -631,7 +631,7 @@ module testbench;
       if(~dut.core.StallW) begin
         if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, AttemptedInstructionCount);
-          if(!NO_IE_MTIME_CHECKPOINT)
+          if(!NO_SPOOFING)
             release dut.uncore.clint.clint.MTIME;
         end 
         //if (ExpectedIEUAdrM == 'h10000005) begin
@@ -700,7 +700,7 @@ module testbench;
             "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
             "mip": begin
                        `checkCSR(`CSR_BASE.csrm.MIP_REGW)
-                       if(!NO_IE_MTIME_CHECKPOINT) begin
+                       if(!NO_SPOOFING) begin
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<11) == 0)
                            force `MEIP = 0;
                          if ((ExpectedCSRArrayValueW[NumCSRPostWIndex] & 1<<09) == 0)
@@ -716,7 +716,7 @@ module testbench;
         if (fault == 1) begin
           errorCount +=1;
           $display("processed %0d instructions with %0d warnings", AttemptedInstructionCount, warningCount);
-          $stop;
+          $stop; $stop;
         end
       end // if (DEBUG_TRACE >= 1)
     end // if (checkInstrW)
@@ -732,7 +732,7 @@ module testbench;
   always @(negedge clk) begin
     if(checkInterruptM) begin
       if((interruptInstrCount+1) == AttemptedInstructionCount) begin
-        if(!NO_IE_MTIME_CHECKPOINT) begin
+        if(!NO_SPOOFING) begin
           case (interruptCauseVal)
             11: begin
                   force `MEIP = 1;
@@ -763,7 +763,7 @@ module testbench;
       end
     end
   end
-  
+
 
 
 
