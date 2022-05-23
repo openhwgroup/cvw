@@ -292,6 +292,6 @@ def plotPPA(mod, freq=None):
 # writeCSV()
 # makeCoefTable()
 
-freqPlot('decoder', 8)
+freqPlot('flopr', 128)
 
-plotPPA('decoder')
+# plotPPA('add')
