@@ -44,30 +44,30 @@ def getData():
 allSynths = getData()
 arr = [-40, -20, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20, 40]
 
-widths = [8, 16, 32, 64, 128]
+widths = [16, 8, 32, 64, 128]
 modules = ['add']
 tech = 'tsmc28'
 LoT = []
 
 # # # initial sweep to get estimate of min delay
-freqs = [10000, 15000, 20000]
-for module in modules:
-    for width in widths:
-        for freq in freqs:
-            LoT += [[module, width, tech, freq]]
+# freqs = [25000, 35000]
+# for module in modules:
+#     for width in widths:
+#         for freq in freqs:
+#             LoT += [[module, width, tech, freq]]
 
 
 # # thorough sweep based on estimate of min delay
-# for m in modules:
-#     for w in widths:
-#         delays = []
-#         for oneSynth in allSynths:
-#             if (oneSynth[0] == m) & (oneSynth[1] == w):
-#                 delays += [oneSynth[3]]
-#         try: f = 1000/min(delays)
-#         except: print(m)
-#         for freq in [str(round(f+f*x/100)) for x in arr]:
-#             LoT += [[m, w, tech, freq]]
+for m in modules:
+    for w in widths:
+        delays = []
+        for oneSynth in allSynths:
+            if (oneSynth[0] == m) & (oneSynth[1] == w):
+                delays += [oneSynth[3]]
+        try: f = 1000/min(delays)
+        except: print(m)
+        for freq in [str(round(f+f*x/100)) for x in arr]:
+            LoT += [[m, w, tech, freq]]
 
 deleteRedundant(LoT)
 pool = Pool()

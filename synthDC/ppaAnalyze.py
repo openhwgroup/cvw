@@ -1,28 +1,39 @@
 #!/usr/bin/python3
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
 
-from distutils.log import error
 from operator import index
-from statistics import median
 import subprocess
-import statistics
 import csv
 import re
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import numpy as np
+from collections import namedtuple
 
 
-def getData(tech, mod=None, width=None):
-    ''' returns a list of lists 
-        each list contains results of one synthesis that matches the input specs
+def synthsfromcsv(filename):
+    with open(filename, newline='') as csvfile:
+        csvreader = csv.reader(csvfile)
+        global allSynths
+        allSynths = list(csvreader)
+        for i in range(len(allSynths)):
+            for j in range(len(allSynths[0])):
+                try: allSynths[i][j] = int(allSynths[i][j])
+                except: 
+                    try: allSynths[i][j] = float(allSynths[i][j])
+                    except: pass
+            allSynths[i] = Synth(*allSynths[i])
+    
+def synthsintocsv(mod=None, width=None):
+    ''' writes a CSV with one line for every available synthesis
+        each line contains the module, tech, width, target freq, and resulting metrics
     '''
     specStr = ''
     if mod != None:
         specStr = mod
         if width != None:
             specStr += ('_'+str(width))
-    specStr += '*{}*'.format(tech)
+    specStr += '*'
 
     bashCommand = "grep 'Critical Path Length' runs/ppa_{}/reports/*qor*".format(specStr)
     outputCPL = subprocess.check_output(['bash','-c', bashCommand])
@@ -41,8 +52,12 @@ def getData(tech, mod=None, width=None):
     wm = re.compile('ppa_\w*_\d*_qor')
     da = re.compile('\d*\.\d{6}')
     p = re.compile('\d+\.\d+[e-]*\d+')
+    t = re.compile('[a-zA-Z0-9]+nm')
 
-    allSynths = []
+    file = open("ppaData.csv", "w")
+    writer = csv.writer(file)
+    writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (mJ)'])
+
     for i in range(len(linesCPL)):
         line = linesCPL[i]
         mwm = wm.findall(line)[0][4:-4].split('_')
@@ -51,78 +66,60 @@ def getData(tech, mod=None, width=None):
         area = float(da.findall(linesDA[i])[0])
         mod = mwm[0]
         width = int(mwm[1])
+        tech = t.findall(line)[0][:-2]
+        try: #fix
+            power = p.findall(linesP[i])
+            lpower = float(power[2])
+            denergy = float(power[1])*delay
+        except: 
+            lpower = 0
+            denergy = 0
 
-        power = p.findall(linesP[i])
-        lpower = float(power[2])
-        denergy = float(power[1])*delay
-
-        oneSynth = [mod, width, freq, delay, area, lpower, denergy]
-        allSynths += [oneSynth]
-
-    return allSynths
+        writer.writerow([mod, tech, width, freq, delay, area, lpower, denergy])
+    file.close()
 
 def getVals(tech, module, var, freq=None):
     ''' for a specified tech, module, and variable/metric
-        returns a list of widths and the corresponding values for that metric with the appropriate units
+        returns a list of values for that metric in ascending width order with the appropriate units
         works at a specified target frequency or if none is given, uses the synthesis with the min delay for each width
     '''
-
-    allSynths = getData(tech, mod=module)
-
+    
     if (var == 'delay'):
-        ind = 3 
         units = " (ns)"
     elif (var == 'area'):
-        ind = 4
         units = " (sq microns)"
-        scale = 2
     elif (var == 'lpower'):
-        ind = 5
         units = " (nW)"
     elif (var == 'denergy'):
-        ind = 6
         units = " (pJ)"
-    else:
-        error
 
-    widths = []
+    global widths
     metric = []
+    widthL = []
     if (freq != None):
         for oneSynth in allSynths:
-            if (oneSynth[2] == freq):
-                widths += [oneSynth[1]]
-                metric += [oneSynth[ind]]
+            if (oneSynth.freq == freq) & (oneSynth.tech == tech) & (oneSynth.module == module):
+                widthL += [oneSynth.width]
+                osdict = oneSynth._asdict()
+                metric += [osdict[var]]
+        metric = [x for _, x in sorted(zip(widthL, metric))] # ordering
     else:
-        widths = [8, 16, 32, 64, 128]
         for w in widths:
-            m = 10000 # large number to start
+            m = 100000 # large number to start
             for oneSynth in allSynths:
-                if (oneSynth[1] == w):
-                    if (oneSynth[3] < m): 
-                        m = oneSynth[3]
-                        met = oneSynth[ind]
+                if (oneSynth.width == w) & (oneSynth.tech == tech) & (oneSynth.module == module):
+                    if (oneSynth.delay < m): 
+                        m = oneSynth.delay
+                        osdict = oneSynth._asdict()
+                        met = osdict[var]
             metric += [met]
 
     if ('flop' in module) & (var == 'area'):
         metric = [m/2 for m in metric] # since two flops in each module 
 
-    return widths, metric, units
+    return metric, units
 
-def writeCSV(tech):
-    ''' writes a CSV with one line for every available synthesis for a specified tech
-        each line contains the module, width, target freq, and resulting metrics
-    '''
-    allSynths = getData(tech)
-    file = open("ppaData.csv", "w")
-    writer = csv.writer(file)
-    writer.writerow(['Module', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (mJ)'])
-
-    for one in allSynths:
-        writer.writerow(one)
-
-    file.close()
-
-def genLegend(fits, coefs, r2, tech):
+def genLegend(fits, coefs, r2, techcolor):
     ''' generates a list of two legend elements 
         labels line with fit equation and dots with tech and r squared of the fit
     '''
@@ -147,7 +144,7 @@ def genLegend(fits, coefs, r2, tech):
         eq += " + " + coefsr[ind] + "*Nlog2(N)"
         ind += 1
 
-    c = 'blue' if (tech == 'sky90') else 'green'
+    tech, c = techcolor
     legend_elements = [lines.Line2D([0], [0], color=c, label=eq),
                        lines.Line2D([0], [0], color=c, ls='', marker='o', label=tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
@@ -167,14 +164,17 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
         singlePlot = False
 
     fullLeg = []
-    for tech in ['sky90', 'tsmc28']:
-        c = 'blue' if (tech == 'sky90') else 'green'
-        widths, metric, units = getVals(tech, module, var, freq=freq)
-        xp, pred, leg = regress(widths, metric, tech, fits)
-        fullLeg += leg
+    global techcolors
+    global widths
+    for combo in techcolors:
+        tech, c = combo
+        metric, units = getVals(tech, module, var, freq=freq)
+        if len(metric) == 5:
+            xp, pred, leg = regress(widths, metric, combo, fits)
+            fullLeg += leg
 
-        ax.scatter(widths, metric, color=c)
-        ax.plot(xp, pred, color=c)
+            ax.scatter(widths, metric, color=c)
+            ax.plot(xp, pred, color=c)
 
     ax.legend(handles=fullLeg)
 
@@ -183,10 +183,11 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
     ax.set_ylabel(str.title(var) + units)
 
     if singlePlot:
-        ax.set_title(module + "  (target  " + str(freq) + "MHz)")
+        titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (min delay)"
+        ax.set_title(module + titleStr)
         plt.show()
 
-def regress(widths, var, tech, fits='clsgn'):
+def regress(widths, var, techcolor, fits='clsgn'):
     ''' fits a curve to the given points
         returns lists of x and y values to plot that curve and legend elements with the equation
     '''
@@ -215,12 +216,13 @@ def regress(widths, var, tech, fits='clsgn'):
         n = [func(x) for func in funcArr]
         pred += [sum(np.multiply(coefs, n))]
 
-    leg = genLegend(fits, coefs, r2, tech)
+    leg = genLegend(fits, coefs, r2, techcolor)
 
     return xp, pred, leg
 
 def makeCoefTable(tech):
-    ''' writes CSV with each line containing the coefficients for a regression fit 
+    ''' not currently in use, may salvage later
+        writes CSV with each line containing the coefficients for a regression fit 
         to a particular combination of module, metric, and target frequency
     '''
     file = open("ppaFitting.csv", "w")
@@ -231,7 +233,8 @@ def makeCoefTable(tech):
         for comb in [['delay', 5000], ['area', 5000], ['area', 10]]:
             var = comb[0]
             freq = comb[1]
-            widths, metric, units = getVals(tech, mod, freq, var)
+            metric, units = getVals(tech, mod, freq, var)
+            global widths
             coefs, r2, funcArr = regress(widths, metric)
             row = [mod] + comb + np.ndarray.tolist(coefs) + [r2]
             writer.writerow(row)
@@ -280,15 +283,14 @@ def noOutliers(freqs, delays, areas):
 def freqPlot(tech, mod, width):
     ''' plots delay, area, area*delay, and area*delay^2 for syntheses with specified tech, module, width
     '''
-    allSynths = getData(tech, mod=mod, width=width)
-
+    global allSynths
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
-        if (mod == oneSynth[0]) & (width == oneSynth[1]):
-            ind = (1000/oneSynth[3] < oneSynth[2]) # when delay is within target clock period
-            freqsL[ind] += [oneSynth[2]]
-            delaysL[ind] += [oneSynth[3]]
-            areasL[ind] += [oneSynth[4]]
+        if (mod == oneSynth.module) & (width == oneSynth.width) & (tech == oneSynth.tech):
+            ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
+            freqsL[ind] += [oneSynth.freq]
+            delaysL[ind] += [oneSynth.delay]
+            areasL[ind] += [oneSynth.area]
 
     f, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, sharex=True)
 
@@ -347,13 +349,14 @@ def plotPPA(mod, freq=None):
     plt.suptitle(mod + titleStr)
     plt.show()
 
+Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
+techcolors = [['sky90', 'green'], ['tsmc28', 'blue']]
+widths = [8, 16, 32, 64, 128]
+synthsintocsv()
 
-# writeCSV()
+synthsfromcsv('ppaData.csv') # your csv here!
 
-# look at comparaotro 32
-
-# for x in ['add', 'mult', 'comparator', 'alu', 'csa']:
-#     for y in [8, 16, 32, 64, 128]:
-#         freqPlot('sky90', x, y)
-
-freqPlot('sky90', 'mult', 32)
+### examples
+# oneMetricPlot('add', 'delay')
+#freqPlot('sky90', 'add', 8)
+#plotPPA('add')
