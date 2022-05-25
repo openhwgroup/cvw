@@ -126,6 +126,16 @@ module ppa_mult_128 #(parameter WIDTH=128) (
   assign y = a * b;
 endmodule
 
+module ppa_alu_8 #(parameter WIDTH=8) (
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
+
+  ppa_alu #(WIDTH) alu (.*);
+endmodule
+
 module ppa_alu_16 #(parameter WIDTH=16) (
   input  logic [WIDTH-1:0] A, B,
   input  logic [2:0]       ALUControl,
@@ -133,7 +143,7 @@ module ppa_alu_16 #(parameter WIDTH=16) (
   output logic [WIDTH-1:0] Result,
   output logic [WIDTH-1:0] Sum);
 
-  ppa_alu #(WIDTH) alu_16 (.*);
+  ppa_alu #(WIDTH) alu (.*);
 endmodule
 
 module ppa_alu_32 #(parameter WIDTH=32) (
@@ -143,7 +153,7 @@ module ppa_alu_32 #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] Result,
   output logic [WIDTH-1:0] Sum);
 
-  ppa_alu #(WIDTH) alu_32 (.*);
+  ppa_alu #(WIDTH) alu (.*);
 endmodule
 
 module ppa_alu_64 #(parameter WIDTH=64) (
@@ -153,7 +163,17 @@ module ppa_alu_64 #(parameter WIDTH=64) (
   output logic [WIDTH-1:0] Result,
   output logic [WIDTH-1:0] Sum);
 
-  ppa_alu #(WIDTH) alu_64 (.*);
+  ppa_alu #(WIDTH) alu (.*);
+endmodule
+
+module ppa_alu_128 #(parameter WIDTH=128) (
+  input  logic [WIDTH-1:0] A, B,
+  input  logic [2:0]       ALUControl,
+  input  logic [2:0]       Funct3,
+  output logic [WIDTH-1:0] Result,
+  output logic [WIDTH-1:0] Sum);
+
+  ppa_alu #(WIDTH) alu (.*);
 endmodule
 
 module ppa_alu #(parameter WIDTH=32) (
@@ -209,9 +229,11 @@ module ppa_alu #(parameter WIDTH=32) (
       3'b111: FullResult = A & B;     // and
     endcase
 
-  // support W-type RV64I ADDW/SUBW/ADDIW/Shifts that sign-extend 32-bit result to 64 bits
-  if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else            assign Result = FullResult;
+  assign Result = FullResult;
+  // not using W64 so it has the same architecture regardless of width
+  // // support W-type RV64I ADDW/SUBW/ADDIW/Shifts that sign-extend 32-bit result to 64 bits
+  // if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  // else            assign Result = FullResult;
 endmodule
 
 module ppa_shiftleft_8 #(parameter WIDTH=8) (
@@ -313,29 +335,35 @@ module ppa_shifter #(parameter WIDTH=32) (
   // For RV64, 32 and 64-bit shifts are needed, with sign extension.
 
   // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  if (WIDTH == 64 | WIDTH ==128) begin:shifter  // RV64 or 128
-    always_comb  // funnel mux
-      if (W64) begin // 32-bit shifts
-        if (Right)
-          if (Arith) z = {{WIDTH{1'b0}}, {WIDTH/2 -1{A[WIDTH/2 -1]}}, A[WIDTH/2 -1:0]};
-          else       z = {{WIDTH*3/2-1{1'b0}}, A[WIDTH/2 -1:0]};
-        else         z = {{WIDTH/2{1'b0}}, A[WIDTH/2 -1:0], {WIDTH-1{1'b0}}};
-      end else begin
-        if (Right)
-          if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
-          else       z = {{WIDTH-1{1'b0}}, A};
-        else         z = {A, {WIDTH-1{1'b0}}};         
-      end
-      assign amttrunc = W64  ? {1'b0, Amt[$clog2(WIDTH)-2:0]} : Amt; // 32 or 64-bit shift 
-  end else begin:shifter // RV32 or less
-    always_comb  // funnel mux
+  // if (WIDTH == 64 | WIDTH ==128) begin:shifter  // RV64 or 128
+  //   always_comb  // funnel mux
+  //     if (W64) begin // 32-bit shifts
+  //       if (Right)
+  //         if (Arith) z = {{WIDTH{1'b0}}, {WIDTH/2 -1{A[WIDTH/2 -1]}}, A[WIDTH/2 -1:0]};
+  //         else       z = {{WIDTH*3/2-1{1'b0}}, A[WIDTH/2 -1:0]};
+  //       else         z = {{WIDTH/2{1'b0}}, A[WIDTH/2 -1:0], {WIDTH-1{1'b0}}};
+  //     end else begin
+  //       if (Right)
+  //         if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
+  //         else       z = {{WIDTH-1{1'b0}}, A};
+  //       else         z = {A, {WIDTH-1{1'b0}}};         
+  //     end
+  //     assign amttrunc = W64  ? {1'b0, Amt[$clog2(WIDTH)-2:0]} : Amt; // 32 or 64-bit shift 
+  // end else begin:shifter // RV32 or less
+  //   always_comb  // funnel mux
+  //     if (Right) 
+  //       if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
+  //       else       z = {{WIDTH-1{1'b0}}, A};
+  //     else         z = {A, {WIDTH-1{1'b0}}};
+  //   assign amttrunc = Amt; // shift amount
+  // end 
+    
+  always_comb  // funnel mux
       if (Right) 
         if (Arith) z = {{WIDTH-1{A[WIDTH-1]}}, A};
         else       z = {{WIDTH-1{1'b0}}, A};
       else         z = {A, {WIDTH-1{1'b0}}};
     assign amttrunc = Amt; // shift amount
-  end 
-    
 
   // opposite offset for right shfits
   assign offset = Right ? amttrunc : ~amttrunc;
@@ -538,13 +566,24 @@ endmodule
 
 // *** some way to express data-critical inputs
 
-module ppa_flop_8 #(parameter WIDTH = 8) ( 
+module ppa_flop #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
   always_ff @(posedge clk)
     q <= #1 d;
+endmodule
+
+module ppa_flop_8 #(parameter WIDTH = 8) ( 
+  input  logic             clk,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  logic [WIDTH-1:0] q1;
+
+  ppa_flop #(WIDTH) f1(clk, d, q1);
+  ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
 module ppa_flop_16 #(parameter WIDTH = 16) ( 
@@ -552,8 +591,10 @@ module ppa_flop_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flop #(WIDTH) f1(clk, d, q1);
+  ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
 module ppa_flop_32 #(parameter WIDTH = 32) ( 
@@ -561,8 +602,10 @@ module ppa_flop_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flop #(WIDTH) f1(clk, d, q1);
+  ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
 module ppa_flop_64 #(parameter WIDTH = 64) ( 
@@ -570,8 +613,10 @@ module ppa_flop_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flop #(WIDTH) f1(clk, d, q1);
+  ppa_flop #(WIDTH) f2(clk, q1, q);
 endmodule
 
 module ppa_flop_128 #(parameter WIDTH = 128) ( 
@@ -579,8 +624,20 @@ module ppa_flop_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
+  logic [WIDTH-1:0] q1;
+
+  ppa_flop #(WIDTH) f1(clk, d, q1);
+  ppa_flop #(WIDTH) f2(clk, q1, q);
+endmodule
+
+module ppa_flopr #(parameter WIDTH = 8) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
   always_ff @(posedge clk)
-    q <= #1 d;
+    if (reset) q <= #1 0;
+    else       q <= #1 d;
 endmodule
 
 module ppa_flopr_8 #(parameter WIDTH = 8) ( 
@@ -588,9 +645,10 @@ module ppa_flopr_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopr #(WIDTH) f1(clk, reset, d, q1);
+  ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_flopr_16 #(parameter WIDTH = 16) ( 
@@ -598,9 +656,10 @@ module ppa_flopr_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopr #(WIDTH) f1(clk, reset, d, q1);
+  ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_flopr_32 #(parameter WIDTH = 32) ( 
@@ -608,9 +667,10 @@ module ppa_flopr_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopr #(WIDTH) f1(clk, reset, d, q1);
+  ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_flopr_64 #(parameter WIDTH = 64) ( 
@@ -618,9 +678,10 @@ module ppa_flopr_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopr #(WIDTH) f1(clk, reset, d, q1);
+  ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_flopr_128 #(parameter WIDTH = 128) ( 
@@ -628,7 +689,18 @@ module ppa_flopr_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopr #(WIDTH) f1(clk, reset, d, q1);
+  ppa_flopr #(WIDTH) f2(clk, reset, q1, q);
+endmodule
+
+module ppa_floprasync #(parameter WIDTH = 8) ( 
+  input  logic             clk, reset,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk or posedge reset)
     if (reset) q <= #1 0;
     else       q <= #1 d;
 endmodule
@@ -638,9 +710,10 @@ module ppa_floprasync_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk or posedge reset)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_floprasync #(WIDTH) f1(clk, reset, d, q1);
+  ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_floprasync_16 #(parameter WIDTH = 16) ( 
@@ -648,9 +721,10 @@ module ppa_floprasync_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk or posedge reset)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_floprasync #(WIDTH) f1(clk, reset, d, q1);
+  ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_floprasync_32 #(parameter WIDTH = 32) ( 
@@ -658,9 +732,10 @@ module ppa_floprasync_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk or posedge reset)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_floprasync #(WIDTH) f1(clk, reset, d, q1);
+  ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_floprasync_64 #(parameter WIDTH = 64) ( 
@@ -668,9 +743,10 @@ module ppa_floprasync_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk or posedge reset)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_floprasync #(WIDTH) f1(clk, reset, d, q1);
+  ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
 endmodule
 
 module ppa_floprasync_128 #(parameter WIDTH = 128) ( 
@@ -678,9 +754,20 @@ module ppa_floprasync_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk or posedge reset)
-    if (reset) q <= #1 0;
-    else       q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_floprasync #(WIDTH) f1(clk, reset, d, q1);
+  ppa_floprasync #(WIDTH) f2(clk, reset, q1, q);
+endmodule
+
+module ppa_flopenr #(parameter WIDTH = 8) (
+  input  logic             clk, reset, en,
+  input  logic [WIDTH-1:0] d, 
+  output logic [WIDTH-1:0] q);
+
+  always_ff @(posedge clk)
+    if (reset)   q <= #1 0;
+    else if (en) q <= #1 d;
 endmodule
 
 module ppa_flopenr_8 #(parameter WIDTH = 8) (
@@ -688,9 +775,10 @@ module ppa_flopenr_8 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopenr #(WIDTH) f1(clk, reset, en, d, q1);
+  ppa_flopenr #(WIDTH) f2(clk, reset, en, q1, q);
 endmodule
 
 module ppa_flopenr_16 #(parameter WIDTH = 16) (
@@ -698,9 +786,10 @@ module ppa_flopenr_16 #(parameter WIDTH = 16) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopenr #(WIDTH) f1(clk, reset, en, d, q1);
+  ppa_flopenr #(WIDTH) f2(clk, reset, en, q1, q);
 endmodule
 
 module ppa_flopenr_32 #(parameter WIDTH = 32) (
@@ -708,9 +797,10 @@ module ppa_flopenr_32 #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopenr #(WIDTH) f1(clk, reset, en, d, q1);
+  ppa_flopenr #(WIDTH) f2(clk, reset, en, q1, q);
 endmodule
 
 module ppa_flopenr_64 #(parameter WIDTH = 64) (
@@ -718,9 +808,10 @@ module ppa_flopenr_64 #(parameter WIDTH = 64) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopenr #(WIDTH) f1(clk, reset, en, d, q1);
+  ppa_flopenr #(WIDTH) f2(clk, reset, en, q1, q);
 endmodule
 
 module ppa_flopenr_128 #(parameter WIDTH = 128) (
@@ -728,9 +819,10 @@ module ppa_flopenr_128 #(parameter WIDTH = 128) (
   input  logic [WIDTH-1:0] d, 
   output logic [WIDTH-1:0] q);
 
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
+  logic [WIDTH-1:0] q1;
+
+  ppa_flopenr #(WIDTH) f1(clk, reset, en, d, q1);
+  ppa_flopenr #(WIDTH) f2(clk, reset, en, q1, q);
 endmodule
 
 module ppa_csa_8 #(parameter WIDTH = 8) (

@@ -66,6 +66,7 @@ def getVals(module, var, freq=None):
     elif (var == 'area'):
         ind = 4
         units = " (sq microns)"
+        scale = 2
     elif (var == 'lpower'):
         ind = 5
         units = " (nW)"
@@ -92,6 +93,9 @@ def getVals(module, var, freq=None):
                         m = oneSynth[3]
                         met = oneSynth[ind]
             metric += [met]
+
+    if ('flop' in module) & (var == 'area'):
+        metric = [m/2 for m in metric] # since two flops in each module 
     return widths, metric, units
 
 def writeCSV():
@@ -250,13 +254,16 @@ def freqPlot(mod, width):
                 delaysA += [oneSynth[3]]
                 areasA += [oneSynth[4]]
 
-    freqsV, delaysV, areasV = noOutliers(freqsV, delaysV, areasV)
-    freqsA, delaysA, areasA = noOutliers(freqsA, delaysA, areasA)
+    if ('flop' in mod): # since two flops in each module 
+        areasA = [m/2 for m in areasA] 
+        areasV = [m/2 for m in areasV]
 
-    adprodA = np.multiply(areasA, delaysA)
-    adsqA = np.multiply(adprodA, delaysA)
-    adprodV = np.multiply(areasV, delaysV)
-    adsqV = np.multiply(adprodV, delaysV)
+    freqsA, delaysA, areasA = noOutliers(freqsA, delaysA, areasA)
+    freqsV, delaysV, areasV = noOutliers(freqsV, delaysV, areasV)
+
+    adprodA, adprodV = adprodpow(areasA, delaysA, areasV, delaysV, 1)
+    adpowA, adpowV = adprodpow(areasA, delaysA, areasV, delaysV, 2)
+
 
     legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
                        lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
@@ -268,8 +275,8 @@ def freqPlot(mod, width):
     ax2.scatter(freqsV, areasV, color='blue')
     ax3.scatter(freqsA, adprodA, color='green')
     ax3.scatter(freqsV, adprodV, color='blue')
-    ax4.scatter(freqsA, adsqA, color='green')
-    ax4.scatter(freqsV, adsqV, color='blue')
+    ax4.scatter(freqsA, adpowA, color='green')
+    ax4.scatter(freqsV, adpowV, color='blue')
     ax1.legend(handles=legend_elements)
     ax4.set_xlabel("Target Freq (MHz)")
     ax1.set_ylabel('Delay (ns)')
@@ -279,19 +286,35 @@ def freqPlot(mod, width):
     ax1.set_title(mod + '_' + str(width))
     plt.show()
 
+def adprodpow(areasA, delaysA, areasV, delaysV, pow):
+    resultA = []
+    resultV = []
+
+    for i in range(len(areasA)):
+        resultA += [(areasA[i])*(delaysA[i])**pow]
+    for i in range(len(areasV)):
+        resultV += [(areasV[i])*(delaysV[i])**pow]
+    
+    return resultA, resultV
+
 def plotPPA(mod, freq=None):
     fig, axs = plt.subplots(2, 2)
     oneMetricPlot(mod, 'delay', ax=axs[0,0], fits='clg', freq=freq)
     oneMetricPlot(mod, 'area', ax=axs[0,1], fits='s', freq=freq)
     oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='c', freq=freq)
     oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits='s', freq=freq)
-    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else "  min delay"
+    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (min delay)"
     plt.suptitle(mod + titleStr)
     plt.show()
 
+
+# plotPPA('alu')
 # writeCSV()
-# makeCoefTable()
+# look at comparaotro 32
+# for x in ['add', 'mult', 'comparator']:
+#     for y in [16, 32, 64, 128]:
+#         freqPlot(x, y)
 
-freqPlot('flopr', 128)
+freqPlot('flop', 8)
 
-# plotPPA('add')
+# plotPPA('alu')
