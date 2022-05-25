@@ -98,101 +98,101 @@ $BUILD/testfloat_gen -rmax i64_to_f128 > $OUTPUT/i64_to_f128_ru.tv
 $BUILD/testfloat_gen -rmin i64_to_f128 > $OUTPUT/i64_to_f128_rd.tv
 $BUILD/testfloat_gen -rnear_maxMag i64_to_f128 > $OUTPUT/i64_to_f128_rnm.tv
 echo "Creating f16_to_ui32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f16_to_ui32 > $OUTPUT/f16_to_ui32_rne.tv
-$BUILD/testfloat_gen -rminMag f16_to_ui32 > $OUTPUT/f16_to_ui32_rz.tv
-$BUILD/testfloat_gen -rmax f16_to_ui32 > $OUTPUT/f16_to_ui32_ru.tv
-$BUILD/testfloat_gen -rmin f16_to_ui32 > $OUTPUT/f16_to_ui32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f16_to_ui32 > $OUTPUT/f16_to_ui32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f16_to_ui32 > $OUTPUT/f16_to_ui32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f16_to_ui32 > $OUTPUT/f16_to_ui32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f16_to_ui32 > $OUTPUT/f16_to_ui32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f16_to_ui32 > $OUTPUT/f16_to_ui32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f16_to_ui32 > $OUTPUT/f16_to_ui32_rnm.tv
 echo "Creating f32_to_ui32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f32_to_ui32 > $OUTPUT/f32_to_ui32_rne.tv
-$BUILD/testfloat_gen -rminMag f32_to_ui32 > $OUTPUT/f32_to_ui32_rz.tv
-$BUILD/testfloat_gen -rmax f32_to_ui32 > $OUTPUT/f32_to_ui32_ru.tv
-$BUILD/testfloat_gen -rmin f32_to_ui32 > $OUTPUT/f32_to_ui32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f32_to_ui32 > $OUTPUT/f32_to_ui32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f32_to_ui32 > $OUTPUT/f32_to_ui32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f32_to_ui32 > $OUTPUT/f32_to_ui32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f32_to_ui32 > $OUTPUT/f32_to_ui32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f32_to_ui32 > $OUTPUT/f32_to_ui32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f32_to_ui32 > $OUTPUT/f32_to_ui32_rnm.tv
 echo "Creating f64_to_ui32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f64_to_ui32 > $OUTPUT/f64_to_ui32_rne.tv
-$BUILD/testfloat_gen -rminMag f64_to_ui32 > $OUTPUT/f64_to_ui32_rz.tv
-$BUILD/testfloat_gen -rmax f64_to_ui32 > $OUTPUT/f64_to_ui32_ru.tv
-$BUILD/testfloat_gen -rmin f64_to_ui32 > $OUTPUT/f64_to_ui32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f64_to_ui32 > $OUTPUT/f64_to_ui32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f64_to_ui32 > $OUTPUT/f64_to_ui32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f64_to_ui32 > $OUTPUT/f64_to_ui32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f64_to_ui32 > $OUTPUT/f64_to_ui32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f64_to_ui32 > $OUTPUT/f64_to_ui32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f64_to_ui32 > $OUTPUT/f64_to_ui32_rnm.tv
 echo "Creating f128_to_ui32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f128_to_ui32 > $OUTPUT/f128_to_ui32_rne.tv
-$BUILD/testfloat_gen -rminMag f128_to_ui32 > $OUTPUT/f128_to_ui32_rz.tv
-$BUILD/testfloat_gen -rmax f128_to_ui32 > $OUTPUT/f128_to_ui32_ru.tv
-$BUILD/testfloat_gen -rmin f128_to_ui32 > $OUTPUT/f128_to_ui32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f128_to_ui32 > $OUTPUT/f128_to_ui32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f128_to_ui32 > $OUTPUT/f128_to_ui32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f128_to_ui32 > $OUTPUT/f128_to_ui32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f128_to_ui32 > $OUTPUT/f128_to_ui32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f128_to_ui32 > $OUTPUT/f128_to_ui32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f128_to_ui32 > $OUTPUT/f128_to_ui32_rnm.tv
 echo "Creating f16_to_ui64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f16_to_ui64 > $OUTPUT/f16_to_ui64_rne.tv
-$BUILD/testfloat_gen -rminMag f16_to_ui64 > $OUTPUT/f16_to_ui64_rz.tv
-$BUILD/testfloat_gen -rmax f16_to_ui64 > $OUTPUT/f16_to_ui64_ru.tv
-$BUILD/testfloat_gen -rmin f16_to_ui64 > $OUTPUT/f16_to_ui64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f16_to_ui64 > $OUTPUT/f16_to_ui64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f16_to_ui64 > $OUTPUT/f16_to_ui64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f16_to_ui64 > $OUTPUT/f16_to_ui64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f16_to_ui64 > $OUTPUT/f16_to_ui64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f16_to_ui64 > $OUTPUT/f16_to_ui64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f16_to_ui64 > $OUTPUT/f16_to_ui64_rnm.tv
 echo "Creating f32_to_ui64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f32_to_ui64 > $OUTPUT/f32_to_ui64_rne.tv
-$BUILD/testfloat_gen -rminMag f32_to_ui64 > $OUTPUT/f32_to_ui64_rz.tv
-$BUILD/testfloat_gen -rmax f32_to_ui64 > $OUTPUT/f32_to_ui64_ru.tv
-$BUILD/testfloat_gen -rmin f32_to_ui64 > $OUTPUT/f32_to_ui64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f32_to_ui64 > $OUTPUT/f32_to_ui64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f32_to_ui64 > $OUTPUT/f32_to_ui64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f32_to_ui64 > $OUTPUT/f32_to_ui64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f32_to_ui64 > $OUTPUT/f32_to_ui64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f32_to_ui64 > $OUTPUT/f32_to_ui64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f32_to_ui64 > $OUTPUT/f32_to_ui64_rnm.tv
 echo "Creating f64_to_ui64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f64_to_ui64 > $OUTPUT/f64_to_ui64_rne.tv
-$BUILD/testfloat_gen -rminMag f64_to_ui64 > $OUTPUT/f64_to_ui64_rz.tv
-$BUILD/testfloat_gen -rmax f64_to_ui64 > $OUTPUT/f64_to_ui64_ru.tv
-$BUILD/testfloat_gen -rmin f64_to_ui64 > $OUTPUT/f64_to_ui64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f64_to_ui64 > $OUTPUT/f64_to_ui64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f64_to_ui64 > $OUTPUT/f64_to_ui64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f64_to_ui64 > $OUTPUT/f64_to_ui64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f64_to_ui64 > $OUTPUT/f64_to_ui64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f64_to_ui64 > $OUTPUT/f64_to_ui64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f64_to_ui64 > $OUTPUT/f64_to_ui64_rnm.tv
 echo "Creating f128_to_ui64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f128_to_ui64 > $OUTPUT/f128_to_ui64_rne.tv
-$BUILD/testfloat_gen -rminMag f128_to_ui64 > $OUTPUT/f128_to_ui64_rz.tv
-$BUILD/testfloat_gen -rmax f128_to_ui64 > $OUTPUT/f128_to_ui64_ru.tv
-$BUILD/testfloat_gen -rmin f128_to_ui64 > $OUTPUT/f128_to_ui64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f128_to_ui64 > $OUTPUT/f128_to_ui64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f128_to_ui64 > $OUTPUT/f128_to_ui64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f128_to_ui64 > $OUTPUT/f128_to_ui64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f128_to_ui64 > $OUTPUT/f128_to_ui64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f128_to_ui64 > $OUTPUT/f128_to_ui64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f128_to_ui64 > $OUTPUT/f128_to_ui64_rnm.tv
 echo "Creating f16_to_i32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f16_to_i32 > $OUTPUT/f16_to_i32_rne.tv
-$BUILD/testfloat_gen -rminMag f16_to_i32 > $OUTPUT/f16_to_i32_rz.tv
-$BUILD/testfloat_gen -rmax f16_to_i32 > $OUTPUT/f16_to_i32_ru.tv
-$BUILD/testfloat_gen -rmin f16_to_i32 > $OUTPUT/f16_to_i32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f16_to_i32 > $OUTPUT/f16_to_i32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f16_to_i32 > $OUTPUT/f16_to_i32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f16_to_i32 > $OUTPUT/f16_to_i32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f16_to_i32 > $OUTPUT/f16_to_i32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f16_to_i32 > $OUTPUT/f16_to_i32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f16_to_i32 > $OUTPUT/f16_to_i32_rnm.tv
 echo "Creating f32_to_i32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f32_to_i32 > $OUTPUT/f32_to_i32_rne.tv
-$BUILD/testfloat_gen -rminMag f32_to_i32 > $OUTPUT/f32_to_i32_rz.tv
-$BUILD/testfloat_gen -rmax f32_to_i32 > $OUTPUT/f32_to_i32_ru.tv
-$BUILD/testfloat_gen -rmin f32_to_i32 > $OUTPUT/f32_to_i32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f32_to_i32 > $OUTPUT/f32_to_i32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f32_to_i32 > $OUTPUT/f32_to_i32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f32_to_i32 > $OUTPUT/f32_to_i32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f32_to_i32 > $OUTPUT/f32_to_i32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f32_to_i32 > $OUTPUT/f32_to_i32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f32_to_i32 > $OUTPUT/f32_to_i32_rnm.tv
 echo "Creating f64_to_i32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f64_to_i32 > $OUTPUT/f64_to_i32_rne.tv
-$BUILD/testfloat_gen -rminMag f64_to_i32 > $OUTPUT/f64_to_i32_rz.tv
-$BUILD/testfloat_gen -rmax f64_to_i32 > $OUTPUT/f64_to_i32_ru.tv
-$BUILD/testfloat_gen -rmin f64_to_i32 > $OUTPUT/f64_to_i32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f64_to_i32 > $OUTPUT/f64_to_i32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f64_to_i32 > $OUTPUT/f64_to_i32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f64_to_i32 > $OUTPUT/f64_to_i32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f64_to_i32 > $OUTPUT/f64_to_i32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f64_to_i32 > $OUTPUT/f64_to_i32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f64_to_i32 > $OUTPUT/f64_to_i32_rnm.tv
 echo "Creating f128_to_i32 convert vectors"
-$BUILD/testfloat_gen -rnear_even f128_to_i32 > $OUTPUT/f128_to_i32_rne.tv
-$BUILD/testfloat_gen -rminMag f128_to_i32 > $OUTPUT/f128_to_i32_rz.tv
-$BUILD/testfloat_gen -rmax f128_to_i32 > $OUTPUT/f128_to_i32_ru.tv
-$BUILD/testfloat_gen -rmin f128_to_i32 > $OUTPUT/f128_to_i32_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f128_to_i32 > $OUTPUT/f128_to_i32_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f128_to_i32 > $OUTPUT/f128_to_i32_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f128_to_i32 > $OUTPUT/f128_to_i32_rz.tv
+$BUILD/testfloat_gen -rmax -exact f128_to_i32 > $OUTPUT/f128_to_i32_ru.tv
+$BUILD/testfloat_gen -rmin -exact f128_to_i32 > $OUTPUT/f128_to_i32_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f128_to_i32 > $OUTPUT/f128_to_i32_rnm.tv
 echo "Creating f16_to_i64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f16_to_i64 > $OUTPUT/f16_to_i64_rne.tv
-$BUILD/testfloat_gen -rminMag f16_to_i64 > $OUTPUT/f16_to_i64_rz.tv
-$BUILD/testfloat_gen -rmax f16_to_i64 > $OUTPUT/f16_to_i64_ru.tv
-$BUILD/testfloat_gen -rmin f16_to_i64 > $OUTPUT/f16_to_i64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f16_to_i64 > $OUTPUT/f16_to_i64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f16_to_i64 > $OUTPUT/f16_to_i64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f16_to_i64 > $OUTPUT/f16_to_i64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f16_to_i64 > $OUTPUT/f16_to_i64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f16_to_i64 > $OUTPUT/f16_to_i64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f16_to_i64 > $OUTPUT/f16_to_i64_rnm.tv
 echo "Creating f32_to_i64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f32_to_i64 > $OUTPUT/f32_to_i64_rne.tv
-$BUILD/testfloat_gen -rminMag f32_to_i64 > $OUTPUT/f32_to_i64_rz.tv
-$BUILD/testfloat_gen -rmax f32_to_i64 > $OUTPUT/f32_to_i64_ru.tv
-$BUILD/testfloat_gen -rmin f32_to_i64 > $OUTPUT/f32_to_i64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f32_to_i64 > $OUTPUT/f32_to_i64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f32_to_i64 > $OUTPUT/f32_to_i64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f32_to_i64 > $OUTPUT/f32_to_i64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f32_to_i64 > $OUTPUT/f32_to_i64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f32_to_i64 > $OUTPUT/f32_to_i64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f32_to_i64 > $OUTPUT/f32_to_i64_rnm.tv
 echo "Creating f64_to_i64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f64_to_i64 > $OUTPUT/f64_to_i64_rne.tv
-$BUILD/testfloat_gen -rminMag f64_to_i64 > $OUTPUT/f64_to_i64_rz.tv
-$BUILD/testfloat_gen -rmax f64_to_i64 > $OUTPUT/f64_to_i64_ru.tv
-$BUILD/testfloat_gen -rmin f64_to_i64 > $OUTPUT/f64_to_i64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f64_to_i64 > $OUTPUT/f64_to_i64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f64_to_i64 > $OUTPUT/f64_to_i64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f64_to_i64 > $OUTPUT/f64_to_i64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f64_to_i64 > $OUTPUT/f64_to_i64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f64_to_i64 > $OUTPUT/f64_to_i64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f64_to_i64 > $OUTPUT/f64_to_i64_rnm.tv
 echo "Creating f128_to_i64 convert vectors"
-$BUILD/testfloat_gen -rnear_even f128_to_i64 > $OUTPUT/f128_to_i64_rne.tv
-$BUILD/testfloat_gen -rminMag f128_to_i64 > $OUTPUT/f128_to_i64_rz.tv
-$BUILD/testfloat_gen -rmax f128_to_i64 > $OUTPUT/f128_to_i64_ru.tv
-$BUILD/testfloat_gen -rmin f128_to_i64 > $OUTPUT/f128_to_i64_rd.tv
-$BUILD/testfloat_gen -rnear_maxMag f128_to_i64 > $OUTPUT/f128_to_i64_rnm.tv
+$BUILD/testfloat_gen -rnear_even -exact f128_to_i64 > $OUTPUT/f128_to_i64_rne.tv
+$BUILD/testfloat_gen -rminMag -exact f128_to_i64 > $OUTPUT/f128_to_i64_rz.tv
+$BUILD/testfloat_gen -rmax -exact f128_to_i64 > $OUTPUT/f128_to_i64_ru.tv
+$BUILD/testfloat_gen -rmin -exact f128_to_i64 > $OUTPUT/f128_to_i64_rd.tv
+$BUILD/testfloat_gen -rnear_maxMag -exact f128_to_i64 > $OUTPUT/f128_to_i64_rnm.tv
 echo "Creating f16_to_f32 convert vectors"
 $BUILD/testfloat_gen -rnear_even f16_to_f32 > $OUTPUT/f16_to_f32_rne.tv
 $BUILD/testfloat_gen -rminMag f16_to_f32 > $OUTPUT/f16_to_f32_rz.tv

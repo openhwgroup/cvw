@@ -17,6 +17,7 @@ module testbenchfp;
   string      FmaRnmTests[];  // list of FMA round to nearest max magnitude
   logic [2:0] OpCtrl[];       // list of op controls
   logic [2:0] Unit[];         // list of units being tested
+  logic WriteInt[];           // Is being written to integer resgiter
   logic [2:0] Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
   logic [1:0] Fmt[];          // list of formats for the other units
   logic [1:0] FmaFmt[];       // list of formats for the FMA
@@ -37,6 +38,7 @@ module testbenchfp;
 
   logic [1:0]           FmaFmtVal, FmtVal;          // value of the current Fmt
   logic [2:0]           UnitVal, OpCtrlVal, FrmVal; // vlaue of the currnet Unit/OpCtrl/FrmVal
+  logic                 WriteIntVal;                // value of the current WriteInt
   logic [`FLEN-1:0]     X, Y, Z;                    // inputs read from TestFloat
   logic [`FLEN-1:0]     FmaRneX, FmaRneY, FmaRneZ;  // inputs read from TestFloat
   logic [`FLEN-1:0]     FmaRzX, FmaRzY, FmaRzZ;     // inputs read from TestFloat
@@ -53,8 +55,9 @@ module testbenchfp;
   logic [4:0]	 	        ResFlg;                                                            // Result flags
   logic [4:0]           FmaRneResFlg, FmaRzResFlg, FmaRuResFlg, FmaRdResFlg, FmaRnmResFlg; // flags read form testfloat
   logic	[`FPSIZES/3:0]  ModFmt, FmaModFmt;  // format - 10 = half, 00 = single, 01 = double, 11 = quad
-  logic [`FLEN-1:0]     FmaRes, DivRes, CmpRes, CvtRes, CvtFpRes;  // Results from each unit
-  logic [4:0]           FmaFlg, CvtFpFlg, DivFlg, CvtIntFlg, CmpFlg;  // Outputed flags
+  logic [`FLEN-1:0]     FmaRes, DivRes, CmpRes, CvtRes;  // Results from each unit
+  logic [`XLEN-1:0]     CvtIntRes;  // Results from each unit
+  logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
   logic                 ResNaN, FmaRneResNaN, FmaRzResNaN, FmaRuResNaN, FmaRdResNaN, FmaRnmResNaN;   // is the outputed result NaN
   logic                 AnsNaN, FmaRneAnsNaN, FmaRzAnsNaN, FmaRuAnsNaN, FmaRdAnsNaN, FmaRnmAnsNaN;   // is the correct answer NaN
   logic                 NaNGood, FmaRneNaNGood, FmaRzNaNGood, FmaRuNaNGood, FmaRdNaNGood, FmaRnmNaNGood; // is the NaN answer correct
@@ -150,6 +153,7 @@ module testbenchfp;
                                               Tests = {Tests, f128rv32cvtint};
                                               // add the op-codes for these tests to the op-code list
                                               OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -159,6 +163,7 @@ module testbenchfp;
                                                 Tests = {Tests, f128rv64cvtint};
                                               // add the op-codes for these tests to the op-code list
                                                 OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -172,10 +177,15 @@ module testbenchfp;
           Tests = {Tests, f128f64cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b01, 3'b11};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b11};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b01};
           end
         end
         if(`F_SUPPORTED) begin // if single precision is supported
@@ -183,10 +193,15 @@ module testbenchfp;
           Tests = {Tests, f128f32cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b00, 3'b11};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b11};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b00};
           end
         end
         if(`ZFH_SUPPORTED) begin // if half precision is supported
@@ -194,10 +209,15 @@ module testbenchfp;
           Tests = {Tests, f128f16cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b10, 3'b11};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b11};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b10};
           end
         end
       end
@@ -205,6 +225,7 @@ module testbenchfp;
         // add the compare tests/op-ctrls/unit/fmt
         Tests = {Tests, f128cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+          WriteInt = {WriteInt, 1'b0, 1'b0, 1'b0};
           for(int i = 0; i<15; i++) begin
             Unit = {Unit, `CMPUNIT};
             Fmt = {Fmt, 2'b11};
@@ -214,6 +235,7 @@ module testbenchfp;
         // add the addition tests/op-ctrls/unit/fmt
         Tests = {Tests, f128add};
         OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
           for(int i = 0; i<5; i++) begin
             Unit = {Unit, `FMAUNIT};
             Fmt = {Fmt, 2'b11};
@@ -223,6 +245,7 @@ module testbenchfp;
         // add the subtraction tests/op-ctrls/unit/fmt
         Tests = {Tests, f128sub};
         OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
           for(int i = 0; i<5; i++) begin
             Unit = {Unit, `FMAUNIT};
             Fmt = {Fmt, 2'b11};
@@ -232,6 +255,7 @@ module testbenchfp;
         // add the multiply tests/op-ctrls/unit/fmt
         Tests = {Tests, f128mul};
         OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
           for(int i = 0; i<5; i++) begin
             Unit = {Unit, `FMAUNIT};
             Fmt = {Fmt, 2'b11};
@@ -241,6 +265,7 @@ module testbenchfp;
         // add the divide tests/op-ctrls/unit/fmt
         Tests = {Tests, f128div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
           for(int i = 0; i<5; i++) begin
             Unit = {Unit, `DIVUNIT};
             Fmt = {Fmt, 2'b11};
@@ -250,6 +275,7 @@ module testbenchfp;
         // add the square-root tests/op-ctrls/unit/fmt
         Tests = {Tests, f128sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
           for(int i = 0; i<5; i++) begin
             Unit = {Unit, `DIVUNIT};
             Fmt = {Fmt, 2'b11};
@@ -264,9 +290,7 @@ module testbenchfp;
         FmaRdTests  = {FmaRdTests,  "f128_mulAdd_rd.tv"};
         FmaRnmTests = {FmaRnmTests, "f128_mulAdd_rnm.tv"};
         // add the format for the Fma
-        for(int i = 0; i<5; i++) begin
-          FmaFmt = {FmaFmt, 2'b11};
-        end
+        FmaFmt = {FmaFmt, 2'b11};
       end
     end
     if (`D_SUPPORTED) begin // if double precision is supported
@@ -274,6 +298,7 @@ module testbenchfp;
                                               Tests = {Tests, f64rv32cvtint};
                                               // add the op-codes for these tests to the op-code list
                                               OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -281,9 +306,10 @@ module testbenchfp;
                                               end
                                               if (`XLEN == 64) begin // if 64-bit integers are being supported
                                                 Tests = {Tests, f64rv64cvtint};
-                                              // add the op-codes for these tests to the op-code list
+                                                // add the op-codes for these tests to the op-code list
                                                 OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                              // add what unit is used and the fmt to their lists (one for each test)
+                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+                                                // add what unit is used and the fmt to their lists (one for each test)
                                                 for(int i = 0; i<20; i++) begin
                                                   Unit = {Unit, `CVTINTUNIT};
                                                   Fmt = {Fmt, 2'b01};
@@ -296,10 +322,15 @@ module testbenchfp;
           Tests = {Tests, f64f32cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b00, 3'b01};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b01};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b00};
           end
         end
         if(`ZFH_SUPPORTED) begin // if half precision is supported
@@ -307,10 +338,15 @@ module testbenchfp;
           Tests = {Tests, f64f16cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b10, 3'b01};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b01};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b10};
           end
         end
       end
@@ -318,6 +354,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0, 1'b0};
         for(int i = 0; i<15; i++) begin
           Unit = {Unit, `CMPUNIT};
           Fmt = {Fmt, 2'b01};
@@ -327,6 +364,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64add};
         OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b01};
@@ -336,6 +374,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64sub};
         OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b01};
@@ -345,6 +384,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64mul};
         OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b01};
@@ -354,6 +394,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b01};
@@ -363,6 +404,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f64sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b01};
@@ -376,9 +418,7 @@ module testbenchfp;
         FmaRuTests  = {FmaRuTests,  "f64_mulAdd_ru.tv"};
         FmaRdTests  = {FmaRdTests,  "f64_mulAdd_rd.tv"};
         FmaRnmTests = {FmaRnmTests, "f64_mulAdd_rnm.tv"};
-        for(int i = 0; i<5; i++) begin
-          FmaFmt = {FmaFmt, 2'b01};
-        end
+        FmaFmt = {FmaFmt, 2'b01};
       end
     end
     if (`F_SUPPORTED) begin // if single precision being supported
@@ -386,6 +426,7 @@ module testbenchfp;
                                               Tests = {Tests, f32rv32cvtint};
                                               // add the op-codes for these tests to the op-code list
                                               OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -393,9 +434,10 @@ module testbenchfp;
                                               end
                                               if (`XLEN == 64) begin // if 64-bit integers are supported
                                                 Tests = {Tests, f32rv64cvtint};
-                                              // add the op-codes for these tests to the op-code list
+                                                // add the op-codes for these tests to the op-code list
                                                 OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                              // add what unit is used and the fmt to their lists (one for each test)
+                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+                                                // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
                                                 Fmt = {Fmt, 2'b00};
@@ -408,10 +450,15 @@ module testbenchfp;
           Tests = {Tests, f32f16cvt};
           // add the op-ctrls (i.e. the format of the result)
           OpCtrl = {OpCtrl, 3'b10, 3'b00};
+          WriteInt = {WriteInt, 1'b0, 1'b0};
           // add the unit being tested and fmt (input format)
-          for(int i = 0; i<10; i++) begin
+          for(int i = 0; i<5; i++) begin
             Unit = {Unit, `CVTFPUNIT};
             Fmt = {Fmt, 2'b00};
+          end
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `CVTFPUNIT};
+            Fmt = {Fmt, 2'b10};
           end
         end
       end
@@ -419,6 +466,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0, 1'b0};
         for(int i = 0; i<15; i++) begin
           Unit = {Unit, `CMPUNIT};
           Fmt = {Fmt, 2'b00};
@@ -428,6 +476,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32add};
         OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b00};
@@ -437,6 +486,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32sub};
         OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b00};
@@ -446,6 +496,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32mul};
         OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b00};
@@ -455,6 +506,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b00};
@@ -464,6 +516,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f32sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b00};
@@ -473,13 +526,11 @@ module testbenchfp;
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
         FmaRneTests = {FmaRneTests, "f32_mulAdd_rne.tv"};
-        // FmaRzTests  = {FmaRzTests,  "f32_mulAdd_rz.tv"};
-        // FmaRuTests  = {FmaRuTests,  "f32_mulAdd_ru.tv"};
-        // FmaRdTests  = {FmaRdTests,  "f32_mulAdd_rd.tv"};
-        // FmaRnmTests = {FmaRnmTests, "f32_mulAdd_rnm.tv"};
-        // for(int i = 0; i<5; i++) begin
-          FmaFmt = {FmaFmt, 2'b00};
-        // end
+        FmaRzTests  = {FmaRzTests,  "f32_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f32_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f32_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f32_mulAdd_rnm.tv"};
+        FmaFmt = {FmaFmt, 2'b00};
       end
     end
     if (`ZFH_SUPPORTED) begin // if half precision supported
@@ -487,6 +538,7 @@ module testbenchfp;
                                               Tests = {Tests, f16rv32cvtint};
                                               // add the op-codes for these tests to the op-code list
                                               OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -496,6 +548,7 @@ module testbenchfp;
                                               Tests = {Tests, f16rv64cvtint, f16rv32cvtint};
                                               // add the op-codes for these tests to the op-code list
                                               OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                                               // add what unit is used and the fmt to their lists (one for each test)
                                               for(int i = 0; i<20; i++) begin
                                                 Unit = {Unit, `CVTINTUNIT};
@@ -507,6 +560,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16cmp};
         OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0, 1'b0};
         for(int i = 0; i<15; i++) begin
           Unit = {Unit, `CMPUNIT};
           Fmt = {Fmt, 2'b10};
@@ -516,6 +570,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16add};
         OpCtrl = {OpCtrl, `ADD_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b10};
@@ -525,6 +580,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16sub};
         OpCtrl = {OpCtrl, `SUB_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b10};
@@ -534,6 +590,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16mul};
         OpCtrl = {OpCtrl, `MUL_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `FMAUNIT};
           Fmt = {Fmt, 2'b10};
@@ -543,6 +600,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
@@ -552,6 +610,7 @@ module testbenchfp;
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
@@ -561,13 +620,11 @@ module testbenchfp;
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
         FmaRneTests = {FmaRneTests, "f16_mulAdd_rne.tv"};
-        // FmaRzTests  = {FmaRzTests,  "f16_mulAdd_rz.tv"};
-        // FmaRuTests  = {FmaRuTests,  "f16_mulAdd_ru.tv"};
-        // FmaRdTests  = {FmaRdTests,  "f16_mulAdd_rd.tv"};
-        // FmaRnmTests = {FmaRnmTests, "f16_mulAdd_rnm.tv"};
-        // for(int i = 0; i<5; i++) begin
-          FmaFmt = {FmaFmt, 2'b10};
-        // end
+        FmaRzTests  = {FmaRzTests,  "f16_mulAdd_rz.tv"};
+        FmaRuTests  = {FmaRuTests,  "f16_mulAdd_ru.tv"};
+        FmaRdTests  = {FmaRdTests,  "f16_mulAdd_rd.tv"};
+        FmaRnmTests = {FmaRnmTests, "f16_mulAdd_rnm.tv"};
+        FmaFmt = {FmaFmt, 2'b10};
       end
     end
 
@@ -606,6 +663,7 @@ module testbenchfp;
   always_comb UnitVal = Unit[TestNum];
   always_comb FmtVal = Fmt[TestNum];
   always_comb OpCtrlVal = OpCtrl[OpCtrlNum];
+  always_comb WriteIntVal = WriteInt[OpCtrlNum];
   always_comb FrmVal = Frm[FrmNum];
   assign Mult = OpCtrlVal === 3'b100;
 
@@ -673,7 +731,7 @@ module testbenchfp;
   readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
                                     .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
                                     .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
-                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .ZOrigDenormE(ZOrigDenorm),
+                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .ZOrigDenormE(ZOrigDenorm), .XOrigDenormE(XOrigDenorm),
                                     .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
                                     .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
                                     .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm), 
@@ -809,7 +867,12 @@ module testbenchfp;
               .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .NormCntM(NormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
               .FMAFlgM(FmaFlg), .FMAResM(FmaRes), .Mult);
   // fcvtfp fcvtfp (.XExpE(XExp), .XManE(XMan), .XSgnE(XSgn), .XZeroE(XZero), .XDenormE(XDenorm), .XInfE(XInf), 
-  //             .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(Frmal), .FmtE(ModFmt), .CvtFpRes, .CvtFpFlgE);
+  //             .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(FrmVal), .FmtE(ModFmt), .CvtFpResE(CvtFpRes), .CvtFpFlgE(CvtFpFlg));
+  
+fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
+            .XZeroE(XZero), .XOrigDenormE(XOrigDenorm), .FOpCtrlE(OpCtrlVal),
+            .XInfE(XInf), .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(FrmVal), .FmtE(ModFmt), 
+            .CvtResE(CvtRes), .CvtIntResE(CvtIntRes), .CvtFlgE(CvtFlg));
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), 
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpResE(CmpRes));
@@ -901,38 +964,55 @@ module testbenchfp;
       AnsNaN = 1'b0;
       ResNaN = 1'b0;
     end
-    else begin
-      case (FmtVal)
+    else if (UnitVal === `CVTFPUNIT) begin
+      case (OpCtrlVal[1:0])
           4'b11: begin // quad             
-            AnsNaN = &Ans[`FLEN-2:`NF]&(|Ans[`NF-1:0]);
-            ResNaN = &FmaRes[`FLEN-2:`NF]&(|FmaRes[`NF-1:0]);
+            AnsNaN = &Ans[`Q_LEN-2:`NF]&(|Ans[`Q_NF-1:0]);
+            ResNaN = &Res[`Q_LEN-2:`NF]&(|Res[`Q_NF-1:0]);
           end
           4'b01: begin // double                 
-            AnsNaN = &Ans[`LEN1-2:`NF1]&(|Ans[`NF1-1:0]);
-            ResNaN = &FmaRes[`LEN1-2:`NF1]&(|FmaRes[`NF1-1:0]);
+            AnsNaN = &Ans[`D_LEN-2:`D_NF]&(|Ans[`D_NF-1:0]);
+            ResNaN = &Res[`D_LEN-2:`D_NF]&(|Res[`D_NF-1:0]);
           end
           4'b00: begin // single
-            AnsNaN = &Ans[`LEN2-2:`NF2]&(|Ans[`NF2-1:0]);
-            ResNaN = &FmaRes[`LEN2-2:`NF2]&(|FmaRes[`NF2-1:0]);
+            AnsNaN = &Ans[`S_LEN-2:`S_NF]&(|Ans[`S_NF-1:0]);
+            ResNaN = &Res[`S_LEN-2:`S_NF]&(|Res[`S_NF-1:0]);
           end
           4'b10: begin // half
             AnsNaN = &Ans[`H_LEN-2:`H_NF]&(|Ans[`H_NF-1:0]);
-            ResNaN = &FmaRes[`H_LEN-2:`H_NF]&(|FmaRes[`H_NF-1:0]);
+            ResNaN = &Res[`H_LEN-2:`H_NF]&(|Res[`H_NF-1:0]);
+          end
+      endcase
+    end
+    else begin
+      case (FmtVal)
+          4'b11: begin // quad             
+            AnsNaN = &Ans[`Q_LEN-2:`Q_NF]&(|Ans[`Q_NF-1:0]);
+            ResNaN = &Res[`Q_LEN-2:`Q_NF]&(|Res[`Q_NF-1:0]);
+          end
+          4'b01: begin // double                 
+            AnsNaN = &Ans[`D_LEN-2:`D_NF]&(|Ans[`D_NF-1:0]);
+            ResNaN = &Res[`D_LEN-2:`D_NF]&(|Res[`D_NF-1:0]);
+          end
+          4'b00: begin // single
+            AnsNaN = &Ans[`S_LEN-2:`S_NF]&(|Ans[`S_NF-1:0]);
+            ResNaN = &Res[`S_LEN-2:`S_NF]&(|Res[`S_NF-1:0]);
+          end
+          4'b10: begin // half
+            AnsNaN = &Ans[`H_LEN-2:`H_NF]&(|Ans[`H_NF-1:0]);
+            ResNaN = &Res[`H_LEN-2:`H_NF]&(|Res[`H_NF-1:0]);
           end
       endcase
     end
   end
-
-  // check results on falling edge of clk
-  always @(negedge clk) begin
-
+always_comb begin
     // select the result to check
     case (UnitVal)
       `FMAUNIT: Res = FmaRes;
       `DIVUNIT: Res = DivRes;
       `CMPUNIT: Res = CmpRes;
-      `CVTINTUNIT: Res = CvtRes;
-      `CVTFPUNIT: Res = CvtFpRes;
+      `CVTINTUNIT: if(WriteIntVal) Res = CvtIntRes; else Res = CvtRes;
+      `CVTFPUNIT: Res = CvtRes;
     endcase
 
     // select the flag to check
@@ -940,9 +1020,13 @@ module testbenchfp;
       `FMAUNIT: ResFlg = FmaFlg;
       `DIVUNIT: ResFlg = DivFlg;
       `CMPUNIT: ResFlg = CmpFlg;
-      `CVTINTUNIT: ResFlg = CvtIntFlg;
-      `CVTFPUNIT: ResFlg = CvtFpFlg;
+      `CVTINTUNIT: ResFlg = CvtFlg;
+      `CVTFPUNIT: ResFlg = CvtFlg;
     endcase
+end
+  // check results on falling edge of clk
+  always @(negedge clk) begin
+
 
     // check if the NaN value is good. IEEE754-2019 sections 6.3 and 6.2.3 specify:
     //    - the sign of the NaN does not matter for the opperations being tested
@@ -1060,15 +1144,19 @@ module testbenchfp;
     else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
       case (OpCtrlVal[1:0]) 
         2'b11: NaNGood = ((AnsFlg[4]&(Res[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+                          (AnsNaN&(Res[`Q_LEN-2:0] === Ans[`Q_LEN-2:0])) | 
                           (XNaN&(Res[`Q_LEN-2:0] === {X[`Q_LEN-2:`Q_NF],1'b1,X[`Q_NF-2:0]})) | 
                           (YNaN&(Res[`Q_LEN-2:0] === {Y[`Q_LEN-2:`Q_NF],1'b1,Y[`Q_NF-2:0]})));
         2'b01: NaNGood = ((AnsFlg[4]&(Res[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+                          (AnsNaN&(Res[`D_LEN-2:0] === Ans[`D_LEN-2:0])) | 
                           (XNaN&(Res[`D_LEN-2:0] === {X[`D_LEN-2:`D_NF],1'b1,X[`D_NF-2:0]})) | 
                           (YNaN&(Res[`D_LEN-2:0] === {Y[`D_LEN-2:`D_NF],1'b1,Y[`D_NF-2:0]})));
         2'b00: NaNGood = ((AnsFlg[4]&(Res[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+                          (AnsNaN&(Res[`S_LEN-2:0] === Ans[`S_LEN-2:0])) | 
                           (XNaN&(Res[`S_LEN-2:0] === {X[`S_LEN-2:`S_NF],1'b1,X[`S_NF-2:0]})) | 
                           (YNaN&(Res[`S_LEN-2:0] === {Y[`S_LEN-2:`S_NF],1'b1,Y[`S_NF-2:0]})));
         2'b10: NaNGood = ((AnsFlg[4]&(Res[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+                          (AnsNaN&(Res[`H_LEN-2:0] === Ans[`H_LEN-2:0])) | 
                           (XNaN&(Res[`H_LEN-2:0] === {X[`H_LEN-2:`H_NF],1'b1,X[`H_NF-2:0]})) | 
                           (YNaN&(Res[`H_LEN-2:0] === {Y[`H_LEN-2:`H_NF],1'b1,Y[`H_NF-2:0]})));
       endcase
@@ -1086,15 +1174,23 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       $stop;
     end
-    // in The RISC-V Instruction Set Manual (2019) section 11.8 specifies that
-    // if a any of the inputs to the EQ LT LE opperations then the opperation should return a 0
-    else if ((UnitVal === `CMPUNIT)&(XNaN|YNaN)&(Res !== (`FLEN)'(0))) begin
+
+    // TestFloat sets the result to all 1's when there is an invalid result, however in 
+    // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
+    // for an unsigned integer result 0 is also okay
+
+    // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
+    // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
+    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res === (`FLEN)'(0))) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res === {1'b0, {`FLEN-1{1'b1}}})) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res === {{`FLEN{1'b0}}, 1'b0, {31{1'b1}}})) | 
+            (Res === Ans | NaNGood | NaNGood === 1'bx)) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -1147,6 +1243,8 @@ module testbenchfp;
       // increment the test
       TestNum += 1;
 
+      // clear the vectors
+      for(int i=0; i<46465; i++) TestVectors[i] = {`FLEN*4+8{1'bx}};
       // read next files
       $readmemh({`PATH, Tests[TestNum]}, TestVectors);
       $readmemh({`PATH, FmaRneTests[TestNum]}, FmaRneVectors);
@@ -1211,6 +1309,7 @@ module readfmavectors (
 );
 
   logic XNormE, XExpMaxE; // signals the unpacker outputs but isn't used in FMA
+  logic XOrigDenormE;
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
   always @(posedge clk) begin
@@ -1244,7 +1343,7 @@ module readfmavectors (
     endcase
   end
   
-  unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
+  unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XOrigDenormE,
                 .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
                 .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
                 .XExpMaxE, .ZOrigDenormE);
@@ -1287,7 +1386,7 @@ module readvectors (
   output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
   output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
   output logic XNormE, XExpMaxE,
-  output logic ZOrigDenormE,
+  output logic ZOrigDenormE, XOrigDenormE,
   output logic [`FLEN-1:0] X, Y, Z
 );
 
@@ -1464,89 +1563,105 @@ module readvectors (
         case (Fmt)
           2'b11: begin       // quad
             //     {is the integer a long,     is the opperation to an integer}
-            casex ({OpCtrl[2], OpCtrl[0]})
+            casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> quad
+                X = {`FLEN{1'bx}};
                 SrcA = TestVector[8+`Q_LEN+`XLEN-1:8+(`Q_LEN)];
                 Ans = TestVector[8+(`Q_LEN-1):8];
               end
-              2'b01:	begin	  // int -> quad
+              2'b10:	begin	  // int -> quad
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
-                SrcA = {{`XLEN-32{TestVector[8+`Q_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`Q_LEN+`XLEN-1:8+(`Q_LEN)]};
+                X = {`FLEN{1'bx}};
+                SrcA = {{`XLEN-32{TestVector[8+`Q_LEN+32-1]}}, TestVector[8+`Q_LEN+32-1:8+(`Q_LEN)]};
                 Ans = TestVector[8+(`Q_LEN-1):8];
               end
-              2'b10:	begin	  // quad -> long
+              2'b01:	begin	  // quad -> long
                 X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`XLEN+`Q_LEN-1:8+(`XLEN)]};
+                SrcA = {`XLEN{1'bx}};
                 Ans = {TestVector[8+(`XLEN-1):8]};
               end
-              2'b00:	begin	  // double -> long
-                X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+`XLEN+`Q_LEN-1:8+(`XLEN)]};
-                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+              2'b00:	begin	  // quad -> int
+                X = {{`FLEN-`Q_LEN{1'b1}}, TestVector[8+32+`Q_LEN-1:8+(32)]};
+                SrcA = {`XLEN{1'bx}};
+                Ans = {{`XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
               end
             endcase
           end
           2'b01:	begin	  // double
-            //     {is the integer a long,     is the opperation to an integer}
-            casex ({OpCtrl[2], OpCtrl[0]})
+            //     {Int->Fp?, is the integer a long}
+            casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> double
+                X = {`FLEN{1'bx}};
                 SrcA = TestVector[8+`D_LEN+`XLEN-1:8+(`D_LEN)];
-                Ans = TestVector[8+(`D_LEN-1):8];
+                Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
               end
-              2'b01:	begin	  // int -> double
+              2'b10:	begin	  // int -> double
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
-                SrcA = {{`XLEN-32{TestVector[8+`D_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`D_LEN+`XLEN-1:8+(`D_LEN)]};
-                Ans = TestVector[8+(`D_LEN-1):8];
+                X = {`FLEN{1'bx}};
+                SrcA = {{`XLEN-32{TestVector[8+`D_LEN+32-1]}}, TestVector[8+`D_LEN+32-1:8+(`D_LEN)]};
+                Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
               end
-              2'b10:	begin	  // double -> long
+              2'b01:	begin	  // double -> long
                 X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`XLEN+`D_LEN-1:8+(`XLEN)]};
+                SrcA = {`XLEN{1'bx}};
                 Ans = {TestVector[8+(`XLEN-1):8]};
               end
               2'b00:	begin	  // double -> int
-                X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`XLEN+`D_LEN-1:8+(`XLEN)]};
-                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+                X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+32+`D_LEN-1:8+(32)]};
+                SrcA = {`XLEN{1'bx}};
+                Ans = {{`XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
               end
             endcase
           end
           2'b00:	begin	  // single
             //     {is the integer a long,     is the opperation to an integer}
-            casex ({OpCtrl[2], OpCtrl[0]})
+            casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> single
+                X = {`FLEN{1'bx}};
                 SrcA = TestVector[8+`S_LEN+`XLEN-1:8+(`S_LEN)];
-                Ans = TestVector[8+(`S_LEN-1):8];
+                Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
               end
-              2'b01:	begin	  // int -> single
+              2'b10:	begin	  // int -> single
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
-                SrcA = {{`XLEN-32{TestVector[8+`S_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`S_LEN+`XLEN-1:8+(`S_LEN)]};
-                Ans = TestVector[8+(`S_LEN-1):8];
+                X = {`FLEN{1'bx}};
+                SrcA = {{`XLEN-32{TestVector[8+`S_LEN+32-1]}}, TestVector[8+`S_LEN+32-1:8+(`S_LEN)]};
+                Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
               end
-              2'b10:	begin	  // single -> long
+              2'b01:	begin	  // single -> long
                 X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`XLEN+`S_LEN-1:8+(`XLEN)]};
+                SrcA = {`XLEN{1'bx}};
                 Ans = {TestVector[8+(`XLEN-1):8]};
               end
               2'b00:	begin	  // single -> int
-                X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`XLEN+`S_LEN-1:8+(`XLEN)]};
-                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}},TestVector[8+(`XLEN-1):8]};
+                X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+32+`S_LEN-1:8+(32)]};
+                SrcA = {`XLEN{1'bx}};
+                Ans = {{`XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
               end
             endcase
           end
           2'b10:	begin	  // half
             //     {is the integer a long,     is the opperation to an integer}
-            casex ({OpCtrl[2], OpCtrl[0]})
+            casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> half
+                X = {`FLEN{1'bx}};
                 SrcA = TestVector[8+`H_LEN+`XLEN-1:8+(`H_LEN)];
-                Ans = TestVector[8+(`H_LEN-1):8];
+                Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
               end
-              2'b01:	begin	  // int -> half
+              2'b10:	begin	  // int -> half
                 // correctly sign extend the integer depending on if it's a signed/unsigned test
-                SrcA = {{`XLEN-32{TestVector[8+`H_LEN+`XLEN]&~OpCtrl[1]}}, TestVector[8+`H_LEN+`XLEN-1:8+(`H_LEN)]};
-                Ans = TestVector[8+(`H_LEN-1):8];
+                X = {`FLEN{1'bx}};
+                SrcA = {{`XLEN-32{TestVector[8+`H_LEN+32-1]}}, TestVector[8+`H_LEN+32-1:8+(`H_LEN)]};
+                Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
               end
-              2'b10:	begin	  // half -> long
+              2'b01:	begin	  // half -> long
                 X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`XLEN+`H_LEN-1:8+(`XLEN)]};
+                SrcA = {`XLEN{1'bx}};
                 Ans = {TestVector[8+(`XLEN-1):8]};
               end
               2'b00:	begin	  // half -> int
-                X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`XLEN+`H_LEN-1:8+(`XLEN)]};
-                Ans = {{`XLEN-32{TestVector[8+`XLEN]&~OpCtrl[1]}}, TestVector[8+(`XLEN-1):8]};
+                X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+32+`H_LEN-1:8+(32)]};
+                SrcA = {`XLEN{1'bx}};
+                Ans = {{`XLEN-32{TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
               end
             endcase
           end
@@ -1557,5 +1672,5 @@ module readvectors (
   unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
                 .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
                 .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XExpMaxE, .ZOrigDenormE);
+                .XExpMaxE, .ZOrigDenormE, .XOrigDenormE);
 endmodule
