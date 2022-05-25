@@ -72,7 +72,7 @@ module fpu (
    logic [1:0] 	  FResultSelD, FResultSelE;           // Select the result written to FP register
    logic [1:0] 	  FResultSelM, FResultSelW;           // Select the result written to FP register
    logic [2:0] 	  FOpCtrlD, FOpCtrlE;       // Select which opperation to do in each component
-   logic [2:0] 	  FResSelD, FResSelE;       // Select one of the results that finish in the memory stage
+   logic [1:0] 	  FResSelD, FResSelE;       // Select one of the results that finish in the memory stage
    logic [1:0] 	  FIntResSelD, FIntResSelE;           // Select the result written to the integer resister
    logic [4:0] 	  Adr1E, Adr2E, Adr3E;                // adresses of each input
 
@@ -104,7 +104,7 @@ module fpu (
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
    logic 		  XNormE;                             // is normal
-   logic         ZOrigDenormE;
+   logic         ZOrigDenormE, XOrigDenormE;
    logic 		  FmtQ;
    logic 		  FOpCtrlQ;     
 
@@ -114,9 +114,8 @@ module fpu (
    logic [63:0] 	  FMAResM, FMAResW;                   // FMA/multiply result
    logic [4:0] 	  FMAFlgM;                   // FMA/multiply result	
    logic [63:0] 	  ReadResW;                           // read result (load instruction)
-   logic [63:0] 	  CvtFpResE;    // add/FP -> FP convert result
-   logic [4:0] 	  CvtFpFlgE;    // add/FP -> FP convert flags
    logic [63:0] 	  CvtResE;                   // FP <-> int convert result
+   logic [`XLEN-1:0] CvtIntResE;                   // FP <-> int convert result
    logic [4:0] 	  CvtFlgE;                   // FP <-> int convert flags //*** trim this	
    logic [63:0] 	  ClassResE;               // classify result
    logic [63:0] 	  CmpResE;                   // compare result
@@ -152,7 +151,7 @@ module fpu (
    flopenrc #(64) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
    flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
-   flopenrc #(17) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+   flopenrc #(16) DECtrlReg3(clk, reset, FlushE, ~StallE, 
                {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD, FDivStartD},
                {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, FDivStartE});
 
@@ -177,7 +176,7 @@ module fpu (
    // unpack unit
    //    - splits FP inputs into their various parts
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, .ZOrigDenormE,
+   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, .ZOrigDenormE, .XOrigDenormE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
@@ -214,13 +213,12 @@ module fpu (
          .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
 
    // other FP execution units
-   fcvtfp fcvtfp (.XExpE, .XManE, .XSgnE, .XZeroE, .XDenormE, .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtFpResE, .CvtFpFlgE);
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
    fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
-   fcvtint fcvtint (.XSgnE, .XExpE, .XManE, .XZeroE, .XNaNE, .XInfE, .XDenormE, .ForwardedSrcAE, .FOpCtrlE, .FmtE, .FrmE,
-   .CvtResE, .CvtFlgE);
+   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, .FWriteIntE, .XZeroE, .XOrigDenormE,
+              .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtResE, .CvtIntResE, .CvtFlgE);
 
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
@@ -231,12 +229,12 @@ module fpu (
    mux2  #(64)  SrcAMux({{32{1'b1}}, ForwardedSrcAE[31:0]}, {{64-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
 
    // select a result that may be written to the FP register
-   mux5  #(64) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, CvtFpResE, FResSelE, FResE);
-   mux5  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, CvtFpFlgE, FResSelE, FFlgE);
+   mux4  #(64) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, FResSelE, FResE);
+   mux4  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, FResSelE, FFlgE);
 
    // select the result that may be written to the integer register - to IEU
    mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], 
-               CvtResE[`XLEN-1:0], FIntResSelE, FIntResE);
+               CvtIntResE, FIntResSelE, FIntResE);
 
    // E/M pipe registers
 

@@ -12,7 +12,7 @@ module unpack (
     output logic                    XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
     output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
     output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-    output logic                    ZOrigDenormE,                   // is the original precision denormalized
+    output logic                    XOrigDenormE, ZOrigDenormE,     // is the original precision denormalized
     output logic                    XExpMaxE                        // does X have the maximum exponent (NaN or Inf)
 );
  
@@ -49,6 +49,7 @@ module unpack (
         assign YExpMaxE = &YExpE;
         assign ZExpMaxE = &ZExpE;
 
+        assign XOrigDenormE = 1'b0;
         assign ZOrigDenormE = 1'b0;
     
 
@@ -73,7 +74,7 @@ module unpack (
         //      double and half
 
         logic  [`LEN1-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed
-        logic               XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
+        logic               YOrigDenormE;   // the original value of XYZ is denormalized
 
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN
         assign XLen1 = &X[`FLEN-1:`LEN1] ? X[`LEN1-1:0] : {1'b0, {`NE1+1{1'b1}}, (`NF1-1)'(0)};
@@ -141,7 +142,7 @@ module unpack (
 
         logic  [`LEN1-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for larger percision
         logic  [`LEN2-1:0]  XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for smallest precision
-        logic               XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
+        logic               YOrigDenormE;   // the original value of XYZ is denormalized
         
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for larger precision
         assign XLen1 = &X[`FLEN-1:`LEN1] ? X[`LEN1-1:0] : {1'b0, {`NE1+1{1'b1}}, (`NF1-1)'(0)};
@@ -318,7 +319,7 @@ module unpack (
         logic  [`D_LEN-1:0]  XLen1, YLen1, ZLen1; // Remove NaN boxing or NaN, if not properly NaN boxed for double percision
         logic  [`S_LEN-1:0]  XLen2, YLen2, ZLen2; // Remove NaN boxing or NaN, if not properly NaN boxed for single percision
         logic  [`H_LEN-1:0]  XLen3, YLen3, ZLen3; // Remove NaN boxing or NaN, if not properly NaN boxed for half percision
-        logic                XOrigDenormE, YOrigDenormE;   // the original value of XYZ is denormalized
+        logic                YOrigDenormE;   // the original value of XYZ is denormalized
         
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for double precision
         assign XLen1 = &X[`Q_LEN-1:`D_LEN] ? X[`D_LEN-1:0] : {1'b0, {`D_NE+1{1'b1}}, (`D_NF-1)'(0)};
