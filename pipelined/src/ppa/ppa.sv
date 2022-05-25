@@ -276,51 +276,6 @@ module ppa_shiftleft_128 #(parameter WIDTH=128) (
   assign y = a << amt;
 endmodule
 
-module ppa_shifter_8 #(parameter WIDTH=8) (
-  input  logic [WIDTH-1:0]     A,
-  input  logic [$clog2(WIDTH)-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [WIDTH-1:0]     Y);
-
-  ppa_shifter #(WIDTH) sh (.*);
-endmodule
-
-module ppa_shifter_16 #(parameter WIDTH=16) (
-  input  logic [WIDTH-1:0]     A,
-  input  logic [$clog2(WIDTH)-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [WIDTH-1:0]     Y);
-
-  ppa_shifter #(WIDTH) sh (.*);
-endmodule
-
-module ppa_shifter_32 #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0]     A,
-  input  logic [$clog2(WIDTH)-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [WIDTH-1:0]     Y);
-
-  ppa_shifter #(WIDTH) sh (.*);
-endmodule
-
-module ppa_shifter_64 #(parameter WIDTH=64) (
-  input  logic [WIDTH-1:0]     A,
-  input  logic [$clog2(WIDTH)-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [WIDTH-1:0]     Y);
-
-  ppa_shifter #(WIDTH) sh (.*);
-endmodule
-
-module ppa_shifter_128 #(parameter WIDTH=128) (
-  input  logic [WIDTH-1:0]     A,
-  input  logic [$clog2(WIDTH)-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [WIDTH-1:0]     Y);
-
-  ppa_shifter #(WIDTH) sh (.*);
-endmodule
-
 module ppa_shifter #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0]     A,
   input  logic [$clog2(WIDTH)-1:0] Amt,
@@ -373,7 +328,51 @@ module ppa_shifter #(parameter WIDTH=32) (
   assign Y = zshift[WIDTH-1:0];    
 endmodule
 
-// just report one hot
+  //   module ppa_shifter_8 #(parameter WIDTH=8) (
+  //   input  logic [WIDTH-1:0]     A,
+  //   input  logic [$clog2(WIDTH)-1:0] Amt,
+  //   input  logic                 Right, Arith, W64,
+  //   output logic [WIDTH-1:0]     Y);
+
+  //   ppa_shifter #(WIDTH) sh (.*);
+  // endmodule
+
+  // module ppa_shifter_16 #(parameter WIDTH=16) (
+  //   input  logic [WIDTH-1:0]     A,
+  //   input  logic [$clog2(WIDTH)-1:0] Amt,
+  //   input  logic                 Right, Arith, W64,
+  //   output logic [WIDTH-1:0]     Y);
+
+  //   ppa_shifter #(WIDTH) sh (.*);
+  // endmodule
+
+  // module ppa_shifter_32 #(parameter WIDTH=32) (
+  //   input  logic [WIDTH-1:0]     A,
+  //   input  logic [$clog2(WIDTH)-1:0] Amt,
+  //   input  logic                 Right, Arith, W64,
+  //   output logic [WIDTH-1:0]     Y);
+
+  //   ppa_shifter #(WIDTH) sh (.*);
+  // endmodule
+
+  // module ppa_shifter_64 #(parameter WIDTH=64) (
+  //   input  logic [WIDTH-1:0]     A,
+  //   input  logic [$clog2(WIDTH)-1:0] Amt,
+  //   input  logic                 Right, Arith, W64,
+  //   output logic [WIDTH-1:0]     Y);
+
+  //   ppa_shifter #(WIDTH) sh (.*);
+  // endmodule
+
+  // module ppa_shifter_128 #(parameter WIDTH=128) (
+  //   input  logic [WIDTH-1:0]     A,
+  //   input  logic [$clog2(WIDTH)-1:0] Amt,
+  //   input  logic                 Right, Arith, W64,
+  //   output logic [WIDTH-1:0]     Y);
+
+  //   ppa_shifter #(WIDTH) sh (.*);
+  // endmodule
+  
 module ppa_prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y);
