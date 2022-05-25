@@ -37,6 +37,7 @@ module srt #(parameter Nf=52) (
   input  logic Flush, // *** multiple pipe stages
   // Floating Point Inputs
   // later add exponents, signs, special cases
+  input  logic       XSign, YSign,
   input  logic [`NE-1:0] XExp, YExp,
   input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
@@ -45,15 +46,18 @@ module srt #(parameter Nf=52) (
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputss
   input  logic       Sqrt, // perform square root, not divide
+  output logic       rsign,
   output logic [Nf-1:0] Quot, Rem, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
 
   logic          qp, qz, qm; // quotient is +1, 0, or -1
-  logic [Nf-1:0] X, Dpreproc;
-  logic [Nf+3:0] WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [Nf+2:0] rp, rm;
+  logic [`NE-1:0] calcExp;
+  logic           calcSign;
+  logic [Nf-1:0]  X, Dpreproc;
+  logic [Nf+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
+  logic [Nf+2:0]  rp, rm;
  
   srtpreproc #(Nf) preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc);
 
@@ -72,6 +76,8 @@ module srt #(parameter Nf=52) (
   // Accumulate quotient digits in a shift register
   qsel #(Nf) qsel(WS[55:52], WC[55:52], qp, qz, qm);
   qacc #(Nf+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+  flopen #(`NE) expflop(clk, Start, calcExp, rExp);
+  flopen #(1) signflop(clk, Start, calcSign, rsign);
 
   // Divisor Selection logic
   inv dinv(D, Db);
@@ -80,7 +86,9 @@ module srt #(parameter Nf=52) (
   // Partial Product Generation
   csa csa(WS, WC, Dsel, qp, WSA, WCA);
 
-  expcalc expcalc(.XExp, .YExp, .rExp);
+  expcalc expcalc(.XExp, .YExp, .calcExp);
+
+  signcalc signcalc(.XSign, .YSign, .calcSign);
 
   srtpostproc postproc(rp, rm, Quot);
 endmodule
@@ -258,10 +266,23 @@ endmodule
 
 module expcalc(
   input logic  [`NE-1:0] XExp, YExp,
-  output logic [`NE-1:0] rExp
+  output logic [`NE-1:0] calcExp
 );
 
-  assign rExp = XExp - YExp + `BIAS;
+  assign calcExp = XExp - YExp + `BIAS;
+
+endmodule
+
+//////////////
+// signcalc //
+//////////////
+
+module signcalc(
+  input logic  XSign, YSign,
+  output logic calcSign
+);
+
+  assign calcSign = XSign ^ YSign;
 
 endmodule
 
