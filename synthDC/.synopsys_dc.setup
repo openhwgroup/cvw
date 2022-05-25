@@ -17,6 +17,9 @@ if {$tech == "sky130"} {
 } elseif {$tech == "sky90"} {
     set s9lib $timing_lib/sky90/sky90_sc/V1.7.4/lib
     lappend search_path $s9lib
+} elseif {$tech == "tsmc28"} {
+    set s10lib /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
+    lappend search_path $s10lib
 }
 
 # Synthetic libraries
@@ -30,6 +33,8 @@ if {$tech == "sky130"} {
     lappend target_library $s8lib/sky130_osu_sc_12T_ms_TT_1P8_25C.ccs.db
 } elseif {$tech == "sky90"} {
     lappend target_library $s9lib/scc9gena_tt_1.2v_25C.db
+} elseif {$tech == "tsmc28"} {
+    lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
 }
 
 # Set Link Library
