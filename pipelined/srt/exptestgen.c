@@ -21,7 +21,7 @@
 
 /* Prototypes */
 
-void output(FILE *fptr, int e1, double a, int e2, double b, int r_exp, double r_mantissa);
+void output(FILE *fptr, int signa, int e1, double a, int signb, int e2, double b, int r_sign, int r_exp, double r_mantissa);
 void printhex(FILE *fptr, double x);
 double random_input(void);
 double random_input_e(void);
@@ -35,8 +35,8 @@ void main(void)
   // a & b are mantissas
   // r_mantissa is result of mantissa divsion
   // r_exp is result of exponent division
-  double a, b, r_mantissa, r_exp;
-  int e1, e2;
+  double a, b, r_mantissa, r_exp, r_sign;
+  int e1, e2, signa, signb;
   double mantissa[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
 			  1.75, 1.875, 1.99999,
 			  1.1, 1.2, 1.01, 1.001, 1.0001,
@@ -53,12 +53,15 @@ void main(void)
   for (i=0; i<ENTRIES; i++) {
     b = mantissa[i];
     e2 = exponent[i] + bias;
+    signb = i%2;
     for (j=0; j<ENTRIES; j++) {
       a = mantissa[j];
       e1 = exponent[j] + bias;
+      signa = j%2;
       r_mantissa = a/b;
       r_exp = e1 - e2 + bias;
-      output(fptr, e1, a, e2, b, r_exp, r_mantissa);
+      r_sign = (i+j)%2;
+      output(fptr, signa, e1, a, signb, e2, b, r_sign, r_exp, r_mantissa);
     }
   }
   
@@ -77,17 +80,17 @@ void main(void)
 
 /* Functions */
 
-void output(FILE *fptr, int e1, double a, int e2, double b, int r_exp, double r_mantissa)
+void output(FILE *fptr, int signa, int e1, double a, int signb, int e2, double b, int r_sign, int r_exp, double r_mantissa)
 {
-  fprintf(fptr, "%03x", e1);
+  fprintf(fptr, "%03x", e1|(signa<<11));
   //printhex(fptr, e1, exp);
   printhex(fptr, a);
   fprintf(fptr, "_");
-  fprintf(fptr, "%03x", e2);
+  fprintf(fptr, "%03x", e2|(signb<<11));
   //printhex(fptr, e2, exp);
   printhex(fptr, b);
   fprintf(fptr, "_");
-  fprintf(fptr, "%03x", r_exp);
+  fprintf(fptr, "%03x", r_exp|(r_sign<<11));
   //printhex(fptr, r_exp, exp);
   printhex(fptr, r_mantissa);
   fprintf(fptr, "\n");
