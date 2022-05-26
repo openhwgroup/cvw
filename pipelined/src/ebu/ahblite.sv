@@ -45,6 +45,7 @@ module ahblite (
   input logic 				 IFUBusRead,
   output logic [`XLEN-1:0] 	 IFUBusHRDATA,
   output logic 				 IFUBusAck,
+  input logic [2:0]    IFUBurstType,
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
   input logic 				 LSUBusRead, 
@@ -52,6 +53,7 @@ module ahblite (
   input logic [`XLEN-1:0] 	 LSUBusHWDATA,
   output logic [`XLEN-1:0] 	 LSUBusHRDATA,
   input logic [2:0] 		 LSUBusSize,
+  input logic [2:0]      LSUBurstType,
   output logic 				 LSUBusAck,
   // AHB-Lite external signals
   (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,

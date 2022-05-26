@@ -41,6 +41,7 @@ module ifu (
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
+(* mark_debug = "true" *) output logic [2:0]  IFUBurstType,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
@@ -190,7 +191,7 @@ module ifu (
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
-          .LSUBusRead(IFUBusRead), .LSUBusSize(), 
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
