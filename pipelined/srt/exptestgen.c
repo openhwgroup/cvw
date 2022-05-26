@@ -21,7 +21,7 @@
 
 /* Prototypes */
 
-void output(FILE *fptr, int signa, int e1, double a, int signb, int e2, double b, int r_sign, int r_exp, double r_mantissa);
+void output(FILE *fptr, int aSign, int aExp, double aFrac, int bSign, int bExp, double bFrac, int rSign, int rExp, double rFrac);
 void printhex(FILE *fptr, double x);
 double random_input(void);
 double random_input_e(void);
@@ -31,12 +31,13 @@ double random_input_e(void);
 void main(void)
 {
   FILE *fptr;
-  // e1 & e2 are exponents
-  // a & b are mantissas
-  // r_mantissa is result of mantissa divsion
-  // r_exp is result of exponent division
-  double a, b, r_mantissa, r_exp, r_sign;
-  int e1, e2, signa, signb;
+  // aExp & bExp are exponents
+  // aFrac & bFrac are mantissas
+  // rFrac is result of fractional divsion
+  // rExp is result of exponent division
+  double aFrac, bFrac, rFrac;
+  int    aExp,  bExp,  rExp;
+  int    aSign, bSign, rSign;
   double mantissa[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
 			  1.75, 1.875, 1.99999,
 			  1.1, 1.2, 1.01, 1.001, 1.0001,
@@ -51,28 +52,28 @@ void main(void)
   }
 
   for (i=0; i<ENTRIES; i++) {
-    b = mantissa[i];
-    e2 = exponent[i] + bias;
-    signb = i%2;
+    bFrac = mantissa[i];
+    bExp = exponent[i] + bias;
+    bSign = i%2;
     for (j=0; j<ENTRIES; j++) {
-      a = mantissa[j];
-      e1 = exponent[j] + bias;
-      signa = j%2;
-      r_mantissa = a/b;
-      r_exp = e1 - e2 + bias;
-      r_sign = (i+j)%2;
-      output(fptr, signa, e1, a, signb, e2, b, r_sign, r_exp, r_mantissa);
+      aFrac = mantissa[j];
+      aExp = exponent[j] + bias;
+      aSign = j%2;
+      rFrac = aFrac/bFrac;
+      rExp = aExp - bExp + bias;
+      rSign = (i+j)%2;
+      output(fptr, aSign, aExp, aFrac, bSign, bExp, bFrac, rSign, rExp, rFrac);
     }
   }
   
   // for (i = 0; i< RANDOM_VECS; i++) {
-  //   a = random_input();
-  //   b = random_input();
-  //   e1 = random_input_e() + BIAS; // make new random input function for exponents
-  //   e2 = random_input_e() + BIAS;
-  //   r_mantissa = a/b;
-  //   r_exp = e1 - e2 + BIAS;
-  //   output(fptr, e1, a, e2, b, r_exp, r_mantissa);
+  //   aFrac = random_input();
+  //   bFrac = random_input();
+  //   aExp = random_input_e() + BIAS; // make new random input function for exponents
+  //   bExp = random_input_e() + BIAS;
+  //   rFrac = a/b;
+  //   rEx[] = e1 - e2 + BIAS;
+  //   output(fptr, aExp, aFrac, bExp, bFrac, rExp, rFrac);
   // }
 
   fclose(fptr);
@@ -80,19 +81,21 @@ void main(void)
 
 /* Functions */
 
-void output(FILE *fptr, int signa, int e1, double a, int signb, int e2, double b, int r_sign, int r_exp, double r_mantissa)
+void output(FILE *fptr, int aSign, int aExp, double aFrac, int bSign, int bExp, double bFrac, int rSign, int rExp, double rFrac)
 {
-  fprintf(fptr, "%03x", e1|(signa<<11));
-  //printhex(fptr, e1, exp);
-  printhex(fptr, a);
+  // Print a in standard double format
+  fprintf(fptr, "%03x", aExp|(aSign<<11));
+  printhex(fptr, aFrac);
   fprintf(fptr, "_");
-  fprintf(fptr, "%03x", e2|(signb<<11));
-  //printhex(fptr, e2, exp);
-  printhex(fptr, b);
+
+  // Print b in standard double format
+  fprintf(fptr, "%03x", bExp|(bSign<<11));
+  printhex(fptr, bFrac);
   fprintf(fptr, "_");
-  fprintf(fptr, "%03x", r_exp|(r_sign<<11));
-  //printhex(fptr, r_exp, exp);
-  printhex(fptr, r_mantissa);
+
+  // Print r in standard double format
+  fprintf(fptr, "%03x", rExp|(rSign<<11));
+  printhex(fptr, rFrac);
   fprintf(fptr, "\n");
 }
 
