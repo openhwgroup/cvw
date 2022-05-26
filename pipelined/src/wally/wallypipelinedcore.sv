@@ -137,6 +137,7 @@ module wallypipelinedcore (
   logic             IFUBusRead;
   logic             IFUBusAck;
   logic [2:0]       IFUBurstType;
+  logic             IFUBurstDone;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0]         LSUBusAdr;
@@ -155,6 +156,7 @@ module wallypipelinedcore (
   logic             InstrAccessFaultF;
   logic [2:0]             LSUBusSize;
   logic [2:0]             LSUBurstType;
+  logic             LSUBurstDone;
   
   logic             DCacheMiss;
   logic             DCacheAccess;
@@ -170,7 +172,7 @@ module wallypipelinedcore (
     .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
     .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
-    .IFUBusRead, .IFUStallF, .IFUBurstType,
+    .IFUBusRead, .IFUStallF, .IFUBurstType, .IFUBurstDone,
     .ICacheAccess, .ICacheMiss,
 
     // Execute
@@ -251,7 +253,7 @@ module wallypipelinedcore (
   .ReadDataM, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
-  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType,
+  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUBurstDone,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -283,12 +285,13 @@ module wallypipelinedcore (
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
      .IFUBusAdr,
-     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck, .IFUBurstType,
+     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck, .IFUBurstType, .IFUBurstDone,
      // Signals from Data Cache
      .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
      .LSUBusHRDATA,
      .LSUBusSize,
      .LSUBurstType,
+     .LSUBurstDone,
      .LSUBusAck,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,

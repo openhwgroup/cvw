@@ -44,6 +44,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   output logic                LSUBusRead,
   output logic [2:0]          LSUBusSize,
   output logic [2:0]          LSUBurstType,
+  output logic                LSUBurstDone,
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr, // ** change name to HADDR to make ahb lite.
   output logic [LOGWPL-1:0]   WordCount,
@@ -68,14 +69,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
 
-  always_comb begin
-    case(WORDSPERLINE)
-      4:        LSUBurstType = 3'b010; // WRAP4
-      8:        LSUBurstType = 3'b100; // WRAP8
-      16:       LSUBurstType = 3'b110; // WRAP16
-      default:  LSUBurstType = 3'b000; // No Burst
-    endcase
-  end
 
   // *** implement flops as an array if feasbile; DCacheBusWriteData might be a problem
   // *** better name than DCacheBusWriteData
@@ -94,5 +87,5 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
     .clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		.LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
-		.DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
+		.LSUBurstType, .LSUBurstDone, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
 endmodule
