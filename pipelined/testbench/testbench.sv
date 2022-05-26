@@ -373,7 +373,7 @@ module riscvassertions;
     assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
     //assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
     //assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
-    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 16");
+    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
   end
 endmodule
 
