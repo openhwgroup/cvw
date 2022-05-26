@@ -70,10 +70,10 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
 
   always_comb begin
     case(WORDSPERLINE)
-      4:        LSUBurstType = 3'b010;
-      8:        LSUBurstType = 3'b100;
-      16:       LSUBurstType = 3'b110;
-      default:  LSUBurstType = 3'b000;
+      4:        LSUBurstType = 3'b010; // WRAP4
+      8:        LSUBurstType = 3'b100; // WRAP8
+      16:       LSUBurstType = 3'b110; // WRAP16
+      default:  LSUBurstType = 3'b000; // No Burst
     endcase
   end
 
