@@ -24,59 +24,68 @@ def synthsfromcsv(filename):
                     except: pass
             allSynths[i] = Synth(*allSynths[i])
     
-def synthsintocsv(mod=None, width=None):
+def synthsintocsv():
     ''' writes a CSV with one line for every available synthesis
         each line contains the module, tech, width, target freq, and resulting metrics
     '''
-    specStr = ''
-    if mod != None:
-        specStr = mod
-        if width != None:
-            specStr += ('_'+str(width))
-    specStr += '*'
+    
+    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    output = subprocess.check_output(['bash','-c', bashCommand])
+    allSynths = output.decode("utf-8").split('\n')[:-1]
 
-    bashCommand = "grep 'Critical Path Length' runs/ppa_{}/reports/*qor*".format(specStr)
-    outputCPL = subprocess.check_output(['bash','-c', bashCommand])
-    linesCPL = outputCPL.decode("utf-8").split('\n')[:-1]
-
-    bashCommand = "grep 'Design Area' runs/ppa_{}/reports/*qor*".format(specStr)
-    outputDA = subprocess.check_output(['bash','-c', bashCommand])
-    linesDA = outputDA.decode("utf-8").split('\n')[:-1]
-
-    bashCommand = "grep '100' runs/ppa_{}/reports/*power*".format(specStr)
-    outputP = subprocess.check_output(['bash','-c', bashCommand])
-    linesP = outputP.decode("utf-8").split('\n')[:-1]
-
-    cpl = re.compile('\d{1}\.\d{6}')
-    f = re.compile('_\d*_MHz')
-    wm = re.compile('ppa_\w*_\d*_qor')
-    da = re.compile('\d*\.\d{6}')
-    p = re.compile('\d+\.\d+[e-]*\d+')
-    t = re.compile('[a-zA-Z0-9]+nm')
+    specReg = re.compile('[a-zA-Z0-9]+')
+    metricReg = re.compile('\d+\.\d+[e]?[-+]?\d*')
 
     file = open("ppaData.csv", "w")
     writer = csv.writer(file)
     writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (mJ)'])
 
-    for i in range(len(linesCPL)):
-        line = linesCPL[i]
-        mwm = wm.findall(line)[0][4:-4].split('_')
-        freq = int(f.findall(line)[0][1:-4])
-        delay = float(cpl.findall(line)[0])
-        area = float(da.findall(linesDA[i])[0])
-        mod = mwm[0]
-        width = int(mwm[1])
-        tech = t.findall(line)[0][:-2]
-        try: #fix
-            power = p.findall(linesP[i])
-            lpower = float(power[2])
-            denergy = float(power[1])*delay
-        except: 
-            lpower = 0
-            denergy = 0
+    for oneSynth in allSynths:
+        module, width, risc, tech, freq = specReg.findall(oneSynth)[2:7]
+        tech = tech[:-2]
+        metrics = []
+        for phrase in [['Path Length', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
+            bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*{}*'
+            bashCommand = bashCommand.format(*phrase)
+            try: output = subprocess.check_output(['bash','-c', bashCommand])
+            except: print("At least one synth run doesn't have reports, try cleanup() first")
+            nums = metricReg.findall(str(output))
+            nums = [float(m) for m in nums]
+            metrics += nums
+        delay = metrics[0]
+        area = metrics[1]
+        lpower = metrics[4]
+        denergy = (metrics[2] + metrics[3])*delay # (switching + internal powers)*delay
 
-        writer.writerow([mod, tech, width, freq, delay, area, lpower, denergy])
+        writer.writerow([module, tech, width, freq, delay, area, lpower, denergy])
     file.close()
+
+def cleanup():
+    ''' removes runs that didn't work
+    '''
+    bashCommand = 'grep -r "Error" runs/ppa*/reports/*qor*'
+    try: 
+        output = subprocess.check_output(['bash','-c', bashCommand])
+        allSynths = output.decode("utf-8").split('\n')[:-1]
+        for run in allSynths:
+            run = run.split('MHz')[0]
+            bc = 'rm -r '+ run + '*'
+            output = subprocess.check_output(['bash','-c', bc])
+    except: pass
+
+    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    output = subprocess.check_output(['bash','-c', bashCommand])
+    allSynths = output.decode("utf-8").split('\n')[:-1]
+    for oneSynth in allSynths:
+        for phrase in [['Path Length', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
+            bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*{}*'
+            bashCommand = bashCommand.format(*phrase)
+            try: output = subprocess.check_output(['bash','-c', bashCommand])
+            except: 
+                bc = 'rm -r '+ oneSynth[2:]
+                try: output = subprocess.check_output(['bash','-c', bc])
+                except: pass
+    print("All cleaned up!")
 
 def getVals(tech, module, var, freq=None):
     ''' for a specified tech, module, and variable/metric
@@ -112,7 +121,8 @@ def getVals(tech, module, var, freq=None):
                         m = oneSynth.delay
                         osdict = oneSynth._asdict()
                         met = osdict[var]
-            metric += [met]
+            try: metric += [met]
+            except: pass
 
     if ('flop' in module) & (var == 'area'):
         metric = [m/2 for m in metric] # since two flops in each module 
@@ -144,9 +154,9 @@ def genLegend(fits, coefs, r2, techcolor):
         eq += " + " + coefsr[ind] + "*Nlog2(N)"
         ind += 1
 
-    tech, c = techcolor
+    tech, c, m = techcolor
     legend_elements = [lines.Line2D([0], [0], color=c, label=eq),
-                       lines.Line2D([0], [0], color=c, ls='', marker='o', label=tech +'  $R^2$='+ str(round(r2, 4)))]
+                       lines.Line2D([0], [0], color=c, ls='', marker=m, label=tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
 def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
@@ -167,13 +177,13 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
     global techcolors
     global widths
     for combo in techcolors:
-        tech, c = combo
+        tech, c, m = combo
         metric, units = getVals(tech, module, var, freq=freq)
         if len(metric) == 5:
             xp, pred, leg = regress(widths, metric, combo, fits)
             fullLeg += leg
 
-            ax.scatter(widths, metric, color=c)
+            ax.scatter(widths, metric, color=c, marker=m)
             ax.plot(xp, pred, color=c)
 
     ax.legend(handles=fullLeg)
@@ -183,7 +193,7 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
     ax.set_ylabel(str.title(var) + units)
 
     if singlePlot:
-        titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (min delay)"
+        titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best delay)"
         ax.set_title(module + titleStr)
         plt.show()
 
@@ -266,17 +276,14 @@ def noOutliers(freqs, delays, areas):
     f=[]
     d=[]
     a=[]
-    
-    try:
-        ind = delays.index(min(delays))
-        med = freqs[ind]
-        for i in range(len(freqs)):
-            norm = freqs[i]/med
-            if (norm > 0.25) & (norm<1.75):
-                f += [freqs[i]]
-                d += [delays[i]]
-                a += [areas[i]]
-    except: pass
+    ind = delays.index(min(delays))
+    med = freqs[ind]
+    for i in range(len(freqs)):
+        norm = freqs[i]/med
+        if (norm > 0.25) & (norm<1.75):
+            f += [freqs[i]]
+            d += [delays[i]]
+            a += [areas[i]]
     
     return f, d, a
 
@@ -292,7 +299,7 @@ def freqPlot(tech, mod, width):
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
 
-    f, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(5, 1, sharex=True)
+    f, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True)
 
     for ind in [0,1]:
         areas = areasL[ind]
@@ -300,17 +307,15 @@ def freqPlot(tech, mod, width):
         freqs = freqsL[ind]
 
         if ('flop' in mod): areas = [m/2 for m in areas] # since two flops in each module
-        freqs, delays, areas = noOutliers(freqs, delays, areas)
+        freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
 
         c = 'blue' if ind else 'green'
-        adprod = adprodpow(areas, delays, 2)
-        adpow = adprodpow(areas, delays, 3)
-        adpow2 = adprodpow(areas, delays, 4)
+        adprod = adprodpow(areas, delays, 1)
+        adpow = adprodpow(areas, delays, 2)
         ax1.scatter(freqs, delays, color=c)
         ax2.scatter(freqs, areas, color=c)
         ax3.scatter(freqs, adprod, color=c)
         ax4.scatter(freqs, adpow, color=c)
-        ax5.scatter(freqs, adpow2, color=c)
 
     legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
                        lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
@@ -341,22 +346,26 @@ def plotPPA(mod, freq=None):
         overlays data from both techs
     '''
     fig, axs = plt.subplots(2, 2)
-    oneMetricPlot(mod, 'delay', ax=axs[0,0], fits='clg', freq=freq)
+    oneMetricPlot(mod, 'delay', ax=axs[0,0], fits='cg', freq=freq)
     oneMetricPlot(mod, 'area', ax=axs[0,1], fits='s', freq=freq)
-    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='c', freq=freq)
+    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='s', freq=freq)
     oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits='s', freq=freq)
-    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (min delay)"
+    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best delay)"
     plt.suptitle(mod + titleStr)
     plt.show()
+    
+if __name__ == '__main__':
 
-Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
-techcolors = [['sky90', 'green'], ['tsmc28', 'blue']]
-widths = [8, 16, 32, 64, 128]
-synthsintocsv()
+    # set up stuff, global variables
+    Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
+    techcolors = [['sky90', 'green', 'o'], ['tsmc28', 'blue', '^']] # add another list here for gf32
+    widths = [8, 16, 32, 64, 128]
 
-synthsfromcsv('ppaData.csv') # your csv here!
+    # synthsintocsv() # slow, run only when new synth runs to add to csv
+  
+    synthsfromcsv('ppaData.csv') # your csv here!
 
-### examples
-# oneMetricPlot('add', 'delay')
-#freqPlot('sky90', 'add', 8)
-#plotPPA('add')
+    ### examples
+    oneMetricPlot('add', 'delay')
+    freqPlot('sky90', 'comparator', 16)
+    plotPPA('add')
