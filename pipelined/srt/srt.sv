@@ -85,14 +85,14 @@ module srt #(parameter Nf=52) (
 
   // Partial Product Generation
   csa csa(WS, WC, Dsel, qp, WSA, WCA);
+  
+  otfc2 otfc2(clk, Start, qp, qz, qm, QuotOTFC);
 
   expcalc expcalc(.XExp, .YExp, .calcExp);
 
   signcalc signcalc(.XSign, .YSign, .calcSign);
 
   srtpostproc postproc(rp, rm, Quot);
-  
-  otfc otfc(qp, qz, qm, Quot, QuotOTFC);
 endmodule
 
 module srtpostproc #(parameter N=52) (
@@ -216,13 +216,46 @@ endmodule
 // otfc //
 //////////
 
-module otfc #(parameter N=52) (
+module otfc2 #(parameter N=52) (
+  input  logic         clk,
+  input  logic         Start,
   input  logic         qp, qz, qm,
-  input  logic [N-1:0] Quot,
-  output logic [N-1:0] QuotOTFC
+  output logic [N-1:0] r
 );
 
-    assign QuotOTFC = Quot;
+  // The on-the-fly converter transfers the quotient 
+  //  bits to the quotient as they come. 
+  //
+  // This code follows the psuedocode presented in the 
+  //  floating point chapter of the book. Right now, 
+  //  it is written for Radix-2 division.
+  //
+  // QM is Q-1. It allows us to write negative bits 
+  //  without using a costly CPA. 
+  logic [N+2:0] Q, QM, QNext, QMNext;
+  // QR and QMR are the shifted versions of Q and QM.
+  //  They are treated as [N-1:r] size signals, and 
+  //  discard the r most significant bits of Q and QM. 
+  logic [N+1:0] QR, QMR;
+
+  flopr #(N+3) Qreg(clk, Start, QNext, Q);
+  flopr #(N+3) QMreg(clk, Start, QMNext, QM);
+
+  always_comb begin
+    QR  = Q[N+1:0];
+    QMR = QM[N+1:0];     // Shift Q and QM
+    if (qp) begin
+      QNext  = {QR,  1'b1};
+      QMNext = {QR,  1'b0};
+    end else if (qz) begin
+      QNext  = {QR,  1'b0};
+      QMNext = {QMR, 1'b1};
+    end else begin        // If qp and qz are not true, then qm is
+      QNext  = {QMR, 1'b1};
+      QMNext = {QMR, 1'b0};
+    end 
+  end
+  assign r = Q[54] ? Q[53:2] : Q[52:1];
 
 endmodule
 
@@ -286,7 +319,7 @@ module expcalc(
   output logic [`NE-1:0] calcExp
 );
 
-  assign calcExp = XExp - YExp + `BIAS;
+  assign calcExp = XExp - YExp + 11'b01111111111;
 
 endmodule
 
