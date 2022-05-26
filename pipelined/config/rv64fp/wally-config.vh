@@ -39,12 +39,12 @@
 
 // MISA RISC-V configuration per specification
 //16 - quad 3 - double 5 - single
-`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 0 << 16 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 )
+`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 16 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 )
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
-`define ZFH_SUPPORTED 0
+`define ZFH_SUPPORTED 1
 
 /// Microarchitectural Features
 `define UARCH_PIPELINED 1

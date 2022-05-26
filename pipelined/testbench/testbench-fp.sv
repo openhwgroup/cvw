@@ -545,15 +545,15 @@ module testbenchfp;
                                                 Fmt = {Fmt, 2'b10};
                                               end
                                               if (`XLEN == 64) begin // if 64-bit integers are supported
-                                              Tests = {Tests, f16rv64cvtint, f16rv32cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                              OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b10};
-                                              end
+                                                Tests = {Tests, f16rv64cvtint};
+                                                // add the op-codes for these tests to the op-code list
+                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+                                                // add what unit is used and the fmt to their lists (one for each test)
+                                                for(int i = 0; i<20; i++) begin
+                                                  Unit = {Unit, `CVTINTUNIT};
+                                                  Fmt = {Fmt, 2'b10};
+                                                end
                                               end
                                             end
       if (TEST === "cmp"   | TEST === "all") begin // if comparisions are being tested
@@ -1187,9 +1187,9 @@ end
 
     // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
     // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res === (`FLEN)'(0))) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res === {1'b0, {`FLEN-1{1'b1}}})) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res === {{`FLEN{1'b0}}, 1'b0, {31{1'b1}}})) | 
+    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
             (Res === Ans | NaNGood | NaNGood === 1'bx)) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
