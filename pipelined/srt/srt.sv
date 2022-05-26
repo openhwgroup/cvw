@@ -47,7 +47,7 @@ module srt #(parameter Nf=52) (
   input  logic       Int, // Choose integer inputss
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign,
-  output logic [Nf-1:0] Quot, Rem, // *** later handle integers
+  output logic [Nf-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -91,6 +91,8 @@ module srt #(parameter Nf=52) (
   signcalc signcalc(.XSign, .YSign, .calcSign);
 
   srtpostproc postproc(rp, rm, Quot);
+  
+  otfc otfc(qp, qz, qm, Quot, QuotOTFC);
 endmodule
 
 module srtpostproc #(parameter N=52) (
@@ -210,9 +212,24 @@ module qacc #(parameter N=55) (
     end */
 endmodule
 
+//////////
+// otfc //
+//////////
+
+module otfc #(parameter N=52) (
+  input  logic         qp, qz, qm,
+  input  logic [N-1:0] Quot,
+  output logic [N-1:0] QuotOTFC
+);
+
+    assign QuotOTFC = Quot;
+
+endmodule
+
 /////////
 // inv //
 /////////
+
 module inv(input  logic [55:0] in, 
            output logic [55:0] out);
 
