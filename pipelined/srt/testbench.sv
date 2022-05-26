@@ -44,7 +44,7 @@ module testbench;
   logic [51:0]  afrac, bfrac;
   logic [10:0]  aExp, bExp;
   logic         asign, bsign;
-  logic [51:0]  r;
+  logic [51:0]  r, rOTFC;
   logic [54:0]  rp, rm;   // positive quotient digits
  
   // Test parameters
@@ -72,7 +72,7 @@ module testbench;
                 .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA('0), .SrcB('0), .Fmt(2'b00), 
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot(r), .Rem(), .Flags());
+                .Quot(r), .QuotOTFC(rOTFC), .Rem(), .Flags());
 
   // Counter
   counter counter(clk, req, done);
@@ -117,6 +117,13 @@ module testbench;
 	      $display("failed\n");
 	      $stop;
 	    end
+    if (r !== rOTFC) // Check if OTFC works
+      begin
+        errors = errors+1;
+        $display("OTFC is %h, should be %h\n", rOTFC, r);
+        $display("failed/n");
+        $stop;
+      end
 	  if (afrac === 52'hxxxxxxxxxxxxx)
 	    begin
  	      $display("%d Tests completed successfully", testnum);
