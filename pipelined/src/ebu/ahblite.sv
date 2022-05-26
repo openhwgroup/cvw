@@ -133,7 +133,8 @@ module ahblite (
         101: 8-beat incrementing burst (INCR8)
         110: 16-beat wrapping burst (WRAP16) [wraps if X in 0X000000]
         111: 16-beat incrementing burst (INCR16)
-  */
+        *** Remove if not necessary
+  */ 
 
 
   assign HPROT = 4'b0011; // not used; see Section 3.7
