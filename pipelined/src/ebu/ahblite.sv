@@ -46,6 +46,7 @@ module ahblite (
   output logic [`XLEN-1:0] 	 IFUBusHRDATA,
   output logic 				 IFUBusAck,
   input logic [2:0]    IFUBurstType,
+  input logic          IFUBurstDone,
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
   input logic 				 LSUBusRead, 
@@ -54,6 +55,7 @@ module ahblite (
   output logic [`XLEN-1:0] 	 LSUBusHRDATA,
   input logic [2:0] 		 LSUBusSize,
   input logic [2:0]      LSUBurstType,
+  input logic          LSUBurstDone,
   output logic 				 LSUBusAck,
   // AHB-Lite external signals
   (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
@@ -89,6 +91,9 @@ module ahblite (
   // Data accesses have priority over instructions.  However, if a data access comes
   // while an instruction read is occuring, the instruction read finishes before
   // the data access can take place.
+  //  *** This is no longer true when adding burst mode. We need to finish the current
+  //  read before doing another read. Need to work this out, but preliminarily we can
+  //  store the current read type in a flop and use that to figure out what burst type to use.
 
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
 
@@ -124,7 +129,7 @@ module ahblite (
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
-  assign HBURST = 3'b000; // Single burst only supported; consider generalizing for cache fillsfH
+  assign HBURST = (GrantData) ? LSUBurstType : IFUBurstType;
 
   /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
         000: Single (SINGLE)

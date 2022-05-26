@@ -48,6 +48,8 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic              LSUBusWrite,
    output logic              LSUBusWriteCrit,
    output logic              LSUBusRead,
+   output logic [2:0]        LSUBurstType,
+   output logic              LSUBurstDone,
    output logic              DCacheBusAck,
    output logic              BusCommittedM,
    output logic              SelUncachedAdr,
@@ -62,6 +64,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   logic 			   WordCountFlag;
   logic [LOGWPL-1:0]   NextWordCount;
   logic 			   UnCachedAccess;
+  logic [2:0]    LocalBurstType;
   
 
   typedef enum logic [2:0] {STATE_BUS_READY,
@@ -120,6 +123,17 @@ module busfsm #(parameter integer   WordCountThreshold,
 	endcase
   end
 
+  always_comb begin
+    case(WordCountThreshold)
+      4:        LSUBurstType = 3'b010; // WRAP4
+      8:        LSUBurstType = 3'b100; // WRAP8
+      16:       LSUBurstType = 3'b110; // WRAP16
+      default:  LSUBurstType = 3'b000; // No Burst
+    endcase // This block might be better in the FSM. WordCountThreshold is WordsPerLine
+  end
+
+  assign LSUBurstType = (UnCachedAccess) ? LocalBurstType : '0; // Don't want to use burst when doing an Uncached Access
+  assign LSUBurstDone = WordCountFlag;
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
