@@ -7,6 +7,7 @@ import csv
 import re
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
+import matplotlib.axes as axes
 import numpy as np
 from collections import namedtuple
 
@@ -330,6 +331,43 @@ def freqPlot(tech, mod, width):
     ax1.set_title(mod + '_' + str(width))
     plt.show()
 
+def squareAreaDelay(tech, mod, width):
+    ''' plots delay, area, area*delay, and area*delay^2 for syntheses with specified tech, module, width
+    '''
+    global allSynths
+    freqsL, delaysL, areasL = ([[], []] for i in range(3))
+    for oneSynth in allSynths:
+        if (mod == oneSynth.module) & (width == oneSynth.width) & (tech == oneSynth.tech):
+            ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
+            freqsL[ind] += [oneSynth.freq]
+            delaysL[ind] += [oneSynth.delay]
+            areasL[ind] += [oneSynth.area]
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    for ind in [0,1]:
+        areas = areasL[ind]
+        delays = delaysL[ind]
+        freqs = freqsL[ind]
+
+        if ('flop' in mod): areas = [m/2 for m in areas] # since two flops in each module
+        freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
+
+        c = 'blue' if ind else 'green'
+        plt.scatter(delays, areas, color=c)
+
+    legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
+                       lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
+
+    plt.legend(handles=legend_elements)
+    
+    plt.xlabel("Delay Achieved (ns)")
+    plt.ylabel('Area (sq microns)')
+    plt.title(mod + '_' + str(width))
+    ax.set_aspect(1./ax.get_data_ratio())
+    plt.show()
+
 def adprodpow(areas, delays, pow):
     ''' for each value in [areas] returns area*delay^pow
         helper function for freqPlot'''
@@ -366,6 +404,7 @@ if __name__ == '__main__':
     synthsfromcsv('ppaData.csv') # your csv here!
 
     ### examples
-    oneMetricPlot('add', 'delay')
-    freqPlot('sky90', 'comparator', 16)
-    plotPPA('add')
+    # oneMetricPlot('add', 'delay')
+    # freqPlot('sky90', 'comparator', 16)
+    # plotPPA('add')
+    squareAreaDelay('sky90', 'comparator', 16)
