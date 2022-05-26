@@ -319,7 +319,7 @@ module expcalc(
   output logic [`NE-1:0] calcExp
 );
 
-  assign calcExp = XExp - YExp + `BIAS;
+  assign calcExp = XExp - YExp + 11'b01111111111;
 
 endmodule
 
