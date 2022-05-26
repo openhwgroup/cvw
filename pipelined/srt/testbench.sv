@@ -121,8 +121,8 @@ module testbench;
       begin
         errors = errors+1;
         $display("OTFC is %h, should be %h\n", rOTFC, r);
-        $display("failed/n");
-        $stop;
+        $display("failed\n");
+        // $stop;
       end
 	  if (afrac === 52'hxxxxxxxxxxxxx)
 	    begin
