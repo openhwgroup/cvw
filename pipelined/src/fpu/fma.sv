@@ -409,22 +409,10 @@ module loa( //https://ieeexplore.ieee.org/abstract/document/930098
 
 
 
-    lzc lzc(.f, .NormCntE);
+    lzc #(3*`NF+7) lzc (.num(f), .ZeroCnt(NormCntE));
   
 endmodule
 
-module lzc(
-    input logic  [3*`NF+6:0]            f,
-    output logic [$clog2(3*`NF+7)-1:0]    NormCntE    // normalization shift
-);
-    
-    logic [$clog2(3*`NF+7)-1:0] i;
-    always_comb begin
-        i = 0;
-        while (~f[3*`NF+6-i] & $unsigned(i) <= $unsigned($clog2(3*`NF+7)'(3)*($clog2(3*`NF+7))'(`NF)+($clog2(3*`NF+7))'(6))) i = i+1;  // search for leading one
-        NormCntE = i;
-    end
-endmodule
 
 
 
