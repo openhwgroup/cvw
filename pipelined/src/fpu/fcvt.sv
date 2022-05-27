@@ -39,9 +39,10 @@ module fcvt (
 
     logic [`FPSIZES/3:0]    OutFmt;     // format of the output
     logic [`XLEN-1:0]       PosInt;     // the positive integer input
+    logic [`XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
     logic [`LGLEN-1:0]      LzcIn;      // input to the Leading Zero Counter (priority encoder)
     logic [`NE:0]           CalcExp;    // the calculated expoent
-	logic [$clog2(`LGLEN):0] ShiftAmt;  // how much to shift by
+	logic [$clog2(`LGLEN)-1:0] ShiftAmt;  // how much to shift by
     logic [`LGLEN+`NF:0]    ShiftIn;    // number to be shifted
     logic                   ResDenormUf;// does the result underflow or is denormalized
     logic                   ResUf;      // does the result underflow
@@ -71,6 +72,7 @@ module fcvt (
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
+    logic [$clog2(`LGLEN)-1:0] ZeroCnt; // output from the LZC
 
 
     // seperate OpCtrl for code readability
@@ -91,18 +93,11 @@ module fcvt (
     ///////////////////////////////////////////////////////////////////////////
     // negation
     ///////////////////////////////////////////////////////////////////////////
-    // negate the input if the input is a negitive singed integer
-    //      - remove leading ones if the input is a unsigned 32-bit integer
-    //
-    //              Negitive input
-    //                      64-bit input : negate the input
-    //                      32-bit input : trim to 32-bits and negate the input
-    //              Positive input
-    //                      64-bit input : do nothing
-    //                      32-bit input : trim to 32-bits
+    // 1) negate the input if the input is a negitive singed integer
+    // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
-    assign PosInt = ResSgn ? Int64 ? -ForwardedSrcAE : {{`XLEN-32{1'b0}}, -ForwardedSrcAE[31:0]} : 
-                             Int64 ? ForwardedSrcAE : {{`XLEN-32{1'b0}}, ForwardedSrcAE[31:0]};
+    assign PosInt = ResSgn ? -ForwardedSrcAE : ForwardedSrcAE;
+    assign TrimInt = {{`XLEN-32{Int64}}, {32{1'b1}}} & PosInt;
 
     ///////////////////////////////////////////////////////////////////////////
     // lzc 
@@ -111,16 +106,10 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign LzcIn = IntToFp ? {PosInt, {`LGLEN-`XLEN{1'b0}}} :      // I->F
-                             {XManE[`NF-1:0], {`LGLEN-`NF{1'b0}}}; // F->F
+    assign LzcIn = IntToFp ? {TrimInt, {`LGLEN-`XLEN{1'b0}}} :
+                             {XManE[`NF-1:0], {`LGLEN-`NF{1'b0}}};
     
-    // lglen is the largest possible value of ZeroCnt (NF or XLEN) hence normcnt must be log2(lglen) bits
-	logic [$clog2(`LGLEN):0]	i, ZeroCnt;
-	always_comb begin
-			i = 0;
-			while (~LzcIn[`LGLEN-1-i] & i <= `LGLEN-1) i = i+1;  // search for leading one 
-			ZeroCnt = i;
-	end
+    lzc #(`LGLEN) lzc (.num(LzcIn), .ZeroCnt);
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -154,9 +143,9 @@ module fcvt (
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN):0]&{$clog2(`LGLEN)+1{~CalcExp[`NE]}} :
-                    ResDenormUf&~IntToFp ? ($clog2(`LGLEN)+1)'(`NF-1)+CalcExp[$clog2(`LGLEN):0] : 
-                              (ZeroCnt+1)&{$clog2(`LGLEN)+1{XOrigDenormE|IntToFp}};
+    assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN)-1:0]&{$clog2(`LGLEN){~CalcExp[`NE]}} :
+                    ResDenormUf&~IntToFp ? ($clog2(`LGLEN))'(`NF-1)+CalcExp[$clog2(`LGLEN)-1:0] : 
+                              (ZeroCnt+1)&{$clog2(`LGLEN){XOrigDenormE|IntToFp}};
     
     // shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
@@ -568,7 +557,7 @@ module fcvt (
     //      - do so if the result underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = (ResUf|(XZeroE&~IntToFp)|(~|PosInt&IntToFp));
+    assign KillRes = (ResUf|(XZeroE&~IntToFp)|(~|TrimInt&IntToFp));
 
     if (`FPSIZES == 1) begin        
         // IEEE sends a payload while Riscv says to send a canonical quiet NaN
