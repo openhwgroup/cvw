@@ -7,9 +7,14 @@ allClean: clean all
 
 build:
 	../../addins/embench-iot/build_all.py --builddir=bd_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S" --cflags="-nostartfiles" 
-	../../addins/embench-iot/build_all.py --builddir=bd_size --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostdlib" --cflags="-nostdlib" --dummy-libs="libgcc libm libc crt0"
+	find ../../addins/embench-iot/bd_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
+	../../addins/embench-iot/build_all.py --builddir=bd_size --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostdlib -nostartfiles" --cflags="-msave-restore" --dummy-libs="libgcc libm libc crt0"
 
-sim: size speed
+sim: modelSimBuild size speed
+
+modelSimBuild: objdump
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-elf2hex --bit-width 32 --input "$$f" --output "$$f.memfile"; done
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf.objdump" | while read f; do extractFunctionRadix.sh $$f; done
 
 size:
 	../../addins/embench-iot/benchmark_size.py --builddir=bd_size
@@ -18,10 +23,7 @@ speed:
 	../../addins/embench-iot/benchmark_speed.py --builddir=bd_speed --target-module run_wally --cpu-mhz=50
 
 objdump:
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/aha-mont64/aha-mont64 > ../../addins/embench-iot/bd_speed/src/aha-mont64/aha-mont64.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/cubic/cubic > ../../addins/embench-iot/bd_speed/src/cubic/cubic.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/md5sum/md5sum > ../../addins/embench-iot/bd_speed/src/md5sum/md5sum.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/statemate/statemate > ../../addins/embench-iot/bd_speed/src/statemate/statemate.objdump
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-objdump -S "$$f" > "$$f.objdump"; done
 
 clean: 
 	rm -rf ../../addins/embench-iot/bd_speed/
