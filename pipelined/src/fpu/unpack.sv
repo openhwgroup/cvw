@@ -96,9 +96,9 @@ module unpack (
 
         // extract the exponent, converting the smaller exponent into the larger precision if nessisary
         //      - if the original precision had a denormal number convert the exponent value 1
-        assign XExpE = FmtE ? X[`FLEN-2:`NF] : XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
-        assign YExpE = FmtE ? Y[`FLEN-2:`NF] : YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
-        assign ZExpE = FmtE ? Z[`FLEN-2:`NF] : ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
+        assign XExpE = FmtE ? X[`FLEN-2:`NF] : XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]}}, XLen1[`LEN1-3:`NF1]}; 
+        assign YExpE = FmtE ? Y[`FLEN-2:`NF] : YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]}}, YLen1[`LEN1-3:`NF1]}; 
+        assign ZExpE = FmtE ? Z[`FLEN-2:`NF] : ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]}}, ZLen1[`LEN1-3:`NF1]}; 
 
         // is the input (in it's original format) denormalized
         assign XOrigDenormE = FmtE ? 0 : ~|XLen1[`LEN1-2:`NF1] & ~XFracZero; 
@@ -257,9 +257,9 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
 
                     // convert the larger precision's exponent to use the largest precision's bias
-                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]&~XExpZero|XExpMaxE}}, XLen1[`LEN1-3:`NF1]}; 
-                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]&~YExpZero|YExpMaxE}}, YLen1[`LEN1-3:`NF1]}; 
-                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`LEN1-3:`NF1]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {XLen1[`LEN1-2], {`NE-`NE1{~XLen1[`LEN1-2]}}, XLen1[`LEN1-3:`NF1]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {YLen1[`LEN1-2], {`NE-`NE1{~YLen1[`LEN1-2]}}, YLen1[`LEN1-3:`NF1]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE1{1'b1}}, (`NE1-1)'(1)} : {ZLen1[`LEN1-2], {`NE-`NE1{~ZLen1[`LEN1-2]}}, ZLen1[`LEN1-3:`NF1]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen1[`NF1-1:0], (`NF-`NF1)'(0)};
@@ -282,9 +282,9 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
                     
                     // convert the smallest precision's exponent to use the largest precision's bias
-                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {XLen2[`LEN2-2], {`NE-`NE2{~XLen2[`LEN2-2]&~XExpZero|XExpMaxE}}, XLen2[`LEN2-3:`NF2]}; 
-                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {YLen2[`LEN2-2], {`NE-`NE2{~YLen2[`LEN2-2]&~YExpZero|YExpMaxE}}, YLen2[`LEN2-3:`NF2]}; 
-                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {ZLen2[`LEN2-2], {`NE-`NE2{~ZLen2[`LEN2-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`LEN2-3:`NF2]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {XLen2[`LEN2-2], {`NE-`NE2{~XLen2[`LEN2-2]}}, XLen2[`LEN2-3:`NF2]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {YLen2[`LEN2-2], {`NE-`NE2{~YLen2[`LEN2-2]}}, YLen2[`LEN2-3:`NF2]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {ZLen2[`LEN2-2], {`NE-`NE2{~ZLen2[`LEN2-2]}}, ZLen2[`LEN2-3:`NF2]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen2[`NF2-1:0], (`NF-`NF2)'(0)};
@@ -447,9 +447,9 @@ module unpack (
                     
                     // convert the double precsion exponent into quad precsion
 
-                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {XLen1[`D_LEN-2], {`Q_NE-`D_NE{~XLen1[`D_LEN-2]&~XExpZero|XExpMaxE}}, XLen1[`D_LEN-3:`D_NF]}; 
-                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {YLen1[`D_LEN-2], {`Q_NE-`D_NE{~YLen1[`D_LEN-2]&~YExpZero|YExpMaxE}}, YLen1[`D_LEN-3:`D_NF]}; 
-                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {ZLen1[`D_LEN-2], {`Q_NE-`D_NE{~ZLen1[`D_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen1[`D_LEN-3:`D_NF]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {XLen1[`D_LEN-2], {`Q_NE-`D_NE{~XLen1[`D_LEN-2]}}, XLen1[`D_LEN-3:`D_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {YLen1[`D_LEN-2], {`Q_NE-`D_NE{~YLen1[`D_LEN-2]}}, YLen1[`D_LEN-3:`D_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`D_NE{1'b1}}, (`D_NE-1)'(1)} : {ZLen1[`D_LEN-2], {`Q_NE-`D_NE{~ZLen1[`D_LEN-2]}}, ZLen1[`D_LEN-3:`D_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
@@ -471,9 +471,9 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
                     
                     // convert the single precsion exponent into quad precsion
-                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {XLen2[`S_LEN-2], {`Q_NE-`S_NE{~XLen2[`S_LEN-2]&~XExpZero|XExpMaxE}}, XLen2[`S_LEN-3:`S_NF]}; 
-                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {YLen2[`S_LEN-2], {`Q_NE-`S_NE{~YLen2[`S_LEN-2]&~YExpZero|YExpMaxE}}, YLen2[`S_LEN-3:`S_NF]}; 
-                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {ZLen2[`S_LEN-2], {`Q_NE-`S_NE{~ZLen2[`S_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen2[`S_LEN-3:`S_NF]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {XLen2[`S_LEN-2], {`Q_NE-`S_NE{~XLen2[`S_LEN-2]}}, XLen2[`S_LEN-3:`S_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {YLen2[`S_LEN-2], {`Q_NE-`S_NE{~YLen2[`S_LEN-2]}}, YLen2[`S_LEN-3:`S_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`S_NE{1'b1}}, (`S_NE-1)'(1)} : {ZLen2[`S_LEN-2], {`Q_NE-`S_NE{~ZLen2[`S_LEN-2]}}, ZLen2[`S_LEN-3:`S_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
@@ -495,9 +495,9 @@ module unpack (
                     // also need to take into account possible zero/denorm/inf/NaN values
 
                     // convert the half precsion exponent into quad precsion
-                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {XLen3[`H_LEN-2], {`Q_NE-`H_NE{~XLen3[`H_LEN-2]&~XExpZero|XExpMaxE}}, XLen3[`H_LEN-3:`H_NF]}; 
-                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {YLen3[`H_LEN-2], {`Q_NE-`H_NE{~YLen3[`H_LEN-2]&~YExpZero|YExpMaxE}}, YLen3[`H_LEN-3:`H_NF]}; 
-                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {ZLen3[`H_LEN-2], {`Q_NE-`H_NE{~ZLen3[`H_LEN-2]&~ZExpZero|ZExpMaxE}}, ZLen3[`H_LEN-3:`H_NF]}; 
+                    XExpE = XOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {XLen3[`H_LEN-2], {`Q_NE-`H_NE{~XLen3[`H_LEN-2]}}, XLen3[`H_LEN-3:`H_NF]}; 
+                    YExpE = YOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {YLen3[`H_LEN-2], {`Q_NE-`H_NE{~YLen3[`H_LEN-2]}}, YLen3[`H_LEN-3:`H_NF]}; 
+                    ZExpE = ZOrigDenormE ? {1'b0, {`Q_NE-`H_NE{1'b1}}, (`H_NE-1)'(1)} : {ZLen3[`H_LEN-2], {`Q_NE-`H_NE{~ZLen3[`H_LEN-2]}}, ZLen3[`H_LEN-3:`H_NF]}; 
 
                     // extract the fraction and add the nessesary trailing zeros
                     XFracE = {XLen3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};

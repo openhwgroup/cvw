@@ -587,7 +587,7 @@ module normalize(
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
-    //*** insert bias-bias simplification in fcvt.sv/phone pictures/ whiteboard... if still there
+    //*** insert bias-bias simplification in fcvt.sv/phone pictures
     // Determine if the sum is zero
     assign SumZero = ~(|SumM);
 
