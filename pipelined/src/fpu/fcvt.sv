@@ -11,7 +11,7 @@ module fcvt (
     input logic [2:0]       FOpCtrlE,       // choose which opperation (look below for values)
     input logic             FWriteIntE,     // is fp->int (since it's writting to the integer register)
     input logic             XZeroE,         // is the input zero
-    input logic             XOrigDenormE,   // is the input denormalized
+    input logic             XDenormE,   // is the input denormalized
     input logic             XInfE,          // is the input infinity
     input logic             XNaNE,          // is the input a NaN
     input logic             XSNaNE,         // is the input a signaling NaN
@@ -145,7 +145,7 @@ module fcvt (
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
     assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN)-1:0]&{$clog2(`LGLEN){~CalcExp[`NE]}} :
                     ResDenormUf&~IntToFp ? ($clog2(`LGLEN))'(`NF-1)+CalcExp[$clog2(`LGLEN)-1:0] : 
-                              (ZeroCnt+1)&{$clog2(`LGLEN){XOrigDenormE|IntToFp}};
+                              (ZeroCnt+1)&{$clog2(`LGLEN){XDenormE|IntToFp}};
     
     // shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
@@ -261,7 +261,7 @@ module fcvt (
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
     //          
-    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XOrigDenormE|IntToFp} - {{`NE-$clog2(`LGLEN)+1{1'b0}}, (ZeroCnt&{$clog2(`LGLEN){XOrigDenormE|IntToFp}})};
+    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-$clog2(`LGLEN)+1{1'b0}}, (ZeroCnt&{$clog2(`LGLEN){XDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
