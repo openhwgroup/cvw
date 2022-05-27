@@ -111,13 +111,13 @@ module ahblite (
             else if (LSUBusWrite)NextBusState = MEMWRITE;
             else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
-      MEMREAD: if (~HREADY)        NextBusState = MEMREAD;
-            else if (IFUBusRead)   NextBusState = INSTRREAD;
+      MEMREAD: if (~LSUBurstDone)        NextBusState = MEMREAD;
+            else if (IFUBusRead & LSUBurstDone)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
-      MEMWRITE: if (~HREADY)       NextBusState = MEMWRITE;
-            else if (IFUBusRead)   NextBusState = INSTRREAD;
+      MEMWRITE: if (~LSUBurstDone)       NextBusState = MEMWRITE;
+            else if (IFUBusRead & LSUBurstDone)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
-      INSTRREAD: if (~HREADY)      NextBusState = INSTRREAD;
+      INSTRREAD: if (~IFUBurstDone)      NextBusState = INSTRREAD; // *** think about moving to memread/write if LSUBusRead/Write are high
             else                   NextBusState = IDLE;  // if (IFUBusRead still high) *** need to wait?
       default:                     NextBusState = IDLE;
     endcase
@@ -129,7 +129,7 @@ module ahblite (
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
-  assign HBURST = (GrantData) ? LSUBurstType : IFUBurstType;
+  assign HBURST = (GrantData) ? LSUBurstType : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
 
   /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
         000: Single (SINGLE)
@@ -145,7 +145,7 @@ module ahblite (
 
 
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = (NextBusState != IDLE) ? 2'b10 : 2'b00; // NONSEQ if reading or writing, IDLE otherwise
+  assign HTRANS = [SIGNAL TO SET SEQ] ? 2'b11 : (NextBusState != IDLE) ? 2'b10 : 2'b00; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = NextBusState == MEMWRITE;
   // delay write data by one cycle for
@@ -161,7 +161,7 @@ module ahblite (
  
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
-  assign IFUBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD);
-  assign LSUBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE);
+  assign IFUBusAck = HREADY & (BusState == INSTRREAD);
+  assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
 
 endmodule
