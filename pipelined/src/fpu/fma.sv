@@ -114,7 +114,6 @@ module fma1(
     output logic [$clog2(3*`NF+7)-1:0]          NormCntE        // normalization shift cnt
     );
 
-    logic [`NE-1:0]     Denorm;             // value of a denormaized number based on precision
     logic [2*`NF+1:0]   ProdManE;           // 1.X frac * 1.Y frac in U(2.2Nf) format
     logic [3*`NF+5:0]   AlignedAddendE;     // Z aligned for addition in U(NF+5.2NF+1)
     logic [3*`NF+6:0]   AlignedAddendInv;   // aligned addend possibly inverted
@@ -131,7 +130,7 @@ module fma1(
 
    // calculate the product's exponent 
     expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE,
-                    .Denorm, .ProdExpE);
+                 .ProdExpE);
 
     // multiplication of the mantissa's
     mult mult(.XManE, .YManE, .ProdManE);
@@ -140,7 +139,7 @@ module fma1(
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
 
-    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .ProdExpE, .Denorm, .XExpE, .YExpE,
+    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .ProdExpE, .XExpE, .YExpE,
                         .AlignedAddendE, .AddendStickyE, .KillProdE);
                         
     // calculate the signs and take the opperation into account
@@ -165,42 +164,8 @@ module expadd(
     input  logic [`FPSIZES/3:0] FmtE,          // precision
     input  logic [`NE-1:0]      XExpE, YExpE,  // input exponents
     input  logic                XZeroE, YZeroE,        // are the inputs zero
-    output logic [`NE-1:0]      Denorm,        // value of denormalized exponent
     output logic [`NE+1:0]      ProdExpE       // product's exponent B^(1023)NE+2
 );
-
-
-    // denormalized numbers have diffrent values depending on which precison it is.
-    //      FLEN - 1
-    //      Other - BIAS - other bias + 1
-    
-    if (`FPSIZES == 1) begin
-        assign Denorm = 1;
-
-    end else if (`FPSIZES == 2) begin
-        assign Denorm = FmtE ? (`NE)'(1) : (`NE)'(`BIAS)-(`NE)'(`BIAS1)+(`NE)'(1);
-
-    end else if (`FPSIZES == 3) begin
-        always_comb begin
-            case (FmtE)
-                `FMT: Denorm = 1;
-                `FMT1: Denorm = `BIAS-`BIAS1+1;
-                `FMT2: Denorm = `BIAS-`BIAS2+1;
-                default: Denorm = 1'bx;
-            endcase
-        end
-
-    end else if (`FPSIZES == 4) begin
-        always_comb begin
-            case (FmtE)
-                2'h3: Denorm = 1;
-                2'h1: Denorm = `BIAS-`D_BIAS+1;
-                2'h0: Denorm = `BIAS-`S_BIAS+1;
-                2'h2: Denorm = `BIAS-`H_BIAS+1;
-            endcase
-        end
-
-    end
 
     // kill the exponent if the product is zero - either X or Y is 0
     assign ProdExpE = ({2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZeroE|YZeroE)}};
@@ -254,7 +219,6 @@ module align(
     input logic  [`NF:0]        ZManE,      // fractions in U(0.NF) format]
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
     input logic  [`NE+1:0]      ProdExpE,       // the product's exponent
-    input logic  [`NE-1:0]      Denorm,         // the biased value of a denormalized number
     output logic [3*`NF+5:0]    AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
     output logic                AddendStickyE,  // Sticky bit calculated from the aliged addend
     output logic                KillProdE       // should the product be set to zero
