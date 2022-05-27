@@ -465,7 +465,7 @@ module fma2(
     logic               ResultSgn, ResultSgnTmp;  // Result sign
     logic [`NE+1:0]     SumExp;     // exponent of the normalized sum
     logic [`NE+1:0]     FullResultExp;  // ResultExp with bits to determine sign and overflow
-    logic [`NF+2:0]     NormSum;        // normalized sum
+    logic [`NF+1:0]     NormSum;        // normalized sum
     logic               NormSumSticky;  // sticky bit calulated from the normalized sum
     logic               SumZero;        // is the sum zero
     logic               ResultDenorm;   // is the result denormalized
@@ -582,7 +582,7 @@ module normalize(
     input logic                         KillProdM,  // is the product set to zero
     input logic 			            ZOrigDenormM,
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
-    output logic [`NF+2:0]              NormSum,        // normalized sum
+    output logic [`NF+1:0]              NormSum,        // normalized sum
     output logic                        SumZero,        // is the sum zero
     output logic                        NormSumSticky, UfSticky,    // sticky bits
     output logic [`NE+1:0]              SumExp,         // exponent of the normalized sum
@@ -707,27 +707,27 @@ module normalize(
     assign LZAPlus2 = SumShifted[3*`NF+8];
 	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
     assign CorrSumShifted =  LZAPlus1 ? SumShifted[3*`NF+6:1] : SumShifted[3*`NF+5:0];
-    assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+3];
+    assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+4];
 
     // Calculate the sticky bit
     if (`FPSIZES == 1) begin
-        assign NormSumSticky = |CorrSumShifted[2*`NF+2:0];
+        assign NormSumSticky = |CorrSumShifted[2*`NF+3:0];
 
     end else if (`FPSIZES == 2) begin
         // 3*NF+5 - NF1 - 3
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`NF1:2*`NF+3]&~FmtM);
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`NF1:2*`NF+4]&~FmtM);
 
     end else if (`FPSIZES == 3) begin
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`NF1:2*`NF+3]&((FmtM==`FMT1)|(FmtM==`FMT2))) | 
-        (|CorrSumShifted[3*`NF+2-`NF2:3*`NF+3-`NF1]&(FmtM==`FMT2));
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`NF1:2*`NF+4]&((FmtM==`FMT1)|(FmtM==`FMT2))) | 
+        (|CorrSumShifted[3*`NF+3-`NF2:3*`NF+4-`NF1]&(FmtM==`FMT2));
 
     end else if (`FPSIZES == 4) begin        
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`D_NF:2*`NF+3]&((FmtM==1)|(FmtM==0)|(FmtM==2))) | 
-        (|CorrSumShifted[3*`NF+2-`S_NF:3*`NF+3-`D_NF]&((FmtM==0)|(FmtM==2))) |
-        (|CorrSumShifted[3*`NF+2-`H_NF:3*`NF+3-`S_NF]&(FmtM==2));
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`D_NF:2*`NF+4]&((FmtM==1)|(FmtM==0)|(FmtM==2))) | 
+        (|CorrSumShifted[3*`NF+3-`S_NF:3*`NF+4-`D_NF]&((FmtM==0)|(FmtM==2))) |
+        (|CorrSumShifted[3*`NF+3-`H_NF:3*`NF+4-`S_NF]&(FmtM==2));
 
     end
 
@@ -745,7 +745,7 @@ module fmaround(
     input logic  [`FPSIZES/3:0] FmtM,       // precision 1 = double 0 = single
     input logic  [2:0]          FrmM,       // rounding mode
     input logic                 UfSticky,   // sticky bit for underlow calculation
-    input logic  [`NF+2:0]      NormSum,    // normalized sum
+    input logic  [`NF+1:0]      NormSum,    // normalized sum
     input logic                 AddendStickyM,  // addend's sticky bit
     input logic                 NormSumSticky,  // normalized sum's sticky bit
     input logic                 ZZeroM,         // is Z zero
@@ -799,83 +799,53 @@ module fmaround(
 
     if (`FPSIZES == 1) begin
         // determine guard, round, and least significant bit of the result
-        assign Guard = NormSum[2];
         assign Round = NormSum[1];
-        assign LSBNormSum = NormSum[3];
+        assign LSBNormSum = NormSum[2];
 
         // used to determine underflow flag
-        assign UfGuard = NormSum[1];
         assign UfRound = NormSum[0];
-        assign UfLSBNormSum = NormSum[2];
-
-        // determine sticky
-        assign Sticky = UfSticky | NormSum[0];
 
     end else if (`FPSIZES == 2) begin
         //         \/-------------NF---------------,
-        //      |      NF1       | 3 |             |
+        //      |      NF1       | 2 |             |
         //          '-------NF1------^
 
         // determine guard, round, and least significant bit of the result
-        assign Guard = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
         assign Round = FmtM ? NormSum[1] : NormSum[`NF-`NF1+1];
-        assign LSBNormSum = FmtM ? NormSum[3] : NormSum[`NF-`NF1+3];
+        assign LSBNormSum = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
 
         // used to determine underflow flag
-        assign UfGuard = FmtM ? NormSum[1] : NormSum[`NF-`NF1+1];
         assign UfRound = FmtM ? NormSum[0] : NormSum[`NF-`NF1];
-        assign UfLSBNormSum = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
 
-        // determine sticky
-        assign Sticky = UfSticky | (FmtM ? NormSum[0] : NormSum[`NF-`NF1]);
 
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtM)
                 `FMT: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[2];
                     Round = NormSum[1];
-                    LSBNormSum = NormSum[3];
+                    LSBNormSum = NormSum[2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[1];
                     UfRound = NormSum[0];
-                    UfLSBNormSum = NormSum[2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[0];
                 end
                 `FMT1: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`NF1+2];
                     Round = NormSum[`NF-`NF1+1];
-                    LSBNormSum = NormSum[`NF-`NF1+3];
+                    LSBNormSum = NormSum[`NF-`NF1+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`NF1+1];
                     UfRound = NormSum[`NF-`NF1];
-                    UfLSBNormSum = NormSum[`NF-`NF1+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`NF1];
                 end
                 `FMT2: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`NF2+2];
                     Round = NormSum[`NF-`NF2+1];
-                    LSBNormSum = NormSum[`NF-`NF2+3];
+                    LSBNormSum = NormSum[`NF-`NF2+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`NF2+1];
                     UfRound = NormSum[`NF-`NF2];
-                    UfLSBNormSum = NormSum[`NF-`NF2+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`NF2];
                 end
                 default: begin
-                    Guard = 1'bx;
                     Round = 1'bx;
                     LSBNormSum = 1'bx;
-                    UfGuard = 1'bx;
                     UfRound = 1'bx;
-                    UfLSBNormSum = 1'bx;
-                    Sticky = 1'bx;
                 end
             endcase
         end
@@ -885,56 +855,40 @@ module fmaround(
             case (FmtM)
                 2'h3: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[2];
                     Round = NormSum[1];
-                    LSBNormSum = NormSum[3];
+                    LSBNormSum = NormSum[2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[1];
                     UfRound = NormSum[0];
-                    UfLSBNormSum = NormSum[2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[0];
                 end
                 2'h1: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`D_NF+2];
                     Round = NormSum[`NF-`D_NF+1];
-                    LSBNormSum = NormSum[`NF-`D_NF+3];
+                    LSBNormSum = NormSum[`NF-`D_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`D_NF+1];
                     UfRound = NormSum[`NF-`D_NF];
-                    UfLSBNormSum = NormSum[`NF-`D_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`D_NF];
                 end
                 2'h0: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`S_NF+2];
                     Round = NormSum[`NF-`S_NF+1];
-                    LSBNormSum = NormSum[`NF-`S_NF+3];
+                    LSBNormSum = NormSum[`NF-`S_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`S_NF+1];
                     UfRound = NormSum[`NF-`S_NF];
-                    UfLSBNormSum = NormSum[`NF-`S_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`S_NF];
                 end
                 2'h2: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`H_NF+2];
                     Round = NormSum[`NF-`H_NF+1];
-                    LSBNormSum = NormSum[`NF-`H_NF+3];
+                    LSBNormSum = NormSum[`NF-`H_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`H_NF+1];
                     UfRound = NormSum[`NF-`H_NF];
-                    UfLSBNormSum = NormSum[`NF-`H_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`H_NF];
                 end
             endcase
         end
 
     end
+    // used to determine underflow flag
+    assign UfLSBNormSum = Round;
+    // determine sticky
+    assign Sticky = UfSticky | UfRound;
 
 
     // Deterimine if a small number was supposed to be subtrated
@@ -944,28 +898,28 @@ module fmaround(
     always_comb begin
         // Determine if you add 1
         case (FrmM)
-            3'b000: CalcPlus1 = Guard & (Round | ((Sticky)&~(~Round&SubBySmallNum)) | (~Round&~(Sticky)&LSBNormSum&~SubBySmallNum));//round to nearest even
+            3'b000: CalcPlus1 = Round & ((Sticky| LSBNormSum)&~SubBySmallNum);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
-            3'b010: CalcPlus1 = ResultSgnTmp & ~(SubBySmallNum & ~Guard & ~Round);//round down
-            3'b011: CalcPlus1 = ~ResultSgnTmp & ~(SubBySmallNum & ~Guard & ~Round);//round up
-            3'b100: CalcPlus1 = (Guard & (Round | ((Sticky)&~(~Round&SubBySmallNum)) | (~Round&~(Sticky)&~SubBySmallNum)));//round to nearest max magnitude
+            3'b010: CalcPlus1 = ResultSgnTmp & ~(SubBySmallNum & ~Round);//round down
+            3'b011: CalcPlus1 = ~ResultSgnTmp & ~(SubBySmallNum & ~Round);//round up
+            3'b100: CalcPlus1 = Round & ~SubBySmallNum;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
         case (FrmM)
-            3'b000: UfCalcPlus1 = UfGuard & (UfRound | (UfSticky&UfRound|~UfSubBySmallNum) | (~Sticky&UfLSBNormSum&~UfSubBySmallNum));//round to nearest even
+            3'b000: UfCalcPlus1 = UfRound & ((UfSticky| UfLSBNormSum)&~UfSubBySmallNum);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
-            3'b010: UfCalcPlus1 = ResultSgnTmp & ~(UfSubBySmallNum & ~UfGuard & ~UfRound);//round down
-            3'b011: UfCalcPlus1 = ~ResultSgnTmp & ~(UfSubBySmallNum & ~UfGuard & ~UfRound);//round up
-            3'b100: UfCalcPlus1 = (UfGuard & (UfRound | (UfSticky&~(~UfRound&UfSubBySmallNum)) | (~Sticky&~UfSubBySmallNum)));//round to nearest max magnitude
+            3'b010: UfCalcPlus1 = ResultSgnTmp & ~(UfSubBySmallNum & ~UfRound);//round down
+            3'b011: UfCalcPlus1 = ~ResultSgnTmp & ~(UfSubBySmallNum & ~UfRound);//round up
+            3'b100: UfCalcPlus1 = UfRound & ~UfSubBySmallNum;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
         endcase
         // Determine if you subtract 1
         case (FrmM)
             3'b000: CalcMinus1 = 0;//round to nearest even
-            3'b001: CalcMinus1 = SubBySmallNum & ~Guard & ~Round;//round to zero
-            3'b010: CalcMinus1 = ~ResultSgnTmp & ~Guard & ~Round & SubBySmallNum;//round down
-            3'b011: CalcMinus1 = ResultSgnTmp & ~Guard & ~Round & SubBySmallNum;//round up
+            3'b001: CalcMinus1 = SubBySmallNum & ~Round;//round to zero
+            3'b010: CalcMinus1 = ~ResultSgnTmp & ~Round & SubBySmallNum;//round down
+            3'b011: CalcMinus1 = ResultSgnTmp & ~Round & SubBySmallNum;//round up
             3'b100: CalcMinus1 = 0;//round to nearest max magnitude
             default: CalcMinus1 = 1'bx;
         endcase
@@ -973,9 +927,9 @@ module fmaround(
     end
 
     // If an answer is exact don't round
-    assign Plus1 = CalcPlus1 & (Sticky | Guard | Round);
-    assign UfPlus1 = UfCalcPlus1 & (Sticky | UfGuard);//UfRound is part of sticky
-    assign Minus1 = CalcMinus1 & (Sticky | Guard | Round);
+    assign Plus1 = CalcPlus1 & (Sticky | Round);
+    assign UfPlus1 = UfCalcPlus1 & (Sticky | UfRound);//UfRound is part of sticky
+    assign Minus1 = CalcMinus1 & (Sticky | Round);
 
     // Compute rounded result
     if (`FPSIZES == 1) begin
@@ -1011,7 +965,7 @@ module fmaround(
 
     end
 
-    assign NormSumTruncated = NormSum[`NF+2:3];
+    assign NormSumTruncated = NormSum[`NF+1:2];
     assign {FullResultExp, ResultFrac} = {SumExp, NormSumTruncated} + RoundAdd;
     assign ResultExp = FullResultExp[`NE-1:0];
 
@@ -1083,12 +1037,12 @@ module fmaflags(
     // Set Underflow flag if the number is too small to be represented in normal numbers
     //      - Don't set the underflow flag if the result is exact
 
-    assign Underflow = (SumExp[`NE+1] | ((SumExp == 0) & (Round|Guard|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign Underflow = (SumExp[`NE+1] | ((SumExp == 0) & (Round|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
     //                      exp is negitive         result is denorm        exp was denorm but rounded to norm and if given an unbounded exponent it would stay denormal
-    assign UnderflowFlag = (FullResultExp[`NE+1] | ((FullResultExp == 0) | ((FullResultExp == 1) & (SumExp == 0) & ~(UfPlus1&UfLSBNormSum)))&(Round|Guard|Sticky))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign UnderflowFlag = (FullResultExp[`NE+1] | ((FullResultExp == 0) | ((FullResultExp == 1) & (SumExp == 0) & ~(UfPlus1&UfLSBNormSum)))&(Round|Sticky))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
     // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed result isn't outputed
-    assign Inexact = (Sticky|Overflow|Guard|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign Inexact = (Sticky|Overflow|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
     // Combine flags
     //      - FMA can't set the Divide by zero flag
