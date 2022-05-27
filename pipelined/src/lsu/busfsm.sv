@@ -132,8 +132,8 @@ module busfsm #(parameter integer   WordCountThreshold,
     endcase // This block might be better in the FSM. WordCountThreshold is WordsPerLine
   end
 
-  assign LSUBurstType = (UnCachedAccess) ? LocalBurstType : '0; // Don't want to use burst when doing an Uncached Access
-  assign LSUBurstDone = WordCountFlag;
+  assign LSUBurstType = (UnCachedAccess) ? 3'b0 : LocalBurstType ; // Don't want to use burst when doing an Uncached Access
+  assign LSUBurstDone = (UnCachedAccess) ? LSUBusAck : WordCountFlag & LSUBusAck;
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
