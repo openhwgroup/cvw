@@ -5,6 +5,7 @@ from operator import index
 import subprocess
 import csv
 import re
+from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import matplotlib.axes as axes
@@ -29,7 +30,7 @@ def synthsintocsv():
     ''' writes a CSV with one line for every available synthesis
         each line contains the module, tech, width, target freq, and resulting metrics
     '''
-    
+    print("This takes a moment...")
     bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
     output = subprocess.check_output(['bash','-c', bashCommand])
     allSynths = output.decode("utf-8").split('\n')[:-1]
@@ -91,7 +92,7 @@ def cleanup():
 def getVals(tech, module, var, freq=None):
     ''' for a specified tech, module, and variable/metric
         returns a list of values for that metric in ascending width order with the appropriate units
-        works at a specified target frequency or if none is given, uses the synthesis with the min delay for each width
+        works at a specified target frequency or if none is given, uses the synthesis with the best achievable delay for each width
     '''
     
     if (var == 'delay'):
@@ -101,11 +102,12 @@ def getVals(tech, module, var, freq=None):
     elif (var == 'lpower'):
         units = " (nW)"
     elif (var == 'denergy'):
-        units = " (pJ)"
+        units = " (nJ)"
 
     global widths
     metric = []
     widthL = []
+
     if (freq != None):
         for oneSynth in allSynths:
             if (oneSynth.freq == freq) & (oneSynth.tech == tech) & (oneSynth.module == module):
@@ -118,7 +120,7 @@ def getVals(tech, module, var, freq=None):
             m = 100000 # large number to start
             for oneSynth in allSynths:
                 if (oneSynth.width == w) & (oneSynth.tech == tech) & (oneSynth.module == module):
-                    if (oneSynth.delay < m): 
+                    if (oneSynth.delay < m) & (1000/oneSynth.delay > oneSynth.freq): 
                         m = oneSynth.delay
                         osdict = oneSynth._asdict()
                         met = osdict[var]
@@ -127,6 +129,8 @@ def getVals(tech, module, var, freq=None):
 
     if ('flop' in module) & (var == 'area'):
         metric = [m/2 for m in metric] # since two flops in each module 
+    if (var == 'denergy'):
+        metric = [m*1000 for m in metric] # more practical units for regression coefs
 
     return metric, units
 
@@ -177,9 +181,20 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
     fullLeg = []
     global techcolors
     global widths
+
+    metrics = ['delay', 'area', 'lpower', 'denergy']
+    ind1 = metrics.index(var)
+    techs = ['sky90', 'gf32', 'tsmc28']
+    global norms
+
     for combo in techcolors:
         tech, c, m = combo
         metric, units = getVals(tech, module, var, freq=freq)
+
+        ind2 = techs.index(tech)
+        norm = norms[ind1][ind2]
+        metric = [m/norm for m in metric] # comment out to not normalize
+
         if len(metric) == 5:
             xp, pred, leg = regress(widths, metric, combo, fits)
             fullLeg += leg
@@ -191,10 +206,13 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn'):
 
     ax.set_xticks(widths)
     ax.set_xlabel("Width (bits)")
-    ax.set_ylabel(str.title(var) + units)
+
+    ylabeldic = {"lpower": "Leakage Power", "denergy": "Dynamic Energy", "area": "Area", "delay": "Delay"}
+
+    ax.set_ylabel(ylabeldic[var] + units)
 
     if singlePlot:
-        titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best delay)"
+        titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
         ax.set_title(module + titleStr)
         plt.show()
 
@@ -343,30 +361,68 @@ def squareAreaDelay(tech, mod, width):
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
 
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
+    f, (ax1) = plt.subplots(1, 1)
+    ax2 = ax1.twinx()
 
     for ind in [0,1]:
         areas = areasL[ind]
         delays = delaysL[ind]
-        freqs = freqsL[ind]
-
+        targets = freqsL[ind]
+        targets = [1000/f for f in targets]
+        
         if ('flop' in mod): areas = [m/2 for m in areas] # since two flops in each module
-        freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
+        targets, delays, areas = noOutliers(targets, delays, areas) # comment out to see all 
+        
+        if not ind:
+            achievedDelays = delays
 
         c = 'blue' if ind else 'green'
-        plt.scatter(delays, areas, color=c)
-
-    legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
-                       lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
-
-    plt.legend(handles=legend_elements)
+        ax1.scatter(targets, delays, marker='^', color=c)
+        ax2.scatter(targets, areas, marker='s', color=c)
     
-    plt.xlabel("Delay Achieved (ns)")
-    plt.ylabel('Area (sq microns)')
-    plt.title(mod + '_' + str(width))
-    ax.set_aspect(1./ax.get_data_ratio())
+    bestAchieved = min(achievedDelays)
+        
+    legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='^', label='delay (timing achieved)'),
+                       lines.Line2D([0], [0], color='green', ls='', marker='s', label='area (timing achieved)'),
+                       lines.Line2D([0], [0], color='blue', ls='', marker='^', label='delay (timing violated)'),
+                       lines.Line2D([0], [0], color='blue', ls='', marker='s', label='area (timing violated)')]
+
+    ax2.legend(handles=legend_elements, loc='upper left')
+    
+    ax1.set_xlabel("Delay Targeted (ns)")
+    ax1.set_ylabel("Delay Achieved (ns)")
+    ax2.set_ylabel('Area (sq microns)')
+    ax1.set_title(mod + '_' + str(width))
+
+    squarify(f)
+
+    xvals = np.array(ax1.get_xlim())
+    frac = (min(flatten(delaysL))-xvals[0])/(xvals[1]-xvals[0])
+    areaLowerLim = min(flatten(areasL))-100
+    areaUpperLim = max(flatten(areasL))/frac + areaLowerLim
+    ax2.set_ylim([areaLowerLim, areaUpperLim])
+    ax1.plot(xvals, xvals, ls="--", c=".3")
+    ax1.hlines(y=bestAchieved, xmin=xvals[0], xmax=xvals[1], color="black", ls='--')
+
     plt.show()
+
+def squarify(fig):
+    ''' helper function for squareAreaDelay()
+        forces matplotlib figure to be a square
+    '''
+    w, h = fig.get_size_inches()
+    if w > h:
+        t = fig.subplotpars.top
+        b = fig.subplotpars.bottom
+        axs = h*(t-b)
+        l = (1.-axs/w)/2
+        fig.subplots_adjust(left=l, right=1-l)
+    else:
+        t = fig.subplotpars.right
+        b = fig.subplotpars.left
+        axs = w*(t-b)
+        l = (1.-axs/h)/2
+        fig.subplots_adjust(bottom=l, top=1-l)
 
 def adprodpow(areas, delays, pow):
     ''' for each value in [areas] returns area*delay^pow
@@ -380,15 +436,15 @@ def adprodpow(areas, delays, pow):
 
 def plotPPA(mod, freq=None):
     ''' for the module specified, plots width vs delay, area, leakage power, and dynamic energy with fits
-        if no freq specified, uses the synthesis with min delay for each width
+        if no freq specified, uses the synthesis with best achievable delay for each width
         overlays data from both techs
     '''
     fig, axs = plt.subplots(2, 2)
     oneMetricPlot(mod, 'delay', ax=axs[0,0], fits='cg', freq=freq)
-    oneMetricPlot(mod, 'area', ax=axs[0,1], fits='s', freq=freq)
-    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='s', freq=freq)
-    oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits='s', freq=freq)
-    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best delay)"
+    oneMetricPlot(mod, 'area', ax=axs[0,1], fits='cl', freq=freq)
+    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits='cl', freq=freq)
+    oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits='cl', freq=freq)
+    titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
     plt.suptitle(mod + titleStr)
     plt.show()
     
@@ -398,13 +454,16 @@ if __name__ == '__main__':
     Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
     techcolors = [['sky90', 'green', 'o'], ['tsmc28', 'blue', '^']] # add another list here for gf32
     widths = [8, 16, 32, 64, 128]
+    norms = [[43.2, 15, 12.2], [1.96, .351, .252], [1.98, .3116, 1.09], [1, 1, 1]] # [sky, gf, tsmc][fo4, invx1area, leakage, energy]
 
     # synthsintocsv() # slow, run only when new synth runs to add to csv
   
     synthsfromcsv('ppaData.csv') # your csv here!
 
     ### examples
-    # oneMetricPlot('add', 'delay')
-    # freqPlot('sky90', 'comparator', 16)
-    # plotPPA('add')
-    squareAreaDelay('sky90', 'comparator', 16)
+    # freqPlot('tsmc28', 'add', 16)
+    squareAreaDelay('sky90', 'add', 32)
+    squareAreaDelay('sky90', 'mult', 32)
+    squareAreaDelay('sky90', 'comparator', 32)
+    plotPPA('add')
+    plotPPA('comparator')
