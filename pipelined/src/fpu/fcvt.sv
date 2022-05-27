@@ -17,9 +17,9 @@ module fcvt (
     input logic             XSNaNE,         // is the input a signaling NaN
     input logic [2:0]       FrmE,           // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic [`FPSIZES/3:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
-    output logic [`FLEN-1:0] CvtResE,       // the fp to fp conversion's result
-    output logic [`XLEN-1:0] CvtIntResE,    // the fp to fp conversion's result
-    output logic [4:0]      CvtFlgE         // the fp to fp conversion's flags
+    output logic [`FLEN-1:0] CvtResE,       // the fp conversion result
+    output logic [`XLEN-1:0] CvtIntResE,    // the int conversion result
+    output logic [4:0]      CvtFlgE         // the conversion's flags
     );
 
     // OpCtrls:
@@ -261,7 +261,7 @@ module fcvt (
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
     //          
-    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XOrigDenormE|IntToFp} - {{`NE-$clog2(`LGLEN){1'b0}}, (ZeroCnt&{$clog2(`LGLEN)+1{XOrigDenormE|IntToFp}})};
+    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XOrigDenormE|IntToFp} - {{`NE-$clog2(`LGLEN)+1{1'b0}}, (ZeroCnt&{$clog2(`LGLEN){XOrigDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
@@ -744,7 +744,7 @@ module fcvt (
                         NaNRes = {{`Q_LEN-`H_LEN{1'b1}}, 1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}};
                     end
                     // determine the infinity result
-                    //      - if the input was infinity or rounding mode RZ, RU, RD (and not rounding the value) then output the maximum normalized floating point number with the correct sign
+                    //      - if the input overflows in rounding mode RZ, RU, RD (and not rounding the value) then output the maximum normalized floating point number with the correct sign
                     //      - otherwise: output infinity with the correct sign
                     //      - kill the infinity singal if the input isn't fp
                     InfRes = (~XInfE|IntToFp)&((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~ResSgn) | (FrmE[1:0]==2'b11&ResSgn)) ? {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};

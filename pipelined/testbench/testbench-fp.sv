@@ -1174,13 +1174,13 @@ end
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       $stop;
     end
-
+    
     // TestFloat sets the result to all 1's when there is an invalid result, however in 
     // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
     // for an unsigned integer result 0 is also okay
@@ -1470,7 +1470,7 @@ module readvectors (
             Ans = TestVector[8];
           end
           2'b10:	begin	  // half
-            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+3*(`H_LEN)-1:12+(`H_LEN)]};
+            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+2*(`H_LEN)-1:12+(`H_LEN)]};
             Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+(`H_LEN)-1:12]};
             Ans = TestVector[8];
           end
