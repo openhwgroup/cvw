@@ -237,6 +237,7 @@ module fpu (
    // select the result that may be written to the integer register - to IEU
    mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], 
                CvtResE[`XLEN-1:0], FIntResSelE, FIntResE);
+   // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok
 
    // E/M pipe registers
 
