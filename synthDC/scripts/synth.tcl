@@ -117,6 +117,10 @@ if {$tech == "sky130"} {
     } else {
 	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
+} elseif {$tech == "tsmc28"} {
+    if ($drive == "INV") {
+	set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
+    }
 }
 
 # Set input/output delay
@@ -131,6 +135,10 @@ if {$tech == "sky130"} {
 	set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
     } else {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+    }
+} elseif {$tech == "tsmc28"} {
+    if ($drive == "INV") {
+	set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     }
 }
 

@@ -8,3 +8,9 @@ testgen: testgen.c
 
 qst2: qst2.c
 	gcc qst2.c -lm -o qst2
+	gcc -lm -o testgen testgen.c
+	./testgen
+
+exptestgen: exptestgen.c
+	gcc -lm -o exptestgen exptestgen.c
+	./exptestgen

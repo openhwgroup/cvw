@@ -34,14 +34,14 @@
 `define LE_OPCTRL 3'b011
 `define LT_OPCTRL 3'b001
 `define EQ_OPCTRL 3'b010
-`define TO_UI_OPCTRL   3'b011
+`define TO_UI_OPCTRL   3'b000
 `define TO_I_OPCTRL    3'b001
-`define TO_UL_OPCTRL   3'b111
-`define TO_L_OPCTRL    3'b101
-`define FROM_UI_OPCTRL 3'b010
-`define FROM_I_OPCTRL  3'b000
+`define TO_UL_OPCTRL   3'b010
+`define TO_L_OPCTRL    3'b011
+`define FROM_UI_OPCTRL 3'b100
+`define FROM_I_OPCTRL  3'b101
 `define FROM_UL_OPCTRL 3'b110
-`define FROM_L_OPCTRL  3'b100
+`define FROM_L_OPCTRL  3'b111
 `define RNE 3'b000
 `define RZ  3'b001
 `define RU  3'b011
@@ -54,16 +54,6 @@
 `define CMPUNIT 4
 
 string f16rv32cvtint[] = '{
-	"f16_to_i32_rne.tv",
-	"f16_to_i32_rz.tv",
-	"f16_to_i32_ru.tv",
-	"f16_to_i32_rd.tv",
-	"f16_to_i32_rnm.tv",
-	"f16_to_ui32_rne.tv",
-	"f16_to_ui32_rz.tv",
-	"f16_to_ui32_ru.tv",
-	"f16_to_ui32_rd.tv",
-	"f16_to_ui32_rnm.tv",
 	"ui32_to_f16_rne.tv",
 	"ui32_to_f16_rz.tv",
 	"ui32_to_f16_ru.tv",
@@ -73,20 +63,20 @@ string f16rv32cvtint[] = '{
 	"i32_to_f16_rz.tv",
 	"i32_to_f16_ru.tv",
 	"i32_to_f16_rd.tv",
-	"i32_to_f16_rnm.tv"
+	"i32_to_f16_rnm.tv",
+	"f16_to_ui32_rne.tv",
+	"f16_to_ui32_rz.tv",
+	"f16_to_ui32_ru.tv",
+	"f16_to_ui32_rd.tv",
+	"f16_to_ui32_rnm.tv",
+	"f16_to_i32_rne.tv",
+	"f16_to_i32_rz.tv",
+	"f16_to_i32_ru.tv",
+	"f16_to_i32_rd.tv",
+	"f16_to_i32_rnm.tv"
 };
 
 string f16rv64cvtint[] = '{
-	"f16_to_ui64_rne.tv",
-	"f16_to_ui64_rz.tv",
-	"f16_to_ui64_ru.tv",
-	"f16_to_ui64_rd.tv",
-	"f16_to_ui64_rnm.tv",
-	"f16_to_i64_rne.tv",
-	"f16_to_i64_rz.tv",
-	"f16_to_i64_ru.tv",
-	"f16_to_i64_rd.tv",
-	"f16_to_i64_rnm.tv",
 	"ui64_to_f16_rne.tv",
 	"ui64_to_f16_rz.tv",
 	"ui64_to_f16_ru.tv",
@@ -96,7 +86,17 @@ string f16rv64cvtint[] = '{
 	"i64_to_f16_rz.tv",
 	"i64_to_f16_ru.tv",
 	"i64_to_f16_rd.tv",
-	"i64_to_f16_rnm.tv"
+	"i64_to_f16_rnm.tv",
+	"f16_to_ui64_rne.tv",
+	"f16_to_ui64_rz.tv",
+	"f16_to_ui64_ru.tv",
+	"f16_to_ui64_rd.tv",
+	"f16_to_ui64_rnm.tv",
+	"f16_to_i64_rne.tv",
+	"f16_to_i64_rz.tv",
+	"f16_to_i64_ru.tv",
+	"f16_to_i64_rd.tv",
+	"f16_to_i64_rnm.tv"
 };
 
 string f32rv32cvtint[] = '{
@@ -307,16 +307,16 @@ string f128f32cvt[] = '{
 
 
 string f128f64cvt[] = '{
-	"f64_to_f128_rne.tv",
-	"f64_to_f128_rz.tv",
-	"f64_to_f128_ru.tv",
-	"f64_to_f128_rd.tv",
-	"f64_to_f128_rnm.tv",
 	"f128_to_f64_rne.tv",
 	"f128_to_f64_rz.tv",
 	"f128_to_f64_ru.tv",
 	"f128_to_f64_rd.tv",
-	"f128_to_f64_rnm.tv"
+	"f128_to_f64_rnm.tv",
+	"f64_to_f128_rne.tv",
+	"f64_to_f128_rz.tv",
+	"f64_to_f128_ru.tv",
+	"f64_to_f128_rd.tv",
+	"f64_to_f128_rnm.tv"
 };
 
 string f16add[] = '{

@@ -51,7 +51,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
     #vsim -coverage -lib work_$2 workopt_$2
 
-    # power add generates the logging necessary for saif generation.
+    # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
     run -all
     # power off -r /dut/core/*

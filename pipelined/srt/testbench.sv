@@ -38,35 +38,41 @@ endmodule
 //////////
 module testbench;
   logic         clk;
-  logic        req;
+  logic         req;
   logic         done;
-  logic [51:0] a;
-  logic [51:0] b;
-  logic  [51:0] r;
-  logic [54:0] rp, rm;   // positive quotient digits
+  logic [63:0]  a, b;
+  logic [51:0]  afrac, bfrac;
+  logic [10:0]  aExp, bExp;
+  logic         asign, bsign;
+  logic [51:0]  r, rOTFC;
+  logic [54:0]  rp, rm;   // positive quotient digits
  
   // Test parameters
   parameter MEM_SIZE = 40000;
-  parameter MEM_WIDTH = 52+52+52;
+  parameter MEM_WIDTH = 64+64+64;
  
-  `define memr  51:0
-  `define memb  103:52
-  `define mema  155:104
+  `define memr  63:0
+  `define memb  127:64
+  `define mema  191:128
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
   logic [MEM_WIDTH-1:0] Vec;  // Verilog doesn't allow direct access to a
                             // bit field of an array 
-  logic    [51:0] correctr, nextr, diffn, diffp;
+  logic [63:0] correctr, nextr, diffn, diffp;
+  logic [10:0] rExp;
+  logic        rsign;
   integer testnum, errors;
 
   // Divider
   srt  #(52) srt(.clk, .Start(req), 
                 .Stall(1'b0), .Flush(1'b0), 
-                .SrcXFrac(a), .SrcYFrac(b), 
+                .XExp(aExp), .YExp(bExp), .rExp,
+                .XSign(asign), .YSign(bsign), .rsign,
+                .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA('0), .SrcB('0), .Fmt(2'b00), 
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot(r), .Rem(), .Flags());
+                .Quot(r), .QuotOTFC(rOTFC), .Rem(), .Flags());
 
   // Counter
   counter counter(clk, req, done);
@@ -88,7 +94,9 @@ module testbench;
       $readmemh ("testvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
+      {asign, aExp, afrac} = a;
       b = Vec[`memb];
+      {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
       req <= #5 1;
     end
@@ -100,16 +108,23 @@ module testbench;
       if (done) 
 	begin
 	  req <= #5 1;
-    diffp = correctr - r;
-    diffn = r - correctr;
-	  if (($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
+    diffp = correctr[51:0] - r;
+    diffn = r - correctr[51:0];
+	  if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
-	      $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
+	      $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);
 	      $display("failed\n");
 	      $stop;
 	    end
-	  if (a === 52'hxxxxxxxxxxxxx)
+    if (r !== rOTFC) // Check if OTFC works
+      begin
+        errors = errors+1;
+        $display("OTFC is %h, should be %h\n", rOTFC, r);
+        $display("failed\n");
+        // $stop;
+      end
+	  if (afrac === 52'hxxxxxxxxxxxxx)
 	    begin
  	      $display("%d Tests completed successfully", testnum);
 	      $stop;
@@ -122,9 +137,11 @@ module testbench;
 	  testnum = testnum+1;
 	  Vec = Tests[testnum];
 	  $display("a = %h  b = %h",a,b);
-	  a = Vec[`mema];
-	  b = Vec[`memb];
-	  nextr = Vec[`memr];
+    a = Vec[`mema];
+    {asign, aExp, afrac} = a;
+    b = Vec[`memb];
+    {bsign, bExp, bfrac} = b;
+    nextr = Vec[`memr];
 	end
     end
  

@@ -87,7 +87,7 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
-//        "imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
+        //"imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
@@ -110,7 +110,7 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
-//        "imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
+        //"imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
@@ -183,7 +183,7 @@ logic [3:0] dummy;
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
-/*      if (tests[0] == `IMPERASTEST)
+      /* if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
@@ -255,7 +255,7 @@ logic [3:0] dummy;
           //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
 	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
             if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
-//            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
+              // if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
               // report errors unless they are garbage at the end of the sim
               // kind of hacky test for garbage right now
               $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
@@ -368,11 +368,12 @@ module riscvassertions;
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
-//    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
     assert (`DMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
     //assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
     //assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
+    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
   end
 endmodule
 
@@ -408,47 +409,45 @@ module DCacheFlushFSM
 	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
 	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
 	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
-      for(index = 0; index < numlines; index++) begin
-		for(way = 0; way < numways; way++) begin
-		  for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-			copyShadow #(.tagstart(tagstart),
-						 .loglinebytelen(loglinebytelen))
-			copyShadow(.clk,
-					   .start,
-					   .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
-					   .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
-					   .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
-					   .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
-					   .index(index),
-					   .cacheWord(cacheWord),
-					   .CacheData(CacheData[way][index][cacheWord]),
-					   .CacheAdr(CacheAdr[way][index][cacheWord]),
-					   .CacheTag(CacheTag[way][index][cacheWord]),
-					   .CacheValid(CacheValid[way][index][cacheWord]),
-					   .CacheDirty(CacheDirty[way][index][cacheWord]));
-		  end
-		end
+    for(index = 0; index < numlines; index++) begin
+		  for(way = 0; way < numways; way++) begin
+		    for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+			    copyShadow #(.tagstart(tagstart),
+					.loglinebytelen(loglinebytelen))
+			    copyShadow(.clk,
+          .start,
+          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
+          .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
+          .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
+          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
+          .index(index),
+          .cacheWord(cacheWord),
+          .CacheData(CacheData[way][index][cacheWord]),
+          .CacheAdr(CacheAdr[way][index][cacheWord]),
+          .CacheTag(CacheTag[way][index][cacheWord]),
+          .CacheValid(CacheValid[way][index][cacheWord]),
+          .CacheDirty(CacheDirty[way][index][cacheWord]));
+        end
       end
+    end
 
-	  integer i, j, k;
+    integer i, j, k;
 
-	  always @(posedge clk) begin
-		if (start) begin #1
-		  #1
-			for(i = 0; i < numlines; i++) begin
-			  for(j = 0; j < numways; j++) begin
-				for(k = 0; k < numwords; k++) begin
-				  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-					ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
-				  end
-				end	
-			  end
-			end
-		end
-	  end
-
-	  
-	end
+    always @(posedge clk) begin
+      if (start) begin #1
+        #1
+        for(i = 0; i < numlines; i++) begin
+          for(j = 0; j < numways; j++) begin
+          for(k = 0; k < numwords; k++) begin
+            if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
+            ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+            end
+          end	
+          end
+        end
+      end
+    end  
+  end
   flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 
