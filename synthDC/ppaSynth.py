@@ -42,21 +42,22 @@ def getData():
     return allSynths
 
 allSynths = getData()
-arr = [-40, -20, -8, -6, -4, -2, 0, 2, 4, 6, 8, 10, 14, 20, 40]
+arr = [-40, -20, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20, 40]
 
-widths = [32, 64, 128]
-modules = ['flopr']
-tech = 'sky90'
+widths = [16, 8, 32, 64, 128]
+modules = ['add']
+tech = 'tsmc28'
 LoT = []
 
 # # # initial sweep to get estimate of min delay
-# freqs = ['7500']
+# freqs = [25000, 35000]
 # for module in modules:
 #     for width in widths:
 #         for freq in freqs:
 #             LoT += [[module, width, tech, freq]]
 
-# thorough sweep based on estimate of min delay
+
+# # thorough sweep based on estimate of min delay
 for m in modules:
     for w in widths:
         delays = []
@@ -69,7 +70,6 @@ for m in modules:
             LoT += [[m, w, tech, freq]]
 
 deleteRedundant(LoT)
-
 pool = Pool()
 pool.starmap(runCommand, LoT)
 pool.close()

@@ -37,6 +37,8 @@ module srt #(parameter Nf=52) (
   input  logic Flush, // *** multiple pipe stages
   // Floating Point Inputs
   // later add exponents, signs, special cases
+  input  logic       XSign, YSign,
+  input  logic [`NE-1:0] XExp, YExp,
   input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
@@ -44,14 +46,18 @@ module srt #(parameter Nf=52) (
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputss
   input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] Quot, Rem, // *** later handle integers
+  output logic       rsign,
+  output logic [Nf-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
+  output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
 
   logic          qp, qz, qm; // quotient is +1, 0, or -1
-  logic [Nf-1:0] X, Dpreproc;
-  logic [Nf+3:0] WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [Nf+2:0] rp, rm;
+  logic [`NE-1:0] calcExp;
+  logic           calcSign;
+  logic [Nf-1:0]  X, Dpreproc;
+  logic [Nf+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
+  logic [Nf+2:0]  rp, rm;
  
   srtpreproc #(Nf) preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc);
 
@@ -70,6 +76,8 @@ module srt #(parameter Nf=52) (
   // Accumulate quotient digits in a shift register
   qsel #(Nf) qsel(WS[55:52], WC[55:52], qp, qz, qm);
   qacc #(Nf+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+  flopen #(`NE) expflop(clk, Start, calcExp, rExp);
+  flopen #(1) signflop(clk, Start, calcSign, rsign);
 
   // Divisor Selection logic
   inv dinv(D, Db);
@@ -77,6 +85,12 @@ module srt #(parameter Nf=52) (
 
   // Partial Product Generation
   csa csa(WS, WC, Dsel, qp, WSA, WCA);
+  
+  otfc2 otfc2(clk, Start, qp, qz, qm, QuotOTFC);
+
+  expcalc expcalc(.XExp, .YExp, .calcExp);
+
+  signcalc signcalc(.XSign, .YSign, .calcSign);
 
   srtpostproc postproc(rp, rm, Quot);
 endmodule
@@ -198,9 +212,57 @@ module qacc #(parameter N=55) (
     end */
 endmodule
 
+//////////
+// otfc //
+//////////
+
+module otfc2 #(parameter N=52) (
+  input  logic         clk,
+  input  logic         Start,
+  input  logic         qp, qz, qm,
+  output logic [N-1:0] r
+);
+
+  // The on-the-fly converter transfers the quotient 
+  //  bits to the quotient as they come. 
+  //
+  // This code follows the psuedocode presented in the 
+  //  floating point chapter of the book. Right now, 
+  //  it is written for Radix-2 division.
+  //
+  // QM is Q-1. It allows us to write negative bits 
+  //  without using a costly CPA. 
+  logic [N+2:0] Q, QM, QNext, QMNext;
+  // QR and QMR are the shifted versions of Q and QM.
+  //  They are treated as [N-1:r] size signals, and 
+  //  discard the r most significant bits of Q and QM. 
+  logic [N+1:0] QR, QMR;
+
+  flopr #(N+3) Qreg(clk, Start, QNext, Q);
+  flopr #(N+3) QMreg(clk, Start, QMNext, QM);
+
+  always_comb begin
+    QR  = Q[N+1:0];
+    QMR = QM[N+1:0];     // Shift Q and QM
+    if (qp) begin
+      QNext  = {QR,  1'b1};
+      QMNext = {QR,  1'b0};
+    end else if (qz) begin
+      QNext  = {QR,  1'b0};
+      QMNext = {QMR, 1'b1};
+    end else begin        // If qp and qz are not true, then qm is
+      QNext  = {QMR, 1'b1};
+      QMNext = {QMR, 1'b0};
+    end 
+  end
+  assign r = Q[54] ? Q[53:2] : Q[52:1];
+
+endmodule
+
 /////////
 // inv //
 /////////
+
 module inv(input  logic [55:0] in, 
            output logic [55:0] out);
 
@@ -245,6 +307,33 @@ module csa #(parameter N=56) (
   assign #1 out1 = in1 ^ in2 ^ in3;
   assign #1 out2 = {in1[54:0] & (in2[54:0] | in3[54:0]) | 
 		    (in2[54:0] & in3[54:0]), cin};
+endmodule
+
+
+//////////////
+// expcalc  //
+//////////////
+
+module expcalc(
+  input logic  [`NE-1:0] XExp, YExp,
+  output logic [`NE-1:0] calcExp
+);
+
+  assign calcExp = XExp - YExp + 11'b01111111111;
+
+endmodule
+
+//////////////
+// signcalc //
+//////////////
+
+module signcalc(
+  input logic  XSign, YSign,
+  output logic calcSign
+);
+
+  assign calcSign = XSign ^ YSign;
+
 endmodule
 
 //////////////
