@@ -155,7 +155,7 @@ def genLegend(fits, coefs, r2, spec):
                        lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
-def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True):
+def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
     ''' module: string module name
         freq: int freq (MHz)
         var: string delay, area, lpower, or denergy
@@ -186,9 +186,9 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True):
         if len(metric) == 5:
             xp, pred, leg = regress(widths, metric, spec, fits)
             fullLeg += leg
-
-            ax.scatter(widths, metric, color=spec.color, marker=spec.shape)
-            ax.plot(xp, pred, color=spec.color)
+            c = color if color else spec.color
+            ax.scatter(widths, metric, color=c, marker=spec.shape)
+            ax.plot(xp, pred, color=c)
 
     ax.legend(handles=fullLeg)
 
@@ -440,13 +440,26 @@ def plotPPA(mod, freq=None, norm=True):
     titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
     plt.suptitle(mod + titleStr)
     plt.show()
+
+def plotBestAreas():
+    global fitDict
+    fig, axs = plt.subplots(1, 1)
+    mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop']
+    colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+    legend_elements = []
+    for i in range(len(mods)):
+        oneMetricPlot(mods[i], 'area', ax=axs, freq=10, norm=False, color=colors[i])
+        legend_elements += [lines.Line2D([0], [0], color=colors[i], ls='', marker='o', label=mods[i])]
+    plt.suptitle('Optimized Areas (target freq 10MHz)')
+    plt.legend(handles=legend_elements)
+    plt.show()
     
 if __name__ == '__main__':
 
     # set up stuff, global variables
     widths = [8, 16, 32, 64, 128]
     # fitDict in progress
-    fitDict = {'add': ['cg', 'cl'], 'mult': ['clg', 's'], 'comparator': ['clsgn', 'clsgn'], 'csa': ['clsgn', 'clsgn'], 'shiftleft': ['clsgn', 'clsgn'], 'flop': ['cl', 'cl'], 'priorityencoder': ['clsgn', 'clsgn']}
+    fitDict = {'add': ['gl', 'lg'], 'mult': ['clg', 's'], 'comparator': ['clsgn', 'clsgn'], 'csa': ['clsgn', 'clsgn'], 'shiftleft': ['clsgn', 'clsgn'], 'flop': ['cl', 'cl'], 'priorityencoder': ['clsgn', 'clsgn']}
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
     techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1.96, 1.98, 1], ['gf32', 'purple', 's', 15e-3, .351, .3116, 1], ['tsmc28', 'blue', '^', 12.2e-3, .252, 1.09, 1]]
     techSpecs = [TechSpec(*t) for t in techSpecs]
@@ -462,5 +475,7 @@ if __name__ == '__main__':
     #         freqPlot('sky90', mod, w) # the weird ones
     # squareAreaDelay('sky90', 'add', 32)
     # oneMetricPlot('add', 'delay')
-    for mod in ['add', 'csa', 'mult', 'comparator', 'priorityencoder', 'shiftleft', 'flop']:
-        plotPPA(mod, norm=False) # no norm input now defaults to normalized
+    # for mod in ['add', 'csa', 'mult', 'comparator', 'priorityencoder', 'shiftleft', 'flop']:
+    #     plotPPA(mod, norm=False) # no norm input now defaults to normalized
+    # plotPPA('add', norm=False)
+    plotBestAreas()
