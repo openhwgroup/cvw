@@ -104,7 +104,6 @@ module fpu (
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
    logic 		  XNormE;                             // is normal
-   logic         ZOrigDenormE, XOrigDenormE;
    logic 		  FmtQ;
    logic 		  FOpCtrlQ;     
 
@@ -176,7 +175,7 @@ module fpu (
    // unpack unit
    //    - splits FP inputs into their various parts
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
-   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE, .ZOrigDenormE, .XOrigDenormE,
+   unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
@@ -188,11 +187,11 @@ module fpu (
    //   - handles FMA and multiply instructions
    fma fma (.clk, .reset, .FlushM, .StallM, 
       .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-      .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
+      .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
       .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
       .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
       .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-      .FOpCtrlE, .ZOrigDenormE,
+      .FOpCtrlE,
       .FmtE, .FmtM, .FrmM, 
       .FMAFlgM, .FMAResM);
 
@@ -215,9 +214,9 @@ module fpu (
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
-   fsgn fsgn (.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
+   fsgninj fsgninj(.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, .FWriteIntE, .XZeroE, .XOrigDenormE,
+   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, .FWriteIntE, .XZeroE, .XDenormE,
               .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtResE, .CvtIntResE, .CvtFlgE);
 
    // data to be stored in memory - to IEU
@@ -235,6 +234,8 @@ module fpu (
    // select the result that may be written to the integer register - to IEU
    mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], 
                CvtIntResE, FIntResSelE, FIntResE);
+   // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok
+   // *** make sure the fpu matches the chapter diagram
 
    // E/M pipe registers
 

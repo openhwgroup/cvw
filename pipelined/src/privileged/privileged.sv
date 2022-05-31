@@ -99,13 +99,14 @@ module privileged (
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
   logic [1:0] NextPrivilegeModeM;
+  logic       DelegateM;
 
   ///////////////////////////////////////////
   // track the current privilege level
   ///////////////////////////////////////////
 
-  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .InterruptM, .CauseM, 
-                    .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
+                    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   ///////////////////////////////////////////
   // decode privileged instructions
@@ -158,11 +159,11 @@ module privileged (
             .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, 
             .PrivilegeModeW, 
-            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .InstrValidM, .CommittedM,  
             .TrapM, .RetM,
-            .InterruptM, .IntPendingM,
+            .InterruptM, .IntPendingM, .DelegateM,
             .CauseM);
 endmodule
 

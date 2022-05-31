@@ -11,15 +11,15 @@ module fcvt (
     input logic [2:0]       FOpCtrlE,       // choose which opperation (look below for values)
     input logic             FWriteIntE,     // is fp->int (since it's writting to the integer register)
     input logic             XZeroE,         // is the input zero
-    input logic             XOrigDenormE,   // is the input denormalized
+    input logic             XDenormE,   // is the input denormalized
     input logic             XInfE,          // is the input infinity
     input logic             XNaNE,          // is the input a NaN
     input logic             XSNaNE,         // is the input a signaling NaN
     input logic [2:0]       FrmE,           // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic [`FPSIZES/3:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
-    output logic [`FLEN-1:0] CvtResE,       // the fp to fp conversion's result
-    output logic [`XLEN-1:0] CvtIntResE,    // the fp to fp conversion's result
-    output logic [4:0]      CvtFlgE         // the fp to fp conversion's flags
+    output logic [`FLEN-1:0] CvtResE,       // the fp conversion result
+    output logic [`XLEN-1:0] CvtIntResE,    // the int conversion result
+    output logic [4:0]      CvtFlgE         // the conversion's flags
     );
 
     // OpCtrls:
@@ -39,9 +39,10 @@ module fcvt (
 
     logic [`FPSIZES/3:0]    OutFmt;     // format of the output
     logic [`XLEN-1:0]       PosInt;     // the positive integer input
+    logic [`XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
     logic [`LGLEN-1:0]      LzcIn;      // input to the Leading Zero Counter (priority encoder)
     logic [`NE:0]           CalcExp;    // the calculated expoent
-	logic [$clog2(`LGLEN):0] ShiftAmt;  // how much to shift by
+	logic [$clog2(`LGLEN+1)-1:0] ShiftAmt;  // how much to shift by
     logic [`LGLEN+`NF:0]    ShiftIn;    // number to be shifted
     logic                   ResDenormUf;// does the result underflow or is denormalized
     logic                   ResUf;      // does the result underflow
@@ -71,6 +72,7 @@ module fcvt (
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
+    logic [$clog2(`LGLEN+1)-1:0] ZeroCnt; // output from the LZC
 
 
     // seperate OpCtrl for code readability
@@ -91,18 +93,11 @@ module fcvt (
     ///////////////////////////////////////////////////////////////////////////
     // negation
     ///////////////////////////////////////////////////////////////////////////
-    // negate the input if the input is a negitive singed integer
-    //      - remove leading ones if the input is a unsigned 32-bit integer
-    //
-    //              Negitive input
-    //                      64-bit input : negate the input
-    //                      32-bit input : trim to 32-bits and negate the input
-    //              Positive input
-    //                      64-bit input : do nothing
-    //                      32-bit input : trim to 32-bits
+    // 1) negate the input if the input is a negitive singed integer
+    // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
-    assign PosInt = ResSgn ? Int64 ? -ForwardedSrcAE : {{`XLEN-32{1'b0}}, -ForwardedSrcAE[31:0]} : 
-                             Int64 ? ForwardedSrcAE : {{`XLEN-32{1'b0}}, ForwardedSrcAE[31:0]};
+    assign PosInt = ResSgn ? -ForwardedSrcAE : ForwardedSrcAE;
+    assign TrimInt = {{`XLEN-32{Int64}}, {32{1'b1}}} & PosInt;
 
     ///////////////////////////////////////////////////////////////////////////
     // lzc 
@@ -111,16 +106,10 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign LzcIn = IntToFp ? {PosInt, {`LGLEN-`XLEN{1'b0}}} :      // I->F
-                             {XManE[`NF-1:0], {`LGLEN-`NF{1'b0}}}; // F->F
+    assign LzcIn = IntToFp ? {TrimInt, {`LGLEN-`XLEN{1'b0}}} :
+                             {XManE[`NF-1:0], {`LGLEN-`NF{1'b0}}};
     
-    // lglen is the largest possible value of ZeroCnt (NF or XLEN) hence normcnt must be log2(lglen) bits
-	logic [$clog2(`LGLEN):0]	i, ZeroCnt;
-	always_comb begin
-			i = 0;
-			while (~LzcIn[`LGLEN-1-i] & i <= `LGLEN-1) i = i+1;  // search for leading one 
-			ZeroCnt = i;
-	end
+    lzc #(`LGLEN) lzc (.num(LzcIn), .ZeroCnt);
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -154,9 +143,9 @@ module fcvt (
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN):0]&{$clog2(`LGLEN)+1{~CalcExp[`NE]}} :
-                    ResDenormUf&~IntToFp ? ($clog2(`LGLEN)+1)'(`NF-1)+CalcExp[$clog2(`LGLEN):0] : 
-                              (ZeroCnt+1)&{$clog2(`LGLEN)+1{XOrigDenormE|IntToFp}};
+    assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN+1)-1:0]&{$clog2(`LGLEN+1){~CalcExp[`NE]}} :
+                    ResDenormUf&~IntToFp ? ($clog2(`LGLEN+1))'(`NF-1)+CalcExp[$clog2(`LGLEN+1)-1:0] : 
+                              (ZeroCnt+1)&{$clog2(`LGLEN+1){XDenormE|IntToFp}};
     
     // shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
@@ -266,13 +255,13 @@ module fcvt (
     //                  |     keep        |
     //
     //              - if the input is denormalized then we dont shift... so the  "- (ZeroCnt+1)" is just leftovers from other options
-    //      int -> fp : largest bias  XLEN - Largest bias + new bias - 1 - ZeroCnt = XLEN + NewBias - 1 - ZeroCnt
+    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - 1 - ZeroCnt = XLEN + NewBias - 1 - ZeroCnt
     //              Process:
     //                  - shifted right by XLEN (XLEN)
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
     //          
-    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XOrigDenormE|IntToFp} - {{`NE-$clog2(`LGLEN){1'b0}}, (ZeroCnt&{$clog2(`LGLEN)+1{XOrigDenormE|IntToFp}})};
+    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-$clog2(`LGLEN+1)+1{1'b0}}, (ZeroCnt&{$clog2(`LGLEN+1){XDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
@@ -568,7 +557,7 @@ module fcvt (
     //      - do so if the result underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = (ResUf|(XZeroE&~IntToFp)|(~|PosInt&IntToFp));
+    assign KillRes = (ResUf|(XZeroE&~IntToFp)|(~|TrimInt&IntToFp));
 
     if (`FPSIZES == 1) begin        
         // IEEE sends a payload while Riscv says to send a canonical quiet NaN
@@ -755,7 +744,7 @@ module fcvt (
                         NaNRes = {{`Q_LEN-`H_LEN{1'b1}}, 1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}};
                     end
                     // determine the infinity result
-                    //      - if the input was infinity or rounding mode RZ, RU, RD (and not rounding the value) then output the maximum normalized floating point number with the correct sign
+                    //      - if the input overflows in rounding mode RZ, RU, RD (and not rounding the value) then output the maximum normalized floating point number with the correct sign
                     //      - otherwise: output infinity with the correct sign
                     //      - kill the infinity singal if the input isn't fp
                     InfRes = (~XInfE|IntToFp)&((FrmE[1:0]==2'b01) | (FrmE[1:0]==2'b10&~ResSgn) | (FrmE[1:0]==2'b11&ResSgn)) ? {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};
