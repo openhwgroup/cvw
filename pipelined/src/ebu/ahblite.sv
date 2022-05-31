@@ -75,10 +75,11 @@ module ahblite (
   (* mark_debug = "true" *) output logic HWRITED
 );
 
-  typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
+  typedef enum logic [2:0] {IDLE, MEMREAD, MEMREADNEXT, MEMWRITE, MEMWRITENEXT, INSTRREAD, INSTRREADNEXT} statetype;
   statetype BusState, NextBusState;
 
   logic GrantData;
+  logic SubsequentAccess;
   logic [31:0] AccessAddress;
   logic [2:0] ISize;
 
@@ -135,6 +136,7 @@ module ahblite (
   assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE) | 
                 (NextBusState == MEMREADNEXT) | (NextBusState == MEMWRITENEXT);
   assign #1 AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
+  assign #1 SubsequentAccess = (GrantData) ? |(AccessAddress[$clog2(`XLEN):0]) : |(AccessAddress[5:0]);
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
@@ -154,7 +156,7 @@ module ahblite (
 
 
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = [SIGNAL TO SET SEQ] ? 2'b11 : (NextBusState != IDLE) ? 2'b10 : 2'b00; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HTRANS = SubsequentAccess ? 2'b11 : (NextBusState != IDLE) ? 2'b10 : 2'b00; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE) | (NextBusState == MEMWRITENEXT);
   // delay write data by one cycle for
@@ -170,7 +172,7 @@ module ahblite (
  
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
-  assign IFUBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD); // *** these are wrong.
-  assign LSUBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE); // *** these are wrong.
+  assign IFUBusAck = (BusState == INSTRREADNEXT);
+  assign LSUBusAck = (BusState == MEMREADNEXT) | (BusState == MEMWRITENEXT);
 
 endmodule
