@@ -111,7 +111,6 @@ module testbenchfp;
   logic                 FmaRdXZero, FmaRdYZero, FmaRdZZero;
   logic                 FmaRnmXZero, FmaRnmYZero, FmaRnmZZero;
   logic                 XExpMax, YExpMax, ZExpMax;         // is the input's exponent all ones  
-  logic                 ZOrigDenorm, FmaRneZOrigDenorm, FmaRzZOrigDenorm, FmaRuZOrigDenorm, FmaRdZOrigDenorm, FmaRnmZOrigDenorm; // is the original precision dnormalized
 
   // in-between FMA signals
   logic                 Mult;
@@ -682,7 +681,7 @@ module testbenchfp;
                                     .XSgnE(FmaRneXSgn), .YSgnE(FmaRneYSgn), .ZSgnE(FmaRneZSgn),
                                     .XExpE(FmaRneXExp), .YExpE(FmaRneYExp), .ZExpE(FmaRneZExp), 
                                     .XManE(FmaRneXMan), .YManE(FmaRneYMan), .ZManE(FmaRneZMan), 
-                                    .XNaNE(FmaRneXNaN), .YNaNE(FmaRneYNaN), .ZNaNE(FmaRneZNaN), .ZOrigDenormE(FmaRneZOrigDenorm),
+                                    .XNaNE(FmaRneXNaN), .YNaNE(FmaRneYNaN), .ZNaNE(FmaRneZNaN),
                                     .XSNaNE(FmaRneXSNaN), .YSNaNE(FmaRneYSNaN), .ZSNaNE(FmaRneZSNaN), 
                                     .XDenormE(FmaRneXDenorm), .YDenormE(FmaRneYDenorm), .ZDenormE(FmaRneZDenorm), 
                                     .XZeroE(FmaRneXZero), .YZeroE(FmaRneYZero), .ZZeroE(FmaRneZZero),
@@ -692,7 +691,7 @@ module testbenchfp;
                                     .XSgnE(FmaRzXSgn), .YSgnE(FmaRzYSgn), .ZSgnE(FmaRzZSgn), .FmaModFmt,
                                     .XExpE(FmaRzXExp), .YExpE(FmaRzYExp), .ZExpE(FmaRzZExp), 
                                     .XManE(FmaRzXMan), .YManE(FmaRzYMan), .ZManE(FmaRzZMan), 
-                                    .XNaNE(FmaRzXNaN), .YNaNE(FmaRzYNaN), .ZNaNE(FmaRzZNaN), .ZOrigDenormE(FmaRzZOrigDenorm),
+                                    .XNaNE(FmaRzXNaN), .YNaNE(FmaRzYNaN), .ZNaNE(FmaRzZNaN),
                                     .XSNaNE(FmaRzXSNaN), .YSNaNE(FmaRzYSNaN), .ZSNaNE(FmaRzZSNaN), 
                                     .XDenormE(FmaRzXDenorm), .YDenormE(FmaRzYDenorm), .ZDenormE(FmaRzZDenorm), 
                                     .XZeroE(FmaRzXZero), .YZeroE(FmaRzYZero), .ZZeroE(FmaRzZZero),
@@ -702,7 +701,7 @@ module testbenchfp;
                                     .XSgnE(FmaRuXSgn), .YSgnE(FmaRuYSgn), .ZSgnE(FmaRuZSgn), .FmaModFmt,
                                     .XExpE(FmaRuXExp), .YExpE(FmaRuYExp), .ZExpE(FmaRuZExp), 
                                     .XManE(FmaRuXMan), .YManE(FmaRuYMan), .ZManE(FmaRuZMan), 
-                                    .XNaNE(FmaRuXNaN), .YNaNE(FmaRuYNaN), .ZNaNE(FmaRuZNaN), .ZOrigDenormE(FmaRuZOrigDenorm),
+                                    .XNaNE(FmaRuXNaN), .YNaNE(FmaRuYNaN), .ZNaNE(FmaRuZNaN),
                                     .XSNaNE(FmaRuXSNaN), .YSNaNE(FmaRuYSNaN), .ZSNaNE(FmaRuZSNaN), 
                                     .XDenormE(FmaRuXDenorm), .YDenormE(FmaRuYDenorm), .ZDenormE(FmaRuZDenorm), 
                                     .XZeroE(FmaRuXZero), .YZeroE(FmaRuYZero), .ZZeroE(FmaRuZZero),
@@ -712,7 +711,7 @@ module testbenchfp;
                                     .XSgnE(FmaRdXSgn), .YSgnE(FmaRdYSgn), .ZSgnE(FmaRdZSgn), .FmaModFmt,
                                     .XExpE(FmaRdXExp), .YExpE(FmaRdYExp), .ZExpE(FmaRdZExp), 
                                     .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan), 
-                                    .XNaNE(FmaRdXNaN), .YNaNE(FmaRdYNaN), .ZNaNE(FmaRdZNaN), .ZOrigDenormE(FmaRdZOrigDenorm),
+                                    .XNaNE(FmaRdXNaN), .YNaNE(FmaRdYNaN), .ZNaNE(FmaRdZNaN),
                                     .XSNaNE(FmaRdXSNaN), .YSNaNE(FmaRdYSNaN), .ZSNaNE(FmaRdZSNaN), 
                                     .XDenormE(FmaRdXDenorm), .YDenormE(FmaRdYDenorm), .ZDenormE(FmaRdZDenorm), 
                                     .XZeroE(FmaRdXZero), .YZeroE(FmaRdYZero), .ZZeroE(FmaRdZZero),
@@ -721,7 +720,7 @@ module testbenchfp;
   readfmavectors readfmarnmvectors (.clk, .TestVector(FmaRnmVectors[VectorNum]), .Ans(FmaRnmAns), .AnsFlg(FmaRnmAnsFlg), 
                                     .XSgnE(FmaRnmXSgn), .YSgnE(FmaRnmYSgn), .ZSgnE(FmaRnmZSgn), .FmaModFmt,
                                     .XExpE(FmaRnmXExp), .YExpE(FmaRnmYExp), .ZExpE(FmaRnmZExp), 
-                                    .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),  .ZOrigDenormE(FmaRnmZOrigDenorm),
+                                    .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),
                                     .XNaNE(FmaRnmXNaN), .YNaNE(FmaRnmYNaN), .ZNaNE(FmaRnmZNaN),
                                     .XSNaNE(FmaRnmXSNaN), .YSNaNE(FmaRnmYSNaN), .ZSNaNE(FmaRnmZSNaN), 
                                     .XDenormE(FmaRnmXDenorm), .YDenormE(FmaRnmYDenorm), .ZDenormE(FmaRnmZDenorm), 
@@ -731,7 +730,7 @@ module testbenchfp;
   readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
                                     .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
                                     .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
-                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .ZOrigDenormE(ZOrigDenorm), .XOrigDenormE(XOrigDenorm),
+                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
                                     .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
                                     .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
                                     .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm), 
@@ -757,13 +756,12 @@ module testbenchfp;
   fma1 fma1rne(.XSgnE(FmaRneXSgn), .YSgnE(FmaRneYSgn), .ZSgnE(FmaRneZSgn), 
               .XExpE(FmaRneXExp), .YExpE(FmaRneYExp), .ZExpE(FmaRneZExp), 
               .XManE(FmaRneXMan), .YManE(FmaRneYMan), .ZManE(FmaRneZMan),
-              .XDenormE(FmaRneXDenorm), .YDenormE(FmaRneYDenorm), .ZDenormE(FmaRneZDenorm),  
               .XZeroE(FmaRneXZero), .YZeroE(FmaRneYZero), .ZZeroE(FmaRneZZero),
               .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRneSum), .NegSumE(FmaRneNegSum), .InvZE(FmaRneInvZ), 
               .NormCntE(FmaRneNormCnt), .ZSgnEffE(FmaRneZSgnEff), .PSgnE(FmaRnePSgn),
               .ProdExpE(FmaRneProdExp), .AddendStickyE(FmaRneAddendSticky), .KillProdE(FmaRneSumKillProd)); 
   fma2 fma2rne(.XSgnM(FmaRneXSgn), .YSgnM(FmaRneYSgn), 
-              .ZExpM(FmaRneZExp), .ZOrigDenormM(FmaRneZOrigDenorm),
+              .ZExpM(FmaRneZExp), .ZDenormM(FmaRneZDenorm),
               .XManM(FmaRneXMan), .YManM(FmaRneYMan), .ZManM(FmaRneZMan), 
               .XNaNM(FmaRneXNaN), .YNaNM(FmaRneYNaN), .ZNaNM(FmaRneZNaN), 
               .XZeroM(FmaRneXZero), .YZeroM(FmaRneYZero), .ZZeroM(FmaRneZZero), 
@@ -776,13 +774,12 @@ module testbenchfp;
   fma1 fma1rz(.XSgnE(FmaRzXSgn), .YSgnE(FmaRzYSgn), .ZSgnE(FmaRzZSgn), 
               .XExpE(FmaRzXExp), .YExpE(FmaRzYExp), .ZExpE(FmaRzZExp), 
               .XManE(FmaRzXMan), .YManE(FmaRzYMan), .ZManE(FmaRzZMan),
-              .XDenormE(FmaRzXDenorm), .YDenormE(FmaRzYDenorm), .ZDenormE(FmaRzZDenorm),  
               .XZeroE(FmaRzXZero), .YZeroE(FmaRzYZero), .ZZeroE(FmaRzZZero),
               .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRzSum), .NegSumE(FmaRzNegSum), .InvZE(FmaRzInvZ), 
               .NormCntE(FmaRzNormCnt), .ZSgnEffE(FmaRzZSgnEff), .PSgnE(FmaRzPSgn),
               .ProdExpE(FmaRzProdExp), .AddendStickyE(FmaRzAddendSticky), .KillProdE(FmaRzSumKillProd)); 
   fma2 fma2rz(.XSgnM(FmaRzXSgn), .YSgnM(FmaRzYSgn), 
-              .ZExpM(FmaRzZExp),  .ZOrigDenormM(FmaRzZOrigDenorm),
+              .ZExpM(FmaRzZExp),  .ZDenormM(FmaRzZDenorm),
               .XManM(FmaRzXMan), .YManM(FmaRzYMan), .ZManM(FmaRzZMan), 
               .XNaNM(FmaRzXNaN), .YNaNM(FmaRzYNaN), .ZNaNM(FmaRzZNaN), 
               .XZeroM(FmaRzXZero), .YZeroM(FmaRzYZero), .ZZeroM(FmaRzZZero), 
@@ -795,13 +792,12 @@ module testbenchfp;
   fma1 fma1ru(.XSgnE(FmaRuXSgn), .YSgnE(FmaRuYSgn), .ZSgnE(FmaRuZSgn), 
               .XExpE(FmaRuXExp), .YExpE(FmaRuYExp), .ZExpE(FmaRuZExp), 
               .XManE(FmaRuXMan), .YManE(FmaRuYMan), .ZManE(FmaRuZMan),
-              .XDenormE(FmaRuXDenorm), .YDenormE(FmaRuYDenorm), .ZDenormE(FmaRuZDenorm),  
               .XZeroE(FmaRuXZero), .YZeroE(FmaRuYZero), .ZZeroE(FmaRuZZero),
               .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRuSum), .NegSumE(FmaRuNegSum), .InvZE(FmaRuInvZ), 
               .NormCntE(FmaRuNormCnt), .ZSgnEffE(FmaRuZSgnEff), .PSgnE(FmaRuPSgn),
               .ProdExpE(FmaRuProdExp), .AddendStickyE(FmaRuAddendSticky), .KillProdE(FmaRuSumKillProd)); 
   fma2 fma2ru(.XSgnM(FmaRuXSgn), .YSgnM(FmaRuYSgn), 
-              .ZExpM(FmaRuZExp),  .ZOrigDenormM(FmaRuZOrigDenorm),
+              .ZExpM(FmaRuZExp),  .ZDenormM(FmaRuZDenorm),
               .XManM(FmaRuXMan), .YManM(FmaRuYMan), .ZManM(FmaRuZMan), 
               .XNaNM(FmaRuXNaN), .YNaNM(FmaRuYNaN), .ZNaNM(FmaRuZNaN), 
               .XZeroM(FmaRuXZero), .YZeroM(FmaRuYZero), .ZZeroM(FmaRuZZero), 
@@ -813,14 +809,13 @@ module testbenchfp;
               .FMAFlgM(FmaRuResFlg), .FMAResM(FmaRuRes), .Mult(1'b0));
   fma1 fma1rd(.XSgnE(FmaRdXSgn), .YSgnE(FmaRdYSgn), .ZSgnE(FmaRdZSgn), 
               .XExpE(FmaRdXExp), .YExpE(FmaRdYExp), .ZExpE(FmaRdZExp), 
-              .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan),
-              .XDenormE(FmaRdXDenorm), .YDenormE(FmaRdYDenorm), .ZDenormE(FmaRdZDenorm),  
+              .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan), 
               .XZeroE(FmaRdXZero), .YZeroE(FmaRdYZero), .ZZeroE(FmaRdZZero),
               .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRdSum), .NegSumE(FmaRdNegSum), .InvZE(FmaRdInvZ), 
               .NormCntE(FmaRdNormCnt), .ZSgnEffE(FmaRdZSgnEff), .PSgnE(FmaRdPSgn),
               .ProdExpE(FmaRdProdExp), .AddendStickyE(FmaRdAddendSticky), .KillProdE(FmaRdSumKillProd)); 
   fma2 fma2rd(.XSgnM(FmaRdXSgn), .YSgnM(FmaRdYSgn), 
-              .ZExpM(FmaRdZExp),  .ZOrigDenormM(FmaRdZOrigDenorm),
+              .ZExpM(FmaRdZExp),  .ZDenormM(FmaRdZDenorm),
               .XManM(FmaRdXMan), .YManM(FmaRdYMan), .ZManM(FmaRdZMan), 
               .XNaNM(FmaRdXNaN), .YNaNM(FmaRdYNaN), .ZNaNM(FmaRdZNaN), 
               .XZeroM(FmaRdXZero), .YZeroM(FmaRdYZero), .ZZeroM(FmaRdZZero), 
@@ -833,13 +828,12 @@ module testbenchfp;
   fma1 fma1rnm(.XSgnE(FmaRnmXSgn), .YSgnE(FmaRnmYSgn), .ZSgnE(FmaRnmZSgn), 
               .XExpE(FmaRnmXExp), .YExpE(FmaRnmYExp), .ZExpE(FmaRnmZExp), 
               .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),
-              .XDenormE(FmaRnmXDenorm), .YDenormE(FmaRnmYDenorm), .ZDenormE(FmaRnmZDenorm),  
               .XZeroE(FmaRnmXZero), .YZeroE(FmaRnmYZero), .ZZeroE(FmaRnmZZero),
               .FOpCtrlE(3'b0), .FmtE(FmaModFmt), .SumE(FmaRnmSum), .NegSumE(FmaRnmNegSum), .InvZE(FmaRnmInvZ), 
               .NormCntE(FmaRnmNormCnt), .ZSgnEffE(FmaRnmZSgnEff), .PSgnE(FmaRnmPSgn),
               .ProdExpE(FmaRnmProdExp), .AddendStickyE(FmaRnmAddendSticky), .KillProdE(FmaRnmSumKillProd)); 
   fma2 fma2rnm(.XSgnM(FmaRnmXSgn), .YSgnM(FmaRnmYSgn), 
-              .ZExpM(FmaRnmZExp),  .ZOrigDenormM(FmaRnmZOrigDenorm),
+              .ZExpM(FmaRnmZExp),  .ZDenormM(FmaRnmZDenorm),
               .XManM(FmaRnmXMan), .YManM(FmaRnmYMan), .ZManM(FmaRnmZMan), 
               .XNaNM(FmaRnmXNaN), .YNaNM(FmaRnmYNaN), .ZNaNM(FmaRnmZNaN), 
               .XZeroM(FmaRnmXZero), .YZeroM(FmaRnmYZero), .ZZeroM(FmaRnmZZero), 
@@ -852,12 +846,11 @@ module testbenchfp;
   fma1 fma1(.XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), 
               .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), 
               .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
-              .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm),  
               .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
               .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .SumE, .NegSumE, .InvZE, .NormCntE, .ZSgnEffE, .PSgnE,
               .ProdExpE, .AddendStickyE, .KillProdE); 
   fma2 fma2(.XSgnM(XSgn), .YSgnM(YSgn), 
-              .ZExpM(ZExp),  .ZOrigDenormM(ZOrigDenorm),
+              .ZExpM(ZExp),  .ZDenormM(ZDenorm),
               .XManM(XMan), .YManM(YMan), .ZManM(ZMan), 
               .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), 
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), 
@@ -870,7 +863,7 @@ module testbenchfp;
   //             .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(FrmVal), .FmtE(ModFmt), .CvtFpResE(CvtFpRes), .CvtFpFlgE(CvtFpFlg));
   
 fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
-            .XZeroE(XZero), .XOrigDenormE(XOrigDenorm), .FOpCtrlE(OpCtrlVal),
+            .XZeroE(XZero), .XDenormE(XDenorm), .FOpCtrlE(OpCtrlVal),
             .XInfE(XInf), .XNaNE(XNaN), .XSNaNE(XSNaN), .FrmE(FrmVal), .FmtE(ModFmt), 
             .CvtResE(CvtRes), .CvtIntResE(CvtIntRes), .CvtFlgE(CvtFlg));
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
@@ -1174,13 +1167,13 @@ end
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       $stop;
     end
-
+    
     // TestFloat sets the result to all 1's when there is an invalid result, however in 
     // http://www.jhauser.us/arithmetic/TestFloat-3/doc/TestFloat-general.html it says
     // for an unsigned integer result 0 is also okay
@@ -1295,7 +1288,6 @@ module readfmavectors (
   input logic [1:0]           FmaFmt,                 // the format of the FMA inputs
   input logic [`FLEN*4+7:0]   TestVector,             // the test vector
   output logic [`FLEN-1:0]    Ans,                    // the correct answer
-  output logic                ZOrigDenormE,           // is z denormalized in it's original precision
   output logic [4:0]          AnsFlg,                 // the correct flag
   output logic                XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
   output logic [`NE-1:0]      XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
@@ -1309,7 +1301,6 @@ module readfmavectors (
 );
 
   logic XNormE, XExpMaxE; // signals the unpacker outputs but isn't used in FMA
-  logic XOrigDenormE;
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
   always @(posedge clk) begin
@@ -1343,10 +1334,10 @@ module readfmavectors (
     endcase
   end
   
-  unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XOrigDenormE,
+  unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XDenormE,
                 .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
-                .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XExpMaxE, .ZOrigDenormE);
+                .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
+                .XExpMaxE, .ZDenormE);
 endmodule
 
 
@@ -1386,7 +1377,6 @@ module readvectors (
   output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
   output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
   output logic XNormE, XExpMaxE,
-  output logic ZOrigDenormE, XOrigDenormE,
   output logic [`FLEN-1:0] X, Y, Z
 );
 
@@ -1470,7 +1460,7 @@ module readvectors (
             Ans = TestVector[8];
           end
           2'b10:	begin	  // half
-            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+3*(`H_LEN)-1:12+(`H_LEN)]};
+            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+2*(`H_LEN)-1:12+(`H_LEN)]};
             Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[12+(`H_LEN)-1:12]};
             Ans = TestVector[8];
           end
@@ -1672,5 +1662,5 @@ module readvectors (
   unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
                 .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
                 .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XExpMaxE, .ZOrigDenormE, .XOrigDenormE);
+                .XExpMaxE);
 endmodule

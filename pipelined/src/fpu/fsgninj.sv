@@ -1,11 +1,9 @@
 ///////////////////////////////////////////
-// privmode.sv
 //
-// Written: David_Harris@hmc.edu 12 May 2022
-// Modified: 
+// Written: Katherine Parry
+// Modified: 6/23/2021
 //
-// Purpose: Track privilege mode
-//          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
+// Purpose: FPU Sign Injection instructions
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -29,32 +27,30 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
+module fsgninj (  
+	input logic        	XSgnE, YSgnE,	// X and Y sign bits
+	input logic [63:0] 	FSrcXE,			// X
+	input logic 		FmtE,			// precision 1 = double 0 = single
+	input  logic [1:0]  SgnOpCodeE,		// operation control
+	output logic [63:0] SgnResE			// result
+);
 
-module privmode (
-  input  logic             clk, reset,
-  input  logic             StallW, TrapM, mretM, sretM,
-  input  logic             DelegateM,
-  input  logic [1:0]       STATUS_MPP,
-  input  logic             STATUS_SPP,
-  output logic [1:0]       NextPrivilegeModeM, PrivilegeModeW
-); 
-  
-  if (`U_SUPPORTED) begin:privmode
-    // PrivilegeMode FSM
-    always_comb begin
-      if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-        if (`S_SUPPORTED & DelegateM)
-                          NextPrivilegeModeM = `S_MODE;
-        else              NextPrivilegeModeM = `M_MODE;
-      end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
-      else if (sretM)     NextPrivilegeModeM = {1'b0, STATUS_SPP};
-      else                NextPrivilegeModeM = PrivilegeModeW;
-    end
+	logic ResSgn;
 
-    flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
-  end else begin  // only machine mode supported
-    assign NextPrivilegeModeM = `M_MODE;
-    assign PrivilegeModeW = `M_MODE;
-  end
+	//op code designation:
+	//
+	//00 - fsgnj - directly copy over sign value of FSrcYE
+	//01 - fsgnjn - negate sign value of FSrcYE
+	//10 - fsgnjx - XOR sign values of FSrcXE & FSrcYE
+	//
+	
+	// calculate the result's sign
+	assign ResSgn = SgnOpCodeE[1] ? (XSgnE ^ YSgnE) : (YSgnE ^ SgnOpCodeE[0]);
+	
+	// format final result based on precision
+	//    - uses NaN-blocking format
+	//        - if there are any unsused bits the most significant bits are filled with 1s
+	assign SgnResE = FmtE ? {ResSgn, FSrcXE[62:0]} : {FSrcXE[63:32], ResSgn, FSrcXE[30:0]};
+
+
 endmodule
