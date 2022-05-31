@@ -155,7 +155,7 @@ def genLegend(fits, coefs, r2, spec):
                        lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
-def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True):
+def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
     ''' module: string module name
         freq: int freq (MHz)
         var: string delay, area, lpower, or denergy
@@ -186,9 +186,9 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True):
         if len(metric) == 5:
             xp, pred, leg = regress(widths, metric, spec, fits)
             fullLeg += leg
-
-            ax.scatter(widths, metric, color=spec.color, marker=spec.shape)
-            ax.plot(xp, pred, color=spec.color)
+            c = color if color else spec.color
+            ax.scatter(widths, metric, color=c, marker=spec.shape)
+            ax.plot(xp, pred, color=c)
 
     ax.legend(handles=fullLeg)
 
@@ -198,14 +198,15 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True):
     if norm:
         ylabeldic = {"lpower": "Normalized Leakage Power", "denergy": "Normalized Dynamic Energy", "area": "INVx1 Areas", "delay": "FO4 Delays"}
     else:
-        ylabeldic = {"lpower": "Leakage Power (nW)", "denergy": "Dynamic Energy (nJ-CHECK)", "area": "Area (sq microns)", "delay": "Delay (ns)"}
+        ylabeldic = {"lpower": "Leakage Power (nW)", "denergy": "Dynamic Energy (nJ)", "area": "Area (sq microns)", "delay": "Delay (ns)"}
 
     ax.set_ylabel(ylabeldic[var])
 
     if singlePlot:
         titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
         ax.set_title(module + titleStr)
-        plt.show()
+        plt.savefig('./plots/PPA/'+ module + '_' + var + '.png')
+        # plt.show()
 
 def regress(widths, var, spec, fits='clsgn'):
     ''' fits a curve to the given points
@@ -226,9 +227,9 @@ def regress(widths, var, spec, fits='clsgn'):
     coefs = coefsResid[0]
     try:
         resid = coefsResid[1][0]
+        r2 = 1 - resid / (y.size * y.var())
     except:
-        resid = 0
-    r2 = 1 - resid / (y.size * y.var())
+        r2 = 0
 
     xp = np.linspace(8, 140, 200)
     pred = []
@@ -338,7 +339,8 @@ def freqPlot(tech, mod, width):
     ax3.set_ylabel('Area * Delay')
     ax4.set_ylabel('Area * $Delay^2$')
     ax1.set_title(mod + '_' + str(width))
-    plt.show()
+    plt.savefig('./plots/freqBuckshot/' + mod + '/' + str(width) + '.png')
+    # plt.show()
 
 def squareAreaDelay(tech, mod, width):
     ''' plots delay, area, area*delay, and area*delay^2 for syntheses with specified tech, module, width
@@ -395,7 +397,8 @@ def squareAreaDelay(tech, mod, width):
     ax1.plot(xvals, xvals, ls="--", c=".3")
     ax1.hlines(y=bestAchieved, xmin=xvals[0], xmax=xvals[1], color="black", ls='--')
 
-    plt.show()
+    plt.savefig('./plots/squareareadelay_' + mod + '_' + str(width) + '.png')
+    # plt.show()
 
 def squarify(fig):
     ''' helper function for squareAreaDelay()
@@ -438,15 +441,32 @@ def plotPPA(mod, freq=None, norm=True):
     oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits=modFit[1], freq=freq, norm=norm)
     oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits=modFit[1], freq=freq, norm=norm)
     titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
+    n = 'normalized' if norm else 'unnormalized'
+    saveStr = './plots/PPA/'+ n + '/' + mod + '.png'
     plt.suptitle(mod + titleStr)
-    plt.show()
+    plt.savefig(saveStr)
+    # plt.show()
+
+def plotBestAreas():
+    global fitDict
+    fig, axs = plt.subplots(1, 1)
+    mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop']
+    colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+    legend_elements = []
+    for i in range(len(mods)):
+        oneMetricPlot(mods[i], 'area', ax=axs, freq=10, norm=False, color=colors[i])
+        legend_elements += [lines.Line2D([0], [0], color=colors[i], ls='', marker='o', label=mods[i])]
+    plt.suptitle('Optimized Areas (target freq 10MHz)')
+    plt.legend(handles=legend_elements)
+    plt.savefig('./plots/bestareas.png')
+    # plt.show()
     
 if __name__ == '__main__':
 
     # set up stuff, global variables
     widths = [8, 16, 32, 64, 128]
     # fitDict in progress
-    fitDict = {'add': ['cg', 'cl'], 'mult': ['clg', 's'], 'comparator': ['clsgn', 'clsgn'], 'csa': ['clsgn', 'clsgn'], 'shiftleft': ['clsgn', 'clsgn'], 'flop': ['cl', 'cl'], 'priorityencoder': ['clsgn', 'clsgn']}
+    fitDict = {'add': ['gl', 'lg'], 'mult': ['clg', 's'], 'comparator': ['clsgn', 'clsgn'], 'csa': ['clsgn', 'clsgn'], 'shiftleft': ['clsgn', 'clsgn'], 'flop': ['cl', 'cl'], 'priorityencoder': ['clsgn', 'clsgn']}
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
     techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1.96, 1.98, 1], ['gf32', 'purple', 's', 15e-3, .351, .3116, 1], ['tsmc28', 'blue', '^', 12.2e-3, .252, 1.09, 1]]
     techSpecs = [TechSpec(*t) for t in techSpecs]
@@ -456,11 +476,15 @@ if __name__ == '__main__':
   
     synthsfromcsv('ppaData.csv') # your csv here!
 
-    ### examples
-    # for mod in ['comparator', 'priorityencoder', 'shiftleft']:
-    #     for w in [16, 32]:
-    #         freqPlot('sky90', mod, w) # the weird ones
+    # ### examples
+
     # squareAreaDelay('sky90', 'add', 32)
     # oneMetricPlot('add', 'delay')
-    for mod in ['add', 'csa', 'mult', 'comparator', 'priorityencoder', 'shiftleft', 'flop']:
-        plotPPA(mod, norm=False) # no norm input now defaults to normalized
+    plotBestAreas()
+    
+    mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mult']
+    for mod in mods:
+        plotPPA(mod, norm=False)
+        plotPPA(mod)
+        for w in [8, 16, 32, 64, 128]:
+            freqPlot('sky90', mod, w)
