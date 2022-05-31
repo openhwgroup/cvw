@@ -111,20 +111,29 @@ module ahblite (
             else if (LSUBusWrite)NextBusState = MEMWRITE;
             else if (IFUBusRead)   NextBusState = INSTRREAD;
             else                   NextBusState = IDLE;
-      MEMREAD: if (~LSUBurstDone)        NextBusState = MEMREAD;
-            else if (IFUBusRead & LSUBurstDone)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      MEMWRITE: if (~LSUBurstDone)       NextBusState = MEMWRITE;
-            else if (IFUBusRead & LSUBurstDone)   NextBusState = INSTRREAD;
-            else                   NextBusState = IDLE;
-      INSTRREAD: if (~IFUBurstDone)      NextBusState = INSTRREAD; // *** think about moving to memread/write if LSUBusRead/Write are high
-            else                   NextBusState = IDLE;  // if (IFUBusRead still high) *** need to wait?
+      MEMREAD: if (HREADY)        NextBusState = MEMREADNEXT;
+               else               NextBusState = MEMREAD;
+      MEMREADNEXT: if (LSUBurstDone & ~IFUBusRead) NextBusState = IDLE;
+                   else if (LSUBurstDone & IFUBusRead) NextBusState = INSTRREAD;
+                   else                                NextBusState = MEMREAD;
+      MEMWRITE: if (HREADY)       NextBusState = MEMWRITENEXT;
+                else              NextBusState = MEMWRITE;
+      MEMWRITENEXT: if (LSUBurstDone & ~IFUBusRead) NextBusState = IDLE;
+                    else if (LSUBurstDone & IFUBusRead) NextBusState = INSTRREAD;
+                    else                                NextBusState = MEMWRITE;
+      INSTRREAD: if (HREADY)      NextBusState = INSTRREADNEXT;
+                 else             NextBusState = INSTRREAD;
+      INSTRREADNEXT: if (IFUBurstDone & ~LSUBusRead & ~LSUBusWrite) NextBusState = IDLE;
+                     else if (IFUBurstDone & LSUBusRead)            NextBusState = MEMREAD;
+                     else if (IFUBurstDone & LSUBusWrite)           NextBusState = MEMWRITE;
+                     else                                           NextBusState = INSTRREAD;
       default:                     NextBusState = IDLE;
     endcase
 
 
   //  bus outputs
-  assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
+  assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE) | 
+                (NextBusState == MEMREADNEXT) | (NextBusState == MEMWRITENEXT);
   assign #1 AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
   assign #1 HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
@@ -147,7 +156,7 @@ module ahblite (
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = [SIGNAL TO SET SEQ] ? 2'b11 : (NextBusState != IDLE) ? 2'b10 : 2'b00; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
-  assign HWRITE = NextBusState == MEMWRITE;
+  assign HWRITE = (NextBusState == MEMWRITE) | (NextBusState == MEMWRITENEXT);
   // delay write data by one cycle for
   flop #(`XLEN) wdreg(HCLK, LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
