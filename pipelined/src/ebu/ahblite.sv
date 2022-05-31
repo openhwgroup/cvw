@@ -170,7 +170,7 @@ module ahblite (
  
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
-  assign IFUBusAck = HREADY & (BusState == INSTRREAD);
-  assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
+  assign IFUBusAck = (BusState == INSTRREAD) & (NextBusState != INSTRREAD); // *** these are wrong.
+  assign LSUBusAck = (BusState == MEMREAD) & (NextBusState != MEMREAD) | (BusState == MEMWRITE) & (NextBusState != MEMWRITE); // *** these are wrong.
 
 endmodule
