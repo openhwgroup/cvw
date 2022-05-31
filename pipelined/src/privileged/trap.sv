@@ -64,7 +64,7 @@ module trap (
   assign IntPendingM = |PendingIntsM;
   assign ValidIntsM = {12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW; 
   assign InterruptM = (|ValidIntsM) && InstrValidM && ~(CommittedM);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
-  assign DelegateM = (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
+  assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 
   ///////////////////////////////////////////
