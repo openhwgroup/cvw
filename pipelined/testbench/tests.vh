@@ -28,6 +28,7 @@
 `define WALLYTEST "2"
 `define MYIMPERASTEST   "3"
 `define COREMARK "4"
+`define EMBENCH "5"
 // *** remove MYIMPERASTEST cases when ported 
 
 string tvpaths[] = '{
@@ -35,13 +36,42 @@ string tvpaths[] = '{
     "../../addins/riscv-arch-test/work/",
     "../../tests/wally-riscv-arch-test/work/",
     "../../tests/imperas-riscv-tests/work/",
-    "../../benchmarks/riscv-coremark/work/"
+    "../../benchmarks/riscv-coremark/work/",
+    "../../addins/embench-iot/bd_speed/src/"
 };
+
+
 
    // *** make sure these are somewhere
   string coremark[] = '{
     `COREMARK,
     "coremark.bare.riscv", "100000"
+  };
+
+  string embench[] = '{
+    `EMBENCH,
+    "aha-mont64/aha-mont64", "1080",
+    "crc32/crc32", "1080",
+    "cubic/cubic", "9080",
+    "edn/edn", "1080",
+    "huffbench/huffbench", "5080",
+    "matmult-int/matmult-int", "1080",
+    "md5sum/md5sum", "4080",
+    "minver/minver", "2080",
+    "nbody/nbody", "2080",
+    "nettle-aes/nettle-aes", "1080",
+    "nettle-sha256/nettle-sha256", "2080",
+    "nsichneu/nsichneu", "4080",
+    "picojpeg/picojpeg", "3080",
+    "primecount/primecount", "1080",
+    "qrduino/qrduino", "6080",
+    "sglib-combined/sglib-combined", "5080",
+    "slre/slre", "1080",
+    "st/st", "2080",
+    "statemate/statemate", "2080",
+    "tarfind/tarfind", "4080",
+    "ud/ud", "1080",
+    "wikisort/wikisort", "3080"
   };
 
   string wally64a[] = '{
