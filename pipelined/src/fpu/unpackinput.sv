@@ -24,21 +24,24 @@ module unpackinput (
         // sign bit
         assign Sgn = In[`FLEN-1];
 
-        // exponent
-        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};
-
         // fraction (no assumed 1)
         assign Frac = In[`NF-1:0];
+        
+        // is the fraction zero
+        assign FracZero = ~|Frac;
 
         // is the exponent non-zero
         assign ExpNonZero = |Exp; 
+        
+        // is the input (in it's original format) denormalized
+        assign Denorm = ~ExpNonZero & ~FracZero;
+
+        // exponent
+        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};
+
 
         // is the exponent all 1's
         assign ExpMax = &Exp;
-
-
-        // is the input (in it's original format) denormalized
-        assign Denorm = ~|In[`FLEN-2:`NF] & ~FracZero; 
     
 
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
@@ -69,6 +72,18 @@ module unpackinput (
         // choose sign bit depending on format - 1=larger precsion 0=smaller precision
         assign Sgn = FmtE ? In[`FLEN-1] : Len1[`LEN1-1];
 
+        // extract the fraction, add trailing zeroes to the mantissa if nessisary
+        assign Frac = FmtE ? In[`NF-1:0] : {Len1[`NF1-1:0], (`NF-`NF1)'(0)};
+
+        // is the fraction zero
+        assign FracZero = ~|Frac;
+        
+        // is the exponent non-zero
+        assign ExpNonZero = FmtE ? |In[`FLEN-2:`NF] : |Len1[`LEN1-2:`NF1]; 
+
+        // is the input (in it's original format) denormalized
+        assign Denorm = ~ExpNonZero & ~FracZero;
+
         // example double to single conversion:
         // 1023 = 0011 1111 1111
         // 127  = 0000 0111 1111 (subtract this)
@@ -80,17 +95,8 @@ module unpackinput (
         // extract the exponent, converting the smaller exponent into the larger precision if nessisary
         //      - if the original precision had a denormal number convert the exponent value 1
         assign Exp = FmtE ? {In[`FLEN-2:`NF+1], In[`NF]|Denorm} : {Len1[`LEN1-2], {`NE-`NE1{~Len1[`LEN1-2]}}, Len1[`LEN1-3:`NF1+1], Len1[`NF1]|Denorm}; 
+ 
 
-        // is the input (in it's original format) denormalized
-
-                    // is the input (in it's original format) denormalized
-        assign Denorm = (FmtE ? ~|In[`FLEN-2:`NF] : ~|Len1[`LEN1-2:`NF1]) & ~FracZero; 
-
-        // extract the fraction, add trailing zeroes to the mantissa if nessisary
-        assign Frac = FmtE ? In[`NF-1:0] : {Len1[`NF1-1:0], (`NF-`NF1)'(0)};
-
-        // is the exponent non-zero
-        assign ExpNonZero = FmtE ? |In[`FLEN-2:`NF] : |Len1[`LEN1-2:`NF1]; 
 
         // is the exponent all 1's
         assign ExpMax = FmtE ? &In[`FLEN-2:`NF] : &Len1[`LEN1-2:`NF1];
@@ -124,109 +130,66 @@ module unpackinput (
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for smaller precision
         assign Len2 = &In[`FLEN-1:`LEN2] ? In[`LEN2-1:0] : {1'b0, {`NE2+1{1'b1}}, (`NF2-1)'(0)};
 
-        // There are 2 case statements
-        //      - one for other singals and one for sgn/exp/frac
-        //      - need two for the dependencies in the expoenent calculation
-        //*** pull out the ~FracZero and and it at the end
-        always_comb begin
+
+        // extract the sign bit
+        always_comb
             case (FmtE)
-                `FMT: begin // if input is largest precision (`FLEN - ie quad or double)
-
-                    // This is the original format so set OrigDenorm to 0
-                    Denorm = ~|In[`FLEN-2:`NF] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |In[`FLEN-2:`NF]; 
-
-                    // is the exponent all 1's
-                    ExpMax = &In[`FLEN-2:`NF];
-                end
-                `FMT1: begin    // if input is larger precsion (`LEN1 - double or single)
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|Len1[`LEN1-2:`NF1] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |Len1[`LEN1-2:`NF1]; 
-
-                    // is the exponent all 1's
-                    ExpMax = &Len1[`LEN1-2:`NF1];
-                end
-                `FMT2: begin        // if input is smallest precsion (`LEN2 - single or half)
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|Len2[`LEN2-2:`NF2] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |Len2[`LEN2-2:`NF2]; 
-
-                    // is the exponent all 1's
-                    ExpMax = &Len2[`LEN2-2:`NF2];
-                end
-                default: begin
-                    Denorm = 0; 
-                    ExpNonZero = 0; 
-                    ExpMax = 0;
-                end
+                `FMT:  Sgn = In[`FLEN-1];
+                `FMT1: Sgn = Len1[`LEN1-1];
+                `FMT2: Sgn = Len2[`LEN2-1];
+                default: Sgn = 0;
             endcase
-        end
-        always_comb begin
+
+        // extract the fraction
+        always_comb
             case (FmtE)
-                `FMT: begin // if input is largest precision (`FLEN - ie quad or double)
-                    // extract the sign bit
-                    Sgn = In[`FLEN-1];
-
-                    // extract the exponent
-                    Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};
-
-                    // extract the fraction
-                    Frac = In[`NF-1:0];
-                end
-                `FMT1: begin    // if input is larger precsion (`LEN1 - double or single)
-
-                    // extract the sign bit
-                    Sgn = Len1[`LEN1-1];
-
-                    // example double to single conversion:
-                    // 1023 = 0011 1111 1111
-                    // 127  = 0000 0111 1111 (subtract this)
-                    // 896  = 0011 1000 0000
-                    // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-                    // dexp = 0bdd dbbb bbbb 
-                    // also need to take into account possible zero/denorm/inf/NaN values
-
-                    // convert the larger precision's exponent to use the largest precision's bias
-                    Exp = {Len1[`LEN1-2], {`NE-`NE1{~Len1[`LEN1-2]}}, Len1[`LEN1-3:`NF1+1], Len1[`NF1]|Denorm}; 
-
-                    // extract the fraction and add the nessesary trailing zeros
-                    Frac = {Len1[`NF1-1:0], (`NF-`NF1)'(0)};
-                end
-                `FMT2: begin        // if input is smallest precsion (`LEN2 - single or half)
-
-                    // exctract the sign bit
-                    Sgn = Len2[`LEN2-1];
-
-                    // example double to single conversion:
-                    // 1023 = 0011 1111 1111
-                    // 127  = 0000 0111 1111 (subtract this)
-                    // 896  = 0011 1000 0000
-                    // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-                    // dexp = 0bdd dbbb bbbb 
-                    // also need to take into account possible zero/denorm/inf/NaN values
-                    
-                    // convert the smallest precision's exponent to use the largest precision's bias
-                    Exp = Denorm ? {1'b0, {`NE-`NE2{1'b1}}, (`NE2-1)'(1)} : {Len2[`LEN2-2], {`NE-`NE2{~Len2[`LEN2-2]}}, Len2[`LEN2-3:`NF2]}; 
-
-                    // extract the fraction and add the nessesary trailing zeros
-                    Frac = {Len2[`NF2-1:0], (`NF-`NF2)'(0)};
-                end
-                default: begin
-                    Sgn = 0;
-                    Exp = 0; 
-                    Frac = 0;
-                end
+                `FMT: Frac = In[`NF-1:0];
+                `FMT1: Frac = {Len1[`NF1-1:0], (`NF-`NF1)'(0)};
+                `FMT2: Frac = {Len2[`NF2-1:0], (`NF-`NF2)'(0)};
+                default: Frac = 0;
             endcase
-        end
+
+        // is the fraction zero
+        assign FracZero = ~|Frac;
+
+
+        // is the exponent non-zero
+        always_comb
+            case (FmtE)
+                `FMT:  ExpNonZero = |In[`FLEN-2:`NF];     // if input is largest precision (`FLEN - ie quad or double)
+                `FMT1: ExpNonZero = |Len1[`LEN1-2:`NF1];  // if input is larger precsion (`LEN1 - double or single)
+                `FMT2: ExpNonZero = |Len2[`LEN2-2:`NF2]; // if input is smallest precsion (`LEN2 - single or half)
+                default: ExpNonZero = 0; 
+            endcase
+            
+        // is the input (in it's original format) denormalized
+        assign Denorm = ~ExpNonZero & ~FracZero;
+
+        // example double to single conversion:
+        // 1023 = 0011 1111 1111
+        // 127  = 0000 0111 1111 (subtract this)
+        // 896  = 0011 1000 0000
+        // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
+        // dexp = 0bdd dbbb bbbb 
+        // also need to take into account possible zero/denorm/inf/NaN values
+
+        // convert the larger precision's exponent to use the largest precision's bias
+        always_comb 
+            case (FmtE)
+                `FMT:  Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};
+                `FMT1: Exp = {Len1[`LEN1-2], {`NE-`NE1{~Len1[`LEN1-2]}}, Len1[`LEN1-3:`NF1+1], Len1[`NF1]|Denorm}; 
+                `FMT2: Exp = {Len2[`LEN2-2], {`NE-`NE2{~Len2[`LEN2-2]}}, Len2[`LEN2-3:`NF2+1], Len2[`NF2]|Denorm}; 
+                default: Exp = 0;
+            endcase
+
+        // is the exponent all 1's
+        always_comb
+            case (FmtE)
+                `FMT:  ExpMax = &In[`FLEN-2:`NF];
+                `FMT1: ExpMax = &Len1[`LEN1-2:`NF1];
+                `FMT2: ExpMax = &Len2[`LEN2-2:`NF2];
+                default: ExpMax = 0;
+            endcase
 
     end else if (`FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
     
@@ -252,136 +215,72 @@ module unpackinput (
         // Check NaN boxing, If the value is not properly NaN boxed, set the value to a quiet NaN - for half precision
         assign Len3 = &In[`Q_LEN-1:`H_LEN] ? In[`H_LEN-1:0] : {1'b0, {`H_NE+1{1'b1}}, (`H_NF-1)'(0)};
 
-
-        // There are 2 case statements
-        //      - one for other singals and one for sgn/exp/frac
-        //      - need two for the dependencies in the expoenent calculation
-        always_comb begin
+        // extract sign bit
+        always_comb
             case (FmtE)
-                2'b11: begin  // if input is quad percision
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|In[`Q_LEN-2:`Q_NF] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |In[`Q_LEN-2:`Q_NF]; 
-
-                    // is the exponent all 1's
-                    ExpMax = &In[`Q_LEN-2:`Q_NF];
-                end
-                2'b01: begin  // if input is double percision
-
-                    // is the exponent all 1's
-                    ExpMax = &Len1[`D_LEN-2:`D_NF];
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|Len1[`D_LEN-2:`D_NF] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |Len1[`D_LEN-2:`D_NF]; 
-                end
-                2'b00: begin      // if input is single percision
-
-                    // is the exponent all 1's
-                    ExpMax = &Len2[`S_LEN-2:`S_NF];
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|Len2[`S_LEN-2:`S_NF] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |Len2[`S_LEN-2:`S_NF]; 
-                end
-                2'b10: begin      // if input is half percision
-
-                    // is the exponent all 1's
-                    ExpMax = &Len3[`H_LEN-2:`H_NF];
-
-                    // is the input (in it's original format) denormalized
-                    Denorm = ~|Len3[`H_LEN-2:`H_NF] & ~FracZero; 
-
-                    // is the exponent non-zero
-                    ExpNonZero = |Len3[`H_LEN-2:`H_NF]; 
-                end
+                2'b11: Sgn = In[`Q_LEN-1];
+                2'b01: Sgn = Len1[`D_LEN-1];
+                2'b00: Sgn = Len2[`S_LEN-1];
+                2'b10: Sgn = Len3[`H_LEN-1];
             endcase
-        end
+            
 
-        always_comb begin
+        // extract the fraction
+        always_comb
             case (FmtE)
-                2'b11: begin  // if input is quad percision
-                    // extract sign bit
-                    Sgn = In[`Q_LEN-1];
-
-                    // extract the exponent
-                    Exp = {In[`Q_LEN-2:`Q_NF+1], In[`Q_NF]|Denorm};
-
-                    // extract the fraction
-                    Frac = In[`Q_NF-1:0];
-                end
-                2'b01: begin  // if input is double percision
-                    // extract sign bit
-                    Sgn = Len1[`D_LEN-1];
-
-                    // example double to single conversion:
-                    // 1023 = 0011 1111 1111
-                    // 127  = 0000 0111 1111 (subtract this)
-                    // 896  = 0011 1000 0000
-                    // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-                    // dexp = 0bdd dbbb bbbb 
-                    // also need to take into account possible zero/denorm/inf/NaN values
-                    
-                    // convert the double precsion exponent into quad precsion
-
-                    Exp = {Len1[`D_LEN-2], {`Q_NE-`D_NE{~Len1[`D_LEN-2]}}, Len1[`D_LEN-3:`D_NF+1], Len1[`D_NF]|Denorm}; 
-
-                    // extract the fraction and add the nessesary trailing zeros
-                    Frac = {Len1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
-                end
-                2'b00: begin      // if input is single percision
-                    // extract sign bit
-                    Sgn = Len2[`S_LEN-1];
-
-                    // example double to single conversion:
-                    // 1023 = 0011 1111 1111
-                    // 127  = 0000 0111 1111 (subtract this)
-                    // 896  = 0011 1000 0000
-                    // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-                    // dexp = 0bdd dbbb bbbb 
-                    // also need to take into account possible zero/denorm/inf/NaN values
-                    
-                    // convert the single precsion exponent into quad precsion
-                    Exp = {Len2[`S_LEN-2], {`Q_NE-`S_NE{~Len2[`S_LEN-2]}}, Len2[`S_LEN-3:`S_NF+1], Len2[`S_NF]|Denorm}; 
-
-                    // extract the fraction and add the nessesary trailing zeros
-                    Frac = {Len2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
-                end
-                2'b10: begin      // if input is half percision
-                    // extract sign bit
-                    Sgn = Len3[`H_LEN-1];
-
-                    // example double to single conversion:
-                    // 1023 = 0011 1111 1111
-                    // 127  = 0000 0111 1111 (subtract this)
-                    // 896  = 0011 1000 0000
-                    // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
-                    // dexp = 0bdd dbbb bbbb 
-                    // also need to take into account possible zero/denorm/inf/NaN values
-
-                    // convert the half precsion exponent into quad precsion
-                    Exp = {Len3[`H_LEN-2], {`Q_NE-`H_NE{~Len3[`H_LEN-2]}}, Len3[`H_LEN-3:`H_NF+1], Len3[`H_NF]|Denorm}; 
-
-                    // extract the fraction and add the nessesary trailing zeros
-                    Frac = {Len3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
-                end
+                2'b11: Frac = In[`Q_NF-1:0];
+                2'b01: Frac = {Len1[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
+                2'b00: Frac = {Len2[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
+                2'b10: Frac = {Len3[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
             endcase
-        end
+
+        // is the fraction zero
+        assign FracZero = ~|Frac;
+
+        // is the exponent non-zero
+        always_comb
+            case (FmtE)
+                2'b11: ExpNonZero = |In[`Q_LEN-2:`Q_NF];
+                2'b01: ExpNonZero = |Len1[`D_LEN-2:`D_NF];
+                2'b00: ExpNonZero = |Len2[`S_LEN-2:`S_NF]; 
+                2'b10: ExpNonZero = |Len3[`H_LEN-2:`H_NF]; 
+            endcase
+
+        // is the input (in it's original format) denormalized
+        assign Denorm = ~ExpNonZero & ~FracZero;
+
+
+        // example double to single conversion:
+        // 1023 = 0011 1111 1111
+        // 127  = 0000 0111 1111 (subtract this)
+        // 896  = 0011 1000 0000
+        // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
+        // dexp = 0bdd dbbb bbbb 
+        // also need to take into account possible zero/denorm/inf/NaN values
+        
+        // convert the double precsion exponent into quad precsion
+        always_comb
+            case (FmtE)
+                2'b11: Exp = {In[`Q_LEN-2:`Q_NF+1], In[`Q_NF]|Denorm};
+                2'b01: Exp = {Len1[`D_LEN-2], {`Q_NE-`D_NE{~Len1[`D_LEN-2]}}, Len1[`D_LEN-3:`D_NF+1], Len1[`D_NF]|Denorm};
+                2'b00: Exp = {Len2[`S_LEN-2], {`Q_NE-`S_NE{~Len2[`S_LEN-2]}}, Len2[`S_LEN-3:`S_NF+1], Len2[`S_NF]|Denorm};
+                2'b10: Exp = {Len3[`H_LEN-2], {`Q_NE-`H_NE{~Len3[`H_LEN-2]}}, Len3[`H_LEN-3:`H_NF+1], Len3[`H_NF]|Denorm}; 
+            endcase
+
+
+        // is the exponent all 1's
+        always_comb 
+            case (FmtE)
+                2'b11: ExpMax = &In[`Q_LEN-2:`Q_NF];
+                2'b01: ExpMax = &Len1[`D_LEN-2:`D_NF];
+                2'b00: ExpMax = &Len2[`S_LEN-2:`S_NF];
+                2'b10: ExpMax = &Len3[`H_LEN-2:`H_NF];
+            endcase
 
     end
 
     // is the exponent all 0's
     assign ExpZero = ~ExpNonZero;
-
-    // is the fraction zero
-    assign FracZero = ~|Frac;
 
     // add the assumed one (or zero if denormal or zero) to create the mantissa
     assign Man = {ExpNonZero, Frac};
