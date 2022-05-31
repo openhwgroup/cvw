@@ -11,39 +11,22 @@ module unpackinput (
     output logic                    Denorm,   // is XYZ denormalized
     output logic                    Zero,         // is XYZ zero
     output logic                    Inf,            // is XYZ infinity
-    output logic                    ExpMax,                        // does In have the maximum exponent (NaN or Inf)
-    output logic                    ExpZero                        // is the exponent zero
+    output logic                    ExpMax                       // does In have the maximum exponent (NaN or Inf)
 );
  
     logic [`NF-1:0] Frac; //Fraction of XYZ
     logic           ExpNonZero; // is the exponent of XYZ non-zero
     logic           FracZero; // is the fraction zero
+    logic           ExpZero;
     
     if (`FPSIZES == 1) begin        // if there is only one floating point format supported
-
-        // sign bit
-        assign Sgn = In[`FLEN-1];
-
-        // fraction (no assumed 1)
-        assign Frac = In[`NF-1:0];
-        
-        // is the fraction zero
-        assign FracZero = ~|Frac;
-
-        // is the exponent non-zero
-        assign ExpNonZero = |Exp; 
-        
-        // is the input (in it's original format) denormalized
-        assign Denorm = ~ExpNonZero & ~FracZero;
-
-        // exponent
-        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};
-
-
-        // is the exponent all 1's
-        assign ExpMax = &Exp;
-    
-
+        assign Sgn = In[`FLEN-1];  // sign bit
+        assign Frac = In[`NF-1:0];  // fraction (no assumed 1)
+        assign FracZero = ~|Frac; // is the fraction zero?
+        assign ExpNonZero = |Exp;  // is the exponent non-zero
+        assign Denorm = ~ExpNonZero & ~FracZero; // is the input (in its original format) denormalized
+        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|Denorm};  // exponent.  Denormalized numbers have effective biased exponent of 1
+        assign ExpMax = &Exp;  // is the exponent all 1's
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
         //***need better names for these constants
         // largest format | smaller format

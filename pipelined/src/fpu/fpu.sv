@@ -103,7 +103,6 @@ module fpu (
    logic 		  XInfM, YInfM, ZInfM;                // is the input infinity - memory stage
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
-   logic 		  XNormE;                             // is normal
    logic 		  FmtQ;
    logic 		  FOpCtrlQ;     
 
@@ -178,7 +177,7 @@ module fpu (
    unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
-         .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE, .XNormE);
+         .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE);
 
    // FMA
    //   - two stage FMA
@@ -215,7 +214,7 @@ module fpu (
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
    fsgninj fsgninj(.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
-   fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XNormE, .XSNaNE, .ClassResE);
+   fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XSNaNE, .ClassResE);
    fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, .FWriteIntE, .XZeroE, .XDenormE,
               .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtResE, .CvtIntResE, .CvtFlgE);
 
