@@ -119,6 +119,7 @@ logic [3:0] dummy;
         "wally32i":                       tests = wally32i; // *** redo
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv; // *** redo
+        "embench":                        tests = embench;
       endcase
     end
     if (tests.size() == 0) begin
@@ -127,7 +128,7 @@ logic [3:0] dummy;
     end
   end
 
-  string signame, memfilename, pathname;
+  string signame, memfilename, pathname, objdumpfilename, adrstr;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
