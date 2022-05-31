@@ -262,23 +262,12 @@ module unpackinput (
 
     end
 
-    // is the exponent all 0's
-    assign ExpZero = ~ExpNonZero;
-
-    // add the assumed one (or zero if denormal or zero) to create the mantissa
-    assign Man = {ExpNonZero, Frac};
-    
-    // is the input a NaN
-    //     - force to be a NaN if it isn't properly Nan Boxed
-    assign NaN = ExpMax & ~FracZero;
-
-    // is the input a singnaling NaN
-    assign SNaN = NaN&~Frac[`NF-1];
-
-    // is the input infinity
-    assign Inf = ExpMax & FracZero;
-
-    // is the input zero
-    assign Zero = ExpZero & FracZero;
-    
+    // Output logic
+    assign ExpZero = ~ExpNonZero; // is the exponent all 0's?
+    assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if denormal or zero) to create the significand
+    //   ***  - force to be a NaN if it isn't properly Nan Boxed
+    assign NaN = ExpMax & ~FracZero; // is the input a NaN?
+    assign SNaN = NaN&~Frac[`NF-1]; // is the input a singnaling NaN?
+    assign Inf = ExpMax & FracZero; // is the input infinity?
+    assign Zero = ExpZero & FracZero; // is the input zero?
 endmodule
