@@ -71,7 +71,9 @@ if { $saifpower == 1 } {
 }
 
 # Set reset false path
-set_false_path -from [get_ports reset]
+if {$drive != "INV"} {
+    set_false_path -from [get_ports reset]
+}
 
 # Set Frequency in [MHz] or period in [ns]
 set my_clock_pin clk
@@ -112,13 +114,13 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 if {$tech == "sky130"} {
     set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
 } elseif {$tech == "sky90"} {
-    if ($drive == "INV") {
+    if {$drive == "INV"} {
 	set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
     } else {
 	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
 } elseif {$tech == "tsmc28"} {
-    if ($drive == "INV") {
+    if {$drive == "INV"} {
 	set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
     }
 }
@@ -131,13 +133,13 @@ set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 if {$tech == "sky130"} {
     set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
 } elseif {$tech == "sky90"} {
-    if ($drive == "INV") {
+    if {$drive == "INV"} {
 	set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
     } else {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
     }
 } elseif {$tech == "tsmc28"} {
-    if ($drive == "INV") {
+    if {$drive == "INV"} {
 	set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     }
 }
