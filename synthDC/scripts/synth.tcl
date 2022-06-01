@@ -325,21 +325,15 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_fpu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fma1 ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma1/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma2/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fdivsqrt/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fdivsqrt/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through faddcvt ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.faddcvt/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FMAResM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FMAResM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FDivResM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FDivResM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FResE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FResE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma/SumE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/SumE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma/ProdExpE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/ProdExpE} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {faddcvt/*} -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mmu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through immu/physicaladdress ////\n\n\n" }

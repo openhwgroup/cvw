@@ -8,7 +8,7 @@ module fclassify (
     input logic         XDenormE, // is denormal
     input logic         XZeroE, // is zero
     input logic         XInfE,  // is infinity
-    output logic [63:0] ClassResE // classify result
+    output logic [`XLEN-1:0] ClassResE // classify result
     );
 
     logic PInf, PZero, PNorm, PDenorm;
@@ -37,6 +37,6 @@ module fclassify (
     //  bit 7 - +Inf
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResE = {{54{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+    assign ClassResE = {{`XLEN-10{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
 
 endmodule

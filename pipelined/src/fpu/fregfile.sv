@@ -33,10 +33,10 @@ module fregfile (
   input logic 	      clk, reset,
   input logic 	      we4, 
   input logic [4:0]   a1, a2, a3, a4, 
-  input logic [63:0]  wd4,
-  output logic [63:0] rd1, rd2, rd3);
+  input logic [`FLEN-1:0]  wd4,
+  output logic [`FLEN-1:0] rd1, rd2, rd3);
    
-   logic [63:0]       rf[31:0];
+   logic [`FLEN-1:0]       rf[31:0];
    integer 	      i;
    
    // three ported register file
