@@ -44,12 +44,11 @@ module privmode (
     // PrivilegeMode FSM
     always_comb begin
       if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-        if (`S_SUPPORTED & DelegateM)
-                          NextPrivilegeModeM = `S_MODE;
-        else              NextPrivilegeModeM = `M_MODE;
-      end else if (mretM) NextPrivilegeModeM = STATUS_MPP;
-      else if (sretM)     NextPrivilegeModeM = {1'b0, STATUS_SPP};
-      else                NextPrivilegeModeM = PrivilegeModeW;
+        if (`S_SUPPORTED & DelegateM) NextPrivilegeModeM = `S_MODE;
+        else                          NextPrivilegeModeM = `M_MODE;
+      end else if (mretM)             NextPrivilegeModeM = STATUS_MPP;
+      else if (sretM)                 NextPrivilegeModeM = {1'b0, STATUS_SPP};
+      else                            NextPrivilegeModeM = PrivilegeModeW;
     end
 
     flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
