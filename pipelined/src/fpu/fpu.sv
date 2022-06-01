@@ -95,7 +95,7 @@ module fpu (
    logic 		  XNaNQ, YNaNQ;                       // is the input a NaN - divide
    logic 		  XSNaNE, YSNaNE, ZSNaNE;             // is the input a signaling NaN - execute stage
    logic 		  XSNaNM, YSNaNM, ZSNaNM;             // is the input a signaling NaN - memory stage
-   logic 		  XDenormE, YDenormE, ZDenormE;       // is the input denormalized
+   logic 		  XDenormE, ZDenormE;       // is the input denormalized
    logic 		  XZeroE, YZeroE, ZZeroE;             // is the input zero - execute stage
    logic 		  XZeroM, YZeroM, ZZeroM;             // is the input zero - memory stage
    logic 		  XZeroQ, YZeroQ;                     // is the input zero - divide
@@ -176,7 +176,7 @@ module fpu (
    //    - does some classifications (SNaN, NaN, Denorm, Norm, Zero, Infifnity)
    unpack unpack (.X(FSrcXE), .Y(FSrcYE), .Z(FSrcZE), .FmtE,
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-         .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .YDenormE, .ZDenormE, 
+         .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE);
 
    // FMA

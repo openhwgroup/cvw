@@ -79,7 +79,6 @@ module testbenchfp;
   logic [`NF:0]         FmaRuXMan, FmaRuYMan, FmaRuZMan;
   logic [`NF:0]         FmaRdXMan, FmaRdYMan, FmaRdZMan;
   logic [`NF:0]         FmaRnmXMan, FmaRnmYMan, FmaRnmZMan;
-  logic                 XNorm;                                // is X normal
   logic                 XNaN, YNaN, ZNaN;                     // is the input NaN
   logic                 FmaRneXNaN, FmaRneYNaN, FmaRneZNaN;
   logic                 FmaRzXNaN, FmaRzYNaN, FmaRzZNaN;
@@ -92,12 +91,12 @@ module testbenchfp;
   logic                 FmaRuXSNaN, FmaRuYSNaN, FmaRuZSNaN;
   logic                 FmaRdXSNaN, FmaRdYSNaN, FmaRdZSNaN;
   logic                 FmaRnmXSNaN, FmaRnmYSNaN, FmaRnmZSNaN;
-  logic                 XDenorm, YDenorm, ZDenorm;            // is the input denormalized
-  logic                 FmaRneXDenorm, FmaRneYDenorm, FmaRneZDenorm;
-  logic                 FmaRzXDenorm, FmaRzYDenorm, FmaRzZDenorm;
-  logic                 FmaRuXDenorm, FmaRuYDenorm, FmaRuZDenorm;
-  logic                 FmaRdXDenorm, FmaRdYDenorm, FmaRdZDenorm;
-  logic                 FmaRnmXDenorm, FmaRnmYDenorm, FmaRnmZDenorm;
+  logic                 XDenorm, ZDenorm;            // is the input denormalized
+  logic                 FmaRneXDenorm, FmaRneZDenorm;
+  logic                 FmaRzXDenorm, FmaRzZDenorm;
+  logic                 FmaRuXDenorm, FmaRuZDenorm;
+  logic                 FmaRdXDenorm, FmaRdZDenorm;
+  logic                 FmaRnmXDenorm, FmaRnmZDenorm;
   logic                 XInf, YInf, ZInf;                   // is the input infinity
   logic                 FmaRneXInf, FmaRneYInf, FmaRneZInf;
   logic                 FmaRzXInf, FmaRzYInf, FmaRzZInf;
@@ -683,7 +682,7 @@ module testbenchfp;
                                     .XManE(FmaRneXMan), .YManE(FmaRneYMan), .ZManE(FmaRneZMan), 
                                     .XNaNE(FmaRneXNaN), .YNaNE(FmaRneYNaN), .ZNaNE(FmaRneZNaN),
                                     .XSNaNE(FmaRneXSNaN), .YSNaNE(FmaRneYSNaN), .ZSNaNE(FmaRneZSNaN), 
-                                    .XDenormE(FmaRneXDenorm), .YDenormE(FmaRneYDenorm), .ZDenormE(FmaRneZDenorm), 
+                                    .XDenormE(FmaRneXDenorm), .ZDenormE(FmaRneZDenorm), 
                                     .XZeroE(FmaRneXZero), .YZeroE(FmaRneYZero), .ZZeroE(FmaRneZZero),
                                     .XInfE(FmaRneXInf), .YInfE(FmaRneYInf), .ZInfE(FmaRneZInf), .FmaModFmt, .FmaFmt(FmaFmtVal),
                                     .X(FmaRneX), .Y(FmaRneY), .Z(FmaRneZ));
@@ -693,7 +692,7 @@ module testbenchfp;
                                     .XManE(FmaRzXMan), .YManE(FmaRzYMan), .ZManE(FmaRzZMan), 
                                     .XNaNE(FmaRzXNaN), .YNaNE(FmaRzYNaN), .ZNaNE(FmaRzZNaN),
                                     .XSNaNE(FmaRzXSNaN), .YSNaNE(FmaRzYSNaN), .ZSNaNE(FmaRzZSNaN), 
-                                    .XDenormE(FmaRzXDenorm), .YDenormE(FmaRzYDenorm), .ZDenormE(FmaRzZDenorm), 
+                                    .XDenormE(FmaRzXDenorm), .ZDenormE(FmaRzZDenorm), 
                                     .XZeroE(FmaRzXZero), .YZeroE(FmaRzYZero), .ZZeroE(FmaRzZZero),
                                     .XInfE(FmaRzXInf), .YInfE(FmaRzYInf), .ZInfE(FmaRzZInf), .FmaFmt(FmaFmtVal),
                                     .X(FmaRzX), .Y(FmaRzY), .Z(FmaRzZ));
@@ -703,7 +702,7 @@ module testbenchfp;
                                     .XManE(FmaRuXMan), .YManE(FmaRuYMan), .ZManE(FmaRuZMan), 
                                     .XNaNE(FmaRuXNaN), .YNaNE(FmaRuYNaN), .ZNaNE(FmaRuZNaN),
                                     .XSNaNE(FmaRuXSNaN), .YSNaNE(FmaRuYSNaN), .ZSNaNE(FmaRuZSNaN), 
-                                    .XDenormE(FmaRuXDenorm), .YDenormE(FmaRuYDenorm), .ZDenormE(FmaRuZDenorm), 
+                                    .XDenormE(FmaRuXDenorm), .ZDenormE(FmaRuZDenorm), 
                                     .XZeroE(FmaRuXZero), .YZeroE(FmaRuYZero), .ZZeroE(FmaRuZZero),
                                     .XInfE(FmaRuXInf), .YInfE(FmaRuYInf), .ZInfE(FmaRuZInf), .FmaFmt(FmaFmtVal),
                                     .X(FmaRuX), .Y(FmaRuY), .Z(FmaRuZ));
@@ -713,7 +712,7 @@ module testbenchfp;
                                     .XManE(FmaRdXMan), .YManE(FmaRdYMan), .ZManE(FmaRdZMan), 
                                     .XNaNE(FmaRdXNaN), .YNaNE(FmaRdYNaN), .ZNaNE(FmaRdZNaN),
                                     .XSNaNE(FmaRdXSNaN), .YSNaNE(FmaRdYSNaN), .ZSNaNE(FmaRdZSNaN), 
-                                    .XDenormE(FmaRdXDenorm), .YDenormE(FmaRdYDenorm), .ZDenormE(FmaRdZDenorm), 
+                                    .XDenormE(FmaRdXDenorm), .ZDenormE(FmaRdZDenorm), 
                                     .XZeroE(FmaRdXZero), .YZeroE(FmaRdYZero), .ZZeroE(FmaRdZZero),
                                     .XInfE(FmaRdXInf), .YInfE(FmaRdYInf), .ZInfE(FmaRdZInf), .FmaFmt(FmaFmtVal),
                                     .X(FmaRdX), .Y(FmaRdY), .Z(FmaRdZ));
@@ -723,7 +722,7 @@ module testbenchfp;
                                     .XManE(FmaRnmXMan), .YManE(FmaRnmYMan), .ZManE(FmaRnmZMan),
                                     .XNaNE(FmaRnmXNaN), .YNaNE(FmaRnmYNaN), .ZNaNE(FmaRnmZNaN),
                                     .XSNaNE(FmaRnmXSNaN), .YSNaNE(FmaRnmYSNaN), .ZSNaNE(FmaRnmZSNaN), 
-                                    .XDenormE(FmaRnmXDenorm), .YDenormE(FmaRnmYDenorm), .ZDenormE(FmaRnmZDenorm), 
+                                    .XDenormE(FmaRnmXDenorm), .ZDenormE(FmaRnmZDenorm), 
                                     .XZeroE(FmaRnmXZero), .YZeroE(FmaRnmYZero), .ZZeroE(FmaRnmZZero),
                                     .XInfE(FmaRnmXInf), .YInfE(FmaRnmYInf), .ZInfE(FmaRnmZInf), .FmaFmt(FmaFmtVal),
                                     .X(FmaRnmX), .Y(FmaRnmY), .Z(FmaRnmZ));
@@ -733,9 +732,9 @@ module testbenchfp;
                                     .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
                                     .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
                                     .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
-                                    .XDenormE(XDenorm), .YDenormE(YDenorm), .ZDenormE(ZDenorm), 
+                                    .XDenormE(XDenorm), .ZDenormE(ZDenorm), 
                                     .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-                                    .XInfE(XInf), .YInfE(YInf), .ZInfE(ZInf),.XNormE(XNorm), .XExpMaxE(XExpMax),
+                                    .XInfE(XInf), .YInfE(YInf), .ZInfE(ZInf), .XExpMaxE(XExpMax),
                                     .X, .Y, .Z);
 
 
@@ -1294,13 +1293,13 @@ module readfmavectors (
   output logic [`NF:0]        XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
   output logic                XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
   output logic                XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
-  output logic                XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
+  output logic                XDenormE, ZDenormE,   // is XYZ denormalized
   output logic                XZeroE, YZeroE, ZZeroE,         // is XYZ zero
   output logic                XInfE, YInfE, ZInfE,            // is XYZ infinity
   output logic [`FLEN-1:0]    X, Y, Z                 // inputs
 );
 
-  logic XNormE, XExpMaxE; // signals the unpacker outputs but isn't used in FMA
+  logic XExpMaxE; // signals the unpacker outputs but isn't used in FMA
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
   always @(posedge clk) begin
@@ -1335,7 +1334,7 @@ module readfmavectors (
   end
   
   unpack unpack(.X, .Y, .Z, .FmtE(FmaModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XDenormE,
-                .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
+                .XManE, .YManE, .ZManE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
                 .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
                 .XExpMaxE, .ZDenormE);
 endmodule
@@ -1373,10 +1372,10 @@ module readvectors (
   output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
   output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
   output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
-  output logic                    XDenormE, YDenormE, ZDenormE,   // is XYZ denormalized
+  output logic                    XDenormE, ZDenormE,   // is XYZ denormalized
   output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
   output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-  output logic XNormE, XExpMaxE,
+  output logic XExpMaxE,
   output logic [`FLEN-1:0] X, Y, Z
 );
 
@@ -1660,7 +1659,7 @@ module readvectors (
   end
   
   unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
-                .XManE, .YManE, .ZManE, .XNormE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
-                .XDenormE, .YDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
+                .XManE, .YManE, .ZManE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
+                .XDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
                 .XExpMaxE);
 endmodule
