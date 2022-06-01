@@ -115,7 +115,7 @@ module fpu (
    logic [63:0] 	  CvtResE;                   // FP <-> int convert result
    logic [`XLEN-1:0] CvtIntResE;                   // FP <-> int convert result
    logic [4:0] 	  CvtFlgE;                   // FP <-> int convert flags //*** trim this	
-   logic [63:0] 	  ClassResE;               // classify result
+   logic [`XLEN-1:0] 	  ClassResE;               // classify result
    logic [63:0] 	  CmpResE;                   // compare result
    logic 		  CmpNVE;                     // compare invalid flag (Not Valid)     
    logic [63:0] 	  SgnResE;                   // sign injection result
@@ -231,7 +231,7 @@ module fpu (
    mux4  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, FResSelE, FFlgE);
 
    // select the result that may be written to the integer register - to IEU
-   mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE[`XLEN-1:0], 
+   mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE, 
                CvtIntResE, FIntResSelE, FIntResE);
    // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok
    // *** make sure the fpu matches the chapter diagram
