@@ -5,7 +5,6 @@ module fclassify (
     input logic         XSgnE,  // sign bit
     input logic         XNaNE,  // is NaN
     input logic         XSNaNE, // is signaling NaN
-    input logic         XNormE, // is normal
     input logic         XDenormE, // is denormal
     input logic         XZeroE, // is zero
     input logic         XInfE,  // is infinity
@@ -14,9 +13,10 @@ module fclassify (
 
     logic PInf, PZero, PNorm, PDenorm;
     logic NInf, NZero, NNorm, NDenorm;
-
+    logic XNormE;
    
     // determine the sub categories
+    assign XNormE = ~(XNaNE | XInfE | XDenormE | XZeroE);
     assign PInf = ~XSgnE&XInfE;
     assign NInf = XSgnE&XInfE;
     assign PNorm = ~XSgnE&XNormE;
