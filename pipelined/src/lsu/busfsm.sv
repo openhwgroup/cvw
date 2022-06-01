@@ -125,10 +125,10 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   always_comb begin
     case(WordCountThreshold)
-      4:        LSUBurstType = 3'b010; // WRAP4
-      8:        LSUBurstType = 3'b100; // WRAP8
-      16:       LSUBurstType = 3'b110; // WRAP16
-      default:  LSUBurstType = 3'b000; // No Burst
+      4:        LocalBurstType = 3'b010; // WRAP4
+      8:        LocalBurstType = 3'b100; // WRAP8
+      16:       LocalBurstType = 3'b110; // WRAP16
+      default:  LocalBurstType = 3'b000; // No Burst
     endcase // This block might be better in the FSM. WordCountThreshold is WordsPerLine
   end
 
