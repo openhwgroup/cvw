@@ -30,7 +30,7 @@ eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
 
 # Only for FMA class project; comment out when done
-eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
+# eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
 
 # Enables name mapping
 if { $saifpower == 1 } {
@@ -332,8 +332,8 @@ redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma2/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fdivsqrt/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through faddcvt ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {faddcvt/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mmu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through immu/physicaladdress ////\n\n\n" }
