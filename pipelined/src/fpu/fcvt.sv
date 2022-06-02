@@ -1,7 +1,7 @@
 
 `include "wally-config.vh"
 // largest length in IEU/FPU
-`define LGLEN ((`NF<`XLEN) ? `XLEN : `NF)
+`define LGLEN 64//((`NF<`XLEN) ? `XLEN : `NF)
 
 module fcvt (
     input logic             XSgnE,          // input's sign
