@@ -82,7 +82,7 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign Fence = InvalidateICacheM; // | sfencevmaM; // fences flush Fetch stage ***why
+  assign Fence = InvalidateICacheM; // | sfencevmaM; // Fences should flush the pipeline and restart *** sfence not working
   assign PrivilegedFlush = TrapM | RetM | Fence; // privileged stage change and fences flush pipeline
   assign FlushF = BPPredWrongE | Fence;
   assign FlushD = FirstUnstalledD | PrivilegedFlush | BPPredWrongE; 
