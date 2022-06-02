@@ -14,7 +14,7 @@ module fctrl (
   output logic [2:0] FOpCtrlD,    // chooses which opperation to do - specifics shown at bottom of module and in each unit
   output logic [1:0] FResSelD,    // select one of the results done in the memory stage
   output logic [1:0] FIntResSelD, // select the result that will be written to the integer register
-  output logic [`FPSIZES/3:0] FmtD,        // precision - single-0 double-1
+  output logic [`FMTBITS-1:0] FmtD,        // precision - single-0 double-1
   output logic [2:0] FrmD,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
   output logic       FWriteIntD   // is the result written to the integer register
   );
@@ -73,14 +73,12 @@ module fctrl (
                                   2'b01:    ControlsD = `FCTRLW'b1_0_11_100_11_00_0_0; // fcvt.s.wu wu->s
                                   2'b10:    ControlsD = `FCTRLW'b1_0_11_111_11_00_0_0; // fcvt.s.l   l->s
                                   2'b11:    ControlsD = `FCTRLW'b1_0_11_110_11_00_0_0; // fcvt.s.lu lu->s
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
                                 endcase
                     7'b1100000: case(Rs2D[1:0])
                                   2'b00:    ControlsD = `FCTRLW'b0_1_11_001_11_11_0_0; // fcvt.w.s   s->w
                                   2'b01:    ControlsD = `FCTRLW'b0_1_11_000_11_11_0_0; // fcvt.wu.s  s->wu
                                   2'b10:    ControlsD = `FCTRLW'b0_1_11_011_11_11_0_0; // fcvt.l.s   s->l
                                   2'b11:    ControlsD = `FCTRLW'b0_1_11_010_11_11_0_0; // fcvt.lu.s  s->lu
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
                                 endcase
                     7'b1111000: ControlsD = `FCTRLW'b1_0_11_000_00_00_0_0; // fmv.w.x
                     7'b0100000: ControlsD = `FCTRLW'b1_0_11_000_11_00_0_0; // fcvt.s.d
@@ -89,14 +87,12 @@ module fctrl (
                                   2'b01:    ControlsD = `FCTRLW'b1_0_11_100_11_00_0_0; // fcvt.d.wu wu->d
                                   2'b10:    ControlsD = `FCTRLW'b1_0_11_111_11_00_0_0; // fcvt.d.l   l->d
                                   2'b11:    ControlsD = `FCTRLW'b1_0_11_110_11_00_0_0; // fcvt.d.lu lu->d
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
                                 endcase
                     7'b1100001: case(Rs2D[1:0])
                                   2'b00:    ControlsD = `FCTRLW'b0_1_11_001_11_11_0_0; // fcvt.w.d   d->w
                                   2'b01:    ControlsD = `FCTRLW'b0_1_11_000_11_11_0_0; // fcvt.wu.d  d->wu
                                   2'b10:    ControlsD = `FCTRLW'b0_1_11_011_11_11_0_0; // fcvt.l.d   d->l
                                   2'b11:    ControlsD = `FCTRLW'b0_1_11_010_11_11_0_0; // fcvt.lu.d  d->lu
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
                                 endcase
                     7'b1111001: ControlsD = `FCTRLW'b1_0_11_001_00_00_0_0; // fmv.d.x
                     7'b0100001: ControlsD = `FCTRLW'b1_0_11_001_11_00_0_0; // fcvt.d.s
@@ -121,13 +117,8 @@ module fctrl (
   //    0-single
   //    1-double
   
-    if (`FPSIZES == 1)begin
-      logic [1:0] FmtTmp;
-      assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
-      assign FmtD = `FMT == FmtTmp;
-end
-      //assign FmtD = 0; *** change back after full paramerterization
-
+    if (`FPSIZES == 1)
+      assign FmtD = 0;
     else if (`FPSIZES == 2)begin
       logic [1:0] FmtTmp;
       assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];

@@ -16,7 +16,7 @@ module fcvt (
     input logic             XNaNE,          // is the input a NaN
     input logic             XSNaNE,         // is the input a signaling NaN
     input logic [2:0]       FrmE,           // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic [`FPSIZES/3:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
+    input logic [`FMTBITS-1:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
     output logic [`FLEN-1:0] CvtResE,       // the fp conversion result
     output logic [`XLEN-1:0] CvtIntResE,    // the int conversion result
     output logic [4:0]      CvtFlgE         // the conversion's flags
@@ -37,7 +37,7 @@ module fcvt (
     // (FI) fp  -> int coversion signals
 
 
-    logic [`FPSIZES/3:0]    OutFmt;     // format of the output
+    logic [`FMTBITS-1:0]    OutFmt;     // format of the output
     logic [`XLEN-1:0]       PosInt;     // the positive integer input
     logic [`XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
     logic [`LGLEN-1:0]      LzcIn;      // input to the Leading Zero Counter (priority encoder)
