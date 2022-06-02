@@ -44,7 +44,7 @@ module srt #(parameter Nf=52) (
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
+  input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign,
   output logic [Nf-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
@@ -52,7 +52,7 @@ module srt #(parameter Nf=52) (
   output logic [3:0] Flags
 );
 
-  logic          qp, qz, qm; // quotient is +1, 0, or -1
+  logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [`NE-1:0] calcExp;
   logic           calcSign;
   logic [Nf-1:0]  X, Dpreproc;
@@ -223,17 +223,17 @@ module otfc2 #(parameter N=52) (
   output logic [N-1:0] r
 );
 
-  // The on-the-fly converter transfers the quotient 
+  //  The on-the-fly converter transfers the quotient 
   //  bits to the quotient as they come. 
   //
-  // This code follows the psuedocode presented in the 
+  //  This code follows the psuedocode presented in the 
   //  floating point chapter of the book. Right now, 
   //  it is written for Radix-2 division.
   //
-  // QM is Q-1. It allows us to write negative bits 
+  //  QM is Q-1. It allows us to write negative bits 
   //  without using a costly CPA. 
   logic [N+2:0] Q, QM, QNext, QMNext;
-  // QR and QMR are the shifted versions of Q and QM.
+  //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
   logic [N+1:0] QR, QMR;
