@@ -87,7 +87,6 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
-        //"imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
@@ -95,8 +94,8 @@ logic [3:0] dummy;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
-        "wally64i":                       tests = wally64i; // *** redo
-        "wally64priv":                    tests = wally64priv;// *** redo
+        "wally64i":                       tests = wally64i; 
+        "wally64priv":                    tests = wally64priv;
         "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
       endcase 
@@ -110,15 +109,14 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
-        //"imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
-        "wally32i":                       tests = wally32i; // *** redo
+        "wally32i":                       tests = wally32i; 
         "wally32e":                       tests = wally32e; 
-        "wally32priv":                    tests = wally32priv; // *** redo
+        "wally32priv":                    tests = wally32priv;
         "embench":                        tests = embench;
       endcase
     end
