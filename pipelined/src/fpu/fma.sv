@@ -34,7 +34,7 @@ module fma(
     input logic                 reset,
     input logic                 FlushM,     // flush the memory stage
     input logic                 StallM,     // stall memory stage
-    input logic  [`FPSIZES/3:0] FmtE, FmtM, // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE, FmtM, // precision 1 = double 0 = single
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [2:0]          FrmM,               // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic                 XSgnE, YSgnE, ZSgnE,    // input signs - execute stage
@@ -102,7 +102,7 @@ module fma1(
     input logic  [`NF:0]        XManE, YManE, ZManE,    // fractions in U(0.NF) format
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
-    input logic  [`FPSIZES/3:0] FmtE,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE,       // precision 1 = double 0 = single
     output logic [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE,      // set the product to zero before addition if the product is too small to matter
@@ -161,7 +161,7 @@ endmodule
 
 
 module expadd(    
-    input  logic [`FPSIZES/3:0] FmtE,          // precision
+    input  logic [`FMTBITS-1:0] FmtE,          // precision
     input  logic [`NE-1:0]      XExpE, YExpE,  // input exponents
     input  logic                XZeroE, YZeroE,        // are the inputs zero
     output logic [`NE+1:0]      ProdExpE       // product's exponent B^(1023)NE+2
@@ -378,7 +378,7 @@ module fma2(
     input logic     [`NE-1:0]               ZExpM, // input exponents
     input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]          FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]          FmtM,       // precision 1 = double 0 = single
     input logic     [`NE+1:0]               ProdExpM,       // X exponent + Y exponent - bias
     input logic                             AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                             KillProdM,      // set the product to zero before addition if the product is too small to matter
@@ -517,7 +517,7 @@ module normalize(
     input logic  [`NE-1:0]              ZExpM,      // exponent of Z
     input logic  [`NE+1:0]              ProdExpM,   // X exponent + Y exponent - bias
     input logic  [$clog2(3*`NF+7)-1:0]  NormCntM,   // normalization shift count
-    input logic  [`FPSIZES/3:0]         FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0]         FmtM,       // precision 1 = double 0 = single
     input logic                         KillProdM,  // is the product set to zero
     input logic 			            ZDenormM,
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
@@ -681,7 +681,7 @@ module normalize(
 endmodule
 
 module fmaround(
-    input logic  [`FPSIZES/3:0] FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,       // precision 1 = double 0 = single
     input logic  [2:0]          FrmM,       // rounding mode
     input logic                 UfSticky,   // sticky bit for underlow calculation
     input logic  [`NF+1:0]      NormSum,    // normalized sum
@@ -920,7 +920,7 @@ module fmaflags(
     input logic  [`NE+1:0]      SumExp,                 // exponent of the normalized sum
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, Guard, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
-    input logic  [`FPSIZES/3:0] FmtM,                   // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,                   // precision 1 = double 0 = single
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
 );
@@ -996,7 +996,7 @@ module resultselect(
     input logic     [`NE-1:0]       ZExpM, // input exponents
     input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]  FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]  FmtM,       // precision 1 = double 0 = single
     input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
     input logic                     XInfM, YInfM, ZInfM,    // inputs are infinity

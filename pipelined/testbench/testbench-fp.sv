@@ -54,7 +54,7 @@ module testbenchfp;
   logic [4:0]           FmaRneAnsFlg, FmaRzAnsFlg, FmaRuAnsFlg, FmaRdAnsFlg, FmaRnmAnsFlg; // flags read form testfloat
   logic [4:0]	 	        ResFlg;                                                            // Result flags
   logic [4:0]           FmaRneResFlg, FmaRzResFlg, FmaRuResFlg, FmaRdResFlg, FmaRnmResFlg; // flags read form testfloat
-  logic	[`FPSIZES/3:0]  ModFmt, FmaModFmt;  // format - 10 = half, 00 = single, 01 = double, 11 = quad
+  logic	[`FMTBITS-1:0]  ModFmt, FmaModFmt;  // format - 10 = half, 00 = single, 01 = double, 11 = quad
   logic [`FLEN-1:0]     FmaRes, DivRes, CmpRes, CvtRes;  // Results from each unit
   logic [`XLEN-1:0]     CvtIntRes;  // Results from each unit
   logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
@@ -669,9 +669,9 @@ module testbenchfp;
   //    - 1 for the larger precision
   //    - 0 for the smaller precision
   always_comb begin
-    if(`FPSIZES/3 === 1) ModFmt = FmtVal;
+    if(`FMTBITS == 2) ModFmt = FmtVal;
     else ModFmt = FmtVal === `FMT;
-    if(`FPSIZES/3 === 1) FmaModFmt = FmaFmtVal;
+    if(`FMTBITS == 2) FmaModFmt = FmaFmtVal;
     else FmaModFmt = FmaFmtVal === `FMT;
   end
 
@@ -1283,7 +1283,7 @@ endmodule
 
 module readfmavectors (
   input logic                 clk,
-  input logic [`FPSIZES/3:0]  FmaModFmt,              // the modified format
+  input logic [`FMTBITS-1:0]  FmaModFmt,              // the modified format
   input logic [1:0]           FmaFmt,                 // the format of the FMA inputs
   input logic [`FLEN*4+7:0]   TestVector,             // the test vector
   output logic [`FLEN-1:0]    Ans,                    // the correct answer
@@ -1358,7 +1358,7 @@ endmodule
 module readvectors (
   input logic clk,
   input logic [`FLEN*4+7:0] TestVector,
-  input logic [`FPSIZES/3:0] ModFmt,
+  input logic [`FMTBITS-1:0] ModFmt,
   input logic [1:0] Fmt,
   input logic [2:0] Unit,
   input logic [31:0] VectorNum,

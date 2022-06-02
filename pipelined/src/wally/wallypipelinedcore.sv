@@ -82,7 +82,7 @@ module wallypipelinedcore (
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
-  logic             CSRWritePendingDEM;
+  logic             CSRWriteFencePendingDEM;
   logic             DivBusyE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
@@ -231,7 +231,7 @@ module wallypipelinedcore (
      .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWritePendingDEM, .StoreStallD
+     .CSRWriteFencePendingDEM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
@@ -294,13 +294,13 @@ module wallypipelinedcore (
 
   
    hazard     hzu(
-     .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+     .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FPUStallD, .FStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-     .InvalidateICacheM, .sfencevmaM, .wfiM, .IntPendingM,
+     .wfiM, .IntPendingM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
