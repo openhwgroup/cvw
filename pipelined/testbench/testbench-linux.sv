@@ -350,6 +350,18 @@ module testbench;
       end \
     end
 
+  // Initializing all zeroes into the branch predictor memory.
+  genvar adrindex;      
+    for(adrindex = 0; adrindex < 1024; adrindex++) begin
+      initial begin 
+      force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+      force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+      #1;
+      release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+      release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+      end
+    end
+
   genvar i;
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
@@ -403,8 +415,6 @@ module testbench;
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
       $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
-    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem); // *** initialize these using zeroes rather than reading from files, see testbench.sv
-    $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
