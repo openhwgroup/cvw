@@ -2,7 +2,7 @@
 
 module unpackinput ( 
     input logic  [`FLEN-1:0]        In,    // inputs from register file
-    input logic  [`FPSIZES/3:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
+    input logic  [`FMTBITS-1:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
     output logic                    Sgn,    // sign bits of XYZ
     output logic [`NE-1:0]          Exp,    // exponents of XYZ (converted to largest supported precision)
     output logic [`NF:0]            Man,    // mantissas of XYZ (converted to largest supported precision)

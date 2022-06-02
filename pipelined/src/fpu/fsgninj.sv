@@ -31,7 +31,7 @@
 module fsgninj (  
 	input logic        	XSgnE, YSgnE,	// X and Y sign bits
 	input logic [`FLEN-1:0] 	FSrcXE,			// X
-	input logic [`FPSIZES/3:0]		FmtE,			// precision 1 = double 0 = single
+	input logic [`FMTBITS-1:0]		FmtE,			// precision 1 = double 0 = single
 	input  logic [1:0]  SgnOpCodeE,		// operation control
 	output logic [`FLEN-1:0] SgnResE			// result
 );

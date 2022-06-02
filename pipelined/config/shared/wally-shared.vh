@@ -69,14 +69,15 @@
 `define H_BIAS 15
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-`define FLEN (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN)
+`define FLEN ($unsigned(`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN))
 `define NE   (`Q_SUPPORTED ? `Q_NE   : `D_SUPPORTED ? `D_NE   : `F_SUPPORTED ? `S_NE   : `H_NE)
 `define NF   (`Q_SUPPORTED ? `Q_NF   : `D_SUPPORTED ? `D_NF   : `F_SUPPORTED ? `S_NF   : `H_NF)
 `define FMT  (`Q_SUPPORTED ? 3       : `D_SUPPORTED ? 1       : `F_SUPPORTED ? 0       : 2)
 `define BIAS (`Q_SUPPORTED ? `Q_BIAS : `D_SUPPORTED ? `D_BIAS : `F_SUPPORTED ? `S_BIAS : `H_BIAS)
 
 // Floating point constants needed for FPU paramerterization
-`define FPSIZES (`Q_SUPPORTED+`D_SUPPORTED+`F_SUPPORTED+`ZFH_SUPPORTED)
+`define FPSIZES ((3)'(`Q_SUPPORTED)+(3)'(`D_SUPPORTED)+(3)'(`F_SUPPORTED)+(3)'(`ZFH_SUPPORTED))
+`define FMTBITS (((`FPSIZES==3'b011)|(`FPSIZES==3'b100)) ? 2 : 1)
 `define LEN1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_LEN   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_LEN  : `H_LEN)
 `define NE1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NE   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NE  : `H_NE)
 `define NF1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NF  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NF : `H_NF)
