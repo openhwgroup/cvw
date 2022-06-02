@@ -38,7 +38,7 @@ module hazard(
 (* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)        input logic  InvalidateICacheM, wfiM, IntPendingM,
+(* mark_debug = "true" *)        input logic  InvalidateICacheM, sfencevmaM, wfiM, IntPendingM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
@@ -46,7 +46,7 @@ module hazard(
 
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
-
+  logic Fence, PrivilegedFlush;
 
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -82,10 +82,12 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushF = BPPredWrongE | InvalidateICacheM;
-  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** does RetM only need to flush if the privilege changes?
-  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** why is BPPredWrongE here, but not needed in simple processor 
-  assign FlushM = FirstUnstalledM | TrapM | RetM | InvalidateICacheM;
+  assign Fence = InvalidateICacheM; // | sfencevmaM; // fences flush Fetch stage ***why
+  assign PrivilegedFlush = TrapM | RetM | Fence; // privileged stage change and fences flush pipeline
+  assign FlushF = BPPredWrongE | Fence;
+  assign FlushD = FirstUnstalledD | PrivilegedFlush | BPPredWrongE; 
+  assign FlushE = FirstUnstalledE | PrivilegedFlush | BPPredWrongE; // *** why is BPPredWrongE here, but not needed in simple processor 
+  assign FlushM = FirstUnstalledM | PrivilegedFlush;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
   assign FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
