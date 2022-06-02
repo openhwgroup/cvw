@@ -1,3 +1,4 @@
+`include "wally-config.vh"
 
 module fctrl (
   input  logic [6:0] Funct7D,   // bits 31:25 of instruction - may contain percision
@@ -13,7 +14,7 @@ module fctrl (
   output logic [2:0] FOpCtrlD,    // chooses which opperation to do - specifics shown at bottom of module and in each unit
   output logic [1:0] FResSelD,    // select one of the results done in the memory stage
   output logic [1:0] FIntResSelD, // select the result that will be written to the integer register
-  output logic       FmtD,        // precision - single-0 double-1
+  output logic [`FPSIZES/3:0] FmtD,        // precision - single-0 double-1
   output logic [2:0] FrmD,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
   output logic       FWriteIntD   // is the result written to the integer register
   );
@@ -119,8 +120,23 @@ module fctrl (
   // Precision
   //    0-single
   //    1-double
-  assign FmtD = FResultSelD == 2'b00 ? Funct3D[0] : ((Funct7D[6:3] == 4'b0100)&OpD[4]) | OpD[6:1] == 6'b010000 ? ~Funct7D[0] : Funct7D[0];
+  
+    if (`FPSIZES == 1)begin
+      logic [1:0] FmtTmp;
+      assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtD = `FMT == FmtTmp;
+end
+      //assign FmtD = 0; *** change back after full paramerterization
 
+    else if (`FPSIZES == 2)begin
+      logic [1:0] FmtTmp;
+      assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtD = `FMT == FmtTmp;
+    end
+    else if (`FPSIZES == 3|`FPSIZES == 4)
+      assign FmtD = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+
+      // assign FmtD = FResultSelD == 2'b00 ? Funct3D[0] : ((Funct7D[6:3] == 4'b0100)&OpD[4]) | OpD[6:1] == 6'b010000 ? ~Funct7D[0] : Funct7D[0];
   // FResultSel:
   //    000 - ReadRes - load
   //    001 - FMARes  - FMA and multiply
