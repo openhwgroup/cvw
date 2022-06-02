@@ -70,7 +70,7 @@ synthDC/*.svf
 synthDC/runs/
 synthDC/hdl
 /pipelined/regression/power.saif
-tests/fp/vectors/*.tv
+tests/fp/vectors/*mulAdd*.tv
 # Temporary configs produced for synthesis
 pipelined/config/rv32e_FPUoff
 pipelined/config/rv32e_PMP0
