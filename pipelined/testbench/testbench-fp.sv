@@ -1182,7 +1182,7 @@ end
     else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
             (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
             (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-            (Res === Ans | NaNGood | NaNGood === 1'bx)) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+            (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
