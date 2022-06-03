@@ -345,7 +345,7 @@ def freqPlot(tech, mod, width):
         freqs = freqsL[ind]
 
         if ('flop' in mod): areas = [m/2 for m in areas] # since two flops in each module
-        freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
+        # freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
 
         c = 'blue' if ind else 'green'
         adprod = adprodpow(areas, delays, 1)
@@ -508,7 +508,7 @@ if __name__ == '__main__':
 
 
     # cleanup()
-    # synthsintocsv() # slow, run only when new synth runs to add to csv
+    synthsintocsv() # slow, run only when new synth runs to add to csv
   
     allSynths = synthsfromcsv('ppaData.csv') # your csv here!
 
