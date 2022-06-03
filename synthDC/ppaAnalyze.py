@@ -150,7 +150,7 @@ def csvOfBest():
         writer.writerow(list(synth))
     file.close()
     
-def genLegend(fits, coefs, r2, spec):
+def genLegend(fits, coefs, r2, spec, ale=False):
     ''' generates a list of two legend elements 
         labels line with fit equation and dots with tech and r squared of the fit
     '''
@@ -161,6 +161,11 @@ def genLegend(fits, coefs, r2, spec):
     ind = 0
 
     eqDict = {'c': '', 'l': 'N', 's': '$N^2$', 'g': '$log_2$(N)', 'n': 'N$log_2$(N)'}
+    if ale:
+        if (normAddWidth == 32):
+            eqDict = {'c': '', 'l': '(N/32)', 's': '$(N/32)^2$', 'g': '$log_2$(N/32)', 'n': '(N/32)$log_2$(N/32)'}
+        elif normAddWidth != 1:
+            print('Legend equations are wrong')
 
     for k in eqDict.keys():
         if k in fits:
@@ -170,7 +175,7 @@ def genLegend(fits, coefs, r2, spec):
     eq = eq[3:]
 
     legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq)]
-    if spec.shape: legend_elements += [lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
+    legend_elements += [lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
 def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
@@ -196,6 +201,8 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
     allWidths = []
     allMetrics = []
 
+    ale = (var != 'delay') # if not delay, must be area, leakage, or energy
+
     for spec in techSpecs:
         metric = getVals(spec.tech, module, var, freq=freq)
         
@@ -207,14 +214,14 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
         if len(metric) == 5:
             allWidths += widths
             allMetrics += metric
-            xp, pred, leg = regress(widths, metric, spec, fits)
+            xp, pred, leg = regress(widths, metric, spec, fits, ale=ale)
             fullLeg += leg
             c = color if color else spec.color
             ax.scatter(widths, metric, color=c, marker=spec.shape)
             ax.plot(xp, pred, color=c)
 
-    combined = TechSpec('combined', 'red', 0, 0, 0, 0, 0)
-    xp, pred, leg = regress(allWidths, allMetrics, combined, fits)
+    combined = TechSpec('combined', 'red', '_', 0, 0, 0, 0)
+    xp, pred, leg = regress(allWidths, allMetrics, combined, fits, ale=ale)
     fullLeg += leg
     ax.plot(xp, pred, color='red')
 
@@ -236,12 +243,13 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
         plt.savefig('./plots/PPA/'+ module + '_' + var + '.png')
         plt.show()
 
-def regress(widths, var, spec, fits='clsgn'):
+def regress(widths, var, spec, fits='clsgn', ale=False):
     ''' fits a curve to the given points
         returns lists of x and y values to plot that curve and legend elements with the equation
     '''
 
     funcArr = genFuncs(fits)
+    widths = [w/normAddWidth for w in widths]
 
     mat = []
     for w in widths:
@@ -258,7 +266,7 @@ def regress(widths, var, spec, fits='clsgn'):
     pred = []
     yp = []
     for x in xp:
-        n = [func(x) for func in funcArr]
+        n = [func(x/normAddWidth) for func in funcArr]
         pred += [sum(np.multiply(coefs, n))]
 
     for w in widths:
@@ -267,7 +275,7 @@ def regress(widths, var, spec, fits='clsgn'):
 
     r2 = skm.r2_score(y, yp)
 
-    leg = genLegend(fits, coefs, r2, spec)
+    leg = genLegend(fits, coefs, r2, spec, ale=ale)
 
     return xp, pred, leg
 
@@ -507,6 +515,7 @@ if __name__ == '__main__':
 
     # set up stuff, global variables
     widths = [8, 16, 32, 64, 128]
+    normAddWidth = 32
     fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 'sl', 'ls'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'n', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}
     fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l'])) #data
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
@@ -532,9 +541,9 @@ if __name__ == '__main__':
     for mod in modules:
         plotPPA(mod, norm=False)
         plotPPA(mod)
-    #     for w in [8, 16, 32, 64, 128]:
-    #         freqPlot('sky90', mod, w)
-    #         freqPlot('tsmc28', mod, w)
+        for w in [8, 16, 32, 64, 128]:
+            freqPlot('sky90', mod, w)
+            freqPlot('tsmc28', mod, w)
         plt.close('all')
 
-    # csvOfBest()
+    csvOfBest()
