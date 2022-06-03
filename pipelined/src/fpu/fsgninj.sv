@@ -26,13 +26,14 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+`include "wally-config.vh"
 
 module fsgninj (  
 	input logic        	XSgnE, YSgnE,	// X and Y sign bits
-	input logic [63:0] 	FSrcXE,			// X
-	input logic 		FmtE,			// precision 1 = double 0 = single
+	input logic [`FLEN-1:0] 	FSrcXE,			// X
+	input logic [`FMTBITS-1:0]		FmtE,			// precision 1 = double 0 = single
 	input  logic [1:0]  SgnOpCodeE,		// operation control
-	output logic [63:0] SgnResE			// result
+	output logic [`FLEN-1:0] SgnResE			// result
 );
 
 	logic ResSgn;
@@ -50,7 +51,30 @@ module fsgninj (
 	// format final result based on precision
 	//    - uses NaN-blocking format
 	//        - if there are any unsused bits the most significant bits are filled with 1s
-	assign SgnResE = FmtE ? {ResSgn, FSrcXE[62:0]} : {FSrcXE[63:32], ResSgn, FSrcXE[30:0]};
+	
+    if (`FPSIZES == 1)
+		assign SgnResE = {ResSgn, FSrcXE[`FLEN-2:0]};
+
+    else if (`FPSIZES == 2)
+		assign SgnResE = FmtE ? {ResSgn, FSrcXE[`FLEN-2:0]} : {{`FLEN-`LEN1{1'b1}}, ResSgn, FSrcXE[`LEN1-2:0]};
+
+    else if (`FPSIZES == 3)
+        always_comb
+            case (FmtE)
+                `FMT: SgnResE = {ResSgn, FSrcXE[`FLEN-2:0]};
+                `FMT1: SgnResE = {{`FLEN-`LEN1{1'b1}}, ResSgn, FSrcXE[`LEN1-2:0]};
+                `FMT2: SgnResE = {{`FLEN-`LEN2{1'b1}}, ResSgn, FSrcXE[`LEN2-2:0]};
+                default: SgnResE = 0;
+            endcase
+
+    else if (`FPSIZES == 4)
+        always_comb
+            case (FmtE)
+                2'h3: SgnResE = {ResSgn, FSrcXE[`Q_LEN-2:0]};
+                2'h1: SgnResE = {{`Q_LEN-`D_LEN{1'b1}}, ResSgn, FSrcXE[`D_LEN-2:0]};
+                2'h0: SgnResE = {{`Q_LEN-`S_LEN{1'b1}}, ResSgn, FSrcXE[`S_LEN-2:0]};
+                2'h2: SgnResE = {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, FSrcXE[`H_LEN-2:0]};
+            endcase
 
 
 endmodule

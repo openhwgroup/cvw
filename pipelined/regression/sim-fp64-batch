@@ -1,3 +1,0 @@
-vsim -c <<!
-do wally-fp64-batch.do rv64gc imperas64d
-!
