@@ -68,6 +68,8 @@ synthDC/alib-52
 synthDC/*.log
 synthDC/*.svf
 synthDC/runs/
+synthDC/plots/
+synthDC/runArchive
 synthDC/hdl
 /pipelined/regression/power.saif
 tests/fp/vectors/*.tv
