@@ -169,8 +169,8 @@ def genLegend(fits, coefs, r2, spec):
 
     eq = eq[3:]
 
-    legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq),
-                       lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
+    legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq)]
+    if spec.shape: legend_elements += [lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
 def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
@@ -193,6 +193,9 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
 
     global norms
 
+    allWidths = []
+    allMetrics = []
+
     for spec in techSpecs:
         metric = getVals(spec.tech, module, var, freq=freq)
         
@@ -202,11 +205,18 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
             metric = [m/norm for m in metric] # comment out to not normalize
 
         if len(metric) == 5:
+            allWidths += widths
+            allMetrics += metric
             xp, pred, leg = regress(widths, metric, spec, fits)
             fullLeg += leg
             c = color if color else spec.color
             ax.scatter(widths, metric, color=c, marker=spec.shape)
             ax.plot(xp, pred, color=c)
+
+    combined = TechSpec('combined', 'red', 0, 0, 0, 0, 0)
+    xp, pred, leg = regress(allWidths, allMetrics, combined, fits)
+    fullLeg += leg
+    ax.plot(xp, pred, color='red')
 
     ax.legend(handles=fullLeg)
 
@@ -508,24 +518,23 @@ if __name__ == '__main__':
 
 
     # cleanup()
-    synthsintocsv() # slow, run only when new synth runs to add to csv
+    # synthsintocsv() # slow, run only when new synth runs to add to csv
   
     allSynths = synthsfromcsv('ppaData.csv') # your csv here!
 
     # # ### examples
 
-    # # squareAreaDelay('sky90', 'add', 32)
-    # # plotBestAreas('add')
-    # oneMetricPlot('mux2', 'delay', norm=False)
-    # print(len(freqsL[0]))
+    # squareAreaDelay('sky90', 'add', 32)
+    # plotBestAreas('add')
+    # oneMetricPlot('add', 'delay')
     # freqPlot('sky90', 'mux4', 16)
     
     for mod in modules:
         plotPPA(mod, norm=False)
         plotPPA(mod)
-        for w in [8, 16, 32, 64, 128]:
-            freqPlot('sky90', mod, w)
-            freqPlot('tsmc28', mod, w)
+    #     for w in [8, 16, 32, 64, 128]:
+    #         freqPlot('sky90', mod, w)
+    #         freqPlot('tsmc28', mod, w)
         plt.close('all')
 
-    csvOfBest()
+    # csvOfBest()
