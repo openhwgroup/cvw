@@ -2,6 +2,7 @@
 # Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
 
 from operator import index
+import scipy.optimize as opt
 import subprocess
 import csv
 import re
@@ -11,14 +12,14 @@ import matplotlib.lines as lines
 import matplotlib.axes as axes
 import numpy as np
 from collections import namedtuple
-
+import sklearn.metrics as skm
 
 def synthsfromcsv(filename):
     Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
     with open(filename, newline='') as csvfile:
         csvreader = csv.reader(csvfile)
         global allSynths
-        allSynths = list(csvreader)
+        allSynths = list(csvreader)[1:]
         for i in range(len(allSynths)):
             for j in range(len(allSynths[0])):
                 try: allSynths[i][j] = int(allSynths[i][j])
@@ -26,6 +27,7 @@ def synthsfromcsv(filename):
                     try: allSynths[i][j] = float(allSynths[i][j])
                     except: pass
             allSynths[i] = Synth(*allSynths[i])
+    return allSynths
     
 def synthsintocsv():
     ''' writes a CSV with one line for every available synthesis
@@ -37,28 +39,32 @@ def synthsintocsv():
     allSynths = output.decode("utf-8").split('\n')[:-1]
 
     specReg = re.compile('[a-zA-Z0-9]+')
-    metricReg = re.compile('\d+\.\d+[e]?[-+]?\d*')
+    metricReg = re.compile('-?\d+\.\d+[e]?[-+]?\d*')
 
     file = open("ppaData.csv", "w")
     writer = csv.writer(file)
-    writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (mJ)'])
+    writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (fJ)'])
 
     for oneSynth in allSynths:
         module, width, risc, tech, freq = specReg.findall(oneSynth)[2:7]
         tech = tech[:-2]
         metrics = []
-        for phrase in [['Path Length', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
+        for phrase in [['Path Slack', 'qor'], ['Clk Period', 'qor'], ['Design Area', 'qor'], ['100', 'power']]:
             bashCommand = 'grep "{}" '+ oneSynth[2:]+'/reports/*{}*'
             bashCommand = bashCommand.format(*phrase)
             try: output = subprocess.check_output(['bash','-c', bashCommand])
-            except: print("At least one synth run doesn't have reports, try cleanup() first")
+            except: 
+                print(module + width + tech + freq + " doesn't have reports")
+                print("Consider running cleanup() first")
             nums = metricReg.findall(str(output))
             nums = [float(m) for m in nums]
             metrics += nums
-        delay = metrics[0]
-        area = metrics[1]
-        lpower = metrics[4]
-        denergy = (metrics[2] + metrics[3])*delay # (switching + internal powers)*delay
+        delay = metrics[1] - metrics[0]
+        area = metrics[2]
+        lpower = metrics[5]
+        denergy = (metrics[3] + metrics[4])*delay*1000 # (switching + internal powers)*delay, more practical units for regression coefs
+
+        if ('flop' in module): area = area/2 # since two flops in each module 
 
         writer.writerow([module, tech, width, freq, delay, area, lpower, denergy])
     file.close()
@@ -119,13 +125,31 @@ def getVals(tech, module, var, freq=None):
             try: metric += [met]
             except: pass
 
-    if ('flop' in module) & (var == 'area'):
-        metric = [m/2 for m in metric] # since two flops in each module 
-    if (var == 'denergy'):
-        metric = [m*1000 for m in metric] # more practical units for regression coefs
-
     return metric
 
+def csvOfBest():
+    global techSpecs, widths, modules, allSynths
+    bestSynths = []
+    for tech in [x.tech for x in techSpecs]:
+        for mod in modules:
+            for w in widths:
+                m = 100000 # large number to start
+                best = None
+                for oneSynth in allSynths:
+                    if (oneSynth.width == w) & (oneSynth.tech == tech) & (oneSynth.module == mod):
+                        if (oneSynth.delay < m) & (1000/oneSynth.delay > oneSynth.freq): 
+                            m = oneSynth.delay
+                            best = oneSynth
+                if (best != None) & (best not in bestSynths):
+                    bestSynths += [best]
+
+    file = open("bestSynths.csv", "w")
+    writer = csv.writer(file)
+    writer.writerow(['Module', 'Tech', 'Width', 'Target Freq', 'Delay', 'Area', 'L Power (nW)', 'D energy (fJ)'])
+    for synth in bestSynths:
+        writer.writerow(list(synth))
+    file.close()
+    
 def genLegend(fits, coefs, r2, spec):
     ''' generates a list of two legend elements 
         labels line with fit equation and dots with tech and r squared of the fit
@@ -135,24 +159,18 @@ def genLegend(fits, coefs, r2, spec):
 
     eq = ''
     ind = 0
-    if 'c' in fits:
-        eq += coefsr[ind]
-        ind += 1
-    if 'l' in fits:
-        eq += " + " + coefsr[ind] + "*N"
-        ind += 1
-    if 's' in fits:
-        eq += " + " + coefsr[ind] + "*N^2"
-        ind += 1
-    if 'g' in fits:
-        eq += " + " + coefsr[ind] + "*log2(N)"
-        ind += 1
-    if 'n' in fits:
-        eq += " + " + coefsr[ind] + "*Nlog2(N)"
-        ind += 1
 
-    legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq),
-                       lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
+    eqDict = {'c': '', 'l': 'N', 's': '$N^2$', 'g': '$log_2$(N)', 'n': 'N$log_2$(N)'}
+
+    for k in eqDict.keys():
+        if k in fits:
+            if str(coefsr[ind]) != '0.0': eq += " + " + coefsr[ind] + eqDict[k]
+            ind += 1
+
+    eq = eq[3:]
+
+    legend_elements = [lines.Line2D([0], [0], color=spec.color, label=eq)]
+    if spec.shape: legend_elements += [lines.Line2D([0], [0], color=spec.color, ls='', marker=spec.shape, label=spec.tech +'  $R^2$='+ str(round(r2, 4)))]
     return legend_elements
 
 def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, color=None):
@@ -175,6 +193,9 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
 
     global norms
 
+    allWidths = []
+    allMetrics = []
+
     for spec in techSpecs:
         metric = getVals(spec.tech, module, var, freq=freq)
         
@@ -184,11 +205,18 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
             metric = [m/norm for m in metric] # comment out to not normalize
 
         if len(metric) == 5:
+            allWidths += widths
+            allMetrics += metric
             xp, pred, leg = regress(widths, metric, spec, fits)
             fullLeg += leg
             c = color if color else spec.color
             ax.scatter(widths, metric, color=c, marker=spec.shape)
             ax.plot(xp, pred, color=c)
+
+    combined = TechSpec('combined', 'red', 0, 0, 0, 0, 0)
+    xp, pred, leg = regress(allWidths, allMetrics, combined, fits)
+    fullLeg += leg
+    ax.plot(xp, pred, color='red')
 
     ax.legend(handles=fullLeg)
 
@@ -196,9 +224,9 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
     ax.set_xlabel("Width (bits)")
 
     if norm:
-        ylabeldic = {"lpower": "Normalized Leakage Power", "denergy": "Normalized Dynamic Energy", "area": "INVx1 Areas", "delay": "FO4 Delays"}
+        ylabeldic = {"lpower": "Leakage Power (add32)", "denergy": "Energy/Op (add32)", "area": "Area (add32)", "delay": "Delay (FO4)"}
     else:
-        ylabeldic = {"lpower": "Leakage Power (nW)", "denergy": "Dynamic Energy (nJ)", "area": "Area (sq microns)", "delay": "Delay (ns)"}
+        ylabeldic = {"lpower": "Leakage Power (nW)", "denergy": "Dynamic Energy (fJ)", "area": "Area (sq microns)", "delay": "Delay (ns)"}
 
     ax.set_ylabel(ylabeldic[var])
 
@@ -206,7 +234,7 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
         titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
         ax.set_title(module + titleStr)
         plt.savefig('./plots/PPA/'+ module + '_' + var + '.png')
-        # plt.show()
+        plt.show()
 
 def regress(widths, var, spec, fits='clsgn'):
     ''' fits a curve to the given points
@@ -223,19 +251,21 @@ def regress(widths, var, spec, fits='clsgn'):
         mat += [row]
     
     y = np.array(var, dtype=np.float)
-    coefsResid = np.linalg.lstsq(mat, y, rcond=None)
+    coefsResid = opt.nnls(mat, y)
     coefs = coefsResid[0]
-    try:
-        resid = coefsResid[1][0]
-        r2 = 1 - resid / (y.size * y.var())
-    except:
-        r2 = 0
 
-    xp = np.linspace(8, 140, 200)
+    xp = np.linspace(4, 140, 200)
     pred = []
+    yp = []
     for x in xp:
         n = [func(x) for func in funcArr]
         pred += [sum(np.multiply(coefs, n))]
+
+    for w in widths:
+        n = [func(w) for func in funcArr]
+        yp += [sum(np.multiply(coefs, n))]
+
+    r2 = skm.r2_score(y, yp)
 
     leg = genLegend(fits, coefs, r2, spec)
 
@@ -287,14 +317,17 @@ def noOutliers(freqs, delays, areas):
     f=[]
     d=[]
     a=[]
-    ind = delays.index(min(delays))
-    med = freqs[ind]
-    for i in range(len(freqs)):
-        norm = freqs[i]/med
-        if (norm > 0.25) & (norm<1.75):
-            f += [freqs[i]]
-            d += [delays[i]]
-            a += [areas[i]]
+    try:
+        ind = delays.index(min(delays))
+        med = freqs[ind]
+        for i in range(len(freqs)):
+            norm = freqs[i]/med
+            # if (norm > 0.25) & (norm<1.75):
+            if freqs[i] < 8000:
+                f += [freqs[i]]
+                d += [delays[i]]
+                a += [areas[i]]
+    except: pass
     
     return f, d, a
 
@@ -303,14 +336,18 @@ def freqPlot(tech, mod, width):
     '''
     global allSynths
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
+    count = 0
     for oneSynth in allSynths:
         if (mod == oneSynth.module) & (width == oneSynth.width) & (tech == oneSynth.tech):
+            count += 1
             ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
-
+    
     f, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True)
+    for ax in (ax1, ax2, ax3, ax4):
+        ax.ticklabel_format(useOffset=False, style='plain')
 
     for ind in [0,1]:
         areas = areasL[ind]
@@ -318,7 +355,7 @@ def freqPlot(tech, mod, width):
         freqs = freqsL[ind]
 
         if ('flop' in mod): areas = [m/2 for m in areas] # since two flops in each module
-        freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
+        # freqs, delays, areas = noOutliers(freqs, delays, areas) # comment out to see all syntheses
 
         c = 'blue' if ind else 'green'
         adprod = adprodpow(areas, delays, 1)
@@ -339,7 +376,7 @@ def freqPlot(tech, mod, width):
     ax3.set_ylabel('Area * Delay')
     ax4.set_ylabel('Area * $Delay^2$')
     ax1.set_title(mod + '_' + str(width))
-    plt.savefig('./plots/freqBuckshot/' + mod + '/' + str(width) + '.png')
+    plt.savefig('./plots/freqBuckshot/' + tech + '/' + mod + '/' + str(width) + '.png')
     # plt.show()
 
 def squareAreaDelay(tech, mod, width):
@@ -433,6 +470,7 @@ def plotPPA(mod, freq=None, norm=True):
         if no freq specified, uses the synthesis with best achievable delay for each width
         overlays data from both techs
     '''
+    plt.rcParams["figure.figsize"] = (12,8)
     fig, axs = plt.subplots(2, 2)
     global fitDict
     modFit = fitDict[mod]
@@ -447,44 +485,56 @@ def plotPPA(mod, freq=None, norm=True):
     plt.savefig(saveStr)
     # plt.show()
 
-def plotBestAreas():
-    global fitDict
+def plotBestAreas(mod):
     fig, axs = plt.subplots(1, 1)
-    mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop']
-    colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
-    legend_elements = []
-    for i in range(len(mods)):
-        oneMetricPlot(mods[i], 'area', ax=axs, freq=10, norm=False, color=colors[i])
-        legend_elements += [lines.Line2D([0], [0], color=colors[i], ls='', marker='o', label=mods[i])]
-    plt.suptitle('Optimized Areas (target freq 10MHz)')
-    plt.legend(handles=legend_elements)
-    plt.savefig('./plots/bestareas.png')
+    ### all areas on one
+    # mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop']
+    # colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple']
+    # legend_elements = []
+    # for i in range(len(mods)):
+    #     oneMetricPlot(mods[i], 'area', ax=axs, freq=10, norm=False, color=colors[i])
+    #     legend_elements += [lines.Line2D([0], [0], color=colors[i], ls='', marker='o', label=mods[i])]
+    # plt.suptitle('Optimized Areas (target freq 10MHz)')
+    # plt.legend(handles=legend_elements)
+    # plt.savefig('./plots/bestareas.png')
     # plt.show()
+
+    oneMetricPlot(mod, 'area', freq=10)
+    plt.title(mod + ' Optimized Areas (target freq 10MHz)')
+    plt.savefig('./plots/bestAreas/' + mod + '.png')
     
 if __name__ == '__main__':
 
     # set up stuff, global variables
     widths = [8, 16, 32, 64, 128]
-    # fitDict in progress
-    fitDict = {'add': ['gl', 'lg'], 'mult': ['clg', 's'], 'comparator': ['clsgn', 'clsgn'], 'csa': ['clsgn', 'clsgn'], 'shiftleft': ['clsgn', 'clsgn'], 'flop': ['cl', 'cl'], 'priorityencoder': ['clsgn', 'clsgn']}
+    fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 'sl', 'ls'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'n', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}
+    fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l'])) #data
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
-    techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1.96, 1.98, 1], ['gf32', 'purple', 's', 15e-3, .351, .3116, 1], ['tsmc28', 'blue', '^', 12.2e-3, .252, 1.09, 1]]
+    techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1330.84, 582.81, 520.66],  ['tsmc28', 'blue', '^', 12.2e-3, 209.29, 1060, 81.43]]
+
+    invz1arealeakage = [['sky90', 1.96, 1.98], ['gf32', .351, .3116], ['tsmc28', .252, 1.09]] #['gf32', 'purple', 's', 15e-3]
     techSpecs = [TechSpec(*t) for t in techSpecs]
+    modules = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mux2', 'mux4', 'mux8', 'mult']
+
 
     # cleanup()
     # synthsintocsv() # slow, run only when new synth runs to add to csv
   
-    synthsfromcsv('ppaData.csv') # your csv here!
+    allSynths = synthsfromcsv('ppaData.csv') # your csv here!
 
-    # ### examples
+    # # ### examples
 
     # squareAreaDelay('sky90', 'add', 32)
+    # plotBestAreas('add')
     # oneMetricPlot('add', 'delay')
-    plotBestAreas()
+    # freqPlot('sky90', 'mux4', 16)
     
-    mods = ['priorityencoder', 'add', 'csa', 'shiftleft', 'comparator', 'flop', 'mult']
-    for mod in mods:
+    for mod in modules:
         plotPPA(mod, norm=False)
         plotPPA(mod)
-        for w in [8, 16, 32, 64, 128]:
-            freqPlot('sky90', mod, w)
+    #     for w in [8, 16, 32, 64, 128]:
+    #         freqPlot('sky90', mod, w)
+    #         freqPlot('tsmc28', mod, w)
+        plt.close('all')
+
+    # csvOfBest()

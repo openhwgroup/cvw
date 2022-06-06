@@ -367,4 +367,4 @@ redirect $filename { report_constraint }
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
 # redirect $filename { report_hierarchy }
 
-#quit 
+quit 
