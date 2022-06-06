@@ -107,7 +107,7 @@ module fpu (
    logic 		  FOpCtrlQ;     
 
    // result and flag signals
-   logic [`FLEN-1:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
+   logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
    logic [4:0] 	  FDivFlgM;                 // divide/squareroot flags  
    logic [`FLEN-1:0] 	  FMAResM, FMAResW;                   // FMA/multiply result
    logic [4:0] 	  FMAFlgM;                   // FMA/multiply result	
@@ -125,7 +125,7 @@ module fpu (
    logic [`FLEN-1:0] 	  FPUResultW;                         // final FP result being written to the FP register     
    // other signals
    logic 		  FDivSqrtDoneE;                      // is divide done
-   logic [`FLEN-1:0] 	  DivInput1E, DivInput2E;             // inputs to divide/squareroot unit
+   logic [63:0] 	  DivInput1E, DivInput2E;             // inputs to divide/squareroot unit
    logic 		  load_preload;                       // enable for FF on fpdivsqrt     
    logic [`FLEN-1:0] 	  AlignedSrcAE;                       // align SrcA to the floating point format
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
@@ -184,11 +184,11 @@ module fpu (
    generate
    if(`FPSIZES == 1) assign BoxedZeroE = 0;
    else if(`FPSIZES == 2) 
-      mux2 #(`FLEN) fmulzeromux ({{`FLEN-`LEN1{1'b1}}, {`FLEN-`LEN1{1'b0}}}, (`FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
+      mux2 #(`FLEN) fmulzeromux ({{`FLEN-`LEN1{1'b1}}, {`LEN1{1'b0}}}, (`FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
    else if(`FPSIZES == 3 | `FPSIZES == 4)
-      mux4 #(`FLEN) fmulzeromux ({{`FLEN-`S_LEN{1'b1}}, (`FLEN-`S_LEN)'(0)}, 
-                                 {{`FLEN-`D_LEN{1'b1}}, (`FLEN-`D_LEN)'(0)}, 
-                                 {{`FLEN-`H_LEN{1'b1}}, (`FLEN-`H_LEN)'(0)}, 
+      mux4 #(`FLEN) fmulzeromux ({{`FLEN-`S_LEN{1'b1}}, {`S_LEN{1'b0}}}, 
+                                 {{`FLEN-`D_LEN{1'b1}}, {`D_LEN{1'b0}}}, 
+                                 {{`FLEN-`H_LEN{1'b1}}, {`H_LEN{1'b0}}}, 
                                  (`FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
    endgenerate
 
@@ -218,17 +218,27 @@ module fpu (
       .FMAFlgM, .FMAResM);
 
    // fpdivsqrt using Goldschmidt's iteration
-   flopenrc #(`FLEN) reg_input1 (.d({XSgnE, XExpE, XManE[51:0]}), .q(DivInput1E),
+   if(`FLEN == 64) begin 
+   flopenrc #(64) reg_input1 (.d({FSrcXE[63:0]}), .q(DivInput1E),
          .clear(FDivSqrtDoneE), .en(load_preload),
          .reset(reset),  .clk(clk));
-   flopenrc #(`FLEN) reg_input2 (.d({YSgnE, YExpE, YManE[51:0]}), .q(DivInput2E),
+   flopenrc #(64) reg_input2 (.d({FSrcYE[63:0]}), .q(DivInput2E),
             .clear(FDivSqrtDoneE), .en(load_preload),
             .reset(reset),  .clk(clk));
-   flopenrc #(8+int'(`FMTBITS-1)) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE, FOpCtrlE[0]}), 
+   end
+   else if (`FLEN == 32) begin 
+   flopenrc #(64) reg_input1 (.d({32'b0, FSrcXE[31:0]}), .q(DivInput1E),
+         .clear(FDivSqrtDoneE), .en(load_preload),
+         .reset(reset),  .clk(clk));
+   flopenrc #(64) reg_input2 (.d({32'b0, FSrcYE[31:0]}), .q(DivInput2E),
+            .clear(FDivSqrtDoneE), .en(load_preload),
+            .reset(reset),  .clk(clk));
+   end
+   flopenrc #(8) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE[0], FOpCtrlE[0]}), 
             .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ, FmtQ, FOpCtrlQ}),
             .clear(FDivSqrtDoneE), .en(load_preload),
             .reset(reset),  .clk(clk));
-   fpdiv_pipe fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmE[1:0]), .op_type(FOpCtrlQ), 
+   fpdiv_pipe fdivsqrt (.op1(DivInput1E[63:0]), .op2(DivInput2E[63:0]), .rm(FrmE[1:0]), .op_type(FOpCtrlQ), 
          .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
          .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
          .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
@@ -244,7 +254,8 @@ module fpu (
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
-   assign FWriteDataE = FSrcYE[`XLEN-1:0];     
+   if (`FLEN>`XLEN) assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
+   else assign FWriteDataE = {{`XLEN-`FLEN{FSrcYE[`FLEN-1]}}, FSrcYE}; 
 
    // NaN Block SrcA
    generate
@@ -262,8 +273,12 @@ module fpu (
    mux4  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, FResSelE, FFlgE);
 
    // select the result that may be written to the integer register - to IEU
-   mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE, 
-               CvtIntResE, FIntResSelE, FIntResE);
+   if (`FLEN>`XLEN) 
+      mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE, 
+                  CvtIntResE, FIntResSelE, FIntResE);
+   else 
+      mux4  #(`XLEN)  IntResMux({{`XLEN-`FLEN{CmpResE[`FLEN-1:0]}}, CmpResE}, {{`XLEN-`FLEN{FSrcXE[`FLEN-1:0]}}, FSrcXE}, ClassResE, 
+                  CvtIntResE, FIntResSelE, FIntResE);
    // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok
    // *** make sure the fpu matches the chapter diagram
 
@@ -290,7 +305,7 @@ module fpu (
 
    // M/W pipe registers
    flopenrc #(`FLEN) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
-   flopenrc #(`FLEN) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
+   flopenrc #(64) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
    flopenrc #(`FLEN) MWRegClass(clk, reset, FlushW, ~StallW, FResM, FResW);
    flopenrc #(4+int'(`FMTBITS-1))  MWCtrlReg(clk, reset, FlushW, ~StallW,
             {FRegWriteM, FResultSelM, FmtM},
@@ -313,5 +328,6 @@ module fpu (
    endgenerate
 
    // select the result to be written to the FP register
-   mux4  #(`FLEN)  FPUResultMux (ReadResW, FMAResW, FDivResW, FResW, FResultSelW, FPUResultW);
+   if(`FLEN>=64)
+   mux4  #(`FLEN)  FPUResultMux (ReadResW, FMAResW, {{`FLEN-64{1'b0}},FDivResW}, FResW, FResultSelW, FPUResultW);
 endmodule // fpu

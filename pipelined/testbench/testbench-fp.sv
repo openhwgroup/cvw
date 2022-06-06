@@ -261,26 +261,26 @@ module testbenchfp;
             Fmt = {Fmt, 2'b11};
           end
       end
-      if (TEST === "div"   | TEST === "all") begin // if division is being tested
-        // add the divide tests/op-ctrls/unit/fmt
-        Tests = {Tests, f128div};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-          for(int i = 0; i<5; i++) begin
-            Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'b11};
-          end
-      end
-      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
-        // add the square-root tests/op-ctrls/unit/fmt
-        Tests = {Tests, f128sqrt};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-          for(int i = 0; i<5; i++) begin
-            Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'b11};
-          end
-      end
+      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
+      //   // add the divide tests/op-ctrls/unit/fmt
+      //   Tests = {Tests, f128div};
+      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //     for(int i = 0; i<5; i++) begin
+      //       Unit = {Unit, `DIVUNIT};
+      //       Fmt = {Fmt, 2'b11};
+      //     end
+      // end
+      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
+      //   // add the square-root tests/op-ctrls/unit/fmt
+      //   Tests = {Tests, f128sqrt};
+      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //     for(int i = 0; i<5; i++) begin
+      //       Unit = {Unit, `DIVUNIT};
+      //       Fmt = {Fmt, 2'b11};
+      //     end
+      // end
       if (TEST === "fma"   | TEST === "all") begin  // if fused-mutliply-add is being tested
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
@@ -390,26 +390,26 @@ module testbenchfp;
           Fmt = {Fmt, 2'b01};
         end
       end
-      if (TEST === "div"   | TEST === "all") begin // if division is being tested
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f64div};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b01};
-        end
-      end
-      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f64sqrt};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b01};
-        end
-      end
+      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f64div};
+      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b01};
+      //   end
+      // end
+      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f64sqrt};
+      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b01};
+      //   end
+      // end
       if (TEST === "fma"   | TEST === "all") begin // if the fused multiply add is being tested
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
@@ -502,26 +502,26 @@ module testbenchfp;
           Fmt = {Fmt, 2'b00};
         end
       end
-      if (TEST === "div"   | TEST === "all") begin // if division is being tested
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f32div};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b00};
-        end
-      end
-      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f32sqrt};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b00};
-        end
-      end
+      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f32div};
+      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b00};
+      //   end
+      // end
+      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f32sqrt};
+      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b00};
+      //   end
+      // end
       if (TEST === "fma"   | TEST === "all")  begin // if fma is being tested
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
@@ -596,26 +596,26 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
-      if (TEST === "div"   | TEST === "all") begin // if division is being tested
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f16div};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b10};
-        end
-      end
-      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-        // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f16sqrt};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-          Unit = {Unit, `DIVUNIT};
-          Fmt = {Fmt, 2'b10};
-        end
-      end
+      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f16div};
+      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b10};
+      //   end
+      // end
+      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+      //   // add the correct tests/op-ctrls/unit/fmt to their lists
+      //   Tests = {Tests, f16sqrt};
+      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+      //   WriteInt = {WriteInt, 1'b0};
+      //   for(int i = 0; i<5; i++) begin
+      //     Unit = {Unit, `DIVUNIT};
+      //     Fmt = {Fmt, 2'b10};
+      //   end
+      // end
       if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
         // add each rounding mode to it's own list of tests
         //    - fma tests are very long, so run all rounding modes in parallel
@@ -673,10 +673,10 @@ module testbenchfp;
   //    - 1 for the larger precision
   //    - 0 for the smaller precision
   always_comb begin
-    if(`FMTBITS == 2) ModFmt = FmtVal;
-    else ModFmt = FmtVal === `FMT;
-    if(`FMTBITS == 2) FmaModFmt = FmaFmtVal;
-    else FmaModFmt = FmaFmtVal === `FMT;
+    if(`FMTBITS == 1) ModFmt = FmtVal == `FMT;
+    else ModFmt = FmtVal;
+    if(`FMTBITS == 1) FmaModFmt = FmaFmtVal == `FMT;
+    else FmaModFmt = FmaFmtVal;
   end
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
@@ -1028,111 +1028,111 @@ end
     //    - the sign of the NaN does not matter for the opperations being tested
     //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
     case (FmaFmtVal)
-      4'b11: FmaRneNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+      4'b11: FmaRneNaNGood =(((`IEEE754==0)&FmaRneAnsNaN&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRneAnsFlg[4]&(FmaRneRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRneXNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneX[`Q_LEN-2:`Q_NF],1'b1,FmaRneX[`Q_NF-2:0]})) | 
                             (FmaRneYNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneY[`Q_LEN-2:`Q_NF],1'b1,FmaRneY[`Q_NF-2:0]})) | 
                             (FmaRneZNaN&(FmaRneRes[`Q_LEN-2:0] === {FmaRneZ[`Q_LEN-2:`Q_NF],1'b1,FmaRneZ[`Q_NF-2:0]})));
-      4'b01: FmaRneNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+      4'b01: FmaRneNaNGood =(((`IEEE754==0)&FmaRneAnsNaN&(FmaRneRes[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRneAnsFlg[4]&(FmaRneRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRneXNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneX[`D_LEN-2:`D_NF],1'b1,FmaRneX[`D_NF-2:0]})) | 
                             (FmaRneYNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneY[`D_LEN-2:`D_NF],1'b1,FmaRneY[`D_NF-2:0]})) | 
                             (FmaRneZNaN&(FmaRneRes[`D_LEN-2:0] === {FmaRneZ[`D_LEN-2:`D_NF],1'b1,FmaRneZ[`D_NF-2:0]})));
-      4'b00: FmaRneNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+      4'b00: FmaRneNaNGood =(((`IEEE754==0)&FmaRneAnsNaN&(FmaRneRes[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRneAnsFlg[4]&(FmaRneRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRneXNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneX[`S_LEN-2:`S_NF],1'b1,FmaRneX[`S_NF-2:0]})) | 
                             (FmaRneYNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneY[`S_LEN-2:`S_NF],1'b1,FmaRneY[`S_NF-2:0]})) | 
                             (FmaRneZNaN&(FmaRneRes[`S_LEN-2:0] === {FmaRneZ[`S_LEN-2:`S_NF],1'b1,FmaRneZ[`S_NF-2:0]})));
-      4'b10: FmaRneNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+      4'b10: FmaRneNaNGood =(((`IEEE754==0)&FmaRneAnsNaN&(FmaRneRes[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRneAnsFlg[4]&(FmaRneRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRneXNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneX[`H_LEN-2:`H_NF],1'b1,FmaRneX[`H_NF-2:0]})) | 
                             (FmaRneYNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneY[`H_LEN-2:`H_NF],1'b1,FmaRneY[`H_NF-2:0]})) | 
                             (FmaRneZNaN&(FmaRneRes[`H_LEN-2:0] === {FmaRneZ[`H_LEN-2:`H_NF],1'b1,FmaRneZ[`H_NF-2:0]})));
     endcase
     case (FmaFmtVal)
-      4'b11: FmaRzNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+      4'b11: FmaRzNaNGood = (((`IEEE754==0)&FmaRzAnsNaN&(FmaRzRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRzAnsFlg[4]&(FmaRzRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRzXNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzX[`Q_LEN-2:`Q_NF],1'b1,FmaRzX[`Q_NF-2:0]})) | 
                             (FmaRzYNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzY[`Q_LEN-2:`Q_NF],1'b1,FmaRzY[`Q_NF-2:0]})) | 
                             (FmaRzZNaN&(FmaRzRes[`Q_LEN-2:0] === {FmaRzZ[`Q_LEN-2:`Q_NF],1'b1,FmaRzZ[`Q_NF-2:0]})));
-      4'b01: FmaRzNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+      4'b01: FmaRzNaNGood = (((`IEEE754==0)&FmaRzAnsNaN&(FmaRzRes[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRzAnsFlg[4]&(FmaRzRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRzXNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzX[`D_LEN-2:`D_NF],1'b1,FmaRzX[`D_NF-2:0]})) | 
                             (FmaRzYNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzY[`D_LEN-2:`D_NF],1'b1,FmaRzY[`D_NF-2:0]})) | 
                             (FmaRzZNaN&(FmaRzRes[`D_LEN-2:0] === {FmaRzZ[`D_LEN-2:`D_NF],1'b1,FmaRzZ[`D_NF-2:0]})));
-      4'b00: FmaRzNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+      4'b00: FmaRzNaNGood = (((`IEEE754==0)&FmaRzAnsNaN&(FmaRzRes[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRzAnsFlg[4]&(FmaRzRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRzXNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzX[`S_LEN-2:`S_NF],1'b1,FmaRzX[`S_NF-2:0]})) | 
                             (FmaRzYNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzY[`S_LEN-2:`S_NF],1'b1,FmaRzY[`S_NF-2:0]})) | 
                             (FmaRzZNaN&(FmaRzRes[`S_LEN-2:0] === {FmaRzZ[`S_LEN-2:`S_NF],1'b1,FmaRzZ[`S_NF-2:0]})));
-      4'b10: FmaRzNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+      4'b10: FmaRzNaNGood = (((`IEEE754==0)&FmaRzAnsNaN&(FmaRzRes[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRzAnsFlg[4]&(FmaRzRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRzXNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzX[`H_LEN-2:`H_NF],1'b1,FmaRzX[`H_NF-2:0]})) | 
                             (FmaRzYNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzY[`H_LEN-2:`H_NF],1'b1,FmaRzY[`H_NF-2:0]})) | 
                             (FmaRzZNaN&(FmaRzRes[`H_LEN-2:0] === {FmaRzZ[`H_LEN-2:`H_NF],1'b1,FmaRzZ[`H_NF-2:0]})));
     endcase
     case (FmaFmtVal)
-      4'b11: FmaRuNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+      4'b11: FmaRuNaNGood = (((`IEEE754==0)&FmaRuAnsNaN&(FmaRuRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRuAnsFlg[4]&(FmaRuRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRuXNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuX[`Q_LEN-2:`Q_NF],1'b1,FmaRuX[`Q_NF-2:0]})) | 
                             (FmaRuYNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuY[`Q_LEN-2:`Q_NF],1'b1,FmaRuY[`Q_NF-2:0]})) | 
                             (FmaRuZNaN&(FmaRuRes[`Q_LEN-2:0] === {FmaRuZ[`Q_LEN-2:`Q_NF],1'b1,FmaRuZ[`Q_NF-2:0]})));
-      4'b01: FmaRuNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+      4'b01: FmaRuNaNGood = (((`IEEE754==0)&FmaRuAnsNaN&(FmaRuRes[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRuAnsFlg[4]&(FmaRuRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRuAnsFlg[4]&(FmaRuRes[`Q_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF{1'b0}}})) |
                             (FmaRuXNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuX[`D_LEN-2:`D_NF],1'b1,FmaRuX[`D_NF-2:0]})) | 
                             (FmaRuYNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuY[`D_LEN-2:`D_NF],1'b1,FmaRuY[`D_NF-2:0]})) | 
                             (FmaRuZNaN&(FmaRuRes[`D_LEN-2:0] === {FmaRuZ[`D_LEN-2:`D_NF],1'b1,FmaRuZ[`D_NF-2:0]})));
-      4'b00: FmaRuNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+      4'b00: FmaRuNaNGood = (((`IEEE754==0)&FmaRuAnsNaN&(FmaRuRes[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRuAnsFlg[4]&(FmaRuRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRuXNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuX[`S_LEN-2:`S_NF],1'b1,FmaRuX[`S_NF-2:0]})) | 
                             (FmaRuYNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuY[`S_LEN-2:`S_NF],1'b1,FmaRuY[`S_NF-2:0]})) | 
                             (FmaRuZNaN&(FmaRuRes[`S_LEN-2:0] === {FmaRuZ[`S_LEN-2:`S_NF],1'b1,FmaRuZ[`S_NF-2:0]})));
-      4'b10: FmaRuNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+      4'b10: FmaRuNaNGood = (((`IEEE754==0)&FmaRuAnsNaN&(FmaRuRes[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRuAnsFlg[4]&(FmaRuRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRuXNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuX[`H_LEN-2:`H_NF],1'b1,FmaRuX[`H_NF-2:0]})) | 
                             (FmaRuYNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuY[`H_LEN-2:`H_NF],1'b1,FmaRuY[`H_NF-2:0]})) | 
                             (FmaRuZNaN&(FmaRuRes[`H_LEN-2:0] === {FmaRuZ[`H_LEN-2:`H_NF],1'b1,FmaRuZ[`H_NF-2:0]})));
     endcase
     case (FmaFmtVal)
-      4'b11: FmaRdNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+      4'b11: FmaRdNaNGood = (((`IEEE754==0)&FmaRdAnsNaN&(FmaRdRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRdAnsFlg[4]&(FmaRdRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRdXNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdX[`Q_LEN-2:`Q_NF],1'b1,FmaRdX[`Q_NF-2:0]})) | 
                             (FmaRdYNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdY[`Q_LEN-2:`Q_NF],1'b1,FmaRdY[`Q_NF-2:0]})) | 
                             (FmaRdZNaN&(FmaRdRes[`Q_LEN-2:0] === {FmaRdZ[`Q_LEN-2:`Q_NF],1'b1,FmaRdZ[`Q_NF-2:0]})));
-      4'b01: FmaRdNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+      4'b01: FmaRdNaNGood = (((`IEEE754==0)&FmaRdAnsNaN&(FmaRdRes[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRdAnsFlg[4]&(FmaRdRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRdXNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdX[`D_LEN-2:`D_NF],1'b1,FmaRdX[`D_NF-2:0]})) | 
                             (FmaRdYNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdY[`D_LEN-2:`D_NF],1'b1,FmaRdY[`D_NF-2:0]})) | 
                             (FmaRdZNaN&(FmaRdRes[`D_LEN-2:0] === {FmaRdZ[`D_LEN-2:`D_NF],1'b1,FmaRdZ[`D_NF-2:0]})));
-      4'b00: FmaRdNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+      4'b00: FmaRdNaNGood = (((`IEEE754==0)&FmaRdAnsNaN&(FmaRdRes[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRdAnsFlg[4]&(FmaRdRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRdXNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdX[`S_LEN-2:`S_NF],1'b1,FmaRdX[`S_NF-2:0]})) | 
                             (FmaRdYNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdY[`S_LEN-2:`S_NF],1'b1,FmaRdY[`S_NF-2:0]})) | 
                             (FmaRdZNaN&(FmaRdRes[`S_LEN-2:0] === {FmaRdZ[`S_LEN-2:`S_NF],1'b1,FmaRdZ[`S_NF-2:0]})));
-      4'b10: FmaRdNaNGood = (((`IEEE754==0)&(FmaRneRes === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+      4'b10: FmaRdNaNGood = (((`IEEE754==0)&FmaRdAnsNaN&(FmaRdRes[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRdAnsFlg[4]&(FmaRdRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRdXNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdX[`H_LEN-2:`H_NF],1'b1,FmaRdX[`H_NF-2:0]})) | 
                             (FmaRdYNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdY[`H_LEN-2:`H_NF],1'b1,FmaRdY[`H_NF-2:0]})) | 
                             (FmaRdZNaN&(FmaRdRes[`H_LEN-2:0] === {FmaRdZ[`H_LEN-2:`H_NF],1'b1,FmaRdZ[`H_NF-2:0]})));
     endcase
     case (FmaFmtVal)
-      4'b11: FmaRnmNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+      4'b11: FmaRnmNaNGood =(((`IEEE754==0)&FmaRnmAnsNaN&(FmaRnmRes === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRnmAnsFlg[4]&(FmaRnmRes[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                             (FmaRnmXNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmX[`Q_LEN-2:`Q_NF],1'b1,FmaRnmX[`Q_NF-2:0]})) | 
                             (FmaRnmYNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmY[`Q_LEN-2:`Q_NF],1'b1,FmaRnmY[`Q_NF-2:0]})) | 
                             (FmaRnmZNaN&(FmaRnmRes[`Q_LEN-2:0] === {FmaRnmZ[`Q_LEN-2:`Q_NF],1'b1,FmaRnmZ[`Q_NF-2:0]})));
-      4'b01: FmaRnmNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+      4'b01: FmaRnmNaNGood =(((`IEEE754==0)&FmaRnmAnsNaN&(FmaRnmRes[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRnmAnsFlg[4]&(FmaRnmRes[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                             (FmaRnmXNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmX[`D_LEN-2:`D_NF],1'b1,FmaRnmX[`D_NF-2:0]})) | 
                             (FmaRnmYNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmY[`D_LEN-2:`D_NF],1'b1,FmaRnmY[`D_NF-2:0]})) | 
                             (FmaRnmZNaN&(FmaRnmRes[`D_LEN-2:0] === {FmaRnmZ[`D_LEN-2:`D_NF],1'b1,FmaRnmZ[`D_NF-2:0]})));
-      4'b00: FmaRnmNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+      4'b00: FmaRnmNaNGood =(((`IEEE754==0)&FmaRnmAnsNaN&(FmaRnmRes[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRnmAnsFlg[4]&(FmaRnmRes[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                             (FmaRnmXNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmX[`S_LEN-2:`S_NF],1'b1,FmaRnmX[`S_NF-2:0]})) | 
                             (FmaRnmYNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmY[`S_LEN-2:`S_NF],1'b1,FmaRnmY[`S_NF-2:0]})) | 
                             (FmaRnmZNaN&(FmaRnmRes[`S_LEN-2:0] === {FmaRnmZ[`S_LEN-2:`S_NF],1'b1,FmaRnmZ[`S_NF-2:0]})));
-      4'b10: FmaRnmNaNGood =(((`IEEE754==0)&(FmaRneRes === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+      4'b10: FmaRnmNaNGood =(((`IEEE754==0)&FmaRnmAnsNaN&(FmaRnmRes[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRnmAnsFlg[4]&(FmaRnmRes[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                             (FmaRnmXNaN&(FmaRnmRes[`H_LEN-2:0] === {FmaRnmX[`H_LEN-2:`H_NF],1'b1,FmaRnmX[`H_NF-2:0]})) | 
                             (FmaRnmYNaN&(FmaRnmRes[`H_LEN-2:0] === {FmaRnmY[`H_LEN-2:`H_NF],1'b1,FmaRnmY[`H_NF-2:0]})) | 
@@ -1140,22 +1140,22 @@ end
     endcase
     if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
       case (FmtVal)
-        4'b11: NaNGood =  (((`IEEE754==0)&(Res === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+        4'b11: NaNGood =  (((`IEEE754==0)&AnsNaN&(Res === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                           (XNaN&(Res[`Q_LEN-2:0] === {X[`Q_LEN-2:`Q_NF],1'b1,X[`Q_NF-2:0]})) | 
                           (YNaN&(Res[`Q_LEN-2:0] === {Y[`Q_LEN-2:`Q_NF],1'b1,Y[`Q_NF-2:0]})) |
                           (ZNaN&(Res[`Q_LEN-2:0] === {Z[`Q_LEN-2:`Q_NF],1'b1,Z[`Q_NF-2:0]})));
-        4'b01: NaNGood =  (((`IEEE754==0)&(Res === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+        4'b01: NaNGood =  (((`IEEE754==0)&AnsNaN&(Res[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                           (XNaN&(Res[`D_LEN-2:0] === {X[`D_LEN-2:`D_NF],1'b1,X[`D_NF-2:0]})) | 
                           (YNaN&(Res[`D_LEN-2:0] === {Y[`D_LEN-2:`D_NF],1'b1,Y[`D_NF-2:0]})) |
                           (ZNaN&(Res[`D_LEN-2:0] === {Z[`D_LEN-2:`D_NF],1'b1,Z[`D_NF-2:0]})));
-        4'b00: NaNGood =  (((`IEEE754==0)&(Res === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+        4'b00: NaNGood =  (((`IEEE754==0)&AnsNaN&(Res[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                           (XNaN&(Res[`S_LEN-2:0] === {X[`S_LEN-2:`S_NF],1'b1,X[`S_NF-2:0]})) | 
                           (YNaN&(Res[`S_LEN-2:0] === {Y[`S_LEN-2:`S_NF],1'b1,Y[`S_NF-2:0]})) |
                           (ZNaN&(Res[`S_LEN-2:0] === {Z[`S_LEN-2:`S_NF],1'b1,Z[`S_NF-2:0]})));
-        4'b10: NaNGood =  (((`IEEE754==0)&(Res === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+        4'b10: NaNGood =  (((`IEEE754==0)&AnsNaN&(Res[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                           (XNaN&(Res[`H_LEN-2:0] === {X[`H_LEN-2:`H_NF],1'b1,X[`H_NF-2:0]})) | 
                           (YNaN&(Res[`H_LEN-2:0] === {Y[`H_LEN-2:`H_NF],1'b1,Y[`H_NF-2:0]})) |
@@ -1163,22 +1163,22 @@ end
       endcase
     else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
       case (OpCtrlVal[1:0]) 
-        2'b11: NaNGood = (((`IEEE754==0)&(Res === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
+        2'b11: NaNGood = (((`IEEE754==0)&AnsNaN&(Res === {1'b0, {`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`Q_LEN-2:0] === {{`Q_NE+1{1'b1}}, {`Q_NF-1{1'b0}}})) |
                           (AnsNaN&(Res[`Q_LEN-2:0] === Ans[`Q_LEN-2:0])) | 
                           (XNaN&(Res[`Q_LEN-2:0] === {X[`Q_LEN-2:`Q_NF],1'b1,X[`Q_NF-2:0]})) | 
                           (YNaN&(Res[`Q_LEN-2:0] === {Y[`Q_LEN-2:`Q_NF],1'b1,Y[`Q_NF-2:0]})));
-        2'b01: NaNGood = (((`IEEE754==0)&(Res === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
+        2'b01: NaNGood = (((`IEEE754==0)&AnsNaN&(Res[`D_LEN-1:0] === {1'b0, {`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`D_LEN-2:0] === {{`D_NE+1{1'b1}}, {`D_NF-1{1'b0}}})) |
                           (AnsNaN&(Res[`D_LEN-2:0] === Ans[`D_LEN-2:0])) | 
                           (XNaN&(Res[`D_LEN-2:0] === {X[`D_LEN-2:`D_NF],1'b1,X[`D_NF-2:0]})) | 
                           (YNaN&(Res[`D_LEN-2:0] === {Y[`D_LEN-2:`D_NF],1'b1,Y[`D_NF-2:0]})));
-        2'b00: NaNGood = (((`IEEE754==0)&(Res === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
+        2'b00: NaNGood = (((`IEEE754==0)&AnsNaN&(Res[`S_LEN-1:0] === {1'b0, {`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`S_LEN-2:0] === {{`S_NE+1{1'b1}}, {`S_NF-1{1'b0}}})) |
                           (AnsNaN&(Res[`S_LEN-2:0] === Ans[`S_LEN-2:0])) | 
                           (XNaN&(Res[`S_LEN-2:0] === {X[`S_LEN-2:`S_NF],1'b1,X[`S_NF-2:0]})) | 
                           (YNaN&(Res[`S_LEN-2:0] === {Y[`S_LEN-2:`S_NF],1'b1,Y[`S_NF-2:0]})));
-        2'b10: NaNGood = (((`IEEE754==0)&(Res === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
+        2'b10: NaNGood = (((`IEEE754==0)&AnsNaN&(Res[`H_LEN-1:0] === {1'b0, {`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                           (AnsFlg[4]&(Res[`H_LEN-2:0] === {{`H_NE+1{1'b1}}, {`H_NF-1{1'b0}}})) |
                           (AnsNaN&(Res[`H_LEN-2:0] === Ans[`H_LEN-2:0])) | 
                           (XNaN&(Res[`H_LEN-2:0] === {X[`H_LEN-2:`H_NF],1'b1,X[`H_NF-2:0]})) | 
@@ -1452,14 +1452,14 @@ module readvectors (
         case (Fmt)
           2'b11: begin       // quad
             X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
-            if(OpCtrl === `MUL_OPCTRL) Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)]; else Y = {2'b0, {`Q_NE-1{1'b1}}, `Q_NF'h0};
+            if(OpCtrl === `MUL_OPCTRL) Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)]; else Y = {2'b0, {`Q_NE-1{1'b1}}, (`Q_NF)'(0)};
             if(OpCtrl === `MUL_OPCTRL) Z = 0; else Z = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
             Ans = TestVector[8+(`Q_LEN-1):8];
           end
           2'b01:	begin	  // double
             X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
             if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]}; 
-            else Y = {{`FLEN-`D_LEN{1'b1}}, 2'b0, {`D_NE-1{1'b1}}, `D_NF'h0};
+            else Y = {{`FLEN-`D_LEN{1'b1}}, 2'b0, {`D_NE-1{1'b1}}, (`D_NF)'(0)};
             if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`D_LEN{1'b1}}, {`D_LEN{1'b0}}}; 
             else Z = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
             Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
@@ -1467,7 +1467,7 @@ module readvectors (
           2'b00:	begin	  // single
             X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
             if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+(`S_LEN)]}; 
-            else Y = {{`FLEN-`S_LEN{1'b1}}, 2'b0, {`S_NE-1{1'b1}}, `S_NF'h0};
+            else Y = {{`FLEN-`S_LEN{1'b1}}, 2'b0, {`S_NE-1{1'b1}}, (`S_NF)'(0)};
             if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`S_LEN{1'b1}}, {`S_LEN{1'b0}}}; 
             else Z = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+(`S_LEN)]};
             Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
@@ -1475,7 +1475,7 @@ module readvectors (
           2'b10:	begin	  // half
             X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
             if(OpCtrl === `MUL_OPCTRL) Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]}; 
-            else Y = {{`FLEN-`H_LEN{1'b1}}, 2'b0, {`H_NE-1{1'b1}}, `H_NF'h0};
+            else Y = {{`FLEN-`H_LEN{1'b1}}, 2'b0, {`H_NE-1{1'b1}}, (`H_NF)'(0)};
             if(OpCtrl === `MUL_OPCTRL) Z = {{`FLEN-`H_LEN{1'b1}}, {`H_LEN{1'b0}}}; 
             else Z = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
             Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
