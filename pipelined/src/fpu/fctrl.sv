@@ -122,7 +122,7 @@ module fctrl (
     else if (`FPSIZES == 2)begin
       logic [1:0] FmtTmp;
       assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
-      assign FmtD = `FMT == FmtTmp;
+      assign FmtD = (`FMT == FmtTmp);
     end
     else if (`FPSIZES == 3|`FPSIZES == 4)
       assign FmtD = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
