@@ -220,14 +220,18 @@ logic [3:0] dummy;
         adrstr = "0";
         ProgramLabelMap = $fopen(ProgramLabelMapFile, "r");
         ProgramAddrMap = $fopen(ProgramAddrMapFile, "r");
-        while (!$feof(ProgramLabelMap)) begin
-          string addr, label;
-          integer returncode;
-          returncode = $fgets(label, ProgramLabelMap);
-          returncode = $fgets(addr, ProgramAddrMap);
-          if (label == "begin_signature\n") begin
-            adrstr = addr[4:7];
-            if (DEBUG) $display("adrstr: %s", adrstr);
+        if (ProgramLabelMap & ProgramAddrMap) begin // check we found both files
+          while (!$feof(ProgramLabelMap)) begin
+            string addr, label;
+            integer returncode;
+            returncode = $fgets(label, ProgramLabelMap);
+            returncode = $fgets(addr, ProgramAddrMap);
+            if (label == "begin_signature\n") begin
+              adrstr = addr[1:7];
+              if (adrstr=="0000000") // if running on rv64 we get the address at a later 
+                adrstr = addr[9:15]; 
+              if (DEBUG) $display("%s begin_signature adrstr: %s", TEST, adrstr);
+            end
           end
         end
         if (adrstr == "0") begin
