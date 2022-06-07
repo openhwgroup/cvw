@@ -81,7 +81,7 @@ module fma(
                 
     // E/M pipeline registers
     flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
-    flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
+    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
     flopenrc #($clog2(3*`NF+7)+8) EMRegFma4(clk, reset, FlushM, ~StallM, 
                             {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0], ZDenormE},
                             {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult, ZDenormM});
@@ -237,7 +237,7 @@ module align(
     //      - positive means the product is larger, so shift Z right
     // *** can we use ProdExpE instead of XExp/YExp to save an adder? DH 5/12/22
     //      KP- yes we used ProdExpE originally but we did this for timing
-    assign AlignCnt = XZeroE|YZeroE ? -1 : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + `NF+3 - {2'b0, ZExpE};
+    assign AlignCnt = XZeroE|YZeroE ? -(`NE+2)'($unsigned(1)) : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF)+3 - {2'b0, ZExpE};
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
@@ -320,7 +320,7 @@ module add(
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
+    assign PreSum = AlignedAddendInv + {{`NF+3{1'b0}}, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
     assign NegPreSum = XZeroE|YZeroE|KillProdE ? {1'b0, AlignedAddendE} : {1'b0, AlignedAddendE} + {{`NF+3{1'b1}}, ~ProdManKilled, 2'b0} + {(3*`NF+7)'(4)};
      
     // Is the sum negitive
@@ -543,7 +543,7 @@ module normalize(
     assign SumZero = ~(|SumM);
 
     // calculate the sum's exponent
-    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, NormCntM} + 1 - (`NE+2)'(`NF+4));
 
     //convert the sum's exponent into the propper percision
     if (`FPSIZES == 1) begin
@@ -556,8 +556,8 @@ module normalize(
         always_comb begin
             case (FmtM)
                 `FMT: SumExpTmp = SumExpTmpTmp;
-                `FMT1: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS1)&{`NE+2{|SumExpTmpTmp}};
-                `FMT2: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS2)&{`NE+2{|SumExpTmpTmp}};
+                `FMT1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|SumExpTmpTmp}};
+                `FMT2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|SumExpTmpTmp}};
                 default: SumExpTmp = `NE+2'bx;
             endcase
         end
@@ -566,9 +566,9 @@ module normalize(
         always_comb begin
             case (FmtM)
                 2'h3: SumExpTmp = SumExpTmpTmp;
-                2'h1: SumExpTmp = (SumExpTmpTmp-`BIAS+`D_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h0: SumExpTmp = (SumExpTmpTmp-`BIAS+`S_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h2: SumExpTmp = (SumExpTmpTmp-`BIAS+`H_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`D_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h0: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`S_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`H_BIAS))&{`NE+2{|SumExpTmpTmp}};
             endcase
         end
 
@@ -674,7 +674,7 @@ module normalize(
 
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~ResultDenorm&PreResultDenorm&~KillProdM}+{12'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
+    assign SumExp = (SumExpTmp+{{`NE+1{1'b0}}, LZAPlus1&~KillProdM}+{{`NE{1'b0}}, LZAPlus2&~KillProdM, 1'b0}+{{`NE+1{1'b0}}, ~ResultDenorm&PreResultDenorm&~KillProdM}+{{`NE+1{1'b0}}, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
     assign ResultDenorm = PreResultDenorm&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 

@@ -51,43 +51,45 @@
 `define PMPCFG_ENTRIES (`PMP_ENTRIES/8)
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-`define Q_LEN 128
-`define Q_NE 15
-`define Q_NF 112
-`define Q_BIAS 16383
-`define D_LEN 64
-`define D_NE 11
-`define D_NF 52
-`define D_BIAS 1023
-`define S_LEN 32
-`define S_NE 8
-`define S_NF 23
-`define S_BIAS 127
-`define H_LEN 16
-`define H_NE 5
-`define H_NF 10
-`define H_BIAS 15
+`define Q_LEN 32'd128
+`define Q_NE 32'd15
+`define Q_NF 32'd112
+`define Q_BIAS 32'd16383
+`define D_LEN 32'd64
+`define D_NE 32'd11
+`define D_NF 32'd52
+`define D_BIAS 32'd1023
+`define D_FMT 32'd1
+`define S_LEN 32'd32
+`define S_NE 32'd8
+`define S_NF 32'd23
+`define S_BIAS 32'd127
+`define S_FMT 32'd1
+`define H_LEN 32'd16
+`define H_NE 32'd5
+`define H_NF 32'd10
+`define H_BIAS 32'd15
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
 `define FLEN (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN)
 `define NE   (`Q_SUPPORTED ? `Q_NE   : `D_SUPPORTED ? `D_NE   : `F_SUPPORTED ? `S_NE   : `H_NE)
 `define NF   (`Q_SUPPORTED ? `Q_NF   : `D_SUPPORTED ? `D_NF   : `F_SUPPORTED ? `S_NF   : `H_NF)
-`define FMT  (`Q_SUPPORTED ? 3       : `D_SUPPORTED ? 1       : `F_SUPPORTED ? 0       : 2)
+`define FMT  (`Q_SUPPORTED ? 2'd3       : `D_SUPPORTED ? 2'd1       : `F_SUPPORTED ? 2'd0       : 2'd2)
 `define BIAS (`Q_SUPPORTED ? `Q_BIAS : `D_SUPPORTED ? `D_BIAS : `F_SUPPORTED ? `S_BIAS : `H_BIAS)
 
 // Floating point constants needed for FPU paramerterization
-`define FPSIZES ((3)'(`Q_SUPPORTED)+(3)'(`D_SUPPORTED)+(3)'(`F_SUPPORTED)+(3)'(`ZFH_SUPPORTED))
-`define FMTBITS (((`FPSIZES==3'b011)|(`FPSIZES==3'b100)) ? 2 : 1)
-`define LEN1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_LEN   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_LEN  : `H_LEN)
-`define NE1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NE   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NE  : `H_NE)
-`define NF1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NF  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NF : `H_NF)
-`define FMT1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? 1        : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? 0       : 2)
-`define BIAS1 ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_BIAS  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_BIAS : `H_BIAS)
-`define LEN2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_LEN   : `H_LEN)
+`define FPSIZES ((32)'(`Q_SUPPORTED)+(32)'(`D_SUPPORTED)+(32)'(`F_SUPPORTED)+(32)'(`ZFH_SUPPORTED))
+`define FMTBITS ((`FPSIZES>=3)+1)
+`define LEN1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_LEN  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_LEN  : `H_LEN)
+`define NE1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NE   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NE   : `H_NE)
+`define NF1   ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NF   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NF   : `H_NF)
+`define FMT1  ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? 2'd1    : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? 2'd0    : 2'd2)
+`define BIAS1 ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_BIAS : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_BIAS : `H_BIAS)
+`define LEN2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_LEN  : `H_LEN)
 `define NE2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NE   : `H_NE)
-`define NF2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NF  : `H_NF)
-`define FMT2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? 0        : 2)
-`define BIAS2 ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS  : `H_BIAS)
+`define NF2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NF   : `H_NF)
+`define FMT2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? 2'd0    : 2'd2)
+`define BIAS2 ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS : `H_BIAS)
 
 // Disable spurious Verilator warnings
 
