@@ -42,6 +42,7 @@ module ifu (
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
 (* mark_debug = "true" *) output logic [2:0]  IFUBurstType,
+(* mark_debug = "true" *) output logic [1:0]  IFUTransType,
 (* mark_debug = "true" *) output logic        IFUBurstDone,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
@@ -192,7 +193,7 @@ module ifu (
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
-          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUBurstDone(IFUBurstDone),
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUBurstDone(IFUBurstDone),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),

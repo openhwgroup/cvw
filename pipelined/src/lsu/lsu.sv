@@ -70,6 +70,7 @@ module lsu (
    (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUBusHWDATA,
    (* mark_debug = "true" *)   output logic [2:0] LSUBusSize, 
    (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
+   (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
    (* mark_debug = "true" *)   output logic LSUBurstDone,
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
@@ -213,7 +214,7 @@ module lsu (
             
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUBurstDone,
+      .LSUBusHRDATA, .LSUBusAck, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUBurstDone,
       .WordCount, .LSUBusWriteCrit,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
       .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM,
