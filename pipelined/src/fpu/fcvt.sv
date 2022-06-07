@@ -2,6 +2,7 @@
 `include "wally-config.vh"
 // largest length in IEU/FPU
 `define LGLEN ((`NF<`XLEN) ? `XLEN : `NF)
+`define LOGLGLEN $unsigned($clog2(`LGLEN+1))
 
 module fcvt (
     input logic             XSgnE,          // input's sign
@@ -16,7 +17,7 @@ module fcvt (
     input logic             XNaNE,          // is the input a NaN
     input logic             XSNaNE,         // is the input a signaling NaN
     input logic [2:0]       FrmE,           // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic [`FPSIZES/3:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
+    input logic [`FMTBITS-1:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
     output logic [`FLEN-1:0] CvtResE,       // the fp conversion result
     output logic [`XLEN-1:0] CvtIntResE,    // the int conversion result
     output logic [4:0]      CvtFlgE         // the conversion's flags
@@ -37,12 +38,12 @@ module fcvt (
     // (FI) fp  -> int coversion signals
 
 
-    logic [`FPSIZES/3:0]    OutFmt;     // format of the output
+    logic [`FMTBITS-1:0]    OutFmt;     // format of the output
     logic [`XLEN-1:0]       PosInt;     // the positive integer input
     logic [`XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
     logic [`LGLEN-1:0]      LzcIn;      // input to the Leading Zero Counter (priority encoder)
     logic [`NE:0]           CalcExp;    // the calculated expoent
-	logic [$clog2(`LGLEN+1)-1:0] ShiftAmt;  // how much to shift by
+	logic [`LOGLGLEN-1:0] ShiftAmt;  // how much to shift by
     logic [`LGLEN+`NF:0]    ShiftIn;    // number to be shifted
     logic                   ResDenormUf;// does the result underflow or is denormalized
     logic                   ResUf;      // does the result underflow
@@ -72,7 +73,7 @@ module fcvt (
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
-    logic [$clog2(`LGLEN+1)-1:0] ZeroCnt; // output from the LZC
+    logic [`LOGLGLEN-1:0] ZeroCnt; // output from the LZC
 
 
     // seperate OpCtrl for code readability
@@ -143,9 +144,9 @@ module fcvt (
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign ShiftAmt = ToInt ? CalcExp[$clog2(`LGLEN+1)-1:0]&{$clog2(`LGLEN+1){~CalcExp[`NE]}} :
-                    ResDenormUf&~IntToFp ? ($clog2(`LGLEN+1))'(`NF-1)+CalcExp[$clog2(`LGLEN+1)-1:0] : 
-                              (ZeroCnt+1)&{$clog2(`LGLEN+1){XDenormE|IntToFp}};
+    assign ShiftAmt = ToInt ? CalcExp[`LOGLGLEN-1:0]&{`LOGLGLEN{~CalcExp[`NE]}} :
+                    ResDenormUf&~IntToFp ? (`LOGLGLEN)'(`NF-1)+CalcExp[`LOGLGLEN-1:0] : 
+                              (ZeroCnt+1)&{`LOGLGLEN{XDenormE|IntToFp}};
     
     // shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
@@ -261,34 +262,34 @@ module fcvt (
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
     //          
-    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-$clog2(`LGLEN+1)+1{1'b0}}, (ZeroCnt&{$clog2(`LGLEN+1){XDenormE|IntToFp}})};
+    assign CalcExp = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-`LOGLGLEN+1{1'b0}}, (ZeroCnt&{`LOGLGLEN{XDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
     assign ResDenormUf = (~|CalcExp | CalcExp[`NE])&~XZeroE&~IntToFp;
     // choose the negative of the fraction size
     if (`FPSIZES == 1) begin
-        assign ResNegNF = -`NF; 
+        assign ResNegNF = -($clog2(`NF)+1)'(`NF); 
 
     end else if (`FPSIZES == 2) begin
-        assign ResNegNF = OutFmt ? -`NF : -`NF1;
+        assign ResNegNF = OutFmt ? -($clog2(`NF)+1)'(`NF) : -($clog2(`NF)+1)'(`NF1);
 
     end else if (`FPSIZES == 3) begin
         always_comb
             case (OutFmt)
-                `FMT:  ResNegNF = -`NF;
-                `FMT1: ResNegNF = -`NF1;
-                `FMT2: ResNegNF = -`NF2;
+                `FMT:  ResNegNF = -($clog2(`NF)+1)'(`NF);
+                `FMT1: ResNegNF = -($clog2(`NF)+1)'(`NF1);
+                `FMT2: ResNegNF = -($clog2(`NF)+1)'(`NF2);
                 default: ResNegNF = 1'bx;
             endcase
 
     end else if (`FPSIZES == 4) begin        
         always_comb
             case (OutFmt)
-                2'h3: ResNegNF = -`Q_NF;
-                2'h1: ResNegNF = -`D_NF;
-                2'h0: ResNegNF = -`S_NF;
-                2'h2: ResNegNF = -`H_NF;
+                2'h3: ResNegNF = -($clog2(`NF)+1)'(`Q_NF);
+                2'h1: ResNegNF = -($clog2(`NF)+1)'(`D_NF);
+                2'h0: ResNegNF = -($clog2(`NF)+1)'(`S_NF);
+                2'h2: ResNegNF = -($clog2(`NF)+1)'(`H_NF);
             endcase
     end
     // determine if the result underflows ??? -> fp
@@ -453,10 +454,10 @@ module fcvt (
 
     // find the maximum exponent (the exponent and larger overflows)
     if (`FPSIZES == 1) begin
-        assign MaxExp = ToInt ? Int64 ? 65 : 33 : {`NE{1'b1}};
+        assign MaxExp = ToInt ? Int64 ? (`NE)'(65) : (`NE)'(33) : {`NE{1'b1}};
 
     end else if (`FPSIZES == 2) begin    
-        assign MaxExp = ToInt ? Int64 ? 65 : 33 :
+        assign MaxExp = ToInt ? Int64 ? (`NE)'($unsigned(65)) : (`NE)'($unsigned(33)) :
                 OutFmt ? {`NE{1'b1}} : {{`NE-`NE1{1'b0}}, {`NE1{1'b1}}};
 
     end else if (`FPSIZES == 3) begin
@@ -476,7 +477,7 @@ module fcvt (
                      MaxExpFp = 1'bx;
                 end
             endcase
-            assign MaxExp = ToInt ? Int64 ? 65 : 33 : MaxExpFp;
+            assign MaxExp = ToInt ? Int64 ? (`NE)'(65) : (`NE)'(33) : MaxExpFp;
 
     end else if (`FPSIZES == 4) begin        
         logic [`NE-1:0] MaxExpFp;
@@ -495,7 +496,7 @@ module fcvt (
                      MaxExpFp = {{`Q_NE-`H_NE{1'b0}}, {`H_NE{1'b1}}};
                 end
             endcase
-            assign MaxExp = ToInt ? Int64 ? 65 : 33 : MaxExpFp;
+            assign MaxExp = ToInt ? Int64 ? (`NE)'(65) : (`NE)'(33) : MaxExpFp;
     end
 
     //                 if the result exponent is larger then the maximum possible exponent

@@ -10,7 +10,7 @@
 
 
 module fcmp (   
-   input logic  [`FPSIZES/3:0]   FmtE,           // precision 1 = double 0 = single
+   input logic  [`FMTBITS-1:0]   FmtE,           // precision 1 = double 0 = single
    input logic  [2:0]            FOpCtrlE,       // see above table
    input logic                   XSgnE, YSgnE,   // input signs
    input logic  [`NE-1:0]        XExpE, YExpE,   // input exponents

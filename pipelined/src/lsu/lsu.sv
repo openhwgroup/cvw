@@ -55,7 +55,7 @@ module lsu (
    // cpu privilege
    input logic [1:0]        PrivilegeModeW, 
    input logic              BigEndianM,
-   input logic              DTLBFlushM,
+   input logic              sfencevmaM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
    output logic             LoadMisalignedFaultM, LoadAccessFaultM,
@@ -157,7 +157,7 @@ module lsu (
       .PTE,
       .PageTypeWriteVal(PageType),
       .TLBWrite(DTLBWriteM),
-      .TLBFlush(DTLBFlushM),
+      .TLBFlush(sfencevmaM),
       .PhysicalAddress(LSUPAdrM),
       .TLBMiss(DTLBMissM),
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),

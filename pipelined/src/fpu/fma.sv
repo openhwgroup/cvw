@@ -34,7 +34,7 @@ module fma(
     input logic                 reset,
     input logic                 FlushM,     // flush the memory stage
     input logic                 StallM,     // stall memory stage
-    input logic  [`FPSIZES/3:0] FmtE, FmtM, // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE, FmtM, // precision 1 = double 0 = single
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [2:0]          FrmM,               // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic                 XSgnE, YSgnE, ZSgnE,    // input signs - execute stage
@@ -81,7 +81,7 @@ module fma(
                 
     // E/M pipeline registers
     flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
-    flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
+    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
     flopenrc #($clog2(3*`NF+7)+8) EMRegFma4(clk, reset, FlushM, ~StallM, 
                             {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0], ZDenormE},
                             {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult, ZDenormM});
@@ -102,7 +102,7 @@ module fma1(
     input logic  [`NF:0]        XManE, YManE, ZManE,    // fractions in U(0.NF) format
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
-    input logic  [`FPSIZES/3:0] FmtE,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE,       // precision 1 = double 0 = single
     output logic [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE,      // set the product to zero before addition if the product is too small to matter
@@ -161,7 +161,7 @@ endmodule
 
 
 module expadd(    
-    input  logic [`FPSIZES/3:0] FmtE,          // precision
+    input  logic [`FMTBITS-1:0] FmtE,          // precision
     input  logic [`NE-1:0]      XExpE, YExpE,  // input exponents
     input  logic                XZeroE, YZeroE,        // are the inputs zero
     output logic [`NE+1:0]      ProdExpE       // product's exponent B^(1023)NE+2
@@ -237,7 +237,7 @@ module align(
     //      - positive means the product is larger, so shift Z right
     // *** can we use ProdExpE instead of XExp/YExp to save an adder? DH 5/12/22
     //      KP- yes we used ProdExpE originally but we did this for timing
-    assign AlignCnt = XZeroE|YZeroE ? -1 : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + `NF+3 - {2'b0, ZExpE};
+    assign AlignCnt = XZeroE|YZeroE ? -(`NE+2)'($unsigned(1)) : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF)+3 - {2'b0, ZExpE};
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
@@ -320,7 +320,7 @@ module add(
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
+    assign PreSum = AlignedAddendInv + {{`NF+3{1'b0}}, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
     assign NegPreSum = XZeroE|YZeroE|KillProdE ? {1'b0, AlignedAddendE} : {1'b0, AlignedAddendE} + {{`NF+3{1'b1}}, ~ProdManKilled, 2'b0} + {(3*`NF+7)'(4)};
      
     // Is the sum negitive
@@ -378,7 +378,7 @@ module fma2(
     input logic     [`NE-1:0]               ZExpM, // input exponents
     input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]          FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]          FmtM,       // precision 1 = double 0 = single
     input logic     [`NE+1:0]               ProdExpM,       // X exponent + Y exponent - bias
     input logic                             AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                             KillProdM,      // set the product to zero before addition if the product is too small to matter
@@ -517,7 +517,7 @@ module normalize(
     input logic  [`NE-1:0]              ZExpM,      // exponent of Z
     input logic  [`NE+1:0]              ProdExpM,   // X exponent + Y exponent - bias
     input logic  [$clog2(3*`NF+7)-1:0]  NormCntM,   // normalization shift count
-    input logic  [`FPSIZES/3:0]         FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0]         FmtM,       // precision 1 = double 0 = single
     input logic                         KillProdM,  // is the product set to zero
     input logic 			            ZDenormM,
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
@@ -543,7 +543,7 @@ module normalize(
     assign SumZero = ~(|SumM);
 
     // calculate the sum's exponent
-    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, NormCntM} + 1 - (`NE+2)'(`NF+4));
 
     //convert the sum's exponent into the propper percision
     if (`FPSIZES == 1) begin
@@ -556,8 +556,8 @@ module normalize(
         always_comb begin
             case (FmtM)
                 `FMT: SumExpTmp = SumExpTmpTmp;
-                `FMT1: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS1)&{`NE+2{|SumExpTmpTmp}};
-                `FMT2: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS2)&{`NE+2{|SumExpTmpTmp}};
+                `FMT1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|SumExpTmpTmp}};
+                `FMT2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|SumExpTmpTmp}};
                 default: SumExpTmp = `NE+2'bx;
             endcase
         end
@@ -566,9 +566,9 @@ module normalize(
         always_comb begin
             case (FmtM)
                 2'h3: SumExpTmp = SumExpTmpTmp;
-                2'h1: SumExpTmp = (SumExpTmpTmp-`BIAS+`D_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h0: SumExpTmp = (SumExpTmpTmp-`BIAS+`S_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h2: SumExpTmp = (SumExpTmpTmp-`BIAS+`H_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`D_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h0: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`S_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`H_BIAS))&{`NE+2{|SumExpTmpTmp}};
             endcase
         end
 
@@ -674,14 +674,14 @@ module normalize(
 
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~ResultDenorm&PreResultDenorm&~KillProdM}+{12'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
+    assign SumExp = (SumExpTmp+{{`NE+1{1'b0}}, LZAPlus1&~KillProdM}+{{`NE{1'b0}}, LZAPlus2&~KillProdM, 1'b0}+{{`NE+1{1'b0}}, ~ResultDenorm&PreResultDenorm&~KillProdM}+{{`NE+1{1'b0}}, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
     assign ResultDenorm = PreResultDenorm&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 
 endmodule
 
 module fmaround(
-    input logic  [`FPSIZES/3:0] FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,       // precision 1 = double 0 = single
     input logic  [2:0]          FrmM,       // rounding mode
     input logic                 UfSticky,   // sticky bit for underlow calculation
     input logic  [`NF+1:0]      NormSum,    // normalized sum
@@ -920,7 +920,7 @@ module fmaflags(
     input logic  [`NE+1:0]      SumExp,                 // exponent of the normalized sum
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, Guard, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
-    input logic  [`FPSIZES/3:0] FmtM,                   // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,                   // precision 1 = double 0 = single
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
 );
@@ -996,7 +996,7 @@ module resultselect(
     input logic     [`NE-1:0]       ZExpM, // input exponents
     input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]  FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]  FmtM,       // precision 1 = double 0 = single
     input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
     input logic                     XInfM, YInfM, ZInfM,    // inputs are infinity

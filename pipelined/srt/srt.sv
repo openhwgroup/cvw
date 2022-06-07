@@ -30,7 +30,11 @@
 
 `include "wally-config.vh"
 
-module srt #(parameter Nf=52) (
+`define DIVLEN ((`NF<(`XLEN+1)) ? (`XLEN + 1) : `NF)
+`define EXTRAFRACBITS ((`NF<(`XLEN+1)) ? (`XLEN - `NF + 1) : 0)
+`define EXTRAINTBITS ((`NF<(`XLEN+1)) ? 0 : (`NF - `XLEN))
+
+module srt (
   input  logic clk,
   input  logic Start, 
   input  logic Stall, // *** multiple pipe stages
@@ -39,7 +43,7 @@ module srt #(parameter Nf=52) (
   // later add exponents, signs, special cases
   input  logic       XSign, YSign,
   input  logic [`NE-1:0] XExp, YExp,
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
+  input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
@@ -47,7 +51,7 @@ module srt #(parameter Nf=52) (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign,
-  output logic [Nf-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
+  output logic [`DIVLEN-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -55,38 +59,40 @@ module srt #(parameter Nf=52) (
   logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [`NE-1:0] calcExp;
   logic           calcSign;
-  logic [Nf-1:0]  X, Dpreproc;
-  logic [Nf+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [Nf+2:0]  rp, rm;
+  logic [`DIVLEN-1:0]  X, Dpreproc;
+  logic [`DIVLEN+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
+  logic [`DIVLEN+2:0]  rp, rm;
+  logic [$clog2(`XLEN+1)-1:0] intExp;
+  logic           intSign;
  
-  srtpreproc #(Nf) preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2   #(Nf+4) wsmux({WSA[54:0], 1'b0}, {4'b0001, X}, Start, WSN);
-  flop   #(Nf+4) wsflop(clk, WSN, WS);
-  mux2   #(Nf+4) wcmux({WCA[54:0], 1'b0}, 56'b0, Start, WCN);
-  flop   #(Nf+4) wcflop(clk, WCN, WC);
-  flopen #(Nf+4) dflop(clk, Start, {4'b0001, Dpreproc}, D);
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+2:0], 1'b0}, {4'b0001, X}, Start, WSN);
+  flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
+  mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+2:0], 1'b0}, {(`DIVLEN+4){1'b0}}, Start, WCN);
+  flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
+  flopen #(`DIVLEN+4) dflop(clk, Start, {4'b0001, Dpreproc}, D);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  // Accumulate quotient digits in a shift register
-  qsel #(Nf) qsel(WS[55:52], WC[55:52], qp, qz, qm);
-  qacc #(Nf+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], qp, qz, qm);
+  // Accumulate quotient digits in a shift register (now done in OTFC)
+  qacc #(`DIVLEN+3) qacc(clk, Start, qp, qz, qm, rp, rm);
   flopen #(`NE) expflop(clk, Start, calcExp, rExp);
   flopen #(1) signflop(clk, Start, calcSign, rsign);
 
   // Divisor Selection logic
   inv dinv(D, Db);
-  mux3onehot divisorsel(Db, 56'b0, D, qp, qz, qm, Dsel);
+  mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qm, Dsel);
 
   // Partial Product Generation
-  csa csa(WS, WC, Dsel, qp, WSA, WCA);
+  csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
   
-  otfc2 otfc2(clk, Start, qp, qz, qm, QuotOTFC);
+  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, QuotOTFC);
 
   expcalc expcalc(.XExp, .YExp, .calcExp);
 
@@ -95,70 +101,60 @@ module srt #(parameter Nf=52) (
   srtpostproc postproc(rp, rm, Quot);
 endmodule
 
-module srtpostproc #(parameter N=52) (
-  input [N+2:0] rp, rm,
-  output [N-1:0] Quot
-);
+////////////////
+// Submodules //
+////////////////
 
-  //assign Quot = rp - rm;
-  finaladd finaladd(rp, rm, Quot);
-endmodule
-
-module srtpreproc #(parameter Nf=52) (
+///////////////////
+// Preprocessing //
+///////////////////
+module srtpreproc (
   input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
+  input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
+  input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] X, D
+  output logic [`DIVLEN-1:0] X, D,
+  output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
+  output logic       intSign // Quotient integer sign
 );
 
-  // Initial: just pass X and Y through for simple fp division
-  assign X = SrcXFrac;
-  assign D = SrcYFrac;
+  logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
+  logic  [`XLEN-1:0] PosA, PosB;
+  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
+
+  assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
+  assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
+
+  lzc #(`XLEN) lzcA (PosA, zeroCntA);
+  lzc #(`XLEN) lzcB (PosB, zeroCntB);
+
+  assign ExtraA = {1'b0, PosA, {`EXTRAINTBITS{1'b0}}};
+  assign ExtraB = {1'b0, PosB, {`EXTRAINTBITS{1'b0}}};
+
+  assign PreprocA = ExtraA << zeroCntA;
+  assign PreprocB = ExtraB << (zeroCntB + 1);
+  assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
+  assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
+
+  
+  assign X = Int ? PreprocA : PreprocX;
+  assign D = Int ? PreprocB : PreprocY;
+  assign intExp = zeroCntB - zeroCntA + 1;
+  assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 endmodule
 
-/*
-
-//////////
-// mux2 //
-//////////
-module mux2(input  logic [55:0] in0, in1, 
-            input  logic        sel, 
-            output logic [55:0] out);
- 
-   assign #1 out = sel ? in1 : in0;
-endmodule
-
-//////////
-// flop //
-//////////
-module flop(clk, in, out);
-  input 	clk;
-  input  [55:0] in;
-  output [55:0] out;
-
-  logic    [55:0] state;
-
-  always @(posedge clk)
-      state <= #1 in;
-
-  assign #1 out = state;
-endmodule
-
-*/
-
-//////////
-// qsel //
-//////////
-module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
-  input  logic [Nf+3:Nf] ps, pc, 
+/////////////////////////////////
+// Quotient Selection, Radix 2 //
+/////////////////////////////////
+module qsel2 ( // *** eventually just change to 4 bits
+  input  logic [`DIVLEN+3:`DIVLEN] ps, pc, 
   output logic         qp, qz, qm
 );
  
-  logic [Nf+3:Nf]  p, g;
+  logic [`DIVLEN+3:`DIVLEN]  p, g;
   logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
@@ -169,9 +165,9 @@ module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  assign #1 magnitude = ~(&p[54:52]);
-  assign #1 cout = g[54] | (p[54] & (g[53] | p[53] & g[52]));
-  assign #1 sign = p[55] ^ cout;
+  assign #1 magnitude = ~(&p[`DIVLEN+2:`DIVLEN]);
+  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & g[`DIVLEN]));
+  assign #1 sign = p[`DIVLEN+3] ^ cout;
 /*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
   assign #1 sign = (ps[55]^pc[55])^
@@ -188,15 +184,16 @@ endmodule
 //////////
 // qacc //
 //////////
-module qacc #(parameter N=55) (
+// To be replaced by OTFC
+module qacc #(parameter N=68) (
   input  logic         clk, 
   input  logic         req, 
   input  logic         qp, qz, qm, 
   output logic [N-1:0] rp, rm
 );
 
-  flopr #(N) rmreg(clk, req, {rm[53:0], qm}, rm);
-  flopr #(N) rpreg(clk, req, {rp[53:0], qp}, rp);
+  flopr #(N) rmreg(clk, req, {rm[N-2:0], qm}, rm);
+  flopr #(N) rpreg(clk, req, {rp[N-2:0], qp}, rp);
 /*  always @(posedge clk)
     begin
       if (req) 
@@ -212,11 +209,10 @@ module qacc #(parameter N=55) (
     end */
 endmodule
 
-//////////
-// otfc //
-//////////
-
-module otfc2 #(parameter N=52) (
+///////////////////////////////////
+// On-The-Fly Converter, Radix 2 //
+///////////////////////////////////
+module otfc2 #(parameter N=65) (
   input  logic         clk,
   input  logic         Start,
   input  logic         qp, qz, qm,
@@ -255,16 +251,15 @@ module otfc2 #(parameter N=52) (
       QMNext = {QMR, 1'b0};
     end 
   end
-  assign r = Q[54] ? Q[53:2] : Q[52:1];
+  assign r = Q[N+2] ? Q[N+1:2] : Q[N:1];
 
 endmodule
 
 /////////
 // inv //
 /////////
-
-module inv(input  logic [55:0] in, 
-           output logic [55:0] out);
+module inv(input  logic [`DIVLEN+3:0] in, 
+           output logic [`DIVLEN+3:0] out);
 
   assign #1 out = ~in;
 endmodule
@@ -272,14 +267,11 @@ endmodule
 //////////
 // mux3 //
 //////////
-module mux3onehot(in0, in1, in2, sel0, sel1, sel2, out);
-  input  [55:0] in0;
-  input  [55:0] in1;
-  input  [55:0] in2;
-  input         sel0;
-  input         sel1;
-  input         sel2;
-  output [55:0] out;
+module mux3onehot #(parameter N=65) (
+  input  logic [N+3:0] in0, in1, in2,
+  input  logic         sel0, sel1, sel2,
+  output logic [N+3:0] out
+);
 
   // lazy inspection of the selects
   // really we should make sure selects are mutually exclusive
@@ -290,7 +282,7 @@ endmodule
 /////////
 // csa //
 /////////
-module csa #(parameter N=56) (
+module csa #(parameter N=69) (
   input  logic [N-1:0] in1, in2, in3, 
   input  logic         cin, 
   output logic [N-1:0] out1, out2
@@ -305,28 +297,26 @@ module csa #(parameter N=56) (
   // insert cin.
 
   assign #1 out1 = in1 ^ in2 ^ in3;
-  assign #1 out2 = {in1[54:0] & (in2[54:0] | in3[54:0]) | 
-		    (in2[54:0] & in3[54:0]), cin};
+  assign #1 out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
+		    (in2[N-2:0] & in3[N-2:0]), cin};
 endmodule
 
 
 //////////////
 // expcalc  //
 //////////////
-
 module expcalc(
   input logic  [`NE-1:0] XExp, YExp,
   output logic [`NE-1:0] calcExp
 );
 
-  assign calcExp = XExp - YExp + 11'b01111111111;
+  assign calcExp = XExp - YExp + (`NE)'(`BIAS);
 
 endmodule
 
 //////////////
 // signcalc //
 //////////////
-
 module signcalc(
   input logic  XSign, YSign,
   output logic calcSign
@@ -336,15 +326,27 @@ module signcalc(
 
 endmodule
 
+////////////////////
+// Postprocessing //
+////////////////////
+module srtpostproc (
+  input  [`DIVLEN+2:0] rp, rm,
+  output [`DIVLEN-1:0] Quot
+);
+
+  //assign Quot = rp - rm;
+  finaladd #(`DIVLEN+3) finaladd(rp, rm, Quot);
+endmodule
+
 //////////////
 // finaladd //
 //////////////
-module finaladd(
-  input  logic [54:0] rp, rm, 
-  output logic [51:0] r
+module finaladd #(parameter N=68) (
+  input  logic [N-1:0] rp, rm, 
+  output logic [N-4:0] r
 );
 
-  logic   [54:0] diff;
+  logic   [N-1:0] diff;
 
   // this magic block performs the final addition for you
   // to convert the positive and negative quotient digits
@@ -359,6 +361,6 @@ module finaladd(
   // The checker ignores such an error.
 
   assign #1 diff = rp - rm;
-  assign #1 r = diff[54] ? diff[53:2] : diff[52:1];
+  assign #1 r = diff[N-1] ? diff[N-2:2] : diff[N-3:1];
 endmodule
 

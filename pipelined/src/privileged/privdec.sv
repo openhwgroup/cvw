@@ -39,7 +39,7 @@ module privdec (
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
   input  logic [1:0]   STATUS_FS,
-  output logic         IllegalInstrFaultM, ITLBFlushF, DTLBFlushM,
+  output logic         IllegalInstrFaultM,
   output logic         EcallFaultM, BreakpointFaultM,
   output logic         sretM, mretM, wfiM, sfencevmaM);
 
@@ -84,9 +84,9 @@ module privdec (
   // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
   // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
   // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
-  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
-  assign ITLBFlushF = sfencevmaM & ~StallMQ;
-  assign DTLBFlushM = sfencevmaM;
+//  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+//  assign ITLBFlushF = sfencevmaM & ~StallMQ;
+//  assign DTLBFlushM = sfencevmaM;
 
   ///////////////////////////////////////////
   // Fault on illegal instructions

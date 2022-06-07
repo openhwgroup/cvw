@@ -72,7 +72,7 @@ module ifu (
 	input logic [`XLEN-1:0] 	SATP_REGW,
 	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
 	input logic [1:0] 			STATUS_MPP,
-	input logic 				ITLBWriteF, ITLBFlushF,
+	input logic 				ITLBWriteF, sfencevmaM,
 	output logic 				ITLBMissF, InstrDAPageFaultF,
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
@@ -137,6 +137,18 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`ZICSR_SUPPORTED == 1) begin : immu
+    ///////////////////////////////////////////
+    // sfence.vma causes TLB flushes
+    ///////////////////////////////////////////
+    // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
+    // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
+    // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
+    // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
+    // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+    logic StallMQ, TLBFlush;
+    flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+    assign TLBFlush = sfencevmaM & ~StallMQ;
+
     mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .PrivilegeModeW, .DisableTranslation(1'b0),
@@ -145,7 +157,7 @@ module ifu (
          .PTE(PTE),
          .PageTypeWriteVal(PageType),
          .TLBWrite(ITLBWriteF),
-         .TLBFlush(ITLBFlushF),
+         .TLBFlush,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
          .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
