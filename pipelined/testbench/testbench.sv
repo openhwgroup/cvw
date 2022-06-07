@@ -162,8 +162,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `RAM_BASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = 0;
+  localparam integer 	   MemEndAddr = `RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -204,6 +204,9 @@ logic [3:0] dummy;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
+  logic [`XLEN-1:0] debugmemoryadr;
+  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
+
   // check results
   always @(negedge clk)
     begin    
