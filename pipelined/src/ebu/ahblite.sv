@@ -46,6 +46,7 @@ module ahblite (
   output logic [`XLEN-1:0] 	 IFUBusHRDATA,
   output logic 				 IFUBusAck,
   input logic [2:0]    IFUBurstType,
+  input logic [1:0]    IFUTransType,
   input logic          IFUBurstDone,
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
@@ -55,6 +56,7 @@ module ahblite (
   output logic [`XLEN-1:0] 	 LSUBusHRDATA,
   input logic [2:0] 		 LSUBusSize,
   input logic [2:0]      LSUBurstType,
+  input logic [1:0]    LSUTransType,
   input logic          LSUBurstDone,
   output logic 				 LSUBusAck,
   // AHB-Lite external signals
@@ -116,17 +118,20 @@ module ahblite (
                else               NextBusState = MEMREAD;
       MEMREADNEXT: if (LSUBurstDone & ~IFUBusRead) NextBusState = IDLE;
                    else if (LSUBurstDone & IFUBusRead) NextBusState = INSTRREAD;
+                   else if (HREADY)                    NextBusState = MEMREADNEXT;
                    else                                NextBusState = MEMREAD;
       MEMWRITE: if (HREADY)       NextBusState = MEMWRITENEXT;
                 else              NextBusState = MEMWRITE;
       MEMWRITENEXT: if (LSUBurstDone & ~IFUBusRead) NextBusState = IDLE;
                     else if (LSUBurstDone & IFUBusRead) NextBusState = INSTRREAD;
+                    else if (HREADY)                    NextBusState = MEMWRITENEXT;
                     else                                NextBusState = MEMWRITE;
       INSTRREAD: if (HREADY)      NextBusState = INSTRREADNEXT;
                  else             NextBusState = INSTRREAD;
       INSTRREADNEXT: if (IFUBurstDone & ~LSUBusRead & ~LSUBusWrite) NextBusState = IDLE;
                      else if (IFUBurstDone & LSUBusRead)            NextBusState = MEMREAD;
                      else if (IFUBurstDone & LSUBusWrite)           NextBusState = MEMWRITE;
+                     else if (HREADY)                               NextBusState = INSTRREADNEXT;
                      else                                           NextBusState = INSTRREAD;
       default:                     NextBusState = IDLE;
     endcase
@@ -160,7 +165,7 @@ module ahblite (
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE) | (NextBusState == MEMWRITENEXT);
   // delay write data by one cycle for
-  flop #(`XLEN) wdreg(HCLK, LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flopen #(`XLEN) wdreg(HCLK, (IFUBusAck | LSUBusAck), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);

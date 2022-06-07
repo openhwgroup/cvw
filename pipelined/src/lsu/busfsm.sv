@@ -50,10 +50,11 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic              LSUBusRead,
    output logic [2:0]        LSUBurstType,
    output logic              LSUBurstDone,
+   output logic [1:0]        LSUTransType,
    output logic              DCacheBusAck,
    output logic              BusCommittedM,
    output logic              SelUncachedAdr,
-   output logic [LOGWPL-1:0] WordCount);
+   output logic [LOGWPL-1:0] WordCount, WordCountDelayed);
   
 
   
@@ -84,12 +85,19 @@ module busfsm #(parameter integer   WordCountThreshold,
 		.reset(reset | CntReset),
 		.en(CntEn),
 		.d(NextWordCount),
-		.q(WordCount));
+		.q(WordCount));  
+  
+  flopenr #(LOGWPL) 
+  WordCountDelayedReg(.clk(clk),
+		.reset(reset | CntReset),
+		.en(CntEn),
+		.d(WordCount),
+		.q(WordCountDelayed));
 
   assign NextWordCount = WordCount + 1'b1;
 
-  assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = PreCntEn & LSUBusAck;
+  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]);
+  assign CntEn = PreCntEn & LSUBusAck | (DCacheFetchLine | DCacheWriteLine);
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
 
@@ -129,13 +137,14 @@ module busfsm #(parameter integer   WordCountThreshold,
       8:        LocalBurstType = 3'b100; // WRAP8
       16:       LocalBurstType = 3'b110; // WRAP16
       default:  LocalBurstType = 3'b000; // No Burst
-    endcase // This block might be better in the FSM. WordCountThreshold is WordsPerLine
+    endcase // *** This isn't working, ask someone for help.
   end
 
   assign LSUBurstType = (UnCachedAccess) ? 3'b0 : LocalBurstType ; // Don't want to use burst when doing an Uncached Access
   assign LSUBurstDone = (UnCachedAccess) ? LSUBusAck : WordCountFlag & LSUBusAck;
+  assign LSUTransType = (|WordCount) ? 2'b11 : (LSUBusRead | LSUBusWrite) ? 2'b10 : 2'b00; 
 
-  assign CntReset = BusCurrState == STATE_BUS_READY;
+  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine);
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
