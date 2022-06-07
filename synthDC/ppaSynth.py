@@ -38,9 +38,9 @@ def getData(filename):
 # arr = [-5, -3, -1, 1, 3, 5]
 arr2 = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
 
-widths = [32] 
-modules = ['mux2']#, 'comparator'] #, 'mux2', 'mux4', 'mux8', 'shiftleft', 'flop', 'comparator'] # need mult, 'shiftleft',  add
-techs = ['sky90']
+widths = [128] 
+modules = ['mux2', 'mux4', 'mux8', 'shiftleft', 'flop', 'comparator', 'mult', 'priorityencoder', 'add', 'csa']
+techs = ['tsmc28']
 LoT = []
 
 
@@ -56,8 +56,7 @@ for w in widths:
                         m = oneSynth.delay
                         synth = oneSynth
             # f = 1000/synth.delay
-            f = 4950
-            for freq in [round(f+f*x/100) for x in arr2]:
+            for freq in [10]: #[round(f+f*x/100) for x in arr2]:
                 LoT += [[synth.module, str(synth.width), synth.tech, str(freq)]]
 
 
