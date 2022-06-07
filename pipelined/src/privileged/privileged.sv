@@ -38,7 +38,7 @@ module privileged (
   output logic [`XLEN-1:0] CSRReadValW,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, 
-  output logic             ITLBFlushF, DTLBFlushM,
+  output logic             sfencevmaM,
   input  logic             InstrValidM, CommittedM, 
   input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
@@ -85,7 +85,7 @@ module privileged (
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
-  logic sretM, mretM, sfencevmaM;
+  logic sretM, mretM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
@@ -115,7 +115,7 @@ module privileged (
    privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
               .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
-              .ITLBFlushF, .DTLBFlushM, .EcallFaultM, .BreakpointFaultM,
+              .EcallFaultM, .BreakpointFaultM,
               .sretM, .mretM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////

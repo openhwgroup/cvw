@@ -1,5 +1,5 @@
 //leading zero counter i.e. priority encoder
-module lzc #(parameter WIDTH=1) (
+module lzc #(parameter WIDTH = 1) (
     input logic  [WIDTH-1:0]            num,
     output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt
 );

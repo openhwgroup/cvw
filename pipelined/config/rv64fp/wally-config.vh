@@ -35,16 +35,16 @@
 `define XLEN 64
 
 // IEEE 754 compliance
-`define IEEE754 1
+`define IEEE754 0
 
 // MISA RISC-V configuration per specification
-//16 - quad 3 - double 5 - single
-`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 16 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 )
+//                    ZYXWVUTSRQPONMLKJIHGFEDCBA
+`define MISA 32'b0000000000101000001000100101101
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
-`define ZFH_SUPPORTED 1
+`define ZFH_SUPPORTED 0
 
 /// Microarchitectural Features
 `define UARCH_PIPELINED 1
@@ -52,9 +52,11 @@
 `define UARCH_SINGLECYCLE 0
 `define DMEM `MEM_CACHE
 `define IMEM `MEM_CACHE
+`define DBUS 1
+`define IBUS 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
-`define BIGENDIAN_SUPPORTED 0
+`define BIGENDIAN_SUPPORTED 1
 
 // TLB configuration.  Entries should be a power of 2
 `define ITLB_ENTRIES 32
@@ -82,12 +84,12 @@
 // Bus Interface width
 `define AHBW 64
 
+// WFI Timeout Wait
+`define WFI_TIMEOUT_BIT 16
+
 // Peripheral Physiccal Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-
-// WFI Timeout Wait
-`define WFI_TIMEOUT_BIT 16
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define BOOTROM_SUPPORTED 1'b1
@@ -130,13 +132,12 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/rv64ic/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv64ic/BTBPredictor.txt"
+`define TWO_BIT_PRELOAD "../config/shared/twoBitPredictor.txt"
+`define BTB_PRELOAD "../config/shared/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 `define BPRED_SIZE 10
-
 
 `define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 0

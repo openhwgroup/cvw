@@ -27,6 +27,15 @@
 
 `include "wally-config.vh"
 
+`define DEBUG_TRACE 0
+// Debug Levels
+// 0: don't check against QEMU
+// 1: print disagreements with QEMU, but only halt on PCW disagreements
+// 2: halt on any disagreement with QEMU except CSRs
+// 3: halt on all disagreements with QEMU
+// 4: print memory accesses whenever they happen
+// 5: print everything
+
 module testbench;
   ///////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////// CONFIG ////////////////////////////////////
@@ -37,14 +46,7 @@ module testbench;
   parameter CHECKPOINT   = 0;
   parameter RISCV_DIR = "/opt/riscv";
   parameter NO_SPOOFING = 0;
-  parameter DEBUG_TRACE = 0;
-  // Debug Levels
-  // 0: don't check against QEMU
-  // 1: print disagreements with QEMU, but only halt on PCW disagreements
-  // 2: halt on any disagreement with QEMU except CSRs
-  // 3: halt on all disagreements with QEMU
-  // 4: print memory accesses whenever they happen
-  // 5: print everything
+
 
 
 
@@ -350,6 +352,18 @@ module testbench;
       end \
     end
 
+  // Initializing all zeroes into the branch predictor memory.
+  genvar adrindex;      
+    for(adrindex = 0; adrindex < 1024; adrindex++) begin
+      initial begin 
+      force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+      force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+      #1;
+      release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+      release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+      end
+    end
+
   genvar i;
   `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
   `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
@@ -403,8 +417,6 @@ module testbench;
     $sformat(linuxImageDir,"%s/buildroot/output/images/",RISCV_DIR);
     if (CHECKPOINT!=0)
       $sformat(checkpointDir,"%s/linux-testvectors/checkpoint%0d/",RISCV_DIR,CHECKPOINT);
-    $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem); // *** initialize these using zeroes rather than reading from files, see testbench.sv
-    $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);
     ProgramAddrMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.addr"};
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
@@ -480,7 +492,7 @@ module testbench;
     if (checkInstrM) begin \
       // read 1 line of the trace file \
       matchCount``STAGE = $fgets(line``STAGE, traceFile``STAGE); \
-      if(DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
+      if(`DEBUG_TRACE >= 5) $display("Time %t, line %x", $time, line``STAGE); \
       // extract PC, Instr \
       matchCount``STAGE = $sscanf(line``STAGE, "%x %x %s", ExpectedPC``STAGE, ExpectedInstr``STAGE, text``STAGE); \
       if (`"STAGE`"=="M") begin \
@@ -564,14 +576,14 @@ module testbench;
   `define checkEQ(NAME, VAL, EXPECTED) \
     if(VAL != EXPECTED) begin \
       $display("%tns, %d instrs: %s %x differs from expected %x", $time, AttemptedInstructionCount, NAME, VAL, EXPECTED); \
-      if ((NAME == "PCW") | (DEBUG_TRACE >= 2)) fault = 1; \
+      if ((NAME == "PCW") | (`DEBUG_TRACE >= 2)) fault = 1; \
     end
 
   `define checkCSR(CSR) \
     begin \
       if (CSR != ExpectedCSRArrayValueW[NumCSRPostWIndex]) begin \
         $display("%tns, %d instrs: CSR %s = %016x, does not equal expected value %016x", $time, AttemptedInstructionCount, ExpectedCSRArrayW[NumCSRPostWIndex], CSR, ExpectedCSRArrayValueW[NumCSRPostWIndex]); \
-        if(DEBUG_TRACE >= 3) fault = 1; \
+        if(`DEBUG_TRACE >= 3) fault = 1; \
       end \
     end
 
@@ -656,13 +668,13 @@ module testbench;
       // end sim
       if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
       fault = 0;
-      if (DEBUG_TRACE >= 1) begin
+      if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
         //`checkEQ("InstrW",InstrW,ExpectedInstrW) <-- not viable because of
         // compressed to uncompressed conversion
         `checkEQ("Instr Count",dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2],InstrCountW)
         #2; // delay 2 ns.
-        if(DEBUG_TRACE >= 5) begin
+        if(`DEBUG_TRACE >= 5) begin
           $display("%tns, %d instrs: Reg Write Address %02d ? expected value: %02d", $time, AttemptedInstructionCount, dut.core.ieu.dp.regf.a3, ExpectedRegAdrW);
           $display("%tns, %d instrs: RF[%02d] %016x ? expected value: %016x", $time, AttemptedInstructionCount, ExpectedRegAdrW, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW);
         end
@@ -672,13 +684,13 @@ module testbench;
           `checkEQ(name, dut.core.ieu.dp.regf.rf[ExpectedRegAdrW], ExpectedRegValueW)
         end
         if (MemOpW.substr(0,2) == "Mem") begin
-          if(DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
+          if(`DEBUG_TRACE >= 4) $display("\tIEUAdrW: %016x ? expected: %016x", IEUAdrW, ExpectedIEUAdrW);
           `checkEQ("IEUAdrW",IEUAdrW,ExpectedIEUAdrW)
           if(MemOpW == "MemR" | MemOpW == "MemRW") begin
-            if(DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
+            if(`DEBUG_TRACE >= 4) $display("\tReadDataW: %016x ? expected: %016x", dut.core.ieu.dp.ReadDataW, ExpectedMemReadDataW);
             `checkEQ("ReadDataW",dut.core.ieu.dp.ReadDataW,ExpectedMemReadDataW)
           end else if(MemOpW == "MemW" | MemOpW == "MemRW") begin
-            if(DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
+            if(`DEBUG_TRACE >= 4) $display("\tWriteDataW: %016x ? expected: %016x", WriteDataW, ExpectedMemWriteDataW);
             `checkEQ("WriteDataW",ExpectedMemWriteDataW,ExpectedMemWriteDataW)
           end
         end
@@ -718,7 +730,7 @@ module testbench;
           $display("processed %0d instructions with %0d warnings", AttemptedInstructionCount, warningCount);
           $stop; $stop;
         end
-      end // if (DEBUG_TRACE >= 1)
+      end // if (`DEBUG_TRACE >= 1)
     end // if (checkInstrW)
   end // always @ (negedge clk)
 
