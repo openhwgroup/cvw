@@ -38,7 +38,8 @@
 `define IEEE754 0
 
 // MISA RISC-V configuration per specification
-`define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 )
+//                    ZYXWVUTSRQPONMLKJIHGFEDCBA
+`define MISA 32'b0000000000101000001000100101101
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32

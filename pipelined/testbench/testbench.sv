@@ -127,7 +127,7 @@ logic [3:0] dummy;
   end
 
   string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
-  integer outputFilePointer;
+  integer outputFilePointer, ProgramLabelMap, ProgramAddrMap;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -215,8 +215,31 @@ logic [3:0] dummy;
       // Termination condition (i.e. we finished running current test) 
       if (DCacheFlushDone) begin
         // Gets the memory location of begin_signature
-        testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
-        testadrNoBase = (tests[test+1].atohex())/(`XLEN/8);
+        adrstr = "0";
+        ProgramLabelMap = $fopen(ProgramLabelMapFile, "r");
+        ProgramAddrMap = $fopen(ProgramAddrMapFile, "r");
+        if (ProgramLabelMap & ProgramAddrMap) begin // check we found both files
+          while (!$feof(ProgramLabelMap)) begin
+            string addr, label;
+            integer returncode;
+            returncode = $fgets(label, ProgramLabelMap);
+            returncode = $fgets(addr, ProgramAddrMap);
+            if (label == "begin_signature\n") begin
+              adrstr = addr[1:7];
+              if (adrstr=="0000000") // if running on rv64 we get the address at a later 
+                adrstr = addr[9:15]; 
+              if (DEBUG) $display("%s begin_signature adrstr: %s", TEST, adrstr);
+            end
+          end
+        end
+        if (adrstr == "0") begin
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+        end
+        $fclose(ProgramLabelMap);
+        $fclose(ProgramAddrMap);
+
+        testadr = (`RAM_BASE+adrstr.atohex())/(`XLEN/8);
+        testadrNoBase = (adrstr.atohex())/(`XLEN/8);
         #600; // give time for instructions in pipeline to finish
         if (TEST == "embench") begin
           // Writes contents of begin_signature to .sim.output file
@@ -294,7 +317,8 @@ logic [3:0] dummy;
           end
         end
         // move onto the next test, check to see if we're done
-        test = test + 2;
+        // test = test + 2;
+        test = test + 1;
         if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
           else $display("FAIL: %d test programs had errors", totalerrors);

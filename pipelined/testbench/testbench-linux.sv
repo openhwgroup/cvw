@@ -666,7 +666,7 @@ module testbench;
       // turn on waves
       if (AttemptedInstructionCount == INSTR_WAVEON) $stop;
       // end sim
-      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) $stop;
+      if ((AttemptedInstructionCount == INSTR_LIMIT) & (INSTR_LIMIT!=0)) begin $stop; $stop; end
       fault = 0;
       if (`DEBUG_TRACE >= 1) begin
         `checkEQ("PCW",PCW,ExpectedPCW)
