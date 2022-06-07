@@ -77,7 +77,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
-    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCount);
+    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCountDelayed);
     flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
       .q(DCacheBusWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
