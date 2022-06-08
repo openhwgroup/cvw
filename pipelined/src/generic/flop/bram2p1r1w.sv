@@ -46,11 +46,11 @@ module bram2p1r1w
 	//----------------------------------------------------------------------
 	) (
 	   input logic 					 clk,
-	   input logic 					 enaA,
+	   input logic 					 reA,
 	   input logic [ADDR_WIDTH-1:0]  addrA,
 	   output logic [DATA_WIDTH-1:0] doutA,
-	   input logic 					 enaB,
-	   input logic [NUM_COL-1:0] 	 weB,
+	   input logic 					 weB,
+	   input logic [NUM_COL-1:0] 	 bweB,
 	   input logic [ADDR_WIDTH-1:0]  addrB,
 	   input logic [DATA_WIDTH-1:0]  dinB
 	   );
@@ -128,15 +128,15 @@ module bram2p1r1w
 
   // Port-A Operation
   always @ (posedge clk) begin
-	if(enaA) begin
+	if(reA) begin
 	  doutA <= RAM[addrA];
 	end
   end
   // Port-B Operation:
   always @ (posedge clk) begin
-	if(enaB) begin
+	if(weB) begin
 	  for(i=0;i<NUM_COL;i=i+1) begin
-		if(weB[i]) begin
+		if(bweB[i]) begin
 		  RAM[addrB][i*COL_WIDTH +: COL_WIDTH] <= dinB[i*COL_WIDTH +:COL_WIDTH];
 		end
 	  end
