@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// ram.sv
+// ram_orig.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ram #(parameter BASE=0, RANGE = 65535) (
+module ram_orig #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELRam,
   input  logic [31:0]      HADDR,
