@@ -68,6 +68,8 @@ synthDC/alib-52
 synthDC/*.log
 synthDC/*.svf
 synthDC/runs/
+synthDC/plots/
+synthDC/runArchive
 synthDC/hdl
 /pipelined/regression/power.saif
 tests/fp/vectors/*.tv
@@ -104,3 +106,5 @@ pipelined/config/rv64ic_noPriv
 pipelined/config/rv64ic_orig
 synthDC/Summary.csv
 pipelined/srt/exptestgen
+pipelined/srt/testgen
+pipelined/srt/qst2

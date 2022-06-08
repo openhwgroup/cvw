@@ -34,7 +34,7 @@ module fma(
     input logic                 reset,
     input logic                 FlushM,     // flush the memory stage
     input logic                 StallM,     // stall memory stage
-    input logic  [`FPSIZES/3:0] FmtE, FmtM, // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE, FmtM, // precision 1 = double 0 = single
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [2:0]          FrmM,               // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic                 XSgnE, YSgnE, ZSgnE,    // input signs - execute stage
@@ -43,8 +43,7 @@ module fma(
     input logic                 XSgnM, YSgnM,           // input signs - memory stage
     input logic [`NE-1:0]       ZExpM,    // input exponents - memory stage
     input logic [`NF:0]         XManM, YManM, ZManM,    // input mantissa - memory stage
-    input logic                 ZOrigDenormE, // is the original precision denormalized
-    input logic                 XDenormE, YDenormE, ZDenormE, // is denorm
+    input logic                 ZDenormE, // is denorm
     input logic                 XZeroE, YZeroE, ZZeroE,     // is zero - execute stage
     input logic                 XNaNM, YNaNM, ZNaNM,        // is NaN
     input logic                 XSNaNM, YSNaNM, ZSNaNM,     // is signaling NaN
@@ -73,21 +72,21 @@ module fma(
     logic 			    PSgnE, PSgnM;
     logic [$clog2(3*`NF+7)-1:0]			NormCntE, NormCntM;
     logic               Mult;
-    logic               ZOrigDenormM;
+    logic               ZDenormM;
     
     fma1 fma1 (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-                .XDenormE, .YDenormE, .ZDenormE,  .XZeroE, .YZeroE, .ZZeroE,
+                .XZeroE, .YZeroE, .ZZeroE,
                 .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .NormCntE, .ZSgnEffE, .PSgnE,
                 .ProdExpE, .AddendStickyE, .KillProdE); 
                 
     // E/M pipeline registers
     flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
-    flopenrc #(13) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
+    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
     flopenrc #($clog2(3*`NF+7)+8) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0], ZOrigDenormE},
-                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult, ZOrigDenormM});
+                            {AddendStickyE, KillProdE, InvZE, NormCntE, NegSumE, ZSgnEffE, PSgnE, FOpCtrlE[2]&~FOpCtrlE[1]&~FOpCtrlE[0], ZDenormE},
+                            {AddendStickyM, KillProdM, InvZM, NormCntM, NegSumM, ZSgnEffM, PSgnM, Mult, ZDenormM});
 
-    fma2 fma2(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZOrigDenormM,
+    fma2 fma2(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM,
             .FrmM, .FmtM,  .ProdExpM, .AddendStickyM, .KillProdM, .SumM, .NegSumM, .InvZM, .NormCntM, .ZSgnEffM, .PSgnM,
             .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .Mult,
             .FMAResM, .FMAFlgM);
@@ -101,10 +100,9 @@ module fma1(
     input logic                 XSgnE, YSgnE, ZSgnE,    // input's signs
     input logic  [`NE-1:0]      XExpE, YExpE, ZExpE,    // biased exponents in B(NE.0) format
     input logic  [`NF:0]        XManE, YManE, ZManE,    // fractions in U(0.NF) format
-    input logic                 XDenormE, YDenormE, ZDenormE, // is the input denormal
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
-    input logic  [`FPSIZES/3:0] FmtE,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtE,       // precision 1 = double 0 = single
     output logic [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE,      // set the product to zero before addition if the product is too small to matter
@@ -116,13 +114,11 @@ module fma1(
     output logic [$clog2(3*`NF+7)-1:0]          NormCntE        // normalization shift cnt
     );
 
-    logic [`NE-1:0]     Denorm;             // value of a denormaized number based on precision
     logic [2*`NF+1:0]   ProdManE;           // 1.X frac * 1.Y frac in U(2.2Nf) format
     logic [3*`NF+5:0]   AlignedAddendE;     // Z aligned for addition in U(NF+5.2NF+1)
     logic [3*`NF+6:0]   AlignedAddendInv;   // aligned addend possibly inverted
     logic [2*`NF+1:0]   ProdManKilled;      // the product's mantissa possibly killed
     logic [3*`NF+6:0]   PreSum, NegPreSum;  // positive and negitve versions of the sum
-    logic [`NE-1:0]     XExpVal, YExpVal;   // exponent value after taking into accound denormals
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
     //      - When multipliying two fp numbers, add the exponents
@@ -133,8 +129,8 @@ module fma1(
    
 
    // calculate the product's exponent 
-    expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE, .XDenormE, .YDenormE, .XExpVal, .YExpVal, 
-                    .Denorm, .ProdExpE);
+    expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE,
+                 .ProdExpE);
 
     // multiplication of the mantissa's
     mult mult(.XManE, .YManE, .ProdManE);
@@ -143,7 +139,7 @@ module fma1(
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
 
-    align align(.ZExpE, .ZManE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .ProdExpE, .Denorm, .XExpVal, .YExpVal,
+    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .ProdExpE, .XExpE, .YExpE,
                         .AlignedAddendE, .AddendStickyE, .KillProdE);
                         
     // calculate the signs and take the opperation into account
@@ -165,53 +161,14 @@ endmodule
 
 
 module expadd(    
-    input  logic [`FPSIZES/3:0] FmtE,          // precision
+    input  logic [`FMTBITS-1:0] FmtE,          // precision
     input  logic [`NE-1:0]      XExpE, YExpE,  // input exponents
-    input  logic                XDenormE, YDenormE,    // are the inputs denormalized
     input  logic                XZeroE, YZeroE,        // are the inputs zero
-    output logic [`NE-1:0]      XExpVal, YExpVal,      // Exponent value after taking into account denormals
-    output logic [`NE-1:0]      Denorm,        // value of denormalized exponent
     output logic [`NE+1:0]      ProdExpE       // product's exponent B^(1023)NE+2
 );
 
-
-    // denormalized numbers have diffrent values depending on which precison it is.
-    //      FLEN - 1
-    //      Other - BIAS - other bias + 1
-    
-    if (`FPSIZES == 1) begin
-        assign Denorm = 1;
-
-    end else if (`FPSIZES == 2) begin
-        assign Denorm = FmtE ? (`NE)'(1) : (`NE)'(`BIAS)-(`NE)'(`BIAS1)+(`NE)'(1);
-
-    end else if (`FPSIZES == 3) begin
-        always_comb begin
-            case (FmtE)
-                `FMT: Denorm = 1;
-                `FMT1: Denorm = `BIAS-`BIAS1+1;
-                `FMT2: Denorm = `BIAS-`BIAS2+1;
-                default: Denorm = 1'bx;
-            endcase
-        end
-
-    end else if (`FPSIZES == 4) begin
-        always_comb begin
-            case (FmtE)
-                2'h3: Denorm = 1;
-                2'h1: Denorm = `BIAS-`D_BIAS+1;
-                2'h0: Denorm = `BIAS-`S_BIAS+1;
-                2'h2: Denorm = `BIAS-`H_BIAS+1;
-            endcase
-        end
-
-    end
-
-    // pick denormalized value or exponent
-    assign XExpVal = XDenormE ? Denorm : XExpE;
-    assign YExpVal = YDenormE ? Denorm : YExpE;
     // kill the exponent if the product is zero - either X or Y is 0
-    assign ProdExpE = ({2'b0, XExpVal} + {2'b0, YExpVal} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZeroE|YZeroE)}};
+    assign ProdExpE = ({2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZeroE|YZeroE)}};
 
 endmodule
 
@@ -258,13 +215,10 @@ endmodule
 
 
 module align(
-    input logic  [`NE-1:0]      ZExpE,      // biased exponents in B(NE.0) format
+    input logic  [`NE-1:0]      XExpE, YExpE, ZExpE,      // biased exponents in B(NE.0) format
     input logic  [`NF:0]        ZManE,      // fractions in U(0.NF) format]
-    input logic                 ZDenormE,   // is the input denormal
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
-    input logic  [`NE-1:0]      XExpVal, YExpVal,       // Exponent value after taking into account denormals
     input logic  [`NE+1:0]      ProdExpE,       // the product's exponent
-    input logic  [`NE-1:0]      Denorm,         // the biased value of a denormalized number
     output logic [3*`NF+5:0]    AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
     output logic                AddendStickyE,  // Sticky bit calculated from the aliged addend
     output logic                KillProdE       // should the product be set to zero
@@ -273,7 +227,6 @@ module align(
     logic [`NE+1:0]     AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
     logic [4*`NF+5:0]   ZManShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
     logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter U(NF+5.3NF+1)
-    logic [`NE-1:0]     ZExpVal;            // Exponent value after taking into account denormals
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -282,11 +235,9 @@ module align(
     // determine the shift count for alignment
     //      - negitive means Z is larger, so shift Z left
     //      - positive means the product is larger, so shift Z right
-    //      - Denormal numbers have a diffrent exponent value depending on the precision
-    assign ZExpVal = ZDenormE ? Denorm : ZExpE;
-    // assign AlignCnt = ProdExpE - {2'b0, ZExpVal} + (`NF+3);
     // *** can we use ProdExpE instead of XExp/YExp to save an adder? DH 5/12/22
-    assign AlignCnt = XZeroE|YZeroE ? -1 : {2'b0, XExpVal} + {2'b0, YExpVal} - {2'b0, (`NE)'(`BIAS)} + `NF+3 - {2'b0, ZExpVal};
+    //      KP- yes we used ProdExpE originally but we did this for timing
+    assign AlignCnt = XZeroE|YZeroE ? -(`NE+2)'($unsigned(1)) : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF)+3 - {2'b0, ZExpE};
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
@@ -369,7 +320,7 @@ module add(
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {55'b0, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
+    assign PreSum = AlignedAddendInv + {{`NF+3{1'b0}}, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
     assign NegPreSum = XZeroE|YZeroE|KillProdE ? {1'b0, AlignedAddendE} : {1'b0, AlignedAddendE} + {{`NF+3{1'b1}}, ~ProdManKilled, 2'b0} + {(3*`NF+7)'(4)};
      
     // Is the sum negitive
@@ -409,22 +360,10 @@ module loa( //https://ieeexplore.ieee.org/abstract/document/930098
 
 
 
-    lzc lzc(.f, .NormCntE);
+    lzc #(3*`NF+7) lzc (.num(f), .ZeroCnt(NormCntE));
   
 endmodule
 
-module lzc(
-    input logic  [3*`NF+6:0]            f,
-    output logic [$clog2(3*`NF+7)-1:0]    NormCntE    // normalization shift
-);
-    
-    logic [$clog2(3*`NF+7)-1:0] i;
-    always_comb begin
-        i = 0;
-        while (~f[3*`NF+6-i] & $unsigned(i) <= $unsigned($clog2(3*`NF+7)'(3)*($clog2(3*`NF+7))'(`NF)+($clog2(3*`NF+7))'(6))) i = i+1;  // search for leading one
-        NormCntE = i;
-    end
-endmodule
 
 
 
@@ -439,7 +378,7 @@ module fma2(
     input logic     [`NE-1:0]               ZExpM, // input exponents
     input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]          FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]          FmtM,       // precision 1 = double 0 = single
     input logic     [`NE+1:0]               ProdExpM,       // X exponent + Y exponent - bias
     input logic                             AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                             KillProdM,      // set the product to zero before addition if the product is too small to matter
@@ -450,7 +389,7 @@ module fma2(
     input logic     [3*`NF+5:0]             SumM,       // the positive sum
     input logic                             NegSumM,    // was the sum negitive
     input logic                             InvZM,      // do you invert Z
-    input logic                             ZOrigDenormM, // is the original precision denormalized
+    input logic                             ZDenormM, // is the original precision denormalized
     input logic                             ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                             PSgnM,      // the product's sign
     input logic                             Mult,       // multiply opperation
@@ -465,7 +404,7 @@ module fma2(
     logic               ResultSgn, ResultSgnTmp;  // Result sign
     logic [`NE+1:0]     SumExp;     // exponent of the normalized sum
     logic [`NE+1:0]     FullResultExp;  // ResultExp with bits to determine sign and overflow
-    logic [`NF+2:0]     NormSum;        // normalized sum
+    logic [`NF+1:0]     NormSum;        // normalized sum
     logic               NormSumSticky;  // sticky bit calulated from the normalized sum
     logic               SumZero;        // is the sum zero
     logic               ResultDenorm;   // is the result denormalized
@@ -486,7 +425,7 @@ module fma2(
     ///////////////////////////////////////////////////////////////////////////////
 
     normalize normalize(.SumM, .ZExpM, .ProdExpM, .NormCntM, .FmtM, .KillProdM, .AddendStickyM, .NormSum, 
-            .ZOrigDenormM, .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
+            .ZDenormM, .SumZero, .NormSumSticky, .UfSticky, .SumExp, .ResultDenorm);
 
 
 
@@ -533,7 +472,7 @@ module fma2(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultselect resultselect(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZOrigDenormM,
+    resultselect resultselect(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM,
         .FrmM, .FmtM, .AddendStickyM, .KillProdM, .XInfM, .YInfM, .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd,
         .ZSgnEffM, .PSgnM, .ResultSgn, .CalcPlus1, .Invalid, .Overflow, .Underflow, 
         .ResultDenorm, .ResultExp, .ResultFrac, .FMAResM);
@@ -578,11 +517,11 @@ module normalize(
     input logic  [`NE-1:0]              ZExpM,      // exponent of Z
     input logic  [`NE+1:0]              ProdExpM,   // X exponent + Y exponent - bias
     input logic  [$clog2(3*`NF+7)-1:0]  NormCntM,   // normalization shift count
-    input logic  [`FPSIZES/3:0]         FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0]         FmtM,       // precision 1 = double 0 = single
     input logic                         KillProdM,  // is the product set to zero
-    input logic 			            ZOrigDenormM,
+    input logic 			            ZDenormM,
     input logic                         AddendStickyM,  // the sticky bit caclulated from the aligned addend
-    output logic [`NF+2:0]              NormSum,        // normalized sum
+    output logic [`NF+1:0]              NormSum,        // normalized sum
     output logic                        SumZero,        // is the sum zero
     output logic                        NormSumSticky, UfSticky,    // sticky bits
     output logic [`NE+1:0]              SumExp,         // exponent of the normalized sum
@@ -599,12 +538,12 @@ module normalize(
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
-    //*** insert bias-bias simplification in fcvt.sv/phone pictures/ whiteboard... if still there
+    //*** insert bias-bias simplification in fcvt.sv/phone pictures
     // Determine if the sum is zero
     assign SumZero = ~(|SumM);
 
     // calculate the sum's exponent
-    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZOrigDenormM} : ProdExpM + -({4'b0, NormCntM} + 1 - (`NF+4));
+    assign SumExpTmpTmp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, NormCntM} + 1 - (`NE+2)'(`NF+4));
 
     //convert the sum's exponent into the propper percision
     if (`FPSIZES == 1) begin
@@ -617,8 +556,8 @@ module normalize(
         always_comb begin
             case (FmtM)
                 `FMT: SumExpTmp = SumExpTmpTmp;
-                `FMT1: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS1)&{`NE+2{|SumExpTmpTmp}};
-                `FMT2: SumExpTmp = (SumExpTmpTmp-`BIAS+`BIAS2)&{`NE+2{|SumExpTmpTmp}};
+                `FMT1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|SumExpTmpTmp}};
+                `FMT2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|SumExpTmpTmp}};
                 default: SumExpTmp = `NE+2'bx;
             endcase
         end
@@ -627,9 +566,9 @@ module normalize(
         always_comb begin
             case (FmtM)
                 2'h3: SumExpTmp = SumExpTmpTmp;
-                2'h1: SumExpTmp = (SumExpTmpTmp-`BIAS+`D_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h0: SumExpTmp = (SumExpTmpTmp-`BIAS+`S_BIAS)&{`NE+2{|SumExpTmpTmp}};
-                2'h2: SumExpTmp = (SumExpTmpTmp-`BIAS+`H_BIAS)&{`NE+2{|SumExpTmpTmp}};
+                2'h1: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`D_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h0: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`S_BIAS))&{`NE+2{|SumExpTmpTmp}};
+                2'h2: SumExpTmp = (SumExpTmpTmp-(`NE+2)'(`BIAS)+(`NE+2)'(`H_BIAS))&{`NE+2{|SumExpTmpTmp}};
             endcase
         end
 
@@ -707,27 +646,27 @@ module normalize(
     assign LZAPlus2 = SumShifted[3*`NF+8];
 	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
     assign CorrSumShifted =  LZAPlus1 ? SumShifted[3*`NF+6:1] : SumShifted[3*`NF+5:0];
-    assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+3];
+    assign NormSum = CorrSumShifted[3*`NF+5:2*`NF+4];
 
     // Calculate the sticky bit
     if (`FPSIZES == 1) begin
-        assign NormSumSticky = |CorrSumShifted[2*`NF+2:0];
+        assign NormSumSticky = |CorrSumShifted[2*`NF+3:0];
 
     end else if (`FPSIZES == 2) begin
         // 3*NF+5 - NF1 - 3
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`NF1:2*`NF+3]&~FmtM);
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`NF1:2*`NF+4]&~FmtM);
 
     end else if (`FPSIZES == 3) begin
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`NF1:2*`NF+3]&((FmtM==`FMT1)|(FmtM==`FMT2))) | 
-        (|CorrSumShifted[3*`NF+2-`NF2:3*`NF+3-`NF1]&(FmtM==`FMT2));
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`NF1:2*`NF+4]&((FmtM==`FMT1)|(FmtM==`FMT2))) | 
+        (|CorrSumShifted[3*`NF+3-`NF2:3*`NF+4-`NF1]&(FmtM==`FMT2));
 
     end else if (`FPSIZES == 4) begin        
-        assign NormSumSticky = (|CorrSumShifted[2*`NF+2:0]) | 
-        (|CorrSumShifted[3*`NF+2-`D_NF:2*`NF+3]&((FmtM==1)|(FmtM==0)|(FmtM==2))) | 
-        (|CorrSumShifted[3*`NF+2-`S_NF:3*`NF+3-`D_NF]&((FmtM==0)|(FmtM==2))) |
-        (|CorrSumShifted[3*`NF+2-`H_NF:3*`NF+3-`S_NF]&(FmtM==2));
+        assign NormSumSticky = (|CorrSumShifted[2*`NF+3:0]) | 
+        (|CorrSumShifted[3*`NF+3-`D_NF:2*`NF+4]&((FmtM==1)|(FmtM==0)|(FmtM==2))) | 
+        (|CorrSumShifted[3*`NF+3-`S_NF:3*`NF+4-`D_NF]&((FmtM==0)|(FmtM==2))) |
+        (|CorrSumShifted[3*`NF+3-`H_NF:3*`NF+4-`S_NF]&(FmtM==2));
 
     end
 
@@ -735,17 +674,17 @@ module normalize(
 
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign SumExp = (SumExpTmp+{12'b0, LZAPlus1&~KillProdM}+{11'b0, LZAPlus2&~KillProdM, 1'b0}+{12'b0, ~ResultDenorm&PreResultDenorm&~KillProdM}+{12'b0, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
+    assign SumExp = (SumExpTmp+{{`NE+1{1'b0}}, LZAPlus1&~KillProdM}+{{`NE{1'b0}}, LZAPlus2&~KillProdM, 1'b0}+{{`NE+1{1'b0}}, ~ResultDenorm&PreResultDenorm&~KillProdM}+{{`NE+1{1'b0}}, &SumExpTmp&SumShifted[3*`NF+6]&~KillProdM}) & {`NE+2{~(SumZero|ResultDenorm)}};
     // recalculate if the result is denormalized
     assign ResultDenorm = PreResultDenorm&~SumShifted[3*`NF+6]&~SumShifted[3*`NF+7];
 
 endmodule
 
 module fmaround(
-    input logic  [`FPSIZES/3:0] FmtM,       // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,       // precision 1 = double 0 = single
     input logic  [2:0]          FrmM,       // rounding mode
     input logic                 UfSticky,   // sticky bit for underlow calculation
-    input logic  [`NF+2:0]      NormSum,    // normalized sum
+    input logic  [`NF+1:0]      NormSum,    // normalized sum
     input logic                 AddendStickyM,  // addend's sticky bit
     input logic                 NormSumSticky,  // normalized sum's sticky bit
     input logic                 ZZeroM,         // is Z zero
@@ -799,83 +738,53 @@ module fmaround(
 
     if (`FPSIZES == 1) begin
         // determine guard, round, and least significant bit of the result
-        assign Guard = NormSum[2];
         assign Round = NormSum[1];
-        assign LSBNormSum = NormSum[3];
+        assign LSBNormSum = NormSum[2];
 
         // used to determine underflow flag
-        assign UfGuard = NormSum[1];
         assign UfRound = NormSum[0];
-        assign UfLSBNormSum = NormSum[2];
-
-        // determine sticky
-        assign Sticky = UfSticky | NormSum[0];
 
     end else if (`FPSIZES == 2) begin
         //         \/-------------NF---------------,
-        //      |      NF1       | 3 |             |
+        //      |      NF1       | 2 |             |
         //          '-------NF1------^
 
         // determine guard, round, and least significant bit of the result
-        assign Guard = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
         assign Round = FmtM ? NormSum[1] : NormSum[`NF-`NF1+1];
-        assign LSBNormSum = FmtM ? NormSum[3] : NormSum[`NF-`NF1+3];
+        assign LSBNormSum = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
 
         // used to determine underflow flag
-        assign UfGuard = FmtM ? NormSum[1] : NormSum[`NF-`NF1+1];
         assign UfRound = FmtM ? NormSum[0] : NormSum[`NF-`NF1];
-        assign UfLSBNormSum = FmtM ? NormSum[2] : NormSum[`NF-`NF1+2];
 
-        // determine sticky
-        assign Sticky = UfSticky | (FmtM ? NormSum[0] : NormSum[`NF-`NF1]);
 
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (FmtM)
                 `FMT: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[2];
                     Round = NormSum[1];
-                    LSBNormSum = NormSum[3];
+                    LSBNormSum = NormSum[2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[1];
                     UfRound = NormSum[0];
-                    UfLSBNormSum = NormSum[2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[0];
                 end
                 `FMT1: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`NF1+2];
                     Round = NormSum[`NF-`NF1+1];
-                    LSBNormSum = NormSum[`NF-`NF1+3];
+                    LSBNormSum = NormSum[`NF-`NF1+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`NF1+1];
                     UfRound = NormSum[`NF-`NF1];
-                    UfLSBNormSum = NormSum[`NF-`NF1+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`NF1];
                 end
                 `FMT2: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`NF2+2];
                     Round = NormSum[`NF-`NF2+1];
-                    LSBNormSum = NormSum[`NF-`NF2+3];
+                    LSBNormSum = NormSum[`NF-`NF2+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`NF2+1];
                     UfRound = NormSum[`NF-`NF2];
-                    UfLSBNormSum = NormSum[`NF-`NF2+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`NF2];
                 end
                 default: begin
-                    Guard = 1'bx;
                     Round = 1'bx;
                     LSBNormSum = 1'bx;
-                    UfGuard = 1'bx;
                     UfRound = 1'bx;
-                    UfLSBNormSum = 1'bx;
-                    Sticky = 1'bx;
                 end
             endcase
         end
@@ -885,56 +794,40 @@ module fmaround(
             case (FmtM)
                 2'h3: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[2];
                     Round = NormSum[1];
-                    LSBNormSum = NormSum[3];
+                    LSBNormSum = NormSum[2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[1];
                     UfRound = NormSum[0];
-                    UfLSBNormSum = NormSum[2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[0];
                 end
                 2'h1: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`D_NF+2];
                     Round = NormSum[`NF-`D_NF+1];
-                    LSBNormSum = NormSum[`NF-`D_NF+3];
+                    LSBNormSum = NormSum[`NF-`D_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`D_NF+1];
                     UfRound = NormSum[`NF-`D_NF];
-                    UfLSBNormSum = NormSum[`NF-`D_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`D_NF];
                 end
                 2'h0: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`S_NF+2];
                     Round = NormSum[`NF-`S_NF+1];
-                    LSBNormSum = NormSum[`NF-`S_NF+3];
+                    LSBNormSum = NormSum[`NF-`S_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`S_NF+1];
                     UfRound = NormSum[`NF-`S_NF];
-                    UfLSBNormSum = NormSum[`NF-`S_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`S_NF];
                 end
                 2'h2: begin
                     // determine guard, round, and least significant bit of the result
-                    Guard = NormSum[`NF-`H_NF+2];
                     Round = NormSum[`NF-`H_NF+1];
-                    LSBNormSum = NormSum[`NF-`H_NF+3];
+                    LSBNormSum = NormSum[`NF-`H_NF+2];
                     // used to determine underflow flag
-                    UfGuard = NormSum[`NF-`H_NF+1];
                     UfRound = NormSum[`NF-`H_NF];
-                    UfLSBNormSum = NormSum[`NF-`H_NF+2];
-                    // determine sticky
-                    Sticky = UfSticky | NormSum[`NF-`H_NF];
                 end
             endcase
         end
 
     end
+    // used to determine underflow flag
+    assign UfLSBNormSum = Round;
+    // determine sticky
+    assign Sticky = UfSticky | UfRound;
 
 
     // Deterimine if a small number was supposed to be subtrated
@@ -944,28 +837,28 @@ module fmaround(
     always_comb begin
         // Determine if you add 1
         case (FrmM)
-            3'b000: CalcPlus1 = Guard & (Round | ((Sticky)&~(~Round&SubBySmallNum)) | (~Round&~(Sticky)&LSBNormSum&~SubBySmallNum));//round to nearest even
+            3'b000: CalcPlus1 = Round & ((Sticky| LSBNormSum)&~SubBySmallNum);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
-            3'b010: CalcPlus1 = ResultSgnTmp & ~(SubBySmallNum & ~Guard & ~Round);//round down
-            3'b011: CalcPlus1 = ~ResultSgnTmp & ~(SubBySmallNum & ~Guard & ~Round);//round up
-            3'b100: CalcPlus1 = (Guard & (Round | ((Sticky)&~(~Round&SubBySmallNum)) | (~Round&~(Sticky)&~SubBySmallNum)));//round to nearest max magnitude
+            3'b010: CalcPlus1 = ResultSgnTmp & ~(SubBySmallNum & ~Round);//round down
+            3'b011: CalcPlus1 = ~ResultSgnTmp & ~(SubBySmallNum & ~Round);//round up
+            3'b100: CalcPlus1 = Round & ~SubBySmallNum;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
         case (FrmM)
-            3'b000: UfCalcPlus1 = UfGuard & (UfRound | (UfSticky&UfRound|~UfSubBySmallNum) | (~Sticky&UfLSBNormSum&~UfSubBySmallNum));//round to nearest even
+            3'b000: UfCalcPlus1 = UfRound & ((UfSticky| UfLSBNormSum)&~UfSubBySmallNum);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
-            3'b010: UfCalcPlus1 = ResultSgnTmp & ~(UfSubBySmallNum & ~UfGuard & ~UfRound);//round down
-            3'b011: UfCalcPlus1 = ~ResultSgnTmp & ~(UfSubBySmallNum & ~UfGuard & ~UfRound);//round up
-            3'b100: UfCalcPlus1 = (UfGuard & (UfRound | (UfSticky&~(~UfRound&UfSubBySmallNum)) | (~Sticky&~UfSubBySmallNum)));//round to nearest max magnitude
+            3'b010: UfCalcPlus1 = ResultSgnTmp & ~(UfSubBySmallNum & ~UfRound);//round down
+            3'b011: UfCalcPlus1 = ~ResultSgnTmp & ~(UfSubBySmallNum & ~UfRound);//round up
+            3'b100: UfCalcPlus1 = UfRound & ~UfSubBySmallNum;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
         endcase
         // Determine if you subtract 1
         case (FrmM)
             3'b000: CalcMinus1 = 0;//round to nearest even
-            3'b001: CalcMinus1 = SubBySmallNum & ~Guard & ~Round;//round to zero
-            3'b010: CalcMinus1 = ~ResultSgnTmp & ~Guard & ~Round & SubBySmallNum;//round down
-            3'b011: CalcMinus1 = ResultSgnTmp & ~Guard & ~Round & SubBySmallNum;//round up
+            3'b001: CalcMinus1 = SubBySmallNum & ~Round;//round to zero
+            3'b010: CalcMinus1 = ~ResultSgnTmp & ~Round & SubBySmallNum;//round down
+            3'b011: CalcMinus1 = ResultSgnTmp & ~Round & SubBySmallNum;//round up
             3'b100: CalcMinus1 = 0;//round to nearest max magnitude
             default: CalcMinus1 = 1'bx;
         endcase
@@ -973,9 +866,9 @@ module fmaround(
     end
 
     // If an answer is exact don't round
-    assign Plus1 = CalcPlus1 & (Sticky | Guard | Round);
-    assign UfPlus1 = UfCalcPlus1 & (Sticky | UfGuard);//UfRound is part of sticky
-    assign Minus1 = CalcMinus1 & (Sticky | Guard | Round);
+    assign Plus1 = CalcPlus1 & (Sticky | Round);
+    assign UfPlus1 = UfCalcPlus1 & (Sticky | UfRound);//UfRound is part of sticky
+    assign Minus1 = CalcMinus1 & (Sticky | Round);
 
     // Compute rounded result
     if (`FPSIZES == 1) begin
@@ -1011,7 +904,7 @@ module fmaround(
 
     end
 
-    assign NormSumTruncated = NormSum[`NF+2:3];
+    assign NormSumTruncated = NormSum[`NF+1:2];
     assign {FullResultExp, ResultFrac} = {SumExp, NormSumTruncated} + RoundAdd;
     assign ResultExp = FullResultExp[`NE-1:0];
 
@@ -1027,7 +920,7 @@ module fmaflags(
     input logic  [`NE+1:0]      SumExp,                 // exponent of the normalized sum
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, Guard, UfLSBNormSum, Sticky, UfPlus1, // bits used to determine rounding
-    input logic  [`FPSIZES/3:0] FmtM,                   // precision 1 = double 0 = single
+    input logic  [`FMTBITS-1:0] FmtM,                   // precision 1 = double 0 = single
     output logic                Invalid, Overflow, Underflow, // flags used to select the result
     output logic [4:0]          FMAFlgM // FMA flags
 );
@@ -1083,12 +976,12 @@ module fmaflags(
     // Set Underflow flag if the number is too small to be represented in normal numbers
     //      - Don't set the underflow flag if the result is exact
 
-    assign Underflow = (SumExp[`NE+1] | ((SumExp == 0) & (Round|Guard|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign Underflow = (SumExp[`NE+1] | ((SumExp == 0) & (Round|Sticky)))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
     //                      exp is negitive         result is denorm        exp was denorm but rounded to norm and if given an unbounded exponent it would stay denormal
-    assign UnderflowFlag = (FullResultExp[`NE+1] | ((FullResultExp == 0) | ((FullResultExp == 1) & (SumExp == 0) & ~(UfPlus1&UfLSBNormSum)))&(Round|Guard|Sticky))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign UnderflowFlag = (FullResultExp[`NE+1] | ((FullResultExp == 0) | ((FullResultExp == 1) & (SumExp == 0) & ~(UfPlus1&UfLSBNormSum)))&(Round|Sticky))&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
     // Set Inexact flag if the result is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed result isn't outputed
-    assign Inexact = (Sticky|Overflow|Guard|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
+    assign Inexact = (Sticky|Overflow|Round|Underflow)&~(XNaNM|YNaNM|ZNaNM|XInfM|YInfM|ZInfM);
 
     // Combine flags
     //      - FMA can't set the Divide by zero flag
@@ -1103,12 +996,13 @@ module resultselect(
     input logic     [`NE-1:0]       ZExpM, // input exponents
     input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FPSIZES/3:0]  FmtM,       // precision 1 = double 0 = single
+    input logic     [`FMTBITS-1:0]  FmtM,       // precision 1 = double 0 = single
     input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
     input logic                     XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                     XNaNM, YNaNM, ZNaNM,    // inputs are NaN
-    input logic                     ZOrigDenormM, // is the original precision denormalized
+    input logic                     ZDenormM, // is the original precision denormalized
+    input logic 		            ZZeroM,
     input logic                     ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                     PSgnM,      // the product's sign
     input logic                     ResultSgn,  // the result's sign
@@ -1134,7 +1028,7 @@ module resultselect(
         end
         assign OverflowResult =  ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                     {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-        assign KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+        assign KillProdResult = {ResultSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
         assign UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
         assign InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
         assign NormResult = {ResultSgn, ResultExp, ResultFrac};
@@ -1153,7 +1047,7 @@ module resultselect(
                                                                                                                             {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                         ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
                                                                                                                             {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-        assign KillProdResult = FmtM ? {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+        assign KillProdResult = FmtM ? {ResultSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
         assign UnderflowResult = FmtM ? {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))} : {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
         assign InfResult = FmtM ? {InfSgn, {`NE{1'b1}}, (`NF)'(0)} : {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
         assign NormResult = FmtM ? {ResultSgn, ResultExp, ResultFrac} : {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
@@ -1173,7 +1067,7 @@ module resultselect(
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                                         {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    KillProdResult = {ResultSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
                     UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
                     InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
                     NormResult = {ResultSgn, ResultExp, ResultFrac};
@@ -1189,7 +1083,7 @@ module resultselect(
                     end
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN1{1'b1}}, ResultSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`LEN1{1'b1}}, {ResultSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`LEN1{1'b1}}, InfSgn, {`NE1{1'b1}}, (`NF1)'(0)};
                     NormResult = {{`FLEN-`LEN1{1'b1}}, ResultSgn, ResultExp[`NE1-1:0], ResultFrac[`NF-1:`NF-`NF1]};
@@ -1206,7 +1100,7 @@ module resultselect(
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} :
                                                                                                                                   {{`FLEN-`LEN2{1'b1}}, ResultSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`LEN2{1'b1}}, {ResultSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`LEN2{1'b1}}, InfSgn, {`NE2{1'b1}}, (`NF2)'(0)};
                     NormResult = {{`FLEN-`LEN2{1'b1}}, ResultSgn, ResultExp[`NE2-1:0], ResultFrac[`NF-1:`NF-`NF2]};
@@ -1244,7 +1138,7 @@ module resultselect(
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {ResultSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} :
                                                                                                                                         {ResultSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    KillProdResult = {ResultSgn, {ZExpM, ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    KillProdResult = {ResultSgn, {ZExpM[`Q_NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
                     UnderflowResult = {ResultSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),(CalcPlus1&(AddendStickyM|FrmM[1]))};
                     InfResult = {InfSgn, {`NE{1'b1}}, (`NF)'(0)};
                     NormResult = {ResultSgn, ResultExp, ResultFrac};
@@ -1260,7 +1154,7 @@ module resultselect(
                     end
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`D_LEN{1'b1}}, {ResultSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`D_LEN{1'b1}}, InfSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
                     NormResult = {{`FLEN-`D_LEN{1'b1}}, ResultSgn, ResultExp[`D_NE-1:0], ResultFrac[`NF-1:`NF-`D_NF]};
@@ -1277,7 +1171,7 @@ module resultselect(
                     
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} :
                                                                                                                                   {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`S_NE-2:1], ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`S_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`S_LEN{1'b1}}, {ResultSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`S_LEN{1'b1}}, InfSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
                     NormResult = {{`FLEN-`S_LEN{1'b1}}, ResultSgn, ResultExp[`S_NE-1:0], ResultFrac[`NF-1:`NF-`S_NF]};
@@ -1295,7 +1189,7 @@ module resultselect(
                     OverflowResult = ((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResultSgn) | (FrmM[1:0]==2'b11&ResultSgn)) ? {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} :
                                                                                                               {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};      
 
-                    KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:1],ZExpM[0]&~ZOrigDenormM, ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
+                    KillProdResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:1],ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
                     UnderflowResult = {{`FLEN-`H_LEN{1'b1}}, {ResultSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), (CalcPlus1&(AddendStickyM|FrmM[1]))}};
                     InfResult = {{`FLEN-`H_LEN{1'b1}}, InfSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};
                     NormResult = {{`FLEN-`H_LEN{1'b1}}, ResultSgn, ResultExp[`H_NE-1:0], ResultFrac[`NF-1:`NF-`H_NF]};

@@ -76,8 +76,6 @@ add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/PMPCFG_ARRAY_RE
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SATP_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SCOUNTEREN_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SEPC_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SIE_REGW
-add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SIP_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SSTATUS_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/STVEC_REGW
 add wave -noupdate -group Bpred -color Orange /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHR
@@ -420,8 +418,6 @@ add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/HRESPCLINT
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/HREADYCLINT
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIME
 add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIMECMP
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/TimerIntM
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/SwIntM
 add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HCLK
 add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HRESETn
 add wave -noupdate -group uart -expand -group {Bus Connection} /testbench/dut/uncore/uart/uart/HSELUART

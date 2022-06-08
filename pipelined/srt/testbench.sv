@@ -1,3 +1,5 @@
+`define DIVLEN 65
+
 /////////////
 // counter //
 /////////////
@@ -37,15 +39,16 @@ endmodule
 // testbench //
 //////////
 module testbench;
-  logic         clk;
-  logic         req;
-  logic         done;
-  logic [63:0]  a, b;
-  logic [51:0]  afrac, bfrac;
-  logic [10:0]  aExp, bExp;
-  logic         asign, bsign;
-  logic [51:0]  r;
-  logic [54:0]  rp, rm;   // positive quotient digits
+  logic              clk;
+  logic              req;
+  logic              done;
+  logic [63:0]       a, b;
+  logic [51:0]       afrac, bfrac;
+  logic [10:0]       aExp, bExp;
+  logic              asign, bsign;
+  logic [51:0]       r, rOTFC;
+  logic [`DIVLEN-1:0]  Quot, QuotOTFC;
+  logic [54:0]       rp, rm;   // positive quotient digits
  
   // Test parameters
   parameter MEM_SIZE = 40000;
@@ -65,14 +68,14 @@ module testbench;
   integer testnum, errors;
 
   // Divider
-  srt  #(52) srt(.clk, .Start(req), 
+  srt srt(.clk, .Start(req), 
                 .Stall(1'b0), .Flush(1'b0), 
                 .XExp(aExp), .YExp(bExp), .rExp,
                 .XSign(asign), .YSign(bsign), .rsign,
                 .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA('0), .SrcB('0), .Fmt(2'b00), 
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot(r), .Rem(), .Flags());
+                .Quot, .QuotOTFC, .Rem(), .Flags());
 
   // Counter
   counter counter(clk, req, done);
@@ -98,6 +101,8 @@ module testbench;
       b = Vec[`memb];
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
+      r = Quot[`DIVLEN:`DIVLEN - 52];
+      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
       req <= #5 1;
     end
   
@@ -117,6 +122,13 @@ module testbench;
 	      $display("failed\n");
 	      $stop;
 	    end
+    if (r !== rOTFC) // Check if OTFC works
+      begin
+        errors = errors+1;
+        $display("OTFC is %h, should be %h\n", rOTFC, r);
+        $display("failed\n");
+        // $stop;
+      end
 	  if (afrac === 52'hxxxxxxxxxxxxx)
 	    begin
  	      $display("%d Tests completed successfully", testnum);

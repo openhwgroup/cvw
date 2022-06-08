@@ -82,7 +82,7 @@ module wallypipelinedcore (
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
-  logic             CSRWritePendingDEM;
+  logic             CSRWriteFencePendingDEM;
   logic             DivBusyE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
@@ -101,7 +101,6 @@ module wallypipelinedcore (
 
   // memory management unit signals
   logic             ITLBWriteF;
-  logic             ITLBFlushF, DTLBFlushM;
   logic             ITLBMissF;
   logic [`XLEN-1:0]         SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
@@ -109,7 +108,7 @@ module wallypipelinedcore (
   logic [1:0]             PrivilegeModeW;
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
-  logic              wfiM, IntPendingM;
+  logic              sfencevmaM, wfiM, IntPendingM;
   logic             SelHPTW;
 
   // PMA checker signals
@@ -196,7 +195,7 @@ module wallypipelinedcore (
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
+    .STATUS_MPP, .ITLBWriteF, .sfencevmaM,
     .ITLBMissF,
 
     // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
@@ -238,7 +237,7 @@ module wallypipelinedcore (
      .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWritePendingDEM, .StoreStallD
+     .CSRWriteFencePendingDEM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
@@ -268,7 +267,7 @@ module wallypipelinedcore (
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
 
-    .DTLBFlushM,                   // connects to privilege
+    .sfencevmaM,                   // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
@@ -310,13 +309,13 @@ module wallypipelinedcore (
 
   
    hazard     hzu(
-     .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+     .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FPUStallD, .FStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-     .InvalidateICacheM, .wfiM, .IntPendingM,
+     .wfiM, .IntPendingM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
@@ -330,7 +329,7 @@ module wallypipelinedcore (
          .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
-         .ITLBFlushF, .DTLBFlushM,
+         .sfencevmaM,
          .InstrValidM, .CommittedM, 
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
@@ -359,8 +358,7 @@ module wallypipelinedcore (
       assign RetM = 0;
       assign TrapM = 0;
       assign wfiM = 0;
-      assign ITLBFlushF = 0;
-      assign DTLBFlushM = 0;
+      assign sfencevmaM = 0;
       assign BigEndianM = 0;
    end
    if (`M_SUPPORTED) begin:mdu

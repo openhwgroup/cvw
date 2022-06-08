@@ -87,7 +87,6 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
-//        "imperas64mmu": if (`VIRTMEM_SUPPORTED) tests = imperas64mmu;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
         "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
@@ -95,8 +94,8 @@ logic [3:0] dummy;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
         "testsBP64":                      tests = testsBP64;
-        "wally64i":                       tests = wally64i; // *** redo
-        "wally64priv":                    tests = wally64priv;// *** redo
+        "wally64i":                       tests = wally64i; 
+        "wally64priv":                    tests = wally64priv;
         "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
       endcase 
@@ -110,15 +109,15 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
-//        "imperas32mmu": if (`VIRTMEM_SUPPORTED) tests = imperas32mmu;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
                         else              tests = imperas32iNOc;
-        "wally32i":                       tests = wally32i; // *** redo
+        "wally32i":                       tests = wally32i; 
         "wally32e":                       tests = wally32e; 
-        "wally32priv":                    tests = wally32priv; // *** redo
+        "wally32priv":                    tests = wally32priv;
+        "embench":                        tests = embench;
       endcase
     end
     if (tests.size() == 0) begin
@@ -127,7 +126,8 @@ logic [3:0] dummy;
     end
   end
 
-  string signame, memfilename, pathname;
+  string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
+  integer outputFilePointer, ProgramLabelMap, ProgramAddrMap;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -162,8 +162,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `RAM_BASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = 0;
+  localparam integer 	   MemEndAddr = `RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -183,7 +183,7 @@ logic [3:0] dummy;
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
-/*      if (tests[0] == `IMPERASTEST)
+      /* if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
       memfilename = {pathname, tests[test], ".elf.memfile"};
@@ -204,6 +204,9 @@ logic [3:0] dummy;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
+  logic [`XLEN-1:0] debugmemoryadr;
+  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
+
   // check results
   always @(negedge clk)
     begin    
@@ -212,77 +215,118 @@ logic [3:0] dummy;
           $display("Benchmark: coremark is done.");
           $stop;
         end
+      // Termination condition (i.e. we finished running current test) 
       if (DCacheFlushDone) begin
- 
-        #600; // give time for instructions in pipeline to finish
-        // clear signature to prevent contamination from previous tests
-        for(i=0; i<SIGNATURESIZE; i=i+1) begin
-          sig32[i] = 'bx;
-        end
-
-        // read signature, reformat in 64 bits if necessary
-        signame = {pathname, tests[test], ".signature.output"};
-        $readmemh(signame, sig32);
-        i = 0;
-        while (i < SIGNATURESIZE) begin
-          if (`XLEN == 32) begin
-            signature[i] = sig32[i];
-            i = i+1;
-          end else begin
-            signature[i/2] = {sig32[i+1], sig32[i]};
-            i = i + 2;
-          end
-          if (i >= 4 & sig32[i-4] === 'bx) begin
-            if (i == 4) begin
-              i = SIGNATURESIZE+1; // flag empty file
-              $display("  Error: empty test file");
-            end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
-          end
-        end
-
-        // Check errors
-        errors = (i == SIGNATURESIZE+1); // error if file is empty
-        i = 0;
-        testadr = (`RAM_BASE+tests[test+1].atohex())/(`XLEN/8);
-        testadrNoBase = (tests[test+1].atohex())/(`XLEN/8);
-        /* verilator lint_off INFINITELOOP */
-        while (signature[i] !== 'bx) begin
-          logic [`XLEN-1:0] sig;
-          if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
-          else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-          //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-          if (signature[i] !== sig &
-          //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
-	      (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
-            if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
-//            if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
-              // report errors unless they are garbage at the end of the sim
-              // kind of hacky test for garbage right now
-              $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
-              errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                    //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
-              $stop;//***debug
+        // Gets the memory location of begin_signature
+        adrstr = "0";
+        ProgramLabelMap = $fopen(ProgramLabelMapFile, "r");
+        ProgramAddrMap = $fopen(ProgramAddrMapFile, "r");
+        if (ProgramLabelMap & ProgramAddrMap) begin // check we found both files
+          while (!$feof(ProgramLabelMap)) begin
+            string label;
+            integer returncode;
+            returncode = $fgets(label, ProgramLabelMap);
+            returncode = $fgets(adrstr, ProgramAddrMap);
+            if (label == "begin_signature\n") begin
+              if (DEBUG) $display("%s begin_signature adrstr: %s", TEST, adrstr);
+              break;
             end
           end
-          i = i + 1;
         end
-        /* verilator lint_on INFINITELOOP */
-        if (errors == 0) begin
-          $display("%s succeeded.  Brilliant!!!", tests[test]);
+        if (adrstr == "0") begin
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         end
-        else begin
-          $display("%s failed with %d errors. :(", tests[test], errors);
-          totalerrors = totalerrors+1;
+        $fclose(ProgramLabelMap);
+        $fclose(ProgramAddrMap);
+
+        testadr = ($unsigned(adrstr.atohex()))/(`XLEN/8);
+        testadrNoBase = (adrstr.atohex() - `RAM_BASE)/(`XLEN/8);
+        #600; // give time for instructions in pipeline to finish
+        if (TEST == "embench") begin
+          // Writes contents of begin_signature to .sim.output file
+          // this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
+          // also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
+          $display("Embench Benchmark: %s is done.", tests[test]);
+          outputfile = {pathname, tests[test], ".sim.output"};
+          outputFilePointer = $fopen(outputfile);
+          i = 0;
+          while ($unsigned(i) < $unsigned(5'd5)) begin
+            $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+            i = i + 1;
+          end
+          $fclose(outputFilePointer);
+          $display("Embench Benchmark: created output file: %s", outputfile);
+        end else begin 
+          // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+          // clear signature to prevent contamination from previous tests
+          for(i=0; i<SIGNATURESIZE; i=i+1) begin
+            sig32[i] = 'bx;
+          end
+          // read signature, reformat in 64 bits if necessary
+          signame = {pathname, tests[test], ".signature.output"};
+          $readmemh(signame, sig32);
+          i = 0;
+          while (i < SIGNATURESIZE) begin
+            if (`XLEN == 32) begin
+              signature[i] = sig32[i];
+              i = i+1;
+            end else begin
+              signature[i/2] = {sig32[i+1], sig32[i]};
+              i = i + 2;
+            end
+            if (i >= 4 & sig32[i-4] === 'bx) begin
+              if (i == 4) begin
+                i = SIGNATURESIZE+1; // flag empty file
+                $display("  Error: empty test file");
+              end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+            end
+          end
+
+          // Check errors
+          errors = (i == SIGNATURESIZE+1); // error if file is empty
+          i = 0;
+          /* verilator lint_off INFINITELOOP */
+          while (signature[i] !== 'bx) begin
+            logic [`XLEN-1:0] sig;
+            if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
+            else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+            //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+            if (signature[i] !== sig &
+            //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
+            (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
+              if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
+                // if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
+                // report errors unless they are garbage at the end of the sim
+                // kind of hacky test for garbage right now
+                $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
+                errors = errors+1;
+                $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+                      tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+                      //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
+                $stop;//***debug
+              end
+            end
+            i = i + 1;
+          end
+          /* verilator lint_on INFINITELOOP */
+          if (errors == 0) begin
+            $display("%s succeeded.  Brilliant!!!", tests[test]);
+          end
+          else begin
+            $display("%s failed with %d errors. :(", tests[test], errors);
+            totalerrors = totalerrors+1;
+          end
         end
-        test = test + 2;
+        // move onto the next test, check to see if we're done
+        // test = test + 2;
+        test = test + 1;
         if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
           else $display("FAIL: %d test programs had errors", totalerrors);
           $stop;
         end
         else begin
+            // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
             memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
@@ -368,7 +412,7 @@ module riscvassertions;
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
-//    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
     assert (`DMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`IMEM == `MEM_CACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
     //assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
@@ -410,47 +454,45 @@ module DCacheFlushFSM
 	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
 	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
 	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
-      for(index = 0; index < numlines; index++) begin
-		for(way = 0; way < numways; way++) begin
-		  for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
-			copyShadow #(.tagstart(tagstart),
-						 .loglinebytelen(loglinebytelen))
-			copyShadow(.clk,
-					   .start,
-					   .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
-					   .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
-					   .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
-					   .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
-					   .index(index),
-					   .cacheWord(cacheWord),
-					   .CacheData(CacheData[way][index][cacheWord]),
-					   .CacheAdr(CacheAdr[way][index][cacheWord]),
-					   .CacheTag(CacheTag[way][index][cacheWord]),
-					   .CacheValid(CacheValid[way][index][cacheWord]),
-					   .CacheDirty(CacheDirty[way][index][cacheWord]));
-		  end
-		end
+    for(index = 0; index < numlines; index++) begin
+		  for(way = 0; way < numways; way++) begin
+		    for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+			    copyShadow #(.tagstart(tagstart),
+					.loglinebytelen(loglinebytelen))
+			    copyShadow(.clk,
+          .start,
+          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
+          .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
+          .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
+          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
+          .index(index),
+          .cacheWord(cacheWord),
+          .CacheData(CacheData[way][index][cacheWord]),
+          .CacheAdr(CacheAdr[way][index][cacheWord]),
+          .CacheTag(CacheTag[way][index][cacheWord]),
+          .CacheValid(CacheValid[way][index][cacheWord]),
+          .CacheDirty(CacheDirty[way][index][cacheWord]));
+        end
       end
+    end
 
-	  integer i, j, k;
+    integer i, j, k;
 
-	  always @(posedge clk) begin
-		if (start) begin #1
-		  #1
-			for(i = 0; i < numlines; i++) begin
-			  for(j = 0; j < numways; j++) begin
-				for(k = 0; k < numwords; k++) begin
-				  if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-					ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
-				  end
-				end	
-			  end
-			end
-		end
-	  end
-
-	  
-	end
+    always @(posedge clk) begin
+      if (start) begin #1
+        #1
+        for(i = 0; i < numlines; i++) begin
+          for(j = 0; j < numways; j++) begin
+          for(k = 0; k < numwords; k++) begin
+            if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
+            ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+            end
+          end	
+          end
+        end
+      end
+    end  
+  end
   flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 

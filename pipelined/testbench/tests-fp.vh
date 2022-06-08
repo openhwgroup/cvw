@@ -1,29 +1,3 @@
-///////////////////////////////////////////
-// tests.vh
-//
-// Written: David_Harris@hmc.edu 7 October 2021
-// Modified: 
-//
-// Purpose: List of tests to apply
-// 
-// A component of the Wally configurable RISC-V project.
-// 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
-// is furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
-// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-///////////////////////////////////////////
-
-
 `define PATH "../../tests/fp/vectors/"
 `define ADD_OPCTRL 3'b110
 `define MUL_OPCTRL 3'b100
@@ -54,16 +28,6 @@
 `define CMPUNIT 4
 
 string f16rv32cvtint[] = '{
-	"f16_to_i32_rne.tv",
-	"f16_to_i32_rz.tv",
-	"f16_to_i32_ru.tv",
-	"f16_to_i32_rd.tv",
-	"f16_to_i32_rnm.tv",
-	"f16_to_ui32_rne.tv",
-	"f16_to_ui32_rz.tv",
-	"f16_to_ui32_ru.tv",
-	"f16_to_ui32_rd.tv",
-	"f16_to_ui32_rnm.tv",
 	"ui32_to_f16_rne.tv",
 	"ui32_to_f16_rz.tv",
 	"ui32_to_f16_ru.tv",
@@ -73,20 +37,20 @@ string f16rv32cvtint[] = '{
 	"i32_to_f16_rz.tv",
 	"i32_to_f16_ru.tv",
 	"i32_to_f16_rd.tv",
-	"i32_to_f16_rnm.tv"
+	"i32_to_f16_rnm.tv",
+	"f16_to_ui32_rne.tv",
+	"f16_to_ui32_rz.tv",
+	"f16_to_ui32_ru.tv",
+	"f16_to_ui32_rd.tv",
+	"f16_to_ui32_rnm.tv",
+	"f16_to_i32_rne.tv",
+	"f16_to_i32_rz.tv",
+	"f16_to_i32_ru.tv",
+	"f16_to_i32_rd.tv",
+	"f16_to_i32_rnm.tv"
 };
 
 string f16rv64cvtint[] = '{
-	"f16_to_ui64_rne.tv",
-	"f16_to_ui64_rz.tv",
-	"f16_to_ui64_ru.tv",
-	"f16_to_ui64_rd.tv",
-	"f16_to_ui64_rnm.tv",
-	"f16_to_i64_rne.tv",
-	"f16_to_i64_rz.tv",
-	"f16_to_i64_ru.tv",
-	"f16_to_i64_rd.tv",
-	"f16_to_i64_rnm.tv",
 	"ui64_to_f16_rne.tv",
 	"ui64_to_f16_rz.tv",
 	"ui64_to_f16_ru.tv",
@@ -96,7 +60,17 @@ string f16rv64cvtint[] = '{
 	"i64_to_f16_rz.tv",
 	"i64_to_f16_ru.tv",
 	"i64_to_f16_rd.tv",
-	"i64_to_f16_rnm.tv"
+	"i64_to_f16_rnm.tv",
+	"f16_to_ui64_rne.tv",
+	"f16_to_ui64_rz.tv",
+	"f16_to_ui64_ru.tv",
+	"f16_to_ui64_rd.tv",
+	"f16_to_ui64_rnm.tv",
+	"f16_to_i64_rne.tv",
+	"f16_to_i64_rz.tv",
+	"f16_to_i64_ru.tv",
+	"f16_to_i64_rd.tv",
+	"f16_to_i64_rnm.tv"
 };
 
 string f32rv32cvtint[] = '{
@@ -307,16 +281,16 @@ string f128f32cvt[] = '{
 
 
 string f128f64cvt[] = '{
-	"f64_to_f128_rne.tv",
-	"f64_to_f128_rz.tv",
-	"f64_to_f128_ru.tv",
-	"f64_to_f128_rd.tv",
-	"f64_to_f128_rnm.tv",
 	"f128_to_f64_rne.tv",
 	"f128_to_f64_rz.tv",
 	"f128_to_f64_ru.tv",
 	"f128_to_f64_rd.tv",
-	"f128_to_f64_rnm.tv"
+	"f128_to_f64_rnm.tv",
+	"f64_to_f128_rne.tv",
+	"f64_to_f128_rz.tv",
+	"f64_to_f128_ru.tv",
+	"f64_to_f128_rd.tv",
+	"f64_to_f128_rnm.tv"
 };
 
 string f16add[] = '{
