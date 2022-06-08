@@ -135,7 +135,7 @@ module wallypipelinedcore (
   logic [`PA_BITS-1:0]         IFUBusAdr;
   logic [`XLEN-1:0]         IFUBusHRDATA;
   logic             IFUBusRead;
-  logic             IFUBusAck;
+  logic             IFUBusAck, IFUBusLock;
   logic [2:0]       IFUBurstType;
   logic [1:0]       IFUTransType;
   logic             IFUBurstDone;
@@ -144,7 +144,7 @@ module wallypipelinedcore (
   logic [`PA_BITS-1:0]         LSUBusAdr;
   logic             LSUBusRead;
   logic             LSUBusWrite;
-  logic             LSUBusAck;
+  logic             LSUBusAck, LSUBusLock;
   logic [`XLEN-1:0]         LSUBusHRDATA;
   logic [`XLEN-1:0]         LSUBusHWDATA;
   
@@ -173,7 +173,7 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, 
     .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
-    .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
+    .IFUBusHRDATA, .IFUBusAck, .IFUBusLock, .PCF, .IFUBusAdr,
     .IFUBusRead, .IFUStallF, .IFUBurstType, .IFUTransType, .IFUBurstDone,
     .ICacheAccess, .ICacheMiss,
 
@@ -254,7 +254,7 @@ module wallypipelinedcore (
   .IEUAdrE, .IEUAdrM, .WriteDataE,
   .ReadDataM, .FlushDCacheM,
   // connected to ahb (all stay the same)
-  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
+  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusLock,
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUBurstDone,
 
     // connect to csr or privilege and stay the same.
@@ -286,8 +286,13 @@ module wallypipelinedcore (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .IFUBusAdr,
-     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck, .IFUBurstType, .IFUTransType, .IFUBurstDone,
+     .IFUBusAdr, .IFUBusRead, 
+     .IFUBusHRDATA, 
+     .IFUBurstType, 
+     .IFUTransType, 
+     .IFUBurstDone,
+     .IFUBusAck, 
+     .IFUBusLock, 
      // Signals from Data Cache
      .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
      .LSUBusHRDATA,
@@ -296,6 +301,7 @@ module wallypipelinedcore (
      .LSUTransType,
      .LSUBurstDone,
      .LSUBusAck,
+     .LSUBusLock,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,

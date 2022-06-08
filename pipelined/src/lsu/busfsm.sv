@@ -41,6 +41,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic               DCacheFetchLine,
    input logic               DCacheWriteLine,
    input logic               LSUBusAck,
+   input logic               LSUBusLock,
    input logic               CPUBusy,
    input logic               CacheableM,
 
@@ -97,7 +98,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign NextWordCount = WordCount + 1'b1;
 
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = PreCntEn & LSUBusAck | (DCacheFetchLine | DCacheWriteLine);
+  assign CntEn = PreCntEn & LSUBusAck | ((DCacheFetchLine | DCacheWriteLine) & LSUBusLock);
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
 
@@ -133,16 +134,16 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   always_comb begin
     case(WordCountThreshold)
-      4:        LocalBurstType = 3'b010; // WRAP4
-      8:        LocalBurstType = 3'b100; // WRAP8
-      16:       LocalBurstType = 3'b110; // WRAP16
+      3:        LocalBurstType = 3'b011; // INCR4
+      7:        LocalBurstType = 3'b101; // INCR8
+      15:       LocalBurstType = 3'b111; // INCR16
       default:  LocalBurstType = 3'b000; // No Burst
-    endcase // *** This isn't working, ask someone for help.
+    endcase
   end
 
   assign LSUBurstType = (UnCachedAccess) ? 3'b0 : LocalBurstType ; // Don't want to use burst when doing an Uncached Access
   assign LSUBurstDone = (UnCachedAccess) ? LSUBusAck : WordCountFlag & LSUBusAck;
-  assign LSUTransType = (|WordCount) ? 2'b11 : (LSUBusRead | LSUBusWrite) ? 2'b10 : 2'b00; 
+  assign LSUTransType = (|WordCount | |WordCountDelayed) ? 2'b11 : (LSUBusRead | LSUBusWrite) ? 2'b10 : 2'b00; 
 
   assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine);
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |

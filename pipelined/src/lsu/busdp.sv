@@ -40,6 +40,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   // bus interface
   input logic [`XLEN-1:0]     LSUBusHRDATA,
   input logic                 LSUBusAck,
+  input logic                 LSUBusLock,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
   output logic [2:0]          LSUBusSize,
@@ -88,6 +89,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
     .clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
-		.LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
+		.LSUBusAck, .LSUBusLock, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
 		.LSUBurstType, .LSUTransType, .LSUBurstDone, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule
