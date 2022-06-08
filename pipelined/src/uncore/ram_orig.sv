@@ -97,9 +97,9 @@ module ram_orig #(parameter BASE=0, RANGE = 65535) (
     HWADDR <= #1 A;
 
   bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
-  memory(.clk(HCLK), .enaA(1'b1),
+  memory(.clk(HCLK), .reA(1'b1),
 		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
-		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
+		 .weB(memwrite & risingHREADYRam), .bweB(ByteMaskM),
 		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
 		 
   
