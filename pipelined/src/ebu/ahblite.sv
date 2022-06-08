@@ -167,8 +167,8 @@ module ahblite (
  
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
-  assign IFUBusInit = (NextBusState == INSTRREAD);
-  assign LSUBusInit = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
+  assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
+  assign LSUBusInit = ((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState == IDLE) & (NextBusState == MEMWRITE);
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);
   assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
 
