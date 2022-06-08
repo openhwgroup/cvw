@@ -49,21 +49,24 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   // 3. implement burst.
   // 4. remove the configurable latency.
 
-  logic [`XLEN/8-1:0] 		  ByteMaskM;
-  logic [31:0]        HWADDR, A;
-  logic				  prevHREADYRam, risingHREADYRam;
+  logic [`XLEN/8-1:0] 		  ByteMask;
+  logic [31:0]        HADDRD, RamAddr;
+  //logic				  prevHREADYRam, risingHREADYRam;
   logic				  initTrans;
-  logic				  memwrite;
-  logic [3:0] 		  busycount;
+  logic				  memwrite, memwriteD;
+  logic         nextHREADYRam;
+  //logic [3:0] 		  busycount;
   
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HWADDR[2:0]), .ByteMask(ByteMaskM));
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(ByteMask));
 
-  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
+  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00); // *** add burst support, or disable on busy
+  assign memwrite = initTrans & HWRITE;
 
   // *** this seems like a weird way to use reset
-  flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELRam &  HWRITE, memwrite);
-  flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
-  // busy FSM to extend READY signal
+  flopen #(1) memwritereg(HCLK, initTrans | ~HRESETn, memwrite, memwriteD); // probably drop ~HRESETn in all this
+  flopen #(32)   haddrreg(HCLK, initTrans | ~HRESETn, HADDR, HADDRD);
+
+/*  // busy FSM to extend READY signal
   always @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
       busycount <= 0;
@@ -79,28 +82,38 @@ module ram #(parameter BASE=0, RANGE = 65535) (
           busycount <= busycount + 1;
         end
       end
-    end
+    end */
+
+
+  assign nextHREADYRam = ~(memwriteD & ~memwrite);
+  flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
+//  assign HREADYRam = ~(memwriteD & ~memwrite);
   assign HRESPRam = 0; // OK
 
-  localparam ADDR_WDITH = $clog2(RANGE/8);
+  localparam ADDR_WIDTH = $clog2(RANGE/8);
   localparam OFFSET = $clog2(`XLEN/8);
   
-  // Rising HREADY edge detector
+/*  // Rising HREADY edge detector
   //   Indicates when ram is finishing up
   //   Needed because HREADY may go high for other reasons,
   //   and we only want to write data when finishing up.
   flopenr #(1) prevhreadyRamreg(HCLK,~HRESETn, 1'b1, HREADYRam,prevHREADYRam);
-  assign risingHREADYRam = HREADYRam & ~prevHREADYRam;
+  assign risingHREADYRam = HREADYRam & ~prevHREADYRam;*/
 
-  always @(posedge HCLK)
-    HWADDR <= #1 A;
-
-  bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
-  memory(.clk(HCLK), .enaA(1'b1),
+/*
+ bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
+  memory(.clk(HCLK), .reA(1'b1),
 		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
-		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
-		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
-		 
-  
+		 .weB(memwrite & risingHREADYRam), .bweB(ByteMaskM),
+		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA)); */
+
+    
+
+  // On writes, use address delayed by one cycle to sync with HWDATA
+  mux2 #(32) adrmux(HADDR, HADDRD, memwriteD, RamAddr);
+
+  // single-ported RAM
+  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
+    memory(.clk(HCLK), .we(memwriteD), .bwe(ByteMask), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
 endmodule
   

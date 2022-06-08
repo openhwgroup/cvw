@@ -5,18 +5,18 @@ module fclassify (
     input logic         XSgnE,  // sign bit
     input logic         XNaNE,  // is NaN
     input logic         XSNaNE, // is signaling NaN
-    input logic         XNormE, // is normal
     input logic         XDenormE, // is denormal
     input logic         XZeroE, // is zero
     input logic         XInfE,  // is infinity
-    output logic [63:0] ClassResE // classify result
+    output logic [`XLEN-1:0] ClassResE // classify result
     );
 
     logic PInf, PZero, PNorm, PDenorm;
     logic NInf, NZero, NNorm, NDenorm;
-
+    logic XNormE;
    
     // determine the sub categories
+    assign XNormE = ~(XNaNE | XInfE | XDenormE | XZeroE);
     assign PInf = ~XSgnE&XInfE;
     assign NInf = XSgnE&XInfE;
     assign PNorm = ~XSgnE&XNormE;
@@ -37,6 +37,6 @@ module fclassify (
     //  bit 7 - +Inf
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResE = {{54{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+    assign ClassResE = {{`XLEN-10{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
 
 endmodule

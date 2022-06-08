@@ -38,7 +38,7 @@ module privileged (
   output logic [`XLEN-1:0] CSRReadValW,
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, 
-  output logic             ITLBFlushF, DTLBFlushM,
+  output logic             sfencevmaM,
   input  logic             InstrValidM, CommittedM, 
   input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
@@ -85,7 +85,7 @@ module privileged (
   logic [`XLEN-1:0] MEDELEG_REGW;
   logic [11:0]      MIDELEG_REGW;
 
-  logic sretM, mretM, sfencevmaM;
+  logic sretM, mretM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultM;
   logic IllegalFPUInstrM;
@@ -99,13 +99,14 @@ module privileged (
   logic       STATUS_MIE, STATUS_SIE;
   logic [11:0] MIP_REGW, MIE_REGW;
   logic [1:0] NextPrivilegeModeM;
+  logic       DelegateM;
 
   ///////////////////////////////////////////
   // track the current privilege level
   ///////////////////////////////////////////
 
-  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .InterruptM, .CauseM, 
-                    .MEDELEG_REGW, .MIDELEG_REGW, .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
+                    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   ///////////////////////////////////////////
   // decode privileged instructions
@@ -114,7 +115,7 @@ module privileged (
    privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
               .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
-              .ITLBFlushF, .DTLBFlushM, .EcallFaultM, .BreakpointFaultM,
+              .EcallFaultM, .BreakpointFaultM,
               .sretM, .mretM, .wfiM, .sfencevmaM);
 
   ///////////////////////////////////////////
@@ -158,11 +159,11 @@ module privileged (
             .LoadPageFaultM, .StoreAmoPageFaultM,
             .mretM, .sretM, 
             .PrivilegeModeW, 
-            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .InstrValidM, .CommittedM,  
             .TrapM, .RetM,
-            .InterruptM, .IntPendingM,
+            .InterruptM, .IntPendingM, .DelegateM,
             .CauseM);
 endmodule
 

@@ -1,37 +1,62 @@
 # Makefile added 1/20/22 David_Harris@hmc.edu
+# Expanded and developed by dtorres@hmc.edu
 # Compile Embench for Wally
 
-all: build sim
+all: sim size
 
 allClean: clean all
 
-build:
-	../../addins/embench-iot/build_all.py --builddir=bd_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S" --cflags="-nostartfiles" 
-	../../addins/embench-iot/build_all.py --builddir=bd_size --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostdlib" --cflags="-nostdlib" --dummy-libs="libgcc libm libc crt0"
+build: buildspeed buildsize
 
-sim: size speed
+# uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for speed
+buildspeed:
+	../../addins/embench-iot/build_all.py --builddir=bd_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S" --cflags="-O2 -nostartfiles" 
+	find ../../addins/embench-iot/bd_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
 
-size:
+# uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for size
+buildsize:
+	../../addins/embench-iot/build_all.py --builddir=bd_size --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostdlib -nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/dummy.S" --cflags="-Os -msave-restore" --dummy-libs="libgcc libm libc crt0"
+
+# builds dependencies, then launches modelsim and finally runs python wrapper script to present results
+sim: modelsim_build_memfile modelsim_run speed
+
+# launches modelsim to simulate tests on wally
+modelsim_run:
+	(cd ../../pipelined/regression/ && vsim -c -do "do wally-pipelined-batch.do rv32gc embench")
+	cd ../../benchmarks/embench/
+
+# builds the objdump based on the compiled c elf files
+objdump: buildspeed
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-objdump -S -D "$$f" > "$$f.objdump"; done
+
+# build memfiles, objdump.lab and objdump.addr files
+modelsim_build_memfile: objdump
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf" | while read f; do riscv64-unknown-elf-elf2hex --bit-width 32 --input "$$f" --output "$$f.memfile"; done
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf.objdump" | while read f; do extractFunctionRadix.sh $$f; done
+
+# builds the tests for speed, runs them on spike and then launches python script to present results
+# note that the speed python script benchmark_speed.py can get confused if there's both a .output file created from spike and modelsim
+# you'll need to manually remove one of the two .output files, or run make clean
+spike: buildspeed spikecmd speed
+
+# command to run spike on all of the benchmarks
+spike_run: buildspeed
+	find ../../addins/embench-iot/bd_speed/ -type f -name "*.elf" | while read f; do spike --isa=rv32imac +signature=$$f.spike.output +signature-granularity=4 $$f; done
+
+# python wrapper to present results of embench size benchmark
+size: buildsize
 	../../addins/embench-iot/benchmark_size.py --builddir=bd_size
 
+# python wrapper to present results of embench speed benchmark
 speed:
-	../../addins/embench-iot/benchmark_speed.py --builddir=bd_speed --target-module run_wally --cpu-mhz=50
+	../../addins/embench-iot/benchmark_speed.py --builddir=bd_speed --target-module run_wally --cpu-mhz=1
 
-objdump:
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/aha-mont64/aha-mont64 > ../../addins/embench-iot/bd_speed/src/aha-mont64/aha-mont64.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/cubic/cubic > ../../addins/embench-iot/bd_speed/src/cubic/cubic.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/md5sum/md5sum > ../../addins/embench-iot/bd_speed/src/md5sum/md5sum.objdump
-	riscv64-unknown-elf-objdump -S ../../addins/embench-iot/bd_speed/src/statemate/statemate > ../../addins/embench-iot/bd_speed/src/statemate/statemate.objdump
-
+# deletes all files
 clean: 
 	rm -rf ../../addins/embench-iot/bd_speed/
 	rm -rf ../../addins/embench-iot/bd_size/
 
-# std:
-# 	../../addins/embench-iot/build_all.py --builddir=bd_std --arch riscv32 --chip generic --board rv32wallyverilog --cc riscv64-unknown-elf-gcc --cflags="-v -c -O2 -ffunction-sections -march=rv32imac -mabi=ilp32" --ldflags="-Wl,-gc-sections -v -march=rv32imac -mabi=ilp32 ../../../../../benchmarks/embench/tohost.S -T../../../config/riscv32/boards/rv32wallyverilog/link.ld" --user-libs="-lm" 
-# 	riscv64-unknown-elf-objdump -D ../../addins/embench-iot/bd_std/src/aha-mont64/aha-mont64 > ../../addins/embench-iot/bd_std/src/aha-mont64/aha-mont64.objdump
-# --dummy-libs="libgcc libm libc"
-# --cflags "-O2 -g -nostartfiles"
-# ../../addins/embench-iot/build_all.py --arch riscv32 --chip generic --board rv32wallyverilog --cc riscv64-unknown-elf-gcc --cflags="-c -Os -ffunction-sections -nostdlib -march=rv32imac -mabi=ilp32" --ldflags="-Wl,-gc-sections -nostdlib -march=rv32imac -mabi=ilp32 -T../../../config/riscv32/boards/rv32wallyverilog/link.ld" --dummy-libs="libgcc libm libc"
-# --user-libs="-lm" 
+allclean: clean
+	rm -rf ../../addins/embench-iot/logs/
+
 # riscv64-unknown-elf-gcc -O2 -g -nostartfiles -I/home/harris/riscv-wally/addins/embench-iot/support -I/home/harris/riscv-wally/addins/embench-iot/config/riscv32/boards/ri5cyverilator -I/home/harris/riscv-wally/addins/embench-iot/config/riscv32/chips/generic -I/home/harris/riscv-wally/addins/embench-iot/config/riscv32 -DCPU_MHZ=1 -DWARMUP_HEAT=1 -o main.o /home/harris/riscv-wally/addins/embench-iot/support/main.c
