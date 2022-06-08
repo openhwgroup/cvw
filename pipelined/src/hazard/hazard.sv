@@ -69,11 +69,11 @@ module hazard(
   assign StallMCause = wfiM & (~TrapM & ~IntPendingM);  
   assign StallWCause = LSUStallM | IFUStallF;
 
-  assign StallF = StallFCause | StallD;
-  assign StallD = StallDCause | StallE;
-  assign StallE = StallECause | StallM;
-  assign StallM = StallMCause | StallW;
-  assign StallW = StallWCause;
+  assign #1 StallF = StallFCause | StallD;
+  assign #1 StallD = StallDCause | StallE;
+  assign #1 StallE = StallECause | StallM;
+  assign #1 StallM = StallMCause | StallW;
+  assign #1 StallW = StallWCause;
 
   assign FirstUnstalledD = ~StallD & StallF;
   assign FirstUnstalledE = ~StallE & StallD;
@@ -81,11 +81,11 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushF = BPPredWrongE;
-  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE; 
-  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE; // *** why is BPPredWrongE here, but not needed in simple processor 
-  assign FlushM = FirstUnstalledM | TrapM | RetM;
+  assign #1 FlushF = BPPredWrongE;
+  assign #1 FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE; 
+  assign #1 FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE; // *** why is BPPredWrongE here, but not needed in simple processor 
+  assign #1 FlushM = FirstUnstalledM | TrapM | RetM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
-  assign FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
+  assign #1 FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
 endmodule
