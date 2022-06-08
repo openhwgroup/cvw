@@ -43,6 +43,6 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   localparam OFFSET = $clog2(`XLEN/8);
 
   bram1p1rw #(`XLEN/8, 8, ADDR_WDITH) 
-    memory(.clk, .en(we), .we(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
+    memory(.clk, .we, .bwe(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
 endmodule
 

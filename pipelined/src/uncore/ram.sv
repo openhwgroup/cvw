@@ -63,7 +63,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   // *** this seems like a weird way to use reset
   flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELRam &  HWRITE, memwrite);
   flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
-  
+
   // busy FSM to extend READY signal
   always @(posedge HCLK, negedge HRESETn) 
     if (~HRESETn) begin
@@ -97,11 +97,31 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     HWADDR <= #1 A;
 
   bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
-  memory(.clk(HCLK), .enaA(1'b1),
+  memory(.clk(HCLK), .reA(1'b1),
 		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
-		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
+		 .weB(memwrite & risingHREADYRam), .bweB(ByteMaskM),
 		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
+/*
+  bram1p1r1w #(`XLEN/8, 8, ADDR_WDITH)
+    memory(.clk(HCLK), .we(memwrite), .bwe(ByteMaskM), . addr(A***), .dout(HREADRam), .din(HWDATA));
 		 
+       #(
+	//--------------------------------------------------------------------------
+	parameter NUM_COL = 8,
+	parameter COL_WIDTH = 8,
+	parameter ADDR_WIDTH = 10,
+	// Addr Width in bits : 2 *ADDR_WIDTH = RAM Depth
+	parameter DATA_WIDTH = NUM_COL*COL_WIDTH // Data Width in bits
+	//----------------------------------------------------------------------
+	) (
+	   input logic 					 clk,
+	   input logic 					 ena,
+	   input logic [NUM_COL-1:0] 	 we,
+	   input logic [ADDR_WIDTH-1:0]  addr,
+	   output logic [DATA_WIDTH-1:0] dout,
+	   input logic [DATA_WIDTH-1:0]  din
+	   );*/
+
   
 endmodule
   
