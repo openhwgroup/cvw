@@ -38,6 +38,7 @@ module ifu (
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
+(* mark_debug = "true" *)	input logic 				IFUBusLock,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
@@ -192,7 +193,7 @@ module ifu (
     
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
-          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
+          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusLock(IFUBusLock), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUBurstDone(IFUBurstDone),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
