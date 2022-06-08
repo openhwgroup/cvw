@@ -115,7 +115,7 @@ module ahblite (
             else if (LSUBusWrite)                         NextBusState = MEMWRITE;
             else if (IFUBusRead)                          NextBusState = INSTRREAD;
             else                                          NextBusState = IDLE;
-      MEMREAD: if (LSUTransComplete & ~IFUBusRead)        NextBusState = INSTRREAD;
+      MEMREAD: if (LSUTransComplete & IFUBusRead)        NextBusState = INSTRREAD;
                else if (LSUTransComplete)                 NextBusState = IDLE;
                else                                       NextBusState = MEMREAD;
       MEMWRITE: if (LSUTransComplete & IFUBusRead)        NextBusState = INSTRREAD;
