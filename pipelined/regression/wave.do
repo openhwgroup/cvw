@@ -468,11 +468,12 @@ add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
-add wave -noupdate -group ifu -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState
+add wave -noupdate -group ifu -color Gold /testbench/dut/core/ifu/bus/busdp/busfsm/BusCurrState
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusRead
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusAdr
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusAck
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusHRDATA
+add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUTransComplete
 add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
 add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/CurrState
 add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillDataLine0
