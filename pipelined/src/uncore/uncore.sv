@@ -92,7 +92,7 @@ module uncore (
 //  generate
     // on-chip RAM
     if (`RAM_SUPPORTED) begin : ram
-      ram #(
+      ram_orig #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
         .HSELRam, .HADDR,
@@ -102,7 +102,7 @@ module uncore (
     end
 
     if (`BOOTROM_SUPPORTED) begin : bootrom
-      ram #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+      ram_orig #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
       bootrom(
         .HCLK, .HRESETn, 
         .HSELRam(HSELBootRom), .HADDR,
