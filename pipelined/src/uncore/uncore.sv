@@ -194,7 +194,7 @@ module uncore (
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-		 HSELEXTD & HRESPEXT |
+		             HSELEXTD & HRESPEXT |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
                  HSELGPIOD & HRESPGPIO | 
@@ -203,7 +203,7 @@ module uncore (
                  HSELSDC & HRESPSDC;		 
 
   assign HREADY = HSELRamD & HREADYRam |
-		  HSELEXTD & HREADYEXT |		  
+		              HSELEXTD & HREADYEXT |		  
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 

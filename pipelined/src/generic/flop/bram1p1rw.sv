@@ -44,7 +44,7 @@ module bram1p1rw
 	//----------------------------------------------------------------------
 	) (
 	   input logic 					 clk,
-	   input logic 					 ena,
+	   input logic 					 en,
 	   input logic [NUM_COL-1:0] 	 we,
 	   input logic [ADDR_WIDTH-1:0]  addr,
 	   output logic [DATA_WIDTH-1:0] dout,
@@ -60,7 +60,7 @@ module bram1p1rw
 
   always @ (posedge clk) begin
 	dout <= RAM[addr];    
-	if(ena) begin
+	if(en) begin
 	  for(i=0;i<NUM_COL;i=i+1) begin
 		if(we[i]) begin
 		  RAM[addr][i*COL_WIDTH +: COL_WIDTH] <= din[i*COL_WIDTH +:COL_WIDTH];
