@@ -92,7 +92,7 @@ module uncore (
 //  generate
     // on-chip RAM
     if (`RAM_SUPPORTED) begin : ram
-      ram_orig #(
+      ram #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
         .HSELRam, .HADDR,
