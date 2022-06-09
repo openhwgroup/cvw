@@ -162,8 +162,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = `RAM_BASE>>(1+`XLEN/32);
-  localparam integer 	   MemEndAddr = (`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32);
+  localparam integer 	   MemStartAddr = 0;
+  localparam integer 	   MemEndAddr = `RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -204,6 +204,9 @@ logic [3:0] dummy;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
+  logic [`XLEN-1:0] debugmemoryadr;
+  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
+
   // check results
   always @(negedge clk)
     begin    
@@ -220,15 +223,13 @@ logic [3:0] dummy;
         ProgramAddrMap = $fopen(ProgramAddrMapFile, "r");
         if (ProgramLabelMap & ProgramAddrMap) begin // check we found both files
           while (!$feof(ProgramLabelMap)) begin
-            string addr, label;
+            string label;
             integer returncode;
             returncode = $fgets(label, ProgramLabelMap);
-            returncode = $fgets(addr, ProgramAddrMap);
+            returncode = $fgets(adrstr, ProgramAddrMap);
             if (label == "begin_signature\n") begin
-              adrstr = addr[1:7];
-              if (adrstr=="0000000") // if running on rv64 we get the address at a later 
-                adrstr = addr[9:15]; 
               if (DEBUG) $display("%s begin_signature adrstr: %s", TEST, adrstr);
+              break;
             end
           end
         end
@@ -238,8 +239,8 @@ logic [3:0] dummy;
         $fclose(ProgramLabelMap);
         $fclose(ProgramAddrMap);
 
-        testadr = (`RAM_BASE+adrstr.atohex())/(`XLEN/8);
-        testadrNoBase = (adrstr.atohex())/(`XLEN/8);
+        testadr = ($unsigned(adrstr.atohex()))/(`XLEN/8);
+        testadrNoBase = (adrstr.atohex() - `RAM_BASE)/(`XLEN/8);
         #600; // give time for instructions in pipeline to finish
         if (TEST == "embench") begin
           // Writes contents of begin_signature to .sim.output file

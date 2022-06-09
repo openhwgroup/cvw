@@ -1,5 +1,5 @@
 # Makefile added 1/20/22 David_Harris@hmc.edu
-# Expanded and developed by dtorres@hmc.edu
+# Expanded and developed by Daniel Torres dtorres@hmc.edu
 # Compile Embench for Wally
 
 all: sim size
