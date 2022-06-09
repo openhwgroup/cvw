@@ -146,7 +146,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign LSUTransComplete = (UnCachedAccess) ? LSUBusAck : WordCountFlag & LSUBusAck;
   assign LSUTransType = (|WordCount) & ~UnCachedAccess ? 2'b11 : (LSUBusRead | LSUBusWrite) & ~WordCountFlag ? 2'b10 : 2'b00; 
 
-  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine);
+  assign CntReset = (BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine)) | LSUTransComplete;
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |

@@ -155,7 +155,7 @@ module ahblite (
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // delay write data by one cycle for
-  flopen #(`XLEN) wdreg(HCLK, (IFUBusAck | LSUBusAck), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flopen #(`XLEN) wdreg(HCLK, (IFUBusAck | LSUBusAck | IFUBusInit | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
