@@ -11,9 +11,6 @@ work/coremark.bare.riscv.elf.memfile: work/coremark.bare.riscv
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $< --output $@
 	extractFunctionRadix.sh $<.elf.objdump
 
-work/coremark.bare.riscv.objdump: work/coremark.bare.riscv
-	riscv64-unknown-elf-objdump -D work/coremark.bare.riscv > work/coremark.bare.riscv.objdump 
-
 work/coremark.bare.riscv: $(sources) Makefile
 #	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=/opt/riscv/riscv-gnu-toolchain XCFLAGS="-march=rv64imd -mabi=lp64d -mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-7-series -Ofast -funroll-all-loops -fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 -funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fno-toplevel-reorder --param=max-inline-insns-size=128 -fipa-pta"
  # These flags were used by WD on CoreMark

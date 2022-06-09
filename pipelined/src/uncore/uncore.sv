@@ -92,7 +92,7 @@ module uncore (
 //  generate
     // on-chip RAM
     if (`RAM_SUPPORTED) begin : ram
-      ram #(
+      ram_orig #(
         .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
         .HCLK, .HRESETn, 
         .HSELRam, .HADDR,
@@ -102,7 +102,7 @@ module uncore (
     end
 
     if (`BOOTROM_SUPPORTED) begin : bootrom
-      ram #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+      ram_orig #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
       bootrom(
         .HCLK, .HRESETn, 
         .HSELRam(HSELBootRom), .HADDR,
@@ -194,7 +194,7 @@ module uncore (
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-		 HSELEXTD & HRESPEXT |
+		             HSELEXTD & HRESPEXT |
                  HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
                  HSELGPIOD & HRESPGPIO | 
@@ -203,7 +203,7 @@ module uncore (
                  HSELSDC & HRESPSDC;		 
 
   assign HREADY = HSELRamD & HREADYRam |
-		  HSELEXTD & HREADYEXT |		  
+		              HSELEXTD & HREADYEXT |		  
                   HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
                   HSELGPIOD & HREADYGPIO | 
