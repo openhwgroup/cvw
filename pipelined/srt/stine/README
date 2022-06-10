@@ -1,0 +1,1 @@
+vsim -do iter64.do -c

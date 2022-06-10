@@ -197,6 +197,8 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
     allMetrics = []
 
     ale = (var != 'delay') # if not delay, must be area, leakage, or energy
+    modFit = fitDict[mod]
+    fits = modFit[ale]
 
     for spec in techSpecs:
         metric = getVals(spec.tech, module, var, freq=freq)
@@ -207,8 +209,8 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
             metric = [m/norm for m in metric]
 
         if len(metric) == 5: # don't include the spec if we don't have points for all widths
-            xp, pred, leg = regress(widths, metric, spec, fits, ale=ale)
-            fullLeg += leg
+            xp, pred, coefs, r2 = regress(widths, metric, fits)
+            fullLeg += genLegend(fits, coefs, r2, spec, ale=ale)
             c = color if color else spec.color
             ax.scatter(widths, metric, color=c, marker=spec.shape)
             ax.plot(xp, pred, color=c)
@@ -216,7 +218,8 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
             allMetrics += metric
 
     combined = TechSpec('combined', 'red', '_', 0, 0, 0, 0)
-    xp, pred, leg = regress(allWidths, allMetrics, combined, fits, ale=ale)
+    xp, pred, coefs, r2 = regress(allWidths, allMetrics, fits)
+    leg = genLegend(fits, coefs, r2, combined, ale=ale)
     fullLeg += leg
     ax.plot(xp, pred, color='red')
 
@@ -232,14 +235,17 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
 
     if (module in ['flop', 'csa']) & (var == 'delay'):
         ax.set_ylim(ymin=0)
+        ytop = ax.get_ylim()[1]
+        ax.set_ylim(ymax=1.1*ytop)
 
     if singlePlot:
         titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
         ax.set_title(module + titleStr)
         plt.savefig('./plots/PPA/'+ module + '_' + var + '.png')
         # plt.show()
+    return fullLeg
 
-def regress(widths, var, spec, fits='clsgn', ale=False):
+def regress(widths, var, fits='clsgn'):
     ''' fits a curve to the given points
         returns lists of x and y values to plot that curve and legend elements with the equation
     '''
@@ -267,28 +273,41 @@ def regress(widths, var, spec, fits='clsgn', ale=False):
     for x in xp:
         n = [func(x/normAddWidth) for func in funcArr]
         pred += [sum(np.multiply(coefs, n))]
-    
-    leg = genLegend(fits, coefs, r2, spec, ale=ale)
 
-    return xp, pred, leg
+    return xp, pred, coefs, r2
 
-def makeCoefTable(tech):
-    ''' not currently in use, may salvage later
+def makeCoefTable():
+    ''' 
         writes CSV with each line containing the coefficients for a regression fit 
-        to a particular combination of module, metric, and target frequency
+        to a particular combination of module, metric (including both techs, normalized)
     '''
     file = open("ppaFitting.csv", "w")
     writer = csv.writer(file)
-    writer.writerow(['Module', 'Metric', 'Freq', '1', 'N', 'N^2', 'log2(N)', 'Nlog2(N)', 'R^2'])
+    writer.writerow(['Module', 'Metric', '1', 'N', 'N^2', 'log2(N)', 'Nlog2(N)', 'R^2'])
 
-    for mod in ['add', 'mult', 'comparator', 'shifter']:
-        for comb in [['delay', 5000], ['area', 5000], ['area', 10]]:
-            var = comb[0]
-            freq = comb[1]
-            metric = getVals(tech, mod, freq, var)
-            global widths
-            coefs, r2, funcArr = regress(widths, metric)
-            row = [mod] + comb + np.ndarray.tolist(coefs) + [r2]
+    for module in modules:
+        for var in ['delay', 'area', 'lpower', 'denergy']:
+            ale = (var != 'delay')
+            metL = []
+            modFit = fitDict[module]
+            fits = modFit[ale]
+
+            for spec in techSpecs:
+                metric = getVals(spec.tech, module, var)
+                techdict = spec._asdict()
+                norm = techdict[var]
+                metL += [m/norm for m in metric]
+
+            xp, pred, coefs, r2 = regress(widths*2, metL, fits)
+            coefs = np.ndarray.tolist(coefs)
+            coefsToWrite  = [None]*5
+            fitTerms = 'clsgn'
+            ind = 0
+            for i in range(len(fitTerms)):
+                if fitTerms[i] in fits:
+                    coefsToWrite[i] = coefs[ind]
+                    ind += 1
+            row = [module, var] + coefsToWrite + [r2]
             writer.writerow(row)
 
     file.close()
@@ -341,8 +360,8 @@ def freqPlot(tech, mod, width):
 
     median = np.median(list(flatten(freqsL)))
     
-    f, (ax1, ax2, ax3, ax4) = plt.subplots(4, 1, sharex=True)
-    for ax in (ax1, ax2, ax3, ax4):
+    f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
+    for ax in (ax1, ax2): #, ax3, ax4):
         ax.ticklabel_format(useOffset=False, style='plain')
 
     for ind in [0,1]:
@@ -353,23 +372,23 @@ def freqPlot(tech, mod, width):
         freqs, delays, areas = noOutliers(median, freqs, delays, areas) # comment out to see all syntheses
 
         c = 'blue' if ind else 'green'
-        adprod = adprodpow(areas, delays, 1)
-        adpow = adprodpow(areas, delays, 2)
+        # adprod = adprodpow(areas, delays, 1)
+        # adpow = adprodpow(areas, delays, 2)
         ax1.scatter(freqs, delays, color=c)
         ax2.scatter(freqs, areas, color=c)
-        ax3.scatter(freqs, adprod, color=c)
-        ax4.scatter(freqs, adpow, color=c)
+        # ax3.scatter(freqs, adprod, color=c)
+        # ax4.scatter(freqs, adpow, color=c)
 
     legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
                        lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
 
     ax1.legend(handles=legend_elements)
     
-    ax4.set_xlabel("Target Freq (MHz)")
+    ax2.set_xlabel("Target Freq (MHz)")
     ax1.set_ylabel('Delay (ns)')
     ax2.set_ylabel('Area (sq microns)')
-    ax3.set_ylabel('Area * Delay')
-    ax4.set_ylabel('Area * $Delay^2$')
+    # ax3.set_ylabel('Area * Delay')
+    # ax4.set_ylabel('Area * $Delay^2$')
     ax1.set_title(mod + '_' + str(width))
     plt.savefig('./plots/freqBuckshot/' + tech + '/' + mod + '/' + str(width) + '.png')
     # plt.show()
@@ -464,23 +483,31 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
         if no freq specified, uses the synthesis with best achievable delay for each width
         overlays data from both techs
     '''
-    plt.rcParams["figure.figsize"] = (12,8)
+    plt.rcParams["figure.figsize"] = (10,7)
     fig, axs = plt.subplots(2, 2)
-    modFit = fitDict[mod]
+    # fig, axs = plt.subplots(4, 1)
 
-    oneMetricPlot(mod, 'delay', ax=axs[0,0], fits=modFit[0], freq=freq, norm=norm)
-    oneMetricPlot(mod, 'area', ax=axs[0,1], fits=modFit[1], freq=freq, norm=norm)
-    oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits=modFit[1], freq=freq, norm=norm)
-    oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits=modFit[1], freq=freq, norm=norm)
+    # oneMetricPlot(mod, 'delay', ax=axs[0], fits=modFit[0], freq=freq, norm=norm)
+    # oneMetricPlot(mod, 'area', ax=axs[1], fits=modFit[1], freq=freq, norm=norm)
+    # oneMetricPlot(mod, 'lpower', ax=axs[2], fits=modFit[1], freq=freq, norm=norm)
+    # oneMetricPlot(mod, 'denergy', ax=axs[3], fits=modFit[1], freq=freq, norm=norm)
+    oneMetricPlot(mod, 'delay', ax=axs[0,0], freq=freq, norm=norm)
+    oneMetricPlot(mod, 'area', ax=axs[0,1], freq=freq, norm=norm)
+    oneMetricPlot(mod, 'lpower', ax=axs[1,0], freq=freq, norm=norm)
+    fullLeg = oneMetricPlot(mod, 'denergy', ax=axs[1,1], freq=freq, norm=norm)
+    
     if aleOpt:
-        oneMetricPlot(mod, 'area', ax=axs[0,1], fits=modFit[1], freq=10, norm=norm, color='black')
-        oneMetricPlot(mod, 'lpower', ax=axs[1,0], fits=modFit[1], freq=10, norm=norm, color='black')
-        oneMetricPlot(mod, 'denergy', ax=axs[1,1], fits=modFit[1], freq=10, norm=norm, color='black')
+        oneMetricPlot(mod, 'area', ax=axs[0,1], freq=10, norm=norm, color='black')
+        oneMetricPlot(mod, 'lpower', ax=axs[1,0], freq=10, norm=norm, color='black')
+        oneMetricPlot(mod, 'denergy', ax=axs[1,1], freq=10, norm=norm, color='black')
     
     titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
     n = 'normalized' if norm else 'unnormalized'
     saveStr = './plots/PPA/'+ n + '/' + mod + '.png'
     plt.suptitle(mod + titleStr)
+
+    # fig.legend(handles=fullLeg, ncol=3, loc='center', bbox_to_anchor=(0.3, 0.82, 0.4, 0.2))
+
     if freq != 10: plt.savefig(saveStr)
     # plt.show()
 
@@ -511,7 +538,7 @@ if __name__ == '__main__':
 
     fitDict = {'add': ['cg', 'l', 'l'], 'mult': ['cg', 's', 'ls'], 'comparator': ['cg', 'l', 'l'], 'csa': ['c', 'l', 'l'], 'shiftleft': ['cg', 'l', 'ln'], 'flop': ['c', 'l', 'l'], 'priorityencoder': ['cg', 'l', 'l']}
     fitDict.update(dict.fromkeys(['mux2', 'mux4', 'mux8'], ['cg', 'l', 'l']))
-    leftblue = [['mux2', 'sky90', 32], ['mux2', 'sky90', 64], ['mux2', 'sky90', 128], ['mux2', 'tsmc28', 16], ['mux2', 'tsmc28', 8], ['mux8', 'sky90', 32]]
+    leftblue = [['mux2', 'sky90', 32], ['mux2', 'sky90', 64], ['mux2', 'sky90', 128], ['mux8', 'sky90', 32], ['mux2', 'tsmc28', 8], ['mux2', 'tsmc28', 64]] 
 
     TechSpec = namedtuple("TechSpec", "tech color shape delay area lpower denergy")
     techSpecs = [['sky90', 'green', 'o', 43.2e-3, 1330.84, 582.81, 520.66],  ['tsmc28', 'blue', '^', 12.2e-3, 209.29, 1060, 81.43]]
@@ -529,12 +556,13 @@ if __name__ == '__main__':
     # squareAreaDelay('sky90', 'add', 32)
     # oneMetricPlot('add', 'delay')
     # freqPlot('sky90', 'mux4', 16)
+    # makeCoefTable()
     
-    for mod in modules:
-        # plotPPA(mod, norm=False)
-        plotPPA(mod, aleOpt=True)
-        plotBestAreas(mod)
-        for w in [8, 16, 32, 64, 128]:
-            freqPlot('sky90', mod, w)
-            freqPlot('tsmc28', mod, w)
+    for mod in ['mux2']: #modules:
+        plotPPA(mod, norm=False)
+        plotPPA(mod) #, aleOpt=True)
+        # plotBestAreas(mod)
+        # for w in [8, 16, 32, 64, 128]:
+        #     freqPlot('sky90', mod, w)
+        #     freqPlot('tsmc28', mod, w)
         plt.close('all')
