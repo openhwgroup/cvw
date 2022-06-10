@@ -107,4 +107,6 @@ pipelined/config/rv64ic_orig
 synthDC/Summary.csv
 pipelined/srt/exptestgen
 pipelined/srt/testgen
-pipelined/srt/qst2
+pipelined/srt/qslc_r4a2
+pipelined/srt/qslc_r4a2.sv
+pipelined/srt/testvectors
