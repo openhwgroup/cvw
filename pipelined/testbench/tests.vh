@@ -36,13 +36,10 @@ string tvpaths[] = '{
     "../../addins/riscv-arch-test/work/",
     "../../tests/wally-riscv-arch-test/work/",
     "../../tests/imperas-riscv-tests/work/",
-    "../../benchmarks/riscv-coremark/work/",
+    "../../benchmarks/coremark/work/",
     "../../addins/embench-iot/bd_speed/src/"
 };
 
-
-
-   // *** make sure these are somewhere
   string coremark[] = '{
     `COREMARK,
     "coremark.bare.riscv"
