@@ -68,7 +68,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   output logic                BusStall,
   output logic                BusCommittedM);
   
-  localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
+  localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 1;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
   logic [LOGWPL-1:0]   WordCountDelayed;
 
