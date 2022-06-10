@@ -66,10 +66,10 @@
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
-`define DCACHE_LINELENINBITS 256
+`define DCACHE_LINELENINBITS 512
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
-`define ICACHE_LINELENINBITS 256
+`define ICACHE_LINELENINBITS 512
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
