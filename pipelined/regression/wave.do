@@ -6,7 +6,7 @@ add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/BPPredWrongE
-add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/CSRWritePendingDEM
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/CSRWriteFencePendingDEM
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/LoadStallD
