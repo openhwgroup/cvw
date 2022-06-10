@@ -59,7 +59,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   
   swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(ByteMask));
 
-  assign initTrans = HREADY & HSELRam & (HTRANS[1]]); 
+  assign initTrans = HREADY & HSELRam & (HTRANS[1]); 
   assign memwrite = initTrans & HWRITE;  // *** why is initTrans needed?  See CLINT interface
   assign memread = initTrans & ~HWRITE;
  
