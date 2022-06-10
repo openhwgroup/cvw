@@ -145,7 +145,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
-  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~WordCountFlag) ? 2'b10 : 2'b00; 
+  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~WordCountFlag | ~CACHE_ENABLED) ? 2'b10 : 2'b00; 
 
   assign CntReset = BusCurrState == STATE_BUS_READY;
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
