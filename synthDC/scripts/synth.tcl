@@ -74,6 +74,9 @@ if { $saifpower == 1 } {
 if {$drive != "INV"} {
     set_false_path -from [get_ports reset]
 }
+if {(($::env(DESIGN) == "ppa_mux2_1") || ($::env(DESIGN) == "ppa_mux4_1") || ($::env(DESIGN) == "ppa_mux8_1"))} {
+    set_false_path -from {s}
+}
 
 # Set Frequency in [MHz] or period in [ns]
 set my_clock_pin clk
