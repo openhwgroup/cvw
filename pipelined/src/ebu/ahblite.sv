@@ -115,11 +115,11 @@ module ahblite (
             else if (LSUBusWrite)                         NextBusState = MEMWRITE;
             else if (IFUBusRead)                          NextBusState = INSTRREAD;
             else                                          NextBusState = IDLE;
-      MEMREAD: if (LSUTransComplete & IFUBusRead)        NextBusState = INSTRREAD;
+      MEMREAD: if (LSUTransComplete & IFUBusRead)         NextBusState = INSTRREAD;
                else if (LSUTransComplete)                 NextBusState = IDLE;
                else                                       NextBusState = MEMREAD;
       MEMWRITE: if (LSUTransComplete & IFUBusRead)        NextBusState = INSTRREAD;
-                else if (LSUTransComplete)                NextBusState = IDLE;
+                else if (LSUTransComplete)                     NextBusState = IDLE;// Ram cannot handle a read after a write, Do not send one.
                 else                                      NextBusState = MEMWRITE;
       INSTRREAD: if (IFUTransComplete & LSUBusRead)       NextBusState = MEMREAD;
                  else if (IFUTransComplete & LSUBusWrite) NextBusState = MEMWRITE;
@@ -155,7 +155,7 @@ module ahblite (
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // delay write data by one cycle for
-  flopen #(`XLEN) wdreg(HCLK, (IFUBusAck | LSUBusAck | IFUBusInit | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
@@ -167,8 +167,8 @@ module ahblite (
  
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
-  assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
-  assign LSUBusInit = ((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState == IDLE) & (NextBusState == MEMWRITE);
+  assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD) & HREADY;
+  assign LSUBusInit = (((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState == IDLE) & (NextBusState == MEMWRITE)) & HREADY;
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);
   assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
 
