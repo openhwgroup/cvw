@@ -53,18 +53,18 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   logic [31:0]        HADDRD, RamAddr;
   //logic				  prevHREADYRam, risingHREADYRam;
   logic				  initTrans;
-  logic				  memwrite, memwriteD;
+  logic				  memwrite, memwriteD, memread;
   logic         nextHREADYRam;
   //logic [3:0] 		  busycount;
   
   swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(ByteMask));
 
-  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00); // *** add burst support, or disable on busy
-  assign memwrite = initTrans & HWRITE;
-
-  // *** this seems like a weird way to use reset
-  flopen #(1) memwritereg(HCLK, initTrans | ~HRESETn, memwrite, memwriteD); // probably drop ~HRESETn in all this
-  flopen #(32)   haddrreg(HCLK, initTrans | ~HRESETn, HADDR, HADDRD);
+  assign initTrans = HREADY & HSELRam & (HTRANS[1]); 
+  assign memwrite = initTrans & HWRITE;  // *** why is initTrans needed?  See CLINT interface
+  assign memread = initTrans & ~HWRITE;
+ 
+  flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
+  flopenr #(32)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
 
 /*  // busy FSM to extend READY signal
   always @(posedge HCLK, negedge HRESETn) 
@@ -85,7 +85,9 @@ module ram #(parameter BASE=0, RANGE = 65535) (
     end */
 
 
-  assign nextHREADYRam = ~(memwriteD & ~memwrite);
+  // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
+  assign nextHREADYRam = ~(memwriteD & memread);
+// assign nextHREADYRam = ~(memwriteD & ~memwrite);
   flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
 //  assign HREADYRam = ~(memwriteD & ~memwrite);
   assign HRESPRam = 0; // OK
@@ -109,8 +111,8 @@ module ram #(parameter BASE=0, RANGE = 65535) (
 
     
 
-  // On writes, use address delayed by one cycle to sync with HWDATA
-  mux2 #(32) adrmux(HADDR, HADDRD, memwriteD, RamAddr);
+  // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
+  mux2 #(32) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
   bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
