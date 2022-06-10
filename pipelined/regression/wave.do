@@ -6,7 +6,7 @@ add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/BPPredWrongE
-add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/CSRWritePendingDEM
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/CSRWriteFencePendingDEM
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/LoadStallD
@@ -468,7 +468,7 @@ add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
-add wave -noupdate -group ifu -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState
+add wave -noupdate -group ifu -color Gold /testbench/dut/core/ifu/bus/busdp/busfsm/BusCurrState
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusRead
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusAdr
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUBusAck
