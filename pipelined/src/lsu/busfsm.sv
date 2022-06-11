@@ -164,7 +164,9 @@ module busfsm #(parameter integer   WordCountThreshold,
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign LSUBusRead = UnCachedLSUBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
 
-  assign UnCachedRW = UnCachedLSUBusWrite | UnCachedLSUBusRead;
+
+  // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because CacheableM is 0 when flushing cache.
+  assign UnCachedRW = UnCachedLSUBusWrite | UnCachedLSUBusRead; 
 
   assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LSUBusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LSUBusAck);
