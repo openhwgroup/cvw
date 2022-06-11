@@ -119,7 +119,7 @@ module ahblite (
                else if (LSUTransComplete)                 NextBusState = IDLE;
                else                                       NextBusState = MEMREAD;
       MEMWRITE: if (LSUTransComplete & IFUBusRead)        NextBusState = INSTRREAD;
-                else if (LSUTransComplete)                     NextBusState = IDLE;// Ram cannot handle a read after a write, Do not send one.
+                else if (LSUTransComplete)                NextBusState = IDLE;
                 else                                      NextBusState = MEMWRITE;
       INSTRREAD: if (IFUTransComplete & LSUBusRead)       NextBusState = MEMREAD;
                  else if (IFUTransComplete & LSUBusWrite) NextBusState = MEMWRITE;
