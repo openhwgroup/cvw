@@ -80,7 +80,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
-
+  // Used to send address for address stage of AHB.
   flopenr #(LOGWPL) 
   WordCountReg(.clk(clk),
 		.reset(reset | CntReset),
@@ -88,6 +88,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 		.d(NextWordCount),
 		.q(WordCount));  
   
+  // Used to store data from data phase of AHB.
   flopenr #(LOGWPL) 
   WordCountDelayedReg(.clk(clk),
 		.reset(reset | CntReset),
@@ -98,8 +99,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign NextWordCount = WordCount + 1'b1;
 
   assign PreCntEn = (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_WRITE);
-  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = (PreCntEn & LSUBusAck | (LSUBusInit)) & ~WordCountFlag & ~UnCachedRW;
+  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]); // Detect when we are waiting on the final access.
+  assign CntEn = (PreCntEn & LSUBusAck | (LSUBusInit)) & ~WordCountFlag & ~UnCachedRW; // Want to count when doing cache accesses and we aren't wrapping up.
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
 
@@ -145,9 +146,11 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
-  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~WordCountFlag | ~CACHE_ENABLED) ? 2'b10 : 2'b00; 
-
-  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine) | (WordCountFlag & LSUBusAck);
+  // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
+  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? 2'b10 : 2'b00; 
+  // Reset if we aren't initiating a transaction or if we are finishing a transaction.
+  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine) | LSUTransComplete; 
+  
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
