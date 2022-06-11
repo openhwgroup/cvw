@@ -99,7 +99,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   assign PreCntEn = (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_WRITE);
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = (PreCntEn & LSUBusAck | (LSUBusInit)) & ~WordCountFlag;
+  assign CntEn = (PreCntEn & LSUBusAck | (LSUBusInit)) & ~WordCountFlag & ~UnCachedRW;
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
 
