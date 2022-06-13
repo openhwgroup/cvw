@@ -136,7 +136,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   always_comb begin
     case(WordCountThreshold)
-      1:        LocalBurstType = 3'b000;
+      0:        LocalBurstType = 3'b000;
       3:        LocalBurstType = 3'b011; // INCR4
       7:        LocalBurstType = 3'b101; // INCR8
       15:       LocalBurstType = 3'b111; // INCR16
@@ -144,6 +144,7 @@ module busfsm #(parameter integer   WordCountThreshold,
     endcase
   end
 
+  // Would these be better as always_comb statements or muxes?
   assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
