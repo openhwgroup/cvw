@@ -67,7 +67,7 @@ void portable_free(void *p) {
 #endif
 /* Porting: Timing functions
 	How to capture time and convert to seconds must be ported to whatever is supported by the platform.
-	e.g. Read value from on board RTC, read value from cpu clock cycles performance counter etc.
+	e.g. Read value from on board RTC, read value from cpu clock cycles performance counter etc. 
 	Sample implementation for standard time.h and windows.h definitions included.
 */
 /* Define: TIMER_RES_DIVIDER
@@ -79,7 +79,7 @@ void portable_free(void *p) {
 #if USE_CLOCK
 	#define NSECS_PER_SEC CLOCKS_PER_SEC
 	#define EE_TIMER_TICKER_RATE 1000
-	#define CORETIMETYPE clock_t
+	#define CORETIMETYPE clock_t 
 	#define GETMYTIME(_t) (*_t=clock())
 	#define MYTIMEDIFF(fin,ini) ((fin)-(ini))
 	#define TIMER_RES_DIVIDER 1
@@ -98,7 +98,7 @@ void portable_free(void *p) {
 #elif HAS_TIME_H
 	#define NSECS_PER_SEC 1000000000
 	#define EE_TIMER_TICKER_RATE 1000
-	#define CORETIMETYPE struct timespec
+	#define CORETIMETYPE struct timespec 
 	#define GETMYTIME(_t) clock_gettime(CLOCK_REALTIME,_t)
 	#define MYTIMEDIFF(fin,ini) ((fin.tv_sec-ini.tv_sec)*(NSECS_PER_SEC/TIMER_RES_DIVIDER)+(fin.tv_nsec-ini.tv_nsec)/TIMER_RES_DIVIDER)
 	/* setting to 1/1000 of a second resolution by default with linux */
@@ -107,58 +107,22 @@ void portable_free(void *p) {
 	#endif
 	#define SAMPLE_TIME_IMPLEMENTATION 1
 #else
-    // Defined for RISCV
-    #define NSECS_PER_SEC 1000000000 // TODO: What freq are we assuming?
-	#define EE_TIMER_TICKER_RATE 1000 // TODO: What is this?
-	#define CORETIMETYPE clock_t
-    #define read_csr(reg) ({ unsigned long __tmp; \
-       asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
-       __tmp; })
-    #define GETMYTIME(_t) (_t = *(volatile unsigned long long*)0x0200BFF8)
-	#define MYTIMEDIFF(fin,ini) ((fin)-(ini))
-	// Changing TIMER_RES_DIVIDER to 1000000 sets EE_TICKS_PER_SEC to 1000 (now counting ticks per ms)
-	#define TIMER_RES_DIVIDER 10000
-	#define SAMPLE_TIME_IMPLEMENTATION 1
+	#define SAMPLE_TIME_IMPLEMENTATION 0
 #endif
 #define EE_TICKS_PER_SEC (NSECS_PER_SEC / TIMER_RES_DIVIDER)
 
 #if SAMPLE_TIME_IMPLEMENTATION
 /** Define Host specific (POSIX), or target specific global time variables. */
 static CORETIMETYPE start_time_val, stop_time_val;
-static unsigned long start_instr_val, stop_instr_val;
-
-/* Function: minstretFunc
-	This function will count the number of instructions.
-*/
-unsigned long minstretFunc(void)
-{
-	unsigned long minstretRead = read_csr(minstret);
-	//ee_printf("Minstret is %lu\n", minstretRead);
-	return minstretRead;
-}
-
-/* Function: minstretDiff
-	This function will take the difference between the first and second reads from the
-	MINSTRET csr to determine the number of machine instructions retired between two points
-	of time
-*/
-unsigned long minstretDiff(void)
-{
-	unsigned long minstretDifference = MYTIMEDIFF(stop_instr_val, start_instr_val);
-	return minstretDifference;
-}
 
 /* Function: start_time
 	This function will be called right before starting the timed portion of the benchmark.
 
-	Implementation may be capturing a system timer (as implemented in the example code)
+	Implementation may be capturing a system timer (as implemented in the example code) 
 	or zeroing some system parameters - e.g. setting the cpu clocks cycles to 0.
 */
 void start_time(void) {
-	start_instr_val = minstretFunc();
-	GETMYTIME(start_time_val);
-	//ee_printf("Timer started\n");
-	//ee_printf("  MTIME: %u\n", start_time_val);
+	GETMYTIME(&start_time_val );      
 #if CALLGRIND_RUN
 	CALLGRIND_START_INSTRUMENTATION
 #endif
@@ -169,37 +133,29 @@ void start_time(void) {
 /* Function: stop_time
 	This function will be called right after ending the timed portion of the benchmark.
 
-	Implementation may be capturing a system timer (as implemented in the example code)
+	Implementation may be capturing a system timer (as implemented in the example code) 
 	or other system parameters - e.g. reading the current value of cpu cycles counter.
 */
 void stop_time(void) {
 #if CALLGRIND_RUN
-	 CALLGRIND_STOP_INSTRUMENTATION
+	 CALLGRIND_STOP_INSTRUMENTATION 
 #endif
 #if MICA
     asm volatile("int3");/*1 */
 #endif
-	GETMYTIME(stop_time_val);
-	stop_instr_val = minstretFunc();
-	//ee_printf("Timer stopped\n");
-	//ee_printf("  MTIME: %u\n", stop_time_val);
+	GETMYTIME(&stop_time_val );      
 }
 /* Function: get_time
 	Return an abstract "ticks" number that signifies time on the system.
-
+	
 	Actual value returned may be cpu cycles, milliseconds or any other value,
 	as long as it can be converted to seconds by <time_in_secs>.
 	This methodology is taken to accomodate any hardware or simulated platform.
-	The sample implementation returns millisecs by default,
+	The sample implementation returns millisecs by default, 
 	and the resolution is controlled by <TIMER_RES_DIVIDER>
 */
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
-	unsigned long instructions = minstretDiff();
-	ee_printf("   Called get_time\n");
-	ee_printf("    Elapsed MTIME: %u\n", elapsed);
-	ee_printf("    Elapsed MINSTRET: %lu\n", instructions);
-	ee_printf("    CPI: %lu / %lu\n", elapsed, instructions); 
 	return elapsed;
 }
 /* Function: time_in_secs
@@ -210,21 +166,16 @@ CORE_TICKS get_time(void) {
 */
 secs_ret time_in_secs(CORE_TICKS ticks) {
 	secs_ret retval=((secs_ret)ticks) / (secs_ret)EE_TICKS_PER_SEC;
-	float retvalint = (float) retval;
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %f\n", retvalint);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retval);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %f\n", retval);
-	return retvalint;
+	return retval;
 }
-#else
+#else 
 #error "Please implement timing functionality in core_portme.c"
 #endif /* SAMPLE_TIME_IMPLEMENTATION */
 
-ee_u32 default_num_contexts = MULTITHREAD;
+ee_u32 default_num_contexts=MULTITHREAD;
 
 /* Function: portable_init
-	Target specific initialization code
+	Target specific initialization code 
 	Test for some common mistakes.
 */
 void portable_init(core_portable *p, int *argc, char *argv[])
@@ -244,24 +195,26 @@ void portable_init(core_portable *p, int *argc, char *argv[])
 #if (MAIN_HAS_NOARGC && (SEED_METHOD==SEED_ARG))
 	ee_printf("ERROR! Main has no argc, but SEED_METHOD defined to SEED_ARG!\n");
 #endif
-
+	
 #if (MULTITHREAD>1) && (SEED_METHOD==SEED_ARG)
-	int nargs=*argc,i;
-	if ((nargs>1) && (*argv[1]=='M')) {
-		default_num_contexts=parseval(argv[1]+1);
-		if (default_num_contexts>MULTITHREAD)
-			default_num_contexts=MULTITHREAD;
-		/* Shift args since first arg is directed to the portable part and not to coremark main */
-		--nargs;
-		for (i=1; i<nargs; i++)
-			argv[i]=argv[i+1];
-		*argc=nargs;
+	{
+		int nargs=*argc,i;
+		if ((nargs>1) && (*argv[1]=='M')) {
+			default_num_contexts=parseval(argv[1]+1);
+			if (default_num_contexts>MULTITHREAD)
+				default_num_contexts=MULTITHREAD;
+			/* Shift args since first arg is directed to the portable part and not to coremark main */
+			--nargs;
+			for (i=1; i<nargs; i++)
+				argv[i]=argv[i+1];
+			*argc=nargs;
+		}
 	}
 #endif /* sample of potential platform specific init via command line, reset the number of contexts being used if first argument is M<n>*/
 	p->portable_id=1;
 }
 /* Function: portable_fini
-	Target specific final code
+	Target specific final code 
 */
 void portable_fini(core_portable *p)
 {
@@ -272,13 +225,13 @@ void portable_fini(core_portable *p)
 
 /* Function: core_start_parallel
 	Start benchmarking in a parallel context.
-
+	
 	Three implementations are provided, one using pthreads, one using fork and shared mem, and one using fork and sockets.
 	Other implementations using MCAPI or other standards can easily be devised.
 */
 /* Function: core_stop_parallel
 	Stop a parallel context execution of coremark, and gather the results.
-
+	
 	Three implementations are provided, one using pthreads, one using fork and shared mem, and one using fork and sockets.
 	Other implementations using MCAPI or other standards can easily be devised.
 */
@@ -328,7 +281,7 @@ ee_u8 core_stop_parallel(core_results *res) {
 	if (res->port.shm == (char *) -1) {
 		ee_printf("ERROR in parent shmat!\n");
 		return 0;
-	}
+	} 
 	memcpy(&(res->crc),res->port.shm,8);
 	shmdt(res->port.shm);
 	return 1;
@@ -354,7 +307,7 @@ ee_u8 core_start_parallel(core_results *res) {
 			close(res->port.sock); /* close the socket */
 		}
 		exit(0);
-	}
+	} 
 	/* parent process, open the socket */
 	res->port.sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
 	bound = bind(res->port.sock,(struct sockaddr*)&(res->port.sa), sizeof(struct sockaddr));

@@ -36,7 +36,7 @@ string tvpaths[] = '{
     "../../addins/riscv-arch-test/work/",
     "../../tests/wally-riscv-arch-test/work/",
     "../../tests/imperas-riscv-tests/work/",
-    "../../benchmarks/coremark/work/",
+    "../../benchmarks/riscv-coremark/work/",
     "../../addins/embench-iot/bd_speed/src/"
 };
 
