@@ -67,6 +67,7 @@ add wave -hex /testbench/dut/core/ebu/HTRANS
 add wave -hex /testbench/dut/core/ebu/HRDATA
 add wave -hex /testbench/dut/core/ebu/HWRITE
 add wave -hex /testbench/dut/core/ebu/HWDATA
+add wave -hex /testbench/dut/core/ebu/HBURST
 add wave -hex /testbench/dut/core/ebu/CaptureDataM
 add wave -divider
 
