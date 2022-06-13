@@ -10,6 +10,10 @@ __pycache__/
 addins
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
+addins/coremark/work/*
+addins/embench/bd_speed/*
+addins/embench/bd_size/*
+benchmarks/embench/Wally*.json
 
 #vsim work files to ignore
 transcript

@@ -16,7 +16,7 @@
 	url = https://github.com/google/riscv-dv
 [submodule "addins/embench-iot"]
 	path = addins/embench-iot
-	url = https://github.com/DTowersM/embench-iot
+	url = https://github.com/embench/embench-iot
 [submodule "addins/coremark"]
 	path = addins/coremark
 	url = https://github.com/eembc/coremark
