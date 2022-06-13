@@ -13,7 +13,7 @@ addins/riscv-tests/target
 addins/coremark/work/*
 addins/embench/bd_speed/*
 addins/embench/bd_size/*
-benchmarks/embench/Wally*.json
+benchmarks/embench/wally*.json
 
 #vsim work files to ignore
 transcript
