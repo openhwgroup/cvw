@@ -41,7 +41,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic               DCacheFetchLine,
    input logic               DCacheWriteLine,
    input logic               LSUBusAck,
-   input logic               LSUBusInit,
+   input logic               LSUBusInit, // This might be better as LSUBusLock, or to send this using LSUBusAck.
    input logic               CPUBusy,
    input logic               CacheableM,
 
