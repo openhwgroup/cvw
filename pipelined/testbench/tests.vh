@@ -1105,11 +1105,11 @@ string imperas32f[] = '{
     // "rv64i_m/D/d_fdiv_b20-01", // looks like flags
     // "rv64i_m/D/d_fdiv_b2-01", // also flags
     // "rv64i_m/D/d_fdiv_b21-01", // positive NaNs again
-    "rv64i_m/D/d_fdiv_b3-01",
+    // "rv64i_m/D/d_fdiv_b3-01",
     // "rv64i_m/D/d_fdiv_b4-01", // flags
-    "rv64i_m/D/d_fdiv_b5-01",
+    // "rv64i_m/D/d_fdiv_b5-01",
     // "rv64i_m/D/d_fdiv_b6-01", // flags
-    "rv64i_m/D/d_fdiv_b7-01",
+    // "rv64i_m/D/d_fdiv_b7-01",
     // "rv64i_m/D/d_fdiv_b8-01", // flags
     // "rv64i_m/D/d_fdiv_b9-01",  might be a flag too
     "rv64i_m/D/d_feq_b1-01",

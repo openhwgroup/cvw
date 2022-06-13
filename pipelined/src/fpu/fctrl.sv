@@ -10,99 +10,99 @@ module fctrl (
   output logic       IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
   output logic       FRegWriteD,  // FP register write enable
   output logic       FDivStartD,  // Start division or squareroot
-  output logic [1:0] FResultSelD, // select result to be written to fp register
+  output logic [1:0] FResSelD, // select result to be written to fp register
   output logic [2:0] FOpCtrlD,    // chooses which opperation to do - specifics shown at bottom of module and in each unit
-  output logic [1:0] FResSelD,    // select one of the results done in the memory stage
-  output logic [1:0] FIntResSelD, // select the result that will be written to the integer register
+  output logic [1:0] PostProcSelD, 
   output logic [`FMTBITS-1:0] FmtD,        // precision - single-0 double-1
   output logic [2:0] FrmD,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
   output logic       FWriteIntD   // is the result written to the integer register
   );
 
-  `define FCTRLW 13
+  `define FCTRLW 11
   logic [`FCTRLW-1:0] ControlsD;
+  //*** will putting x for don't cares reduce area in synthisis???
   // FPU Instruction Decoder
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
-      ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1;
+      ControlsD = `FCTRLW'b0_0_00_00_000_0_1;
     else case(OpD)
-    // FRegWrite_FWriteInt_FResultSel_FOpCtrl_FResSel_FIntResSel_FDivStart_IllegalFPUInstr
+    // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr
       7'b0000111: case(Funct3D)
-                    3'b010:  ControlsD = `FCTRLW'b1_0_00_000_00_00_0_0; // flw
-                    3'b011:  ControlsD = `FCTRLW'b1_0_00_001_00_00_0_0; // fld
-                    default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                    3'b010:  ControlsD = `FCTRLW'b1_0_10_00_000_0_0; // flw
+                    3'b011:  ControlsD = `FCTRLW'b1_0_10_00_000_0_0; // fld
+                    default: ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
                   endcase
       7'b0100111: case(Funct3D)
-                    3'b010:  ControlsD = `FCTRLW'b0_0_00_010_00_00_0_0; // fsw
-                    3'b011:  ControlsD = `FCTRLW'b0_0_00_011_00_00_0_0; // fsd
-                    default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                    3'b010:  ControlsD = `FCTRLW'b0_0_00_00_000_0_0; // fsw
+                    3'b011:  ControlsD = `FCTRLW'b0_0_00_00_000_0_0; // fsd
+                    default: ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
                   endcase
-      7'b1000011:   ControlsD = `FCTRLW'b1_0_01_000_00_00_0_0; // fmadd
-      7'b1000111:   ControlsD = `FCTRLW'b1_0_01_001_00_00_0_0; // fmsub
-      7'b1001011:   ControlsD = `FCTRLW'b1_0_01_010_00_00_0_0; // fnmsub
-      7'b1001111:   ControlsD = `FCTRLW'b1_0_01_011_00_00_0_0; // fnmadd
+      7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0; // fmadd
+      7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0; // fmsub
+      7'b1001011:   ControlsD = `FCTRLW'b1_0_01_10_010_0_0; // fnmsub
+      7'b1001111:   ControlsD = `FCTRLW'b1_0_01_10_011_0_0; // fnmadd
       7'b1010011: casez(Funct7D)
-                    7'b00000??: ControlsD = `FCTRLW'b1_0_01_110_00_00_0_0; // fadd
-                    7'b00001??: ControlsD = `FCTRLW'b1_0_01_111_00_00_0_0; // fsub
-                    7'b00010??: ControlsD = `FCTRLW'b1_0_01_100_00_00_0_0; // fmul
-                    7'b00011??: ControlsD = `FCTRLW'b1_0_10_000_00_00_1_0; // fdiv
-                    7'b01011??: ControlsD = `FCTRLW'b1_0_10_001_00_00_1_0; // fsqrt
+                    7'b00000??: ControlsD = `FCTRLW'b1_0_01_10_110_0_0; // fadd
+                    7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0; // fsub
+                    7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0; // fmul
+                    7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_000_1_0; // fdiv
+                    7'b01011??: ControlsD = `FCTRLW'b1_0_01_01_001_1_0; // fsqrt
                     7'b00100??: case(Funct3D)
-                                  3'b000:  ControlsD = `FCTRLW'b1_0_11_000_01_00_0_0; // fsgnj
-                                  3'b001:  ControlsD = `FCTRLW'b1_0_11_001_01_00_0_0; // fsgnjn
-                                  3'b010:  ControlsD = `FCTRLW'b1_0_11_010_01_00_0_0; // fsgnjx
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                                  3'b000:  ControlsD = `FCTRLW'b1_0_00_00_000_0_0; // fsgnj
+                                  3'b001:  ControlsD = `FCTRLW'b1_0_00_00_001_0_0; // fsgnjn
+                                  3'b010:  ControlsD = `FCTRLW'b1_0_00_00_010_0_0; // fsgnjx
+                                  default: ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
                                 endcase
                     7'b00101??: case(Funct3D)
-                                  3'b000:  ControlsD = `FCTRLW'b1_0_11_111_10_00_0_0; // fmin
-                                  3'b001:  ControlsD = `FCTRLW'b1_0_11_101_10_00_0_0; // fmax
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                                  3'b000:  ControlsD = `FCTRLW'b1_0_00_00_110_0_0; // fmin
+                                  3'b001:  ControlsD = `FCTRLW'b1_0_00_00_101_0_0; // fmax
+                                  default: ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
                                 endcase
                     7'b10100??: case(Funct3D)
-                                  3'b010:  ControlsD = `FCTRLW'b0_1_11_010_10_00_0_0; // feq
-                                  3'b001:  ControlsD = `FCTRLW'b0_1_11_001_10_00_0_0; // flt
-                                  3'b000:  ControlsD = `FCTRLW'b0_1_11_011_10_00_0_0; // fle
-                                  default: ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                                  3'b010:  ControlsD = `FCTRLW'b0_1_00_00_010_0_0; // feq
+                                  3'b001:  ControlsD = `FCTRLW'b0_1_00_00_001_0_0; // flt
+                                  3'b000:  ControlsD = `FCTRLW'b0_1_00_00_011_0_0; // fle
+                                  default: ControlsD = `FCTRLW'b0_0_00_00_000__0_1; // non-implemented instruction
                                 endcase
-                    7'b11100??: if (Funct3D == 3'b001) ControlsD = `FCTRLW'b0_1_11_000_00_10_0_0; // fclass
-                                else if (Funct3D[1:0] == 2'b00) ControlsD = `FCTRLW'b0_1_11_100_00_01_0_0; // fmv.x.w
-                                else if (Funct3D[1:0] == 2'b01) ControlsD = `FCTRLW'b0_1_11_101_00_01_0_0; // fmv.x.d
-                                else                            ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
-                    7'b1101000: case(Rs2D[1:0])//***reduce resSel
-                                  2'b00:    ControlsD = `FCTRLW'b1_0_11_101_11_00_0_0; // fcvt.s.w   w->s
-                                  2'b01:    ControlsD = `FCTRLW'b1_0_11_100_11_00_0_0; // fcvt.s.wu wu->s
-                                  2'b10:    ControlsD = `FCTRLW'b1_0_11_111_11_00_0_0; // fcvt.s.l   l->s
-                                  2'b11:    ControlsD = `FCTRLW'b1_0_11_110_11_00_0_0; // fcvt.s.lu lu->s
+                    7'b11100??: if (Funct3D == 3'b001)          ControlsD = `FCTRLW'b0_1_10_00_000_0_0; // fclass
+                                else if (Funct3D[1:0] == 2'b00) ControlsD = `FCTRLW'b0_1_11_00_000_0_0; // fmv.x.w   to int reg
+                                else if (Funct3D[1:0] == 2'b01) ControlsD = `FCTRLW'b0_1_11_00_000_0_0; // fmv.x.d   to int reg
+                                else                            ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
+                    7'b1101000: case(Rs2D[1:0])
+                                  2'b00:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0; // fcvt.s.w   w->s
+                                  2'b01:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0; // fcvt.s.wu wu->s
+                                  2'b10:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0; // fcvt.s.l   l->s
+                                  2'b11:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0; // fcvt.s.lu lu->s
                                 endcase
                     7'b1100000: case(Rs2D[1:0])
-                                  2'b00:    ControlsD = `FCTRLW'b0_1_11_001_11_11_0_0; // fcvt.w.s   s->w
-                                  2'b01:    ControlsD = `FCTRLW'b0_1_11_000_11_11_0_0; // fcvt.wu.s  s->wu
-                                  2'b10:    ControlsD = `FCTRLW'b0_1_11_011_11_11_0_0; // fcvt.l.s   s->l
-                                  2'b11:    ControlsD = `FCTRLW'b0_1_11_010_11_11_0_0; // fcvt.lu.s  s->lu
+                                  2'b00:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0; // fcvt.w.s   s->w
+                                  2'b01:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0; // fcvt.wu.s  s->wu
+                                  2'b10:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0; // fcvt.l.s   s->l
+                                  2'b11:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0; // fcvt.lu.s  s->lu
                                 endcase
-                    7'b1111000: ControlsD = `FCTRLW'b1_0_11_000_00_00_0_0; // fmv.w.x
-                    7'b0100000: ControlsD = `FCTRLW'b1_0_11_000_11_00_0_0; // fcvt.s.d
+                    7'b1111000: ControlsD = `FCTRLW'b1_0_00_00_011_0_0; // fmv.w.x   to fp reg
+                    7'b0100000: ControlsD = `FCTRLW'b1_0_01_00_000_0_0; // fcvt.s.d
                     7'b1101001: case(Rs2D[1:0])
-                                  2'b00:    ControlsD = `FCTRLW'b1_0_11_101_11_00_0_0; // fcvt.d.w   w->d
-                                  2'b01:    ControlsD = `FCTRLW'b1_0_11_100_11_00_0_0; // fcvt.d.wu wu->d
-                                  2'b10:    ControlsD = `FCTRLW'b1_0_11_111_11_00_0_0; // fcvt.d.l   l->d
-                                  2'b11:    ControlsD = `FCTRLW'b1_0_11_110_11_00_0_0; // fcvt.d.lu lu->d
+                                  2'b00:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0; // fcvt.d.w   w->d
+                                  2'b01:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0; // fcvt.d.wu wu->d
+                                  2'b10:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0; // fcvt.d.l   l->d
+                                  2'b11:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0; // fcvt.d.lu lu->d
                                 endcase
                     7'b1100001: case(Rs2D[1:0])
-                                  2'b00:    ControlsD = `FCTRLW'b0_1_11_001_11_11_0_0; // fcvt.w.d   d->w
-                                  2'b01:    ControlsD = `FCTRLW'b0_1_11_000_11_11_0_0; // fcvt.wu.d  d->wu
-                                  2'b10:    ControlsD = `FCTRLW'b0_1_11_011_11_11_0_0; // fcvt.l.d   d->l
-                                  2'b11:    ControlsD = `FCTRLW'b0_1_11_010_11_11_0_0; // fcvt.lu.d  d->lu
+                                  2'b00:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0; // fcvt.w.d   d->w
+                                  2'b01:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0; // fcvt.wu.d  d->wu
+                                  2'b10:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0; // fcvt.l.d   d->l
+                                  2'b11:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0; // fcvt.lu.d  d->lu
                                 endcase
-                    7'b1111001: ControlsD = `FCTRLW'b1_0_11_001_00_00_0_0; // fmv.d.x
-                    7'b0100001: ControlsD = `FCTRLW'b1_0_11_001_11_00_0_0; // fcvt.d.s
-                    default:    ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+                    7'b1111001: ControlsD = `FCTRLW'b1_0_00_00_011_0_0; // fmv.d.x   to fp reg
+                    7'b0100001: ControlsD = `FCTRLW'b1_0_01_00_001_0_0; // fcvt.d.s
+                    default:    ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
                   endcase
-      default:      ControlsD = `FCTRLW'b0_0_00_000_00_00_0_1; // non-implemented instruction
+      default:      ControlsD = `FCTRLW'b0_0_00_00_000_0_1; // non-implemented instruction
     endcase
 
   // unswizzle control bits
-  assign {FRegWriteD, FWriteIntD, FResultSelD, FOpCtrlD, FResSelD, FIntResSelD, FDivStartD, IllegalFPUInstrD} = ControlsD;
+  assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, FOpCtrlD, FDivStartD, IllegalFPUInstrD} = ControlsD;
   
   // rounding modes:
   //    000 - round to nearest, ties to even
@@ -121,82 +121,61 @@ module fctrl (
       assign FmtD = 0;
     else if (`FPSIZES == 2)begin
       logic [1:0] FmtTmp;
-      assign FmtTmp = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtTmp = (FResSelD == 2'b10)&~FWriteIntD ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
       assign FmtD = (`FMT == FmtTmp);
     end
     else if (`FPSIZES == 3|`FPSIZES == 4)
-      assign FmtD = (FResultSelD == 2'b00) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtD = (FResSelD == 2'b10)&~FWriteIntD ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
-      // assign FmtD = FResultSelD == 2'b00 ? Funct3D[0] : ((Funct7D[6:3] == 4'b0100)&OpD[4]) | OpD[6:1] == 6'b010000 ? ~Funct7D[0] : Funct7D[0];
-  // FResultSel:
-  //    000 - ReadRes - load
-  //    001 - FMARes  - FMA and multiply
-  //    010 - FAddRes - add and fp to fp
-  //    011 - FDivRes - divide and squareroot
-  //    100 - FRes    - anything that is written to the fp register and is ready in the memory stage
-  //        FResSel:
-  //            00 - SrcA   - move to fp register 
-  //            01 - SgnRes - sign injection
-  //            10 - CmpRes - min/max
-  //            11 - CvtRes - convert to fp
-  
-  // FIntResSel:
-  //    00 - CmpRes   - less than, equal, or less than or equal 
-  //    01 - FSrcX    - move to int register
-  //    10 - ClassRes - classify
-  //    11 - CvtRes   - convert to signed/unsigned int
+//  Final Res Sel:
+//        fp      int
+//  00  other     cmp
+//  01  postproc  cvt
+//  10  store     class
+//  11            mv
 
-  // OpCtrl values: 
-  // div/sqrt
-      //  fdiv  = ???0
-      //  fsqrt = ???1
+//  post processing Sel:
+//  00  cvt
+//  01  div
+//  10  fma
 
-  // cmp		
-      //  fmin = ?111
-      //  fmax = ?101
-      //  feq  = ?010
-      //  flt  = ?001
-      //  fle  = ?011
-      //  {?,  is min or max,   is eq or le,   is lt or le}
+//  Other Sel:
+//    Ctrl signal = {FOpCtrl[2], &FOpctrl[1:0]}
+//        000 - sign            00
+//        001 - negate sign     00
+//        010 - xor sign        00
+//        011 - mv to fp        01
+//        110 - min             10
+//        101 - max             10
 
-  //fma/mult	
-      //  fmadd  = ?000
-      //  fmsub  = ?001
-      //  fnmsub = ?010	-(a*b)+c
-      //  fnmadd = ?011 -(a*b)-c
-      //  fmul   = ?100
-      //	{?, is mul, negate product, negate addend}
-
-  // sgn inj
-      //  fsgnj  = ??00
-      //  fsgnjn = ??01
-      //  fsgnjx = ??10
-
-  // add/sub/cnvt
-      //  fadd      = 0000
-      //  fsub      = 0001
-      //  fcvt.s.d  = 0111
-      //  fcvt.d.s  = 0111
-      //  Fmt controls the output for fp -> fp
-      
-  // convert
-      //  fcvt.w.s  = 0010
-      //  fcvt.wu.s = 0110
-      //  fcvt.s.w  = 0001
-      //  fcvt.s.wu = 0101
-      //  fcvt.l.s  = 1010
-      //  fcvt.lu.s = 1110
-      //  fcvt.s.l  = 1001
-      //  fcvt.s.lu = 1101
-      //  fcvt.w.d  = 0010 
-      //  fcvt.wu.d = 0110
-      //  fcvt.d.w  = 0001
-      //  fcvt.d.wu = 0101
-      //  fcvt.l.d  = 1010
-      //  fcvt.lu.d = 1110
-      //  fcvt.d.l  = 1001
-      //  fcvt.d.lu = 1101
-      //  {long, unsigned, to int, from int}
+//  OpCtrl:
+//    Fma: {not multiply-add?, negate prod?, negate Z?}
+//        000 - fmadd
+//        001 - fmsub
+//        010 - fnmsub
+//        011 - fnmadd
+//        100 - mul
+//        110 - add
+//        111 - sub
+//    Div: 
+//        0 - ???
+//        1 - ???
+//    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
+//    Cvt Fp: output format
+//        10 - to half
+//        00 - to single
+//        01 - to double
+//        11 - to quad
+//    Cmp: {equal?, less than?}
+//        010 - eq
+//        001 - lt
+//        011 - le
+//        110 - min
+//        101 - max
+//    Sgn:
+//        00 - sign
+//        01 - negate sign
+//        10 - xor sign
     
 
 endmodule

@@ -93,10 +93,12 @@ module wallypipelinedcore (
   logic             FWriteIntE;
   logic [`XLEN-1:0]         FWriteDataE;
   logic [`XLEN-1:0]         FIntResM;  
+  logic [`XLEN-1:0]         FCvtIntResW;  
   logic             FDivBusyE;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic             FRegWriteM;
   logic             FPUStallD;
+  logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
 
   // memory management unit signals
@@ -230,6 +232,8 @@ module wallypipelinedcore (
      .CSRReadValW, .ReadDataM, .MDUResultW,
      .RdW, .ReadDataW,
      .InstrValidM, 
+     .FCvtIntResW,
+     .FResSelW,
 
      // hazards
      .StallD, .StallE, .StallM, .StallW,
@@ -390,6 +394,8 @@ module wallypipelinedcore (
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory
          .FIntResM, // data to be written to integer register
+         .FCvtIntResW, // fp -> int conversion result to be stored in int register
+         .FResSelW,   // fpu result selection
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
          .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
          .SetFflagsM        // FPU flags (to privileged unit)
