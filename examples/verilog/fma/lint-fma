@@ -1,0 +1,8 @@
+#!/bin/bash
+# check for warnings in Verilog code
+# The verilator lint tool is faster and better than Modelsim so it is best to run this first.
+export PATH=$PATH:/usr/local/bin/
+verilator=`which verilator`
+
+basepath=$(dirname $0)/..
+$verilator --lint-only --top-module fma16 fma16.v
