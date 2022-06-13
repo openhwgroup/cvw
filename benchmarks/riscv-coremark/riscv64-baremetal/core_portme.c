@@ -210,12 +210,9 @@ CORE_TICKS get_time(void) {
 */
 secs_ret time_in_secs(CORE_TICKS ticks) {
 	secs_ret retval=((secs_ret)ticks) / (secs_ret)EE_TICKS_PER_SEC;
-	float retvalint = (float) retval;
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %f\n", retvalint);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retval);
-	ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %f\n", retval);
-	return retvalint;
+	int retvalint = (int)retval;
+	//ee_printf("RETURN VALUE FROM TIME IN SECS FUNCTION: %d\n", retvalint);
+	return retval;
 }
 #else
 #error "Please implement timing functionality in core_portme.c"
