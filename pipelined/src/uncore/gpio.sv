@@ -91,7 +91,7 @@ module gpio (
       high_ip <= #1 0;
       low_ie <= #1 0;
       low_ip <= #1 0;
-      out_xor <= 1'b 0;
+      out_xor <= #1 0;
     end else begin
       // writes
       if (memwrite)
