@@ -61,6 +61,8 @@ module ieu (
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MDUResultW,
+  input logic [1:0]        FResSelW,
+  input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
@@ -105,8 +107,8 @@ module ieu (
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
-    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE,
-    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW,
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE, .FResSelW,
+    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .ReadDataM, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(

@@ -38,9 +38,13 @@ module ifu (
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
+(* mark_debug = "true" *)	input logic 				IFUBusInit,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
+(* mark_debug = "true" *) output logic [2:0]  IFUBurstType,
+(* mark_debug = "true" *) output logic [1:0]  IFUTransType,
+(* mark_debug = "true" *) output logic        IFUTransComplete,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
@@ -201,8 +205,8 @@ module ifu (
     
     busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
-          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
-          .LSUBusRead(IFUBusRead), .LSUBusSize(), 
+          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .LSUBusWriteCrit(),
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
