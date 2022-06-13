@@ -134,13 +134,16 @@ module wallypipelinedcore (
   logic [`PA_BITS-1:0]         IFUBusAdr;
   logic [`XLEN-1:0]         IFUBusHRDATA;
   logic             IFUBusRead;
-  logic             IFUBusAck;
+  logic             IFUBusAck, IFUBusInit;
+  logic [2:0]       IFUBurstType;
+  logic [1:0]       IFUTransType;
+  logic             IFUTransComplete;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0]         LSUBusAdr;
   logic             LSUBusRead;
   logic             LSUBusWrite;
-  logic             LSUBusAck;
+  logic             LSUBusAck, LSUBusInit;
   logic [`XLEN-1:0]         LSUBusHRDATA;
   logic [`XLEN-1:0]         LSUBusHWDATA;
   
@@ -152,6 +155,9 @@ module wallypipelinedcore (
   logic [4:0]             InstrClassM;
   logic             InstrAccessFaultF;
   logic [2:0]             LSUBusSize;
+  logic [2:0]             LSUBurstType;
+  logic [1:0]             LSUTransType;
+  logic             LSUTransComplete;
   
   logic             DCacheMiss;
   logic             DCacheAccess;
@@ -166,8 +172,8 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, 
     .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
-    .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
-    .IFUBusRead, .IFUStallF,
+    .IFUBusHRDATA, .IFUBusAck, .IFUBusInit, .PCF, .IFUBusAdr,
+    .IFUBusRead, .IFUStallF, .IFUBurstType, .IFUTransType, .IFUTransComplete,
     .ICacheAccess, .ICacheMiss,
 
     // Execute
@@ -247,8 +253,8 @@ module wallypipelinedcore (
   .IEUAdrE, .IEUAdrM, .WriteDataE,
   .ReadDataM, .FlushDCacheM,
   // connected to ahb (all stay the same)
-  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
-  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
+  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
+  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -279,13 +285,22 @@ module wallypipelinedcore (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .IFUBusAdr,
-     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck,
+     .IFUBusAdr, .IFUBusRead, 
+     .IFUBusHRDATA, 
+     .IFUBurstType, 
+     .IFUTransType, 
+     .IFUTransComplete,
+     .IFUBusAck, 
+     .IFUBusInit, 
      // Signals from Data Cache
      .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
      .LSUBusHRDATA,
      .LSUBusSize,
+     .LSUBurstType,
+     .LSUTransType,
+     .LSUTransComplete,
      .LSUBusAck,
+     .LSUBusInit,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,

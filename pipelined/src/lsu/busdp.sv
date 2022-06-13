@@ -40,9 +40,13 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   // bus interface
   input logic [`XLEN-1:0]     LSUBusHRDATA,
   input logic                 LSUBusAck,
+  input logic                 LSUBusInit,
   output logic                LSUBusWrite,
   output logic                LSUBusRead,
-  output logic [2:0]          LSUBusSize, 
+  output logic [2:0]          LSUBusSize,
+  output logic [2:0]          LSUBurstType,
+  output logic [1:0]          LSUTransType, // For AHBLite
+  output logic                LSUTransComplete,
   input logic [2:0]           LSUFunct3M,
   output logic [`PA_BITS-1:0] LSUBusAdr, // ** change name to HADDR to make ahb lite.
   output logic [LOGWPL-1:0]   WordCount,
@@ -66,13 +70,15 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
+  logic [LOGWPL-1:0]   WordCountDelayed;
+
 
   // *** implement flops as an array if feasbile; DCacheBusWriteData might be a problem
   // *** better name than DCacheBusWriteData
   genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
-    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCount);
+    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCountDelayed);
     flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
       .q(DCacheBusWriteData[(index+1)*`XLEN-1:index*`XLEN]));
   end
@@ -83,6 +89,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
     .clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
-		.LSUBusAck, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
-		.DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount);
+		.LSUBusAck, .LSUBusInit, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .LSUBusWriteCrit, .LSUBusRead,
+		.LSUBurstType, .LSUTransType, .LSUTransComplete, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule
