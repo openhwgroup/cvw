@@ -48,7 +48,7 @@ module gpio (
 
   logic [31:0] input0d, input1d, input2d, input3d;
   logic [31:0] input_val, input_en, output_en, output_val;
-  logic [31:0] rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
+  logic [31:0] rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip, out_xor; 
 
   logic initTrans, memwrite;
   logic [7:0] entry, entryd;
@@ -91,6 +91,7 @@ module gpio (
       high_ip <= #1 0;
       low_ie <= #1 0;
       low_ip <= #1 0;
+      out_xor <= 1'b 0;
     end else begin
       // writes
       if (memwrite)
@@ -104,7 +105,7 @@ module gpio (
           8'h20: fall_ie <= #1 Din;
           8'h28: high_ie <= #1 Din;
           8'h30: low_ie  <= #1 Din;
-          8'h40: output_val <= #1 output_val ^ Din; // OUT_XOR
+          8'h40: out_xor <= #1 Din; 
         endcase
         /* verilator lint_on CASEINCOMPLETE */
       // reads
@@ -121,7 +122,7 @@ module gpio (
         8'h2C: Dout <= #1 high_ip;
         8'h30: Dout <= #1 low_ie;
         8'h34: Dout <= #1 low_ip;
-        8'h40: Dout <= #1 0; // OUT_XOR reads as 0
+        8'h40: Dout <= #1 out_xor;
         default: Dout <= #1 0;
       endcase
       // interrupts
@@ -152,7 +153,7 @@ module gpio (
   flop #(32) sync2(HCLK,input1d,input2d);
   flop #(32) sync3(HCLK,input2d,input3d);
   assign input_val = input3d;
-  assign GPIOPinsOut = output_val;
+  assign GPIOPinsOut = output_val ^ out_xor;
   assign GPIOPinsEn = output_en;
 
   assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};
