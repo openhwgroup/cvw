@@ -9,4 +9,4 @@
 # sqrt   - test square ro
 # all    - test everything
 
-vsim -do "do testfloat.do rv64fpquad cmp"
+vsim -do "do testfloat.do rv64fp mul"

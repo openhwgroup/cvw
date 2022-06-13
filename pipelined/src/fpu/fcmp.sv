@@ -2,12 +2,11 @@
 `include "wally-config.vh"
 
 // FOpCtrlE values
-//    111   min
+//    110   min
 //    101   max
 //    010   equal
 //    001   less than
 //    011   less than or equal
-
 
 module fcmp (   
    input logic  [`FMTBITS-1:0]   FmtE,           // precision 1 = double 0 = single
@@ -20,12 +19,13 @@ module fcmp (
    input logic                   XSNaNE, YSNaNE, // is signaling NaN
    input logic  [`FLEN-1:0]      FSrcXE, FSrcYE, // original, non-converted to double, inputs
    output logic                  CmpNVE,         // invalid flag
-   output logic [`FLEN-1:0]      CmpResE         // compare resilt
+   output logic [`FLEN-1:0]      CmpFpResE,         // compare resilt
+   output logic [`XLEN-1:0]      CmpIntResE         // compare resilt
    );
 
    logic LTabs, LT, EQ; // is X < or > or = Y
    logic [`FLEN-1:0] NaNRes;
-   logic BothZeroE, EitherNaNE, EitherSNaNE;
+   logic BothZero, EitherNaN, EitherSNaN;
    
    assign LTabs= {1'b0, XExpE, XManE} < {1'b0, YExpE, YManE}; // unsigned comparison, treating FP as integers
    assign LT = (XSgnE & ~YSgnE) | (XSgnE & YSgnE & ~LTabs & ~EQ) | (~XSgnE & ~YSgnE & LTabs);
@@ -36,9 +36,9 @@ module fcmp (
 //   assign LT = XSgnE^YSgnE ? XSgnE : XExpE==YExpE ? ((XManE<YManE)^XSgnE)&~EQ : (XExpE<YExpE)^XSgnE;
    assign EQ = (FSrcXE == FSrcYE);
 
-   assign BothZeroE = XZeroE&YZeroE;
-   assign EitherNaNE = XNaNE|YNaNE;
-   assign EitherSNaNE = XSNaNE|YSNaNE;
+   assign BothZero = XZeroE&YZeroE;
+   assign EitherNaN = XNaNE|YNaNE;
+   assign EitherSNaN = XSNaNE|YSNaNE;
 
 
    // flags
@@ -47,11 +47,11 @@ module fcmp (
    //    EQ - quiet - sets invalid if signaling NaN input
    always_comb begin
       case (FOpCtrlE[2:0])
-         3'b111: CmpNVE = EitherSNaNE;//min 
-         3'b101: CmpNVE = EitherSNaNE;//max
-         3'b010: CmpNVE = EitherSNaNE;//equal
-         3'b001: CmpNVE = EitherNaNE;//less than
-         3'b011: CmpNVE = EitherNaNE;//less than or equal
+         3'b110: CmpNVE = EitherSNaN;//min 
+         3'b101: CmpNVE = EitherSNaN;//max
+         3'b010: CmpNVE = EitherSNaN;//equal
+         3'b001: CmpNVE = EitherNaN;//less than
+         3'b011: CmpNVE = EitherNaN;//less than or equal
          default: CmpNVE = 1'b0;
       endcase
    end 
@@ -112,16 +112,12 @@ module fcmp (
             endcase
 
  // when one input is a NaN -output the non-NaN
-   always_comb
-      case (FOpCtrlE[2:0])
-         3'b111: CmpResE = XNaNE ? YNaNE ? NaNRes : FSrcYE // Min
-                                 : YNaNE ? FSrcXE : LT ? FSrcXE : FSrcYE;
-         3'b101: CmpResE = XNaNE ? YNaNE ? NaNRes : FSrcYE // Max
-                                 : YNaNE ? FSrcXE : LT ? FSrcYE : FSrcXE;
-         3'b010: CmpResE = {(`FLEN-1)'(0), (EQ|BothZeroE) & ~EitherNaNE}; // Equal
-         3'b001: CmpResE = {(`FLEN-1)'(0), LT & ~BothZeroE & ~EitherNaNE}; // Less than
-         3'b011: CmpResE = {(`FLEN-1)'(0), (LT|EQ|BothZeroE) & ~EitherNaNE}; // Less than or equal
-         default: CmpResE = (`FLEN)'(0);
-      endcase
+   assign CmpFpResE = FOpCtrlE[0] ? XNaNE ? YNaNE ? NaNRes : FSrcYE // Max
+                                          : YNaNE ? FSrcXE : LT ? FSrcYE : FSrcXE : 
+                                    XNaNE ? YNaNE ? NaNRes : FSrcYE // Min
+                                          : YNaNE ? FSrcXE : LT ? FSrcXE : FSrcYE;
+                                    
+
+   assign CmpIntResE = {(`XLEN-1)'(0), (((EQ|BothZero)&FOpCtrlE[1])|(LT&FOpCtrlE[0]&~BothZero))&~EitherNaN};
    
 endmodule

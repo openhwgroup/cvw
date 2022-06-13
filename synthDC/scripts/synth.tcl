@@ -74,7 +74,7 @@ if { $saifpower == 1 } {
 if {$drive != "INV"} {
     set_false_path -from [get_ports reset]
 }
-if {(($::env(DESIGN) == "ppa_mux2_1") || ($::env(DESIGN) == "ppa_mux4_1") || ($::env(DESIGN) == "ppa_mux8_1"))} {
+if {(($::env(DESIGN) == "ppa_mux2d_1") || ($::env(DESIGN) == "ppa_mux4d_1") || ($::env(DESIGN) == "ppa_mux8d_1"))} {
     set_false_path -from {s}
 }
 

@@ -45,6 +45,8 @@ module fpu (
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
   output logic [`XLEN-1:0] FIntResM, // data to be written to integer register
+  output logic [`XLEN-1:0] FCvtIntResW, // data to be written to integer register
+  output logic [1:0]       FResSelW,
   output logic 		   FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
   output logic 		   IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
   output logic [4:0] 	   SetFflagsM        // FPU flags (to privileged unit)
@@ -68,24 +70,24 @@ module fpu (
    logic [`FMTBITS-1:0] FmtD, FmtE, FmtM, FmtW;             // FP precision 0-single 1-double
    logic 		  FDivStartD, FDivStartE;             // Start division or squareroot
    logic 		  FWriteIntD;                         // Write to integer register
+   logic 		  FWriteIntM;                         // Write to integer register
    logic [1:0] 	  FForwardXE, FForwardYE, FForwardZE; // forwarding mux control signals
-   logic [1:0] 	  FResultSelD, FResultSelE;           // Select the result written to FP register
-   logic [1:0] 	  FResultSelM, FResultSelW;           // Select the result written to FP register
-   logic [2:0] 	  FOpCtrlD, FOpCtrlE;       // Select which opperation to do in each component
-   logic [1:0] 	  FResSelD, FResSelE;       // Select one of the results that finish in the memory stage
-   logic [1:0] 	  FIntResSelD, FIntResSelE;           // Select the result written to the integer resister
+   logic [2:0] 	  FOpCtrlD, FOpCtrlE, FOpCtrlM;       // Select which opperation to do in each component
+   logic [1:0] 	  FResSelD, FResSelE, FResSelM;       // Select one of the results that finish in the memory stage
+   logic [1:0] 	  PostProcSelD, PostProcSelE, PostProcSelM; // select result in the post processing unit
    logic [4:0] 	  Adr1E, Adr2E, Adr3E;                // adresses of each input
 
    // regfile signals
    logic [`FLEN-1:0] 	  FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
    logic [`FLEN-1:0] 	  FRD1E, FRD2E, FRD3E;                // Read Data from FP register - execute stage
    logic [`FLEN-1:0] 	  FSrcXE;                             // Input 1 to the various units (after forwarding)
+   logic [`XLEN-1:0] 	  IntSrcXE;                             // Input 1 to the various units (after forwarding)
    logic [`FLEN-1:0] 	  FPreSrcYE, FSrcYE;                  // Input 2 to the various units (after forwarding)
    logic [`FLEN-1:0] 	  FPreSrcZE, FSrcZE;                  // Input 3 to the various units (after forwarding)
 
    // unpacking signals
    logic 		  XSgnE, YSgnE, ZSgnE;                // input's sign - execute stage
-   logic 		  XSgnM, YSgnM;                       // input's sign - memory stage
+   logic 		  XSgnM;                       // input's sign - memory stage
    logic [`NE-1:0] 	  XExpE, YExpE, ZExpE;                // input's exponent - execute stage
    logic [`NE-1:0] 	  ZExpM;                              // input's exponent - memory stage
    logic [`NF:0] 	  XManE, YManE, ZManE;                // input's fraction - execute stage
@@ -95,7 +97,7 @@ module fpu (
    logic 		  XNaNQ, YNaNQ;                       // is the input a NaN - divide
    logic 		  XSNaNE, YSNaNE, ZSNaNE;             // is the input a signaling NaN - execute stage
    logic 		  XSNaNM, YSNaNM, ZSNaNM;             // is the input a signaling NaN - memory stage
-   logic 		  XDenormE, ZDenormE;       // is the input denormalized
+   logic 		  XDenormE, ZDenormE, ZDenormM;       // is the input denormalized
    logic 		  XZeroE, YZeroE, ZZeroE;             // is the input zero - execute stage
    logic 		  XZeroM, YZeroM, ZZeroM;             // is the input zero - memory stage
    logic 		  XZeroQ, YZeroQ;                     // is the input zero - divide
@@ -104,24 +106,43 @@ module fpu (
    logic 		  XInfQ, YInfQ;                       // is the input infinity - divide
    logic 		  XExpMaxE;                           // is the exponent all ones (max value)
    logic 		  FmtQ;
-   logic 		  FOpCtrlQ;     
+   logic 		  FOpCtrlQ;   
+
+   // Fma Signals
+    logic [3*`NF+5:0]	SumE, SumM;                       
+    logic [`NE+1:0]	    ProdExpE, ProdExpM;
+    logic 			    AddendStickyE, AddendStickyM;
+    logic 			    KillProdE, KillProdM;
+    logic 			    InvZE, InvZM;
+    logic 			    NegSumE, NegSumM;
+    logic 			    ZSgnEffE, ZSgnEffM;
+    logic 			    PSgnE, PSgnM;
+    logic [$clog2(3*`NF+7)-1:0]			FmaNormCntE, FmaNormCntM;
+
+   // Cvt Signals
+    logic [`NE:0]           CvtCalcExpE, CvtCalcExpM;    // the calculated expoent
+	 logic [`LOGLGLEN-1:0]   CvtShiftAmtE, CvtShiftAmtM;  // how much to shift by
+    logic                   CvtResDenormUfE, CvtResDenormUfM;// does the result underflow or is denormalized
+    logic                   CvtResSgnE, CvtResSgnM;     // the result's sign
+    logic                   IntZeroE, IntZeroM;      // is the integer zero?
+    logic [`LGLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
    logic [4:0] 	  FDivFlgM;                 // divide/squareroot flags  
-   logic [`FLEN-1:0] 	  FMAResM, FMAResW;                   // FMA/multiply result
-   logic [4:0] 	  FMAFlgM;                   // FMA/multiply result	
    logic [`FLEN-1:0] 	  ReadResW;                           // read result (load instruction)
-   logic [`FLEN-1:0] 	  CvtResE;                   // FP <-> int convert result
-   logic [`XLEN-1:0] CvtIntResE;                   // FP <-> int convert result
-   logic [4:0] 	  CvtFlgE;                   // FP <-> int convert flags //*** trim this	
    logic [`XLEN-1:0] 	  ClassResE;               // classify result
-   logic [`FLEN-1:0] 	  CmpResE;                   // compare result
-   logic 		  CmpNVE;                     // compare invalid flag (Not Valid)     
+   logic [`XLEN-1:0] 	  FIntResE;               // classify result
+   logic [`FLEN-1:0] 	  FpResM, FpResW;               // classify result
+   logic [`FLEN-1:0] 	  PostProcResM;               // classify result
+   logic [4:0] 	  PostProcFlgM;               // classify result
+   logic [`XLEN-1:0] FCvtIntResM; 
+   logic [`FLEN-1:0] 	  CmpFpResE;                   // compare result
+   logic [`XLEN-1:0] 	  CmpIntResE;                   // compare result
+   logic 		           CmpNVE;                     // compare invalid flag (Not Valid)     
    logic [`FLEN-1:0] 	  SgnResE;                   // sign injection result
-   logic [`FLEN-1:0] 	  FResE, FResM, FResW;                // selected result that is ready in the memory stage
-   logic [4:0] 	  FFlgE, FFlgM;                       // selected flag that is ready in the memory stage     
-   logic [`XLEN-1:0] 	  FIntResE;     
+   logic [`FLEN-1:0] 	  PreFpResE, PreFpResM, PreFpResW;                // selected result that is ready in the memory stage
+   logic  	        PreNVE, PreNVM;                       // selected flag that is ready in the memory stage     
    logic [`FLEN-1:0] 	  FPUResultW;                         // final FP result being written to the FP register     
    // other signals
    logic 		  FDivSqrtDoneE;                      // is divide done
@@ -133,10 +154,20 @@ module fpu (
    
    // DECODE STAGE
 
+   //////////////////////////////////////////////////////////////////////////////////////////
+   //          |||||||||||
+   //          |||      |||
+   //          |||       |||
+   //          |||       |||
+   //          |||       |||
+   //          |||      |||
+   //          |||||||||||
+   //////////////////////////////////////////////////////////////////////////////////////////
+
    // calculate FP control signals
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .FRM_REGW, .STATUS_FS,
-      .IllegalFPUInstrD, .FRegWriteD, .FDivStartD, .FResultSelD, .FOpCtrlD, .FResSelD, 
-      .FIntResSelD, .FmtD, .FrmD, .FWriteIntD);
+      .IllegalFPUInstrD, .FRegWriteD, .FDivStartD, .FResSelD, .FOpCtrlD, .PostProcSelD, 
+      .FmtD, .FrmD, .FWriteIntD);
 
    // FP register file
    fregfile fregfile (.clk, .reset, .we4(FRegWriteW),
@@ -150,20 +181,31 @@ module fpu (
    flopenrc #(`FLEN) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
    flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
-   flopenrc #(16+int'(`FMTBITS-1)) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-               {FRegWriteD, FResultSelD, FResSelD, FIntResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD, FDivStartD},
-               {FRegWriteE, FResultSelE, FResSelE, FIntResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, FDivStartE});
+   flopenrc #(13+int'(`FMTBITS)) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD, FDivStartD},
+               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, FDivStartE});
 
    // EXECUTION STAGE
+   
+   //////////////////////////////////////////////////////////////////////////////////////////
+   //          ||||||||||||
+   //          |||
+   //          |||       
+   //          |||||||||
+   //          |||     
+   //          |||      
+   //          ||||||||||||
+   //////////////////////////////////////////////////////////////////////////////////////////
+
    // Hazard unit for FPU  
    //    - determines if any forwarding or stalls are needed
-   fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResultSelM, 
+   fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResSelM, 
                   .FStallD, .FForwardXE, .FForwardYE, .FForwardZE);
 
    // forwarding muxs
-   mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, FResM, FForwardXE, FSrcXE);
-   mux3  #(`FLEN)  fyemux (FRD2E, FPUResultW, FResM, FForwardYE, FPreSrcYE);
-   mux3  #(`FLEN)  fzemux (FRD3E, FPUResultW, FResM, FForwardZE, FPreSrcZE);
+   mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, FpResM, FForwardXE, FSrcXE);
+   mux3  #(`FLEN)  fyemux (FRD2E, FPUResultW, FpResM, FForwardYE, FPreSrcYE);
+   mux3  #(`FLEN)  fzemux (FRD3E, FPUResultW, FpResM, FForwardZE, FPreSrcZE);
 
 
    generate
@@ -178,7 +220,7 @@ module fpu (
    endgenerate
 
 
-   mux2  #(`FLEN)  fyaddmux (FPreSrcYE, BoxedOneE, FOpCtrlE[2]&FOpCtrlE[1]&(FResultSelE==2'b01), FSrcYE); // Force Z to be 0 for multiply instructions
+   mux2  #(`FLEN)  fyaddmux (FPreSrcYE, BoxedOneE, FOpCtrlE[2]&FOpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10), FSrcYE); // Force Z to be 0 for multiply instructions
    
    // Force Z to be 0 for multiply instructions 
    generate
@@ -201,21 +243,12 @@ module fpu (
          .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
          .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE, .XDenormE, .ZDenormE, 
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE);
-
-   // FMA
-   //   - two stage FMA
-   //   - execute stage - multiplication and addend shifting
-   //   - memory stage  - addition and rounding
-   //   - handles FMA and multiply instructions
-   fma fma (.clk, .reset, .FlushM, .StallM, 
-      .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, .XManE, .YManE, .ZManE, 
-      .ZDenormE, .XZeroE, .YZeroE, .ZZeroE,
-      .XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, 
-      .XNaNM, .YNaNM, .ZNaNM, .XZeroM, .YZeroM, .ZZeroM, 
-      .XInfM, .YInfM, .ZInfM, .XSNaNM, .YSNaNM, .ZSNaNM,
-      .FOpCtrlE,
-      .FmtE, .FmtM, .FrmM, 
-      .FMAFlgM, .FMAResM);
+   
+   // fma - does multiply, add, and multiply-add instructions 
+   fma fma (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, 
+            .XManE, .YManE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, 
+            .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .FmaNormCntE, 
+            .ZSgnEffE, .PSgnE, .ProdExpE, .AddendStickyE, .KillProdE); 
 
    // fpdivsqrt using Goldschmidt's iteration
    if(`FLEN == 64) begin 
@@ -245,11 +278,14 @@ module fpu (
 
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
-            .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpResE);
+            .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpFpResE, .CmpIntResE);
    fsgninj fsgninj(.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XSNaNE, .ClassResE);
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, .FWriteIntE, .XZeroE, .XDenormE,
-              .XInfE, .XNaNE, .XSNaNE, .FrmE, .FmtE, .CvtResE, .CvtIntResE, .CvtFlgE);
+
+   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, 
+              .FWriteIntE, .XZeroE, .XDenormE, .FmtE, .CvtCalcExpE, 
+              .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .IntZeroE, 
+              .CvtLzcInE);
 
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
@@ -269,16 +305,16 @@ module fpu (
                              {{`FLEN-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE); // NaN boxing zeroes
    endgenerate
    // select a result that may be written to the FP register
-   mux4  #(`FLEN) FResMux(AlignedSrcAE, SgnResE, CmpResE, CvtResE, FResSelE, FResE);
-   mux4  #(5)  FFlgMux(5'b0, 5'b0, {CmpNVE, 4'b0}, CvtFlgE, FResSelE, FFlgE);
+   mux3  #(`FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {FOpCtrlE[2], &FOpCtrlE[1:0]}, PreFpResE);
+   assign PreNVE = CmpNVE&(FOpCtrlE[2]|FWriteIntE);
 
    // select the result that may be written to the integer register - to IEU
    if (`FLEN>`XLEN) 
-      mux4  #(`XLEN)  IntResMux(CmpResE[`XLEN-1:0], FSrcXE[`XLEN-1:0], ClassResE, 
-                  CvtIntResE, FIntResSelE, FIntResE);
+      assign IntSrcXE = FSrcXE[`XLEN-1:0];
    else 
-      mux4  #(`XLEN)  IntResMux({{`XLEN-`FLEN{CmpResE[`FLEN-1:0]}}, CmpResE}, {{`XLEN-`FLEN{FSrcXE[`FLEN-1:0]}}, FSrcXE}, ClassResE, 
-                  CvtIntResE, FIntResSelE, FIntResE);
+      assign IntSrcXE = {{`XLEN-`FLEN{FSrcXE[`FLEN-1:0]}}, FSrcXE};
+
+   mux3 #(`XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
    // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok
    // *** make sure the fpu matches the chapter diagram
 
@@ -286,32 +322,67 @@ module fpu (
 
    // flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
    flopenrc #(`NF+2) EMFpReg2 (clk, reset, FlushM, ~StallM, {XSgnE,XManE}, {XSgnM,XManM});
-   flopenrc #(`NF+2) EMFpReg3 (clk, reset, FlushM, ~StallM, {YSgnE,YManE}, {YSgnM,YManM});
+   flopenrc #(`NF+1) EMFpReg3 (clk, reset, FlushM, ~StallM, YManE, YManM);
    flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZExpE,ZManE}, {ZExpM,ZManM});
-   flopenrc #(12) EMFpReg5 (clk, reset, FlushM, ~StallM, 
-            {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
-            {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});     
-   flopenrc #(`FLEN) EMRegCmpRes (clk, reset, FlushM, ~StallM, FResE, FResM); 
-   flopenrc #(5)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, FFlgE, FFlgM);      
-   flopenrc #(`XLEN) EMRegSgnRes (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
-   flopenrc #(7+int'(`FMTBITS-1)) EMCtrlReg (clk, reset, FlushM, ~StallM,
-               {FRegWriteE, FResultSelE, FrmE, FmtE},
-               {FRegWriteM, FResultSelM, FrmM, FmtM});
+   flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
+   flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
+   flopenrc #(13) EMFpReg5 (clk, reset, FlushM, ~StallM, 
+            {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
+            {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
+   flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
+   flopenrc #(12+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE},
+               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, FOpCtrlM, FWriteIntM});
+   flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
+   flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
+   flopenrc #($clog2(3*`NF+7)+6) EMRegFma4(clk, reset, FlushM, ~StallM, 
+                           {AddendStickyE, KillProdE, InvZE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
+                           {AddendStickyM, KillProdM, InvZM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
+   flopenrc #(`NE+`LOGLGLEN+`LGLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
+                           {CvtCalcExpE, CvtShiftAmtE, CvtResDenormUfE, CvtResSgnE, IntZeroE, CvtLzcInE},
+                           {CvtCalcExpM, CvtShiftAmtM, CvtResDenormUfM, CvtResSgnM, IntZeroM, CvtLzcInM});
 
    // BEGIN MEMORY STAGE
 
+   //////////////////////////////////////////////////////////////////////////////////////////
+   //          |||         |||
+   //          ||||||   ||||||
+   //          ||| ||| ||| |||
+   //          |||  |||||  |||
+   //          |||   |||   |||
+   //          |||         |||
+   //          |||         |||
+   //////////////////////////////////////////////////////////////////////////////////////////
+
+   postprocess postprocess(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
+                           .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, 
+                           .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, 
+                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, 
+                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, 
+                           .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
+
    // FPU flag selection - to privileged
-   mux4  #(5)  FPUFlgMux (5'b0, FMAFlgM, FDivFlgM, FFlgM, FResultSelM, SetFflagsM);
+   mux2  #(5)  FPUFlgMux ({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+   mux2  #(`FLEN)  FPUResMux (PreFpResM, PostProcResM, FResSelM[0], FpResM);
 
    // M/W pipe registers
-   flopenrc #(`FLEN) MWRegFma(clk, reset, FlushW, ~StallW, FMAResM, FMAResW); 
-   flopenrc #(64) MWRegDiv(clk, reset, FlushW, ~StallW, FDivResM, FDivResW); 
-   flopenrc #(`FLEN) MWRegClass(clk, reset, FlushW, ~StallW, FResM, FResW);
+   flopenrc #(`FLEN) MWRegFp(clk, reset, FlushW, ~StallW, FpResM, FpResW); 
+   flopenrc #(`XLEN) MWRegInt(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
    flopenrc #(4+int'(`FMTBITS-1))  MWCtrlReg(clk, reset, FlushW, ~StallW,
-            {FRegWriteM, FResultSelM, FmtM},
-            {FRegWriteW, FResultSelW, FmtW});
+            {FRegWriteM, FResSelM, FmtM},
+            {FRegWriteW, FResSelW, FmtW});
 
    // BEGIN WRITEBACK STAGE
+
+   //////////////////////////////////////////////////////////////////////////////////////////
+   //         |||           |||
+   //         |||           |||
+   //         |||    |||    |||
+   //         |||   |||||   |||
+   //         |||  ||| |||  |||
+   //          ||||||   ||||||
+   //          |||         |||
+   //////////////////////////////////////////////////////////////////////////////////////////
 
    // put ReadData into NaN-blocking format
    //    - if there are any unsused bits the most significant bits are filled with 1s
@@ -328,6 +399,6 @@ module fpu (
    endgenerate
 
    // select the result to be written to the FP register
-   if(`FLEN>=64)
-   mux4  #(`FLEN)  FPUResultMux (ReadResW, FMAResW, {{`FLEN-64{1'b0}},FDivResW}, FResW, FResultSelW, FPUResultW);
+   mux2  #(`FLEN)  FPUResultMux (FpResW, ReadResW, FResSelW[1], FPUResultW);
+
 endmodule // fpu
