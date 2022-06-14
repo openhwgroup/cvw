@@ -85,7 +85,7 @@ module postprocess(
     logic [3*`NF+8:0]            ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
-    logic                   Overflow, Underflow, Invalid; // flags
+    logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
     logic                   Signed;     // is the opperation with a signed integer?
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
@@ -187,7 +187,7 @@ module postprocess(
 
     flags flags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .InfIn, .XZeroM, .YZeroM, 
                 .XSgnM, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCalcExpM,
-                .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round,
+                .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round, .IntInvalid,
                 .UfLSBRes, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullResExp, .Plus1,
                 .RoundExp, .NegResMSBS, .Invalid, .Overflow, .Underflow, .PostProcFlgM);
 
@@ -195,7 +195,7 @@ module postprocess(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM,
+    resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM, .IntInvalid,
         .IntZeroM, .FrmM, .OutFmt, .AddendStickyM, .KillProdM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegResMSBS,
         .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
