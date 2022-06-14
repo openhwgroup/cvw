@@ -133,7 +133,7 @@ module fcvt (
                 `FMT: NewBiasToFp =  (`NE-1)'(`BIAS);
                 `FMT1: NewBiasToFp = (`NE-1)'(`BIAS1);
                 `FMT2: NewBiasToFp = (`NE-1)'(`BIAS2);
-                default: NewBiasToFp = 1'bx;
+                default: NewBiasToFp = {`NE-1{1'bx}};
             endcase
         assign NewBias = ToInt ? (`NE-1)'(1) : NewBiasToFp; 
 

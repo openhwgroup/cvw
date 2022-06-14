@@ -34,7 +34,8 @@ module flags(
     logic               FmaInvalid; // integer invalid flag
     logic               DivInvalid; // integer invalid flag
     logic               DivByZero;
-    logic [`NE-1:0]     MaxExp;     // the maximum exponent before overflow
+    logic               ResExpGteMax; // is the result greater than or equal to the maximum floating point expoent
+    logic               ShiftGtIntSz; // is the shift greater than the the integer size (use ResExp to account for possible roundning "shift")
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -43,56 +44,51 @@ module flags(
 
 
    if (`FPSIZES == 1) begin
-        assign MaxExp = ToInt&CvtOp ? Int64 ? (`NE)'(65) : (`NE)'(33) : {`NE{1'b1}};
+        assign ResExpGteMax = &FullResExp[`NE-1:0] | FullResExp[`NE];
+        assign ShiftGtIntSz = (|FullResExp[`NE:7]|(FullResExp[6]&~Int64)) | ((|FullResExp[4:0]|(FullResExp[5]&Int64))&((FullResExp[5]&~Int64) | FullResExp[6]&Int64));
 
     end else if (`FPSIZES == 2) begin    
-        assign MaxExp = ToInt&CvtOp ? Int64 ? (`NE)'($unsigned(65)) : (`NE)'($unsigned(33)) :
-                OutFmt ? {`NE{1'b1}} : {{`NE-`NE1{1'b0}}, {`NE1{1'b1}}};
+        assign ResExpGteMax = OutFmt ? &FullResExp[`NE-1:0] | FullResExp[`NE] : &FullResExp[`NE1-1:0] | (|FullResExp[`NE:`NE1]);
 
+        assign ShiftGtIntSz = (|FullResExp[`NE:7]|(FullResExp[6]&~Int64)) | ((|FullResExp[4:0]|(FullResExp[5]&Int64))&((FullResExp[5]&~Int64) | FullResExp[6]&Int64));
     end else if (`FPSIZES == 3) begin
-        logic [`NE-1:0] MaxExpFp;
         always_comb
             case (OutFmt)
-                `FMT:  begin 
-                     MaxExpFp = {`NE{1'b1}};
-                end
-                `FMT1:  begin 
-                     MaxExpFp = {{`NE-`NE1{1'b0}}, {`NE1{1'b1}}};
-                end
-                `FMT2:  begin 
-                     MaxExpFp = {{`NE-`NE2{1'b0}}, {`NE2{1'b1}}};
-                end
-                default:  begin 
-                     MaxExpFp = 1'bx;
-                end
+                `FMT: ResExpGteMax = &FullResExp[`NE-1:0] | FullResExp[`NE];
+                `FMT1: ResExpGteMax = &FullResExp[`NE1-1:0] | (|FullResExp[`NE:`NE1]);
+                `FMT2: ResExpGteMax = &FullResExp[`NE2-1:0] | (|FullResExp[`NE:`NE2]);
+                default: ResExpGteMax = 1'bx;
             endcase
-            assign MaxExp = ToInt&CvtOp ? Int64 ? (`NE)'(65) : (`NE)'(33) : MaxExpFp;
+            assign ShiftGtIntSz = (|FullResExp[`NE:7]|(FullResExp[6]&~Int64)) | ((|FullResExp[4:0]|(FullResExp[5]&Int64))&((FullResExp[5]&~Int64) | FullResExp[6]&Int64));
 
     end else if (`FPSIZES == 4) begin        
-        logic [`NE-1:0] MaxExpFp;
         always_comb
             case (OutFmt)
-                2'h3:  begin 
-                     MaxExpFp = {`Q_NE{1'b1}};
-                end
-                2'h1:  begin 
-                     MaxExpFp = {{`Q_NE-`D_NE{1'b0}}, {`D_NE{1'b1}}};
-                end
-                2'h0:  begin 
-                     MaxExpFp = {{`Q_NE-`S_NE{1'b0}}, {`S_NE{1'b1}}};
-                end
-                2'h2:  begin 
-                     MaxExpFp = {{`Q_NE-`H_NE{1'b0}}, {`H_NE{1'b1}}};
-                end
+                `Q_FMT: ResExpGteMax = &FullResExp[`Q_NE-1:0] | FullResExp[`Q_NE];
+                `D_FMT: ResExpGteMax = &FullResExp[`D_NE-1:0] | (|FullResExp[`Q_NE:`D_NE]);
+                `S_FMT: ResExpGteMax = &FullResExp[`S_NE-1:0] | (|FullResExp[`Q_NE:`S_NE]);
+                `H_FMT: ResExpGteMax = &FullResExp[`H_NE-1:0] | (|FullResExp[`Q_NE:`H_NE]);
             endcase
-            assign MaxExp = ToInt&CvtOp ? Int64 ? (`NE)'(65) : (`NE)'(33) : MaxExpFp;
+            // a left shift of intlen+1 is still in range but any more than that is an overflow
+            //           inital: |      64 0's         |    XLEN     |
+            //                   |      64 0's         |    XLEN     | << 64
+            //                   |      XLEN           |    00000... |
+            // 65 = ...0 0 0 0   0 1 0 0   0 0 0 1
+            //      |     or      | |     or      |
+            // 33 = ...0 0 0 0   0 0 1 0   0 0 0 1
+            //      |     or        | |     or    |
+            // larger or equal if:
+            //      - any of the bits after the most significan 1 is one
+            //      - the most signifcant in 65 or 33 is still a one in the number and
+            //        one of the later bits is one
+            assign ShiftGtIntSz = (|FullResExp[`Q_NE:7]|(FullResExp[6]&~Int64)) | ((|FullResExp[4:0]|(FullResExp[5]&Int64))&((FullResExp[5]&~Int64) | FullResExp[6]&Int64));
     end
 
-    //                 if the result is greater than or equal to the max exponent
-    //                 |                     and the exponent isn't negitive
-    //                 |                     |                   if the input isnt infinity or NaN
-    //                 |                     |                   |            
-    assign Overflow = (FullResExp>={2'b0, MaxExp}) & ~FullResExp[`NE+1]&~(InfIn|NaNIn);
+    //                 if the result is greater than or equal to the max exponent(not taking into account sign)
+    //                 |           and the exponent isn't negitive
+    //                 |           |                   if the input isnt infinity or NaN
+    //                 |           |                   |            
+    assign Overflow = ResExpGteMax & ~FullResExp[`NE+1]&~(InfIn|NaNIn);
 
     // detecting tininess after rounding
     //                  the exponent is negitive
@@ -123,12 +119,12 @@ module flags(
 
     //                  if the input is NaN or infinity
     //                  |           if the integer res overflows (out of range) 
-    //                  |           |         if the input was negitive but ouputing to a unsigned number
-    //                  |           |         |                    the res doesn't round to zero
-    //                  |           |         |                    |               or the res rounds up out of bounds
-    //                  |           |         |                    |                       and the res didn't underflow
-    //                  |           |         |                    |                       |
-    assign IntInvalid = XNaNM|XInfM|Overflow|((XSgnM&~Signed)&(~((CvtCalcExpM[`NE]|(~|CvtCalcExpM))&~Plus1)))|(NegResMSBS[1]^NegResMSBS[0]);
+    //                  |           |                                  if the input was negitive but ouputing to a unsigned number
+    //                  |           |                                  |                    the res doesn't round to zero
+    //                  |           |                                  |                    |               or the res rounds up out of bounds
+    //                  |           |                                  |                    |                       and the res didn't underflow
+    //                  |           |                                  |                    |                       |
+    assign IntInvalid = XNaNM|XInfM|(ShiftGtIntSz&~FullResExp[`NE+1])|((XSgnM&~Signed)&(~((CvtCalcExpM[`NE]|(~|CvtCalcExpM))&~Plus1)))|(NegResMSBS[1]^NegResMSBS[0]);
     //                                                                                                     |
     //                                                                                                     or when the positive res rounds up out of range
     assign SigNaN = (XSNaNM&~(IntToFp&CvtOp)) | (YSNaNM&~CvtOp) | (ZSNaNM&FmaOp);

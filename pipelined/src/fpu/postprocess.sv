@@ -82,7 +82,7 @@ module postprocess(
     logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt;   // normalization shift count
     logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
-    logic [3*`NF+8:0]            ShiftIn;        // is the sum zero
+    logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
     logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
@@ -150,8 +150,8 @@ module postprocess(
                 ShiftIn =  0;//{{`NORMSHIFTSZ-(3*`NF+8){1'b0}}, DivShiftIn};
             end
             default: begin 
-                ShiftAmt = 0; 
-                ShiftIn = 0; 
+                ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
+                ShiftIn = {`NORMSHIFTSZ{1'bx}}; 
             end
         endcase
     

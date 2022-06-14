@@ -98,7 +98,7 @@ module unpackinput (
                 `FMT:  BadNaNBox = 0;
                 `FMT1: BadNaNBox = ~&In[`FLEN-1:`LEN1];
                 `FMT2: BadNaNBox = ~&In[`FLEN-1:`LEN2];
-                default: BadNaNBox = 0;
+                default: BadNaNBox = 1'bx;
             endcase
 
         // extract the sign bit
@@ -107,7 +107,7 @@ module unpackinput (
                 `FMT:  Sgn = In[`FLEN-1];
                 `FMT1: Sgn = In[`LEN1-1];
                 `FMT2: Sgn = In[`LEN2-1];
-                default: Sgn = 0;
+                default: Sgn = 1'bx;
             endcase
 
         // extract the fraction
@@ -116,7 +116,7 @@ module unpackinput (
                 `FMT: Frac = In[`NF-1:0];
                 `FMT1: Frac = {In[`NF1-1:0], (`NF-`NF1)'(0)};
                 `FMT2: Frac = {In[`NF2-1:0], (`NF-`NF2)'(0)};
-                default: Frac = 0;
+                default: Frac = {`NF{1'bx}};
             endcase
 
         // is the exponent non-zero
@@ -125,7 +125,7 @@ module unpackinput (
                 `FMT:  ExpNonZero = |In[`FLEN-2:`NF];     // if input is largest precision (`FLEN - ie quad or double)
                 `FMT1: ExpNonZero = |In[`LEN1-2:`NF1];  // if input is larger precsion (`LEN1 - double or single)
                 `FMT2: ExpNonZero = |In[`LEN2-2:`NF2]; // if input is smallest precsion (`LEN2 - single or half)
-                default: ExpNonZero = 0; 
+                default: ExpNonZero = 1'bx; 
             endcase
             
         // example double to single conversion:
@@ -142,7 +142,7 @@ module unpackinput (
                 `FMT:  Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};
                 `FMT1: Exp = {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
                 `FMT2: Exp = {In[`LEN2-2], {`NE-`NE2{~In[`LEN2-2]}}, In[`LEN2-3:`NF2+1], In[`NF2]|~ExpNonZero}; 
-                default: Exp = 0;
+                default: Exp = {`NE{1'bx}};
             endcase
 
         // is the exponent all 1's
@@ -151,7 +151,7 @@ module unpackinput (
                 `FMT:  ExpMax = &In[`FLEN-2:`NF];
                 `FMT1: ExpMax = &In[`LEN1-2:`NF1];
                 `FMT2: ExpMax = &In[`LEN2-2:`NF2];
-                default: ExpMax = 0;
+                default: ExpMax = 1'bx;
             endcase
 
     end else if (`FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
