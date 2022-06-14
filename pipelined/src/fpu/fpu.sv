@@ -52,12 +52,6 @@ module fpu (
   output logic [4:0] 	   SetFflagsM        // FPU flags (to privileged unit)
   );
 
-   //*** make everything FLEN at some point
-   //*** add the 128 bit support to the if statement when needed
-   //*** make new tests for fp using testfloat that include flag checking and all rounding modes
-   //*** what is the format for 16-bit - finding conflicting info online can't find anything specified in spec
-   //*** only fma/mul and fp <-> int convert flags have been tested. test the others.
-
    // FPU specifics:
    //    - uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
@@ -203,9 +197,9 @@ module fpu (
                   .FStallD, .FForwardXE, .FForwardYE, .FForwardZE);
 
    // forwarding muxs
-   mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, FpResM, FForwardXE, FSrcXE);
-   mux3  #(`FLEN)  fyemux (FRD2E, FPUResultW, FpResM, FForwardYE, FPreSrcYE);
-   mux3  #(`FLEN)  fzemux (FRD3E, FPUResultW, FpResM, FForwardZE, FPreSrcZE);
+   mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, FForwardXE, FSrcXE);
+   mux3  #(`FLEN)  fyemux (FRD2E, FPUResultW, PreFpResM, FForwardYE, FPreSrcYE);
+   mux3  #(`FLEN)  fzemux (FRD3E, FPUResultW, PreFpResM, FForwardZE, FPreSrcZE);
 
 
    generate
