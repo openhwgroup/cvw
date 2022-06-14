@@ -47,7 +47,7 @@ spike_run:
 
 # python wrapper to present results of embench size benchmark
 size: buildsize
-	$(embench_dir)/benchmark_size.py --builddir=bd_size --json-output > wallySize.output
+	$(embench_dir)/benchmark_size.py --builddir=bd_size --json-output > wallySize.json
 
 # python wrapper to present results of embench speed benchmark
 speed:
