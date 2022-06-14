@@ -24,14 +24,13 @@ module flags(
     input logic  [1:0]          NegResMSBS,             // the negitive integer result's most significant bits
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, UfLSBRes, Sticky, UfPlus1, // bits used to determine rounding
-    output logic                Invalid, Overflow, Underflow, // flags used to select the res
+    output logic                IntInvalid, Invalid, Overflow, Underflow, // flags used to select the res
     output logic [4:0]          PostProcFlgM // flags
 );
     logic               SigNaN;     // is an input a signaling NaN
     logic               Inexact;    // inexact flag
     logic               FpInexact;  // floating point inexact flag
     logic               IntInexact; // integer inexact flag
-    logic               IntInvalid; // integer invalid flag
     logic               FmaInvalid; // integer invalid flag
     logic               DivInvalid; // integer invalid flag
     logic               DivByZero;
@@ -112,7 +111,7 @@ module flags(
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
     //                  |                                     |
-    assign IntInexact = ((CvtCalcExpM[`NE]&~XZeroM)|Sticky|Round)&~Invalid;
+    assign IntInexact = ((CvtCalcExpM[`NE]&~XZeroM)|Sticky|Round)&~IntInvalid;
 
     // select the inexact flag to output
     assign Inexact = ToInt ? IntInexact : FpInexact;
@@ -136,14 +135,14 @@ module flags(
     assign FmaInvalid = ((XInfM | YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);
     assign DivInvalid = ((XInfM & YInfM) | (XZeroM & YZeroM))&~Sqrt | (XSgnM&Sqrt);
 
-    assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp) | (IntInvalid&CvtOp&ToInt);
+    assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
 
     assign DivByZero = YZeroM&DivOp;  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags
-    assign PostProcFlgM = {Invalid, DivByZero, Overflow&~(ToInt&CvtOp), Underflow&~(ToInt&CvtOp), Inexact};
+    assign PostProcFlgM = {Invalid|(IntInvalid&CvtOp&ToInt), DivByZero, Overflow&~(ToInt&CvtOp), Underflow&~(ToInt&CvtOp), Inexact};
 
 endmodule
 

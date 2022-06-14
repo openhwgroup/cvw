@@ -25,7 +25,7 @@ module resultselect(
     input logic 		            ZZeroM,
     input logic                     ResSgn,  // the res's sign
     input logic     [`FLEN:0]       RoundAdd,   // how much to add to the res
-    input logic                     Invalid, Overflow,  // flags
+    input logic                     IntInvalid, Invalid, Overflow,  // flags
     input logic CvtResUf,
     input logic     [`NE-1:0]       ResExp,          // Res exponent
     input logic     [`NE+1:0]       FullResExp,          // Res exponent
@@ -276,7 +276,7 @@ module resultselect(
     //          - if rounding and signed opperation and negitive input, output -1
     //          - otherwise output a rounded 0
     //      - otherwise output the normal res (trmined and sign extended if nessisary)
-    assign FCvtIntResM = Invalid ?  OfIntRes :
+    assign FCvtIntResM = IntInvalid ?  OfIntRes :
 			            CvtCalcExpM[`NE] ? XSgnM&Signed&Plus1 ? {{`XLEN{1'b1}}} : {{`XLEN-1{1'b0}}, Plus1} : //CalcExp has to come after invalid ***swap to actual mux at some point??
                         Int64 ? NegRes[`XLEN-1:0] : {{`XLEN-32{NegRes[31]}}, NegRes[31:0]};
 endmodule
