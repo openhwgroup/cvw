@@ -2,7 +2,7 @@
 `define ADD_OPCTRL 3'b110
 `define MUL_OPCTRL 3'b100
 `define SUB_OPCTRL 3'b111
-`define FADD_OPCTRL 3'b000
+`define FMA_OPCTRL 3'b000
 `define DIV_OPCTRL 3'b000
 `define SQRT_OPCTRL 3'b001
 `define LE_OPCTRL 3'b011
@@ -21,11 +21,11 @@
 `define RU  3'b011
 `define RD  3'b010
 `define RNM 3'b100
-`define FMAUNIT 0
+`define FMAUNIT 2
 `define DIVUNIT 1
-`define CVTINTUNIT 2
-`define CVTFPUNIT 3
-`define CMPUNIT 4
+`define CVTINTUNIT 0
+`define CVTFPUNIT 4
+`define CMPUNIT 3
 
 string f16rv32cvtint[] = '{
 	"ui32_to_f16_rne.tv",

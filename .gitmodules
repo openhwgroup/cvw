@@ -17,6 +17,9 @@
 [submodule "addins/embench-iot"]
 	path = addins/embench-iot
 	url = https://github.com/embench/embench-iot
+[submodule "addins/coremark"]
+	path = addins/coremark
+	url = https://github.com/eembc/coremark
 [submodule "addins/sky130_osu_sc_t18"]
 	path = addins/sky130_osu_sc_t18
 	url = https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t18

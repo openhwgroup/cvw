@@ -61,6 +61,8 @@ module datapath (
 (* mark_debug = "true" *)  input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
+  input logic [`XLEN-1:0]  FCvtIntResW,
+  input logic [1:0]        FResSelW,
   output logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MDUResultW, 
@@ -120,14 +122,17 @@ module datapath (
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
   flopen #(`XLEN)   ReadDataWReg(clk, ~StallW, ReadDataM, ReadDataW);
-  mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
 
   // floating point interactions: fcvt, fp stores
   if (`F_SUPPORTED) begin:fpmux
+    logic [`XLEN-1:0] IFCvtResultW;
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
+    mux5  #(`XLEN)    resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
   end else begin:fpmux
     assign IFResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
+    mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
   end
 
   // handle Store Conditional result if atomic extension supported

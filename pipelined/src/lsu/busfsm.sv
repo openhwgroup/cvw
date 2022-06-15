@@ -41,6 +41,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic               DCacheFetchLine,
    input logic               DCacheWriteLine,
    input logic               LSUBusAck,
+   input logic               LSUBusInit, // This might be better as LSUBusLock, or to send this using LSUBusAck.
    input logic               CPUBusy,
    input logic               CacheableM,
 
@@ -48,10 +49,13 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic              LSUBusWrite,
    output logic              LSUBusWriteCrit,
    output logic              LSUBusRead,
+   output logic [2:0]        LSUBurstType,
+   output logic              LSUTransComplete,
+   output logic [1:0]        LSUTransType,
    output logic              DCacheBusAck,
    output logic              BusCommittedM,
    output logic              SelUncachedAdr,
-   output logic [LOGWPL-1:0] WordCount);
+   output logic [LOGWPL-1:0] WordCount, WordCountDelayed);
   
 
   
@@ -61,7 +65,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   logic 			   CntReset;
   logic 			   WordCountFlag;
   logic [LOGWPL-1:0]   NextWordCount;
-  logic 			   UnCachedAccess;
+  logic 			   UnCachedAccess, UnCachedRW;
+  logic [2:0]    LocalBurstType;
   
 
   typedef enum logic [2:0] {STATE_BUS_READY,
@@ -75,18 +80,27 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
-
+  // Used to send address for address stage of AHB.
   flopenr #(LOGWPL) 
   WordCountReg(.clk(clk),
 		.reset(reset | CntReset),
 		.en(CntEn),
 		.d(NextWordCount),
-		.q(WordCount));
+		.q(WordCount));  
+  
+  // Used to store data from data phase of AHB.
+  flopenr #(LOGWPL) 
+  WordCountDelayedReg(.clk(clk),
+		.reset(reset | CntReset),
+		.en(CntEn),
+		.d(WordCount),
+		.q(WordCountDelayed));
 
   assign NextWordCount = WordCount + 1'b1;
 
-  assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0]);
-  assign CntEn = PreCntEn & LSUBusAck;
+  assign PreCntEn = (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_WRITE);
+  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]); // Detect when we are waiting on the final access.
+  assign CntEn = (PreCntEn & LSUBusAck | (LSUBusInit)) & ~WordCountFlag & ~UnCachedRW; // Want to count when doing cache accesses and we aren't wrapping up.
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
 
@@ -120,14 +134,29 @@ module busfsm #(parameter integer   WordCountThreshold,
 	endcase
   end
 
+  always_comb begin
+    case(WordCountThreshold)
+      0:        LocalBurstType = 3'b000;
+      3:        LocalBurstType = 3'b011; // INCR4
+      7:        LocalBurstType = 3'b101; // INCR8
+      15:       LocalBurstType = 3'b111; // INCR16
+      default:  LocalBurstType = 3'b001; // INCR without end.
+    endcase
+  end
 
-  assign CntReset = BusCurrState == STATE_BUS_READY;
+  // Would these be better as always_comb statements or muxes?
+  assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
+  assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
+  // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
+  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? 2'b10 : 2'b00; 
+  // Reset if we aren't initiating a transaction or if we are finishing a transaction.
+  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine) | LSUTransComplete; 
+  
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
-  assign PreCntEn = BusCurrState == STATE_BUS_FETCH | BusCurrState == STATE_BUS_WRITE;
   assign UnCachedLSUBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign LSUBusWrite = UnCachedLSUBusWrite | (BusCurrState == STATE_BUS_WRITE);
@@ -138,6 +167,10 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign UnCachedLSUBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign LSUBusRead = UnCachedLSUBusRead | (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
+
+
+  // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because CacheableM is 0 when flushing cache.
+  assign UnCachedRW = UnCachedLSUBusWrite | UnCachedLSUBusRead; 
 
   assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LSUBusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LSUBusAck);
