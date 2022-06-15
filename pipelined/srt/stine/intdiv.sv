@@ -195,7 +195,7 @@ module divide4 #(parameter WIDTH=64)
    logic [WIDTH:0] 	     Qstar;   
    logic [WIDTH:0] 	     QMstar;
    logic [WIDTH:0] 	     QM2star;   
-   logic [6:0] 		     qtotal;   
+   logic [7:0] 		     qtotal;   
    logic [WIDTH+3:0] 	     SumN, CarryN, SumN2, CarryN2;
    logic [WIDTH+3:0] 	     divi1, divi2, divi1c, divi2c, dive1;
    logic [WIDTH+3:0] 	     mdivi_temp, mdivi;   
@@ -219,9 +219,9 @@ module divide4 #(parameter WIDTH=64)
    mux2 #(WIDTH+4) mx2 ({CarryN2[WIDTH+1:0], 2'h0}, {WIDTH+4{1'b0}}, state0, CarryN);
    mux2 #(WIDTH+4) mx3 ({SumN2[WIDTH+1:0], 2'h0}, dive1, state0, SumN);
    // Simplify QST
-   adder #(7) cpa1 (SumN[WIDTH+3:WIDTH-3], CarryN[WIDTH+3:WIDTH-3], qtotal);   
+   adder #(8) cpa1 (SumN[WIDTH+3:WIDTH-4], CarryN[WIDTH+3:WIDTH-4], qtotal);   
    // q = {+2, +1, -1, -2} else q = 0
-   qst4 pd1 (qtotal[6:0], divi1[WIDTH-1:WIDTH-3], quotient);
+   qst4 pd1 (qtotal[7:1], divi1[WIDTH-1:WIDTH-3], quotient);
    assign ulp = quotient[2]|quotient[3];
    assign zero = ~(quotient[3]|quotient[2]|quotient[1]|quotient[0]);
    // Map to binary encoding
