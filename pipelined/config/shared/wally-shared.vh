@@ -55,20 +55,22 @@
 `define Q_NE 32'd15
 `define Q_NF 32'd112
 `define Q_BIAS 32'd16383
+`define Q_FMT 2'd3
 `define D_LEN 32'd64
 `define D_NE 32'd11
 `define D_NF 32'd52
 `define D_BIAS 32'd1023
-`define D_FMT 32'd1
+`define D_FMT 2'd1
 `define S_LEN 32'd32
 `define S_NE 32'd8
 `define S_NF 32'd23
 `define S_BIAS 32'd127
-`define S_FMT 32'd1
+`define S_FMT 2'd0
 `define H_LEN 32'd16
 `define H_NE 32'd5
 `define H_NF 32'd10
 `define H_BIAS 32'd15
+`define H_FMT 2'd2
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
 `define FLEN (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN)
@@ -90,6 +92,12 @@
 `define NF2   ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NF   : `H_NF)
 `define FMT2  ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? 2'd0    : 2'd2)
 `define BIAS2 ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS : `H_BIAS)
+
+// largest length in IEU/FPU
+`define LGLEN ((`NF<`XLEN) ? `XLEN : `NF)
+`define LOGLGLEN $unsigned($clog2(`LGLEN+1))
+`define NORMSHIFTSZ ((`LGLEN+`NF) > (3*`NF+8) ? (`LGLEN+`NF+1) : (3*`NF+9))
+`define CORRSHIFTSZ ((`LGLEN+`NF) > (3*`NF+8) ? (`LGLEN+`NF+1) : (3*`NF+6))
 
 // Disable spurious Verilator warnings
 

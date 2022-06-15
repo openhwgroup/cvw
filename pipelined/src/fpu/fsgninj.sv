@@ -46,7 +46,7 @@ module fsgninj (
 	//
 	
 	// calculate the result's sign
-	assign ResSgn = SgnOpCodeE[1] ? (XSgnE ^ YSgnE) : (YSgnE ^ SgnOpCodeE[0]);
+	assign ResSgn = (SgnOpCodeE[1] ? XSgnE : SgnOpCodeE[0]) ^ YSgnE;
 	
 	// format final result based on precision
 	//    - uses NaN-blocking format
@@ -64,7 +64,7 @@ module fsgninj (
                 `FMT: SgnResE = {ResSgn, FSrcXE[`FLEN-2:0]};
                 `FMT1: SgnResE = {{`FLEN-`LEN1{1'b1}}, ResSgn, FSrcXE[`LEN1-2:0]};
                 `FMT2: SgnResE = {{`FLEN-`LEN2{1'b1}}, ResSgn, FSrcXE[`LEN2-2:0]};
-                default: SgnResE = 0;
+                default: SgnResE = {`FLEN{1'bx}};
             endcase
 
     else if (`FPSIZES == 4)
