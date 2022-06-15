@@ -98,6 +98,7 @@ module postprocess(
     logic DivOp;
     logic InfIn;
     logic ResSgn;
+    logic RoundSgn;
     logic NaNIn;
     logic UfLSBRes;
     logic Sqrt;
@@ -171,15 +172,16 @@ module postprocess(
     // round to nearest max magnitude
 
     round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM,
-                .InvZM, .ResSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
+                .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
                 .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.FrmM, .PSgnM, .PostProcSelM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
-                          .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, .CvtResSgnM, .ResSgn);
+    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
+                          .FmaOp, .DivOp, .CvtOp, .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, 
+                          .CvtResSgnM, .RoundSgn, .ResSgn);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
