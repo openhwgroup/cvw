@@ -3,7 +3,7 @@ make allclean:
 	make all
 
 make clean:
-	make clean -C ../../addins/riscv-arch-test
+	make clean -C ../../tests/riscof
 	make clean -C ../../tests/wally-riscv-arch-test
 #	make allclean -C ../../tests/imperas-riscv-tests
 
@@ -15,8 +15,8 @@ make all:
 	#make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
 	
 	# Build riscv-arch-test 64 and 32-bit versions
-	make -C ../../addins/riscv-arch-test --jobs
-	make -C ../../addins/riscv-arch-test XLEN=32 --jobs
+	make -C ../../tests/riscof/ --jobs
+	make -C ../../tests/riscof/ XLEN=32 --jobs
 
 	# Build wally-riscv-arch-test
 	make -C ../../tests/wally-riscv-arch-test/ --jobs

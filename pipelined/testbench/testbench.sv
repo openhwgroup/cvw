@@ -51,7 +51,6 @@ module testbench;
 string tests[];
 logic [3:0] dummy;
 
-  string ProgramAddrMapFile, ProgramLabelMapFile;
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
@@ -64,6 +63,9 @@ logic [3:0] dummy;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
   logic [`XLEN-1:0] PCW;
+
+  string ProgramAddrMapFile, ProgramLabelMapFile;
+  integer   	ProgramAddrLabelArray [string];
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
@@ -127,7 +129,7 @@ logic [3:0] dummy;
   end
 
   string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
-  integer outputFilePointer, ProgramLabelMap, ProgramAddrMap;
+  integer outputFilePointer;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic UARTSin, UARTSout;
@@ -193,6 +195,11 @@ logic [3:0] dummy;
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
+      // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
+      ProgramAddrLabelArray = '{ "begin_signature" : 0, 
+	            	                 "tohost" : 0 };
+      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
       reset_ext = 1; # 42; reset_ext = 0;
     end
@@ -217,30 +224,12 @@ logic [3:0] dummy;
         end
       // Termination condition (i.e. we finished running current test) 
       if (DCacheFlushDone) begin
-        // Gets the memory location of begin_signature
-        adrstr = "0";
-        ProgramLabelMap = $fopen(ProgramLabelMapFile, "r");
-        ProgramAddrMap = $fopen(ProgramAddrMapFile, "r");
-        if (ProgramLabelMap & ProgramAddrMap) begin // check we found both files
-          while (!$feof(ProgramLabelMap)) begin
-            string label;
-            integer returncode;
-            returncode = $fgets(label, ProgramLabelMap);
-            returncode = $fgets(adrstr, ProgramAddrMap);
-            if (label == "begin_signature\n") begin
-              if (DEBUG) $display("%s begin_signature adrstr: %s", TEST, adrstr);
-              break;
-            end
-          end
-        end
-        if (adrstr == "0") begin
+        integer begin_signature_addr; 
+        begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+        if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        end
-        $fclose(ProgramLabelMap);
-        $fclose(ProgramAddrMap);
-
-        testadr = ($unsigned(adrstr.atohex()))/(`XLEN/8);
-        testadrNoBase = (adrstr.atohex() - `RAM_BASE)/(`XLEN/8);
+        testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
+        testadrNoBase = (begin_signature_addr - `RAM_BASE)/(`XLEN/8);
         #600; // give time for instructions in pipeline to finish
         if (TEST == "embench") begin
           // Writes contents of begin_signature to .sim.output file
@@ -318,7 +307,6 @@ logic [3:0] dummy;
           end
         end
         // move onto the next test, check to see if we're done
-        // test = test + 2;
         test = test + 1;
         if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
@@ -336,6 +324,9 @@ logic [3:0] dummy;
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            ProgramAddrLabelArray = '{ "begin_signature" : 0, 
+	            	                       "tohost" : 0 };
+            updateProgramAddrLabelArray(.ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile), .ProgramAddrLabelArray(ProgramAddrLabelArray));
             $display("Read memfile %s", memfilename);
             reset_ext = 1; # 47; reset_ext = 0;
         end
@@ -363,7 +354,8 @@ logic [3:0] dummy;
 			     (dut.core.ieu.dp.regf.we3 & 
 			      dut.core.ieu.dp.regf.a3 == 3 & 
 			      dut.core.ieu.dp.regf.wd3 == 1)) |
-          (dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM;
+           ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
+           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
     			.reset(reset),
@@ -523,5 +515,26 @@ module copyShadow
     end
   end
   
-endmodule		      
+endmodule
 
+task automatic updateProgramAddrLabelArray;
+  input string ProgramAddrMapFile, ProgramLabelMapFile;
+  inout  integer ProgramAddrLabelArray [string];
+  // Gets the memory location of begin_signature
+  integer ProgramLabelMapFP, ProgramAddrMapFP;
+  ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
+  ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
+  
+  if (ProgramLabelMapFP & ProgramAddrMapFP) begin // check we found both files
+    while (!$feof(ProgramLabelMapFP)) begin
+      string label, adrstr;
+      integer returncode;
+      returncode = $fscanf(ProgramLabelMapFP, "%s\n", label);
+      returncode = $fscanf(ProgramAddrMapFP, "%s\n", adrstr);
+      if (ProgramAddrLabelArray.exists(label)) 
+        ProgramAddrLabelArray[label] = adrstr.atohex();
+    end
+  end
+  $fclose(ProgramLabelMapFP);
+  $fclose(ProgramAddrMapFP);
+endtask
