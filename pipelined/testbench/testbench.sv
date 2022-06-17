@@ -326,7 +326,7 @@ logic [3:0] dummy;
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             ProgramAddrLabelArray = '{ "begin_signature" : 0, 
 	            	                       "tohost" : 0 };
-            updateProgramAddrLabelArray(.ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile), .ProgramAddrLabelArray(ProgramAddrLabelArray));
+            updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
             reset_ext = 1; # 47; reset_ext = 0;
         end
