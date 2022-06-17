@@ -25,7 +25,7 @@ module fmashiftcalc(
     assign SumZero = ~(|SumM);
 
     // calculate the sum's exponent
-    assign NormSumExp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -({{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, FmaNormCntM} + 1 - (`NE+2)'(`NF+4));
+    assign NormSumExp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -{{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, FmaNormCntM} - 1 + (`NE+2)'(`NF+4);
 
     //convert the sum's exponent into the propper percision
     if (`FPSIZES == 1) begin
@@ -40,7 +40,7 @@ module fmashiftcalc(
                 `FMT: ConvNormSumExp = NormSumExp;
                 `FMT1: ConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|NormSumExp}};
                 `FMT2: ConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|NormSumExp}};
-                default: ConvNormSumExp = `NE+2'bx;
+                default: ConvNormSumExp = {`NE+2{1'bx}};
             endcase
         end
 

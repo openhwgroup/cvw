@@ -52,7 +52,7 @@ module fcmp (
          3'b010: CmpNVE = EitherSNaN;//equal
          3'b001: CmpNVE = EitherNaN;//less than
          3'b011: CmpNVE = EitherNaN;//less than or equal
-         default: CmpNVE = 1'b0;
+         default: CmpNVE = 1'bx;
       endcase
    end 
 
@@ -91,7 +91,7 @@ module fcmp (
                `FMT2:
                   if(`IEEE754) NaNRes = {{`FLEN-`LEN2{1'b1}}, XSgnE, {`NE2{1'b1}}, 1'b1, XManE[`NF-2:`NF-`NF2]};
                   else         NaNRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
-               default:        NaNRes = (`FLEN)'(0);
+               default:        NaNRes = {`FLEN{1'bx}};
             endcase
 
    else if (`FPSIZES == 4)

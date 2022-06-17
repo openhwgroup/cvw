@@ -7,13 +7,16 @@ module resultsign(
     input logic         ZInfM,
     input logic         InfIn,
     input logic         NegSumM,
-    input logic [1:0] PostProcSelM,
+    input logic         FmaOp,
+    input logic         DivOp,
+    input logic         CvtOp,
     input logic [`NE+1:0] SumExp,
     input logic         SumZero,
     input logic         Mult,
     input logic         Round,
     input logic         Sticky,
     input logic         CvtResSgnM,
+    output logic        RoundSgn,
     output logic        ResSgn
 );
 
@@ -40,11 +43,9 @@ module resultsign(
     assign InfSgn = ZInfM ? ZSgnEffM : PSgnM;
     assign FmaResSgn = InfIn ? InfSgn : SumZero ? ZeroSgn : FmaResSgnTmp;
 
-    always_comb
-        case(PostProcSelM)
-            2'b10: ResSgn = FmaResSgn; // fma
-            2'b00: ResSgn = CvtResSgnM; // cvt
-            2'b01: ResSgn = 0; // divide
-            default: ResSgn = 1'bx; 
-        endcase
+    // Sign for rounding calulation
+    assign RoundSgn = (FmaResSgnTmp&FmaOp) | (CvtResSgnM&CvtOp) | (1'b0&DivOp);
+
+    assign ResSgn = (FmaResSgn&FmaOp) | (CvtResSgnM&CvtOp) | (1'b0&DivOp);
+
 endmodule

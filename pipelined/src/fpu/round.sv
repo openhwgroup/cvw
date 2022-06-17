@@ -21,7 +21,7 @@ module round(
     input logic                 ZZeroM,         // is Z zero
     input logic                 InvZM,          // invert Z
     input logic  [`NE+1:0]      SumExp,         // exponent of the normalized sum
-    input logic                 ResSgn,      // the result's sign
+    input logic                 RoundSgn,      // the result's sign
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
     output logic                UfPlus1,  // do you add or subtract on from the result
     output logic [`NE+1:0]      FullResExp,      // ResExp with bits to determine sign and overflow
@@ -230,8 +230,8 @@ module round(
         case (FrmM)
             3'b000: CalcPlus1 = Round & ((Sticky| LSBRes)&~SubBySmallNum);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
-            3'b010: CalcPlus1 = ResSgn & ~(SubBySmallNum & ~Round);//round down
-            3'b011: CalcPlus1 = ~ResSgn & ~(SubBySmallNum & ~Round);//round up
+            3'b010: CalcPlus1 = RoundSgn & ~(SubBySmallNum & ~Round);//round down
+            3'b011: CalcPlus1 = ~RoundSgn & ~(SubBySmallNum & ~Round);//round up
             3'b100: CalcPlus1 = Round & ~SubBySmallNum;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
@@ -239,8 +239,8 @@ module round(
         case (FrmM)
             3'b000: UfCalcPlus1 = UfRound & ((UfSticky| UfLSBRes)&~UfSubBySmallNum);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
-            3'b010: UfCalcPlus1 = ResSgn & ~(UfSubBySmallNum & ~UfRound);//round down
-            3'b011: UfCalcPlus1 = ~ResSgn & ~(UfSubBySmallNum & ~UfRound);//round up
+            3'b010: UfCalcPlus1 = RoundSgn & ~(UfSubBySmallNum & ~UfRound);//round down
+            3'b011: UfCalcPlus1 = ~RoundSgn & ~(UfSubBySmallNum & ~UfRound);//round up
             3'b100: UfCalcPlus1 = UfRound & ~UfSubBySmallNum;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
         endcase
@@ -248,8 +248,8 @@ module round(
         case (FrmM)
             3'b000: CalcMinus1 = 0;//round to nearest even
             3'b001: CalcMinus1 = SubBySmallNum & ~Round;//round to zero
-            3'b010: CalcMinus1 = ~ResSgn & ~Round & SubBySmallNum;//round down
-            3'b011: CalcMinus1 = ResSgn & ~Round & SubBySmallNum;//round up
+            3'b010: CalcMinus1 = ~RoundSgn & ~Round & SubBySmallNum;//round down
+            3'b011: CalcMinus1 = RoundSgn & ~Round & SubBySmallNum;//round up
             3'b100: CalcMinus1 = 0;//round to nearest max magnitude
             default: CalcMinus1 = 1'bx;
         endcase
