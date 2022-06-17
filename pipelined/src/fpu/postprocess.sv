@@ -82,7 +82,7 @@ module postprocess(
     logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt;   // normalization shift count
     logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
-    logic [3*`NF+8:0]            ShiftIn;        // is the sum zero
+    logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
     logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
@@ -98,6 +98,7 @@ module postprocess(
     logic DivOp;
     logic InfIn;
     logic ResSgn;
+    logic RoundSgn;
     logic NaNIn;
     logic UfLSBRes;
     logic Sqrt;
@@ -150,8 +151,8 @@ module postprocess(
                 ShiftIn =  0;//{{`NORMSHIFTSZ-(3*`NF+8){1'b0}}, DivShiftIn};
             end
             default: begin 
-                ShiftAmt = 0; 
-                ShiftIn = 0; 
+                ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
+                ShiftIn = {`NORMSHIFTSZ{1'bx}}; 
             end
         endcase
     
@@ -171,15 +172,16 @@ module postprocess(
     // round to nearest max magnitude
 
     round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM,
-                .InvZM, .ResSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
+                .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
                 .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.FrmM, .PSgnM, .PostProcSelM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
-                          .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, .CvtResSgnM, .ResSgn);
+    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
+                          .FmaOp, .DivOp, .CvtOp, .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, 
+                          .CvtResSgnM, .RoundSgn, .ResSgn);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags

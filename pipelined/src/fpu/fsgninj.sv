@@ -46,7 +46,7 @@ module fsgninj (
 	//
 	
 	// calculate the result's sign
-	assign ResSgn = SgnOpCodeE[1] ? (XSgnE ^ YSgnE) : (YSgnE ^ SgnOpCodeE[0]);
+	assign ResSgn = (SgnOpCodeE[1] ? XSgnE : SgnOpCodeE[0]) ^ YSgnE;
 	
 	// format final result based on precision
 	//    - uses NaN-blocking format
@@ -56,25 +56,30 @@ module fsgninj (
 		assign SgnResE = {ResSgn, FSrcXE[`FLEN-2:0]};
 
     else if (`FPSIZES == 2)
-		assign SgnResE = FmtE ? {ResSgn, FSrcXE[`FLEN-2:0]} : {{`FLEN-`LEN1{1'b1}}, ResSgn, FSrcXE[`LEN1-2:0]};
+		assign SgnResE = {~FmtE|ResSgn, FSrcXE[`FLEN-2:`LEN1], FmtE ? FSrcXE[`LEN1-1] : ResSgn, FSrcXE[`LEN1-2:0]};
 
-    else if (`FPSIZES == 3)
+    else if (`FPSIZES == 3) begin
+		logic [2:0] SgnBits;
         always_comb
             case (FmtE)
-                `FMT: SgnResE = {ResSgn, FSrcXE[`FLEN-2:0]};
-                `FMT1: SgnResE = {{`FLEN-`LEN1{1'b1}}, ResSgn, FSrcXE[`LEN1-2:0]};
-                `FMT2: SgnResE = {{`FLEN-`LEN2{1'b1}}, ResSgn, FSrcXE[`LEN2-2:0]};
-                default: SgnResE = 0;
+                `FMT: SgnBits = {ResSgn, FSrcXE[`LEN1-1], FSrcXE[`LEN2-1]};
+                `FMT1: SgnBits = {1'b1, ResSgn, FSrcXE[`LEN2-1]};
+                `FMT2: SgnBits = {2'b11, ResSgn};
+                default: SgnBits = {3{1'bx}};
             endcase
+		assign SgnResE = {SgnBits[2], FSrcXE[`FLEN-2:`LEN1], SgnBits[1], FSrcXE[`LEN1-2:`LEN2], SgnBits[0], FSrcXE[`LEN2-2:0]};
+        
 
-    else if (`FPSIZES == 4)
+	end else if (`FPSIZES == 4) begin
+		logic [3:0] SgnBits;
         always_comb
             case (FmtE)
-                2'h3: SgnResE = {ResSgn, FSrcXE[`Q_LEN-2:0]};
-                2'h1: SgnResE = {{`Q_LEN-`D_LEN{1'b1}}, ResSgn, FSrcXE[`D_LEN-2:0]};
-                2'h0: SgnResE = {{`Q_LEN-`S_LEN{1'b1}}, ResSgn, FSrcXE[`S_LEN-2:0]};
-                2'h2: SgnResE = {{`Q_LEN-`H_LEN{1'b1}}, ResSgn, FSrcXE[`H_LEN-2:0]};
+                `Q_FMT: SgnBits = {ResSgn, FSrcXE[`D_LEN-1], FSrcXE[`S_LEN-1], FSrcXE[`H_LEN-1]};
+                `D_FMT: SgnBits = {1'b1, ResSgn, FSrcXE[`S_LEN-1], FSrcXE[`H_LEN-1]};
+                `S_FMT: SgnBits = {2'b11, ResSgn, FSrcXE[`H_LEN-1]};
+                `H_FMT: SgnBits = {3'b111, ResSgn};
             endcase
-
+		assign SgnResE = {SgnBits[3], FSrcXE[`Q_LEN-2:`D_LEN], SgnBits[2], FSrcXE[`D_LEN-2:`S_LEN], SgnBits[1], FSrcXE[`S_LEN-2:`H_LEN], SgnBits[0], FSrcXE[`H_LEN-2:0]};
+	end
 
 endmodule
