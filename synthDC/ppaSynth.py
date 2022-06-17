@@ -1,16 +1,13 @@
 #!/usr/bin/python3
-# Madeleine Masser-Frye mmasserfrye@hmc.edu 5/22
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 6/22
 
-from collections import namedtuple
-import csv
 import subprocess
 import re
-from multiprocessing import Pool, cpu_count
+from multiprocessing import Pool
 from ppaAnalyze import synthsfromcsv
 
-
 def runCommand(module, width, tech, freq):
-    command = "make synth DESIGN=ppa_{}_{} TECH={} DRIVE=INV FREQ={} MAXOPT=1".format(module, width, tech, freq)
+    command = "make synth DESIGN=ppa_{}_{} TECH={} DRIVE=INV FREQ={} MAXOPT=1 MAXCORES=1".format(module, width, tech, freq)
     subprocess.Popen(command, shell=True)
 
 def deleteRedundant(LoT):
@@ -20,58 +17,40 @@ def deleteRedundant(LoT):
         bashCommand = synthStr.format(*synth)
         outputCPL = subprocess.check_output(['bash','-c', bashCommand])
 
-def getData(filename):
-    Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
-    with open(filename, newline='') as csvfile:
-        csvreader = csv.reader(csvfile)
-        global allSynths
-        allSynths = list(csvreader)
-        for i in range(len(allSynths)):
-            for j in range(len(allSynths[0])):
-                try: allSynths[i][j] = int(allSynths[i][j])
-                except: 
-                    try: allSynths[i][j] = float(allSynths[i][j])
-                    except: pass
-            allSynths[i] = Synth(*allSynths[i])
+if __name__ == '__main__':
+    
+    LoT = []
+    synthsToRun = []
 
+    ##### Run specific syntheses
+    # widths = [8] 
+    # modules = ['mult', 'add', 'shiftleft', 'flop', 'comparator', 'priorityencoder', 'add', 'csa', 'mux2', 'mux4', 'mux8']
+    # techs = ['sky90']
+    # freqs = [5000]
+    # for w in widths:
+    #     for module in modules:
+    #         for tech in techs:
+    #             for freq in freqs:
+    #                 LoT += [[module, str(w), tech, str(freq)]]
 
-# arr = [-5, -3, -1, 1, 3, 5]
-arr2 = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
+    ##### Run a sweep based on best delay found in existing syntheses
+    arr = [-8, -6, -4, -2, 0, 2, 4, 6, 8]
+    allSynths = synthsfromcsv('bestSynths.csv')
+    for synth in allSynths:
+        f = 1000/synth.delay
+        for freq in [round(f+f*x/100) for x in arr]:
+            LoT += [[synth.module, str(synth.width), synth.tech, str(freq)]]
+        
+    ##### Only do syntheses for which a run doesn't already exist
+    bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
+    output = subprocess.check_output(['bash','-c', bashCommand])
+    specReg = re.compile('[a-zA-Z0-9]+')
+    allSynths = output.decode("utf-8").split('\n')[:-1]
+    allSynths = [specReg.findall(oneSynth)[2:7] for oneSynth in allSynths]
+    allSynths = [oneSynth[0:2] + [oneSynth[3][:-2]] + [oneSynth[4]] for oneSynth in allSynths]
+    for synth in LoT:
+        if (synth not in allSynths):
+            synthsToRun += [synth]
 
-widths = [128] 
-modules = ['mux2', 'mux4', 'mux8', 'shiftleft', 'flop', 'comparator', 'mult', 'priorityencoder', 'add', 'csa']
-techs = ['tsmc28']
-LoT = []
-
-
-allSynths = synthsfromcsv('ppaData.csv')
-
-for w in widths:
-    for module in modules:
-        for tech in techs:
-            m = 100000 # large number to start
-            for oneSynth in allSynths:
-                if (oneSynth.width == w) & (oneSynth.tech == tech) & (oneSynth.module == module):
-                    if (oneSynth.delay < m): 
-                        m = oneSynth.delay
-                        synth = oneSynth
-            # f = 1000/synth.delay
-            for freq in [10]: #[round(f+f*x/100) for x in arr2]:
-                LoT += [[synth.module, str(synth.width), synth.tech, str(freq)]]
-
-
-bashCommand = "find . -path '*runs/ppa*rv32e*' -prune"
-output = subprocess.check_output(['bash','-c', bashCommand])
-specReg = re.compile('[a-zA-Z0-9]+')
-allSynths = output.decode("utf-8").split('\n')[:-1]
-allSynths = [specReg.findall(oneSynth)[2:7] for oneSynth in allSynths]
-allSynths = [oneSynth[0:2] + [oneSynth[3][:-2]] + [oneSynth[4]] for oneSynth in allSynths]
-
-synthsToRun = []
-for synth in LoT:
-    if synth not in allSynths:
-        synthsToRun += [synth]
-
-pool = Pool(processes=25)
-pool.starmap(runCommand, synthsToRun)
-pool.close()
+    pool = Pool(processes=25)
+    pool.starmap(runCommand, synthsToRun)
