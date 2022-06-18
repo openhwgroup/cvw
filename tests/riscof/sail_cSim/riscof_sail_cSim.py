@@ -90,7 +90,7 @@ class sail_cSim(pluginTemplate):
             test_dir = testentry['work_dir']
             test_name = test.rsplit('/',1)[1][:-2]
 
-            elf = 'ref.elf'
+            elf = 'Ref.elf'
 
             execute = "@cd "+testentry['work_dir']+";"
 
@@ -98,8 +98,8 @@ class sail_cSim(pluginTemplate):
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
-            execute += self.objdump_cmd.format(elf, self.xlen, 'ref.elf.objdump')
-            sig_file = os.path.join(test_dir, "ref.signature.output")
+            execute += self.objdump_cmd.format(elf, self.xlen, 'Ref.elf.objdump')
+            sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
             execute += self.sail_exe[self.xlen] + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 

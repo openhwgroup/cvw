@@ -197,8 +197,7 @@ logic [3:0] dummy;
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
-      ProgramAddrLabelArray = '{ "begin_signature" : 0, 
-	            	                 "tohost" : 0 };
+      ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
       reset_ext = 1; # 42; reset_ext = 0;
@@ -251,8 +250,10 @@ logic [3:0] dummy;
           for(i=0; i<SIGNATURESIZE; i=i+1) begin
             sig32[i] = 'bx;
           end
+          // riscof tests have a different signature, tests[0] == "1" refers to RISCVARCHTESTs
+          if (tests[0] == "1") signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
+          else signame = {pathname, tests[test], ".signature.output"};
           // read signature, reformat in 64 bits if necessary
-          signame = {pathname, tests[test], ".signature.output"};
           $readmemh(signame, sig32);
           i = 0;
           while (i < SIGNATURESIZE) begin
@@ -324,8 +325,7 @@ logic [3:0] dummy;
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-            ProgramAddrLabelArray = '{ "begin_signature" : 0, 
-	            	                       "tohost" : 0 };
+            ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
             reset_ext = 1; # 47; reset_ext = 0;
