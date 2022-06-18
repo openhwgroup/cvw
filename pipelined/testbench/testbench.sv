@@ -65,7 +65,7 @@ logic [3:0] dummy;
   logic [`XLEN-1:0] PCW;
 
   string ProgramAddrMapFile, ProgramLabelMapFile;
-  integer   	ProgramAddrLabelArray [string];
+  integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
@@ -197,7 +197,6 @@ logic [3:0] dummy;
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
-      ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
       reset_ext = 1; # 42; reset_ext = 0;
