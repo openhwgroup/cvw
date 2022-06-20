@@ -32,10 +32,11 @@
 
 module subwordread 
   (
-   input logic [`XLEN-1:0] 	ReadDataWordMuxM,
+   input logic [`LLEN-1:0] 	ReadDataWordMuxM,
    input logic [2:0] 		LSUPAdrM,
    input logic [2:0] 		Funct3M,
-   output logic [`XLEN-1:0] ReadDataM
+   input logic          FpLoadM, 
+   output logic [`LLEN-1:0] ReadDataM
    );
 
   logic [7:0] 				ByteM; 
@@ -74,18 +75,31 @@ module subwordread
         1'b1: WordM = ReadDataWordMuxM[63:32];
       endcase
 
-    // sign extension
+    logic [63:0] DblWordM;
+    assign DblWordM = ReadDataWordMuxM[63:0];
+
+    // sign extension/ NaN boxing
     always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{56{ByteM[7]}}, ByteM};                  // lb
-      3'b001:  ReadDataM = {{48{HalfwordM[15]}}, HalfwordM[15:0]};   // lh 
-      3'b010:  ReadDataM = {{32{WordM[31]}}, WordM[31:0]};           // lw
-      3'b011:  ReadDataM = ReadDataWordMuxM;                         // ld
-      3'b100:  ReadDataM = {56'b0, ByteM[7:0]};                      // lbu
-      3'b101:  ReadDataM = {48'b0, HalfwordM[15:0]};                 // lhu
-      3'b110:  ReadDataM = {32'b0, WordM[31:0]};                     // lwu
+      3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
+      3'b001:  if(`ZFH_SUPPORTED) 
+                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadM}}, HalfwordM[15:0]}; // lh/flh
+               else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
+      3'b010:  if(`F_SUPPORTED) 
+                    ReadDataM = {{`LLEN-32{WordM[31]|FpLoadM}}, WordM[31:0]};         // lw/flw
+               else ReadDataM = {{`LLEN-32{WordM[31]}}, WordM[31:0]};                 // lw
+      3'b011:  if(`D_SUPPORTED) 
+                    ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadM}}, DblWordM[63:0]};   // ld/fld
+               else ReadDataM = {{`LLEN-64{DblWordM[63]}}, DblWordM[63:0]};           // ld/fld
+      3'b100:    if(`Q_SUPPORTED) 
+                    ReadDataM = FpLoadM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
+                 else 
+                    ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};    // lbu
+      3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu
+      3'b110:  ReadDataM = {{`LLEN-32{1'b0}}, WordM[31:0]};       // lwu
       default: ReadDataM = ReadDataWordMuxM; // Shouldn't happen
     endcase
+
   end else begin:swrmux // 32-bit
     // byte mux
     always_comb
@@ -105,13 +119,18 @@ module subwordread
 
     // sign extension
     always_comb
-    case(Funct3M) 
-      3'b000:  ReadDataM = {{24{ByteM[7]}}, ByteM};                  // lb
-      3'b001:  ReadDataM = {{16{HalfwordM[15]}}, HalfwordM[15:0]};   // lh 
-      3'b010:  ReadDataM = ReadDataWordMuxM;                                   // lw
-      3'b100:  ReadDataM = {24'b0, ByteM[7:0]};                      // lbu
-      3'b101:  ReadDataM = {16'b0, HalfwordM[15:0]};                 // lhu
-      default: ReadDataM = ReadDataWordMuxM;
+    case(Funct3M)
+      3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
+      3'b001:  if(`ZFH_SUPPORTED) 
+                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadM}}, HalfwordM[15:0]}; // lh/flh
+               else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
+      3'b010:  if(`F_SUPPORTED) 
+                    ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadM}}, ReadDataWordMuxM[31:0]};         // lw/flw
+               else ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]}}, ReadDataWordMuxM[31:0]};                 // lw
+      3'b011:  ReadDataM = ReadDataWordMuxM;                      // fld
+      3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};         // lbu
+      3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu
+      default: ReadDataM = ReadDataWordMuxM; // Shouldn't happen
     endcase
   end
 endmodule

@@ -63,9 +63,9 @@ module datapath (
   input  logic [2:0]       ResultSrcW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   input logic [1:0]        FResSelW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MDUResultW, 
+  input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -121,7 +121,6 @@ module datapath (
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
-  flopen #(`XLEN)   ReadDataWReg(clk, ~StallW, ReadDataM, ReadDataW);
 
   // floating point interactions: fcvt, fp stores
   if (`F_SUPPORTED) begin:fpmux

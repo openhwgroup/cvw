@@ -386,7 +386,7 @@ module riscvassertions;
     assert (`DIV_BITSPERCYCLE == 1 | `DIV_BITSPERCYCLE==2 | `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
+    // assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`FLEN<=`XLEN | `DMEM == `MEM_CACHE) else $error("Wally does not support FLEN > XLEN unleses data cache is supported");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
