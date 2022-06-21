@@ -34,13 +34,14 @@ module fpu (
   input logic 		   reset,
   input logic [2:0] 	   FRM_REGW, // Rounding mode from CSR
   input logic [31:0] 	   InstrD, // instruction from IFU
-  input logic [`XLEN-1:0]  ReadDataW,// Read data from memory
+  input logic [`FLEN-1:0]  ReadDataW,// Read data from memory
   input logic [`XLEN-1:0]  ForwardedSrcAE, // Integer input being processed (from IEU)
   input logic 		   StallE, StallM, StallW, // stall signals from HZU
   input logic 		   FlushE, FlushM, FlushW, // flush signals from HZU
   input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
   input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
+  output logic 		   FpLoadM, // Fp load instruction?
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
@@ -348,6 +349,8 @@ module fpu (
    //          |||         |||
    //////////////////////////////////////////////////////////////////////////////////////////
 
+   assign FpLoadM = FResSelM[1];
+
    postprocess postprocess(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
                            .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, 
                            .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, 
@@ -378,21 +381,7 @@ module fpu (
    //          |||         |||
    //////////////////////////////////////////////////////////////////////////////////////////
 
-   // put ReadData into NaN-blocking format
-   //    - if there are any unsused bits the most significant bits are filled with 1s
-   //    - for load instruction
-   generate
-      if(`FPSIZES == 1) assign ReadResW = {{`FLEN-`XLEN{1'b1}}, ReadDataW};
-      else if(`FPSIZES == 2) 
-         mux2 #(`FLEN) SrcAMux ({{`FLEN-`LEN1{1'b1}}, ReadDataW[`LEN1-1:0]}, {{`FLEN-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW);
-      else if(`FPSIZES == 3 | `FPSIZES == 4)
-         mux4 #(`FLEN) SrcAMux ({{`FLEN-`S_LEN{1'b1}}, ReadDataW[`S_LEN-1:0]}, 
-                              {{`FLEN-`D_LEN{1'b1}}, ReadDataW[`D_LEN-1:0]}, 
-                              {{`FLEN-`H_LEN{1'b1}}, ReadDataW[`H_LEN-1:0]}, 
-                              {{`FLEN-`XLEN{1'b1}}, ReadDataW}, FmtW, ReadResW); // NaN boxing zeroes
-   endgenerate
-
    // select the result to be written to the FP register
-   mux2  #(`FLEN)  FPUResultMux (FpResW, ReadResW, FResSelW[1], FPUResultW);
+   mux2  #(`FLEN)  FPUResultMux (FpResW, ReadDataW, FResSelW[1], FPUResultW);
 
 endmodule // fpu
