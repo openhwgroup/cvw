@@ -1581,6 +1581,7 @@ string wally32i[] = '{
  };
 
  string wally32periph[] = '{
-    `WALLYTEST
+    `WALLYTEST,
+    "rv32i_m/privilege/WALLY-gpio-01"
  };
 

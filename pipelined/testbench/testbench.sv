@@ -117,6 +117,7 @@ logic [3:0] dummy;
         "wally32i":                       tests = wally32i; 
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv;
+        "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
       endcase
     end
