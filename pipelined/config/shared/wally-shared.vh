@@ -95,6 +95,7 @@
 
 // largest length in IEU/FPU
 `define LGLEN ((`NF<`XLEN) ? `XLEN : `NF)
+`define LLEN ((`FLEN<`XLEN) ? `XLEN : `FLEN)
 `define LOGLGLEN $unsigned($clog2(`LGLEN+1))
 `define NORMSHIFTSZ ((`LGLEN+`NF) > (3*`NF+8) ? (`LGLEN+`NF+1) : (3*`NF+9))
 `define CORRSHIFTSZ ((`LGLEN+`NF) > (3*`NF+8) ? (`LGLEN+`NF+1) : (3*`NF+6))

@@ -53,8 +53,8 @@ target_tests_nosim = \
     WALLY-status-fp-enabled-01 \
     WALLY-status-sie-01 \
     WALLY-status-tw-01 \
+    WALLY-gpio-01 \
 
-# unclear why wfi, status-fp-enabled, status-sie, and status-tw fail
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))
 

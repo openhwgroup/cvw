@@ -65,7 +65,7 @@ logic [3:0] dummy;
   logic [`XLEN-1:0] PCW;
 
   string ProgramAddrMapFile, ProgramLabelMapFile;
-  integer   	ProgramAddrLabelArray [string];
+  integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
     
@@ -119,6 +119,7 @@ logic [3:0] dummy;
         "wally32i":                       tests = wally32i; 
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv;
+        "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
       endcase
     end
@@ -197,8 +198,6 @@ logic [3:0] dummy;
       ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
-      ProgramAddrLabelArray = '{ "begin_signature" : 0, 
-	            	                 "tohost" : 0 };
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
       reset_ext = 1; # 42; reset_ext = 0;
@@ -251,8 +250,10 @@ logic [3:0] dummy;
           for(i=0; i<SIGNATURESIZE; i=i+1) begin
             sig32[i] = 'bx;
           end
+          // riscof tests have a different signature, tests[0] == "1" refers to RISCVARCHTESTs
+          if (tests[0] == "1") signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
+          else signame = {pathname, tests[test], ".signature.output"};
           // read signature, reformat in 64 bits if necessary
-          signame = {pathname, tests[test], ".signature.output"};
           $readmemh(signame, sig32);
           i = 0;
           while (i < SIGNATURESIZE) begin
@@ -324,8 +325,7 @@ logic [3:0] dummy;
 
             ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
             ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-            ProgramAddrLabelArray = '{ "begin_signature" : 0, 
-	            	                       "tohost" : 0 };
+            ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
             reset_ext = 1; # 47; reset_ext = 0;
@@ -387,7 +387,7 @@ module riscvassertions;
     assert (`DIV_BITSPERCYCLE == 1 | `DIV_BITSPERCYCLE==2 | `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
+    // assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`FLEN<=`XLEN | `DMEM == `MEM_CACHE) else $error("Wally does not support FLEN > XLEN unleses data cache is supported");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");

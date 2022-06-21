@@ -121,11 +121,11 @@ module fctrl (
       assign FmtD = 0;
     else if (`FPSIZES == 2)begin
       logic [1:0] FmtTmp;
-      assign FmtTmp = (FResSelD == 2'b10)&~FWriteIntD ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
       assign FmtD = (`FMT == FmtTmp);
     end
     else if (`FPSIZES == 3|`FPSIZES == 4)
-      assign FmtD = (FResSelD == 2'b10)&~FWriteIntD ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
 //  Final Res Sel:
 //        fp      int
