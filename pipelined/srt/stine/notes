@@ -1,0 +1,13 @@
+Dividend x --(0.10101111), divisord --(0.11000101)(i -- 16(0.1100)2- 12)
+
+X = 175 (xAF)
+D = 197 (xC5)
+
+X = 175/256 = 0.68359375
+D = 197/256 = 0.76953125
+
+Note: Add lg(r) extra iterations due to shifting of computed q
+      q_{computed} = q / radix
+
+./srt4div 0.68359375 0.76953125 4 10
+

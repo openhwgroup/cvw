@@ -98,6 +98,7 @@ module wallypipelinedcore (
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic             FRegWriteM;
   logic             FPUStallD;
+  logic             FpLoadM;
   logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
 
@@ -128,8 +129,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0] IEUAdrE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
-  (* mark_debug = "true" *) logic [`XLEN-1:0] ReadDataM;
-  logic [`XLEN-1:0] ReadDataW;  
+  logic [`LLEN-1:0] ReadDataW;  
   logic             CommittedM;
 
   // AHB ifu interface
@@ -229,8 +229,8 @@ module wallypipelinedcore (
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .ReadDataM, .MDUResultW,
-     .RdW, .ReadDataW,
+     .CSRReadValW, .MDUResultW,
+     .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
      .FResSelW,
@@ -253,9 +253,10 @@ module wallypipelinedcore (
   .AtomicM, .TrapM,
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
+  .FpLoadM,
   //.DataMisalignedM(DataMisalignedM),
   .IEUAdrE, .IEUAdrM, .WriteDataE,
-  .ReadDataM, .FlushDCacheM,
+  .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
@@ -383,13 +384,14 @@ module wallypipelinedcore (
          .clk, .reset,
          .FRM_REGW, // Rounding mode from CSR
          .InstrD, // instruction from IFU
-         .ReadDataW,// Read data from memory
+         .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
          .ForwardedSrcAE, // Integer input being processed (from IEU)
          .StallE, .StallM, .StallW, // stall signals from HZU
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
          .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
+         .FpLoadM,
          .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory

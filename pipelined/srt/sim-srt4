@@ -1,0 +1,2 @@
+vsim -do "do srt-radix4.do"
+

@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ../wally-riscv-arch-test/riscv-test-suite/rv64i_m/I/src/WALLY-XOR.S
 // David_Harris@hmc.edu & Katherine Parry
-// Created 2022-01-27 08:08:42.395231//
+// Created 2022-06-17 22:58:09.919138//
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation

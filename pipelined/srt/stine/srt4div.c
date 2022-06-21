@@ -1,83 +1,45 @@
 #include "disp.h"
 #include <math.h>
 
+// QSLC is for division by recuerrence for
+// r=4 using a CPA - See Table 5.9 EL
 int qslc (double prem, double d) {
 
   int q;
 
+  // For Debugging
   printf("d  --> %lg\n", d);
   printf("rw --> %lg\n", prem);
-  if ((d>=0.0)&&(d<1.0)) {
-    if (prem>=1.0)
-       q = 2;
-    else if (prem>=0.25)
-      q = 1;
-    else if (prem>=-0.25)
-      q = 0;
-    else if (prem >= -1)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=1.0)&&(d<2.0)) {
-    if (prem>=2.0)
-       q = 2;
-    else if (prem>=0.66667)
-      q = 1;
-    else if (prem>=-0.6667)
-      q = 0;
-    else if (prem >= -2)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=2.0)&&(d<3.0)) {
-    if (prem>=4.0)
-       q = 2;
-    else if (prem>=1.25)
-      q = 1;
-    else if (prem>=-1.25)
-      q = 0;
-    else if (prem >= -4)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=3.0)&&(d<4.0)) {
-    if (prem>=5.0)
+  
+  if ((d>=8.0)&&(d<9.0)) {
+    if (prem>=6.0)
        q = 2;
     else if (prem>=2.0)
       q = 1;
     else if (prem>=-2.0)
       q = 0;
-    else if (prem >= -5)
+    else if (prem >= -6)
       q = -1;
     else 
       q = -2;
     return q;
   }
 
-  if ((d>=4.0)&&(d<5.0)) {
-    if (prem>=6.66667)
+  if ((d>=9.0)&&(d<10.0)) {
+    if (prem>=7)
        q = 2;
     else if (prem>=2.0)
       q = 1;
     else if (prem>=-2.0)
       q = 0;
-    else if (prem >= -6.66667)
+    else if (prem >= 7.0)
       q = -1;
     else 
       q = -2;
     return q;
   }
 
-  if ((d>=5.0)&&(d<6.0)) {
+  if ((d>=10.0)&&(d<11.0)) {
     if (prem>=8.0)
        q = 2;
     else if (prem>=2.0)
@@ -91,7 +53,21 @@ int qslc (double prem, double d) {
     return q;
   }
 
-  if ((d>=6.0)&&(d<7.0)) {
+  if ((d>=11.0)&&(d<12.0)) {
+    if (prem>=8.0)
+       q = 2;
+    else if (prem>=2.0)
+      q = 1;
+    else if (prem>=-2.0)
+      q = 0;
+    else if (prem >= -8.0)
+      q = -1;
+    else 
+      q = -2;
+    return q;
+  }
+
+  if ((d>=12.0)&&(d<13.0)) {
     if (prem>=10.0)
        q = 2;
     else if (prem>=4.0)
@@ -105,21 +81,35 @@ int qslc (double prem, double d) {
     return q;
   }
 
-  if ((d>=7.0)&&(d<8.0)) {
-    if (prem>=11.0)
+  if ((d>=13.0)&&(d<14.0)) {
+    if (prem>=10.0)
        q = 2;
     else if (prem>=4.0)
       q = 1;
     else if (prem>=-4.0)
       q = 0;
-    else if (prem >= -11.0)
+    else if (prem >= -10.0)
       q = -1;
     else 
       q = -2;
     return q;
   }
 
-  if ((d>=8.0)&&(d<9.0)) {
+  if ((d>=14.0)&&(d<15.0)) {
+    if (prem>=10.0)
+       q = 2;
+    else if (prem>=4.0)
+      q = 1;
+    else if (prem>=-4.0)
+      q = 0;
+    else if (prem >= -10.0)
+      q = -1;
+    else 
+      q = -2;
+    return q;
+  }
+
+  if ((d>=15.0)&&(d<16.0)) {
     if (prem>=12.0)
        q = 2;
     else if (prem>=4.0)
@@ -133,105 +123,8 @@ int qslc (double prem, double d) {
     return q;
   }
 
-  if ((d>=9.0)&&(d<10.0)) {
-    if (prem>=15.0)
-       q = 2;
-    else if (prem>=4.0)
-      q = 1;
-    else if (prem>=-4.0)
-      q = 0;
-    else if (prem >= -15.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=10.0)&&(d<11.0)) {
-    if (prem>=15.0)
-       q = 2;
-    else if (prem>=4.0)
-      q = 1;
-    else if (prem>=-4.0)
-      q = 0;
-    else if (prem >= -15.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=11.0)&&(d<12.0)) {
-    if (prem>=16.0)
-       q = 2;
-    else if (prem>=4.0)
-      q = 1;
-    else if (prem>=-4.0)
-      q = 0;
-    else if (prem >= -16.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=12.0)&&(d<13.0)) {
-    if (prem>=20.0)
-       q = 2;
-    else if (prem>=8.0)
-      q = 1;
-    else if (prem>=-8.0)
-      q = 0;
-    else if (prem >= -20.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=13.0)&&(d<14.0)) {
-    if (prem>=20.0)
-       q = 2;
-    else if (prem>=8.0)
-      q = 1;
-    else if (prem>=-8.0)
-      q = 0;
-    else if (prem >= -20.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=14.0)&&(d<15.0)) {
-    if (prem>=20.0)
-       q = 2;
-    else if (prem>=8.0)
-      q = 1;
-    else if (prem>=-8.0)
-      q = 0;
-    else if (prem >= -20.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
-  if ((d>=15.0)&&(d<16.0)) {
-    if (prem>=24.0)
-       q = 2;
-    else if (prem>=8.0)
-      q = 1;
-    else if (prem>=-8.0)
-      q = 0;
-    else if (prem >= -24.0)
-      q = -1;
-    else 
-      q = -2;
-    return q;
-  }
-
 }
+
 
 /*
  This routine performs a radix-4 SRT division 
@@ -246,6 +139,8 @@ int main(int argc, char* argv[]) {
    int q;
    int num_iter, i;
    int prec;
+   int radix = 4;
+   
    if (argc < 5) {
       fprintf(stderr,
 	      "Usage: %s numerator denominator num_iterations prec\n", 
@@ -267,27 +162,29 @@ int main(int argc, char* argv[]) {
    printf("\n");
 
    Q = 0;
-   P = N*0.25;
+   P = N * pow(2.0, -log2(radix));
    printf("N = %lg, D = %lg, N/D = %lg, num_iter = %d \n\n", 
 	  N, D, N/D, num_iter); 
    for (scale = 1, i = 0; i < num_iter; i++) {
      // Shift by r
-     scale = scale*0.25;
-     q = qslc(flr((4*P)*16,3), D*16);
-     //q = -q;
+     scale = scale * pow(2.0, -log2(radix));
+     // (4*P)*8 because of footnote in Table 5.9, page 296 EL
+     // i.e., real value = shown value / 8
+     // D*16 since we use 4 bits of D (1 bit known)
+     q = qslc(flr((radix * P) * 8, 3), D*16);
      printf("4*W[n] = ");
-     disp_bin(4*P,3,prec,stdout);
+     disp_bin(radix*P, 3, prec, stdout);
      printf("\n");
      printf("q*D = ");      
-     disp_bin(q*D,3,prec,stdout);
+     disp_bin(q*D, 3, prec, stdout);
      printf("\n");
      printf("W[n+1] = ");            
-     disp_bin(P ,3,prec,stdout);
+     disp_bin(P ,3, prec, stdout);
      printf("\n");
      // Recurrence
-     P = 4*P - q*D;
+     P = radix * P - q * D;
      // OTFC
-     Q = Q + q*scale;
+     Q = Q + q * scale;
      printf("i = %d, q = %d, Q = %1.18lf, W = %1.18lf\n", i, q, Q, P); 
      printf("i = %d, q = %d", i, q);
      printf(", Q = ");
@@ -296,8 +193,9 @@ int main(int argc, char* argv[]) {
      disp_bin(P, 3, prec, stdout);
      printf("\n\n");
    }
+   // Is shifted partial remainder negative?
    if (P < 0) {
-     Q = Q - scale;
+     Q = Q - pow(2.0, -prec);
      P = P + D;
      printf("\nCorrecting Negative Remainder\n"); 
      printf("Q = %1.18lf, W = %1.18lf\n", Q, P); 
@@ -306,9 +204,12 @@ int main(int argc, char* argv[]) {
      printf(", W = ");
      disp_bin(P, 3, prec, stdout);
      printf("\n");
-   } 
-   RQ = flr(N/D, (double) prec);
-   RD = Q*4;
+   }
+
+   // Output Results
+   RQ = N/D;
+   // Since q_{computed} = q / radix, multiply by radix
+   RD = Q * radix;
    printf("true = %1.18lf, computed = %1.18lf, \n", RQ, RD);
    printf("true = ");
    disp_bin(RQ, 3, prec, stdout);
