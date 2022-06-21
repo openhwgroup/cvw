@@ -41,7 +41,7 @@ module controller(
   output logic       IllegalBaseInstrFaultD,
   // Execute stage control signals
   input logic 	     StallE, FlushE,  
-  input logic  [2:0] FlagsE, 
+  input logic  [1:0] FlagsE, 
   input  logic       FWriteIntE,
   output logic       PCSrcE,        // for datapath and Hazard Unit
   output logic [2:0] ALUControlE, 
@@ -52,6 +52,7 @@ module controller(
   output logic       MDUE, W64E,
   output logic       JumpE,	
   output logic       SCE,
+  output logic       BranchSignedE,
   // Memory stage control signals
   input  logic       StallM, FlushM,
   output logic [1:0] MemRWM,
@@ -211,8 +212,9 @@ module controller(
                            {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FencePendingE, InstrValidE});
 
   // Branch Logic
-  assign {eqE, ltE, ltuE} = FlagsE;
-  mux4 #(1) branchflagmux(eqE, 1'b0, ltE, ltuE, Funct3E[2:1], BranchFlagE);
+  assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
+  assign {eqE, ltE} = FlagsE;
+  mux3 #(1) branchflagmux(eqE, 1'b0, ltE, Funct3E[2:1], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 

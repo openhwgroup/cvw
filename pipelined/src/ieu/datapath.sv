@@ -43,11 +43,12 @@ module datapath (
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             ALUResultSrcE, 
   input  logic             JumpE,
+  input  logic             BranchSignedE,
   input  logic             IllegalFPUInstrE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
-  output logic [2:0]       FlagsE,
+  output logic [1:0]       FlagsE,
   output logic [`XLEN-1:0] IEUAdrE,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   // Memory stage signals
@@ -106,7 +107,7 @@ module datapath (
 	
   mux3  #(`XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
-  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
+  comparator_dc_flip #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
   alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
