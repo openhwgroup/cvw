@@ -559,11 +559,11 @@ module testbench;
         if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
           if(!NO_SPOOFING) begin \
             $display("%tns, %d instrs: Overwrite UART's Register in memory stage.", $time, AttemptedInstructionCount); \
-            force dut.core.ieu.dp.ReadDataM = ExpectedMemReadDataM; \
+            force dut.core.lsu.ReadDataM = ExpectedMemReadDataM; \
           end \
         end else \
           if(!NO_SPOOFING) \
-            release dut.core.ieu.dp.ReadDataM; \
+            release dut.core.lsu.ReadDataM; \
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           if(!NO_SPOOFING) \

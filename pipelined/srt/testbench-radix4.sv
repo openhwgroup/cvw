@@ -1,4 +1,6 @@
-`define DIVLEN 65
+
+`include "wally-config.vh"
+`define DIVLEN ((`NF<`XLEN) ? `XLEN : `NF)
 
 /////////////
 // counter //
@@ -7,7 +9,7 @@ module counter(input  logic clk,
                input  logic req, 
                output logic done);
  
-   logic    [7:0]  count;
+   logic    [5:0]  count;
 
   // This block of control logic sequences the divider
   // through its iterations.  You may modify it if you
@@ -17,7 +19,7 @@ module counter(input  logic clk,
 
   always @(posedge clk)
     begin
-      if      (count == `DIVLEN+1) done <= #1 1;
+      if      (count == `DIVLEN/2+1) done <= #1 1;
       else if (done | req) done <= #1 0;	
       if (req) count <= #1 0;
       else     count <= #1 count+1;
@@ -38,7 +40,7 @@ endmodule
 //////////
 // testbench //
 //////////
-module testbench;
+module testbenchradix4;
   logic              clk;
   logic              req;
   logic              done;
@@ -68,14 +70,14 @@ module testbench;
   integer testnum, errors;
 
   // Divider
-  srt srt(.clk, .Start(req), 
+  srtradix4 srtradix4(.clk, .Start(req), 
                 .Stall(1'b0), .Flush(1'b0), 
                 .XExp(aExp), .YExp(bExp), .rExp,
                 .XSign(asign), .YSign(bsign), .rsign,
-                .SrcXFrac(afrac), .SrcYFrac(bfrac), 
+                .XFrac(afrac), .YFrac(bfrac), 
                 .SrcA('0), .SrcB('0), .Fmt(2'b00), 
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot, .QuotOTFC, .Rem(), .Flags());
+                .Quot, .Rem(), .Flags());
 
   // Counter
   counter counter(clk, req, done);
@@ -85,7 +87,7 @@ module testbench;
     forever
       begin
         clk = 1; #17;
-        clk = 0; #16;
+        clk = 0; #17;
       end
 
 
@@ -101,45 +103,35 @@ module testbench;
       b = Vec[`memb];
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
-      r = Quot[`DIVLEN:`DIVLEN - 52];
-      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
-      req <= #5 1;
+      r = Quot[`DIVLEN-1:`DIVLEN - 52];
+      req <= 1;
     end
   
   // Apply directed test vectors read from file.
 
   always @(posedge clk)
     begin
-      r = Quot[`DIVLEN:`DIVLEN - 52];
-      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
-      if (done) 
-	begin
-	  req <= #5 1;
-    diffp = correctr[51:0] - r;
-    diffn = r - correctr[51:0];
-	  if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
-	    begin
-	      errors = errors+1;
-	      $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);
-	      $display("failed\n");
-	      $stop;
-	    end
-    if (r !== rOTFC) // Check if OTFC works
-      begin
-        errors = errors+1;
-        $display("OTFC is %h, should be %h\n", rOTFC, r);
-        $display("failed\n");
-        // $stop;
-      end
-	  if (afrac === 52'hxxxxxxxxxxxxx)
-	    begin
- 	      $display("%d Tests completed successfully", testnum);
-	      $stop;
-	    end
+      r = Quot[`DIVLEN-1:`DIVLEN - 52];
+      if (done) begin
+        req <= 1;
+        diffp = correctr[51:0] - r;
+        diffn = r - correctr[51:0];
+        if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
+          begin
+            errors = errors+1;
+            $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);
+            $display("failed\n");
+            $stop;
+          end
+        if (afrac === 52'hxxxxxxxxxxxxx)
+          begin
+            $display("%d Tests completed successfully", testnum);
+            $stop;
+          end
 	end
       if (req) 
 	begin
-	  req <= #5 0;
+	  req <= 0;
 	  correctr = nextr;
 	  testnum = testnum+1;
 	  Vec = Tests[testnum];

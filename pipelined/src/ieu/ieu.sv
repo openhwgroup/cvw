@@ -60,11 +60,11 @@ module ieu (
   output logic       InvalidateICacheM, FlushDCacheM,
 
   // Writeback stage
-  input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MDUResultW,
+  input logic [`XLEN-1:0]  CSRReadValW, MDUResultW,
   input logic [1:0]        FResSelW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, 
   // hazards
@@ -109,7 +109,7 @@ module ieu (
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE, .FResSelW,
     .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .ReadDataM, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
+    .CSRReadValW, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,

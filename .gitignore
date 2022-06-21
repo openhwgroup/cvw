@@ -32,7 +32,7 @@ testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/*
-tests/riscof/riscof_work*/*
+tests/riscof/riscof_work/
 tests/riscof/config32.ini
 tests/riscof/config64.ini
 tests/linux-testgen/linux-testvectors/*
