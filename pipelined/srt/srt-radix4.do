@@ -17,7 +17,7 @@ if [file exists work] {
 }
 vlib work
 
-vlog +incdir+../config/rv64gc +incdir+../config/shared srt-radix4.sv testbench-radix4.sv qsel4.sv ../src/generic/flop/flop*.sv ../src/generic/mux.sv ../src/generic/lzc.sv
+vlog +incdir+../config/rv64gc +incdir+../config/shared srt-radix4.sv testbench-radix4.sv ../src/generic/flop/flop*.sv ../src/generic/mux.sv ../src/generic/lzc.sv
 vopt +acc work.testbenchradix4 -o workopt 
 vsim workopt
 
