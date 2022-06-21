@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
    }
 
    // Output Results
-   RQ = N/D;
+   RQ = flr(N/D, prec);
    // Since q_{computed} = q / radix, multiply by radix
    RD = Q * radix;
    printf("true = %1.18lf, computed = %1.18lf, \n", RQ, RD);
