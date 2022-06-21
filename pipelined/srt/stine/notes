@@ -11,3 +11,20 @@ Note: Add lg(r) extra iterations due to shifting of computed q
 
 ./srt4div 0.68359375 0.76953125 4 10
 
+r=2
+X = 0.10011111
+D = 0.11000101
+
+X = 159 (9F)
+D = 197 (C5)
+
+X = 159/256 = 0.62109375
+D = 197/256 = 0.76953125
+
+./srt2div 0.62109375 0.76953125 8 9
+
+
+
+
+
+
