@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-rm -r runs/*
+# rm -r runs/*
 make clean
 make del
 make freqs TECH=$1

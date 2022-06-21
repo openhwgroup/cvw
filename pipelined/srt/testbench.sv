@@ -7,7 +7,7 @@ module counter(input  logic clk,
                input  logic req, 
                output logic done);
  
-   logic    [5:0]  count;
+   logic    [7:0]  count;
 
   // This block of control logic sequences the divider
   // through its iterations.  You may modify it if you
@@ -17,7 +17,7 @@ module counter(input  logic clk,
 
   always @(posedge clk)
     begin
-      if      (count == 54) done <= #1 1;
+      if      (count == `DIVLEN+1) done <= #1 1;
       else if (done | req) done <= #1 0;	
       if (req) count <= #1 0;
       else     count <= #1 count+1;
@@ -110,12 +110,14 @@ module testbench;
 
   always @(posedge clk)
     begin
+      r = Quot[`DIVLEN:`DIVLEN - 52];
+      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
       if (done) 
 	begin
 	  req <= #5 1;
     diffp = correctr[51:0] - r;
     diffn = r - correctr[51:0];
-	  if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1)) // check if accurate to 1 ulp
+	  if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
 	    begin
 	      errors = errors+1;
 	      $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);

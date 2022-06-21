@@ -80,7 +80,7 @@ module comparator #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-// This comaprator is best
+// This comparator is best
 module comparator_dc_flip #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
@@ -94,7 +94,7 @@ module comparator_dc_flip #(parameter WIDTH=64) (
   assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
 
   // behavioral description gives best results
-  assign eq = (af == bf);
+  assign eq = (a == b);
   assign lt = (af < bf);
   assign flags = {eq, lt};
 endmodule
