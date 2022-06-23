@@ -87,7 +87,7 @@ module clint (
     always_ff @(posedge HCLK or negedge HRESETn) 
       if (~HRESETn) begin
         MSIP <= 0;
-        MTIMECMP <= 0xFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
+        MTIMECMP <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
       end else if (memwrite) begin
         if (entryd == 16'h0000) MSIP <= HWDATA[0];
         if (entryd == 16'h4000) begin
