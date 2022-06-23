@@ -59,7 +59,7 @@ module postprocess(
     input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
     input logic             IntZeroM,         // is the input zero
     input logic [1:0] PostProcSelM, // select result to be written to fp register
-    input logic [`DIVLEN-1:0]   Quot,
+    input logic [`DIVLEN+2:0]   Quot,
     output logic    [`FLEN-1:0]    PostProcResM,    // FMA final result
     output logic    [4:0]          PostProcFlgM,
     output logic [`XLEN-1:0] FCvtIntResM    // the int conversion result
@@ -84,6 +84,7 @@ module postprocess(
     logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt;   // normalization shift count
     logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
+    logic [$clog2(`NORMSHIFTSZ)-1:0]  DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
@@ -93,6 +94,7 @@ module postprocess(
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
     logic [`NE+1:0] RoundExp;
+    logic [`NE:0] CorrDivExp;
     logic [1:0] NegResMSBS;
     logic CvtOp;
     logic FmaOp;
@@ -137,6 +139,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
+    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt);
 
     always_comb
         case(PostProcSelM)
@@ -149,8 +152,8 @@ module postprocess(
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
             2'b01: begin //div ***prob can take out
-                ShiftAmt = {$clog2(`NORMSHIFTSZ){1'b0}};//{DivShiftAmt};
-                ShiftIn =  {Quot, {`NORMSHIFTSZ-`DIVLEN{1'b0}}};
+                ShiftAmt = DivShiftAmt;
+                ShiftIn =  {Quot[`DIVLEN+1:0], {`NORMSHIFTSZ-`DIVLEN-2{1'b0}}};
             end
             default: begin 
                 ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
@@ -173,9 +176,9 @@ module postprocess(
     // round to infinity
     // round to nearest max magnitude
 
-    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .DivCalcExpM,
+    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
-                .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
+                .DivOp, .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
