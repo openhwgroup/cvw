@@ -94,6 +94,7 @@ module postprocess(
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
     logic [`NE+1:0] RoundExp;
+    logic [`NE:0] CorrDivExp;
     logic [1:0] NegResMSBS;
     logic CvtOp;
     logic FmaOp;
@@ -138,7 +139,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Quot, .DivShiftAmt);
+    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt);
 
     always_comb
         case(PostProcSelM)
@@ -175,7 +176,7 @@ module postprocess(
     // round to infinity
     // round to nearest max magnitude
 
-    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .DivCalcExpM,
+    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
                 .DivOp, .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
