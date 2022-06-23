@@ -60,7 +60,7 @@ module clint (
   flopr #(16) entrydflop(HCLK, ~HRESETn, entry, entryd);
 
   assign HRESPCLINT = 0; // OK
-  assign HREADYCLINT = 1'b1; // *** needs to depend on DONE during accesses 
+  assign HREADYCLINT = 1'b1; // *** needs to depend on DONE during asynchronous MTIME accesses 
   
   // word aligned reads
   if (`XLEN==64) assign #2 entry = {HADDR[15:3], 3'b000};
@@ -87,8 +87,7 @@ module clint (
     always_ff @(posedge HCLK or negedge HRESETn) 
       if (~HRESETn) begin
         MSIP <= 0;
-        MTIMECMP <= 0;
-        // MTIMECMP is not reset
+        MTIMECMP <= 0xFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
       end else if (memwrite) begin
         if (entryd == 16'h0000) MSIP <= HWDATA[0];
         if (entryd == 16'h4000) begin
@@ -104,7 +103,6 @@ module clint (
     always_ff @(posedge HCLK or negedge HRESETn) 
       if (~HRESETn) begin
         MTIME <= 0;
-        // MTIMECMP is not reset
       end else if (memwrite & entryd == 16'hBFF8) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
         for(j=0;j<`XLEN/8;j++)
