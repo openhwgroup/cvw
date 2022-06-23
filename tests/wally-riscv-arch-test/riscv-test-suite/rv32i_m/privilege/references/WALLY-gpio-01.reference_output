@@ -11,7 +11,7 @@ A55A0000 # Test interrupt pending bits: high_ip
 00000000 #   fall_ip
 A4AA0000 #   input_val
 A5FA0000 #   high_ip
-5BF50000 #   low_ip
+5BF5FFFF #   low_ip
 00A00000 #   rise_ip
 01500000 #   fall_ip
 00000000 #   MEIP
