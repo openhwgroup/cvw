@@ -30,12 +30,9 @@
 
 `include "wally-config.vh"
 
-`define DIVLEN ((`NF<(`XLEN)) ? (`XLEN) : `NF)
-
 module srtradix4 (
   input  logic clk,
   input  logic DivStart, 
-  input  logic       XSgnE, YSgnE,
   input  logic [`NE-1:0] XExpE, YExpE,
   input  logic [`NF-1:0] XFrac, YFrac,
   input  logic [`XLEN-1:0] SrcA, SrcB,
@@ -44,8 +41,8 @@ module srtradix4 (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       DivDone,
-  output logic       DivSgn,
-  output logic [`DIVLEN-1:0] Quot, Rem, // *** later handle integers
+  output logic [`DIVLEN-1:0] Quot,
+  output logic [`XLEN-1:0] Rem, // *** later handle integers
   output logic [`NE-1:0] DivExp
 );
 
@@ -91,7 +88,6 @@ module srtradix4 (
 
   // Store the expoenent and sign until division is DivDone
   flopen #(`NE) expflop(clk, DivStart, DivCalcExp, DivExp);
-  flopen #(1) signflop(clk, DivStart, calcSign, DivSgn);
 
   // Divisor Selection logic
   // *** radix 4 change to choose -2 to 2
@@ -115,13 +111,11 @@ module srtradix4 (
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, |q[3:2], WSA, WCA);
   
   //*** change for radix 4
-  otfc4  #(`DIVLEN) otfc4(clk, DivStart, q, Quot);
+  otfc4 otfc4(clk, DivStart, q, Quot);
 
   expcalc expcalc(.XExpE, .YExpE, .DivCalcExp);
 
-  signcalc signcalc(.XSgnE, .YSgnE, .calcSign);
-
-  counter counter(clk, DivStart, DivDone);
+  divcounter divcounter(clk, DivStart, DivDone);
 
 endmodule
 
@@ -132,7 +126,7 @@ endmodule
 /////////////
 // counter //
 /////////////
-module counter(input  logic clk, 
+module divcounter(input  logic clk, 
                input  logic DivStart, 
                output logic DivDone);
  
@@ -146,6 +140,7 @@ module counter(input  logic clk,
 
   always @(posedge clk)
     begin
+      DivDone = 0;
       if      (count == `DIVLEN/2+1) DivDone <= #1 1;
       else if (DivDone | DivStart) DivDone <= #1 0;	
       if (DivStart) count <= #1 0;
@@ -170,7 +165,7 @@ module qsel4 (
 	// Wmsbs = |        |
 
 	logic [3:0] QSel4[1023:0];
-	initial $readmemh("qslc_r4a2b.tv", QSel4);
+	initial $readmemh("../srt/qsel4.dat", QSel4);
 	assign q = QSel4[{Dmsbs,Wmsbs}];
 	
 endmodule
@@ -218,11 +213,11 @@ endmodule
 ///////////////////////////////////
 // On-The-Fly Converter, Radix 2 //
 ///////////////////////////////////
-module otfc4 #(parameter N=65) (
+module otfc4 (
   input  logic         clk,
   input  logic         DivStart,
   input  logic [3:0]   q,
-  output logic [N-1:0] r
+  output logic [`DIVLEN-1:0] Quot
 );
 
   //  The on-the-fly converter transfers the quotient 
@@ -230,20 +225,20 @@ module otfc4 #(parameter N=65) (
   //
   //  This code follows the psuedocode presented in the 
   //  floating point chapter of the book. Right now, 
-  //  it is written for Radix-2 division.
+  //  it is written for Radix-4 division.
   //
   //  QM is Q-1. It allows us to write negative bits 
   //  without using a costly CPA. 
-  logic [N+2:0] Q, QM, QNext, QMNext, QMux, QMMux;
+  logic [`DIVLEN+2:0] Q, QM, QNext, QMNext, QMux, QMMux;
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
-  logic [N:0] QR, QMR;
+  logic [`DIVLEN:0] QR, QMR;
   // if starting a new divison set Q to 0 and QM to -1
-  mux2 #(N+3) Qmux(QNext, {N+3{1'b0}}, DivStart, QMux);
-  mux2 #(N+3) QMmux(QMNext, {N+3{1'b1}}, DivStart, QMMux);
-  flop #(N+3) Qreg(clk, QMux, Q);
-  flop #(N+3) QMreg(clk, QMMux, QM);
+  mux2 #(`DIVLEN+3) Qmux(QNext, {`DIVLEN+3{1'b0}}, DivStart, QMux);
+  mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, DivStart, QMMux);
+  flop #(`DIVLEN+3) Qreg(clk, QMux, Q);
+  flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   // shift Q (quotent) and QM (quotent-1)
 		// if 	q = 2  	    Q = {Q, 10} 	QM = {Q, 01}		
@@ -253,11 +248,9 @@ module otfc4 #(parameter N=65) (
 		// else if 	q = -2	Q = {QM, 10} 	QM = {QM, 01}
     // *** how does the 0 concatination numbers work?
 
-
-
   always_comb begin
-    QR  = Q[N:0];
-    QMR = QM[N:0];     // Shift Q and QM
+    QR  = Q[`DIVLEN:0];
+    QMR = QM[`DIVLEN:0];     // Shift Q and QM
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
       QMNext = {QR,  2'b01};
@@ -275,7 +268,8 @@ module otfc4 #(parameter N=65) (
       QMNext = {QMR, 2'b11};
     end 
   end
-  assign r = Q[N+2] ? Q[N+1:2] : Q[N:1];
+  // Quot is in the range [.5, 2) so normalize the result if nesissary
+  assign Quot = Q[`DIVLEN+2] ? Q[`DIVLEN+1:2] : Q[`DIVLEN:1];
 
 endmodule
 
@@ -313,17 +307,5 @@ module expcalc(
 );
 
   assign DivCalcExp = XExpE - YExpE + (`NE)'(`BIAS);
-
-endmodule
-
-//////////////
-// signcalc //
-//////////////
-module signcalc(
-  input logic  XSgnE, YSgnE,
-  output logic calcSign
-);
-
-  assign calcSign = XSgnE ^ YSgnE;
 
 endmodule

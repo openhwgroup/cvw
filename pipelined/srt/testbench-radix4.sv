@@ -50,7 +50,7 @@ module testbenchradix4;
                 .XExpE(aExp), .YExpE(bExp), .DivExp,
                 .XSgnE(asign), .YSgnE(bsign), .DivSgn,
                 .XFrac(afrac), .YFrac(bfrac), 
-                .SrcA('0), .SrcB('0), .Fmt(2'b00), 
+                .SrcA('0), .SrcB('0),
                 .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), .DivDone,
                 .Quot, .Rem());
 

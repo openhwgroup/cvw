@@ -4,6 +4,8 @@ module resultsign(
     input logic [2:0]   FrmM,
     input logic         PSgnM, ZSgnEffM,
     input logic         InvZM,
+    input logic         XSgnM,
+    input logic         YSgnM,
     input logic         ZInfM,
     input logic         InfIn,
     input logic         NegSumM,
@@ -25,6 +27,7 @@ module resultsign(
     logic FmaResSgn;
     logic FmaResSgnTmp;
     logic Underflow;
+    logic DivSgn;
     // logic ResultSgnTmp;
 
     // Determine the sign if the sum is zero
@@ -43,9 +46,10 @@ module resultsign(
     assign InfSgn = ZInfM ? ZSgnEffM : PSgnM;
     assign FmaResSgn = InfIn ? InfSgn : SumZero ? ZeroSgn : FmaResSgnTmp;
 
-    // Sign for rounding calulation
-    assign RoundSgn = (FmaResSgnTmp&FmaOp) | (CvtResSgnM&CvtOp) | (1'b0&DivOp);
+    assign DivSgn = XSgnM^YSgnM;
 
-    assign ResSgn = (FmaResSgn&FmaOp) | (CvtResSgnM&CvtOp) | (1'b0&DivOp);
+    // Sign for rounding calulation
+    assign RoundSgn = (FmaResSgnTmp&FmaOp) | (CvtResSgnM&CvtOp) | (DivSgn&DivOp);
+    assign ResSgn = (FmaResSgn&FmaOp) | (CvtResSgnM&CvtOp) | (DivSgn&DivOp);
 
 endmodule

@@ -7,10 +7,10 @@ module cvtshiftcalc(
     input logic  [`NE:0]           CvtCalcExpM,    // the calculated expoent
     input logic  [`NF:0]           XManM,          // input mantissas
     input logic     [`FMTBITS-1:0]  OutFmt,       // output format
-    input logic  [`LGLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
+    input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
     input logic CvtResDenormUfM,
     output logic CvtResUf,
-    output logic [`LGLEN+`NF:0]    CvtShiftIn    // number to be shifted
+    output logic [`CVTLEN+`NF:0]    CvtShiftIn    // number to be shifted
 );
     logic [$clog2(`NF):0]	ResNegNF;   // the result's fraction length negated (-NF)
 
@@ -31,8 +31,8 @@ module cvtshiftcalc(
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | 
     //          - otherwise:
     //              |     LzcInM      | 0's if nessisary | 
-    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, XManM[`NF]&~CvtCalcExpM[`NE], XManM[`NF-1]|(CvtCalcExpM[`NE]&XManM[`NF]), XManM[`NF-2:0], {`LGLEN-`XLEN{1'b0}}} : 
-                     CvtResDenormUfM ? {{`NF-1{1'b0}}, XManM, {`LGLEN-`NF+1{1'b0}}} : 
+    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, XManM[`NF]&~CvtCalcExpM[`NE], XManM[`NF-1]|(CvtCalcExpM[`NE]&XManM[`NF]), XManM[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
+                     CvtResDenormUfM ? {{`NF-1{1'b0}}, XManM, {`CVTLEN-`NF+1{1'b0}}} : 
                                    {CvtLzcInM, {`NF+1{1'b0}}};
     
     
