@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module postprocess(
-    input logic                             XSgnM,  // input signs
+    input logic                             XSgnM, YSgnM,  // input signs
     input logic     [`NE-1:0]               ZExpM, // input exponents
     input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
     input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
@@ -52,12 +52,13 @@ module postprocess(
     input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
     input logic CvtResDenormUfM,
-	input logic [`LOGLGLEN-1:0] CvtShiftAmtM,  // how much to shift by
+	input logic [`LOGCVTLEN-1:0] CvtShiftAmtM,  // how much to shift by
     input logic                   CvtResSgnM,     // the result's sign
     input logic             FWriteIntM,     // is fp->int (since it's writting to the integer register)
-    input logic  [`LGLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
+    input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
     input logic             IntZeroM,         // is the input zero
     input logic [1:0] PostProcSelM, // select result to be written to fp register
+    input logic [`DIVLEN-1:0]   Quot,
     output logic    [`FLEN-1:0]    PostProcResM,    // FMA final result
     output logic    [4:0]          PostProcFlgM,
     output logic [`XLEN-1:0] FCvtIntResM    // the int conversion result
@@ -75,7 +76,7 @@ module postprocess(
     logic [3*`NF+8:0]            FmaShiftIn;        // is the sum zero
     logic               UfPlus1;                    // do you add one (for determining underflow flag)
     logic               Round;   // bits needed to determine rounding
-    logic [`LGLEN+`NF:0]    CvtShiftIn;    // number to be shifted
+    logic [`CVTLEN+`NF:0]    CvtShiftIn;    // number to be shifted
     logic               Mult;       // multiply opperation
     logic [`FLEN:0]     RoundAdd;       // how much to add to the result
     logic [`NE+1:0]     ConvNormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
@@ -143,12 +144,12 @@ module postprocess(
                 ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+9){1'b0}}};
             end
             2'b00: begin // cvt
-                ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(`LGLEN+1){1'b0}}, CvtShiftAmtM};
-                ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`LGLEN-`NF-1{1'b0}}};
+                ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmtM};
+                ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
-            2'b01: begin //div
-                ShiftAmt = 0;//{DivShiftAmt};
-                ShiftIn =  0;//{{`NORMSHIFTSZ-(3*`NF+8){1'b0}}, DivShiftIn};
+            2'b01: begin //div ***prob can take out
+                ShiftAmt = 1'b0;//{DivShiftAmt};
+                ShiftIn =  {Quot, {`NORMSHIFTSZ-`DIVLEN{1'b0}}};
             end
             default: begin 
                 ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
@@ -181,7 +182,7 @@ module postprocess(
 
     resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
                           .FmaOp, .DivOp, .CvtOp, .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, 
-                          .CvtResSgnM, .RoundSgn, .ResSgn);
+                          .XSgnM, .YSgnM, .CvtResSgnM, .RoundSgn, .ResSgn);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags

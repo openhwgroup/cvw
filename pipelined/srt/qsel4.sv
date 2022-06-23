@@ -11,7 +11,7 @@ module qsel4 (
 	logic [2:0] Dmsbs;
 	assign PreWmsbs = WC[`DIVLEN+3:`DIVLEN-4] + WS[`DIVLEN+3:`DIVLEN-4];
 	assign Wmsbs = PreWmsbs[7:1];
-	assign Dmsbs = D[`DIVLEN-1:`DIVLEN-3];
+        assign Dmsbs = D[`DIVLEN-1:`DIVLEN-3];
 	// D = 0001.xxx...
 	// Dmsbs = |   |
     // W =      xxxx.xxx...

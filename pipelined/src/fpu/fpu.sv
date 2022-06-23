@@ -82,7 +82,7 @@ module fpu (
 
    // unpacking signals
    logic 		  XSgnE, YSgnE, ZSgnE;                // input's sign - execute stage
-   logic 		  XSgnM;                       // input's sign - memory stage
+   logic 		  XSgnM, YSgnM;                       // input's sign - memory stage
    logic [`NE-1:0] 	  XExpE, YExpE, ZExpE;                // input's exponent - execute stage
    logic [`NE-1:0] 	  ZExpM;                              // input's exponent - memory stage
    logic [`NF:0] 	  XManE, YManE, ZManE;                // input's fraction - execute stage
@@ -116,11 +116,11 @@ module fpu (
 
    // Cvt Signals
     logic [`NE:0]           CvtCalcExpE, CvtCalcExpM;    // the calculated expoent
-	 logic [`LOGLGLEN-1:0]   CvtShiftAmtE, CvtShiftAmtM;  // how much to shift by
+	 logic [`LOGCVTLEN-1:0]   CvtShiftAmtE, CvtShiftAmtM;  // how much to shift by
     logic                   CvtResDenormUfE, CvtResDenormUfM;// does the result underflow or is denormalized
     logic                   CvtResSgnE, CvtResSgnM;     // the result's sign
     logic                   IntZeroE, IntZeroM;      // is the integer zero?
-    logic [`LGLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
+    logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -317,7 +317,7 @@ module fpu (
 
    // flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, FSrcXE, FSrcXM);
    flopenrc #(`NF+2) EMFpReg2 (clk, reset, FlushM, ~StallM, {XSgnE,XManE}, {XSgnM,XManM});
-   flopenrc #(`NF+1) EMFpReg3 (clk, reset, FlushM, ~StallM, YManE, YManM);
+   flopenrc #(`NF+2) EMFpReg3 (clk, reset, FlushM, ~StallM, {YSgnE,YManE}, {YSgnM,YManM});
    flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZExpE,ZManE}, {ZExpM,ZManM});
    flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
    flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
@@ -333,7 +333,7 @@ module fpu (
    flopenrc #($clog2(3*`NF+7)+6) EMRegFma4(clk, reset, FlushM, ~StallM, 
                            {AddendStickyE, KillProdE, InvZE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
                            {AddendStickyM, KillProdM, InvZM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
-   flopenrc #(`NE+`LOGLGLEN+`LGLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
+   flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
                            {CvtCalcExpE, CvtShiftAmtE, CvtResDenormUfE, CvtResSgnE, IntZeroE, CvtLzcInE},
                            {CvtCalcExpM, CvtShiftAmtM, CvtResDenormUfM, CvtResSgnM, IntZeroM, CvtLzcInM});
 
@@ -351,7 +351,7 @@ module fpu (
 
    assign FpLoadM = FResSelM[1];
 
-   postprocess postprocess(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
+   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
                            .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, 
                            .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, 
                            .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, 
