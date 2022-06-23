@@ -23,5 +23,6 @@ add wave -group {Divide} -noupdate /testbenchfp/srtradix4/qsel4/*
 add wave -group {Divide} -noupdate /testbenchfp/srtradix4/otfc4/*
 add wave -group {Divide} -noupdate /testbenchfp/srtradix4/preproc/*
 add wave -group {Divide} -noupdate /testbenchfp/srtradix4/divcounter/*
+add wave -group {Divide} -noupdate /testbenchfp/srtradix4/expcalc/*
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
