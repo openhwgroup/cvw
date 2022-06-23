@@ -11,6 +11,7 @@ module round(
     input logic  [`FMTBITS-1:0] OutFmt,       // precision 1 = double 0 = single
     input logic  [2:0]          FrmM,       // rounding mode
     input logic                 FmaOp,
+    input logic                 DivOp,
     input logic [1:0] PostProcSelM,
     input logic                 CvtResDenormUfM,
     input logic                 ToInt,
