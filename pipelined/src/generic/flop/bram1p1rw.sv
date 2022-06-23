@@ -54,10 +54,6 @@ module bram1p1rw
   logic [DATA_WIDTH-1:0] 			 RAM [(2**ADDR_WIDTH)-1:0];
   integer 							 i;
 
-  initial begin
-	$readmemh("big64.txt", RAM);
-  end
-
   always @ (posedge clk) begin
 	dout <= RAM[addr];    
 	if(we) begin

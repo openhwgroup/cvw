@@ -34,14 +34,15 @@ module srtradix4 (
   input  logic clk,
   input  logic DivStart, 
   input  logic [`NE-1:0] XExpE, YExpE,
-  input  logic [`NF-1:0] XFrac, YFrac,
+  input  logic [`NF:0] XManE, YManE,
   input  logic [`XLEN-1:0] SrcA, SrcB,
+  input  logic XZeroE,
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       DivDone,
-  output logic [`DIVLEN-1:0] Quot,
+  output logic [`DIVLEN+2:0] Quot,
   output logic [`XLEN-1:0] Rem, // *** later handle integers
   output logic [`NE:0] DivCalcExpE
 );
@@ -49,14 +50,15 @@ module srtradix4 (
   // logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [3:0]     q;
   logic [`NE:0] DivCalcExp;
-  logic [`DIVLEN-1:0]  X, Dpreproc;
+  logic [`DIVLEN:0]    X;
+  logic [`DIVLEN-1:0]  Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN;
   logic [`DIVLEN+3:0]  WC, WCA, WCN;
   logic [`DIVLEN+3:0]  D, DBar, D2, DBar2, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp;
   logic           intSign;
  
-  srtpreproc preproc(SrcA, SrcB, XFrac, YFrac, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, intSign);
+  srtpreproc preproc(SrcA, SrcB, XManE, YManE, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -68,7 +70,7 @@ module srtradix4 (
   //  - otherwise load WSA into the flipflop
   //  *** what does N and A stand for?
   //  *** change shift amount for radix4
-  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+1:0], 2'b0}, {4'b0001, X}, DivStart, WSN);
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+1:0], 2'b0}, {3'b000, X}, DivStart, WSN);
   flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
   mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
   flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
@@ -110,9 +112,9 @@ module srtradix4 (
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, |q[3:2], WSA, WCA);
   
   //*** change for radix 4
-  otfc4 otfc4(clk, DivStart, q, Quot);
+  otfc4 otfc4(.clk, .DivStart, .q, .Quot);
 
-  expcalc expcalc(.XExpE, .YExpE, .DivCalcExp);
+  expcalc expcalc(.XExpE, .YExpE, .XZeroE, .DivCalcExp);
 
   divcounter divcounter(clk, DivStart, DivDone);
 
@@ -164,7 +166,57 @@ module qsel4 (
 	// Wmsbs = |        |
 
 	logic [3:0] QSel4[1023:0];
-	initial $readmemh("../srt/qsel4.dat", QSel4);
+
+  initial begin 
+    integer d, w, i, w2;
+    for(d=0; d<8; d++)
+      for(w=0; w<128; w++)begin
+        i = d*128+w;
+        w2 = w-128*(w>=64); // convert to two's complement
+        case(d)
+          0: if($signed(w2)>=$signed(12))      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-4)  QSel4[i] = 4'b0000; 
+            else if(w2>=-13) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          1: if(w2>=14)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-15) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          2: if(w2>=15)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-16) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          3: if(w2>=16)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-18) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          4: if(w2>=18)      QSel4[i] = 4'b1000;
+            else if(w2>=6)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-20) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          5: if(w2>=20)      QSel4[i] = 4'b1000;
+            else if(w2>=6)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-20) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          6: if(w2>=20)      QSel4[i] = 4'b1000;
+            else if(w2>=8)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-22) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+          7: if(w2>=24)      QSel4[i] = 4'b1000;
+            else if(w2>=8)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-24) QSel4[i] = 4'b0010; 
+            else            QSel4[i] = 4'b0001; 
+        endcase
+      end
+  end
 	assign q = QSel4[{Dmsbs,Wmsbs}];
 	
 endmodule
@@ -174,39 +226,42 @@ endmodule
 ///////////////////
 module srtpreproc (
   input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [`NF-1:0] XFrac, YFrac,
+  input  logic [`NF:0] XManE, YManE,
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
-  output logic [`DIVLEN-1:0] X, D,
+  output logic [`DIVLEN:0] X,
+  output logic [`DIVLEN-1:0] Dpreproc,
   output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
   output logic       intSign // Quotient integer sign
 );
 
-  logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
-  logic  [`XLEN-1:0] PosA, PosB;
-  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
+  // logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
+  // logic  [`XLEN-1:0] PosA, PosB;
+  // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
+  logic  [`DIVLEN:0] PreprocA, PreprocX;
+  logic  [`DIVLEN-1:0] PreprocB, PreprocY;
 
-  assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
-  assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
+  // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
+  // assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
 
-  lzc #(`XLEN) lzcA (PosA, zeroCntA);
-  lzc #(`XLEN) lzcB (PosB, zeroCntB);
+  // lzc #(`XLEN) lzcA (PosA, zeroCntA);
+  // lzc #(`XLEN) lzcB (PosB, zeroCntB);
 
-  assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
-  assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
+  // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
+  // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
 
-  assign PreprocA = ExtraA << zeroCntA;
-  assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XFrac, {`DIVLEN-`NF{1'b0}}};
-  assign PreprocY = {YFrac, {`DIVLEN-`NF{1'b0}}};
+  // assign PreprocA = ExtraA << zeroCntA;
+  // assign PreprocB = ExtraB << (zeroCntB + 1);
+  assign PreprocX = {XManE, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocY = {YManE[`NF-1:0], {`DIVLEN-`NF{1'b0}}};
 
   
   assign X = Int ? PreprocA : PreprocX;
-  assign D = Int ? PreprocB : PreprocY;
-  assign intExp = zeroCntB - zeroCntA + 1;
-  assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
+  assign Dpreproc = Int ? PreprocB : PreprocY;
+  // assign intExp = zeroCntB - zeroCntA + 1;
+  // assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 endmodule
 
 ///////////////////////////////////
@@ -216,7 +271,7 @@ module otfc4 (
   input  logic         clk,
   input  logic         DivStart,
   input  logic [3:0]   q,
-  output logic [`DIVLEN-1:0] Quot
+  output logic [`DIVLEN+2:0] Quot
 );
 
   //  The on-the-fly converter transfers the quotient 
@@ -228,7 +283,7 @@ module otfc4 (
   //
   //  QM is Q-1. It allows us to write negative bits 
   //  without using a costly CPA. 
-  logic [`DIVLEN+2:0] Q, QM, QNext, QMNext, QMux, QMMux;
+  logic [`DIVLEN+2:0] QM, QNext, QMNext, QMux, QMMux;
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
@@ -236,7 +291,7 @@ module otfc4 (
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`DIVLEN+3) Qmux(QNext, {`DIVLEN+3{1'b0}}, DivStart, QMux);
   mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, DivStart, QMMux);
-  flop #(`DIVLEN+3) Qreg(clk, QMux, Q);
+  flop #(`DIVLEN+3) Qreg(clk, QMux, Quot);
   flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   // shift Q (quotent) and QM (quotent-1)
@@ -248,7 +303,7 @@ module otfc4 (
     // *** how does the 0 concatination numbers work?
 
   always_comb begin
-    QR  = Q[`DIVLEN:0];
+    QR  = Quot[`DIVLEN:0];
     QMR = QM[`DIVLEN:0];     // Shift Q and QM
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
@@ -268,7 +323,7 @@ module otfc4 (
     end 
   end
   // Quot is in the range [.5, 2) so normalize the result if nesissary
-  assign Quot = Q[`DIVLEN+2] ? Q[`DIVLEN+1:2] : Q[`DIVLEN:1];
+  // assign Quot = Q[`DIVLEN+2] ? Q[`DIVLEN+1:2] : Q[`DIVLEN:1];
 
 endmodule
 
@@ -302,9 +357,10 @@ endmodule
 //////////////
 module expcalc(
   input logic  [`NE-1:0] XExpE, YExpE,
+  input logic XZeroE,
   output logic [`NE:0] DivCalcExp
 );
 
-  assign DivCalcExp = XExpE - YExpE + (`NE)'(`BIAS);
+  assign DivCalcExp = (XExpE - YExpE + (`NE)'(`BIAS))&{`NE+1{~XZeroE}};
 
 endmodule
