@@ -73,7 +73,7 @@ int main() {
   printf("\tcase({D[5:3],Wmsbs})\n");
   for (o=0; o < pow(2.0, DIVISOR_SIZE); o++) {
     for (m=0; m < pow(2.0, TOT_SIZE); m++) {
-      printf("\t\t10'b");
+      printf("\t\t11'b");
       disp_binary((double) pla.divisor, DIVISOR_SIZE, 0);
       printf("_");
       disp_binary((double) pla.tot, TOT_SIZE, 0);
