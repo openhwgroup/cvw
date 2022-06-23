@@ -53,6 +53,7 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
+	logic [`DIVLEN+2:0] Quot;
   logic CvtResDenormUfE;
   logic DivStart, DivDone;
   
@@ -69,7 +70,6 @@ module testbenchfp;
   logic 			          ZSgnEffE;
   logic 			          PSgnE;
   logic       DivSgn;
-  logic [`DIVLEN-1:0] Quot;
   logic [`NE:0] DivCalcExp;
 
 
@@ -659,8 +659,8 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp),
-                .XFrac(XMan[`NF-1:0]), .YFrac(YMan[`NF-1:0]), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
+  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero),
+                .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
                 .DivDone, .Quot, .Rem());
                 
   assign CmpFlg[3:0] = 0;
