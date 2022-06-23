@@ -70,7 +70,7 @@ module testbenchfp;
   logic 			          PSgnE;
   logic       DivSgn;
   logic [`DIVLEN-1:0] Quot;
-  logic [`NE-1:0] DivExp;
+  logic [`NE:0] DivCalcExp;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -643,7 +643,7 @@ module testbenchfp;
               .ProdExpE, .AddendStickyE, .KillProdE); 
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
-              .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot,
+              .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
               .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE),
               .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE),
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
@@ -659,7 +659,7 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivExp,
+  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp),
                 .XFrac(XMan[`NF-1:0]), .YFrac(YMan[`NF-1:0]), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
                 .DivDone, .Quot, .Rem());
                 

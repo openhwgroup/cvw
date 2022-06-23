@@ -23,6 +23,7 @@ module round(
     input logic  [`NE+1:0]      SumExp,         // exponent of the normalized sum
     input logic                 RoundSgn,      // the result's sign
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
+    input logic [`NE:0]           DivCalcExpM,    // the calculated expoent
     output logic                UfPlus1,  // do you add or subtract on from the result
     output logic [`NE+1:0]      FullResExp,      // ResExp with bits to determine sign and overflow
     output logic [`NF-1:0]      ResFrac,         // Result fraction
@@ -303,7 +304,7 @@ module round(
         case(PostProcSelM)
             2'b10: RoundExp = SumExp; // fma
             2'b00: RoundExp = {CvtCalcExpM[`NE], CvtCalcExpM}&{`NE+2{~CvtResDenormUfM|CvtResUf}}; // cvt
-            2'b01: RoundExp = 0; // divide
+            2'b01: RoundExp = {DivCalcExpM[`NE], DivCalcExpM[`NE:0]}; // divide
             default: RoundExp = 0; 
         endcase
 
