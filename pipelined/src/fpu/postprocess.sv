@@ -51,6 +51,7 @@ module postprocess(
     input logic [2:0]                       FOpCtrlM,       // choose which opperation (look below for values)
     input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
+    input logic [`NE:0]           DivCalcExpM,    // the calculated expoent
     input logic CvtResDenormUfM,
 	input logic [`LOGCVTLEN-1:0] CvtShiftAmtM,  // how much to shift by
     input logic                   CvtResSgnM,     // the result's sign
@@ -148,7 +149,7 @@ module postprocess(
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
             2'b01: begin //div ***prob can take out
-                ShiftAmt = 1'b0;//{DivShiftAmt};
+                ShiftAmt = {$clog2(`NORMSHIFTSZ){1'b0}};//{DivShiftAmt};
                 ShiftIn =  {Quot, {`NORMSHIFTSZ-`DIVLEN{1'b0}}};
             end
             default: begin 
@@ -172,7 +173,7 @@ module postprocess(
     // round to infinity
     // round to nearest max magnitude
 
-    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM,
+    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .DivCalcExpM,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
                 .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 

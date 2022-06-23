@@ -43,13 +43,12 @@ module srtradix4 (
   output logic       DivDone,
   output logic [`DIVLEN-1:0] Quot,
   output logic [`XLEN-1:0] Rem, // *** later handle integers
-  output logic [`NE-1:0] DivExp
+  output logic [`NE:0] DivCalcExpE
 );
 
   // logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [3:0]     q;
-  logic [`NE-1:0] DivCalcExp;
-  logic           calcSign;
+  logic [`NE:0] DivCalcExp;
   logic [`DIVLEN-1:0]  X, Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN;
   logic [`DIVLEN+3:0]  WC, WCA, WCN;
@@ -87,7 +86,7 @@ module srtradix4 (
   qsel4 qsel4(.D, .WS, .WC, .q);
 
   // Store the expoenent and sign until division is DivDone
-  flopen #(`NE) expflop(clk, DivStart, DivCalcExp, DivExp);
+  flopen #(`NE+1) expflop(clk, DivStart, DivCalcExp, DivCalcExpE);
 
   // Divisor Selection logic
   // *** radix 4 change to choose -2 to 2
@@ -303,7 +302,7 @@ endmodule
 //////////////
 module expcalc(
   input logic  [`NE-1:0] XExpE, YExpE,
-  output logic [`NE-1:0] DivCalcExp
+  output logic [`NE:0] DivCalcExp
 );
 
   assign DivCalcExp = XExpE - YExpE + (`NE)'(`BIAS);

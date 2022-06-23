@@ -104,23 +104,27 @@ module fpu (
    logic 		  FOpCtrlQ;   
 
    // Fma Signals
-    logic [3*`NF+5:0]	SumE, SumM;                       
-    logic [`NE+1:0]	    ProdExpE, ProdExpM;
-    logic 			    AddendStickyE, AddendStickyM;
-    logic 			    KillProdE, KillProdM;
-    logic 			    InvZE, InvZM;
-    logic 			    NegSumE, NegSumM;
-    logic 			    ZSgnEffE, ZSgnEffM;
-    logic 			    PSgnE, PSgnM;
-    logic [$clog2(3*`NF+7)-1:0]			FmaNormCntE, FmaNormCntM;
+   logic [3*`NF+5:0]	SumE, SumM;                       
+   logic [`NE+1:0]	    ProdExpE, ProdExpM;
+   logic 			    AddendStickyE, AddendStickyM;
+   logic 			    KillProdE, KillProdM;
+   logic 			    InvZE, InvZM;
+   logic 			    NegSumE, NegSumM;
+   logic 			    ZSgnEffE, ZSgnEffM;
+   logic 			    PSgnE, PSgnM;
+   logic [$clog2(3*`NF+7)-1:0]			FmaNormCntE, FmaNormCntM;
 
    // Cvt Signals
-    logic [`NE:0]           CvtCalcExpE, CvtCalcExpM;    // the calculated expoent
-	 logic [`LOGCVTLEN-1:0]   CvtShiftAmtE, CvtShiftAmtM;  // how much to shift by
-    logic                   CvtResDenormUfE, CvtResDenormUfM;// does the result underflow or is denormalized
-    logic                   CvtResSgnE, CvtResSgnM;     // the result's sign
-    logic                   IntZeroE, IntZeroM;      // is the integer zero?
-    logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
+   logic [`NE:0]           CvtCalcExpE, CvtCalcExpM;    // the calculated expoent
+   logic [`LOGCVTLEN-1:0]   CvtShiftAmtE, CvtShiftAmtM;  // how much to shift by
+   logic                   CvtResDenormUfE, CvtResDenormUfM;// does the result underflow or is denormalized
+   logic                   CvtResSgnE, CvtResSgnM;     // the result's sign
+   logic                   IntZeroE, IntZeroM;      // is the integer zero?
+   logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
+   
+   //divide signals
+   logic [`DIVLEN-1:0] Quot;
+   logic [`NE:0] DivCalcExpM;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -352,8 +356,8 @@ module fpu (
    assign FpLoadM = FResSelM[1];
 
    postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
-                           .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, 
-                           .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, 
+                           .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .Quot,
+                           .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM,
                            .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, 
                            .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, 
                            .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
