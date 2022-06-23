@@ -1,7 +1,11 @@
+00000000 # test reset to zero
 00000000
-00000000
-A5A5A5A5
+A5A5A5A5 # test output pins
 5A5AFFFF
-00000000
+00000000 # test input enables
 5A5A0000
-A55A0000
+A55A0000 # test XOR
+# A55A0000 # test interrupt pins
+# 5AA5FFFF
+# 00000000
+# 00000000
