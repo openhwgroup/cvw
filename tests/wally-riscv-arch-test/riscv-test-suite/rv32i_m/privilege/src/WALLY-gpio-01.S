@@ -109,7 +109,7 @@ SETUP_PLIC
 .4byte output_val, 0x5BAA000F, write32_test         # change output pattern to check rise/fall interrupts
 .4byte input_val, 0xA4AA0000, read32_test           # check new output matches expected output
 .4byte high_ip, 0xA5FA00000, read32_test            # high interrupt pending *** (is this correct?)
-.4byte low_ip, 0x5BF50000, read32_test              # low interrupt pending should be opposite high for enabled pins
+.4byte low_ip, 0x5BF5FFFF, read32_test              # low interrupt pending should be opposite high for enabled pins
 .4byte rise_ip, 0x00A00000, read32_test             # check for changed bits (rising)
 .4byte fall_ip, 0x01500000, read32_test             # check for changed bits (falling)
 .4byte 0x0, 0x00000000, readmip_test                # Check no external interrupt has been generated
@@ -129,7 +129,7 @@ SETUP_PLIC
 
 .4byte high_ie, 0x00020000, write32_test            # enable high interrupt on bit 17, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
-.4byte low_ie, 0x00000000, write32_test             # disable high interrupt on bit 17, which is pending
+.4byte high_ie, 0x00000000, write32_test             # disable high interrupt on bit 17, which is pending
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
