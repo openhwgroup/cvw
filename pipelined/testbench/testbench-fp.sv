@@ -899,7 +899,7 @@ module readvectors (
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
-  always @(TestNum) begin
+  always @(VectorNum) begin
     #1; 
     AnsFlg = TestVector[4:0];
     DivStart = 1'b0;
@@ -971,6 +971,7 @@ module readvectors (
             X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
             Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
             Ans = TestVector[8+(`Q_LEN-1):8];
+            if (~clk) #5;
             DivStart = 1'b1; #10 // one clk cycle
             DivStart = 1'b0;
           end
@@ -978,6 +979,7 @@ module readvectors (
             X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
             Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
             Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            if (~clk) #5;
             DivStart = 1'b1; #10
             DivStart = 1'b0;
           end
@@ -985,6 +987,7 @@ module readvectors (
             X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
             Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
             Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            if (~clk) #5;
             DivStart = 1'b1; #10
             DivStart = 1'b0;
           end
@@ -992,6 +995,7 @@ module readvectors (
             X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
             Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
             Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            if (~clk) #5;
             DivStart = 1'b1; #10
             DivStart = 1'b0;
           end
