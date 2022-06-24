@@ -24,6 +24,7 @@ module flags(
     input logic  [1:0]          NegResMSBS,             // the negitive integer result's most significant bits
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, UfLSBRes, Sticky, UfPlus1, // bits used to determine rounding
+    output logic                DivByZero,
     output logic                IntInvalid, Invalid, Overflow, Underflow, // flags used to select the res
     output logic [4:0]          PostProcFlgM // flags
 );
@@ -33,7 +34,6 @@ module flags(
     logic               IntInexact; // integer inexact flag
     logic               FmaInvalid; // integer invalid flag
     logic               DivInvalid; // integer invalid flag
-    logic               DivByZero;
     logic               ResExpGteMax; // is the result greater than or equal to the maximum floating point expoent
     logic               ShiftGtIntSz; // is the shift greater than the the integer size (use ResExp to account for possible roundning "shift")
 
