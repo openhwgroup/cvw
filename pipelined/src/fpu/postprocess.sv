@@ -104,6 +104,7 @@ module postprocess(
     logic ResSgn;
     logic RoundSgn;
     logic NaNIn;
+    logic DivByZero;
     logic UfLSBRes;
     logic Sqrt;
     logic [`FMTBITS-1:0] OutFmt;
@@ -194,7 +195,7 @@ module postprocess(
 
     flags flags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .InfIn, .XZeroM, .YZeroM, 
                 .XSgnM, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCalcExpM,
-                .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round, .IntInvalid,
+                .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round, .IntInvalid, .DivByZero,
                 .UfLSBRes, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullResExp, .Plus1,
                 .RoundExp, .NegResMSBS, .Invalid, .Overflow, .Underflow, .PostProcFlgM);
 
@@ -205,6 +206,6 @@ module postprocess(
     resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM, .IntInvalid,
         .IntZeroM, .FrmM, .OutFmt, .AddendStickyM, .KillProdM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegResMSBS,
-        .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
+        .DivByZero, .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
 
 endmodule
