@@ -88,6 +88,7 @@ module postprocess(
     logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
     logic [$clog2(`NORMSHIFTSZ)-1:0]  DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
+    logic [`NORMSHIFTSZ-1:0] DivShiftIn;
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
     logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
@@ -142,7 +143,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt);
+    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSelM)
@@ -156,7 +157,7 @@ module postprocess(
             end
             2'b01: begin //div ***prob can take out
                 ShiftAmt = DivShiftAmt;
-                ShiftIn =  {Quot[`DIVLEN+1:0], {`NORMSHIFTSZ-`DIVLEN-2{1'b0}}};
+                ShiftIn =  DivShiftIn;
             end
             default: begin 
                 ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 

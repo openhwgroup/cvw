@@ -372,6 +372,6 @@ module expcalc(
 );
 
   // correct exponent for denormal shifts
-  assign DivCalcExp = (XExpE - XZeroCnt - YExpE + YZeroCnt + (`NE)'(`BIAS))&{`NE+1{~XZeroE}};
+  assign DivCalcExp = (XExpE - XZeroCnt - YExpE + YZeroCnt + (`NE)'(`BIAS))&{`NE+2{~XZeroE}};
 
 endmodule
