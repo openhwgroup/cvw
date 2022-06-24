@@ -1,30 +1,13 @@
 #!/usr/bin/python3
-# Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
 # Madeleine Masser-Frye (mmmasserfrye@hmc.edu) 06/2022
 from collections import namedtuple
-import glob 
 import re
 import csv
 import subprocess
 from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
-import numpy as np
 
-# field_names = [ 'Name', 'Critical Path Length', 'Cell Area', 'Synth Time']
-# data = []
-# for name in glob.glob("/home/ssanghai/riscv-wally/synthDC/runs/*/reports/wallypipelinedcore_qor.rep"):   
-#     f = open(name, 'r')
-#     # trimName = re.search("runs\/(.*?)\/reports", name).group(1)
-#     trimName = re.search("wallypipelinedcore_(.*?)_sky9",name).group(1)
-#     for line in f:
-#         if "Critical Path Length" in line:
-#             pathLen = re.search("Length: *(.*?)\\n", line).group(1) 
-#         if "Cell Area" in line:
-#             area = re.search("Area: *(.*?)\\n", line).group(1) 
-#         if "Overall Compile Time" in line:
-#             time = re.search("Time: *(.*?)\\n", line).group(1)
-#     data += [{'Name' : trimName, 'Critical Path Length': pathLen, 'Cell Area' : area, 'Synth Time' :time}]
 
 def synthsintocsv():
     ''' writes a CSV with one line for every available synthesis
