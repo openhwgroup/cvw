@@ -17,6 +17,7 @@ module resultselect(
     input logic [`NORMSHIFTSZ-1:0]             Shifted,        // is the sum zero
     input logic                     FmaOp,
     input logic                     Plus1,
+    input logic                     DivByZero,
     input logic [`NE:0]             CvtCalcExpM,    // the calculated expoent
     input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
@@ -218,18 +219,19 @@ module resultselect(
     //      - dont set to zero if int input is zero but not using the int input
     assign KillRes = CvtOp ? (CvtResUf|(XZeroM&~IntToFp)|(IntZeroM&IntToFp)) : FullResExp[`NE+1];//Underflow & ~ResDenorm & (ResExp!=1);
 
+    // output infinity with result sign if divide by zero
     if(`IEEE754) begin
         assign PostProcResM = XNaNM&~(IntToFp&CvtOp) ? XNaNRes :
                          YNaNM&~CvtOp ? YNaNRes :
                          ZNaNM&FmaOp ? ZNaNRes :
                          Invalid ? InvalidRes : 
-                         Overflow|InfIn ? OfRes :
+                         Overflow|DivByZero|InfIn ? OfRes :
                          KillProdM&FmaOp ? KillProdRes : 
                          KillRes ? UfRes :  
                          NormRes;
     end else begin
         assign PostProcResM = NaNIn|Invalid ? InvalidRes :
-                         Overflow|InfIn ? OfRes :
+                         Overflow|DivByZero|InfIn ? OfRes :
                          KillProdM&FmaOp ? KillProdRes :  
                          KillRes ? UfRes :  
                          NormRes;
