@@ -51,8 +51,10 @@ module postprocess(
     input logic [2:0]                       FOpCtrlM,       // choose which opperation (look below for values)
     input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic [`NE:0]           DivCalcExpM,    // the calculated expoent
+    input logic [`NE+1:0]           DivCalcExpM,    // the calculated expoent
     input logic CvtResDenormUfM,
+    input logic DivStickyM,
+    input logic DivNegStickyM,
 	input logic [`LOGCVTLEN-1:0] CvtShiftAmtM,  // how much to shift by
     input logic                   CvtResSgnM,     // the result's sign
     input logic             FWriteIntM,     // is fp->int (since it's writting to the integer register)
@@ -94,7 +96,7 @@ module postprocess(
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
     logic [`NE+1:0] RoundExp;
-    logic [`NE:0] CorrDivExp;
+    logic [`NE+1:0] CorrDivExp;
     logic [1:0] NegResMSBS;
     logic CvtOp;
     logic FmaOp;
@@ -179,6 +181,7 @@ module postprocess(
 
     round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
+                .DivStickyM, .DivNegStickyM,
                 .DivOp, .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////

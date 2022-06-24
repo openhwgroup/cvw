@@ -69,8 +69,9 @@ module testbenchfp;
   logic 			          NegSumE;
   logic 			          ZSgnEffE;
   logic 			          PSgnE;
-  logic       DivSgn;
-  logic [`NE:0] DivCalcExp;
+  logic       DivSticky;
+  logic       DivNegSticky;
+  logic [`NE+1:0] DivCalcExp;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,8 +645,8 @@ module testbenchfp;
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
               .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
-              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE),
-              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE),
+              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE), .DivStickyM(DivSticky),
+              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE), .DivNegStickyM(DivNegSticky),
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
               .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
               .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
@@ -659,9 +660,9 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero),
+  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero), .DivStickyE(DivSticky),
                 .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
-                .DivDone, .Quot, .Rem());
+                .DivNegStickyE(DivNegSticky), .DivDone, .Quot, .Rem());
                 
   assign CmpFlg[3:0] = 0;
 

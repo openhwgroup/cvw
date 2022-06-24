@@ -133,8 +133,8 @@ module flags(
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
-
-    assign DivByZero = YZeroM&DivOp;  
+    // if dividing by zero and not 0/0
+    assign DivByZero = YZeroM&DivOp&~XZeroM;  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags
