@@ -7,6 +7,9 @@ module resultselect(
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [`FMTBITS-1:0]  OutFmt,       // output format
     input logic                     InfIn,
+    input logic                     XInfM,
+    input logic                     YInfM,
+    input logic                     DivOp,
     input logic                     XZeroM,
     input logic                     IntZeroM,
     input logic                     NaNIn,
@@ -40,6 +43,7 @@ module resultselect(
     logic [`XLEN-1:0]       OfIntRes;   // the overflow result for integer output
     logic [`XLEN+1:0]       NegRes;     // the negation of the result
     logic KillRes;
+    logic SelOfRes;
 
 
     // does the overflow result output the maximum normalized floating point number
@@ -59,7 +63,7 @@ module resultselect(
         end
 
         assign OfRes =  OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-        assign KillProdRes = {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+        // assign KillProdRes = {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
         assign UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
         assign NormRes = {ResSgn, ResExp, ResFrac};
 
@@ -75,7 +79,7 @@ module resultselect(
         
         assign OfRes =  OutFmt ? OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                OfResMax ? {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-        assign KillProdRes = OutFmt ? {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+        // assign KillProdRes = OutFmt ? {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
         assign UfRes = OutFmt ? {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]} : {{`FLEN-`LEN1{1'b1}}, {ResSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), Plus1&FrmM[1]}};
         assign NormRes = OutFmt ? {ResSgn, ResExp, ResFrac} : {{`FLEN-`LEN1{1'b1}}, ResSgn, ResExp[`NE1-1:0], ResFrac[`NF-1:`NF-`NF1]};
 
@@ -93,7 +97,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    KillProdRes = {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    // KillProdRes = {ResSgn, {ZExpM[`NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
                     UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
                     NormRes = {ResSgn, ResExp, ResFrac};
                 end
@@ -107,7 +111,7 @@ module resultselect(
                         InvalidRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end
                     OfRes = OfResMax ? {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    KillProdRes = {{`FLEN-`LEN1{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
+                    // KillProdRes = {{`FLEN-`LEN1{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE1-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF1]} + (RoundAdd[`NF-`NF1+`LEN1-2:`NF-`NF1]&{`LEN1-1{AddendStickyM}})};
                     UfRes = {{`FLEN-`LEN1{1'b1}}, {ResSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), Plus1&FrmM[1]}};
                     NormRes = {{`FLEN-`LEN1{1'b1}}, ResSgn, ResExp[`NE1-1:0], ResFrac[`NF-1:`NF-`NF1]};
                 end
@@ -122,7 +126,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`LEN2{1'b1}}, ResSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} : {{`FLEN-`LEN2{1'b1}}, ResSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    KillProdRes = {{`FLEN-`LEN2{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
+                    // KillProdRes = {{`FLEN-`LEN2{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`NE2-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`NF2]} + (RoundAdd[`NF-`NF2+`LEN2-2:`NF-`NF2]&{`LEN2-1{AddendStickyM}})};
                     UfRes = {{`FLEN-`LEN2{1'b1}}, {ResSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), Plus1&FrmM[1]}};
                     NormRes = {{`FLEN-`LEN2{1'b1}}, ResSgn, ResExp[`NE2-1:0], ResFrac[`NF-1:`NF-`NF2]};
                 end
@@ -156,7 +160,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    KillProdRes = {ResSgn, {ZExpM[`Q_NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
+                    // KillProdRes = {ResSgn, {ZExpM[`Q_NE-1:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:0]} + (RoundAdd[`FLEN-2:0]&{`FLEN-1{AddendStickyM}})};
                     UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
                     NormRes = {ResSgn, ResExp, ResFrac};
                 end
@@ -170,7 +174,7 @@ module resultselect(
                         InvalidRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end
                     OfRes = OfResMax ? {{`FLEN-`D_LEN{1'b1}}, ResSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} : {{`FLEN-`D_LEN{1'b1}}, ResSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    KillProdRes = {{`FLEN-`D_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
+                    // KillProdRes = {{`FLEN-`D_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`D_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`D_NF]} + (RoundAdd[`NF-`D_NF+`D_LEN-2:`NF-`D_NF]&{`D_LEN-1{AddendStickyM}})};
                     UfRes = {{`FLEN-`D_LEN{1'b1}}, {ResSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), Plus1&FrmM[1]}};
                     NormRes = {{`FLEN-`D_LEN{1'b1}}, ResSgn, ResExp[`D_NE-1:0], ResFrac[`NF-1:`NF-`D_NF]};
                 end
@@ -185,7 +189,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`S_LEN{1'b1}}, ResSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} : {{`FLEN-`S_LEN{1'b1}}, ResSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    KillProdRes = {{`FLEN-`S_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`S_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
+                    // KillProdRes = {{`FLEN-`S_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`S_NE-2:1], ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`S_NF]} + (RoundAdd[`NF-`S_NF+`S_LEN-2:`NF-`S_NF]&{`S_LEN-1{AddendStickyM}})};
                     UfRes = {{`FLEN-`S_LEN{1'b1}}, {ResSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), Plus1&FrmM[1]}};
                     NormRes = {{`FLEN-`S_LEN{1'b1}}, ResSgn, ResExp[`S_NE-1:0], ResFrac[`NF-1:`NF-`S_NF]};
                 end
@@ -201,7 +205,7 @@ module resultselect(
                     
                     OfRes = OfResMax ? {{`FLEN-`H_LEN{1'b1}}, ResSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`FLEN-`H_LEN{1'b1}}, ResSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};      
 
-                    KillProdRes = {{`FLEN-`H_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:1],ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
+                    // KillProdRes = {{`FLEN-`H_LEN{1'b1}}, ResSgn, {ZExpM[`NE-1], ZExpM[`H_NE-2:1],ZExpM[0]&~(ZDenormM|ZZeroM), ZManM[`NF-1:`NF-`H_NF]} + (RoundAdd[`NF-`H_NF+`H_LEN-2:`NF-`H_NF]&{`H_LEN-1{AddendStickyM}})};
                     UfRes = {{`FLEN-`H_LEN{1'b1}}, {ResSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), Plus1&FrmM[1]}};
                     NormRes = {{`FLEN-`H_LEN{1'b1}}, ResSgn, ResExp[`H_NE-1:0], ResFrac[`NF-1:`NF-`H_NF]};
                 end
@@ -217,22 +221,22 @@ module resultselect(
     //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = CvtOp ? (CvtResUf|(XZeroM&~IntToFp)|(IntZeroM&IntToFp)) : FullResExp[`NE+1];//Underflow & ~ResDenorm & (ResExp!=1);
-
+    assign KillRes = CvtOp ? (CvtResUf|(XZeroM&~IntToFp)|(IntZeroM&IntToFp)) : FullResExp[`NE+1] | (YInfM&DivOp&~XInfM);//Underflow & ~ResDenorm & (ResExp!=1);
+    assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInfM&DivOp));
     // output infinity with result sign if divide by zero
     if(`IEEE754) begin
         assign PostProcResM = XNaNM&~(IntToFp&CvtOp) ? XNaNRes :
                          YNaNM&~CvtOp ? YNaNRes :
                          ZNaNM&FmaOp ? ZNaNRes :
                          Invalid ? InvalidRes : 
-                         Overflow|DivByZero|InfIn ? OfRes :
-                         KillProdM&FmaOp ? KillProdRes : 
+                         SelOfRes ? OfRes :
+                        //  KillProdM&FmaOp ? KillProdRes : 
                          KillRes ? UfRes :  
                          NormRes;
     end else begin
         assign PostProcResM = NaNIn|Invalid ? InvalidRes :
-                         Overflow|DivByZero|InfIn ? OfRes :
-                         KillProdM&FmaOp ? KillProdRes :  
+                         SelOfRes ? OfRes :
+                        //  KillProdM&FmaOp ? KillProdRes :  
                          KillRes ? UfRes :  
                          NormRes;
     end
