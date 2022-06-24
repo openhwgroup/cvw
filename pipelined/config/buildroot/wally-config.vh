@@ -124,8 +124,6 @@
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/buildroot/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/buildroot/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0

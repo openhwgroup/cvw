@@ -72,6 +72,7 @@ test_cases:
 
 .4byte input_val, 0x00000000, read32_test  # input_val reset to zero
 .4byte input_en, 0x00000000, read32_test  # input_en reset to zero
+# *** add more
 
 # =========== Test output and input pins ===========
 
@@ -86,14 +87,49 @@ test_cases:
 .4byte input_en, 0x00000000, write32_test       # disable all input pins
 .4byte input_val, 0x00000000, read32_test       # read 0 since input pins are disabled
 .4byte input_en, 0xFFFF0000, write32_test       # enable a few input pins
-.4byte input_val, 0x5A5A0000, read32_test      # read part of pattern set above.
+.4byte input_val, 0x5A5A0000, read32_test       # read part of pattern set above.
 
-# =========== Test output enables(?) ===========
-
-.4byte output_en, 0xFFFFFFFF, write32_test      # undo changes made to output enable
 
 # =========== Test XOR functionality ===========
 .4byte out_xor, 0xFF00FF00, write32_test        # invert certain pin values
-.4byte input_val, 0xA55A0000, read32_test           # read inverted pins and verify input enable is working
+.4byte input_val, 0xA55A0000, read32_test       # read inverted pins and verify input enable is working
+
+# =========== Test Interrupt Pending bits ===========
+
+SETUP_PLIC
+
+.4byte low_ip, 0xFFFFFFFF, write32_test             # clear pending low interrupts
+.4byte high_ip, 0xFFFFFFFF, write32_test            # clear pending high interrupts
+.4byte rise_ip, 0xFFFFFFFF, write32_test            # clear pending rise interrupts
+.4byte fall_ip, 0xFFFFFFFF, write32_test            # clear pending fall interrupts
+.4byte high_ip, 0xA55A0000, read32_test             # check pending high interrupts
+.4byte low_ip, 0x5AA5FFFF, read32_test              # check pending low interrupts
+.4byte rise_ip, 0x00000000, read32_test             # check pending rise interrupts
+.4byte fall_ip, 0x00000000, read32_test             # check pending fall interrupts
+.4byte output_val, 0x5BAA000F, write32_test         # change output pattern to check rise/fall interrupts
+.4byte input_val, 0xA4AA0000, read32_test           # check new output matches expected output
+.4byte high_ip, 0xA5FA00000, read32_test            # high interrupt pending *** (is this correct?)
+.4byte low_ip, 0x5BF5FFFF, read32_test              # low interrupt pending should be opposite high for enabled pins
+.4byte rise_ip, 0x00A00000, read32_test             # check for changed bits (rising)
+.4byte fall_ip, 0x01500000, read32_test             # check for changed bits (falling)
+.4byte 0x0, 0x00000000, readmip_test                # Check no external interrupt has been generated
+
+# =========== Test interrupts can be enabled without being triggered ===========
+
+.4byte high_ie, 0x00010000, write32_test            # enable high interrupt on bit 16, no pending interrupt
+.4byte 0x0, 0x00000000, readmip_test                # No external interrupt should be pending
+.4byte low_ie, 0x00020000, write32_test             # enable low interrupt on bit 17, no pending interrupt
+.4byte 0x0, 0x00000000, readmip_test                # No external interrupt should be pending
+.4byte rise_ie, 0x00010000, write32_test            # enable rise interrupt on bit 16, no pending interrupt
+.4byte 0x0, 0x00000000, readmip_test                # No external interrupt should be pending
+.4byte fall_ie, 0x00010000, write32_test            # enable fall interrupt on bit 16, no pending interrupt
+.4byte 0x0, 0x00000000, readmip_test                # No external interrupt should be pending
+
+# =========== Test interrupts can be enabled and triggered
+
+.4byte high_ie, 0x00020000, write32_test            # enable high interrupt on bit 17, which is pending
+.4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
+.4byte high_ie, 0x00000000, write32_test             # disable high interrupt on bit 17, which is pending
+.4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 
 .4byte 0x0, 0x0, terminate_test # terminate tests

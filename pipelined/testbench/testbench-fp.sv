@@ -48,13 +48,14 @@ module testbenchfp;
   logic                 XInf, YInf, ZInf;                   // is the input infinity
   logic                 XZero, YZero, ZZero;                // is the input zero
   logic                 XExpMax, YExpMax, ZExpMax;         // is the input's exponent all ones  
-  logic  [`LGLEN-1:0]      CvtLzcInE;      // input to the Leading Zero Counter (priority encoder)
+  logic  [`CVTLEN-1:0]      CvtLzcInE;      // input to the Leading Zero Counter (priority encoder)
   logic        IntZeroE;
   logic CvtResSgnE;
-  logic [`XLEN-1:0] Empty1,Empty2,Empty3,Empty4,Empty5;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
-	logic [`LOGLGLEN-1:0] CvtShiftAmtE;  // how much to shift by
+	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
+	logic [`DIVLEN+2:0] Quot;
   logic CvtResDenormUfE;
+  logic DivStart, DivDone;
   
 
   // in-between FMA signals
@@ -68,6 +69,8 @@ module testbenchfp;
   logic 			          NegSumE;
   logic 			          ZSgnEffE;
   logic 			          PSgnE;
+  logic       DivSgn;
+  logic [`NE:0] DivCalcExp;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -205,16 +208,16 @@ module testbenchfp;
             Fmt = {Fmt, 2'b11};
           end
       end
-      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
-      //   // add the divide tests/op-ctrls/unit/fmt
-      //   Tests = {Tests, f128div};
-      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //     for(int i = 0; i<5; i++) begin
-      //       Unit = {Unit, `DIVUNIT};
-      //       Fmt = {Fmt, 2'b11};
-      //     end
-      // end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the divide tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
       // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
       //   // add the square-root tests/op-ctrls/unit/fmt
       //   Tests = {Tests, f128sqrt};
@@ -332,16 +335,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b01};
         end
       end
-      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f64div};
-      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b01};
-      //   end
-      // end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
       // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
       //   // add the correct tests/op-ctrls/unit/fmt to their lists
       //   Tests = {Tests, f64sqrt};
@@ -443,16 +446,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b00};
         end
       end
-      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f32div};
-      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b00};
-      //   end
-      // end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
       // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
       //   // add the correct tests/op-ctrls/unit/fmt to their lists
       //   Tests = {Tests, f32sqrt};
@@ -536,16 +539,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
-      // if (TEST === "div"   | TEST === "all") begin // if division is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f16div};
-      //   OpCtrl = {OpCtrl, `DIV_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b10};
-      //   end
-      // end
+      if (TEST === "div"   | TEST === "all") begin // if division is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16div};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
       // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
       //   // add the correct tests/op-ctrls/unit/fmt to their lists
       //   Tests = {Tests, f16sqrt};
@@ -611,7 +614,7 @@ module testbenchfp;
   readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
                                     .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
                                     .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
-                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
+                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .DivStart,
                                     .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
                                     .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
                                     .XDenormE(XDenorm), .ZDenormE(ZDenorm), 
@@ -639,8 +642,8 @@ module testbenchfp;
               .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .SumE, .NegSumE, .InvZE, .FmaNormCntE, .ZSgnEffE, .PSgnE,
               .ProdExpE, .AddendStickyE, .KillProdE); 
               
-  postprocess postprocess(.XSgnM(XSgn), .PostProcSelM(UnitVal[1:0]),
-              .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal),
+  postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
+              .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
               .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE),
               .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE),
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
@@ -650,21 +653,16 @@ module testbenchfp;
               .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
               .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
   
-fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
+  fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
             .XZeroE(XZero), .XDenormE(XDenorm), .FOpCtrlE(OpCtrlVal), .IntZeroE,
             .FmtE(ModFmt), .CvtCalcExpE, .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .CvtLzcInE);
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  // fcvtint fcvtint (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .XZeroE(XZero), .XNaNE(XNaN), .XInfE(XInf), 
-  //                 .XDenormE(XDenorm), .ForwardedSrcAE(SrcA), .FOpCtrlE, .FmtE(ModFmt), .FrmE(Frmal),
-  //                 .CvtRes, .CvtFlgE);
-  // *** integrade divide and squareroot
-  //  fpdiv_pipe fdivsqrt (.op1(DivInput1E), .op2(DivInput2E), .rm(FrmVal[1:0]), .op_type(FOpCtrlQ), 
-  //        .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
-  //        .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
-  //        .FDivBusyE, .done(FDivSqrtDoneE), .AS_Res(FDivRes), .Flg(FDivFlg));
-
+  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero),
+                .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
+                .DivDone, .Quot, .Rem());
+                
   assign CmpFlg[3:0] = 0;
 
   // produce clock
@@ -817,7 +815,7 @@ end
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone&(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -840,8 +838,7 @@ end
       $stop;
     end
 
-
-    VectorNum += 1; // increment the vector
+    if(DivDone|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
 
     if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the end of file
 
@@ -895,15 +892,17 @@ module readvectors (
   output logic                    XDenormE, ZDenormE,   // is XYZ denormalized
   output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
   output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-  output logic XExpMaxE,
+  output logic                    XExpMaxE,
+  output logic                    DivStart,
   output logic [`FLEN-1:0] X, Y, Z
 );
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
-  always @(posedge clk) begin
+  always @(VectorNum) begin
     #1; 
     AnsFlg = TestVector[4:0];
+    DivStart = 1'b0;
     case (Unit)
       `FMAUNIT:
         case (Fmt)
@@ -972,21 +971,33 @@ module readvectors (
             X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
             Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
             Ans = TestVector[8+(`Q_LEN-1):8];
+            if (~clk) #5;
+            DivStart = 1'b1; #10 // one clk cycle
+            DivStart = 1'b0;
           end
           2'b01:	begin	  // double
             X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
             Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
             Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+            if (~clk) #5;
+            DivStart = 1'b1; #10
+            DivStart = 1'b0;
           end
           2'b00:	begin	  // single
             X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
             Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
             Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+            if (~clk) #5;
+            DivStart = 1'b1; #10
+            DivStart = 1'b0;
           end
           2'b10:	begin	  // half
             X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
             Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
             Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+            if (~clk) #5;
+            DivStart = 1'b1; #10
+            DivStart = 1'b0;
           end
         endcase
       `CMPUNIT:

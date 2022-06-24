@@ -12,11 +12,11 @@ module fcvt (
     input logic             XDenormE,   // is the input denormalized
     input logic [`FMTBITS-1:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
     output logic [`NE:0]           CvtCalcExpE,    // the calculated expoent
-	output logic [`LOGLGLEN-1:0] CvtShiftAmtE,  // how much to shift by
+	output logic [`LOGCVTLEN-1:0] CvtShiftAmtE,  // how much to shift by
     output logic                   CvtResDenormUfE,// does the result underflow or is denormalized
     output logic                   CvtResSgnE,     // the result's sign
     output logic                   IntZeroE,      // is the integer zero?
-    output logic [`LGLEN-1:0]      CvtLzcInE      // input to the Leading Zero Counter (priority encoder)
+    output logic [`CVTLEN-1:0]      CvtLzcInE      // input to the Leading Zero Counter (priority encoder)
     );
 
     // OpCtrls:
@@ -43,7 +43,7 @@ module fcvt (
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
-    logic [`LOGLGLEN-1:0] ZeroCnt; // output from the LZC
+    logic [`LOGCVTLEN-1:0] ZeroCnt; // output from the LZC
 
 
     // seperate OpCtrl for code readability
@@ -78,10 +78,10 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign CvtLzcInE = IntToFp ? {TrimInt, {`LGLEN-`XLEN{1'b0}}} :
-                             {XManE[`NF-1:0], {`LGLEN-`NF{1'b0}}};
+    assign CvtLzcInE = IntToFp ? {TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
+                             {XManE[`NF-1:0], {`CVTLEN-`NF{1'b0}}};
     
-    lzc #(`LGLEN) lzc (.num(CvtLzcInE), .ZeroCnt);
+    lzc #(`CVTLEN) lzc (.num(CvtLzcInE), .ZeroCnt);
 
     ///////////////////////////////////////////////////////////////////////////
     // shifter
@@ -99,9 +99,9 @@ module fcvt (
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign CvtShiftAmtE = ToInt ? CvtCalcExpE[`LOGLGLEN-1:0]&{`LOGLGLEN{~CvtCalcExpE[`NE]}} :
-                    CvtResDenormUfE&~IntToFp ? (`LOGLGLEN)'(`NF-1)+CvtCalcExpE[`LOGLGLEN-1:0] : 
-                              (ZeroCnt+1)&{`LOGLGLEN{XDenormE|IntToFp}};
+    assign CvtShiftAmtE = ToInt ? CvtCalcExpE[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~CvtCalcExpE[`NE]}} :
+                    CvtResDenormUfE&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+CvtCalcExpE[`LOGCVTLEN-1:0] : 
+                              (ZeroCnt+1)&{`LOGCVTLEN{XDenormE|IntToFp}};
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
@@ -180,7 +180,7 @@ module fcvt (
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
     //          
-    assign CvtCalcExpE = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-`LOGLGLEN+1{1'b0}}, (ZeroCnt&{`LOGLGLEN{XDenormE|IntToFp}})};
+    assign CvtCalcExpE = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-`LOGCVTLEN+1{1'b0}}, (ZeroCnt&{`LOGCVTLEN{XDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
