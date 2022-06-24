@@ -42,23 +42,27 @@ module srtradix4 (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       DivDone,
+  output logic       DivStickyE,
+  output logic       DivNegStickyE,
   output logic [`DIVLEN+2:0] Quot,
   output logic [`XLEN-1:0] Rem, // *** later handle integers
-  output logic [`NE:0] DivCalcExpE
+  output logic [`NE+1:0] DivCalcExpE
 );
 
   // logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [3:0]     q;
-  logic [`NE:0] DivCalcExp;
+  logic [`NE+1:0] DivCalcExp;
   logic [`DIVLEN:0]    X;
   logic [`DIVLEN-1:0]  Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN;
   logic [`DIVLEN+3:0]  WC, WCA, WCN;
   logic [`DIVLEN+3:0]  D, DBar, D2, DBar2, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp;
+  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic           intSign;
  
-  srtpreproc preproc(SrcA, SrcB, XManE, YManE, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, intSign);
+  srtpreproc preproc(.SrcA, .SrcB, .XManE, .YManE, .W64, .Signed, .Int, .Sqrt, .X, 
+                    .XZeroCnt, .YZeroCnt, .Dpreproc, .intExp, .intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -88,7 +92,7 @@ module srtradix4 (
   qsel4 qsel4(.D, .WS, .WC, .q);
 
   // Store the expoenent and sign until division is DivDone
-  flopen #(`NE+1) expflop(clk, DivStart, DivCalcExp, DivCalcExpE);
+  flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpE);
 
   // Divisor Selection logic
   // *** radix 4 change to choose -2 to 2
@@ -113,8 +117,10 @@ module srtradix4 (
   
   //*** change for radix 4
   otfc4 otfc4(.clk, .DivStart, .q, .Quot);
+  assign DivStickyE = (WS+WC) != 0; //replace with early termination
+  assign DivNegStickyE = $signed(WS+WC) < 0; //replace with early termination
 
-  expcalc expcalc(.XExpE, .YExpE, .XZeroE, .DivCalcExp);
+  expcalc expcalc(.XExpE, .YExpE, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
 
   divcounter divcounter(clk, DivStart, DivDone);
 
@@ -233,11 +239,10 @@ module srtpreproc (
   input  logic       Sqrt, // perform square root, not divide
   output logic [`DIVLEN:0] X,
   output logic [`DIVLEN-1:0] Dpreproc,
+  output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
   output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
   output logic       intSign // Quotient integer sign
 );
-
-  // logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
   logic  [`DIVLEN:0] PreprocA, PreprocX;
@@ -245,17 +250,21 @@ module srtpreproc (
 
   // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
   // assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
-
   // lzc #(`XLEN) lzcA (PosA, zeroCntA);
   // lzc #(`XLEN) lzcB (PosB, zeroCntB);
+
+  // ***can probably merge X LZC with conversion
+  // cout the number of leading zeros
+  lzc #(`NF+1) lzcA (XManE, XZeroCnt);
+  lzc #(`NF+1) lzcB (YManE, YZeroCnt);
 
   // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
   // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
 
   // assign PreprocA = ExtraA << zeroCntA;
   // assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XManE, {`DIVLEN-`NF{1'b0}}};
-  assign PreprocY = {YManE[`NF-1:0], {`DIVLEN-`NF{1'b0}}};
+  assign PreprocX = {XManE<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocY = {YManE[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
 
   
   assign X = Int ? PreprocA : PreprocX;
@@ -358,9 +367,11 @@ endmodule
 module expcalc(
   input logic  [`NE-1:0] XExpE, YExpE,
   input logic XZeroE,
-  output logic [`NE:0] DivCalcExp
+  input logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  output logic [`NE+1:0] DivCalcExp
 );
 
-  assign DivCalcExp = (XExpE - YExpE + (`NE)'(`BIAS))&{`NE+1{~XZeroE}};
+  // correct exponent for denormal shifts
+  assign DivCalcExp = (XExpE - XZeroCnt - YExpE + YZeroCnt + (`NE)'(`BIAS))&{`NE+1{~XZeroE}};
 
 endmodule

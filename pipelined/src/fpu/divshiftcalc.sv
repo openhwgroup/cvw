@@ -2,9 +2,9 @@
 
 module divshiftcalc(
     input logic  [`DIVLEN+2:0] Quot,
-    input logic  [`NE:0] DivCalcExpM,
+    input logic  [`NE+1:0] DivCalcExpM,
     output logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt,
-    output logic [`NE:0] CorrDivExp
+    output logic [`NE+1:0] CorrDivExp
 );
     
     assign DivShiftAmt = {{$clog2(`NORMSHIFTSZ)-1{1'b0}}, ~Quot[`DIVLEN+2]};

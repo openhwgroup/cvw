@@ -24,7 +24,9 @@ module round(
     input logic  [`NE+1:0]      SumExp,         // exponent of the normalized sum
     input logic                 RoundSgn,      // the result's sign
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic [`NE:0]           CorrDivExp,    // the calculated expoent
+    input logic [`NE+1:0]           CorrDivExp,    // the calculated expoent
+    input logic                DivStickyM,             // sticky bit
+    input logic DivNegStickyM,
     output logic                UfPlus1,  // do you add or subtract on from the result
     output logic [`NE+1:0]      FullResExp,      // ResExp with bits to determine sign and overflow
     output logic [`NF-1:0]      ResFrac,         // Result fraction
@@ -149,7 +151,7 @@ module round(
 
     // only add the Addend sticky if doing an FMA opperation
     //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-    assign UfSticky = AddendStickyM&FmaOp | NormSumSticky | CvtResUf&CvtOp | SumExp[`NE+1]&FmaOp;
+    assign UfSticky = AddendStickyM&FmaOp | NormSumSticky | CvtResUf&CvtOp | SumExp[`NE+1]&FmaOp | DivStickyM&DivOp;
     
     // determine round and LSB of the rounded value
     //      - underflow round bit is used to determint the underflow flag
@@ -223,9 +225,11 @@ module round(
     assign Sticky = UfSticky | UfRound;
 
 
-    // Deterimine if a small number was supposed to be subtrated - For Fma calculation only
-    assign SubBySmallNum = AddendStickyM & InvZM & ~(NormSumSticky|UfRound) & ~ZZeroM & FmaOp;
-    assign UfSubBySmallNum = AddendStickyM & InvZM & ~(NormSumSticky) & ~ZZeroM & FmaOp;
+    // Deterimine if a small number was supposed to be subtrated
+    //  - for FMA or if division has a negitive sticky bit
+    assign SubBySmallNum = ((AddendStickyM&FmaOp&~ZZeroM&InvZM) | (DivNegStickyM&DivOp)) & ~(NormSumSticky|UfRound);
+    assign UfSubBySmallNum = ((AddendStickyM&FmaOp&~ZZeroM&InvZM) | (DivNegStickyM&DivOp)) & ~NormSumSticky;
+
 
     always_comb begin
         // Determine if you add 1
@@ -305,7 +309,7 @@ module round(
         case(PostProcSelM)
             2'b10: RoundExp = SumExp; // fma
             2'b00: RoundExp = {CvtCalcExpM[`NE], CvtCalcExpM}&{`NE+2{~CvtResDenormUfM|CvtResUf}}; // cvt
-            2'b01: RoundExp = {CorrDivExp[`NE], CorrDivExp[`NE:0]}; // divide
+            2'b01: RoundExp = CorrDivExp; // divide
             default: RoundExp = 0; 
         endcase
 
