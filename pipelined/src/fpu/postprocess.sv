@@ -210,6 +210,7 @@ module postprocess(
     resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM, .IntInvalid,
         .IntZeroM, .FrmM, .OutFmt, .AddendStickyM, .KillProdM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegResMSBS,
+        .XInfM, .YInfM, .DivOp,
         .DivByZero, .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
 
 endmodule
