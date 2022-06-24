@@ -5,10 +5,10 @@ NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 500
-export CONFIG ?= rv32e
+export FREQ ?= 4000
+export CONFIG ?= rv64gc
 # sky130 and sky90 presently supported
-export TECH ?= sky130
+export TECH ?= tsmc28
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 4
@@ -19,7 +19,7 @@ export DRIVE ?= FLOP
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(hash)
+export OUTPUTDIR := newRuns/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(hash)
 export SAIFPOWER ?= 0
 
 CONFIGDIR ?= ${WALLY}/pipelined/config
