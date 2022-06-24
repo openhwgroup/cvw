@@ -100,8 +100,6 @@ def freqPlot(tech, width, config):
             areasL[ind] += [oneSynth.area]
     
     f, (ax1, ax2) = plt.subplots(2, 1, sharex=True)
-    for ax in (ax1, ax2):
-        ax.ticklabel_format(useOffset=False, style='plain')
 
     for ind in [0,1]:
         areas = areasL[ind]
@@ -120,11 +118,13 @@ def freqPlot(tech, width, config):
                        lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
 
     ax1.legend(handles=legend_elements)
+    ytop = ax2.get_ylim()[1]
+    ax2.set_ylim(ymin=0, ymax=1.1*ytop)
     ax2.set_xlabel("Target Freq (MHz)")
     ax1.set_ylabel('Delay (ns)')
     ax2.set_ylabel('Area (sq microns)')
     ax1.set_title(tech + ' ' + width +config)
-    plt.savefig('./plots/wally/' + tech + '_' + width + config + '.png')
+    plt.savefig('./plots/wally/freqSweep_' + tech + '_' + width + config + '.png')
     # plt.show()
 
 def areaDelay(width, tech, freq, config=None, special=None):
@@ -149,16 +149,24 @@ def areaDelay(width, tech, freq, config=None, special=None):
     plt.scatter(delays, areas)
     plt.xlabel('Delay (ns)')
     plt.ylabel('Area (sq microns)')
-    titleStr = tech + ' ' +width
-    if config: titleStr += config
-    if special: titleStr += special
+    ytop = ax1.get_ylim()[1]
+    plt.ylim(ymin=0, ymax=1.1*ytop)
+    titleStr = tech + ' ' + width
+    saveStr = tech + '_' + width
+    if config: 
+        titleStr += config
+        saveStr = saveStr + config + '_versions_'
+    if (special != None): 
+        titleStr += special
+        saveStr = saveStr + '_origConfigs_'
+    saveStr += str(freq)
     titleStr = titleStr + ' (target freq: ' + str(freq) + ')'
     plt.title(titleStr)
 
     for i in range(len(labels)):
         plt.annotate(labels[i], (delays[i], areas[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
-    plt.savefig('./plots/wally/areaDelay ' + titleStr + '.png')
+    plt.savefig('./plots/wally/areaDelay_' + saveStr + '.png')
     
 # ending freq in 42 means fpu was turned off manually
 
@@ -168,4 +176,3 @@ if __name__ == '__main__':
     freqPlot('tsmc28', 'rv64', 'gc')
     areaDelay('rv32', 'tsmc28', 4200, config='gc')
     areaDelay('rv32', 'tsmc28', 3042, special='')
-
