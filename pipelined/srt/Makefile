@@ -1,4 +1,4 @@
-all: exptestgen testgen qslc_r4a2 qslc_r4a2b
+all: exptestgen testgen qslc_r4a2 qslc_r4a2b qslc_sqrt_r4a2
 
 sqrttestgen: sqrttestgen.c
 	gcc sqrttestgen.c -o sqrttestgen -lm
@@ -19,5 +19,9 @@ qslc_r4a2b: qslc_r4a2b.c
 	gcc qslc_r4a2b.c -o qslc_r4a2b -lm
 	./qslc_r4a2b > qslc_r4a2b.tv
 
+qslc_sqrt_r4a2: qslc_sqrt_r4a2.c
+	gcc qslc_sqrt_r4a2.c -o qslc_sqrt_r4a2 -lm
+	./qslc_sqrt_r4a2 > qslc_sqrt_r4a2.sv
+
 clean:
-	rm -f testgen exptestgen qslc_r4a2 
+	rm -f testgen exptestgen qslc_r4a2 qslc_r4a2b qslc_sqrt_r4a2

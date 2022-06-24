@@ -8,8 +8,9 @@ IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
 ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) 
 
 ELFFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf")
+OBJDUMPFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf.objdump")
 MEMFILES ?= $(ELFFILES:.elf=.elf.memfile)
-ADDRFILES ?= $(ELFFILES:.elf=.elf.objdump.addr)
+ADDRFILES ?= $(OBJDUMPFILES:.objdump=.objdump.addr)
 
 print:
 	echo "files in $(ALLDIRS) are $(ELFFILES)."

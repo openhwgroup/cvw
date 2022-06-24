@@ -2,30 +2,6 @@
 `include "wally-config.vh"
 `define DIVLEN ((`NF<`XLEN) ? `XLEN : `NF)
 
-/////////////
-// counter //
-/////////////
-module counter(input  logic clk, 
-               input  logic req, 
-               output logic done);
- 
-   logic    [5:0]  count;
-
-  // This block of control logic sequences the divider
-  // through its iterations.  You may modify it if you
-  // build a divider which completes in fewer iterations.
-  // You are not responsible for the (trivial) circuit
-  // design of the block.
-
-  always @(posedge clk)
-    begin
-      if      (count == `DIVLEN/2+1) done <= #1 1;
-      else if (done | req) done <= #1 0;	
-      if (req) count <= #1 0;
-      else     count <= #1 count+1;
-    end
-endmodule
-
 ///////////
 // clock //
 ///////////
@@ -43,7 +19,7 @@ endmodule
 module testbenchradix4;
   logic              clk;
   logic              req;
-  logic              done;
+  logic              DivDone;
   logic [63:0]       a, b;
   logic [51:0]       afrac, bfrac;
   logic [10:0]       aExp, bExp;
@@ -65,22 +41,20 @@ module testbenchradix4;
   logic [MEM_WIDTH-1:0] Vec;  // Verilog doesn't allow direct access to a
                             // bit field of an array 
   logic [63:0] correctr, nextr, diffn, diffp;
-  logic [10:0] rExp;
-  logic        rsign;
+  logic [10:0] DivExp;
+  logic        DivSgn;
   integer testnum, errors;
 
   // Divider
-  srtradix4 srtradix4(.clk, .Start(req), 
-                .Stall(1'b0), .Flush(1'b0), 
-                .XExp(aExp), .YExp(bExp), .rExp,
-                .XSign(asign), .YSign(bsign), .rsign,
+  srtradix4 srtradix4(.clk, .DivStart(req), 
+                .XExpE(aExp), .YExpE(bExp), .DivExp,
+                .XSgnE(asign), .YSgnE(bsign), .DivSgn,
                 .XFrac(afrac), .YFrac(bfrac), 
-                .SrcA('0), .SrcB('0), .Fmt(2'b00), 
-                .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), 
-                .Quot, .Rem(), .Flags());
+                .SrcA('0), .SrcB('0),
+                .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(1'b0), .DivDone,
+                .Quot, .Rem());
 
   // Counter
-  counter counter(clk, req, done);
 
 
     initial
@@ -112,14 +86,14 @@ module testbenchradix4;
   always @(posedge clk)
     begin
       r = Quot[`DIVLEN-1:`DIVLEN - 52];
-      if (done) begin
+      if (DivDone) begin
         req <= 1;
         diffp = correctr[51:0] - r;
         diffn = r - correctr[51:0];
-        if ((rsign !== correctr[63]) | (rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
+        if ((DivSgn !== correctr[63]) | (DivExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
           begin
             errors = errors+1;
-            $display("result was %h_%h, should be %h %h %h\n", rExp, r, correctr, diffn, diffp);
+            $display("result was %h_%h, should be %h %h %h\n", DivExp, r, correctr, diffn, diffp);
             $display("failed\n");
             $stop;
           end

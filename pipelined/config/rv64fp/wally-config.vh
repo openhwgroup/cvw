@@ -32,7 +32,7 @@
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 64
+`define XLEN 32
 
 // IEEE 754 compliance
 `define IEEE754 0
@@ -132,8 +132,6 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/shared/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/shared/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
