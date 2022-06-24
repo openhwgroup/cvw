@@ -75,6 +75,7 @@ synthDC/alib-52
 synthDC/*.log
 synthDC/*.svf
 synthDC/runs/
+synthDC/newRuns
 synthDC/PPAruns
 synthDC/plots/
 synthDC/runArchive
