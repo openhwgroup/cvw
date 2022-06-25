@@ -88,7 +88,7 @@ module flags(
     //                 |           and the exponent isn't negitive
     //                 |           |                   if the input isnt infinity or NaN
     //                 |           |                   |            
-    assign Overflow = ResExpGteMax & ~FullResExp[`NE+1]&~(InfIn|NaNIn);
+    assign Overflow = ResExpGteMax & ~FullResExp[`NE+1]&~(InfIn|NaNIn|DivByZero);
 
     // detecting tininess after rounding
     //                  the exponent is negitive
@@ -98,11 +98,11 @@ module flags(
     //                  |                    |                    |                                      |                     and if the result is not exact
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
-    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (RoundExp == 0) & ~(UfPlus1&UfLSBRes)))&(Round|Sticky))&~(InfIn|NaNIn);
+    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (RoundExp == 0) & ~(UfPlus1&UfLSBRes)))&(Round|Sticky))&~(InfIn|NaNIn|DivByZero);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (Sticky|Overflow|Round|Underflow)&~(InfIn|NaNIn);
+    assign FpInexact = (Sticky|Overflow|Round|Underflow)&~(InfIn|NaNIn|DivByZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
