@@ -30,7 +30,8 @@ module divshiftcalc(
     assign NormShift = (`NE+2)'(`NF+1) + {(`NE+1)'(0), ~Quot[`DIVLEN+2]};
     assign DivShiftAmt = ResDenorm ?  DenormShift[$clog2(`NORMSHIFTSZ)-1:0] : NormShift[$clog2(`NORMSHIFTSZ)-1:0];
 
-    // assign DivShiftIn = {(`NF)'(0), Quot[`DIVLEN+2:0], {`NORMSHIFTSZ-`DIVLEN-3-`NF{1'b0}}};
+    // *** may be able to reduce shifter size
+    assign DivShiftIn = {{`NF{1'b0}}, Quot[`DIVLEN+2:0], {`NORMSHIFTSZ-`DIVLEN-3-`NF{1'b0}}};
     // the quotent is in the range [.5,2)
     // if the quotent < 1 and not denormal then subtract 1 to account for the normalization shift
     assign CorrDivExp = (ResDenorm&~DenormShift[`NE+1]) ? (`NE+2)'(0) : DivCalcExpM - {(`NE+1)'(0), ~Quot[`DIVLEN+2]};

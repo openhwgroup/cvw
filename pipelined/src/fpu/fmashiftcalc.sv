@@ -120,8 +120,9 @@ module fmashiftcalc(
 
     // Determine the shift needed for denormal results
     //  - if not denorm add 1 to shift out the leading 1
-    assign DenormShift = PreResultDenorm ? ConvNormSumExp[$clog2(3*`NF+7)-1:0] : 1;
+    assign DenormShift = PreResultDenorm&~KillProdM ? ConvNormSumExp[$clog2(3*`NF+7)-1:0] : 1;
     // set and calculate the shift input and amount
+    //  - shift once if killing a product and the result is denormalized
     assign FmaShiftIn = {3'b0, SumM};
-    assign FmaShiftAmt = FmaNormCntM+DenormShift;
+    assign FmaShiftAmt = (FmaNormCntM&{$clog2(3*`NF+7){~KillProdM}})+DenormShift;
 endmodule
