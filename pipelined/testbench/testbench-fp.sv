@@ -816,7 +816,7 @@ end
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
     // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone&(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone^~(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
