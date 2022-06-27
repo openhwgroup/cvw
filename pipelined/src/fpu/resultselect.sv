@@ -211,7 +211,7 @@ module resultselect(
     //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = CvtOp ? (CvtResUf|(XZeroM&~IntToFp)|(IntZeroM&IntToFp)) : FullResExp[`NE+1] | (YInfM&DivOp&~XInfM);//Underflow & ~ResDenorm & (ResExp!=1);
+    assign KillRes = CvtOp ? (CvtResUf|(XZeroM&~IntToFp)|(IntZeroM&IntToFp)) : FullResExp[`NE+1] | (((YInfM&~XInfM)|XZeroM)&DivOp);//Underflow & ~ResDenorm & (ResExp!=1);
     assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInfM&DivOp));
     // output infinity with result sign if divide by zero
     if(`IEEE754) begin
