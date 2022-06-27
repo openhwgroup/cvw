@@ -28,7 +28,8 @@ module divshiftcalc(
     //  00000000xx.xxxxx... << 1?               Exp = DivCalcExp-1
     // Left shift amount  = NF+1 plus 1 if normalization required
     assign NormShift = (`NE+2)'(`NF+1) + {(`NE+1)'(0), ~Quot[`DIVLEN+2]};
-    assign DivShiftAmt = ResDenorm ?  DenormShift[$clog2(`NORMSHIFTSZ)-1:0] : NormShift[$clog2(`NORMSHIFTSZ)-1:0];
+    // if the shift amount is negitive then dont shift (keep sticky bit)
+    assign DivShiftAmt = ResDenorm ?  DenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0];
 
     // *** may be able to reduce shifter size
     assign DivShiftIn = {{`NF{1'b0}}, Quot[`DIVLEN+2:0], {`NORMSHIFTSZ-`DIVLEN-3-`NF{1'b0}}};
