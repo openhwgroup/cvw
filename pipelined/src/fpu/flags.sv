@@ -134,7 +134,8 @@ module flags(
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
     // if dividing by zero and not 0/0
-    assign DivByZero = YZeroM&DivOp&~XZeroM;  
+    //  - don't set flag if an input is NaN or Inf(IEEE says has to be a finite numerator)
+    assign DivByZero = YZeroM&DivOp&~(XZeroM|NaNIn|InfIn);  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags

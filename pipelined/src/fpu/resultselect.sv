@@ -48,7 +48,7 @@ module resultselect(
 
     // does the overflow result output the maximum normalized floating point number
     //                output infinity if the input is infinity
-    assign OfResMax = (~InfIn|(IntToFp&CvtOp))&((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResSgn) | (FrmM[1:0]==2'b11&ResSgn));
+    assign OfResMax = (~InfIn|(IntToFp&CvtOp))&~DivByZero&((FrmM[1:0]==2'b01) | (FrmM[1:0]==2'b10&~ResSgn) | (FrmM[1:0]==2'b11&ResSgn));
 
     if (`FPSIZES == 1) begin
 
@@ -63,7 +63,7 @@ module resultselect(
         end
 
         assign OfRes =  OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-        assign UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
+        assign UfRes = {ResSgn, {`FLEN-1{1'b0}}, Plus1&FrmM[1]&~(DivOp&YInfM)};
         assign NormRes = {ResSgn, ResExp, ResFrac};
 
     end else if (`FPSIZES == 2) begin //will the format conversion in killprod work in other conversions?
@@ -78,7 +78,7 @@ module resultselect(
         
         assign OfRes =  OutFmt ? OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}} :
                                OfResMax ? {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-        assign UfRes = OutFmt ? {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]} : {{`FLEN-`LEN1{1'b1}}, {ResSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), Plus1&FrmM[1]}};
+        assign UfRes = OutFmt ? {ResSgn, (`FLEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)} : {{`FLEN-`LEN1{1'b1}}, ResSgn, (`LEN1-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
         assign NormRes = OutFmt ? {ResSgn, ResExp, ResFrac} : {{`FLEN-`LEN1{1'b1}}, ResSgn, ResExp[`NE1-1:0], ResFrac[`NF-1:`NF-`NF1]};
 
     end else if (`FPSIZES == 3) begin
@@ -95,7 +95,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
+                    UfRes = {ResSgn, (`FLEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {ResSgn, ResExp, ResFrac};
                 end
                 `FMT1: begin  
@@ -108,7 +108,7 @@ module resultselect(
                         InvalidRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end
                     OfRes = OfResMax ? {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, ResSgn, {`NE1{1'b1}}, (`NF1)'(0)};
-                    UfRes = {{`FLEN-`LEN1{1'b1}}, {ResSgn, (`LEN1-1)'(0)} + {(`LEN1-1)'(0), Plus1&FrmM[1]}};
+                    UfRes = {{`FLEN-`LEN1{1'b1}}, ResSgn, (`LEN1-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {{`FLEN-`LEN1{1'b1}}, ResSgn, ResExp[`NE1-1:0], ResFrac[`NF-1:`NF-`NF1]};
                 end
                 `FMT2: begin  
@@ -122,7 +122,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`LEN2{1'b1}}, ResSgn, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} : {{`FLEN-`LEN2{1'b1}}, ResSgn, {`NE2{1'b1}}, (`NF2)'(0)};
-                    UfRes = {{`FLEN-`LEN2{1'b1}}, {ResSgn, (`LEN2-1)'(0)} + {(`LEN2-1)'(0), Plus1&FrmM[1]}};
+                    UfRes = {{`FLEN-`LEN2{1'b1}}, ResSgn, (`LEN2-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {{`FLEN-`LEN2{1'b1}}, ResSgn, ResExp[`NE2-1:0], ResFrac[`NF-1:`NF-`NF2]};
                 end
                 default: begin
@@ -154,7 +154,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {ResSgn, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {ResSgn, {`NE{1'b1}}, {`NF{1'b0}}};
-                    UfRes = {ResSgn, {`FLEN-1{1'b0}}} + {(`FLEN-1)'(0),Plus1&FrmM[1]};
+                    UfRes = {ResSgn, (`FLEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {ResSgn, ResExp, ResFrac};
                 end
                 2'h1: begin  
@@ -167,7 +167,7 @@ module resultselect(
                         InvalidRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end
                     OfRes = OfResMax ? {{`FLEN-`D_LEN{1'b1}}, ResSgn, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} : {{`FLEN-`D_LEN{1'b1}}, ResSgn, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    UfRes = {{`FLEN-`D_LEN{1'b1}}, {ResSgn, (`D_LEN-1)'(0)} + {(`D_LEN-1)'(0), Plus1&FrmM[1]}};
+                    UfRes = {{`FLEN-`D_LEN{1'b1}}, ResSgn, (`D_LEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {{`FLEN-`D_LEN{1'b1}}, ResSgn, ResExp[`D_NE-1:0], ResFrac[`NF-1:`NF-`D_NF]};
                 end
                 2'h0: begin  
@@ -181,7 +181,7 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`S_LEN{1'b1}}, ResSgn, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} : {{`FLEN-`S_LEN{1'b1}}, ResSgn, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    UfRes = {{`FLEN-`S_LEN{1'b1}}, {ResSgn, (`S_LEN-1)'(0)} + {(`S_LEN-1)'(0), Plus1&FrmM[1]}};
+                    UfRes = {{`FLEN-`S_LEN{1'b1}}, ResSgn, (`S_LEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {{`FLEN-`S_LEN{1'b1}}, ResSgn, ResExp[`S_NE-1:0], ResFrac[`NF-1:`NF-`S_NF]};
                 end
                 2'h2: begin  
@@ -195,8 +195,8 @@ module resultselect(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`H_LEN{1'b1}}, ResSgn, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`FLEN-`H_LEN{1'b1}}, ResSgn, {`H_NE{1'b1}}, (`H_NF)'(0)};      
-
-                    UfRes = {{`FLEN-`H_LEN{1'b1}}, {ResSgn, (`H_LEN-1)'(0)} + {(`H_LEN-1)'(0), Plus1&FrmM[1]}};
+	            // zero is exact fi dividing by infinity so don't add 1
+                    UfRes = {{`FLEN-`H_LEN{1'b1}}, ResSgn, (`H_LEN-2)'(0), Plus1&FrmM[1]&~(DivOp&YInfM)};
                     NormRes = {{`FLEN-`H_LEN{1'b1}}, ResSgn, ResExp[`H_NE-1:0], ResFrac[`NF-1:`NF-`H_NF]};
                 end
             endcase
