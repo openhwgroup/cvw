@@ -49,6 +49,7 @@ module postprocess(
     input logic                             ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                             PSgnM,      // the product's sign
     input logic [2:0]                       FOpCtrlM,       // choose which opperation (look below for values)
+    input logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M,
     input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
     input logic [`NE+1:0]           DivCalcExpM,    // the calculated expoent
@@ -143,7 +144,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.FmtM, .Quot, .DivCalcExpM, .EarlyTermShiftDiv2M, .CorrDivExp, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSelM)

@@ -36,11 +36,14 @@ module srtradix4 (
   input  logic [`NE-1:0] XExpE, YExpE,
   input  logic [`NF:0] XManE, YManE,
   input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic XZeroE,
+  input  logic XInfE, YInfE, 
+  input  logic XZeroE, YZeroE, 
+  input  logic XNaNE, YNaNE, 
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
+  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
   output logic       DivDone,
   output logic       DivStickyE,
   output logic       DivNegStickyE,
@@ -49,10 +52,9 @@ module srtradix4 (
   output logic [`NE+1:0] DivCalcExpE
 );
 
-  // logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [3:0]     q;
   logic [`NE+1:0] DivCalcExp;
-  logic [`DIVLEN:0]    X;
+  logic [`DIVLEN-1:0]    X;
   logic [`DIVLEN-1:0]  Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN;
   logic [`DIVLEN+3:0]  WC, WCA, WCN;
@@ -68,13 +70,11 @@ module srtradix4 (
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  //  - assumed one is added here since all numbers are normlaized
-  //    *** wait what about zero? is that specal case? can the divider handle it?
   //  - when the start signal is asserted X and 0 are loaded into WS and WC
   //  - otherwise load WSA into the flipflop
-  //  *** what does N and A stand for?
-  //  *** change shift amount for radix4
-  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+1:0], 2'b0}, {3'b000, X}, DivStart, WSN);
+  //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
+  //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+1:0], 2'b0}, {3'b000, ~XZeroE, X}, DivStart, WSN);
   flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
   mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
   flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
@@ -117,12 +117,11 @@ module srtradix4 (
   
   //*** change for radix 4
   otfc4 otfc4(.clk, .DivStart, .q, .Quot);
-  assign DivStickyE = (WS+WC) != 0; //replace with early termination
-  assign DivNegStickyE = $signed(WS+WC) < 0; //replace with early termination
 
   expcalc expcalc(.XExpE, .YExpE, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
 
-  divcounter divcounter(clk, DivStart, DivDone);
+  earlytermination earlytermination(.clk, .WC, .WS, .XZeroE, .YZeroE, .XInfE, .EarlyTermShiftDiv2E,
+                  .YInfE, .XNaNE, .YNaNE, .DivStickyE, .DivNegStickyE, .DivStart, .DivDone);
 
 endmodule
 
@@ -130,28 +129,35 @@ endmodule
 // Submodules //
 ////////////////
 
-/////////////
-// counter //
-/////////////
-module divcounter(input  logic clk, 
-               input  logic DivStart, 
-               output logic DivDone);
+module earlytermination(
+  input  logic clk, 
+	input logic [`DIVLEN+3:0] WS, WC,
+  input  logic XInfE, YInfE, 
+  input  logic XZeroE, YZeroE, 
+  input  logic XNaNE, YNaNE, 
+  input  logic DivStart, 
+  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
+  output logic DivStickyE,
+  output logic DivNegStickyE,
+  output logic DivDone);
  
-   logic    [5:0]  count;
+   logic [$clog2(`DIVLEN/2+3)-1:0]  Count;
+   logic WZero;
 
-  // This block of control logic sequences the divider
-  // through its iterations.  You may modify it if you
-  // build a divider which completes in fewer iterations.
-  // You are not responsible for the (trivial) circuit
-  // design of the block.
-
+   assign WZero = (WS+WC == 0)|XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE; //*** temporary
+   // *** rather than Counting should just be able to check if one of the two msbs of the quotent is 1 then stop???
+  assign DivDone = (DivStickyE | WZero);
+  assign DivStickyE = ~|Count;
+  assign DivNegStickyE = $signed(WS+WC) < 0;
+  assign EarlyTermShiftDiv2E = Count;
+  // +1 for setup
+  // `DIVLEN/2 to get required number of bits
+  // +1 for possible .5 and round bit
+  // Count down Counter
   always @(posedge clk)
     begin
-      DivDone = 0;
-      if      (count == `DIVLEN/2+1) DivDone <= #1 1;
-      else if (DivDone | DivStart) DivDone <= #1 0;	
-      if (DivStart) count <= #1 0;
-      else     count <= #1 count+1;
+      if (DivStart) Count <= #1 `DIVLEN/2+2;
+      else     Count <= #1 Count-1;
     end
 endmodule
 
@@ -237,7 +243,7 @@ module srtpreproc (
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
-  output logic [`DIVLEN:0] X,
+  output logic [`DIVLEN-1:0] X,
   output logic [`DIVLEN-1:0] Dpreproc,
   output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
   output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
@@ -245,7 +251,7 @@ module srtpreproc (
 );
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
-  logic  [`DIVLEN:0] PreprocA, PreprocX;
+  logic  [`DIVLEN-1:0] PreprocA, PreprocX;
   logic  [`DIVLEN-1:0] PreprocB, PreprocY;
 
   // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
@@ -263,7 +269,7 @@ module srtpreproc (
 
   // assign PreprocA = ExtraA << zeroCntA;
   // assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XManE<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocX = {XManE[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
   assign PreprocY = {YManE[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
 
   
@@ -300,7 +306,7 @@ module otfc4 (
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`DIVLEN+3) Qmux(QNext, {`DIVLEN+3{1'b0}}, DivStart, QMux);
   mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, DivStart, QMMux);
-  flop #(`DIVLEN+3) Qreg(clk, QMux, Quot);
+  flop #(`DIVLEN+3) Qreg(clk, QMux, Quot); // *** have to connect Quot directly to M stage
   flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   // shift Q (quotent) and QM (quotent-1)
@@ -331,8 +337,7 @@ module otfc4 (
       QMNext = {QMR, 2'b11};
     end 
   end
-  // Quot is in the range [.5, 2) so normalize the result if nesissary
-  // assign Quot = Q[`DIVLEN+2] ? Q[`DIVLEN+1:2] : Q[`DIVLEN:1];
+  // Final Quoteint is in the range [.5, 2)
 
 endmodule
 
@@ -371,7 +376,7 @@ module expcalc(
   output logic [`NE+1:0] DivCalcExp
 );
 
-  // correct exponent for denormal shifts
+  // correct exponent for denormalized input's normalization shifts
   assign DivCalcExp = (XExpE - XZeroCnt - YExpE + YZeroCnt + (`NE)'(`BIAS))&{`NE+2{~XZeroE}};
 
 endmodule
