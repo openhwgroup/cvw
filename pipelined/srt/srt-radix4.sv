@@ -143,12 +143,13 @@ module earlytermination(
  
    logic [$clog2(`DIVLEN/2+3)-1:0]  Count;
    logic WZero;
+   logic [`DIVLEN+3:0] W;
 
-   assign WZero = (WS+WC == 0)|XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE; //*** temporary
-   // *** rather than Counting should just be able to check if one of the two msbs of the quotent is 1 then stop???
+  assign WZero = ((WS^WC)=={WS[`DIVLEN+2:0]|WC[`DIVLEN+2:0], 1'b0})|XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE;
   assign DivDone = (DivStickyE | WZero);
   assign DivStickyE = ~|Count;
-  assign DivNegStickyE = $signed(WS+WC) < 0;
+  assign W = WC+WS;
+  assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???
   assign EarlyTermShiftDiv2E = Count;
   // +1 for setup
   // `DIVLEN/2 to get required number of bits
