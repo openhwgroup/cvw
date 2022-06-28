@@ -55,6 +55,7 @@ module testbenchfp;
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
 	logic [`DIVLEN+2:0] Quot;
   logic CvtResDenormUfE;
+  logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2;
   logic DivStart, DivDone;
   
 
@@ -69,8 +70,9 @@ module testbenchfp;
   logic 			          NegSumE;
   logic 			          ZSgnEffE;
   logic 			          PSgnE;
-  logic       DivSgn;
-  logic [`NE:0] DivCalcExp;
+  logic       DivSticky;
+  logic       DivNegSticky;
+  logic [`NE+1:0] DivCalcExp;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -644,13 +646,13 @@ module testbenchfp;
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
               .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
-              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE),
-              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE),
+              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE), .DivStickyM(DivSticky),
+              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE), .DivNegStickyM(DivNegSticky),
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
               .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
               .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
               .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), 
-              .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
+              .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
               .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
   
   fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
@@ -659,9 +661,9 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero),
-                .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), 
-                .DivDone, .Quot, .Rem());
+  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky),
+                .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), .XNaNE(XNaN), .YNaNE(YNaN),
+                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2), .DivDone, .Quot, .Rem());
                 
   assign CmpFlg[3:0] = 0;
 
@@ -814,8 +816,9 @@ end
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
-    // check if the non-fma test is correct
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone&(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    // check if result is correct
+    //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((~DivStart&DivDone)^~(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -838,7 +841,7 @@ end
       $stop;
     end
 
-    if(DivDone|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
+    if((~DivStart&DivDone)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
 
     if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the end of file
 

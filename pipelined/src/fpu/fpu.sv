@@ -124,7 +124,10 @@ module fpu (
    
    //divide signals
    logic [`DIVLEN+2:0] Quot;
-   logic [`NE:0] DivCalcExpM;
+   logic [`NE+1:0] DivCalcExpM;
+   logic DivNegStickyM;
+   logic DivStickyM;
+   logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -355,11 +358,11 @@ module fpu (
 
    assign FpLoadM = FResSelM[1];
 
-   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
+   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, .EarlyTermShiftDiv2M,
                            .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .Quot,
                            .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM,
-                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, 
-                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, 
+                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, .DivNegStickyM,
+                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, .DivStickyM,
                            .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
 
    // FPU flag selection - to privileged
