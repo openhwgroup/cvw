@@ -92,13 +92,15 @@ module wallypipelinedcore (
   logic             FStallD;
   logic             FWriteIntE;
   logic [`XLEN-1:0]         FWriteDataE;
+  logic                     FLoad2;
+  logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
   logic [`XLEN-1:0]         FCvtIntResW;  
   logic             FDivBusyE;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic             FRegWriteM;
   logic             FPUStallD;
-  logic             FpLoadM;
+  logic             FpLoadStoreM;
   logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
 
@@ -253,7 +255,8 @@ module wallypipelinedcore (
   .AtomicM, .TrapM,
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
-  .FpLoadM,
+  .FpLoadStoreM,
+  .FWriteDataM, .FLoad2,
   //.DataMisalignedM(DataMisalignedM),
   .IEUAdrE, .IEUAdrM, .WriteDataE,
   .ReadDataW, .FlushDCacheM,
@@ -391,10 +394,12 @@ module wallypipelinedcore (
          .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
-         .FpLoadM,
+         .FpLoadStoreM,
+         .FLoad2,
          .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory
+         .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
          .FCvtIntResW, // fp -> int conversion result to be stored in int register
          .FResSelW,   // fpu result selection
