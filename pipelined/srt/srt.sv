@@ -2,7 +2,7 @@
 // srt.sv
 //
 // Written: David_Harris@hmc.edu 13 January 2022
-// Modified: 
+// Modified: cturek@hmc.edu June 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
@@ -29,10 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
-
-`define DIVLEN ((`NF<(`XLEN+1)) ? (`XLEN + 1) : `NF)
-`define EXTRAFRACBITS ((`NF<(`XLEN+1)) ? (`XLEN - `NF + 1) : 0)
-`define EXTRAINTBITS ((`NF<(`XLEN+1)) ? 0 : (`NF - `XLEN))
+`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF) : 0)
+`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN))
 
 module srt (
   input  logic clk,
@@ -131,11 +129,11 @@ module srtpreproc (
   lzc #(`XLEN) lzcA (PosA, zeroCntA);
   lzc #(`XLEN) lzcB (PosB, zeroCntB);
 
-  assign ExtraA = {1'b0, PosA, {`EXTRAINTBITS{1'b0}}};
-  assign ExtraB = {1'b0, PosB, {`EXTRAINTBITS{1'b0}}};
+  assign ExtraA = {PosA, {`EXTRAINTBITS{1'b0}}};
+  assign ExtraB = {PosB, {`EXTRAINTBITS{1'b0}}};
 
   assign PreprocA = ExtraA << zeroCntA;
-  assign PreprocB = ExtraB << (zeroCntB + 1);
+  assign PreprocB = ExtraB << zeroCntB;
   assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
   assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
 
@@ -228,14 +226,15 @@ module otfc2 #(parameter N=65) (
   //
   //  QM is Q-1. It allows us to write negative bits 
   //  without using a costly CPA. 
-  logic [N+2:0] Q, QM, QNext, QMNext;
+  logic [N+2:0] Q, QM, QNext, QMNext, QMMux;
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
   logic [N+1:0] QR, QMR;
 
   flopr #(N+3) Qreg(clk, Start, QNext, Q);
-  flopr #(N+3) QMreg(clk, Start, QMNext, QM);
+  mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, Start, QMMux);
+  flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   always_comb begin
     QR  = Q[N+1:0];
