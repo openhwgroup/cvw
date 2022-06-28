@@ -112,6 +112,8 @@ module postprocess(
     logic UfLSBRes;
     logic Sqrt;
     logic [`FMTBITS-1:0] OutFmt;
+    logic DivResDenorm;
+    logic [`NE+1:0] DivDenormShift;
 
     // signals to help readability
     assign Signed = FOpCtrlM[0];
@@ -144,7 +146,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.FmtM, .Quot, .DivCalcExpM, .EarlyTermShiftDiv2M, .CorrDivExp, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.FmtM, .Quot, .DivCalcExpM, .EarlyTermShiftDiv2M, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSelM)
@@ -169,7 +171,8 @@ module postprocess(
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
     lzacorrection lzacorrection(.FmaOp, .KillProdM, .PreResultDenorm, .ConvNormSumExp,
-                                .SumZero, .Shifted, .SumExp, .CorrShifted);
+                                .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExpM,
+                                .CorrDivExp, .SumZero, .Shifted, .SumExp, .CorrShifted);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
