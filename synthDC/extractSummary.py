@@ -7,6 +7,7 @@ import subprocess
 from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
+from wallySynth import testFreq
 
 
 def synthsintocsv():
@@ -26,7 +27,7 @@ def synthsintocsv():
     writer.writerow(['Width', 'Config', 'Special', 'Tech', 'Target Freq', 'Delay', 'Area'])
 
     for oneSynth in allSynths:
-        descrip = specReg.findall(oneSynth)
+        descrip = specReg.findall(oneSynth) #[30:]
         width = descrip[2][:4]
         config = descrip[2][4:]
         if descrip[3][-2:] == 'nm':
@@ -46,7 +47,7 @@ def synthsintocsv():
                 nums = [float(m) for m in nums]
                 metrics += nums
             except: 
-                print(config + tech + freq + " doesn't have reports")
+                print(width + config + tech + '_' + freq + " doesn't have reports")
         if metrics == []:
             pass
         else:
@@ -56,7 +57,7 @@ def synthsintocsv():
     file.close()
 
 def synthsfromcsv(filename):
-    Synth = namedtuple("Synth", " width config special tech freq delay area")
+    Synth = namedtuple("Synth", "width config special tech freq delay area")
     with open(filename, newline='') as csvfile:
         csvreader = csv.reader(csvfile)
         global allSynths
@@ -110,23 +111,26 @@ def freqPlot(tech, width, config):
     plt.savefig('./plots/wally/freqSweep_' + tech + '_' + width + config + '.png')
     # plt.show()
 
-def areaDelay(width, tech, freq, config=None, special=None):
+def areaDelay(tech, freq, width=None, config=None, special=None):
     delays, areas, labels = ([] for i in range(3))
 
     for oneSynth in allSynths:
-        if (width == oneSynth.width) & (tech == oneSynth.tech) & (freq == oneSynth.freq):
-            if (special != None) & (oneSynth.special == special):
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.config]
-            elif (config != None) & (oneSynth.config == config):
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.special]
-            else:
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.config + '_' + oneSynth.special]
+        if (width==None) or (width == oneSynth.width):
+            if (tech == oneSynth.tech) & (freq == oneSynth.freq):
+                if (special != None) & (oneSynth.special == special):
+                    delays += [oneSynth.delay]
+                    areas += [oneSynth.area]
+                    labels += [oneSynth.width + oneSynth.config]
+                elif (config != None) & (oneSynth.config == config):
+                    delays += [oneSynth.delay]
+                    areas += [oneSynth.area]
+                    labels += [oneSynth.special]
+            # else:
+            #     delays += [oneSynth.delay]
+            #     areas += [oneSynth.area]
+            #     labels += [oneSynth.config + '_' + oneSynth.special]
+    if width == None:
+        width = ''
     
     f, (ax1) = plt.subplots(1, 1)
     plt.scatter(delays, areas)
@@ -154,8 +158,11 @@ def areaDelay(width, tech, freq, config=None, special=None):
 # ending freq in 42 means fpu was turned off manually
 
 if __name__ == '__main__':
-    synthsintocsv()
+    # synthsintocsv()
     synthsfromcsv('Summary.csv')
-    freqPlot('tsmc28', 'rv64', 'gc')
-    areaDelay('rv32', 'tsmc28', 4200, config='gc')
-    areaDelay('rv32', 'tsmc28', 3042, special='')
+    freqPlot('tsmc28', 'rv32', 'e')
+    freqPlot('sky90', 'rv32', 'e')
+    areaDelay('tsmc28', testFreq[1], width= 'rv64', config='gc')
+    areaDelay('tsmc28', testFreq[1], special='')
+    areaDelay('sky90', testFreq[0], width='rv64', config='gc')
+    areaDelay('sky90', testFreq[0], special='')
