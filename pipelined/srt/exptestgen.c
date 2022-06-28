@@ -46,7 +46,7 @@ void main(void)
   int i, j;
   int bias = 1023;
 
-  if ((fptr = fopen("testvectors","w")) == NULL) {
+  if ((fptr = fopen("testvectors","w")) == NULL) { 
     fprintf(stderr, "Couldn't write testvectors file\n");
     exit(1);
   }

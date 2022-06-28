@@ -49,10 +49,13 @@ module postprocess(
     input logic                             ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                             PSgnM,      // the product's sign
     input logic [2:0]                       FOpCtrlM,       // choose which opperation (look below for values)
+    input logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M,
     input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
     input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic [`NE:0]           DivCalcExpM,    // the calculated expoent
+    input logic [`NE+1:0]           DivCalcExpM,    // the calculated expoent
     input logic CvtResDenormUfM,
+    input logic DivStickyM,
+    input logic DivNegStickyM,
 	input logic [`LOGCVTLEN-1:0] CvtShiftAmtM,  // how much to shift by
     input logic                   CvtResSgnM,     // the result's sign
     input logic             FWriteIntM,     // is fp->int (since it's writting to the integer register)
@@ -86,6 +89,7 @@ module postprocess(
     logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
     logic [$clog2(`NORMSHIFTSZ)-1:0]  DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
+    logic [`NORMSHIFTSZ-1:0] DivShiftIn;
     logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
     logic                   Plus1;      // add one to the final result?
     logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
@@ -94,7 +98,7 @@ module postprocess(
     logic                   IntToFp;       // is the opperation an int->fp conversion?
     logic                   ToInt;      // is the opperation an fp->int conversion?
     logic [`NE+1:0] RoundExp;
-    logic [`NE:0] CorrDivExp;
+    logic [`NE+1:0] CorrDivExp;
     logic [1:0] NegResMSBS;
     logic CvtOp;
     logic FmaOp;
@@ -108,6 +112,8 @@ module postprocess(
     logic UfLSBRes;
     logic Sqrt;
     logic [`FMTBITS-1:0] OutFmt;
+    logic DivResDenorm;
+    logic [`NE+1:0] DivDenormShift;
 
     // signals to help readability
     assign Signed = FOpCtrlM[0];
@@ -140,7 +146,7 @@ module postprocess(
                               .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Quot, .DivCalcExpM, .CorrDivExp, .DivShiftAmt);
+    divshiftcalc divshiftcalc(.FmtM, .Quot, .DivCalcExpM, .EarlyTermShiftDiv2M, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSelM)
@@ -154,7 +160,7 @@ module postprocess(
             end
             2'b01: begin //div ***prob can take out
                 ShiftAmt = DivShiftAmt;
-                ShiftIn =  {Quot[`DIVLEN+1:0], {`NORMSHIFTSZ-`DIVLEN-2{1'b0}}};
+                ShiftIn =  DivShiftIn;
             end
             default: begin 
                 ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
@@ -165,7 +171,8 @@ module postprocess(
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
     lzacorrection lzacorrection(.FmaOp, .KillProdM, .PreResultDenorm, .ConvNormSumExp,
-                                .SumZero, .Shifted, .SumExp, .CorrShifted);
+                                .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExpM,
+                                .CorrDivExp, .SumZero, .Shifted, .SumExp, .CorrShifted);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -179,6 +186,7 @@ module postprocess(
 
     round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
+                .DivStickyM, .DivNegStickyM,
                 .DivOp, .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -206,6 +214,7 @@ module postprocess(
     resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM, .IntInvalid,
         .IntZeroM, .FrmM, .OutFmt, .AddendStickyM, .KillProdM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegResMSBS,
+        .XInfM, .YInfM, .DivOp,
         .DivByZero, .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
 
 endmodule

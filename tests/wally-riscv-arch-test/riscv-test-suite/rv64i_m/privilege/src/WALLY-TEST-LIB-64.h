@@ -857,6 +857,27 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     addi a6, a6, 8 
 .endm
 
+.macro SETUP_PLIC  
+    # Setup PLIC with a series of register writes
+
+    .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
+    .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
+    .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
+    .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
+    .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
+    .equ PLIC_THRESH0,     0x0C200000       # Priority threshold for context 0 (machine mode)
+    .equ PLIC_CLAIM0,      0x0C200004       # Claim/Complete register for context 0
+    .equ PLIC_THRESH1,     0x0C201000       # Priority threshold for context 1 (supervisor mode)
+    .equ PLIC_CLAIM1,      0x0C201004       # Claim/Complete register for context 1
+
+    .4byte PLIC_THRESH0, 0, write32_test    # Set PLIC machine mode interrupt threshold to 0 to accept all interrupts
+    .4byte PLIC_THRESH1, 7, write32_test    # Set PLIC supervisor mode interrupt threshold to 7 to accept no interrupts
+    .4byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
+    .4byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
+    .4byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
+    .4byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
+.endm
+
 .macro END_TESTS
     // invokes one final ecall to return to machine mode then terminates this program, so the output is
     //      0x8: termination called from U mode
@@ -982,6 +1003,20 @@ read08_test:
     sd t2, 0(t1)
     addi t1, t1, 8
     addi a6, a6, 8
+    j test_loop // go to next test case
+
+readmip_test:  // read the MIP into the signature
+    csrr t2, mip
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop // go to next test case
+
+readsip_test:  // read the MIP into the signature
+    csrr t2, sip
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
     j test_loop // go to next test case
 
 goto_s_mode:
