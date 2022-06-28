@@ -38,6 +38,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          CacheWriteData,
+  input logic                        FLoad2,
   input logic                        SetValidWay,
   input logic                        ClearValidWay,
   input logic                        SetDirtyWay,
@@ -74,8 +75,14 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
-  onehotdecoder #(LOGWPL) adrdec(
-    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+  if(`LLEN>`XLEN)begin 
+    logic [2**LOGWPL-1:0] MemPAdrDecodedtmp;
+    onehotdecoder #(LOGWPL) adrdec(
+      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecodedtmp));
+    assign MemPAdrDecoded = MemPAdrDecodedtmp|{MemPAdrDecodedtmp[2**LOGWPL-2:0]&{2**LOGWPL-1{FLoad2}}, 1'b0};
+  end else
+    onehotdecoder #(LOGWPL) adrdec(
+      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
   assign FinalByteMask = SetValidWay ? '1 : ByteMask; // OR
