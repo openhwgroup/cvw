@@ -90,6 +90,7 @@ test_cases:
 .4byte mtimeh, 0xA5A5A5A6, write32_test     # cause mtip to go high by making mtime > mtimecmp
 .4byte 0x0, 0x00000080, readmip_test        # mtip should be set
 
+.4byte 0x0, 0x0, terminate_test # terminate tests
 
 # =========== Experimental mtime counting test ===========
 
