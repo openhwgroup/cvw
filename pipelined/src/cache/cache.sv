@@ -43,6 +43,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic [`PA_BITS-1:0]  PAdr, // physical address
   input logic [(`XLEN-1)/8:0] ByteMask,
   input logic [`XLEN-1:0]     FinalWriteData,
+  input logic [`FLEN-1:0]     FWriteDataM,
+  input logic                        FLoad2,
+  input logic                 FpLoadStoreM,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
@@ -120,7 +123,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask, .FLoad2,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
@@ -159,8 +162,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-		.d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
+  if (`LLEN>`XLEN)
+    mux3 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+      .d1({WORDSPERLINE/2{FWriteDataM}}),	.d2(CacheBusWriteData),	.s({SetValid,FpLoadStoreM&~SetValid}), .y(CacheWriteData));
+  else
+    mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+      .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
