@@ -68,6 +68,7 @@ logic [3:0] dummy;
   integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
+  logic riscofTest; 
     
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
@@ -174,6 +175,8 @@ logic [3:0] dummy;
       totalerrors = 0;
       testadr = 0;
       testadrNoBase = 0;
+      // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests and  tests[0] == "2" refers to WallyRiscvArchTests 
+      riscofTest = tests[0] == "1"; // | tests[0] == "2"; 
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
@@ -250,8 +253,7 @@ logic [3:0] dummy;
           for(i=0; i<SIGNATURESIZE; i=i+1) begin
             sig32[i] = 'bx;
           end
-          // riscof tests have a different signature, tests[0] == "1" refers to RISCVARCHTESTs
-          if (tests[0] == "1") signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
+          if (riscofTest) signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
           else signame = {pathname, tests[test], ".signature.output"};
           // read signature, reformat in 64 bits if necessary
           $readmemh(signame, sig32);
