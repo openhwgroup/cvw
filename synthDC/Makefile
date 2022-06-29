@@ -5,8 +5,8 @@ NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 4000
-export CONFIG ?= rv64gc
+export FREQ ?= 3402
+export CONFIG ?= rv32e
 # sky130 and sky90 presently supported
 export TECH ?= tsmc28
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
@@ -126,6 +126,8 @@ clean:
 	rm -f command.log
 	rm -f filenames*.log
 	rm -f power.saif
+	rm -f Synopsys_stack_trace_*.txt
+	rm -f crte_*.txt
 
 
 

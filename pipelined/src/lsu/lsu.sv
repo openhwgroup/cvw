@@ -57,7 +57,9 @@ module lsu (
    input logic              BigEndianM,
    input logic              sfencevmaM,
    // fpu
-   input logic              FpLoadM,
+   input logic [`FLEN-1:0]  FWriteDataM,
+   input logic              FLoad2,
+   input logic              FpLoadStoreM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
    output logic             LoadMisalignedFaultM, LoadAccessFaultM,
@@ -235,7 +237,7 @@ module lsu (
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount,
+        .ByteMask(ByteMaskM), .WordCount, .FpLoadStoreM, .FWriteDataM, .FLoad2,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
@@ -269,7 +271,7 @@ module lsu (
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
     .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
-		.FpLoadM, .Funct3M(LSUFunct3M), .ReadDataM);
+		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register

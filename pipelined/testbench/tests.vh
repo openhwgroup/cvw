@@ -33,8 +33,8 @@
 
 string tvpaths[] = '{
     "../../addins/imperas-riscv-tests/work/",
-    "../../tests/riscof/work/",
-    "../../tests/wally-riscv-arch-test/work/",
+    "../../tests/riscof/work/riscv-arch-test/",
+    "../../tests/wally-riscv-arch-test/work/", //"../../tests/riscof/work/wally-riscv-arch-test/",
     "../../tests/imperas-riscv-tests/work/",
     "../../benchmarks/riscv-coremark/work/",
     "../../addins/embench-iot/"
@@ -1607,3 +1607,89 @@ string wally32i[] = '{
     // "rv32i_m/privilege/WALLY-uart-01"
  };
 
+
+// riscof test paths, to replace existing paths once riscof flow is working
+// string wally64a[] = '{
+//     `WALLYTEST,
+//     "rv64i_m/privilege/src/WALLY-amo.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-lrsc.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S/ref/Ref"
+//   };
+
+//     string wally32a[] = '{
+//     `WALLYTEST,
+//     "rv32i_m/privilege/src/WALLY-amo.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-lrsc.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S/ref/Ref"
+
+//   };
+
+//   string wally64i[] = '{
+//     `WALLYTEST,
+//     "rv64i_m/I/src/WALLY-ADD.S/ref/Ref",
+//     "rv64i_m/I/src/WALLY-SLT.S/ref/Ref",
+//     "rv64i_m/I/src/WALLY-SLTU.S/ref/Ref",
+//     "rv64i_m/I/src/WALLY-SUB.S/ref/Ref",
+//     "rv64i_m/I/src/WALLY-XOR.S/ref/Ref"
+//  };
+
+//  string wally64priv[] = '{
+//     `WALLYTEST,
+//     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-mie-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-minfo-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-misa-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-mmu-sv39.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-mmu-sv48.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-mtvec-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-pma.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-pmp.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-sie-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-status-mie-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-status-sie-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-status-tw-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-stvec-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-trap-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-trap-s-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-trap-sret-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-trap-u-01.S/ref/Ref",
+//     "rv64i_m/privilege/src/WALLY-wfi-01.S/ref/Ref"
+//  };
+
+//  string wally64periph[] = '{
+//     `WALLYTEST,
+//     "rv64i_m/privilege/src/WALLY-periph.S/ref/Ref"
+//  };
+
+//  string wally32i[] = '{
+//     `WALLYTEST,
+//     "rv32i_m/I/src/WALLY-ADD.S/ref/Ref",
+//     "rv32i_m/I/src/WALLY-SLT.S/ref/Ref",
+//     "rv32i_m/I/src/WALLY-SLTU.S/ref/Ref",
+//     "rv32i_m/I/src/WALLY-SUB.S/ref/Ref",
+//     "rv32i_m/I/src/WALLY-XOR.S/ref/Ref" 
+//  };
+
+//  string wally32priv[] = '{
+//     `WALLYTEST,
+//     "rv32i_m/privilege/src/WALLY-csr-permission-s-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-csr-permission-u-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-mie-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-minfo-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-misa-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-mmu-sv32.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-mtvec-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-pma.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-pmp.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-sie-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-status-mie-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-status-sie-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-status-tw-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-stvec-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-trap-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-trap-s-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-trap-sret-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-trap-u-01.S/ref/Ref",
+//     "rv32i_m/privilege/src/WALLY-wfi-01.S/ref/Ref"
+//  };
