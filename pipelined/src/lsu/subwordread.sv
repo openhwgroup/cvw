@@ -35,7 +35,7 @@ module subwordread
    input logic [`LLEN-1:0] 	ReadDataWordMuxM,
    input logic [2:0] 		LSUPAdrM,
    input logic [2:0] 		Funct3M,
-   input logic          FpLoadM, 
+   input logic          FpLoadStoreM, 
    output logic [`LLEN-1:0] ReadDataM
    );
 
@@ -83,16 +83,16 @@ module subwordread
     case(Funct3M)
       3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
       3'b001:  if(`ZFH_SUPPORTED) 
-                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadM}}, HalfwordM[15:0]}; // lh/flh
+                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
                else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
       3'b010:  if(`F_SUPPORTED) 
-                    ReadDataM = {{`LLEN-32{WordM[31]|FpLoadM}}, WordM[31:0]};         // lw/flw
+                    ReadDataM = {{`LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
                else ReadDataM = {{`LLEN-32{WordM[31]}}, WordM[31:0]};                 // lw
       3'b011:  if(`D_SUPPORTED) 
-                    ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadM}}, DblWordM[63:0]};   // ld/fld
+                    ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
                else ReadDataM = {{`LLEN-64{DblWordM[63]}}, DblWordM[63:0]};           // ld/fld
       3'b100:    if(`Q_SUPPORTED) 
-                    ReadDataM = FpLoadM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
+                    ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
                  else 
                     ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};    // lbu
       3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu
@@ -122,10 +122,10 @@ module subwordread
     case(Funct3M)
       3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
       3'b001:  if(`ZFH_SUPPORTED) 
-                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadM}}, HalfwordM[15:0]}; // lh/flh
+                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
                else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
       3'b010:  if(`F_SUPPORTED) 
-                    ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadM}}, ReadDataWordMuxM[31:0]};         // lw/flw
+                    ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]};         // lw/flw
                else ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]}}, ReadDataWordMuxM[31:0]};                 // lw
       3'b011:  ReadDataM = ReadDataWordMuxM;                      // fld
       3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};         // lbu

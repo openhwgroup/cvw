@@ -101,7 +101,7 @@ class sail_cSim(pluginTemplate):
             execute += self.objdump_cmd.format(elf, self.xlen, 'Ref.elf.objdump')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
 
-            execute += self.sail_exe[self.xlen] + ' --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+            execute += self.sail_exe[self.xlen] + ' -z268435455 --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:
