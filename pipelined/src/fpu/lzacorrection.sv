@@ -1,24 +1,24 @@
 `include "wally-config.vh"
 
 module lzacorrection(
-    input logic  [`NORMSHIFTSZ-1:0]     Shifted,         // the shifted sum before LZA correction
-    input logic                         FmaOp,
-    input logic                         DivOp,
-    input logic DivResDenorm,
-    input logic  [`NE+1:0] DivCalcExpM,
-    input logic [`NE+1:0] DivDenormShift,
-    input logic  [`NE+1:0]              ConvNormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
-    input logic                         PreResultDenorm,    // is the result denormalized - calculated before LZA corection
-    input logic                         KillProdM,  // is the product set to zero
-    input logic                         SumZero,
-    output logic  [`CORRSHIFTSZ-1:0]    CorrShifted,         // the shifted sum before LZA correction
-    output logic [`NE+1:0] CorrDivExp,
-    output logic [`NE+1:0]              SumExp         // exponent of the normalized sum
+    input logic  [`NORMSHIFTSZ-1:0] Shifted,         // the shifted sum before LZA correction
+    input logic                     FmaOp,
+    input logic                     DivOp,
+    input logic                     DivResDenorm,
+    input logic  [`NE+1:0]          DivCalcExpM,
+    input logic  [`NE+1:0]          DivDenormShift,
+    input logic  [`NE+1:0]          ConvNormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
+    input logic                     PreResultDenorm,    // is the result denormalized - calculated before LZA corection
+    input logic                     KillProdM,  // is the product set to zero
+    input logic                     SumZero,
+    output logic [`CORRSHIFTSZ-1:0] CorrShifted,         // the shifted sum before LZA correction
+    output logic [`NE+1:0]          CorrDivExp,
+    output logic [`NE+1:0]          SumExp         // exponent of the normalized sum
 );
-    logic [3*`NF+5:0]           CorrSumShifted;     // the shifted sum after LZA correction
-    logic [`CORRSHIFTSZ:0]           CorrQuotShifted;
-    logic                        ResDenorm;    // is the result denormalized
-    logic                       LZAPlus1, LZAPlus2; // add one or two to the sum's exponent due to LZA correction
+    logic [3*`NF+5:0]      CorrSumShifted;     // the shifted sum after LZA correction
+    logic [`CORRSHIFTSZ:0] CorrQuotShifted;
+    logic                  ResDenorm;    // is the result denormalized
+    logic                  LZAPlus1, LZAPlus2; // add one or two to the sum's exponent due to LZA correction
 
     // LZA correction
     assign LZAPlus1 = Shifted[`NORMSHIFTSZ-2];

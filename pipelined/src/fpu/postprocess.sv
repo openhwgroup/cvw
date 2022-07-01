@@ -30,101 +30,109 @@
 `include "wally-config.vh"
 
 module postprocess(
+    // general signals
     input logic                             XSgnM, YSgnM,  // input signs
-    input logic     [`NE-1:0]               ZExpM, // input exponents
-    input logic     [`NF:0]                 XManM, YManM, ZManM, // input mantissas
-    input logic     [2:0]                   FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FMTBITS-1:0]          FmtM,       // precision 1 = double 0 = single
-    input logic     [`NE+1:0]               ProdExpM,       // X exponent + Y exponent - bias
-    input logic                             AddendStickyM,  // sticky bit that is calculated during alignment
-    input logic                             KillProdM,      // set the product to zero before addition if the product is too small to matter
+    input logic  [`NE-1:0]                  ZExpM, // input exponents
+    input logic  [`NF:0]                    XManM, YManM, ZManM, // input mantissas
+    input logic  [2:0]                      FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic  [`FMTBITS-1:0]             FmtM,       // precision 1 = double 0 = single
+    input logic  [2:0]                      FOpCtrlM,       // choose which opperation (look below for values)
     input logic                             XZeroM, YZeroM, ZZeroM, // inputs are zero
     input logic                             XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                             XNaNM, YNaNM, ZNaNM,    // inputs are NaN
     input logic                             XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
-    input logic     [3*`NF+5:0]             SumM,       // the positive sum
+    input logic                             ZDenormM, // is the original precision denormalized
+    input logic  [1:0]                      PostProcSelM, // select result to be written to fp register
+    //fma signals
+    input logic  [`NE+1:0]                  ProdExpM,       // X exponent + Y exponent - bias
+    input logic                             AddendStickyM,  // sticky bit that is calculated during alignment
+    input logic                             KillProdM,      // set the product to zero before addition if the product is too small to matter
+    input logic  [3*`NF+5:0]                SumM,       // the positive sum
     input logic                             NegSumM,    // was the sum negitive
     input logic                             InvZM,      // do you invert Z
-    input logic                             ZDenormM, // is the original precision denormalized
     input logic                             ZSgnEffM,   // the modified Z sign - depends on instruction
     input logic                             PSgnM,      // the product's sign
-    input logic [2:0]                       FOpCtrlM,       // choose which opperation (look below for values)
-    input logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M,
-    input logic     [$clog2(3*`NF+7)-1:0]   FmaNormCntM,   // the normalization shift count
-    input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic [`NE+1:0]           DivCalcExpM,    // the calculated expoent
-    input logic CvtResDenormUfM,
-    input logic DivStickyM,
-    input logic DivNegStickyM,
-	input logic [`LOGCVTLEN-1:0] CvtShiftAmtM,  // how much to shift by
-    input logic                   CvtResSgnM,     // the result's sign
-    input logic             FWriteIntM,     // is fp->int (since it's writting to the integer register)
-    input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
-    input logic             IntZeroM,         // is the input zero
-    input logic [1:0] PostProcSelM, // select result to be written to fp register
-    input logic [`DIVLEN+2:0]   Quot,
-    output logic    [`FLEN-1:0]    PostProcResM,    // FMA final result
-    output logic    [4:0]          PostProcFlgM,
-    output logic [`XLEN-1:0] FCvtIntResM    // the int conversion result
+    input logic  [$clog2(3*`NF+7)-1:0]      FmaNormCntM,   // the normalization shift count
+    //divide signals
+    input logic  [$clog2(`DIVLEN/2+3)-1:0]  EarlyTermShiftDiv2M,
+    input logic  [`NE+1:0]                  DivCalcExpM,    // the calculated expoent
+    input logic                             DivStickyM,
+    input logic                             DivNegStickyM,
+    input logic  [`DIVLEN+2:0]              Quot,
+    // conversion signals
+    input logic  [`NE:0]                    CvtCalcExpM,    // the calculated expoent
+    input logic                             CvtResDenormUfM,
+	input logic  [`LOGCVTLEN-1:0]           CvtShiftAmtM,  // how much to shift by
+    input logic                             CvtResSgnM,     // the result's sign
+    input logic                             FWriteIntM,     // is fp->int (since it's writting to the integer register)
+    input logic  [`CVTLEN-1:0]              CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
+    input logic                             IntZeroM,         // is the input zero
+    // final results
+    output logic [`FLEN-1:0]                PostProcResM,    // FMA final result
+    output logic [4:0]                      PostProcFlgM,
+    output logic [`XLEN-1:0]                FCvtIntResM    // the int conversion result
     );
    
-
-
-    logic [`NF-1:0]     ResFrac; // Result fraction
-    logic [`NE-1:0]     ResExp;  // Result exponent
-    logic  [`CORRSHIFTSZ-1:0]    CorrShifted;         // the shifted sum before LZA correction
-    logic [`NE+1:0]     SumExp;     // exponent of the normalized sum
-    logic [`NE+1:0]     FullResExp;  // ResExp with bits to determine sign and overflow
-    logic               SumZero;        // is the sum zero
-    logic               Sticky;           // Sticky bit
-    logic [3*`NF+8:0]            FmaShiftIn;        // is the sum zero
-    logic               UfPlus1;                    // do you add one (for determining underflow flag)
-    logic               Round;   // bits needed to determine rounding
-    logic [`CVTLEN+`NF:0]    CvtShiftIn;    // number to be shifted
-    logic               Mult;       // multiply opperation
-    logic [`FLEN:0]     RoundAdd;       // how much to add to the result
-    logic [`NE+1:0]     ConvNormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
-    logic               PreResultDenorm;    // is the result denormalized - calculated before LZA corection
-    logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt;   // normalization shift count
-    logic [$clog2(`NORMSHIFTSZ)-1:0]  ShiftAmt;   // normalization shift count
-    logic [$clog2(`NORMSHIFTSZ)-1:0]  DivShiftAmt;
-    logic [`NORMSHIFTSZ-1:0]            ShiftIn;        // is the sum zero
-    logic [`NORMSHIFTSZ-1:0] DivShiftIn;
-    logic [`NORMSHIFTSZ-1:0]    Shifted;    // the shifted result
-    logic                   Plus1;      // add one to the final result?
-    logic                   IntInvalid, Overflow, Underflow, Invalid; // flags
-    logic                   Signed;     // is the opperation with a signed integer?
-    logic                   Int64;      // is the integer 64 bits?
-    logic                   IntToFp;       // is the opperation an int->fp conversion?
-    logic                   ToInt;      // is the opperation an fp->int conversion?
+    // general signals
+    logic [`NF-1:0] ResFrac; // Result fraction
+    logic [`NE-1:0] ResExp;  // Result exponent
+    logic [`CORRSHIFTSZ-1:0] CorrShifted; // corectly shifted fraction
+    logic [`NE+1:0] FullResExp;  // ResExp with bits to determine sign and overflow
+    logic Sticky;           // Sticky bit
+    logic UfPlus1;                    // do you add one (for determining underflow flag)
+    logic Round;   // bits needed to determine rounding
+    logic [`FLEN:0] RoundAdd;       // how much to add to the result
+    logic [$clog2(`NORMSHIFTSZ)-1:0] ShiftAmt;   // normalization shift count
+    logic [`NORMSHIFTSZ-1:0] ShiftIn;        // is the sum zero
+    logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
+    logic Plus1;      // add one to the final result?
+    logic IntInvalid, Overflow, Invalid; // flags
     logic [`NE+1:0] RoundExp;
-    logic [`NE+1:0] CorrDivExp;
-    logic [1:0] NegResMSBS;
-    logic CvtOp;
-    logic FmaOp;
-    logic CvtResUf;
-    logic DivOp;
-    logic InfIn;
     logic ResSgn;
     logic RoundSgn;
-    logic NaNIn;
-    logic DivByZero;
     logic UfLSBRes;
-    logic Sqrt;
     logic [`FMTBITS-1:0] OutFmt;
+    // fma signals
+    logic [`NE+1:0] SumExp;     // exponent of the normalized sum
+    logic SumZero;        // is the sum zero
+    logic [3*`NF+8:0] FmaShiftIn;        // is the sum zero
+    logic [`NE+1:0] ConvNormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
+    logic PreResultDenorm;    // is the result denormalized - calculated before LZA corection
+    logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
+    // division singals
+    logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt;
+    logic [`NORMSHIFTSZ-1:0] DivShiftIn;
+    logic [`NE+1:0] CorrDivExp;
+    logic DivByZero;
     logic DivResDenorm;
     logic [`NE+1:0] DivDenormShift;
+    // conversion signals
+    logic [`CVTLEN+`NF:0] CvtShiftIn;    // number to be shifted
+    logic [1:0] NegResMSBS;
+    logic CvtResUf;
+    // readability signals
+    logic Mult;       // multiply opperation
+    logic Int64;      // is the integer 64 bits?
+    logic Signed;     // is the opperation with a signed integer?
+    logic IntToFp;       // is the opperation an int->fp conversion?
+    logic ToInt;      // is the opperation an fp->int conversion?
+    logic CvtOp;
+    logic FmaOp;
+    logic DivOp;
+    logic InfIn;
+    logic NaNIn;
+    logic Sqrt;
 
     // signals to help readability
-    assign Signed = FOpCtrlM[0];
-    assign Int64 =  FOpCtrlM[1];
-    assign IntToFp =   FOpCtrlM[2];
-    assign ToInt =  FWriteIntM;
+    assign Signed =  FOpCtrlM[0];
+    assign Int64 =   FOpCtrlM[1];
+    assign IntToFp = FOpCtrlM[2];
+    assign ToInt =   FWriteIntM;
     assign Mult = FOpCtrlM[2]&~FOpCtrlM[1]&~FOpCtrlM[0];
     assign CvtOp = (PostProcSelM == 2'b00);
     assign FmaOp = (PostProcSelM == 2'b10);
     assign DivOp = (PostProcSelM == 2'b01);
-    assign Sqrt = FOpCtrlM[0];
+    assign Sqrt =  FOpCtrlM[0];
 
     // is there an input of infinity or NaN being used
     assign InfIn = (XInfM&~(IntToFp&CvtOp))|(YInfM&~CvtOp)|(ZInfM&FmaOp);
@@ -205,7 +213,7 @@ module postprocess(
                 .XSgnM, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCalcExpM,
                 .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round, .IntInvalid, .DivByZero,
                 .UfLSBRes, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullResExp, .Plus1,
-                .RoundExp, .NegResMSBS, .Invalid, .Overflow, .Underflow, .PostProcFlgM);
+                .RoundExp, .NegResMSBS, .Invalid, .Overflow, .PostProcFlgM);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Select the result
