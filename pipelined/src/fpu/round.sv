@@ -8,42 +8,42 @@
 `define XLENPOS ((`XLEN>`NF) ? 1 : (`XLEN>`NF1) ? 2 : 3)
 
 module round(
-    input logic  [`FMTBITS-1:0] OutFmt,       // precision 1 = double 0 = single
-    input logic  [2:0]          FrmM,       // rounding mode
-    input logic                 FmaOp,
-    input logic                 DivOp,
-    input logic [1:0] PostProcSelM,
-    input logic                 CvtResDenormUfM,
-    input logic                 ToInt,
-    input logic                 CvtOp,
-    input logic                 CvtResUf,
-    input logic [`CORRSHIFTSZ-1:0]  CorrShifted,
-    input logic                 AddendStickyM,  // addend's sticky bit
-    input logic                 ZZeroM,         // is Z zero
-    input logic                 InvZM,          // invert Z
-    input logic  [`NE+1:0]      SumExp,         // exponent of the normalized sum
-    input logic                 RoundSgn,      // the result's sign
-    input logic [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic [`NE+1:0]           CorrDivExp,    // the calculated expoent
-    input logic                DivStickyM,             // sticky bit
-    input logic DivNegStickyM,
-    output logic                UfPlus1,  // do you add or subtract on from the result
-    output logic [`NE+1:0]      FullResExp,      // ResExp with bits to determine sign and overflow
-    output logic [`NF-1:0]      ResFrac,         // Result fraction
-    output logic [`NE-1:0]      ResExp,          // Result exponent
-    output logic                Sticky,             // sticky bit
-    output logic [`NE+1:0] RoundExp,
-    output logic Plus1,
-    output logic [`FLEN:0]      RoundAdd,           // how much to add to the result
-    output logic                Round, UfLSBRes // bits needed to calculate rounding
+    input logic  [`FMTBITS-1:0]     OutFmt,       // precision 1 = double 0 = single
+    input logic  [2:0]              FrmM,       // rounding mode
+    input logic                     FmaOp,
+    input logic                     DivOp,
+    input logic                     CvtOp,
+    input logic                     ToInt,
+    input logic  [1:0]              PostProcSelM,
+    input logic                     CvtResDenormUfM,
+    input logic                     CvtResUf,
+    input logic  [`CORRSHIFTSZ-1:0] CorrShifted,
+    input logic                     AddendStickyM,  // addend's sticky bit
+    input logic                     ZZeroM,         // is Z zero
+    input logic                     InvZM,          // invert Z
+    input logic  [`NE+1:0]          SumExp,         // exponent of the normalized sum
+    input logic                     RoundSgn,      // the result's sign
+    input logic  [`NE:0]            CvtCalcExpM,    // the calculated expoent
+    input logic  [`NE+1:0]          CorrDivExp,    // the calculated expoent
+    input logic                     DivStickyM,             // sticky bit
+    input logic                     DivNegStickyM,
+    output logic                    UfPlus1,  // do you add or subtract on from the result
+    output logic [`NE+1:0]          FullResExp,      // ResExp with bits to determine sign and overflow
+    output logic [`NF-1:0]          ResFrac,         // Result fraction
+    output logic [`NE-1:0]          ResExp,          // Result exponent
+    output logic                    Sticky,             // sticky bit
+    output logic [`NE+1:0]          RoundExp,
+    output logic                    Plus1,
+    output logic [`FLEN:0]          RoundAdd,           // how much to add to the result
+    output logic                    Round, UfLSBRes // bits needed to calculate rounding
 );
     logic           LSBRes;         // bit used for rounding - least significant bit of the normalized sum
     logic           SubBySmallNum, UfSubBySmallNum;  // was there supposed to be a subtraction by a small number
     logic           UfCalcPlus1, CalcMinus1, Minus1; // do you add or subtract on from the result
-    logic                 NormSumSticky;  // normalized sum's sticky bit
-    logic                 UfSticky;   // sticky bit for underlow calculation
+    logic           NormSumSticky;  // normalized sum's sticky bit
+    logic           UfSticky;   // sticky bit for underlow calculation
     logic [`NF-1:0] RoundFrac;
-    logic FpRes, IntRes;
+    logic           FpRes, IntRes;
     logic           UfRound;
     logic           FpRound, FpLSBRes, FpUfRound;
     logic           CalcPlus1, FpPlus1;

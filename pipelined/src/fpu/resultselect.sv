@@ -4,29 +4,27 @@ module resultselect(
     input logic                     XSgnM,        // input signs
     input logic     [`NE-1:0]       ZExpM, // input exponents
     input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
+    input logic                     XNaNM, YNaNM, ZNaNM,    // inputs are NaN
     input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic     [`FMTBITS-1:0]  OutFmt,       // output format
     input logic                     InfIn,
-    input logic                     XInfM,
-    input logic                     YInfM,
-    input logic                     DivOp,
-    input logic                     XZeroM,
+    input logic                     XInfM, YInfM,
+    input logic                     XZeroM, ZZeroM,
     input logic                     IntZeroM,
     input logic                     NaNIn,
     input logic                     IntToFp,
     input logic                     Int64,
     input logic                     Signed,
     input logic                     CvtOp,
-    input logic [`NORMSHIFTSZ-1:0]             Shifted,        // is the sum zero
+    input logic                     DivOp,
     input logic                     FmaOp,
+    input logic [`NORMSHIFTSZ-1:0]  Shifted,        // is the sum zero
     input logic                     Plus1,
     input logic                     DivByZero,
     input logic [`NE:0]             CvtCalcExpM,    // the calculated expoent
     input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
     input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
-    input logic                     XNaNM, YNaNM, ZNaNM,    // inputs are NaN
     input logic                     ZDenormM, // is the original precision denormalized
-    input logic 		            ZZeroM,
     input logic                     ResSgn,  // the res's sign
     input logic     [`FLEN:0]       RoundAdd,   // how much to add to the res
     input logic                     IntInvalid, Invalid, Overflow,  // flags
