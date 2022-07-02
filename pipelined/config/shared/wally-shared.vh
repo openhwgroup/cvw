@@ -94,12 +94,12 @@
 `define BIAS2 ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS : `H_BIAS)
 
 // largest length in IEU/FPU
-`define CVTLEN ((`NF<`XLEN) ? `XLEN : `NF)
-`define LLEN ((`FLEN<`XLEN) ? `XLEN : `FLEN)
+`define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF))
+`define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`CVTLEN+`NF) > (3*`NF+8) ? (`CVTLEN+`NF+1) : (3*`NF+9))
-`define CORRSHIFTSZ ((`CVTLEN+`NF) > (3*`NF+8) ? (`CVTLEN+`NF+1) : (3*`NF+6))
-`define DIVLEN ((`NF < `XLEN) ? `XLEN : `NF)
+`define NORMSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+9))
+`define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
 
 // Disable spurious Verilator warnings
 

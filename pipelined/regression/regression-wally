@@ -44,16 +44,18 @@ configs = [
         grepstr="All lints run with no errors or warnings"
     )
 ]
-def getBuildrootTC(short):
+def getBuildrootTC(boot):
     INSTR_LIMIT = 4000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
-    if short:
+    if boot:
+        name="buildrootboot"
+        BRcmd="vsim > {} -c <<!\ndo wally-pipelined.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
+        BRgrepstr="WallyHostname login:"
+    else:
+        name="buildroot"
         BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
-    else:
-        BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot $RISCV 0 1 0\n!"
-        BRgrepstr=str(MAX_EXPECTED)+" instructions"
-    return  TestCase(name="buildroot",variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
+    return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
 tc = TestCase(
       name="buildroot-checkpoint",
@@ -136,14 +138,14 @@ def main():
         os.system('./make-tests.sh | tee ./logs/make-tests.log')
 
     if '-all' in sys.argv:
-        TIMEOUT_DUR = 30*3600 # seconds
-        configs.append(getBuildrootTC(short=False))
+        TIMEOUT_DUR = 30*7200 # seconds
+        configs.append(getBuildrootTC(boot=True))
     elif '-buildroot' in sys.argv:
-        TIMEOUT_DUR = 30*3600 # seconds
-        configs=[getBuildrootTC(short=False)]
+        TIMEOUT_DUR = 30*7200 # seconds
+        configs=[getBuildrootTC(boot=True)]
     else:
         TIMEOUT_DUR = 10*60 # seconds
-        configs.append(getBuildrootTC(short=True))
+        configs.append(getBuildrootTC(boot=False))
 
     # Scale the number of concurrent processes to the number of test cases, but
     # max out at a limited number of concurrent processes to not overwhelm the system

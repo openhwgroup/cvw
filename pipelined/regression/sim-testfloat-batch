@@ -7,4 +7,4 @@
 # sqrt   - test square root
 # all    - test everything
 
-vsim -c -do "do testfloat.do rv64fpquad all"
+vsim -c -do "do testfloat.do rv64fpquad $1"
