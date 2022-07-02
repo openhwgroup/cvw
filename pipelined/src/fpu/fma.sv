@@ -62,8 +62,7 @@ module fma(
    
 
    // calculate the product's exponent 
-    expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE,
-                 .ProdExpE);
+    expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE, .ProdExpE);
 
     // multiplication of the mantissa's
     mult mult(.XManE, .YManE, .ProdManE);
@@ -72,7 +71,7 @@ module fma(
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
 
-    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .ProdExpE, .XExpE, .YExpE,
+    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .XExpE, .YExpE,
                         .AlignedAddendE, .AddendStickyE, .KillProdE);
                         
     // calculate the signs and take the opperation into account
@@ -88,8 +87,6 @@ module fma(
 
     // Choose the positive sum and accompanying LZA result.
     assign SumE = NegSumE ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
-
-
 endmodule
 
 
@@ -151,7 +148,6 @@ module align(
     input logic  [`NE-1:0]      XExpE, YExpE, ZExpE,      // biased exponents in B(NE.0) format
     input logic  [`NF:0]        ZManE,      // fractions in U(0.NF) format]
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
-    input logic  [`NE+1:0]      ProdExpE,       // the product's exponent
     output logic [3*`NF+5:0]    AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
     output logic                AddendStickyE,  // Sticky bit calculated from the aliged addend
     output logic                KillProdE       // should the product be set to zero
@@ -168,8 +164,7 @@ module align(
     // determine the shift count for alignment
     //      - negitive means Z is larger, so shift Z left
     //      - positive means the product is larger, so shift Z right
-    // *** can we use ProdExpE instead of XExp/YExp to save an adder? DH 5/12/22
-    //      KP- yes we used ProdExpE originally but we did this for timing
+    // This could have been done using ProdExpE, but AlignCnt is on the critical path so we replicate logic for speed
     assign AlignCnt = XZeroE|YZeroE ? -(`NE+2)'($unsigned(1)) : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF)+3 - {2'b0, ZExpE};
 
     // Defualt Addition without shifting
