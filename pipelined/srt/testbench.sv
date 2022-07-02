@@ -1,4 +1,4 @@
-`define DIVLEN 65
+`define DIVLEN 64
 
 /////////////
 // counter //
@@ -17,7 +17,7 @@ module counter(input  logic clk,
 
   always @(posedge clk)
     begin
-      if      (count == `DIVLEN+1) done <= #1 1;
+      if      (count == `DIVLEN + 2) done <= #1 1;
       else if (done | req) done <= #1 0;	
       if (req) count <= #1 0;
       else     count <= #1 count+1;
@@ -101,8 +101,8 @@ module testbench;
       b = Vec[`memb];
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
-      r = Quot[`DIVLEN:`DIVLEN - 52];
-      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
+      r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
+      rOTFC = QuotOTFC[(`DIVLEN - 1):(`DIVLEN - 52)];
       req <= #5 1;
     end
   
@@ -110,8 +110,8 @@ module testbench;
 
   always @(posedge clk)
     begin
-      r = Quot[`DIVLEN:`DIVLEN - 52];
-      rOTFC = QuotOTFC[`DIVLEN:`DIVLEN - 52];
+      r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
+      rOTFC = QuotOTFC[(`DIVLEN - 1):(`DIVLEN - 52)];
       if (done) 
 	begin
 	  req <= #5 1;

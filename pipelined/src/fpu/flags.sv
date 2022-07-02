@@ -4,7 +4,7 @@ module flags(
     input logic                 XSgnM,
     input logic                 XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
     input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
-    input logic Plus1,
+    input logic                 Plus1,
     input logic                 InfIn,                  // is a Inf input being used
     input logic                 XZeroM, YZeroM,         // inputs are zero
     input logic                 XNaNM, YNaNM,           // inputs are NaN
@@ -25,7 +25,7 @@ module flags(
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, UfLSBRes, Sticky, UfPlus1, // bits used to determine rounding
     output logic                DivByZero,
-    output logic                IntInvalid, Invalid, Overflow, Underflow, // flags used to select the res
+    output logic                IntInvalid, Invalid, Overflow, // flags used to select the res
     output logic [4:0]          PostProcFlgM // flags
 );
     logic               SigNaN;     // is an input a signaling NaN
@@ -34,6 +34,7 @@ module flags(
     logic               IntInexact; // integer inexact flag
     logic               FmaInvalid; // integer invalid flag
     logic               DivInvalid; // integer invalid flag
+    logic               Underflow;   // Underflow flag
     logic               ResExpGteMax; // is the result greater than or equal to the maximum floating point expoent
     logic               ShiftGtIntSz; // is the shift greater than the the integer size (use ResExp to account for possible roundning "shift")
 
@@ -88,7 +89,7 @@ module flags(
     //                 |           and the exponent isn't negitive
     //                 |           |                   if the input isnt infinity or NaN
     //                 |           |                   |            
-    assign Overflow = ResExpGteMax & ~FullResExp[`NE+1]&~(InfIn|NaNIn);
+    assign Overflow = ResExpGteMax & ~FullResExp[`NE+1]&~(InfIn|NaNIn|DivByZero);
 
     // detecting tininess after rounding
     //                  the exponent is negitive
@@ -98,11 +99,11 @@ module flags(
     //                  |                    |                    |                                      |                     and if the result is not exact
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
-    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (RoundExp == 0) & ~(UfPlus1&UfLSBRes)))&(Round|Sticky))&~(InfIn|NaNIn);
+    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (RoundExp == 0) & ~(UfPlus1&UfLSBRes)))&(Round|Sticky))&~(InfIn|NaNIn|DivByZero);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (Sticky|Overflow|Round|Underflow)&~(InfIn|NaNIn);
+    assign FpInexact = (Sticky|Overflow|Round|Underflow)&~(InfIn|NaNIn|DivByZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
@@ -133,8 +134,9 @@ module flags(
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
-
-    assign DivByZero = YZeroM&DivOp;  
+    // if dividing by zero and not 0/0
+    //  - don't set flag if an input is NaN or Inf(IEEE says has to be a finite numerator)
+    assign DivByZero = YZeroM&DivOp&~(XZeroM|NaNIn|InfIn);  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags

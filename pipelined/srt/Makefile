@@ -23,5 +23,10 @@ qslc_sqrt_r4a2: qslc_sqrt_r4a2.c
 	gcc qslc_sqrt_r4a2.c -o qslc_sqrt_r4a2 -lm
 	./qslc_sqrt_r4a2 > qslc_sqrt_r4a2.sv
 
+inttestgen: inttestgen.c
+	gcc -lm -o inttestgen inttestgen.c
+	./inttestgen
+
 clean:
 	rm -f testgen exptestgen qslc_r4a2 qslc_r4a2b qslc_sqrt_r4a2
+	

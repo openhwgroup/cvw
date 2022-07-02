@@ -41,10 +41,12 @@ module fpu (
   input logic [4:0] 	   RdM, RdW, // which FP register to write to (from IEU)
   input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
-  output logic 		   FpLoadM, // Fp load instruction?
+  output logic 		   FpLoadStoreM, // Fp load instruction?
+  output logic              FLoad2,
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
+  output logic [`FLEN-1:0] FWriteDataM, // Data to be written to memory
   output logic [`XLEN-1:0] FIntResM, // data to be written to integer register
   output logic [`XLEN-1:0] FCvtIntResW, // data to be written to integer register
   output logic [1:0]       FResSelW,
@@ -124,7 +126,10 @@ module fpu (
    
    //divide signals
    logic [`DIVLEN+2:0] Quot;
-   logic [`NE:0] DivCalcExpM;
+   logic [`NE+1:0] DivCalcExpM;
+   logic DivNegStickyM;
+   logic DivStickyM;
+   logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -289,8 +294,19 @@ module fpu (
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
-   if (`FLEN>`XLEN) assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
-   else assign FWriteDataE = {{`XLEN-`FLEN{FSrcYE[`FLEN-1]}}, FSrcYE}; 
+   if (`LLEN==`XLEN) begin
+      assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
+   end else begin
+      logic [`FLEN-1:0] FWriteDataE;
+      if(`FMTBITS == 2) assign FLoad2 = FmtM == `FMT;
+      else assign FLoad2 = FmtM;
+
+      if (`FPSIZES==1) assign FWriteDataE = FSrcYE;
+      else if (`FPSIZES==2) assign FWriteDataE = FmtE ? FSrcYE : {2{FSrcYE[`LEN1-1:0]}};
+      else assign FWriteDataE = FmtE == `FMT ? FSrcYE : {2{FSrcYE[`LEN1-1:0]}};
+
+      flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, FWriteDataE, FWriteDataM);
+   end
 
    // NaN Block SrcA
    generate
@@ -308,7 +324,7 @@ module fpu (
    assign PreNVE = CmpNVE&(FOpCtrlE[2]|FWriteIntE);
 
    // select the result that may be written to the integer register - to IEU
-   if (`FLEN>`XLEN) 
+   if (`FLEN>`XLEN)
       assign IntSrcXE = FSrcXE[`XLEN-1:0];
    else 
       assign IntSrcXE = {{`XLEN-`FLEN{FSrcXE[`FLEN-1:0]}}, FSrcXE};
@@ -353,13 +369,13 @@ module fpu (
    //          |||         |||
    //////////////////////////////////////////////////////////////////////////////////////////
 
-   assign FpLoadM = FResSelM[1];
+   assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, 
+   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, .EarlyTermShiftDiv2M,
                            .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .Quot,
                            .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM,
-                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, 
-                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, 
+                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, .DivNegStickyM,
+                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, .DivStickyM,
                            .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
 
    // FPU flag selection - to privileged

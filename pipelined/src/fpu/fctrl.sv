@@ -33,8 +33,8 @@ module fctrl (
                     default: ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
                   endcase
       7'b0100111: case(Funct3D)
-                    3'b010:  ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_0; // fsw
-                    3'b011:  ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_0; // fsd
+                    3'b010:  ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsw
+                    3'b011:  ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsd
                     default: ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
                   endcase
       7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0; // fmadd
@@ -121,7 +121,7 @@ module fctrl (
       assign FmtD = 0;
     else if (`FPSIZES == 2)begin
       logic [1:0] FmtTmp;
-      assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
+      assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : (~OpD[6]&(&OpD[2:0])) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : Funct7D[1:0];
       assign FmtD = (`FMT == FmtTmp);
     end
     else if (`FPSIZES == 3|`FPSIZES == 4)
