@@ -110,7 +110,7 @@ module fpu (
    logic [`NE+1:0]	    ProdExpE, ProdExpM;
    logic 			    AddendStickyE, AddendStickyM;
    logic 			    KillProdE, KillProdM;
-   logic 			    InvZE, InvZM;
+   logic 			    InvAE, InvAM;
    logic 			    NegSumE, NegSumM;
    logic 			    ZSgnEffE, ZSgnEffM;
    logic 			    PSgnE, PSgnM;
@@ -249,10 +249,10 @@ module fpu (
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE);
    
    // fma - does multiply, add, and multiply-add instructions 
-   fma fma (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, 
-            .XManE, .YManE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, 
-            .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .FmaNormCntE, 
-            .ZSgnEffE, .PSgnE, .ProdExpE, .AddendStickyE, .KillProdE); 
+   fma fma (.Xs(XSgnE), .Ys(YSgnE), .Zs(ZSgnE), .Xe(XExpE), .Ye(YExpE), .Ze(ZExpE), 
+            .Xm(XManE), .Ym(YManE), .Zm(ZManE), .XZeroE, .YZeroE, .ZZeroE, 
+            .FOpCtrlE, .FmtE, .Sm(SumE), .NegSumE, .InvA(InvAE), .FmaNormCntE, 
+            .ZSgnEffE, .Ps(PSgnE), .Pe(ProdExpE), .AddendStickyE, .KillProdE); 
 
    // fpdivsqrt using Goldschmidt's iteration
    if(`FLEN == 64) begin 
@@ -351,8 +351,8 @@ module fpu (
    flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
    flopenrc #($clog2(3*`NF+7)+6) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                           {AddendStickyE, KillProdE, InvZE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
-                           {AddendStickyM, KillProdM, InvZM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
+                           {AddendStickyE, KillProdE, InvAE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
+                           {AddendStickyM, KillProdM, InvAM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
    flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
                            {CvtCalcExpE, CvtShiftAmtE, CvtResDenormUfE, CvtResSgnE, IntZeroE, CvtLzcInE},
                            {CvtCalcExpM, CvtShiftAmtM, CvtResDenormUfM, CvtResSgnM, IntZeroM, CvtLzcInM});
@@ -374,7 +374,7 @@ module fpu (
    postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, .EarlyTermShiftDiv2M,
                            .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .Quot,
                            .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM,
-                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, .DivNegStickyM,
+                           .NegSumM, .InvZM(InvAM), .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, .DivNegStickyM,
                            .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, .DivStickyM,
                            .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
 
