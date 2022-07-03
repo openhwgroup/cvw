@@ -61,15 +61,15 @@ module testbenchfp;
 
   // in-between FMA signals
   logic                 Mult;
-  logic [`NE+1:0]	      ProdExpE;
+  logic [`NE+1:0]	      Pe;
   logic 				        AddendStickyE;
   logic 					      KillProdE; 
   logic [$clog2(3*`NF+7)-1:0]	FmaNormCntE;
-  logic [3*`NF+5:0]	    SumE;       
+  logic [3*`NF+5:0]	    Sm;       
   logic 			          InvZE;
   logic 			          NegSumE;
   logic 			          ZSgnEffE;
-  logic 			          PSgnE;
+  logic 			          Ps;
   logic       DivSticky;
   logic       DivNegSticky;
   logic [`NE+1:0] DivCalcExp;
@@ -637,12 +637,12 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  fma fma(.XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), 
-              .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), 
-              .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
+  fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
+              .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan),
               .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .SumE, .NegSumE, .InvZE, .FmaNormCntE, .ZSgnEffE, .PSgnE,
-              .ProdExpE, .AddendStickyE, .KillProdE); 
+              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .Sm, .NegSumE, .InvZE, .FmaNormCntE, .ZSgnEffE, .Ps,
+              .Pe, .AddendStickyE, .KillProdE); 
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
               .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
@@ -651,8 +651,8 @@ module testbenchfp;
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
               .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
               .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
-              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), 
-              .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
+              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(Pe), 
+              .SumM(Sm), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(Ps), .FmtM(ModFmt), .FrmM(FrmVal), 
               .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
   
   fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 

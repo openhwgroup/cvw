@@ -27,7 +27,7 @@ module fmashiftcalc(
     // calculate the sum's exponent
     assign NormSumExp = KillProdM ? {2'b0, ZExpM[`NE-1:1], ZExpM[0]&~ZDenormM} : ProdExpM + -{{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, FmaNormCntM} - 1 + (`NE+2)'(`NF+4);
 
-    //convert the sum's exponent into the propper percision
+    //convert the sum's exponent into the proper percision
     if (`FPSIZES == 1) begin
         assign ConvNormSumExp = NormSumExp;
 
@@ -105,7 +105,7 @@ module fmashiftcalc(
                 2'h1: PreResultDenorm = Sum1LEZ & Sum1GEFL & ~SumZero;
                 2'h0: PreResultDenorm = Sum2LEZ & Sum2GEFL & ~SumZero;
                 2'h2: PreResultDenorm = Sum3LEZ & Sum3GEFL & ~SumZero;
-            endcase
+            endcase // *** remove checking to see if it's underflowed and only check for less than zero for denorm checking
         end
 
     end
