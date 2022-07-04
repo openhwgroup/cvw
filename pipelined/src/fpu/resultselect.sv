@@ -237,7 +237,7 @@ module resultselect(
     //          signed | -2^31 | -2^63  |
     //        unsigned |   0   |    0   |
     //
-    //      - positive infinity and out of range negitive input and NaNs
+    //      - positive infinity and out of range positive input and NaNs
     //                 |   int  |  long  |
     //          signed | 2^31-1 | 2^63-1 |
     //        unsigned | 2^32-1 | 2^64-1 |
