@@ -641,7 +641,7 @@ module testbenchfp;
               .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
               .Xm(XMan), .Ym(YMan), .Zm(ZMan),
               .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .Sm, .NegSumE, .InvZE, .FmaNormCntE, .ZSgnEffE, .Ps,
+              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .Sm, .NegSumE, .InvA(InvZE), .FmaNormCntE, .ZSgnEffE, .Ps,
               .Pe, .AddendStickyE, .KillProdE); 
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
@@ -818,7 +818,15 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((~DivStart&DivDone)^~(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((UnitVal !== `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+      errors += 1;
+      $display("There is an error in %s", Tests[TestNum]);
+      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+      $stop;
+    end
+
+  // division
+    else if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(~DivStart&DivDone)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
