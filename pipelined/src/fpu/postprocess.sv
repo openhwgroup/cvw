@@ -109,6 +109,7 @@ module postprocess(
     // conversion signals
     logic [`CVTLEN+`NF:0] CvtShiftIn;    // number to be shifted
     logic [1:0] NegResMSBS;
+    logic [`XLEN+1:0]    NegRes;
     logic CvtResUf;
     // readability signals
     logic Mult;       // multiply opperation
@@ -166,7 +167,7 @@ module postprocess(
                 ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmtM};
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
-            2'b01: begin //div ***prob can take out
+            2'b01: begin //div
                 ShiftAmt = DivShiftAmt;
                 ShiftIn =  DivShiftIn;
             end
@@ -201,9 +202,11 @@ module postprocess(
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .InvZM, .SumExp, .Round, .Sticky,
-                          .FmaOp, .DivOp, .CvtOp, .ZInfM, .InfIn, .NegSumM, .SumZero, .Mult, 
-                          .XSgnM, .YSgnM, .CvtResSgnM, .RoundSgn, .ResSgn);
+    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .SumExp, .Round, .Sticky,
+                          .FmaOp, .ZInfM, .InfIn, .SumZero, .Mult, .RoundSgn, .ResSgn);
+                          
+    roundsign roundsign(.PSgnM, .ZSgnEffM, .InvZM, .FmaOp, .DivOp, .CvtOp, .NegSumM, 
+                          .XSgnM, .YSgnM, .CvtResSgnM, .RoundSgn);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -219,10 +222,11 @@ module postprocess(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultselect resultselect(.XSgnM, .ZExpM, .XManM, .YManM, .ZManM, .ZDenormM, .ZZeroM, .XZeroM, .IntInvalid,
-        .IntZeroM, .FrmM, .OutFmt, .AddendStickyM, .KillProdM, .XNaNM, .YNaNM, .ZNaNM, .RoundAdd, .CvtResUf, 
-        .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegResMSBS,
+    negateintres negateintres(.XSgnM, .Shifted, .Signed, .Int64, .Plus1, .NegResMSBS, .NegRes);
+    resultselect resultselect(.XSgnM, .XManM, .YManM, .ZManM, .XZeroM, .IntInvalid,
+        .IntZeroM, .FrmM, .OutFmt, .XNaNM, .YNaNM, .ZNaNM, .CvtResUf, 
+        .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegRes,
         .XInfM, .YInfM, .DivOp,
-        .DivByZero, .FullResExp, .Shifted, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
+        .DivByZero, .FullResExp, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
 
 endmodule
