@@ -30,27 +30,27 @@
 `include "wally-config.vh"
 
 module fma(
-    input logic                 XSgnE, YSgnE, ZSgnE,    // input's signs
-    input logic  [`NE-1:0]      XExpE, YExpE, ZExpE,    // biased exponents in B(NE.0) format
-    input logic  [`NF:0]        XManE, YManE, ZManE,    // fractions in U(0.NF) format
+    input logic                 Xs, Ys, Zs,    // input's signs
+    input logic  [`NE-1:0]      Xe, Ye, Ze,    // input's biased exponents in B(NE.0) format
+    input logic  [`NF:0]        Xm, Ym, Zm,    // input's significands in U(0.NF) format
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
     input logic  [2:0]          FOpCtrlE,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [`FMTBITS-1:0] FmtE,       // precision 1 = double 0 = single
-    output logic [`NE+1:0]      ProdExpE,       // X exponent + Y exponent - bias in B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
+    output logic [`NE+1:0]      Pe,       // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                AddendStickyE,  // sticky bit that is calculated during alignment
     output logic                KillProdE,      // set the product to zero before addition if the product is too small to matter
-    output logic [3*`NF+5:0]    SumE,           // the positive sum
+    output logic [3*`NF+5:0]    Sm,           // the positive sum
     output logic                NegSumE,        // was the sum negitive
-    output logic                InvZE,          // intert Z
+    output logic                InvA,          // intert Z
     output logic                ZSgnEffE,       // the modified Z sign
-    output logic                PSgnE,          // the product's sign
+    output logic                Ps,          // the product's sign
     output logic [$clog2(3*`NF+7)-1:0]          FmaNormCntE        // normalization shift cnt
     );
 
-    logic [2*`NF+1:0]   ProdManE;           // 1.X frac * 1.Y frac in U(2.2Nf) format
-    logic [3*`NF+5:0]   AlignedAddendE;     // Z aligned for addition in U(NF+5.2NF+1)
-    logic [3*`NF+6:0]   AlignedAddendInv;   // aligned addend possibly inverted
-    logic [2*`NF+1:0]   ProdManKilled;      // the product's mantissa possibly killed
+    logic [2*`NF+1:0]   Pm;           // the product's significand in U(2.2Nf) format
+    logic [3*`NF+5:0]   Am;     // Z aligned for addition in U(NF+5.2NF+1)
+    logic [3*`NF+6:0]   AmInv;   // aligned addend possibly inverted
+    logic [2*`NF+1:0]   PmKilled;      // the product's mantissa possibly killed
     logic [3*`NF+6:0]   PreSum, NegPreSum;  // positive and negitve versions of the sum
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
@@ -62,43 +62,40 @@ module fma(
    
 
    // calculate the product's exponent 
-    expadd expadd(.FmtE, .XExpE, .YExpE, .XZeroE, .YZeroE, .ProdExpE);
+    expadd expadd(.FmtE, .Xe, .Ye, .XZeroE, .YZeroE, .Pe);
 
     // multiplication of the mantissa's
-    mult mult(.XManE, .YManE, .ProdManE);
+    mult mult(.Xm, .Ym, .Pm);
    
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
 
-    align align(.ZExpE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, .XExpE, .YExpE,
-                        .AlignedAddendE, .AddendStickyE, .KillProdE);
+    align align(.Ze, .Zm, .XZeroE, .YZeroE, .ZZeroE, .Xe, .Ye,
+                        .Am, .AddendStickyE, .KillProdE);
                         
     // calculate the signs and take the opperation into account
-    sign sign(.FOpCtrlE, .XSgnE, .YSgnE, .ZSgnE, .PSgnE, .ZSgnEffE);
+    sign sign(.FOpCtrlE, .Xs, .Ys, .Zs, .Ps, .ZSgnEffE);
 
     // ///////////////////////////////////////////////////////////////////////////////
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    add add(.AlignedAddendE, .ProdManE, .PSgnE, .ZSgnEffE, .KillProdE, .AlignedAddendInv, .ProdManKilled, .NegSumE, .PreSum, .NegPreSum, .InvZE, .XZeroE, .YZeroE);
+    add add(.Am, .Pm, .Ps, .ZSgnEffE, .KillProdE, .AmInv, .PmKilled, .NegSumE, .PreSum, .NegPreSum, .InvA, .XZeroE, .YZeroE, .Sm);
     
-    loa loa(.A(AlignedAddendInv+{(3*`NF+6)'(0),InvZE}), .P(ProdManKilled), .FmaNormCntE);
-
-    // Choose the positive sum and accompanying LZA result.
-    assign SumE = NegSumE ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
+    loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA}), .P(PmKilled), .FmaNormCntE);
 endmodule
 
 
 module expadd(    
     input  logic [`FMTBITS-1:0] FmtE,          // precision
-    input  logic [`NE-1:0]      XExpE, YExpE,  // input exponents
+    input  logic [`NE-1:0]      Xe, Ye,  // input exponents
     input  logic                XZeroE, YZeroE,        // are the inputs zero
-    output logic [`NE+1:0]      ProdExpE       // product's exponent B^(1023)NE+2
+    output logic [`NE+1:0]      Pe       // product's exponent B^(1023)NE+2
 );
 
     // kill the exponent if the product is zero - either X or Y is 0
-    assign ProdExpE = ({2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZeroE|YZeroE)}};
+    assign Pe = ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZeroE|YZeroE)}};
 
 endmodule
 
@@ -107,10 +104,10 @@ endmodule
 
 
 module mult(
-    input logic [`NF:0] XManE, YManE,
-    output logic [2*`NF+1:0] ProdManE
+    input logic [`NF:0] Xm, Ym,
+    output logic [2*`NF+1:0] Pm
 );
-    assign ProdManE = XManE * YManE;
+    assign Pm = Xm * Ym;
 endmodule
 
 
@@ -122,8 +119,8 @@ endmodule
 
 module sign(    
     input  logic [2:0]  FOpCtrlE,               // precision
-    input  logic        XSgnE, YSgnE, ZSgnE,    // are the inputs denormalized
-    output logic        PSgnE,     // the product's sign - takes opperation into account
+    input  logic        Xs, Ys, Zs,    // are the inputs denormalized
+    output logic        Ps,     // the product's sign - takes opperation into account
     output logic        ZSgnEffE   // Z sign used in fma - takes opperation into account
 );
 
@@ -131,9 +128,9 @@ module sign(
     //      Negate product's sign if FNMADD or FNMSUB
     
     // flip is negation opperation
-    assign PSgnE = XSgnE ^ YSgnE ^ (FOpCtrlE[1]&~FOpCtrlE[2]);
+    assign Ps = Xs ^ Ys ^ (FOpCtrlE[1]&~FOpCtrlE[2]);
     // flip if subtraction
-    assign ZSgnEffE = ZSgnE^FOpCtrlE[0];
+    assign ZSgnEffE = Zs^FOpCtrlE[0];
 
 endmodule
 
@@ -145,10 +142,10 @@ endmodule
 
 
 module align(
-    input logic  [`NE-1:0]      XExpE, YExpE, ZExpE,      // biased exponents in B(NE.0) format
-    input logic  [`NF:0]        ZManE,      // fractions in U(0.NF) format]
+    input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
+    input logic  [`NF:0]        Zm,      // fractions in U(0.NF) format]
     input logic                 XZeroE, YZeroE, ZZeroE, // is the input zero
-    output logic [3*`NF+5:0]    AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
+    output logic [3*`NF+5:0]    Am, // Z aligned for addition in U(NF+5.2NF+1)
     output logic                AddendStickyE,  // Sticky bit calculated from the aliged addend
     output logic                KillProdE       // should the product be set to zero
 );
@@ -156,6 +153,7 @@ module align(
     logic [`NE+1:0]     AlignCnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
     logic [4*`NF+5:0]   ZManShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
     logic [4*`NF+5:0]   ZManPreShifted;     // input to the alignment shifter U(NF+5.3NF+1)
+    logic KillZ;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -164,15 +162,19 @@ module align(
     // determine the shift count for alignment
     //      - negitive means Z is larger, so shift Z left
     //      - positive means the product is larger, so shift Z right
-    // This could have been done using ProdExpE, but AlignCnt is on the critical path so we replicate logic for speed
-    assign AlignCnt = XZeroE|YZeroE ? -(`NE+2)'($unsigned(1)) : {2'b0, XExpE} + {2'b0, YExpE} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF)+3 - {2'b0, ZExpE};
+    // This could have been done using Pe, but AlignCnt is on the critical path so we replicate logic for speed
+    assign AlignCnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF+3) - {2'b0, Ze};
 
     // Defualt Addition without shifting
     //          |   54'b0    |  106'b(product)  | 2'b0 |
     //          | addnend |
 
     // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
-    assign ZManPreShifted = {ZManE,(3*`NF+5)'(0)};
+    assign ZManPreShifted = {Zm,(3*`NF+5)'(0)};
+    
+    assign KillProdE = AlignCnt[`NE+1]|XZeroE|YZeroE;
+    assign KillZ = $signed(AlignCnt)>$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(5));
+
     always_comb
         begin
         
@@ -180,18 +182,9 @@ module align(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //  | addnend |
-        if ($signed(AlignCnt) < $signed((`NE+2)'(0))) begin
-            KillProdE = 1;
+        if (KillProdE) begin
             ZManShifted = ZManPreShifted;
             AddendStickyE = ~(XZeroE|YZeroE);
-
-        // If the Addend is shifted right
-        //          |   54'b0    |  106'b(product)  | 2'b0 |
-        //                                  | addnend |
-        end else if ($signed(AlignCnt)<=$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(5)))  begin
-            KillProdE = 0;
-            ZManShifted = ZManPreShifted >> AlignCnt;
-            AddendStickyE = |(ZManShifted[`NF-1:0]);
 
         // If the addend is too small to effect the addition        
         //      - The addend has to shift two past the end of the addend to be considered too small
@@ -199,15 +192,21 @@ module align(
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //                                                      | addnend |
-        end else begin
-            KillProdE = 0;
+        end else if (KillZ)  begin
             ZManShifted = 0;
             AddendStickyE = ~ZZeroE;
+
+        // If the Addend is shifted right
+        //          |   54'b0    |  106'b(product)  | 2'b0 |
+        //                                  | addnend |
+        end else begin
+            ZManShifted = ZManPreShifted >> AlignCnt;
+            AddendStickyE = |(ZManShifted[`NF-1:0]);
 
         end
     end
 
-    assign AlignedAddendE = ZManShifted[4*`NF+5:`NF];
+    assign Am = ZManShifted[4*`NF+5:`NF];
 
 endmodule
 
@@ -218,15 +217,16 @@ endmodule
 
 
 module add(
-    input logic  [3*`NF+5:0]    AlignedAddendE, // Z aligned for addition in U(NF+5.2NF+1)
-    input logic  [2*`NF+1:0]    ProdManE,       // the product's mantissa
-    input logic                 PSgnE, ZSgnEffE,// the product and modified Z signs
+    input logic  [3*`NF+5:0]    Am, // Z aligned for addition in U(NF+5.2NF+1)
+    input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
+    input logic                 Ps, ZSgnEffE,// the product and modified Z signs
     input logic                 KillProdE,      // should the product be set to 0
     input logic                 XZeroE, YZeroE, // is the input zero
-    output logic [3*`NF+6:0]    AlignedAddendInv,  // aligned addend possibly inverted
-    output logic [2*`NF+1:0]    ProdManKilled,     // the product's mantissa possibly killed
+    output logic [3*`NF+6:0]    AmInv,  // aligned addend possibly inverted
+    output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                NegSumE,        // was the sum negitive
-    output logic                InvZE,          // do you invert Z
+    output logic                InvA,          // do you invert Z
+    output logic [3*`NF+5:0]    Sm,           // the positive sum
     output logic [3*`NF+6:0]    PreSum, NegPreSum// possibly negitive sum
 );
 
@@ -237,23 +237,25 @@ module add(
     // Negate Z  when doing one of the following opperations:
     //      -prod +  Z
     //       prod -  Z
-    assign InvZE = ZSgnEffE ^ PSgnE;
+    assign InvA = ZSgnEffE ^ Ps;
 
     // Choose an inverted or non-inverted addend - the one has to be added now for the LZA
-    assign AlignedAddendInv = InvZE ? {1'b1, ~AlignedAddendE} : {1'b0, AlignedAddendE};
+    assign AmInv = InvA ? {1'b1, ~Am} : {1'b0, Am};
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-    assign ProdManKilled = ProdManE&{2*`NF+2{~KillProdE}};
+    assign PmKilled = Pm&{2*`NF+2{~KillProdE}};
 
 
 
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = AlignedAddendInv + {{`NF+3{1'b0}}, ProdManKilled, 2'b0} + {{3*`NF+6{1'b0}}, InvZE};
-    assign NegPreSum = XZeroE|YZeroE|KillProdE ? {1'b0, AlignedAddendE} : {1'b0, AlignedAddendE} + {{`NF+3{1'b1}}, ~ProdManKilled, 2'b0} + {(3*`NF+7)'(4)};
+    assign PreSum = {{`NF+3{1'b0}}, PmKilled, 2'b0} + AmInv + {{3*`NF+6{1'b0}}, InvA};
+    assign NegPreSum = {1'b0, Am} + {{`NF+3{1'b1}}, ~PmKilled, 2'b0} + {(3*`NF+7)'(4)};
      
     // Is the sum negitive
     assign NegSumE = PreSum[3*`NF+6];
 
+    // Choose the positive sum and accompanying LZA result.
+    assign Sm = NegSumE ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
 endmodule
 
 
