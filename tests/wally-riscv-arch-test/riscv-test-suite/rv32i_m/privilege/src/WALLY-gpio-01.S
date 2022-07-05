@@ -77,11 +77,11 @@ test_cases:
 .4byte rise_ie, 0x00000000, read32_test     # rise_ie reset to zero
 .4byte rise_ip, 0x00000000, read32_test     # rise_ip reset to zero
 .4byte fall_ie, 0x00000000, read32_test     # fall_ie reset to zero
-.4byte fall_ip, 0xffffffff, read32_test     # fall_ip reset to ones (input_val is zero)
+.4byte fall_ip, 0x00000000, read32_test     # fall_ip reset to zeros 
 .4byte high_ie, 0x00000000, read32_test     # high_ie reset to zero
 .4byte high_ip, 0x00000000, read32_test     # high_ip reset to zero
 .4byte low_ie, 0x00000000, read32_test      # low_ie reset to zero
-.4byte low_ip, 0x00000000, read32_test      # low_ip reset to zero
+.4byte low_ip, 0xffffffff, read32_test      # low_ip reset to ones (input_val is zero)
 .4byte iof_en, 0x00000000, read32_test      # iof_en reset to zero
 .4byte iof_sel, 0x00000000, read32_test     # iof_sel reset to zero
 .4byte out_xor, 0x00000000, read32_test     # out_xor reset to zero
