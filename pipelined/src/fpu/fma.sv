@@ -259,7 +259,7 @@ module add(
 endmodule
 
 
-module loa( //https://ieeexplore.ieee.org/abstract/document/930098
+module loa( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
     input logic  [3*`NF+6:0] A,     // addend
     input logic  [2*`NF+1:0] P,     // product
     output logic [$clog2(3*`NF+7)-1:0]       FmaNormCntE   // normalization shift count for the positive result
