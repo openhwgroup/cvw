@@ -49,6 +49,8 @@ module ahblite (
   input logic [2:0]    IFUBurstType,
   input logic [1:0]    IFUTransType,
   input logic          IFUTransComplete,
+  input logic [(`XLEN-1)/8:0]     ByteMaskM,
+
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
   input logic 				 LSUBusRead, 
@@ -67,6 +69,7 @@ module ahblite (
   (* mark_debug = "true" *) output logic HCLK, HRESETn,
   (* mark_debug = "true" *) output logic [31:0] HADDR, // *** one day switch to a different bus that supports the full physical address
   (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
+   output logic [`XLEN/8-1:0] HWSTRB,
   (* mark_debug = "true" *) output logic HWRITE, 
   (* mark_debug = "true" *) output logic [2:0] HSIZE,
   (* mark_debug = "true" *) output logic [2:0] HBURST,
@@ -154,6 +157,7 @@ module ahblite (
   assign HTRANS = (GrantData) ? LSUTransType : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
+  assign HWSTRB = ByteMaskM;
   // delay write data by one cycle for
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes

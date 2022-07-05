@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// clint.sv
+// clint_apb.sv
 //
 // Written: David_Harris@hmc.edu 14 January 2021
 // Modified: 
@@ -28,45 +28,37 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-/*
+
 `include "wally-config.vh"
 
-module clint (
-  input logic 			   HCLK, HRESETn, TIMECLK,
-  input logic 			   HSELCLINT,
-  input logic [15:0] 	   HADDR,
-  input logic [3:0] 	   HSIZED,
-  input logic 			   HWRITE,
-  input logic [`XLEN-1:0]  HWDATA,
-  input logic 			   HREADY,
-  input logic [1:0] 	   HTRANS,
-  output logic [`XLEN-1:0] HREADCLINT,
-  output logic 			   HRESPCLINT, HREADYCLINT,
+module clint_apb (
+  input  logic             PCLK, PRESETn,
+  input  logic             PSEL,
+  input  logic [15:0]      PADDR, 
+  input  logic [`XLEN-1:0] PWDATA,
+  input  logic [`XLEN/8-1:0] PSTRB,
+  input  logic             PWRITE,
+  input  logic             PENABLE,
+  output logic [`XLEN-1:0] PRDATA,
+  output logic             PREADY,
   (* mark_debug = "true" *) output logic [63:0] MTIME, 
   output logic 			   MTimerInt, MSwInt);
 
   logic        MSIP;
 
-  logic [15:0] entry, entryd;
+  logic [15:0] entry;
   logic memwrite;
-  logic initTrans;
-  (* mark_debug = "true" *)    logic [63:0] MTIMECMP;
-  logic [`XLEN/8-1:0] ByteMaskM;
+   (* mark_debug = "true" *)    logic [63:0] MTIMECMP;
   integer             i, j;
-
-  assign initTrans = HREADY & HSELCLINT & (HTRANS != 2'b00);
-  // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
-  flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
-  flopr #(16) entrydflop(HCLK, ~HRESETn, entry, entryd);
-
-  assign HRESPCLINT = 0; // OK
-  assign HREADYCLINT = 1'b1; // *** needs to depend on DONE during asynchronous MTIME accesses 
   
+  assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
+  assign PREADY = 1'b1; // GPIO never takes >1 cycle to respond
+
   // word aligned reads
-  if (`XLEN==64) assign #2 entry = {HADDR[15:3], 3'b000};
-  else           assign #2 entry = {HADDR[15:2], 2'b00}; 
+  if (`XLEN==64) assign #2 entry = {PADDR[15:3], 3'b000};
+  else           assign #2 entry = {PADDR[15:2], 2'b00}; 
   
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(entryd[2:0]), .ByteMask(ByteMaskM));
+  //swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(entry[2:0]), .ByteMask(PSTRB));
 
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
@@ -76,83 +68,83 @@ module clint (
 
   // register access
   if (`XLEN==64) begin:clint // 64-bit
-    always @(posedge HCLK) begin
+    always @(posedge PCLK) begin
       case(entry)
-        16'h0000: HREADCLINT <= {63'b0, MSIP};
-        16'h4000: HREADCLINT <= MTIMECMP;
-        16'hBFF8: HREADCLINT <= MTIME;
-        default:  HREADCLINT <= 0;
+        16'h0000: PRDATA <= {63'b0, MSIP};
+        16'h4000: PRDATA <= MTIMECMP;
+        16'hBFF8: PRDATA <= MTIME;
+        default:  PRDATA <= 0;
       endcase
     end 
-    always_ff @(posedge HCLK or negedge HRESETn) 
-      if (~HRESETn) begin
+    always_ff @(posedge PCLK or negedge PRESETn) 
+      if (~PRESETn) begin
         MSIP <= 0;
         MTIMECMP <= 64'hFFFFFFFFFFFFFFFF; // Spec says MTIMECMP is not reset, but we reset to maximum value to prevent spurious timer interrupts
       end else if (memwrite) begin
-        if (entryd == 16'h0000) MSIP <= HWDATA[0];
-        if (entryd == 16'h4000) begin
+        if (entry == 16'h0000) MSIP <= PWDATA[0];
+        if (entry == 16'h4000) begin
           for(i=0;i<`XLEN/8;i++)
-            if(ByteMaskM[i])
-              MTIMECMP[i*8 +: 8] <= HWDATA[i*8 +: 8]; // ***dh: this notation isn't in book yet - maybe from Ross
+            if(PSTRB[i])
+              MTIMECMP[i*8 +: 8] <= PWDATA[i*8 +: 8]; // ***dh: this notation isn't in book yet - maybe from Ross
         end
       end
 
 // eventually replace MTIME logic below with timereg
-//    timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), 1'b0, HWDATA, MTIME, done);
+//    timereg tr(PCLK, PRESETn, TIMECLK, memwrite & (entry==16'hBFF8), 1'b0, PWDATA, MTIME, done);
 
-    always_ff @(posedge HCLK or negedge HRESETn) 
-      if (~HRESETn) begin
+    always_ff @(posedge PCLK or negedge PRESETn) 
+      if (~PRESETn) begin
         MTIME <= 0;
-      end else if (memwrite & entryd == 16'hBFF8) begin
+      end else if (memwrite & entry == 16'hBFF8) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
         for(j=0;j<`XLEN/8;j++)
-          if(ByteMaskM[j])
-            MTIME[j*8 +: 8] <= HWDATA[j*8 +: 8];
+          if(PSTRB[j])
+            MTIME[j*8 +: 8] <= PWDATA[j*8 +: 8];
       end else MTIME <= MTIME + 1; 
   end else begin:clint // 32-bit
-    always @(posedge HCLK) begin
+    always @(posedge PCLK) begin
       case(entry)
-        16'h0000: HREADCLINT <= {31'b0, MSIP};
-        16'h4000: HREADCLINT <= MTIMECMP[31:0];
-        16'h4004: HREADCLINT <= MTIMECMP[63:32];
-        16'hBFF8: HREADCLINT <= MTIME[31:0];
-        16'hBFFC: HREADCLINT <= MTIME[63:32];
-        default:  HREADCLINT <= 0;
+        16'h0000: PRDATA <= {31'b0, MSIP};
+        16'h4000: PRDATA <= MTIMECMP[31:0];
+        16'h4004: PRDATA <= MTIMECMP[63:32];
+        16'hBFF8: PRDATA <= MTIME[31:0];
+        16'hBFFC: PRDATA <= MTIME[63:32];
+        default:  PRDATA <= 0;
       endcase
     end 
-    always_ff @(posedge HCLK or negedge HRESETn) 
-      if (~HRESETn) begin
+    always_ff @(posedge PCLK or negedge PRESETn) 
+      if (~PRESETn) begin
         MSIP <= 0;
         MTIMECMP <= 0;
         // MTIMECMP is not reset ***?
       end else if (memwrite) begin
-        if (entryd == 16'h0000) MSIP <= HWDATA[0];
-        if (entryd == 16'h4000) 
+        if (entry == 16'h0000) MSIP <= PWDATA[0];
+        if (entry == 16'h4000) 
           for(j=0;j<`XLEN/8;j++)
-            if(ByteMaskM[j])
-              MTIMECMP[j*8 +: 8] <= HWDATA[j*8 +: 8];
-        if (entryd == 16'h4004) 
+            if(PSTRB[j])
+              MTIMECMP[j*8 +: 8] <= PWDATA[j*8 +: 8];
+        if (entry == 16'h4004) 
           for(j=0;j<`XLEN/8;j++)
-            if(ByteMaskM[j])
-              MTIMECMP[32 + j*8 +: 8] <= HWDATA[j*8 +: 8];
+            if(PSTRB[j])
+              MTIMECMP[32 + j*8 +: 8] <= PWDATA[j*8 +: 8];
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
       end
 
 // eventually replace MTIME logic below with timereg
-//     timereg tr(HCLK, HRESETn, TIMECLK, memwrite & (entryd==16'hBFF8), memwrite & (entryd == 16'hBFFC), HWDATA, MTIME, done);
-    always_ff @(posedge HCLK or negedge HRESETn) 
-      if (~HRESETn) begin
+//     timereg tr(PCLK, PRESETn, TIMECLK, memwrite & (entry==16'hBFF8), memwrite & (entry == 16'hBFFC), PWDATA, MTIME, done);
+    always_ff @(posedge PCLK or negedge PRESETn) 
+      if (~PRESETn) begin
         MTIME <= 0;
         // MTIMECMP is not reset
-      end else if (memwrite & (entryd == 16'hBFF8)) begin
+      end else if (memwrite & (entry == 16'hBFF8)) begin
         for(i=0;i<`XLEN/8;i++)
-          if(ByteMaskM[i])
-            MTIME[i*8 +: 8] <= HWDATA[i*8 +: 8];
-      end else if (memwrite & (entryd == 16'hBFFC)) begin
+          if(PSTRB[i])
+            MTIME[i*8 +: 8] <= PWDATA[i*8 +: 8];
+      end else if (memwrite & (entry == 16'hBFFC)) begin
         // MTIME Counter.  Eventually change this to run off separate clock.  Synchronization then needed
         for(i=0;i<`XLEN/8;i++)
-          if(ByteMaskM[i])
-            MTIME[32 + i*8 +: 8]<= HWDATA[i*8 +: 8];
+          if(PSTRB[i])
+            MTIME[32 + i*8 +: 8]<= PWDATA[i*8 +: 8];
       end else MTIME <= MTIME + 1;
   end 
 
@@ -183,18 +175,18 @@ module timeregsync(
 endmodule
 
 module timereg(
-  input  logic HCLK, HRESETn, TIMECLK,
+  input  logic PCLK, PRESETn, TIMECLK,
   input  logic             we0, we1,
-  input  logic [`XLEN-1:0] HWDATA,
+  input  logic [`XLEN-1:0] PWDATA,
   output logic [63:0]      MTIME,
   output logic             done);
 
-//  if (`TIMEBASE_SYNC) begin:timereg // use HCLK for MTIME
-  if (1) begin:timereg // use HCLK for MTIME
-    timregsync timeregsync(.clk(HCLK), .resetn(HRESETn), .we0, .we1, .wd(HWDATA), .q(MTIME));
+//  if (`TIMEBASE_SYNC) begin:timereg // use PCLK for MTIME
+  if (1) begin:timereg // use PCLK for MTIME
+    timregsync timeregsync(.clk(PCLK), .resetn(PRESETn), .we0, .we1, .wd(PWDATA), .q(MTIME));
     assign done = 1; // immediately completes
   end else begin // use asynchronous TIMECLK 
-    // TIME counter runs on TIMECLK but bus interface runs on HCLK
+    // TIME counter runs on TIMECLK but bus interface runs on PCLK
     // Need to synchronize reads and writes
     // This is subtle because synchronizing a binary counter on a per-bit basis could give a mix of old and new bits
     // Instead, we use a Gray coded counter that only changes one bit per cycle
@@ -210,29 +202,29 @@ module timereg(
     // When a write enable is asserted for a cycle, sample the enables and data and raise a request until it is acknowledged
     // When the acknowledge falls, the transaction is done and the system is ready for another write.
     // ***look at redoing this assuming write enable and data are held rather than pulsed.
-    always_ff @(posedge HCLK or negedge HRESETn) 
-      if (~HRESETn) 
+    always_ff @(posedge PCLK or negedge PRESETn) 
+      if (~PRESETn) 
         req <= 0; // don't bother resetting wd
       else begin
         req        <= we0 | we1 | req & ~ack;
         we0_stored <= we0; 
         we1_stored <= we1;
-        wd_stored  <= HWDATA;
+        wd_stored  <= PWDATA;
         ack_stored <= ack;
         done       <= ack_stored & ~ack;
       end
 
     // synchronize the reset and reqest into the TIMECLK domain
-    sync resetsync(TIMECLK, HRESETn, resetn_sync);
+    sync resetsync(TIMECLK, PRESETn, resetn_sync);
     sync rsync(TIMECLK, req, req_sync);
-    // synchronize the acknowledge back to the HCLK domain to indicate the request was handled and can be lowered
-    sync async(HCLK, req_sync, ack);
+    // synchronize the acknowledge back to the PCLK domain to indicate the request was handled and can be lowered
+    sync async(PCLK, req_sync, ack);
 
     timeregsync timeregsync(.clk(TIMECLK), .resetn(resetn_sync), .we0(we0_stored), .we1(we1_stored), .wd(wd_stored), .q(time_int));
     binarytogray b2g(time_int, time_int_gc);
     flop gcreg(TIMECLK, time_int_gc, time_gc);
 
-    sync timesync[63:0](HCLK, time_gc, MTIME_GC); 
+    sync timesync[63:0](PCLK, time_gc, MTIME_GC); 
     graytobinary g2b(MTIME_GC, MTIME);
   end
 endmodule
@@ -258,4 +250,3 @@ module graytobinary #(parameter N = `XLEN) (
       assign b[i] = g[i] ^ b[i+1];
     end
 endmodule
-*/

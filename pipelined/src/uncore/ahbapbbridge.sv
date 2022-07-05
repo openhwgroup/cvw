@@ -34,10 +34,10 @@ module ahbapbbridge #(PERIPHS = 2) (
   input  logic [PERIPHS-1:0] HSEL,  
   input  logic [31:0]      HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
+  input  logic [`XLEN/8-1:0] HWSTRB,
   input  logic             HWRITE,
   input  logic [1:0]       HTRANS,
   input  logic             HREADY,
-  input  logic [`XLEN/8-1:0] HWSTRB,
 //  input  logic [3:0]       HPROT, // not used
   output logic [`XLEN-1:0] HRDATA,
   output logic             HRESP, HREADYOUT,
@@ -102,7 +102,7 @@ module ahbapbbridge #(PERIPHS = 2) (
       end
     end
   end
-  assign HREADYOUT = PREADYOUT & PENABLE; // don't raise HREADYOUT until access phase
+assign HREADYOUT = PREADYOUT & ~initTransSelD; // don't raise HREADYOUT before access phase
 
   // resp logic
   assign HRESP = 0; // bridge never indicates errors
