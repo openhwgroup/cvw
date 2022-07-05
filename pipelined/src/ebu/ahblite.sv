@@ -131,8 +131,8 @@ module ahblite (
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign #1 AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
-  assign #1 HADDR = AccessAddress;
+  assign AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
+  assign HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
   assign HBURST = (GrantData) ? LSUBurstType : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
@@ -163,13 +163,10 @@ module ahblite (
 
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
-
- 
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
   assign LSUBusInit = (((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState != MEMWRITE) & (NextBusState == MEMWRITE));
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);
   assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
-
 endmodule
