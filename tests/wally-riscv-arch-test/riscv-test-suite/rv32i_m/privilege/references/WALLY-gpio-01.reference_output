@@ -8,8 +8,8 @@
 00000000 # fall_ip
 00000000 # high_ie
 00000000 # high_ip
-00000000 # fall_ie
-ffffffff # fall_ip
+00000000 # low_ie
+ffffffff # low_ip
 00000000 # iof_en
 00000000 # iof_sel
 00000000 # out_xor
