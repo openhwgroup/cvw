@@ -290,7 +290,6 @@ logic [3:0] dummy;
                 // if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
                 // report errors unless they are garbage at the end of the sim
                 // kind of hacky test for garbage right now
-                $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
                 errors = errors+1;
                 $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
                       tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
