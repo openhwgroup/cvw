@@ -39,6 +39,7 @@ module uncore (
   input  logic             TIMECLK,
   input  logic [31:0]      HADDR,
   input  logic [`AHBW-1:0] HWDATA,
+  input  logic [`XLEN/8-1:0] HWSTRB,
   input  logic             HWRITE,
   input  logic [2:0]       HSIZE,
   input  logic [2:0]       HBURST,
@@ -93,8 +94,6 @@ module uncore (
   logic HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // *** to do:
-  // combinational loop related to HREADY, HREADYOUT through PENABLE
-  // hook up and test GPIO on AHB
   // hook up HWSTRB and remove subword write decoders
   // add other peripherals on AHB
   // HTRANS encoding
@@ -109,13 +108,10 @@ module uncore (
 
   // AHB -> APB bridge
   ahbapbbridge #(2) ahbapbbridge
-    (.HCLK, .HRESETn, .HSEL({1'b0, HSELGPIO}), .HADDR, .HWDATA, .HWRITE, .HTRANS, .HREADY, .HWSTRB('1), 
+    (.HCLK, .HRESETn, .HSEL({HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
      .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
      .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign PREADY[1] = 0; // *** replace these with connections to other peripherals
-  assign PRDATA[1] = 0; 
-  assign HSELBRIDGE = HSELGPIO; // if any of the bridge signals are selected
-  // This system is showing a combinatonal loop related to HREADY and HREADYBRIDGE and HREADYGPIO
+  assign HSELBRIDGE = HSELGPIO | HSELCLINT; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (`RAM_SUPPORTED) begin : ram
@@ -140,12 +136,17 @@ module uncore (
 
   // memory-mapped I/O peripherals
   if (`CLINT_SUPPORTED == 1) begin : clint
-    clint clint(
+/*    clint clint(
       .HCLK, .HRESETn, .TIMECLK,
       .HSELCLINT, .HADDR(HADDR[15:0]), .HWRITE,
       .HWDATA, .HREADY, .HTRANS, .HSIZED,
       .HREADCLINT,
       .HRESPCLINT, .HREADYCLINT,
+      .MTIME(MTIME_CLINT), 
+      .MTimerInt, .MSwInt);*/
+    clint_apb clint(
+      .PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), 
       .MTIME(MTIME_CLINT), 
       .MTimerInt, .MSwInt);
 
@@ -215,7 +216,7 @@ module uncore (
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
 		          ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
-                  ({`XLEN{HSELCLINTD}} & HREADCLINT) |
+//                  ({`XLEN{HSELCLINTD}} & HREADCLINT) |
                   ({`XLEN{HSELPLICD}} & HREADPLIC) | 
 //                  ({`XLEN{HSELGPIOD}} & HREADGPIO) |
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
@@ -225,7 +226,7 @@ module uncore (
 
   assign HRESP = HSELRamD & HRESPRam |
 		             HSELEXTD & HRESPEXT |
-                 HSELCLINTD & HRESPCLINT |
+//                 HSELCLINTD & HRESPCLINT |
                  HSELPLICD & HRESPPLIC |
 //                 HSELGPIOD & HRESPGPIO | 
                  HSELBRIDGE & HRESPBRIDGE |
@@ -235,7 +236,7 @@ module uncore (
 
   assign HREADY = HSELRamD & HREADYRam |
 		              HSELEXTD & HREADYEXT |		  
-                  HSELCLINTD & HREADYCLINT |
+//                  HSELCLINTD & HREADYCLINT |
                   HSELPLICD & HREADYPLIC |
 //                  HSELGPIOD & HREADYGPIO | 
                   HSELBRIDGED & HREADYBRIDGE |
@@ -243,6 +244,8 @@ module uncore (
                   HSELUARTD & HREADYUART |
                   HSELSDCD & HREADYSDC |		  
                   HSELNoneD; // don't lock up the bus if no region is being accessed
+
+  // *** remove HREADYGPIO, others 
 
   // Address Decoder Delay (figure 4-2 in spec)
   flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
