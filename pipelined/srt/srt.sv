@@ -48,8 +48,8 @@ module srt (
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
-  output logic       rsign,
-  output logic [`DIVLEN-1:0] Quot, Rem, QuotOTFC, // *** later handle integers
+  output logic       rsign, done,
+  output logic [`DIVLEN-1:0] Rem, Quot, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -59,11 +59,10 @@ module srt (
   logic           calcSign;
   logic [`DIVLEN-1:0]  X, Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [`DIVLEN+2:0]  rp, rm;
-  logic [$clog2(`XLEN+1)-1:0] intExp;
+  logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
   logic           intSign;
  
-  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, intSign);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -78,25 +77,25 @@ module srt (
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
   qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], qp, qz, qm);
-  // Accumulate quotient digits in a shift register (now done in OTFC)
-  qacc #(`DIVLEN+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+
   flopen #(`NE) expflop(clk, Start, calcExp, rExp);
   flopen #(1) signflop(clk, Start, calcSign, rsign);
+  flopen #(7) durflop(clk, Start, calcDur, dur);
+  
+  counter divcounter(clk, Start, dur, done);
 
   // Divisor Selection logic
-  inv dinv(D, Db);
+  assign Db = ~D;
   mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qm, Dsel);
 
   // Partial Product Generation
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
   
-  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, QuotOTFC);
+  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
 
   expcalc expcalc(.XExp, .YExp, .calcExp);
 
   signcalc signcalc(.XSign, .YSign, .calcSign);
-
-  srtpostproc postproc(rp, rm, Quot);
 endmodule
 
 ////////////////
@@ -115,7 +114,7 @@ module srtpreproc (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic [`DIVLEN-1:0] X, D,
-  output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
+  output logic [$clog2(`XLEN+1)-1:0] intExp, dur, // Quotient integer exponent
   output logic       intSign // Quotient integer sign
 );
 
@@ -132,8 +131,8 @@ module srtpreproc (
   assign ExtraA = {PosA, {`EXTRAINTBITS{1'b0}}};
   assign ExtraB = {PosB, {`EXTRAINTBITS{1'b0}}};
 
-  assign PreprocA = ExtraA << zeroCntA;
-  assign PreprocB = ExtraB << zeroCntB;
+  assign PreprocA = ExtraA << (zeroCntA + 1);
+  assign PreprocB = ExtraB << (zeroCntB + 1);
   assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
   assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
 
@@ -142,6 +141,8 @@ module srtpreproc (
   assign D = Int ? PreprocB : PreprocY;
   assign intExp = zeroCntB - zeroCntA + 1;
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
+
+  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (`DIVLEN + 2);
 endmodule
 
 /////////////////////////////////
@@ -179,38 +180,10 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign #1 qm = magnitude & sign;
 endmodule
 
-//////////
-// qacc //
-//////////
-// To be replaced by OTFC
-module qacc #(parameter N=68) (
-  input  logic         clk, 
-  input  logic         req, 
-  input  logic         qp, qz, qm, 
-  output logic [N-1:0] rp, rm
-);
-
-  flopr #(N) rmreg(clk, req, {rm[N-2:0], qm}, rm);
-  flopr #(N) rpreg(clk, req, {rp[N-2:0], qp}, rp);
-/*  always @(posedge clk)
-    begin
-      if (req) 
-	begin
-	  rp <= #1 0;
-	  rm <= #1 0;
-	end
-      else 
-	begin
-	  rm <= #1 {rm[54:0], qm};
-	  rp <= #1 {rp[54:0], qp};
-	end
-    end */
-endmodule
-
 ///////////////////////////////////
 // On-The-Fly Converter, Radix 2 //
 ///////////////////////////////////
-module otfc2 #(parameter N=65) (
+module otfc2 #(parameter N=64) (
   input  logic         clk,
   input  logic         Start,
   input  logic         qp, qz, qm,
@@ -254,13 +227,29 @@ module otfc2 #(parameter N=65) (
 
 endmodule
 
-/////////
-// inv //
-/////////
-module inv(input  logic [`DIVLEN+3:0] in, 
-           output logic [`DIVLEN+3:0] out);
+/////////////
+// counter //
+/////////////
+module counter(input  logic clk, 
+               input  logic req, 
+               input  logic [$clog2(`XLEN+1)-1:0] dur,
+               output logic done);
+ 
+   logic    [$clog2(`XLEN+1)-1:0]  count;
 
-  assign #1 out = ~in;
+  // This block of control logic sequences the divider
+  // through its iterations.  You may modify it if you
+  // build a divider which completes in fewer iterations.
+  // You are not responsible for the (trivial) circuit
+  // design of the block.
+
+  always @(posedge clk)
+    begin
+      if      (count == dur) done <= #1 1;
+      else if (done | req) done <= #1 0;	
+      if (req) count <= #1 0;
+      else     count <= #1 count+1;
+    end
 endmodule
 
 //////////
@@ -324,42 +313,3 @@ module signcalc(
   assign calcSign = XSign ^ YSign;
 
 endmodule
-
-////////////////////
-// Postprocessing //
-////////////////////
-module srtpostproc (
-  input  [`DIVLEN+2:0] rp, rm,
-  output [`DIVLEN-1:0] Quot
-);
-
-  //assign Quot = rp - rm;
-  finaladd #(`DIVLEN+3) finaladd(rp, rm, Quot);
-endmodule
-
-//////////////
-// finaladd //
-//////////////
-module finaladd #(parameter N=68) (
-  input  logic [N-1:0] rp, rm, 
-  output logic [N-4:0] r
-);
-
-  logic   [N-1:0] diff;
-
-  // this magic block performs the final addition for you
-  // to convert the positive and negative quotient digits
-  // into a normalized mantissa.  It returns the 52 bit
-  // mantissa after shifting to guarantee a leading 1.
-  // You can assume this block operates in one cycle
-  // and do not need to budget it in your area and power
-  // calculations.
-	
-  // Since no rounding is performed, the result may be too 
-  // small by one unit in the least significant place (ulp).
-  // The checker ignores such an error.
-
-  assign #1 diff = rp - rm;
-  assign #1 r = diff[N-1] ? diff[N-2:2] : diff[N-3:1];
-endmodule
-
