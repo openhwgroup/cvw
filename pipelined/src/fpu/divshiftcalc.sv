@@ -11,7 +11,7 @@ module divshiftcalc(
     output logic [`NE+1:0] DivDenormShift
 );
     logic [`NE+1:0] NormShift;
-    logic [`NE+1:0] Nf, NfPlus1;
+    logic [`NE+1:0] Nf;
 
     // is the result denromalized
     // if the exponent is 1 then the result needs to be normalized then the result is denormalizes
@@ -19,51 +19,25 @@ module divshiftcalc(
     // select the proper fraction lengnth
     if (`FPSIZES == 1) begin
         assign Nf = (`NE+2)'(`NF);
-        assign NfPlus1 = (`NE+2)'(`NF+1);
 
     end else if (`FPSIZES == 2) begin
         assign Nf = FmtM ? (`NE+2)'(`NF) : (`NE+2)'(`NF1);
-        assign NfPlus1 = FmtM ? (`NE+2)'(`NF+1) : (`NE+2)'(`NF1+1);
 
     end else if (`FPSIZES == 3) begin
         always_comb
             case (FmtM)
-                `FMT: begin
-                    Nf = (`NE+2)'(`NF);
-                    NfPlus1 = (`NE+2)'(`NF+1);
-                end
-                `FMT1: begin
-                    Nf = (`NE+2)'(`NF1);
-                    NfPlus1 = (`NE+2)'(`NF1+1);
-                end
-                `FMT2: begin
-                    Nf = (`NE+2)'(`NF2);
-                    NfPlus1 = (`NE+2)'(`NF2+1);
-                end
-                default: begin
-                    Nf = 1'bx;
-                    NfPlus1 = 1'bx;
-                end
+                `FMT: Nf = (`NE+2)'(`NF);
+                `FMT1: Nf = (`NE+2)'(`NF1);
+                `FMT2: Nf = (`NE+2)'(`NF2);
+                default: Nf = 1'bx;
             endcase
     end else if (`FPSIZES == 4) begin
         always_comb
             case (FmtM)
-                2'h3: begin
-                    Nf = (`NE+2)'(`Q_NF);
-                    NfPlus1 = (`NE+2)'(`Q_NF+1);
-                end
-                2'h1: begin
-                    Nf = (`NE+2)'(`D_NF);
-                    NfPlus1 = (`NE+2)'(`D_NF+1);
-                end
-                2'h0: begin
-                    Nf = (`NE+2)'(`S_NF);
-                    NfPlus1 = (`NE+2)'(`S_NF+1);
-                end
-                2'h2: begin
-                    Nf = (`NE+2)'(`H_NF);
-                    NfPlus1 = (`NE+2)'(`H_NF+1);
-                end
+                2'h3: Nf = (`NE+2)'(`Q_NF);
+                2'h1: Nf = (`NE+2)'(`D_NF);
+                2'h0: Nf = (`NE+2)'(`S_NF);
+                2'h2: Nf = (`NE+2)'(`H_NF);
             endcase
     end
     // if the result is denormalized

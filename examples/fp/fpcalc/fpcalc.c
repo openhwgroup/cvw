@@ -157,7 +157,7 @@ void softfloatInit(void) {
     //                 RM:  softfloat_round_min
     softfloat_roundingMode = softfloat_round_near_even; 
     softfloat_exceptionFlags = 0; // clear exceptions
-    softfloat_detectTininess = softfloat_tininess_beforeRounding; // RISC-V behavior for tininess
+    softfloat_detectTininess = softfloat_tininess_afterRounding; // RISC-V behavior for tininess
 }
 
 uint64_t parseNum(char *num) {

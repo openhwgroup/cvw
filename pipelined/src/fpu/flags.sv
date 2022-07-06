@@ -4,7 +4,7 @@ module flags(
     input logic                 XSgnM,
     input logic                 XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
     input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
-    input logic Plus1,
+    input logic                 Plus1,
     input logic                 InfIn,                  // is a Inf input being used
     input logic                 XZeroM, YZeroM,         // inputs are zero
     input logic                 XNaNM, YNaNM,           // inputs are NaN
@@ -25,7 +25,7 @@ module flags(
     input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
     input logic                 Round, UfLSBRes, Sticky, UfPlus1, // bits used to determine rounding
     output logic                DivByZero,
-    output logic                IntInvalid, Invalid, Overflow, Underflow, // flags used to select the res
+    output logic                IntInvalid, Invalid, Overflow, // flags used to select the res
     output logic [4:0]          PostProcFlgM // flags
 );
     logic               SigNaN;     // is an input a signaling NaN
@@ -34,6 +34,7 @@ module flags(
     logic               IntInexact; // integer inexact flag
     logic               FmaInvalid; // integer invalid flag
     logic               DivInvalid; // integer invalid flag
+    logic               Underflow;   // Underflow flag
     logic               ResExpGteMax; // is the result greater than or equal to the maximum floating point expoent
     logic               ShiftGtIntSz; // is the shift greater than the the integer size (use ResExp to account for possible roundning "shift")
 

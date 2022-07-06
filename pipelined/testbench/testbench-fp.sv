@@ -61,15 +61,15 @@ module testbenchfp;
 
   // in-between FMA signals
   logic                 Mult;
-  logic [`NE+1:0]	      ProdExpE;
+  logic [`NE+1:0]	      Pe;
   logic 				        AddendStickyE;
   logic 					      KillProdE; 
   logic [$clog2(3*`NF+7)-1:0]	FmaNormCntE;
-  logic [3*`NF+5:0]	    SumE;       
+  logic [3*`NF+5:0]	    Sm;       
   logic 			          InvZE;
   logic 			          NegSumE;
   logic 			          ZSgnEffE;
-  logic 			          PSgnE;
+  logic 			          Ps;
   logic       DivSticky;
   logic       DivNegSticky;
   logic [`NE+1:0] DivCalcExp;
@@ -637,12 +637,12 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  fma fma(.XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), 
-              .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), 
-              .XManE(XMan), .YManE(YMan), .ZManE(ZMan),
+  fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
+              .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan),
               .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .SumE, .NegSumE, .InvZE, .FmaNormCntE, .ZSgnEffE, .PSgnE,
-              .ProdExpE, .AddendStickyE, .KillProdE); 
+              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .Sm, .NegSumE, .InvA(InvZE), .FmaNormCntE, .ZSgnEffE, .Ps,
+              .Pe, .AddendStickyE, .KillProdE); 
               
   postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
               .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
@@ -651,8 +651,8 @@ module testbenchfp;
               .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
               .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
               .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
-              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(ProdExpE), 
-              .SumM(SumE), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(PSgnE), .FmtM(ModFmt), .FrmM(FrmVal), 
+              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(Pe), 
+              .SumM(Sm), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(Ps), .FmtM(ModFmt), .FrmM(FrmVal), 
               .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
   
   fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
@@ -818,7 +818,15 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((~DivStart&DivDone)^~(UnitVal == `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((UnitVal !== `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+      errors += 1;
+      $display("There is an error in %s", Tests[TestNum]);
+      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+      $stop;
+    end
+
+  // division
+    else if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(~DivStart&DivDone)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
