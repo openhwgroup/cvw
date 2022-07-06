@@ -42,6 +42,7 @@ module wallypipelinedcore (
    output logic         HCLK, HRESETn,
    output logic [31:0]         HADDR,
    output logic [`AHBW-1:0] HWDATA,
+   output logic [`XLEN/8-1:0] HWSTRB,
    output logic         HWRITE,
    output logic [2:0]         HSIZE,
    output logic [2:0]         HBURST,
@@ -115,6 +116,8 @@ module wallypipelinedcore (
   logic [1:0]             PageType;
   logic              sfencevmaM, wfiM, IntPendingM;
   logic             SelHPTW;
+  logic [`XLEN/8-1:0] ByteMaskM;
+
 
   // PMA checker signals
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
@@ -263,6 +266,7 @@ module wallypipelinedcore (
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
+  .ByteMaskM,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -309,9 +313,10 @@ module wallypipelinedcore (
      .LSUTransComplete,
      .LSUBusAck,
      .LSUBusInit,
+     .ByteMaskM,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
-     .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
+     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
      .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
      .HWRITED);
 

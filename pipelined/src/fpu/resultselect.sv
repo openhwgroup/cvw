@@ -1,47 +1,38 @@
 `include "wally-config.vh"
 
 module resultselect(
-    input logic                     XSgnM,        // input signs
-    input logic     [`NE-1:0]       ZExpM, // input exponents
-    input logic     [`NF:0]         XManM, YManM, ZManM, // input mantissas
-    input logic     [2:0]           FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic     [`FMTBITS-1:0]  OutFmt,       // output format
-    input logic                     InfIn,
-    input logic                     XInfM,
-    input logic                     YInfM,
-    input logic                     DivOp,
-    input logic                     XZeroM,
-    input logic                     IntZeroM,
-    input logic                     NaNIn,
-    input logic                     IntToFp,
-    input logic                     Int64,
-    input logic                     Signed,
-    input logic                     CvtOp,
-    input logic [`NORMSHIFTSZ-1:0]             Shifted,        // is the sum zero
-    input logic                     FmaOp,
-    input logic                     Plus1,
-    input logic                     DivByZero,
-    input logic [`NE:0]             CvtCalcExpM,    // the calculated expoent
-    input logic                     AddendStickyM,  // sticky bit that is calculated during alignment
-    input logic                     KillProdM,      // set the product to zero before addition if the product is too small to matter
-    input logic                     XNaNM, YNaNM, ZNaNM,    // inputs are NaN
-    input logic                     ZDenormM, // is the original precision denormalized
-    input logic 		            ZZeroM,
-    input logic                     ResSgn,  // the res's sign
-    input logic     [`FLEN:0]       RoundAdd,   // how much to add to the res
-    input logic                     IntInvalid, Invalid, Overflow,  // flags
-    input logic CvtResUf,
-    input logic     [`NE-1:0]       ResExp,          // Res exponent
-    input logic     [`NE+1:0]       FullResExp,          // Res exponent
-    input logic     [`NF-1:0]       ResFrac,         // Res fraction
-    output logic    [`FLEN-1:0]     PostProcResM,     // final res
-    output logic [1:0] NegResMSBS,
-    output logic    [`XLEN-1:0]     FCvtIntResM     // final res
+    input logic                 XSgnM,        // input signs
+    input logic  [`NF:0]        XManM, YManM, ZManM, // input mantissas
+    input logic                 XNaNM, YNaNM, ZNaNM,    // inputs are NaN
+    input logic  [2:0]          FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic  [`FMTBITS-1:0] OutFmt,       // output format
+    input logic                 InfIn,
+    input logic                 XInfM, YInfM,
+    input logic                 XZeroM,
+    input logic                 IntZeroM,
+    input logic                 NaNIn,
+    input logic                 IntToFp,
+    input logic                 Int64,
+    input logic                 Signed,
+    input logic                 CvtOp,
+    input logic                 DivOp,
+    input logic                 FmaOp,
+    input logic                 Plus1,
+    input logic                 DivByZero,
+    input logic  [`NE:0]        CvtCalcExpM,    // the calculated expoent
+    input logic                 ResSgn,  // the res's sign
+    input logic                 IntInvalid, Invalid, Overflow,  // flags
+    input logic                 CvtResUf,
+    input logic  [`NE-1:0]      ResExp,          // Res exponent
+    input logic  [`NE+1:0]      FullResExp,          // Res exponent
+    input logic  [`NF-1:0]      ResFrac,         // Res fraction
+    input logic  [`XLEN+1:0]    NegRes,     // the negation of the result
+    output logic [`FLEN-1:0]    PostProcResM,     // final res
+    output logic [`XLEN-1:0]    FCvtIntResM     // final res
 );
     logic [`FLEN-1:0]   XNaNRes, YNaNRes, ZNaNRes, InvalidRes, OfRes, UfRes, NormRes; // possible results
     logic OfResMax;
     logic [`XLEN-1:0]       OfIntRes;   // the overflow result for integer output
-    logic [`XLEN+1:0]       NegRes;     // the negation of the result
     logic KillRes;
     logic SelOfRes;
 
@@ -246,7 +237,7 @@ module resultselect(
     //          signed | -2^31 | -2^63  |
     //        unsigned |   0   |    0   |
     //
-    //      - positive infinity and out of range negitive input and NaNs
+    //      - positive infinity and out of range positive input and NaNs
     //                 |   int  |  long  |
     //          signed | 2^31-1 | 2^63-1 |
     //        unsigned | 2^32-1 | 2^64-1 |
@@ -256,13 +247,7 @@ module resultselect(
                                               Int64 ? {1'b0, {`XLEN-1{1'b1}}} : {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}} : // signed positive
                                XSgnM&~XNaNM ? {`XLEN{1'b0}} : // unsigned negitive
                                               {`XLEN{1'b1}};// unsigned positive
-    
-    // round and negate the positive res if needed
-    assign NegRes = XSgnM ? -({2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1}) : {2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1};
-    
-    //*** false critical path probably
-    assign NegResMSBS = Signed ? Int64 ? NegRes[`XLEN:`XLEN-1] : NegRes[32:31] :
-			              Int64 ? NegRes[`XLEN+1:`XLEN] : NegRes[33:32];
+
 
     // select the integer output
     //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res

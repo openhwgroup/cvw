@@ -31,6 +31,7 @@ module cvtshiftcalc(
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | 
     //          - otherwise:
     //              |     LzcInM      | 0's if nessisary | 
+    // change to int shift to the left one
     assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, XManM[`NF]&~CvtCalcExpM[`NE], XManM[`NF-1]|(CvtCalcExpM[`NE]&XManM[`NF]), XManM[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
                      CvtResDenormUfM ? {{`NF-1{1'b0}}, XManM, {`CVTLEN-`NF+1{1'b0}}} : 
                                    {CvtLzcInM, {`NF+1{1'b0}}};

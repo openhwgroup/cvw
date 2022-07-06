@@ -168,9 +168,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   else
     mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
       .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
-  mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {{OFFSETLEN}{1'b0}}}),
-		.d2({VictimTag, FlushAdr, {{OFFSETLEN}{1'b0}}}),
+  mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),
 		.s({SelFlush, SelEvict}), .y(CacheBusAdr));
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +185,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
-  assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+  if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+  else assign NextFlushWay = FlushWay[NUMWAYS-1];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables

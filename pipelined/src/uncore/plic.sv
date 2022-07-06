@@ -176,8 +176,8 @@ module plic (
   end
 
   // pending interrupt requests
-  //assign nextIntPending = (intPending | requests) & ~intInProgress;
-  assign nextIntPending = requests;
+  //assign nextIntPending = (intPending | requests) & ~intInProgress; // 
+  assign nextIntPending = requests; // DH: RT made this change May 2022, but it seems to be a bug to not consider intInProgress; see May 23, 2022 slack discussion
   flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
 
   // context-dependent signals
