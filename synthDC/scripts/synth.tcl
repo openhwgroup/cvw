@@ -102,7 +102,8 @@ set_critical_range [expr $my_period*0.05] $current_design
 
 # Partitioning - flatten or hierarchically synthesize
 if { $maxopt == 1 } {
-    ungroup -all -flatten -simple_names
+    ungroup -all -simple_names
+    # -flatten 
 }
 
 # Set input pins except clock
