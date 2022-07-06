@@ -40,7 +40,7 @@
 
 module uartPC16550D(
 	// Processor Interface
-	input logic 	   HCLK, HRESETn,
+	input logic 	   PCLK, PRESETn,
 	input logic [2:0]  A,
 	input logic [7:0]  Din,
 	output logic [7:0] Dout,
@@ -132,7 +132,7 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK) begin
+  always_ff @(posedge PCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= #1 {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= #1 loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
 														{SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
@@ -142,8 +142,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Register interface (Table 1, note some are read only and some write only)
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn) 
-    if (~HRESETn) begin // Table 3 Reset Configuration
+  always_ff @(posedge PCLK, negedge PRESETn) 
+    if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
       if (`QEMU) LCR <= #1 8'b0; else LCR <= #1 8'b11; // fpga only **** BUG
@@ -229,8 +229,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Ross Thompson: Found a bug.  If the baud rate dividers DLM, and DLL are reloaded
   // the baudcount is not reset to  {DLM, DLL, UART_PRESCALE}
-  always_ff @(posedge HCLK, negedge HRESETn) 
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn) 
+    if (~PRESETn) begin
       baudcount <= #1 1;
       baudpulse <= #1 0;
     end else if (~MEMWb & DLAB & (A == 3'b0 | A == 3'b1)) begin
@@ -254,8 +254,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive timing and control
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       rxoversampledcnt <= #1 0;
       rxstate <= #1 UART_IDLE;
       rxbitsreceived <= #1 0;
@@ -288,8 +288,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
     else if (rxcentered) rxshiftreg <= #1 {rxshiftreg[8:0], SINsync}; // capture bit
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
   assign rxstopbit = rxshiftreg[0];
@@ -310,8 +310,8 @@ module uartPC16550D(
   assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
 
   // receive FIFO and register
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0; RXBR <= #1 0;
     end else begin
       if (rxstate == UART_DONE) begin
@@ -367,8 +367,8 @@ module uartPC16550D(
   assign rxfifohaserr = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
-  always_ff @(posedge HCLK, negedge HRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (~HRESETn) rxfifodmaready <= #1 0;
+  always_ff @(posedge PCLK, negedge PRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~PRESETn) rxfifodmaready <= #1 0;
     else if (rxfifotriggered | rxfifotimeout) rxfifodmaready <= #1 1;
     else if (rxfifoempty) rxfifodmaready <= #1 0;
 
@@ -386,8 +386,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
 	// transmit timing and control
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       txoversampledcnt <= #1 0;
       txstate <= #1 UART_IDLE;
       txbitssent <= #1 0;
@@ -435,8 +435,8 @@ module uartPC16550D(
   end
   
   // registers & FIFO
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       txfifohead <= #1 0; txfifotail <= #1 0; txhrfull <= #1 0; txsrfull <= #1 0; TXHR <= #1 0; txsr <= #1 12'hfff;
     end else begin
       if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
@@ -477,8 +477,8 @@ module uartPC16550D(
   assign txfifofull = (txfifoentries == 4'b1111);
 
   // transmit buffer ready bit
-  always_ff @(posedge HCLK, negedge HRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (~HRESETn) txfifodmaready <= #1 0;
+  always_ff @(posedge PCLK, negedge PRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~PRESETn) txfifodmaready <= #1 0;
     else if (txfifoempty) txfifodmaready <= #1 1;
     else if (txfifofull)  txfifodmaready <= #1 0;
 
@@ -514,18 +514,18 @@ module uartPC16550D(
       intrpending = 0;
     end
   end
-  always @(posedge HCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
+  always @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
 
   // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
   assign setSquashRXerrIP = ~MEMRb & (A==3'b101);
   assign resetSquashRXerrIP = (rxstate == UART_DONE);
   assign squashRXerrIP = (prevSquashRXerrIP | setSquashRXerrIP) & ~resetSquashRXerrIP;
-  flopr #(1) squashRXerrIPreg(HCLK, ~HRESETn, squashRXerrIP, prevSquashRXerrIP);
+  flopr #(1) squashRXerrIPreg(PCLK, ~PRESETn, squashRXerrIP, prevSquashRXerrIP);
   // Side effect of reading IIR is lowering THRE_IP if most significant intr
   assign setSquashTHRE_IP = ~MEMRb & (A==3'b010) & (intrID==3'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
   assign resetSquashTHRE_IP = ~THRE;
   assign squashTHRE_IP = prevSquashTHRE_IP & ~resetSquashTHRE_IP;
-  flopr #(1) squashTHRE_IPreg(HCLK, ~HRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
+  flopr #(1) squashTHRE_IPreg(PCLK, ~PRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
 
   ///////////////////////////////////////////
   // modem control logic
