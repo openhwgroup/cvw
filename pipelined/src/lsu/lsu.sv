@@ -77,6 +77,8 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
    (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
+   output logic [(`XLEN-1)/8:0]     ByteMaskM,
+
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
    input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -112,7 +114,6 @@ module lsu (
   logic                     LSUBusWriteCrit;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
-  logic [(`XLEN-1)/8:0]     ByteMaskM;
   logic [`XLEN-1:0]         WriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
   
@@ -268,10 +269,10 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
-  subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+  subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
+    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register

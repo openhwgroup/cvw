@@ -3,31 +3,21 @@
 module resultsign(
     input logic [2:0]   FrmM,
     input logic         PSgnM, ZSgnEffM,
-    input logic         InvZM,
-    input logic         XSgnM,
-    input logic         YSgnM,
     input logic         ZInfM,
     input logic         InfIn,
-    input logic         NegSumM,
     input logic         FmaOp,
-    input logic         DivOp,
-    input logic         CvtOp,
     input logic [`NE+1:0] SumExp,
     input logic         SumZero,
     input logic         Mult,
     input logic         Round,
     input logic         Sticky,
-    input logic         CvtResSgnM,
-    output logic        RoundSgn,
+    input logic         RoundSgn,
     output logic        ResSgn
 );
 
     logic ZeroSgn;
     logic InfSgn;
-    logic FmaResSgn;
-    logic FmaResSgnTmp;
     logic Underflow;
-    logic DivSgn;
     // logic ResultSgnTmp;
 
     // Determine the sign if the sum is zero
@@ -42,14 +32,7 @@ module resultsign(
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign FmaResSgnTmp = InvZM&(ZSgnEffM)&NegSumM | InvZM&PSgnM&~NegSumM | (ZSgnEffM&PSgnM);
     assign InfSgn = ZInfM ? ZSgnEffM : PSgnM;
-    assign FmaResSgn = InfIn ? InfSgn : SumZero ? ZeroSgn : FmaResSgnTmp;
-
-    assign DivSgn = XSgnM^YSgnM;
-
-    // Sign for rounding calulation
-    assign RoundSgn = (FmaResSgnTmp&FmaOp) | (CvtResSgnM&CvtOp) | (DivSgn&DivOp);
-    assign ResSgn = (FmaResSgn&FmaOp) | (CvtResSgnM&CvtOp) | (DivSgn&DivOp);
+    assign ResSgn = InfIn&FmaOp ? InfSgn : SumZero&FmaOp ? ZeroSgn : RoundSgn;
 
 endmodule
