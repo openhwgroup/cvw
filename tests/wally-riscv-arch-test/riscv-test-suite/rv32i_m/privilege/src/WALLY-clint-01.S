@@ -91,13 +91,3 @@ test_cases:
 .4byte 0x0, 0x00000080, readmip_test        # mtip should be set
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
-
-# =========== Experimental mtime counting test ===========
-
-# .4byte mtimecmph, 0xFFFFFFFF, write32_test  # make sure mtip isn't set until ready
-# .4byte mtimeh, 0x0FFFFFFF, write32_test     # write near max value to mtimeh
-# .4byte mtime, 0x00000000, write32_test      # write small value to mtime
-# .4byte 0x0, 0x000000000, readmip_test       # mtip should be zero
-# .4byte mtimecmp, 0x00000001, write32_test   # write slightly larger value than mtime to test mtime counting
-# .4byte mtimecmph, 0x0FFFFFFF, write32_test  # write same value as mtimeh to test mtime counting
-# .4byte 0x0, 0x00000080, readmip_test        # mtip should be set since it has been at least two cycles
