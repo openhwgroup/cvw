@@ -39,7 +39,6 @@ module pmpadrdec (
   input  logic [7:0]       PMPCfg,
   input  logic [`XLEN-1:0] PMPAdr,
   input  logic             PAgePMPAdrIn,
-  input  logic             FirstMatch,
   output logic             PAgePMPAdrOut,
   output logic             Match, Active, 
   output logic             L, X, W, R
@@ -83,10 +82,10 @@ module pmpadrdec (
                  (AdrMode == NA4 | AdrMode == NAPOT) ? NAMatch :
                  0;
 
-  assign L = PMPCfg[7] & FirstMatch;
-  assign X = PMPCfg[2] & FirstMatch;
-  assign W = PMPCfg[1] & FirstMatch;
-  assign R = PMPCfg[0] & FirstMatch;
+  assign L = PMPCfg[7];
+  assign X = PMPCfg[2];
+  assign W = PMPCfg[1];
+  assign R = PMPCfg[0];
   assign Active = |PMPCfg[4:3];
  endmodule
 

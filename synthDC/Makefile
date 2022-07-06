@@ -5,8 +5,8 @@ NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 3402
-export CONFIG ?= rv32e
+export FREQ ?= 3000
+export CONFIG ?= rv32gc
 # sky130 and sky90 presently supported
 export TECH ?= tsmc28
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
@@ -14,7 +14,7 @@ export TECH ?= tsmc28
 export MAXCORES ?= 4
 # MAXOPT turns on flattening, boundary optimization, and retiming
 # The output netlist is hard to interpret, but significantly better PPA
-export MAXOPT ?= 0
+export MAXOPT ?= 1
 export DRIVE ?= FLOP
 
 time := $(shell date +%F-%H-%M)

@@ -245,7 +245,7 @@ def oneMetricPlot(module, var, freq=None, ax=None, fits='clsgn', norm=True, colo
         ax.add_artist(ax.legend(handles=fullLeg, loc=legLoc))
         titleStr = "  (target  " + str(freq)+ "MHz)" if freq != None else " (best achievable delay)"
         ax.set_title(module + titleStr)
-        plt.savefig('./plots/PPA/'+ module + '_' + var + '.png')
+        plt.savefig('.plots/'+ module + '_' + var + '.png')
         # plt.show()
     return r2
 
@@ -550,7 +550,7 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
 
     if freq != 10: 
         n = 'normalized' if norm else 'unnormalized'
-        saveStr = './plots/PPA/'+ n + '/' + mod + '.png'
+        saveStr = './plots/'+ n + '/' + mod + '.png'
         plt.savefig(saveStr)
     # plt.show()
 
@@ -563,7 +563,7 @@ def makeLineLegend():
     fullLeg += [lines.Line2D([0], [0], color='green', label='sky90', marker='o')]
     fullLeg += [lines.Line2D([0], [0], color='red', label='combined', marker='_')]
     fig.legend(handles=fullLeg, ncol=5, handlelength=1.4, loc='center') 
-    saveStr = './plots/PPA/legend.png'
+    saveStr = './plots/legend.png'
     plt.savefig(saveStr)
 
 def muxPlot(fits='clsgn', norm=True):
@@ -616,7 +616,7 @@ def muxPlot(fits='clsgn', norm=True):
     ax.set_title('mux timing')
     
     ax.legend(handles = fullLeg)
-    plt.savefig('./plots/PPA/mux.png')
+    plt.savefig('./plots/mux.png')
 
 def stdDevError():
     for var in ['delay', 'area', 'lpower', 'denergy']:
