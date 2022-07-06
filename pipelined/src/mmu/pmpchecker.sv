@@ -67,16 +67,16 @@ module pmpchecker (
       .PMPAdr(PMPADDR_ARRAY_REGW),
       .PAgePMPAdrIn({PAgePMPAdr[`PMP_ENTRIES-2:0], 1'b1}),
       .PAgePMPAdrOut(PAgePMPAdr),
-      .FirstMatch, .Match, .Active, .L, .X, .W, .R);
+      .Match, .Active, .L, .X, .W, .R);
 
     priorityonehot #(`PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
 
     // Only enforce PMP checking for S and U modes when at least one PMP is active or in Machine mode when L bit is set in selected region
-    assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |L : |Active; 
+    assign EnforcePMP = (PrivilegeModeW == `M_MODE) ? |(L & FirstMatch) : |Active; 
 
-    assign PMPInstrAccessFaultF = EnforcePMP & ExecuteAccessF & ~|X;
-    assign PMPStoreAmoAccessFaultM = EnforcePMP & WriteAccessM   & ~|W;
-    assign PMPLoadAccessFaultM  = EnforcePMP & ReadAccessM    & ~|R;
+    assign PMPInstrAccessFaultF = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;
+    assign PMPStoreAmoAccessFaultM = EnforcePMP & WriteAccessM   & ~|(W & FirstMatch) ;
+    assign PMPLoadAccessFaultM  = EnforcePMP & ReadAccessM    & ~|(R & FirstMatch) ;
   end else begin: pmpchecker  // no checker
     assign PMPInstrAccessFaultF = 0;
     assign PMPLoadAccessFaultM = 0;

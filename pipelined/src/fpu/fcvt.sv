@@ -179,7 +179,7 @@ module fcvt (
     //                  - shifted right by XLEN (XLEN)
     //                  - shift left to normilize (-1-ZeroCnt)
     //                  - newBias to make the biased exponent
-    //          
+    //          oldexp - biasold +newbias - (ZeroCnt+1)&(XDenormE|IntToFp)
     assign CvtCalcExpE = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-`LOGCVTLEN+1{1'b0}}, (ZeroCnt&{`LOGCVTLEN{XDenormE|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
