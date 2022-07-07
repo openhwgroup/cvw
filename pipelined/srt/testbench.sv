@@ -55,10 +55,16 @@ module testbench;
   parameter MEM_SIZE = 40000;
   parameter MEM_WIDTH = 64+64+64+64;
  
-  `define memrem  63:0
-  `define memr  127:64
-  `define memb  191:128
-  `define mema  255:192
+  // INT TEST SIZES
+  // `define memrem  63:0 
+  // `define memr  127:64
+  // `define memb  191:128
+  // `define mema  255:192
+
+  // FLOAT TEST SIZES
+  `define memr  63:0 
+  `define memb  127:64
+  `define mema  191:128
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
@@ -69,7 +75,7 @@ module testbench;
   logic        rsign;
   integer testnum, errors;
 
-  assign Int = 1'b1;
+  assign Int = 1'b0;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -98,7 +104,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("inttestvectors", Tests);
+      $readmemh ("testvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;

@@ -57,22 +57,22 @@ module srt (
   logic           qp, qz, qm; // quotient is +1, 0, or -1
   logic [`NE-1:0] calcExp;
   logic           calcSign;
-  logic [`DIVLEN-1:0]  X, Dpreproc;
+  logic [`DIVLEN+3:0]  X, Dpreproc;
   logic [`DIVLEN+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
   logic           intSign;
  
-  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+2:0], 1'b0}, {4'b0001, X}, Start, WSN);
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+2:0], 1'b0}, X, Start, WSN);
   flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
   mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+2:0], 1'b0}, {(`DIVLEN+4){1'b0}}, Start, WCN);
   flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
-  flopen #(`DIVLEN+4) dflop(clk, Start, {4'b0001, Dpreproc}, D);
+  flopen #(`DIVLEN+4) dflop(clk, Start, Dpreproc, D);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -108,19 +108,20 @@ endmodule
 module srtpreproc (
   input  logic [`XLEN-1:0] SrcA, SrcB,
   input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
+  input  logic [`NE-1:0] XExp,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
-  output logic [`DIVLEN-1:0] X, D,
+  output logic [`DIVLEN+3:0] X, D,
   output logic [$clog2(`XLEN+1)-1:0] intExp, dur, // Quotient integer exponent
   output logic       intSign // Quotient integer sign
 );
 
   logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
+  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY, DivX, SqrtX;
 
   assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
   assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
@@ -136,9 +137,11 @@ module srtpreproc (
   assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
   assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
 
-  
-  assign X = Int ? PreprocA : PreprocX;
-  assign D = Int ? PreprocB : PreprocY;
+  assign DivX = Int ? PreprocA : PreprocX;
+  assign SqrtX = {XExp[0] ? 4'b0000 : 4'b1111, SrcXFrac};
+
+  assign X = Sqrt ? SqrtX : {4'b0001, DivX};
+  assign D = {4'b0001, Int ? PreprocB : PreprocY};
   assign intExp = zeroCntB - zeroCntA + 1;
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
