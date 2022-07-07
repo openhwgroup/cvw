@@ -1,12 +1,40 @@
+///////////////////////////////////////////
+//
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
+//
+// Purpose: Post-Processing flag calculation
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// MIT LICENSE
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+// software and associated documentation files (the "Software"), to deal in the Software 
+// without restriction, including without limitation the rights to use, copy, modify, merge, 
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in all copies or 
+//   substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//   OR OTHER DEALINGS IN THE SOFTWARE.
+////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 module flags(
-    input logic                 XSgnM,
+    input logic                 Xs,
     input logic                 XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
     input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                 Plus1,
     input logic                 InfIn,                  // is a Inf input being used
-    input logic                 XZeroM, YZeroM,         // inputs are zero
+    input logic                 XZero, YZero,         // inputs are zero
     input logic                 XNaNM, YNaNM,           // inputs are NaN
     input logic                 NaNIn,                  // is a NaN input being used
     input logic                 Sqrt,                   // Sqrt?
@@ -108,7 +136,7 @@ module flags(
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
     //                  |                                     |
-    assign IntInexact = ((CvtCalcExpM[`NE]&~XZeroM)|Sticky|Round)&~IntInvalid;
+    assign IntInexact = ((CvtCalcExpM[`NE]&~XZero)|Sticky|Round)&~IntInvalid;
 
     // select the inexact flag to output
     assign Inexact = ToInt ? IntInexact : FpInexact;
@@ -125,18 +153,18 @@ module flags(
     //                  |           |                                  |                    |               or the res rounds up out of bounds
     //                  |           |                                  |                    |                       and the res didn't underflow
     //                  |           |                                  |                    |                       |
-    assign IntInvalid = XNaNM|XInfM|(ShiftGtIntSz&~FullResExp[`NE+1])|((XSgnM&~Signed)&(~((CvtCalcExpM[`NE]|(~|CvtCalcExpM))&~Plus1)))|(NegResMSBS[1]^NegResMSBS[0]);
+    assign IntInvalid = XNaNM|XInfM|(ShiftGtIntSz&~FullResExp[`NE+1])|((Xs&~Signed)&(~((CvtCalcExpM[`NE]|(~|CvtCalcExpM))&~Plus1)))|(NegResMSBS[1]^NegResMSBS[0]);
     //                                                                                                     |
     //                                                                                                     or when the positive res rounds up out of range
     assign SigNaN = (XSNaNM&~(IntToFp&CvtOp)) | (YSNaNM&~CvtOp) | (ZSNaNM&FmaOp);
-    assign FmaInvalid = ((XInfM | YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZeroM & YInfM) | (YZeroM & XInfM);
-    assign DivInvalid = ((XInfM & YInfM) | (XZeroM & YZeroM))&~Sqrt | (XSgnM&Sqrt);
+    assign FmaInvalid = ((XInfM | YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZero & YInfM) | (YZero & XInfM);
+    assign DivInvalid = ((XInfM & YInfM) | (XZero & YZero))&~Sqrt | (Xs&Sqrt);
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
     // if dividing by zero and not 0/0
     //  - don't set flag if an input is NaN or Inf(IEEE says has to be a finite numerator)
-    assign DivByZero = YZeroM&DivOp&~(XZeroM|NaNIn|InfIn);  
+    assign DivByZero = YZero&DivOp&~(XZero|NaNIn|InfIn);  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags
