@@ -6,20 +6,21 @@ NAME := synth
 # defaults
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 3000
-export CONFIG ?= rv32gc
+export CONFIG ?= rv32e_FPUoff
+TITLE = shreya
 # sky130 and sky90 presently supported
-export TECH ?= tsmc28
+export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
-export MAXCORES ?= 4
+export MAXCORES ?= 1
 # MAXOPT turns on flattening, boundary optimization, and retiming
 # The output netlist is hard to interpret, but significantly better PPA
-export MAXOPT ?= 1
+export MAXOPT ?= 0
 export DRIVE ?= FLOP
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := newRuns/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(hash)
+export OUTPUTDIR := newRuns/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
 CONFIGDIR ?= ${WALLY}/pipelined/config
@@ -50,9 +51,10 @@ rv%.log: rv%
 	echo $<
 
 
-DIRS = rv64gc rv32e rv32gc rv64ic rv32ic 
-# DELDIRS = rv32e rv32gc rv64ic rv64gc rv32ic
-# CONFIGSUBDIRS = _FPUoff _noMulDiv _noVirtMem _PMP0 _PMP16 _orig
+DIRS32 = rv32e rv32gc rv32ic 
+DIRS64 = rv64ic rv64gc
+DIRS = $(DIRS32) $(DIRS64)
+
 # bpred:
 # 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
@@ -63,15 +65,17 @@ copy:
 	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
 	@$(foreach dir, $(DIRS), sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
-	@$(foreach dir, $(DIRS), sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
 	@$(foreach dir, $(DIRS), sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
+
+	@$(foreach dir, $(DIRS32), sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
+	@$(foreach dir, $(DIRS64), sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
 
 
 del:
 	rm -rf $(CONFIGDIR)/*_*
 
 configs: $(DIRS)
-$(DIRS): 
+$(DIRS):
 	#turn off FPU 
 	rm -rf $(CONFIGDIR)/$@_FPUoff
 	cp -r $(CONFIGDIR)/$@_orig $(CONFIGDIR)/$@_FPUoff
@@ -104,10 +108,10 @@ freqs:
 allsynth: $(CONFIGFILESTRIM)
 
 $(CONFIGFILESTRIM):
-	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=1000 MAXCORES=1
+	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=3000 MAXCORES=1
 
 
-synth:
+synth: clean
 	@echo "DC Synthesis"
 	@mkdir -p hdl/
 	@mkdir -p $(OUTPUTDIR)
@@ -128,6 +132,10 @@ clean:
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
+
+fresh:
+	rm -rf  WORK
+	rm -f hdl/*
 
 
 
