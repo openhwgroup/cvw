@@ -93,7 +93,11 @@ module srt (
   
   otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
 
+<<<<<<< Updated upstream
   expcalc expcalc(.XExp, .YExp, .calcExp);
+=======
+  expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
+>>>>>>> Stashed changes
 
   signcalc signcalc(.XSign, .YSign, .calcSign);
 endmodule
@@ -297,11 +301,23 @@ endmodule
 // expcalc  //
 //////////////
 module expcalc(
+<<<<<<< Updated upstream
   input logic  [`NE-1:0] XExp, YExp,
   output logic [`NE-1:0] calcExp
 );
 
   assign calcExp = XExp - YExp + (`NE)'(`BIAS);
+=======
+  input  logic [`NE-1:0] XExp, YExp,
+  input  logic           Sqrt,
+  output logic [`NE-1:0] calcExp
+);
+  logic        [`NE-1:0] SExp, DExp, SXExp;
+  assign SXExp = XExp - (`NE)'(`BIAS);
+  assign SExp  = {1'b0, SXExp[`NE-1:1]} + (`NE)'(`BIAS);
+  assign DExp  = XExp - YExp + (`NE)'(`BIAS);
+  assign calcExp = Sqrt ? SExp : DExp;
+>>>>>>> Stashed changes
 
 endmodule
 
