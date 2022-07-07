@@ -101,6 +101,8 @@
 `define NORMSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+9))
 `define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
 
+`define USE_SRAM 1
+
 // Disable spurious Verilator warnings
 
 /* verilator lint_off STMTDLY */
