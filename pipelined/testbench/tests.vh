@@ -34,7 +34,7 @@
 string tvpaths[] = '{
     "../../addins/imperas-riscv-tests/work/",
     "../../tests/riscof/work/riscv-arch-test/",
-    "../../tests/wally-riscv-arch-test/work/", //"../../tests/riscof/work/wally-riscv-arch-test/",
+    "../../tests/wally-riscv-arch-test/work/", //"../../tests/riscof/work/wally-riscv-arch-test/", 
     "../../tests/imperas-riscv-tests/work/",
     "../../benchmarks/coremark/work/",
     "../../addins/embench-iot/"
@@ -1661,6 +1661,12 @@ string wally32i[] = '{
 //     `WALLYTEST,
 //     "rv64i_m/privilege/src/WALLY-periph.S/ref/Ref"
 //  };
+
+
+ string wally32d[] = '{
+    `WALLYTEST,
+    "rv32i_m/D/src/WALLY-fld.S/ref/Ref"
+ };
 
 //  string wally32i[] = '{
 //     `WALLYTEST,
