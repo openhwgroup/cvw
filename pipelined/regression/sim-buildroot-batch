@@ -32,5 +32,5 @@ echo "CHECKPOINT   = ${CHECKPOINT}"
 
 # *** change config from buildroot to rv64gc
 vsim -c <<!
-do wally-pipelined-batch.do buildroot buildroot $RISCV $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
+do wally-pipelined-batch.do buildroot buildroot-no-trace $RISCV $INSTR_LIMIT $INSTR_WAVEON $CHECKPOINT
 !
