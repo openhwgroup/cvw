@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 //
-// Written: Katherine Parry, David Harris
-// Modified: 6/23/2021
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
 //
-// Purpose: Floating point multiply-accumulate of configurable size
+// Purpose: Post-Processing
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -31,13 +31,13 @@
 
 module postprocess(
     // general signals
-    input logic                             XSgnM, YSgnM,  // input signs
-    input logic  [`NE-1:0]                  ZExpM, // input exponents
-    input logic  [`NF:0]                    XManM, YManM, ZManM, // input mantissas
-    input logic  [2:0]                      FrmM,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic  [`FMTBITS-1:0]             FmtM,       // precision 1 = double 0 = single
-    input logic  [2:0]                      FOpCtrlM,       // choose which opperation (look below for values)
-    input logic                             XZeroM, YZeroM, ZZeroM, // inputs are zero
+    input logic                             Xs, Ys,  // input signs
+    input logic  [`NE-1:0]                  Ze, // input exponents
+    input logic  [`NF:0]                    Xm, Ym, Zm, // input mantissas
+    input logic  [2:0]                      Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic  [`FMTBITS-1:0]             Fmt,       // precision 1 = double 0 = single
+    input logic  [2:0]                      FOpCtrl,       // choose which opperation (look below for values)
+    input logic                             XZero, YZero, ZZero, // inputs are zero
     input logic                             XInfM, YInfM, ZInfM,    // inputs are infinity
     input logic                             XNaNM, YNaNM, ZNaNM,    // inputs are NaN
     input logic                             XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
@@ -55,9 +55,10 @@ module postprocess(
     input logic  [$clog2(3*`NF+7)-1:0]      FmaNormCntM,   // the normalization shift count
     //divide signals
     input logic  [$clog2(`DIVLEN/2+3)-1:0]  EarlyTermShiftDiv2M,
-    input logic  [`NE+1:0]                  DivCalcExpM,    // the calculated expoent
     input logic                             DivStickyM,
     input logic                             DivNegStickyM,
+    input logic                             DivDone,
+    input logic  [`NE+1:0]                  DivCalcExpM,
     input logic  [`DIVLEN+2:0]              Quot,
     // conversion signals
     input logic  [`NE:0]                    CvtCalcExpM,    // the calculated expoent
@@ -125,15 +126,15 @@ module postprocess(
     logic Sqrt;
 
     // signals to help readability
-    assign Signed =  FOpCtrlM[0];
-    assign Int64 =   FOpCtrlM[1];
-    assign IntToFp = FOpCtrlM[2];
+    assign Signed =  FOpCtrl[0];
+    assign Int64 =   FOpCtrl[1];
+    assign IntToFp = FOpCtrl[2];
     assign ToInt =   FWriteIntM;
-    assign Mult = FOpCtrlM[2]&~FOpCtrlM[1]&~FOpCtrlM[0];
+    assign Mult = FOpCtrl[2]&~FOpCtrl[1]&~FOpCtrl[0];
     assign CvtOp = (PostProcSelM == 2'b00);
     assign FmaOp = (PostProcSelM == 2'b10);
-    assign DivOp = (PostProcSelM == 2'b01);
-    assign Sqrt =  FOpCtrlM[0];
+    assign DivOp = (PostProcSelM == 2'b01)&DivDone;
+    assign Sqrt =  FOpCtrl[0];
 
     // is there an input of infinity or NaN being used
     assign InfIn = (XInfM&~(IntToFp&CvtOp))|(YInfM&~CvtOp)|(ZInfM&FmaOp);
@@ -141,21 +142,21 @@ module postprocess(
 
     // choose the ouptut format depending on the opperation
     //      - fp -> fp: OpCtrl contains the percision of the output
-    //      - otherwise: FmtM contains the percision of the output
+    //      - otherwise: Fmt contains the percision of the output
     if (`FPSIZES == 2) 
-        assign OutFmt = IntToFp|~CvtOp ? FmtM : (FOpCtrlM[1:0] == `FMT); 
+        assign OutFmt = IntToFp|~CvtOp ? Fmt : (FOpCtrl[1:0] == `FMT); 
     else if (`FPSIZES == 3 | `FPSIZES == 4) 
-        assign OutFmt = IntToFp|~CvtOp ? FmtM : FOpCtrlM[1:0]; 
+        assign OutFmt = IntToFp|~CvtOp ? Fmt : FOpCtrl[1:0]; 
 
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
 
-    cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCalcExpM, .CvtResDenormUfM, .XManM, .CvtLzcInM,  
-                              .XZeroM, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
-    fmashiftcalc fmashiftcalc(.SumM, .ZExpM, .ProdExpM, .FmaNormCntM, .FmtM, .KillProdM, .ConvNormSumExp,
+    cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCalcExpM, .CvtResDenormUfM, .Xm, .CvtLzcInM,  
+                              .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
+    fmashiftcalc fmashiftcalc(.SumM, .Ze, .ProdExpM, .FmaNormCntM, .Fmt, .KillProdM, .ConvNormSumExp,
                           .ZDenormM, .SumZero, .PreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.FmtM, .Quot, .DivCalcExpM, .EarlyTermShiftDiv2M, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .DivCalcExpM, .Quot, .EarlyTermShiftDiv2M, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSelM)
@@ -168,8 +169,13 @@ module postprocess(
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
             2'b01: begin //div
-                ShiftAmt = DivShiftAmt;
-                ShiftIn =  DivShiftIn;
+                if(DivDone) begin
+                    ShiftAmt = DivShiftAmt;
+                    ShiftIn =  DivShiftIn;
+                end else begin
+                    ShiftAmt = '0;
+                    ShiftIn =  '0;
+                end
             end
             default: begin 
                 ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
@@ -193,27 +199,28 @@ module postprocess(
     // round to infinity
     // round to nearest max magnitude
 
-    round round(.OutFmt, .FrmM, .Sticky, .AddendStickyM, .ZZeroM, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
+                          
+    roundsign roundsign(.PSgnM, .ZSgnEffM, .InvZM, .FmaOp, .DivOp, .CvtOp, .NegSumM, 
+                          .Xs, .Ys, .CvtResSgnM, .RoundSgn);
+
+    round round(.OutFmt, .Frm, .Sticky, .AddendStickyM, .ZZero, .Plus1, .PostProcSelM, .CvtCalcExpM, .CorrDivExp,
                 .InvZM, .RoundSgn, .SumExp, .FmaOp, .CvtOp, .CvtResDenormUfM, .CorrShifted, .ToInt,  .CvtResUf,
-                .DivStickyM, .DivNegStickyM,
+                .DivStickyM, .DivNegStickyM, .DivDone,
                 .DivOp, .UfPlus1, .FullResExp, .ResFrac, .ResExp, .Round, .RoundAdd, .UfLSBRes, .RoundExp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.FrmM, .PSgnM, .ZSgnEffM, .SumExp, .Round, .Sticky,
+    resultsign resultsign(.Frm, .PSgnM, .ZSgnEffM, .SumExp, .Round, .Sticky,
                           .FmaOp, .ZInfM, .InfIn, .SumZero, .Mult, .RoundSgn, .ResSgn);
-                          
-    roundsign roundsign(.PSgnM, .ZSgnEffM, .InvZM, .FmaOp, .DivOp, .CvtOp, .NegSumM, 
-                          .XSgnM, .YSgnM, .CvtResSgnM, .RoundSgn);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
     ///////////////////////////////////////////////////////////////////////////////
 
-    flags flags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .InfIn, .XZeroM, .YZeroM, 
-                .XSgnM, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCalcExpM,
+    flags flags(.XSNaNM, .YSNaNM, .ZSNaNM, .XInfM, .YInfM, .ZInfM, .InfIn, .XZero, .YZero, 
+                .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCalcExpM,
                 .XNaNM, .YNaNM, .NaNIn, .ZSgnEffM, .PSgnM, .Round, .IntInvalid, .DivByZero,
                 .UfLSBRes, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullResExp, .Plus1,
                 .RoundExp, .NegResMSBS, .Invalid, .Overflow, .PostProcFlgM);
@@ -222,9 +229,9 @@ module postprocess(
     // Select the result
     ///////////////////////////////////////////////////////////////////////////////
 
-    negateintres negateintres(.XSgnM, .Shifted, .Signed, .Int64, .Plus1, .NegResMSBS, .NegRes);
-    resultselect resultselect(.XSgnM, .XManM, .YManM, .ZManM, .XZeroM, .IntInvalid,
-        .IntZeroM, .FrmM, .OutFmt, .XNaNM, .YNaNM, .ZNaNM, .CvtResUf, 
+    negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .NegResMSBS, .NegRes);
+    resultselect resultselect(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
+        .IntZeroM, .Frm, .OutFmt, .XNaNM, .YNaNM, .ZNaNM, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .NegRes,
         .XInfM, .YInfM, .DivOp,
         .DivByZero, .FullResExp, .CvtCalcExpM, .ResSgn, .ResExp, .ResFrac, .PostProcResM, .FCvtIntResM);
