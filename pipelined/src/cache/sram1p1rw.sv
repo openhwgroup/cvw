@@ -33,6 +33,8 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
+`include "wally-config.vh"
+
 module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   input logic                     clk,
   input logic [$clog2(DEPTH)-1:0] Adr,
