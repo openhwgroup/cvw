@@ -158,11 +158,11 @@ def areaDelay(tech, freq, width=None, config=None, special=None):
 # ending freq in 42 means fpu was turned off manually
 
 if __name__ == '__main__':
-    # synthsintocsv()
+    synthsintocsv()
     synthsfromcsv('Summary.csv')
     freqPlot('tsmc28', 'rv32', 'e')
     freqPlot('sky90', 'rv32', 'e')
     areaDelay('tsmc28', testFreq[1], width= 'rv64', config='gc')
-    areaDelay('tsmc28', testFreq[1], special='')
     areaDelay('sky90', testFreq[0], width='rv64', config='gc')
-    areaDelay('sky90', testFreq[0], special='')
+    areaDelay('tsmc28', testFreq[1], special='FPUoff')
+    areaDelay('sky90', testFreq[0], special='FPUoff')

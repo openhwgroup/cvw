@@ -3,6 +3,9 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
+# start run clock
+set t1 [clock seconds]
+
 # Ignore unnecessary warnings:
 # intraassignment delays for nonblocking assignments are ignored
 suppress_message {VER-130} 
@@ -132,8 +135,13 @@ if {$tech == "sky130"} {
 }
 
 # Set input/output delay
-set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
-set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+if {$drive == "FLOP"} {
+    set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+} else {
+    set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+}
 
 # Setting load constraint on output ports 
 if {$tech == "sky130"} {
@@ -374,5 +382,10 @@ redirect $filename { report_constraint }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
 # redirect $filename { report_hierarchy }
+
+# end run clock and echo run time in minutes
+set t2 [clock seconds]
+set t [expr $t2 - $t1]
+echo [expr $t/60]
 
 quit 
