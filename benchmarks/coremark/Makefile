@@ -13,7 +13,7 @@ PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=rv$(XLEN)im -static -fal
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
 	-funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fipa-pta \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
-	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1
+	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DITERATIONS=2
 
 # flags that cause build errors mcmodel=medlow
 
@@ -28,7 +28,7 @@ PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=rv$(XLEN)im -static -fal
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
-	(cd ../../pipelined/regression && (vsim -c -do "do wally-pipelined-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
+	(cd ../../pipelined/regression && (time vsim -c -do "do wally-pipelined-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
 	cd ../../benchmarks/coremark/
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
