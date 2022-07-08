@@ -52,7 +52,7 @@ module clint_apb (
   integer             i, j;
   
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-  assign PREADY = 1'b1; // GPIO never takes >1 cycle to respond
+  assign PREADY = 1'b1; // CLINT never takes >1 cycle to respond
 
   // word aligned reads
   if (`XLEN==64) assign #2 entry = {PADDR[15:3], 3'b000};

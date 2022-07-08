@@ -42,6 +42,7 @@ module wallypipelinedsocwrapper (
   output 	     HCLK, HRESETn,
   output [31:0]      HADDR,
   output [`AHBW-1:0] HWDATA,
+  output logic [`XLEN/8-1:0] HWSTRB,
   output 	     HWRITE,
   output [2:0] 	     HSIZE,
   output [2:0] 	     HBURST,

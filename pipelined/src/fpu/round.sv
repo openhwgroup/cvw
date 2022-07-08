@@ -1,3 +1,31 @@
+///////////////////////////////////////////
+//
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
+//
+// Purpose: Rounder
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// MIT LICENSE
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+// software and associated documentation files (the "Software"), to deal in the Software 
+// without restriction, including without limitation the rights to use, copy, modify, merge, 
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in all copies or 
+//   substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//   OR OTHER DEALINGS IN THE SOFTWARE.
+////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 // what position is XLEN in?
 //  options: 
@@ -9,17 +37,18 @@
 
 module round(
     input logic  [`FMTBITS-1:0]     OutFmt,       // precision 1 = double 0 = single
-    input logic  [2:0]              FrmM,       // rounding mode
+    input logic  [2:0]              Frm,       // rounding mode
     input logic                     FmaOp,
     input logic                     DivOp,
     input logic                     CvtOp,
     input logic                     ToInt,
+    input logic                     DivDone,
     input logic  [1:0]              PostProcSelM,
     input logic                     CvtResDenormUfM,
     input logic                     CvtResUf,
     input logic  [`CORRSHIFTSZ-1:0] CorrShifted,
     input logic                     AddendStickyM,  // addend's sticky bit
-    input logic                     ZZeroM,         // is Z zero
+    input logic                     ZZero,         // is Z zero
     input logic                     InvZM,          // invert Z
     input logic  [`NE+1:0]          SumExp,         // exponent of the normalized sum
     input logic                     RoundSgn,      // the result's sign
@@ -227,13 +256,13 @@ module round(
 
     // Deterimine if a small number was supposed to be subtrated
     //  - for FMA or if division has a negitive sticky bit
-    assign SubBySmallNum = ((AddendStickyM&FmaOp&~ZZeroM&InvZM) | (DivNegStickyM&DivOp)) & ~(NormSumSticky|UfRound);
-    assign UfSubBySmallNum = ((AddendStickyM&FmaOp&~ZZeroM&InvZM) | (DivNegStickyM&DivOp)) & ~NormSumSticky;
+    assign SubBySmallNum = ((AddendStickyM&FmaOp&~ZZero&InvZM) | (DivNegStickyM&DivOp)) & ~(NormSumSticky|UfRound);
+    assign UfSubBySmallNum = ((AddendStickyM&FmaOp&~ZZero&InvZM) | (DivNegStickyM&DivOp)) & ~NormSumSticky;
 
 
     always_comb begin
         // Determine if you add 1
-        case (FrmM)
+        case (Frm)
             3'b000: CalcPlus1 = Round & ((Sticky| LSBRes)&~SubBySmallNum);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
             3'b010: CalcPlus1 = RoundSgn & ~(SubBySmallNum & ~Round);//round down
@@ -242,7 +271,7 @@ module round(
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
-        case (FrmM)
+        case (Frm)
             3'b000: UfCalcPlus1 = UfRound & ((UfSticky| UfLSBRes)&~UfSubBySmallNum);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
             3'b010: UfCalcPlus1 = RoundSgn & ~(UfSubBySmallNum & ~UfRound);//round down
@@ -251,7 +280,7 @@ module round(
             default: UfCalcPlus1 = 1'bx;
         endcase
         // Determine if you subtract 1
-        case (FrmM)
+        case (Frm)
             3'b000: CalcMinus1 = 0;//round to nearest even
             3'b001: CalcMinus1 = SubBySmallNum & ~Round;//round to zero
             3'b010: CalcMinus1 = ~RoundSgn & ~Round & SubBySmallNum;//round down
@@ -309,8 +338,8 @@ module round(
         case(PostProcSelM)
             2'b10: RoundExp = SumExp; // fma
             2'b00: RoundExp = {CvtCalcExpM[`NE], CvtCalcExpM}&{`NE+2{~CvtResDenormUfM|CvtResUf}}; // cvt
-            2'b01: RoundExp = CorrDivExp; // divide
-            default: RoundExp = 0; 
+            2'b01: RoundExp = DivDone ? CorrDivExp : '0; // divide
+            default: RoundExp = '0; 
         endcase
 
     // round the result

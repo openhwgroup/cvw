@@ -84,11 +84,11 @@ module uncore (
   
   logic PCLK, PRESETn, PWRITE, PENABLE;
 //  logic PSEL, PREADY;
-  logic [1:0] PSEL, PREADY;
+  logic [3:0] PSEL, PREADY;
   logic [31:0] PADDR;
   logic [`XLEN-1:0] PWDATA;
   logic [`XLEN/8-1:0] PSTRB;
-  logic [1:0][`XLEN-1:0] PRDATA;
+  logic [3:0][`XLEN-1:0] PRDATA;
 //  logic [`XLEN-1:0][8:0] PRDATA;
   logic [`XLEN-1:0] HREADBRIDGE;
   logic HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
@@ -107,11 +107,11 @@ module uncore (
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // AHB -> APB bridge
-  ahbapbbridge #(2) ahbapbbridge
-    (.HCLK, .HRESETn, .HSEL({HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(4) ahbapbbridge
+    (.HCLK, .HRESETn, .HSEL({HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
      .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
      .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (`RAM_SUPPORTED) begin : ram
@@ -155,12 +155,17 @@ module uncore (
     assign MTimerInt = 0; assign MSwInt = 0;
   end
   if (`PLIC_SUPPORTED == 1) begin : plic
-    plic plic(
+/*    plic plic(
       .HCLK, .HRESETn, 
       .HSELPLIC, .HADDR(HADDR[27:0]),
       .HWRITE, .HREADY, .HTRANS, .HWDATA,
       .UARTIntr, .GPIOIntr,
       .HREADPLIC, .HRESPPLIC, .HREADYPLIC,
+      .MExtInt, .SExtInt); */
+    plic_apb plic(
+      .PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), 
+      .UARTIntr, .GPIOIntr,
       .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
@@ -186,12 +191,18 @@ module uncore (
     assign GPIOPinsOut = 0; assign GPIOPinsEn = 0; assign GPIOIntr = 0;
   end
   if (`UART_SUPPORTED == 1) begin : uart
-    uart uart(
+/*    uart uart(
       .HCLK, .HRESETn, 
       .HSELUART,
       .HADDR(HADDR[2:0]), 
       .HWRITE, .HWDATA,
       .HREADUART, .HRESPUART, .HREADYUART,
+      .SIN(UARTSin), .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), // from E1A driver from RS232 interface
+      .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
+      .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU */
+    uart_apb uart(
+      .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[3]), .PREADY(PREADY[3]), 
       .SIN(UARTSin), .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), // from E1A driver from RS232 interface
       .SOUT(UARTSout), .RTSb(), .DTRb(),                                // to E1A driver to RS232 interface
       .OUT1b(), .OUT2b(), .INTR(UARTIntr), .TXRDYb(), .RXRDYb());       // to CPU
@@ -217,35 +228,35 @@ module uncore (
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
 		          ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
 //                  ({`XLEN{HSELCLINTD}} & HREADCLINT) |
-                  ({`XLEN{HSELPLICD}} & HREADPLIC) | 
+//                  ({`XLEN{HSELPLICD}} & HREADPLIC) | 
 //                  ({`XLEN{HSELGPIOD}} & HREADGPIO) |
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({`XLEN{HSELBootRomD}} & HREADBootRom) |
-                  ({`XLEN{HSELUARTD}} & HREADUART) |
+//                  ({`XLEN{HSELUARTD}} & HREADUART) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
 		             HSELEXTD & HRESPEXT |
 //                 HSELCLINTD & HRESPCLINT |
-                 HSELPLICD & HRESPPLIC |
+//                 HSELPLICD & HRESPPLIC |
 //                 HSELGPIOD & HRESPGPIO | 
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
-                 HSELUARTD & HRESPUART |
+//                 HSELUARTD & HRESPUART |
                  HSELSDC & HRESPSDC;		 
 
   assign HREADY = HSELRamD & HREADYRam |
 		              HSELEXTD & HREADYEXT |		  
 //                  HSELCLINTD & HREADYCLINT |
-                  HSELPLICD & HREADYPLIC |
+//                  HSELPLICD & HREADYPLIC |
 //                  HSELGPIOD & HREADYGPIO | 
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-                  HSELUARTD & HREADYUART |
+//                  HSELUARTD & HREADYUART |
                   HSELSDCD & HREADYSDC |		  
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
-  // *** remove HREADYGPIO, others 
+  // *** remove HREADYGPIO, others that are now unused
 
   // Address Decoder Delay (figure 4-2 in spec)
   flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});

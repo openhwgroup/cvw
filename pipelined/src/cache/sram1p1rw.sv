@@ -33,6 +33,8 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
+`include "wally-config.vh"
+
 module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   input logic                     clk,
   input logic [$clog2(DEPTH)-1:0] Adr,
@@ -47,37 +49,33 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   always_ff @(posedge clk)       AdrD <= Adr;
 
   genvar                          index;
-/* -----\/----- EXCLUDED -----\/-----
-  for(index = 0; index < WIDTH/8; index++) begin
-    always_ff @(posedge clk) begin
-      if (WriteEnable & ByteMask[index]) begin
-        StoredData[Adr][8*(index+1)-1:8*index] <= #1 CacheWriteData[8*(index+1)-1:8*index];
-      end
-    end
-  end
- -----/\----- EXCLUDED -----/\----- */
 
-  if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
-    always_ff @(posedge clk) 
-      if (WriteEnable & ByteMask[WIDTH/8])
-        StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 
-	  CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
-  
-  for(index = 0; index < WIDTH/8; index++) 
-    always_ff @(posedge clk)
-      if(WriteEnable & ByteMask[index])
-	StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
-/*  
-  // if not a multiple of 8, MSByte is not 8 bits long.
-  if(WIDTH%8 != 0) begin
-    always_ff @(posedge clk) begin
-      if (WriteEnable & ByteMask[WIDTH/8]) begin
-        StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
-      end
-    end
-  end 
-*/
-  assign ReadData = StoredData[AdrD];
+
+   if (`USE_SRAM == 1) begin
+    // 64 x 128-bit SRAM
+    logic [WIDTH-1:0] BitWriteMask;
+    for (index=0; index < WIDTH; index++) 
+      assign BitWriteMask[index] = ByteMask[index/8];
+    TS1N28HPCPSVTB64X128M4SWBASO sram(
+      .SLP(1'b0), .SD(1'b0), .CLK(clk), .CEB(1'b0), .WEB(~WriteEnable),
+      .CEBM(1'b0), .WEBM(1'b0), .AWT(1'b0), .A(Adr), .D(CacheWriteData), 
+      .BWEB(~BitWriteMask), .AM('b0), .DM('b0), .BWEBM('b0), .BIST(1'b0), .Q(ReadData)
+    );
+
+  end else begin 
+    if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
+      always_ff @(posedge clk) 
+        if (WriteEnable & ByteMask[WIDTH/8])
+          StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 
+      CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
+    
+    for(index = 0; index < WIDTH/8; index++) 
+      always_ff @(posedge clk)
+        if(WriteEnable & ByteMask[index])
+    StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
+
+    assign ReadData = StoredData[AdrD];
+  end
 endmodule
 
 
