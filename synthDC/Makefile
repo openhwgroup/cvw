@@ -66,18 +66,17 @@ copy:
 	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
 	@$(foreach dir, $(DIRS), sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
-	@$(foreach dir, $(DIRS), sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
+	@$(foreach dir, $(DIRS), sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
 
 	@$(foreach dir, $(DIRS32), sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
 	@$(foreach dir, $(DIRS64), sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
 
-
-del:
-	rm -rf $(CONFIGDIR)/*_*
-
 configs: $(DIRS)
 $(DIRS):
-	#turn off FPU 
+	# remove old config files
+	rm -rf $(CONFIGDIR)/*_*
+
+	# turn off FPU 
 	rm -rf $(CONFIGDIR)/$@_FPUoff
 	cp -r $(CONFIGDIR)/$@_orig $(CONFIGDIR)/$@_FPUoff
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_FPUoff/wally-config.vh
@@ -93,12 +92,12 @@ $(DIRS):
 	cp -r $(CONFIGDIR)/$@_FPUoff $(CONFIGDIR)/$@_PMP0
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$@_PMP0/wally-config.vh
 	
-	#no muldiv
+	# no muldiv
 	rm -rf $(CONFIGDIR)/$@_noMulDiv
 	cp -r $(CONFIGDIR)/$@_PMP0 $(CONFIGDIR)/$@_noMulDiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
 
-	#no priv
+	# no priv
 	rm -rf $(CONFIGDIR)/$@_noPriv
 	cp -r $(CONFIGDIR)/$@_noMulDiv $(CONFIGDIR)/$@_noPriv
 	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/$@_noPriv/wally-config.vh
@@ -111,13 +110,10 @@ allsynth: $(CONFIGFILESTRIM)
 $(CONFIGFILESTRIM):
 	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=3000 MAXCORES=1
 
-
 synth:
-	rm -f hdl/*
-	rm -rf WORK
 	@echo "DC Synthesis"
-	@mkdir -p hdl/
 	@mkdir -p $(OUTPUTDIR)
+	@mkdir -p $(OUTPUTDIR)/hdl
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
@@ -125,17 +121,20 @@ ifeq ($(SAIFPOWER), 1)
 	cp -f ../pipelined/regression/power.saif .
 endif
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+	rm -rf $(OUTPUTDIR)/hdl
+	rm -rf $(OUTPUTDIR)/WORK
 
 clean:
-# fix should make del be here
-	rm -rf  alib-52 WORK analyzed $(NAME).out
-	rm -f hdl/*
+	rm -rf  alib-52 analyzed
 	rm -f default.svf
 	rm -f command.log
 	rm -f filenames*.log
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
+
+fresh: clean copy configs
+	@echo "synth directory cleaned and fresh config files written"
 
 
 
