@@ -26,11 +26,11 @@ set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
-eval file copy -force ${cfg} {hdl/}
+eval file copy -force ${cfg} {$outputDir/hdl/}
 eval file copy -force ${cfg} $outputDir
-eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -41,7 +41,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
-set my_verilog_files [glob hdl/*]
+set my_verilog_files [glob $outputDir/hdl/*]
 
 # Set toplevel
 set my_toplevel $::env(DESIGN)
@@ -56,7 +56,7 @@ set vhdlout_show_unconnected_pins "true"
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
-define_design_lib WORK -path ./WORK
+define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
 elaborate $my_toplevel -lib WORK 
 
@@ -183,9 +183,9 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name INPUTS -from [all_inputs] 
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
-# Save Unmapped Design
-#set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-#write_file -format ddc -hierarchy -o $filename
+Save Unmapped Design
+set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
 if { $maxopt == 1 } {
