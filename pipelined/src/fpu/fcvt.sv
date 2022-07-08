@@ -6,7 +6,7 @@
 //
 // Purpose: Floating point conversions of configurable size
 // 
-// A component of the Wally configurable RISC-V project.
+// Int component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -21,7 +21,7 @@
 //   substantial portions of the Software.
 //
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR Int PARTICULAR 
 //   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
 //   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
@@ -31,21 +31,21 @@
 `include "wally-config.vh"
 
 module fcvt (
-    input logic             XSgnE,          // input's sign
-    input logic [`NE-1:0]   XExpE,          // input's exponent
-    input logic [`NF:0]     XManE,          // input's fraction
-    input logic [`XLEN-1:0] ForwardedSrcAE, // integer input - from IEU
-    input logic [2:0]       FOpCtrlE,       // choose which opperation (look below for values)
-    input logic             FWriteIntE,     // is fp->int (since it's writting to the integer register)
-    input logic             XZeroE,         // is the input zero
-    input logic             XDenormE,   // is the input denormalized
-    input logic [`FMTBITS-1:0] FmtE,        // the input's precision (11=quad 01=double 00=single 10=half)
-    output logic [`NE:0]           CvtCalcExpE,    // the calculated expoent
-	output logic [`LOGCVTLEN-1:0] CvtShiftAmtE,  // how much to shift by
-    output logic                   CvtResDenormUfE,// does the result underflow or is denormalized
-    output logic                   CvtResSgnE,     // the result's sign
-    output logic                   IntZeroE,      // is the integer zero?
-    output logic [`CVTLEN-1:0]      CvtLzcInE      // input to the Leading Zero Counter (priority encoder)
+    input logic             Xs,          // input's sign
+    input logic [`NE-1:0]   Xe,          // input's exponent
+    input logic [`NF:0]     Xm,          // input's fraction
+    input logic [`XLEN-1:0] Int, // integer input - from IEU
+    input logic [2:0]       FOpCtrl,       // choose which opperation (look below for values)
+    input logic             ToInt,     // is fp->int (since it's writting to the integer register)
+    input logic             XZero,         // is the input zero
+    input logic             XDenorm,   // is the input denormalized
+    input logic [`FMTBITS-1:0] Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
+    output logic [`NE:0]           Ce,    // the calculated expoent
+	output logic [`LOGCVTLEN-1:0] ShiftAmt,  // how much to shift by
+    output logic                   ResDenormUf,// does the result underflow or is denormalized
+    output logic                   Cs,     // the result's sign
+    output logic                   IntZero,      // is the integer zero?
+    output logic [`CVTLEN-1:0]      LzcIn      // input to the Leading Zero Counter (priority encoder)
     );
 
     // OpCtrls:
@@ -58,9 +58,6 @@ module fcvt (
     //                            bit 2              bit 1                   bit 0
     //      for example: signed long -> single floating point has the OpCode 101
 
-    // (FF) fp  -> fp coversion signals
-    // (IF) int -> fp coversion signals
-    // (FI) fp  -> int coversion signals
 
 
     logic [`FMTBITS-1:0]    OutFmt;     // format of the output
@@ -71,23 +68,21 @@ module fcvt (
     logic                   Signed;     // is the opperation with a signed integer?
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
-    logic                   ToInt;      // is the opperation an fp->int conversion?
-    logic [`LOGCVTLEN-1:0] ZeroCnt; // output from the LZC
+    logic [`LOGCVTLEN-1:0] LeadingZeros; // output from the LZC
 
 
     // seperate OpCtrl for code readability
-    assign Signed = FOpCtrlE[0];
-    assign Int64 =  FOpCtrlE[1];
-    assign IntToFp =   FOpCtrlE[2];
-    assign ToInt =  FWriteIntE;
+    assign Signed = FOpCtrl[0];
+    assign Int64 =  FOpCtrl[1];
+    assign IntToFp =   FOpCtrl[2];
 
     // choose the ouptut format depending on the opperation
     //      - fp -> fp: OpCtrl contains the percision of the output
-    //      - int -> fp: FmtE contains the percision of the output
+    //      - int -> fp: Fmt contains the percision of the output
     if (`FPSIZES == 2) 
-        assign OutFmt = IntToFp ? FmtE : (FOpCtrlE[1:0] == `FMT); 
+        assign OutFmt = IntToFp ? Fmt : (FOpCtrl[1:0] == `FMT); 
     else if (`FPSIZES == 3 | `FPSIZES == 4) 
-        assign OutFmt = IntToFp ? FmtE : FOpCtrlE[1:0]; 
+        assign OutFmt = IntToFp ? Fmt : FOpCtrl[1:0]; 
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -96,9 +91,9 @@ module fcvt (
     // 1) negate the input if the input is a negitive singed integer
     // 2) trim the input to the proper size (kill the 32 most significant zeroes if needed)
 
-    assign PosInt = CvtResSgnE ? -ForwardedSrcAE : ForwardedSrcAE;
+    assign PosInt = Cs ? -Int : Int;
     assign TrimInt = {{`XLEN-32{Int64}}, {32{1'b1}}} & PosInt;
-    assign IntZeroE = ~|TrimInt;
+    assign IntZero = ~|TrimInt;
 
     ///////////////////////////////////////////////////////////////////////////
     // lzc 
@@ -107,10 +102,10 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign CvtLzcInE = IntToFp ? {TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
-                             {XManE[`NF-1:0], {`CVTLEN-`NF{1'b0}}};
+    assign LzcIn = IntToFp ? {TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
+                             {Xm[`NF-1:0], {`CVTLEN-`NF{1'b0}}};
     
-    lzc #(`CVTLEN) lzc (.num(CvtLzcInE), .ZeroCnt);
+    lzc #(`CVTLEN) lzc (.num(LzcIn), .ZeroCnt(LeadingZeros));
 
     ///////////////////////////////////////////////////////////////////////////
     // shifter
@@ -124,13 +119,13 @@ module fcvt (
     //      denormalized/undeflowed result fp -> fp:
     //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
     //      ??? -> fp: 
-    //          - shift left by ZeroCnt+1 - to shift till the result is normalized
+    //          - shift left by LeadingZeros+1 - to shift till the result is normalized
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign CvtShiftAmtE = ToInt ? CvtCalcExpE[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~CvtCalcExpE[`NE]}} :
-                    CvtResDenormUfE&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+CvtCalcExpE[`LOGCVTLEN-1:0] : 
-                              (ZeroCnt+1)&{`LOGCVTLEN{XDenormE|IntToFp}};
+    assign ShiftAmt = ToInt ? Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}} :
+                    ResDenormUf&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0] : 
+                              (LeadingZeros+1)&{`LOGCVTLEN{XDenorm|IntToFp}};
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
@@ -180,15 +175,15 @@ module fcvt (
     // select the old exponent
     //      int -> fp : largest bias + XLEN
     //      fp -> ??? : XExp
-    assign OldExp = IntToFp ? (`NE)'(`BIAS)+(`NE)'(`XLEN) : XExpE;
+    assign OldExp = IntToFp ? (`NE)'(`BIAS)+(`NE)'(`XLEN) : Xe;
     
     // calculate CalcExp
     //      fp -> fp : 
-    //          - XExp - Largest bias + new bias - (ZeroCnt+1)
+    //          - XExp - Largest bias + new bias - (LeadingZeros+1)
     //                                          only do ^ if the input was denormalized
     //              - convert the expoenent to the final preciaion (Exp - oldBias + newBias)
-    //              - correct the expoent when there is a normalization shift ( + ZeroCnt+1) 
-    //      fp -> int : XExp - Largest Bias + 1 - (ZeroCnt+1)
+    //              - correct the expoent when there is a normalization shift ( + LeadingZeros+1) 
+    //      fp -> int : XExp - Largest Bias + 1 - (LeadingZeros+1)
     //          |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
     //          process:
     //              - start
@@ -202,18 +197,18 @@ module fcvt (
     //                  |  0's |     Mantissa      |      0's if nessisary     |
     //                  |     keep        |
     //
-    //              - if the input is denormalized then we dont shift... so the  "- (ZeroCnt+1)" is just leftovers from other options
-    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - 1 - ZeroCnt = XLEN + NewBias - 1 - ZeroCnt
+    //              - if the input is denormalized then we dont shift... so the  "- (LeadingZeros+1)" is just leftovers from other options
+    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - 1 - LeadingZeros = XLEN + NewBias - 1 - LeadingZeros
     //              Process:
     //                  - shifted right by XLEN (XLEN)
-    //                  - shift left to normilize (-1-ZeroCnt)
+    //                  - shift left to normilize (-1-LeadingZeros)
     //                  - newBias to make the biased exponent
-    //          oldexp - biasold +newbias - (ZeroCnt+1)&(XDenormE|IntToFp)
-    assign CvtCalcExpE = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenormE|IntToFp} - {{`NE-`LOGCVTLEN+1{1'b0}}, (ZeroCnt&{`LOGCVTLEN{XDenormE|IntToFp}})};
+    //          oldexp - biasold +newbias - (LeadingZeros+1)&(XDenorm|IntToFp)
+    assign Ce = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenorm|IntToFp} - {{`NE-`LOGCVTLEN+1{1'b0}}, (LeadingZeros&{`LOGCVTLEN{XDenorm|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
-    assign CvtResDenormUfE = (~|CvtCalcExpE | CvtCalcExpE[`NE])&~XZeroE&~IntToFp;
+    assign ResDenormUf = (~|Ce | Ce[`NE])&~XZero&~IntToFp;
 
     
     ///////////////////////////////////////////////////////////////////////////
@@ -225,7 +220,7 @@ module fcvt (
     //          - if 64-bit : check the msb of the 64-bit integer input and if it's signed
     //          - if 32-bit : check the msb of the 32-bit integer input and if it's signed
     //      - otherwise: the floating point input's sign
-    assign CvtResSgnE = IntToFp ? Int64 ? ForwardedSrcAE[`XLEN-1]&Signed : ForwardedSrcAE[31]&Signed : XSgnE;
+    assign Cs = IntToFp ? Int64 ? Int[`XLEN-1]&Signed : Int[31]&Signed : Xs;
 
 endmodule
 

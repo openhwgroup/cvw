@@ -76,7 +76,7 @@ module testbenchfp;
   logic                 XZero, YZero, ZZero;                // is the input zero
   logic                 XExpMax, YExpMax, ZExpMax;         // is the input's exponent all ones  
   logic  [`CVTLEN-1:0]      CvtLzcInE;      // input to the Leading Zero Counter (priority encoder)
-  logic        IntZeroE;
+  logic        IntZero;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
@@ -104,6 +104,7 @@ module testbenchfp;
   logic 			          As;
   logic 			          Ps;
   logic       DivSticky;
+  logic       DivDone;
   logic       DivNegSticky;
   logic [`NE+1:0] DivCalcExp;
 
@@ -677,25 +678,25 @@ module testbenchfp;
           .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
           .Pe, .ZmSticky, .KillProd); 
               
-  postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSelM(UnitVal[1:0]),
-              .Ze(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCalcExpM(CvtCalcExpE), .DivStickyM(DivSticky),
-              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE), .DivNegStickyM(DivNegSticky),
-              .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
-              .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
-              .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
-              .KillProdM(KillProd), .AddendStickyM(ZmSticky), .ProdExpM(Pe), 
-              .SumM(Sm), .NegSumM(NegSum), .InvZM(InvA), .FmaNormCntM(NCnt), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(As), .PSgnM(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
+  postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
+              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE), .DivNegSticky,
+              .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
+              .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+              .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+              .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .PostProcFlg(Flg), .W(FpRes), .FCvtIntRes(IntRes));
   
-  fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
-            .XZeroE(XZero), .XDenormE(XDenorm), .FOpCtrlE(OpCtrlVal), .IntZeroE,
-            .FmtE(ModFmt), .CvtCalcExpE, .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .CvtLzcInE);
+  fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
+            .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
+            .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
   srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
-  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
+  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
                 .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2));
   srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .WS, .WC, .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
                 .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
