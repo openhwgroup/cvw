@@ -151,7 +151,7 @@ SETUP_PLIC
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 .4byte fall_ie, 0x01000000, write32_test            # enable high interrupt on bit 24, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
-.4byte high_ie, 0x00000000, write32_test            # disable high interrupt on bit 24, which is pending
+.4byte fall_ie, 0x00000000, write32_test            # disable high interrupt on bit 24, which is pending
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
