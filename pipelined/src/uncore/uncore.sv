@@ -53,7 +53,6 @@ module uncore (
   output logic             HSELEXT,
   // delayed signals
   input  logic [2:0]       HADDRD,
-  input  logic [3:0]       HSIZED,
   input  logic             HWRITED,
   // peripheral pins
   output logic             MTimerInt, MSwInt, MExtInt, SExtInt,
@@ -83,20 +82,13 @@ module uncore (
   logic 	   SDCIntM;
   
   logic PCLK, PRESETn, PWRITE, PENABLE;
-//  logic PSEL, PREADY;
   logic [3:0] PSEL, PREADY;
   logic [31:0] PADDR;
   logic [`XLEN-1:0] PWDATA;
   logic [`XLEN/8-1:0] PSTRB;
   logic [3:0][`XLEN-1:0] PRDATA;
-//  logic [`XLEN-1:0][8:0] PRDATA;
   logic [`XLEN-1:0] HREADBRIDGE;
   logic HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
-
-  // *** to do:
-  // hook up HWSTRB and remove subword write decoders
-  // add other peripherals on AHB
-  // HTRANS encoding
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -119,7 +111,7 @@ module uncore (
       .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
       .HCLK, .HRESETn, 
       .HSELRam, .HADDR,
-      .HWRITE, .HREADY, .HSIZED,
+      .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam,
       .HRESPRam, .HREADYRam);
   end
@@ -130,7 +122,7 @@ module uncore (
     bootrom(
       .HCLK, .HRESETn, 
       .HSELRam(HSELBootRom), .HADDR,
-      .HWRITE, .HREADY, .HTRANS, .HSIZED,
+      .HWRITE, .HREADY, .HTRANS, 
       .HWDATA, .HWSTRB,
       .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
   end
@@ -189,37 +181,25 @@ module uncore (
     assign SDCCmdOE = 0;
   end
 
-  // mux could also include external memory  
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-		          ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
+		              ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({`XLEN{HSELBootRomD}} & HREADBootRom) |
-//                  ({`XLEN{HSELUARTD}} & HREADUART) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
 		             HSELEXTD & HRESPEXT |
-//                 HSELCLINTD & HRESPCLINT |
-//                 HSELPLICD & HRESPPLIC |
-//                 HSELGPIOD & HRESPGPIO | 
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
-//                 HSELUARTD & HRESPUART |
                  HSELSDC & HRESPSDC;		 
 
   assign HREADY = HSELRamD & HREADYRam |
 		              HSELEXTD & HREADYEXT |		  
-//                  HSELCLINTD & HREADYCLINT |
-//                  HSELPLICD & HREADYPLIC |
-//                  HSELGPIOD & HREADYGPIO | 
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-//                  HSELUARTD & HREADYUART |
                   HSELSDCD & HREADYSDC |		  
                   HSELNoneD; // don't lock up the bus if no region is being accessed
-
-  // *** remove HREADYGPIO, others that are now unused
 
   // Address Decoder Delay (figure 4-2 in spec)
   flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});

@@ -144,7 +144,7 @@ module SDC
 
   // currently does not support writes
 
-  assign InitTrans = HREADY & HSELSDC & (HTRANS != 2'b00);
+  assign InitTrans = HREADY & HSELSDC & HTRANS[1];
   //assign RegRead = InitTrans & ~HWRITE;
   // register resolve combo loop
   flopr #(1) RegReadReg(HCLK, ~HRESETn, InitTrans & ~HWRITE, RegRead);
