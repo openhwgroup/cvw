@@ -296,10 +296,10 @@ module fpu (
    fsgninj fsgninj(.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XSNaNE, .ClassResE);
 
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, 
-              .FWriteIntE, .XZeroE, .XDenormE, .FmtE, .CvtCalcExpE, 
-              .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .IntZeroE, 
-              .CvtLzcInE);
+   fcvt fcvt (.Xs(XSgnE), .Xe(XExpE), .Xm(XManE), .Int(ForwardedSrcAE), .FOpCtrl(FOpCtrlE), 
+              .ToInt(FWriteIntE), .XZero(XZeroE), .XDenorm(XDenormE), .Fmt(FmtE), .Ce(CvtCalcExpE), 
+              .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .IntZero(IntZeroE), 
+              .LzcIn(CvtLzcInE));
 
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
@@ -381,12 +381,12 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .ProdExpM, .EarlyTermShiftDiv2M,
-                           .AddendStickyM, .KillProdM, .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInfM, .YInfM, .Quot(QuotM),
-                           .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM, .DivDone(DivDoneM),
-                           .NegSumM, .InvZM(InvAM), .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrl(FOpCtrlM), .FmaNormCntM, .DivNegStickyM,
-                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, .DivStickyM,
-                           .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
+   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2M),
+                           .FmaZmSticky(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .Quot(QuotM),
+                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivCalcExp(DivCalcExpM), .DivDone(DivDoneM),
+                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM), .DivNegSticky(DivNegStickyM),
+                           .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivSticky(DivStickyM),
+                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .W(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
    // FPU flag selection - to privileged
    mux2  #(5)  FPUFlgMux ({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
