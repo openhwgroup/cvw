@@ -32,11 +32,11 @@ module cvtshiftcalc(
     input logic                    XZero,
     input logic                    ToInt,
     input logic                    IntToFp,
-    input logic  [`NE:0]           CvtCalcExpM,    // the calculated expoent
+    input logic  [`NE:0]           CvtCe,    // the calculated expoent
     input logic  [`NF:0]           Xm,          // input mantissas
     input logic     [`FMTBITS-1:0]  OutFmt,       // output format
-    input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
-    input logic CvtResDenormUfM,
+    input logic  [`CVTLEN-1:0]      CvtLzcIn,      // input to the Leading Zero Counter (priority encoder)
+    input logic CvtResDenormUf,
     output logic CvtResUf,
     output logic [`CVTLEN+`NF:0]    CvtShiftIn    // number to be shifted
 );
@@ -60,9 +60,9 @@ module cvtshiftcalc(
     //          - otherwise:
     //              |     LzcInM      | 0's if nessisary | 
     // change to int shift to the left one
-    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, Xm[`NF]&~CvtCalcExpM[`NE], Xm[`NF-1]|(CvtCalcExpM[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
-                     CvtResDenormUfM ? {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}} : 
-                                   {CvtLzcInM, {`NF+1{1'b0}}};
+    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, Xm[`NF]&~CvtCe[`NE], Xm[`NF-1]|(CvtCe[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
+                     CvtResDenormUf ? {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}} : 
+                                   {CvtLzcIn, {`NF+1{1'b0}}};
     
     
     // choose the negative of the fraction size
@@ -93,6 +93,6 @@ module cvtshiftcalc(
     // determine if the result underflows ??? -> fp
     //      - if the first 1 is shifted out of the result then the result underflows
     //      - can't underflow an integer to fp conversions
-    assign CvtResUf = ($signed(CvtCalcExpM) < $signed({{`NE-$clog2(`NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp;
+    assign CvtResUf = ($signed(CvtCe) < $signed({{`NE-$clog2(`NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp;
    
 endmodule
