@@ -192,7 +192,8 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    AMOWriteDataM, FinalWriteDataM, LittleEndianWriteDataM;
+  logic [`XLEN-1:0]    AMOWriteDataM, IEUWriteDataM, LittleEndianWriteDataM;
+  logic [`LLEN-1:0]    FinalWriteDataM;
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`LLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -202,7 +203,7 @@ module lsu (
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
-    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
+    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM(IEUWriteDataM), //*** fix the dtim FinalWriteData
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
@@ -230,15 +231,19 @@ module lsu (
 
     mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DCacheBusWriteData[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(FinalWriteDataM),
+    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     
     if(CACHE_ENABLED) begin : dcache
+      if (`LLEN>`FLEN)
+        mux2 #(`LLEN) datamux({(`LLEN-`XLEN)'(0), IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
+      else
+        assign FinalWriteDataM[`XLEN-1:0] = IEUWriteDataM;
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount, .FpLoadStoreM, .FWriteDataM, .FLoad2,
+        .ByteMask(ByteMaskM), .WordCount, .FLoad2,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
@@ -286,10 +291,10 @@ module lsu (
   //  swap the bytes when read from big-endian memory
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`BIGENDIAN_SUPPORTED) begin:endian
-    bigendianswap #(`XLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(FinalWriteDataM));
+    bigendianswap #(`XLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(IEUWriteDataM));
     bigendianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordM), .y(LittleEndianReadDataWordM));
   end else begin
-    assign FinalWriteDataM = LittleEndianWriteDataM;
+    assign IEUWriteDataM = LittleEndianWriteDataM;
     assign LittleEndianReadDataWordM = ReadDataWordM;
   end
 
