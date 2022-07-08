@@ -30,12 +30,12 @@
 
 module flags(
     input logic                 Xs,
-    input logic                 XSNaNM, YSNaNM, ZSNaNM, // inputs are signaling NaNs
-    input logic                 XInfM, YInfM, ZInfM,    // inputs are infinity
+    input logic                 XSNaN, YSNaN, ZSNaN, // inputs are signaling NaNs
+    input logic                 XInf, YInf, ZInf,    // inputs are infinity
     input logic                 Plus1,
     input logic                 InfIn,                  // is a Inf input being used
     input logic                 XZero, YZero,         // inputs are zero
-    input logic                 XNaNM, YNaNM,           // inputs are NaN
+    input logic                 XNaN, YNaN,           // inputs are NaN
     input logic                 NaNIn,                  // is a NaN input being used
     input logic                 Sqrt,                   // Sqrt?
     input logic                 ToInt,                  // convert to integer
@@ -43,18 +43,18 @@ module flags(
     input logic                 Int64,                  // convert to 64 bit integer
     input logic                 Signed,                 // convert to a signed integer
     input logic [`FMTBITS-1:0]  OutFmt,                 // output format
-    input logic [`NE:0]         CvtCalcExpM,            // the calculated expoent - Cvt
+    input logic [`NE:0]         CvtCe,            // the calculated expoent - Cvt
     input logic                 CvtOp,                  // conversion opperation?
     input logic                 DivOp,                  // conversion opperation?
     input logic                 FmaOp,                  // Fma opperation?
-    input logic  [`NE+1:0]      FullResExp,             // ResExp with bits to determine sign and overflow
-    input logic  [`NE+1:0]      RoundExp,               // exponent of the normalized sum
-    input logic  [1:0]          NegResMSBS,             // the negitive integer result's most significant bits
-    input logic                 ZSgnEffM, PSgnM,        // the product and modified Z signs
-    input logic                 Round, UfLSBRes, Sticky, UfPlus1, // bits used to determine rounding
+    input logic  [`NE+1:0]      FullResExp,             // Re with bits to determine sign and overflow
+    input logic  [`NE+1:0]      Nexp,               // exponent of the normalized sum
+    input logic  [1:0]          CvtNegResMsbs,             // the negitive integer result's most significant bits
+    input logic                 FmaAs, FmaPs,        // the product and modified Z signs
+    input logic                 R, UfLSBRes, S, UfPlus1, // bits used to determine rounding
     output logic                DivByZero,
     output logic                IntInvalid, Invalid, Overflow, // flags used to select the res
-    output logic [4:0]          PostProcFlgM // flags
+    output logic [4:0]          PostProcFlg // flags
 );
     logic               SigNaN;     // is an input a signaling NaN
     logic               Inexact;    // inexact flag
@@ -64,7 +64,7 @@ module flags(
     logic               DivInvalid; // integer invalid flag
     logic               Underflow;   // Underflow flag
     logic               ResExpGteMax; // is the result greater than or equal to the maximum floating point expoent
-    logic               ShiftGtIntSz; // is the shift greater than the the integer size (use ResExp to account for possible roundning "shift")
+    logic               ShiftGtIntSz; // is the shift greater than the the integer size (use Re to account for possible roundning "shift")
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -127,16 +127,16 @@ module flags(
     //                  |                    |                    |                                      |                     and if the result is not exact
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
-    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (RoundExp == 0) & ~(UfPlus1&UfLSBRes)))&(Round|Sticky))&~(InfIn|NaNIn|DivByZero);
+    assign Underflow = ((FullResExp[`NE+1] | (FullResExp == 0) | ((FullResExp == 1) & (Nexp == 0) & ~(UfPlus1&UfLSBRes)))&(R|S))&~(InfIn|NaNIn|DivByZero);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (Sticky|Overflow|Round|Underflow)&~(InfIn|NaNIn|DivByZero);
+    assign FpInexact = (S|Overflow|R|Underflow)&~(InfIn|NaNIn|DivByZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
     //                  |                                     |
-    assign IntInexact = ((CvtCalcExpM[`NE]&~XZero)|Sticky|Round)&~IntInvalid;
+    assign IntInexact = ((CvtCe[`NE]&~XZero)|S|R)&~IntInvalid;
 
     // select the inexact flag to output
     assign Inexact = ToInt ? IntInexact : FpInexact;
@@ -153,12 +153,12 @@ module flags(
     //                  |           |                                  |                    |               or the res rounds up out of bounds
     //                  |           |                                  |                    |                       and the res didn't underflow
     //                  |           |                                  |                    |                       |
-    assign IntInvalid = XNaNM|XInfM|(ShiftGtIntSz&~FullResExp[`NE+1])|((Xs&~Signed)&(~((CvtCalcExpM[`NE]|(~|CvtCalcExpM))&~Plus1)))|(NegResMSBS[1]^NegResMSBS[0]);
+    assign IntInvalid = XNaN|XInf|(ShiftGtIntSz&~FullResExp[`NE+1])|((Xs&~Signed)&(~((CvtCe[`NE]|(~|CvtCe))&~Plus1)))|(CvtNegResMsbs[1]^CvtNegResMsbs[0]);
     //                                                                                                     |
     //                                                                                                     or when the positive res rounds up out of range
-    assign SigNaN = (XSNaNM&~(IntToFp&CvtOp)) | (YSNaNM&~CvtOp) | (ZSNaNM&FmaOp);
-    assign FmaInvalid = ((XInfM | YInfM) & ZInfM & (PSgnM ^ ZSgnEffM) & ~XNaNM & ~YNaNM) | (XZero & YInfM) | (YZero & XInfM);
-    assign DivInvalid = ((XInfM & YInfM) | (XZero & YZero))&~Sqrt | (Xs&Sqrt);
+    assign SigNaN = (XSNaN&~(IntToFp&CvtOp)) | (YSNaN&~CvtOp) | (ZSNaN&FmaOp);
+    assign FmaInvalid = ((XInf | YInf) & ZInf & (FmaPs ^ FmaAs) & ~XNaN & ~YNaN) | (XZero & YInf) | (YZero & XInf);
+    assign DivInvalid = ((XInf & YInf) | (XZero & YZero))&~Sqrt | (Xs&Sqrt);
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 
@@ -168,7 +168,7 @@ module flags(
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags
-    assign PostProcFlgM = {Invalid|(IntInvalid&CvtOp&ToInt), DivByZero, Overflow&~(ToInt&CvtOp), Underflow&~(ToInt&CvtOp), Inexact};
+    assign PostProcFlg = {Invalid|(IntInvalid&CvtOp&ToInt), DivByZero, Overflow&~(ToInt&CvtOp), Underflow&~(ToInt&CvtOp), Inexact};
 
 endmodule
 
