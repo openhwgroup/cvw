@@ -183,9 +183,9 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name INPUTS -from [all_inputs] 
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
-Save Unmapped Design
-set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-write_file -format ddc -hierarchy -o $filename
+# Save Unmapped Design
+# set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+# write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
 if { $maxopt == 1 } {
