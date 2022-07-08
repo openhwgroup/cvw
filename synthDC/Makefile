@@ -52,6 +52,9 @@ DIRS = $(DIRS32) $(DIRS64)
 # 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
 # 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
 copy: 
+	# remove old config files
+	rm -rf $(CONFIGDIR)/*_*
+
 	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
 	@$(foreach dir, $(DIRS), sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
@@ -63,9 +66,7 @@ copy:
 
 configs: $(DIRS)
 $(DIRS):
-	# remove old config files
-	rm -rf $(CONFIGDIR)/*_*
-
+	
 	# turn off FPU 
 	rm -rf $(CONFIGDIR)/$@_FPUoff
 	cp -r $(CONFIGDIR)/$@_orig $(CONFIGDIR)/$@_FPUoff
@@ -120,7 +121,3 @@ clean:
 
 fresh: clean copy configs
 	@echo "synth directory cleaned and fresh config files written"
-
-
-
-
