@@ -56,16 +56,6 @@ module plic_apb (
   input  logic             PENABLE,
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
-/*
-  input  logic             PCLK, PRESETn,
-  input  logic             HSELPLIC,
-  input  logic [27:0]      HADDR, // *** could factor out entry into HADDRd at the level of uncore
-  input  logic             HWRITE,
-  input  logic             HREADY,
-  input  logic [1:0]       HTRANS,
-  input  logic [`XLEN-1:0] HWDATA,
-  output logic [`XLEN-1:0] PRDATA,
-  output logic             HRESPPLIC, HREADYPLIC, */
   input  logic             UARTIntr,GPIOIntr,
     (* mark_debug = "true" *)  output logic             MExtInt, SExtInt);
 
@@ -96,14 +86,6 @@ module plic_apb (
   assign memread  = ~PWRITE & PSEL;  // read at start of access phase.  PENABLE hasn't set up before this
   assign PREADY = 1'b1; // PLIC never takes >1 cycle to respond
   assign entry = {PADDR[23:2],2'b0};
-  /*
-  assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
-  assign memread = initTrans & ~HWRITE;
-  // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
-  flopr #(1) memwriteflop(PCLK, ~HRESETn, initTrans & HWRITE, memwrite);
-  flopr #(24) entrydflop(PCLK, ~PRESETn, entry, entryd);
-  assign HRESPPLIC = 0; // OK
-  assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond */
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
