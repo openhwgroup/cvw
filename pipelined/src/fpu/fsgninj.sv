@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// Written: Katherine Parry
+// Written: me@KatherineParry.com
 // Modified: 6/23/2021
 //
 // Purpose: FPU Sign Injection instructions
