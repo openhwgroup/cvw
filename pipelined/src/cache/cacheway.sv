@@ -105,7 +105,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // *** Potential optimization: if byte write enables are available, could remove subwordwrites
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),
