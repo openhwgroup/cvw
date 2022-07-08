@@ -1,14 +1,15 @@
 #  
-#  Makefile for synthesis
+# Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
+# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 7/8/2022
 NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 3000
 export CONFIG ?= rv32e
+# title to add a note in the synth's directory name
 TITLE = 
-
 # tsmc28, sky130, and sky90 presently supported
 export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
@@ -28,13 +29,7 @@ CONFIGDIR ?= ${WALLY}/pipelined/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
 # FREQS = 25 50 100 150 200 250 300 350 400
-k = 3 6 
-
-ifeq ($(TECH), sky130)
-	FREQS = 25 50 100 150 200 250 300 350 400
-else ifeq ($(TECH), sky90)
-	FREQS = 500 550 600 650 700 750 800 850 900 950 1000
-endif
+# k = 3 6 
 
 print:
 	@echo $(FREQS)
@@ -42,14 +37,9 @@ print:
 
 
 default:
-	@echo "Basic synthesis procedure for Wally:"
-	@echo "  Invoke with make synth"
-
-test: rv%
-	echo "Running test on $<"
-
-rv%.log: rv%
-	echo $<
+	@echo "  Basic synthesis procedure for Wally:"
+	@echo "        Invoke with make synth"
+	@echo "Use wallySynth.py to run a concurrent sweep "
 
 
 DIRS32 = rv32e rv32gc rv32ic 
@@ -104,11 +94,6 @@ $(DIRS):
 
 freqs: 
 	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e FREQ=$(freq) MAXCORES=1;)
-
-allsynth: $(CONFIGFILESTRIM)
-
-$(CONFIGFILESTRIM):
-	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=3000 MAXCORES=1
 
 synth:
 	@echo "DC Synthesis"
