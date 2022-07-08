@@ -284,20 +284,12 @@ logic [3:0] dummy;
             if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
             else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-            if (signature[i] !== sig &
-            //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
-            (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
-              if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
-                // if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
-                // report errors unless they are garbage at the end of the sim
-                // kind of hacky test for garbage right now
-                errors = errors+1;
-                $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
-                      tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                      //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
-                $stop;//***debug
-              end
-            end
+            if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+              errors = errors+1;
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+              $stop;//***debug
+             end
             i = i + 1;
           end
           /* verilator lint_on INFINITELOOP */
