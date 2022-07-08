@@ -6,9 +6,10 @@ NAME := synth
 # defaults
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 3000
-export CONFIG ?= rv32e_FPUoff
-TITLE = shreya
-# sky130 and sky90 presently supported
+export CONFIG ?= rv32e
+TITLE = 
+
+# tsmc28, sky130, and sky90 presently supported
 export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
@@ -111,7 +112,9 @@ $(CONFIGFILESTRIM):
 	make synth DESIGN=wallypipelinedcore CONFIG=$@ TECH=sky90 FREQ=3000 MAXCORES=1
 
 
-synth: clean
+synth:
+	rm -f hdl/*
+	rm -rf WORK
 	@echo "DC Synthesis"
 	@mkdir -p hdl/
 	@mkdir -p $(OUTPUTDIR)
@@ -124,6 +127,7 @@ endif
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 
 clean:
+# fix should make del be here
 	rm -rf  alib-52 WORK analyzed $(NAME).out
 	rm -f hdl/*
 	rm -f default.svf
@@ -133,9 +137,6 @@ clean:
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
 
-fresh:
-	rm -rf  WORK
-	rm -f hdl/*
 
 
 

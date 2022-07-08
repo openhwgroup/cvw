@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // srt.sv
 //
-// Written: David_Harris@hmc.edu 13 January 2022
-// Modified: 
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
@@ -33,38 +33,27 @@
 module srtradix4 (
   input  logic clk,
   input  logic DivStart, 
+  input  logic DivBusy, 
+  input logic  [`FMTBITS-1:0] FmtE,
   input  logic [`NE-1:0] XExpE, YExpE,
-  input  logic [`NF:0] XManE, YManE,
-  input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
-  input  logic XNaNE, YNaNE, 
-  input  logic       W64, // 32-bit ints on XLEN=64
-  input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputs
-  input  logic       Sqrt, // perform square root, not divide
-  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
-  output logic       DivDone,
-  output logic       DivStickyE,
-  output logic       DivNegStickyE,
+  input logic [`DIVLEN-1:0] X,
+  input logic [`DIVLEN-1:0] Dpreproc,
+  input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
   output logic [`DIVLEN+2:0] Quot,
-  output logic [`XLEN-1:0] Rem, // *** later handle integers
-  output logic [`NE+1:0] DivCalcExpE
+  output logic [`DIVLEN+3:0]  WSN, WCN,
+  output logic [`DIVLEN+3:0]  WS, WC,
+  output logic  [`NE+1:0] DivCalcExpM,
+  output logic [`XLEN-1:0] Rem
 );
 
   logic [3:0]     q;
-  logic [`NE+1:0] DivCalcExp;
-  logic [`DIVLEN-1:0]    X;
-  logic [`DIVLEN-1:0]  Dpreproc;
-  logic [`DIVLEN+3:0]  WS, WSA, WSN;
-  logic [`DIVLEN+3:0]  WC, WCA, WCN;
+  logic [`DIVLEN+3:0]  WSA;
+  logic [`DIVLEN+3:0]  WCA;
   logic [`DIVLEN+3:0]  D, DBar, D2, DBar2, Dsel;
+  logic [`NE+1:0] DivCalcExp;
   logic [$clog2(`XLEN+1)-1:0] intExp;
-  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic           intSign;
- 
-  srtpreproc preproc(.SrcA, .SrcB, .XManE, .YManE, .W64, .Signed, .Int, .Sqrt, .X, 
-                    .XZeroCnt, .YZeroCnt, .Dpreproc, .intExp, .intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -79,6 +68,7 @@ module srtradix4 (
   mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
   flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
   flopen #(`DIVLEN+4) dflop(clk, DivStart, {4'b0001, Dpreproc}, D);
+  flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpM);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -90,9 +80,6 @@ module srtradix4 (
 	// 0010 = -1
 	// 0001 = -2
   qsel4 qsel4(.D, .WS, .WC, .q);
-
-  // Store the expoenent and sign until division is DivDone
-  flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpE);
 
   // Divisor Selection logic
   // *** radix 4 change to choose -2 to 2
@@ -116,12 +103,9 @@ module srtradix4 (
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, |q[3:2], WSA, WCA);
   
   //*** change for radix 4
-  otfc4 otfc4(.clk, .DivStart, .q, .Quot);
+  otfc4 otfc4(.clk, .DivStart, .DivBusy, .q, .Quot);
 
-  expcalc expcalc(.XExpE, .YExpE, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
-
-  earlytermination earlytermination(.clk, .WC, .WS, .XZeroE, .YZeroE, .XInfE, .EarlyTermShiftDiv2E,
-                  .YInfE, .XNaNE, .YNaNE, .DivStickyE, .DivNegStickyE, .DivStart, .DivDone);
+  expcalc expcalc(.FmtE, .XExpE, .YExpE, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
 
 endmodule
 
@@ -129,38 +113,7 @@ endmodule
 // Submodules //
 ////////////////
 
-module earlytermination(
-  input  logic clk, 
-	input logic [`DIVLEN+3:0] WS, WC,
-  input  logic XInfE, YInfE, 
-  input  logic XZeroE, YZeroE, 
-  input  logic XNaNE, YNaNE, 
-  input  logic DivStart, 
-  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
-  output logic DivStickyE,
-  output logic DivNegStickyE,
-  output logic DivDone);
- 
-   logic [$clog2(`DIVLEN/2+3)-1:0]  Count;
-   logic WZero;
-   logic [`DIVLEN+3:0] W;
 
-  assign WZero = ((WS^WC)=={WS[`DIVLEN+2:0]|WC[`DIVLEN+2:0], 1'b0})|XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE;
-  assign DivDone = (DivStickyE | WZero);
-  assign DivStickyE = ~|Count;
-  assign W = WC+WS;
-  assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???
-  assign EarlyTermShiftDiv2E = Count;
-  // +1 for setup
-  // `DIVLEN/2 to get required number of bits
-  // +1 for possible .5 and round bit
-  // Count down Counter
-  always @(posedge clk)
-    begin
-      if (DivStart) Count <= #1 `DIVLEN/2+2;
-      else     Count <= #1 Count-1;
-    end
-endmodule
 
 module qsel4 (
 	input logic [`DIVLEN+3:0] D,
@@ -234,58 +187,13 @@ module qsel4 (
 	
 endmodule
 
-///////////////////
-// Preprocessing //
-///////////////////
-module srtpreproc (
-  input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [`NF:0] XManE, YManE,
-  input  logic       W64, // 32-bit ints on XLEN=64
-  input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputs
-  input  logic       Sqrt, // perform square root, not divide
-  output logic [`DIVLEN-1:0] X,
-  output logic [`DIVLEN-1:0] Dpreproc,
-  output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic [$clog2(`XLEN+1)-1:0] intExp, // Quotient integer exponent
-  output logic       intSign // Quotient integer sign
-);
-  // logic  [`XLEN-1:0] PosA, PosB;
-  // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
-  logic  [`DIVLEN-1:0] PreprocA, PreprocX;
-  logic  [`DIVLEN-1:0] PreprocB, PreprocY;
-
-  // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
-  // assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
-  // lzc #(`XLEN) lzcA (PosA, zeroCntA);
-  // lzc #(`XLEN) lzcB (PosB, zeroCntB);
-
-  // ***can probably merge X LZC with conversion
-  // cout the number of leading zeros
-  lzc #(`NF+1) lzcA (XManE, XZeroCnt);
-  lzc #(`NF+1) lzcB (YManE, YZeroCnt);
-
-  // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
-  // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
-
-  // assign PreprocA = ExtraA << zeroCntA;
-  // assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XManE[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
-  assign PreprocY = {YManE[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
-
-  
-  assign X = Int ? PreprocA : PreprocX;
-  assign Dpreproc = Int ? PreprocB : PreprocY;
-  // assign intExp = zeroCntB - zeroCntA + 1;
-  // assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
-endmodule
-
 ///////////////////////////////////
 // On-The-Fly Converter, Radix 2 //
 ///////////////////////////////////
 module otfc4 (
   input  logic         clk,
   input  logic         DivStart,
+  input  logic         DivBusy,
   input  logic [3:0]   q,
   output logic [`DIVLEN+2:0] Quot
 );
@@ -307,7 +215,7 @@ module otfc4 (
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`DIVLEN+3) Qmux(QNext, {`DIVLEN+3{1'b0}}, DivStart, QMux);
   mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, DivStart, QMMux);
-  flop #(`DIVLEN+3) Qreg(clk, QMux, Quot); // *** have to connect Quot directly to M stage
+  flopen #(`DIVLEN+3) Qreg(clk, DivBusy|DivStart, QMux, Quot); // *** have to connect Quot directly to M stage
   flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   // shift Q (quotent) and QM (quotent-1)
@@ -361,23 +269,44 @@ module csa #(parameter N=69) (
   // bit, leaving room in the least significant bit to 
   // insert cin.
 
-  assign #1 out1 = in1 ^ in2 ^ in3;
-  assign #1 out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
+  assign out1 = in1 ^ in2 ^ in3;
+  assign out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
 		    (in2[N-2:0] & in3[N-2:0]), cin};
 endmodule
 
-
-//////////////
-// expcalc  //
-//////////////
 module expcalc(
-  input logic  [`NE-1:0] XExpE, YExpE,
-  input logic XZeroE,
-  input logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic [`NE+1:0] DivCalcExp
-);
+  input logic  [`FMTBITS-1:0] FmtE,
+  input  logic [`NE-1:0] XExpE, YExpE,
+  input logic XZeroE, 
+  input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  output logic  [`NE+1:0] DivCalcExp
+  );
+    logic [`NE-2:0] Bias;
+    
+    if (`FPSIZES == 1) begin
+        assign Bias = (`NE-1)'(`BIAS); 
 
-  // correct exponent for denormalized input's normalization shifts
-  assign DivCalcExp = (XExpE - XZeroCnt - YExpE + YZeroCnt + (`NE)'(`BIAS))&{`NE+2{~XZeroE}};
+    end else if (`FPSIZES == 2) begin
+        assign Bias = FmtE ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
 
-endmodule
+    end else if (`FPSIZES == 3) begin
+        always_comb
+            case (FmtE)
+                `FMT: Bias  =  (`NE-1)'(`BIAS);
+                `FMT1: Bias = (`NE-1)'(`BIAS1);
+                `FMT2: Bias = (`NE-1)'(`BIAS2);
+                default: Bias = 'x;
+            endcase
+
+    end else if (`FPSIZES == 4) begin        
+        always_comb
+            case (FmtE)
+                2'h3: Bias =  (`NE-1)'(`Q_BIAS);
+                2'h1: Bias =  (`NE-1)'(`D_BIAS);
+                2'h0: Bias =  (`NE-1)'(`S_BIAS);
+                2'h2: Bias =  (`NE-1)'(`H_BIAS);
+            endcase
+    end
+    // correct exponent for denormalized input's normalization shifts
+    assign DivCalcExp = ({2'b0, XExpE} - {{`NE+1-$clog2(`NF+2){1'b0}}, XZeroCnt} - {2'b0, YExpE} + {{`NE+1-$clog2(`NF+2){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZeroE}};
+    endmodule

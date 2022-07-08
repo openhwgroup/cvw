@@ -62,9 +62,20 @@ module testbench;
   // `define mema  255:192
 
   // FLOAT TEST SIZES
+<<<<<<< Updated upstream
   `define memr  63:0 
   `define memb  127:64
   `define mema  191:128
+=======
+  // `define memr  63:0 
+  // `define memb  127:64
+  // `define mema  191:128
+
+  // SQRT TEST SIZES 
+  `define memr  63:0 
+  `define mema  127:64
+  `define memb  191:128
+>>>>>>> Stashed changes
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
@@ -75,7 +86,13 @@ module testbench;
   logic        rsign;
   integer testnum, errors;
 
+<<<<<<< Updated upstream
   assign Int = 1'b0;
+=======
+  // Equip Int test or Sqrt test
+  assign Int = 1'b0;
+  assign Sqrt = 1'b1;
+>>>>>>> Stashed changes
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -84,7 +101,11 @@ module testbench;
                 .XSign(asign), .YSign(bsign), .rsign,
                 .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA(a), .SrcB(b), .Fmt(2'b00), 
+<<<<<<< Updated upstream
                 .W64(1'b1), .Signed(1'b0), .Int, .Sqrt(1'b0), 
+=======
+                .W64(1'b1), .Signed(1'b0), .Int, .Sqrt, 
+>>>>>>> Stashed changes
                 .Quot, .Rem(), .Flags(), .done);
 
   // Counter
@@ -104,7 +125,11 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
+<<<<<<< Updated upstream
       $readmemh ("testvectors", Tests);
+=======
+      $readmemh ("sqrttestvectors", Tests);
+>>>>>>> Stashed changes
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
@@ -118,12 +143,11 @@ module testbench;
   
   // Apply directed test vectors read from file.
 
-  always @(posedge clk)
-    begin
-      r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
-      rInt = Quot;
-      if (done) begin
-        if (~Int) begin
+  always @(posedge clk) begin
+    r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
+    rInt = Quot;
+    if (done) begin
+      if (~Int & ~Sqrt) begin
         req <= #5 1;
         diffp = correctr[51:0] - r;
         diffn = r - correctr[51:0];
@@ -139,24 +163,45 @@ module testbench;
             $display("%d Tests completed successfully", testnum);
             $stop;
           end
-        end else begin
-          req <= #5 1;
-          diffp = correctr[63:0] - rInt;
-          diffn = rInt - correctr[63:0];
-          if (($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
-            begin
-              errors = errors+1;
-              $display("result was %h, should be %h %h %h\n", rInt, correctr, diffn, diffp);
-              $display("failed\n");
-              $stop;
-            end
-        if (afrac === 52'hxxxxxxxxxxxxx)
+      end else if (~Sqrt) begin
+        req <= #5 1;
+        diffp = correctr[63:0] - rInt;
+        diffn = rInt - correctr[63:0];
+        if (($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
           begin
-            $display("%d Tests completed successfully", testnum);
+            errors = errors+1;
+            $display("result was %h, should be %h %h %h\n", rInt, correctr, diffn, diffp);
+            $display("failed\n");
             $stop;
           end
-	      end
+        if (afrac === 52'hxxxxxxxxxxxxx)
+        begin
+          $display("%d Tests completed successfully", testnum);
+          $stop;
+        end
+      end else begin 
+        req <= #5 1;
+        diffp = correctr[51:0] - r;
+        diffn = r - correctr[51:0];
+<<<<<<< Updated upstream
+        if (($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
+          begin
+            errors = errors + 1;
+            $display("result was %h, should be %h %h %h\n", rSqrt, correctr, diffn, diffp);
+=======
+        if (rExp !== correctr[62:52]) // check if accurate to 1 ulp
+          begin
+            errors = errors + 1;
+            $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
+>>>>>>> Stashed changes
+            $display("failed\n");
+            $stop;
+          end
+        if (afrac === 52'hxxxxxxxxxxxxx) begin 
+          $display("%d Tests completed successfully", testnum);
+          $stop; end 
       end
+    end
     if (req) begin
       req <= #5 0;
       correctr = nextr;
@@ -169,7 +214,6 @@ module testbench;
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
     end
-    end
- 
+  end
 endmodule
  
