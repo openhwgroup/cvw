@@ -55,6 +55,7 @@ logic [3:0] dummy;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
+  logic [`XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
   logic [2:0]       HSIZE;
   logic [2:0]       HBURST;
@@ -154,7 +155,7 @@ logic [3:0] dummy;
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
-                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 

@@ -19,7 +19,7 @@
 
 /* Prototypes */
 
-void output(FILE *fptr, double a, double r);
+void output(FILE *fptr, int aExp, double aFrac, int rExp, double rFrac);
 void printhex(FILE *fptr, double x);
 double random_input(void);
 
@@ -28,12 +28,20 @@ double random_input(void);
 void main(void)
 {
   FILE *fptr;
-  double a, b, r;
-  double list[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
+  double aFrac, rFrac;
+  int    aExp,  rExp;
+  double mans[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
 			  1.75, 1.875, 1.99999,
 			  1.1, 1.2, 1.01, 1.001, 1.0001,
+<<<<<<< Updated upstream
 			  1/1.1, 1/1.5, 1/1.25, 1/1.125};
-  int i, j;
+=======
+			  2/1.1, 2/1.5, 2/1.25, 2/1.125};
+>>>>>>> Stashed changes
+  double exps[ENTRIES] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+        11, 12, 13, 14, 15, 16};
+  int i;
+  int bias = 1023;
 
   if ((fptr = fopen("sqrttestvectors","w")) == NULL) {
     fprintf(stderr, "Couldn't write sqrttestvectors file\n");
@@ -41,28 +49,31 @@ void main(void)
   }
 
   for (i=0; i<ENTRIES; i++) {
-    a = list[i];
-    r = sqrt(a);
-    output(fptr, a, r);
+    aFrac = mans[i];
+    aExp  = exps[i] + bias;
+    rFrac = sqrt(aFrac * pow(2, aExp - bias));
+    rExp  = (int) (log(rFrac)/log(2) + bias);
+    output(fptr, aExp, aFrac, rExp, rFrac);
   }
   
-  for (i = 0; i< RANDOM_VECS; i++) {
-    a = random_input();
-    r = sqrt(a);
-    output(fptr, a, r);
-  }
+  // for (i = 0; i< RANDOM_VECS; i++) {
+  //   a = random_input();
+  //   r = sqrt(a);
+  //   output(fptr, a, r);
+  // }
 
   fclose(fptr);
 }
 
 /* Functions */
 
-void output(FILE *fptr, double a, double r)
+void output(FILE *fptr, int aExp, double aFrac, int rExp, double rFrac)
 {
- printf("sqrt(%lf) = %lf\n", a, r);
-  printhex(fptr, a);
+  fprintf(fptr, "%03x", aExp);
+  printhex(fptr, aFrac);
   fprintf(fptr, "_");
-  printhex(fptr, r);
+  fprintf(fptr, "%03x", rExp);
+  printhex(fptr, rFrac);
   fprintf(fptr, "\n");
 
 

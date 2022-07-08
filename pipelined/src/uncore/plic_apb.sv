@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// plic.sv
+// plic_apb.sv
 //
 // Written: bbracker@hmc.edu 18 January 2021
 // Modified: 
@@ -35,7 +35,6 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
 `include "wally-config.vh"
 
 `define N `PLIC_NUM_SRC
@@ -47,21 +46,31 @@
 // number of conexts
 // hardcoded to 2 contexts for now; *** later upgrade to arbitrary (up to 15872) contexts
 
-module plic (
-  input  logic             HCLK, HRESETn,
+module plic_apb (
+  input  logic             PCLK, PRESETn,
+  input  logic             PSEL,
+  input  logic [27:0]      PADDR, 
+  input  logic [`XLEN-1:0] PWDATA,
+  input  logic [`XLEN/8-1:0] PSTRB,
+  input  logic             PWRITE,
+  input  logic             PENABLE,
+  output logic [`XLEN-1:0] PRDATA,
+  output logic             PREADY,
+/*
+  input  logic             PCLK, PRESETn,
   input  logic             HSELPLIC,
-  input  logic [27:0]      HADDR, // *** could factor out entryd into HADDRd at the level of uncore
+  input  logic [27:0]      HADDR, // *** could factor out entry into HADDRd at the level of uncore
   input  logic             HWRITE,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] PRDATA,
+  output logic             HRESPPLIC, HREADYPLIC, */
   input  logic             UARTIntr,GPIOIntr,
-  output logic [`XLEN-1:0] HREADPLIC,
-  output logic             HRESPPLIC, HREADYPLIC,
     (* mark_debug = "true" *)  output logic             MExtInt, SExtInt);
 
   logic memwrite, memread, initTrans;
-  logic [23:0] entry, entryd;
+  logic [23:0] entry;
   logic [31:0] Din, Dout;
 
   // context-independent signals
@@ -82,31 +91,36 @@ module plic (
   // =======
   // AHB I/O
   // =======
-  assign entry = {HADDR[23:2],2'b0};
+
+  assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
+  assign memread  = ~PWRITE & PSEL;  // read at start of access phase.  PENABLE hasn't set up before this
+  assign PREADY = 1'b1; // PLIC never takes >1 cycle to respond
+  assign entry = {PADDR[23:2],2'b0};
+  /*
   assign initTrans = HREADY & HSELPLIC & (HTRANS != 2'b00);
   assign memread = initTrans & ~HWRITE;
   // entryd and memwrite are delayed by a cycle because AHB controller waits a cycle before outputting write data
-  flopr #(1) memwriteflop(HCLK, ~HRESETn, initTrans & HWRITE, memwrite);
-  flopr #(24) entrydflop(HCLK, ~HRESETn, entry, entryd);
+  flopr #(1) memwriteflop(PCLK, ~HRESETn, initTrans & HWRITE, memwrite);
+  flopr #(24) entrydflop(PCLK, ~PRESETn, entry, entryd);
   assign HRESPPLIC = 0; // OK
-  assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond
+  assign HREADYPLIC = 1'b1; // PLIC never takes >1 cycle to respond */
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
   if (`XLEN == 64) begin
-    assign Din       = entryd[2] ? HWDATA[63:32] : HWDATA[31:0];
-    assign HREADPLIC = entryd[2] ? {Dout,32'b0}  : {32'b0,Dout};
+    assign Din    = entry[2] ? PWDATA[63:32] : PWDATA[31:0];
+    assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
-    assign HREADPLIC = Dout;
-    assign Din       = HWDATA[31:0];
+    assign PRDATA = Dout;
+    assign Din    = PWDATA[31:0];
   end
 
   // ==================
   // Register Interface
   // ==================
-  always @(posedge HCLK,negedge HRESETn) begin
+  always @(posedge PCLK,negedge PRESETn) begin
     // resetting
-    if (~HRESETn) begin
+    if (~PRESETn) begin
       intPriority   <= #1 {`N{3'b0}};
       intEn         <= #1 {2{`N'b0}};
       intThreshold  <= #1 {2{3'b0}};
@@ -114,8 +128,8 @@ module plic (
     // writing
     end else begin
       if (memwrite)
-        casez(entryd)
-          24'h0000??: intPriority[entryd[7:2]] <= #1 Din[2:0];
+        casez(entry)
+          24'h0000??: intPriority[entry[7:2]] <= #1 Din[2:0];
           `ifdef PLIC_NUM_SRC_LT_32 // *** switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
           24'h002000: intEn[0][`N:1] <= #1 Din[`N:1];
           24'h002080: intEn[1][`N:1] <= #1 Din[`N:1];
@@ -131,7 +145,7 @@ module plic (
           24'h201000: intThreshold[1] <= #1 Din[2:0];
           24'h201004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
-      // reading
+      // Read synchronously because a read can have side effect of changing intInProgress
       if (memread)
         casez(entry)
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};
@@ -160,9 +174,8 @@ module plic (
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
-      else
-        Dout <= #1 32'h0;
-    end
+      else Dout <= #1 32'h0;
+   end
   end
 
   // connect sources to requests
@@ -179,7 +192,7 @@ module plic (
   // pending interrupt requests
   //assign nextIntPending = (intPending | requests) & ~intInProgress; // 
   assign nextIntPending = requests; // DH: RT made this change May 2022, but it seems to be a bug to not consider intInProgress; see May 23, 2022 slack discussion
-  flopr #(`N) intPendingFlop(HCLK,~HRESETn,nextIntPending,intPending);
+  flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 
   // context-dependent signals
   genvar ctx;
@@ -258,4 +271,3 @@ module plic (
   assign SExtInt = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
 
-*/
