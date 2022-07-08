@@ -29,16 +29,16 @@
 `include "wally-config.vh"
 
 module roundsign(
-    input logic         PSgnM, ZSgnEffM,
-    input logic         InvZM,
+    input logic         FmaPs, FmaAs,
+    input logic         FmaInvA,
     input logic         Xs,
     input logic         Ys,
-    input logic         NegSumM,
+    input logic         FmaNegSum,
     input logic         FmaOp,
     input logic         DivOp,
     input logic         CvtOp,
-    input logic         CvtResSgnM,
-    output logic        RoundSgn
+    input logic         CvtCs,
+    output logic        Nsgn
 );
 
     logic FmaResSgnTmp;
@@ -48,13 +48,13 @@ module roundsign(
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign FmaResSgnTmp = NegSumM^PSgnM; //*** move to execute stage
+    assign FmaResSgnTmp = FmaNegSum^FmaPs; //*** move to execute stage
 
-    // assign FmaResSgnTmp = InvZM&(ZSgnEffM)&NegSumM | InvZM&PSgnM&~NegSumM | (ZSgnEffM&PSgnM);
+    // assign FmaResSgnTmp = FmaInvA&(FmaAs)&FmaNegSum | FmaInvA&FmaPs&~FmaNegSum | (FmaAs&FmaPs);
 
     assign DivSgn = Xs^Ys;
 
     // Sign for rounding calulation
-    assign RoundSgn = (FmaResSgnTmp&FmaOp) | (CvtResSgnM&CvtOp) | (DivSgn&DivOp);
+    assign Nsgn = (FmaResSgnTmp&FmaOp) | (CvtCs&CvtOp) | (DivSgn&DivOp);
 
 endmodule
