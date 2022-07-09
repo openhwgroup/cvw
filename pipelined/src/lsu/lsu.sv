@@ -58,7 +58,7 @@ module lsu (
    input logic              sfencevmaM,
    // fpu
    input logic [`FLEN-1:0]  FWriteDataM,
-   input logic              FLoad2,
+   input logic              FStore2,
    input logic              FpLoadStoreM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
@@ -236,14 +236,14 @@ module lsu (
     
     if(CACHE_ENABLED) begin : dcache
       if (`LLEN>`FLEN)
-        mux2 #(`LLEN) datamux({(`LLEN-`XLEN)'(0), IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
+        mux2 #(`LLEN) datamux({{`LLEN-`XLEN{1'b0}}, IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
       else
-        assign FinalWriteDataM[`XLEN-1:0] = IEUWriteDataM;
+        assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount, .FLoad2,
+        .ByteMask(ByteMaskM), .WordCount, .FStore2,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 

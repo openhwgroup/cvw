@@ -42,7 +42,7 @@ module fpu (
   input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FpLoadStoreM, // Fp load instruction?
-  output logic              FLoad2,
+  output logic              FStore2,
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
@@ -298,8 +298,8 @@ module fpu (
       assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
    end else begin
       logic [`FLEN-1:0] FWriteDataE;
-      if(`FMTBITS == 2) assign FLoad2 = FmtM == `FMT;
-      else assign FLoad2 = FmtM;
+      if(`FMTBITS == 2) assign FStore2 = FmtM == `FMT;
+      else assign FStore2 = FmtM;
 
       if (`FPSIZES==1) assign FWriteDataE = FSrcYE;
       else if (`FPSIZES==2) assign FWriteDataE = FmtE ? FSrcYE : {2{FSrcYE[`LEN1-1:0]}};
