@@ -56,6 +56,7 @@ set vhdlout_show_unconnected_pins "true"
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
+set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
 elaborate $my_toplevel -lib WORK 

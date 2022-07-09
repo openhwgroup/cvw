@@ -109,9 +109,9 @@ endif
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 	rm -rf $(OUTPUTDIR)/hdl
 	rm -rf $(OUTPUTDIR)/WORK
+	rm -rf $(OUTPUTDIR)/alib-52
 
 clean:
-	rm -rf  alib-52 analyzed
 	rm -f default.svf
 	rm -f command.log
 	rm -f filenames*.log
