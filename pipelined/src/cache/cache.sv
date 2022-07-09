@@ -43,7 +43,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic [`PA_BITS-1:0]  PAdr, // physical address
   input logic [(`XLEN-1)/8:0] ByteMask,
   input logic [WORDLEN-1:0]     FinalWriteData,
-  input logic                        FLoad2,
+  input logic                        FStore2,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
@@ -121,7 +121,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask, .FLoad2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask, .FStore2,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
