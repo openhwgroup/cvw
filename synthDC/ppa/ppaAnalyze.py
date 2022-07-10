@@ -8,9 +8,11 @@ import re
 from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
+import matplotlib as mpl
 import numpy as np
 from collections import namedtuple
 import sklearn.metrics as skm
+import os
 
 def synthsfromcsv(filename):
     Synth = namedtuple("Synth", "module tech width freq delay area lpower denergy")
@@ -518,8 +520,8 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
         if no freq specified, uses the synthesis with best achievable delay for each width
         overlays data from both techs
     '''
-    plt.rcParams["figure.figsize"] = (7,3.46)
-    fig, axs = plt.subplots(2, 2)
+    with mpl.rc_context({"figure.figsize": (7,3.46)}):
+        fig, axs = plt.subplots(2, 2)
 
     arr = [['delay', 'area'], ['lpower', 'denergy']]
 
@@ -555,6 +557,8 @@ def plotPPA(mod, freq=None, norm=True, aleOpt=False):
     # plt.show()
 
 def makeLineLegend():
+    ''' generates legend to accompany normalized plots
+    '''
     plt.rcParams["figure.figsize"] = (5.5,0.3)
     fig = plt.figure()
     fullLeg = [lines.Line2D([0], [0], color='black', label='fastest', linestyle='-')]
@@ -619,6 +623,8 @@ def muxPlot(fits='clsgn', norm=True):
     plt.savefig('./plots/mux.png')
 
 def stdDevError():
+    ''' calculates std deviation and error for paper-writing purposes
+    '''
     for var in ['delay', 'area', 'lpower', 'denergy']:
         errlist = []
         for module in modules:
@@ -668,6 +674,30 @@ def stdDevError():
 
         print(var, ' ', avgErr, ' ', stdv)
 
+def makePlotDirectory():
+    ''' creates plots directory in same level as this script to store plots in
+    '''
+    current_directory = os.getcwd()
+    final_directory = os.path.join(current_directory, 'plots')
+    if not os.path.exists(final_directory):
+        os.makedirs(final_directory)
+    os.chdir(final_directory)
+
+    for folder in ['freqBuckshot', 'normalized', 'unnormalized']:
+        new_directory = os.path.join(final_directory, folder)
+        if not os.path.exists(new_directory):
+            os.makedirs(new_directory)
+        os.chdir(new_directory)
+        if 'freq' in folder:
+            for tech in ['sky90', 'tsmc28']:
+                for mod in modules:
+                    tech_directory = os.path.join(new_directory, tech)
+                    mod_directory = os.path.join(tech_directory, mod)
+                    if not os.path.exists(mod_directory):
+                        os.makedirs(mod_directory)
+                os.chdir('..')
+    
+    os.chdir(current_directory)
     
 if __name__ == '__main__':
     ##############################
@@ -686,26 +716,22 @@ if __name__ == '__main__':
     ##############################
 
     # cleanup() # run to remove garbage synth runs
-    # synthsintocsv() # slow, run only when new synth runs to add to csv
+    synthsintocsv() # slow, run only when new synth runs to add to csv
   
     allSynths = synthsfromcsv('ppaData.csv') # your csv here!
     bestSynths = csvOfBest('bestSynths.csv')
+    makePlotDirectory()
 
-    # ### function examples
-    # squareAreaDelay('sky90', 'add', 32)
-    # oneMetricPlot('mult', 'lpower')
-    # freqPlot('sky90', 'mux4', 16)
-    # plotBestAreas('add')
+    # ### other functions
     # makeCoefTable()
     # makeEqTable()
-    # makeLineLegend()
     # muxPlot()
     # stdDevError()
 
     for mod in modules:
-        plotPPA(mod, norm=False)
-        plotPPA(mod, aleOpt=True)
         for w in widths:
             freqPlot('sky90', mod, w)
             freqPlot('tsmc28', mod, w)
+        plotPPA(mod, norm=False)
+        plotPPA(mod, aleOpt=True)
         plt.close('all')
