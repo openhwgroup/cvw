@@ -14,7 +14,7 @@ def mask(command):
     subprocess.Popen(command, shell=True)
 
 def freshStart():
-    out = subprocess.check_output(['bash','-c', 'make clean'])
+    out = subprocess.check_output(['bash','-c', 'make fresh'])
     for x in out.decode("utf-8").split('\n')[:-1]:
         print(x)
     return
