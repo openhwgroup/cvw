@@ -8,12 +8,13 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
 	$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
-PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=rv$(XLEN)im -static -falign-functions=16 \
+ARCH := rv$(XLEN)im
+PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 	-mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-3-series -O3 -funroll-all-loops -finline-functions -falign-jumps=4 \
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
 	-funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fipa-pta \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
-	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1
+	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DXLEN=$(XLEN)
 
 # flags that cause build errors mcmodel=medlow
 
