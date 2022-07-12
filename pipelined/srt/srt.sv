@@ -229,7 +229,7 @@ module otfc2 #(parameter N=64) (
   logic [N+1:0] QR, QMR;
 
   flopr #(N+3) Qreg(clk, Start, QNext, Q);
-  mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, Start, QMMux);
+  mux2 #(`DIVLEN+3) Qmux(QMNext, {`DIVLEN+3{1'b1}}, Start, QMMux);
   flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   always_comb begin
@@ -254,11 +254,35 @@ endmodule
 // Square Root OTFC, Radix 2 //
 ///////////////////////////////
 module softc2(
-  input  logic clk,
-  input  logic Start,
-  input  logic sp, sn,
-  output logic S,
+  input  logic         clk,
+  input  logic         Start,
+  input  logic         sp, sn,
+  input  logic [N+3:0] C,
+  output logic [N-1:0] Sq,
 );
+
+
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  logic [N+2:0] S, SM, SNext, SMNext, SMMux;
+
+  flopr #(N+3) Sreg(clk, Start, SNext, S);
+  mux2 #(`DIVLEN+3) Smux(SMNext, {`DIVLEN+3{1'b1}}, Start, SMMux);
+  flop #(`DIVLEN+3) SMreg(clk, SMMux, SM);
+
+  always_comb begin
+    if (sp) begin
+      SNext  = S | ((C << 2) & ~(C << 1));
+      SMNext = S;
+    end else if (sn) begin
+      SNext  = SM | ((C << 2) & ~(C << 1));
+      SMNext = SM;
+    end else begin        // If sp and sn are not true, then sz is
+      SNext  = S;
+      SMNext = SM | ((C << 2) & ~(C << 1));
+    end 
+  end
+  assign Sq = S[N+2] ? S[N+1:2] : S[N:1];
 
 endmodule
 /////////////
