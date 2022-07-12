@@ -82,7 +82,7 @@ module testbench;
 
   // Equip Int test or Sqrt test
   assign Int = 1'b0;
-  assign Sqrt = 1'b1;
+  assign Sqrt = 1'b0;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -111,7 +111,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("sqrttestvectors", Tests);
+      $readmemh ("testvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
