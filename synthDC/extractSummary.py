@@ -7,10 +7,10 @@ import subprocess
 from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
-from wallySynth import testFreq
 import numpy as np
 from ppa.ppaAnalyze import noOutliers
 from matplotlib import ticker
+import argparse
 
 
 def synthsintocsv():
@@ -74,14 +74,13 @@ def synthsfromcsv(filename):
             allSynths[i] = Synth(*allSynths[i])
     return allSynths
 
-
 def freqPlot(tech, width, config):
     ''' plots delay, area for syntheses with specified tech, module, width
     '''
 
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
-        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & (oneSynth.special == ''):
+        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('' == oneSynth.special):
             ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
@@ -124,74 +123,93 @@ def freqPlot(tech, width, config):
     addFO4axis(fig, ax1, tech)
 
     plt.savefig('./plots/wally/freqSweep_' + tech + '_' + width + config + '.png')
-    # plt.show()
 
 
+def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
 
-def areaDelay(tech, fig=None, ax=None, freq=None, width=None, config=None, norm=False):
-    delays, areas, labels = ([] for i in range(3))
+    plt.subplots_adjust(left=0.18)
 
-    for oneSynth in allSynths:
-        if (width==None) or (width == oneSynth.width):
-            if (tech == oneSynth.tech) & (freq == oneSynth.freq):
-                if (config == None) & (oneSynth.special == 'FPUoff'): #fix
-                    delays += [oneSynth.delay]
-                    areas += [oneSynth.area]
-                    labels += [oneSynth.width + oneSynth.config]
-                elif (config != None) & (oneSynth.config == config):
-                    delays += [oneSynth.delay]
-                    areas += [oneSynth.area]
-                    labels += [oneSynth.special]
-    if width == None:
-        width = ''
-    if (fig == None) or (ax == None):
-        fig, (ax) = plt.subplots(1, 1)
-        ax.ticklabel_format(useOffset=False, style='plain')
-        plt.subplots_adjust(left=0.18)
+    fo4 = techdict[tech].fo4
+    add32area = techdict[tech].add32area
+    marker = techdict[tech].shape
+    color = techdict[tech].color
 
     if norm:
-        delays = [d/techdict[tech][0] for d in delays]
-        areas = [a/techdict[tech][1] for a in areas]
+        delays = [d/fo4 for d in delays]
+        areas = [a/add32area for a in areas]
     
-    plt.scatter(delays, areas)
+    plt.scatter(delays, areas, marker=marker, color=color)
     plt.xlabel('Cycle time (ns)')
     plt.ylabel('Area (sq microns)')
     ytop = ax.get_ylim()[1]
     plt.ylim(ymin=0, ymax=1.1*ytop)
-    titleStr = tech + ' ' + width
-    saveStr = tech + '_' + width
-    if config: 
-        titleStr += config
-        saveStr = saveStr + config + '_versions_'
-    if (config == None): 
-        saveStr = saveStr + '_origConfigs_'
-    saveStr += str(freq)
-    titleStr = titleStr
-    plt.title(titleStr)
     
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:,.0f}'))
 
     for i in range(len(labels)):
         plt.annotate(labels[i], (delays[i], areas[i]), textcoords="offset points", xytext=(0,10), ha='center')
 
-    # addFO4axis(fig, ax1, tech)
-    
-    plt.savefig('./plots/wally/areaDelay_' + saveStr + '.png')
+    return fig
 
-def normAreaDelay():
-    fig2, (ax) = plt.subplots(1, 1)
-    areaDelay('sky90', fig=fig2, ax=ax, freq=testFreq[0], norm=True)
-    areaDelay('tsmc28', fig=fig2, ax=ax, freq=testFreq[1], norm=True)
+def plotFeatures(tech, width, config):
+    delays, areas, labels = ([] for i in range(3))
+    freq = techdict[tech].targfreq
+    for oneSynth in allSynths:
+        if (tech == oneSynth.tech) & (freq == oneSynth.freq):
+            if (oneSynth.config == config) & (width == oneSynth.width):
+                delays += [oneSynth.delay]
+                areas += [oneSynth.area]
+                labels += [oneSynth.special]
+
+    fig, (ax) = plt.subplots(1, 1)
+
+    fig = areaDelay(tech, delays, areas, labels, fig, ax)
+
+    titlestr = tech+'_'+width+config
+    plt.title(titlestr)
+    plt.savefig('./plots/wally/features_'+titlestr+'.png')
+    
+def plotConfigs(tech, special=''):
+    delays, areas, labels = ([] for i in range(3))
+    freq = techdict[tech].targfreq
+    for oneSynth in allSynths:
+        if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.special == special):
+                delays += [oneSynth.delay]
+                areas += [oneSynth.area]
+                labels += [oneSynth.width + oneSynth.config]
+
+    fig, (ax) = plt.subplots(1, 1)
+
+    fig = areaDelay(tech, delays, areas, labels, fig, ax)
+
+    titleStr = tech+'_'+special
+    plt.title(titleStr)
+    plt.savefig('./plots/wally/configs_' + titleStr + '.png')
+
+
+def normAreaDelay(special=''):
+    fig, (ax) = plt.subplots(1, 1)
+    fullLeg = []
+    for tech in list(techdict.keys()):
+        delays, areas, labels = ([] for i in range(3))
+        spec = techdict[tech]
+        freq = spec.targfreq
+        for oneSynth in allSynths:
+            if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.special == special):
+                    delays += [oneSynth.delay]
+                    areas += [oneSynth.area]
+                    labels += [oneSynth.width + oneSynth.config]
+        areaDelay(tech, delays, areas, labels, fig, ax, norm=True)
+        fullLeg += [lines.Line2D([0], [0], markerfacecolor=spec.color, label=tech, marker=spec.shape, markersize=10, color='w')]
+
     ax.set_title('Normalized Area & Cycle Time by Configuration')
     ax.set_xlabel('Cycle Time (FO4)')
-    ax.set_ylabel('Area (add32)')
-    fullLeg = [lines.Line2D([0], [0], color='royalblue', label='tsmc28')]
-    fullLeg += [lines.Line2D([0], [0], color='orange', label='sky90')]
+    ax.set_ylabel('Area (add32)')        
     ax.legend(handles = fullLeg, loc='upper left')
     plt.savefig('./plots/wally/normAreaDelay.png')
     
 def addFO4axis(fig, ax, tech):
-    fo4 = techdict[tech][0]
+    fo4 = techdict[tech].fo4
 
     ax3 = fig.add_axes((0.125,0.14,0.775,0.0))
     ax3.yaxis.set_visible(False) # hide the yaxis
@@ -215,15 +233,22 @@ def addFO4axis(fig, ax, tech):
 
 if __name__ == '__main__':
 
-    techdict = {'sky90': [43.2e-3, 1440.600027], 'tsmc28': [12.2e-3, 209.286002]}
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-s", "--skyfreq", type=int, default=3000, help = "Target frequency used for sky90 syntheses")
+    parser.add_argument("-t", "--tsmcfreq", type=int, default=10000, help = "Target frequency used for tsmc28 syntheses")
+    args = parser.parse_args()
 
-    # synthsintocsv()
+    TechSpec = namedtuple("TechSpec", "color shape targfreq fo4 add32area add32lpower add32denergy")
+    techdict = {}
+    techdict['sky90'] = TechSpec('green', 'o', args.skyfreq, 43.2e-3, 1440.600027, 714.057, 0.658023)
+    techdict['tsmc28'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
+
+    synthsintocsv()
     synthsfromcsv('Summary.csv')
     freqPlot('tsmc28', 'rv32', 'e')
     freqPlot('sky90', 'rv32', 'e')
-    areaDelay('tsmc28', freq=testFreq[1], width= 'rv64', config='gc')
-    areaDelay('sky90', freq=testFreq[0], width='rv64', config='gc')
-    areaDelay('tsmc28', freq=testFreq[1])
-    areaDelay('sky90', freq=testFreq[0])
-
-    # normAreaDelay()
+    plotFeatures('sky90', 'rv64', 'gc')
+    plotFeatures('tsmc28', 'rv64', 'gc')
+    plotConfigs('sky90', special='orig')
+    plotConfigs('tsmc28', special='orig')
+    normAreaDelay(special='orig')

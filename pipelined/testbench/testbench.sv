@@ -123,6 +123,7 @@ logic [3:0] dummy;
         "wally32priv":                    tests = wally32priv;
         "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
+        "coremark":                       tests = coremark;
       endcase
     end
     if (tests.size() == 0) begin
