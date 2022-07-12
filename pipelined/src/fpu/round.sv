@@ -57,7 +57,7 @@ module round(
     input logic                     DivSticky,             // sticky bit
     input logic                     DivNegSticky,
     output logic                    UfPlus1,  // do you add or subtract on from the result
-    output logic [`NE+1:0]          FullResExp,      // Re with bits to determine sign and overflow
+    output logic [`NE+1:0]          FullRe,      // Re with bits to determine sign and overflow
     output logic [`NF-1:0]          Rf,         // Result fraction
     output logic [`NE-1:0]          Re,          // Result exponent
     output logic                    S,             // sticky bit
@@ -344,8 +344,8 @@ module round(
 
     // round the result
     //      - if the fraction overflows one should be added to the exponent
-    assign {FullResExp, Rf} = {Nexp, RoundFrac} + RoundAdd;
-    assign Re = FullResExp[`NE-1:0];
+    assign {FullRe, Rf} = {Nexp, RoundFrac} + RoundAdd;
+    assign Re = FullRe[`NE-1:0];
 
 
 endmodule

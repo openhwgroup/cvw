@@ -40,8 +40,8 @@ module srtfsm(
   input  logic DivStart, 
   input logic StallE,
   input logic StallM,
-  input  logic [$clog2(`DIVLEN/2+3)-1:0] Dur,
-  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
+  input  logic [`DURLEN-1:0] Dur,
+  output logic [`DURLEN-1:0] EarlyTermShiftE,
   output logic DivStickyE,
   output logic DivDone,
   output logic DivNegStickyE,
@@ -51,7 +51,7 @@ module srtfsm(
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
-  logic [$clog2(`DIVLEN/2+3)-1:0] step;
+  logic [`DURLEN-1:0] step;
   logic WZero;
   //logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
   logic [`DIVLEN+3:0] W;
@@ -63,7 +63,7 @@ module srtfsm(
   assign DivDone = (state == DONE);
   assign W = WC+WS;
   assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???
-  assign EarlyTermShiftDiv2E = step;
+  assign EarlyTermShiftE = step;
 
   always_ff @(posedge clk) begin
       if (reset) begin
@@ -73,7 +73,7 @@ module srtfsm(
           if (XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE) state <= #1 DONE;
           else         state <= #1 BUSY;
       end else if (state == BUSY) begin
-          if ((~|step[$clog2(`DIVLEN/2+3)-1:1]&step[0])|WZero) begin
+          if ((~|step[`DURLEN-1:1]&step[0])|WZero) begin
               state <= #1 DONE;
           end
           step <= step - 1;

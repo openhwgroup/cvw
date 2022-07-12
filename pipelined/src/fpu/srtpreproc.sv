@@ -35,7 +35,7 @@ module srtpreproc (
   output logic [`DIVLEN-1:0] X,
   output logic [`DIVLEN-1:0] Dpreproc,
   output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic [$clog2(`DIVLEN/2+3)-1:0] Dur
+  output logic [`DURLEN-1:0] Dur
 );
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
@@ -63,10 +63,20 @@ module srtpreproc (
   
   assign X = PreprocX;
   assign Dpreproc = PreprocY;
-
-  assign Dur = ($clog2(`DIVLEN/2+3))'(`DIVLEN/2+2);
+  
+  assign Dur = (`DURLEN)'($rtoi(`FPDUR));
   // assign intExp = zeroCntB - zeroCntA + 1;
   // assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
+
+  //           radix 2     radix 4
+  // 1 copies  DIVLEN+2    DIVLEN+2/2
+  // 2 copies  DIVLEN+2/2  DIVLEN+2/2*2
+  // 4 copies  DIVLEN+2/4  DIVLEN+2/2*4
+  // 8 copies  DIVLEN+2/8  DIVLEN+2/2*8
+
+  // DIVRESLEN = DIVLEN or DIVLEN+2
+  // r = 1 or 2
+  // DIVRESLEN/(r*`DIVCOPIES)
 
 
 endmodule

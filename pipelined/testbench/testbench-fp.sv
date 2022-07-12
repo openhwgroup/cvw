@@ -80,9 +80,9 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVLEN+2:0] Quot;
+	logic [`QLEN-1:0] Quot;
   logic CvtResDenormUfE;
-  logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2;
+  logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
   logic [`DIVLEN-1:0]    DivX;
@@ -90,7 +90,7 @@ module testbenchfp;
   logic [`DIVLEN+3:0]  WSN, WS;
   logic [`DIVLEN+3:0]  WCN, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
+  logic [`DURLEN-1:0] Dur;
 
   // in-between FMA signals
   logic                 Mult;
@@ -686,8 +686,8 @@ module testbenchfp;
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlg(Flg), .W(FpRes), .FCvtIntRes(IntRes));
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
             .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
@@ -697,8 +697,8 @@ module testbenchfp;
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
   srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
   srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .WS, .WC, .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
+                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
+  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
                 .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
 
   assign CmpFlg[3:0] = 0;
