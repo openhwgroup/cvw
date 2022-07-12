@@ -92,10 +92,10 @@ module srt (
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
   
   // If only implementing division, use divide otfc
-  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
+  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
   // otherwise use sotfc
-  creg              sotfcC(clk, Start, C);
-  sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot);
+  // creg              sotfcC(clk, Start, C);
+  // sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot);
 
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
@@ -272,7 +272,7 @@ module sotfc2(
 
   flopr #(`DIVLEN+4) Sreg(clk, Start, SMNext, SM);
   mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, (`DIVLEN){1'b0}}, Start, SMux);
-  flop #(`DIVLEN+4) SMreg(clk, SMux, M);
+  flop #(`DIVLEN+4) SMreg(clk, SMux, S);
 
   always_comb begin
     if (sp) begin
