@@ -144,7 +144,7 @@ module srtpreproc (
   assign DivX = Int ? PreprocA : PreprocX;
   assign SqrtX = XExp[0] ? {4'b0000, SrcXFrac, 1'b0} : {5'b11111, SrcXFrac};
 
-  assign X = Sqrt ? {SqrtX, {(`EXTRAINTBITS-1){1'b0}}} : {4'b0001, DivX};
+  assign X = Sqrt ? {SqrtX, {(`EXTRAFRACBITS-1){1'b0}}} : {4'b0001, DivX};
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
   assign intExp = zeroCntB - zeroCntA + 1;
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
