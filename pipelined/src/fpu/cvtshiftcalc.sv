@@ -1,14 +1,42 @@
+///////////////////////////////////////////
+//
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
+//
+// Purpose: Conversion shift calculation
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// MIT LICENSE
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+// software and associated documentation files (the "Software"), to deal in the Software 
+// without restriction, including without limitation the rights to use, copy, modify, merge, 
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in all copies or 
+//   substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//   OR OTHER DEALINGS IN THE SOFTWARE.
+////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 module cvtshiftcalc(
-    input logic                    XZeroM,
+    input logic                    XZero,
     input logic                    ToInt,
     input logic                    IntToFp,
-    input logic  [`NE:0]           CvtCalcExpM,    // the calculated expoent
-    input logic  [`NF:0]           XManM,          // input mantissas
+    input logic  [`NE:0]           CvtCe,    // the calculated expoent
+    input logic  [`NF:0]           Xm,          // input mantissas
     input logic     [`FMTBITS-1:0]  OutFmt,       // output format
-    input logic  [`CVTLEN-1:0]      CvtLzcInM,      // input to the Leading Zero Counter (priority encoder)
-    input logic CvtResDenormUfM,
+    input logic  [`CVTLEN-1:0]      CvtLzcIn,      // input to the Leading Zero Counter (priority encoder)
+    input logic CvtResDenormUf,
     output logic CvtResUf,
     output logic [`CVTLEN+`NF:0]    CvtShiftIn    // number to be shifted
 );
@@ -32,9 +60,9 @@ module cvtshiftcalc(
     //          - otherwise:
     //              |     LzcInM      | 0's if nessisary | 
     // change to int shift to the left one
-    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, XManM[`NF]&~CvtCalcExpM[`NE], XManM[`NF-1]|(CvtCalcExpM[`NE]&XManM[`NF]), XManM[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
-                     CvtResDenormUfM ? {{`NF-1{1'b0}}, XManM, {`CVTLEN-`NF+1{1'b0}}} : 
-                                   {CvtLzcInM, {`NF+1{1'b0}}};
+    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, Xm[`NF]&~CvtCe[`NE], Xm[`NF-1]|(CvtCe[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
+                     CvtResDenormUf ? {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}} : 
+                                   {CvtLzcIn, {`NF+1{1'b0}}};
     
     
     // choose the negative of the fraction size
@@ -65,6 +93,6 @@ module cvtshiftcalc(
     // determine if the result underflows ??? -> fp
     //      - if the first 1 is shifted out of the result then the result underflows
     //      - can't underflow an integer to fp conversions
-    assign CvtResUf = ($signed(CvtCalcExpM) < $signed({{`NE-$clog2(`NF){1'b1}}, ResNegNF}))&~XZeroM&~IntToFp;
+    assign CvtResUf = ($signed(CvtCe) < $signed({{`NE-$clog2(`NF){1'b1}}, ResNegNF}))&~XZero&~IntToFp;
    
 endmodule

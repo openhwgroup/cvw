@@ -1,4 +1,31 @@
-
+///////////////////////////////////////////
+//
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
+//
+// Purpose: Testbench for Testfloat
+// 
+// A component of the Wally configurable RISC-V project.
+// 
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+//
+// MIT LICENSE
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+// software and associated documentation files (the "Software"), to deal in the Software 
+// without restriction, including without limitation the rights to use, copy, modify, merge, 
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// to whom the Software is furnished to do so, subject to the following conditions:
+//
+//   The above copyright notice and this permission notice shall be included in all copies or 
+//   substantial portions of the Software.
+//
+//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
+//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
+//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
+//   OR OTHER DEALINGS IN THE SOFTWARE.
+////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 `include "tests-fp.vh"
 
@@ -49,28 +76,35 @@ module testbenchfp;
   logic                 XZero, YZero, ZZero;                // is the input zero
   logic                 XExpMax, YExpMax, ZExpMax;         // is the input's exponent all ones  
   logic  [`CVTLEN-1:0]      CvtLzcInE;      // input to the Leading Zero Counter (priority encoder)
-  logic        IntZeroE;
+  logic        IntZero;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVLEN+2:0] Quot;
+	logic [`QLEN-1:0] Quot;
   logic CvtResDenormUfE;
-  logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2;
-  logic DivStart, DivDone;
-  
+  logic [`DURLEN-1:0] EarlyTermShift;
+  logic DivStart, DivBusy;
+  logic reset = 1'b0;
+  logic [`DIVLEN-1:0]    DivX;
+  logic [`DIVLEN-1:0]  Dpreproc;
+  logic [`DIVLEN+3:0]  WSN, WS;
+  logic [`DIVLEN+3:0]  WCN, WC;
+  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
+  logic [`DURLEN-1:0] Dur;
 
   // in-between FMA signals
   logic                 Mult;
   logic [`NE+1:0]	      Pe;
-  logic 				        AddendStickyE;
-  logic 					      KillProdE; 
-  logic [$clog2(3*`NF+7)-1:0]	FmaNormCntE;
+  logic 				        ZmSticky;
+  logic 					      KillProd; 
+  logic [$clog2(3*`NF+7)-1:0]	NCnt;
   logic [3*`NF+5:0]	    Sm;       
-  logic 			          InvZE;
-  logic 			          NegSumE;
-  logic 			          ZSgnEffE;
+  logic 			          InvA;
+  logic 			          NegSum;
+  logic 			          As;
   logic 			          Ps;
   logic       DivSticky;
+  logic       DivDone;
   logic       DivNegSticky;
   logic [`NE+1:0] DivCalcExp;
 
@@ -638,33 +672,35 @@ module testbenchfp;
 
   // instantiate devices under test
   fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
-              .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan),
-              .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-              .FOpCtrlE(OpCtrlVal), .FmtE(ModFmt), .Sm, .NegSumE, .InvA(InvZE), .FmaNormCntE, .ZSgnEffE, .Ps,
-              .Pe, .AddendStickyE, .KillProdE); 
+          .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
+          .Xm(XMan), .Ym(YMan), .Zm(ZMan),
+          .XZero, .YZero, .ZZero,
+          .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
+          .Pe, .ZmSticky, .KillProd); 
               
-  postprocess postprocess(.XSgnM(XSgn), .YSgnM(YSgn), .PostProcSelM(UnitVal[1:0]),
-              .ZExpM(ZExp),  .ZDenormM(ZDenorm), .FOpCtrlM(OpCtrlVal), .Quot, .DivCalcExpM(DivCalcExp),
-              .XManM(XMan), .YManM(YMan), .ZManM(ZMan), .CvtCalcExpM(CvtCalcExpE), .DivStickyM(DivSticky),
-              .XNaNM(XNaN), .YNaNM(YNaN), .ZNaNM(ZNaN), .CvtResDenormUfM(CvtResDenormUfE), .DivNegStickyM(DivNegSticky),
-              .XZeroM(XZero), .YZeroM(YZero), .ZZeroM(ZZero), .CvtShiftAmtM(CvtShiftAmtE),
-              .XInfM(XInf), .YInfM(YInf), .ZInfM(ZInf), .CvtResSgnM(CvtResSgnE), .FWriteIntM(WriteIntVal),
-              .XSNaNM(XSNaN), .YSNaNM(YSNaN), .ZSNaNM(ZSNaN), .CvtLzcInM(CvtLzcInE), .IntZeroM(IntZeroE),
-              .KillProdM(KillProdE), .AddendStickyM(AddendStickyE), .ProdExpM(Pe), 
-              .SumM(Sm), .NegSumM(NegSumE), .InvZM(InvZE), .FmaNormCntM(FmaNormCntE), .EarlyTermShiftDiv2M(EarlyTermShiftDiv2), .ZSgnEffM(ZSgnEffE), .PSgnM(Ps), .FmtM(ModFmt), .FrmM(FrmVal), 
-              .PostProcFlgM(Flg), .PostProcResM(FpRes), .FCvtIntResM(IntRes));
+  postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
+              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE), .DivNegSticky,
+              .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
+              .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+              .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+              .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
-  fcvt fcvt (.XSgnE(XSgn), .XExpE(XExp), .XManE(XMan), .ForwardedSrcAE(SrcA), .FWriteIntE(WriteIntVal), 
-            .XZeroE(XZero), .XDenormE(XDenorm), .FOpCtrlE(OpCtrlVal), .IntZeroE,
-            .FmtE(ModFmt), .CvtCalcExpE, .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .CvtLzcInE);
+  fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
+            .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
+            .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtradix4 srtradix4(.clk, .DivStart, .XExpE(XExp), .YExpE(YExp), .DivCalcExpE(DivCalcExp), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky),
-                .XManE(XMan), .YManE(YMan), .SrcA('0), .SrcB('0), .W64(1'b0), .Signed(1'b0), .Int(1'b0), .Sqrt(OpCtrlVal[0]), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2), .DivDone, .Quot, .Rem());
-                
+  srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
+  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
+                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
+  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
+                .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
+
   assign CmpFlg[3:0] = 0;
 
   // produce clock
@@ -818,15 +854,7 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&((UnitVal !== `DIVUNIT))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
-      errors += 1;
-      $display("There is an error in %s", Tests[TestNum]);
-      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-      $stop;
-    end
-
-  // division
-    else if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(~DivStart&DivDone)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~(DivBusy|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -849,7 +877,7 @@ end
       $stop;
     end
 
-    if((~DivStart&DivDone)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
+    if(~(DivBusy|DivStart)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
 
     if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the end of file
 
@@ -930,7 +958,7 @@ module readvectors (
             end
             Ans = TestVector[8+(`Q_LEN-1):8];
           end
-          2'b01:	begin	  // double
+          2'b01:	if (`D_SUPPORTED)begin	  // double
             if(OpCtrl === `FMA_OPCTRL) begin
               X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+4*(`D_LEN)-1:8+3*(`D_LEN)]};
               Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
@@ -945,7 +973,7 @@ module readvectors (
             end
             Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
           end
-          2'b00:	begin	  // single
+          2'b00:	if (`S_SUPPORTED)begin	  // single
             if(OpCtrl === `FMA_OPCTRL) begin
               X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+4*(`S_LEN)-1:8+3*(`S_LEN)]};
               Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
@@ -986,7 +1014,7 @@ module readvectors (
             DivStart = 1'b1; #10 // one clk cycle
             DivStart = 1'b0;
           end
-          2'b01:	begin	  // double
+          2'b01:	if (`D_SUPPORTED)begin	  // double
             X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
             Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
             Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
@@ -994,7 +1022,7 @@ module readvectors (
             DivStart = 1'b1; #10
             DivStart = 1'b0;
           end
-          2'b00:	begin	  // single
+          2'b00:	if (`S_SUPPORTED)begin	  // single
             X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
             Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
             Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
@@ -1018,12 +1046,12 @@ module readvectors (
             Y = TestVector[12+(`Q_LEN)-1:12];
             Ans = TestVector[8];
           end
-          2'b01:	begin	  // double
+          2'b01:	if (`D_SUPPORTED)begin	  // double
             X = {{`FLEN-`D_LEN{1'b1}}, TestVector[12+2*(`D_LEN)-1:12+(`D_LEN)]};
             Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[12+(`D_LEN)-1:12]};
             Ans = TestVector[8];
           end
-          2'b00:	begin	  // single
+          2'b00:	if (`S_SUPPORTED)begin	  // single
             X = {{`FLEN-`S_LEN{1'b1}}, TestVector[12+2*(`S_LEN)-1:12+(`S_LEN)]};
             Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[12+(`S_LEN)-1:12]};
             Ans = TestVector[8];
@@ -1042,7 +1070,7 @@ module readvectors (
               X = {TestVector[8+`Q_LEN+`Q_LEN-1:8+(`Q_LEN)]};
               Ans = TestVector[8+(`Q_LEN-1):8];
             end
-            2'b01:	begin	  // double
+            2'b01:	if (`D_SUPPORTED)begin	  // double
               X = {TestVector[8+`Q_LEN+`D_LEN-1:8+(`D_LEN)]};
               Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
             end
@@ -1056,7 +1084,7 @@ module readvectors (
             end
           endcase
           end
-          2'b01:	begin	  // double
+          2'b01:	if (`D_SUPPORTED)begin	  // double
           case (OpCtrl[1:0])
             2'b11: begin       // quad
               X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+`D_LEN+`Q_LEN-1:8+(`Q_LEN)]};
@@ -1076,13 +1104,13 @@ module readvectors (
             end
           endcase
           end
-          2'b00:	begin	  // single
+          2'b00:	if (`S_SUPPORTED)begin	  // single
           case (OpCtrl[1:0])
             2'b11: begin       // quad
               X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`Q_LEN-1:8+(`Q_LEN)]};
               Ans = TestVector[8+(`Q_LEN-1):8];
             end
-            2'b01:	begin	  // double
+            2'b01:	if (`D_SUPPORTED)begin	  // double
               X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+`S_LEN+`D_LEN-1:8+(`D_LEN)]};
               Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
             end
@@ -1102,11 +1130,11 @@ module readvectors (
               X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`Q_LEN-1:8+(`Q_LEN)]};
               Ans = TestVector[8+(`Q_LEN-1):8];
             end
-            2'b01:	begin	  // double
+            2'b01:	if (`D_SUPPORTED)begin	  // double
               X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`D_LEN-1:8+(`D_LEN)]};
               Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
             end
-            2'b00:	begin	  // single
+            2'b00:	if (`S_SUPPORTED)begin	  // single
               X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+`H_LEN+`S_LEN-1:8+(`S_LEN)]};
               Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
             end
@@ -1146,7 +1174,7 @@ module readvectors (
               end
             endcase
           end
-          2'b01:	begin	  // double
+          2'b01:	if (`D_SUPPORTED)begin	  // double
             //     {Int->Fp?, is the integer a long}
             casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> double
@@ -1172,7 +1200,7 @@ module readvectors (
               end
             endcase
           end
-          2'b00:	begin	  // single
+          2'b00:	if (`S_SUPPORTED)begin	  // single
             //     {is the integer a long,     is the opperation to an integer}
             casex ({OpCtrl[2:1]})
               2'b11: begin       // long -> single
