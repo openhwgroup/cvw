@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module srtradix4 (
+module srtradix4(
   input  logic clk,
   input  logic DivStart, 
   input  logic DivBusy, 
@@ -40,20 +40,29 @@ module srtradix4 (
   input logic [`DIVLEN-1:0] X,
   input logic [`DIVLEN-1:0] Dpreproc,
   input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic [`DIVLEN+2:0] Quot,
+  output logic [`QLEN-1:0] Quot,
   output logic [`DIVLEN+3:0]  WSN, WCN,
-  output logic [`DIVLEN+3:0]  WS, WC,
+  output logic [`DIVLEN+3:0]  FirstWS, FirstWC,
   output logic  [`NE+1:0] DivCalcExpM,
   output logic [`XLEN-1:0] Rem
 );
 
-  logic [3:0]     q;
-  logic [`DIVLEN+3:0]  WSA;
-  logic [`DIVLEN+3:0]  WCA;
-  logic [`DIVLEN+3:0]  D, DBar, D2, DBar2, Dsel;
+
+ /* verilator lint_off UNOPTFLAT */
+  logic [`DIVLEN+3:0]  WSA[`DIVCOPIES-1:0];
+  logic [`DIVLEN+3:0]  WCA[`DIVCOPIES-1:0];
+  logic [`DIVLEN+3:0]  WS[`DIVCOPIES-1:0];
+  logic [`DIVLEN+3:0]  WC[`DIVCOPIES-1:0];
+  logic [`QLEN-1:0] Q[`DIVCOPIES-1:0];
+  logic [`QLEN-1:0] QM[`DIVCOPIES-1:0];
+  logic [`QLEN-1:0] QNext[`DIVCOPIES-1:0];
+  logic [`QLEN-1:0] QMNext[`DIVCOPIES-1:0];
+ /* verilator lint_on UNOPTFLAT */
+  logic [`DIVLEN+3:0]  D, DBar, D2, DBar2;
   logic [`NE+1:0] DivCalcExp;
   logic [$clog2(`XLEN+1)-1:0] intExp;
   logic           intSign;
+  logic [`QLEN-1:0] QMux, QMMux;
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -63,47 +72,43 @@ module srtradix4 (
   //  - otherwise load WSA into the flipflop
   //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
   //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
-  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+1:0], 2'b0}, {3'b000, ~XZeroE, X}, DivStart, WSN);
-  flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
-  mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
-  flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0}, {3'b000, ~XZeroE, X}, DivStart, WSN);
+  flop   #(`DIVLEN+4) wsflop(clk, WSN, WS[0]);
+  mux2   #(`DIVLEN+4) wcmux({WCA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
+  flop   #(`DIVLEN+4) wcflop(clk, WCN, WC[0]);
   flopen #(`DIVLEN+4) dflop(clk, DivStart, {4'b0001, Dpreproc}, D);
   flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpM);
 
-  // Quotient Selection logic
-  // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  // *** change this for radix 4 - generate w/ stine code
-  // q encoding:
-	// 1000 = +2
-	// 0100 = +1
-	// 0000 =  0
-	// 0010 = -1
-	// 0001 = -2
-  qsel4 qsel4(.D, .WS, .WC, .q);
 
-  // Divisor Selection logic
-  // *** radix 4 change to choose -2 to 2
+  // Divisor Selections
   // - choose the negitive version of what's being selected
   assign DBar = ~D;
   assign DBar2 = {~D[`DIVLEN+2:0], 1'b1};
   assign D2 = {D[`DIVLEN+2:0], 1'b0};
 
-  always_comb
-    case (q)
-      4'b1000: Dsel = DBar2;
-      4'b0100: Dsel = DBar;
-      4'b0000: Dsel = {(`DIVLEN+4){1'b0}};
-      4'b0010: Dsel = D;
-      4'b0001: Dsel = D2;
-      default: Dsel = {`DIVLEN+4{1'bx}};
-    endcase
+  genvar i;
+  generate
+    for(i=0; i<`DIVCOPIES; i++) begin
+      divinteration divinteration(.clk, .DivStart, .DivBusy, .D, .DBar, .D2, .DBar2, 
+      .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]));
+      if(i<3) begin 
+        assign WS[i+1] = {WSA[i][`DIVLEN+1:0], 2'b0};
+        assign WC[i+1] = {WCA[i][`DIVLEN+1:0], 2'b0};
+        assign Q[i+1] = QNext[i];
+        assign QM[i+1] = QMNext[i];
+      end
+    end
+  endgenerate
 
-  // Partial Product Generation
-  //  WSA, WCA = WS + WC - qD
-  csa    #(`DIVLEN+4) csa(WS, WC, Dsel, |q[3:2], WSA, WCA);
-  
-  //*** change for radix 4
-  otfc4 otfc4(.clk, .DivStart, .DivBusy, .q, .Quot);
+  // if starting a new divison set Q to 0 and QM to -1
+  mux2 #(`QLEN) Qmux(QNext[`DIVCOPIES-1], {`QLEN{1'b0}}, DivStart, QMux);
+  mux2 #(`QLEN) QMmux(QMNext[`DIVCOPIES-1], {`QLEN{1'b1}}, DivStart, QMMux);
+  flopen #(`QLEN) Qreg(clk, DivBusy|DivStart, QMux, Q[0]); // *** have to connect Quot directly to M stage
+  flop #(`QLEN) QMreg(clk, QMMux, QM[0]);
+
+  assign Quot = Q[0];
+  assign FirstWS = WS[0];
+  assign FirstWC = WC[0];
 
   expcalc expcalc(.FmtE, .XExpE, .YExpE, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
 
@@ -113,7 +118,50 @@ endmodule
 // Submodules //
 ////////////////
 
+ /* verilator lint_off UNOPTFLAT */
+module divinteration (
+  input logic clk,
+  input logic DivStart,
+  input logic DivBusy,
+  input logic [`DIVLEN+3:0] D,
+  input logic [`DIVLEN+3:0]  DBar, D2, DBar2,
+  input logic [`QLEN-1:0] Q, QM,
+  input logic [`DIVLEN+3:0]  WS, WC,
+  output logic [`QLEN-1:0] QNext, QMNext, 
+  output logic [`DIVLEN+3:0]  WSA, WCA
+);
+ /* verilator lint_on UNOPTFLAT */
 
+  logic [`DIVLEN+3:0]  Dsel;
+  logic [3:0]     q;
+
+  // Quotient Selection logic
+  // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
+  // q encoding:
+	// 1000 = +2
+	// 0100 = +1
+	// 0000 =  0
+	// 0010 = -1
+	// 0001 = -2
+  qsel4 qsel4(.D, .WS, .WC, .q);
+
+  always_comb
+    case (q)
+      4'b1000: Dsel = DBar2;
+      4'b0100: Dsel = DBar;
+      4'b0000: Dsel = {`DIVLEN+4{1'b0}};
+      4'b0010: Dsel = D;
+      4'b0001: Dsel = D2;
+      default: Dsel = {`DIVLEN+4{1'bx}};
+    endcase
+
+  // Partial Product Generation
+  //  WSA, WCA = WS + WC - qD
+  csa    #(`DIVLEN+4) csa(WS, WC, Dsel, |q[3:2], WSA, WCA);
+
+  otfc4 otfc4(.clk, .DivStart, .DivBusy, .q, .Q, .QM, .QNext, .QMNext);
+
+endmodule
 
 module qsel4 (
 	input logic [`DIVLEN+3:0] D,
@@ -195,7 +243,8 @@ module otfc4 (
   input  logic         DivStart,
   input  logic         DivBusy,
   input  logic [3:0]   q,
-  output logic [`DIVLEN+2:0] Quot
+  input logic [`QLEN-1:0] Q, QM,
+  output logic [`QLEN-1:0] QNext, QMNext
 );
 
   //  The on-the-fly converter transfers the quotient 
@@ -207,16 +256,11 @@ module otfc4 (
   //
   //  QM is Q-1. It allows us to write negative bits 
   //  without using a costly CPA. 
-  logic [`DIVLEN+2:0] QM, QNext, QMNext, QMux, QMMux;
+
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
-  logic [`DIVLEN:0] QR, QMR;
-  // if starting a new divison set Q to 0 and QM to -1
-  mux2 #(`DIVLEN+3) Qmux(QNext, {`DIVLEN+3{1'b0}}, DivStart, QMux);
-  mux2 #(`DIVLEN+3) QMmux(QMNext, {`DIVLEN+3{1'b1}}, DivStart, QMMux);
-  flopen #(`DIVLEN+3) Qreg(clk, DivBusy|DivStart, QMux, Quot); // *** have to connect Quot directly to M stage
-  flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
+  logic [`QLEN-3:0] QR, QMR;
 
   // shift Q (quotent) and QM (quotent-1)
 		// if 	q = 2  	    Q = {Q, 10} 	QM = {Q, 01}		
@@ -227,8 +271,8 @@ module otfc4 (
     // *** how does the 0 concatination numbers work?
 
   always_comb begin
-    QR  = Quot[`DIVLEN:0];
-    QMR = QM[`DIVLEN:0];     // Shift Q and QM
+    QR  = Q[`QLEN-3:0];
+    QMR = QM[`QLEN-3:0];     // Shift Q and QM
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
       QMNext = {QR,  2'b01};

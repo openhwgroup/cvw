@@ -35,7 +35,7 @@ module resultsign(
     input logic         InfIn,
     input logic         FmaOp,
     input logic [`NE+1:0] FmaSe,
-    input logic         FmaSmZero,
+    input logic         FmaSZero,
     input logic         Mult,
     input logic         R,
     input logic         S,
@@ -61,6 +61,6 @@ module resultsign(
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
     assign InfSgn = ZInf ? FmaAs : FmaPs;
-    assign Ws = InfIn&FmaOp ? InfSgn : FmaSmZero&FmaOp ? ZeroSgn : Nsgn;
+    assign Ws = InfIn&FmaOp ? InfSgn : FmaSZero&FmaOp ? ZeroSgn : Nsgn;
 
 endmodule

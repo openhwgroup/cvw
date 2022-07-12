@@ -54,12 +54,12 @@ module postprocess(
     input logic                             FmaInvA,      // do you invert Z
     input logic  [$clog2(3*`NF+7)-1:0]      FmaNCnt,   // the normalization shift count
     //divide signals
-    input logic  [$clog2(`DIVLEN/2+3)-1:0]  DivEarlyTermShiftDiv2,
+    input logic  [`DURLEN-1:0]              DivEarlyTermShift,
     input logic                             DivSticky,
     input logic                             DivNegSticky,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivCalcExp,
-    input logic  [`DIVLEN+2:0]              Quot,
+    input logic  [`QLEN-1:0]                Quot,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
@@ -69,7 +69,7 @@ module postprocess(
     input logic  [`CVTLEN-1:0]              CvtLzcIn,      // input to the Leading Zero Counter (priority encoder)
     input logic                             IntZero,         // is the input zero
     // final results
-    output logic [`FLEN-1:0]                W,    // FMA final result
+    output logic [`FLEN-1:0]                PostProcRes,    // FMA final result
     output logic [4:0]                      PostProcFlg,
     output logic [`XLEN-1:0]                FCvtIntRes    // the int conversion result
     );
@@ -81,7 +81,7 @@ module postprocess(
     logic Nsgn;
     logic [`NE+1:0] Nexp;
     logic [`CORRSHIFTSZ-1:0] Nfrac; // corectly shifted fraction
-    logic [`NE+1:0] FullResExp;  // Re with bits to determine sign and overflow
+    logic [`NE+1:0] FullRe;  // Re with bits to determine sign and overflow
     logic S;           // S bit
     logic UfPlus1;                    // do you add one (for determining underflow flag)
     logic R;   // bits needed to determine rounding
@@ -95,7 +95,7 @@ module postprocess(
     logic [`FMTBITS-1:0] OutFmt;
     // fma signals
     logic [`NE+1:0] FmaSe;     // exponent of the normalized sum
-    logic FmaSmZero;        // is the sum zero
+    logic FmaSZero;        // is the sum zero
     logic [3*`NF+8:0] FmaShiftIn;        // shift input
     logic [`NE+1:0] FmaConvNormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
@@ -153,8 +153,8 @@ module postprocess(
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .FmaConvNormSumExp,
-                          .ZDenorm, .FmaSmZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .DivCalcExp, .Quot, .DivEarlyTermShiftDiv2, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+                          .ZDenorm, .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .DivCalcExp, .Quot, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
@@ -185,7 +185,7 @@ module postprocess(
 
     lzacorrection lzacorrection(.FmaOp, .FmaKillProd, .FmaPreResultDenorm, .FmaConvNormSumExp,
                                 .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExp,
-                                .DivCorrExp, .FmaSmZero, .Shifted, .FmaSe, .Nfrac);
+                                .DivCorrExp, .FmaSZero, .Shifted, .FmaSe, .Nfrac);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -204,14 +204,14 @@ module postprocess(
     round round(.OutFmt, .Frm, .S, .FmaZmSticky, .ZZero, .Plus1, .PostProcSel, .CvtCe, .DivCorrExp,
                 .FmaInvA, .Nsgn, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Nfrac, .ToInt,  .CvtResUf,
                 .DivSticky, .DivNegSticky, .DivDone,
-                .DivOp, .UfPlus1, .FullResExp, .Rf, .Re, .R, .RoundAdd, .UfLSBRes, .Nexp);
+                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .RoundAdd, .UfLSBRes, .Nexp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
     resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaSe, .R, .S,
-                          .FmaOp, .ZInf, .InfIn, .FmaSmZero, .Mult, .Nsgn, .Ws);
+                          .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Nsgn, .Ws);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -220,7 +220,7 @@ module postprocess(
     flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
                 .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
                 .XNaN, .YNaN, .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
-                .UfLSBRes, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullResExp, .Plus1,
+                .UfLSBRes, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
                 .Nexp, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -228,10 +228,10 @@ module postprocess(
     ///////////////////////////////////////////////////////////////////////////////
 
     negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
-    resultselect resultselect(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
+    specialcase specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
         .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
         .XInf, .YInf, .DivOp,
-        .DivByZero, .FullResExp, .CvtCe, .Ws, .Re, .Rf, .W, .FCvtIntRes);
+        .DivByZero, .FullRe, .CvtCe, .Ws, .Re, .Rf, .PostProcRes, .FCvtIntRes);
 
 endmodule

@@ -125,12 +125,12 @@ module fpu (
    logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
    
    //divide signals
-   logic [`DIVLEN+2:0] QuotE, QuotM;
+   logic [`QLEN-1:0] QuotM;
    logic [`NE+1:0] DivCalcExpE, DivCalcExpM; 
    logic DivNegStickyE, DivNegStickyM;
    logic DivStickyE, DivStickyM;
    logic DivDoneM;
-   logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E, EarlyTermShiftDiv2M;
+   logic [`DURLEN-1:0] EarlyTermShiftM;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -289,7 +289,7 @@ module fpu (
    divsqrt divsqrt(.clk, .reset, .FmtE, .XManE, .YManE, .XExpE, .YExpE, 
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(FDivStartE), 
                   .StallE, .StallM, .DivStickyM, .DivNegStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
-                  .EarlyTermShiftDiv2M, .QuotM, .DivDone(DivDoneM));
+                  .EarlyTermShiftM, .QuotM, .DivDone(DivDoneM));
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpFpResE, .CmpIntResE);
@@ -381,12 +381,12 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2M),
+   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShift(EarlyTermShiftM),
                            .FmaZmSticky(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .Quot(QuotM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivCalcExp(DivCalcExpM), .DivDone(DivDoneM),
                            .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM), .DivNegSticky(DivNegStickyM),
                            .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivSticky(DivStickyM),
-                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .W(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
+                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
    // FPU flag selection - to privileged
    mux2  #(5)  FPUFlgMux ({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
