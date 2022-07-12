@@ -235,8 +235,8 @@ module lsu (
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     
     if(CACHE_ENABLED) begin : dcache
-      if (`LLEN>`FLEN)
-        mux2 #(`LLEN) datamux({{`LLEN-`XLEN{1'b0}}, IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
+      if (`LLEN>`XLEN)
+        mux2 #(`LLEN) datamux({IEUWriteDataM, IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
       else
         assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
