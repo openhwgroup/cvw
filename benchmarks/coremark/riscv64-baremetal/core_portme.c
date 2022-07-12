@@ -196,10 +196,13 @@ void stop_time(void) {
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
 	unsigned long instructions = minstretDiff();
-	ee_printf("   Called get_time\n");
+	long long cm100 = 1000000000 / elapsed;  // coremark score * 100
+	long long cpi100 = elapsed*100/instructions; // CPI * 100
+	ee_printf("   WALLY CoreMark Results (from get_time)\n");
 	ee_printf("    Elapsed MTIME: %u\n", elapsed);
 	ee_printf("    Elapsed MINSTRET: %lu\n", instructions);
-	ee_printf("    CPI: %lu / %lu\n", elapsed, instructions); 
+	ee_printf("    COREMARK/MHz Score: 10,000,000 / %lu = %d.%02d \n", elapsed, cm100/100, cm100%100);
+	ee_printf("    CPI: %lu / %lu = %d.%02d\n", elapsed, instructions, cpi100/100, cpi100%100); 
 	return elapsed;
 }
 /* Function: time_in_secs

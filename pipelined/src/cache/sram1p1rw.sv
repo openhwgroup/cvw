@@ -53,13 +53,14 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
 
    if (`USE_SRAM == 1) begin
     // 64 x 128-bit SRAM
+    // check if the size is ok, complain if not***
     logic [WIDTH-1:0] BitWriteMask;
     for (index=0; index < WIDTH; index++) 
       assign BitWriteMask[index] = ByteMask[index/8];
     TS1N28HPCPSVTB64X128M4SWBASO sram(
-      .SLP(1'b0), .SD(1'b0), .CLK(clk), .CEB(1'b0), .WEB(~WriteEnable),
-      .CEBM(1'b0), .WEBM(1'b0), .AWT(1'b0), .A(Adr), .D(CacheWriteData), 
-      .BWEB(~BitWriteMask), .AM('b0), .DM('b0), .BWEBM('b0), .BIST(1'b0), .Q(ReadData)
+      .CLK(clk), .CEB(1'b0), .WEB(~WriteEnable),
+      .A(Adr), .D(CacheWriteData), 
+      .BWEB(~BitWriteMask), .Q(ReadData)
     );
 
   end else begin 

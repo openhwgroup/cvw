@@ -95,11 +95,21 @@
 
 // largest length in IEU/FPU
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
 `define NORMSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+9))
 `define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
+
+// division constants
+`define RADIX 4
+`define DIVCOPIES 4
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF))
+`define DIVRESLEN ((`NF>`XLEN) ? `DIVLEN+2 : `DIVLEN)
+`define LOGR ((`RADIX==2) ? 1 : 2)
+`define FPDUR $ceil($itor(`DIVRESLEN)/$itor(`LOGR*`DIVCOPIES))
+`define DURLEN ($clog2($rtoi(`FPDUR)+1))
+`define QLEN ($rtoi(`FPDUR)*`LOGR*`DIVCOPIES)
+
 
 `define USE_SRAM 0
 
