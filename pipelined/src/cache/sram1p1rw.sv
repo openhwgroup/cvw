@@ -53,6 +53,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
 
    if (`USE_SRAM == 1) begin
     // 64 x 128-bit SRAM
+    // check if the size is ok, complain if not***
     logic [WIDTH-1:0] BitWriteMask;
     for (index=0; index < WIDTH; index++) 
       assign BitWriteMask[index] = ByteMask[index/8];

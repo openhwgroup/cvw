@@ -105,6 +105,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
+  // *** instantiate one larger RAM, not one per RAM.  Expand byte mask
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),

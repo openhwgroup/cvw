@@ -93,11 +93,7 @@ module srt (
   
   otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
 
-<<<<<<< Updated upstream
-  expcalc expcalc(.XExp, .YExp, .calcExp);
-=======
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
->>>>>>> Stashed changes
 
   signcalc signcalc(.XSign, .YSign, .calcSign);
 endmodule
@@ -187,6 +183,26 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign #1 qm = magnitude & sign;
 endmodule
 
+////////////////////////////////////
+// Adder Input Selection, Radix 2 //
+////////////////////////////////////
+module fsel2 (
+  input  logic sp, sn,
+  input  logic [`DIVLEN+3:0] C, S, SM,
+  output logic [`DIVLEN+3:0] F
+);
+  logic [`DIVLEN+3:0] FP, FN;
+  
+  // Generate for both positive and negative bits
+  assign FP = ~S & C;
+  assign FN = SM | (C & (~C << 2));
+
+  // Choose which adder input will be used
+
+  assign F = sp ? FP : (sn ? FN : (`DIVLEN+4){1'b0});
+
+endmodule
+
 ///////////////////////////////////
 // On-The-Fly Converter, Radix 2 //
 ///////////////////////////////////
@@ -234,6 +250,17 @@ module otfc2 #(parameter N=64) (
 
 endmodule
 
+///////////////////////////////
+// Square Root OTFC, Radix 2 //
+///////////////////////////////
+module softc2(
+  input  logic clk,
+  input  logic Start,
+  input  logic sp, sn,
+  output logic S,
+);
+
+endmodule
 /////////////
 // counter //
 /////////////
@@ -301,13 +328,6 @@ endmodule
 // expcalc  //
 //////////////
 module expcalc(
-<<<<<<< Updated upstream
-  input logic  [`NE-1:0] XExp, YExp,
-  output logic [`NE-1:0] calcExp
-);
-
-  assign calcExp = XExp - YExp + (`NE)'(`BIAS);
-=======
   input  logic [`NE-1:0] XExp, YExp,
   input  logic           Sqrt,
   output logic [`NE-1:0] calcExp
@@ -317,7 +337,6 @@ module expcalc(
   assign SExp  = {1'b0, SXExp[`NE-1:1]} + (`NE)'(`BIAS);
   assign DExp  = XExp - YExp + (`NE)'(`BIAS);
   assign calcExp = Sqrt ? SExp : DExp;
->>>>>>> Stashed changes
 
 endmodule
 
