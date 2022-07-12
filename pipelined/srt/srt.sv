@@ -54,13 +54,13 @@ module srt (
   output logic [3:0] Flags
 );
 
-  logic           qp, qz, qm; // quotient is +1, 0, or -1
-  logic [`NE-1:0] calcExp;
-  logic           calcSign;
-  logic [`DIVLEN+3:0]  X, Dpreproc;
-  logic [`DIVLEN+3:0]  WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
+  logic                       qp, qz, qm; // quotient is +1, 0, or -1
+  logic [`NE-1:0]             calcExp;
+  logic                       calcSign;
+  logic [`DIVLEN+3:0]         X, Dpreproc, C;
+  logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
-  logic           intSign;
+  logic                       intSign;
  
   srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
 
@@ -91,7 +91,11 @@ module srt (
   // Partial Product Generation
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
   
-  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
+  // If only implementing division, use divide otfc
+  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
+  // otherwise use sotfc
+  creg              sotfcC(clk, Start, C);
+  sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot);
 
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
@@ -138,9 +142,9 @@ module srtpreproc (
   assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
 
   assign DivX = Int ? PreprocA : PreprocX;
-  assign SqrtX = {XExp[0] ? 4'b0000 : 4'b1111, SrcXFrac};
+  assign SqrtX = XExp[0] ? {4'b0000, SrcXFrac, 1'b0} : {5'b11111, SrcXFrac};
 
-  assign X = Sqrt ? SqrtX : {4'b0001, DivX};
+  assign X = Sqrt ? {SqrtX, {(`EXTRAINTBITS-1){1'b0}}} : {4'b0001, DivX};
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
   assign intExp = zeroCntB - zeroCntA + 1;
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
@@ -253,22 +257,22 @@ endmodule
 ///////////////////////////////
 // Square Root OTFC, Radix 2 //
 ///////////////////////////////
-module softc2(
+module sotfc2(
   input  logic         clk,
   input  logic         Start,
   input  logic         sp, sn,
-  input  logic [N+3:0] C,
-  output logic [N-1:0] Sq,
+  input  logic [`DIVLEN+3:0] C,
+  output logic [`DIVLEN-1:0] Sq,
 );
 
 
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
-  logic [N+2:0] S, SM, SNext, SMNext, SMMux;
+  logic [`DIVLEN+3:0] S, SM, SNext, SMNext, SMux;
 
-  flopr #(N+3) Sreg(clk, Start, SNext, S);
-  mux2 #(`DIVLEN+3) Smux(SMNext, {`DIVLEN+3{1'b1}}, Start, SMMux);
-  flop #(`DIVLEN+3) SMreg(clk, SMMux, SM);
+  flopr #(`DIVLEN+4) Sreg(clk, Start, SMNext, SM);
+  mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, (`DIVLEN){1'b0}}, Start, SMux);
+  flop #(`DIVLEN+4) SMreg(clk, SMux, M);
 
   always_comb begin
     if (sp) begin
@@ -282,9 +286,23 @@ module softc2(
       SMNext = SM | ((C << 2) & ~(C << 1));
     end 
   end
-  assign Sq = S[N+2] ? S[N+1:2] : S[N:1];
+  assign Sq = S[`DIVLEN-1:0];
 
 endmodule
+
+//////////////////////////
+// C Register for SOTFC //
+//////////////////////////
+module creg(input  logic clk,
+            input  logic Start,
+            output logic [`DIVLEN+3:0] C
+);
+  logic [`DIVLEN+3:0] CMux;
+
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {6'b111111, (`DIVLEN-2){1'b0}}, Start, CMux);
+  flop #(`DIVLEN+4) cflop(clk, CMux, C);
+endmodule
+
 /////////////
 // counter //
 /////////////
@@ -293,7 +311,7 @@ module counter(input  logic clk,
                input  logic [$clog2(`XLEN+1)-1:0] dur,
                output logic done);
  
-   logic    [$clog2(`XLEN+1)-1:0]  count;
+  logic    [$clog2(`XLEN+1)-1:0]  count;
 
   // This block of control logic sequences the divider
   // through its iterations.  You may modify it if you
