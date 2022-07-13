@@ -54,13 +54,14 @@ module srt (
   output logic [3:0] Flags
 );
 
-  logic                       qp, qz, qm; // quotient is +1, 0, or -1
+  logic                       qp, qz, qn; // quotient is +1, 0, or -1
   logic [`NE-1:0]             calcExp;
   logic                       calcSign;
   logic [`DIVLEN+3:0]         X, Dpreproc, C, F, AddIn;
   logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
   logic                       intSign;
+  logic                       cin;
  
   srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
 
@@ -76,29 +77,30 @@ module srt (
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], qp, qz, qm);
+  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], qp, qz, qn);
 
   flopen #(`NE) expflop(clk, Start, calcExp, rExp);
   flopen #(1) signflop(clk, Start, calcSign, rsign);
   flopen #(7) durflop(clk, Start, calcDur, dur);
   
-  counter divcounter(clk, Start, dur, done);
+  srtcounter divcounter(clk, Start, dur, done);
 
   // Divisor Selection logic
   assign Db = ~D;
-  mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qm, Dsel);
+  mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qn, Dsel);
 
   // If only implementing division, use divide otfc
-  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
+  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qn, Quot);
   // otherwise use sotfc
-  creg              sotfcC(clk, Start, C);
-  sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot, F);
+  creg   sotfcC(clk, Start, C);
+  sotfc2 sotfc2(clk, Start, qp, qn, C, Quot, F);
 
   // Adder input selection
   assign AddIn = Sqrt ? F : Dsel;
 
   // Partial Product Generation
-  csa    #(`DIVLEN+4) csa(WS, WC, AddIn, qp, WSA, WCA);
+  assign cin = ~Sqrt & qp;
+  csa    #(`DIVLEN+4) csa(WS, WC, AddIn, cin, WSA, WCA);
   
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
@@ -128,30 +130,40 @@ module srtpreproc (
 
   logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY, DivX, SqrtX;
+  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY, DivX;
+  logic  [`NF+4:0] SqrtX;
 
+  // Generate positive integer inputs if they are signed
   assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
   assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
 
+  // Calculate leading zeros of integer inputs
   lzc #(`XLEN) lzcA (PosA, zeroCntA);
   lzc #(`XLEN) lzcB (PosB, zeroCntB);
 
+  // Make integers have DIVLEN bits
   assign ExtraA = {PosA, {`EXTRAINTBITS{1'b0}}};
   assign ExtraB = {PosB, {`EXTRAINTBITS{1'b0}}};
 
+  // Shift integers to have leading ones
   assign PreprocA = ExtraA << (zeroCntA + 1);
   assign PreprocB = ExtraB << (zeroCntB + 1);
+
+  // Make mantissas have DIVLEN bits
   assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
   assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
 
+  // Selecting correct divider inputs
   assign DivX = Int ? PreprocA : PreprocX;
   assign SqrtX = XExp[0] ? {4'b0000, SrcXFrac, 1'b0} : {5'b11111, SrcXFrac};
-
   assign X = Sqrt ? {SqrtX, {(`EXTRAFRACBITS-1){1'b0}}} : {4'b0001, DivX};
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
+
+  // Integer exponent and sign calculations
   assign intExp = zeroCntB - zeroCntA + 1;
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
+  // Number of cycles of divider
   assign dur = Int ? (intExp & {7{~intExp[6]}}) : (`DIVLEN + 2);
 endmodule
 
@@ -160,7 +172,7 @@ endmodule
 /////////////////////////////////
 module qsel2 ( // *** eventually just change to 4 bits
   input  logic [`DIVLEN+3:`DIVLEN] ps, pc, 
-  output logic         qp, qz, qm
+  output logic         qp, qz, qn
 );
  
   logic [`DIVLEN+3:`DIVLEN]  p, g;
@@ -187,7 +199,7 @@ module qsel2 ( // *** eventually just change to 4 bits
   // Produce quotient = +1, 0, or -1
   assign #1 qp = magnitude & ~sign;
   assign #1 qz = ~magnitude;
-  assign #1 qm = magnitude & sign;
+  assign #1 qn = magnitude & sign;
 endmodule
 
 ////////////////////////////////////
@@ -198,15 +210,16 @@ module fsel2 (
   input  logic [`DIVLEN+3:0] C, S, SM,
   output logic [`DIVLEN+3:0] F
 );
-  logic [`DIVLEN+3:0] FP, FN;
+  logic [`DIVLEN+3:0] FP, FN, FZ;
   
   // Generate for both positive and negative bits
   assign FP = ~S & C;
   assign FN = SM | (C & (~C << 2));
+  assign FZ = {(`DIVLEN+4){1'B0}};
 
   // Choose which adder input will be used
 
-  assign F = sp ? FP : (sn ? FN : (`DIVLEN+4){1'b0});
+  assign F = sp ? FP : (sn ? FN : FZ);
 
 endmodule
 
@@ -216,7 +229,7 @@ endmodule
 module otfc2 #(parameter N=64) (
   input  logic         clk,
   input  logic         Start,
-  input  logic         qp, qz, qm,
+  input  logic         qp, qz, qn,
   output logic [N-1:0] r
 );
 
@@ -236,7 +249,7 @@ module otfc2 #(parameter N=64) (
   logic [N+1:0] QR, QMR;
 
   flopr #(N+3) Qreg(clk, Start, QNext, Q);
-  mux2 #(`DIVLEN+3) Qmux(QMNext, {`DIVLEN+3{1'b1}}, Start, QMMux);
+  mux2 #(`DIVLEN+3) Qmux(QMNext, {(`DIVLEN+3){1'b1}}, Start, QMMux);
   flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
 
   always_comb begin
@@ -248,7 +261,7 @@ module otfc2 #(parameter N=64) (
     end else if (qz) begin
       QNext  = {QR,  1'b0};
       QMNext = {QMR, 1'b1};
-    end else begin        // If qp and qz are not true, then qm is
+    end else begin        // If qp and qz are not true, then qn is
       QNext  = {QMR, 1'b1};
       QMNext = {QMR, 1'b0};
     end 
@@ -266,7 +279,7 @@ module sotfc2(
   input  logic         sp, sn,
   input  logic [`DIVLEN+3:0] C,
   output logic [`DIVLEN-1:0] Sq,
-  output logic [`DIVLEN+3:0] F,
+  output logic [`DIVLEN+3:0] F
 );
 
 
@@ -275,7 +288,7 @@ module sotfc2(
   logic [`DIVLEN+3:0] S, SM, SNext, SMNext, SMux;
 
   flopr #(`DIVLEN+4) Sreg(clk, Start, SMNext, SM);
-  mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, (`DIVLEN){1'b0}}, Start, SMux);
+  mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, {(`DIVLEN){1'b0}}}, Start, SMux);
   flop #(`DIVLEN+4) SMreg(clk, SMux, S);
 
   always_comb begin
@@ -305,17 +318,18 @@ module creg(input  logic clk,
 );
   logic [`DIVLEN+3:0] CMux;
 
-  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {6'b111111, (`DIVLEN-2){1'b0}}, Start, CMux);
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {6'b111111, {(`DIVLEN-2){1'b0}}}, Start, CMux);
   flop #(`DIVLEN+4) cflop(clk, CMux, C);
 endmodule
 
 /////////////
 // counter //
 /////////////
-module counter(input  logic clk, 
-               input  logic req, 
-               input  logic [$clog2(`XLEN+1)-1:0] dur,
-               output logic done);
+module srtcounter(input  logic clk, 
+                  input  logic req, 
+                  input  logic [$clog2(`XLEN+1)-1:0] dur,
+                  output logic done
+);
  
   logic    [$clog2(`XLEN+1)-1:0]  count;
 
