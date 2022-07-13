@@ -87,6 +87,7 @@ module srt (
   // Divisor Selection logic
   assign Db = ~D;
   mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qm, Dsel);
+  fsel2 fsel(qp, qn, )
 
   // Partial Product Generation
   csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
@@ -95,7 +96,7 @@ module srt (
   otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
   // otherwise use sotfc
   // creg              sotfcC(clk, Start, C);
-  // sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot);
+  // sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot, F);
 
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
@@ -263,6 +264,7 @@ module sotfc2(
   input  logic         sp, sn,
   input  logic [`DIVLEN+3:0] C,
   output logic [`DIVLEN-1:0] Sq,
+  output logic [`DIVLEN+3:0] F,
 );
 
 
@@ -287,6 +289,8 @@ module sotfc2(
     end 
   end
   assign Sq = S[`DIVLEN-1:0];
+
+  fsel2 fsel(sp, sn, C, S, SM, F);
 
 endmodule
 
