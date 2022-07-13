@@ -87,8 +87,8 @@ module testbenchfp;
   logic reset = 1'b0;
   logic [`DIVLEN-1:0]    DivX;
   logic [`DIVLEN-1:0]  Dpreproc;
-  logic [`DIVLEN+3:0]  WSN, WS;
-  logic [`DIVLEN+3:0]  WCN, WC;
+  logic [`DIVLEN+3:0]  NextWSN, WS;
+  logic [`DIVLEN+3:0]  NextWCN, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DURLEN-1:0] Dur;
 
@@ -696,9 +696,9 @@ module testbenchfp;
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
   srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
-  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
+  srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
                 .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
+  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
                 .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
 
   assign CmpFlg[3:0] = 0;

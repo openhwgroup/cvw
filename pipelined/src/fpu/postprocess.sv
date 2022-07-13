@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module postprocess(
+module postprocess (
     // general signals
     input logic                             Xs, Ys,  // input signs
     input logic  [`NE-1:0]                  Ze, // input exponents
