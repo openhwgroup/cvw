@@ -48,8 +48,6 @@ module round(
     input logic                     CvtResUf,
     input logic  [`CORRSHIFTSZ-1:0] Nfrac,
     input logic                     FmaZmSticky,  // addend's sticky bit
-    input logic                     ZZero,         // is Z zero
-    input logic                     FmaInvA,          // invert Z
     input logic  [`NE+1:0]          FmaSe,         // exponent of the normalized sum
     input logic                     Nsgn,      // the result's sign
     input logic  [`NE:0]            CvtCe,    // the calculated expoent
@@ -62,11 +60,10 @@ module round(
     output logic                    S,             // sticky bit
     output logic [`NE+1:0]          Nexp,
     output logic                    Plus1,
-    output logic [`FLEN:0]          RoundAdd,           // how much to add to the result
     output logic                    R, UfLSBRes // bits needed to calculate rounding
 );
     logic           LSBRes;         // bit used for rounding - least significant bit of the normalized sum
-    logic           UfCalcPlus1, CalcMinus1, Minus1; // do you add or subtract on from the result
+    logic           UfCalcPlus1; 
     logic           NormSumSticky;  // normalized sum's sticky bit
     logic           UfSticky;   // sticky bit for underlow calculation
     logic [`NF-1:0] RoundFrac;
@@ -74,6 +71,7 @@ module round(
     logic           UfRound;
     logic           FpRound, FpLSBRes, FpUfRound;
     logic           CalcPlus1, FpPlus1;
+    logic [`FLEN:0] RoundAdd;           // how much to add to the result
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -288,30 +286,13 @@ module round(
         //  | NE+2 |        NF      |
         //  '-NE+2-^----NF1----^
         // `FLEN+1-`NE-2-`NF1 = FLEN-1-NE-NF1
-        assign RoundAdd = OutFmt ? {{{`FLEN{1'b0}}}, FpPlus1} :
-                                   {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
+        assign RoundAdd = {(`NE+1+`NF1)'(0), FpPlus1&~OutFmt, (`NF-`NF1-1)'(0), FpPlus1&OutFmt};
 
     end else if (`FPSIZES == 3) begin
-        always_comb begin
-            case (OutFmt)
-                `FMT:  RoundAdd = {{{`FLEN{1'b0}}}, FpPlus1};
-                `FMT1: RoundAdd = {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
-                `FMT2: RoundAdd = {(`NE+1+`NF2)'(0), FpPlus1, (`FLEN-1-`NE-`NF2)'(0)};
-                default: RoundAdd = (`FLEN+1)'(0);
-            endcase
-        end
+        assign RoundAdd = {(`NE+1+`NF2)'(0), FpPlus1&(OutFmt==`FMT2), (`NF1-`NF2-1)'(0), FpPlus1&(OutFmt==`FMT1), (`NF-`NF1-1)'(0), FpPlus1&(OutFmt==`FMT)};
 
-    end else if (`FPSIZES == 4) begin        
-        always_comb begin
-            case (OutFmt)
-                2'h3: RoundAdd = {{`FLEN{1'b0}}, FpPlus1};
-                2'h1: RoundAdd = {(`NE+1+`D_NF)'(0), FpPlus1, (`FLEN-1-`NE-`D_NF)'(0)};
-                2'h0: RoundAdd = {(`NE+1+`S_NF)'(0), FpPlus1, (`FLEN-1-`NE-`S_NF)'(0)};
-                2'h2: RoundAdd = {(`NE+1+`H_NF)'(0), FpPlus1, (`FLEN-1-`NE-`H_NF)'(0)};
-            endcase
-        end
-
-    end
+    end else if (`FPSIZES == 4)      
+        assign RoundAdd = {(`Q_NE+1+`H_NF)'(0), FpPlus1&(OutFmt==`H_FMT), (`S_NF-`H_NF-1)'(0), FpPlus1&(OutFmt==`S_FMT), (`D_NF-`S_NF-1)'(0), FpPlus1&(OutFmt==`D_FMT), (`Q_NF-`D_NF-1)'(0), FpPlus1&(OutFmt==`Q_FMT)};
 
     // determine the result to be roundned
     assign RoundFrac = Nfrac[`CORRSHIFTSZ-1:`CORRSHIFTSZ-`NF];
