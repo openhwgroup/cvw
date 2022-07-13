@@ -55,21 +55,11 @@ module testbench;
   parameter MEM_SIZE = 40000;
   parameter MEM_WIDTH = 64+64+64+64;
  
-  // INT TEST SIZES
-  // `define memrem  63:0 
-  // `define memr  127:64
-  // `define memb  191:128
-  // `define mema  255:192
-
-  // FLOAT TEST SIZES
-  // `define memr  63:0 
-  // `define memb  127:64
-  // `define mema  191:128
-
-  // SQRT TEST SIZES 
-  `define memr  63:0 
-  `define mema  127:64
+  // Test sizes
+  `define memrem  63:0 
+  `define memr  127:64
   `define memb  191:128
+  `define mema  255:192
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
