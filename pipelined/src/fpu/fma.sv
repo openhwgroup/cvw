@@ -51,7 +51,6 @@ module fma(
     logic [3*`NF+5:0]   Am;     // addend aligned's mantissa for addition in U(NF+5.2NF+1)
     logic [3*`NF+6:0]   AmInv;   // aligned addend's mantissa possibly inverted
     logic [2*`NF+1:0]   PmKilled;      // the product's mantissa possibly killed
-    logic [3*`NF+6:0]   PreSum, NegPreSum;  // positive and negitve versions of the sum
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
     //      - When multipliying two fp numbers, add the exponents
@@ -74,7 +73,7 @@ module fma(
     sign sign(.FOpCtrl, .Xs, .Ys, .Zs, .Ps, .As);
 
     align align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
-                .Ps, .As, .Am, .ZmSticky, .KillProd);
+                .Am, .ZmSticky, .KillProd);
                         
 
 
@@ -82,7 +81,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .PreSum, .NegPreSum, .InvA, .XZero, .YZero, .Sm);
+    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm);
     
     loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .NCnt);
 endmodule
@@ -143,7 +142,6 @@ endmodule
 
 
 module align(
-    input logic                 As, Ps,
     input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
     input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
     input logic                 XZero, YZero, ZZero, // is the input zero
@@ -224,14 +222,13 @@ module add(
     input logic                 Ps, As,// the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
     input logic                 KillProd,      // should the product be set to 0
     input logic                 ZmSticky,
-    input logic                 XZero, YZero, // is the input zero
     output logic [3*`NF+6:0]    AmInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // do you invert the aligned addend
-    output logic [3*`NF+5:0]    Sm,           // the positive sum
-    output logic [3*`NF+6:0]    PreSum, NegPreSum// possibly negitive sum
+    output logic [3*`NF+5:0]    Sm           // the positive sum
 );
+    logic [3*`NF+6:0]    PreSum, NegPreSum; // possibly negitive sum
 
     ///////////////////////////////////////////////////////////////////////////////
     // Addition

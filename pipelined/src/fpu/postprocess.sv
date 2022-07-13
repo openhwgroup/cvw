@@ -84,7 +84,6 @@ module postprocess (
     logic S;           // S bit
     logic UfPlus1;                    // do you add one (for determining underflow flag)
     logic R;   // bits needed to determine rounding
-    logic [`FLEN:0] RoundAdd;       // how much to add to the result
     logic [$clog2(`NORMSHIFTSZ)-1:0] ShiftAmt;   // normalization shift count
     logic [`NORMSHIFTSZ-1:0] ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
@@ -200,10 +199,10 @@ module postprocess (
     roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
                           .Xs, .Ys, .CvtCs, .Nsgn);
 
-    round round(.OutFmt, .Frm, .S, .FmaZmSticky, .ZZero, .Plus1, .PostProcSel, .CvtCe, .DivCorrExp,
-                .FmaInvA, .Nsgn, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Nfrac, .ToInt,  .CvtResUf,
+    round round(.OutFmt, .Frm, .S, .FmaZmSticky, .Plus1, .PostProcSel, .CvtCe, .DivCorrExp,
+                .Nsgn, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Nfrac, .ToInt,  .CvtResUf,
                 .DivSticky, .DivDone,
-                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .RoundAdd, .UfLSBRes, .Nexp);
+                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .UfLSBRes, .Nexp);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
