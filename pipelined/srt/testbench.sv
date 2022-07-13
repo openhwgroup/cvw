@@ -101,7 +101,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("testvectors", Tests);
+      $readmemh ("sqrttestvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
