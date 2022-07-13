@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
-module lzacorrection(
+module shiftcorrection(
     input logic  [`NORMSHIFTSZ-1:0] Shifted,         // the shifted sum before LZA correction
     input logic                     FmaOp,
     input logic                     DivOp,

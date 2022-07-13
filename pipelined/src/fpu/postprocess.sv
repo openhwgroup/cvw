@@ -181,7 +181,7 @@ module postprocess (
     
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
-    lzacorrection lzacorrection(.FmaOp, .FmaPreResultDenorm, .FmaConvNormSumExp,
+    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .FmaConvNormSumExp,
                                 .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExp,
                                 .DivCorrExp, .FmaSZero, .Shifted, .FmaSe, .Nfrac);
 
