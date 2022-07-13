@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 `define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF) : 0)
-`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN))
+`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN + 1))
 
 module srt (
   input  logic clk,
@@ -164,7 +164,7 @@ module srtpreproc (
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
   // Number of cycles of divider
-  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (`DIVLEN + 2);
+  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (7)'(`DIVLEN + 2);
 endmodule
 
 /////////////////////////////////
