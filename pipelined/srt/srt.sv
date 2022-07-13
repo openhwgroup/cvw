@@ -57,7 +57,7 @@ module srt (
   logic                       qp, qz, qm; // quotient is +1, 0, or -1
   logic [`NE-1:0]             calcExp;
   logic                       calcSign;
-  logic [`DIVLEN+3:0]         X, Dpreproc, C;
+  logic [`DIVLEN+3:0]         X, Dpreproc, C, F, AddIn;
   logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
   logic                       intSign;
@@ -87,17 +87,19 @@ module srt (
   // Divisor Selection logic
   assign Db = ~D;
   mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qm, Dsel);
-  fsel2 fsel(qp, qn, )
+
+  // If only implementing division, use divide otfc
+  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
+  // otherwise use sotfc
+  creg              sotfcC(clk, Start, C);
+  sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot, F);
+
+  // Adder input selection
+  assign AddIn = Sqrt ? F : Dsel;
 
   // Partial Product Generation
-  csa    #(`DIVLEN+4) csa(WS, WC, Dsel, qp, WSA, WCA);
+  csa    #(`DIVLEN+4) csa(WS, WC, AddIn, qp, WSA, WCA);
   
-  // If only implementing division, use divide otfc
-  otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qm, Quot);
-  // otherwise use sotfc
-  // creg              sotfcC(clk, Start, C);
-  // sotfc2 #(`DIVLEN) sotfc2(clk, Start, qp, qn, C, Quot, F);
-
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
   signcalc signcalc(.XSign, .YSign, .calcSign);
