@@ -29,8 +29,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
-`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF) : 0)
-`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN + 1))
+`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF + 2) : 2)
+`define EXTRAINTBITS ((`NF<(`XLEN)) ? 2 : (`NF - `XLEN + 2))
 
 module srt (
   input  logic clk,
@@ -49,7 +49,7 @@ module srt (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign, done,
-  output logic [`DIVLEN-1:0] Rem, Quot, // *** later handle integers
+  output logic [`DIVLEN-3:0] Rem, Quot, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -164,7 +164,7 @@ module srtpreproc (
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
   // Number of cycles of divider
-  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (7)'(`DIVLEN + 2);
+  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (7)'(`DIVLEN);
 endmodule
 
 /////////////////////////////////
@@ -226,26 +226,16 @@ endmodule
 ///////////////////////////////////
 // On-The-Fly Converter, Radix 2 //
 ///////////////////////////////////
-module otfc2 #(parameter N=64) (
+module otfc2 #(parameter N=66) (
   input  logic         clk,
   input  logic         Start,
   input  logic         qp, qz, qn,
-  output logic [N-1:0] r
+  output logic [N-3:0] r
 );
-
   //  The on-the-fly converter transfers the quotient 
-  //  bits to the quotient as they come. 
-  //
-  //  This code follows the psuedocode presented in the 
-  //  floating point chapter of the book. Right now, 
-  //  it is written for Radix-2 division.
-  //
-  //  QM is Q-1. It allows us to write negative bits 
-  //  without using a costly CPA. 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division only.
   logic [N+2:0] Q, QM, QNext, QMNext, QMMux;
-  //  QR and QMR are the shifted versions of Q and QM.
-  //  They are treated as [N-1:r] size signals, and 
-  //  discard the r most significant bits of Q and QM. 
   logic [N+1:0] QR, QMR;
 
   flopr #(N+3) Qreg(clk, Start, QNext, Q);
@@ -266,7 +256,7 @@ module otfc2 #(parameter N=64) (
       QMNext = {QMR, 1'b0};
     end 
   end
-  assign r = Q[N+2] ? Q[N+1:2] : Q[N:1];
+  assign r = Q[N] ? Q[N-1:2] : Q[N-2:1];
 
 endmodule
 
@@ -278,13 +268,12 @@ module sotfc2(
   input  logic         Start,
   input  logic         sp, sn,
   input  logic [`DIVLEN+3:0] C,
-  output logic [`DIVLEN-1:0] Sq,
+  output logic [`DIVLEN-3:0] Sq,
   output logic [`DIVLEN+3:0] F
 );
-
-
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
   logic [`DIVLEN+3:0] S, SM, SNext, SMNext, SMux;
 
   flopr #(`DIVLEN+4) Sreg(clk, Start, SMNext, SM);
@@ -303,7 +292,7 @@ module sotfc2(
       SMNext = SM | ((C << 2) & ~(C << 1));
     end 
   end
-  assign Sq = S[`DIVLEN-1:0];
+  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:2] : S[`DIVLEN-2:1];
 
   fsel2 fsel(sp, sn, C, S, SM, F);
 
