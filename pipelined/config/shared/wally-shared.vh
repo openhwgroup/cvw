@@ -103,7 +103,7 @@
 // division constants
 `define RADIX 32'h4
 `define DIVCOPIES 32'h4
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF + 1))
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN + 2) : (`NF + 2))
 `define DIVRESLEN ((`NF>`XLEN) ? `DIVLEN+2 : `DIVLEN)
 `define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
 // FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
