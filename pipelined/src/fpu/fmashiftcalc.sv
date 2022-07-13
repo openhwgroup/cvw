@@ -53,7 +53,8 @@ module fmashiftcalc(
     assign FmaSZero = ~(|FmaSm);
 
     // calculate the sum's exponent
-    assign NormSumExp = FmaKillProd ? {2'b0, Ze[`NE-1:1], Ze[0]&~ZDenorm} : FmaPe + -{{`NE+2-$unsigned($clog2(3*`NF+7)){1'b0}}, FmaNCnt} - 1 + (`NE+2)'(`NF+4);
+    //                                                                      ProdExp - NormCnt - 1 + NF+4 = ProdExp + ~NormCnt + 1 - 1 + NF+4 = ProdExp + ~NormCnt + NF+4
+    assign NormSumExp = FmaKillProd ? {2'b0, Ze[`NE-1:1], Ze[0]&~ZDenorm} : FmaPe + {{`NE+2-$unsigned($clog2(3*`NF+7)){1'b1}}, ~FmaNCnt} + (`NE+2)'(`NF+4);
 
     //convert the sum's exponent into the proper percision
     if (`FPSIZES == 1) begin

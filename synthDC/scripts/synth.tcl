@@ -347,7 +347,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fdivsqrt/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 
