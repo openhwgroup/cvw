@@ -101,14 +101,15 @@
 `define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
 
 // division constants
-`define RADIX 4
-`define DIVCOPIES 4
+`define RADIX 32'h4
+`define DIVCOPIES 32'h4
 `define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF))
 `define DIVRESLEN ((`NF>`XLEN) ? `DIVLEN+2 : `DIVLEN)
-`define LOGR ((`RADIX==2) ? 1 : 2)
-`define FPDUR $ceil($itor(`DIVRESLEN)/$itor(`LOGR*`DIVCOPIES))
-`define DURLEN ($clog2($rtoi(`FPDUR)+1))
-`define QLEN ($rtoi(`FPDUR)*`LOGR*`DIVCOPIES)
+`define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
+// FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
+`define FPDUR ((`DIVRESLEN+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES))
+`define DURLEN ($clog2(`FPDUR+1))
+`define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
 
 
 `define USE_SRAM 0

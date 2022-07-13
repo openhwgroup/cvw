@@ -32,7 +32,7 @@
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 32
+`define XLEN 64
 
 // IEEE 754 compliance
 `define IEEE754 0
