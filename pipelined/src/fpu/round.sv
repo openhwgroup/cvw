@@ -55,7 +55,6 @@ module round(
     input logic  [`NE:0]            CvtCe,    // the calculated expoent
     input logic  [`NE+1:0]          DivCorrExp,    // the calculated expoent
     input logic                     DivSticky,             // sticky bit
-    input logic                     DivNegSticky,
     output logic                    UfPlus1,  // do you add or subtract on from the result
     output logic [`NE+1:0]          FullRe,      // Re with bits to determine sign and overflow
     output logic [`NF-1:0]          Rf,         // Result fraction
@@ -67,7 +66,6 @@ module round(
     output logic                    R, UfLSBRes // bits needed to calculate rounding
 );
     logic           LSBRes;         // bit used for rounding - least significant bit of the normalized sum
-    logic           SubBySmallNum, UfSubBySmallNum;  // was there supposed to be a subtraction by a small number
     logic           UfCalcPlus1, CalcMinus1, Minus1; // do you add or subtract on from the result
     logic           NormSumSticky;  // normalized sum's sticky bit
     logic           UfSticky;   // sticky bit for underlow calculation
@@ -254,39 +252,24 @@ module round(
     assign S = UfSticky | UfRound;
 
 
-    // Deterimine if a small number was supposed to be subtrated
-    //  - for FMA or if division has a negitive sticky bit
-    assign SubBySmallNum = ((FmaZmSticky&FmaOp&~ZZero&FmaInvA) | (DivNegSticky&DivOp)) & ~(NormSumSticky|UfRound);
-    assign UfSubBySmallNum = ((FmaZmSticky&FmaOp&~ZZero&FmaInvA) | (DivNegSticky&DivOp)) & ~NormSumSticky;
-
-
     always_comb begin
         // Determine if you add 1
         case (Frm)
-            3'b000: CalcPlus1 = R & ((S| LSBRes)&~SubBySmallNum);//round to nearest even
+            3'b000: CalcPlus1 = R & (S| LSBRes);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
-            3'b010: CalcPlus1 = Nsgn & ~(SubBySmallNum & ~R);//round down
-            3'b011: CalcPlus1 = ~Nsgn & ~(SubBySmallNum & ~R);//round up
-            3'b100: CalcPlus1 = R & ~SubBySmallNum;//round to nearest max magnitude
+            3'b010: CalcPlus1 = Nsgn;//round down
+            3'b011: CalcPlus1 = ~Nsgn;//round up
+            3'b100: CalcPlus1 = R;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
         case (Frm)
-            3'b000: UfCalcPlus1 = UfRound & ((UfSticky| UfLSBRes)&~UfSubBySmallNum);//round to nearest even
+            3'b000: UfCalcPlus1 = UfRound & (UfSticky| UfLSBRes);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
-            3'b010: UfCalcPlus1 = Nsgn & ~(UfSubBySmallNum & ~UfRound);//round down
-            3'b011: UfCalcPlus1 = ~Nsgn & ~(UfSubBySmallNum & ~UfRound);//round up
-            3'b100: UfCalcPlus1 = UfRound & ~UfSubBySmallNum;//round to nearest max magnitude
+            3'b010: UfCalcPlus1 = Nsgn;//round down
+            3'b011: UfCalcPlus1 = ~Nsgn;//round up
+            3'b100: UfCalcPlus1 = UfRound;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
-        endcase
-        // Determine if you subtract 1
-        case (Frm)
-            3'b000: CalcMinus1 = 0;//round to nearest even
-            3'b001: CalcMinus1 = SubBySmallNum & ~R;//round to zero
-            3'b010: CalcMinus1 = ~Nsgn & ~R & SubBySmallNum;//round down
-            3'b011: CalcMinus1 = Nsgn & ~R & SubBySmallNum;//round up
-            3'b100: CalcMinus1 = 0;//round to nearest max magnitude
-            default: CalcMinus1 = 1'bx;
         endcase
    
     end
@@ -295,26 +278,25 @@ module round(
     assign Plus1 = CalcPlus1 & (S | R);
     assign FpPlus1 = Plus1&~(ToInt&CvtOp);
     assign UfPlus1 = UfCalcPlus1 & S; // UfRound is part of sticky
-    assign Minus1 = CalcMinus1 & (S | R);
 
     // Compute rounded result
     if (`FPSIZES == 1) begin
-        assign RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{`FLEN{1'b0}}, FpPlus1};
+        assign RoundAdd = {{`FLEN{1'b0}}, FpPlus1};
 
     end else if (`FPSIZES == 2) begin
         // \/FLEN+1
         //  | NE+2 |        NF      |
         //  '-NE+2-^----NF1----^
         // `FLEN+1-`NE-2-`NF1 = FLEN-1-NE-NF1
-        assign RoundAdd = OutFmt ? Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, FpPlus1} :
-                                   Minus1 ? {{`NE+2+`NF1{1'b1}}, (`FLEN-1-`NE-`NF1)'(0)} : {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
+        assign RoundAdd = OutFmt ? {{{`FLEN{1'b0}}}, FpPlus1} :
+                                   {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
 
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (OutFmt)
-                `FMT:  RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, FpPlus1};
-                `FMT1: RoundAdd = Minus1 ? {{`NE+2+`NF1{1'b1}}, (`FLEN-1-`NE-`NF1)'(0)} : {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
-                `FMT2: RoundAdd = Minus1 ? {{`NE+2+`NF2{1'b1}}, (`FLEN-1-`NE-`NF2)'(0)} : {(`NE+1+`NF2)'(0), FpPlus1, (`FLEN-1-`NE-`NF2)'(0)};
+                `FMT:  RoundAdd = {{{`FLEN{1'b0}}}, FpPlus1};
+                `FMT1: RoundAdd = {(`NE+1+`NF1)'(0), FpPlus1, (`FLEN-1-`NE-`NF1)'(0)};
+                `FMT2: RoundAdd = {(`NE+1+`NF2)'(0), FpPlus1, (`FLEN-1-`NE-`NF2)'(0)};
                 default: RoundAdd = (`FLEN+1)'(0);
             endcase
         end
@@ -322,10 +304,10 @@ module round(
     end else if (`FPSIZES == 4) begin        
         always_comb begin
             case (OutFmt)
-                2'h3: RoundAdd = Minus1 ? {`FLEN+1{1'b1}} : {{{`FLEN{1'b0}}}, FpPlus1};
-                2'h1: RoundAdd = Minus1 ? {{`NE+2+`D_NF{1'b1}}, (`FLEN-1-`NE-`D_NF)'(0)} : {(`NE+1+`D_NF)'(0), FpPlus1, (`FLEN-1-`NE-`D_NF)'(0)};
-                2'h0: RoundAdd = Minus1 ? {{`NE+2+`S_NF{1'b1}}, (`FLEN-1-`NE-`S_NF)'(0)} : {(`NE+1+`S_NF)'(0), FpPlus1, (`FLEN-1-`NE-`S_NF)'(0)};
-                2'h2: RoundAdd = Minus1 ? {{`NE+2+`H_NF{1'b1}}, (`FLEN-1-`NE-`H_NF)'(0)} : {(`NE+1+`H_NF)'(0), FpPlus1, (`FLEN-1-`NE-`H_NF)'(0)};
+                2'h3: RoundAdd = {{`FLEN{1'b0}}, FpPlus1};
+                2'h1: RoundAdd = {(`NE+1+`D_NF)'(0), FpPlus1, (`FLEN-1-`NE-`D_NF)'(0)};
+                2'h0: RoundAdd = {(`NE+1+`S_NF)'(0), FpPlus1, (`FLEN-1-`NE-`S_NF)'(0)};
+                2'h2: RoundAdd = {(`NE+1+`H_NF)'(0), FpPlus1, (`FLEN-1-`NE-`H_NF)'(0)};
             endcase
         end
 

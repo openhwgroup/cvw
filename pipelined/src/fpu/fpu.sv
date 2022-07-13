@@ -127,7 +127,6 @@ module fpu (
    //divide signals
    logic [`QLEN-1:0] QuotM;
    logic [`NE+1:0] DivCalcExpE, DivCalcExpM; 
-   logic DivNegStickyE, DivNegStickyM;
    logic DivStickyE, DivStickyM;
    logic DivDoneM;
    logic [`DURLEN-1:0] EarlyTermShiftM;
@@ -288,7 +287,7 @@ module fpu (
    //       .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
    divsqrt divsqrt(.clk, .reset, .FmtE, .XManE, .YManE, .XExpE, .YExpE, 
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(FDivStartE), 
-                  .StallE, .StallM, .DivStickyM, .DivNegStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
+                  .StallE, .StallM, .DivStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
                   .EarlyTermShiftM, .QuotM, .DivDone(DivDoneM));
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
@@ -384,7 +383,7 @@ module fpu (
    postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShift(EarlyTermShiftM),
                            .FmaZmSticky(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .Quot(QuotM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivCalcExp(DivCalcExpM), .DivDone(DivDoneM),
-                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM), .DivNegSticky(DivNegStickyM),
+                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM),
                            .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivSticky(DivStickyM),
                            .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 

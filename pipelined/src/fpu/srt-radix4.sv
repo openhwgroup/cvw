@@ -40,6 +40,7 @@ module srtradix4(
   input logic [`DIVLEN-1:0] X,
   input logic [`DIVLEN-1:0] Dpreproc,
   input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  input logic NegSticky,
   output logic [`QLEN-1:0] Quot,
   output logic [`DIVLEN+3:0]  NextWSN, NextWCN,
   output logic [`DIVLEN+3:0]  FirstWS, FirstWC,
@@ -106,9 +107,9 @@ module srtradix4(
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`QLEN) QMmux(QMNext[`DIVCOPIES-1], {`QLEN{1'b1}}, DivStart, QMMux);
   flopenr #(`QLEN) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
-  flop #(`QLEN) QMreg(clk, QMMux, QM[0]);
+  flopen #(`QLEN) QMreg(clk, DivBusy, QMMux, QM[0]);
 
-  assign Quot = Q[0];
+  assign Quot = NegSticky ? QM[0] : Q[0];
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
 

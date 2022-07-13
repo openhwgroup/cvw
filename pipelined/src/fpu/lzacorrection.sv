@@ -37,7 +37,6 @@ module lzacorrection(
     input logic  [`NE+1:0]          DivDenormShift,
     input logic  [`NE+1:0]          FmaConvNormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     input logic                     FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
-    input logic                     FmaKillProd,  // is the product set to zero
     input logic                     FmaSZero,
     output logic [`CORRSHIFTSZ-1:0] Nfrac,         // the shifted sum before LZA correction
     output logic [`NE+1:0]          DivCorrExp,
@@ -59,7 +58,7 @@ module lzacorrection(
     assign Nfrac = FmaOp ? {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}} : DivOp&~DivResDenorm ? CorrQuotShifted[`CORRSHIFTSZ-1:0] : Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign FmaSe = (FmaConvNormSumExp+{{`NE+1{1'b0}}, LZAPlus1&~FmaKillProd}+{{`NE{1'b0}}, LZAPlus2&~FmaKillProd, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm&~FmaKillProd}+{{`NE+1{1'b0}}, &FmaConvNormSumExp&Shifted[3*`NF+6]&~FmaKillProd}) & {`NE+2{~(FmaSZero|ResDenorm)}};
+    assign FmaSe = (FmaConvNormSumExp+{{`NE+1{1'b0}}, LZAPlus1}+{{`NE{1'b0}}, LZAPlus2, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}+{{`NE+1{1'b0}}, &FmaConvNormSumExp&Shifted[3*`NF+6]}) & {`NE+2{~(FmaSZero|ResDenorm)}};
     // recalculate if the result is denormalized
     assign ResDenorm = FmaPreResultDenorm&~Shifted[`NORMSHIFTSZ-3]&~Shifted[`NORMSHIFTSZ-2];
 

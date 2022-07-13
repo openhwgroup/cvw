@@ -35,7 +35,6 @@ module fmashiftcalc(
     input logic  [$clog2(3*`NF+7)-1:0]  FmaNCnt,   // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,       // precision 1 = double 0 = single
     input logic                         FmaKillProd,  // is the product set to zero
-    input logic 			            ZDenorm,
     output logic [`NE+1:0]              FmaConvNormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     output logic                        FmaSZero,    // is the result denormalized - calculated before LZA corection
     output logic                        FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
@@ -54,7 +53,7 @@ module fmashiftcalc(
 
     // calculate the sum's exponent
     //                                                                      ProdExp - NormCnt - 1 + NF+4 = ProdExp + ~NormCnt + 1 - 1 + NF+4 = ProdExp + ~NormCnt + NF+4
-    assign NormSumExp = FmaKillProd ? {2'b0, Ze[`NE-1:1], Ze[0]&~ZDenorm} : FmaPe + {{`NE+2-$unsigned($clog2(3*`NF+7)){1'b1}}, ~FmaNCnt} + (`NE+2)'(`NF+4);
+    assign NormSumExp = (FmaKillProd ? {2'b0, Ze} : FmaPe) + {{`NE+2-$unsigned($clog2(3*`NF+7)){1'b1}}, ~FmaNCnt} + (`NE+2)'(`NF+4);
 
     //convert the sum's exponent into the proper percision
     if (`FPSIZES == 1) begin
@@ -149,9 +148,9 @@ module fmashiftcalc(
 
     // Determine the shift needed for denormal results
     //  - if not denorm add 1 to shift out the leading 1
-    assign DenormShift = FmaPreResultDenorm&~FmaKillProd ? FmaConvNormSumExp[$clog2(3*`NF+7)-1:0] : 1;
+    assign DenormShift = FmaPreResultDenorm ? FmaConvNormSumExp[$clog2(3*`NF+7)-1:0] : 1;
     // set and calculate the shift input and amount
     //  - shift once if killing a product and the result is denormalized
     assign FmaShiftIn = {3'b0, FmaSm};
-    assign FmaShiftAmt = (FmaNCnt&{$clog2(3*`NF+7){~FmaKillProd}})+DenormShift;
+    assign FmaShiftAmt = FmaNCnt+DenormShift;
 endmodule

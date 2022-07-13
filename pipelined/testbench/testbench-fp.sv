@@ -681,7 +681,7 @@ module testbenchfp;
   postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
               .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
               .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
-              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE), .DivNegSticky,
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
@@ -697,8 +697,8 @@ module testbenchfp;
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
   srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
   srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
+                .XInfE(XInf), .YInfE(YInf), .NegSticky(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
+  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .NegSticky(DivNegSticky), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
                 .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
 
   assign CmpFlg[3:0] = 0;
@@ -854,7 +854,7 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~(DivBusy|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);

@@ -70,20 +70,21 @@ module fma(
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
-
-    align align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
-                        .Am, .ZmSticky, .KillProd);
-                        
     // calculate the signs and take the opperation into account
     sign sign(.FOpCtrl, .Xs, .Ys, .Zs, .Ps, .As);
+
+    align align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
+                .Ps, .As, .Am, .ZmSticky, .KillProd);
+                        
+
 
     // ///////////////////////////////////////////////////////////////////////////////
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    add add(.Am, .Pm, .Ps, .As, .KillProd, .AmInv, .PmKilled, .NegSum, .PreSum, .NegPreSum, .InvA, .XZero, .YZero, .Sm);
+    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .PreSum, .NegPreSum, .InvA, .XZero, .YZero, .Sm);
     
-    loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA}), .P(PmKilled), .NCnt);
+    loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .NCnt);
 endmodule
 
 
@@ -142,6 +143,7 @@ endmodule
 
 
 module align(
+    input logic                 As, Ps,
     input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
     input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
     input logic                 XZero, YZero, ZZero, // is the input zero
@@ -172,7 +174,7 @@ module align(
     // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
     assign ZmPreshifted = {Zm,(3*`NF+5)'(0)};
     
-    assign KillProd = ACnt[`NE+1]|XZero|YZero;
+    assign KillProd = (ACnt[`NE+1]&~ZZero)|XZero|YZero;
     assign KillZ = $signed(ACnt)>$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(5));
 
     always_comb
@@ -183,7 +185,7 @@ module align(
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //  | addnend |
         if (KillProd) begin
-            ZmShifted = ZmPreshifted;
+            ZmShifted = {(`NF+3)'(0), Zm, (2*`NF+2)'(0)};
             ZmSticky = ~(XZero|YZero);
 
         // If the addend is too small to effect the addition        
@@ -221,6 +223,7 @@ module add(
     input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
     input logic                 Ps, As,// the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
     input logic                 KillProd,      // should the product be set to 0
+    input logic                 ZmSticky,
     input logic                 XZero, YZero, // is the input zero
     output logic [3*`NF+6:0]    AmInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
@@ -243,13 +246,14 @@ module add(
     assign AmInv = InvA ? {1'b1, ~Am} : {1'b0, Am};
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
     assign PmKilled = Pm&{2*`NF+2{~KillProd}};
-
-
-
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    assign PreSum = {{`NF+3{1'b0}}, PmKilled, 2'b0} + AmInv + {{3*`NF+6{1'b0}}, InvA};
-    assign NegPreSum = {1'b0, Am} + {{`NF+3{1'b1}}, ~PmKilled, 2'b0} + {(3*`NF+7)'(4)};
+    //              Zsticky             Psticky
+    // PreSum    -1 = don't add 1     +1 = add 2
+    // NegPreSum +1 = add 2           -1 = don't add 1
+    // for NegPreSum the product is set to -1 whenever the product is killed, therefore add 1, 2 or 0
+    assign PreSum = {{`NF+3{1'b0}}, PmKilled, 1'b0, InvA&ZmSticky&KillProd} + AmInv + {{3*`NF+6{1'b0}}, InvA&~((ZmSticky&~KillProd))};
+    assign NegPreSum = {1'b0, Am} + {{`NF+3{1'b1}}, ~PmKilled, 2'b11} + {(3*`NF+5)'(0), ZmSticky&~KillProd, ~(ZmSticky)};
      
     // Is the sum negitive
     assign NegSum = PreSum[3*`NF+6];
@@ -261,7 +265,7 @@ endmodule
 
 module loa( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
     input logic  [3*`NF+6:0] A,     // addend
-    input logic  [2*`NF+1:0] P,     // product
+    input logic  [2*`NF+3:0] P,     // product
     output logic [$clog2(3*`NF+7)-1:0]       NCnt   // normalization shift count for the positive result
     ); 
     
@@ -273,12 +277,9 @@ module loa( // [Schmookler & Nowka, Leading zero anticipation and detection, IEE
     assign T[3*`NF+6:2*`NF+4] = A[3*`NF+6:2*`NF+4];
     assign G[3*`NF+6:2*`NF+4] = 0;
     assign Z[3*`NF+6:2*`NF+4] = ~A[3*`NF+6:2*`NF+4];
-    assign T[2*`NF+3:2] = A[2*`NF+3:2]^P;
-    assign G[2*`NF+3:2] = A[2*`NF+3:2]&P;
-    assign Z[2*`NF+3:2] = ~A[2*`NF+3:2]&~P;
-    assign T[1:0] = A[1:0];
-    assign G[1:0] = 0;
-    assign Z[1:0] = ~A[1:0];
+    assign T[2*`NF+3:0] = A[2*`NF+3:0]^P;
+    assign G[2*`NF+3:0] = A[2*`NF+3:0]&P;
+    assign Z[2*`NF+3:0] = ~A[2*`NF+3:0]&~P;
 
 
     // Apply function to determine Leading pattern

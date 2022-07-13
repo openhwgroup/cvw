@@ -44,7 +44,7 @@ module srtfsm(
   output logic [`DURLEN-1:0] EarlyTermShiftE,
   output logic DivStickyE,
   output logic DivDone,
-  output logic DivNegStickyE,
+  output logic NegSticky,
   output logic DivBusy
   );
   
@@ -62,7 +62,7 @@ module srtfsm(
   assign DivStickyE = |W;
   assign DivDone = (state == DONE);
   assign W = WC+WS;
-  assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???
+  assign NegSticky = W[`DIVLEN+3]; //*** is there a better way to do this???
   assign EarlyTermShiftE = step;
 
   always_ff @(posedge clk) begin
