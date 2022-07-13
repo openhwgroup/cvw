@@ -24,9 +24,6 @@ add wave -group {Divide} -noupdate /testbenchfp/srtradix4/*
 add wave -group {Divide} -group inter0 -noupdate /testbenchfp/srtradix4/genblk1[0]/divinteration/*
 add wave -group {Divide} -group inter0 -noupdate /testbenchfp/srtradix4/genblk1[0]/divinteration/qsel4/*
 add wave -group {Divide} -group inter0 -noupdate /testbenchfp/srtradix4/genblk1[0]/divinteration/otfc4/*
-add wave -group {Divide} -group inter1 -noupdate /testbenchfp/srtradix4/genblk1[1]/divinteration/*
-add wave -group {Divide} -group inter2 -noupdate /testbenchfp/srtradix4/genblk1[2]/divinteration/*
-add wave -group {Divide} -group inter3 -noupdate /testbenchfp/srtradix4/genblk1[3]/divinteration/*
 add wave -group {Divide} -noupdate /testbenchfp/srtpreproc/*
 add wave -group {Divide} -noupdate /testbenchfp/srtradix4/expcalc/*
 add wave -group {Divide} -noupdate /testbenchfp/srtfsm/*

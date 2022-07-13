@@ -41,7 +41,7 @@ module srtradix4(
   input logic [`DIVLEN-1:0] Dpreproc,
   input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
   output logic [`QLEN-1:0] Quot,
-  output logic [`DIVLEN+3:0]  WSN, WCN,
+  output logic [`DIVLEN+3:0]  NextWSN, NextWCN,
   output logic [`DIVLEN+3:0]  FirstWS, FirstWC,
   output logic  [`NE+1:0] DivCalcExpM,
   output logic [`XLEN-1:0] Rem
@@ -58,11 +58,12 @@ module srtradix4(
   logic [`QLEN-1:0] QNext[`DIVCOPIES-1:0];
   logic [`QLEN-1:0] QMNext[`DIVCOPIES-1:0];
  /* verilator lint_on UNOPTFLAT */
+  logic [`DIVLEN+3:0]  WSN, WCN;
   logic [`DIVLEN+3:0]  D, DBar, D2, DBar2;
   logic [`NE+1:0] DivCalcExp;
   logic [$clog2(`XLEN+1)-1:0] intExp;
   logic           intSign;
-  logic [`QLEN-1:0] QMux, QMMux;
+  logic [`QLEN-1:0] QMMux;
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -72,9 +73,11 @@ module srtradix4(
   //  - otherwise load WSA into the flipflop
   //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
   //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
-  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0}, {3'b000, ~XZeroE, X}, DivStart, WSN);
+  assign NextWSN = {WSA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0};
+  assign NextWCN = {WCA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0};
+  mux2   #(`DIVLEN+4) wsmux(NextWSN, {3'b000, ~XZeroE, X}, DivStart, WSN);
   flop   #(`DIVLEN+4) wsflop(clk, WSN, WS[0]);
-  mux2   #(`DIVLEN+4) wcmux({WCA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0}, {`DIVLEN+4{1'b0}}, DivStart, WCN);
+  mux2   #(`DIVLEN+4) wcmux(NextWCN, {`DIVLEN+4{1'b0}}, DivStart, WCN);
   flop   #(`DIVLEN+4) wcflop(clk, WCN, WC[0]);
   flopen #(`DIVLEN+4) dflop(clk, DivStart, {4'b0001, Dpreproc}, D);
   flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpM);
@@ -88,10 +91,10 @@ module srtradix4(
 
   genvar i;
   generate
-    for(i=0; i<`DIVCOPIES; i++) begin
+    for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin
       divinteration divinteration(.clk, .DivStart, .DivBusy, .D, .DBar, .D2, .DBar2, 
       .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]));
-      if(i<3) begin 
+      if(i<(`DIVCOPIES-1)) begin 
         assign WS[i+1] = {WSA[i][`DIVLEN+1:0], 2'b0};
         assign WC[i+1] = {WCA[i][`DIVLEN+1:0], 2'b0};
         assign Q[i+1] = QNext[i];
@@ -101,9 +104,8 @@ module srtradix4(
   endgenerate
 
   // if starting a new divison set Q to 0 and QM to -1
-  mux2 #(`QLEN) Qmux(QNext[`DIVCOPIES-1], {`QLEN{1'b0}}, DivStart, QMux);
   mux2 #(`QLEN) QMmux(QMNext[`DIVCOPIES-1], {`QLEN{1'b1}}, DivStart, QMMux);
-  flopen #(`QLEN) Qreg(clk, DivBusy|DivStart, QMux, Q[0]); // *** have to connect Quot directly to M stage
+  flopenr #(`QLEN) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
   flop #(`QLEN) QMreg(clk, QMMux, QM[0]);
 
   assign Quot = Q[0];
@@ -181,7 +183,7 @@ module qsel4 (
 
 	logic [3:0] QSel4[1023:0];
 
-  initial begin 
+  always_comb begin 
     integer d, w, i, w2;
     for(d=0; d<8; d++)
       for(w=0; w<128; w++)begin
@@ -270,9 +272,9 @@ module otfc4 (
 		// else if 	q = -2	Q = {QM, 10} 	QM = {QM, 01}
     // *** how does the 0 concatination numbers work?
 
+  assign QR  = Q[`QLEN-3:0];
+  assign QMR = QM[`QLEN-3:0];     // Shifted Q and QM
   always_comb begin
-    QR  = Q[`QLEN-3:0];
-    QMR = QM[`QLEN-3:0];     // Shift Q and QM
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
       QMNext = {QR,  2'b01};
@@ -352,5 +354,5 @@ module expcalc(
             endcase
     end
     // correct exponent for denormalized input's normalization shifts
-    assign DivCalcExp = ({2'b0, XExpE} - {{`NE+1-$clog2(`NF+2){1'b0}}, XZeroCnt} - {2'b0, YExpE} + {{`NE+1-$clog2(`NF+2){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZeroE}};
+    assign DivCalcExp = ({2'b0, XExpE} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - {2'b0, YExpE} + {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZeroE}};
     endmodule

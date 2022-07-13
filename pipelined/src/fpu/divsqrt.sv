@@ -52,7 +52,7 @@ module divsqrt(
 //   output logic [`XLEN-1:0] RemM,
 );
 
-  logic [`DIVLEN+3:0]  WSN, WCN;
+  logic [`DIVLEN+3:0]  NextWSN, NextWCN;
   logic [`DIVLEN+3:0]  WS, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DIVLEN-1:0] X;
@@ -61,8 +61,8 @@ module divsqrt(
 
   srtpreproc srtpreproc(.XManE, .Dur, .YManE,.X,.Dpreproc, .XZeroCnt, .YZeroCnt);
 
-  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivStickyE(DivStickyM), .XNaNE, .YNaNE,
+  srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivStickyE(DivStickyM), .XNaNE, .YNaNE,
                 .XInfE, .YInfE, .DivNegStickyE(DivNegStickyM), .EarlyTermShiftE(EarlyTermShiftM));
-  srtradix4 srtradix4(.clk, .FmtE, .X,.Dpreproc, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .WSN, .WCN, .DivStart(DivStartE), .XExpE, .YExpE, .XZeroE, .YZeroE,
+  srtradix4 srtradix4(.clk, .FmtE, .X,.Dpreproc, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .XExpE, .YExpE, .XZeroE, .YZeroE,
                 .DivBusy, .Quot(QuotM), .Rem(), .DivCalcExpM);
 endmodule

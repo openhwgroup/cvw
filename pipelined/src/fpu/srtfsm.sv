@@ -33,7 +33,7 @@
 module srtfsm(
   input  logic clk, 
   input  logic reset, 
-  input logic [`DIVLEN+3:0] WSN, WCN, WS, WC,
+  input logic [`DIVLEN+3:0] NextWSN, NextWCN, WS, WC,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
@@ -58,8 +58,8 @@ module srtfsm(
 
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
-  assign WZero = ((WSN^WCN)=={WSN[`DIVLEN+2:0]|WCN[`DIVLEN+2:0], 1'b0});
-  assign DivStickyE = ~WZero;
+  assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVLEN+2:0]|NextWCN[`DIVLEN+2:0], 1'b0});
+  assign DivStickyE = |W;
   assign DivDone = (state == DONE);
   assign W = WC+WS;
   assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???

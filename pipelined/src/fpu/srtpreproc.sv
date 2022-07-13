@@ -63,8 +63,7 @@ module srtpreproc (
   
   assign X = PreprocX;
   assign Dpreproc = PreprocY;
-  
-  assign Dur = (`DURLEN)'($rtoi(`FPDUR));
+  assign Dur = (`DURLEN)'(`FPDUR);
   // assign intExp = zeroCntB - zeroCntA + 1;
   // assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
