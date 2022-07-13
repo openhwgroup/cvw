@@ -96,6 +96,10 @@ void output(FILE *fptr, int aSign, int aExp, double aFrac, int bSign, int bExp, 
   // Print r in standard double format
   fprintf(fptr, "%03x", rExp|(rSign<<11));
   printhex(fptr, rFrac);
+  fprintf(fptr, "_");
+
+  // Spacing for testbench, value doesn't matter
+  fprintf(fptr, "%016x", 0);
   fprintf(fptr, "\n");
 }
 
