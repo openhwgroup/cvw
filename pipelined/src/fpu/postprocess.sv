@@ -56,7 +56,6 @@ module postprocess (
     //divide signals
     input logic  [`DURLEN-1:0]              DivEarlyTermShift,
     input logic                             DivSticky,
-    input logic                             DivNegSticky,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivCalcExp,
     input logic  [`QLEN-1:0]                Quot,
@@ -153,7 +152,7 @@ module postprocess (
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .FmaConvNormSumExp,
-                          .ZDenorm, .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
+                          .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
     divshiftcalc divshiftcalc(.Fmt, .DivCalcExp, .Quot, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
@@ -183,7 +182,7 @@ module postprocess (
     
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
-    lzacorrection lzacorrection(.FmaOp, .FmaKillProd, .FmaPreResultDenorm, .FmaConvNormSumExp,
+    lzacorrection lzacorrection(.FmaOp, .FmaPreResultDenorm, .FmaConvNormSumExp,
                                 .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExp,
                                 .DivCorrExp, .FmaSZero, .Shifted, .FmaSe, .Nfrac);
 
@@ -203,7 +202,7 @@ module postprocess (
 
     round round(.OutFmt, .Frm, .S, .FmaZmSticky, .ZZero, .Plus1, .PostProcSel, .CvtCe, .DivCorrExp,
                 .FmaInvA, .Nsgn, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Nfrac, .ToInt,  .CvtResUf,
-                .DivSticky, .DivNegSticky, .DivDone,
+                .DivSticky, .DivDone,
                 .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .RoundAdd, .UfLSBRes, .Nexp);
 
     ///////////////////////////////////////////////////////////////////////////////
