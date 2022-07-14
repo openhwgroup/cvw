@@ -35,7 +35,7 @@ module divshiftcalc(
     // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
     assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, DivEarlyTermShift&{`DURLEN{~DivDenormShift[`NE+1]}}, ($clog2(`LOGR*`DIVCOPIES))'(0)};
 
-    // *** may be able to reduce shifter size
+    // *** QLEN can be changed to DIVLEN if we figure out what divLEN is - chenge normshiftsize definifion
     assign DivShiftIn = {{`NF-1{1'b0}}, Quot, {`NORMSHIFTSZ-`QLEN+1-`NF{1'b0}}};
 
 endmodule

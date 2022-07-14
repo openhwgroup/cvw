@@ -97,14 +97,14 @@
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+9))
-`define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
+`define NORMSHIFTSZ ((`QLEN+`NF+3) > (3*`NF+8) ? (`QLEN+`NF+3) : (3*`NF+9))
+`define CORRSHIFTSZ ((`DIVRESLEN+`NF+3) > (3*`NF+8) ? (`DIVRESLEN+`NF+3) : (3*`NF+6))
 
 // division constants
 `define RADIX 32'h4
 `define DIVCOPIES 32'h4
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN + 2) : (`NF + 2))
-`define DIVRESLEN ((`NF>`XLEN) ? `DIVLEN+2 : `DIVLEN)
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF + 3))
+`define DIVRESLEN ((`NF>`XLEN) ? `NF+4 : `XLEN)
 `define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
 // FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
 `define FPDUR ((`DIVRESLEN+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES))

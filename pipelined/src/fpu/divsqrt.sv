@@ -59,10 +59,10 @@ module divsqrt(
   logic [`DURLEN-1:0] Dur;
   logic NegSticky;
 
-  srtpreproc srtpreproc(.XManE, .Dur, .YManE,.X,.Dpreproc, .XZeroCnt, .YZeroCnt);
+  srtpreproc srtpreproc(.XManE, .Dur, .YManE, .X,.Dpreproc, .XZeroCnt, .YZeroCnt);
 
   srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivStickyE(DivStickyM), .XNaNE, .YNaNE,
-                .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
+               .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
   srtradix4 srtradix4(.clk, .FmtE, .X,.Dpreproc, .NegSticky, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .XExpE, .YExpE, .XZeroE, .YZeroE,
                 .DivBusy, .Quot(QuotM), .Rem(), .DivCalcExpM);
 endmodule

@@ -695,11 +695,10 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
-  srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .NegSticky(DivNegSticky), .EarlyTermShiftE(EarlyTermShift));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .NegSticky(DivNegSticky), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
-                .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
+  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XManE(XMan), .YManE(YMan), .XExpE(XExp), .YExpE(YExp), 
+                  .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
+                  .StallE(1'b0), .StallM(1'b0), .DivStickyM(DivSticky), .DivBusy, .DivCalcExpM(DivCalcExp),
+                  .EarlyTermShiftM(EarlyTermShift), .QuotM(Quot), .DivDone);
 
   assign CmpFlg[3:0] = 0;
 
