@@ -215,7 +215,7 @@ module fsel2 (
   // Generate for both positive and negative bits
   assign FP = ~S & C;
   assign FN = SM | (C & (~C << 2));
-  assign FZ = {(`DIVLEN+4){1'B0}};
+  assign FZ = {(`DIVLEN+4){1'b0}};
 
   // Choose which adder input will be used
 
@@ -276,20 +276,20 @@ module sotfc2(
   //  Use this otfc for division and square root.
   logic [`DIVLEN+3:0] S, SM, SNext, SMNext, SMux;
 
-  flopr #(`DIVLEN+4) Sreg(clk, Start, SMNext, SM);
+  flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
   mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, {(`DIVLEN){1'b0}}}, Start, SMux);
-  flop #(`DIVLEN+4) SMreg(clk, SMux, S);
+  flop #(`DIVLEN+4) Sreg(clk, SMux, S);
 
   always_comb begin
     if (sp) begin
-      SNext  = S | ((C << 2) & ~(C << 1));
+      SNext  = S | ((C << 1) & ~(C << 2));
       SMNext = S;
     end else if (sn) begin
-      SNext  = SM | ((C << 2) & ~(C << 1));
+      SNext  = SM | ((C << 1) & ~(C << 2));
       SMNext = SM;
     end else begin        // If sp and sn are not true, then sz is
       SNext  = S;
-      SMNext = SM | ((C << 2) & ~(C << 1));
+      SMNext = SM | ((C << 1) & ~(C << 2));
     end 
   end
   assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:2] : S[`DIVLEN-2:1];
