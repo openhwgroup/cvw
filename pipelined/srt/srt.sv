@@ -75,7 +75,7 @@ module srt (
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN-1], WC[`DIVLEN+3:`DIVLEN-1], qp, qz, qn);
+  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN-1], WC[`DIVLEN+3:`DIVLEN-1], Sqrt, qp, qz, qn);
 
   flopen #(`NE) expflop(clk, Start, calcExp, rExp);
   flopen #(1) signflop(clk, Start, calcSign, rsign);
@@ -170,6 +170,7 @@ endmodule
 /////////////////////////////////
 module qsel2 ( // *** eventually just change to 4 bits
   input  logic [`DIVLEN+3:`DIVLEN-1] ps, pc, 
+  input  logic         Sqrt,
   output logic         qp, qz, qn
 );
  
@@ -185,7 +186,7 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign g = ps & pc;
 
   assign #1 magnitude = ~(&p[`DIVLEN+2:`DIVLEN-1]);
-  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & (g[`DIVLEN] | (p[`DIVLEN] & g[`DIVLEN-1]))));
+  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & (g[`DIVLEN] | (Sqrt & (p[`DIVLEN] & g[`DIVLEN-1])))));
   assign #1 sign = p[`DIVLEN+3] ^ cout;
 /*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
