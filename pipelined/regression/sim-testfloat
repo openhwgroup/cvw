@@ -6,7 +6,7 @@
 # fma    - test fma
 # sub    - test subtraction
 # div    - test division
-# sqrt   - test square ro
+# sqrt   - test square root
 # all    - test everything
 
-vsim -do "do testfloat.do rv64fp mul"
+vsim -do "do testfloat.do rv64fp $1"
