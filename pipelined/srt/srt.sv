@@ -29,8 +29,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
-`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF + 2) : 2)
-`define EXTRAINTBITS ((`NF<(`XLEN)) ? 2 : (`NF - `XLEN + 2))
 
 module srt (
   input  logic clk,
@@ -49,7 +47,7 @@ module srt (
   input  logic       Int, // Choose integer inputs
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign, done,
-  output logic [`DIVLEN-3:0] Rem, Quot, // *** later handle integers
+  output logic [`DIVLEN-2:0] Rem, Quot, // *** later handle integers
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -268,7 +266,7 @@ module sotfc2(
   input  logic         Start,
   input  logic         sp, sn,
   input  logic [`DIVLEN+3:0] C,
-  output logic [`DIVLEN-3:0] Sq,
+  output logic [`DIVLEN-2:0] Sq,
   output logic [`DIVLEN+3:0] F
 );
   //  The on-the-fly converter transfers the square root 
@@ -292,7 +290,7 @@ module sotfc2(
       SMNext = SM | ((C << 1) & ~(C << 2));
     end 
   end
-  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:2] : S[`DIVLEN-2:1];
+  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
 
   fsel2 fsel(sp, sn, C, S, SM, F);
 

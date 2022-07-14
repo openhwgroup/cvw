@@ -104,6 +104,8 @@
 `define RADIX 32'h4
 `define DIVCOPIES 32'h4
 `define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF + 3))
+`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF) : 3)
+`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN + 3))
 `define DIVRESLEN ((`NF>`XLEN) ? `NF+4 : `XLEN)
 `define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
 // FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
