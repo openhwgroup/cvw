@@ -72,7 +72,7 @@ module testbench;
 
   // Equip Int test or Sqrt test
   assign Int = 1'b0;
-  assign Sqrt = 1'b0;
+  assign Sqrt = 1'b1;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -155,7 +155,7 @@ module testbench;
         req <= #5 1;
         diffp = correctr[51:0] - r;
         diffn = r - correctr[51:0];
-        if (rExp !== correctr[62:52]) // check if accurate to 1 ulp
+        if ((rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
           begin
             errors = errors + 1;
             $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
