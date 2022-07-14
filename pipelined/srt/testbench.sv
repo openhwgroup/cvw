@@ -160,10 +160,9 @@ module testbench;
             errors = errors + 1;
             $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
             $display("failed\n");
-            $stop;
           end
         if (afrac === 52'hxxxxxxxxxxxxx) begin 
-          $display("%d Tests completed successfully", testnum);
+          $display("%d Tests completed successfully", testnum-errors);
           $stop; end 
       end
     end
