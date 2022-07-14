@@ -1,4 +1,4 @@
-`define DIVLEN 64
+`include "wally-config.vh"
 
 /////////////
 // counter //
@@ -39,17 +39,17 @@ endmodule
 // testbench //
 //////////
 module testbench;
-  logic              clk;
-  logic              req;
-  logic              done;
-  logic              Int;
-  logic [63:0]       a, b;
-  logic [51:0]       afrac, bfrac;
-  logic [10:0]       aExp, bExp;
-  logic              asign, bsign;
-  logic [51:0]       r;
-  logic [63:0]       rInt;
-  logic [`DIVLEN-1:0]  Quot;
+  logic               clk;
+  logic               req;
+  logic               done;
+  logic               Int;
+  logic [`XLEN-1:0]   a, b;
+  logic [`NF-1:0]     afrac, bfrac;
+  logic [`NE-1:0]     aExp, bExp;
+  logic               asign, bsign;
+  logic [`NF-1:0]     r;
+  logic [`XLEN-1:0]   rInt;
+  logic [`DIVLEN-2:0] Quot;
  
   // Test parameters
   parameter MEM_SIZE = 40000;
@@ -108,16 +108,16 @@ module testbench;
       b = Vec[`memb];
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
-      r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
-      rInt = Quot;
+      r = Quot[(`DIVLEN - 2):(`DIVLEN - `NF - 1)];
+      rInt = {1'b1, Quot};
       req <= #5 1;
     end
   
   // Apply directed test vectors read from file.
 
   always @(posedge clk) begin
-    r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
-    rInt = Quot;
+    r = Quot[(`DIVLEN - 2):(`DIVLEN - `NF - 1)];
+    rInt = {1'b1, Quot};
     if (done) begin
       if (~Int & ~Sqrt) begin
         req <= #5 1;
