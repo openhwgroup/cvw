@@ -1,7 +1,7 @@
 `include "wally-config.vh"
 
 module divshiftcalc(
-    input logic  [`QLEN-1:0] Quot,
+    input logic  [`QLEN-1-(`RADIX/4):0] Quot,
     input logic  [`FMTBITS-1:0] Fmt,
     input logic [`DURLEN-1:0] DivEarlyTermShift,
     input logic [`NE+1:0] DivCalcExp,
@@ -30,12 +30,12 @@ module divshiftcalc(
     //  00000000x.xxxxxx... << NF               Exp = DivCalcExp (extra shift done afterwards)
     //  00000000xx.xxxxx... << 1?               Exp = DivCalcExp-1 (determined after)
     // inital Left shift amount  = NF
+    // shift one more if the it's a minimally redundent radix 4 - one entire cycle needed for integer bit
     assign NormShift = (`NE+2)'(`NF);
     // if the shift amount is negitive then dont shift (keep sticky bit)
     // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, DivEarlyTermShift&{`DURLEN{~DivDenormShift[`NE+1]}}, ($clog2(`LOGR*`DIVCOPIES))'(0)};
+    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, DivEarlyTermShift&{`DURLEN{~DivDenormShift[`NE+1]}}, {$clog2(`LOGR*`DIVCOPIES){1'b0}}};
 
-    // *** QLEN can be changed to DIVLEN if we figure out what divLEN is - chenge normshiftsize definifion
-    assign DivShiftIn = {{`NF-1{1'b0}}, Quot, {`NORMSHIFTSZ-`QLEN+1-`NF{1'b0}}};
+    assign DivShiftIn = {{`NF{1'b0}}, Quot, {`NORMSHIFTSZ-`QLEN+(`RADIX/4)-`NF{1'b0}}};
 
 endmodule
