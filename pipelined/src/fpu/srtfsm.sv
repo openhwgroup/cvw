@@ -38,8 +38,9 @@ module srtfsm(
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
   input  logic DivStart, 
-  input logic StallE,
-  input logic StallM,
+  input  logic StallE,
+  input  logic StallM,
+  input  logic [`DIVLEN+3:0] StickyWSA,
   input  logic [`DURLEN-1:0] Dur,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
   output logic DivStickyE,
@@ -59,7 +60,14 @@ module srtfsm(
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
   assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVLEN+2:0]|NextWCN[`DIVLEN+2:0], 1'b0});
-  assign DivStickyE = |W;
+  // calculate sticky bit
+  //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
+  //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
+  //      radix-4 division can't create a QM that continually adds 0's
+  if (`RADIX == 2)
+    assign DivStickyE = |W&~(StickyWSA == WS);
+  else
+    assign DivStickyE = |W;
   assign DivDone = (state == DONE);
   assign W = WC+WS;
   assign NegSticky = W[`DIVLEN+3]; //*** is there a better way to do this???

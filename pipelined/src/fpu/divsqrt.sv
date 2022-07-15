@@ -47,22 +47,23 @@ module divsqrt(
   output logic DivDone,
   output logic [`NE+1:0] DivCalcExpM,
   output logic [`DURLEN-1:0] EarlyTermShiftM,
-  output logic [`QLEN-1:0] QuotM
+  output logic [`QLEN-1-(`RADIX/4):0] QuotM
 //   output logic [`XLEN-1:0] RemM,
 );
 
   logic [`DIVLEN+3:0]  NextWSN, NextWCN;
   logic [`DIVLEN+3:0]  WS, WC;
+  logic [`DIVLEN+3:0] StickyWSA;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DIVLEN-1:0] X;
   logic [`DIVLEN-1:0] Dpreproc;
   logic [`DURLEN-1:0] Dur;
   logic NegSticky;
 
-  srtpreproc srtpreproc(.XManE, .Dur, .YManE, .X,.Dpreproc, .XZeroCnt, .YZeroCnt);
+  srtpreproc srtpreproc(.Xm(XManE), .Dur, .Ym(YManE), .X,.Dpreproc, .XZeroCnt, .YZeroCnt);
 
   srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivStickyE(DivStickyM), .XNaNE, .YNaNE,
-               .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
-  srtradix4 srtradix4(.clk, .FmtE, .X,.Dpreproc, .NegSticky, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .XExpE, .YExpE, .XZeroE, .YZeroE,
-                .DivBusy, .Quot(QuotM), .Rem(), .DivCalcExpM);
+               .StickyWSA, .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
+  srt srt(.clk, .FmtE, .X,.Dpreproc, .NegSticky, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XExpE), .Ye(YExpE), .XZeroE, .YZeroE,
+                .StickyWSA, .DivBusy, .Quot(QuotM), .Rem(), .DivCalcExpM);
 endmodule

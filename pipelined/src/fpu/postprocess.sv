@@ -58,7 +58,7 @@ module postprocess (
     input logic                             DivSticky,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivCalcExp,
-    input logic  [`QLEN-1:0]                Quot,
+    input logic  [`QLEN-1-(`RADIX/4):0]                Quot,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent

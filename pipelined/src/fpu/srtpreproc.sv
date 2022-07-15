@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module srtpreproc (
-  input  logic [`NF:0] XManE, YManE,
+  input  logic [`NF:0] Xm, Ym,
   output logic [`DIVLEN-1:0] X,
   output logic [`DIVLEN-1:0] Dpreproc,
   output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
@@ -49,16 +49,16 @@ module srtpreproc (
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
-  lzc #(`NF+1) lzcA (XManE, XZeroCnt);
-  lzc #(`NF+1) lzcB (YManE, YZeroCnt);
+  lzc #(`NF+1) lzcA (Xm, XZeroCnt);
+  lzc #(`NF+1) lzcB (Ym, YZeroCnt);
 
   // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
   // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
 
   // assign PreprocA = ExtraA << zeroCntA;
   // assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XManE[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
-  assign PreprocY = {YManE[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocX = {Xm[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocY = {Ym[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
 
   
   assign X = PreprocX;
