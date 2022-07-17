@@ -60,10 +60,11 @@ module cvtshiftcalc(
     //          - otherwise:
     //              |     LzcInM      | 0's if nessisary | 
     // change to int shift to the left one
-    assign CvtShiftIn = ToInt ? {{`XLEN{1'b0}}, Xm[`NF]&~CvtCe[`NE], Xm[`NF-1]|(CvtCe[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}} : 
-                     CvtResDenormUf ? {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}} : 
-                                   {CvtLzcIn, {`NF+1{1'b0}}};
-    
+
+    always_comb
+        if (ToInt)               CvtShiftIn = {{`XLEN{1'b0}}, Xm[`NF]&~CvtCe[`NE], Xm[`NF-1]|(CvtCe[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}};
+        else if (CvtResDenormUf) CvtShiftIn = {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}};
+        else                     CvtShiftIn = {CvtLzcIn, {`NF+1{1'b0}}};
     
     // choose the negative of the fraction size
     if (`FPSIZES == 1) begin
