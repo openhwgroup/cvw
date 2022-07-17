@@ -78,6 +78,13 @@ def freqPlot(tech, width, config):
     ''' plots delay, area for syntheses with specified tech, module, width
     '''
 
+    current_directory = os.getcwd()
+    final_directory = os.path.join(current_directory, 'plots/wally')
+#    if not os.path.exists(final_directory):
+#        os.makedirs(final_directory)
+#    os.chdir(final_directory)
+
+
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
         if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('' == oneSynth.special):
