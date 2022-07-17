@@ -11,6 +11,7 @@ import numpy as np
 from ppa.ppaAnalyze import noOutliers
 from matplotlib import ticker
 import argparse
+import os
 
 
 def synthsintocsv():
