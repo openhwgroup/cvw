@@ -429,7 +429,9 @@ module DCacheFlushFSM
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
 	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
+	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;      
+	  localparam integer cachenumwords = 1; //testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;
+	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;        
 	  localparam integer lognumlines = $clog2(numlines);
 	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
@@ -438,16 +440,17 @@ module DCacheFlushFSM
 
 
 	  genvar 			 index, way, cacheWord;
-	  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [linelen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachenumwords-1:0];
+      logic [linelen-1:0] cacheline;
+	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachenumwords-1:0];
+	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachenumwords-1:0];
+	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachenumwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [cachenumwords-1:0];
     for(index = 0; index < numlines; index++) begin
 		  for(way = 0; way < numways; way++) begin
-		    for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+		    for(cacheWord = 0; cacheWord < cachenumwords; cacheWord++) begin
 			    copyShadow #(.tagstart(tagstart),
-					.loglinebytelen(loglinebytelen))
+					.loglinebytelen(loglinebytelen), .linelen(linelen))
 			    copyShadow(.clk,
           .start,
           .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
@@ -472,9 +475,14 @@ module DCacheFlushFSM
         #1
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
-          for(k = 0; k < numwords; k++) begin
-            if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-            ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+          if (CacheValid[j][i][0] & CacheDirty[j][i][0]) begin
+            for(k = 0; k < numwords; k++) begin
+              //cacheline = CacheData[j][i][0];
+              // does not work with modelsim
+              // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
+              // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
+              //ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = cacheline[`XLEN*(k+1)-1:`XLEN*k];
+              ShadowRAM[(CacheAdr[j][i][0] >> $clog2(`XLEN/8)) + k] = CacheData[j][i][0][`XLEN*k +: `XLEN];
             end
           end	
           end
@@ -486,15 +494,15 @@ module DCacheFlushFSM
 endmodule
 
 module copyShadow
-  #(parameter tagstart, loglinebytelen)
+  #(parameter tagstart, loglinebytelen, linelen)
   (input logic clk,
    input logic 			     start,
    input logic [`PA_BITS-1:tagstart] tag,
    input logic 			     valid, dirty,
-   input logic [`XLEN-1:0] 	     data,
+   input logic [linelen-1:0] 	     data,
    input logic [32-1:0] 	     index,
    input logic [32-1:0] 	     cacheWord,
-   output logic [`XLEN-1:0] 	     CacheData,
+   output logic [linelen-1:0] 	     CacheData,
    output logic [`PA_BITS-1:0] 	     CacheAdr,
    output logic [`XLEN-1:0] 	     CacheTag,
    output logic 		     CacheValid,
