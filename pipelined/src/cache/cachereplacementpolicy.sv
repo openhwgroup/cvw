@@ -59,8 +59,8 @@ module cachereplacementpolicy
   // Replacement Bits: Register file
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
   always_ff @(posedge clk) 
-    if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] = '0;
-    else if (LRUWriteEnD) ReplacementBits[RAdrD] = NewReplacementD;
+    if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
+    else if (LRUWriteEnD) ReplacementBits[RAdrD] <= NewReplacementD;
   assign LineReplacementBits = ReplacementBits[RAdrD];
 
   genvar 		      index;

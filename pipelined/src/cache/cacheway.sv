@@ -38,7 +38,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          CacheWriteData,
-  input logic                        FLoad2,
+  input logic                        FStore2,
   input logic                        SetValidWay,
   input logic                        ClearValidWay,
   input logic                        SetDirtyWay,
@@ -79,7 +79,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     logic [2**LOGWPL-1:0] MemPAdrDecodedtmp;
     onehotdecoder #(LOGWPL) adrdec(
       .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecodedtmp));
-    assign MemPAdrDecoded = MemPAdrDecodedtmp|{MemPAdrDecodedtmp[2**LOGWPL-2:0]&{2**LOGWPL-1{FLoad2}}, 1'b0};
+    assign MemPAdrDecoded = MemPAdrDecodedtmp|{MemPAdrDecodedtmp[2**LOGWPL-2:0]&{2**LOGWPL-1{FStore2}}, 1'b0};
   end else
     onehotdecoder #(LOGWPL) adrdec(
       .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
@@ -105,7 +105,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // *** Potential optimization: if byte write enables are available, could remove subwordwrites
+  // *** instantiate one larger RAM, not one per RAM.  Expand byte mask
   genvar 							  words;
   for(words = 0; words < LINELEN/`XLEN; words++) begin: word
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),

@@ -38,7 +38,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
-  input  logic [3:0]       HSIZED,
+  input  logic [`XLEN/8-1:0] HWSTRB,
   output logic [`XLEN-1:0] HREADRam,
   output logic             HRESPRam, HREADYRam
 );
@@ -69,13 +69,8 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
   mux2 #(32) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
-  // Byte mask for subword writes
-  // ***the CLINT and other peripherals duplicate this hardware
-  // *** it shoudl be centralized and sent over HWSTRB
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(ByteMask));
-
   // single-ported RAM
   bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
-    memory(.clk(HCLK), .we(memwriteD), .bwe(ByteMask), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
+    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
 endmodule
   

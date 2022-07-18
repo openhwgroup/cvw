@@ -857,6 +857,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     addi a6, a6, 8 
 .endm
 
+// Place this macro in peripheral tests to setup all the PLIC registers to generate external interrupts
 .macro SETUP_PLIC  
     # Setup PLIC with a series of register writes
 

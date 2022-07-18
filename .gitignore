@@ -76,7 +76,8 @@ synthDC/*.log
 synthDC/*.svf
 synthDC/runs/
 synthDC/newRuns
-synthDC/PPAruns
+synthDC/ppa/PPAruns
+synthDC/ppa/plots
 synthDC/plots/
 synthDC/runArchive
 synthDC/hdl

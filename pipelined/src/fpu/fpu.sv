@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// Written: Katherine Parry, James Stine, Brett Mathis
+// Written: me@KatherineParry.com, James Stine, Brett Mathis
 // Modified: 6/23/2021
 //
 // Purpose: FPU
@@ -42,7 +42,7 @@ module fpu (
   input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FpLoadStoreM, // Fp load instruction?
-  output logic              FLoad2,
+  output logic              FStore2,
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
@@ -110,7 +110,7 @@ module fpu (
    logic [`NE+1:0]	    ProdExpE, ProdExpM;
    logic 			    AddendStickyE, AddendStickyM;
    logic 			    KillProdE, KillProdM;
-   logic 			    InvZE, InvZM;
+   logic 			    InvAE, InvAM;
    logic 			    NegSumE, NegSumM;
    logic 			    ZSgnEffE, ZSgnEffM;
    logic 			    PSgnE, PSgnM;
@@ -125,11 +125,11 @@ module fpu (
    logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
    
    //divide signals
-   logic [`DIVLEN+2:0] Quot;
-   logic [`NE+1:0] DivCalcExpM;
-   logic DivNegStickyM;
-   logic DivStickyM;
-   logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2M;
+   logic [`QLEN-1-(`RADIX/4):0] QuotM;
+   logic [`NE+1:0] DivCalcExpE, DivCalcExpM; 
+   logic DivStickyE, DivStickyM;
+   logic DivDoneM;
+   logic [`DURLEN-1:0] EarlyTermShiftM;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -185,9 +185,10 @@ module fpu (
    flopenrc #(`FLEN) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
    flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
-   flopenrc #(13+int'(`FMTBITS)) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD, FDivStartD},
-               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE, FDivStartE});
+   flopenrc #(12+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, FOpCtrlD, FWriteIntD},
+               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, FOpCtrlE, FWriteIntE});
+   flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
 
    // EXECUTION STAGE
    
@@ -249,47 +250,55 @@ module fpu (
          .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE, .XExpMaxE);
    
    // fma - does multiply, add, and multiply-add instructions 
-   fma fma (.XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE, 
-            .XManE, .YManE, .ZManE, .XZeroE, .YZeroE, .ZZeroE, 
-            .FOpCtrlE, .FmtE, .SumE, .NegSumE, .InvZE, .FmaNormCntE, 
-            .ZSgnEffE, .PSgnE, .ProdExpE, .AddendStickyE, .KillProdE); 
+   fma fma (.Xs(XSgnE), .Ys(YSgnE), .Zs(ZSgnE), 
+            .Xe(XExpE), .Ye(YExpE), .Ze(ZExpE), 
+            .Xm(XManE), .Ym(YManE), .Zm(ZManE), 
+            .XZero(XZeroE), .YZero(YZeroE), .ZZero(ZZeroE), 
+            .FOpCtrl(FOpCtrlE), .Fmt(FmtE), 
+            .As(ZSgnEffE), .Ps(PSgnE),
+            .Sm(SumE), .Pe(ProdExpE), 
+            .NegSum(NegSumE), .InvA(InvAE), .NCnt(FmaNormCntE), 
+            .ZmSticky(AddendStickyE), .KillProd(KillProdE)); 
 
-   // fpdivsqrt using Goldschmidt's iteration
-   if(`FLEN == 64) begin 
-   flopenrc #(64) reg_input1 (.d({FSrcXE[63:0]}), .q(DivInput1E),
-         .clear(FDivSqrtDoneE), .en(load_preload),
-         .reset(reset),  .clk(clk));
-   flopenrc #(64) reg_input2 (.d({FSrcYE[63:0]}), .q(DivInput2E),
-            .clear(FDivSqrtDoneE), .en(load_preload),
-            .reset(reset),  .clk(clk));
-   end
-   else if (`FLEN == 32) begin 
-   flopenrc #(64) reg_input1 (.d({32'b0, FSrcXE[31:0]}), .q(DivInput1E),
-         .clear(FDivSqrtDoneE), .en(load_preload),
-         .reset(reset),  .clk(clk));
-   flopenrc #(64) reg_input2 (.d({32'b0, FSrcYE[31:0]}), .q(DivInput2E),
-            .clear(FDivSqrtDoneE), .en(load_preload),
-            .reset(reset),  .clk(clk));
-   end
-   flopenrc #(8) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE[0], FOpCtrlE[0]}), 
-            .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ, FmtQ, FOpCtrlQ}),
-            .clear(FDivSqrtDoneE), .en(load_preload),
-            .reset(reset),  .clk(clk));
-   fpdiv_pipe fdivsqrt (.op1(DivInput1E[63:0]), .op2(DivInput2E[63:0]), .rm(FrmE[1:0]), .op_type(FOpCtrlQ), 
-         .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
-         .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
-         .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
-
+   // // fpdivsqrt using Goldschmidt's iteration
+   // if(`FLEN == 64) begin 
+   // flopenrc #(64) reg_input1 (.d({FSrcXE[63:0]}), .q(DivInput1E),
+   //       .clear(FDivSqrtDoneE), .en(load_preload),
+   //       .reset(reset),  .clk(clk));
+   // flopenrc #(64) reg_input2 (.d({FSrcYE[63:0]}), .q(DivInput2E),
+   //          .clear(FDivSqrtDoneE), .en(load_preload),
+   //          .reset(reset),  .clk(clk));
+   // end
+   // else if (`FLEN == 32) begin 
+   // flopenrc #(64) reg_input1 (.d({32'b0, FSrcXE[31:0]}), .q(DivInput1E),
+   //       .clear(FDivSqrtDoneE), .en(load_preload),
+   //       .reset(reset),  .clk(clk));
+   // flopenrc #(64) reg_input2 (.d({32'b0, FSrcYE[31:0]}), .q(DivInput2E),
+   //          .clear(FDivSqrtDoneE), .en(load_preload),
+   //          .reset(reset),  .clk(clk));
+   // end
+   // flopenrc #(8) reg_input3 (.d({XNaNE, YNaNE, XInfE, YInfE, XZeroE, YZeroE, FmtE[0], FOpCtrlE[0]}), 
+   //          .q({XNaNQ, YNaNQ, XInfQ, YInfQ, XZeroQ, YZeroQ, FmtQ, FOpCtrlQ}),
+   //          .clear(FDivSqrtDoneE), .en(load_preload),
+   //          .reset(reset),  .clk(clk));
+   // fpdiv_pipe fdivsqrt (.op1(DivInput1E[63:0]), .op2(DivInput2E[63:0]), .rm(FrmE[1:0]), .op_type(FOpCtrlQ), 
+   //       .reset, .clk(clk), .start(FDivStartE), .P(~FmtQ), .OvEn(1'b1), .UnEn(1'b1),
+   //       .XNaNQ, .YNaNQ, .XInfQ, .YInfQ, .XZeroQ, .YZeroQ, .load_preload,
+   //       .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
+   divsqrt divsqrt(.clk, .reset, .FmtE, .XManE, .YManE, .XExpE, .YExpE, 
+                  .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(FDivStartE), 
+                  .StallE, .StallM, .DivStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
+                  .EarlyTermShiftM, .QuotM, .DivDone(DivDoneM));
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpFpResE, .CmpIntResE);
    fsgninj fsgninj(.SgnOpCodeE(FOpCtrlE[1:0]), .XSgnE, .YSgnE, .FSrcXE, .FmtE, .SgnResE);
    fclassify fclassify (.XSgnE, .XDenormE, .XZeroE, .XNaNE, .XInfE, .XSNaNE, .ClassResE);
 
-   fcvt fcvt (.XSgnE, .XExpE, .XManE, .ForwardedSrcAE, .FOpCtrlE, 
-              .FWriteIntE, .XZeroE, .XDenormE, .FmtE, .CvtCalcExpE, 
-              .CvtShiftAmtE, .CvtResDenormUfE, .CvtResSgnE, .IntZeroE, 
-              .CvtLzcInE);
+   fcvt fcvt (.Xs(XSgnE), .Xe(XExpE), .Xm(XManE), .Int(ForwardedSrcAE), .FOpCtrl(FOpCtrlE), 
+              .ToInt(FWriteIntE), .XZero(XZeroE), .XDenorm(XDenormE), .Fmt(FmtE), .Ce(CvtCalcExpE), 
+              .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .IntZero(IntZeroE), 
+              .LzcIn(CvtLzcInE));
 
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
@@ -298,8 +307,8 @@ module fpu (
       assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
    end else begin
       logic [`FLEN-1:0] FWriteDataE;
-      if(`FMTBITS == 2) assign FLoad2 = FmtM == `FMT;
-      else assign FLoad2 = FmtM;
+      if(`FMTBITS == 2) assign FStore2 = FmtM == `FMT;
+      else assign FStore2 = FmtM;
 
       if (`FPSIZES==1) assign FWriteDataE = FSrcYE;
       else if (`FPSIZES==2) assign FWriteDataE = FmtE ? FSrcYE : {2{FSrcYE[`LEN1-1:0]}};
@@ -351,8 +360,8 @@ module fpu (
    flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SumE, SumM); 
    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, ProdExpE, ProdExpM);  
    flopenrc #($clog2(3*`NF+7)+6) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                           {AddendStickyE, KillProdE, InvZE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
-                           {AddendStickyM, KillProdM, InvZM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
+                           {AddendStickyE, KillProdE, InvAE, FmaNormCntE, NegSumE, ZSgnEffE, PSgnE},
+                           {AddendStickyM, KillProdM, InvAM, FmaNormCntM, NegSumM, ZSgnEffM, PSgnM});
    flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
                            {CvtCalcExpE, CvtShiftAmtE, CvtResDenormUfE, CvtResSgnE, IntZeroE, CvtLzcInE},
                            {CvtCalcExpM, CvtShiftAmtM, CvtResDenormUfM, CvtResSgnM, IntZeroM, CvtLzcInM});
@@ -371,12 +380,12 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.XSgnM, .YSgnM, .ZExpM, .XManM, .YManM, .ZManM, .FrmM, .FmtM, .ProdExpM, .EarlyTermShiftDiv2M,
-                           .AddendStickyM, .KillProdM, .XZeroM, .YZeroM, .ZZeroM, .XInfM, .YInfM, .Quot,
-                           .ZInfM, .XNaNM, .YNaNM, .ZNaNM, .XSNaNM, .YSNaNM, .ZSNaNM, .SumM, .DivCalcExpM,
-                           .NegSumM, .InvZM, .ZDenormM, .ZSgnEffM, .PSgnM, .FOpCtrlM, .FmaNormCntM, .DivNegStickyM,
-                           .CvtCalcExpM, .CvtResDenormUfM,.CvtShiftAmtM, .CvtResSgnM, .FWriteIntM, .DivStickyM,
-                           .CvtLzcInM, .IntZeroM, .PostProcSelM, .PostProcResM, .PostProcFlgM, .FCvtIntResM);
+   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShift(EarlyTermShiftM),
+                           .FmaZmS(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QuotM),
+                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivQe(DivCalcExpM), .DivDone(DivDoneM),
+                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM),
+                           .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivS(DivStickyM),
+                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
    // FPU flag selection - to privileged
    mux2  #(5)  FPUFlgMux ({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);

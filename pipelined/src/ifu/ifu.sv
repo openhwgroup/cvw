@@ -185,11 +185,10 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
-  
   if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
-    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
+    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM({{(`XLEN-32){1'b0}}, PCPF[31:0]}), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), .ByteMaskM('0),
-              .ReadDataWordM(FinalInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
+              .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
               .BusCommittedM(), .DCacheStallM(ICacheStallF), .Cacheable(CacheableF),
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
@@ -227,7 +226,7 @@ module ifu (
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM(TrapM), .IgnoreRequestTrapM('0),
              .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
-             .CacheFetchLine(ICacheFetchLine), .FWriteDataM(), .FpLoadStoreM(), .FLoad2(),
+             .CacheFetchLine(ICacheFetchLine), .FStore2(),
              .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
              .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
