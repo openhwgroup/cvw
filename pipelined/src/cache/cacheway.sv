@@ -115,13 +115,28 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     assign WordByteEnabled[BYTESPERWORD*(words+1)-1:BYTESPERWORD*(words)] = {{BYTESPERWORD}{SelectedWriteWordEn[words]}};
   assign SRAMLineByteMask = ReplicatedByteMask & WordByteEnabled;
 
+  localparam integer           SRAMLEN = 256;
+  localparam integer           NUMSRAM = LINELEN/SRAMLEN;
+  localparam integer           SRAMLENINBYTES = SRAMLEN/8;
+  localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
+  
+  for(words = 0; words < NUMSRAM; words++) begin: word
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .Adr(RAdr),
+      .ReadData(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .CacheWriteData(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .WriteEnable(1'b1), .ByteMask(SRAMLineByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+  end
+  
+
+/* -----\/----- EXCLUDED -----\/-----
   for(words = 0; words < 1; words++) begin: word
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(LINELEN)) CacheDataMem(.clk, .Adr(RAdr),
       .ReadData(ReadDataLine),
       .CacheWriteData(CacheWriteData),
       .WriteEnable(1'b1), .ByteMask(SRAMLineByteMask));
   end
-  
+ -----/\----- EXCLUDED -----/\----- */
+
 
 /* -----\/----- EXCLUDED -----\/-----
   for(words = 0; words < WORDSPERLINE; words++) begin: word
