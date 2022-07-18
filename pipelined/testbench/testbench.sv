@@ -114,7 +114,7 @@ logic [3:0] dummy;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
-        "wally32d":     if (`D_SUPPORTED) tests = wally32d;
+        // "wally32d":     if (`D_SUPPORTED) tests = wally32d;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
