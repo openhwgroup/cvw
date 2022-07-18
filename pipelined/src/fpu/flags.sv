@@ -131,7 +131,7 @@ module flags(
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (S|Overflow|R|Underflow)&~(InfIn|NaNIn|DivByZero);
+    assign FpInexact = (S|Overflow|R)&~(InfIn|NaNIn|DivByZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
