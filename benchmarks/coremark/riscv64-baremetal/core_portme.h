@@ -94,7 +94,7 @@ typedef clock_t CORE_TICKS;
  #define COMPILER_FLAGS FLAGS_STR /* "Please put compiler flags here (e.g. -o3)" */
 #endif
 #ifndef MEM_LOCATION
- #define MEM_LOCATION "Please put data memory location here\n\t\t\t(e.g. code in flash, data on heap etc)"
+ #define MEM_LOCATION "Code and Data in external RAM"
  #define MEM_LOCATION_UNSPEC 1
 #endif
 

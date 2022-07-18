@@ -16,7 +16,7 @@ PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=$(ARCH) -static -falign-
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
 	-funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fipa-pta \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
-	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DXLEN=$(XLEN) -DITERATIONS=10
+	-DTOTAL_DATA_SIZE=2000 -DMAIN_HAS_NOARGC=1 -DPERFORMANCE_RUN=1 -DITERATIONS=10 -DXLEN=$(XLEN) 
 
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
@@ -31,7 +31,7 @@ $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 
 $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 	make -C $(cmbase) PORT_DIR=$(PORT_DIR) compile RISCV=$(RISCV)/riscv-gnu-toolchain XCFLAGS="$(PORT_CFLAGS)"
- 	mkdir -p $(work_dir)
+	mkdir -p $(work_dir)
 	mv $(cmbase)/coremark.bare.riscv $(work_dir)
 
 .PHONY: clean
@@ -39,4 +39,4 @@ $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 clean:
 	rm -f $(work_dir)/*
 
- 
+
