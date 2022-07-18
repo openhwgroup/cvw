@@ -107,7 +107,7 @@ ifeq ($(SAIFPOWER), 1)
 	cp -f ../pipelined/regression/power.saif .
 endif
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
-	rm -rf $(OUTPUTDIR)/hdl
+#	rm -rf $(OUTPUTDIR)/hdl
 	rm -rf $(OUTPUTDIR)/WORK
 	rm -rf $(OUTPUTDIR)/alib-52
 
