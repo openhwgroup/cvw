@@ -108,7 +108,7 @@ class spike(pluginTemplate):
 
       #TODO: The following assumes you are using the riscv-gcc toolchain. If
       #      not please change appropriately
-      self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
+      self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
 
     def runTests(self, testList):
 
@@ -158,7 +158,12 @@ class spike(pluginTemplate):
 	  # echo statement.
           if self.target_run:
             # set up the simulation command. Template is for spike. Please change.
-            simcmd = self.dut_exe + ' --isa={0} +signature={1} +signature-granularity=4 {2}'.format(self.isa, sig_file, elf)
+            if ('NO_SAIL=True' in testentry['macros']):
+                # if the tests can't run on SAIL we copy the reference output to the src directory
+                reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
+                simcmd = 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+            else:
+                simcmd = self.dut_exe + ' --isa={0} +signature={1} +signature-granularity=4 {2}'.format(self.isa, sig_file, elf)
           else:
             simcmd = 'echo "NO RUN"'
 
