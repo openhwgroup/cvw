@@ -31,11 +31,11 @@
 `include "wally-config.vh"
 
 module srtpreproc (
-  input  logic [`NF:0] XManE, YManE,
+  input  logic [`NF:0] Xm, Ym,
   output logic [`DIVLEN-1:0] X,
   output logic [`DIVLEN-1:0] Dpreproc,
   output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic [$clog2(`DIVLEN/2+3)-1:0] Dur
+  output logic [`DURLEN-1:0] Dur
 );
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
@@ -49,24 +49,33 @@ module srtpreproc (
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
-  lzc #(`NF+1) lzcA (XManE, XZeroCnt);
-  lzc #(`NF+1) lzcB (YManE, YZeroCnt);
+  lzc #(`NF+1) lzcA (Xm, XZeroCnt);
+  lzc #(`NF+1) lzcB (Ym, YZeroCnt);
 
   // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
   // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
 
   // assign PreprocA = ExtraA << zeroCntA;
   // assign PreprocB = ExtraB << (zeroCntB + 1);
-  assign PreprocX = {XManE[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
-  assign PreprocY = {YManE[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocX = {Xm[`NF-1:0]<<XZeroCnt, {`DIVLEN-`NF{1'b0}}};
+  assign PreprocY = {Ym[`NF-1:0]<<YZeroCnt, {`DIVLEN-`NF{1'b0}}};
 
   
   assign X = PreprocX;
   assign Dpreproc = PreprocY;
-
-  assign Dur = ($clog2(`DIVLEN/2+3))'(`DIVLEN/2+2);
+  assign Dur = (`DURLEN)'(`FPDUR);
   // assign intExp = zeroCntB - zeroCntA + 1;
   // assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
+
+  //           radix 2     radix 4
+  // 1 copies  DIVLEN+2    DIVLEN+2/2
+  // 2 copies  DIVLEN+2/2  DIVLEN+2/2*2
+  // 4 copies  DIVLEN+2/4  DIVLEN+2/2*4
+  // 8 copies  DIVLEN+2/8  DIVLEN+2/2*8
+
+  // DIVRESLEN = DIVLEN or DIVLEN+2
+  // r = 1 or 2
+  // DIVRESLEN/(r*`DIVCOPIES)
 
 
 endmodule

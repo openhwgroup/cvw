@@ -56,7 +56,7 @@ set vhdlout_show_unconnected_pins "true"
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
-set alib_library_analysis_path ./$outputDir
+#set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
 elaborate $my_toplevel -lib WORK 
@@ -347,7 +347,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fdivsqrt/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 

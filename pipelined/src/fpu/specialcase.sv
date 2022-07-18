@@ -29,17 +29,17 @@
 
 `include "wally-config.vh"
 
-module resultselect(
+module specialcase(
     input logic                 Xs,        // input signs
     input logic  [`NF:0]        Xm, Ym, Zm, // input mantissas
     input logic                 XNaN, YNaN, ZNaN,    // inputs are NaN
     input logic  [2:0]          Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic  [`FMTBITS-1:0] OutFmt,       // output format
     input logic                 InfIn,
+    input logic                 NaNIn,
     input logic                 XInf, YInf,
     input logic                 XZero,
     input logic                 IntZero,
-    input logic                 NaNIn,
     input logic                 IntToFp,
     input logic                 Int64,
     input logic                 Signed,
@@ -53,10 +53,10 @@ module resultselect(
     input logic                 IntInvalid, Invalid, Overflow,  // flags
     input logic                 CvtResUf,
     input logic  [`NE-1:0]      Re,          // Res exponent
-    input logic  [`NE+1:0]      FullResExp,          // Res exponent
+    input logic  [`NE+1:0]      FullRe,          // Res exponent
     input logic  [`NF-1:0]      Rf,         // Res fraction
     input logic  [`XLEN+1:0]    CvtNegRes,     // the negation of the result
-    output logic [`FLEN-1:0]    W,     // final res
+    output logic [`FLEN-1:0]    PostProcRes,     // final res
     output logic [`XLEN-1:0]    FCvtIntRes     // final res
 );
     logic [`FLEN-1:0]   XNaNRes, YNaNRes, ZNaNRes, InvalidRes, OfRes, UfRes, NormRes; // possible results
@@ -231,11 +231,11 @@ module resultselect(
     //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullResExp[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResDenorm & (Re!=1);
+    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResDenorm & (Re!=1);
     assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInf&DivOp));
     // output infinity with result sign if divide by zero
     if(`IEEE754) begin
-        assign W = XNaN&~(IntToFp&CvtOp) ? XNaNRes :
+        assign PostProcRes = XNaN&~(IntToFp&CvtOp) ? XNaNRes :
                          YNaN&~CvtOp ? YNaNRes :
                          ZNaN&FmaOp ? ZNaNRes :
                          Invalid ? InvalidRes : 
@@ -243,7 +243,7 @@ module resultselect(
                          KillRes ? UfRes :  
                          NormRes;
     end else begin
-        assign W = NaNIn|Invalid ? InvalidRes :
+        assign PostProcRes = NaNIn|Invalid ? InvalidRes :
                          SelOfRes ? OfRes :
                          KillRes ? UfRes :  
                          NormRes;

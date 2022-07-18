@@ -68,7 +68,8 @@ module fcvt (
     logic                   Signed;     // is the opperation with a signed integer?
     logic                   Int64;      // is the integer 64 bits?
     logic                   IntToFp;       // is the opperation an int->fp conversion?
-    logic [`LOGCVTLEN-1:0] LeadingZeros; // output from the LZC
+    logic [`CVTLEN:0]       LzcInFull;      // input to the Leading Zero Counter (priority encoder)
+    logic [`LOGCVTLEN-1:0]  LeadingZeros; // output from the LZC
 
 
     // seperate OpCtrl for code readability
@@ -102,10 +103,11 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign LzcIn = IntToFp ? {TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
-                             {Xm[`NF-1:0], {`CVTLEN-`NF{1'b0}}};
+    assign LzcInFull = IntToFp ? {1'b0, TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
+                             {Xm, {`CVTLEN-`NF{1'b0}}};
+    assign LzcIn = LzcInFull[`CVTLEN-1:0];
     
-    lzc #(`CVTLEN) lzc (.num(LzcIn), .ZeroCnt(LeadingZeros));
+    lzc #(`CVTLEN+1) lzc (.num(LzcInFull), .ZeroCnt(LeadingZeros));
 
     ///////////////////////////////////////////////////////////////////////////
     // shifter
@@ -119,13 +121,13 @@ module fcvt (
     //      denormalized/undeflowed result fp -> fp:
     //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
     //      ??? -> fp: 
-    //          - shift left by LeadingZeros+1 - to shift till the result is normalized
+    //          - shift left by LeadingZeros - to shift till the result is normalized
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
     assign ShiftAmt = ToInt ? Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}} :
                     ResDenormUf&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0] : 
-                              (LeadingZeros+1)&{`LOGCVTLEN{XDenorm|IntToFp}};
+                              (LeadingZeros);
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
@@ -197,14 +199,14 @@ module fcvt (
     //                  |  0's |     Mantissa      |      0's if nessisary     |
     //                  |     keep        |
     //
-    //              - if the input is denormalized then we dont shift... so the  "- (LeadingZeros+1)" is just leftovers from other options
-    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - 1 - LeadingZeros = XLEN + NewBias - 1 - LeadingZeros
+    //              - if the input is denormalized then we dont shift... so the  "- LeadingZeros" is just leftovers from other options
+    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - LeadingZeros = XLEN + NewBias - LeadingZeros
     //              Process:
     //                  - shifted right by XLEN (XLEN)
-    //                  - shift left to normilize (-1-LeadingZeros)
+    //                  - shift left to normilize (-LeadingZeros)
     //                  - newBias to make the biased exponent
-    //          oldexp - biasold +newbias - (LeadingZeros+1)&(XDenorm|IntToFp)
-    assign Ce = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE{1'b0}}, XDenorm|IntToFp} - {{`NE-`LOGCVTLEN+1{1'b0}}, (LeadingZeros&{`LOGCVTLEN{XDenorm|IntToFp}})};
+    //          oldexp - biasold +newbias - LeadingZeros&(XDenorm|IntToFp)
+    assign Ce = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE-`LOGCVTLEN+1{1'b0}}, (LeadingZeros&{`LOGCVTLEN{XDenorm|IntToFp}})};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
