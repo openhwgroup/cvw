@@ -44,6 +44,7 @@ module fma(
     output logic                InvA,          // Was A inverted for effective subtraction (P-A or -P+A)
     output logic                As,       // the aligned addend's sign (modified Z sign for other opperations)
     output logic                Ps,          // the product's sign
+    output logic                Ss,          // the sum's sign
     output logic [$clog2(3*`NF+7)-1:0]          NCnt        // normalization shift count
     );
 
@@ -81,7 +82,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm);
+    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Ss);
     
     loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .NCnt);
 endmodule
@@ -226,6 +227,7 @@ module add(
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // do you invert the aligned addend
+    output logic                Ss,          
     output logic [3*`NF+5:0]    Sm           // the positive sum
 );
     logic [3*`NF+6:0]    PreSum, NegPreSum; // possibly negitive sum
@@ -257,6 +259,11 @@ module add(
 
     // Choose the positive sum and accompanying LZA result.
     assign Sm = NegSum ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
+    // is the result negitive
+    //  if p - z is the Sum negitive
+    //  if -p + z is the Sum positive
+    //  if -p - z then the Sum is negitive
+    assign Ss = NegSum^Ps; //*** move to execute stage
 endmodule
 
 

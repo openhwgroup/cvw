@@ -52,6 +52,7 @@ module postprocess (
     input logic                             FmaKillProd,      // set the product to zero before addition if the product is too small to matter
     input logic                             FmaNegSum,    // was the sum negitive
     input logic                             FmaInvA,      // do you invert Z
+    input logic                             FmaSs,
     input logic  [$clog2(3*`NF+7)-1:0]      FmaNCnt,   // the normalization shift count
     //divide signals
     input logic  [`DURLEN-1:0]              DivEarlyTermShift,
@@ -197,7 +198,7 @@ module postprocess (
 
                           
     roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
-                          .Xs, .Ys, .CvtCs, .Ms);
+                        .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
     round round(.OutFmt, .Frm, .S, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
