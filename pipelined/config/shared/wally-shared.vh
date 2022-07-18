@@ -95,11 +95,25 @@
 
 // largest length in IEU/FPU
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+9))
-`define CORRSHIFTSZ ((`DIVLEN+`NF+3) > (3*`NF+8) ? (`DIVLEN+`NF+3) : (3*`NF+6))
+`define NORMSHIFTSZ ((`QLEN+`NF+3) > (3*`NF+8) ? (`QLEN+`NF+1) : (3*`NF+9))
+`define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+8) ? (`DIVRESLEN+`NF) : (3*`NF+6))
+
+// division constants
+`define RADIX 32'h2
+`define DIVCOPIES 32'h1
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF + 3))
+`define EXTRAFRACBITS ((`NF<(`XLEN)) ? (`XLEN - `NF) : 3)
+`define EXTRAINTBITS ((`NF<(`XLEN)) ? 0 : (`NF - `XLEN + 3))
+`define DIVRESLEN ((`NF>`XLEN) ? `NF+4 : `XLEN)
+`define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
+// FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
+// one interation is required for the integer bit for minimally redundent radix-4
+`define FPDUR ((`DIVLEN+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4))
+`define DURLEN ($clog2(`FPDUR+1))
+`define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
+
 
 `define USE_SRAM 0
 

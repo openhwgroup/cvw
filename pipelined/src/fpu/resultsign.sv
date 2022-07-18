@@ -35,32 +35,29 @@ module resultsign(
     input logic         InfIn,
     input logic         FmaOp,
     input logic [`NE+1:0] FmaSe,
-    input logic         FmaSmZero,
+    input logic         FmaSZero,
     input logic         Mult,
     input logic         R,
     input logic         S,
-    input logic         Nsgn,
+    input logic         Ms,
     output logic        Ws
 );
 
-    logic ZeroSgn;
-    logic InfSgn;
-    logic Underflow;
-    // logic ResultSgnTmp;
+    logic Zeros;
+    logic Infs;
 
     // Determine the sign if the sum is zero
     //      if cancelation then 0 unless round to -infinity
     //      if multiply then Psgn
     //      otherwise psign
-    assign Underflow = FmaSe[`NE+1] | ((FmaSe == 0) & (R|S));
-    assign ZeroSgn = (FmaPs^FmaAs)&~Underflow&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
+    assign Zeros = (FmaPs^FmaAs)&~(FmaSe[`NE+1] | ((FmaSe == 0) & (R|S)))&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
 
     // is the result negitive
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign InfSgn = ZInf ? FmaAs : FmaPs;
-    assign Ws = InfIn&FmaOp ? InfSgn : FmaSmZero&FmaOp ? ZeroSgn : Nsgn;
+    assign Infs = ZInf ? FmaAs : FmaPs;
+    assign Ws = InfIn&FmaOp ? Infs : FmaSZero&FmaOp ? Zeros : Ms;
 
 endmodule

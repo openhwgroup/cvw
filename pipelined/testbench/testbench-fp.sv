@@ -80,17 +80,17 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVLEN+2:0] Quot;
+	logic [`QLEN-1-(`RADIX/4):0] Quot;
   logic CvtResDenormUfE;
-  logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2;
+  logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
   logic [`DIVLEN-1:0]    DivX;
   logic [`DIVLEN-1:0]  Dpreproc;
-  logic [`DIVLEN+3:0]  WSN, WS;
-  logic [`DIVLEN+3:0]  WCN, WC;
+  logic [`DIVLEN+3:0]  NextWSN, WS;
+  logic [`DIVLEN+3:0]  NextWCN, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
+  logic [`DURLEN-1:0] Dur;
 
   // in-between FMA signals
   logic                 Mult;
@@ -679,15 +679,15 @@ module testbenchfp;
           .Pe, .ZmSticky, .KillProd); 
               
   postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
-              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
-              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE), .DivNegSticky,
+              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivS(DivSticky),
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlg(Flg), .W(FpRes), .FCvtIntRes(IntRes));
+              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone,
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
             .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
@@ -695,11 +695,10 @@ module testbenchfp;
   fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
               .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
               .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
-  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .WS, .WC, .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
-                .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
+  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XManE(XMan), .YManE(YMan), .XExpE(XExp), .YExpE(YExp), 
+                  .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
+                  .StallE(1'b0), .StallM(1'b0), .DivStickyM(DivSticky), .DivBusy, .DivCalcExpM(DivCalcExp),
+                  .EarlyTermShiftM(EarlyTermShift), .QuotM(Quot), .DivDone);
 
   assign CmpFlg[3:0] = 0;
 
@@ -854,7 +853,7 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~(DivBusy|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);

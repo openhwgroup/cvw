@@ -11,6 +11,7 @@ import numpy as np
 from ppa.ppaAnalyze import noOutliers
 from matplotlib import ticker
 import argparse
+import os
 
 
 def synthsintocsv():
@@ -59,6 +60,7 @@ def synthsintocsv():
             writer.writerow([width, config, special, tech, freq, delay, area])
     file.close()
 
+	
 def synthsfromcsv(filename):
     Synth = namedtuple("Synth", "width config special tech freq delay area")
     with open(filename, newline='') as csvfile:
@@ -74,9 +76,15 @@ def synthsfromcsv(filename):
             allSynths[i] = Synth(*allSynths[i])
     return allSynths
 
+
 def freqPlot(tech, width, config):
     ''' plots delay, area for syntheses with specified tech, module, width
     '''
+
+    current_directory = os.getcwd()
+    final_directory = os.path.join(current_directory, 'plots/wally')
+    if not os.path.exists(final_directory):
+        os.makedirs(final_directory)
 
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
@@ -151,6 +159,7 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
 
     return fig
 
+
 def plotFeatures(tech, width, config):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
@@ -168,7 +177,8 @@ def plotFeatures(tech, width, config):
     titlestr = tech+'_'+width+config
     plt.title(titlestr)
     plt.savefig('./plots/wally/features_'+titlestr+'.png')
-    
+
+	
 def plotConfigs(tech, special=''):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
@@ -207,7 +217,8 @@ def normAreaDelay(special=''):
     ax.set_ylabel('Area (add32)')        
     ax.legend(handles = fullLeg, loc='upper left')
     plt.savefig('./plots/wally/normAreaDelay.png')
-    
+
+	
 def addFO4axis(fig, ax, tech):
     fo4 = techdict[tech].fo4
 

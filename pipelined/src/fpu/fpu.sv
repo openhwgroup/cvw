@@ -42,7 +42,7 @@ module fpu (
   input logic [1:0]        STATUS_FS, // Is floating-point enabled?
   output logic 		   FRegWriteM, // FP register write enable
   output logic 		   FpLoadStoreM, // Fp load instruction?
-  output logic              FLoad2,
+  output logic              FStore2,
   output logic 		   FStallD, // Stall the decode stage
   output logic 		   FWriteIntE, // integer register write enables
   output logic [`XLEN-1:0] FWriteDataE, // Data to be written to memory
@@ -125,12 +125,11 @@ module fpu (
    logic [`CVTLEN-1:0]      CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
    
    //divide signals
-   logic [`DIVLEN+2:0] QuotE, QuotM;
+   logic [`QLEN-1-(`RADIX/4):0] QuotM;
    logic [`NE+1:0] DivCalcExpE, DivCalcExpM; 
-   logic DivNegStickyE, DivNegStickyM;
    logic DivStickyE, DivStickyM;
    logic DivDoneM;
-   logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E, EarlyTermShiftDiv2M;
+   logic [`DURLEN-1:0] EarlyTermShiftM;
 
    // result and flag signals
    logic [63:0] 	  FDivResM, FDivResW;                 // divide/squareroot result
@@ -288,8 +287,8 @@ module fpu (
    //       .FDivBusyE, .done(FDivSqrtDoneE), .AS_Result(FDivResM), .Flags(FDivFlgM));
    divsqrt divsqrt(.clk, .reset, .FmtE, .XManE, .YManE, .XExpE, .YExpE, 
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(FDivStartE), 
-                  .StallE, .StallM, .DivStickyM, .DivNegStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
-                  .EarlyTermShiftDiv2M, .QuotM, .DivDone(DivDoneM));
+                  .StallE, .StallM, .DivStickyM, .DivBusy(FDivBusyE), .DivCalcExpM, //***change divbusyE to M signal
+                  .EarlyTermShiftM, .QuotM, .DivDone(DivDoneM));
    // other FP execution units
    fcmp fcmp (.FmtE, .FOpCtrlE, .XSgnE, .YSgnE, .XExpE, .YExpE, .XManE, .YManE, 
             .XZeroE, .YZeroE, .XNaNE, .YNaNE, .XSNaNE, .YSNaNE, .FSrcXE, .FSrcYE, .CmpNVE, .CmpFpResE, .CmpIntResE);
@@ -308,8 +307,8 @@ module fpu (
       assign FWriteDataE = FSrcYE[`XLEN-1:0]; 
    end else begin
       logic [`FLEN-1:0] FWriteDataE;
-      if(`FMTBITS == 2) assign FLoad2 = FmtM == `FMT;
-      else assign FLoad2 = FmtM;
+      if(`FMTBITS == 2) assign FStore2 = FmtM == `FMT;
+      else assign FStore2 = FmtM;
 
       if (`FPSIZES==1) assign FWriteDataE = FSrcYE;
       else if (`FPSIZES==2) assign FWriteDataE = FmtE ? FSrcYE : {2{FSrcYE[`LEN1-1:0]}};
@@ -381,12 +380,12 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2M),
-                           .FmaZmSticky(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .Quot(QuotM),
-                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivCalcExp(DivCalcExpM), .DivDone(DivDoneM),
-                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM), .DivNegSticky(DivNegStickyM),
-                           .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivSticky(DivStickyM),
-                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .W(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
+   postprocess postprocess(.Xs(XSgnM), .Ys(YSgnM), .Ze(ZExpM), .Xm(XManM), .Ym(YManM), .Zm(ZManM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(ProdExpM), .DivEarlyTermShift(EarlyTermShiftM),
+                           .FmaZmS(AddendStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QuotM),
+                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SumM), .DivQe(DivCalcExpM), .DivDone(DivDoneM),
+                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(ZSgnEffM), .FmaPs(PSgnM), .FOpCtrl(FOpCtrlM), .FmaNCnt(FmaNormCntM),
+                           .CvtCe(CvtCalcExpM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CvtResSgnM), .ToInt(FWriteIntM), .DivS(DivStickyM),
+                           .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
    // FPU flag selection - to privileged
    mux2  #(5)  FPUFlgMux ({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
