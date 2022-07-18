@@ -35,7 +35,7 @@ module fmashiftcalc(
     input logic  [$clog2(3*`NF+7)-1:0]  FmaNCnt,   // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,       // precision 1 = double 0 = single
     input logic                         FmaKillProd,  // is the product set to zero
-    output logic [`NE+1:0]              FmaConvNormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
+    output logic [`NE+1:0]              FmaNe,          // exponent of the normalized sum not taking into account denormal or zero results
     output logic                        FmaSZero,    // is the result denormalized - calculated before LZA corection
     output logic                        FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
     output logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt,   // normalization shift count
@@ -57,28 +57,28 @@ module fmashiftcalc(
 
     //convert the sum's exponent into the proper percision
     if (`FPSIZES == 1) begin
-        assign FmaConvNormSumExp = NormSumExp;
+        assign FmaNe = NormSumExp;
 
     end else if (`FPSIZES == 2) begin
-        assign FmaConvNormSumExp = Fmt ? NormSumExp : (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|NormSumExp}};
+        assign FmaNe = Fmt ? NormSumExp : (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|NormSumExp}};
 
     end else if (`FPSIZES == 3) begin
         always_comb begin
             case (Fmt)
-                `FMT: FmaConvNormSumExp = NormSumExp;
-                `FMT1: FmaConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|NormSumExp}};
-                `FMT2: FmaConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|NormSumExp}};
-                default: FmaConvNormSumExp = {`NE+2{1'bx}};
+                `FMT: FmaNe = NormSumExp;
+                `FMT1: FmaNe = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS1))&{`NE+2{|NormSumExp}};
+                `FMT2: FmaNe = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`BIAS2))&{`NE+2{|NormSumExp}};
+                default: FmaNe = {`NE+2{1'bx}};
             endcase
         end
 
     end else if (`FPSIZES == 4) begin
         always_comb begin
             case (Fmt)
-                2'h3: FmaConvNormSumExp = NormSumExp;
-                2'h1: FmaConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`D_BIAS))&{`NE+2{|NormSumExp}};
-                2'h0: FmaConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`S_BIAS))&{`NE+2{|NormSumExp}};
-                2'h2: FmaConvNormSumExp = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`H_BIAS))&{`NE+2{|NormSumExp}};
+                2'h3: FmaNe = NormSumExp;
+                2'h1: FmaNe = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`D_BIAS))&{`NE+2{|NormSumExp}};
+                2'h0: FmaNe = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`S_BIAS))&{`NE+2{|NormSumExp}};
+                2'h2: FmaNe = (NormSumExp-(`NE+2)'(`BIAS)+(`NE+2)'(`H_BIAS))&{`NE+2{|NormSumExp}};
             endcase
         end
 
@@ -144,11 +144,11 @@ module fmashiftcalc(
     //      - if kill prod dont add to exp
 
     // Determine if the result is denormal
-    // assign FmaPreResultDenorm = $signed(FmaConvNormSumExp)<=0 & ($signed(FmaConvNormSumExp)>=$signed(-FracLen)) & ~FmaSZero;
+    // assign FmaPreResultDenorm = $signed(FmaNe)<=0 & ($signed(FmaNe)>=$signed(-FracLen)) & ~FmaSZero;
 
     // Determine the shift needed for denormal results
     //  - if not denorm add 1 to shift out the leading 1
-    assign DenormShift = FmaPreResultDenorm ? FmaConvNormSumExp[$clog2(3*`NF+7)-1:0] : 1;
+    assign DenormShift = FmaPreResultDenorm ? FmaNe[$clog2(3*`NF+7)-1:0] : 1;
     // set and calculate the shift input and amount
     //  - shift once if killing a product and the result is denormalized
     assign FmaShiftIn = {3'b0, FmaSm};
