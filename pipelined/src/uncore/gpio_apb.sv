@@ -37,10 +37,12 @@ module gpio_apb (
   input  logic             PSEL,
   input  logic [7:0]       PADDR, 
   input  logic [`XLEN-1:0] PWDATA,
+  input  logic [`XLEN/8-1:0] PSTRB,
   input  logic             PWRITE,
   input  logic             PENABLE,
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
+  input  logic [31:0]      iof0, iof1,
   input  logic [31:0]      GPIOPinsIn,
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
   output logic             GPIOIntr);
@@ -48,6 +50,7 @@ module gpio_apb (
   logic [31:0] input0d, input1d, input2d, input3d;
   logic [31:0] input_val, input_en, output_en, output_val;
   logic [31:0] rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
+  logic [31:0] out_xor, iof_en, iof_sel, iof_out, gpio_out;
 
   logic [7:0] entry;
   logic [31:0] Din, Dout;
@@ -55,8 +58,8 @@ module gpio_apb (
   
   // APB I/O
   assign entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses
-  assign memwrite = PWRITE & PENABLE;  // only write in access phase
-  assign PREADY = PENABLE; // GPIO never takes >1 cycle to respond
+  assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
+  assign PREADY = 1'b1; // GPIO never takes >1 cycle to respond
 
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
@@ -84,6 +87,9 @@ module gpio_apb (
       high_ip <= #1 0;
       low_ie <= #1 0;
       low_ip <= #1 0;
+      iof_en <= #1 0;
+      iof_sel <= #1 0;
+      out_xor <= #1 0;
     end else begin     // writes
         // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
         /* verilator lint_off CASEINCOMPLETE */
@@ -96,7 +102,9 @@ module gpio_apb (
           8'h20: fall_ie <= #1 Din;
           8'h28: high_ie <= #1 Din;
           8'h30: low_ie  <= #1 Din;
-          8'h40: output_val <= #1 output_val ^ Din; // OUT_XOR
+          8'h38: iof_en  <= #1 Din;
+          8'h3C: iof_sel <= #1 Din;
+          8'h40: out_xor <= #1 Din;
         endcase
         /* verilator lint_on CASEINCOMPLETE */
 
@@ -123,7 +131,9 @@ module gpio_apb (
         8'h2C: Dout <= #1 high_ip;
         8'h30: Dout <= #1 low_ie;
         8'h34: Dout <= #1 low_ip;
-        8'h40: Dout <= #1 0; // OUT_XOR reads as 0
+        8'h38: Dout <= #1 iof_en;
+        8'h3C: Dout <= #1 iof_sel;
+        8'h40: Dout <= #1 out_xor; 
         default: Dout <= #1 0;
       endcase
     end
@@ -138,7 +148,9 @@ module gpio_apb (
   flop #(32) sync2(PCLK,input1d,input2d);
   flop #(32) sync3(PCLK,input2d,input3d);
   assign input_val = input3d;
-  assign GPIOPinsOut = output_val;
+  assign iof_out = iof_sel & iof1 | ~iof_sel & iof0;         // per-bit mux between iof1 and iof0
+  assign gpio_out = iof_en & iof_out | ~iof_en & output_val; // per-bit mux between IOF and output_val
+  assign GPIOPinsOut = gpio_out ^ out_xor;                   // per-bit flip output polarity
   assign GPIOPinsEn = output_en;
 
   assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};

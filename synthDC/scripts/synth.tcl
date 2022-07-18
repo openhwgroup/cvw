@@ -3,6 +3,9 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
+# start run clock
+set t1 [clock seconds]
+
 # Ignore unnecessary warnings:
 # intraassignment delays for nonblocking assignments are ignored
 suppress_message {VER-130} 
@@ -23,11 +26,11 @@ set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
-eval file copy -force ${cfg} {hdl/}
+eval file copy -force ${cfg} {$outputDir/hdl/}
 eval file copy -force ${cfg} $outputDir
-eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -38,7 +41,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
-set my_verilog_files [glob hdl/*]
+set my_verilog_files [glob $outputDir/hdl/*]
 
 # Set toplevel
 set my_toplevel $::env(DESIGN)
@@ -53,7 +56,8 @@ set vhdlout_show_unconnected_pins "true"
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
-define_design_lib WORK -path ./WORK
+#set alib_library_analysis_path ./$outputDir
+define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
 elaborate $my_toplevel -lib WORK 
 
@@ -102,7 +106,7 @@ set_critical_range [expr $my_period*0.05] $current_design
 
 # Partitioning - flatten or hierarchically synthesize
 if { $maxopt == 1 } {
-    ungroup -all -flatten -simple_names
+    ungroup -all -simple_names -flatten 
 }
 
 # Set input pins except clock
@@ -131,8 +135,13 @@ if {$tech == "sky130"} {
 }
 
 # Set input/output delay
-set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
-set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+if {$drive == "FLOP"} {
+    set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+} else {
+    set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+}
 
 # Setting load constraint on output ports 
 if {$tech == "sky130"} {
@@ -176,8 +185,8 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
-#set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-#write_file -format ddc -hierarchy -o $filename
+# set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+# write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
 if { $maxopt == 1 } {
@@ -338,7 +347,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fdivsqrt/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 
@@ -373,5 +382,10 @@ redirect $filename { report_constraint }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
 # redirect $filename { report_hierarchy }
+
+# end run clock and echo run time in minutes
+set t2 [clock seconds]
+set t [expr $t2 - $t1]
+echo [expr $t/60]
 
 quit 

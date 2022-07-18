@@ -55,6 +55,7 @@ logic [3:0] dummy;
   logic             HREADYEXT, HRESPEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
+  logic [`XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
   logic [2:0]       HSIZE;
   logic [2:0]       HBURST;
@@ -113,6 +114,7 @@ logic [3:0] dummy;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "imperas32i":                     tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
+        // "wally32d":     if (`D_SUPPORTED) tests = wally32d;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
@@ -122,6 +124,7 @@ logic [3:0] dummy;
         "wally32priv":                    tests = wally32priv;
         "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
+        "coremark":                       tests = coremark;
       endcase
     end
     if (tests.size() == 0) begin
@@ -154,7 +157,7 @@ logic [3:0] dummy;
   assign HRDATAEXT = 0;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
-                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT,
+                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
@@ -283,21 +286,12 @@ logic [3:0] dummy;
             if (`DMEM == `MEM_TIM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
             else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-            if (signature[i] !== sig &
-            //if (signature[i] !== dut.core.lsu.dtim.ram.memory.RAM[testadr+i] &
-            (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  // ***i+1?
-              if ((signature[i] !== '0 | signature[i+4] !== 'x)) begin
-                // if (signature[i+4] !== 'bx | (signature[i] !== 32'hFFFFFFFF & signature[i] !== 32'h00000000)) begin
-                // report errors unless they are garbage at the end of the sim
-                // kind of hacky test for garbage right now
-                $display("sig4 = %h ne %b", signature[i+4], signature[i+4] !== 'bx);
-                errors = errors+1;
-                $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
-                      tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                      //   tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], dut.core.lsu.dtim.ram.memory.RAM[testadr+i], signature[i]);
-                $stop;//***debug
-              end
-            end
+            if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+              errors = errors+1;
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+              $stop;//***debug
+             end
             i = i + 1;
           end
           /* verilator lint_on INFINITELOOP */

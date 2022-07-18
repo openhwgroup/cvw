@@ -49,6 +49,8 @@ module ahblite (
   input logic [2:0]    IFUBurstType,
   input logic [1:0]    IFUTransType,
   input logic          IFUTransComplete,
+  input logic [(`XLEN-1)/8:0]     ByteMaskM,
+
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
   input logic 				 LSUBusRead, 
@@ -67,6 +69,7 @@ module ahblite (
   (* mark_debug = "true" *) output logic HCLK, HRESETn,
   (* mark_debug = "true" *) output logic [31:0] HADDR, // *** one day switch to a different bus that supports the full physical address
   (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
+   output logic [`XLEN/8-1:0] HWSTRB,
   (* mark_debug = "true" *) output logic HWRITE, 
   (* mark_debug = "true" *) output logic [2:0] HSIZE,
   (* mark_debug = "true" *) output logic [2:0] HBURST,
@@ -131,8 +134,8 @@ module ahblite (
 
   //  bus outputs
   assign #1 GrantData = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign #1 AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
-  assign #1 HADDR = AccessAddress;
+  assign AccessAddress = (GrantData) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
+  assign HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
   assign HSIZE = (GrantData) ? {1'b0, LSUBusSize[1:0]} : ISize;
   assign HBURST = (GrantData) ? LSUBurstType : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
@@ -154,6 +157,10 @@ module ahblite (
   assign HTRANS = (GrantData) ? LSUTransType : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
+  //assign HWSTRB = ByteMaskM;
+    // Byte mask for HWSTRB
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
+
   // delay write data by one cycle for
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
@@ -163,13 +170,10 @@ module ahblite (
 
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
-
- 
   assign IFUBusHRDATA = HRDATA;
   assign LSUBusHRDATA = HRDATA;
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
   assign LSUBusInit = (((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState != MEMWRITE) & (NextBusState == MEMWRITE));
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);
   assign LSUBusAck = HREADY & ((BusState == MEMREAD) | (BusState == MEMWRITE));
-
 endmodule

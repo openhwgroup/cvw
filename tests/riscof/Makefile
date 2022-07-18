@@ -8,7 +8,7 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 XLEN    ?= 64
 
-all: root build_arch build_wally memfile
+all: root build_arch #build_wally memfile
 
 root:
 	mkdir -p $(work_dir)
