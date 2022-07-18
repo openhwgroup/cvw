@@ -48,17 +48,17 @@ module postprocess (
     input logic                             FmaPs,      // the product's sign
     input logic  [`NE+1:0]                  FmaPe,       // Product exponent
     input logic  [3*`NF+5:0]                FmaSm,       // the positive sum
-    input logic                             FmaZmSticky,  // sticky bit that is calculated during alignment
+    input logic                             FmaZmS,  // sticky bit that is calculated during alignment
     input logic                             FmaKillProd,      // set the product to zero before addition if the product is too small to matter
     input logic                             FmaNegSum,    // was the sum negitive
     input logic                             FmaInvA,      // do you invert Z
     input logic  [$clog2(3*`NF+7)-1:0]      FmaNCnt,   // the normalization shift count
     //divide signals
     input logic  [`DURLEN-1:0]              DivEarlyTermShift,
-    input logic                             DivSticky,
+    input logic                             DivS,
     input logic                             DivDone,
-    input logic  [`NE+1:0]                  DivCalcExp,
-    input logic  [`QLEN-1-(`RADIX/4):0]                Quot,
+    input logic  [`NE+1:0]                  DivQe,
+    input logic  [`QLEN-1-(`RADIX/4):0]                DivQm,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
@@ -77,9 +77,9 @@ module postprocess (
     logic Ws;
     logic [`NF-1:0] Rf; // Result fraction
     logic [`NE-1:0] Re;  // Result exponent
-    logic Nsgn;
-    logic [`NE+1:0] Nexp;
-    logic [`CORRSHIFTSZ-1:0] Nfrac; // corectly shifted fraction
+    logic Ms;
+    logic [`NE+1:0] Me;
+    logic [`CORRSHIFTSZ-1:0] Mf; // corectly shifted fraction
     logic [`NE+1:0] FullRe;  // Re with bits to determine sign and overflow
     logic S;           // S bit
     logic UfPlus1;                    // do you add one (for determining underflow flag)
@@ -89,19 +89,19 @@ module postprocess (
     logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
     logic Plus1;      // add one to the final result?
     logic IntInvalid, Overflow, Invalid; // flags
-    logic UfLSBRes;
+    logic UfL;
     logic [`FMTBITS-1:0] OutFmt;
     // fma signals
     logic [`NE+1:0] FmaSe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
     logic [3*`NF+8:0] FmaShiftIn;        // shift input
-    logic [`NE+1:0] FmaConvNormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
+    logic [`NE+1:0] FmaNe;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
     // division singals
     logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0] DivShiftIn;
-    logic [`NE+1:0] DivCorrExp;
+    logic [`NE+1:0] Qe;
     logic DivByZero;
     logic DivResDenorm;
     logic [`NE+1:0] DivDenormShift;
@@ -150,9 +150,9 @@ module postprocess (
 
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
-    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .FmaConvNormSumExp,
+    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .FmaNe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .DivCalcExp, .Quot, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
@@ -181,9 +181,9 @@ module postprocess (
     
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
-    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .FmaConvNormSumExp,
-                                .DivResDenorm, .DivDenormShift, .DivOp, .DivCalcExp,
-                                .DivCorrExp, .FmaSZero, .Shifted, .FmaSe, .Nfrac);
+    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .FmaNe,
+                                .DivResDenorm, .DivDenormShift, .DivOp, .DivQe,
+                                .Qe, .FmaSZero, .Shifted, .FmaSe, .Mf);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -197,19 +197,19 @@ module postprocess (
 
                           
     roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
-                          .Xs, .Ys, .CvtCs, .Nsgn);
+                          .Xs, .Ys, .CvtCs, .Ms);
 
-    round round(.OutFmt, .Frm, .S, .FmaZmSticky, .Plus1, .PostProcSel, .CvtCe, .DivCorrExp,
-                .Nsgn, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Nfrac, .ToInt,  .CvtResUf,
-                .DivSticky, .DivDone,
-                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .UfLSBRes, .Nexp);
+    round round(.OutFmt, .Frm, .S, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
+                .Ms, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
+                .DivS, .DivDone,
+                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .UfL, .Me);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
     resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaSe, .R, .S,
-                          .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Nsgn, .Ws);
+                          .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Ws);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -218,8 +218,8 @@ module postprocess (
     flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
                 .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
                 .XNaN, .YNaN, .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
-                .UfLSBRes, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
-                .Nexp, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
+                .UfL, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
+                .Me, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Select the result

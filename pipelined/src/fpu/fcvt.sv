@@ -127,7 +127,7 @@ module fcvt (
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
     assign ShiftAmt = ToInt ? Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}} :
                     ResDenormUf&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0] : 
-                              (LeadingZeros)&{`LOGCVTLEN{XDenorm|IntToFp}};
+                              (LeadingZeros);
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
