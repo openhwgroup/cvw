@@ -94,6 +94,7 @@ module testbenchfp;
 
   // in-between FMA signals
   logic                 Mult;
+  logic                 Ss;
   logic [`NE+1:0]	      Pe;
   logic 				        ZmSticky;
   logic 					      KillProd; 
@@ -674,18 +675,18 @@ module testbenchfp;
   fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
           .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
           .Xm(XMan), .Ym(YMan), .Zm(ZMan),
-          .XZero, .YZero, .ZZero,
+          .XZero, .YZero, .ZZero, .Ss,
           .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
           .Pe, .ZmSticky, .KillProd); 
               
   postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
-              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
+              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
               .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
+              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone,
               .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   

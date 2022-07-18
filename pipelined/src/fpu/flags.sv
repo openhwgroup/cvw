@@ -48,10 +48,10 @@ module flags(
     input logic                 DivOp,                  // conversion opperation?
     input logic                 FmaOp,                  // Fma opperation?
     input logic  [`NE+1:0]      FullRe,             // Re with bits to determine sign and overflow
-    input logic  [`NE+1:0]      Nexp,               // exponent of the normalized sum
+    input logic  [`NE+1:0]      Me,               // exponent of the normalized sum
     input logic  [1:0]          CvtNegResMsbs,             // the negitive integer result's most significant bits
     input logic                 FmaAs, FmaPs,        // the product and modified Z signs
-    input logic                 R, UfLSBRes, S, UfPlus1, // bits used to determine rounding
+    input logic                 R, UfL, S, UfPlus1, // bits used to determine rounding
     output logic                DivByZero,
     output logic                IntInvalid, Invalid, Overflow, // flags used to select the res
     output logic [4:0]          PostProcFlg // flags
@@ -127,11 +127,11 @@ module flags(
     //                  |                    |                    |                                      |                     and if the result is not exact
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
-    assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Nexp == 0) & ~(UfPlus1&UfLSBRes)))&(R|S))&~(InfIn|NaNIn|DivByZero);
+    assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&UfL)))&(R|S))&~(InfIn|NaNIn|DivByZero);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (S|Overflow|R|Underflow)&~(InfIn|NaNIn|DivByZero);
+    assign FpInexact = (S|Overflow|R)&~(InfIn|NaNIn|DivByZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
