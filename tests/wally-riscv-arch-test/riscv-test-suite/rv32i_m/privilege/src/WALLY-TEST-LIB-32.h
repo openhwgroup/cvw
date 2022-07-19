@@ -973,6 +973,45 @@ readsip_test:  // read the MIP into the signature
     addi a6, a6, 4
     j test_loop // go to next test case
 
+claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C002000
+    li t3, 0x0C200004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    j test_loop
+
+claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C002080
+    li t3, 0x0C201004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    j test_loop
+
+uart_data_wait:
+    li t2, 0x10000005 // LSR
+    li t3, 0x10000002 // IIR
+    lb t4, 0(t3) // save IIR before potential clear
+    lb t5, 0(t2)
+    andi t5, t5, 1  // only care if data is ready
+    li t6, 1
+    beq t5, t6, uart_data_ready
+    j uart_data_wait
+
+uart_data_ready:
+    sb t4, 0(t1)
+    sb t5, 1(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop
+
 goto_s_mode:
     // return to address in t3, 
     li a0, 3 // Trap handler behavior (go to supervisor mode)
