@@ -11,8 +11,8 @@ sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
 ARCH := rv$(XLEN)im
-PORT_CFLAGS = -g -march=rv$(XLEN)im -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
-	-mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-3-series -O3 -funroll-all-loops -finline-functions -falign-jumps=4 \
+PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
+	-mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-3-series -O3 -finline-functions -falign-jumps=4 \
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
 	-funroll-all-loops --param=uninlined-function-insns=8 -fno-tree-vrp -fwrapv -fipa-pta \
 	-nostdlib -nostartfiles -ffreestanding -mstrict-align \
