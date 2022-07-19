@@ -35,12 +35,12 @@ module shiftcorrection(
     input logic                     DivResDenorm,
     input logic  [`NE+1:0]          DivQe,
     input logic  [`NE+1:0]          DivDenormShift,
-    input logic  [`NE+1:0]          FmaNe,          // exponent of the normalized sum not taking into account denormal or zero results
+    input logic  [`NE+1:0]          NormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     input logic                     FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
     input logic                     FmaSZero,
     output logic [`CORRSHIFTSZ-1:0] Mf,         // the shifted sum before LZA correction
     output logic [`NE+1:0]          Qe,
-    output logic [`NE+1:0]          FmaSe         // exponent of the normalized sum
+    output logic [`NE+1:0]          FmaMe         // exponent of the normalized sum
 );
     logic [3*`NF+5:0]      CorrSumShifted;     // the shifted sum after LZA correction
     logic [`CORRSHIFTSZ-1:0] CorrQuotShifted;
@@ -58,7 +58,7 @@ module shiftcorrection(
     assign Mf = FmaOp ? {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}} : DivOp&~DivResDenorm ? CorrQuotShifted : Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign FmaSe = (FmaNe+{{`NE+1{1'b0}}, LZAPlus1}+{{`NE{1'b0}}, LZAPlus2, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}+{{`NE+1{1'b0}}, &FmaNe&Shifted[3*`NF+6]}) & {`NE+2{~(FmaSZero|ResDenorm)}};
+    assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1}+{{`NE{1'b0}}, LZAPlus2, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}+{{`NE+1{1'b0}}, &NormSumExp&Shifted[3*`NF+6]}) & {`NE+2{~(FmaSZero|ResDenorm)}};
     // recalculate if the result is denormalized
     assign ResDenorm = FmaPreResultDenorm&~Shifted[`NORMSHIFTSZ-3]&~Shifted[`NORMSHIFTSZ-2];
 
