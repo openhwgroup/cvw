@@ -45,6 +45,7 @@ module fma(
     output logic                As,       // the aligned addend's sign (modified Z sign for other opperations)
     output logic                Ps,          // the product's sign
     output logic                Ss,          // the sum's sign
+    output logic [`NE+1:0]      Se,
     output logic [$clog2(3*`NF+7)-1:0]          NCnt        // normalization shift count
     );
 
@@ -82,7 +83,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    add add(.Am, .Pm, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Ss);
+    add add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
     
     loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .NCnt);
 endmodule
@@ -223,11 +224,14 @@ module add(
     input logic                 Ps, As,// the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
     input logic                 KillProd,      // should the product be set to 0
     input logic                 ZmSticky,
+    input logic  [`NE-1:0]      Ze,
+    input logic  [`NE+1:0]      Pe,
     output logic [3*`NF+6:0]    AmInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // do you invert the aligned addend
     output logic                Ss,          
+    output logic [`NE+1:0]      Se,
     output logic [3*`NF+5:0]    Sm           // the positive sum
 );
     logic [3*`NF+6:0]    PreSum, NegPreSum; // possibly negitive sum
@@ -264,6 +268,7 @@ module add(
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
     assign Ss = NegSum^Ps; //*** move to execute stage
+    assign Se = KillProd ? {2'b0, Ze} : Pe;
 endmodule
 
 

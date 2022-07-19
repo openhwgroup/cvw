@@ -34,7 +34,7 @@ module resultsign(
     input logic         ZInf,
     input logic         InfIn,
     input logic         FmaOp,
-    input logic [`NE+1:0] FmaSe,
+    input logic [`NE+1:0] FmaMe,
     input logic         FmaSZero,
     input logic         Mult,
     input logic         R,
@@ -50,7 +50,7 @@ module resultsign(
     //      if cancelation then 0 unless round to -infinity
     //      if multiply then Psgn
     //      otherwise psign
-    assign Zeros = (FmaPs^FmaAs)&~(FmaSe[`NE+1] | ((FmaSe == 0) & (R|S)))&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
+    assign Zeros = (FmaPs^FmaAs)&~(FmaMe[`NE+1] | ((FmaMe == 0) & (R|S)))&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
 
     // is the result negitive

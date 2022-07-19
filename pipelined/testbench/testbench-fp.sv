@@ -96,6 +96,7 @@ module testbenchfp;
   logic                 Mult;
   logic                 Ss;
   logic [`NE+1:0]	      Pe;
+  logic [`NE+1:0]	      Se;
   logic 				        ZmSticky;
   logic 					      KillProd; 
   logic [$clog2(3*`NF+7)-1:0]	NCnt;
@@ -675,7 +676,7 @@ module testbenchfp;
   fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
           .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
           .Xm(XMan), .Ym(YMan), .Zm(ZMan),
-          .XZero, .YZero, .ZZero, .Ss,
+          .XZero, .YZero, .ZZero, .Ss, .Se,
           .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
           .Pe, .ZmSticky, .KillProd); 
               
@@ -686,7 +687,7 @@ module testbenchfp;
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone,
+              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
               .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   

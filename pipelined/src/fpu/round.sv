@@ -48,7 +48,7 @@ module round(
     input logic                     CvtResUf,
     input logic  [`CORRSHIFTSZ-1:0] Mf,
     input logic                     FmaZmS,  // addend's sticky bit
-    input logic  [`NE+1:0]          FmaSe,         // exponent of the normalized sum
+    input logic  [`NE+1:0]          FmaMe,         // exponent of the normalized sum
     input logic                     Ms,      // the result's sign
     input logic  [`NE:0]            CvtCe,    // the calculated expoent
     input logic  [`NE+1:0]          Qe,    // the calculated expoent
@@ -176,7 +176,7 @@ module round(
 
     // only add the Addend sticky if doing an FMA opperation
     //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-    assign UfS = FmaZmS&FmaOp | NormS | CvtResUf&CvtOp | FmaSe[`NE+1]&FmaOp | DivS&DivOp;
+    assign UfS = FmaZmS&FmaOp | NormS | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivS&DivOp;
     
     // determine round and LSB of the rounded value
     //      - underflow round bit is used to determint the underflow flag
@@ -299,7 +299,7 @@ module round(
     
     always_comb
         case(PostProcSel)
-            2'b10: Me = FmaSe; // fma
+            2'b10: Me = FmaMe; // fma
             2'b00: Me = {CvtCe[`NE], CvtCe}&{`NE+2{~CvtResDenormUf|CvtResUf}}; // cvt
             2'b01: Me = DivDone ? Qe : '0; // divide
             default: Me = '0; 
