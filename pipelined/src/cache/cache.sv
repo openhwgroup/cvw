@@ -105,9 +105,15 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [1:0]                 CacheRW, CacheAtomic;
-  logic [LINELEN-1:0]         ReadDataLine;
+  logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       save, restore;
+  logic                       SelBusBuffer;
+
+  localparam                  LOGXLENBYTES = $clog2(`XLEN/8);
+  logic [2**LOGWPL-1:0]       MemPAdrDecoded;
+  logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, LineByteMux;
+  genvar                      index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -121,7 +127,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask, .FStore2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
@@ -134,7 +140,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineCache));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
 
   // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
@@ -153,6 +159,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
+  mux2 #(LINELEN) EarlyReturnBuf(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
+
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
     .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
     .ReadDataLine, .ReadDataWord);
@@ -160,8 +168,24 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-  .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
+  logic [LINELEN-1:0] FinalWriteDataDup;
+  assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
+
+  onehotdecoder #(LOGWPL) adrdec(
+    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+  for(index = 0; index < 2**LOGWPL; index++) begin
+    assign DemuxedByteMask[(index+1)*(`XLEN/8)-1:index*(`XLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+  end
+  // *** have to add back in fstore2
+  assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+  assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
+
+  for(index = 0; index < LINELEN/8; index++) begin
+    mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
+      .d1(CacheBusWriteData[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+  end
+  //mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+//  .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),
@@ -204,7 +228,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
+		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
         .save, .restore,
         .LRUWriteEn);
 endmodule 
