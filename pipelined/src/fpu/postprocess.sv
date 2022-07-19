@@ -46,6 +46,7 @@ module postprocess (
     //fma signals
     input logic                             FmaAs,   // the modified Z sign - depends on instruction
     input logic                             FmaPs,      // the product's sign
+    input logic  [`NE+1:0]                  FmaSe,
     input logic  [`NE+1:0]                  FmaPe,       // Product exponent
     input logic  [3*`NF+5:0]                FmaSm,       // the positive sum
     input logic                             FmaZmS,  // sticky bit that is calculated during alignment
@@ -93,10 +94,10 @@ module postprocess (
     logic UfL;
     logic [`FMTBITS-1:0] OutFmt;
     // fma signals
-    logic [`NE+1:0] FmaSe;     // exponent of the normalized sum
+    logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
     logic [3*`NF+8:0] FmaShiftIn;        // shift input
-    logic [`NE+1:0] FmaNe;          // exponent of the normalized sum not taking into account denormal or zero results
+    logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
     // division singals
@@ -151,7 +152,7 @@ module postprocess (
 
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
-    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .FmaNe,
+    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
     divshiftcalc divshiftcalc(.Fmt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
@@ -182,9 +183,9 @@ module postprocess (
     
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
-    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .FmaNe,
+    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .NormSumExp,
                                 .DivResDenorm, .DivDenormShift, .DivOp, .DivQe,
-                                .Qe, .FmaSZero, .Shifted, .FmaSe, .Mf);
+                                .Qe, .FmaSZero, .Shifted, .FmaMe, .Mf);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Rounding
@@ -201,7 +202,7 @@ module postprocess (
                         .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
     round round(.OutFmt, .Frm, .S, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
-                .Ms, .FmaSe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
+                .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
                 .DivS, .DivDone,
                 .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .UfL, .Me);
 
@@ -209,7 +210,7 @@ module postprocess (
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaSe, .R, .S,
+    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaMe, .R, .S,
                           .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Ws);
 
     ///////////////////////////////////////////////////////////////////////////////
