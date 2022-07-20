@@ -72,6 +72,7 @@ module fpu (
    logic [1:0] 	      FResSelE, FResSelM;       // Select one of the results that finish in the memory stage
    logic [1:0] 	      PostProcSelE, PostProcSelM; // select result in the post processing unit
    logic [4:0] 	      Adr1E, Adr2E, Adr3E;                // adresses of each input
+   logic                IllegalFPUInstrM;
 
    // regfile signals
    logic [`FLEN-1:0] FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -163,7 +164,7 @@ module fpu (
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
                .reset, .clk, .IllegalFPUInstrD, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
-               .DivStartE, .FWriteIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM,
+               .DivStartE, .FWriteIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM,
                .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .Adr1E, .Adr2E, .Adr3E);
 
    // FP register file
@@ -290,8 +291,8 @@ module fpu (
       assign FWriteDataE = YE[`XLEN-1:0]; 
    end else begin
       logic [`FLEN-1:0] FWriteDataE;
-      if(`FMTBITS == 2) assign FStore2 = FmtM == `FMT;
-      else assign FStore2 = FmtM;
+      if(`FMTBITS == 2) assign FStore2 = (FmtM == `FMT)&~IllegalFPUInstrM;
+      else assign FStore2 = FmtM&~IllegalFPUInstrM;
 
       if (`FPSIZES==1) assign FWriteDataE = YE;
       else if (`FPSIZES==2) assign FWriteDataE = FmtE ? YE : {2{YE[`LEN1-1:0]}};

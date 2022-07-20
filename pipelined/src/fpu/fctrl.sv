@@ -41,7 +41,7 @@ module fctrl (
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
   input  logic [1:0] STATUS_FS, // is FPU enabled?
   input  logic       FDivBusyE,  // is the divider busy
-  output logic       IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+  output logic       IllegalFPUInstrD, IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
   output logic 		         FRegWriteM, FRegWriteW, // FP register write enable
   output logic [2:0] 	      FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
@@ -55,6 +55,7 @@ module fctrl (
 
   `define FCTRLW 11
   logic [`FCTRLW-1:0] ControlsD;
+  logic       IllegalFPUInstrE;
   logic 		  FRegWriteD; // FP register write enable
   logic 		  DivStartD; // integer register write enable
   logic 		  FWriteIntD; // integer register write enable
@@ -171,6 +172,25 @@ module fctrl (
     else if (`FPSIZES == 3|`FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
+      
+//     // signals to help readability
+//     assign IntToFp = OpCtrl[2];
+//     assign CvtOp = (PostProcSelE == 2'b00)&(FResSelE == 2'b01);
+//     assign FmaOp = (PostProcSelE == 2'b10)&(FResSelE == 2'b01);
+//     assign Sqrt =  OpCtrl[0];
+
+//     // is there an input of infinity or NaN being used
+//     assign InfIn = (XInf&~(IntToFp&CvtOp))|(YInf&~CvtOp)|(ZInf&FmaOp);
+//     assign NaNIn = (XNaN&~(IntToFp&CvtOp))|(YNaN&~CvtOp)|(ZNaN&FmaOp);
+
+// // enables:
+// //    X - all except int->fp, store, load, mv int->fp
+// //    Y - all except cvt, mv, load, class
+// //    Z - fma ops only
+//     assign XEnE = ;
+//     assign YEnE = ~((FResSel==2'b10));
+//     assign ZEnE = FmaOp&~OpCtrlE[2];
+
 //  Final Res Sel:
 //        fp      int
 //  00  other     cmp
@@ -228,10 +248,14 @@ module fctrl (
    flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, DivStartD, DivStartE);
+  if(`FLEN>`XLEN)
+    flopenrc #(1) DEIllegalReg(clk, reset, FlushE, ~StallE, IllegalFPUInstrD, IllegalFPUInstrE);
   // E/M pipleine register
   flopenrc #(12+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE},
               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM});
+  if(`FLEN>`XLEN)
+    flopenrc #(1) EMIllegalReg(clk, reset, FlushM, ~StallM, IllegalFPUInstrE, IllegalFPUInstrM);
   // M/W pipleine register
   flopenrc #(3)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM},
