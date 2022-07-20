@@ -30,7 +30,7 @@
 
 module unpackinput ( 
     input logic  [`FLEN-1:0]        In,    // inputs from register file
-    input logic  [`FMTBITS-1:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
+    input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
     output logic                    Sgn,    // sign bits of XYZ
     output logic [`NE-1:0]          Exp,    // exponents of XYZ (converted to largest supported precision)
     output logic [`NF:0]            Man,    // mantissas of XYZ (converted to largest supported precision)
@@ -74,16 +74,16 @@ module unpackinput (
         //      quad   and half
         //      double and half
 
-        assign BadNaNBox = ~(FmtE|(&In[`FLEN-1:`LEN1])); // Check NaN boxing
+        assign BadNaNBox = ~(Fmt|(&In[`FLEN-1:`LEN1])); // Check NaN boxing
 
         // choose sign bit depending on format - 1=larger precsion 0=smaller precision
-        assign Sgn = FmtE ? In[`FLEN-1] : In[`LEN1-1];
+        assign Sgn = Fmt ? In[`FLEN-1] : In[`LEN1-1];
 
         // extract the fraction, add trailing zeroes to the mantissa if nessisary
-        assign Frac = FmtE ? In[`NF-1:0] : {In[`NF1-1:0], (`NF-`NF1)'(0)};
+        assign Frac = Fmt ? In[`NF-1:0] : {In[`NF1-1:0], (`NF-`NF1)'(0)};
 
         // is the exponent non-zero
-        assign ExpNonZero = FmtE ? |In[`FLEN-2:`NF] : |In[`LEN1-2:`NF1]; 
+        assign ExpNonZero = Fmt ? |In[`FLEN-2:`NF] : |In[`LEN1-2:`NF1]; 
 
         // example double to single conversion:
         // 1023 = 0011 1111 1111
@@ -95,10 +95,10 @@ module unpackinput (
 
         // extract the exponent, converting the smaller exponent into the larger precision if nessisary
         //      - if the original precision had a denormal number convert the exponent value 1
-        assign Exp = FmtE ? {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero} : {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
+        assign Exp = Fmt ? {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero} : {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
  
         // is the exponent all 1's
-        assign ExpMax = FmtE ? &In[`FLEN-2:`NF] : &In[`LEN1-2:`NF1];
+        assign ExpMax = Fmt ? &In[`FLEN-2:`NF] : &In[`LEN1-2:`NF1];
     
 
     end else if (`FPSIZES == 3) begin       // three floating point precsions supported
@@ -122,7 +122,7 @@ module unpackinput (
 
         // Check NaN boxing
         always_comb
-            case (FmtE)
+            case (Fmt)
                 `FMT:  BadNaNBox = 0;
                 `FMT1: BadNaNBox = ~&In[`FLEN-1:`LEN1];
                 `FMT2: BadNaNBox = ~&In[`FLEN-1:`LEN2];
@@ -131,7 +131,7 @@ module unpackinput (
 
         // extract the sign bit
         always_comb
-            case (FmtE)
+            case (Fmt)
                 `FMT:  Sgn = In[`FLEN-1];
                 `FMT1: Sgn = In[`LEN1-1];
                 `FMT2: Sgn = In[`LEN2-1];
@@ -140,7 +140,7 @@ module unpackinput (
 
         // extract the fraction
         always_comb
-            case (FmtE)
+            case (Fmt)
                 `FMT: Frac = In[`NF-1:0];
                 `FMT1: Frac = {In[`NF1-1:0], (`NF-`NF1)'(0)};
                 `FMT2: Frac = {In[`NF2-1:0], (`NF-`NF2)'(0)};
@@ -149,7 +149,7 @@ module unpackinput (
 
         // is the exponent non-zero
         always_comb
-            case (FmtE)
+            case (Fmt)
                 `FMT:  ExpNonZero = |In[`FLEN-2:`NF];     // if input is largest precision (`FLEN - ie quad or double)
                 `FMT1: ExpNonZero = |In[`LEN1-2:`NF1];  // if input is larger precsion (`LEN1 - double or single)
                 `FMT2: ExpNonZero = |In[`LEN2-2:`NF2]; // if input is smallest precsion (`LEN2 - single or half)
@@ -166,7 +166,7 @@ module unpackinput (
 
         // convert the larger precision's exponent to use the largest precision's bias
         always_comb 
-            case (FmtE)
+            case (Fmt)
                 `FMT:  Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};
                 `FMT1: Exp = {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
                 `FMT2: Exp = {In[`LEN2-2], {`NE-`NE2{~In[`LEN2-2]}}, In[`LEN2-3:`NF2+1], In[`NF2]|~ExpNonZero}; 
@@ -175,7 +175,7 @@ module unpackinput (
 
         // is the exponent all 1's
         always_comb
-            case (FmtE)
+            case (Fmt)
                 `FMT:  ExpMax = &In[`FLEN-2:`NF];
                 `FMT1: ExpMax = &In[`LEN1-2:`NF1];
                 `FMT2: ExpMax = &In[`LEN2-2:`NF2];
@@ -194,7 +194,7 @@ module unpackinput (
 
         // Check NaN boxing
         always_comb
-            case (FmtE)
+            case (Fmt)
                 2'b11:  BadNaNBox = 0;
                 2'b01: BadNaNBox = ~&In[`Q_LEN-1:`D_LEN];
                 2'b00: BadNaNBox = ~&In[`Q_LEN-1:`S_LEN];
@@ -203,7 +203,7 @@ module unpackinput (
 
         // extract sign bit
         always_comb
-            case (FmtE)
+            case (Fmt)
                 2'b11: Sgn = In[`Q_LEN-1];
                 2'b01: Sgn = In[`D_LEN-1];
                 2'b00: Sgn = In[`S_LEN-1];
@@ -213,7 +213,7 @@ module unpackinput (
 
         // extract the fraction
         always_comb
-            case (FmtE)
+            case (Fmt)
                 2'b11: Frac = In[`Q_NF-1:0];
                 2'b01: Frac = {In[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
                 2'b00: Frac = {In[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
@@ -222,7 +222,7 @@ module unpackinput (
 
         // is the exponent non-zero
         always_comb
-            case (FmtE)
+            case (Fmt)
                 2'b11: ExpNonZero = |In[`Q_LEN-2:`Q_NF];
                 2'b01: ExpNonZero = |In[`D_LEN-2:`D_NF];
                 2'b00: ExpNonZero = |In[`S_LEN-2:`S_NF]; 
@@ -240,7 +240,7 @@ module unpackinput (
         
         // convert the double precsion exponent into quad precsion
         always_comb
-            case (FmtE)
+            case (Fmt)
                 2'b11: Exp = {In[`Q_LEN-2:`Q_NF+1], In[`Q_NF]|~ExpNonZero};
                 2'b01: Exp = {In[`D_LEN-2], {`Q_NE-`D_NE{~In[`D_LEN-2]}}, In[`D_LEN-3:`D_NF+1], In[`D_NF]|~ExpNonZero};
                 2'b00: Exp = {In[`S_LEN-2], {`Q_NE-`S_NE{~In[`S_LEN-2]}}, In[`S_LEN-3:`S_NF+1], In[`S_NF]|~ExpNonZero};
@@ -250,7 +250,7 @@ module unpackinput (
 
         // is the exponent all 1's
         always_comb 
-            case (FmtE)
+            case (Fmt)
                 2'b11: ExpMax = &In[`Q_LEN-2:`Q_NF];
                 2'b01: ExpMax = &In[`D_LEN-2:`D_NF];
                 2'b00: ExpMax = &In[`S_LEN-2:`S_NF];

@@ -35,7 +35,7 @@ module fcvt (
     input logic [`NE-1:0]   Xe,          // input's exponent
     input logic [`NF:0]     Xm,          // input's fraction
     input logic [`XLEN-1:0] Int, // integer input - from IEU
-    input logic [2:0]       FOpCtrl,       // choose which opperation (look below for values)
+    input logic [2:0]       OpCtrl,       // choose which opperation (look below for values)
     input logic             ToInt,     // is fp->int (since it's writting to the integer register)
     input logic             XZero,         // is the input zero
     input logic             XDenorm,   // is the input denormalized
@@ -73,17 +73,17 @@ module fcvt (
 
 
     // seperate OpCtrl for code readability
-    assign Signed = FOpCtrl[0];
-    assign Int64 =  FOpCtrl[1];
-    assign IntToFp =   FOpCtrl[2];
+    assign Signed = OpCtrl[0];
+    assign Int64 =  OpCtrl[1];
+    assign IntToFp =   OpCtrl[2];
 
     // choose the ouptut format depending on the opperation
     //      - fp -> fp: OpCtrl contains the percision of the output
     //      - int -> fp: Fmt contains the percision of the output
     if (`FPSIZES == 2) 
-        assign OutFmt = IntToFp ? Fmt : (FOpCtrl[1:0] == `FMT); 
+        assign OutFmt = IntToFp ? Fmt : (OpCtrl[1:0] == `FMT); 
     else if (`FPSIZES == 3 | `FPSIZES == 4) 
-        assign OutFmt = IntToFp ? Fmt : FOpCtrl[1:0]; 
+        assign OutFmt = IntToFp ? Fmt : OpCtrl[1:0]; 
 
 
     ///////////////////////////////////////////////////////////////////////////

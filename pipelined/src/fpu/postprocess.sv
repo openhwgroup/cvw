@@ -36,7 +36,7 @@ module postprocess (
     input logic  [`NF:0]                    Xm, Ym, Zm, // input mantissas
     input logic  [2:0]                      Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic  [`FMTBITS-1:0]             Fmt,       // precision 1 = double 0 = single
-    input logic  [2:0]                      FOpCtrl,       // choose which opperation (look below for values)
+    input logic  [2:0]                      OpCtrl,       // choose which opperation (look below for values)
     input logic                             XZero, YZero, ZZero, // inputs are zero
     input logic                             XInf, YInf, ZInf,    // inputs are infinity
     input logic                             XNaN, YNaN, ZNaN,    // inputs are NaN
@@ -54,7 +54,7 @@ module postprocess (
     input logic                             FmaNegSum,    // was the sum negitive
     input logic                             FmaInvA,      // do you invert Z
     input logic                             FmaSs,
-    input logic  [$clog2(3*`NF+7)-1:0]      FmaNCnt,   // the normalization shift count
+    input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
     input logic  [`DURLEN-1:0]              DivEarlyTermShift,
     input logic                             DivS,
@@ -125,14 +125,14 @@ module postprocess (
     logic Sqrt;
 
     // signals to help readability
-    assign Signed =  FOpCtrl[0];
-    assign Int64 =   FOpCtrl[1];
-    assign IntToFp = FOpCtrl[2];
-    assign Mult = FOpCtrl[2]&~FOpCtrl[1]&~FOpCtrl[0];
+    assign Signed =  OpCtrl[0];
+    assign Int64 =   OpCtrl[1];
+    assign IntToFp = OpCtrl[2];
+    assign Mult = OpCtrl[2]&~OpCtrl[1]&~OpCtrl[0];
     assign CvtOp = (PostProcSel == 2'b00);
     assign FmaOp = (PostProcSel == 2'b10);
     assign DivOp = (PostProcSel == 2'b01)&DivDone;
-    assign Sqrt =  FOpCtrl[0];
+    assign Sqrt =  OpCtrl[0];
 
     // is there an input of infinity or NaN being used
     assign InfIn = (XInf&~(IntToFp&CvtOp))|(YInf&~CvtOp)|(ZInf&FmaOp);
@@ -142,9 +142,9 @@ module postprocess (
     //      - fp -> fp: OpCtrl contains the percision of the output
     //      - otherwise: Fmt contains the percision of the output
     if (`FPSIZES == 2) 
-        assign OutFmt = IntToFp|~CvtOp ? Fmt : (FOpCtrl[1:0] == `FMT); 
+        assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == `FMT); 
     else if (`FPSIZES == 3 | `FPSIZES == 4) 
-        assign OutFmt = IntToFp|~CvtOp ? Fmt : FOpCtrl[1:0]; 
+        assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
 
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
@@ -152,7 +152,7 @@ module postprocess (
 
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
-    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaNCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
+    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaSCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
     divshiftcalc divshiftcalc(.Fmt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 

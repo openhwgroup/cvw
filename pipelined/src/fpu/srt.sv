@@ -37,15 +37,15 @@ module srt(
   input  logic [`FMTBITS-1:0] FmtE,
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
-  input  logic [`DIVLEN-1:0] X,
-  input  logic [`DIVLEN-1:0] Dpreproc,
-  input  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  input  logic NegSticky,
-  output logic [`QLEN-1-(`RADIX/4):0] Quot,
+  input logic [`DIVLEN-1:0] X,
+  input logic [`DIVLEN-1:0] Dpreproc,
+  input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  input logic NegSticky,
+  output logic [`QLEN-1-(`RADIX/4):0] Qm,
   output logic [`DIVLEN+3:0]  NextWSN, NextWCN,
   output logic [`DIVLEN+3:0]  StickyWSA,
   output logic [`DIVLEN+3:0]  FirstWS, FirstWC,
-  output logic [`NE+1:0] DivCalcExpM,
+  output logic  [`NE+1:0] QeM,
   output logic [`XLEN-1:0] Rem
 );
 
@@ -62,7 +62,7 @@ module srt(
  /* verilator lint_on UNOPTFLAT */
   logic [`DIVLEN+3:0]  WSN, WCN;
   logic [`DIVLEN+3:0]  D, DBar, D2, DBar2;
-  logic [`NE+1:0] DivCalcExp;
+  logic [`NE+1:0] Qe;
   logic [$clog2(`XLEN+1)-1:0] intExp;
   logic           intSign;
   logic [`QLEN-1:0] QMMux;
@@ -88,7 +88,7 @@ module srt(
   mux2   #(`DIVLEN+4) wcmux(NextWCN, {`DIVLEN+4{1'b0}}, DivStart, WCN);
   flopen   #(`DIVLEN+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
   flopen #(`DIVLEN+4) dflop(clk, DivStart, {4'b0001, Dpreproc}, D);
-  flopen #(`NE+2) expflop(clk, DivStart, DivCalcExp, DivCalcExpM);
+  flopen #(`NE+2) expflop(clk, DivStart, Qe, QeM);
 
 
   // Divisor Selections
@@ -123,7 +123,7 @@ module srt(
   flopenr #(`QLEN) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
   flopen #(`QLEN) QMreg(clk, DivBusy, QMMux, QM[0]);
 
-  assign Quot = NegSticky ? QM[0][`QLEN-1-(`RADIX/4):0] : Q[0][`QLEN-1-(`RADIX/4):0];
+  assign Qm = NegSticky ? QM[0][`QLEN-1-(`RADIX/4):0] : Q[0][`QLEN-1-(`RADIX/4):0];
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
   if(`RADIX==2)
@@ -132,7 +132,7 @@ module srt(
     else
       assign StickyWSA = {WSA[1][`DIVLEN+2:0], 1'b0};
 
-  expcalc expcalc(.FmtE, .Xe, .Ye, .XZeroE, .XZeroCnt, .YZeroCnt, .DivCalcExp);
+  expcalc expcalc(.FmtE, .Xe, .Ye, .XZeroE, .XZeroCnt, .YZeroCnt, .Qe);
 
 endmodule
 
@@ -155,7 +155,7 @@ module divinteration (
   logic [3:0]     q;
   logic qp, qz;//, qn;
 
-  // Quotient Selection logic
+  // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
   // q encoding:
 	// 1000 = +2
@@ -226,7 +226,7 @@ module expcalc(
   input  logic [`NE-1:0] Xe, Ye,
   input logic XZeroE, 
   input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic  [`NE+1:0] DivCalcExp
+  output logic  [`NE+1:0] Qe
   );
     logic [`NE-2:0] Bias;
     
@@ -255,5 +255,5 @@ module expcalc(
             endcase
     end
     // correct exponent for denormalized input's normalization shifts
-    assign DivCalcExp = ({2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - {2'b0, Ye} + {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZeroE}};
+    assign Qe = ({2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - {2'b0, Ye} + {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZeroE}};
     endmodule

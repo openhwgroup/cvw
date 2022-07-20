@@ -43,7 +43,7 @@ module shiftcorrection(
     output logic [`NE+1:0]          FmaMe         // exponent of the normalized sum
 );
     logic [3*`NF+5:0]      CorrSumShifted;     // the shifted sum after LZA correction
-    logic [`CORRSHIFTSZ-1:0] CorrQuotShifted;
+    logic [`CORRSHIFTSZ-1:0] CorrQmShifted;
     logic                  ResDenorm;    // is the result denormalized
     logic                  LZAPlus1, LZAPlus2; // add one or two to the sum's exponent due to LZA correction
 
@@ -53,11 +53,11 @@ module shiftcorrection(
 	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
     assign CorrSumShifted =  LZAPlus1 ? Shifted[`NORMSHIFTSZ-3:1] : Shifted[`NORMSHIFTSZ-4:0];
     //                        if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Denorm)
-    assign CorrQuotShifted = (LZAPlus2|(DivQe==1&~LZAPlus2)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
+    assign CorrQmShifted = (LZAPlus2|(DivQe==1&~LZAPlus2)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
     // if the result of the divider was calculated to be denormalized, then the result was correctly normalized, so select the top shifted bits
     always_comb
         if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}};
-        else if (DivOp&~DivResDenorm)   Mf = CorrQuotShifted;
+        else if (DivOp&~DivResDenorm)   Mf = CorrQmShifted;
         else                            Mf = Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
