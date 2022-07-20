@@ -5,7 +5,7 @@
 embench_dir = ../../addins/embench-iot
 
 all: build 
-run: sim size
+run: size sim
 
 allClean: clean all
 
