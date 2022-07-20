@@ -75,7 +75,7 @@ module srt (
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN-1], WC[`DIVLEN+3:`DIVLEN-1], Sqrt, qp, qz, qn);
+  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], Sqrt, qp, qz, qn);
 
   flopen #(`NE) expflop(clk, Start, calcExp, rExp);
   flopen #(1) signflop(clk, Start, calcSign, rsign);
@@ -154,7 +154,7 @@ module srtpreproc (
 
   // Selecting correct divider inputs
   assign DivX = Int ? PreprocA : PreprocX;
-  assign SqrtX = XExp[0] ? {4'b0000, SrcXFrac, 1'b0} : {5'b11111, SrcXFrac};
+  assign SqrtX = XExp[0] ? {5'b11101, SrcXFrac} : {4'b1111, SrcXFrac, 1'b0};
   assign X = Sqrt ? {SqrtX, {(`EXTRAFRACBITS-1){1'b0}}} : {4'b0001, DivX};
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
 
@@ -169,13 +169,13 @@ endmodule
 /////////////////////////////////
 // Quotient Selection, Radix 2 //
 /////////////////////////////////
-module qsel2 ( // *** eventually just change to 4 bits
-  input  logic [`DIVLEN+3:`DIVLEN-1] ps, pc, 
+module qsel2 (
+  input  logic [`DIVLEN+3:`DIVLEN] ps, pc, 
   input  logic         Sqrt,
   output logic         qp, qz, qn
 );
  
-  logic [`DIVLEN+3:`DIVLEN-1]  p, g;
+  logic [`DIVLEN+3:`DIVLEN]  p, g;
   logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
@@ -186,8 +186,8 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  assign #1 magnitude = ~(&p[`DIVLEN+2:`DIVLEN-1]);
-  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & (g[`DIVLEN] | (Sqrt & (p[`DIVLEN] & g[`DIVLEN-1])))));
+  assign #1 magnitude = ~(&p[`DIVLEN+2:`DIVLEN]);
+  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & (g[`DIVLEN])));
   assign #1 sign = p[`DIVLEN+3] ^ cout;
 /*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
@@ -283,7 +283,7 @@ module sotfc2(
   logic [`DIVLEN+3:0] SNext, SMNext, SMux;
 
   flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
-  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
+  mux2 #(`DIVLEN+4) Smux(SNext, {2'b00, Sqrt, {(`DIVLEN+1){1'b0}}}, Start, SMux);
   flop #(`DIVLEN+4) Sreg(clk, SMux, S);
 
   always_comb begin
@@ -298,7 +298,7 @@ module sotfc2(
       SMNext = SM | ((C << 1) & ~(C << 2));
     end 
   end
-  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
+  assign Sq = S[`DIVLEN+1] ? S[`DIVLEN:2] : S[`DIVLEN-1:1];
 endmodule
 
 //////////////////////////
@@ -311,7 +311,7 @@ module creg(input  logic clk,
 );
   logic [`DIVLEN+3:0] CMux;
 
-  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {5'b11111, Sqrt, {(`DIVLEN-2){1'b0}}}, Start, CMux);
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b1111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
   flop #(`DIVLEN+4) cflop(clk, CMux, C);
 endmodule
 
