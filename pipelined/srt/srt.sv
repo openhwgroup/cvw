@@ -311,7 +311,7 @@ module creg(input  logic clk,
 );
   logic [`DIVLEN+3:0] CMux;
 
-  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b1111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b11111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
   flop #(`DIVLEN+4) cflop(clk, CMux, C);
 endmodule
 
