@@ -34,7 +34,7 @@ module fma(
     input logic  [`NE-1:0]      Xe, Ye, Ze,    // input's biased exponents in B(NE.0) format
     input logic  [`NF:0]        Xm, Ym, Zm,    // input's significands in U(0.NF) format
     input logic                 XZero, YZero, ZZero, // is the input zero
-    input logic  [2:0]          FOpCtrl,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
+    input logic  [2:0]          OpCtrl,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [`FMTBITS-1:0] Fmt,       // format of the result single double half or quad
     output logic [`NE+1:0]      Pe,       // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                ZmSticky,  // sticky bit that is calculated during alignment
@@ -46,7 +46,7 @@ module fma(
     output logic                Ps,          // the product's sign
     output logic                Ss,          // the sum's sign
     output logic [`NE+1:0]      Se,
-    output logic [$clog2(3*`NF+7)-1:0]          NCnt        // normalization shift count
+    output logic [$clog2(3*`NF+7)-1:0]          SCnt        // normalization shift count
     );
 
     logic [2*`NF+1:0]   Pm;           // the product's significand in U(2.2Nf) format
@@ -72,7 +72,7 @@ module fma(
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
     // calculate the signs and take the opperation into account
-    sign sign(.FOpCtrl, .Xs, .Ys, .Zs, .Ps, .As);
+    sign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As);
 
     align align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
                 .Am, .ZmSticky, .KillProd);
@@ -85,7 +85,7 @@ module fma(
         
     add add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
     
-    loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .NCnt);
+    loa loa(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .P({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .SCnt);
 endmodule
 
 
@@ -120,7 +120,7 @@ endmodule
 
 
 module sign(    
-    input  logic [2:0]  FOpCtrl,               // opperation contol
+    input  logic [2:0]  OpCtrl,               // opperation contol
     input  logic        Xs, Ys, Zs,    // sign of the inputs
     output logic        Ps,     // the product's sign - takes opperation into account
     output logic        As   // aligned addend sign used in fma - takes opperation into account
@@ -130,9 +130,9 @@ module sign(
     //      Negate product's sign if FNMADD or FNMSUB
     
     // flip is negation opperation
-    assign Ps = Xs ^ Ys ^ (FOpCtrl[1]&~FOpCtrl[2]);
+    assign Ps = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]);
     // flip if subtraction
-    assign As = Zs^FOpCtrl[0];
+    assign As = Zs^OpCtrl[0];
 
 endmodule
 
@@ -275,7 +275,7 @@ endmodule
 module loa( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
     input logic  [3*`NF+6:0] A,     // addend
     input logic  [2*`NF+3:0] P,     // product
-    output logic [$clog2(3*`NF+7)-1:0]       NCnt   // normalization shift count for the positive result
+    output logic [$clog2(3*`NF+7)-1:0]       SCnt   // normalization shift count for the positive result
     ); 
     
     logic [3*`NF+6:0] T;
@@ -300,6 +300,6 @@ module loa( // [Schmookler & Nowka, Leading zero anticipation and detection, IEE
 
 
 
-    lzc #(3*`NF+7) lzc (.num(f), .ZeroCnt(NCnt));
+    lzc #(3*`NF+7) lzc (.num(f), .ZeroCnt(SCnt));
   
 endmodule

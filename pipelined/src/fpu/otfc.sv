@@ -107,6 +107,6 @@ module otfc4 (
       QMNext = {QMR, 2'b11};
     end 
   end
-  // Final Quoteint is in the range [.5, 2)
+  // Final Qmeint is in the range [.5, 2)
 
 endmodule
