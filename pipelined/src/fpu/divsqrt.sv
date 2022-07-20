@@ -41,7 +41,7 @@ module divsqrt(
   input  logic XNaNE, YNaNE, 
   input  logic DivStartE, 
   input  logic StallM,
-  input logic StallE,
+  input  logic StallE,
   output logic DivStickyM,
   output logic DivBusy,
   output logic DivDone,

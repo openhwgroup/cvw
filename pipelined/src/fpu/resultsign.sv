@@ -46,11 +46,21 @@ module resultsign(
     logic Zeros;
     logic Infs;
 
-    // Determine the sign if the sum is zero
-    //      if cancelation then 0 unless round to -infinity
-    //      if multiply then Psgn
-    //      otherwise psign
-    assign Zeros = (FmaPs^FmaAs)&~(FmaMe[`NE+1] | ((FmaMe == 0) & (R|S)))&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
+    // The IEEE754-2019 standard specifies: 
+    //      - the sign of an exact zero sum (with operands of diffrent signs) should be positive unless rounding toward negitive infinity
+    //      - when the exact result of an FMA opperation is non-zero, but is zero due to rounding, use the sign of the exact result
+    //      - if x = +0 or -0 then x+x=x and x-(-x)=x 
+    //      - the sign of a product is the exclisive or or the opperand's signs
+    // Zero sign will only be selected if:
+    //      - P=Z and a cancelation occurs - exact zero
+    //      - Z is zero and P is zero - exact zero
+    //      - P is killed and Z is zero - Psgn
+    //      - Z is killed and P is zero - impossible
+    // Zero sign calculation:
+    //      - if a multiply opperation is done, then use the products sign(Ps)
+    //      - if the zero sum is not exactly zero i.e. R|S use the sign of the exact result (which is the product's sign)
+    //      - if an effective addition occurs (P+A or -P+-A or P--A) then use the product's sign
+    assign Zeros = (FmaPs^FmaAs)&~(R|S)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
 
     // is the result negitive
@@ -58,6 +68,9 @@ module resultsign(
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
     assign Infs = ZInf ? FmaAs : FmaPs;
-    assign Ws = InfIn&FmaOp ? Infs : FmaSZero&FmaOp ? Zeros : Ms;
+    always_comb
+        if(InfIn&FmaOp) Ws = Infs;
+        else if(FmaSZero&FmaOp) Ws = Zeros;
+        else Ws = Ms;
 
 endmodule

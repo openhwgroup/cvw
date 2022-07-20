@@ -55,7 +55,10 @@ module shiftcorrection(
     //                        if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Denorm)
     assign CorrQuotShifted = (LZAPlus2|(DivQe==1&~LZAPlus2)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
     // if the result of the divider was calculated to be denormalized, then the result was correctly normalized, so select the top shifted bits
-    assign Mf = FmaOp ? {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}} : DivOp&~DivResDenorm ? CorrQuotShifted : Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
+    always_comb
+        if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}};
+        else if (DivOp&~DivResDenorm)   Mf = CorrQuotShifted;
+        else                            Mf = Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
     assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1}+{{`NE{1'b0}}, LZAPlus2, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}+{{`NE+1{1'b0}}, &NormSumExp&Shifted[3*`NF+6]}) & {`NE+2{~(FmaSZero|ResDenorm)}};
