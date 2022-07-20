@@ -141,10 +141,12 @@ module cachefsm
       STATE_READY: if(IgnoreRequest)                 NextState = STATE_READY;
                    else if(DoFlush)                  NextState = STATE_FLUSH;
                    else if(DoAnyHit & CPUBusy)       NextState = STATE_CPU_BUSY;
-                   else if(DoAnyMiss & VictimDirty)  NextState = STATE_MISS_EVICT_DIRTY_START; // change
-                   else if(DoAnyMiss & ~VictimDirty) NextState = STATE_MISS_FETCH_WDV; // change      
+                   else if(DoAnyMiss)                NextState = STATE_MISS_FETCH_WDV;
+                   //else if(DoAnyMiss & VictimDirty)  NextState = STATE_MISS_EVICT_DIRTY_START; // change
+                   //else if(DoAnyMiss & ~VictimDirty) NextState = STATE_MISS_FETCH_WDV; // change      
                    else                              NextState = STATE_READY;
-      STATE_MISS_FETCH_WDV: if(CacheBusAck)          NextState = STATE_MISS_WRITE_CACHE_LINE;
+      STATE_MISS_FETCH_WDV: if(CacheBusAck & ~VictimDirty) NextState = STATE_MISS_WRITE_CACHE_LINE;
+                            else if(CacheBusAck & VictimDirty) NextState = STATE_MISS_EVICT_DIRTY_START;
                             else                     NextState = STATE_MISS_FETCH_WDV;
       STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_READY;
       STATE_MISS_READ_WORD: if(CacheRW[0] & ~AMO)    NextState = STATE_MISS_WRITE_WORD;
@@ -153,9 +155,11 @@ module cachefsm
                                   else               NextState = STATE_READY;
       STATE_MISS_WRITE_WORD: if(CPUBusy)             NextState = STATE_CPU_BUSY;
                              else                    NextState = STATE_READY;
-      STATE_MISS_EVICT_DIRTY_START:                  NextState = STATE_MISS_EVICT_DIRTY; // start needed for the delayed lru update.
-      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)        NextState = STATE_MISS_EVICT_DIRTY_DONE;
+      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)        NextState = STATE_MISS_WRITE_CACHE_LINE;
                               else                   NextState = STATE_MISS_EVICT_DIRTY;
+      STATE_MISS_EVICT_DIRTY_START:                  NextState = STATE_MISS_EVICT_DIRTY; // start needed for the delayed lru update.
+//      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)        NextState = STATE_MISS_EVICT_DIRTY_DONE;
+//                              else                   NextState = STATE_MISS_EVICT_DIRTY;
       STATE_MISS_EVICT_DIRTY_DONE:                   NextState = STATE_MISS_FETCH_WDV;
       STATE_CPU_BUSY: if(CPUBusy)                    NextState = STATE_CPU_BUSY;
                       else                           NextState = STATE_READY;
@@ -199,7 +203,7 @@ module cachefsm
   assign LRUWriteEn = (CurrState == STATE_READY & DoAnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls
-  assign SelEvict = (CurrState == STATE_READY & DoAnyMiss & VictimDirty) |
+  assign SelEvict = //(CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
                     (CurrState == STATE_MISS_EVICT_DIRTY_START) |
                     (CurrState == STATE_MISS_EVICT_DIRTY);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
@@ -213,9 +217,9 @@ module cachefsm
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss & ~VictimDirty) |
-                          (CurrState == STATE_MISS_EVICT_DIRTY_DONE);
-  assign CacheWriteLine = (CurrState == STATE_READY & DoAnyMiss & VictimDirty) |
+  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss);
+//  assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & VictimDirty & CacheBusAck) |
+    assign CacheWriteLine = (CurrState == STATE_MISS_EVICT_DIRTY_START) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // handle cpu stall.
   assign restore = ((CurrState == STATE_CPU_BUSY)) & ~`REPLAY;

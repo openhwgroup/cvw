@@ -316,8 +316,10 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group status /testb
 add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheFetchLine
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteLine
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAck
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataWord
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/VAdr
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/EffectivePrivilegeMode
@@ -515,7 +517,7 @@ add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/Upd
 add wave -noupdate {/testbench/dut/core/ifu/bus/icache/icache/CacheWays[0]/FinalByteMask}
 add wave -noupdate {/testbench/dut/core/ifu/bus/icache/icache/CacheWays[0]/SelectedWriteWordEn}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 5} {307575 ns} 1} {{Cursor 2} {307965 ns} 1} {{Cursor 3} {307661 ns} 0}
+WaveRestoreCursors {{Cursor 5} {307575 ns} 1} {{Cursor 2} {307965 ns} 1} {{Cursor 3} {112734 ns} 0}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -531,4 +533,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {0 ns} {3158332 ns}
+WaveRestoreZoom {112550 ns} {112886 ns}
