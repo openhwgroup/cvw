@@ -103,7 +103,7 @@ module fcvt (
     // choose the input to the leading zero counter i.e. priority encoder
     //             int -> fp : | positive integer | 00000... (if needed) | 
     //             fp  -> fp : | fraction         | 00000... (if needed) | 
-    assign LzcInFull = IntToFp ? {1'b0, TrimInt, {`CVTLEN-`XLEN{1'b0}}} :
+    assign LzcInFull = IntToFp ? {TrimInt, {`CVTLEN-`XLEN+1{1'b0}}} :
                              {Xm, {`CVTLEN-`NF{1'b0}}};
     assign LzcIn = LzcInFull[`CVTLEN-1:0];
     
@@ -125,9 +125,10 @@ module fcvt (
     //              - only shift fp -> fp if the intital value is denormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    assign ShiftAmt = ToInt ? Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}} :
-                    ResDenormUf&~IntToFp ? (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0] : 
-                              (LeadingZeros);
+    always_comb
+        if(ToInt)                       ShiftAmt = Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}};
+        else if (ResDenormUf&~IntToFp)  ShiftAmt = (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0];
+        else                            ShiftAmt = LeadingZeros;
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
@@ -150,7 +151,9 @@ module fcvt (
         assign NewBias = ToInt ? (`NE-1)'(1) : (`NE-1)'(`BIAS); 
 
     end else if (`FPSIZES == 2) begin
-        assign NewBias = ToInt ? (`NE-1)'(1) : OutFmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
+        logic [`NE-2:0] NewBiasToFp;
+        assign NewBiasToFp = OutFmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
+        assign NewBias = ToInt ? (`NE-1)'(1) : NewBiasToFp; 
 
     end else if (`FPSIZES == 3) begin
         logic [`NE-2:0] NewBiasToFp;
@@ -177,7 +180,7 @@ module fcvt (
     // select the old exponent
     //      int -> fp : largest bias + XLEN
     //      fp -> ??? : XExp
-    assign OldExp = IntToFp ? (`NE)'(`BIAS)+(`NE)'(`XLEN) : Xe;
+    assign OldExp = IntToFp ? (`NE)'(`BIAS)+(`NE)'(`XLEN-1) : Xe;
     
     // calculate CalcExp
     //      fp -> fp : 
@@ -222,7 +225,11 @@ module fcvt (
     //          - if 64-bit : check the msb of the 64-bit integer input and if it's signed
     //          - if 32-bit : check the msb of the 32-bit integer input and if it's signed
     //      - otherwise: the floating point input's sign
-    assign Cs = IntToFp ? Int64 ? Int[`XLEN-1]&Signed : Int[31]&Signed : Xs;
+    always_comb
+        if(IntToFp)
+            if(Int64)   Cs = Int[`XLEN-1]&Signed;
+            else        Cs = Int[31]&Signed;
+        else            Cs = Xs;
 
 endmodule
 

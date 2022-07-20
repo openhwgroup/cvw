@@ -42,7 +42,6 @@ module fmashiftcalc(
     output logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt,   // normalization shift count
     output logic [3*`NF+8:0]            FmaShiftIn        // is the sum zero
 );
-    logic [$clog2(3*`NF+7)-1:0] DenormShift;        // right shift if the result is denormalized //***change this later
     logic [`NE+1:0]             PreNormSumExp;       // the exponent of the normalized sum with the `FLEN bias
     logic [`NE+1:0] BiasCorr;
 
@@ -149,9 +148,6 @@ module fmashiftcalc(
     // Determine if the result is denormal
     // assign FmaPreResultDenorm = $signed(NormSumExp)<=0 & ($signed(NormSumExp)>=$signed(-FracLen)) & ~FmaSZero;
 
-    // Determine the shift needed for denormal results
-    //  - if not denorm add 1 to shift out the leading 1
-    assign DenormShift = FmaPreResultDenorm ? NormSumExp[$clog2(3*`NF+7)-1:0] : 1;
     // set and calculate the shift input and amount
     //  - shift once if killing a product and the result is denormalized
     assign FmaShiftIn = {3'b0, FmaSm};

@@ -55,7 +55,7 @@ module srt (
   logic                       qp, qz, qn; // quotient is +1, 0, or -1
   logic [`NE-1:0]             calcExp;
   logic                       calcSign;
-  logic [`DIVLEN+3:0]         X, Dpreproc, C, F, AddIn;
+  logic [`DIVLEN+3:0]         X, Dpreproc, C, F, S, SM, AddIn;
   logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
   logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
   logic                       intSign;
@@ -90,8 +90,9 @@ module srt (
   // If only implementing division, use divide otfc
   // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qn, Quot);
   // otherwise use sotfc
-  creg   sotfcC(clk, Start, C);
-  sotfc2 sotfc2(clk, Start, qp, qn, C, Quot, F);
+  creg   sotfcC(clk, Start, Sqrt, C);
+  sotfc2 sotfc2(clk, Start, qp, qn, Sqrt, C, Quot, S, SM);
+  fsel2 fsel(qp, qn, C, S, SM, F);
 
   // Adder input selection
   assign AddIn = Sqrt ? F : Dsel;
@@ -214,11 +215,16 @@ module fsel2 (
   // Generate for both positive and negative bits
   assign FP = ~S & C;
   assign FN = SM | (C & (~C << 2));
-  assign FZ = {(`DIVLEN+4){1'b0}};
+  assign FZ = '0;
 
   // Choose which adder input will be used
 
-  assign F = sp ? FP : (sn ? FN : FZ);
+  always_comb
+    if (sp)       F = FP;
+    else if (sn)  F = FN;
+    else          F = FZ;
+
+  // assign F = sp ? FP : (sn ? FN : FZ);
 
 endmodule
 
@@ -266,17 +272,18 @@ module sotfc2(
   input  logic         clk,
   input  logic         Start,
   input  logic         sp, sn,
+  input  logic         Sqrt,
   input  logic [`DIVLEN+3:0] C,
   output logic [`DIVLEN-2:0] Sq,
-  output logic [`DIVLEN+3:0] F
+  output logic [`DIVLEN+3:0] S, SM
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
-  logic [`DIVLEN+3:0] S, SM, SNext, SMNext, SMux;
+  logic [`DIVLEN+3:0] SNext, SMNext, SMux;
 
   flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
-  mux2 #(`DIVLEN+4) Smux(SNext, {4'b0001, {(`DIVLEN){1'b0}}}, Start, SMux);
+  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
   flop #(`DIVLEN+4) Sreg(clk, SMux, S);
 
   always_comb begin
@@ -292,9 +299,6 @@ module sotfc2(
     end 
   end
   assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
-
-  fsel2 fsel(sp, sn, C, S, SM, F);
-
 endmodule
 
 //////////////////////////
@@ -302,11 +306,12 @@ endmodule
 //////////////////////////
 module creg(input  logic clk,
             input  logic Start,
+            input  logic Sqrt,
             output logic [`DIVLEN+3:0] C
 );
   logic [`DIVLEN+3:0] CMux;
 
-  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {6'b111111, {(`DIVLEN-2){1'b0}}}, Start, CMux);
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {5'b11111, Sqrt, {(`DIVLEN-2){1'b0}}}, Start, CMux);
   flop #(`DIVLEN+4) cflop(clk, CMux, C);
 endmodule
 
