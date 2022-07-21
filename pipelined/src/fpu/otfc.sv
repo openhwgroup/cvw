@@ -58,6 +58,41 @@ module otfc2 (
 
 endmodule
 
+///////////////////////////////
+// Square Root OTFC, Radix 2 //
+///////////////////////////////
+module sotfc2(
+  input  logic         clk,
+  input  logic         Start,
+  input  logic         sp, sn,
+  input  logic         Sqrt,
+  input  logic [`DIVLEN+3:0] C,
+  output logic [`DIVLEN-2:0] Sq,
+  output logic [`DIVLEN+3:0] S, SM
+);
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
+  logic [`DIVLEN+3:0] SNext, SMNext, SMux;
+
+  flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
+  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
+  flop #(`DIVLEN+4) Sreg(clk, SMux, S);
+
+  always_comb begin
+    if (sp) begin
+      SNext  = S | (C & ~(C << 1));
+      SMNext = S;
+    end else if (sn) begin
+      SNext  = SM | (C & ~(C << 1));
+      SMNext = SM;
+    end else begin        // If sp and sn are not true, then sz is
+      SNext  = S;
+      SMNext = SM | (C & ~(C << 1));
+    end 
+  end
+  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
+endmodule
 
 module otfc4 (
   input  logic [3:0]   q,
@@ -108,5 +143,40 @@ module otfc4 (
     end 
   end
   // Final Qmeint is in the range [.5, 2)
+
+endmodule
+
+///////////////////////////////
+// Square Root OTFC, Radix 4 //
+///////////////////////////////
+module sotfc4(
+  input  logic [3:0]   s,
+  input  logic         Sqrt,
+  input  logic [`DIVLEN+3:0] S, SM,
+  input  logic [`DIVLEN+3:0] C,
+  output logic [`DIVLEN+3:0] SNext, SMNext
+);
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
+
+  always_comb begin
+    if (s[3]) begin
+      SNext  = S | ((C << 1)&~(C << 2));
+      SMNext = S | (C&~(C << 1));
+    end else if (s[2]) begin
+      SNext  = S | (C&~(C << 1));
+      SMNext = S;
+    end else if (s[1]) begin
+      SNext  = SM | (C&~(C << 2));
+      SMNext = SM | ((C << 1)&~(C << 2));
+    end else if (s[0]) begin
+      SNext  = SM | ((C << 1)&~(C << 2));
+      SMNext = SM | (C&~(C << 1));
+    end else begin        // If sp and sn are not true, then sz is
+      SNext  = S;
+      SMNext = SM | (C & ~(C << 2));
+    end 
+  end
 
 endmodule

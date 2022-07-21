@@ -697,7 +697,7 @@ module testbenchfp;
   fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
               .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
               .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
-  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), 
+  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(1'b0), .SqrtM(1'b0),
                   .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
                   .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
                   .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
