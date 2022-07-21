@@ -46,6 +46,8 @@ module fctrl (
   output logic [2:0] 	      FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
   output logic 		         DivStartE,             // Start division or squareroot
+  output logic              XEnE, YEnE, ZEnE,
+  output logic              YEnForwardE, ZEnForwardE,
   output logic 		         FWriteIntE, FWriteIntM,                         // Write to integer register
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
@@ -173,23 +175,18 @@ module fctrl (
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
       
-//     // signals to help readability
-//     assign IntToFp = OpCtrl[2];
-//     assign CvtOp = (PostProcSelE == 2'b00)&(FResSelE == 2'b01);
-//     assign FmaOp = (PostProcSelE == 2'b10)&(FResSelE == 2'b01);
-//     assign Sqrt =  OpCtrl[0];
 
-//     // is there an input of infinity or NaN being used
-//     assign InfIn = (XInf&~(IntToFp&CvtOp))|(YInf&~CvtOp)|(ZInf&FmaOp);
-//     assign NaNIn = (XNaN&~(IntToFp&CvtOp))|(YNaN&~CvtOp)|(ZNaN&FmaOp);
-
-// // enables:
-// //    X - all except int->fp, store, load, mv int->fp
-// //    Y - all except cvt, mv, load, class
-// //    Z - fma ops only
-//     assign XEnE = ;
-//     assign YEnE = ~((FResSel==2'b10));
-//     assign ZEnE = FmaOp&~OpCtrlE[2];
+// enables:
+//    X - all except int->fp, store, load, mv int->fp
+//    Y - all except cvt, mv, load, class
+//    Z - fma ops only
+//                  load/store                        mv int->fp                      cvt int->fp
+    assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
+//                  load/class                                    mv               cvt
+    assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign ZEnE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
+    assign YEnForwardE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign ZEnForwardE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&~OpCtrlE[2];
 
 //  Final Res Sel:
 //        fp      int

@@ -37,7 +37,6 @@ module flags(
     input logic                 NaNIn,                  // is a NaN input being used
     input logic [`FMTBITS-1:0]  OutFmt,                 // output format
     input logic                 XZero, YZero,         // inputs are zero
-    input logic                 XNaN, YNaN,           // inputs are NaN
     input logic                 Sqrt,                   // Sqrt?
     input logic                 ToInt,                  // convert to integer
     input logic                 IntToFp,                // convert integer to floating point
@@ -153,11 +152,11 @@ module flags(
     //                  |           |                                  |                    |               or the res rounds up out of bounds
     //                  |           |                                  |                    |                       and the res didn't underflow
     //                  |           |                                  |                    |                       |
-    assign IntInvalid = XNaN|XInf|(ShiftGtIntSz&~FullRe[`NE+1])|((Xs&~Signed)&(~((CvtCe[`NE]|(~|CvtCe))&~Plus1)))|(CvtNegResMsbs[1]^CvtNegResMsbs[0]);
+    assign IntInvalid = NaNIn|InfIn|(ShiftGtIntSz&~FullRe[`NE+1])|((Xs&~Signed)&(~((CvtCe[`NE]|(~|CvtCe))&~Plus1)))|(CvtNegResMsbs[1]^CvtNegResMsbs[0]);
     //                                                                                                     |
     //                                                                                                     or when the positive res rounds up out of range
     assign SigNaN = (XSNaN&~(IntToFp&CvtOp)) | (YSNaN&~CvtOp) | (ZSNaN&FmaOp);
-    assign FmaInvalid = ((XInf | YInf) & ZInf & (FmaPs ^ FmaAs) & ~XNaN & ~YNaN) | (XZero & YInf) | (YZero & XInf);
+    assign FmaInvalid = ((XInf | YInf) & ZInf & (FmaPs ^ FmaAs) & ~NaNIn) | (XZero & YInf) | (YZero & XInf);
     assign DivInvalid = ((XInf & YInf) | (XZero & YZero))&~Sqrt | (Xs&Sqrt);
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);

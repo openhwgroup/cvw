@@ -66,9 +66,9 @@ module testbenchfp;
   logic [`XLEN-1:0]     IntRes, CmpRes;  // Results from each unit
   logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
   logic                 AnsNaN, ResNaN, NaNGood;
-  logic                 XSgn, YSgn, ZSgn;                     // sign of the inputs
-  logic [`NE-1:0]       XExp, YExp, ZExp;                     // exponent of the inputs
-  logic [`NF:0]         XMan, YMan, ZMan;                     // mantissas of the inputs
+  logic                 Xs, Ys, Zs;                     // sign of the inputs
+  logic [`NE-1:0]       Xe, Ye, Ze;                     // exponent of the inputs
+  logic [`NF:0]         Xm, Ym, Zm;                     // mantissas of the inputs
   logic                 XNaN, YNaN, ZNaN;                     // is the input NaN
   logic                 XSNaN, YSNaN, ZSNaN;                  // is the input a signaling NaN
   logic                 XDenorm, ZDenorm;            // is the input denormalized
@@ -99,7 +99,7 @@ module testbenchfp;
   logic [`NE+1:0]	      Se;
   logic 				        ZmSticky;
   logic 					      KillProd; 
-  logic [$clog2(3*`NF+7)-1:0]	NCnt;
+  logic [$clog2(3*`NF+7)-1:0]	SCnt;
   logic [3*`NF+5:0]	    Sm;       
   logic 			          InvA;
   logic 			          NegSum;
@@ -650,14 +650,14 @@ module testbenchfp;
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
   readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
-                                    .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
-                                    .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
-                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .DivStart,
-                                    .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
-                                    .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
-                                    .XDenormE(XDenorm), .ZDenormE(ZDenorm), 
-                                    .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-                                    .XInfE(XInf), .YInfE(YInf), .ZInfE(ZInf), .XExpMaxE(XExpMax),
+                                    .Xs, .Ys, .Zs, .Unit(UnitVal),
+                                    .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
+                                    .Xm, .Ym, .Zm, .DivStart,
+                                    .XNaN, .YNaN, .ZNaN,
+                                    .XSNaN, .YSNaN, .ZSNaN, 
+                                    .XDenorm, .ZDenorm, 
+                                    .XZero, .YZero, .ZZero,
+                                    .XInf, .YInf, .ZInf, .XExpMax,
                                     .X, .Y, .Z);
 
 
@@ -673,34 +673,34 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
-          .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
-          .Xm(XMan), .Ym(YMan), .Zm(ZMan),
+  fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
+          .Xe(Xe), .Ye(Ye), .Ze(Ze), 
+          .Xm(Xm), .Ym(Ym), .Zm(Zm),
           .XZero, .YZero, .ZZero, .Ss, .Se,
-          .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
+          .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .SCnt, .As, .Ps,
           .Pe, .ZmSticky, .KillProd); 
               
-  postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
-              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
+  postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+              .Ze(Ze),  .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
               .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
-  fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
-            .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
+  fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+            .XZero(XZero), .XDenorm(XDenorm), .OpCtrl(OpCtrlVal), .IntZero,
             .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
-  fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
-              .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
-              .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XManE(XMan), .YManE(YMan), .XExpE(XExp), .YExpE(YExp), 
+  fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+              .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
+              .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
+  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), 
                   .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
-                  .StallE(1'b0), .StallM(1'b0), .DivStickyM(DivSticky), .DivBusy, .DivCalcExpM(DivCalcExp),
-                  .EarlyTermShiftM(EarlyTermShift), .QuotM(Quot), .DivDone);
+                  .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
+                  .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
 
   assign CmpFlg[3:0] = 0;
 
@@ -868,10 +868,10 @@ end
 
     // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
     // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-            (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
+            (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -924,18 +924,19 @@ module readvectors (
   output logic [`FLEN-1:0] Ans,
   output logic [`XLEN-1:0] SrcA,
   output logic [4:0] AnsFlg,
-  output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
-  output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
-  output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
-  output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
-  output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
-  output logic                    XDenormE, ZDenormE,   // is XYZ denormalized
-  output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
-  output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-  output logic                    XExpMaxE,
+  output logic                    Xs, Ys, Zs,    // sign bits of XYZ
+  output logic [`NE-1:0]          Xe, Ye, Ze,    // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
+  output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
+  output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+  output logic                    XDenorm, ZDenorm,   // is XYZ denormalized
+  output logic                    XZero, YZero, ZZero,         // is XYZ zero
+  output logic                    XInf, YInf, ZInf,            // is XYZ infinity
+  output logic                    XExpMax,
   output logic                    DivStart,
   output logic [`FLEN-1:0] X, Y, Z
 );
+  logic XEn, YEn, ZEn;
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
@@ -1257,8 +1258,12 @@ module readvectors (
     endcase  
   end
   
-  unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
-                .XManE, .YManE, .ZManE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
-                .XDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XExpMaxE);
+  assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
+  assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT));
+  assign ZEn = (Unit == `FMAUNIT);
+  
+  unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
+                .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
+                .XDenorm, .ZDenorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
+                .XEn, .YEn, .ZEn, .XExpMax);
 endmodule

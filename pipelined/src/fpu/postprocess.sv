@@ -135,8 +135,8 @@ module postprocess (
     assign Sqrt =  OpCtrl[0];
 
     // is there an input of infinity or NaN being used
-    assign InfIn = (XInf&~(IntToFp&CvtOp))|(YInf&~CvtOp)|(ZInf&FmaOp);
-    assign NaNIn = (XNaN&~(IntToFp&CvtOp))|(YNaN&~CvtOp)|(ZNaN&FmaOp);
+    assign InfIn = XInf|YInf|ZInf;
+    assign NaNIn = XNaN|YNaN|ZNaN;
 
     // choose the ouptut format depending on the opperation
     //      - fp -> fp: OpCtrl contains the percision of the output
@@ -219,7 +219,7 @@ module postprocess (
 
     flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
                 .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
-                .XNaN, .YNaN, .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
+                .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
                 .UfL, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
                 .Me, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
 

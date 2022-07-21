@@ -30,7 +30,7 @@
 
 module unpackinput ( 
     input logic  [`FLEN-1:0]        In,    // inputs from register file
-    // input logic                     En,     // enable the input
+    input logic                     En,     // enable the input
     input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
     output logic                    Sgn,    // sign bits of XYZ
     output logic [`NE-1:0]          Exp,    // exponents of XYZ (converted to largest supported precision)
@@ -263,8 +263,8 @@ module unpackinput (
     // Output logic
     assign FracZero = ~|Frac; // is the fraction zero?
     assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if denormal or zero) to create the significand
-    assign NaN = (ExpMax & ~FracZero)|BadNaNBox; // is the input a NaN?
+    assign NaN = ((ExpMax & ~FracZero)|BadNaNBox)&En; // is the input a NaN?
     assign SNaN = NaN&~Frac[`NF-1]&~BadNaNBox; // is the input a singnaling NaN?
-    assign Inf = ExpMax & FracZero; // is the input infinity?
+    assign Inf = ExpMax & FracZero &En; // is the input infinity?
     assign Zero = ~ExpNonZero & FracZero; // is the input zero?
 endmodule
