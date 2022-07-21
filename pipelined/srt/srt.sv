@@ -2,7 +2,7 @@
 // srt.sv
 //
 // Written: David_Harris@hmc.edu 13 January 2022
-// Modified: cturek@hmc.edu June 2022
+// Modified: cturek@hmc.edu July 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
