@@ -49,7 +49,7 @@ module testbench;
   logic               asign, bsign;
   logic [`NF-1:0]     r;
   logic [`XLEN-1:0]   rInt;
-  logic [`DIVLEN-2:0] Quot;
+  logic [`DIVLEN-1:0] Quot, Rem;
  
   // Test parameters
   parameter MEM_SIZE = 40000;
@@ -72,7 +72,7 @@ module testbench;
 
   // Equip Int test or Sqrt test
   assign Int = 1'b0;
-  assign Sqrt = 1'b0;
+  assign Sqrt = 1'b1;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -82,7 +82,7 @@ module testbench;
                 .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA(a), .SrcB(b), .Fmt(2'b00), 
                 .W64(1'b1), .Signed(1'b0), .Int, .Sqrt, 
-                .Quot, .Rem(), .Flags(), .done);
+                .Result(Quot), .Rem, .Flags(), .done);
 
   // Counter
   // counter counter(clk, req, done);
@@ -101,7 +101,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("testvectors", Tests);
+      $readmemh ("sqrttestvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
@@ -117,7 +117,7 @@ module testbench;
 
   always @(posedge clk) begin
     r = Quot[(`DIVLEN - 2):(`DIVLEN - `NF - 1)];
-    rInt = {1'b1, Quot};
+    rInt = Quot;
     if (done) begin
       if (~Int & ~Sqrt) begin
         req <= #5 1;
