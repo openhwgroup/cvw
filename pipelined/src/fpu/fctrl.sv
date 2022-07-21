@@ -219,8 +219,8 @@ module fctrl (
 //        110 - add
 //        111 - sub
 //    Div: 
-//        0 - ???
-//        1 - ???
+//        0 - div
+//        1 - sqrt
 //    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
 //    Cvt Fp: output format
 //        10 - to half

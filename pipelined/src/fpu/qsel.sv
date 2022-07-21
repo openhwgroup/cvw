@@ -62,9 +62,36 @@ module qsel2 ( // *** eventually just change to 4 bits
 //   assign #1 qn = magnitude & sign;
 endmodule
 
+////////////////////////////////////
+// Adder Input Generation, Radix 2 //
+////////////////////////////////////
+module fgen2 (
+  input  logic sp, sn,
+  input  logic [`DIVLEN+3:0] C, S, SM,
+  output logic [`DIVLEN+3:0] F
+);
+  logic [`DIVLEN+3:0] FP, FN, FZ;
+  
+  // Generate for both positive and negative bits
+  assign FP = ~(S << 1) & C;
+  assign FN = (SM << 1) | (C & (~C << 2));
+  assign FZ = '0;
+
+  // Choose which adder input will be used
+
+  always_comb
+    if (sp)       F = FP;
+    else if (sn)  F = FN;
+    else          F = FZ;
+
+  // assign F = sp ? FP : (sn ? FN : FZ);
+
+endmodule
+
 module qsel4 (
 	input logic [`DIVLEN+3:0] D,
 	input logic [`DIVLEN+3:0] WS, WC,
+  input logic Sqrt,
 	output logic [3:0] q
 );
 	logic [6:0] Wmsbs;
@@ -91,45 +118,77 @@ module qsel4 (
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-4)  QSel4[i] = 4'b0000; 
             else if(w2>=-13) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           1: if(w2>=14)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
-            else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-15) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-5)  QSel4[i] = 4'b0000; // was -6
+            else if(~Sqrt&(w2>=-15)) QSel4[i] = 4'b0010; // divide case
+            else if( Sqrt&(w2>=-14)) QSel4[i] = 4'b0010; // sqrt case
+            else             QSel4[i] = 4'b0001; 
           2: if(w2>=15)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-6)  QSel4[i] = 4'b0000; 
             else if(w2>=-16) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           3: if(w2>=16)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-18) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-17) QSel4[i] = 4'b0010; // was -18
+            else             QSel4[i] = 4'b0001; 
           4: if(w2>=18)      QSel4[i] = 4'b1000;
             else if(w2>=6)   QSel4[i] = 4'b0100; 
-            else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-20) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; // was -8
+            else if(~Sqrt&(w2>=-20)) QSel4[i] = 4'b0010; // divide case
+            else if( Sqrt&(w2>=-18)) QSel4[i] = 4'b0010; // sqrt case
+            else             QSel4[i] = 4'b0001; 
           5: if(w2>=20)      QSel4[i] = 4'b1000;
             else if(w2>=6)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
             else if(w2>=-20) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           6: if(w2>=20)      QSel4[i] = 4'b1000;
             else if(w2>=8)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
             else if(w2>=-22) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
-          7: if(w2>=24)      QSel4[i] = 4'b1000;
+            else             QSel4[i] = 4'b0001; 
+          7: if(w2>=22)      QSel4[i] = 4'b1000; // was 24
             else if(w2>=8)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-24) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-23) QSel4[i] = 4'b0010; // was -24
+            else             QSel4[i] = 4'b0001; 
         endcase
       end
   end
 	assign q = QSel4[{Dmsbs,Wmsbs}];
 	
+endmodule
+
+////////////////////////////////////
+// Adder Input Generation, Radix 4 //
+////////////////////////////////////
+module fgen4 (
+  input  logic [3:0] s,
+  input  logic [`DIVLEN+3:0] C, S, SM,
+  output logic [`DIVLEN+3:0] F
+);
+  logic [`DIVLEN+3:0] F2, F1, F0, FN1, FN2;
+  
+  // Generate for both positive and negative bits
+  assign F2  = (~S << 2) & (C << 2);
+  assign F1  = ~(S << 1) & C;
+  assign F0  = '0;
+  assign FN1 = (SM << 1) | (C & ~(C << 2));
+  assign FN2 = (SM << 2) | ((C << 2)&~(C <<4));
+
+  // Choose which adder input will be used
+
+  always_comb
+    if (s[3])       F = F2;
+    else if (s[2])  F = F1;
+    else if (s[1])  F = FN1;
+    else if (s[0])  F = FN2;
+    else            F = F0;
+
+  // assign F = sp ? FP : (sn ? FN : FZ);
+
 endmodule
