@@ -259,7 +259,7 @@ module fpu (
    //    - fdiv
    //    - fsqrt
    // *** add other opperations
-   divsqrt divsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, 
+   divsqrt divsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), 
                   .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
                   .EarlyTermShiftM, .QmM, .DivDone(DivDoneM));
