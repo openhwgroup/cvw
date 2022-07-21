@@ -20,8 +20,8 @@ root:
 fsd_fld_tempfix:
     # this is a temporary fix, there's a typo on the rv64i_m/D/src/d_fsd-align-01.S and rv64i_m/D/src/d_fld-align-01.S tests
     # https://github.com/riscv-non-isa/riscv-arch-test/issues/266
-	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*fld*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
-	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*fsd*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
+	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*d_fld-align*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
+	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*d_fsd-align*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
 
 build_arch: fsd_fld_tempfix
 	riscof run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
