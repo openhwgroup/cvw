@@ -213,8 +213,8 @@ module fsel2 (
   logic [`DIVLEN+3:0] FP, FN, FZ;
   
   // Generate for both positive and negative bits
-  assign FP = ~S & C;
-  assign FN = SM | (C & (~C << 2));
+  assign FP = ~(S << 1) & C;
+  assign FN = (SM << 1) | (C & (~C << 2));
   assign FZ = '0;
 
   // Choose which adder input will be used
@@ -283,22 +283,22 @@ module sotfc2(
   logic [`DIVLEN+3:0] SNext, SMNext, SMux;
 
   flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
-  mux2 #(`DIVLEN+4) Smux(SNext, {2'b00, Sqrt, {(`DIVLEN+1){1'b0}}}, Start, SMux);
+  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
   flop #(`DIVLEN+4) Sreg(clk, SMux, S);
 
   always_comb begin
     if (sp) begin
-      SNext  = S | ((C << 1) & ~(C << 2));
+      SNext  = S | (C & ~(C << 1));
       SMNext = S;
     end else if (sn) begin
-      SNext  = SM | ((C << 1) & ~(C << 2));
+      SNext  = SM | (C & ~(C << 1));
       SMNext = SM;
     end else begin        // If sp and sn are not true, then sz is
       SNext  = S;
-      SMNext = SM | ((C << 1) & ~(C << 2));
+      SMNext = SM | (C & ~(C << 1));
     end 
   end
-  assign Sq = S[`DIVLEN+1] ? S[`DIVLEN:2] : S[`DIVLEN-1:1];
+  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
 endmodule
 
 //////////////////////////
@@ -311,7 +311,7 @@ module creg(input  logic clk,
 );
   logic [`DIVLEN+3:0] CMux;
 
-  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b11111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b1111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
   flop #(`DIVLEN+4) cflop(clk, CMux, C);
 endmodule
 
