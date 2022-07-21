@@ -41,7 +41,8 @@ module divsqrt(
   input  logic XNaNE, YNaNE, 
   input  logic DivStartE, 
   input  logic StallM,
-  input logic StallE,
+  input  logic StallE,
+  input  logic SqrtE, SqrtM,
   output logic DivSM,
   output logic DivBusy,
   output logic DivDone,
@@ -55,15 +56,15 @@ module divsqrt(
   logic [`DIVLEN+3:0]  WS, WC;
   logic [`DIVLEN+3:0] StickyWSA;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [`DIVLEN-1:0] X;
-  logic [`DIVLEN-1:0] Dpreproc;
+  logic [`DIVLEN+3:0] X;
+  logic [`DIVLEN+3:0] Dpreproc;
   logic [`DURLEN-1:0] Dur;
   logic NegSticky;
 
-  srtpreproc srtpreproc(.Xm(XmE), .Dur, .Ym(YmE), .X,.Dpreproc, .XZeroCnt, .YZeroCnt);
+  srtpreproc srtpreproc(.clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc, .XZeroCnt, .YZeroCnt);
 
   srtfsm srtfsm(.reset, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
                .StickyWSA, .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
-  srt srt(.clk, .FmtE, .X,.Dpreproc, .NegSticky, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
-                .StickyWSA, .DivBusy, .Qm(QmM), .Rem(), .QeM);
+  srt srt(.clk, .Sqrt(SqrtM), .X,.Dpreproc, .NegSticky, .XZeroCnt, .YZeroCnt, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
+                .StickyWSA, .DivBusy, .Qm(QmM), .Rem());
 endmodule
