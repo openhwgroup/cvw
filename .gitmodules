@@ -21,7 +21,3 @@
 [submodule "addins/coremark"]
 	path = addins/coremark
 	url = https://github.com/eembc/coremark
-[submodule "embench"]
-	branch = embench-1.0-branch
-[submodule "embench-iot"]
-	branch = embench-1.0-branch
