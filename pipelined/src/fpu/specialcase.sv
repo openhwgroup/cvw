@@ -280,14 +280,14 @@ module specialcase(
     //      other: 32 bit unsinged res should be sign extended as if it were a signed number
     always_comb
         if(Signed)
-            if(Xs&~XNaN)    // signed negitive
+            if(Xs&~NaNIn)    // signed negitive
                 if(Int64)   OfIntRes = {1'b1, {`XLEN-1{1'b0}}};
                 else        OfIntRes = {{`XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
             else            // signed positive
                 if(Int64)   OfIntRes = {1'b0, {`XLEN-1{1'b1}}};
                 else        OfIntRes = {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
         else
-            if(Xs&~XNaN)    OfIntRes = {`XLEN{1'b0}}; // unsigned negitive
+            if(Xs&~NaNIn)    OfIntRes = {`XLEN{1'b0}}; // unsigned negitive
             else            OfIntRes = {`XLEN{1'b1}}; // unsigned positive
 
 
