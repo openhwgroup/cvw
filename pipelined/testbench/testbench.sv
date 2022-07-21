@@ -195,13 +195,19 @@ logic [3:0] dummy;
       /* if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
-      memfilename = {pathname, tests[test], ".elf.memfile"};
+      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+      else memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
       else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
       if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
-      ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      if (riscofTest) begin
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else begin
+        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      end
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
@@ -241,7 +247,8 @@ logic [3:0] dummy;
           // this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
           // also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
           $display("Embench Benchmark: %s is done.", tests[test]);
-          outputfile = {pathname, tests[test], ".sim.output"};
+          if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+          else outputfile = {pathname, tests[test], ".sim.output"};
           outputFilePointer = $fopen(outputfile);
           i = 0;
           while ($unsigned(i) < $unsigned(5'd5)) begin
@@ -256,7 +263,7 @@ logic [3:0] dummy;
           for(i=0; i<SIGNATURESIZE; i=i+1) begin
             sig32[i] = 'bx;
           end
-          if (riscofTest) signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
+          if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
           else signame = {pathname, tests[test], ".signature.output"};
           // read signature, reformat in 64 bits if necessary
           $readmemh(signame, sig32);
@@ -313,14 +320,20 @@ logic [3:0] dummy;
         else begin
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
-            memfilename = {pathname, tests[test], ".elf.memfile"};
+            if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+            else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
             else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
-            ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-            ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            if (riscofTest) begin
+              ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+              ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+            end else begin
+              ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+              ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
