@@ -31,6 +31,7 @@
 module unpack ( 
     input logic  [`FLEN-1:0]        X, Y, Z,    // inputs from register file
     input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
+    input logic                     XEn, YEn, ZEn,
     output logic                    Xs, Ys, Zs,    // sign bits of XYZ
     output logic [`NE-1:0]          Xe, Ye, Ze,    // exponents of XYZ (converted to largest supported precision)
     output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
@@ -46,15 +47,15 @@ module unpack (
     logic           XFracZero, YFracZero, ZFracZero; // is the fraction zero
     logic           YExpMax, ZExpMax;  // is the exponent all 1s
     
-    unpackinput unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), 
+    unpackinput unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn),
                             .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
                             .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero));
 
-    unpackinput unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), 
+    unpackinput unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn),
                             .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
                             .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero));
 
-    unpackinput unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), 
+    unpackinput unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn),
                             .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
                             .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero));
     // is the input denormalized
