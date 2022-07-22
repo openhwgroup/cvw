@@ -214,23 +214,23 @@
 00000003 # claim gives 3 for ID of GPIO
 00000400 # check GPIO interrupt pending cleared after claim
 00000000 # check no interrupts pending
-00000000 # read sip
+00000000 # read sip (7.4)
 00000408 # check GPIO and UART interrupt pending on intPending0
 00000000 # nothing in claim register
 00000408 # check GPIO and UART interrupt pending on intPending0
 00000000 # check no interrupts pending
-00000200 # read sip
+00000200 # read sip (7.5)
 00000408 # check GPIO and UART interrupt pending on intPending0
 00000003 # claim gives 3 for ID of GPIO
 00000400 # check GPIO interrupt pending cleared after claim
 00000000 # check no interrupts pending
-00000000 # read sip
+00000000 # read sip (7.6)
 00000408 # check GPIO and UART interrupt pending on intPending0
 00000000 # nothing in claim register
 00000408 # check GPIO and UART interrupt pending on intPending0
 00000000 # check no interrupts pending
 00000009 # output from ecall in supervisor mode
-00000800 # MEIP set
+00000800 # MEIP set (8.0)
 00000408 # check GPIO and UART interrupt pending on intPending0
 0000000A # claim UART
 00000008 # GPIO interrupt pending after UART claimcomp
