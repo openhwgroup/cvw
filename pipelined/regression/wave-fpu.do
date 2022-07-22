@@ -32,8 +32,9 @@ add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/*
 add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/*
 # add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/otfc/otfc2/*
 # add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/qsel/qsel2/*
+add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/genblk1/qsel4/*
 add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtpreproc/*
-# add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/expcalc/*
+add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtpreproc/expcalc/*
 add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtfsm/*
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
