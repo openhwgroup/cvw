@@ -1,6 +1,6 @@
 /* sqrttestgen.c */
 
-/* Written 19 October 2021 David_Harris@hmc.edu
+/* Written 7/22/2022 by Cedar Turek
 
    This program creates test vectors for mantissa component
    of an IEEE floating point square root. 
@@ -15,6 +15,7 @@
 /* Constants */
 
 #define ENTRIES  17
+#define BIGENT   1000
 #define RANDOM_VECS 500
 
 /* Prototypes */
@@ -34,6 +35,9 @@ void main(void)
 			  1.75, 1.875, 1.99999,
 			  1.1, 1.5, 1.01, 1.001, 1.0001,
 			  2/1.1, 2/1.5, 2/1.25, 2/1.125};
+
+  double bigtest[BIGENT];
+
   double exps[ENTRIES] = {0, 0, 2, 3, 4, 5, 6, 7, 8, 1, 10,
         11, 12, 13, 14, 15, 16};
   int i;
@@ -44,13 +48,14 @@ void main(void)
     exit(1);
   }
 
-  for (i=0; i<ENTRIES; i++) {
-    aFrac = mans[i];
-    aExp  = exps[i] + bias;
-    rFrac = sqrt(aFrac * pow(2, exps[i]));
-    rExp  = (int) (log(rFrac)/log(2) + bias);
-    output(fptr, aExp, aFrac, rExp, rFrac);
-  }
+  // Small Test
+  // for (i=0; i<ENTRIES; i++) {
+  //   aFrac = mans[i];
+  //   aExp  = exps[i] + bias;
+  //   rFrac = sqrt(aFrac * pow(2, exps[i]));
+  //   rExp  = (int) (log(rFrac)/log(2) + bias);
+  //   output(fptr, aExp, aFrac, rExp, rFrac);
+  // }
 
   //                                  WS
   // Test 1: sqrt(1) = 1              0000 0000 0000 00
@@ -66,6 +71,16 @@ void main(void)
   //   r = sqrt(a);
   //   output(fptr, a, r);
   // }
+
+  // Big Test
+  for (i=0; i<BIGENT; i++) {
+    bigtest[i] = random_input();
+    aFrac = bigtest[i];
+    aExp  = (i - BIGENT/2) + bias;
+    rFrac = sqrt(aFrac * pow(2, (i - BIGENT/2)));
+    rExp  = (int) (log(rFrac)/log(2) + bias);
+    output(fptr, aExp, aFrac, rExp, rFrac);
+  }
 
   fclose(fptr);
 }
@@ -105,6 +120,6 @@ void printhex(FILE *fptr, double m)
 
 double random_input(void)
 {
-  return 1.0 + rand()/32767.0;
+  return 1.0 + ((rand() % 32768)/32767.0);
 }
   
