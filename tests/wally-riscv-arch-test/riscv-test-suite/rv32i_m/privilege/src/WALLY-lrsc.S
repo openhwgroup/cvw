@@ -24,7 +24,8 @@
 #include "model_test.h"
 #include "arch_test.h"
 
-RVTEST_ISA("RV64I")
+RVTEST_ISA("RV32IA")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*A.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",lrsc)
 
 .section .text.init
 .globl rvtest_entry_point
