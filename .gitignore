@@ -7,12 +7,8 @@ __pycache__/
 .vscode/
 
 #External repos
-addins
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
-addins/coremark/work/*
-addins/embench/bd_speed/*
-addins/embench/bd_size/*
 benchmarks/embench/wally*.json
 
 #vsim work files to ignore

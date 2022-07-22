@@ -38,23 +38,15 @@ module roundsign(
     input logic         DivOp,
     input logic         CvtOp,
     input logic         CvtCs,
+    input logic         FmaSs,
     output logic        Ms
 );
 
-    logic FmaResSgnTmp;
     logic Qs;
-
-    // is the result negitive
-    //  if p - z is the Sum negitive
-    //  if -p + z is the Sum positive
-    //  if -p - z then the Sum is negitive
-    assign FmaResSgnTmp = FmaNegSum^FmaPs; //*** move to execute stage
-
-    // assign FmaResSgnTmp = FmaInvA&(FmaAs)&FmaNegSum | FmaInvA&FmaPs&~FmaNegSum | (FmaAs&FmaPs);
 
     assign Qs = Xs^Ys;
 
     // Sign for rounding calulation
-    assign Ms = (FmaResSgnTmp&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
+    assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
 
 endmodule

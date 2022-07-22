@@ -29,25 +29,44 @@
 `include "wally-config.vh"
 
 module fctrl (
+  input  logic       clk,
+  input  logic       reset,
+  input  logic       StallE, StallM, StallW, // stall signals
+  input  logic       FlushE, FlushM, FlushW, // flush signals
+  input  logic [31:0] InstrD,
   input  logic [6:0] Funct7D,   // bits 31:25 of instruction - may contain percision
   input  logic [6:0] OpD,       // bits 6:0 of instruction
   input  logic [4:0] Rs2D,      // bits 24:20 of instruction
   input  logic [2:0] Funct3D,   // bits 14:12 of instruction - may contain rounding mode
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
   input  logic [1:0] STATUS_FS, // is FPU enabled?
-  output logic       IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
-  output logic       FRegWriteD,  // FP register write enable
-  output logic       FDivStartD,  // Start division or squareroot
-  output logic [1:0] FResSelD, // select result to be written to fp register
-  output logic [2:0] FOpCtrlD,    // chooses which opperation to do - specifics shown at bottom of module and in each unit
-  output logic [1:0] PostProcSelD, 
-  output logic [`FMTBITS-1:0] FmtD,        // precision - single-0 double-1
-  output logic [2:0] FrmD,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-  output logic       FWriteIntD   // is the result written to the integer register
+  input  logic       FDivBusyE,  // is the divider busy
+  output logic       IllegalFPUInstrD, IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
+  output logic 		         FRegWriteM, FRegWriteW, // FP register write enable
+  output logic [2:0] 	      FrmM,                   // FP rounding mode
+  output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
+  output logic 		         DivStartE,             // Start division or squareroot
+  output logic              XEnE, YEnE, ZEnE,
+  output logic              YEnForwardE, ZEnForwardE,
+  output logic 		         FWriteIntE, FWriteIntM,                         // Write to integer register
+  output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
+  output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
+  output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
+  output logic [4:0] 	      Adr1E, Adr2E, Adr3E                // adresses of each input
   );
 
   `define FCTRLW 11
   logic [`FCTRLW-1:0] ControlsD;
+  logic       IllegalFPUInstrE;
+  logic 		  FRegWriteD; // FP register write enable
+  logic 		  DivStartD; // integer register write enable
+  logic 		  FWriteIntD; // integer register write enable
+  logic 		         FRegWriteE; // FP register write enable
+  logic [2:0] 	      OpCtrlD;       // Select which opperation to do in each component
+  logic [1:0] 	      PostProcSelD; // select result in the post processing unit
+  logic [1:0] 	      FResSelD;       // Select one of the results that finish in the memory stage
+  logic [2:0] FrmD, FrmE;                   // FP rounding mode
+  logic [`FMTBITS-1:0] FmtD;             // FP format
   //*** will putting x for don't cares reduce area in synthisis???
   // FPU Instruction Decoder
   always_comb
@@ -130,7 +149,7 @@ module fctrl (
     endcase
 
   // unswizzle control bits
-  assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, FOpCtrlD, FDivStartD, IllegalFPUInstrD} = ControlsD;
+  assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, DivStartD, IllegalFPUInstrD} = ControlsD;
   
   // rounding modes:
   //    000 - round to nearest, ties to even
@@ -155,6 +174,20 @@ module fctrl (
     else if (`FPSIZES == 3|`FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
+      
+
+// enables:
+//    X - all except int->fp, store, load, mv int->fp
+//    Y - all except cvt, mv, load, class
+//    Z - fma ops only
+//                  load/store                        mv int->fp                      cvt int->fp
+    assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
+//                  load/class                                    mv               cvt
+    assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign ZEnE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
+    assign YEnForwardE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign ZEnForwardE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&~OpCtrlE[2];
+
 //  Final Res Sel:
 //        fp      int
 //  00  other     cmp
@@ -168,7 +201,7 @@ module fctrl (
 //  10  fma
 
 //  Other Sel:
-//    Ctrl signal = {FOpCtrl[2], &FOpctrl[1:0]}
+//    Ctrl signal = {OpCtrl[2], &FOpctrl[1:0]}
 //        000 - sign            00
 //        001 - negate sign     00
 //        010 - xor sign        00
@@ -186,8 +219,8 @@ module fctrl (
 //        110 - add
 //        111 - sub
 //    Div: 
-//        0 - ???
-//        1 - ???
+//        0 - div
+//        1 - sqrt
 //    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
 //    Cvt Fp: output format
 //        10 - to half
@@ -205,5 +238,24 @@ module fctrl (
 //        01 - negate sign
 //        10 - xor sign
     
+  // D/E pipleine register
+  flopenrc #(12+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD},
+              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE});
+   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
+                           {Adr1E, Adr2E, Adr3E});
+  flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, DivStartD, DivStartE);
+  if(`FLEN>`XLEN)
+    flopenrc #(1) DEIllegalReg(clk, reset, FlushE, ~StallE, IllegalFPUInstrD, IllegalFPUInstrE);
+  // E/M pipleine register
+  flopenrc #(12+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE},
+              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM});
+  if(`FLEN>`XLEN)
+    flopenrc #(1) EMIllegalReg(clk, reset, FlushM, ~StallM, IllegalFPUInstrE, IllegalFPUInstrM);
+  // M/W pipleine register
+  flopenrc #(3)  MWCtrlReg(clk, reset, FlushW, ~StallW,
+          {FRegWriteM, FResSelM},
+          {FRegWriteW, FResSelW});
 
 endmodule
