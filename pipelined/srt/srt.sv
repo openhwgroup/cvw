@@ -389,11 +389,11 @@ module expcalc(
   input  logic           Sqrt,
   output logic [`NE-1:0] calcExp
 );
-  logic        [`NE-1:0] SExp, DExp, SXExp;
-  assign SXExp = XExp - (`NE)'(`BIAS);
-  assign SExp  = {1'b0, SXExp[`NE-1:1]} + (`NE)'(`BIAS);
-  assign DExp  = XExp - YExp + (`NE)'(`BIAS);
-  assign calcExp = Sqrt ? SExp : DExp;
+  logic        [`NE+1:0] SExp, DExp, SXExp;
+  assign SXExp = {2'b00, XExp} - (`NE+2)'(`BIAS);
+  assign SExp  = (SXExp >> 1) + (`NE+2)'(`BIAS);
+  assign DExp  = {2'b00, XExp} - {2'b00, YExp} + (`NE+2)'(`BIAS);
+  assign calcExp = Sqrt ? SExp[`NE-1:0] : DExp[`NE-1:0];
 
 endmodule
 
@@ -462,11 +462,13 @@ module srtpostproc(
   end
   assign floatRes = S[`DIVLEN] ? S[`DIVLEN:1] : S[`DIVLEN-1:0];
   assign intRes = intS[`DIVLEN] ? intS[`DIVLEN:1] : intS[`DIVLEN-1:0];
-  assign shiftRem = (intRem >>> (`DIVLEN - dur + 2));
-  always_comb 
-    if (Int)      Result = intRes >> (`DIVLEN - dur);
-    else if (Mod) Result = shiftRem[`DIVLEN-1:0];
-    else          Result = floatRes;
+  assign shiftRem = (intRem >> (zeroCntD));
+  always_comb begin
+    if (Int) begin
+      if (Mod) Result = shiftRem[`DIVLEN-1:0];
+      else Result = intRes >> (`DIVLEN - dur);
+    end else Result = floatRes;
+  end
   assign calcSign = XSign ^ YSign;
 endmodule
 

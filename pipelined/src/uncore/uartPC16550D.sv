@@ -206,6 +206,8 @@ module uartPC16550D(
       // Modem Status Register (8.6.8)
       if (~MEMWb & (A == 3'b110))
         MSR <= #1 Din[3:0];
+      else if (~MEMRb & (A == 3'b110)) 
+        MSR <= #1 4'b0; // Reading MSR clears the flags in MSR bits 3:0
       else begin
         MSR[0] <= #1 MSR[0] | CTSb2 ^ CTSbsync; // Delta Clear to Send
         MSR[1] <= #1 MSR[1] | DSRb2 ^ DSRbsync; // Delta Data Set Ready
