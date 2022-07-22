@@ -1,1 +1,1 @@
-vsim -c -do "do wally-pipelined-batch.do rv32gc wally32d"
+vsim -c -do "do wally-pipelined-batch.do rv32gc wally32periph"

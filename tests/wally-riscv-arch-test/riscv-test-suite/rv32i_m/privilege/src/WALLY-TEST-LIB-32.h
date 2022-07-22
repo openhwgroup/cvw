@@ -965,6 +965,17 @@ read08_test:
     // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
     li t2, 0xBAD // bad value that will be overwritten on good reads.
     lb t2, 0(t3)
+    andi t2, t2, 0xFF // mask to lower 8 bits
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop // go to next test case
+
+read04_test:
+    // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lb t2, 0(t3)
+    andi t2, t2, 15 // mask lower 4 bits
     sw t2, 0(t1)
     addi t1, t1, 4
     addi a6, a6, 4
@@ -983,6 +994,103 @@ readsip_test:  // read the MIP into the signature
     addi t1, t1, 4
     addi a6, a6, 4
     j test_loop // go to next test case
+
+claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002000
+    li t3, 0x0C200004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002080
+    li t3, 0x0C201004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+uart_lsr_intr_wait: // waits for interrupts to be ready
+    li t2, 0x10000002 // IIR
+    li t4, 0x6
+uart_lsr_intr_loop:
+    lb t3, 0(t2)
+    andi t3, t3, 0x7
+    bne t3, t4, uart_lsr_intr_loop
+    sw t3, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop
+
+uart_data_wait:
+    li t2, 0x10000005 // LSR
+    li t3, 0x10000002 // IIR
+    li a4, 0x61
+uart_read_LSR_IIR:
+    lb t4, 0(t3) // save IIR before potential clear
+    lb t5, 0(t2)
+    andi t6, t5, 0x61  // only care if all transmissions are done
+    bne a4, t6, uart_read_LSR_IIR
+
+uart_data_ready:
+    li t2, 0
+    sw t2, 0(t1) // clear entry deadbeef from memory
+    andi t5, t5, 0x9F // mask THRE and TEMT from signature
+    sb t4, 1(t1) // IIR
+    sb t5, 0(t1) // LSR
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop
+
+uart_clearmodemintr:
+    li t2, 0x10000006
+    lb t2, 0(t2)
+    j test_loop
 
 goto_s_mode:
     // return to address in t3, 

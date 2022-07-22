@@ -30,35 +30,35 @@
 
 module unpack ( 
     input logic  [`FLEN-1:0]        X, Y, Z,    // inputs from register file
-    input logic  [`FMTBITS-1:0]     FmtE,       // format signal 00 - single 01 - double 11 - quad 10 - half
-    output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
-    output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
-    output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
-    output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
-    output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
-    output logic                    XDenormE, ZDenormE,   // is XYZ denormalized
-    output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
-    output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-    output logic                    XExpMaxE                        // does X have the maximum exponent (NaN or Inf)
+    input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
+    input logic                     XEn, YEn, ZEn,
+    output logic                    Xs, Ys, Zs,    // sign bits of XYZ
+    output logic [`NE-1:0]          Xe, Ye, Ze,    // exponents of XYZ (converted to largest supported precision)
+    output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
+    output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
+    output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+    output logic                    XDenorm, ZDenorm,   // is XYZ denormalized
+    output logic                    XZero, YZero, ZZero,         // is XYZ zero
+    output logic                    XInf, YInf, ZInf,            // is XYZ infinity
+    output logic                    XExpMax                        // does X have the maximum exponent (NaN or Inf)
 );
  
-    logic [`NF-1:0] XFracE, YFracE, ZFracE; //Fraction of XYZ
     logic           XExpNonZero, YExpNonZero, ZExpNonZero; // is the exponent of XYZ non-zero
     logic           XFracZero, YFracZero, ZFracZero; // is the fraction zero
-    logic           YExpMaxE, ZExpMaxE;  // is the exponent all 1s
+    logic           YExpMax, ZExpMax;  // is the exponent all 1s
     
-    unpackinput unpackinputX (.In(X), .FmtE, .Sgn(XSgnE), .Exp(XExpE), .Man(XManE), 
-                            .NaN(XNaNE), .SNaN(XSNaNE), .ExpNonZero(XExpNonZero),
-                            .Zero(XZeroE), .Inf(XInfE), .ExpMax(XExpMaxE), .FracZero(XFracZero));
+    unpackinput unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn),
+                            .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
+                            .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero));
 
-    unpackinput unpackinputY (.In(Y), .FmtE, .Sgn(YSgnE), .Exp(YExpE), .Man(YManE), 
-                            .NaN(YNaNE), .SNaN(YSNaNE), .ExpNonZero(YExpNonZero),
-                            .Zero(YZeroE), .Inf(YInfE), .ExpMax(YExpMaxE), .FracZero(YFracZero));
+    unpackinput unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn),
+                            .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
+                            .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero));
 
-    unpackinput unpackinputZ (.In(Z), .FmtE, .Sgn(ZSgnE), .Exp(ZExpE), .Man(ZManE), 
-                            .NaN(ZNaNE), .SNaN(ZSNaNE), .ExpNonZero(ZExpNonZero),
-                            .Zero(ZZeroE), .Inf(ZInfE), .ExpMax(ZExpMaxE), .FracZero(ZFracZero));
+    unpackinput unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn),
+                            .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
+                            .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero));
     // is the input denormalized
-    assign XDenormE = ~XExpNonZero & ~XFracZero;
-    assign ZDenormE = ~ZExpNonZero & ~ZFracZero;
+    assign XDenorm = ~XExpNonZero & ~XFracZero;
+    assign ZDenorm = ~ZExpNonZero & ~ZFracZero;
 endmodule

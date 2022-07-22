@@ -143,18 +143,22 @@ SETUP_PLIC
 .4byte high_ie, 0x00020000, write32_test            # enable high interrupt on bit 17, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
 .4byte high_ie, 0x00000000, write32_test            # disable high interrupt on bit 17
+.4byte 0x0, 0x00000000, claim_m_plic_interrupts     # clear PLIC pending interrupts
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 .4byte low_ie, 0x00010000, write32_test             # enable low interrupt on bit 16, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
 .4byte low_ie, 0x00000000, write32_test             # disable low interrupt on bit 16
+.4byte 0x0, 0x00000000, claim_m_plic_interrupts     # clear PLIC pending interrupts
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 .4byte rise_ie, 0x00200000, write32_test            # enable rise interrupt on bit 21, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
 .4byte rise_ie, 0x00000000, write32_test            # disable rise interrupt on bit 21, which is pending
+.4byte 0x0, 0x00000000, claim_m_plic_interrupts     # clear PLIC pending interrupts
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 .4byte fall_ie, 0x01000000, write32_test            # enable high interrupt on bit 24, which is pending
 .4byte 0x0, 0x00000800, readmip_test                # MEIP should be raised
 .4byte fall_ie, 0x00000000, write32_test            # disable high interrupt on bit 24, which is pending
+.4byte 0x0, 0x00000000, claim_m_plic_interrupts     # clear PLIC pending interrupts
 .4byte 0x0, 0x00000000, readmip_test                # MEIP should be released
 
 .4byte 0x0, 0x0, terminate_test # terminate tests

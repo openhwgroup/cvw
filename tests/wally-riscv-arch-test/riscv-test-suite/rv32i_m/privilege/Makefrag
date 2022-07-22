@@ -55,6 +55,8 @@ target_tests_nosim = \
     WALLY-status-tw-01 \
     WALLY-gpio-01 \
     WALLY-clint-01 \
+    WALLY-plic-01 \
+    WALLY-uart-01 \
 
 
 rv32i_tests = $(addsuffix .elf, $(rv32i_sc_tests))

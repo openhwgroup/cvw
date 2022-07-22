@@ -69,14 +69,16 @@ typedef clock_t CORE_TICKS;
 // #elif (XLEN==32) 
 // 	#include <sys/types.h>
 // 	typedef ee_u32 CORE_TICKS;
-#else
 /* Configuration: size_t and clock_t
      Note these need to match the size of the clock output and the xLen the processor supports
  */
+#elif (XLEN==64) 
 typedef unsigned long int size_t;
 typedef unsigned long int clock_t;
-typedef clock_t CORE_TICKS;
+#else
+#include <sys/types.h>
 #endif
+typedef clock_t CORE_TICKS;
 
 /* Definitions: COMPILER_VERSION, COMPILER_FLAGS, MEM_LOCATION
 	Initialize these strings per platform
@@ -92,7 +94,7 @@ typedef clock_t CORE_TICKS;
  #define COMPILER_FLAGS FLAGS_STR /* "Please put compiler flags here (e.g. -o3)" */
 #endif
 #ifndef MEM_LOCATION
- #define MEM_LOCATION "Please put data memory location here\n\t\t\t(e.g. code in flash, data on heap etc)"
+ #define MEM_LOCATION "Code and Data in external RAM"
  #define MEM_LOCATION_UNSPEC 1
 #endif
 

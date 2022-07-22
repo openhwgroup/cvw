@@ -43,7 +43,7 @@ module srtfsm(
   input  logic [`DIVLEN+3:0] StickyWSA,
   input  logic [`DURLEN-1:0] Dur,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
-  output logic DivStickyE,
+  output logic DivSE,
   output logic DivDone,
   output logic NegSticky,
   output logic DivBusy
@@ -65,9 +65,9 @@ module srtfsm(
   //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
   //      radix-4 division can't create a QM that continually adds 0's
   if (`RADIX == 2)
-    assign DivStickyE = |W&~(StickyWSA == WS);
+    assign DivSE = |W&~(StickyWSA == WS);
   else
-    assign DivStickyE = |W;
+    assign DivSE = |W;
   assign DivDone = (state == DONE);
   assign W = WC+WS;
   assign NegSticky = W[`DIVLEN+3]; //*** is there a better way to do this???
