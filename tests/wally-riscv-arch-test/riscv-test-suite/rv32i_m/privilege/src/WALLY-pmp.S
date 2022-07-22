@@ -23,6 +23,9 @@
 
 #include "WALLY-TEST-LIB-32.h" 
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",pmp)
+
 INIT_TESTS
 
 TRAP_HANDLER m
@@ -53,6 +56,8 @@ test_cases:
 # =========== test 12.3.2.2 PMPs ===========
 
 # Test 12.3.2.2.1 Config: Write known values and set PMP config according to table 12.4 in the *** riscv book, copied below
+
+.4byte 0x80100300, 0xFEEDBEEF, write32_test
 
 # write pmpaddr regs
                                          # | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |

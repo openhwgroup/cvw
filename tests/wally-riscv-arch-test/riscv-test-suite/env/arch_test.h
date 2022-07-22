@@ -11,7 +11,7 @@
 //   #define rvtest_gpr_save
 // #endif
 
-#define TEST_CASE_1
+// #define TEST_CASE_1
 
 //-----------------------------------------------------------------------
 // RV Arch Test Macros
@@ -95,14 +95,14 @@
   #endif
 #endif
 
-#if XLEN==64
-  #if FLEN==32
-    #define SREG sw
-    #define LREG lW
-    #define REGWIDTH 4
-    #define MASK 0xFFFFFFFF
-  #endif
-#endif
+// #if XLEN==64
+//   #if FLEN==32
+//     #define SREG sw
+//     #define LREG lW
+//     #define REGWIDTH 4
+//     #define MASK 0xFFFFFFFF
+//   #endif
+// #endif
 
 #define MMODE_SIG 3
 #define RLENG (REGWIDTH<<3)
