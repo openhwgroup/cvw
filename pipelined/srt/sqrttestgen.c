@@ -86,10 +86,6 @@ void output(FILE *fptr, int aExp, double aFrac, int rExp, double rFrac)
   // Print r in standard double format
   fprintf(fptr, "%03x", rExp);
   printhex(fptr, rFrac);
-  fprintf(fptr, "_");
-
-  // Spacing for testbench, value doesn't matter
-  fprintf(fptr, "%016x", 0);
   fprintf(fptr, "\n");
 }
 

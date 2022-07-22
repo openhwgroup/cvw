@@ -35,33 +35,36 @@ module srt (
   input  logic Start, 
   input  logic Stall, // *** multiple pipe stages
   input  logic Flush, // *** multiple pipe stages
-  // Floating Point Inputs
-  // later add exponents, signs, special cases
+  // Floating Point
   input  logic       XSign, YSign,
   input  logic [`NE-1:0] XExp, YExp,
   input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
+  // Integer
   input  logic [`XLEN-1:0] SrcA, SrcB,
+  // Customization
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
+  // Selection
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign, done,
-  output logic [`DIVLEN-2:0] Rem, Quot, // *** later handle integers
+  output logic [`DIVLEN-1:0] Result,
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
 
-  logic                       qp, qz, qn; // quotient is +1, 0, or -1
+  logic                       qp, qz, qn; // result bits are +1, 0, or -1
   logic [`NE-1:0]             calcExp;
   logic                       calcSign;
   logic [`DIVLEN+3:0]         X, Dpreproc, C, F, S, SM, AddIn;
   logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [$clog2(`XLEN+1)-1:0] intExp, dur, calcDur;
+  logic [$clog2(`XLEN+1)-1:0] zeroCntD, intExp, dur, calcDur;
   logic                       intSign;
   logic                       cin;
  
-  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, intExp, calcDur, intSign);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Mod, Sqrt, X, Dpreproc, zeroCntD, intExp, calcDur, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -91,7 +94,7 @@ module srt (
   // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qn, Quot);
   // otherwise use sotfc
   creg   sotfcC(clk, Start, Sqrt, C);
-  sotfc2 sotfc2(clk, Start, qp, qn, Sqrt, C, Quot, S, SM);
+  sotfc2 sotfc2(clk, Start, qp, qn, Sqrt, C, S, SM);
   fsel2 fsel(qp, qn, C, S, SM, F);
 
   // Adder input selection
@@ -103,7 +106,7 @@ module srt (
   
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
-  signcalc signcalc(.XSign, .YSign, .calcSign);
+  srtpostproc postproc(.WS, .WC, .X, .D, .S, .SM, .dur, .zeroCntD, .XSign, .YSign, .Signed, .Int, .Mod, .Result, .calcSign);
 endmodule
 
 ////////////////
@@ -121,13 +124,14 @@ module srtpreproc (
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
   output logic [`DIVLEN+3:0] X, D,
-  output logic [$clog2(`XLEN+1)-1:0] intExp, dur, // Quotient integer exponent
+  output logic [$clog2(`XLEN+1)-1:0] zeroCntB, intExp, dur, // Quotient integer exponent
   output logic       intSign // Quotient integer sign
 );
 
-  logic  [$clog2(`XLEN+1)-1:0] zeroCntA, zeroCntB;
+  logic  [$clog2(`XLEN+1)-1:0] zeroCntA;
   logic  [`XLEN-1:0] PosA, PosB;
   logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY, DivX;
   logic  [`NF+4:0] SqrtX;
@@ -159,7 +163,7 @@ module srtpreproc (
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
 
   // Integer exponent and sign calculations
-  assign intExp = zeroCntB - zeroCntA + 1;
+  assign intExp = zeroCntB - zeroCntA - Mod + (PreprocA >= PreprocB);
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
   // Number of cycles of divider
@@ -235,7 +239,7 @@ module otfc2 #(parameter N=66) (
   input  logic         clk,
   input  logic         Start,
   input  logic         qp, qz, qn,
-  output logic [N-3:0] r
+  output logic [N-3:0] Result
 );
   //  The on-the-fly converter transfers the quotient 
   //  bits to the quotient as they come.
@@ -261,7 +265,7 @@ module otfc2 #(parameter N=66) (
       QMNext = {QMR, 1'b0};
     end 
   end
-  assign r = Q[N] ? Q[N-1:2] : Q[N-2:1];
+  assign Result = Q[N] ? Q[N-1:2] : Q[N-2:1];
 
 endmodule
 
@@ -274,7 +278,6 @@ module sotfc2(
   input  logic         sp, sn,
   input  logic         Sqrt,
   input  logic [`DIVLEN+3:0] C,
-  output logic [`DIVLEN-2:0] Sq,
   output logic [`DIVLEN+3:0] S, SM
 );
   //  The on-the-fly converter transfers the square root 
@@ -298,7 +301,6 @@ module sotfc2(
       SMNext = SM | (C & ~(C << 1));
     end 
   end
-  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
 endmodule
 
 //////////////////////////
@@ -395,14 +397,76 @@ module expcalc(
 
 endmodule
 
-//////////////
-// signcalc //
-//////////////
-module signcalc(
-  input logic  XSign, YSign,
+module srtpostproc(
+  input  logic [`DIVLEN+3:0] WS, WC, X, D, S, SM,
+  input  logic [$clog2(`XLEN+1)-1:0] dur, zeroCntD,
+  input  logic XSign, YSign, Signed, Int, Mod,
+  output logic [`DIVLEN-1:0] Result,
   output logic calcSign
 );
+  logic [`DIVLEN+3:0] W, shiftRem, intRem, intS; 
+  logic [`DIVLEN-1:0] floatRes, intRes;
+  logic               WSign;
 
+  assign W = WS + WC;
+  assign WSign = W[`DIVLEN+3];
+  // Remainder handling
+  always_comb begin
+    if (zeroCntD == ($clog2(`XLEN+1))'(`XLEN)) begin
+      intRem = X;
+      intS = -1;
+    end
+    else if (~Signed) begin
+      if (WSign) begin
+        intRem = W + D;
+        intS = SM;
+      end else begin 
+        intRem = W;
+        intS = S;
+      end
+    end
+    else case ({YSign, XSign, WSign})
+      3'b000: begin
+        intRem = W; 
+        intS = S; 
+      end
+      3'b001: begin
+        intRem = W + D;
+        intS = SM;
+      end
+      3'b010: begin
+        intRem = W - D;
+        intS = ~S;
+      end
+      3'b011: begin
+        intRem = W;
+        intS = ~SM;
+      end
+      3'b100: begin
+        intRem = W;
+        intS = ~SM;
+      end
+      3'b101: begin
+        intRem = W + D;
+        intS = ~SM + 1;
+      end 
+      3'b110: begin
+        intRem = W - D;
+        intS = S + 1;
+      end 
+      3'b111: begin
+        intRem = W;
+        intS = S;
+      end
+    endcase
+  end
+  assign floatRes = S[`DIVLEN] ? S[`DIVLEN:1] : S[`DIVLEN-1:0];
+  assign intRes = intS[`DIVLEN] ? intS[`DIVLEN:1] : intS[`DIVLEN-1:0];
+  assign shiftRem = (intRem >>> (`DIVLEN - dur + 2));
+  always_comb 
+    if (Int)      Result = intRes >> (`DIVLEN - dur);
+    else if (Mod) Result = shiftRem[`DIVLEN-1:0];
+    else          Result = floatRes;
   assign calcSign = XSign ^ YSign;
-
 endmodule
+
