@@ -47,9 +47,10 @@ module srt (
   // Selection
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
   output logic       rsign, done,
-  output logic [`DIVLEN-1:0] Rem, Result,
+  output logic [`DIVLEN-1:0] Result,
   output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
@@ -63,7 +64,7 @@ module srt (
   logic                       intSign;
   logic                       cin;
  
-  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc, zeroCntD, intExp, calcDur, intSign);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Mod, Sqrt, X, Dpreproc, zeroCntD, intExp, calcDur, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -105,7 +106,7 @@ module srt (
   
   expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
-  srtpostproc postproc(.WS, .WC, .X, .D, .S, .SM, .dur, .zeroCntD, .XSign, .YSign, .Signed, .Int, .Result, .Rem, .calcSign);
+  srtpostproc postproc(.WS, .WC, .X, .D, .S, .SM, .dur, .zeroCntD, .XSign, .YSign, .Signed, .Int, .Mod, .Result, .calcSign);
 endmodule
 
 ////////////////
@@ -123,6 +124,7 @@ module srtpreproc (
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
   input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
   output logic [`DIVLEN+3:0] X, D,
   output logic [$clog2(`XLEN+1)-1:0] zeroCntB, intExp, dur, // Quotient integer exponent
@@ -161,7 +163,7 @@ module srtpreproc (
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
 
   // Integer exponent and sign calculations
-  assign intExp = zeroCntB - zeroCntA + 1;
+  assign intExp = zeroCntB - zeroCntA - Mod + (PreprocA >= PreprocB);
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
   // Number of cycles of divider
@@ -398,8 +400,8 @@ endmodule
 module srtpostproc(
   input  logic [`DIVLEN+3:0] WS, WC, X, D, S, SM,
   input  logic [$clog2(`XLEN+1)-1:0] dur, zeroCntD,
-  input  logic XSign, YSign, Signed, Int,
-  output logic [`DIVLEN-1:0]   Result, Rem,
+  input  logic XSign, YSign, Signed, Int, Mod,
+  output logic [`DIVLEN-1:0] Result,
   output logic calcSign
 );
   logic [`DIVLEN+3:0] W, shiftRem, intRem, intS; 
@@ -460,9 +462,11 @@ module srtpostproc(
   end
   assign floatRes = S[`DIVLEN] ? S[`DIVLEN:1] : S[`DIVLEN-1:0];
   assign intRes = intS[`DIVLEN] ? intS[`DIVLEN:1] : intS[`DIVLEN-1:0];
-  assign Result = Int ? intRes : floatRes;
+  assign shiftRem = (intRem >>> (`DIVLEN - dur + 2));
+  always_comb 
+    if (Int)      Result = intRes >> (`DIVLEN - dur);
+    else if (Mod) Result = shiftRem[`DIVLEN-1:0];
+    else          Result = floatRes;
   assign calcSign = XSign ^ YSign;
-  assign shiftRem = intRem >>> dur;
-  assign Rem = shiftRem[`DIVLEN-1:0];
 endmodule
 
