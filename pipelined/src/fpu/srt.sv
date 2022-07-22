@@ -37,40 +37,43 @@ module srt(
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
   input  logic Sqrt,
-  input  logic [`DIVLEN+3:0] X,
-  input  logic [`DIVLEN+3:0] Dpreproc,
-  input  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  input  logic [`DIVb:0] X,
+  input  logic [`DIVN-2:0] Dpreproc,
   input  logic NegSticky,
-  output logic [`QLEN-1-(`RADIX/4):0] Qm,
-  output logic [`DIVLEN+3:0]  NextWSN, NextWCN,
-  output logic [`DIVLEN+3:0]  StickyWSA,
-  output logic [`DIVLEN+3:0]  FirstWS, FirstWC,
-  output logic [`XLEN-1:0] Rem
+  output logic [`DIVb-(`RADIX/4):0] Qm,
+  output logic [`DIVb+3:0]  NextWSN, NextWCN,
+  output logic [`DIVb+3:0]  StickyWSA,
+  output logic [`DIVb+3:0]  FirstWS, FirstWC
 );
 
-
+//QLEN = 1.(number of bits created for division)
+// N is NF+1 or XLEN
+// WC/WS is dependent on D so 4.N-1 ie N+3 bits or N+2:0 + one more bit in fraction for possible sqrt right shift
+// D is 1.N-1, but the msb is always 1 so 0.N-1 or N-1 bits or N-1:0
+// Dsel should match WC/WS so 4.N-1 ie N+3 bits or N+2:0
+// Q/QM/S/SM should be 1.b so b+1 bits or b:0
+// C needs to be the lenght of the final fraction 0.b so b or b-1:0
  /* verilator lint_off UNOPTFLAT */
-  logic [`DIVLEN+3:0]  WSA[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0]  WCA[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0]  WS[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0]  WC[`DIVCOPIES-1:0];
-  logic [`QLEN-1:0] Q[`DIVCOPIES-1:0];
-  logic [`QLEN-1:0] QM[`DIVCOPIES-1:0];
-  logic [`QLEN-1:0] QNext[`DIVCOPIES-1:0];
-  logic [`QLEN-1:0] QMNext[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0] S[`DIVCOPIES-1:0]; //***change to QLEN???
-  logic [`DIVLEN+3:0] SM[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0] SNext[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0] SMNext[`DIVCOPIES-1:0];
-  logic [`DIVLEN+3:0] C[`DIVCOPIES-1:0];
+  logic [`DIVb+3:0]  WSA[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WCA[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WS[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WC[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb:0] Q[`DIVCOPIES-1:0]; // U1.b
+  logic [`DIVb:0] QM[`DIVCOPIES-1:0];// 1.b
+  logic [`DIVb:0] QNext[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb:0] QMNext[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb:0] S[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb:0] SM[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb:0] SNext[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb:0] SMNext[`DIVCOPIES-1:0];// U1.b
+  logic [`DIVb-1:0] C[`DIVCOPIES-1:0]; // 0.b
  /* verilator lint_on UNOPTFLAT */
-  logic [`DIVLEN+3:0]  WSN, WCN;
-  logic [`DIVLEN+3:0]  D, DBar, D2, DBar2;
-  logic [$clog2(`XLEN+1)-1:0] intExp;
-  logic           intSign;
-  logic [`QLEN-1:0] QMMux;
-  logic [`DIVLEN+3:0] CMux;
-  logic [`DIVLEN+3:0] SMux;
+  logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
+  logic [`DIVN-2:0]  D; // U0.N-1
+  logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
+  logic [`DIVb:0] QMMux;
+  logic [`DIVb-1:0] CMux;
+  logic [`DIVb:0] SMux;
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -81,27 +84,28 @@ module srt(
   //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
   //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
   if (`RADIX == 2) begin : nextw
-    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVLEN+2:0], 1'b0};
-    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVLEN+2:0], 1'b0};
+    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
+    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
   end else begin
-    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0};
-    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVLEN+1:0], 2'b0};
+    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
+    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
   end
 
-  mux2   #(`DIVLEN+4) wsmux(NextWSN, X, DivStart, WSN);
-  flopen   #(`DIVLEN+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
-  mux2   #(`DIVLEN+4) wcmux(NextWCN, {`DIVLEN+4{1'b0}}, DivStart, WCN);
-  flopen   #(`DIVLEN+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
-  flopen #(`DIVLEN+4) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVLEN+4) Cmux({2'b11, C[`DIVCOPIES-1][`DIVLEN+3:2]}, {5'b11111, Sqrt, {(`DIVLEN-2){1'b0}}}, DivStart, CMux);
-  flop #(`DIVLEN+4) cflop(clk, CMux, C[0]);
+  mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
+  flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
+  mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
+  flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
+  flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
+  mux2 #(`DIVb) Cmux({2'b11, C[`DIVCOPIES-1][`DIVb-1:2]}, {Sqrt, {(`DIVb-1){1'b0}}}, DivStart, CMux);
+  flop #(`DIVb) cflop(clk, CMux, C[0]);
 
   // Divisor Selections
-  // - choose the negitive version of what's being selected
-  assign DBar = ~D;
+  //  - choose the negitive version of what's being selected
+  //  - D is only the fraction
+  assign DBar = {3'b111, 1'b0, ~D, {`DIVb-`DIVN+1{1'b1}}};
   if(`RADIX == 4) begin : d2
-    assign DBar2 = {~D[`DIVLEN+2:0], 1'b1};
-    assign D2 = {D[`DIVLEN+2:0], 1'b0};
+    assign DBar2 = {2'b11, 1'b0, ~D, {`DIVb+2-`DIVN{1'b1}}};
+    assign D2 = {2'b0, 1'b1, D, {`DIVb+2-`DIVN{1'b0}}};
   end
 
   genvar i;
@@ -112,12 +116,13 @@ module srt(
       .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]));
       if(i<(`DIVCOPIES-1)) begin 
         if (`RADIX==2)begin 
-          assign WS[i+1] = {WSA[i][`DIVLEN+1:0], 1'b0};
-          assign WC[i+1] = {WCA[i][`DIVLEN+1:0], 1'b0};
+          assign WS[i+1] = {WSA[i][`DIVb+2:0], 1'b0};
+          assign WC[i+1] = {WCA[i][`DIVb+2:0], 1'b0};
+          assign  C[i+1] = {1'b1, C[i][`DIVb-1:1]};
         end else begin
-          assign WS[i+1] = {WSA[i][`DIVLEN+1:0], 2'b0};
-          assign WC[i+1] = {WCA[i][`DIVLEN+1:0], 2'b0};
-          assign  C[i+1] = {2'b11, C[i][`DIVLEN+3:2]};
+          assign WS[i+1] = {WSA[i][`DIVb+1:0], 2'b0};
+          assign WC[i+1] = {WCA[i][`DIVb+1:0], 2'b0};
+          assign  C[i+1] = {2'b11, C[i][`DIVb-1:2]};
         end
         assign Q[i+1] = QNext[i];
         assign QM[i+1] = QMNext[i];
@@ -128,30 +133,30 @@ module srt(
   endgenerate
 
   // if starting a new divison set Q to 0 and QM to -1
-  mux2 #(`QLEN) QMmux(QMNext[`DIVCOPIES-1], {`QLEN{1'b1}}, DivStart, QMMux);
-  flopenr #(`QLEN) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
-  flopen #(`QLEN) QMreg(clk, DivBusy, QMMux, QM[0]);
+  mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
+  flopenr #(`DIVb+1) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
+  flopen #(`DIVb+1) QMreg(clk, DivBusy, QMMux, QM[0]);
 
-  flopr #(`DIVLEN+4) SMreg(clk, DivStart, SMNext[`DIVCOPIES-1], SM[0]);
-  mux2 #(`DIVLEN+4) Smux(SNext[`DIVCOPIES-1], {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, DivStart, SMux);
-  flop #(`DIVLEN+4) Sreg(clk, SMux, S[0]);
-
+  flopr #(`DIVb+1) SMreg(clk, DivStart, SMNext[`DIVCOPIES-1], SM[0]);
+  mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {Sqrt, {(`DIVb){1'b0}}}, DivStart, SMux);
+  flop #(`DIVb+1) Sreg(clk, SMux, S[0]);
+ // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
-    if(Sqrt)
-      if(NegSticky) Qm = SM[0][`QLEN-1-(`RADIX/4):0];
-      else          Qm = S[0][`QLEN-1-(`RADIX/4):0];
+    if(Sqrt) // sqrt ouputs in the range (1, .5]
+      if(NegSticky) Qm = {SM[0][`DIVb-1-(`RADIX/4):0], 1'b0};
+      else          Qm = {S[0][`DIVb-1-(`RADIX/4):0], 1'b0};
     else  
-      if(NegSticky) Qm = QM[0][`QLEN-1-(`RADIX/4):0];
-      else          Qm = Q[0][`QLEN-1-(`RADIX/4):0];
+      if(NegSticky) Qm = QM[0][`DIVb-(`RADIX/4):0];
+      else          Qm = Q[0][`DIVb-(`RADIX/4):0];
 
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
 
   if(`RADIX==2)
     if (`DIVCOPIES == 1)
-      assign StickyWSA = {WSA[0][`DIVLEN+2:0], 1'b0};
+      assign StickyWSA = {WSA[0][`DIVb+2:0], 1'b0};
     else
-      assign StickyWSA = {WSA[1][`DIVLEN+2:0], 1'b0};
+      assign StickyWSA = {WSA[1][`DIVb+2:0], 1'b0};
 
 
 endmodule
@@ -162,24 +167,24 @@ endmodule
 
  /* verilator lint_off UNOPTFLAT */
 module divinteration (
-  input logic [`DIVLEN+3:0] D,
-  input logic [`DIVLEN+3:0]  DBar, D2, DBar2,
-  input logic [`QLEN-1:0] Q, QM,
-  input logic [`DIVLEN+3:0] S, SM,
-  input logic [`DIVLEN+3:0]  WS, WC,
-  input logic [`DIVLEN+3:0] C,
+  input logic [`DIVN-2:0] D,
+  input logic [`DIVb+3:0]  DBar, D2, DBar2,
+  input logic [`DIVb:0] Q, QM,
+  input logic [`DIVb:0] S, SM,
+  input logic [`DIVb+3:0]  WS, WC,
+  input logic [`DIVb-1:0] C,
   input logic Sqrt,
-  output logic [`QLEN-1:0] QNext, QMNext, 
-  output logic [`DIVLEN+3:0] SNext, SMNext, 
-  output logic [`DIVLEN+3:0]  WSA, WCA
+  output logic [`DIVb:0] QNext, QMNext, 
+  output logic [`DIVb:0] SNext, SMNext, 
+  output logic [`DIVb+3:0]  WSA, WCA
 );
  /* verilator lint_on UNOPTFLAT */
 
-  logic [`DIVLEN+3:0]  Dsel;
+  logic [`DIVb+3:0]  Dsel;
   logic [3:0]     q;
-  logic qp, qz;//, qn;
-  logic [`DIVLEN+3:0] F;
-  logic [`DIVLEN+3:0] AddIn;
+  logic qp, qz;
+  logic [`DIVb+3:0] F;
+  logic [`DIVb+3:0] AddIn;
 
   // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -190,21 +195,21 @@ module divinteration (
 	// 0010 = -1
 	// 0001 = -2
   if(`RADIX == 2) begin : qsel
-    qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], qp, qz);//, qn);
+    qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz);
   end else begin
     qsel4 qsel4(.D, .WS, .WC, .Sqrt, .q);
-    fgen4 fgen4(.s(q), .C, .S, .SM, .F);
+    // fgen4 fgen4(.s(q), .C, .S, .SM, .F);
   end
 
   if(`RADIX == 2) begin : dsel
-    assign Dsel = {`DIVLEN+4{~qz}}&(qp ? DBar : D);
+    assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
   end else begin
     always_comb
       case (q)
         4'b1000: Dsel = DBar2;
         4'b0100: Dsel = DBar;
         4'b0000: Dsel = '0;
-        4'b0010: Dsel = D;
+        4'b0010: Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}};
         4'b0001: Dsel = D2;
         default: Dsel = 'x;
       endcase
@@ -213,16 +218,16 @@ module divinteration (
   //  WSA, WCA = WS + WC - qD
   assign AddIn = Sqrt ? F : Dsel;
   if (`RADIX == 2) begin : csa
-    csa #(`DIVLEN+4) csa(WS, WC, AddIn, qp, WSA, WCA);
+    csa #(`DIVb+4) csa(WS, WC, AddIn, qp, WSA, WCA);
   end else begin
-    csa #(`DIVLEN+4) csa(WS, WC, AddIn, |q[3:2], WSA, WCA);
+    csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~Sqrt, WSA, WCA);
   end
 
   if (`RADIX == 2) begin : otfc
     otfc2 otfc2(.qp, .qz, .Q, .QM, .QNext, .QMNext);
   end else begin
     otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-    sotfc4 sotfc4(.s(q), .Sqrt, .C, .S, .SM, .SNext, .SMNext);
+    // sotfc4 sotfc4(.s(q), .Sqrt, .C, .S, .SM, .SNext, .SMNext);
   end
 
 endmodule

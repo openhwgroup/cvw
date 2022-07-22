@@ -60,7 +60,7 @@ module postprocess (
     input logic                             DivS,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
-    input logic  [`QLEN-1-(`RADIX/4):0]                DivQm,
+    input logic  [`DIVb-(`RADIX/4):0]                DivQm,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
@@ -154,7 +154,7 @@ module postprocess (
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaSCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
@@ -199,7 +199,7 @@ module postprocess (
 
                           
     roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
-                        .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
+                        .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
     round round(.OutFmt, .Frm, .S, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,

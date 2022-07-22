@@ -34,6 +34,7 @@ module roundsign(
     input logic         Xs,
     input logic         Ys,
     input logic         FmaNegSum,
+    input logic         Sqrt,
     input logic         FmaOp,
     input logic         DivOp,
     input logic         CvtOp,
@@ -44,7 +45,7 @@ module roundsign(
 
     logic Qs;
 
-    assign Qs = Xs^Ys;
+    assign Qs = Xs^(Ys&~Sqrt);
 
     // Sign for rounding calulation
     assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
