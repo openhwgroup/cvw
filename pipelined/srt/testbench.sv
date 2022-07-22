@@ -53,7 +53,7 @@ module testbench;
  
   // Test parameters
   parameter MEM_SIZE = 40000;
-  parameter MEM_WIDTH = 64+64+64+64;
+  parameter MEM_WIDTH = 64+64+64;
  
   // Test sizes
   `define memr  63:0 
@@ -70,9 +70,9 @@ module testbench;
   integer testnum, errors;
 
   // Equip Int, Sqrt, or IntMod test
-  assign Int =  1'b1;
+  assign Int =  1'b0;
   assign Mod =  1'b0;
-  assign Sqrt = 1'b0;
+  assign Sqrt = 1'b1;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -101,7 +101,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("inttestvectors", Tests);
+      $readmemh ("sqrttestvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
