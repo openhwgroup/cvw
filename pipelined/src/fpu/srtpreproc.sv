@@ -39,16 +39,16 @@ module srtpreproc (
   input  logic Sqrt,
   input logic XZero,
   output logic  [`NE+1:0] QeM,
-  output logic [`DIVLEN+3:0] X,
-  output logic [`DIVLEN+3:0] Dpreproc,
-  output logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
+  output logic [`DIVb:0] X,
+  output logic [`DIVN-2:0] Dpreproc,
   output logic [`DURLEN-1:0] Dur
 );
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
   logic  [`NF-1:0] PreprocA, PreprocX;
   logic  [`NF-1:0] PreprocB, PreprocY;
-  logic  [`NF+3:0] SqrtX;
+  logic  [`NF+1:0] SqrtX;
+  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`NE+1:0] Qe;
 
   // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
@@ -70,9 +70,9 @@ module srtpreproc (
   assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
 
   
-  assign SqrtX = Xe[0] ? {3'b110, ~XZero, PreprocX} : {2'b11, ~XZero, PreprocX, 1'b0};
-  assign X = Sqrt ? {SqrtX, {`DIVLEN-`NF{1'b0}}} : {3'b000, ~XZero, PreprocX, {`DIVLEN-`NF{1'b0}}};
-  assign Dpreproc = {4'b0001, /*Int ? PreprocB : */PreprocY, {`DIVLEN-`NF{1'b0}}};
+  assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
+  assign X = Sqrt ? {SqrtX, {`DIVb-1-`NF{1'b0}}} : {~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
+  assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
   assign Dur = (`DURLEN)'(`FPDUR);
 
   //           radix 2     radix 4
@@ -99,7 +99,8 @@ module expcalc(
   output logic  [`NE+1:0] Qe
   );
   logic [`NE-2:0] Bias;
-  logic [`NE-1:0] SExp, SXExp;
+  logic [`NE+1:0] SXExp;
+  logic [`NE+1:0] SExp;
   logic [`NE+1:0] DExp;
   
   if (`FPSIZES == 1) begin
@@ -126,10 +127,10 @@ module expcalc(
             2'h2: Bias =  (`NE-1)'(`H_BIAS);
         endcase
   end
-  assign SXExp = Xe - (`NE)'(`BIAS);
-  assign SExp  = {1'b0, SXExp[`NE-1:1]} + Bias;
+  assign SXExp = {2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - (`NE+1)'(`BIAS);
+  assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
   // correct exponent for denormalized input's normalization shifts
   assign DExp = ({2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - {2'b0, Ye} + {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZero}};
   
-  assign Qe = Sqrt ? {2'b0, SExp} : DExp;
+  assign Qe = Sqrt ? SExp : DExp;
 endmodule
