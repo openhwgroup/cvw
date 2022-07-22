@@ -94,7 +94,7 @@ class sail_cSim(pluginTemplate):
 
             execute = "@cd "+testentry['work_dir']+";"
 
-            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
+            cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 1), self.xlen) + ' ' + test + ' -o ' + elf
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 

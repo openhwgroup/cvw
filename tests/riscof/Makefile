@@ -26,10 +26,11 @@ fsd_fld_tempfix:
 build_arch: fsd_fld_tempfix
 	riscof run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
 	rm -rf $(arch_workdir)/rv$(XLEN)i_m
-	mv -f $(work_dir)/rv$(XLEN)i_m $(arch_workdir)/
+	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
+	rsync -a $(work_dir)/rv64i_m/ $(arch_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
 
 build_wally:
-	riscof --verbose debug run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
+	riscof --verbose debug run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run 2>&1 | tee log.txt
 	rm -rf $(wally_workdir)/rv$(XLEN)i_m
 	mv -f $(work_dir)/rv$(XLEN)i_m $(wally_workdir)/
 
