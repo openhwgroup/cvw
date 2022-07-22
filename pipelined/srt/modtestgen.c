@@ -2,7 +2,8 @@
 
 /* Written 7/21/2022 by Cedar Turek
 
-   This program creates test vectors for integer divide.
+   This program creates test vectors for modulo
+   calculation from integer divide.
    */
 
 /* #includes */
@@ -18,7 +19,7 @@
 
 /* Prototypes */
 
-void output(FILE *fptr, long a, long b, long r);
+void output(FILE *fptr, long a, long b, long rem);
 void printhex(FILE *fptr, long x);
 double random_input(void);
 
@@ -27,11 +28,11 @@ double random_input(void);
 void main(void)
 {
   FILE *fptr;
-  long a, b, r;
+  long a, b, rem;
   long list[ENTRIES] = {1, 3, 5, 18, 25, 33, 42, 65, 103, 255};
   int i, j;
 
-  if ((fptr = fopen("inttestvectors","w")) == NULL) {
+  if ((fptr = fopen("modtestvectors","w")) == NULL) {
     fprintf(stderr, "Couldn't write testvectors file\n");
     exit(1);
   }
@@ -40,8 +41,8 @@ void main(void)
     b = list[i];
     for (j=0; j<ENTRIES; j++) {
       a = list[j];
-      r = a/b;
-      output(fptr, a, b, r);
+      rem = a%b;
+      output(fptr, a, b, rem);
     }
   }
 
@@ -50,13 +51,13 @@ void main(void)
 
 /* Functions */
 
-void output(FILE *fptr, long a, long b, long r)
+void output(FILE *fptr, long a, long b, long rem)
 {
   printhex(fptr, a);
   fprintf(fptr, "_");
   printhex(fptr, b);
   fprintf(fptr, "_");
-  printhex(fptr, r);
+  printhex(fptr, rem);
   fprintf(fptr, "\n");
 }
 
