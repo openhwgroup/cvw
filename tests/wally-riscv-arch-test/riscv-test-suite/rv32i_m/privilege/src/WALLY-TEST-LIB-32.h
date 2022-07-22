@@ -954,7 +954,6 @@ read08_test:
     // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
     li t2, 0xBAD // bad value that will be overwritten on good reads.
     lb t2, 0(t3)
-    andi t2, t2, 0xFF // mask to lower 8 bits
     sw t2, 0(t1)
     addi t1, t1, 4
     addi a6, a6, 4
