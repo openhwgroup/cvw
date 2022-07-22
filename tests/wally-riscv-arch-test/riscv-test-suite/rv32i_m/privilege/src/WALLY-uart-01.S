@@ -132,9 +132,33 @@ test_cases:
 .4byte UART_MSR, 0x00, write08_test # clear MSR
 .4byte UART_IER, 0x08, write08_test # enable MODEM Status interrupts
 .4byte UART_IIR, 0x01, read08_test  # no interrupts pending
-.4byte UART_MCR, 0x02, write08_test # Cause DCTS interrupt
+.4byte UART_MCR, 0x12, write08_test # Cause DCTS interrupt
 .4byte UART_IIR, 0x00, read08_test  # MODEM interrupt
 .4byte UART_MSR, 0x11, read08_test  # Read MSR to clear interrupt
 .4byte UART_IIR, 0x01, read08_test  # interrupt cleared by reading MSR
+.4byte UART_MCR, 0x13, write08_test # Set DSR high
+.4byte UART_IIR, 0x00, read08_test  # MODEM interrupt
+.4byte UART_MSR, 0x32, read08_test  # Read MSR to clear interrupt
+.4byte UART_IIR, 0x01, read08_test  # Interrupt cleared by reading MSR
+.4byte UART_MCR, 0x17, write08_test # Set RIb low and keep CTS and DSR
+.4byte UART_MCR, 0x13, write08_test # Set RIb high and keep CTS and DSR
+.4byte UART_IIR, 0x00, read08_test  # MODEM interrupt
+.4byte UART_MSR, 0x34, read08_test  # Read MSR to clear interrupt
+.4byte UART_IIR, 0x01, read08_test  # Interrupt cleared by reading MSR
+.4byte UART_MCR, 0x1B, write08_test # Set DCD high and keep CTS and DSR
+.4byte UART_IIR, 0x00, read08_test  # MODEM interrupt
+.4byte UART_MSR, 0xb8, read08_test  # Read MSR to clear interrupt
+.4byte UART_IIR, 0x01, read08_test  # Interrupt cleared by reading MSR
+.4byte UART_MCR, 0x10, write08_test # Clear MCR
+.4byte UART_MSR, 0x00, write08_test # Clear MSR
+
+# =========== FIFO interrupts ===========
+
+.4byte UART_IER, 0x07, write08_test # enable data available, buffer empty, and line status interrupts
+.4byte UART_FCR, 0x41, write08_test # Set FIFO threshold to 4 and enable FIFO mode
+.4byte UART_IIR, 0xC2, read08_test  # Enabling FIFO sets top two bits of IIR
+.4byte UART_THR, 0x00, write08_test # write 0 to transmit register
+.4byte 0x0, 0xC101, uart_data_wait  # no interrupts pending (transmitter interrupt squashed by early read)
+.4byte UART_RBR, 0x00, read08_test  # read 0 from buffer register
 
 .4byte 0x0, 0x0, terminate_test
