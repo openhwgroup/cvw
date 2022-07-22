@@ -178,14 +178,14 @@ module fctrl (
 
 // enables:
 //    X - all except int->fp, store, load, mv int->fp
-//    Y - all except cvt, mv, load, class
+//    Y - all except cvt, mv, load, class, sqrt
 //    Z - fma ops only
 //                  load/store                        mv int->fp                      cvt int->fp
     assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
 //                  load/class                                    mv               cvt
-    assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
     assign ZEnE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
-    assign YEnForwardE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&(PostProcSelE==2'b00)));    
+    assign YEnForwardE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
     assign ZEnForwardE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&~OpCtrlE[2];
 
 //  Final Res Sel:
