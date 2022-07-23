@@ -1,15 +1,14 @@
 /* testgen.c */
 
-/* Written 10/31/96 by David Harris
+/* Written 7/21/2022 by Cedar Turek
 
-   This program creates test vectors for mantissa component
-   of an IEEE floating point divider. 
+   This program creates test vectors for integer divide.
    */
 
 /* #includes */
 
 #include <stdio.h>
-#include <stdlib.h>
+#include <stdlib.h> 
 #include <math.h>
 
 /* Constants */
@@ -19,7 +18,7 @@
 
 /* Prototypes */
 
-void output(FILE *fptr, long a, long b, long r, long rem);
+void output(FILE *fptr, long a, long b, long r);
 void printhex(FILE *fptr, long x);
 double random_input(void);
 
@@ -28,7 +27,7 @@ double random_input(void);
 void main(void)
 {
   FILE *fptr;
-  long a, b, r, rem;
+  long a, b, r;
   long list[ENTRIES] = {1, 3, 5, 18, 25, 33, 42, 65, 103, 255};
   int i, j;
 
@@ -42,32 +41,22 @@ void main(void)
     for (j=0; j<ENTRIES; j++) {
       a = list[j];
       r = a/b;
-      rem = a%b;
-      output(fptr, a, b, r, rem);
+      output(fptr, a, b, r);
     }
   }
-  
-//   for (i = 0; i< RANDOM_VECS; i++) {
-//     a = random_input();
-//     b = random_input();
-//     r = a/b;
-//     output(fptr, a, b, r);
-//   }
 
   fclose(fptr);
 }
 
 /* Functions */
 
-void output(FILE *fptr, long a, long b, long r, long rem)
+void output(FILE *fptr, long a, long b, long r)
 {
   printhex(fptr, a);
   fprintf(fptr, "_");
   printhex(fptr, b);
   fprintf(fptr, "_");
   printhex(fptr, r);
-  fprintf(fptr, "_");
-  printhex(fptr, rem);
   fprintf(fptr, "\n");
 }
 

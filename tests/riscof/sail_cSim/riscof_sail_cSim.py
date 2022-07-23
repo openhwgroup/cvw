@@ -52,7 +52,7 @@ class sail_cSim(pluginTemplate):
         ispec = utils.load_yaml(isa_yaml)['hart0']
         self.xlen = ('64' if 64 in ispec['supported_xlen'] else '32')
         self.isa = 'rv' + self.xlen
-        self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
+        self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
         if "I" in ispec["ISA"]:
             self.isa += 'i'
         if "M" in ispec["ISA"]:
@@ -90,18 +90,24 @@ class sail_cSim(pluginTemplate):
             test_dir = testentry['work_dir']
             test_name = test.rsplit('/',1)[1][:-2]
 
-            elf = 'Ref.elf'
+            elf = 'ref.elf'
 
             execute = "@cd "+testentry['work_dir']+";"
 
-            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
+            cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 1), self.xlen) + ' ' + test + ' -o ' + elf
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
-            execute += self.objdump_cmd.format(elf, self.xlen, 'Ref.elf.objdump')
+            execute += self.objdump_cmd.format(elf, self.xlen, 'ref.elf.objdump')
             sig_file = os.path.join(test_dir, self.name[:-1] + ".signature")
-
-            execute += self.sail_exe[self.xlen] + ' -z268435455 --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
+            
+            # Check if the tests can be run on SAIL
+            if ('NO_SAIL=True' in testentry['macros']):
+                # if the tests can't run on SAIL we copy the reference output to the src directory
+                reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
+                execute += 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+            else:
+                execute += self.sail_exe[self.xlen] + ' -z268435455 -i --test-signature={0} {1} > {2}.log 2>&1;'.format(sig_file, elf, test_name)
 
             cov_str = ' '
             for label in testentry['coverage_labels']:

@@ -42,7 +42,7 @@ module qsel2 ( // *** eventually just change to 4 bits
   // for efficiency.  You can probably optimize your logic to
   // select the proper divisor with less delay.
 
-  // Quotient equations from EE371 lecture notes 13-20
+  // Qmient equations from EE371 lecture notes 13-20
   assign p = ps ^ pc;
   assign g = ps & pc;
 
@@ -62,17 +62,48 @@ module qsel2 ( // *** eventually just change to 4 bits
 //   assign #1 qn = magnitude & sign;
 endmodule
 
+////////////////////////////////////
+// Adder Input Generation, Radix 2 //
+////////////////////////////////////
+module fgen2 (
+  input  logic sp, sz,
+  input  logic [`DIVb-1:0] C,
+  input  logic [`DIVb:0] S, SM,
+  output logic [`DIVb+3:0] F
+);
+  logic [`DIVb+3:0] FP, FN, FZ;
+  logic [`DIVb+3:0] SExt, SMExt, CExt;
+
+  assign SExt = {3'b0, S};
+  assign SMExt = {3'b0, SM};
+  assign CExt = {4'hf, C};
+
+  // Generate for both positive and negative bits
+  assign FP = ~(SExt << 1) & CExt;
+  assign FN = (SMExt << 1) | (CExt & (~CExt << 2));
+  assign FZ = '0;
+
+  // Choose which adder input will be used
+
+  always_comb
+    if (sp)       F = FP;
+    else if (sz)  F = FZ;
+    else          F = FN;
+
+endmodule
+
 module qsel4 (
-	input logic [`DIVLEN+3:0] D,
-	input logic [`DIVLEN+3:0] WS, WC,
+	input logic [`DIVN-2:0] D,
+	input logic [`DIVb+3:0] WS, WC,
+  input logic Sqrt,
 	output logic [3:0] q
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
 	logic [2:0] Dmsbs;
-	assign PreWmsbs = WC[`DIVLEN+3:`DIVLEN-4] + WS[`DIVLEN+3:`DIVLEN-4];
+	assign PreWmsbs = WC[`DIVb+3:`DIVb-4] + WS[`DIVb+3:`DIVb-4];
 	assign Wmsbs = PreWmsbs[7:1];
-	assign Dmsbs = D[`DIVLEN-1:`DIVLEN-3];
+	assign Dmsbs = D[`DIVN-2:`DIVN-4];//|{3{D[`DIVN-2]&Sqrt}};
 	// D = 0001.xxx...
 	// Dmsbs = |   |
   // W =      xxxx.xxx...
@@ -91,45 +122,77 @@ module qsel4 (
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-4)  QSel4[i] = 4'b0000; 
             else if(w2>=-13) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           1: if(w2>=14)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
-            else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-15) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-5)  QSel4[i] = 4'b0000; // was -6
+            else if(~Sqrt&(w2>=-15)) QSel4[i] = 4'b0010; // divide case
+            else if( Sqrt&(w2>=-14)) QSel4[i] = 4'b0010; // sqrt case
+            else             QSel4[i] = 4'b0001; 
           2: if(w2>=15)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-6)  QSel4[i] = 4'b0000; 
             else if(w2>=-16) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           3: if(w2>=16)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-18) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-17) QSel4[i] = 4'b0010; // was -18
+            else             QSel4[i] = 4'b0001; 
           4: if(w2>=18)      QSel4[i] = 4'b1000;
             else if(w2>=6)   QSel4[i] = 4'b0100; 
-            else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-20) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; // was -8
+            else if(~Sqrt&(w2>=-20)) QSel4[i] = 4'b0010; // divide case
+            else if( Sqrt&(w2>=-18)) QSel4[i] = 4'b0010; // sqrt case
+            else             QSel4[i] = 4'b0001; 
           5: if(w2>=20)      QSel4[i] = 4'b1000;
             else if(w2>=6)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
             else if(w2>=-20) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else             QSel4[i] = 4'b0001; 
           6: if(w2>=20)      QSel4[i] = 4'b1000;
             else if(w2>=8)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
             else if(w2>=-22) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
-          7: if(w2>=24)      QSel4[i] = 4'b1000;
+            else             QSel4[i] = 4'b0001; 
+          7: if(w2>=22)      QSel4[i] = 4'b1000; // was 24
             else if(w2>=8)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-24) QSel4[i] = 4'b0010; 
-            else            QSel4[i] = 4'b0001; 
+            else if(w2>=-23) QSel4[i] = 4'b0010; // was -24
+            else             QSel4[i] = 4'b0001; 
         endcase
       end
   end
 	assign q = QSel4[{Dmsbs,Wmsbs}];
 	
+endmodule
+
+////////////////////////////////////
+// Adder Input Generation, Radix 4 //
+////////////////////////////////////
+module fgen4 (
+  input  logic [3:0] s,
+  input  logic [`DIVLEN+3:0] C, S, SM,
+  output logic [`DIVLEN+3:0] F
+);
+  logic [`DIVLEN+3:0] F2, F1, F0, FN1, FN2;
+  
+  // Generate for both positive and negative bits
+  assign F2  = (~S << 2) & (C << 2);
+  assign F1  = ~(S << 1) & C;
+  assign F0  = '0;
+  assign FN1 = (SM << 1) | (C & ~(C << 3));
+  assign FN2 = (SM << 2) | ((C << 2)&~(C << 4));
+
+  // Choose which adder input will be used
+
+  always_comb
+    if (s[3])       F = F2;
+    else if (s[2])  F = F1;
+    else if (s[1])  F = FN1;
+    else if (s[0])  F = FN2;
+    else            F = F0;
+
+  // assign F = sp ? FP : (sn ? FN : FZ);
+
 endmodule
