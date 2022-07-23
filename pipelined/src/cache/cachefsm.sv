@@ -76,8 +76,6 @@ module cachefsm
    output logic      FlushAdrCntRst,
    output logic      FlushWayCntRst,
    output logic      SelBusBuffer, 
-   output logic      save,
-   output logic      restore,
    output logic      SRAMEnable);
   
   logic               resetDelay;
@@ -198,10 +196,6 @@ module cachefsm
   assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss);
     assign CacheWriteLine = (CurrState == STATE_MISS_EVICT_DIRTY_START) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
-  // handle cpu stall.
-  assign restore = '0;
-  assign save = '0;
-
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
                   // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
