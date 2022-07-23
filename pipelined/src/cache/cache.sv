@@ -38,7 +38,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic [1:0]           RW,
   input logic [1:0]           Atomic,
   input logic                 FlushCache,
-  input logic                 InvalidateCacheM,
+  input logic                 InvalidateCache,
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
   input logic [(`XLEN-1)/8:0] ByteMask,
@@ -130,7 +130,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
-    .Invalidate(InvalidateCacheM));
+    .Invalidate(InvalidateCache));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
       .clk, .reset, .HitWay, .VictimWay, .RAdr, .LRUWriteEn);
@@ -220,7 +220,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
-        .InvalidateCache(InvalidateCacheM),
+        .InvalidateCache,
         .SRAMEnable,
         .LRUWriteEn);
 endmodule 
