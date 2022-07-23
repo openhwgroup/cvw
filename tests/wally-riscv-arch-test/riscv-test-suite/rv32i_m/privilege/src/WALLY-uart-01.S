@@ -160,5 +160,25 @@ test_cases:
 .4byte UART_THR, 0x00, write08_test # write 0 to transmit register
 .4byte 0x0, 0xC101, uart_data_wait  # no interrupts pending (transmitter interrupt squashed by early read)
 .4byte UART_RBR, 0x00, read08_test  # read 0 from buffer register
+.4byte UART_THR, 0xA5, write08_test # Write A5 to transmit register
+.4byte UART_THR, 0x01, write08_test # Write 1 to transmit register
+.4byte UART_IIR, 0xC1, read08_test  # no interrupts pending
+.4byte UART_THR, 0x02, write08_test # Write 2 to transmit register
+.4byte UART_THR, 0x03, write08_test # Write 3 to transmit register
+.4byte 0x0, 0xC401, uart_data_wait  # Interrupt due to data ready
+.4byte UART_RBR, 0xA5, read08_test  # Read A5 from buffer register
+.4byte UART_IIR, 0xC2, read08_test   # Data ready interrupt cleared
+.4byte UART_RBR, 0x01, read08_test  # Read 1 from buffer register
+.4byte UART_RBR, 0x02, read08_test  # Read 2 from buffer register
+.4byte UART_LSR, 0x61, read08_test  # Data ready, 1 item left in FIFO
+.4byte UART_RBR, 0x03, read08_test  # Read 3 from buffer register
+.4byte UART_LSR, 0x60, read08_test  # No data ready, FIFO is empty
+.4byte UART_THR, 0xFF, write08_test # Write FF to transmit register
+.4byte UART_THR, 0xFE, write08_test # Write FE to transmit register
+.4byte 0x0, 0xC101, uart_data_wait  # Interrupt due to data ready
+.4byte UART_FCR, 0xC7, write08_test # Clear all bytes in FIFO
+.4byte UART_FCR, 0xC1, read08_test  # Check that FCR clears bits 1 and 2 when written to 1
+.4byte UART_LSR, 0x60, read08_test  # No data ready, FIFO cleared by writing to FCR
+
 
 .4byte 0x0, 0x0, terminate_test

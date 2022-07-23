@@ -39,6 +39,17 @@ ffffffB8
 ffffffC2 # FIFO interrupt
 0000C101
 00000000
-
+ffffffC1
+0000C401
+ffffffA5
+ffffffC1
+00000001
+00000002
+00000061
+00000003
+00000060
+0000C101
+ffffffC1
+00000060
 
 0000000b # ecall from test termination

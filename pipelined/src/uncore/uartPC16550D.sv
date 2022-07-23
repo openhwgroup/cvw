@@ -324,7 +324,9 @@ module uartPC16550D(
     if (~PRESETn) begin
       rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0; RXBR <= #1 0;
     end else begin
-      if (rxstate == UART_DONE) begin
+      if (~MEMWb & (A == 3'b010) & Din[1]) begin
+        rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0;
+      end else if (rxstate == UART_DONE) begin
         RXBR <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
         if (rxoverrunerr) $warning("UART RX Overrun Error\n");
         if (rxparityerr) $warning("UART RX Parity Error\n");
@@ -337,7 +339,8 @@ module uartPC16550D(
       end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
           if (~rxfifoempty) rxfifotail <= #1 rxfifotail + 1;
-          if (rxfifoempty) rxdataready <= #1 0;
+          // if (rxfifoempty) rxdataready <= #1 0;
+          if (rxfifoentries == 1) rxdataready <= #1 0; // When reading the last entry, data ready becomes zero
         end else begin
           rxdataready <= #1 0;
           RXBR <= #1 {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
@@ -448,6 +451,8 @@ module uartPC16550D(
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) begin
       txfifohead <= #1 0; txfifotail <= #1 0; txhrfull <= #1 0; txsrfull <= #1 0; TXHR <= #1 0; txsr <= #1 12'hfff;
+    end else if (~MEMWb & (A == 3'b010) & Din[2]) begin
+      txfifohead <= #1 0; txfifotail <= #1 0;
     end else begin
       if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
@@ -461,7 +466,7 @@ module uartPC16550D(
       end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
-          if (~txfifoempty) begin
+          if (~txfifoempty & ~txsrfull) begin
             txsr <= #1 txdata;
             txfifotail <= #1 txfifotail+1;
             txsrfull <= #1 1;
