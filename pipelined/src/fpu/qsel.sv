@@ -66,25 +66,29 @@ endmodule
 // Adder Input Generation, Radix 2 //
 ////////////////////////////////////
 module fgen2 (
-  input  logic sp, sn,
-  input  logic [`DIVLEN+3:0] C, S, SM,
-  output logic [`DIVLEN+3:0] F
+  input  logic sp, sz,
+  input  logic [`DIVb-1:0] C,
+  input  logic [`DIVb:0] S, SM,
+  output logic [`DIVb+3:0] F
 );
-  logic [`DIVLEN+3:0] FP, FN, FZ;
-  
+  logic [`DIVb+3:0] FP, FN, FZ;
+  logic [`DIVb+3:0] SExt, SMExt, CExt;
+
+  assign SExt = {3'b0, S};
+  assign SMExt = {3'b0, SM};
+  assign CExt = {4'hf, C};
+
   // Generate for both positive and negative bits
-  assign FP = ~(S << 1) & C;
-  assign FN = (SM << 1) | (C & (~C << 2));
+  assign FP = ~(SExt << 1) & CExt;
+  assign FN = (SMExt << 1) | (CExt & (~CExt << 2));
   assign FZ = '0;
 
   // Choose which adder input will be used
 
   always_comb
     if (sp)       F = FP;
-    else if (sn)  F = FN;
-    else          F = FZ;
-
-  // assign F = sp ? FP : (sn ? FN : FZ);
+    else if (sz)  F = FZ;
+    else          F = FN;
 
 endmodule
 
