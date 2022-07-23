@@ -8,7 +8,7 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 XLEN    ?= 64
 
-all: root build_arch #build_wally memfile
+all: root build_rv32e build_wally build_arch 
 
 root:
 	mkdir -p $(work_dir)
@@ -25,14 +25,24 @@ fsd_fld_tempfix:
 
 build_arch: fsd_fld_tempfix
 	riscof run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
-	rm -rf $(arch_workdir)/rv$(XLEN)i_m
+# rm -rf $(arch_workdir)/rv$(XLEN)i_m
 	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
 	rsync -a $(work_dir)/rv64i_m/ $(arch_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
 
 build_wally:
-	riscof --verbose debug run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run 2>&1 | tee log.txt
-	rm -rf $(wally_workdir)/rv$(XLEN)i_m
-	mv -f $(work_dir)/rv$(XLEN)i_m $(wally_workdir)/
+	riscof run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
+# riscof --verbose debug run --work-dir=$(work_dir) --config=config$(XLEN).ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run 2>&1 | tee log.txt
+# rm -rf $(wally_workdir)/rv$(XLEN)i_m
+# mv -f $(work_dir)/rv$(XLEN)i_m $(wally_workdir)/
+	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
+	rsync -a $(work_dir)/rv64i_m/ $(wally_workdir)/rv$(XLEN)i_m/ || echo "error suppressed"
+
+build_rv32e:
+	sed 's,{0},$(current_dir),g;s,{1},32e,g' config.ini > config32e.ini
+	riscof run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run
+# riscof --verbose debug run --work-dir=$(work_dir) --config=config32e.ini --suite=$(wally_dir)/riscv-test-suite/ --env=$(wally_dir)/riscv-test-suite/env --no-browser --no-dut-run 2>&1 | tee log.txt
+	rsync -a $(work_dir)/rv32i_m/ $(wally_workdir)/rv32i_m/ || echo "error suppressed"
+	rsync -a $(work_dir)/rv32e_unratified/ $(wally_workdir)/rv32e_unratified/ || echo "error suppressed"
 
 memfile: 
 	find $(work) -type f -name "*.elf" | grep "rv64i_m" | while read f; do riscv64-unknown-elf-elf2hex --bit-width 64 --input "$$f" --output "$$f.memfile"; done
@@ -42,6 +52,7 @@ memfile:
 clean:
 	rm -f config64.ini
 	rm -f config32.ini
+	rm -f config32e.ini
 	rm -rf $(work_dir)
 	rm -rf $(wally_workdir)
 	rm -rf $(arch_workdir)
