@@ -33,6 +33,7 @@
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
   input logic                        clk,
+  input logic                        ce,
   input logic                        reset,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
@@ -98,7 +99,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
+  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
     .Adr(RAdr), .ReadData(ReadTag), .ByteMask('1),
     .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
 
@@ -120,7 +121,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .Adr(RAdr),
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .Adr(RAdr),
       .ReadData(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .CacheWriteData(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       //.WriteEnable(1'b1), .ByteMask(SRAMLineByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
@@ -140,7 +141,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     else if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
     else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
 	end
-  flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
+  flopen #($clog2(NUMLINES)) RAdrDelayReg(clk, ce, RAdr, RAdrD);
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
