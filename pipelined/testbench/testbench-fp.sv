@@ -80,7 +80,7 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`QLEN-1-(`RADIX/4):0] Quot;
+	logic [`DIVb-(`RADIX/4):0] Quot;
   logic CvtResDenormUfE;
   logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
@@ -256,16 +256,16 @@ module testbenchfp;
             Fmt = {Fmt, 2'b11};
           end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
-      //   // add the square-root tests/op-ctrls/unit/fmt
-      //   Tests = {Tests, f128sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //     for(int i = 0; i<5; i++) begin
-      //       Unit = {Unit, `DIVUNIT};
-      //       Fmt = {Fmt, 2'b11};
-      //     end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
+        // add the square-root tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
       if (TEST === "fma"   | TEST === "all") begin  // if fused-mutliply-add is being tested
         Tests = {Tests, f128fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -383,16 +383,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b01};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f64sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b01};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
       if (TEST === "fma"   | TEST === "all") begin // if the fused multiply add is being tested
         Tests = {Tests, f64fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -494,16 +494,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b00};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f32sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b00};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
       if (TEST === "fma"   | TEST === "all")  begin // if fma is being tested
         Tests = {Tests, f32fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -587,16 +587,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f16sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b10};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
       if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
         Tests = {Tests, f16fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -697,7 +697,7 @@ module testbenchfp;
   fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
               .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
               .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
-  divsqrt divsqrt(.clk, .reset, .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(1'b0), .SqrtM(1'b0),
+  divsqrt divsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                   .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
                   .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
                   .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
@@ -1007,40 +1007,72 @@ module readvectors (
           end
         endcase
       `DIVUNIT:
-        case (Fmt)
-          2'b11: begin       // quad
-            X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
-            Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
-            Ans = TestVector[8+(`Q_LEN-1):8];
-            if (~clk) #5;
-            DivStart = 1'b1; #10 // one clk cycle
-            DivStart = 1'b0;
-          end
-          2'b01:	if (`D_SUPPORTED)begin	  // double
-            X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
-            Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
-            Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-          2'b00:	if (`S_SUPPORTED)begin	  // single
-            X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
-            Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
-            Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-          2'b10:	begin	  // half
-            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
-            Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
-            Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-        endcase
+        if(OpCtrl[0])
+          case (Fmt)
+            2'b11: begin       // quad
+              X = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+              Ans = TestVector[8+(`Q_LEN-1):8];
+              if (~clk) #5;
+              DivStart = 1'b1; #10 // one clk cycle
+              DivStart = 1'b0;
+            end
+            2'b01:	if (`D_SUPPORTED)begin	  // double
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b00:	if (`S_SUPPORTED)begin	  // single
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+          endcase
+        else
+          case (Fmt)
+            2'b11: begin       // quad
+              X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
+              Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+              Ans = TestVector[8+(`Q_LEN-1):8];
+              if (~clk) #5;
+              DivStart = 1'b1; #10 // one clk cycle
+              DivStart = 1'b0;
+            end
+            2'b01:	if (`D_SUPPORTED)begin	  // double
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
+              Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b00:	if (`S_SUPPORTED)begin	  // single
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
+              Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
+              Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+          endcase
       `CMPUNIT:
         case (Fmt)        
           2'b11: begin       // quad
@@ -1259,7 +1291,7 @@ module readvectors (
   end
   
   assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
-  assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT));
+  assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
   assign ZEn = (Unit == `FMAUNIT);
   
   unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,

@@ -125,7 +125,7 @@ module fpu (
    logic [`CVTLEN-1:0]     CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
    
    //divide signals
-   logic [`QLEN-1-(`RADIX/4):0] QmM;
+   logic [`DIVb-(`RADIX/4):0] QmM;
    logic [`NE+1:0]      QeE, QeM; 
    logic                DivSE, DivSM;
    logic                DivDoneM;
@@ -260,7 +260,7 @@ module fpu (
    //    - fsqrt
    // *** add other opperations
    divsqrt divsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
-                  .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), 
+                  .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), .XsE,
                   .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
                   .EarlyTermShiftM, .QmM, .DivDone(DivDoneM));
    // compare

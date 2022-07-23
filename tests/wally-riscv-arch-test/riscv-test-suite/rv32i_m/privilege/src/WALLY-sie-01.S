@@ -23,6 +23,9 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",sie)
+
 INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
@@ -43,7 +46,7 @@ WRITE_READ_CSR sie, 0x0 // force zeroing out mie CSR.
 jal cause_s_time_interrupt // write this from M mode to attempt to make s time interrupt pending
 GOTO_S_MODE // this would cause S mode interrupt to fire, but it shouldn't since SIE is zeored out.
 jal cause_s_soft_interrupt
-li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
+# li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
 // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
 jal cause_s_ext_interrupt_GPIO
 

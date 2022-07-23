@@ -23,7 +23,14 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
+RVTEST_ISA("RV32IAF")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*A.*F.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",status-fp-enabled)
+
 INIT_TESTS
+
+// Set the FS bits to 01, This makes sure SAILs mstatus matches wally in the signature
+li x29, 0x00002000 
+csrw mstatus, x29 
 
 TRAP_HANDLER m
 

@@ -26,7 +26,7 @@
 
 .macro INIT_TESTS
 
-RVTEST_ISA("RV64I")
+// RVTEST_ISA("RV64I")
 
 .section .text.init
 .globl rvtest_entry_point
@@ -156,6 +156,7 @@ cause_s_soft_interrupt:
 
 cause_m_ext_interrupt:
     // ========== Configure PLIC ==========
+    li a3, 0x40
     // m priority threshold = 0
     li t3, 0xC200000
     li t4, 0
@@ -192,6 +193,7 @@ m_ext_loop:
 
 cause_s_ext_interrupt_GPIO:
     // ========== Configure PLIC ==========
+    li a3, 0x40
     // s priority threshold = 0
     li t3, 0xC201000
     li t4, 0

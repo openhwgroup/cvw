@@ -32,16 +32,16 @@
 
 module otfc2 (
   input  logic         qp, qz,
-  input  logic [`QLEN-1:0] Q, QM,
-  output logic [`QLEN-1:0] QNext, QMNext
+  input  logic [`DIVb:0] Q, QM,
+  output logic [`DIVb:0] QNext, QMNext
 );
   //  The on-the-fly converter transfers the quotient 
   //  bits to the quotient as they come.
   //  Use this otfc for division only.
-  logic [`QLEN-2:0] QR, QMR;
+  logic [`DIVb-1:0] QR, QMR;
 
-  assign QR  = Q[`QLEN-2:0];
-  assign QMR = QM[`QLEN-2:0];     // Shifted Q and QM
+  assign QR  = Q[`DIVb-1:0];
+  assign QMR = QM[`DIVb-1:0];     // Shifted Q and QM
 
   always_comb begin
     if (qp) begin
@@ -96,8 +96,8 @@ endmodule
 
 module otfc4 (
   input  logic [3:0]   q,
-  input  logic [`QLEN-1:0] Q, QM,
-  output logic [`QLEN-1:0] QNext, QMNext
+  input  logic [`DIVb:0] Q, QM,
+  output logic [`DIVb:0] QNext, QMNext
 );
 
   //  The on-the-fly converter transfers the quotient 
@@ -113,7 +113,7 @@ module otfc4 (
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
-  logic [`QLEN-3:0] QR, QMR;
+  logic [`DIVb-2:0] QR, QMR;
 
   // shift Q (quotent) and QM (quotent-1)
 		// if 	q = 2  	    Q = {Q, 10} 	QM = {Q, 01}		
@@ -122,8 +122,8 @@ module otfc4 (
 		// else if 	q = -1	Q = {QM, 11} 	QM = {QM, 10}
 		// else if 	q = -2	Q = {QM, 10} 	QM = {QM, 01}
 
-  assign QR  = Q[`QLEN-3:0];
-  assign QMR = QM[`QLEN-3:0];     // Shifted Q and QM
+  assign QR  = Q[`DIVb-2:0];
+  assign QMR = QM[`DIVb-2:0];     // Shifted Q and QM
   always_comb begin
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
