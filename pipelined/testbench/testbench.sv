@@ -179,7 +179,7 @@ logic [3:0] dummy;
       testadr = 0;
       testadrNoBase = 0;
       // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests and  tests[0] == "2" refers to WallyRiscvArchTests 
-      riscofTest = tests[0] == "1"; // | tests[0] == "2"; 
+      riscofTest = tests[0] == "1" | tests[0] == "2"; 
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       //  guarantee the  initialized reads.  For example a strcmp can read 6 byte

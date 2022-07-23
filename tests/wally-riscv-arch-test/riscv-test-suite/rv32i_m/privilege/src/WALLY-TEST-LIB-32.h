@@ -26,7 +26,7 @@
 
 .macro INIT_TESTS
 
-RVTEST_ISA("RV32I")
+// RVTEST_ISA("RV32I")
 
 .section .text.init
 .globl rvtest_entry_point
@@ -152,7 +152,15 @@ cause_s_soft_interrupt:
     csrs sip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
     ret
 
+cause_s_soft_from_m_interrupt:
+    li t3, 0x2
+    csrs mip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    ret
+
 cause_m_ext_interrupt:
+    // these interrupts involve a time loop waiting for the interrupt to go off.
+    // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+    li a3, 0x40
     // ========== Configure PLIC ==========
     // m priority threshold = 0
     li t3, 0xC200000
@@ -189,6 +197,9 @@ m_ext_loop:
     ret
 
 cause_s_ext_interrupt_GPIO:
+    // these interrupts involve a time loop waiting for the interrupt to go off.
+    // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+    li a3, 0x40
     // ========== Configure PLIC ==========
     // s priority threshold = 0
     li t3, 0xC201000

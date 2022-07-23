@@ -126,11 +126,11 @@ module flags(
     //                  |                    |                    |                                      |                     and if the result is not exact
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
-    assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&UfL)))&(R|S))&~(InfIn|NaNIn|DivByZero);
+    assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&UfL)))&(R|S))&~(InfIn|NaNIn|DivByZero|Invalid);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
-    assign FpInexact = (S|Overflow|R)&~(InfIn|NaNIn|DivByZero);
+    assign FpInexact = (S|Overflow|R)&~(InfIn|NaNIn|DivByZero|Invalid);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
@@ -163,7 +163,7 @@ module flags(
 
     // if dividing by zero and not 0/0
     //  - don't set flag if an input is NaN or Inf(IEEE says has to be a finite numerator)
-    assign DivByZero = YZero&DivOp&~(XZero|NaNIn|InfIn);  
+    assign DivByZero = YZero&DivOp&~Sqrt&~(XZero|NaNIn|InfIn);  
 
     // Combine flags
     //      - to integer results do not set the underflow or overflow flags

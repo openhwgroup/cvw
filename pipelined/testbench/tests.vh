@@ -34,7 +34,7 @@
 string tvpaths[] = '{
     "../../addins/imperas-riscv-tests/work/",
     "../../tests/riscof/work/riscv-arch-test/",
-    "../../tests/wally-riscv-arch-test/work/", //"../../tests/riscof/work/wally-riscv-arch-test/", //
+    "../../tests/riscof/work/wally-riscv-arch-test/",
     "../../tests/imperas-riscv-tests/work/",
     "../../benchmarks/coremark/work/",
     "../../addins/embench-iot/"
@@ -92,24 +92,8 @@ string tvpaths[] = '{
     "bd_sizeopt_speed/src/wikisort/wikisort"
   };
 
-  string wally64a[] = '{
-    `WALLYTEST,
-    "rv64i_m/privilege/WALLY-amo",
-    "rv64i_m/privilege/WALLY-lrsc",
-    "rv64i_m/privilege/WALLY-status-fp-enabled-01"
-  };
-
-    string wally32a[] = '{
-    `WALLYTEST,
-    "rv32i_m/privilege/WALLY-amo",
-    "rv32i_m/privilege/WALLY-lrsc",
-    "rv32i_m/privilege/WALLY-status-fp-enabled-01"
-
-  };
-
   // *** restore CSR tests from Imperas old
-
-    string extra64i[] = '{
+  string extra64i[] = '{
     `MYIMPERASTEST,
     "rv64i_m/I/WALLY-ADD",
     "rv64i_m/I/WALLY-SUB",
@@ -919,6 +903,20 @@ string imperas32f[] = '{
     "rv32p/WALLY-CSR-PERMISSIONS-S"
   };
 
+ string wally64a[] = '{
+    `WALLYTEST,
+    "rv64i_m/privilege/src/WALLY-amo.S",
+    "rv64i_m/privilege/src/WALLY-lrsc.S",
+    "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S"
+  };
+
+ string wally32a[] = '{
+    `WALLYTEST,
+    "rv32i_m/privilege/src/WALLY-amo.S",
+    "rv32i_m/privilege/src/WALLY-lrsc.S",
+    "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S"
+ };
+
   string arch64priv[] = '{
     `RISCVARCHTEST,
     "rv64i_m/privilege/src/ebreak.S",
@@ -1491,212 +1489,126 @@ string imperas32f[] = '{
 
  string wally64i[] = '{
     `WALLYTEST,
-    "rv64i_m/I/WALLY-ADD",
-    "rv64i_m/I/WALLY-SLT",
-    "rv64i_m/I/WALLY-SLTU",
-    "rv64i_m/I/WALLY-SUB",
-    "rv64i_m/I/WALLY-XOR"
+    "rv64i_m/I/src/WALLY-ADD.S",
+    "rv64i_m/I/src/WALLY-SLT.S",
+    "rv64i_m/I/src/WALLY-SLTU.S",
+    "rv64i_m/I/src/WALLY-SUB.S",
+    "rv64i_m/I/src/WALLY-XOR.S"
  };
 
+ 
  string wally64priv[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-status-tw-01",
-    "rv64i_m/privilege/WALLY-csr-permission-s-01",
-    "rv64i_m/privilege/WALLY-csr-permission-u-01",
-    "rv64i_m/privilege/WALLY-minfo-01",
-    "rv64i_m/privilege/WALLY-misa-01",
-    "rv64i_m/privilege/WALLY-mmu-sv39",
-    "rv64i_m/privilege/WALLY-mmu-sv48",
-    "rv64i_m/privilege/WALLY-pma",
-    "rv64i_m/privilege/WALLY-pmp",
-    "rv64i_m/privilege/WALLY-trap-01",
-    "rv64i_m/privilege/WALLY-trap-s-01",
-    "rv64i_m/privilege/WALLY-trap-u-01",
-    "rv64i_m/privilege/WALLY-mie-01",
-    "rv64i_m/privilege/WALLY-sie-01",
-    "rv64i_m/privilege/WALLY-mtvec-01",
-    "rv64i_m/privilege/WALLY-stvec-01",
-    "rv64i_m/privilege/WALLY-status-mie-01",
-    "rv64i_m/privilege/WALLY-status-sie-01",
-    "rv64i_m/privilege/WALLY-trap-sret-01",
-    "rv64i_m/privilege/WALLY-status-tw-01",
-    "rv64i_m/privilege/WALLY-wfi-01"
+    "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
+    "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
+    "rv64i_m/privilege/src/WALLY-mie-01.S",
+    "rv64i_m/privilege/src/WALLY-minfo-01.S",
+    "rv64i_m/privilege/src/WALLY-misa-01.S",
+    "rv64i_m/privilege/src/WALLY-mmu-sv39.S",
+    "rv64i_m/privilege/src/WALLY-mmu-sv48.S",
+    "rv64i_m/privilege/src/WALLY-mtvec-01.S",
+    "rv64i_m/privilege/src/WALLY-pma.S",
+    "rv64i_m/privilege/src/WALLY-pmp.S",
+    "rv64i_m/privilege/src/WALLY-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-status-mie-01.S",
+    "rv64i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-status-tw-01.S",
+    "rv64i_m/privilege/src/WALLY-stvec-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-sret-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-u-01.S",
+    "rv64i_m/privilege/src/WALLY-wfi-01.S"
  };
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/WALLY-periph"
+    "rv64i_m/privilege/src/WALLY-periph.S"
  };
 
  string wally32e[] = '{
     `WALLYTEST,
-    "rv32i_m/I/E-add-01",
-    "rv32i_m/I/E-addi-01",
-    "rv32i_m/I/E-and-01",
-    "rv32i_m/I/E-andi-01",
-    "rv32i_m/I/E-auipc-01",
-    "rv32i_m/I/E-bge-01",
-    "rv32i_m/I/E-bgeu-01",
-    "rv32i_m/I/E-blt-01",
-    "rv32i_m/I/E-bltu-01",
-    "rv32i_m/I/E-bne-01",
-    "rv32i_m/I/E-jal-01",
-    "rv32i_m/I/E-jalr-01",
-    "rv32i_m/I/E-lb-align-01",
-    "rv32i_m/I/E-lbu-align-01",
-    "rv32i_m/I/E-lh-align-01",
-    "rv32i_m/I/E-lhu-align-01",
-    "rv32i_m/I/E-lui-01",
-    "rv32i_m/I/E-lw-align-01",
-    "rv32i_m/I/E-or-01",
-    "rv32i_m/I/E-ori-01",
-    "rv32i_m/I/E-sb-align-01",
-    "rv32i_m/I/E-sh-align-01",
-    "rv32i_m/I/E-sll-01",
-    "rv32i_m/I/E-slli-01",
-    "rv32i_m/I/E-slt-01",
-    "rv32i_m/I/E-slti-01",
-    "rv32i_m/I/E-sltiu-01",
-    "rv32i_m/I/E-sltu-01",
-    "rv32i_m/I/E-sra-01",
-    "rv32i_m/I/E-srai-01",
-    "rv32i_m/I/E-srl-01",
-    "rv32i_m/I/E-srli-01",
-    "rv32i_m/I/E-sub-01",
-    "rv32i_m/I/E-sw-align-01",
-    "rv32i_m/I/E-xor-01",
-    "rv32i_m/I/E-xori-01"
+    "rv32i_m/I/src/E-add-01.S",
+    "rv32i_m/I/src/E-addi-01.S",
+    "rv32i_m/I/src/E-and-01.S",
+    "rv32i_m/I/src/E-andi-01.S",
+    "rv32i_m/I/src/E-auipc-01.S",
+    "rv32i_m/I/src/E-bge-01.S",
+    "rv32i_m/I/src/E-bgeu-01.S",
+    "rv32i_m/I/src/E-blt-01.S",
+    "rv32i_m/I/src/E-bltu-01.S",
+    "rv32i_m/I/src/E-bne-01.S",
+    "rv32i_m/I/src/E-jal-01.S",
+    "rv32i_m/I/src/E-jalr-01.S",
+    "rv32i_m/I/src/E-lb-align-01.S",
+    "rv32i_m/I/src/E-lbu-align-01.S",
+    "rv32i_m/I/src/E-lh-align-01.S",
+    "rv32i_m/I/src/E-lhu-align-01.S",
+    "rv32i_m/I/src/E-lui-01.S",
+    "rv32i_m/I/src/E-lw-align-01.S",
+    "rv32i_m/I/src/E-or-01.S",
+    "rv32i_m/I/src/E-ori-01.S",
+    "rv32i_m/I/src/E-sb-align-01.S",
+    "rv32i_m/I/src/E-sh-align-01.S",
+    "rv32i_m/I/src/E-sll-01.S",
+    "rv32i_m/I/src/E-slli-01.S",
+    "rv32i_m/I/src/E-slt-01.S",
+    "rv32i_m/I/src/E-slti-01.S",
+    "rv32i_m/I/src/E-sltiu-01.S",
+    "rv32i_m/I/src/E-sltu-01.S",
+    "rv32i_m/I/src/E-sra-01.S",
+    "rv32i_m/I/src/E-srai-01.S",
+    "rv32i_m/I/src/E-srl-01.S",
+    "rv32i_m/I/src/E-srli-01.S",
+    "rv32i_m/I/src/E-sub-01.S",
+    "rv32i_m/I/src/E-sw-align-01.S",
+    "rv32i_m/I/src/E-xor-01.S",
+    "rv32i_m/I/src/E-xori-01.S"
  };
 
-string wally32i[] = '{
+ string wally32i[] = '{
     `WALLYTEST,
-    "rv32i_m/I/WALLY-ADD",
-    "rv32i_m/I/WALLY-SLT",
-    "rv32i_m/I/WALLY-SLTU",
-    "rv32i_m/I/WALLY-SUB",
-    "rv32i_m/I/WALLY-XOR"
+    "rv32i_m/I/src/WALLY-ADD.S",
+    "rv32i_m/I/src/WALLY-SLT.S",
+    "rv32i_m/I/src/WALLY-SLTU.S",
+    "rv32i_m/I/src/WALLY-SUB.S",
+    "rv32i_m/I/src/WALLY-XOR.S" 
  };
+
 
  string wally32priv[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/WALLY-csr-permission-s-01",
-    "rv32i_m/privilege/WALLY-csr-permission-u-01",
-    "rv32i_m/privilege/WALLY-minfo-01",
-    "rv32i_m/privilege/WALLY-misa-01",
-    "rv32i_m/privilege/WALLY-mmu-sv32",
-    "rv32i_m/privilege/WALLY-pma",
-    "rv32i_m/privilege/WALLY-pmp",
-    "rv32i_m/privilege/WALLY-trap-01",
-    "rv32i_m/privilege/WALLY-trap-s-01",
-    "rv32i_m/privilege/WALLY-trap-u-01",
-    "rv32i_m/privilege/WALLY-mie-01",
-    "rv32i_m/privilege/WALLY-sie-01",
-    "rv32i_m/privilege/WALLY-mtvec-01",
-    "rv32i_m/privilege/WALLY-stvec-01",
-    "rv32i_m/privilege/WALLY-status-mie-01",
-    "rv32i_m/privilege/WALLY-status-sie-01",
-    "rv32i_m/privilege/WALLY-trap-sret-01",
-    "rv32i_m/privilege/WALLY-status-tw-01", 
-    "rv32i_m/privilege/WALLY-wfi-01"
+    "rv32i_m/privilege/src/WALLY-csr-permission-s-01.S",
+    "rv32i_m/privilege/src/WALLY-csr-permission-u-01.S",
+    "rv32i_m/privilege/src/WALLY-mie-01.S",
+    "rv32i_m/privilege/src/WALLY-minfo-01.S",
+    "rv32i_m/privilege/src/WALLY-misa-01.S",
+    "rv32i_m/privilege/src/WALLY-mmu-sv32.S",
+    "rv32i_m/privilege/src/WALLY-mtvec-01.S",
+    "rv32i_m/privilege/src/WALLY-pma.S",
+    "rv32i_m/privilege/src/WALLY-pmp.S",
+    "rv32i_m/privilege/src/WALLY-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-status-mie-01.S",
+    "rv32i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-status-tw-01.S",
+    "rv32i_m/privilege/src/WALLY-stvec-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-u-01.S",
+    "rv32i_m/privilege/src/WALLY-wfi-01.S"
  };
 
  string wally32periph[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/WALLY-gpio-01",
-    "rv32i_m/privilege/WALLY-clint-01",
-    "rv32i_m/privilege/WALLY-plic-01",
-    "rv32i_m/privilege/WALLY-uart-01"
+    "rv32i_m/privilege/src/WALLY-gpio-01.S",
+    "rv32i_m/privilege/src/WALLY-clint-01.S",
+    "rv32i_m/privilege/src/WALLY-uart-01.S",
+    "rv32i_m/privilege/src/WALLY-plic-01.S"
  };
-
-
-// riscof test paths, to replace existing paths once riscof flow is working
-// string wally64a[] = '{
-//     `WALLYTEST,
-//     "rv64i_m/privilege/src/WALLY-amo.S",
-//     "rv64i_m/privilege/src/WALLY-lrsc.S",
-//     "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S"
-//   };
-
-//     string wally32a[] = '{
-//     `WALLYTEST,
-//     "rv32i_m/privilege/src/WALLY-amo.S",
-//     "rv32i_m/privilege/src/WALLY-lrsc.S",
-//     "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S"
-
-//   };
-
-//   string wally64i[] = '{
-//     `WALLYTEST,
-//     "rv64i_m/I/src/WALLY-ADD.S",
-//     "rv64i_m/I/src/WALLY-SLT.S",
-//     "rv64i_m/I/src/WALLY-SLTU.S",
-//     "rv64i_m/I/src/WALLY-SUB.S",
-//     "rv64i_m/I/src/WALLY-XOR.S"
-//  };
-
-//  string wally64priv[] = '{
-//     `WALLYTEST,
-//     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
-//     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
-//     "rv64i_m/privilege/src/WALLY-mie-01.S",
-//     "rv64i_m/privilege/src/WALLY-minfo-01.S",
-//     "rv64i_m/privilege/src/WALLY-misa-01.S",
-//     "rv64i_m/privilege/src/WALLY-mmu-sv39.S",
-//     "rv64i_m/privilege/src/WALLY-mmu-sv48.S",
-//     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
-//     "rv64i_m/privilege/src/WALLY-pma.S",
-//     "rv64i_m/privilege/src/WALLY-pmp.S",
-//     "rv64i_m/privilege/src/WALLY-sie-01.S",
-//     "rv64i_m/privilege/src/WALLY-status-mie-01.S",
-//     "rv64i_m/privilege/src/WALLY-status-sie-01.S",
-//     "rv64i_m/privilege/src/WALLY-status-tw-01.S",
-//     "rv64i_m/privilege/src/WALLY-stvec-01.S",
-//     "rv64i_m/privilege/src/WALLY-trap-01.S",
-//     "rv64i_m/privilege/src/WALLY-trap-s-01.S",
-//     "rv64i_m/privilege/src/WALLY-trap-sret-01.S",
-//     "rv64i_m/privilege/src/WALLY-trap-u-01.S",
-//     "rv64i_m/privilege/src/WALLY-wfi-01.S"
-//  };
-
-//  string wally64periph[] = '{
-//     `WALLYTEST,
-//     "rv64i_m/privilege/src/WALLY-periph.S"
-//  };
 
 
  string wally32d[] = '{
     `WALLYTEST,
     "rv32i_m/D/src/WALLY-fld.S"
  };
-
-//  string wally32i[] = '{
-//     `WALLYTEST,
-//     "rv32i_m/I/src/WALLY-ADD.S",
-//     "rv32i_m/I/src/WALLY-SLT.S",
-//     "rv32i_m/I/src/WALLY-SLTU.S",
-//     "rv32i_m/I/src/WALLY-SUB.S",
-//     "rv32i_m/I/src/WALLY-XOR.S" 
-//  };
-
-//  string wally32priv[] = '{
-//     `WALLYTEST,
-//     "rv32i_m/privilege/src/WALLY-csr-permission-s-01.S",
-//     "rv32i_m/privilege/src/WALLY-csr-permission-u-01.S",
-//     "rv32i_m/privilege/src/WALLY-mie-01.S",
-//     "rv32i_m/privilege/src/WALLY-minfo-01.S",
-//     "rv32i_m/privilege/src/WALLY-misa-01.S",
-//     "rv32i_m/privilege/src/WALLY-mmu-sv32.S",
-//     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
-//     "rv32i_m/privilege/src/WALLY-pma.S",
-//     "rv32i_m/privilege/src/WALLY-pmp.S",
-//     "rv32i_m/privilege/src/WALLY-sie-01.S",
-//     "rv32i_m/privilege/src/WALLY-status-mie-01.S",
-//     "rv32i_m/privilege/src/WALLY-status-sie-01.S",
-//     "rv32i_m/privilege/src/WALLY-status-tw-01.S",
-//     "rv32i_m/privilege/src/WALLY-stvec-01.S",
-//     "rv32i_m/privilege/src/WALLY-trap-01.S",
-//     "rv32i_m/privilege/src/WALLY-trap-s-01.S",
-//     "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
-//     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
-//     "rv32i_m/privilege/src/WALLY-wfi-01.S"
-//  };

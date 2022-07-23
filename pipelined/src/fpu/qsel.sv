@@ -89,17 +89,17 @@ module fgen2 (
 endmodule
 
 module qsel4 (
-	input logic [`DIVLEN+3:0] D,
-	input logic [`DIVLEN+3:0] WS, WC,
+	input logic [`DIVN-2:0] D,
+	input logic [`DIVb+3:0] WS, WC,
   input logic Sqrt,
 	output logic [3:0] q
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
 	logic [2:0] Dmsbs;
-	assign PreWmsbs = WC[`DIVLEN+3:`DIVLEN-4] + WS[`DIVLEN+3:`DIVLEN-4];
+	assign PreWmsbs = WC[`DIVb+3:`DIVb-4] + WS[`DIVb+3:`DIVb-4];
 	assign Wmsbs = PreWmsbs[7:1];
-	assign Dmsbs = D[`DIVLEN-1:`DIVLEN-3];
+	assign Dmsbs = D[`DIVN-2:`DIVN-4];//|{3{D[`DIVN-2]&Sqrt}};
 	// D = 0001.xxx...
 	// Dmsbs = |   |
   // W =      xxxx.xxx...
@@ -177,8 +177,8 @@ module fgen4 (
   assign F2  = (~S << 2) & (C << 2);
   assign F1  = ~(S << 1) & C;
   assign F0  = '0;
-  assign FN1 = (SM << 1) | (C & ~(C << 2));
-  assign FN2 = (SM << 2) | ((C << 2)&~(C <<4));
+  assign FN1 = (SM << 1) | (C & ~(C << 3));
+  assign FN2 = (SM << 2) | ((C << 2)&~(C << 4));
 
   // Choose which adder input will be used
 
