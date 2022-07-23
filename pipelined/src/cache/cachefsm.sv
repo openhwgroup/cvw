@@ -37,6 +37,7 @@ module cachefsm
    input logic [1:0] CacheRW,
    input logic [1:0] CacheAtomic,
    input logic       FlushCache,
+   input logic       InvalidateCache,
    // hazard inputs
    input logic       CPUBusy,
    // interlock fsm
@@ -74,9 +75,10 @@ module cachefsm
    output logic      FlushWayCntEn, 
    output logic      FlushAdrCntRst,
    output logic      FlushWayCntRst,
-   output logic 	 SelBusBuffer,   
+   output logic      SelBusBuffer, 
    output logic      save,
-   output logic      restore);
+   output logic      restore,
+   output logic      SRAMEnable);
   
   logic               resetDelay;
   logic               AMO;
@@ -117,7 +119,7 @@ module cachefsm
   assign DoRead = CacheRW[1] & ~IgnoreRequest; 
   assign DoWrite = CacheRW[0] & ~IgnoreRequest; 
 
-  assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit;
+  assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit & ~InvalidateCache;
   assign DoAnyUpdateHit = (DoAMO | DoWrite) & CacheHit;
   assign DoAnyHit = DoAnyUpdateHit | (DoRead & CacheHit);  
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
@@ -138,15 +140,15 @@ module cachefsm
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(IgnoreRequest)                 NextState = STATE_READY;
+      STATE_READY: if(IgnoreRequest | InvalidateCache) NextState = STATE_READY;
                    else if(DoFlush)                  NextState = STATE_FLUSH;
-                   else if(DoAnyHit & CPUBusy)       NextState = STATE_CPU_BUSY;
-                   else if(DoAnyMiss)                NextState = STATE_MISS_FETCH_WDV; // fetch first, then eviction if necessary. see delay in lru read/write path.
+                   //else if(DoAnyHit & CPUBusy)       NextState = STATE_CPU_BUSY;
+                   else if(DoAnyMiss)                NextState = STATE_MISS_FETCH_WDV; // fetch first, then eviction is necessary. see delay in lru read/write path.
                    else                              NextState = STATE_READY;
       STATE_MISS_FETCH_WDV: if(CacheBusAck & ~VictimDirty) NextState = STATE_MISS_WRITE_CACHE_LINE;
                             else if(CacheBusAck & VictimDirty) NextState = STATE_MISS_EVICT_DIRTY_START;
                             else                     NextState = STATE_MISS_FETCH_WDV;
-      STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_READY;
+      STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_READY; // cpu_busy not needed. load misses have the property of reading from the bus buffer rather than sram.
       STATE_MISS_READ_WORD: if(CacheRW[0] & ~AMO)    NextState = STATE_MISS_WRITE_WORD;
                             else                     NextState = STATE_MISS_READ_WORD_DELAY;
       STATE_MISS_READ_WORD_DELAY: if(CPUBusy)        NextState = STATE_CPU_BUSY;
@@ -237,5 +239,7 @@ module cachefsm
                   resetDelay;
 
   assign SelBusBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE;
+  assign SRAMEnable = (CurrState == STATE_READY & ~CPUBusy | CacheStall) | (CurrState != STATE_READY) | reset;
+  //assign SRAMEnable = 1;
                        
 endmodule // cachefsm

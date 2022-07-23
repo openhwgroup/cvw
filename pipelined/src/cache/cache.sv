@@ -109,6 +109,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       save, restore;
   logic                       SelBusBuffer;
+  logic                       SRAMEnable;
 
   localparam                  LOGXLENBYTES = $clog2(`XLEN/8);
   logic [2**LOGWPL-1:0]       MemPAdrDecoded;
@@ -127,7 +128,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCacheM));
@@ -229,6 +230,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
-        .save, .restore,
+        .InvalidateCache(InvalidateCacheM),
+        .save, .restore, .SRAMEnable,
         .LRUWriteEn);
 endmodule 
