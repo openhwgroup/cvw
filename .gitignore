@@ -7,12 +7,8 @@ __pycache__/
 .vscode/
 
 #External repos
-addins
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
-addins/coremark/work/*
-addins/embench/bd_speed/*
-addins/embench/bd_size/*
 benchmarks/embench/wally*.json
 
 #vsim work files to ignore
@@ -34,6 +30,7 @@ testsBP/*/*.a
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/*
 tests/riscof/riscof_work/
 tests/riscof/config32.ini
+tests/riscof/config32e.ini
 tests/riscof/config64.ini
 tests/linux-testgen/linux-testvectors/*
 !tests/linux-testgen/linux-testvectors/tvCopier.py

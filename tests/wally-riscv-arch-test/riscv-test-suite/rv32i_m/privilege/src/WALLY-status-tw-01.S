@@ -24,6 +24,9 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;", status-tw)
+
 INIT_TESTS
 
 TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps

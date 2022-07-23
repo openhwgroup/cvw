@@ -32,16 +32,16 @@
 
 module otfc2 (
   input  logic         qp, qz,
-  input  logic [`QLEN-1:0] Q, QM,
-  output logic [`QLEN-1:0] QNext, QMNext
+  input  logic [`DIVb:0] Q, QM,
+  output logic [`DIVb:0] QNext, QMNext
 );
   //  The on-the-fly converter transfers the quotient 
   //  bits to the quotient as they come.
   //  Use this otfc for division only.
-  logic [`QLEN-2:0] QR, QMR;
+  logic [`DIVb-1:0] QR, QMR;
 
-  assign QR  = Q[`QLEN-2:0];
-  assign QMR = QM[`QLEN-2:0];     // Shifted Q and QM
+  assign QR  = Q[`DIVb-1:0];
+  assign QMR = QM[`DIVb-1:0];     // Shifted Q and QM
 
   always_comb begin
     if (qp) begin
@@ -58,11 +58,41 @@ module otfc2 (
 
 endmodule
 
+///////////////////////////////
+// Square Root OTFC, Radix 2 //
+///////////////////////////////
+module sotfc2(
+  input  logic         sp, sz,
+  input  logic [`DIVb-1:0] C,
+  input logic [`DIVb:0] S, SM,
+  output logic [`DIVb:0] SNext, SMNext
+);
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
+  logic [`DIVb:0] CExt;
+
+  assign CExt = {1'b1, C};
+
+  always_comb begin
+    if (sp) begin
+      SNext  = S | (CExt & ~(CExt << 1));
+      SMNext = S;
+    end else if (sz) begin
+      SNext  = S;
+      SMNext = SM | (CExt & ~(CExt << 1));
+    end else begin        // If sp and sz are not true, then sn is
+      SNext  = SM | (CExt & ~(CExt << 1));
+      SMNext = SM;
+    end 
+  end
+
+endmodule
 
 module otfc4 (
   input  logic [3:0]   q,
-  input  logic [`QLEN-1:0] Q, QM,
-  output logic [`QLEN-1:0] QNext, QMNext
+  input  logic [`DIVb:0] Q, QM,
+  output logic [`DIVb:0] QNext, QMNext
 );
 
   //  The on-the-fly converter transfers the quotient 
@@ -78,7 +108,7 @@ module otfc4 (
   //  QR and QMR are the shifted versions of Q and QM.
   //  They are treated as [N-1:r] size signals, and 
   //  discard the r most significant bits of Q and QM. 
-  logic [`QLEN-3:0] QR, QMR;
+  logic [`DIVb-2:0] QR, QMR;
 
   // shift Q (quotent) and QM (quotent-1)
 		// if 	q = 2  	    Q = {Q, 10} 	QM = {Q, 01}		
@@ -87,8 +117,8 @@ module otfc4 (
 		// else if 	q = -1	Q = {QM, 11} 	QM = {QM, 10}
 		// else if 	q = -2	Q = {QM, 10} 	QM = {QM, 01}
 
-  assign QR  = Q[`QLEN-3:0];
-  assign QMR = QM[`QLEN-3:0];     // Shifted Q and QM
+  assign QR  = Q[`DIVb-2:0];
+  assign QMR = QM[`DIVb-2:0];     // Shifted Q and QM
   always_comb begin
     if (q[3]) begin // +2
       QNext  = {QR,  2'b10};
@@ -107,6 +137,41 @@ module otfc4 (
       QMNext = {QMR, 2'b11};
     end 
   end
-  // Final Quoteint is in the range [.5, 2)
+  // Final Qmeint is in the range [.5, 2)
+
+endmodule
+
+///////////////////////////////
+// Square Root OTFC, Radix 4 //
+///////////////////////////////
+module sotfc4(
+  input  logic [3:0]   s,
+  input  logic         Sqrt,
+  input  logic [`DIVLEN+3:0] S, SM,
+  input  logic [`DIVLEN+3:0] C,
+  output logic [`DIVLEN+3:0] SNext, SMNext
+);
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
+
+  always_comb begin
+    if (s[3]) begin
+      SNext  = S | ((C << 1)&~(C << 2));
+      SMNext = S | (C&~(C << 1));
+    end else if (s[2]) begin
+      SNext  = S | (C&~(C << 1));
+      SMNext = S;
+    end else if (s[1]) begin
+      SNext  = SM | (C&~(C << 2));
+      SMNext = SM | ((C << 1)&~(C << 2));
+    end else if (s[0]) begin
+      SNext  = SM | ((C << 1)&~(C << 2));
+      SMNext = SM | (C&~(C << 1));
+    end else begin        // If sp and sn are not true, then sz is
+      SNext  = S;
+      SMNext = SM | (C & ~(C << 2));
+    end 
+  end
 
 endmodule
