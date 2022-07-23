@@ -79,7 +79,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic                       ClearValid;
   logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]         HitWay, HitWaySaved, HitWayFinal;
+  logic [NUMWAYS-1:0]         HitWay;
   logic                       CacheHit;
   logic                       SetDirty;
   logic                       SetValid;
@@ -107,7 +107,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [1:0]                 CacheRW, CacheAtomic;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
-  logic                       save, restore;
   logic                       SelBusBuffer;
   logic                       SRAMEnable;
 
@@ -134,7 +133,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
     .Invalidate(InvalidateCacheM));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .HitWay(HitWayFinal), .VictimWay, .RAdr, .LRUWriteEn);
+      .clk, .reset, .HitWay, .VictimWay, .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
@@ -143,15 +142,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineCache));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
-
-  // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
-  // There are two ways to resolve. 1. We can replay the read of the sram or we can save
-  // the data.  Replay is eaiser but creates a longer critical path.
-  // save/restore only wayhit and readdata.
-  if(!`REPLAY) begin
-    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, HitWay, HitWaySaved);
-    mux2 #(NUMWAYS) saverestoremux(HitWay, HitWaySaved, restore, HitWayFinal);
-  end else assign HitWayFinal = HitWay;
 
   // like to fix this.
   if(DCACHE) 
@@ -163,7 +153,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   mux2 #(LINELEN) EarlyReturnBuf(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
 
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
-    .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+    .PAdr(WordOffsetAddr),
     .ReadDataLine, .ReadDataWord);
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -210,7 +200,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
-  mux3 #(NUMWAYS) selectwaymux(HitWayFinal, VictimWay, FlushWay, 
+  mux3 #(NUMWAYS) selectwaymux(HitWay, VictimWay, FlushWay, 
     {SelFlush, SetValid}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
@@ -231,6 +221,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
         .InvalidateCache(InvalidateCacheM),
-        .save, .restore, .SRAMEnable,
+        .SRAMEnable,
         .LRUWriteEn);
 endmodule 
