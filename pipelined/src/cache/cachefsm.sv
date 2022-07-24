@@ -95,8 +95,7 @@ module cachefsm
 					               STATE_FLUSH,
 					               STATE_FLUSH_CHECK,
 					               STATE_FLUSH_INCR,
-					               STATE_FLUSH_WRITE_BACK,
-					               STATE_FLUSH_CLEAR_DIRTY} statetype;
+					               STATE_FLUSH_WRITE_BACK} statetype;
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
   logic               IgnoreRequest;
@@ -149,11 +148,11 @@ module cachefsm
                          else if(FlushWayFlag)       NextState = STATE_FLUSH_INCR;
                          else                        NextState = STATE_FLUSH_CHECK;
 	  STATE_FLUSH_INCR:                              NextState = STATE_FLUSH_CHECK;
-      STATE_FLUSH_WRITE_BACK: if(CacheBusAck)        NextState = STATE_FLUSH_CLEAR_DIRTY;
-                              else                   NextState = STATE_FLUSH_WRITE_BACK;
-      STATE_FLUSH_CLEAR_DIRTY: if(FlushFlag)         NextState = STATE_READY;
-                               else if(FlushWayFlag) NextState = STATE_FLUSH_INCR;
-                               else                  NextState = STATE_FLUSH_CHECK;
+      STATE_FLUSH_WRITE_BACK: if(CacheBusAck) begin
+                                if(FlushFlag)         NextState = STATE_READY;
+                                else if(FlushWayFlag) NextState = STATE_FLUSH_INCR;
+                                else                  NextState = STATE_FLUSH_CHECK;
+      end                       else                  NextState = STATE_FLUSH_WRITE_BACK;
       default:                                       NextState = STATE_READY;
     endcase
   end
@@ -169,27 +168,26 @@ module cachefsm
                       (CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
                       (CurrState == STATE_FLUSH_WRITE_BACK) |
-                      (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~(FlushFlag));
+                      (CurrState == STATE_FLUSH_WRITE_BACK & ~(FlushFlag) & CacheBusAck);
   // write enables internal to cache
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign SetDirty = (CurrState == STATE_READY & DoAnyUpdateHit) |
                           (CurrState == STATE_MISS_WRITE_CACHE_LINE & (AMO | CacheRW[0]));
   assign ClearValid = '0;
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(AMO | CacheRW[0])) |
-                      (CurrState == STATE_FLUSH_CLEAR_DIRTY);
+                      (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
   assign LRUWriteEn = (CurrState == STATE_READY & DoAnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls
   assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY_START) |
                     (CurrState == STATE_MISS_EVICT_DIRTY);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
-                    (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK) |
-                    (CurrState == STATE_FLUSH_CLEAR_DIRTY);
+                    (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
   assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayAndNotAdrFlag) |
-                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & FlushWayAndNotAdrFlag);
+                         (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayAndNotAdrFlag & CacheBusAck);                         
   assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushFlag)) |
-                         (CurrState == STATE_FLUSH_CLEAR_DIRTY & ~FlushFlag);
+                         (CurrState == STATE_FLUSH_WRITE_BACK & ~FlushFlag & CacheBusAck);
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
@@ -210,6 +208,5 @@ module cachefsm
 
   assign SelBusBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign SRAMEnable = (CurrState == STATE_READY & ~CPUBusy | CacheStall) | (CurrState != STATE_READY) | reset;
-  //assign SRAMEnable = 1;
                        
 endmodule // cachefsm
