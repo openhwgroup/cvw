@@ -131,29 +131,31 @@ module cachefsm
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(IgnoreRequest | InvalidateCache) NextState = STATE_READY;
-                   else if(DoFlush)                  NextState = STATE_FLUSH;
-                   else if(DoAnyMiss)                NextState = STATE_MISS_FETCH_WDV; // fetch first, then eviction is necessary. see delay in lru read/write path.
-                   else                              NextState = STATE_READY;
-      STATE_MISS_FETCH_WDV: if(CacheBusAck & ~VictimDirty) NextState = STATE_MISS_WRITE_CACHE_LINE;
+      STATE_READY: if(IgnoreRequest | InvalidateCache)         NextState = STATE_READY;
+                   else if(DoFlush)                            NextState = STATE_FLUSH;
+      // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
+      // To optimize do the fetch first, then eviction if necessary.
+                   else if(DoAnyMiss)                          NextState = STATE_MISS_FETCH_WDV;
+                   else                                        NextState = STATE_READY;
+      STATE_MISS_FETCH_WDV: if(CacheBusAck & ~VictimDirty)     NextState = STATE_MISS_WRITE_CACHE_LINE;
                             else if(CacheBusAck & VictimDirty) NextState = STATE_MISS_EVICT_DIRTY_START;
-                            else                     NextState = STATE_MISS_FETCH_WDV;
-      STATE_MISS_WRITE_CACHE_LINE:                   NextState = STATE_READY; // cpu_busy not needed. load misses have the property of reading from the bus buffer rather than sram.
-      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)        NextState = STATE_MISS_WRITE_CACHE_LINE;
-                              else                   NextState = STATE_MISS_EVICT_DIRTY;
-      STATE_MISS_EVICT_DIRTY_START:                  NextState = STATE_MISS_EVICT_DIRTY; // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
-	  STATE_FLUSH:                                   NextState = STATE_FLUSH_CHECK;
-      STATE_FLUSH_CHECK: if(VictimDirty)             NextState = STATE_FLUSH_WRITE_BACK;
-                         else if(FlushFlag)          NextState = STATE_READY;
-                         else if(FlushWayFlag)       NextState = STATE_FLUSH_INCR;
-                         else                        NextState = STATE_FLUSH_CHECK;
-	  STATE_FLUSH_INCR:                              NextState = STATE_FLUSH_CHECK;
+                            else                               NextState = STATE_MISS_FETCH_WDV;
+      STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_READY; 
+      STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                  NextState = STATE_MISS_WRITE_CACHE_LINE;
+                              else                             NextState = STATE_MISS_EVICT_DIRTY;
+      STATE_MISS_EVICT_DIRTY_START:                            NextState = STATE_MISS_EVICT_DIRTY; // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
+	  STATE_FLUSH:                                             NextState = STATE_FLUSH_CHECK;
+      STATE_FLUSH_CHECK: if(VictimDirty)                       NextState = STATE_FLUSH_WRITE_BACK;
+                         else if(FlushFlag)                    NextState = STATE_READY;
+                         else if(FlushWayFlag)                 NextState = STATE_FLUSH_INCR;
+                         else                                  NextState = STATE_FLUSH_CHECK;
+	  STATE_FLUSH_INCR:                                        NextState = STATE_FLUSH_CHECK;
       STATE_FLUSH_WRITE_BACK: if(CacheBusAck) begin
-                                if(FlushFlag)         NextState = STATE_READY;
-                                else if(FlushWayFlag) NextState = STATE_FLUSH_INCR;
-                                else                  NextState = STATE_FLUSH_CHECK;
-      end                       else                  NextState = STATE_FLUSH_WRITE_BACK;
-      default:                                       NextState = STATE_READY;
+                                if(FlushFlag)                  NextState = STATE_READY;
+                                else if(FlushWayFlag)          NextState = STATE_FLUSH_INCR;
+                                else                           NextState = STATE_FLUSH_CHECK;
+      end                       else                           NextState = STATE_FLUSH_WRITE_BACK;
+      default:                                                 NextState = STATE_READY;
     endcase
   end
 
@@ -198,7 +200,6 @@ module cachefsm
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
                   // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
                   (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
-                  (CurrState == STATE_READY & (CacheRW[1] & CacheHit) & (CPUBusy & `REPLAY)) |
                   (CurrState == STATE_READY & (DoAnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |
