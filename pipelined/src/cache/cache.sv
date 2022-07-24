@@ -42,8 +42,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
   input logic [(`XLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]     FinalWriteData,
-  input logic                        FStore2,
+  input logic [WORDLEN-1:0]   FinalWriteData,
+  input logic                 FStore2,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu

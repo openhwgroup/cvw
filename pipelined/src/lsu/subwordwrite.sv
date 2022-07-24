@@ -39,7 +39,10 @@ module subwordwrite (
 );
 
   // Compute byte masks
-  swbytemask swbytemask(.Size(LSUFunct3M[1:0]), .Adr(LSUPAdrM), .ByteMask(ByteMaskM));
+  //swbytemask swbytemask(.Size(LSUFunct3M[1:0]), .Adr(LSUPAdrM), .ByteMask(ByteMaskM));
+  // *** fix me.
+  swbytemaskword #(.WORDLEN(`XLEN)) 
+  swbytemaskword (.Size(LSUFunct3M[2:0]), .Adr(LSUPAdrM), .ByteMask(ByteMaskM));  
   
   // Replicate data for subword writes
   if (`XLEN == 64) begin:sww
