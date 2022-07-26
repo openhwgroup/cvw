@@ -90,7 +90,7 @@ logic [3:0] dummy;
                           else                  tests = {arch64c};
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64f":      if (`D_SUPPORTED) tests = arch64f;
-        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
+        "arch32f":      if (`F_SUPPORTED) tests = arch32f;  // 32-bit FP tests r        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
