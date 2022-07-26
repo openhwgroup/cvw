@@ -27,7 +27,7 @@ set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
 eval file copy -force ${cfg} {$outputDir/hdl/}
-eval file copy -force ${cfg} $outputDir
+#eval file copy -force ${cfg} $outputDir
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}

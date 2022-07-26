@@ -236,7 +236,7 @@ module ifu (
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
+             .CacheCommitted(), .InvalidateCache(InvalidateICacheM));
 
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;

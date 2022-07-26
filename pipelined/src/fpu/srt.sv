@@ -72,6 +72,7 @@ module srt(
   logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
   logic [`DIVb:0] QMMux;
+  logic [`DIVb-1:0] NextC;
   logic [`DIVb-1:0] CMux;
   logic [`DIVb:0] SMux;
 
@@ -86,10 +87,21 @@ module srt(
   if (`RADIX == 2) begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
+    assign NextC   = {1'b1, C[`DIVCOPIES-1][`DIVb-1:1]};
   end else begin
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
+    assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
   end
+
+
+//   mux2   #(`DIVb+4) wsmux(NextWSN, {{3{Sqrt}}, X}, DivStart, WSN); //*** modified for sqrt which doesnt work
+//   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
+//   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
+//   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
+//   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
+//   mux2 #(`DIVb) Cmux(NextC, {Sqrt, {(`DIVb-1){1'b0}}}, DivStart, CMux);
+//   flop #(`DIVb) cflop(clk, CMux, C[0]);
 
   mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
@@ -131,6 +143,7 @@ module srt(
       end
     end
   endgenerate
+
 
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
@@ -196,6 +209,7 @@ module divinteration (
 	// 0001 = -2
   if(`RADIX == 2) begin : qsel
     qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz);
+    fgen2 fgen2(.sp(qp), .sz(qz), .C, .S, .SM, .F);
   end else begin
     qsel4 qsel4(.D, .WS, .WC, .Sqrt, .q);
     // fgen4 fgen4(.s(q), .C, .S, .SM, .F);
@@ -218,13 +232,14 @@ module divinteration (
   //  WSA, WCA = WS + WC - qD
   assign AddIn = Sqrt ? F : Dsel;
   if (`RADIX == 2) begin : csa
-    csa #(`DIVb+4) csa(WS, WC, AddIn, qp, WSA, WCA);
+    csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~Sqrt, WSA, WCA);
   end else begin
     csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~Sqrt, WSA, WCA);
   end
 
   if (`RADIX == 2) begin : otfc
     otfc2 otfc2(.qp, .qz, .Q, .QM, .QNext, .QMNext);
+    sotfc2 sotfc2(.sp(qp), .sz(qz), .C, .S, .SM, .SNext, .SMNext);
   end else begin
     otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
     // sotfc4 sotfc4(.s(q), .Sqrt, .C, .S, .SM, .SNext, .SMNext);
@@ -254,3 +269,7 @@ module csa #(parameter N=69) (
   assign out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
 		    (in2[N-2:0] & in3[N-2:0]), cin};
 endmodule
+
+
+
+
