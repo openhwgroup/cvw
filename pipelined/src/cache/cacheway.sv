@@ -33,6 +33,7 @@
 module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
   input logic                        clk,
+  input logic                        ce,
   input logic                        reset,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
@@ -48,16 +49,19 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        VictimWay,
   input logic                        FlushWay,
   input logic                        Invalidate,
-  input logic [(`XLEN-1)/8:0]        ByteMask,
+//  input logic [(`XLEN-1)/8:0]        ByteMask,
+  input logic [LINELEN/8-1:0]        LineByteMask,
 
   output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       HitWay,
   output logic                       VictimDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
-  localparam                         WORDSPERLINE = LINELEN/`XLEN;
+  localparam integer                 WORDSPERLINE = LINELEN/`XLEN;
+  localparam integer                 BYTESPERLINE = LINELEN/8;
   localparam                         LOGWPL = $clog2(WORDSPERLINE);
   localparam                         LOGXLENBYTES = $clog2(`XLEN/8);
+  localparam integer                 BYTESPERWORD = `XLEN/8;
 
   logic [NUMLINES-1:0]               ValidBits;
   logic [NUMLINES-1:0]               DirtyBits;
@@ -69,12 +73,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              SelTag;
   logic [$clog2(NUMLINES)-1:0]       RAdrD;
   logic [2**LOGWPL-1:0]              MemPAdrDecoded;
-  logic [LINELEN/`XLEN-1:0]          SelectedWriteWordEn;
-  logic [(`XLEN-1)/8:0]              FinalByteMask;
+  logic           SelectedWriteWordEn;
+//  logic [WORDSPERLINE-1:0]          SelectedWriteWordEn;
+//  logic [(`XLEN-1)/8:0]              FinalByteMask;
+  logic [LINELEN/8-1:0]              FinalByteMask;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
+/* -----\/----- EXCLUDED -----\/-----
   if(`LLEN>`XLEN)begin 
     logic [2**LOGWPL-1:0] MemPAdrDecodedtmp;
     onehotdecoder #(LOGWPL) adrdec(
@@ -83,15 +90,16 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end else
     onehotdecoder #(LOGWPL) adrdec(
       .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+ -----/\----- EXCLUDED -----/\----- */
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = SetValidWay ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
-  assign FinalByteMask = SetValidWay ? '1 : ByteMask; // OR
+  assign SelectedWriteWordEn = SetValidWay | SetDirtyWay;// ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
+  assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk,
+  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
     .Adr(RAdr), .ReadData(ReadTag), .ByteMask('1),
     .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
 
@@ -105,13 +113,19 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // *** instantiate one larger RAM, not one per RAM.  Expand byte mask
   genvar 							  words;
-  for(words = 0; words < LINELEN/`XLEN; words++) begin: word
-    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(`XLEN)) CacheDataMem(.clk, .Adr(RAdr),
-      .ReadData(ReadDataLine[(words+1)*`XLEN-1:words*`XLEN] ),
-      .CacheWriteData(CacheWriteData[(words+1)*`XLEN-1:words*`XLEN]),
-      .WriteEnable(SelectedWriteWordEn[words]), .ByteMask(FinalByteMask));
+
+  localparam integer           SRAMLEN = 128;
+  localparam integer           NUMSRAM = LINELEN/SRAMLEN;
+  localparam integer           SRAMLENINBYTES = SRAMLEN/8;
+  localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
+  
+  for(words = 0; words < NUMSRAM; words++) begin: word
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .Adr(RAdr),
+      .ReadData(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .CacheWriteData(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      //.WriteEnable(1'b1), .ByteMask(SRAMLineByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+      .WriteEnable(SelectedWriteWordEn), .ByteMask(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
   // AND portion of distributed read multiplexers
@@ -127,7 +141,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     else if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
     else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
 	end
-  flop #($clog2(NUMLINES)) RAdrDelayReg(clk, RAdr, RAdrD);
+  flopen #($clog2(NUMLINES)) RAdrDelayReg(clk, ce, RAdr, RAdrD);
   assign Valid = ValidBits[RAdrD];
 
   /////////////////////////////////////////////////////////////////////////////////////////////

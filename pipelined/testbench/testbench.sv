@@ -89,7 +89,8 @@ logic [3:0] dummy;
                           if (`ZICSR_SUPPORTED) tests = {arch64c, arch64cpriv};
                           else                  tests = {arch64c};
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
-        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
+        "arch64f":      if (`D_SUPPORTED) tests = arch64f;
+        "arch32f":      if (`F_SUPPORTED) tests = arch32f;  // 32-bit FP tests r        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
         "imperas64i":                     tests = imperas64i;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
@@ -112,9 +113,9 @@ logic [3:0] dummy;
                           else                  tests = {arch32c};
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
+        "arch32d":      if (`D_SUPPORTED) tests = arch32d;
         "imperas32i":                     tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
-        // "wally32d":     if (`D_SUPPORTED) tests = wally32d;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
         "wally32a":     if (`A_SUPPORTED) tests = wally32a;
         "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
@@ -442,8 +443,13 @@ module DCacheFlushFSM
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
 	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
-	  localparam integer lognumlines = $clog2(numlines);
+	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+	  localparam integer sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+	  localparam integer cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+      
+//testbench.dut.core.lsu.bus.dcache.dcache.CacheWays.NUMSRAM;
+	  localparam integer numwords = sramlen/`XLEN;
+      localparam integer lognumlines = $clog2(numlines);
 	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
 	  localparam integer tagstart = lognumlines + loglinebytelen;
@@ -451,16 +457,17 @@ module DCacheFlushFSM
 
 
 	  genvar 			 index, way, cacheWord;
-	  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+      logic [sramlen-1:0] cacheline;
+	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     for(index = 0; index < numlines; index++) begin
 		  for(way = 0; way < numways; way++) begin
-		    for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+		    for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
 			    copyShadow #(.tagstart(tagstart),
-					.loglinebytelen(loglinebytelen))
+					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
 			    copyShadow(.clk,
           .start,
           .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
@@ -478,18 +485,25 @@ module DCacheFlushFSM
       end
     end
 
-    integer i, j, k;
+    integer i, j, k, l;
 
     always @(posedge clk) begin
       if (start) begin #1
         #1
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
-          for(k = 0; k < numwords; k++) begin
-            if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-            ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+            for(l = 0; l < cachesramwords; l++) begin
+              if (CacheValid[j][i][l] & CacheDirty[j][i][l]) begin
+                for(k = 0; k < numwords; k++) begin
+                  //cacheline = CacheData[j][i][0];
+                  // does not work with modelsim
+                  // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
+                  // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
+                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = cacheline[`XLEN*(k+1)-1:`XLEN*k];
+                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(`XLEN/8)) + k] = CacheData[j][i][l][`XLEN*k +: `XLEN];
+                end
+              end
             end
-          end	
           end
         end
       end
@@ -499,15 +513,15 @@ module DCacheFlushFSM
 endmodule
 
 module copyShadow
-  #(parameter tagstart, loglinebytelen)
+  #(parameter tagstart, loglinebytelen, sramlen)
   (input logic clk,
    input logic 			     start,
    input logic [`PA_BITS-1:tagstart] tag,
    input logic 			     valid, dirty,
-   input logic [`XLEN-1:0] 	     data,
+   input logic [sramlen-1:0] 	     data,
    input logic [32-1:0] 	     index,
    input logic [32-1:0] 	     cacheWord,
-   output logic [`XLEN-1:0] 	     CacheData,
+   output logic [sramlen-1:0] 	     CacheData,
    output logic [`PA_BITS-1:0] 	     CacheAdr,
    output logic [`XLEN-1:0] 	     CacheTag,
    output logic 		     CacheValid,
@@ -520,7 +534,7 @@ module copyShadow
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(`XLEN/8));
+      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
     end
   end
   

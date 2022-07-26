@@ -62,36 +62,31 @@ endmodule
 // Square Root OTFC, Radix 2 //
 ///////////////////////////////
 module sotfc2(
-  input  logic         clk,
-  input  logic         Start,
-  input  logic         sp, sn,
-  input  logic         Sqrt,
-  input  logic [`DIVLEN+3:0] C,
-  output logic [`DIVLEN-2:0] Sq,
-  output logic [`DIVLEN+3:0] S, SM
+  input  logic         sp, sz,
+  input  logic [`DIVb-1:0] C,
+  input logic [`DIVb:0] S, SM,
+  output logic [`DIVb:0] SNext, SMNext
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
-  logic [`DIVLEN+3:0] SNext, SMNext, SMux;
+  logic [`DIVb:0] CExt;
 
-  flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
-  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
-  flop #(`DIVLEN+4) Sreg(clk, SMux, S);
+  assign CExt = {1'b1, C};
 
   always_comb begin
     if (sp) begin
-      SNext  = S | (C & ~(C << 1));
+      SNext  = S | (CExt & ~(CExt << 1));
       SMNext = S;
-    end else if (sn) begin
-      SNext  = SM | (C & ~(C << 1));
-      SMNext = SM;
-    end else begin        // If sp and sn are not true, then sz is
+    end else if (sz) begin
       SNext  = S;
-      SMNext = SM | (C & ~(C << 1));
+      SMNext = SM | (CExt & ~(CExt << 1));
+    end else begin        // If sp and sz are not true, then sn is
+      SNext  = SM | (CExt & ~(CExt << 1));
+      SMNext = SM;
     end 
   end
-  assign Sq = S[`DIVLEN] ? S[`DIVLEN-1:1] : S[`DIVLEN-2:0];
+
 endmodule
 
 module otfc4 (
