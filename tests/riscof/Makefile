@@ -8,8 +8,8 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 #XLEN    ?= 64
 
-all: root fsd_fld_tempfix arch32 wally32  wally32e arch64 wally64
-#all: root fsd_fld_tempfix arch64
+#all: root fsd_fld_tempfix arch32 wally32  wally32e arch64 wally64
+all: root fsd_fld_tempfix wally32
 
 root:
 	mkdir -p $(work_dir)

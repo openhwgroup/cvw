@@ -180,7 +180,10 @@ class spike(pluginTemplate):
 
       # once the make-targets are done and the makefile has been created, run all the targets in
       # parallel using the make command set above.
-      make.execute_all(self.work_dir)
+      #make.execute_all(self.work_dir)
+      # DH 7/26/22 increase timeout to 1800 seconds so sim will finish on slow machines
+      make.execute_all(self.work_dir, timeout = 1800) 
+
 
       # if target runs are not required then we simply exit as this point after running all
       # the makefile targets.
