@@ -65,5 +65,5 @@ ffffffC1 # Threshold = 14
 0000C201
 00000061 # FIFO has data, no overrun
 00000006 # wait for interrupt
-000000A3 # FIFO overrun error
+ffffffA3 # FIFO overrun error
 0000000b # ecall from test termination
