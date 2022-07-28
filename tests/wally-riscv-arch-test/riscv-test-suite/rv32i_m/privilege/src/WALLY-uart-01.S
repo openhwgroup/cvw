@@ -71,14 +71,14 @@ test_cases:
 
 .4byte UART_IER, 0x00, read08_test
 .4byte UART_IIR, 0x01, read08_test # IIR resets to 1
-# .4byte UART_LCR, 0x00, read08_test *** commented out because LCR should reset to zero but resets to 3
+# .4byte UART_LCR, 0x00, read08_test *** commented out because LCR should reset to zero but resets to 3 to help Linux boot
 .4byte UART_MCR, 0x00, read08_test
 .4byte UART_LSR, 0x60, read08_test # LSR resets with transmit status bits set
 .4byte UART_MSR, 0x00, read04_test
 
 # =========== Basic read-write ===========
 
-.4byte UART_LCR, 0x00, write08_test # set LCR to reset value *** remove if UART resets to correct value
+.4byte UART_LCR, 0x00, write08_test # set LCR to initial value
 .4byte UART_MCR, 0x10, write08_test # put UART into loopback for MSR test
 .4byte UART_LSR, 0x60, read08_test
 .4byte UART_THR, 0x00, write08_test # write value to UART
@@ -112,10 +112,32 @@ test_cases:
 
 # Transmit 8 bits
 
-.4byte UART_LCR, 0x03, write08_test # set LCR to transmit seven bits
+.4byte UART_LCR, 0x03, write08_test # set LCR to transmit eight bits
 .4byte UART_THR, 0x80, write08_test # write value to UART
 .4byte 0x0, 0x0101, uart_data_wait  # wait for data to become ready then output IIR and then LSR
 .4byte UART_RBR, 0x80, read08_test  # read full written value + sign extension
+
+# Check function with odd parity
+
+.4byte UART_LCR, 0x0B, write08_test # set LCR to transmit 8 bits + odd partiy
+.4byte UART_THR, 0x79, write08_test # write value to UART
+.4byte 0x0, 0x0101, uart_data_wait  # wait for data to become ready then output IIR and then LSR
+.4byte UART_RBR, 0x79, read08_test  # read full written value
+
+# Check function with even parity
+
+.4byte UART_LCR, 0x1B, write08_test # set LCR to transmit 8 bits + even parity
+.4byte UART_THR, 0x6A, write08_test # write value to UART
+.4byte 0x0, 0x0101, uart_data_wait  # wait for data to become ready then output IIR and then LSR
+.4byte UART_RBR, 0x6A, read08_test  # read full written value
+
+# Check function with extra stop bit
+
+.4byte UART_LCR, 0x07, write08_test # set LCR to transmit 8 bits + extra stop
+.4byte UART_THR, 0x5B, write08_test # write value to UART
+.4byte 0x0, 0x0101, uart_data_wait  # wait for data to become ready then output IIR and then LSR
+.4byte UART_RBR, 0x5B, read08_test  # read full written value
+.4byte UART_LCR, 0x03, write08_test # set LCR to transmit 8 bits + no extra stop bit
 
 # =========== Transmit-related interrupts ===========
 
@@ -126,7 +148,7 @@ test_cases:
 .4byte UART_THR, 0x01, write08_test     # write 1 to transmitter buffer
 .4byte UART_IIR, 0x04, read08_test      # data interrupt should still be high
 .4byte 0x0, 0x06, uart_lsr_intr_wait    # wait for transmission to complete, IIR should throw error due to overrun error.
-.4byte UART_LSR, 0x63, read08_test      # read overrun error from LSR
+.4byte UART_LSR, 0x23, read08_test      # read overrun error from LSR
 .4byte UART_IIR, 0x04, read08_test      # check that LSR interrupt was cleared
 .4byte UART_RBR, 0x01, read08_test      # read previous value from UART
 
@@ -216,7 +238,7 @@ test_cases:
 .4byte 0x0, 0xC401, uart_data_wait  # Interrupt due to trigger threshold reached
 .4byte UART_THR, 0x0E, write08_test # Write 14 to transmit register
 .4byte UART_THR, 0x0F, write08_test # Write 15 to transmit register
-.4byte 0x0, 0xC201, uart_data_wait
+.4byte 0x0, 0xC101, uart_data_wait
 .4byte UART_LSR, 0x61, read08_test      # FIFO contains data, no overrun error
 .4byte UART_THR, 0x10, write08_test     # Write 16 to transmit register, filling RX shift register
 .4byte UART_THR, 0x11, write08_test     # Write 17 to transmit register, destroying contents held in shift register
