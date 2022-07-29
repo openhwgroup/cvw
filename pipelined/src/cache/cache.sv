@@ -162,12 +162,18 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [LINELEN-1:0] FinalWriteDataDup;
   assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
 
-  onehotdecoder #(LOGWPL) adrdec(
-    .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
+  if(`LLEN>`XLEN)begin 
+    logic [2**LOGWPL-1:0] MemPAdrDecodedtmp;
+    onehotdecoder #(LOGWPL) adrdec(
+      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecodedtmp));
+    assign MemPAdrDecoded = MemPAdrDecodedtmp|{MemPAdrDecodedtmp[2**LOGWPL-2:0]&{2**LOGWPL-1{FStore2}}, 1'b0};
+  end else
+    onehotdecoder #(LOGWPL) adrdec(
+      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
   for(index = 0; index < 2**LOGWPL; index++) begin
     assign DemuxedByteMask[(index+1)*(`XLEN/8)-1:index*(`XLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
   end
-  // *** have to add back in fstore2
+  
   assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 
