@@ -328,9 +328,9 @@ module uartPC16550D(
         rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0;
       end else if (rxstate == UART_DONE) begin
         RXBR <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
-        if (rxoverrunerr) $warning("UART RX Overrun Error\n");
-        if (rxparityerr) $warning("UART RX Parity Error\n");
-        if (rxframingerr) $warning("UART RX Framing Error\n");
+        if (rxoverrunerr) $warning("UART RX Overrun Err\n");
+        if (rxparityerr) $warning("UART RX Parity Err\n");
+        if (rxframingerr) $warning("UART RX Framing Err\n");
         if (fifoenabled) begin
           rxfifo[rxfifohead] <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata};
           rxfifohead <= #1 rxfifohead + 1;

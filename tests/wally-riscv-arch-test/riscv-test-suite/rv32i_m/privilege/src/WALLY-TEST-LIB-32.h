@@ -1061,6 +1061,7 @@ uart_lsr_intr_loop:
     lb t3, 0(t2)
     andi t3, t3, 0x7
     bne t3, t4, uart_lsr_intr_loop
+uart_save_iir_status:
     sw t3, 0(t1)
     addi t1, t1, 4
     addi a6, a6, 4
@@ -1071,9 +1072,9 @@ uart_data_wait:
     li t3, 0x10000002 // IIR
     li a4, 0x61
 uart_read_LSR_IIR:
-    lb t4, 0(t3) // save IIR before potential clear
-    lb t5, 0(t2)
-    andi t6, t5, 0x61  // only care if all transmissions are done
+    lb t4, 0(t3) // save IIR before reading LSR mgith clear it
+    lb t5, 0(t2) // read LSR
+    andi t6, t5, 0x61  // wait until all transmissions are done and data is ready
     bne a4, t6, uart_read_LSR_IIR
 
 uart_data_ready:

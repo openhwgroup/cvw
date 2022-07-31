@@ -127,4 +127,6 @@ class sail_cSim(pluginTemplate):
             execute+=coverage_cmd
 
             make.add_target(execute)
-        make.execute_all(self.work_dir)
+#        make.execute_all(self.work_dir)
+# DH 7/26/22 increase timeout so sim will finish on slow machines
+        make.execute_all(self.work_dir, timeout = 1800)
