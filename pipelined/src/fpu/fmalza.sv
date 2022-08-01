@@ -38,7 +38,8 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
 
     localparam WIDTH = 3*`NF+7;
     
-    logic [WIDTH-1:0] AA, B, P, G, K, F;
+   logic [WIDTH-1:0] 		       B,F;
+   logic [WIDTH-1:0]  P, G, K;
     logic [WIDTH-2:0] Pp1, Gm1, Km1;
 
     assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
@@ -48,7 +49,7 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
     assign G = A&B;
     assign K= ~A&~B;
 
-   assign Pp1 = P[WIDTH-1:1];
+   assign Pp1 = {A[WIDTH-1], P[WIDTH-2:1]};
    assign Gm1 = {G[WIDTH-3:0], Cin};
    assign Km1 = {K[WIDTH-3:0], ~Cin};
    
