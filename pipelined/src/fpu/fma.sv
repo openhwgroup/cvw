@@ -85,6 +85,6 @@ module fma(
         
     fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
     
-    fmalza lza(.A(AmInv+{(3*`NF+6)'(0),InvA&~((ZmSticky&~KillProd))}), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .SCnt);
+    fmalza lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .SCnt);
 endmodule
 
