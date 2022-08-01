@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
-    input logic [3*`NF+6:0] 	       A, // addend
+    input logic [3*`NF+5:0] 	       A, // addend
     input logic [2*`NF+3:0] 	       Pm, // product
     input logic 		       Cin, // carry in
     input logic sub,
@@ -45,12 +45,11 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
 
     assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
 
-    assign P = A[WIDTH-2:0]^B[WIDTH-2:0];
-    assign G = A[WIDTH-2:0]&B[WIDTH-2:0];
-    assign K= ~A[WIDTH-2:0]&~B[WIDTH-2:0];
+    assign P = A[WIDTH-2:0]^B;
+    assign G = A[WIDTH-2:0]&B;
+    assign K= ~A[WIDTH-2:0]&~B;
 
    assign Pp1 = {sub, P[WIDTH-2:1]};
-//   assign Pp1 = {A[WIDTH-1], P[WIDTH-2:1]};
    assign Gm1 = {G[WIDTH-3:0], Cin};
    assign Km1 = {K[WIDTH-3:0], ~Cin};
    
