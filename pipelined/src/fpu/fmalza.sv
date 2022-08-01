@@ -32,26 +32,27 @@
 module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
     input logic [3*`NF+6:0] 	       A, // addend
     input logic [2*`NF+3:0] 	       Pm, // product
-    input logic                        Cin, // carry in
+    input logic 		       Cin, // carry in
+    input logic sub,
     output logic [$clog2(3*`NF+7)-1:0] SCnt   // normalization shift count for the positive result
     ); 
 
     localparam WIDTH = 3*`NF+7;
     
    logic [WIDTH-1:0] 		       B,F;
-   logic [WIDTH-1:0] 		       P, G;
-   logic [WIDTH-2:0]  K;
+   logic [WIDTH-2:0]   P, G, K;
     logic [WIDTH-2:0] Pp1, Gm1, Km1;
 
     assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
 
    // next steps***replace P[WIDTH-1] with sub, then remove one bit from A
    
-    assign P = A^B;
+    assign P = A[WIDTH-2:0]^B[WIDTH-2:0];
     assign G = A[WIDTH-2:0]&B[WIDTH-2:0];
     assign K= ~A[WIDTH-2:0]&~B[WIDTH-2:0];
 
-   assign Pp1 = {A[WIDTH-1], P[WIDTH-2:1]};
+   assign Pp1 = {sub, P[WIDTH-2:1]};
+//   assign Pp1 = {A[WIDTH-1], P[WIDTH-2:1]};
    assign Gm1 = {G[WIDTH-3:0], Cin};
    assign Km1 = {K[WIDTH-3:0], ~Cin};
    
@@ -59,7 +60,7 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
     //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
     //f[n] = ~P[n]&P[n-1]           note: n is the MSB
     //f[i] = (P[i+1]&(G[i]&~K[i-1] | K[i]&~G[i-1])) | (~P[i+1]&(K[i]&~K[i-1] | G[i]&~G[i-1]))
-    assign F[WIDTH-1] = ~P[WIDTH-1]&P[WIDTH-2];
+    assign F[WIDTH-1] = ~sub&P[WIDTH-2];
     assign F[WIDTH-2:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
 
     lzc #(WIDTH) lzc (.num(F), .ZeroCnt(SCnt));
