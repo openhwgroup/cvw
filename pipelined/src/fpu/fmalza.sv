@@ -39,14 +39,12 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
 
     localparam WIDTH = 3*`NF+7;
     
-   logic [WIDTH-1:0] 		       B,F;
-   logic [WIDTH-2:0]   P, G, K;
+   logic [WIDTH-1:0] 		       F;
+   logic [WIDTH-2:0]  B, P, G, K;
     logic [WIDTH-2:0] Pp1, Gm1, Km1;
 
-    assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
+    assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
 
-   // next steps***replace P[WIDTH-1] with sub, then remove one bit from A
-   
     assign P = A[WIDTH-2:0]^B[WIDTH-2:0];
     assign G = A[WIDTH-2:0]&B[WIDTH-2:0];
     assign K= ~A[WIDTH-2:0]&~B[WIDTH-2:0];
