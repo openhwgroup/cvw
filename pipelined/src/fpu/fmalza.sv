@@ -31,32 +31,27 @@
 
 module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
     input logic  [3*`NF+6:0] A,     // addend
-    input logic  [2*`NF+3:0] P,     // product
+    input logic  [2*`NF+3:0] Pm,     // product
     output logic [$clog2(3*`NF+7)-1:0]       SCnt   // normalization shift count for the positive result
     ); 
+
+    localparam WIDTH = 3*`NF+7;
     
-    logic [3*`NF+6:0] T;
-    logic [3*`NF+6:0] G;
-    logic [3*`NF+6:0] Z;
-    logic [3*`NF+6:0] f;
+    logic [WIDTH-1:0] B, P, G, K, F;
+    logic [WIDTH-1:0] Pp1, Gm1, Km1;
 
-    assign T[3*`NF+6:2*`NF+4] = A[3*`NF+6:2*`NF+4];
-    assign G[3*`NF+6:2*`NF+4] = 0;
-    assign Z[3*`NF+6:2*`NF+4] = ~A[3*`NF+6:2*`NF+4];
-    assign T[2*`NF+3:0] = A[2*`NF+3:0]^P;
-    assign G[2*`NF+3:0] = A[2*`NF+3:0]&P;
-    assign Z[2*`NF+3:0] = ~A[2*`NF+3:0]&~P;
+    assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
 
+    assign P = A^B;
+    assign G = A&B;
+    assign K= ~A&~B;
 
     // Apply function to determine Leading pattern
     //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
-    //f[n] = ~T[n]&T[n-1]           note: n is the MSB
-    //f[i] = (T[i+1]&(G[i]&~Z[i-1] | Z[i]&~G[i-1])) | (~T[i+1]&(Z[i]&~Z[i-1] | G[i]&~G[i-1]))
-    assign f[3*`NF+6] = ~T[3*`NF+6]&T[3*`NF+5];
-    assign f[3*`NF+5:0] = (T[3*`NF+6:1]&(G[3*`NF+5:0]&{~Z[3*`NF+4:0], 1'b0} | Z[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1})) | (~T[3*`NF+6:1]&(Z[3*`NF+5:0]&{~Z[3*`NF+4:0], 1'b0} | G[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1}));
+    //f[n] = ~P[n]&P[n-1]           note: n is the MSB
+    //f[i] = (P[i+1]&(G[i]&~K[i-1] | K[i]&~G[i-1])) | (~P[i+1]&(K[i]&~K[i-1] | G[i]&~G[i-1]))
+    assign F[WIDTH-1] = ~P[WIDTH-1]&P[WIDTH-2];
+    assign F[WIDTH-2:0] = (P[3*`NF+6:1]&(G[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | K[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1})) | (~P[3*`NF+6:1]&(K[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | G[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1}));
 
-
-
-    lzc #(3*`NF+7) lzc (.num(f), .ZeroCnt(SCnt));
-  
+    lzc #(3*`NF+7) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule
