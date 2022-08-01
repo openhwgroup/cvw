@@ -42,11 +42,11 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
     logic [WIDTH-2:0] Pp1, Gm1, Km1;
 
     assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
-   assign AA = A + Cin;
+//   assign AA = A + Cin;
 
-    assign P = AA^B;
-    assign G = AA&B;
-    assign K= ~AA&~B;
+    assign P = A^B;
+    assign G = A&B;
+    assign K= ~A&~B;
 
    assign Pp1 = P[WIDTH-1:1];
    assign Gm1 = {G[WIDTH-3:0], Cin};
@@ -57,7 +57,7 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
     //f[n] = ~P[n]&P[n-1]           note: n is the MSB
     //f[i] = (P[i+1]&(G[i]&~K[i-1] | K[i]&~G[i-1])) | (~P[i+1]&(K[i]&~K[i-1] | G[i]&~G[i-1]))
     assign F[WIDTH-1] = ~P[WIDTH-1]&P[WIDTH-2];
-    assign F[WIDTH-2:0] = (Pp1&(G[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | K[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1})) | (~P[3*`NF+6:1]&(K[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | G[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1}));
+    assign F[WIDTH-2:0] = (Pp1&(G[WIDTH-2:0]&~Km1 | K[WIDTH-2:0]&~Gm1)) | (~Pp1&(K[WIDTH-2:0]&~Km1 | G[WIDTH-2:0]&~Gm1));
 
     lzc #(WIDTH) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule
