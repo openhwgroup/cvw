@@ -29,16 +29,14 @@
 
 `include "wally-config.vh"
 
-module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
-    input logic [3*`NF+5:0] 	       A, // addend
+module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
+    input logic [WIDTH-1:0] 	       A, // addend
     input logic [2*`NF+3:0] 	       Pm, // product
     input logic 		       Cin, // carry in
     input logic sub,
-    output logic [$clog2(3*`NF+7)-1:0] SCnt   // normalization shift count for the positive result
+    output logic [$clog2(WIDTH+1)-1:0] SCnt   // normalization shift count for the positive result
     ); 
 
-    localparam WIDTH = 3*`NF+6;
-    
    logic [WIDTH:0] 	       F;
    logic [WIDTH-1:0]  B, P, G, K;
     logic [WIDTH-1:0] Pp1, Gm1, Km1;
