@@ -37,7 +37,7 @@ module fmaadd(
     input logic                 ZmSticky,
     input logic  [`NE-1:0]      Ze,
     input logic  [`NE+1:0]      Pe,
-    output logic [3*`NF+6:0]    AmInv,  // aligned addend possibly inverted
+    output logic [3*`NF+5:0]    AmInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // do you invert the aligned addend
@@ -45,7 +45,7 @@ module fmaadd(
     output logic [`NE+1:0]      Se,
     output logic [3*`NF+5:0]    Sm           // the positive sum
 );
-    logic [3*`NF+6:0]    PreSum, NegPreSum; // possibly negitive sum
+    logic [3*`NF+5:0]    PreSum, NegPreSum; // possibly negitive sum
 
     ///////////////////////////////////////////////////////////////////////////////
     // Addition
@@ -57,7 +57,7 @@ module fmaadd(
     assign InvA = As ^ Ps;
 
     // Choose an inverted or non-inverted addend - the one has to be added now for the LZA
-    assign AmInv = InvA ? {1'b1, ~Am} : {1'b0, Am};
+    assign AmInv = InvA ? ~Am : Am;
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
     assign PmKilled = Pm&{2*`NF+2{~KillProd}};
     // Do the addition
@@ -66,11 +66,11 @@ module fmaadd(
     // PreSum    -1 = don't add 1     +1 = add 2
     // NegPreSum +1 = add 2           -1 = don't add 1
     // for NegPreSum the product is set to -1 whenever the product is killed, therefore add 1, 2 or 0
-    assign PreSum = {{`NF+3{1'b0}}, PmKilled, 1'b0, InvA&ZmSticky&KillProd} + AmInv + {{3*`NF+6{1'b0}}, InvA&~((ZmSticky&~KillProd))};
-    assign NegPreSum = {1'b0, Am} + {{`NF+3{1'b1}}, ~PmKilled, 2'b11} + {(3*`NF+5)'(0), ZmSticky&~KillProd, ~(ZmSticky)};
+    assign PreSum = {{`NF+2{1'b0}}, PmKilled, 1'b0, InvA&ZmSticky&KillProd} + AmInv + {{3*`NF+5{1'b0}}, InvA&~((ZmSticky&~KillProd))};
+    assign NegPreSum = Am + {{`NF+2{1'b1}}, ~PmKilled, 2'b11} + {(3*`NF+4)'(0), ZmSticky&~KillProd, ~(ZmSticky)};
      
     // Is the sum negitive
-    assign NegSum = PreSum[3*`NF+6];
+    assign NegSum = PreSum[3*`NF+5];
 
     // Choose the positive sum and accompanying LZA result.
     assign Sm = NegSum ? NegPreSum[3*`NF+5:0] : PreSum[3*`NF+5:0];
