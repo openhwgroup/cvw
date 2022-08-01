@@ -39,7 +39,7 @@ module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, 
 
     localparam WIDTH = 3*`NF+6;
     
-   logic [WIDTH:0] 		       F;
+   logic [WIDTH:0] 	       F;
    logic [WIDTH-1:0]  B, P, G, K;
     logic [WIDTH-1:0] Pp1, Gm1, Km1;
 
