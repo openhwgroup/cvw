@@ -49,7 +49,6 @@ module ahblite (
   input logic [2:0]    IFUBurstType,
   input logic [1:0]    IFUTransType,
   input logic          IFUTransComplete,
-  input logic [(`XLEN-1)/8:0]     ByteMaskM,
 
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUBusAdr,
@@ -157,8 +156,7 @@ module ahblite (
   assign HTRANS = (GrantData) ? LSUTransType : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
-  //assign HWSTRB = ByteMaskM;
-    // Byte mask for HWSTRB
+  // Byte mask for HWSTRB
   swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
 
   // delay write data by one cycle for
