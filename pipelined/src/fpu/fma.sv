@@ -51,7 +51,7 @@ module fma(
 
     logic [2*`NF+1:0]   Pm;           // the product's significand in U(2.2Nf) format
     logic [3*`NF+5:0]   Am;     // addend aligned's mantissa for addition in U(NF+5.2NF+1)
-    logic [3*`NF+6:0]   AmInv;   // aligned addend's mantissa possibly inverted
+    logic [3*`NF+5:0]   AmInv;   // aligned addend's mantissa possibly inverted
     logic [2*`NF+1:0]   PmKilled;      // the product's mantissa possibly killed
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
@@ -86,7 +86,7 @@ module fma(
     fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
 
    
-    fmalza lza(.A(AmInv[3*`NF+5:0]), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
+    fmalza lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
 endmodule
 
 
