@@ -77,8 +77,6 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
    (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
-   output logic [(`XLEN-1)/8:0]     ByteMaskM,
-
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
    input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -116,6 +114,7 @@ module lsu (
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [`XLEN-1:0]         WriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
+  logic [(`XLEN-1)/8:0]     ByteMaskM;
   
   // *** TO DO: Burst mode
 
@@ -277,7 +276,14 @@ module lsu (
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
+    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM);
+
+  // Compute byte masks
+  //swbytemask swbytemask(.Size(LSUFunct3M[1:0]), .Adr(LSUPAdrM[2:0]), .ByteMask(ByteMaskM));
+  swbytemaskword #(`XLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  // *** fix me.
+  //swbytemaskword #(.WORDLEN(`XLEN)) 
+  //swbytemaskword (.Size(LSUFunct3M[2:0]), .Adr(LSUPAdrM), .ByteMask(ByteMaskM));  
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register
