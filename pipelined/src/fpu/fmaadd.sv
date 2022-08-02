@@ -51,10 +51,10 @@ module fmaadd(
     // Addition
     ///////////////////////////////////////////////////////////////////////////////
    
-    // Choose an inverted or non-inverted addend - the one has to be added now for the LZA
+    // Choose an inverted or non-inverted addend.  Put carry into adder/LZA for addition
     assign AmInv = InvA ? ~Am : Am;
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-    assign PmKilled = Pm&{2*`NF+2{~KillProd}};
+    assign PmKilled = KillProd ? '0 : Pm;
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
     //              Zsticky             Psticky
@@ -64,15 +64,12 @@ module fmaadd(
     assign {NegSum, PreSum} = {{`NF+3{1'b0}}, PmKilled, 1'b0, InvA&ZmSticky&KillProd} + {InvA, AmInv} + {{3*`NF+6{1'b0}}, InvA&~((ZmSticky&~KillProd))};
     assign NegPreSum = Am + {{`NF+2{1'b1}}, ~PmKilled, 2'b11} + {(3*`NF+4)'(0), ZmSticky&~KillProd, ~(ZmSticky)};
      
-    // Is the sum negitive
-//    assign NegSum = PreSum[3*`NF+6];
-
     // Choose the positive sum and accompanying LZA result.
     assign Sm = NegSum ? NegPreSum : PreSum;
     // is the result negitive
     //  if p - z is the Sum negitive
     //  if -p + z is the Sum positive
     //  if -p - z then the Sum is negitive
-    assign Ss = NegSum^Ps; //*** move to execute stage
+    assign Ss = NegSum^Ps; 
     assign Se = KillProd ? {2'b0, Ze} : Pe;
 endmodule
