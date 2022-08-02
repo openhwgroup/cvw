@@ -29,29 +29,29 @@
 `include "wally-config.vh"
 
 module fclassify (
-    input logic         XSgnE,  // sign bit
-    input logic         XNaNE,  // is NaN
-    input logic         XSNaNE, // is signaling NaN
-    input logic         XDenormE, // is denormal
-    input logic         XZeroE, // is zero
-    input logic         XInfE,  // is infinity
-    output logic [`XLEN-1:0] ClassResE // classify result
-    );
+    input logic         Xs,     // sign bit
+    input logic         XNaN,   // is NaN
+    input logic         XSNaN,  // is signaling NaN
+    input logic         XDenorm,// is denormal
+    input logic         XZero,  // is zero
+    input logic         XInf,   // is infinity
+    output logic [`XLEN-1:0] ClassRes// classify result
+);
 
     logic PInf, PZero, PNorm, PDenorm;
     logic NInf, NZero, NNorm, NDenorm;
-    logic XNormE;
+    logic XNorm;
    
     // determine the sub categories
-    assign XNormE = ~(XNaNE | XInfE | XDenormE | XZeroE);
-    assign PInf = ~XSgnE&XInfE;
-    assign NInf = XSgnE&XInfE;
-    assign PNorm = ~XSgnE&XNormE;
-    assign NNorm = XSgnE&XNormE;
-    assign PDenorm = ~XSgnE&XDenormE;
-    assign NDenorm = XSgnE&XDenormE;
-    assign PZero = ~XSgnE&XZeroE;
-    assign NZero = XSgnE&XZeroE;
+    assign XNorm= ~(XNaN | XInf| XDenorm| XZero);
+    assign PInf = ~Xs&XInf;
+    assign NInf = Xs&XInf;
+    assign PNorm = ~Xs&XNorm;
+    assign NNorm = Xs&XNorm;
+    assign PDenorm = ~Xs&XDenorm;
+    assign NDenorm = Xs&XDenorm;
+    assign PZero = ~Xs&XZero;
+    assign NZero = Xs&XZero;
 
     // determine sub category and combine into the result
     //  bit 0 - -Inf
@@ -64,6 +64,6 @@ module fclassify (
     //  bit 7 - +Inf
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassResE = {{`XLEN-10{1'b0}}, XNaNE&~XSNaNE, XSNaNE, PInf, PNorm,  PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
 
 endmodule

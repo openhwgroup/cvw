@@ -1,4 +1,4 @@
-all: archtests wallytests memfiles
+all: riscoftests memfiles
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
@@ -19,18 +19,15 @@ allclean: clean all
 
 clean:
 	make clean -C ../../tests/riscof
-	make clean -C ../../tests/wally-riscv-arch-test
+#   make clean -C ../../tests/wally-riscv-arch-test
 #	make allclean -C ../../tests/imperas-riscv-tests
 
-archtests:
-	# Build riscv-arch-test 64 and 32-bit versions
-	make -C ../../tests/riscof/ --jobs
-	make -C ../../tests/riscof/ XLEN=32 --jobs
-
-wallytests:
-	# Build wally-riscv-arch-test
-	make -C ../../tests/wally-riscv-arch-test/ --jobs
-	make -C ../../tests/wally-riscv-arch-test/ XLEN=32  --jobs
+riscoftests: 
+# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
+	make -C ../../tests/riscof/ 
+#	make -C ../../tests/riscof/ XLEN=32
+#	make -C ../../tests/riscof/ XLEN=32 build_rv32e
+#	make -C ../../tests/riscof/ XLEN=64
 
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs

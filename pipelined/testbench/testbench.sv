@@ -89,7 +89,8 @@ logic [3:0] dummy;
                           if (`ZICSR_SUPPORTED) tests = {arch64c, arch64cpriv};
                           else                  tests = {arch64c};
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
-        "arch64d":      if (`D_SUPPORTED) tests = arch64d;
+        "arch64f":      if (`F_SUPPORTED) tests = arch64f;
+        "arch64d":      if (`D_SUPPORTED) tests = arch64d;  
         "imperas64i":                     tests = imperas64i;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
@@ -112,6 +113,7 @@ logic [3:0] dummy;
                           else                  tests = {arch32c};
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
+        "arch32d":      if (`D_SUPPORTED) tests = arch32d;
         "imperas32i":                     tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
@@ -123,6 +125,7 @@ logic [3:0] dummy;
         "wally32priv":                    tests = wally32priv;
         "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
+        "coremark":                       tests = coremark;
       endcase
     end
     if (tests.size() == 0) begin
@@ -177,7 +180,7 @@ logic [3:0] dummy;
       testadr = 0;
       testadrNoBase = 0;
       // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests and  tests[0] == "2" refers to WallyRiscvArchTests 
-      riscofTest = tests[0] == "1"; // | tests[0] == "2"; 
+      riscofTest = tests[0] == "1" | tests[0] == "2"; 
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
@@ -193,13 +196,19 @@ logic [3:0] dummy;
       /* if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
-      memfilename = {pathname, tests[test], ".elf.memfile"};
+      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+      else memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
       else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
       if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
-      ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-      ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      if (riscofTest) begin
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else begin
+        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      end
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
@@ -239,7 +248,8 @@ logic [3:0] dummy;
           // this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
           // also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
           $display("Embench Benchmark: %s is done.", tests[test]);
-          outputfile = {pathname, tests[test], ".sim.output"};
+          if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+          else outputfile = {pathname, tests[test], ".sim.output"};
           outputFilePointer = $fopen(outputfile);
           i = 0;
           while ($unsigned(i) < $unsigned(5'd5)) begin
@@ -254,7 +264,7 @@ logic [3:0] dummy;
           for(i=0; i<SIGNATURESIZE; i=i+1) begin
             sig32[i] = 'bx;
           end
-          if (riscofTest) signame = {pathname, tests[test], "erence-sail_c_simulator.signature"};
+          if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
           else signame = {pathname, tests[test], ".signature.output"};
           // read signature, reformat in 64 bits if necessary
           $readmemh(signame, sig32);
@@ -311,14 +321,20 @@ logic [3:0] dummy;
         else begin
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
-            memfilename = {pathname, tests[test], ".elf.memfile"};
+            if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+            else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`IMEM == `MEM_TIM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
             else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`DMEM == `MEM_TIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
-            ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-            ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            if (riscofTest) begin
+              ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+              ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+            end else begin
+              ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+              ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+            end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
@@ -427,8 +443,13 @@ module DCacheFlushFSM
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
 	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer numwords = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN/`XLEN;  
-	  localparam integer lognumlines = $clog2(numlines);
+	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+	  localparam integer sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+	  localparam integer cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+      
+//testbench.dut.core.lsu.bus.dcache.dcache.CacheWays.NUMSRAM;
+	  localparam integer numwords = sramlen/`XLEN;
+      localparam integer lognumlines = $clog2(numlines);
 	  localparam integer loglinebytelen = $clog2(linebytelen);
 	  localparam integer lognumways = $clog2(numways);
 	  localparam integer tagstart = lognumlines + loglinebytelen;
@@ -436,16 +457,17 @@ module DCacheFlushFSM
 
 
 	  genvar 			 index, way, cacheWord;
-	  logic [`XLEN-1:0]  CacheData [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [numwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [numwords-1:0];
+	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+      logic [sramlen-1:0] cacheline;
+	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     for(index = 0; index < numlines; index++) begin
 		  for(way = 0; way < numways; way++) begin
-		    for(cacheWord = 0; cacheWord < numwords; cacheWord++) begin
+		    for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
 			    copyShadow #(.tagstart(tagstart),
-					.loglinebytelen(loglinebytelen))
+					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
 			    copyShadow(.clk,
           .start,
           .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
@@ -463,18 +485,25 @@ module DCacheFlushFSM
       end
     end
 
-    integer i, j, k;
+    integer i, j, k, l;
 
     always @(posedge clk) begin
       if (start) begin #1
         #1
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
-          for(k = 0; k < numwords; k++) begin
-            if (CacheValid[j][i][k] & CacheDirty[j][i][k]) begin
-            ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = CacheData[j][i][k];
+            for(l = 0; l < cachesramwords; l++) begin
+              if (CacheValid[j][i][l] & CacheDirty[j][i][l]) begin
+                for(k = 0; k < numwords; k++) begin
+                  //cacheline = CacheData[j][i][0];
+                  // does not work with modelsim
+                  // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
+                  // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
+                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = cacheline[`XLEN*(k+1)-1:`XLEN*k];
+                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(`XLEN/8)) + k] = CacheData[j][i][l][`XLEN*k +: `XLEN];
+                end
+              end
             end
-          end	
           end
         end
       end
@@ -484,15 +513,15 @@ module DCacheFlushFSM
 endmodule
 
 module copyShadow
-  #(parameter tagstart, loglinebytelen)
+  #(parameter tagstart, loglinebytelen, sramlen)
   (input logic clk,
    input logic 			     start,
    input logic [`PA_BITS-1:tagstart] tag,
    input logic 			     valid, dirty,
-   input logic [`XLEN-1:0] 	     data,
+   input logic [sramlen-1:0] 	     data,
    input logic [32-1:0] 	     index,
    input logic [32-1:0] 	     cacheWord,
-   output logic [`XLEN-1:0] 	     CacheData,
+   output logic [sramlen-1:0] 	     CacheData,
    output logic [`PA_BITS-1:0] 	     CacheAdr,
    output logic [`XLEN-1:0] 	     CacheTag,
    output logic 		     CacheValid,
@@ -505,7 +534,7 @@ module copyShadow
       CacheValid = valid;
       CacheDirty = dirty;
       CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(`XLEN/8));
+      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
     end
   end
   

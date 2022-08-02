@@ -114,7 +114,12 @@ void portable_free(void *p) {
     #define read_csr(reg) ({ unsigned long __tmp; \
        asm volatile ("csrr %0, " #reg : "=r"(__tmp)); \
        __tmp; })
-    #define GETMYTIME(_t) (_t = *(volatile unsigned long long*)0x0200BFF8)
+	// #if (XLEN==64) 
+	// 	typedef unsigned long long ee_ptr_int;
+	// #else
+	// 	typedef unsigned long ee_ptr_int;
+	// #endif
+    #define GETMYTIME(_t) (_t = *(volatile ee_ptr_int*)0x0200BFF8)
 	#define MYTIMEDIFF(fin,ini) ((fin)-(ini))
 	// Changing TIMER_RES_DIVIDER to 1000000 sets EE_TICKS_PER_SEC to 1000 (now counting ticks per ms)
 	#define TIMER_RES_DIVIDER 10000
@@ -196,10 +201,13 @@ void stop_time(void) {
 CORE_TICKS get_time(void) {
 	CORE_TICKS elapsed=(CORE_TICKS)(MYTIMEDIFF(stop_time_val, start_time_val));
 	unsigned long instructions = minstretDiff();
-	ee_printf("   Called get_time\n");
+	ee_ptr_int cm100 = 1000000000 / elapsed;  // coremark score * 100
+	ee_ptr_int cpi100 = elapsed*100/instructions; // CPI * 100
+	ee_printf("   WALLY CoreMark Results (from get_time)\n");
 	ee_printf("    Elapsed MTIME: %u\n", elapsed);
 	ee_printf("    Elapsed MINSTRET: %lu\n", instructions);
-	ee_printf("    CPI: %lu / %lu\n", elapsed, instructions); 
+	ee_printf("    COREMARK/MHz Score: 10,000,000 / %lu = %d.%02d \n", elapsed, cm100/100, cm100%100);
+	ee_printf("    CPI: %lu / %lu = %d.%02d\n", elapsed, instructions, cpi100/100, cpi100%100); 
 	return elapsed;
 }
 /* Function: time_in_secs

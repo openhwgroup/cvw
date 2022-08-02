@@ -66,9 +66,9 @@ module testbenchfp;
   logic [`XLEN-1:0]     IntRes, CmpRes;  // Results from each unit
   logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
   logic                 AnsNaN, ResNaN, NaNGood;
-  logic                 XSgn, YSgn, ZSgn;                     // sign of the inputs
-  logic [`NE-1:0]       XExp, YExp, ZExp;                     // exponent of the inputs
-  logic [`NF:0]         XMan, YMan, ZMan;                     // mantissas of the inputs
+  logic                 Xs, Ys, Zs;                     // sign of the inputs
+  logic [`NE-1:0]       Xe, Ye, Ze;                     // exponent of the inputs
+  logic [`NF:0]         Xm, Ym, Zm;                     // mantissas of the inputs
   logic                 XNaN, YNaN, ZNaN;                     // is the input NaN
   logic                 XSNaN, YSNaN, ZSNaN;                  // is the input a signaling NaN
   logic                 XDenorm, ZDenorm;            // is the input denormalized
@@ -80,24 +80,26 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVLEN+2:0] Quot;
+	logic [`DIVb-(`RADIX/4):0] Quot;
   logic CvtResDenormUfE;
-  logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2;
+  logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
   logic [`DIVLEN-1:0]    DivX;
   logic [`DIVLEN-1:0]  Dpreproc;
-  logic [`DIVLEN+3:0]  WSN, WS;
-  logic [`DIVLEN+3:0]  WCN, WC;
+  logic [`DIVLEN+3:0]  NextWSN, WS;
+  logic [`DIVLEN+3:0]  NextWCN, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
+  logic [`DURLEN-1:0] Dur;
 
   // in-between FMA signals
   logic                 Mult;
+  logic                 Ss;
   logic [`NE+1:0]	      Pe;
+  logic [`NE+1:0]	      Se;
   logic 				        ZmSticky;
   logic 					      KillProd; 
-  logic [$clog2(3*`NF+7)-1:0]	NCnt;
+  logic [$clog2(3*`NF+7)-1:0]	SCnt;
   logic [3*`NF+5:0]	    Sm;       
   logic 			          InvA;
   logic 			          NegSum;
@@ -254,16 +256,16 @@ module testbenchfp;
             Fmt = {Fmt, 2'b11};
           end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
-      //   // add the square-root tests/op-ctrls/unit/fmt
-      //   Tests = {Tests, f128sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //     for(int i = 0; i<5; i++) begin
-      //       Unit = {Unit, `DIVUNIT};
-      //       Fmt = {Fmt, 2'b11};
-      //     end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tested
+        // add the square-root tests/op-ctrls/unit/fmt
+        Tests = {Tests, f128sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+          for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+          end
+      end
       if (TEST === "fma"   | TEST === "all") begin  // if fused-mutliply-add is being tested
         Tests = {Tests, f128fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -381,16 +383,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b01};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f64sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b01};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if square-root is being tessted
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f64sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b01};
+        end
+      end
       if (TEST === "fma"   | TEST === "all") begin // if the fused multiply add is being tested
         Tests = {Tests, f64fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -492,16 +494,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b00};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f32sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b00};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f32sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b00};
+        end
+      end
       if (TEST === "fma"   | TEST === "all")  begin // if fma is being tested
         Tests = {Tests, f32fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -585,16 +587,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
-      // if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
-      //   // add the correct tests/op-ctrls/unit/fmt to their lists
-      //   Tests = {Tests, f16sqrt};
-      //   OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-      //   WriteInt = {WriteInt, 1'b0};
-      //   for(int i = 0; i<5; i++) begin
-      //     Unit = {Unit, `DIVUNIT};
-      //     Fmt = {Fmt, 2'b10};
-      //   end
-      // end
+      if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
+        // add the correct tests/op-ctrls/unit/fmt to their lists
+        Tests = {Tests, f16sqrt};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+          Unit = {Unit, `DIVUNIT};
+          Fmt = {Fmt, 2'b10};
+        end
+      end
       if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
         Tests = {Tests, f16fma};
         OpCtrl = {OpCtrl, `FMA_OPCTRL};
@@ -648,14 +650,14 @@ module testbenchfp;
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
   readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
-                                    .XSgnE(XSgn), .YSgnE(YSgn), .ZSgnE(ZSgn), .Unit (UnitVal),
-                                    .XExpE(XExp), .YExpE(YExp), .ZExpE(ZExp), .TestNum, .OpCtrl(OpCtrlVal),
-                                    .XManE(XMan), .YManE(YMan), .ZManE(ZMan), .DivStart,
-                                    .XNaNE(XNaN), .YNaNE(YNaN), .ZNaNE(ZNaN),
-                                    .XSNaNE(XSNaN), .YSNaNE(YSNaN), .ZSNaNE(ZSNaN), 
-                                    .XDenormE(XDenorm), .ZDenormE(ZDenorm), 
-                                    .XZeroE(XZero), .YZeroE(YZero), .ZZeroE(ZZero),
-                                    .XInfE(XInf), .YInfE(YInf), .ZInfE(ZInf), .XExpMaxE(XExpMax),
+                                    .Xs, .Ys, .Zs, .Unit(UnitVal),
+                                    .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
+                                    .Xm, .Ym, .Zm, .DivStart,
+                                    .XNaN, .YNaN, .ZNaN,
+                                    .XSNaN, .YSNaN, .ZSNaN, 
+                                    .XDenorm, .ZDenorm, 
+                                    .XZero, .YZero, .ZZero,
+                                    .XInf, .YInf, .ZInf, .XExpMax,
                                     .X, .Y, .Z);
 
 
@@ -671,35 +673,34 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  fma fma(.Xs(XSgn), .Ys(YSgn), .Zs(ZSgn), 
-          .Xe(XExp), .Ye(YExp), .Ze(ZExp), 
-          .Xm(XMan), .Ym(YMan), .Zm(ZMan),
-          .XZero, .YZero, .ZZero,
-          .FOpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .NCnt, .As, .Ps,
+  fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
+          .Xe(Xe), .Ye(Ye), .Ze(Ze), 
+          .Xm(Xm), .Ym(Ym), .Zm(Zm),
+          .XZero, .YZero, .ZZero, .Ss, .Se,
+          .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .SCnt, .As, .Ps,
           .Pe, .ZmSticky, .KillProd); 
               
-  postprocess postprocess(.Xs(XSgn), .Ys(YSgn), .PostProcSel(UnitVal[1:0]),
-              .Ze(ZExp),  .ZDenorm(ZDenorm), .FOpCtrl(OpCtrlVal), .Quot, .DivCalcExp(DivCalcExp),
-              .Xm(XMan), .Ym(YMan), .Zm(ZMan), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky),
-              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE), .DivNegSticky,
+  postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+              .Ze(Ze),  .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaKillProd(KillProd), .FmaZmSticky(ZmSticky), .FmaPe(Pe), .DivDone,
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaNCnt(NCnt), .DivEarlyTermShiftDiv2(EarlyTermShiftDiv2), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlg(Flg), .W(FpRes), .FCvtIntRes(IntRes));
+              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
-  fcvt fcvt (.Xs(XSgn), .Xe(XExp), .Xm(XMan), .Int(SrcA), .ToInt(WriteIntVal), 
-            .XZero(XZero), .XDenorm(XDenorm), .FOpCtrl(OpCtrlVal), .IntZero,
+  fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+            .XZero(XZero), .XDenorm(XDenorm), .OpCtrl(OpCtrlVal), .IntZero,
             .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
-  fcmp fcmp   (.FmtE(ModFmt), .FOpCtrlE(OpCtrlVal), .XSgnE(XSgn), .YSgnE(YSgn), .XExpE(XExp), .YExpE(YExp), 
-              .XManE(XMan), .YManE(YMan), .XZeroE(XZero), .YZeroE(YZero), .CmpIntResE(CmpRes),
-              .XNaNE(XNaN), .YNaNE(YNaN), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .FSrcXE(X), .FSrcYE(Y), .CmpNVE(CmpFlg[4]), .CmpFpResE(FpCmpRes));
-  srtpreproc srtpreproc(.XManE(XMan), .Dur, .YManE(YMan),.X(DivX),.Dpreproc, .XZeroCnt, .YZeroCnt);
-  srtfsm srtfsm(.reset, .WSN, .WCN, .WS, .WC, .Dur, .DivBusy, .DivDone, .clk, .DivStart, .StallM(1'b0), .StallE(1'b0), .XZeroE(XZero), .YZeroE(YZero), .DivStickyE(DivSticky), .XNaNE(XNaN), .YNaNE(YNaN),
-                .XInfE(XInf), .YInfE(YInf), .DivNegStickyE(DivNegSticky), .EarlyTermShiftDiv2E(EarlyTermShiftDiv2));
-  srtradix4 srtradix4(.clk, .FmtE(ModFmt), .X(DivX),.Dpreproc, .DivBusy, .XZeroCnt, .YZeroCnt, .WS, .WC, .WSN, .WCN, .DivStart, .XExpE(XExp), .YExpE(YExp), .XZeroE(XZero), .YZeroE(YZero),
-                .Quot, .Rem(), .DivCalcExpM(DivCalcExp));
+  fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+              .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
+              .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
+  divsqrt divsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+                  .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
+                  .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
+                  .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
 
   assign CmpFlg[3:0] = 0;
 
@@ -854,7 +855,7 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~(DivBusy|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -867,10 +868,10 @@ end
 
     // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
     // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
-            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~XSgn|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-            (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&XSgn&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+    else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[`XLEN-1:0] === (`XLEN)'(0))) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[`XLEN-1:0] === {1'b0, {`XLEN-1{1'b1}}})) | 
+            (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[`XLEN-1:0] === {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
+            (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
       errors += 1;
       $display("There is an error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -923,18 +924,19 @@ module readvectors (
   output logic [`FLEN-1:0] Ans,
   output logic [`XLEN-1:0] SrcA,
   output logic [4:0] AnsFlg,
-  output logic                    XSgnE, YSgnE, ZSgnE,    // sign bits of XYZ
-  output logic [`NE-1:0]          XExpE, YExpE, ZExpE,    // exponents of XYZ (converted to largest supported precision)
-  output logic [`NF:0]            XManE, YManE, ZManE,    // mantissas of XYZ (converted to largest supported precision)
-  output logic                    XNaNE, YNaNE, ZNaNE,    // is XYZ a NaN
-  output logic                    XSNaNE, YSNaNE, ZSNaNE, // is XYZ a signaling NaN
-  output logic                    XDenormE, ZDenormE,   // is XYZ denormalized
-  output logic                    XZeroE, YZeroE, ZZeroE,         // is XYZ zero
-  output logic                    XInfE, YInfE, ZInfE,            // is XYZ infinity
-  output logic                    XExpMaxE,
+  output logic                    Xs, Ys, Zs,    // sign bits of XYZ
+  output logic [`NE-1:0]          Xe, Ye, Ze,    // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
+  output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
+  output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+  output logic                    XDenorm, ZDenorm,   // is XYZ denormalized
+  output logic                    XZero, YZero, ZZero,         // is XYZ zero
+  output logic                    XInf, YInf, ZInf,            // is XYZ infinity
+  output logic                    XExpMax,
   output logic                    DivStart,
   output logic [`FLEN-1:0] X, Y, Z
 );
+  logic XEn, YEn, ZEn;
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
@@ -1005,40 +1007,72 @@ module readvectors (
           end
         endcase
       `DIVUNIT:
-        case (Fmt)
-          2'b11: begin       // quad
-            X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
-            Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
-            Ans = TestVector[8+(`Q_LEN-1):8];
-            if (~clk) #5;
-            DivStart = 1'b1; #10 // one clk cycle
-            DivStart = 1'b0;
-          end
-          2'b01:	if (`D_SUPPORTED)begin	  // double
-            X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
-            Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
-            Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-          2'b00:	if (`S_SUPPORTED)begin	  // single
-            X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
-            Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
-            Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-          2'b10:	begin	  // half
-            X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
-            Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
-            Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
-            if (~clk) #5;
-            DivStart = 1'b1; #10
-            DivStart = 1'b0;
-          end
-        endcase
+        if(OpCtrl[0])
+          case (Fmt)
+            2'b11: begin       // quad
+              X = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+              Ans = TestVector[8+(`Q_LEN-1):8];
+              if (~clk) #5;
+              DivStart = 1'b1; #10 // one clk cycle
+              DivStart = 1'b0;
+            end
+            2'b01:	if (`D_SUPPORTED)begin	  // double
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b00:	if (`S_SUPPORTED)begin	  // single
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+          endcase
+        else
+          case (Fmt)
+            2'b11: begin       // quad
+              X = TestVector[8+3*(`Q_LEN)-1:8+2*(`Q_LEN)];
+              Y = TestVector[8+2*(`Q_LEN)-1:8+(`Q_LEN)];
+              Ans = TestVector[8+(`Q_LEN-1):8];
+              if (~clk) #5;
+              DivStart = 1'b1; #10 // one clk cycle
+              DivStart = 1'b0;
+            end
+            2'b01:	if (`D_SUPPORTED)begin	  // double
+              X = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+3*(`D_LEN)-1:8+2*(`D_LEN)]};
+              Y = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+2*(`D_LEN)-1:8+(`D_LEN)]};
+              Ans = {{`FLEN-`D_LEN{1'b1}}, TestVector[8+(`D_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b00:	if (`S_SUPPORTED)begin	  // single
+              X = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+3*(`S_LEN)-1:8+2*(`S_LEN)]};
+              Y = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+2*(`S_LEN)-1:8+1*(`S_LEN)]};
+              Ans = {{`FLEN-`S_LEN{1'b1}}, TestVector[8+(`S_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+            2'b10:	begin	  // half
+              X = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+3*(`H_LEN)-1:8+2*(`H_LEN)]};
+              Y = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+2*(`H_LEN)-1:8+(`H_LEN)]};
+              Ans = {{`FLEN-`H_LEN{1'b1}}, TestVector[8+(`H_LEN-1):8]};
+              if (~clk) #5;
+              DivStart = 1'b1; #10
+              DivStart = 1'b0;
+            end
+          endcase
       `CMPUNIT:
         case (Fmt)        
           2'b11: begin       // quad
@@ -1256,8 +1290,12 @@ module readvectors (
     endcase  
   end
   
-  unpack unpack(.X, .Y, .Z, .FmtE(ModFmt), .XSgnE, .YSgnE, .ZSgnE, .XExpE, .YExpE, .ZExpE,
-                .XManE, .YManE, .ZManE, .XNaNE, .YNaNE, .ZNaNE, .XSNaNE, .YSNaNE, .ZSNaNE,
-                .XDenormE, .ZDenormE, .XZeroE, .YZeroE, .ZZeroE, .XInfE, .YInfE, .ZInfE,
-                .XExpMaxE);
+  assign XEn = ~((Unit == `CVTINTUNIT)&OpCtrl[2]);
+  assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
+  assign ZEn = (Unit == `FMAUNIT);
+  
+  unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
+                .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
+                .XDenorm, .ZDenorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
+                .XEn, .YEn, .ZEn, .XExpMax);
 endmodule

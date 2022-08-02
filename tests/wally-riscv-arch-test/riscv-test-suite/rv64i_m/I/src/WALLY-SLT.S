@@ -19,6 +19,7 @@
 
 #include "model_test.h"
 #include "arch_test.h"
+RVTEST_ISA("RV64I")
 
 .section .text.init
 .globl rvtest_entry_point
@@ -27,6 +28,8 @@ RVMODEL_BOOT
 RVTEST_CODE_BEGIN
 
 RVTEST_SIGBASE( x6, wally_signature)
+
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",slt)
 
 # Testcase 0:  rs1:x18(0x0000000000000000), rs2:x9(0x0000000000000000), result rd:x5(0x0000000000000000)
 li x18, MASK_XLEN(0x0000000000000000)

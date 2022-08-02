@@ -93,7 +93,7 @@ module wallypipelinedcore (
   logic             FStallD;
   logic             FWriteIntE;
   logic [`XLEN-1:0]         FWriteDataE;
-  logic                     FLoad2;
+  logic                     FStore2;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
   logic [`XLEN-1:0]         FCvtIntResW;  
@@ -116,7 +116,6 @@ module wallypipelinedcore (
   logic [1:0]             PageType;
   logic              sfencevmaM, wfiM, IntPendingM;
   logic             SelHPTW;
-  logic [`XLEN/8-1:0] ByteMaskM;
 
 
   // PMA checker signals
@@ -259,14 +258,13 @@ module wallypipelinedcore (
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
   .FpLoadStoreM,
-  .FWriteDataM, .FLoad2,
+  .FWriteDataM, .FStore2,
   //.DataMisalignedM(DataMisalignedM),
   .IEUAdrE, .IEUAdrM, .WriteDataE,
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
-  .ByteMaskM,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -313,7 +311,6 @@ module wallypipelinedcore (
      .LSUTransComplete,
      .LSUBusAck,
      .LSUBusInit,
-     .ByteMaskM,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
@@ -400,7 +397,7 @@ module wallypipelinedcore (
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
-         .FLoad2,
+         .FStore2,
          .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory

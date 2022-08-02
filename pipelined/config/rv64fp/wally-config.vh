@@ -32,14 +32,14 @@
 `define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 64
+`define XLEN 32
 
 // IEEE 754 compliance
 `define IEEE754 0
 
 // MISA RISC-V configuration per specification
 //                    ZYXWVUTSRQPONMLKJIHGFEDCBA
-`define MISA 32'b0000000000101000001000100100101
+`define MISA 32'b0000000000101000001000100101101
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -137,5 +137,4 @@
 `define TESTSBP 0
 `define BPRED_SIZE 10
 
-`define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 0

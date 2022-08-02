@@ -33,47 +33,57 @@
 module srtfsm(
   input  logic clk, 
   input  logic reset, 
-  input logic [`DIVLEN+3:0] WSN, WCN, WS, WC,
+  input logic [`DIVb+3:0] NextWSN, NextWCN, WS, WC,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
   input  logic DivStart, 
-  input logic StallE,
-  input logic StallM,
-  input  logic [$clog2(`DIVLEN/2+3)-1:0] Dur,
-  output logic [$clog2(`DIVLEN/2+3)-1:0] EarlyTermShiftDiv2E,
-  output logic DivStickyE,
+  input  logic XsE,
+  input  logic SqrtE,
+  input  logic StallE,
+  input  logic StallM,
+  input  logic [`DIVb+3:0] StickyWSA,
+  input  logic [`DURLEN-1:0] Dur,
+  output logic [`DURLEN-1:0] EarlyTermShiftE,
+  output logic DivSE,
   output logic DivDone,
-  output logic DivNegStickyE,
+  output logic NegSticky,
   output logic DivBusy
   );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
-  logic [$clog2(`DIVLEN/2+3)-1:0] step;
+  logic [`DURLEN-1:0] step;
   logic WZero;
   //logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
-  logic [`DIVLEN+3:0] W;
+  logic [`DIVb+3:0] W;
 
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
-  assign WZero = ((WSN^WCN)=={WSN[`DIVLEN+2:0]|WCN[`DIVLEN+2:0], 1'b0});
-  assign DivStickyE = ~WZero;
+  assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0});
+  // calculate sticky bit
+  //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
+  //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
+  //      radix-4 division can't create a QM that continually adds 0's
+  if (`RADIX == 2)
+    assign DivSE = |W&~(StickyWSA == WS);
+  else
+    assign DivSE = |W;
   assign DivDone = (state == DONE);
   assign W = WC+WS;
-  assign DivNegStickyE = W[`DIVLEN+3]; //*** is there a better way to do this???
-  assign EarlyTermShiftDiv2E = step;
+  assign NegSticky = W[`DIVb+3];
+  assign EarlyTermShiftE = step;
 
   always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
           step <= Dur;
-          if (XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE) state <= #1 DONE;
+          if (XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE|(XsE&SqrtE)) state <= #1 DONE;
           else         state <= #1 BUSY;
       end else if (state == BUSY) begin
-          if ((~|step[$clog2(`DIVLEN/2+3)-1:1]&step[0])|WZero) begin
+          if ((~|step[`DURLEN-1:1]&step[0])|WZero) begin
               state <= #1 DONE;
           end
           step <= step - 1;
