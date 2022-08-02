@@ -77,8 +77,6 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
    (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
-   output logic [(`XLEN-1)/8:0]     ByteMaskM,
-
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
    input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -116,6 +114,7 @@ module lsu (
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [`XLEN-1:0]         WriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
+  logic [(`LLEN-1)/8:0]     ByteMaskM, FinalByteMaskM;
   
   // *** TO DO: Burst mode
 
@@ -205,22 +204,22 @@ module lsu (
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM(IEUWriteDataM), //*** fix the dtim FinalWriteData
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
   end 
   if (`DBUS) begin : bus  
     localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic [LOGWPL-1:0]   WordCount;
+    logic [LOGBWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .LSUBusWriteCrit,
@@ -240,10 +239,10 @@ module lsu (
       else
         assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount, .FStore2,
+        .ByteMask(FinalByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
@@ -277,7 +276,13 @@ module lsu (
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
+    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM);
+
+  // Compute byte masks
+  swbytemaskword #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  // *** fix when when fstore2 is valid.  I'm not sure this is even needed if LSUFunct3M can be 3'b100 for a 16 byte write.
+  //assign FinalByteMaskM = FStore2 ? '1 : ByteMaskM;
+  assign FinalByteMaskM = ByteMaskM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register

@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL, DCACHE) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, DCACHE) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
@@ -41,9 +41,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic                 InvalidateCache,
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
-  input logic [(`XLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]     FinalWriteData,
-  input logic                        FStore2,
+  input logic [(WORDLEN-1)/8:0] ByteMask,
+  input logic [WORDLEN-1:0]   FinalWriteData,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
@@ -58,7 +57,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
-  input logic [LOGWPL-1:0]    WordCount,
+  input logic [LOGBWPL-1:0]    WordCount,
   input logic                 LSUBusWriteCrit, 
   output logic [`PA_BITS-1:0] CacheBusAdr,
   input logic [LINELEN-1:0]   CacheBusWriteData,
@@ -110,8 +109,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic                       SelBusBuffer;
   logic                       SRAMEnable;
 
-  localparam                  LOGXLENBYTES = $clog2(`XLEN/8);
-  logic [2**LOGWPL-1:0]       MemPAdrDecoded;
+  localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
+  localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
+  localparam                  LOGCWPL = $clog2(CACHEWORDSPERLINE);
+  logic [CACHEWORDSPERLINE-1:0] MemPAdrDecoded;
   logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, LineByteMux;
   genvar                      index;
   
@@ -127,7 +128,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCache));
@@ -145,14 +146,14 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // like to fix this.
   if(DCACHE) 
-    mux2 #(LOGWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
+    mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
       .d1(WordCount), .s(LSUBusWriteCrit),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-  mux2 #(LINELEN) EarlyReturnBuf(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
+  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
 
-  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
+  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
     .PAdr(WordOffsetAddr),
     .ReadDataLine, .ReadDataWord);
   
@@ -162,18 +163,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [LINELEN-1:0] FinalWriteDataDup;
   assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
 
-  if(`LLEN>`XLEN)begin 
-    logic [2**LOGWPL-1:0] MemPAdrDecodedtmp;
-    onehotdecoder #(LOGWPL) adrdec(
-      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecodedtmp));
-    assign MemPAdrDecoded = MemPAdrDecodedtmp|{MemPAdrDecodedtmp[2**LOGWPL-2:0]&{2**LOGWPL-1{FStore2}}, 1'b0};
-  end else
-    onehotdecoder #(LOGWPL) adrdec(
-      .bin(PAdr[LOGWPL+LOGXLENBYTES-1:LOGXLENBYTES]), .decoded(MemPAdrDecoded));
-  for(index = 0; index < 2**LOGWPL; index++) begin
-    assign DemuxedByteMask[(index+1)*(`XLEN/8)-1:index*(`XLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+  onehotdecoder #(LOGCWPL) adrdec(
+    .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
+  for(index = 0; index < 2**LOGCWPL; index++) begin
+    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
   end
-  
+
   assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 

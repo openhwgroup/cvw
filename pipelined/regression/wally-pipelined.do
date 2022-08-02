@@ -38,7 +38,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829  -fatal 7
 
     #-- Run the Simulation
-    run -all
+    #run -all
     add log -recursive /*
     do linux-wave.do
     run -all
