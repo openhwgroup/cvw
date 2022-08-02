@@ -196,13 +196,13 @@ module ifu (
   if (`IBUS) begin : bus
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   LOGBWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
     logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .LSUBusWriteCrit(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
@@ -222,7 +222,7 @@ module ifu (
     if(CACHE_ENABLED) begin : icache
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-              .NUMWAYS(`ICACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
+              .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM(TrapM), .IgnoreRequestTrapM('0),
              .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 

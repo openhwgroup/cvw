@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL, LOGWPL)(
+module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
   input logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0]   PAdr,
   input logic [LINELEN-1:0]  ReadDataLine,
   output logic [WORDLEN-1:0] ReadDataWord);
