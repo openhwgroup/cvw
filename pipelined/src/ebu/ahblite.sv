@@ -157,7 +157,7 @@ module ahblite (
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // Byte mask for HWSTRB
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
+  swbytemask #(`XLEN) swbytemask(.Size(HSIZED[2:0]), .Adr(HADDRD[$clog2(`XLEN/8)-1:0]), .ByteMask(HWSTRB));
 
   // delay write data by one cycle for
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
