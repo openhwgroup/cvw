@@ -9,16 +9,16 @@
 00000000 # stval of faulting instruction (0x0)
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000003 # scause from Breakpoint
-80000168 # stval of breakpoint instruction adress
+8000015c # stval of breakpoint instruction adress
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000004 # scause from load address misaligned
-80000171 # stval of misaligned address
+80000165 # stval of misaligned address
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000005 # scause from load access
 00000000 # stval of accessed adress (0x0)
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000006 # scause from store misaligned
-80000189 # stval of address with misaligned store instr
+8000017d # stval of address with misaligned store instr
 00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
 00000007 # scause from store access
 00000000 # stval of accessed address (0x0)
@@ -64,16 +64,16 @@ fffff7ff # medeleg after attempted write of all 1's (only some bits are writeabl
 00000000 # stval of faulting instruction (0x0)
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000003 # scause from Breakpoint
-80000168 # stval of breakpoint instruction adress
+8000015c # stval of breakpoint instruction adress
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000004 # scause from load address misaligned
-80000171 # stval of misaligned address
+80000165 # stval of misaligned address
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000005 # scause from load access
 00000000 # stval of accessed adress (0x0)
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000006 # scause from store misaligned
-80000189 # stval of address with misaligned store instr
+8000017d # stval of address with misaligned store instr
 00000120 # masked out sstatus.SPP = 1, sstatus.SPIE = 1, and sstatus.SIE = 0
 00000007 # scause from store access
 00000000 # stval of accessed address (0x0)

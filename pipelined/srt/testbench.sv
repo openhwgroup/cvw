@@ -1,4 +1,4 @@
-`define DIVLEN 64
+`include "wally-config.vh"
 
 /////////////
 // counter //
@@ -39,37 +39,26 @@ endmodule
 // testbench //
 //////////
 module testbench;
-  logic              clk;
-  logic              req;
-  logic              done;
-  logic              Int;
-  logic [63:0]       a, b;
-  logic [51:0]       afrac, bfrac;
-  logic [10:0]       aExp, bExp;
-  logic              asign, bsign;
-  logic [51:0]       r;
-  logic [63:0]       rInt;
-  logic [`DIVLEN-1:0]  Quot;
+  logic               clk;
+  logic               req;
+  logic               done;
+  logic               Int, Sqrt, Mod;
+  logic [`XLEN-1:0]   a, b;
+  logic [`NF-1:0]     afrac, bfrac;
+  logic [`NE-1:0]     aExp, bExp;
+  logic               asign, bsign;
+  logic [`NF-1:0]     r;
+  logic [`XLEN-1:0]   rInt;
+  logic [`DIVLEN-1:0] Quot;
  
   // Test parameters
   parameter MEM_SIZE = 40000;
-  parameter MEM_WIDTH = 64+64+64+64;
+  parameter MEM_WIDTH = 64+64+64;
  
-  // INT TEST SIZES
-  // `define memrem  63:0 
-  // `define memr  127:64
-  // `define memb  191:128
-  // `define mema  255:192
-
-  // FLOAT TEST SIZES
-  // `define memr  63:0 
-  // `define memb  127:64
-  // `define mema  191:128
-
-  // SQRT TEST SIZES 
+  // Test sizes
   `define memr  63:0 
-  `define mema  127:64
-  `define memb  191:128
+  `define memb  127:64
+  `define mema  191:128
 
   // Test logicisters
   logic [MEM_WIDTH-1:0] Tests [0:MEM_SIZE];  // Space for input file
@@ -80,8 +69,9 @@ module testbench;
   logic        rsign;
   integer testnum, errors;
 
-  // Equip Int test or Sqrt test
-  assign Int = 1'b0;
+  // Equip Int, Sqrt, or IntMod test
+  assign Int =  1'b0;
+  assign Mod =  1'b0;
   assign Sqrt = 1'b1;
 
   // Divider
@@ -91,8 +81,8 @@ module testbench;
                 .XSign(asign), .YSign(bsign), .rsign,
                 .SrcXFrac(afrac), .SrcYFrac(bfrac), 
                 .SrcA(a), .SrcB(b), .Fmt(2'b00), 
-                .W64(1'b1), .Signed(1'b0), .Int, .Sqrt, 
-                .Quot, .Rem(), .Flags(), .done);
+                .W64(1'b1), .Signed(1'b0), .Int, .Mod, .Sqrt, 
+                .Result(Quot), .Flags(), .done);
 
   // Counter
   // counter counter(clk, req, done);
@@ -118,7 +108,7 @@ module testbench;
       b = Vec[`memb];
       {bsign, bExp, bfrac} = b;
       nextr = Vec[`memr];
-      r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
+      r = Quot[(`DIVLEN - 2):(`DIVLEN - `NF - 1)];
       rInt = Quot;
       req <= #5 1;
     end
@@ -126,10 +116,10 @@ module testbench;
   // Apply directed test vectors read from file.
 
   always @(posedge clk) begin
-    r = Quot[(`DIVLEN - 1):(`DIVLEN - 52)];
+    r = Quot[(`DIVLEN - 2):(`DIVLEN - `NF - 1)];
     rInt = Quot;
     if (done) begin
-      if (~Int & ~Sqrt) begin
+      if (~Int & ~Sqrt) begin // This test case checks floating point division
         req <= #5 1;
         diffp = correctr[51:0] - r;
         diffn = r - correctr[51:0];
@@ -145,35 +135,32 @@ module testbench;
             $display("%d Tests completed successfully", testnum);
             $stop;
           end
-      end else if (~Sqrt) begin
+      end else if (~Sqrt) begin // This test case works for both integer divide and integer modulo
         req <= #5 1;
         diffp = correctr[63:0] - rInt;
-        diffn = rInt - correctr[63:0];
-        if (($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
+        if (($signed(diffp) != 0) | (diffp === 64'bx)) // check if accurate to 1 ulp
           begin
             errors = errors+1;
-            $display("result was %h, should be %h %h %h\n", rInt, correctr, diffn, diffp);
+            $display("result was %h, should be %h %h\n", rInt, correctr, diffp);
             $display("failed\n");
-            $stop;
           end
         if (afrac === 52'hxxxxxxxxxxxxx)
         begin
-          $display("%d Tests completed successfully", testnum);
+          $display("%d Tests completed successfully", testnum - errors);
           $stop;
         end
-      end else begin 
+      end else begin // This test case verifies square root
         req <= #5 1;
         diffp = correctr[51:0] - r;
         diffn = r - correctr[51:0];
-        if (rExp !== correctr[62:52]) // check if accurate to 1 ulp
+        if ((rExp !== correctr[62:52]) | ($signed(diffn) > 1) | ($signed(diffp) > 1) | (diffn === 64'bx) | (diffp === 64'bx)) // check if accurate to 1 ulp
           begin
             errors = errors + 1;
             $display("result was %h, should be %h %h %h\n", r, correctr, diffn, diffp);
             $display("failed\n");
-            $stop;
           end
         if (afrac === 52'hxxxxxxxxxxxxx) begin 
-          $display("%d Tests completed successfully", testnum);
+          $display("%d Tests completed successfully", testnum-errors);
           $stop; end 
       end
     end

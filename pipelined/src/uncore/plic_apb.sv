@@ -172,8 +172,8 @@ module plic_apb (
   end
 
   // pending interrupt requests
-  //assign nextIntPending = (intPending | requests) & ~intInProgress; // 
-  assign nextIntPending = requests; // DH: RT made this change May 2022, but it seems to be a bug to not consider intInProgress; see May 23, 2022 slack discussion
+  assign nextIntPending = (intPending | requests) & ~intInProgress; // dh changed back 7/9/22 see if Buildroot still boots.  Confirmed to boot successfully.
+  //assign nextIntPending = requests; // DH: RT made this change May 2022, but it seems to be a bug to not consider intInProgress; see May 23, 2022 slack discussion
   flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 
   // context-dependent signals

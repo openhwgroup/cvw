@@ -34,13 +34,8 @@ module subwordwrite (
   input logic [2:0]          LSUPAdrM,
   input logic [2:0]          LSUFunct3M,
   input logic [`XLEN-1:0]    AMOWriteDataM,
-  output logic [`XLEN-1:0]   LittleEndianWriteDataM,
-  output logic [`XLEN/8-1:0] ByteMaskM
-);
+  output logic [`XLEN-1:0]   LittleEndianWriteDataM);
 
-  // Compute byte masks
-  swbytemask swbytemask(.Size(LSUFunct3M[1:0]), .Adr(LSUPAdrM), .ByteMask(ByteMaskM));
-  
   // Replicate data for subword writes
   if (`XLEN == 64) begin:sww
     always_comb 

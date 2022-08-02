@@ -29,17 +29,17 @@
 
 `include "wally-config.vh"
 
-module resultselect(
+module specialcase(
     input logic                 Xs,        // input signs
     input logic  [`NF:0]        Xm, Ym, Zm, // input mantissas
     input logic                 XNaN, YNaN, ZNaN,    // inputs are NaN
     input logic  [2:0]          Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic  [`FMTBITS-1:0] OutFmt,       // output format
     input logic                 InfIn,
+    input logic                 NaNIn,
     input logic                 XInf, YInf,
     input logic                 XZero,
     input logic                 IntZero,
-    input logic                 NaNIn,
     input logic                 IntToFp,
     input logic                 Int64,
     input logic                 Signed,
@@ -53,10 +53,10 @@ module resultselect(
     input logic                 IntInvalid, Invalid, Overflow,  // flags
     input logic                 CvtResUf,
     input logic  [`NE-1:0]      Re,          // Res exponent
-    input logic  [`NE+1:0]      FullResExp,          // Res exponent
+    input logic  [`NE+1:0]      FullRe,          // Res exponent
     input logic  [`NF-1:0]      Rf,         // Res fraction
     input logic  [`XLEN+1:0]    CvtNegRes,     // the negation of the result
-    output logic [`FLEN-1:0]    W,     // final res
+    output logic [`FLEN-1:0]    PostProcRes,     // final res
     output logic [`XLEN-1:0]    FCvtIntRes     // final res
 );
     logic [`FLEN-1:0]   XNaNRes, YNaNRes, ZNaNRes, InvalidRes, OfRes, UfRes, NormRes; // possible results
@@ -95,9 +95,14 @@ module resultselect(
         end else begin 
             assign InvalidRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
         end
-        
-        assign OfRes =  OutFmt ? OfResMax ? {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Ws, {`NE{1'b1}}, {`NF{1'b0}}} :
-                               OfResMax ? {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1{1'b1}}, (`NF1)'(0)};
+
+        always_comb
+            if(OutFmt)
+                if(OfResMax)    OfRes = {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}};
+                else            OfRes = {Ws, {`NE{1'b1}}, {`NF{1'b0}}};
+            else
+                if(OfResMax)    OfRes = {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}};
+                else            OfRes = {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1{1'b1}}, (`NF1)'(0)};
         assign UfRes = OutFmt ? {Ws, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)} : {{`FLEN-`LEN1{1'b1}}, Ws, (`LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
         assign NormRes = OutFmt ? {Ws, Re, Rf} : {{`FLEN-`LEN1{1'b1}}, Ws, Re[`NE1-1:0], Rf[`NF-1:`NF-`NF1]};
 
@@ -231,23 +236,24 @@ module resultselect(
     //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullResExp[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResDenorm & (Re!=1);
+    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResDenorm & (Re!=1);
     assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInf&DivOp));
     // output infinity with result sign if divide by zero
-    if(`IEEE754) begin
-        assign W = XNaN&~(IntToFp&CvtOp) ? XNaNRes :
-                         YNaN&~CvtOp ? YNaNRes :
-                         ZNaN&FmaOp ? ZNaNRes :
-                         Invalid ? InvalidRes : 
-                         SelOfRes ? OfRes :
-                         KillRes ? UfRes :  
-                         NormRes;
-    end else begin
-        assign W = NaNIn|Invalid ? InvalidRes :
-                         SelOfRes ? OfRes :
-                         KillRes ? UfRes :  
-                         NormRes;
-    end
+    if(`IEEE754)
+        always_comb
+            if(XNaN&~(IntToFp&CvtOp))   PostProcRes = XNaNRes;
+            else if(YNaN&~CvtOp)        PostProcRes = YNaNRes;
+            else if(ZNaN&FmaOp)         PostProcRes = ZNaNRes;
+            else if(Invalid)            PostProcRes = InvalidRes;
+            else if(SelOfRes)           PostProcRes = OfRes;
+            else if(KillRes)            PostProcRes = UfRes;
+            else                        PostProcRes = NormRes;
+    else
+        always_comb
+            if(NaNIn|Invalid)           PostProcRes = InvalidRes;
+            else if(SelOfRes)           PostProcRes = OfRes;
+            else if(KillRes)            PostProcRes = UfRes;
+            else                        PostProcRes = NormRes;
 
     ///////////////////////////////////////////////////////////////////////////////////////
     //
@@ -272,10 +278,17 @@ module resultselect(
     //        unsigned | 2^32-1 | 2^64-1 |
     //
     //      other: 32 bit unsinged res should be sign extended as if it were a signed number
-    assign OfIntRes = Signed ? Xs&~XNaN ? Int64 ? {1'b1, {`XLEN-1{1'b0}}} : {{`XLEN-32{1'b1}}, 1'b1, {31{1'b0}}} : // signed negitive
-                                              Int64 ? {1'b0, {`XLEN-1{1'b1}}} : {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}} : // signed positive
-                               Xs&~XNaN ? {`XLEN{1'b0}} : // unsigned negitive
-                                              {`XLEN{1'b1}};// unsigned positive
+    always_comb
+        if(Signed)
+            if(Xs&~NaNIn)    // signed negitive
+                if(Int64)   OfIntRes = {1'b1, {`XLEN-1{1'b0}}};
+                else        OfIntRes = {{`XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
+            else            // signed positive
+                if(Int64)   OfIntRes = {1'b0, {`XLEN-1{1'b1}}};
+                else        OfIntRes = {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
+        else
+            if(Xs&~NaNIn)    OfIntRes = {`XLEN{1'b0}}; // unsigned negitive
+            else            OfIntRes = {`XLEN{1'b1}}; // unsigned positive
 
 
     // select the integer output
@@ -284,7 +297,11 @@ module resultselect(
     //          - if rounding and signed opperation and negitive input, output -1
     //          - otherwise output a rounded 0
     //      - otherwise output the normal res (trmined and sign extended if nessisary)
-    assign FCvtIntRes = IntInvalid ?  OfIntRes :
-			            CvtCe[`NE] ? Xs&Signed&Plus1 ? {{`XLEN{1'b1}}} : {{`XLEN-1{1'b0}}, Plus1} : //CalcExp has to come after invalid ***swap to actual mux at some point??
-                        Int64 ? CvtNegRes[`XLEN-1:0] : {{`XLEN-32{CvtNegRes[31]}}, CvtNegRes[31:0]};
+    always_comb
+        if(IntInvalid)          FCvtIntRes = OfIntRes;
+        else if(CvtCe[`NE]) 
+            if(Xs&Signed&Plus1) FCvtIntRes = {{`XLEN{1'b1}}};
+            else                FCvtIntRes = {{`XLEN-1{1'b0}}, Plus1};
+        else if(Int64)          FCvtIntRes = CvtNegRes[`XLEN-1:0];
+        else                    FCvtIntRes = {{`XLEN-32{CvtNegRes[31]}}, CvtNegRes[31:0]};
 endmodule

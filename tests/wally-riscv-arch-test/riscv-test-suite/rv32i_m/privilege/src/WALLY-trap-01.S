@@ -23,6 +23,9 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",trap)
+
 INIT_TESTS
 
 CAUSE_TRAP_TRIGGERS // initialize code that will cause traps for consistent mtval addresses
@@ -48,7 +51,7 @@ GOTO_S_MODE // Causes U mode ecall
 GOTO_M_MODE // Causes S mode ecall
 
 
-jal cause_s_soft_interrupt 
+jal cause_s_soft_from_m_interrupt 
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt
 jal cause_m_time_interrupt
@@ -70,14 +73,11 @@ jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall // M mode ecall
 
-jal cause_s_soft_interrupt // The delegated S mode interrupts should not fire since we're running in M mode.
+jal cause_s_soft_from_m_interrupt // The delegated S mode interrupts should not fire since we're running in M mode.
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt 
 jal cause_m_time_interrupt
-li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
-// since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
 jal cause_s_ext_interrupt_GPIO
-li a3, 0x40
 jal cause_m_ext_interrupt
 
 

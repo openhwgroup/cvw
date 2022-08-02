@@ -51,7 +51,7 @@ lappend search_path ./mapped
 
 # Set up User Information
 set company "Oklahoma State University"
-set user    "James E. Stine"
+set user    "Prof. James E. Stine"
 
 # Alias
 alias ra report_area

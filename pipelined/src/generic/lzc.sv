@@ -34,7 +34,7 @@ module lzc #(parameter WIDTH = 1) (
 /* verilator lint_off CMPCONST */
 /* verilator lint_off WIDTH */
     
-    int i;
+    logic [31:0] i;
     always_comb begin
         i = 0;
         while (~num[WIDTH-1-i] & (i < WIDTH)) i = i+1;  // search for leading one

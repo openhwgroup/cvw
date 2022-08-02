@@ -23,6 +23,9 @@
 
 #include "WALLY-TEST-LIB-32.h" 
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;",csr-permission-u)
+
 INIT_TESTS
 
 TRAP_HANDLER m

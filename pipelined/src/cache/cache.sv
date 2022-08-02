@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTERVAL, DCACHE) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, DCACHE) (
   input logic                 clk,
   input logic                 reset,
    // cpu side
@@ -38,14 +38,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   input logic [1:0]           RW,
   input logic [1:0]           Atomic,
   input logic                 FlushCache,
-  input logic                 InvalidateCacheM,
+  input logic                 InvalidateCache,
   input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]  PAdr, // physical address
-  input logic [(`XLEN-1)/8:0] ByteMask,
-  input logic [`XLEN-1:0]     FinalWriteData,
-  input logic [`FLEN-1:0]     FWriteDataM,
-  input logic                        FLoad2,
-  input logic                 FpLoadStoreM,
+  input logic [(WORDLEN-1)/8:0] ByteMask,
+  input logic [WORDLEN-1:0]   FinalWriteData,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
@@ -60,7 +57,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   output logic                CacheFetchLine,
   output logic                CacheWriteLine,
   input logic                 CacheBusAck,
-  input logic [LOGWPL-1:0]    WordCount,
+  input logic [LOGBWPL-1:0]    WordCount,
   input logic                 LSUBusWriteCrit, 
   output logic [`PA_BITS-1:0] CacheBusAdr,
   input logic [LINELEN-1:0]   CacheBusWriteData,
@@ -72,7 +69,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   localparam                  SETLEN = $clog2(NUMLINES);
   localparam                  SETTOP = SETLEN+OFFSETLEN;
   localparam                  TAGLEN = `PA_BITS - SETTOP;
-  localparam                  WORDSPERLINE = LINELEN/`XLEN;
+  localparam                  WORDSPERLINE = LINELEN/WORDLEN;
   localparam                  FlushAdrThreshold   = NUMLINES - 1;
 
   logic                       SelAdr;
@@ -81,7 +78,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic                       ClearValid;
   logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]         HitWay, HitWaySaved, HitWayFinal;
+  logic [NUMWAYS-1:0]         HitWay;
   logic                       CacheHit;
   logic                       SetDirty;
   logic                       SetValid;
@@ -107,9 +104,17 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [1:0]                 CacheRW, CacheAtomic;
-  logic [LINELEN-1:0]         ReadDataLine;
+  logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
-  logic                       save, restore;
+  logic                       SelBusBuffer;
+  logic                       SRAMEnable;
+
+  localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
+  localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
+  localparam                  LOGCWPL = $clog2(CACHEWORDSPERLINE);
+  logic [CACHEWORDSPERLINE-1:0] MemPAdrDecoded;
+  logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, LineByteMux;
+  genvar                      index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -123,51 +128,56 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .RAdr, .PAdr, .CacheWriteData, .ByteMask, .FLoad2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
-    .Invalidate(InvalidateCacheM));
+    .Invalidate(InvalidateCache));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .HitWay(HitWayFinal), .VictimWay, .RAdr, .LRUWriteEn);
+      .clk, .reset, .HitWay, .VictimWay, .RAdr, .LRUWriteEn);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
-  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLine));
+  or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineCache));
   or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
-
-  // Because of the sram clocked read when the ieu is stalled the read data maybe lost.
-  // There are two ways to resolve. 1. We can replay the read of the sram or we can save
-  // the data.  Replay is eaiser but creates a longer critical path.
-  // save/restore only wayhit and readdata.
-  if(!`REPLAY) begin
-    flopenr #(NUMWAYS) wayhitsavereg(clk, save, reset, HitWay, HitWaySaved);
-    mux2 #(NUMWAYS) saverestoremux(HitWay, HitWaySaved, restore, HitWayFinal);
-  end else assign HitWayFinal = HitWay;
 
   // like to fix this.
   if(DCACHE) 
-    mux2 #(LOGWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
+    mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
       .d1(WordCount), .s(LSUBusWriteCrit),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL, LOGWPL) subcachelineread(
-    .clk, .reset, .PAdr(WordOffsetAddr), .save, .restore,
+  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
+
+  subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
+    .PAdr(WordOffsetAddr),
     .ReadDataLine, .ReadDataWord);
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  if (`LLEN>`XLEN)
-    mux3 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-      .d1({WORDSPERLINE/2{FWriteDataM}}),	.d2(CacheBusWriteData),	.s({SetValid,FpLoadStoreM&~SetValid}), .y(CacheWriteData));
-  else
-    mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-      .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
+  logic [LINELEN-1:0] FinalWriteDataDup;
+  assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
+
+  onehotdecoder #(LOGCWPL) adrdec(
+    .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
+  for(index = 0; index < 2**LOGCWPL; index++) begin
+    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+  end
+
+  assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+  assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
+
+  for(index = 0; index < LINELEN/8; index++) begin
+    mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
+      .d1(CacheBusWriteData[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+  end
+  //mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
+//  .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),
@@ -191,7 +201,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
-  mux3 #(NUMWAYS) selectwaymux(HitWayFinal, VictimWay, FlushWay, 
+  mux3 #(NUMWAYS) selectwaymux(HitWay, VictimWay, FlushWay, 
     {SelFlush, SetValid}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
@@ -210,7 +220,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGWPL, WORDLEN, MUXINTER
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache,
-        .save, .restore,
+		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
+        .InvalidateCache,
+        .SRAMEnable,
         .LRUWriteEn);
 endmodule 

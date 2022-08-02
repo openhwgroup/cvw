@@ -58,7 +58,7 @@ module lsu (
    input logic              sfencevmaM,
    // fpu
    input logic [`FLEN-1:0]  FWriteDataM,
-   input logic              FLoad2,
+   input logic              FStore2,
    input logic              FpLoadStoreM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
@@ -77,8 +77,6 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
    (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
-   output logic [(`XLEN-1)/8:0]     ByteMaskM,
-
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
    input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -116,6 +114,7 @@ module lsu (
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [`XLEN-1:0]         WriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
+  logic [(`LLEN-1)/8:0]     ByteMaskM, FinalByteMaskM;
   
   // *** TO DO: Burst mode
 
@@ -192,7 +191,8 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    AMOWriteDataM, FinalWriteDataM, LittleEndianWriteDataM;
+  logic [`XLEN-1:0]    AMOWriteDataM, IEUWriteDataM, LittleEndianWriteDataM;
+  logic [`LLEN-1:0]    FinalWriteDataM;
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`LLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -202,24 +202,24 @@ module lsu (
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
-    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM, 
+    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM(IEUWriteDataM), //*** fix the dtim FinalWriteData
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM, .Cacheable(CacheableM),
+              .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
   end 
   if (`DBUS) begin : bus  
     localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  DCacheBusWriteData;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
     logic                DCacheBusAck;
-    logic [LOGWPL-1:0]   WordCount;
+    logic [LOGBWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .LSUBusWriteCrit,
@@ -230,21 +230,25 @@ module lsu (
 
     mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DCacheBusWriteData[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(FinalWriteDataM),
+    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     
     if(CACHE_ENABLED) begin : dcache
+      if (`LLEN>`XLEN)
+        mux2 #(`LLEN) datamux({IEUWriteDataM, IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
+      else
+        assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount, .FpLoadStoreM, .FWriteDataM, .FLoad2,
+        .ByteMask(FinalByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
-        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCacheM(1'b0));
+        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
     end else begin : passthrough
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
@@ -272,7 +276,13 @@ module lsu (
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM, .ByteMaskM);
+    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM);
+
+  // Compute byte masks
+  swbytemaskword #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  // *** fix when when fstore2 is valid.  I'm not sure this is even needed if LSUFunct3M can be 3'b100 for a 16 byte write.
+  //assign FinalByteMaskM = FStore2 ? '1 : ByteMaskM;
+  assign FinalByteMaskM = ByteMaskM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register
@@ -286,10 +296,10 @@ module lsu (
   //  swap the bytes when read from big-endian memory
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`BIGENDIAN_SUPPORTED) begin:endian
-    bigendianswap #(`XLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(FinalWriteDataM));
+    bigendianswap #(`XLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(IEUWriteDataM));
     bigendianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordM), .y(LittleEndianReadDataWordM));
   end else begin
-    assign FinalWriteDataM = LittleEndianWriteDataM;
+    assign IEUWriteDataM = LittleEndianWriteDataM;
     assign LittleEndianReadDataWordM = ReadDataWordM;
   end
 

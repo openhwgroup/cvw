@@ -19,12 +19,15 @@
 
 #include "model_test.h"
 #include "arch_test.h"
+RVTEST_ISA("RV32I")
 
 .section .text.init
 .globl rvtest_entry_point
 rvtest_entry_point:
 RVMODEL_BOOT
 RVTEST_CODE_BEGIN
+
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",sub)
 
 RVTEST_SIGBASE( x6, wally_signature)
 

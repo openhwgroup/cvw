@@ -108,7 +108,7 @@ class spike(pluginTemplate):
 
       #TODO: The following assumes you are using the riscv-gcc toolchain. If
       #      not please change appropriately
-      self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else 'ilp32 ')
+      self.compile_cmd = self.compile_cmd+' -mabi='+('lp64 ' if 64 in ispec['supported_xlen'] else ('ilp32e ' if "E" in ispec["ISA"] else 'ilp32 '))
 
     def runTests(self, testList):
 
@@ -151,14 +151,19 @@ class spike(pluginTemplate):
 
           # substitute all variables in the compile command that we created in the initialize
           # function
-          cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen, test, elf, compile_macros)
+          cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 2), self.xlen, test, elf, compile_macros)
 
 	  # if the user wants to disable running the tests and only compile the tests, then
 	  # the "else" clause is executed below assigning the sim command to simple no action
 	  # echo statement.
           if self.target_run:
             # set up the simulation command. Template is for spike. Please change.
-            simcmd = self.dut_exe + ' --isa={0} +signature={1} +signature-granularity=4 {2}'.format(self.isa, sig_file, elf)
+            if ('NO_SAIL=True' in testentry['macros']):
+                # if the tests can't run on SAIL we copy the reference output to the src directory
+                reference_output = re.sub("/src/","/references/", re.sub(".S",".reference_output", test))
+                simcmd = 'cut -c-{0:g} {1} > {2}'.format(8, reference_output, sig_file) #use cut to remove comments when copying
+            else:
+                simcmd = self.dut_exe + ' --isa={0} +signature={1} +signature-granularity=4 {2}'.format(self.isa, sig_file, elf)
           else:
             simcmd = 'echo "NO RUN"'
 
@@ -175,7 +180,10 @@ class spike(pluginTemplate):
 
       # once the make-targets are done and the makefile has been created, run all the targets in
       # parallel using the make command set above.
-      make.execute_all(self.work_dir)
+      #make.execute_all(self.work_dir)
+      # DH 7/26/22 increase timeout to 1800 seconds so sim will finish on slow machines
+      make.execute_all(self.work_dir, timeout = 1800) 
+
 
       # if target runs are not required then we simply exit as this point after running all
       # the makefile targets.
