@@ -13,12 +13,6 @@ def runSynth(config, tech, freq, maxopt):
 def mask(command):
     subprocess.Popen(command, shell=True)
 
-def freshStart():
-    out = subprocess.check_output(['bash','-c', 'make fresh'])
-    for x in out.decode("utf-8").split('\n')[:-1]:
-        print(x)
-    return
-
 
 if __name__ == '__main__':
     
@@ -48,17 +42,14 @@ if __name__ == '__main__':
     if args.freqsweep:
         sc = args.freqsweep
         config = args.version if args.version else 'rv32e'
-        freshStart()
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
             runSynth(config, tech, freq, maxopt)
     if args.configsweep:
-        freshStart()
         for config in ['rv32gc', 'rv32ic', 'rv64gc', 'rv64ic', 'rv32e']: # configs
             config = config + '_orig' # until memory integrated
             runSynth(config, tech, freq, maxopt)
     if args.featuresweep:
-        freshStart()
         v = args.version if args.version else 'rv64gc'
-        for mod in ['FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations
+        for mod in ['orig', 'FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations
             config = v + '_' + mod
             runSynth(config, tech, freq, maxopt)
