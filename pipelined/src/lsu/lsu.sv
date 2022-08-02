@@ -114,7 +114,7 @@ module lsu (
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [`XLEN-1:0]         WriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
-  logic [(`LLEN-1)/8:0]     ByteMaskM;
+  logic [(`LLEN-1)/8:0]     ByteMaskM, FinalByteMaskM;
   
   // *** TO DO: Burst mode
 
@@ -242,7 +242,7 @@ module lsu (
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(ByteMaskM), .WordCount, .FStore2,
+        .ByteMask(FinalByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
@@ -279,7 +279,10 @@ module lsu (
     .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
-  swbytemask #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  swbytemaskword #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  // *** fix when when fstore2 is valid.  I'm not sure this is even needed if LSUFunct3M can be 3'b100 for a 16 byte write.
+  //assign FinalByteMaskM = FStore2 ? '1 : ByteMaskM;
+  assign FinalByteMaskM = ByteMaskM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register

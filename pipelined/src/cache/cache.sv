@@ -43,7 +43,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic [`PA_BITS-1:0]  PAdr, // physical address
   input logic [(WORDLEN-1)/8:0] ByteMask,
   input logic [WORDLEN-1:0]   FinalWriteData,
-  input logic                 FStore2,
   output logic                CacheCommitted,
   output logic                CacheStall,
    // to performance counters to cpu
@@ -129,7 +128,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask, .FStore2,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
     .Invalidate(InvalidateCache));
@@ -169,7 +168,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   for(index = 0; index < 2**LOGCWPL; index++) begin
     assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
   end
-  // *** have to add back in fstore2
   assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 
