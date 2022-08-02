@@ -126,10 +126,16 @@ module busfsm #(parameter integer   WordCountThreshold,
                                      else                            BusNextState = STATE_BUS_READY;
 	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                     BusNextState = STATE_BUS_CPU_BUSY;
                                      else                            BusNextState = STATE_BUS_READY;
-      STATE_BUS_FETCH:           if (WordCountFlag & LSUBusAck)      BusNextState = STATE_BUS_READY;
-	                             else                                BusNextState = STATE_BUS_FETCH;
-      STATE_BUS_WRITE:           if(WordCountFlag & LSUBusAck)       BusNextState = STATE_BUS_READY;
-	                             else                                BusNextState = STATE_BUS_WRITE;
+      STATE_BUS_FETCH:           if (WordCountFlag & LSUBusAck) begin
+                                   if (DCacheFetchLine)  BusNextState = STATE_BUS_FETCH;
+                                   else if (DCacheWriteLine)  BusNextState = STATE_BUS_WRITE;
+                                   else BusNextState = STATE_BUS_READY;
+	                             end else                            BusNextState = STATE_BUS_FETCH;
+      STATE_BUS_WRITE:           if(WordCountFlag & LSUBusAck) begin
+                                   if (DCacheFetchLine)  BusNextState = STATE_BUS_FETCH;
+                                   else if (DCacheWriteLine)  BusNextState = STATE_BUS_WRITE;
+                                   else  BusNextState = STATE_BUS_READY;
+                                 end else                                BusNextState = STATE_BUS_WRITE;
 	  default:                                                       BusNextState = STATE_BUS_READY;
 	endcase
   end
