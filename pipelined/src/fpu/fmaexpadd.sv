@@ -36,7 +36,10 @@ module fmaexpadd(
     output logic [`NE+1:0]      Pe       // product's exponent B^(1023)NE+2
 );
 
+   logic 			PZero;
+   
     // kill the exponent if the product is zero - either X or Y is 0
-    assign Pe = ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)})&{`NE+2{~(XZero|YZero)}};
+   assign PZero = XZero | YZero;
+    assign Pe = PZero ? '0 : ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)});
 
 endmodule

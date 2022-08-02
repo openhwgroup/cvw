@@ -72,7 +72,7 @@ module fma(
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
     // calculate the signs and take the opperation into account
-    fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As);
+    fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
 
     fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
                 .Am, .ZmSticky, .KillProd);
