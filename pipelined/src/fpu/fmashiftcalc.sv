@@ -40,7 +40,7 @@ module fmashiftcalc(
     output logic                        FmaSZero,    // is the result denormalized - calculated before LZA corection
     output logic                        FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
     output logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt,   // normalization shift count
-    output logic [3*`NF+8:0]            FmaShiftIn        // is the sum zero
+    output logic [3*`NF+7:0]            FmaShiftIn        // is the sum zero
 );
     logic [`NE+1:0]             PreNormSumExp;       // the exponent of the normalized sum with the `FLEN bias
     logic [`NE+1:0] BiasCorr;
@@ -150,7 +150,7 @@ module fmashiftcalc(
 
     // set and calculate the shift input and amount
     //  - shift once if killing a product and the result is denormalized
-    assign FmaShiftIn = {3'b0, FmaSm};
+    assign FmaShiftIn = {2'b0, FmaSm};
     if (`FPSIZES == 1)
         assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+7)-1:0]+($clog2(3*`NF+7))'(`NF+3): FmaSCnt+1;
     else

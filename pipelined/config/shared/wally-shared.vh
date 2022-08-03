@@ -97,7 +97,7 @@
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`QLEN+`NF+3) > (3*`NF+8) ? (`QLEN+`NF+1) : (3*`NF+9))
+`define NORMSHIFTSZ ((`QLEN+`NF+1) > (3*`NF+8) ? (`QLEN+`NF+1) : (3*`NF+8))
 `define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+8) ? (`DIVRESLEN+`NF) : (3*`NF+6))
 
 // division constants

@@ -96,7 +96,7 @@ module postprocess (
     // fma signals
     logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
-    logic [3*`NF+8:0] FmaShiftIn;        // shift input
+    logic [3*`NF+7:0] FmaShiftIn;        // shift input
     logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
@@ -160,7 +160,7 @@ module postprocess (
         case(PostProcSel)
             2'b10: begin // fma
                 ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(3*`NF+7){1'b0}}, FmaShiftAmt};
-                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+9){1'b0}}};
+                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+8){1'b0}}};
             end
             2'b00: begin // cvt
                 ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};
