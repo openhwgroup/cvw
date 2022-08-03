@@ -184,9 +184,9 @@ def plotConfigs(tech, special=''):
     freq = techdict[tech].targfreq
     for oneSynth in allSynths:
         if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.special == special):
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.width + oneSynth.config]
+            delays += [oneSynth.delay]
+            areas += [oneSynth.area]
+            labels += [oneSynth.width + oneSynth.config]
 
     fig, (ax) = plt.subplots(1, 1)
 

@@ -319,10 +319,23 @@ module fpu (
    assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
    // select the result that may be written to the integer register - to IEU
+   
+   logic [`FLEN-1:0] SgnExtXE;
+   generate
+   if(`FPSIZES == 1)
+      assign SgnExtXE = XE;
+   else if(`FPSIZES == 2) 
+      mux2 #(`FLEN) sgnextmux ({{`FLEN-`LEN1{XsE}}, XE[`LEN1-1:0]}, XE, FmtE, SgnExtXE);
+   else if(`FPSIZES == 3 | `FPSIZES == 4)
+      mux4 #(`FLEN) fmulzeromux ({{`FLEN-`H_LEN{XsE}}, XE[`H_LEN-1:0]}, 
+                                 {{`FLEN-`S_LEN{XsE}}, XE[`S_LEN-1:0]}, 
+                                 {{`FLEN-`D_LEN{XsE}}, XE[`D_LEN-1:0]}, 
+                                 XE, FmtE, SgnExtXE); // NaN boxing zeroes
+   endgenerate
    if (`FLEN>`XLEN)
-      assign IntSrcXE = XE[`XLEN-1:0];
+      assign IntSrcXE = SgnExtXE[`XLEN-1:0];
    else 
-      assign IntSrcXE = {{`XLEN-`FLEN{XE[`FLEN-1:0]}}, XE};
+      assign IntSrcXE = {{`XLEN-`FLEN{XsE}}, SgnExtXE};
 
    mux3 #(`XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
    // *** DH 5/25/22: CvtRes will move to mem stage.  Premux in execute to save area, then make sure stalls are ok

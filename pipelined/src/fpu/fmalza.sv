@@ -29,29 +29,32 @@
 
 `include "wally-config.vh"
 
-module fmalza( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
-    input logic  [3*`NF+6:0] A,     // addend
-    input logic  [2*`NF+3:0] Pm,     // product
-    output logic [$clog2(3*`NF+7)-1:0]       SCnt   // normalization shift count for the positive result
+module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
+    input logic [WIDTH-1:0] 	       A, // addend
+    input logic [2*`NF+3:0] 	       Pm, // product
+    input logic 		       Cin, // carry in
+    input logic sub,
+    output logic [$clog2(WIDTH+1)-1:0] SCnt   // normalization shift count for the positive result
     ); 
 
-    localparam WIDTH = 3*`NF+7;
-    
-    logic [WIDTH-1:0] B, P, G, K, F;
+   logic [WIDTH:0] 	       F;
+   logic [WIDTH-1:0]  B, P, G, K;
     logic [WIDTH-1:0] Pp1, Gm1, Km1;
 
-    assign B = {{(`NF+3){1'b0}}, Pm}; // Zero extend product
+    assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
 
     assign P = A^B;
     assign G = A&B;
     assign K= ~A&~B;
 
+   assign Pp1 = {sub, P[WIDTH-1:1]};
+   assign Gm1 = {G[WIDTH-2:0], Cin};
+   assign Km1 = {K[WIDTH-2:0], ~Cin};
+   
     // Apply function to determine Leading pattern
     //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
-    //f[n] = ~P[n]&P[n-1]           note: n is the MSB
-    //f[i] = (P[i+1]&(G[i]&~K[i-1] | K[i]&~G[i-1])) | (~P[i+1]&(K[i]&~K[i-1] | G[i]&~G[i-1]))
-    assign F[WIDTH-1] = ~P[WIDTH-1]&P[WIDTH-2];
-    assign F[WIDTH-2:0] = (P[3*`NF+6:1]&(G[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | K[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1})) | (~P[3*`NF+6:1]&(K[3*`NF+5:0]&{~K[3*`NF+4:0], 1'b0} | G[3*`NF+5:0]&{~G[3*`NF+4:0], 1'b1}));
+    assign F[WIDTH] = ~sub&P[WIDTH-1];
+    assign F[WIDTH-1:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
 
-    lzc #(3*`NF+7) lzc (.num(F), .ZeroCnt(SCnt));
+    lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule

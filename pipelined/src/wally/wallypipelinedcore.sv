@@ -116,7 +116,6 @@ module wallypipelinedcore (
   logic [1:0]             PageType;
   logic              sfencevmaM, wfiM, IntPendingM;
   logic             SelHPTW;
-  logic [`XLEN/8-1:0] ByteMaskM;
 
 
   // PMA checker signals
@@ -266,7 +265,6 @@ module wallypipelinedcore (
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
   .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
-  .ByteMaskM,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -313,7 +311,6 @@ module wallypipelinedcore (
      .LSUTransComplete,
      .LSUBusAck,
      .LSUBusInit,
-     .ByteMaskM,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
