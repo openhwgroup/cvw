@@ -1,0 +1,8 @@
+0000000b # ecall for change to supervisor mode
+
+00000200 # read SIP with supervisor interrupt
+00000008 # check GPIO interrupt pending on intPending1
+00000003 # Claim GPIO in supervisor context
+00000000 # No interrupts pending
+00000000 # No interrupts pending
+

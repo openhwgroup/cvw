@@ -2,7 +2,7 @@
 //
 // WALLY-plic
 //
-// Author: David_Harris@hmc.edu and Nicholas Lucio <nlucio@hmc.edu>
+// Author: Nicholas Lucio <nlucio@hmc.edu>
 //
 // Created 2022-06-16
 //
@@ -121,7 +121,7 @@ test_cases:
 .4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending
 .4byte output_val, 0x00000000, write32_test         # clear output_val
 .4byte rise_ip, 0x00000001, write32_test            # clear interrupt
-.4byte PLIC_CLAIM0, 0x00000003, write32_test        # complete claim
+#.4byte PLIC_CLAIM0, 0x00000003, write32_test        # complete claim
 .4byte 0x0, 0x00000000, claim_m_plic_interrupts     # clear interrupt one
 .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupt pending
 

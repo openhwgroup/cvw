@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 //
-// WALLY-gpio
+// WALLY-plic-s
 //
 // Author: David_Harris@hmc.edu and Nicholas Lucio <nlucio@hmc.edu>
 //
-// Created 2022-06-16
+// Created 2022-07-29
 //
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -60,6 +60,7 @@ test_cases:
 .equ PLIC_INTPRI_GPIO, (PLIC+0x00000C)       # GPIO is interrupt 3
 .equ PLIC_INTPRI_UART, (PLIC+0x000028)      # UART is interrupt 10
 .equ PLIC_INTPENDING0, (PLIC+0x001000)       # intPending0 register
+.equ PLIC_INTPENDING1, (PLIC+0x001004)       # intPending0 register
 .equ PLIC_INTEN00,     (PLIC+0x002000)       # interrupt enables for context 0 (machine mode) sources 31:1
 .equ PLIC_INTEN10,     (PLIC+0x002080)       # interrupt enables for context 1 (supervisor mode) sources 31:1
 .equ PLIC_THRESH0,     (PLIC+0x200000)       # Priority threshold for context 0 (machine mode)
@@ -108,389 +109,26 @@ test_cases:
 
 # =========== Initialize relevant PLIC registers ===========
 
-.4byte PLIC_INTPRI_GPIO, 0x00000000, write32_test   # set GPIO priority to zero
-.4byte PLIC_INTPRI_UART, 0x00000000, write32_test   # set UART priority to zero
-.4byte PLIC_INTEN00, 0x00000408, write32_test       # enable m-mode interrupts
-.4byte PLIC_INTEN10, 0x00000408, write32_test       # enable s-mode interrupts
+.4byte PLIC_INTPRI_UART, 0x00000007, write32_test   # set UART priority to zero
+
+# =========== Enter Supervisor Mode ===========
+
+.4byte 0x0, 0x0, goto_s_mode                        # Enter supervisor mode
+
+# =========== Test interrupt enables and priorities ===========
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable s-mode interrupts
 .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
-.4byte PLIC_THRESH1, 0x00000007, write32_test       # set s-mode threshold to max
-
-# =========== Machine-Mode Priority Testing (1.T.X) ===========
-
-# Test 1.0.0: GPIO int lacks priority (0 = 0)
-.4byte PLIC_THRESH0, 0x00000000, write32_test       # change threshold
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect no interrupt pending *** pending bug?????
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.0.1: GPIO int has priority (1 > 0)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.0.2: meip and c/c clear without interrupt pending
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-
-# Test 1.1.0: GPIO lacks priority (1 = 1)
-.4byte PLIC_THRESH0, 0x00000001, write32_test       # change threshold
+.4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
 .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
+.4byte 0x0, 0x00000800, readsip_test                # read mip
+.4byte PLIC_INTPENDING1, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
+.4byte PLIC_INTPENDING1, 0x00000000, read32_test    # interrupt pending cleared for GPIO
 .4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.1.1: GPIO int has priority (2 > 1)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000002, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.2.0: GPIO int lacks priority (2 = 2)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000002, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.2.1: GPIO int has priority (3 > 2)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000003, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.3.0: GPIO int lacks priority (3 = 3)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000003, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.3.1: GPIO int has priority (4 > 3)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000004, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.4.0: GPIO int lacks priority (4 = 4)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000004, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.4.1: GPIO int has priority (5 > 4)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000005, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.5.0: GPIO int lacks priority (5 = 5)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000005, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.5.1: GPIO int has priority (6 > 5)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000006, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.6.0: GPIO int lacks priority (6 = 6)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000006, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.6.1: GPIO int has priority (7 > 6)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_INTPRI_GPIO, 0x00000007, write32_test   # let GPIO cause interrupts
-.4byte 0x0, 0x00000800, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # expect interrupt pending on bit 3
-.4byte 0x0, 0x00000003, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# Test 1.7.0: GPIO int lacks priority (7 = 7)
-.4byte output_val, 0x00000001, write32_test         # set GPIO rise_ip high
-.4byte PLIC_THRESH0, 0x00000007, write32_test       # change threshold
-.4byte 0x0, 0x00000000, readmip_test                # read mip
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # expect no interrupt pending
-.4byte 0x0, 0x00000000, readmclaimcomplete_test     # read and clear claimcomplete
-.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending was cleared
-.4byte output_val, 0x00000000, write32_test         # clear output_val
-.4byte rise_ip, 0x00000000, write32_test            # clear interrupt
-
-# # =========== UART vs GPIO priority (2.X) =========== *** 
-
-# .4byte PLIC_INTEN00, 0x00000408, write32_test       # enable m-mode interrupts
-# .4byte PLIC_INTEN10, 0x00000408, write32_test       # enable s-mode interrupts
-# .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
-# .4byte PLIC_THRESH1, 0x00000007, write32_test       # set s-mode threshold to max
-
-# # Test 2.0: GPIO Priority = UART Priority
-
-# .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
-# .4byte PLIC_INTPRI_UART, 0x00000001, write32_test   # UARTPriority = 1
-# .4byte 0x0, 0x00000800, readmip_test                # read mip
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # GPIO claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000200, read32_test    # GPIO interrupt was cleared
-# .4byte 0x0, 0x00000800, readmip_test                # expect mip to remain high
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # UART claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # UART interrupt pending was cleared
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 2.1: GPIO Priority < UART Priority
-
-# .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000002, write32_test   # GPIO Priority = 2
-# .4byte PLIC_INTPRI_UART, 0x00000003, write32_test   # UART Priority = 3
-# .4byte 0x0, 0x00000800, readmip_test                # read mip
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for UART and GPIO
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # UART claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000008, read32_test    # UART interrupt was cleared
-# .4byte 0x0, 0x00000800, readmip_test                # expect mip to remain high
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # GPIO claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # GPIO interrupt pending was cleared
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 2.2: GPIO Priority > UART Priority
-
-# .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000005, write32_test   # GPIO Priority = 5
-# .4byte PLIC_INTPRI_UART, 0x00000004, write32_test   # UART Priority = 4
-# .4byte 0x0, 0x00000800, readmip_test                # read mip
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # GPIO claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000200, read32_test    # GPIO interrupt was cleared
-# .4byte 0x0, 0x00000800, readmip_test                # expect mip to remain high
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # UART claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # UART interrupt pending was cleared
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 2.3: GPIO Priority < UART Priority (2)
-
-# .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000006, write32_test   # GPIO Priority = 6
-# .4byte PLIC_INTPRI_UART, 0x00000007, write32_test   # UART Priority = 7
-# .4byte 0x0, 0x00000800, readmip_test                # read mip
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for UART and GPIO
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # UART claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000008, read32_test    # UART interrupt was cleared
-# .4byte 0x0, 0x00000800, readmip_test                # expect mip to remain high
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # GPIO claim/complete process
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # GPIO interrupt pending was cleared
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 2.4: Interrupts disabled (Thresh0 = 7)
-
-# .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_THRESH0, 0x00000007, write32_test       # Disable m-mode interrupts
-# .4byte PLIC_INTPRI_GPIO, 0x00000007, write32_test   # GPIO Priority = 7
-# .4byte PLIC_INTPRI_UART, 0x00000007, write32_test   # UART Priority = 7
-# .4byte 0x0, 0x00000000, readmip_test,               # read mip
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupt pending
-# .4byte 0x0, 0x00000000, readmclaimcomplete_test     # no interrupt pending
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # =========== SEIP tests (3.X) ===========
-
-# .4byte PLIC_INTEN00, 0x00000408, write32_test       # enable m-mode interrupts
-# .4byte PLIC_INTEN10, 0x00000408, write32_test       # enable s-mode interrupts
-# .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
-# .4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
-
-# # Test 3.0: Cause machine and supervisor interrupts
-
-# .4byte output_val, 0x00000000, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIO Priority = 1
-# .4byte PLIC_INTPRI_UART, 0x00000001, write32_test   # UART Priority = 1
-# .4byte 0x0, 0x00000A00, readmip_test                # Expect high on MEIP and SEIP
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # Expect GPIO on claim/complete
-# .4byte 0x0, 0x00000A00, readmip_test                # Still expect high on MEIP and SEIP
-# .4byte PLIC_INTPENDING0, 0x00000200, read32_test    # GPIO interrupt was cleared
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # Expect UART on claim/complete
-# .4byte 0x0, 0x00000000, readmip_test                # all interrupts were cleared
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # Pending should also be clear
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 3.1: Suppress machine mode interrupts
-
-# .4byte output_val, 0x00000000, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000003, write32_test   # GPIO Priority = 3
-# .4byte PLIC_INTPRI_UART, 0x00000002, write32_test   # UART Priority = 2
-# .4byte PLIC_THRESH0, 0x00000007, write32_test       # set m-mode threshold to 7
-# .4byte 0x0, 0x00000200, readmip_test                # Expect high on SEIP only
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # Expect GPIO on claim/complete
-# .4byte 0x0, 0x00000200, readmip_test                # Expect high on SEIP only
-# .4byte PLIC_INTPENDING0, 0x00000200, read32_test    # GPIO interrupt was cleared
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # Expect UART on claim/complete
-# .4byte 0x0, 0x00000000, readmip_test                # all interrupts were cleared
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # Pending should also be clear
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 3.2: Cause SEIP with UART first
-
-# .4byte output_val, 0x00000000, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000006, write32_test   # GPIO Priority = 6
-# .4byte PLIC_INTPRI_UART, 0x00000007, write32_test   # UART Priority = 7
-# .4byte 0x0, 0x00000200, readmip_test                # Expect high on SEIP only
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # Expect UART on claim/complete
-# .4byte 0x0, 0x00000200, readmip_test                # Expect high on SEIP only
-# .4byte PLIC_INTPENDING0, 0x00000008, read32_test    # UART interrupt was cleared
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # Expect GPIO on claim/complete
-# .4byte 0x0, 0x00000000, readmip_test                # all interrupts were cleared
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # Pending should also be clear
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # Test 3.3: Low SEIP due to insufficient priority
-
-# .4byte output_val, 0x00000000, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTPRI_GPIO, 0x00000002, write32_test   # GPIO Priority = 2
-# .4byte PLIC_INTPRI_UART, 0x00000003, write32_test   # UART Priority = 3
-# .4byte PLIC_THRESH0, 0x00000004, write32_test       # set m-mode threshold to 7
-# .4byte PLIC_THRESH1, 0x00000005, write32_test       # set s-mode threshold to 7
-# .4byte 0x0, 0x00000000, readmip_test                # no interrupt pending
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupt pending
-# .4byte 0x0, 0x00000000, readmclaimcomplete_test     # Expect nothing on claim/complete
-# .4byte output_val, 0x00000000, write32_test         # clear output_val
-# .4byte rise_ip, 0x00000000, write32_test            # clear GPIO interrupt
-# .4byte UART_MSR, 0x00000000, write08_test           # clear UART interrupt
-
-# # =========== UART interrupt enable tests (4.X) ===========
-
-# .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
-# .4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
-# .4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIO Priority = 1
-# .4byte PLIC_INTPRI_UART, 0x00000001, write32_test   # UART Priority = 1
-
-# # Test 4.0: GPIO m-mode disabled
-
-# .4byte output_val, 0x00000000, write32_test         # cause rise_ip to go high
-# .4byte UART_MSR, 0x00000010, write08_test           # step 1 of UART interrupt
-# .4byte UART_MSR, 0x00000012, write08_test           # step 2 of UART interrupt
-# .4byte PLIC_INTEN00, 0x000000200, write32_test      # GPIO m-mode interrupt disabled
-# .4byte PLIC_INTEN00, 0x000000208, write32_test      # No s-mode interrupt disabled
-# .4byte 0x0, 0x00000A00, readmip_test                # Expect high on MEIP from UART and SEIP from GPIO
-# .4byte PLIC_INTPENDING0, 0x00000408, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x00000003, readmclaimcomplete_test     # Expect GPIO on claim/complete
-# .4byte 0x0, 0x00000200, readmip_test                # Expect high on MEIP and SEIP from UART
-# .4byte PLIC_INTPENDING0, 0x00000200, read32_test    # interrupt pending for GPIO and UART
-# .4byte 0x0, 0x0000000A, readmclaimcomplete_test     # Expect UART on claim/complete
-# .4byte 0x0, 0x00000000, readmip_test                # all interrupts were cleared
-# .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # Pending should also be clear
-
-# Test 4.1: UART m-mode disabled
-
-
-
-# Test 4.2: GPIO s-mode disabled
-
-
-
-# Test 4.3: UART s-mode disabled
-
-
-
-# Test 4.4: GPIO and UART s-mode disabled
-
-
-
-# Test 4.5: GPIO and UART m-mode disabled
-
-
-
-# Test 4.6: GPIO and UART fully disabled
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte PLIC_INTPENDING1, 0x00000000, read32_test    # no interrupts pending
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
