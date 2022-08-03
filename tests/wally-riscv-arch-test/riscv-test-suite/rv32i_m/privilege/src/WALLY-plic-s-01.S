@@ -105,19 +105,126 @@ test_cases:
 .4byte 0x0, 0x0, goto_s_mode                        # Enter supervisor mode
 
 # =========== Test interrupt enables and priorities ===========
+
+# Case 1.1:
 .4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
 .4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
 .4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
 .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
 .4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
 .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
-.4byte 0x0, 0x00000800, readsip_test                # read mip
+.4byte 0x0, 0x00000200, readsip_test                # read sip
 .4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
 .4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
 .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
 .4byte output_val, 0x00000000, write32_test         # clear output_val
 .4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
 .4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
+# Case 1.2:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000000, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
+.4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000200, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# Case 1.3:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000000, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
+.4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000000, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000000, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# Case 1.4:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000000, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000000, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
+.4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000000, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000000, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# Case 1.5:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
+.4byte PLIC_THRESH1, 0x00000005, write32_test       # set s-mode threshold to 5
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000000, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# Case 1.6:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000005, write32_test       # set m-mode threshold to 5
+.4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000200, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# Case 1.7:
+.4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
+.4byte PLIC_THRESH0, 0x00000005, write32_test       # set m-mode threshold to 5
+.4byte PLIC_THRESH1, 0x00000005, write32_test       # set s-mode threshold to 5
+.4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
+.4byte 0x0, 0x00000000, readsip_test                # read sip
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
+.4byte output_val, 0x00000000, write32_test         # clear output_val
+.4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
+.4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
+.4byte 0x0, 0x0, claim_s_plic_interrupts	    # clear interrupt from PLIC
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
+
+# All done
+	
 .4byte 0x0, 0x0, terminate_test # terminate tests
