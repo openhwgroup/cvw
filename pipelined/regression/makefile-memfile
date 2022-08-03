@@ -19,7 +19,7 @@ print:
 .PHONY: all wally-sim-files
 all: wally-sim-files
 
-wally-sim-files: $(MEMFILES) $(ADDRFILES)
+wally-sim-files: $(MEMFILES) $(ADDRFILES) 
 	echo "$@"
 
 # notes to self on how this works.

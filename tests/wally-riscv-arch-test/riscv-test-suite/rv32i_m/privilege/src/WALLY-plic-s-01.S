@@ -3,6 +3,7 @@
 // WALLY-plic-s
 //
 // Author: David_Harris@hmc.edu and Nicholas Lucio <nlucio@hmc.edu>
+// Test PLIC supervisor context interrupts and claim/complete
 //
 // Created 2022-07-29
 //
