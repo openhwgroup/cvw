@@ -45,15 +45,14 @@ module shiftcorrection(
     logic [3*`NF+5:0]      CorrSumShifted;     // the shifted sum after LZA correction
     logic [`CORRSHIFTSZ-1:0] CorrQmShifted;
     logic                  ResDenorm;    // is the result denormalized
-    logic                  LZAPlus1, LZAPlus2; // add one or two to the sum's exponent due to LZA correction
+    logic                  LZAPlus1; // add one or two to the sum's exponent due to LZA correction
 
     // LZA correction
-    assign LZAPlus1 = Shifted[`NORMSHIFTSZ-2];
-    assign LZAPlus2 = Shifted[`NORMSHIFTSZ-1];
+    assign LZAPlus1 = Shifted[`NORMSHIFTSZ-1];
 	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
-    assign CorrSumShifted =  LZAPlus1 ? Shifted[`NORMSHIFTSZ-3:1] : Shifted[`NORMSHIFTSZ-4:0];
+    assign CorrSumShifted =  LZAPlus1 ? Shifted[`NORMSHIFTSZ-2:1] : Shifted[`NORMSHIFTSZ-3:0];
     //                        if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Denorm)
-    assign CorrQmShifted = (LZAPlus2|(DivQe==1&~LZAPlus2)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
+    assign CorrQmShifted = (LZAPlus1|(DivQe==1&~LZAPlus1)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
     // if the result of the divider was calculated to be denormalized, then the result was correctly normalized, so select the top shifted bits
     always_comb
         if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}};
@@ -61,11 +60,11 @@ module shiftcorrection(
         else                            Mf = Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
     //                          if plus1                     If plus2                                      if said denorm but norm plus 1           if said denorm but norm plus 2
-    assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1}+{{`NE{1'b0}}, LZAPlus2, 1'b0}+{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}+{{`NE+1{1'b0}}, &NormSumExp&Shifted[3*`NF+6]}) & {`NE+2{~(FmaSZero|ResDenorm)}};
+    assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1} +{{`NE+1{1'b0}}, ~ResDenorm&FmaPreResultDenorm}) & {`NE+2{~(FmaSZero|ResDenorm)}};
     // recalculate if the result is denormalized
-    assign ResDenorm = FmaPreResultDenorm&~Shifted[`NORMSHIFTSZ-3]&~Shifted[`NORMSHIFTSZ-2];
+    assign ResDenorm = FmaPreResultDenorm&~Shifted[`NORMSHIFTSZ-2]&~Shifted[`NORMSHIFTSZ-1];
 
     // the quotent is in the range [.5,2) if there is no early termination
     // if the quotent < 1 and not denormal then subtract 1 to account for the normalization shift
-    assign Qe = ((DivResDenorm)&~DivDenormShift[`NE+1]) ? (`NE+2)'(0) : DivQe - {(`NE+1)'(0), ~LZAPlus2};
+    assign Qe = ((DivResDenorm)&~DivDenormShift[`NE+1]) ? (`NE+2)'(0) : DivQe - {(`NE+1)'(0), ~LZAPlus1};
 endmodule

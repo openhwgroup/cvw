@@ -289,18 +289,22 @@ module fpu (
    // data to be stored in memory - to IEU
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
-   if (`LLEN==`XLEN) begin
-      assign FWriteDataE = YE[`XLEN-1:0]; 
-   end else begin
-      logic [`FLEN-1:0] FWriteDataE;
-      if(`FMTBITS == 2) assign FStore2 = (FmtM == `FMT)&~IllegalFPUInstrM;
-      else assign FStore2 = FmtM&~IllegalFPUInstrM;
-
-      if (`FPSIZES==1) assign FWriteDataE = YE;
-      else if (`FPSIZES==2) assign FWriteDataE = FmtE ? YE : {2{YE[`LEN1-1:0]}};
-      else assign FWriteDataE = FmtE == `FMT ? YE : {2{YE[`LEN1-1:0]}};
-
-      flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, FWriteDataE, FWriteDataM);
+   
+   if(`LLEN==`XLEN)
+      assign FWriteDataE = {{`XLEN-`FLEN{1'b1}}, YE};
+   else begin
+      logic [`FLEN-1:0] WriteDataE;
+      if(`FPSIZES == 1) assign WriteDataE = YE;
+      else if(`FPSIZES == 2) assign WriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
+      else 
+         always_comb
+               case(FmtE)
+                  `Q_FMT: WriteDataE = YE;
+                  `D_FMT: WriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
+                  `S_FMT: WriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
+                  `H_FMT: WriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
+               endcase
+      flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, WriteDataE, FWriteDataM);
    end
 
    // NaN Block SrcA
@@ -314,6 +318,7 @@ module fpu (
                              {{`FLEN-`H_LEN{1'b1}}, ForwardedSrcAE[`H_LEN-1:0]}, 
                              {{`FLEN-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE); // NaN boxing zeroes
    endgenerate
+
    // select a result that may be written to the FP register
    mux3  #(`FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
    assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
