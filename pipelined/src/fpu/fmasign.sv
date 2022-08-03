@@ -33,7 +33,8 @@ module fmasign(
     input  logic [2:0]  OpCtrl,               // opperation contol
     input  logic        Xs, Ys, Zs,    // sign of the inputs
     output logic        Ps,     // the product's sign - takes opperation into account
-    output logic        As   // aligned addend sign used in fma - takes opperation into account
+    output logic        As,   // aligned addend sign used in fma - takes opperation into account
+    output logic        InvA // Effective subtraction: invert addend
 );
 
     // Calculate the product's sign
@@ -41,7 +42,8 @@ module fmasign(
     
     // flip is negation opperation
     assign Ps = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]);
-    // flip if subtraction
+    // flip addend sign for subtraction
     assign As = Zs^OpCtrl[0];
-
+   // Effective subtraction when product and addend have opposite signs
+    assign InvA = As ^ Ps;
 endmodule

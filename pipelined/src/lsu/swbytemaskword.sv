@@ -1,9 +1,10 @@
 ///////////////////////////////////////////
+// swbytemask.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
+// Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: FMA exponent addition
+// Purpose: On-chip RAM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -21,25 +22,38 @@
 //
 //   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
 //   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR CO///////////////////////////////////////////
+// swbytemask.sv
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
-module fmaexpadd(    
-    input  logic [`FMTBITS-1:0] Fmt,          // format of the output: single double half quad
-    input  logic [`NE-1:0]      Xe, Ye,  // input's exponents
-    input  logic                XZero, YZero,        // are the inputs zero
-    output logic [`NE+1:0]      Pe       // product's exponent B^(1023)NE+2
-);
+module swbytemaskword #(parameter WORDLEN = 64)(
+  input logic [2:0]              Size,
+  input logic [$clog2(WORDLEN/8)-1:0] Adr,
+  output logic [WORDLEN/8-1:0]   ByteMask);
 
-   logic 			PZero;
-   
-    // kill the exponent if the product is zero - either X or Y is 0
-   assign PZero = XZero | YZero;
-    assign Pe = PZero ? '0 : ({2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)});
+  assign ByteMask = ((2**(2**Size))-1) << Adr;
+
+/* Equivalent to the following for WORDLEN = 64
+ if(WORDLEN == 64) begin
+    always_comb begin
+      case(Size[1:0])
+        2'b00: begin ByteMask = 8'b00000000; ByteMask[Adr[2:0]] = 1; end // sb
+        2'b01: case (Adr[2:1])
+                  2'b00: ByteMask = 8'b0000_0011;
+                  2'b01: ByteMask = 8'b0000_1100;
+                  2'b10: ByteMask = 8'b0011_0000;
+                  2'b11: ByteMask = 8'b1100_0000;
+                endcase
+        2'b10: if (Adr[2]) ByteMask = 8'b11110000;
+               else        ByteMask = 8'b00001111;
+        2'b11: ByteMask = 8'b1111_1111;
+        default ByteMask = 8'b0000_0000;
+      endcase
+    end
+  end
+*/
 
 endmodule
+
