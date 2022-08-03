@@ -88,14 +88,7 @@ test_cases:
 .equ iof_sel, (GPIO+0x3C)
 .equ out_xor, (GPIO+0x40)
 
-# =========== Define UART registers ===========
-
-.equ UART, 0x10000000
-.equ UART_IER, (UART+0x01)
-.equ UART_MCR, (UART+0x04)
-.equ UART_MSR, (UART+0x06)
-
-# =========== Initialize UART and GPIO ===========
+# =========== Initialize  GPIO ===========
 
 # GPIO Initialization
 .4byte input_en, 0x00000001, write32_test   # enable bit 0 of input_en
@@ -103,14 +96,9 @@ test_cases:
 .4byte output_val, 0x00000000, write32_test # make sure output_val is 0
 .4byte rise_ie, 0x00000001, write32_test    # enable rise interrupts
 
-# UART Initialization
-.4byte UART_IER, 0x08, write08_test   # enable modem status interrupts from CTS
-.4byte UART_MCR, 0x10, write08_test   # enable loopback mode, RTS = 0
-.4byte UART_MSR, 0x00, write08_test   # disable UART interrupt
-
 # =========== Initialize relevant PLIC registers ===========
 
-.4byte PLIC_INTPRI_UART, 0x00000007, write32_test   # set UART priority to zero
+.4byte PLIC_INTPRI_UART, 0x00000000, write32_test   # set UART priority to 0 to never interrupt 
 
 # =========== Enter Supervisor Mode ===========
 
@@ -118,18 +106,18 @@ test_cases:
 
 # =========== Test interrupt enables and priorities ===========
 .4byte PLIC_INTPRI_GPIO, 0x00000001, write32_test   # GPIOPriority = 1
-.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable m-mode interrupts
-.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable s-mode interrupts
+.4byte PLIC_INTEN00, 0x00000008, write32_test       # enable GPIO m-mode interrupts
+.4byte PLIC_INTEN10, 0x00000008, write32_test       # enable GPIO s-mode interrupts
 .4byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
 .4byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
 .4byte output_val, 0x00000001, write32_test         # cause rise_ip to go high
 .4byte 0x0, 0x00000800, readsip_test                # read mip
-.4byte PLIC_INTPENDING1, 0x00000008, read32_test    # interrupt pending for GPIO
+.4byte PLIC_INTPENDING0, 0x00000008, read32_test    # interrupt pending for GPIO
 .4byte PLIC_CLAIM1, 0x00000003, read32_test         # read claim register
-.4byte PLIC_INTPENDING1, 0x00000000, read32_test    # interrupt pending cleared for GPIO
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # interrupt pending cleared for GPIO
 .4byte output_val, 0x00000000, write32_test         # clear output_val
 .4byte rise_ip, 0x00000001, write32_test            # clear GPIO interrupt
 .4byte PLIC_CLAIM1, 0x00000003, write32_test        # complete claim made earlier
-.4byte PLIC_INTPENDING1, 0x00000000, read32_test    # no interrupts pending
+.4byte PLIC_INTPENDING0, 0x00000000, read32_test    # no interrupts pending
 
 .4byte 0x0, 0x0, terminate_test # terminate tests
