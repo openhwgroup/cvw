@@ -157,7 +157,7 @@ module flags(
     //                                                                                                     or when the positive res rounds up out of range
     assign SigNaN = (XSNaN&~(IntToFp&CvtOp)) | (YSNaN&~CvtOp) | (ZSNaN&FmaOp);
     assign FmaInvalid = ((XInf | YInf) & ZInf & (FmaPs ^ FmaAs) & ~NaNIn) | (XZero & YInf) | (YZero & XInf);
-    assign DivInvalid = ((XInf & YInf) | (XZero & YZero))&~Sqrt | (Xs&Sqrt);
+    assign DivInvalid = ((XInf & YInf) | (XZero & YZero))&~Sqrt | (Xs&Sqrt&~NaNIn&~XZero);
 
     assign Invalid = SigNaN | (FmaInvalid&FmaOp) | (DivInvalid&DivOp);
 

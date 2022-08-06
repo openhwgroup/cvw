@@ -85,10 +85,6 @@ module testbenchfp;
   logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
-  logic [`DIVLEN-1:0]    DivX;
-  logic [`DIVLEN-1:0]  Dpreproc;
-  logic [`DIVLEN+3:0]  NextWSN, WS;
-  logic [`DIVLEN+3:0]  NextWCN, WC;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DURLEN-1:0] Dur;
 

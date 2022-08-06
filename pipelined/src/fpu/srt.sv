@@ -36,7 +36,8 @@ module srt(
   input  logic DivBusy, 
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
-  input  logic Sqrt,
+  input  logic SqrtE,
+  input  logic SqrtM,
   input  logic [`DIVb:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
   input  logic NegSticky,
@@ -95,21 +96,14 @@ module srt(
   end
 
 
-//   mux2   #(`DIVb+4) wsmux(NextWSN, {{3{Sqrt}}, X}, DivStart, WSN); //*** modified for sqrt which doesnt work
-//   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
-//   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
-//   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
-//   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-//   mux2 #(`DIVb) Cmux(NextC, {Sqrt, {(`DIVb-1){1'b0}}}, DivStart, CMux);
-//   flop #(`DIVb) cflop(clk, CMux, C[0]);
-
-  mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
+  // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
+  mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVb) Cmux({2'b11, C[`DIVCOPIES-1][`DIVb-1:2]}, {Sqrt, {(`DIVb-1){1'b0}}}, DivStart, CMux);
-  flop #(`DIVb) cflop(clk, CMux, C[0]);
+  mux2 #(`DIVb) Cmux(NextC, {1'b1, {(`DIVb-1){1'b0}}}, DivStart, CMux);
+  flopen #(`DIVb) cflop(clk, DivStart|DivBusy, CMux, C[0]);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
@@ -123,7 +117,7 @@ module srt(
   genvar i;
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
-      divinteration divinteration(.D, .DBar, .D2, .DBar2, .Sqrt,
+      divinteration divinteration(.D, .DBar, .D2, .DBar2, .SqrtM,
       .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
       .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]));
       if(i<(`DIVCOPIES-1)) begin 
@@ -151,11 +145,11 @@ module srt(
   flopen #(`DIVb+1) QMreg(clk, DivBusy, QMMux, QM[0]);
 
   flopr #(`DIVb+1) SMreg(clk, DivStart, SMNext[`DIVCOPIES-1], SM[0]);
-  mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {Sqrt, {(`DIVb){1'b0}}}, DivStart, SMux);
+  mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {SqrtM, {(`DIVb){1'b0}}}, DivStart, SMux);
   flop #(`DIVb+1) Sreg(clk, SMux, S[0]);
  // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
-    if(Sqrt) // sqrt ouputs in the range (1, .5]
+    if(SqrtM) // sqrt ouputs in the range (1, .5]
       if(NegSticky) Qm = {SM[0][`DIVb-1-(`RADIX/4):0], 1'b0};
       else          Qm = {S[0][`DIVb-1-(`RADIX/4):0], 1'b0};
     else  
@@ -186,7 +180,7 @@ module divinteration (
   input logic [`DIVb:0] S, SM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb-1:0] C,
-  input logic Sqrt,
+  input logic SqrtM,
   output logic [`DIVb:0] QNext, QMNext, 
   output logic [`DIVb:0] SNext, SMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
@@ -211,7 +205,7 @@ module divinteration (
     qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz);
     fgen2 fgen2(.sp(qp), .sz(qz), .C, .S, .SM, .F);
   end else begin
-    qsel4 qsel4(.D, .WS, .WC, .Sqrt, .q);
+    qsel4 qsel4(.D, .WS, .WC, .Sqrt(SqrtM), .q);
     // fgen4 fgen4(.s(q), .C, .S, .SM, .F);
   end
 
@@ -230,11 +224,11 @@ module divinteration (
   end
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
-  assign AddIn = Sqrt ? F : Dsel;
+  assign AddIn = SqrtM ? F : Dsel;
   if (`RADIX == 2) begin : csa
-    csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~Sqrt, WSA, WCA);
+    csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
   end else begin
-    csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~Sqrt, WSA, WCA);
+    csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~SqrtM, WSA, WCA);
   end
 
   if (`RADIX == 2) begin : otfc
@@ -242,7 +236,7 @@ module divinteration (
     sotfc2 sotfc2(.sp(qp), .sz(qz), .C, .S, .SM, .SNext, .SMNext);
   end else begin
     otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-    // sotfc4 sotfc4(.s(q), .Sqrt, .C, .S, .SM, .SNext, .SMNext);
+    // sotfc4 sotfc4(.s(q), .SqrtM, .C, .S, .SM, .SNext, .SMNext);
   end
 
 endmodule

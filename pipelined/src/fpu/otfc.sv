@@ -147,9 +147,9 @@ endmodule
 module sotfc4(
   input  logic [3:0]   s,
   input  logic         Sqrt,
-  input  logic [`DIVLEN+3:0] S, SM,
-  input  logic [`DIVLEN+3:0] C,
-  output logic [`DIVLEN+3:0] SNext, SMNext
+  input  logic [`DIVb+3:0] S, SM,
+  input  logic [`DIVb+3:0] C,
+  output logic [`DIVb+3:0] SNext, SMNext
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
