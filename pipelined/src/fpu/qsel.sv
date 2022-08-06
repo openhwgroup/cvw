@@ -31,11 +31,11 @@
 `include "wally-config.vh"
 
 module qsel2 ( // *** eventually just change to 4 bits
-  input  logic [`DIVLEN+3:`DIVLEN] ps, pc, 
+  input  logic [3:0] ps, pc, 
   output logic         qp, qz//, qn
 );
  
-  logic [`DIVLEN+3:`DIVLEN]  p, g;
+  logic [3:0]  p, g;
   logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
@@ -46,9 +46,9 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  assign magnitude = ~(&p[`DIVLEN+2:`DIVLEN]);
-  assign cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & g[`DIVLEN]));
-  assign sign = p[`DIVLEN+3] ^ cout;
+  assign magnitude = ~(&p[2:0]);
+  assign cout = g[2] | (p[2] & (g[1] | p[1] & g[0]));
+  assign sign = p[3] ^ cout;
 /*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
   assign #1 sign = (ps[55]^pc[55])^
@@ -80,7 +80,7 @@ module fgen2 (
 
   // Generate for both positive and negative bits
   assign FP = ~(SExt << 1) & CExt;
-  assign FN = (SMExt << 1) | (CExt & (~CExt << 2));
+  assign FN = (SMExt << 1) | (CExt & ~(CExt << 2));
   assign FZ = '0;
 
   // Choose which adder input will be used
@@ -172,10 +172,10 @@ endmodule
 ////////////////////////////////////
 module fgen4 (
   input  logic [3:0] s,
-  input  logic [`DIVLEN+3:0] C, S, SM,
-  output logic [`DIVLEN+3:0] F
+  input  logic [`DIVb+3:0] C, S, SM,
+  output logic [`DIVb+3:0] F
 );
-  logic [`DIVLEN+3:0] F2, F1, F0, FN1, FN2;
+  logic [`DIVb+3:0] F2, F1, F0, FN1, FN2;
   
   // Generate for both positive and negative bits
   assign F2  = (~S << 2) & (C << 2);

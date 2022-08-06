@@ -65,6 +65,6 @@ module divsqrt(
 
   srtfsm srtfsm(.reset, .XsE, .SqrtE, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
                .StickyWSA, .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
-  srt srt(.clk, .Sqrt(SqrtM), .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
+  srt srt(.clk, .SqrtE, .SqrtM, .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
                 .StickyWSA, .DivBusy, .Qm(QmM));
 endmodule
