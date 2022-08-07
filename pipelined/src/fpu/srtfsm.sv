@@ -80,7 +80,7 @@ module srtfsm(
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
           step <= Dur;
-          if (XZeroE|YZeroE|XInfE|YInfE|XNaNE|YNaNE|(XsE&SqrtE)) state <= #1 DONE;
+          if (XZeroE|(YZeroE&~SqrtE)|XInfE|YInfE|XNaNE|YNaNE|(XsE&SqrtE)) state <= #1 DONE;
           else         state <= #1 BUSY;
       end else if (state == BUSY) begin
           if ((~|step[`DURLEN-1:1]&step[0])|WZero) begin
