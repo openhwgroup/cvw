@@ -142,11 +142,11 @@ module srt(
   // if starting a new divison set Q to 0 and QM to -1
   mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
   flopenr #(`DIVb+1) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
-  flopen #(`DIVb+1) QMreg(clk, DivBusy, QMMux, QM[0]);
+  flopen #(`DIVb+1) QMreg(clk, DivStart|DivBusy, QMMux, QM[0]);
 
-  flopr #(`DIVb+1) SMreg(clk, DivStart, SMNext[`DIVCOPIES-1], SM[0]);
-  mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {SqrtM, {(`DIVb){1'b0}}}, DivStart, SMux);
-  flop #(`DIVb+1) Sreg(clk, SMux, S[0]);
+  flopenr #(`DIVb+1) SMreg(clk, DivStart, DivBusy, SMNext[`DIVCOPIES-1], SM[0]);
+  mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {1'b1, {(`DIVb){1'b0}}}, DivStart, SMux);
+  flopen #(`DIVb+1) Sreg(clk, DivStart|DivBusy, SMux, S[0]);
  // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
     if(SqrtM) // sqrt ouputs in the range (1, .5]
