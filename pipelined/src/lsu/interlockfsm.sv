@@ -96,32 +96,9 @@ module interlockfsm(
 	endcase
   end // always_comb
 	  
-  // *** change test to not propagate xs  so that we can return to excluded code
-  // might have changed name to WALLY-MMU-SV39?
-
-  // signal to CPU it needs to wait on HPTW.
-  /* -----\/----- EXCLUDED -----\/-----
-   // this code has a problem with imperas64mmu as it reads in an invalid uninitalized instruction.  InterlockStall becomes x and it propagates
-   // everywhere.  The case statement below implements the same logic but any x on the inputs will resolve to 0.
-   // Note this will cause a problem for post synthesis gate simulation.
-   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF)) | 
-   (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
-   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-
-   -----/\----- EXCLUDED -----/\----- */
-
-  always_comb begin
-	InterlockStall = 1'b0;
-	case(InterlockCurrState) 
-	  STATE_T0_READY: if((DTLBMissOrDAFaultM | ITLBMissOrDAFaultF) & ~TrapM) InterlockStall = 1'b1;
-	  STATE_T3_DTLB_MISS: InterlockStall = 1'b1;
-	  STATE_T4_ITLB_MISS: InterlockStall = 1'b1;
-	  STATE_T5_ITLB_MISS: InterlockStall = 1'b1;
-	  STATE_T7_DITLB_MISS: InterlockStall = 1'b1;
-	  default: InterlockStall = 1'b0;
-	endcase
-  end
-  
+   assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF) & ~TrapM) | 
+                           (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
+                           (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign SelReplayMemE = (InterlockCurrState == STATE_T1_REPLAY & DCacheStallM) |
                          (InterlockCurrState == STATE_T3_DTLB_MISS & DTLBWriteM) | 
                          (InterlockCurrState == STATE_T5_ITLB_MISS & ITLBWriteF);
