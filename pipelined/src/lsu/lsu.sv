@@ -212,7 +212,7 @@ module lsu (
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  DCacheBusWriteData;
+    logic [LINELEN-1:0]  DLSUBusBuffer;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
@@ -224,11 +224,11 @@ module lsu (
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .SelLSUBusWord,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM,
+      .DCacheWriteLine, .DCacheBusAck, .DLSUBusBuffer, .LSUPAdrM,
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
-    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DCacheBusWriteData[`XLEN-1:0]}),
+    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DLSUBusBuffer[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
@@ -247,7 +247,7 @@ module lsu (
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
-        .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
+        .LSUBusBuffer(DLSUBusBuffer), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
     end else begin : passthrough
