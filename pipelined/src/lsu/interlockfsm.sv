@@ -46,8 +46,7 @@ module interlockfsm(
   output logic      InterlockStall,
   output logic      SelReplayMemE,
   output logic      SelHPTW,
-  output logic      IgnoreRequestTLB,
-  output logic      IgnoreRequestTrapM);
+  output logic      IgnoreRequestTLB);
 
   logic             ToITLBMiss;
   logic             ToITLBMissNoReplay;
@@ -105,6 +104,4 @@ module interlockfsm(
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
 				   (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
   assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & (ITLBMissOrDAFaultF | DTLBMissOrDAFaultM));
-  assign IgnoreRequestTrapM = (InterlockCurrState == STATE_T0_READY & (TrapM)) |
-							  ((InterlockCurrState == STATE_T1_REPLAY) & (TrapM));
 endmodule

@@ -42,8 +42,8 @@ module cachefsm
    input logic       CPUBusy,
    // interlock fsm
    input logic       IgnoreRequestTLB,
-   input logic       IgnoreRequestTrapM,
-   input logic       TrapM,
+   input logic       DCacheTrapM,
+   input logic       ICacheTrapM,
    // Bus inputs
    input logic       CacheBusAck,
    // dcache internals
@@ -98,12 +98,12 @@ module cachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
   logic               IgnoreRequest;
-  assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
+  assign IgnoreRequest = IgnoreRequestTLB | (DCacheTrapM | ICacheTrapM);
 
   // if the command is used in the READY state then the cache needs to be able to supress
-  // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
+  // using both IgnoreRequestTLB and DCacheTrapM.  Otherwise we can just use IgnoreRequestTLB.
 
-  assign DoFlush = FlushCache & ~IgnoreRequestTrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
+  assign DoFlush = FlushCache & ~(DCacheTrapM | ICacheTrapM); // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
   assign AMO = CacheAtomic[1] & (&CacheRW);
   assign DoAMO = AMO & ~IgnoreRequest; 
   assign DoRead = CacheRW[1] & ~IgnoreRequest; 
@@ -194,8 +194,8 @@ module cachefsm
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |  
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
-  assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
-                  // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
+  assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~(DCacheTrapM | ICacheTrapM))) | // Ignore Request is needed on TLB miss.
+                  // use the raw requests as we don't want DCacheTrapM in the critical path
                   (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (DoAnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
