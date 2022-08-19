@@ -38,69 +38,39 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   input  logic [`XLEN-1:0] HWDATA,
-  input  logic [3:0]       HSIZED,
+  input  logic [`XLEN/8-1:0] HWSTRB,
   output logic [`XLEN-1:0] HREADRam,
   output logic             HRESPRam, HREADYRam
 );
 
-  // Desired changes.
-  // 1. find a way to merge read and write address into 1 port.
-  // 2. remove all unnecessary latencies. (HREADY needs to be able to constant high.)
-  // 3. implement burst.
-  // 4. remove the configurable latency.
+  localparam ADDR_WIDTH = $clog2(RANGE/8);
+  localparam OFFSET = $clog2(`XLEN/8);   
 
-  logic [`XLEN/8-1:0] 		  ByteMaskM;
-  logic [31:0]        HWADDR, A;
-  logic				  prevHREADYRam, risingHREADYRam;
+  logic [`XLEN/8-1:0] 		  ByteMask;
+  logic [31:0]        HADDRD, RamAddr;
   logic				  initTrans;
-  logic				  memwrite;
-  logic [3:0] 		  busycount;
-  
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HWADDR[2:0]), .ByteMask(ByteMaskM));
+  logic				  memwrite, memwriteD, memread;
+  logic         nextHREADYRam;
 
-  assign initTrans = HREADY & HSELRam & (HTRANS != 2'b00);
+  // a new AHB transactions starts when HTRANS requests a transaction, 
+  // the peripheral is selected, and the previous transaction is completing
+  assign initTrans = HREADY & HSELRam & (HTRANS[1]); 
+  assign memwrite = initTrans & HWRITE;  
+  assign memread = initTrans & ~HWRITE;
+ 
+  flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
+  flopenr #(32)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
 
-  // *** this seems like a weird way to use reset
-  flopenr #(1) memwritereg(HCLK, 1'b0, initTrans | ~HRESETn, HSELRam &  HWRITE, memwrite);
-  flopenr #(32)   haddrreg(HCLK, 1'b0, initTrans | ~HRESETn, HADDR, A);
-  // busy FSM to extend READY signal
-  always @(posedge HCLK, negedge HRESETn) 
-    if (~HRESETn) begin
-      busycount <= 0;
-      HREADYRam <= #1 0;
-    end else begin
-      if (initTrans) begin
-        busycount <= 0;
-        HREADYRam <= #1 0;
-      end else if (~HREADYRam) begin
-        if (busycount == 0) begin // Ram latency, for testing purposes.  *** test with different values such as 2
-          HREADYRam <= #1 1;
-        end else begin
-          busycount <= busycount + 1;
-        end
-      end
-    end
+  // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
+  assign nextHREADYRam = ~(memwriteD & memread);
+  flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
   assign HRESPRam = 0; // OK
 
-  localparam ADDR_WDITH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`XLEN/8);
-  
-  // Rising HREADY edge detector
-  //   Indicates when ram is finishing up
-  //   Needed because HREADY may go high for other reasons,
-  //   and we only want to write data when finishing up.
-  flopenr #(1) prevhreadyRamreg(HCLK,~HRESETn, 1'b1, HREADYRam,prevHREADYRam);
-  assign risingHREADYRam = HREADYRam & ~prevHREADYRam;
+  // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
+  mux2 #(32) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
-  always @(posedge HCLK)
-    HWADDR <= #1 A;
-
-  bram2p1r1w #(`XLEN/8, 8, ADDR_WDITH, `FPGA)
-  memory(.clk(HCLK), .enaA(1'b1),
-		 .addrA(A[ADDR_WDITH+OFFSET-1:OFFSET]), .doutA(HREADRam),
-		 .enaB(memwrite & risingHREADYRam), .weB(ByteMaskM),
-		 .addrB(HWADDR[ADDR_WDITH+OFFSET-1:OFFSET]), .dinB(HWDATA));
-		 
-  
+  // single-ported RAM
+  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
+    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
 endmodule
   

@@ -57,18 +57,15 @@ module csrs #(parameter
     input logic 	     STATUS_TVM,
     input logic [`XLEN-1:0]  CSRWriteValM,
     input logic [1:0] 	     PrivilegeModeW,
-    output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
+    (* mark_debug = "true" *) output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
     (* mark_debug = "true" *) output logic [`XLEN-1:0] SEPC_REGW,      
     output logic [31:0]      SCOUNTEREN_REGW, 
     output logic [`XLEN-1:0] SATP_REGW,
-    (* mark_debug = "true" *) input logic [11:0] SIP_REGW, SIE_REGW,
+    (* mark_debug = "true" *) input logic [11:0] MIP_REGW, MIE_REGW,
     output logic 	     WriteSSTATUSM,
     output logic 	     IllegalCSRSAccessM
   );
 
-  //logic [`XLEN-1:0] zero = 0;
-  //logic [31:0] allones = {32{1'b1}};
-  //logic [`XLEN-1:0] SEDELEG_MASK = ~(zero | 3'b111 << 9); // sedeleg[11:9] hardwired to zero per Privileged Spec 3.1.8
 
   // Supervisor mode CSRs sometimes supported
   if (`S_SUPPORTED) begin:csrs
@@ -105,8 +102,8 @@ module csrs #(parameter
       case (CSRAdrM) 
         SSTATUS:   CSRSReadValM = SSTATUS_REGW;
         STVEC:     CSRSReadValM = STVEC_REGW;
-        SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIP_REGW};
-        SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, SIE_REGW};
+        SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW & 12'h222}; // only read supervisor fields
+        SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW & 12'h222}; // only read supervisor fields
         SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
         SEPC:      CSRSReadValM = SEPC_REGW;
         SCAUSE:    CSRSReadValM = SCAUSE_REGW;

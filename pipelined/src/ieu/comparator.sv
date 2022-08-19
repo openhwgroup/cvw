@@ -30,6 +30,15 @@
 
 `include "wally-config.vh"
 
+module donedet #(parameter WIDTH=64) (
+  input  logic [WIDTH-1:0] a, b,
+  output logic        eq);
+
+  //assign eq = (a+b == 0); // gives good speed but 3x necessary area
+  // See CMOS VLSI Design 4th Ed. p. 463 K = A+B for K = 0
+  assign eq = ((a ^ b) == {a[WIDTH-2:0], 1'b0} | {b[WIDTH-2:0], 1'b0});
+ endmodule
+
 module comparator_sub #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   output logic [2:0]       flags);
@@ -71,7 +80,7 @@ module comparator #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-// This comaprator 
+// This comparator is best
 module comparator_dc_flip #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   input  logic             sgnd,
@@ -85,7 +94,7 @@ module comparator_dc_flip #(parameter WIDTH=64) (
   assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
 
   // behavioral description gives best results
-  assign eq = (af == bf);
+  assign eq = (a == b);
   assign lt = (af < bf);
   assign flags = {eq, lt};
 endmodule

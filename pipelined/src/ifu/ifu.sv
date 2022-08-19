@@ -33,14 +33,18 @@
 
 module ifu (
 	input logic 				clk, reset,
-	input logic 				StallF, StallD, StallE, StallM, StallW,
-	input logic 				FlushF, FlushD, FlushE, FlushM, FlushW,
+	input logic 				StallF, StallD, StallE, StallM, 
+	input logic 				FlushF, FlushD, FlushE, FlushM, 
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
+(* mark_debug = "true" *)	input logic 				IFUBusInit,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
+(* mark_debug = "true" *) output logic [2:0]  IFUBurstType,
+(* mark_debug = "true" *) output logic [1:0]  IFUTransType,
+(* mark_debug = "true" *) output logic        IFUTransComplete,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
@@ -65,7 +69,6 @@ module ifu (
 	output logic 				InstrPageFaultF,
 	output logic 				IllegalIEUInstrFaultD,
 	output logic 				InstrMisalignedFaultM,
-	input logic 				ExceptionM,
 	// mmu management
 	input logic [1:0] 			PrivilegeModeW,
 	input logic [`XLEN-1:0] 	PTE,
@@ -73,7 +76,7 @@ module ifu (
 	input logic [`XLEN-1:0] 	SATP_REGW,
 	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
 	input logic [1:0] 			STATUS_MPP,
-	input logic 				ITLBWriteF, ITLBFlushF,
+	input logic 				ITLBWriteF, sfencevmaM,
 	output logic 				ITLBMissF, InstrDAPageFaultF,
 	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
 	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
@@ -138,6 +141,18 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`ZICSR_SUPPORTED == 1) begin : immu
+    ///////////////////////////////////////////
+    // sfence.vma causes TLB flushes
+    ///////////////////////////////////////////
+    // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
+    // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
+    // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
+    // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
+    // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+    logic StallMQ, TLBFlush;
+    flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+    assign TLBFlush = sfencevmaM & ~StallMQ;
+
     mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .PrivilegeModeW, .DisableTranslation(1'b0),
@@ -146,7 +161,7 @@ module ifu (
          .PTE(PTE),
          .PageTypeWriteVal(PageType),
          .TLBWrite(ITLBWriteF),
-         .TLBFlush(ITLBFlushF),
+         .TLBFlush,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
          .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
@@ -170,11 +185,10 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
-  
   if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
-    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM(PCPF[31:0]), .IEUAdrE(PCNextFSpill),
+    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM({{(`XLEN-32){1'b0}}, PCPF[31:0]}), .IEUAdrE(PCNextFSpill),
               .TrapM(1'b0), .FinalWriteDataM(), .ByteMaskM('0),
-              .ReadDataWordM(FinalInstrRawF), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
+              .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
               .BusCommittedM(), .DCacheStallM(ICacheStallF), .Cacheable(CacheableF),
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
     
@@ -182,18 +196,16 @@ module ifu (
   if (`IBUS) begin : bus
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  ReadDataLine;
+    localparam integer   LOGBWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ICacheBusWriteData;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
-    logic [31:0]         temp;
     logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) 
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
-          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusWrite(), .LSUBusWriteCrit(),
-          .LSUBusRead(IFUBusRead), .LSUBusSize(), 
+          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .LSUBusWriteCrit(),
+          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
@@ -210,7 +222,7 @@ module ifu (
     if(CACHE_ENABLED) begin : icache
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-              .NUMWAYS(`ICACHE_NUMWAYS), .LOGWPL(LOGWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
+              .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM(TrapM), .IgnoreRequestTrapM('0),
              .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
@@ -224,7 +236,7 @@ module ifu (
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(), .InvalidateCacheM(InvalidateICacheM));
+             .CacheCommitted(), .InvalidateCache(InvalidateICacheM));
 
     end else begin : passthrough
       assign {ICacheFetchLine, ICacheBusAdr, ICacheStallF, FinalInstrRawF} = '0;

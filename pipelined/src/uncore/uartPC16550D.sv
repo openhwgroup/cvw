@@ -40,7 +40,7 @@
 
 module uartPC16550D(
 	// Processor Interface
-	input logic 	   HCLK, HRESETn,
+	input logic 	   PCLK, PRESETn,
 	input logic [2:0]  A,
 	input logic [7:0]  Din,
 	output logic [7:0] Dout,
@@ -93,8 +93,8 @@ module uartPC16550D(
   logic [10:0] 					rxfifo[15:0];
   logic [7:0] 					txfifo[15:0];
   logic [4:0] 					rxfifotailunwrapped;
-  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-  logic [3:0] 					rxfifoentries, txfifoentries;
+(* mark_debug = "true" *)  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
+(* mark_debug = "true" *)  logic [3:0] 					rxfifoentries, txfifoentries;
   logic [3:0] 					rxbitsexpected, txbitsexpected;
 
   // receive data
@@ -103,8 +103,8 @@ module uartPC16550D(
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
    (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
-  logic 						rxdataready;
-  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
+(* mark_debug = "true" *)  logic 						rxdataready;
+(* mark_debug = "true" *)  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
   logic 						rxfifodmaready;
   logic [8:0] 					rxdata9;
   logic [7:0] 					rxdata;
@@ -119,20 +119,20 @@ module uartPC16550D(
   logic 						txfifoempty, txfifofull, txfifodmaready;
 
   // control signals
-  logic 						fifoenabled, fifodmamodesel, evenparitysel;
+(* mark_debug = "true" *)  logic 						fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
-  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
-  logic 						rxdataavailintr, modemstatusintr, intrpending;
-  logic [2:0] 					intrID;
+(* mark_debug = "true" *)  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
+(* mark_debug = "true" *)  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
+(* mark_debug = "true" *)  logic 						rxdataavailintr, modemstatusintr, intrpending;
+(* mark_debug = "true" *)  logic [2:0] 					intrID;
 
   logic 						baudpulseComb;
 
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK) begin
+  always_ff @(posedge PCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= #1 {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= #1 loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
 														{SINd, DSRbd, DCDbd, CTSbd, RIbd}; // syncrhonized signals, handle loopback testing
@@ -142,8 +142,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Register interface (Table 1, note some are read only and some write only)
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn) 
-    if (~HRESETn) begin // Table 3 Reset Configuration
+  always_ff @(posedge PCLK, negedge PRESETn) 
+    if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
       if (`QEMU) LCR <= #1 8'b0; else LCR <= #1 8'b11; // fpga only **** BUG
@@ -165,6 +165,7 @@ module uartPC16550D(
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
+        /* verilator lint_off CASEINCOMPLETE */
         case (A)
 		  /* -----\/----- EXCLUDED -----\/-----
            3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
@@ -177,34 +178,42 @@ module uartPC16550D(
 		  // freq /baud / 16 = div
           //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
 		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
-		  3'b000: if (DLAB) DLL <= #1 8'd8; //else TXHR <= #1 Din; // TX handled in 		  
+		      3'b000: if (DLAB) DLL <= #1 8'd8; //else TXHR <= #1 Din; // TX handled in 		  
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
-
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
           3'b100: MCR <= #1 Din[4:0];
-          3'b101: LSR[6:1] <= #1 Din[6:1];  // recommended only for test, see 8.6.3
-          3'b110: MSR <= #1 Din[3:0];
           3'b111: SCR <= #1 Din;
         endcase
+        /* verilator lint_on CASEINCOMPLETE */
       end
-      
+
       // Line Status Register (8.6.3)
-      //   Ben 6/9/21 I don't like how this is a register. A lot of the individual bits have clocked components, so this just adds unecessary delay.
-      LSR[0] <= #1 rxdataready; // Data ready
-      LSR[1] <= #1 (LSR[1] | RXBR[10]) & ~squashRXerrIP;; // overrun error
-      LSR[2] <= #1 (LSR[2] | RXBR[9]) & ~squashRXerrIP; // parity error
-      LSR[3] <= #1 (LSR[3] | RXBR[8]) & ~squashRXerrIP; // framing error
-      LSR[4] <= #1 (LSR[4] | rxbreak) & ~squashRXerrIP; // break indicator
-      LSR[5] <= #1 THRE; // THRE
-      LSR[6] <= #1 ~txsrfull & THRE; //  TEMT
-      if (rxfifohaserr) LSR[7] <= #1 1; // any bits in FIFO have error
+      // Ben 6/9/21 I don't like how this is a register. A lot of the individual bits have clocked components, so this just adds unecessary delay.
+      if (~MEMWb & (A == 3'b101))
+        LSR[6:1] <= #1 Din[6:1]; // recommended only for test, see 8.6.3
+      else begin
+        LSR[0] <= #1 rxdataready; // Data ready
+        LSR[1] <= #1 (LSR[1] | RXBR[10]) & ~squashRXerrIP;; // overrun error
+        LSR[2] <= #1 (LSR[2] | RXBR[9]) & ~squashRXerrIP; // parity error
+        LSR[3] <= #1 (LSR[3] | RXBR[8]) & ~squashRXerrIP; // framing error
+        LSR[4] <= #1 (LSR[4] | rxbreak) & ~squashRXerrIP; // break indicator
+        LSR[5] <= #1 THRE; // THRE
+        LSR[6] <= #1 ~txsrfull & THRE; //  TEMT
+        if (rxfifohaserr) LSR[7] <= #1 1; // any bits in FIFO have error
+      end
 
       // Modem Status Register (8.6.8)
-      MSR[0] <= #1 MSR[0] | CTSb2 ^ CTSbsync; // Delta Clear to Send
-      MSR[1] <= #1 MSR[1] | DSRb2 ^ DSRbsync; // Delta Data Set Ready
-      MSR[2] <= #1 MSR[2] | (~RIb2 & RIbsync); // Trailing Edge of Ring Indicator
-      MSR[3] <= #1 MSR[3] | DCDb2 ^ DCDbsync; // Delta Data Carrier Detect
+      if (~MEMWb & (A == 3'b110))
+        MSR <= #1 Din[3:0];
+      else if (~MEMRb & (A == 3'b110)) 
+        MSR <= #1 4'b0; // Reading MSR clears the flags in MSR bits 3:0
+      else begin
+        MSR[0] <= #1 MSR[0] | CTSb2 ^ CTSbsync; // Delta Clear to Send
+        MSR[1] <= #1 MSR[1] | DSRb2 ^ DSRbsync; // Delta Data Set Ready
+        MSR[2] <= #1 MSR[2] | (~RIb2 & RIbsync); // Trailing Edge of Ring Indicator
+        MSR[3] <= #1 MSR[3] | DCDb2 ^ DCDbsync; // Delta Data Carrier Detect
+      end
     end
   always_comb
     if (~MEMRb)
@@ -215,7 +224,8 @@ module uartPC16550D(
         3'b011: Dout = LCR;
         3'b100: Dout = {3'b000, MCR};
         3'b101: Dout = LSR;
-        3'b110: Dout = {~CTSbsync, ~DSRbsync, ~RIbsync, ~DCDbsync, MSR[3:0]}; 
+        // 3'b110: Dout = {~CTSbsync, ~DSRbsync, ~RIbsync, ~DCDbsync, MSR[3:0]}; 
+        3'b110: Dout = {~DCDbsync, ~RIbsync, ~DSRbsync, ~CTSbsync, MSR[3:0]};
         3'b111: Dout = SCR;      
       endcase
     else Dout = 8'b0;
@@ -229,8 +239,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // Ross Thompson: Found a bug.  If the baud rate dividers DLM, and DLL are reloaded
   // the baudcount is not reset to  {DLM, DLL, UART_PRESCALE}
-  always_ff @(posedge HCLK, negedge HRESETn) 
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn) 
+    if (~PRESETn) begin
       baudcount <= #1 1;
       baudpulse <= #1 0;
     end else if (~MEMWb & DLAB & (A == 3'b0 | A == 3'b1)) begin
@@ -254,8 +264,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive timing and control
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       rxoversampledcnt <= #1 0;
       rxstate <= #1 UART_IDLE;
       rxbitsreceived <= #1 0;
@@ -288,8 +298,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
     else if (rxcentered) rxshiftreg <= #1 {rxshiftreg[8:0], SINsync}; // capture bit
   assign rxparitybit = rxshiftreg[1]; // parity, if it exists, in bit 1 when all done
   assign rxstopbit = rxshiftreg[0];
@@ -304,21 +314,23 @@ module uartPC16550D(
 
   // ERROR CONDITIONS
   assign rxparity = ^rxdata;
-  assign rxparityerr = rxparity ^ rxparitybit ^ ~evenparitysel; // Check even/odd parity (*** check if LCR needs to be inverted)
+  assign rxparityerr = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity (*** check if LCR needs to be inverted)
   assign rxoverrunerr = fifoenabled ? (rxfifoentries == 15) : rxdataready; // overrun if FIFO or receive buffer register full 
   assign rxframingerr = ~rxstopbit; // framing error if no stop bit
   assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
 
   // receive FIFO and register
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0; RXBR <= #1 0;
     end else begin
-      if (rxstate == UART_DONE) begin
+      if (~MEMWb & (A == 3'b010) & Din[1]) begin
+        rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0;
+      end else if (rxstate == UART_DONE) begin
         RXBR <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
-        if (rxoverrunerr) $warning("UART RX Overrun Error\n");
-        if (rxparityerr) $warning("UART RX Parity Error\n");
-        if (rxframingerr) $warning("UART RX Framing Error\n");
+        if (rxoverrunerr) $warning("UART RX Overrun Err\n");
+        if (rxparityerr) $warning("UART RX Parity Err\n");
+        if (rxframingerr) $warning("UART RX Framing Err\n");
         if (fifoenabled) begin
           rxfifo[rxfifohead] <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata};
           rxfifohead <= #1 rxfifohead + 1;
@@ -326,8 +338,9 @@ module uartPC16550D(
         rxdataready <= #1 1;
       end else if (~MEMRb & A == 3'b000 & ~DLAB) begin // reading RBR updates ready / pops fifo 
         if (fifoenabled) begin
-          if (rxfifotail+1 < rxfifohead) rxfifotail <= #1 rxfifotail + 1;
-          if (rxfifohead == rxfifotail +1) rxdataready <= #1 0;
+          if (~rxfifoempty) rxfifotail <= #1 rxfifotail + 1;
+          // if (rxfifoempty) rxdataready <= #1 0;
+          if (rxfifoentries == 1) rxdataready <= #1 0; // When reading the last entry, data ready becomes zero
         end else begin
           rxdataready <= #1 0;
           RXBR <= #1 {1'b0, RXBR[9:0]}; // Ben 31 March 2022: I added this so that rxoverrunerr permanently goes away upon reading RBR (when not in FIFO mode)
@@ -367,8 +380,8 @@ module uartPC16550D(
   assign rxfifohaserr = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
-  always_ff @(posedge HCLK, negedge HRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (~HRESETn) rxfifodmaready <= #1 0;
+  always_ff @(posedge PCLK, negedge PRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~PRESETn) rxfifodmaready <= #1 0;
     else if (rxfifotriggered | rxfifotimeout) rxfifodmaready <= #1 1;
     else if (rxfifoempty) rxfifodmaready <= #1 0;
 
@@ -386,8 +399,8 @@ module uartPC16550D(
   ///////////////////////////////////////////
 	// transmit timing and control
   ///////////////////////////////////////////
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       txoversampledcnt <= #1 0;
       txstate <= #1 UART_IDLE;
       txbitssent <= #1 0;
@@ -405,7 +418,7 @@ module uartPC16550D(
       txstate <= #1 UART_IDLE;
     end
 
-  assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s)
+  assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s) - 1
   // *** explain; is this necessary?
   if (`QEMU) assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
   else       assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
@@ -435,9 +448,11 @@ module uartPC16550D(
   end
   
   // registers & FIFO
-  always_ff @(posedge HCLK, negedge HRESETn)
-    if (~HRESETn) begin
+  always_ff @(posedge PCLK, negedge PRESETn)
+    if (~PRESETn) begin
       txfifohead <= #1 0; txfifotail <= #1 0; txhrfull <= #1 0; txsrfull <= #1 0; TXHR <= #1 0; txsr <= #1 12'hfff;
+    end else if (~MEMWb & (A == 3'b010) & Din[2]) begin
+      txfifohead <= #1 0; txfifotail <= #1 0;
     end else begin
       if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
@@ -451,7 +466,7 @@ module uartPC16550D(
       end
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
-          if (~txfifoempty) begin
+          if (~txfifoempty & ~txsrfull) begin
             txsr <= #1 txdata;
             txfifotail <= #1 txfifotail+1;
             txsrfull <= #1 1;
@@ -477,8 +492,8 @@ module uartPC16550D(
   assign txfifofull = (txfifoentries == 4'b1111);
 
   // transmit buffer ready bit
-  always_ff @(posedge HCLK, negedge HRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
-    if (~HRESETn) txfifodmaready <= #1 0;
+  always_ff @(posedge PCLK, negedge PRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
+    if (~PRESETn) txfifodmaready <= #1 0;
     else if (txfifoempty) txfifodmaready <= #1 1;
     else if (txfifofull)  txfifodmaready <= #1 0;
 
@@ -514,18 +529,18 @@ module uartPC16550D(
       intrpending = 0;
     end
   end
-  always @(posedge HCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
+  always @(posedge PCLK) INTR <= #1 intrpending; // prevent glitches on interrupt pin
 
   // Side effect of reading LSR is lowering overrun, parity, framing, break intr's
   assign setSquashRXerrIP = ~MEMRb & (A==3'b101);
   assign resetSquashRXerrIP = (rxstate == UART_DONE);
   assign squashRXerrIP = (prevSquashRXerrIP | setSquashRXerrIP) & ~resetSquashRXerrIP;
-  flopr #(1) squashRXerrIPreg(HCLK, ~HRESETn, squashRXerrIP, prevSquashRXerrIP);
+  flopr #(1) squashRXerrIPreg(PCLK, ~PRESETn, squashRXerrIP, prevSquashRXerrIP);
   // Side effect of reading IIR is lowering THRE_IP if most significant intr
   assign setSquashTHRE_IP = ~MEMRb & (A==3'b010) & (intrID==3'h1); // there's a 1-cycle delay on set squash so that THRE_IP doesn't change during the process of reading IIR (otherwise combinational loop)
   assign resetSquashTHRE_IP = ~THRE;
   assign squashTHRE_IP = prevSquashTHRE_IP & ~resetSquashTHRE_IP;
-  flopr #(1) squashTHRE_IPreg(HCLK, ~HRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
+  flopr #(1) squashTHRE_IPreg(PCLK, ~PRESETn, squashTHRE_IP | setSquashTHRE_IP, prevSquashTHRE_IP);
 
   ///////////////////////////////////////////
   // modem control logic

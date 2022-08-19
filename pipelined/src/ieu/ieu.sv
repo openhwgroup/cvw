@@ -50,7 +50,6 @@ module ieu (
   // Memory stage interface
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
-  output logic [1:0] 	   AtomicE, // atomic control goes to LSU	    
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
   output logic [`XLEN-1:0] WriteDataE, // Address and write data to LSU
 
@@ -61,9 +60,11 @@ module ieu (
   output logic       InvalidateICacheM, FlushDCacheM,
 
   // Writeback stage
-  input logic [`XLEN-1:0]  CSRReadValW, ReadDataM, MDUResultW,
+  input logic [`XLEN-1:0]  CSRReadValW, MDUResultW,
+  input logic [1:0]        FResSelW,
+  input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, 
   // hazards
@@ -72,12 +73,12 @@ module ieu (
   output logic 		   FPUStallD, LoadStallD, MDUStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
-  output logic 		   CSRWritePendingDEM,
+  output logic 		   CSRWriteFencePendingDEM,
   output logic             StoreStallD
 );
 
   logic [2:0]  ImmSrcD;
-  logic [2:0]  FlagsE;
+  logic [1:0]  FlagsE;
   logic [2:0]  ALUControlE;
   logic        ALUSrcAE, ALUSrcBE;
   logic [2:0]  ResultSrcW;
@@ -92,23 +93,24 @@ module ieu (
   logic             RegWriteM, RegWriteW;
   logic             MemReadE, CSRReadE;
   logic             JumpE;
+  logic             BranchSignedE;
            
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
-    .Funct3E, .MDUE, .W64E, .JumpE, .StallM, .FlushM, .MemRWM,
-    .CSRReadM, .CSRWriteM, .PrivilegedM, .SCE, .AtomicE, .AtomicM, .Funct3M,
+    .Funct3E, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
+    .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWritePendingDEM, .StoreStallD);
+    .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWriteFencePendingDEM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
-    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .IllegalFPUInstrE,
+    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, .IllegalFPUInstrE,
     .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
-    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE,
-    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW,
-    .CSRReadValW, .ReadDataM, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE, .FResSelW,
+    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
+    .CSRReadValW, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,

@@ -23,6 +23,9 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
+RVTEST_ISA("RV32I")
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",wfi)
+
 INIT_TESTS
 
 TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on traps
@@ -33,7 +36,9 @@ WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
 
 // Code copied from test library to cause m time interrupt, with time loop replaced with wfi.
 
-li x28, 0x40          // Desired offset from the present time
+/* Note: the following line might cause problems in the future. If more than 0x50 cycles are needed before the wfi 
+ instruction begins, then the program might fall into a loop and run forever*/
+li x28, 0x50          // Desired offset from the present time
 mv a3, x28            // copy value in to know to stop waiting for interrupt after this many cycles
 la x29, 0x02004000    // MTIMECMP register in CLINT
 la x30, 0x0200BFF8    // MTIME register in CLINT

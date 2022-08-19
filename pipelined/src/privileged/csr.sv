@@ -40,9 +40,9 @@ module csr #(parameter
   input  logic             FlushE, FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM,
-  input  logic             CSRReadM, CSRWriteM, TrapM, MTrapM, STrapM, UTrapM, mretM, sretM, wfiM, InterruptM,
-  input  logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
+  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, InterruptM,
+  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
   input  logic             BPPredDirWrongM,
@@ -55,14 +55,13 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [`XLEN-1:0] CauseM, NextFaultMtvalM,
+  input  logic [`LOG_XLEN-1:0] CauseM, 
   input  logic             SelHPTW,
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
-  output logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW, STVEC_REGW, MTVEC_REGW,
   output logic [`XLEN-1:0]      MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
-  output logic [11:0]      MIP_REGW, MIE_REGW, SIP_REGW, SIE_REGW, MIDELEG_REGW,
+  output logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]       STATUS_FS,
@@ -71,8 +70,7 @@ module csr #(parameter
   
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
-//  output logic [11:0]     MIP_REGW, SIP_REGW, UIP_REGW, MIE_REGW, SIE_REGW, UIE_REGW,
-  output logic [`XLEN-1:0] CSRReadValW,
+  output logic [`XLEN-1:0] CSRReadValW, PrivilegedNextPCM,
   output logic             IllegalCSRAccessM, BigEndianM
 );
 
@@ -84,6 +82,9 @@ module csr #(parameter
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
+  logic [`XLEN-1:0] STVEC_REGW, MTVEC_REGW;
+  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW;
+
   logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic            WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
@@ -92,22 +93,71 @@ module csr #(parameter
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
 
   logic [11:0] CSRAdrM;
-  //logic [11:0] UIP_REGW, UIE_REGW = 0; // N user-mode exceptions not supported
   logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
-  logic [11:0] IP_REGW_writeable;
+  logic [11:0] MIP_REGW_writeable;
+  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector, NextFaultMtvalM;
+  logic MTrapM, STrapM;
+
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
 
-  // modify CSRs
+  ///////////////////////////////////////////
+  // MTVAL
+  ///////////////////////////////////////////
+
+  always_comb
+    if (InterruptM) NextFaultMtvalM = 0;
+    else case (CauseM)
+      12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
+      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
+      0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
+      default:                NextFaultMtvalM = 0; // Ecall, interrupts
+    endcase
+
+  ///////////////////////////////////////////
+  // Trap Vectoring
+  ///////////////////////////////////////////
+  //
+  // POSSIBLE OPTIMIZATION: 
+  // From 20190608 privielegd spec page 27 (3.1.7)
+  // > Allowing coarser alignments in Vectored mode enables vectoring to be
+  // > implemented without a hardware adder circuit.
+  // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
+  // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
+  // However, this is program dependent, so not implemented at this time.
+
+  always_comb
+    if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
+    else                               PrivilegedTrapVector = MTVEC_REGW; 
+
+  if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
+      always_comb
+        if (PrivilegedTrapVector[1:0] == 2'b01 & InterruptM)
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM}, 2'b00};
+        else
+          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
+  else begin
+    assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+  end
+
+  always_comb 
+    if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
+    else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
+    else                                    PrivilegedNextPCM = SEPC_REGW;
+
+  ///////////////////////////////////////////
+  // CSRWriteValM
+  ///////////////////////////////////////////
   always_comb begin
     // Choose either rs1 or uimm[4:0] as source
     CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
 
     // CSR set and clear for MIP/SIP should only touch internal state, not interrupt inputs
-    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(`XLEN-12){1'b0}}, IP_REGW_writeable};
+    if (CSRAdrM == MIP | CSRAdrM == SIP) CSRReadVal2M = {{(`XLEN-12){1'b0}}, MIP_REGW_writeable};
     else                                 CSRReadVal2M = CSRReadValM;
 
     // Compute AND/OR modification
@@ -122,20 +172,28 @@ module csr #(parameter
     endcase
   end
 
-  // write CSRs
+  ///////////////////////////////////////////
+  // CSR Write values
+  ///////////////////////////////////////////
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? ((wfiM & InterruptM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? CauseM : CSRWriteValM;
+  assign NextCauseM = TrapM ? {InterruptM, {(`XLEN-`LOG_XLEN-1){1'b0}}, CauseM}: CSRWriteValM;
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
   assign CSRUWriteM = CSRWriteM;  
+  assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
+  assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
+
+  ///////////////////////////////////////////
+  // CSRs
+  ///////////////////////////////////////////
 
   csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
-              .MExtIntM, .SExtIntM, .TimerIntM, .SwIntM,
-              .MIP_REGW, .MIE_REGW, .SIP_REGW, .SIE_REGW, .MIDELEG_REGW, .IP_REGW_writeable);
+              .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
+              .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW,
               .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
@@ -145,7 +203,7 @@ module csr #(parameter
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
               .STATUS_FS, .BigEndianM);
   csrc  counters(.clk, .reset,
-              .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW,   
+              .StallE, .StallM, .StallW, .FlushM, .FlushW,   
               .InstrValidM, .LoadStallD, .CSRMWriteM,
               .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
               .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
@@ -166,7 +224,7 @@ module csr #(parameter
               .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
               .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
               .SCOUNTEREN_REGW,
-              .SATP_REGW, .SIP_REGW, .SIE_REGW,
+              .SATP_REGW, .MIP_REGW, .MIE_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
               .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  

@@ -32,29 +32,67 @@
 `include "wally-config.vh"
 
 module privdec (
+  input  logic         clk, reset,
+  input  logic         StallM,
   input  logic [31:20] InstrM,
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
-  input  logic         TrappedSRETM, WFITimeoutM,
   input  logic [1:0]   PrivilegeModeW, 
-  input  logic         STATUS_TSR, STATUS_TVM,
+  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
   input  logic [1:0]   STATUS_FS,
   output logic         IllegalInstrFaultM,
-  output logic         sretM, mretM, ecallM, ebreakM, wfiM, sfencevmaM);
+  output logic         EcallFaultM, BreakpointFaultM,
+  output logic         sretM, mretM, wfiM, sfencevmaM);
 
   logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
+  logic WFITimeoutM;
+  logic       StallMQ;
+  logic       ebreakM, ecallM;
 
-  // xRET defined in Privileged Spect 3.2.2
+  ///////////////////////////////////////////
+  // Decode privileged instructions
+  ///////////////////////////////////////////
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
-                      PrivilegeModeW[0] & ~STATUS_TSR; 
+                      (PrivilegeModeW == `M_MODE || PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
-
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001) & 
                       (PrivilegeModeW == `M_MODE | (PrivilegeModeW == `S_MODE & ~STATUS_TVM)); 
+
+  ///////////////////////////////////////////
+  // WFI timeout Privileged Spec 3.1.6.5
+  ///////////////////////////////////////////
+  if (`U_SUPPORTED) begin:wfi
+    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+    assign WFICountPlus1 = WFICount + 1;
+    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+  end else assign WFITimeoutM = 0;
+
+  ///////////////////////////////////////////
+  // Extract exceptions by name and handle them 
+  ///////////////////////////////////////////
+  assign BreakpointFaultM = ebreakM; // could have other causes from a debugger
+  assign EcallFaultM = ecallM;
+
+  ///////////////////////////////////////////
+  // sfence.vma causes TLB flushes
+  ///////////////////////////////////////////
+  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
+  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
+  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
+  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
+  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
+//  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
+//  assign ITLBFlushF = sfencevmaM & ~StallMQ;
+//  assign DTLBFlushM = sfencevmaM;
+
+  ///////////////////////////////////////////
+  // Fault on illegal instructions
+  ///////////////////////////////////////////
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalOrDisabledFPUInstrM = IllegalFPUInstrM | (STATUS_FS == 2'b00);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalOrDisabledFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
-                               TrappedSRETM | WFITimeoutM; 
+                               WFITimeoutM; 
 endmodule
