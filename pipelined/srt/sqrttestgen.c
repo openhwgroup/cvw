@@ -1,6 +1,6 @@
 /* sqrttestgen.c */
 
-/* Written 19 October 2021 David_Harris@hmc.edu
+/* Written 7/22/2022 by Cedar Turek
 
    This program creates test vectors for mantissa component
    of an IEEE floating point square root. 
@@ -15,11 +15,12 @@
 /* Constants */
 
 #define ENTRIES  17
+#define BIGENT   1000
 #define RANDOM_VECS 500
 
 /* Prototypes */
 
-void output(FILE *fptr, double a, double r);
+void output(FILE *fptr, int aExp, double aFrac, int rExp, double rFrac);
 void printhex(FILE *fptr, double x);
 double random_input(void);
 
@@ -28,28 +29,57 @@ double random_input(void);
 void main(void)
 {
   FILE *fptr;
-  double a, b, r;
-  double list[ENTRIES] = {1, 1.5, 1.25, 1.125, 1.0625,
+  double aFrac, rFrac;
+  int    aExp,  rExp;
+  double mans[ENTRIES] = {1, 1849.0/1024, 1.25, 1.125, 1.0625,
 			  1.75, 1.875, 1.99999,
-			  1.1, 1.2, 1.01, 1.001, 1.0001,
-			  1/1.1, 1/1.5, 1/1.25, 1/1.125};
-  int i, j;
+			  1.1, 1.5, 1.01, 1.001, 1.0001,
+			  2/1.1, 2/1.5, 2/1.25, 2/1.125};
+
+  double bigtest[BIGENT];
+
+  double exps[ENTRIES] = {0, 0, 2, 3, 4, 5, 6, 7, 8, 1, 10,
+        11, 12, 13, 14, 15, 16};
+  int i;
+  int bias = 1023;
 
   if ((fptr = fopen("sqrttestvectors","w")) == NULL) {
     fprintf(stderr, "Couldn't write sqrttestvectors file\n");
     exit(1);
   }
 
-  for (i=0; i<ENTRIES; i++) {
-    a = list[i];
-    r = sqrt(a);
-    output(fptr, a, r);
-  }
+  // Small Test
+  // for (i=0; i<ENTRIES; i++) {
+  //   aFrac = mans[i];
+  //   aExp  = exps[i] + bias;
+  //   rFrac = sqrt(aFrac * pow(2, exps[i]));
+  //   rExp  = (int) (log(rFrac)/log(2) + bias);
+  //   output(fptr, aExp, aFrac, rExp, rFrac);
+  // }
+
+  //                                  WS
+  // Test 1: sqrt(1) = 1              0000 0000 0000 00
+  // Test 2: sqrt(1849/1024) = 43/32  0000 1100 1110 01
+  // Test 3: sqrt(5)                  0000 0100 0000 00
+  // Test 4: sqrt(9) = 3              1111 1001 0000 00
+  // Test 5: sqrt(17)                 0000 0001 0000 00
+  // Test 6: sqrt(56)                 1111 1110 0000 00
+  // Test 7: sqrt(120)                0000 1110 0000 00
   
-  for (i = 0; i< RANDOM_VECS; i++) {
-    a = random_input();
-    r = sqrt(a);
-    output(fptr, a, r);
+  // for (i = 0; i< RANDOM_VECS; i++) {
+  //   a = random_input();
+  //   r = sqrt(a);
+  //   output(fptr, a, r);
+  // }
+
+  // Big Test
+  for (i=0; i<BIGENT; i++) {
+    bigtest[i] = random_input();
+    aFrac = bigtest[i];
+    aExp  = (i - BIGENT/2) + bias;
+    rFrac = sqrt(aFrac * pow(2, (i - BIGENT/2)));
+    rExp  = (int) (log(rFrac)/log(2) + bias);
+    output(fptr, aExp, aFrac, rExp, rFrac);
   }
 
   fclose(fptr);
@@ -57,15 +87,21 @@ void main(void)
 
 /* Functions */
 
-void output(FILE *fptr, double a, double r)
+void output(FILE *fptr, int aExp, double aFrac, int rExp, double rFrac)
 {
- printf("sqrt(%lf) = %lf\n", a, r);
-  printhex(fptr, a);
+  // Print a in standard double format
+  fprintf(fptr, "%03x", aExp);
+  printhex(fptr, aFrac);
   fprintf(fptr, "_");
-  printhex(fptr, r);
+
+  // Spacing for testbench, value doesn't matter
+  fprintf(fptr, "%016x", 0);
+  fprintf(fptr, "_");
+
+  // Print r in standard double format
+  fprintf(fptr, "%03x", rExp);
+  printhex(fptr, rFrac);
   fprintf(fptr, "\n");
-
-
 }
 
 void printhex(FILE *fptr, double m)
@@ -84,6 +120,6 @@ void printhex(FILE *fptr, double m)
 
 double random_input(void)
 {
-  return 1.0 + rand()/32767.0;
+  return 1.0 + ((rand() % 32768)/32767.0);
 }
   

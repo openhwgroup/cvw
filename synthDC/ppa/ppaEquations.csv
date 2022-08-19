@@ -1,0 +1,11 @@
+Element,Best delay,Fast area,Fast leakage,Fast energy,Small area,Small leakage,Small energy
+priorityencoder,0.98$log_2$(N),0.32S,0.22S,0.087S,0.14S,0.044S,0.033S
+add,1.9 + 1.4$log_2$(N),1S,0.89S,0.91S,0.32S,0.15S,0.33S
+csa,3.6,0.87S,1.3S,0.95S,0.33S,0.15S,0.31S
+shiftleft,0.46 + 1.6$log_2$(N),1.9S,2.1S,1.4S,0.77S,0.28S,0.48S
+comparator,2.1 + 0.91$log_2$(N),0.58S,0.44S,0.27S,0.33S,0.15S,0.12S
+flop,3.3,0.33S,0.33S,1.3S,0.33S,0.33S,1.3S
+mux2,2.6 + 0.41$log_2$(N),0.21S,0.23S,0.16S,0.14S,0.11S,0.14S
+mux4,3.1 + 0.5$log_2$(N),0.35S,0.31S,0.26S,0.27S,0.11S,0.19S
+mux8,4.9 + 0.46$log_2$(N),0.8S,0.66S,0.43S,0.53S,0.23S,0.24S
+mult,6$log_2$(N),13$S^2$,13$S^2$,33$S^2$,7.8$S^2$,3.5$S^2$,14$S^2$

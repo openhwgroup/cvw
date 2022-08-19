@@ -34,7 +34,7 @@
 module wallypipelinedcore (
    input logic             clk, reset,
    // Privileged
-   input logic             TimerIntM, MExtIntM, SExtIntM, SwIntM,
+   input logic             MTimerInt, MExtInt, SExtInt, MSwInt,
    input logic [63:0]         MTIME_CLINT, 
    // Bus Interface
    input logic [`AHBW-1:0]  HRDATA,
@@ -42,6 +42,7 @@ module wallypipelinedcore (
    output logic         HCLK, HRESETn,
    output logic [31:0]         HADDR,
    output logic [`AHBW-1:0] HWDATA,
+   output logic [`XLEN/8-1:0] HWSTRB,
    output logic         HWRITE,
    output logic [2:0]         HSIZE,
    output logic [2:0]         HBURST,
@@ -63,13 +64,11 @@ module wallypipelinedcore (
   // new signals that must connect through DP
   logic             MDUE, W64E;
   logic             CSRReadM, CSRWriteM, PrivilegedM;
-  logic [1:0]             AtomicE;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
 (* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
   logic [2:0]             Funct3E;
-  //  logic [31:0] InstrF;
-  logic [31:0]             InstrD, InstrW;
+  logic [31:0]             InstrD;
   (* mark_debug = "true" *) logic [31:0]             InstrM;
   logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
@@ -84,9 +83,8 @@ module wallypipelinedcore (
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
-  logic             CSRWritePendingDEM;
+  logic             CSRWriteFencePendingDEM;
   logic             DivBusyE;
-  logic             DivE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
   // floating point unit signals
@@ -95,16 +93,20 @@ module wallypipelinedcore (
   logic             FStallD;
   logic             FWriteIntE;
   logic [`XLEN-1:0]         FWriteDataE;
+  logic                     FStore2;
+  logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
+  logic [`XLEN-1:0]         FCvtIntResW;  
   logic             FDivBusyE;
   logic             IllegalFPUInstrD, IllegalFPUInstrE;
   logic             FRegWriteM;
   logic             FPUStallD;
+  logic             FpLoadStoreM;
+  logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
 
   // memory management unit signals
   logic             ITLBWriteF;
-  logic             ITLBFlushF, DTLBFlushM;
   logic             ITLBMissF;
   logic [`XLEN-1:0]         SATP_REGW;
   logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV;
@@ -112,8 +114,9 @@ module wallypipelinedcore (
   logic [1:0]             PrivilegeModeW;
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
-  logic              wfiM, IntPendingM;
+  logic              sfencevmaM, wfiM, IntPendingM;
   logic             SelHPTW;
+
 
   // PMA checker signals
   var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
@@ -130,21 +133,23 @@ module wallypipelinedcore (
   logic [`XLEN-1:0] IEUAdrE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
   (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
-  (* mark_debug = "true" *) logic [`XLEN-1:0] ReadDataM;
-  logic [`XLEN-1:0] ReadDataW;  
+  logic [`LLEN-1:0] ReadDataW;  
   logic             CommittedM;
 
   // AHB ifu interface
   logic [`PA_BITS-1:0]         IFUBusAdr;
   logic [`XLEN-1:0]         IFUBusHRDATA;
   logic             IFUBusRead;
-  logic             IFUBusAck;
+  logic             IFUBusAck, IFUBusInit;
+  logic [2:0]       IFUBurstType;
+  logic [1:0]       IFUTransType;
+  logic             IFUTransComplete;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0]         LSUBusAdr;
   logic             LSUBusRead;
   logic             LSUBusWrite;
-  logic             LSUBusAck;
+  logic             LSUBusAck, LSUBusInit;
   logic [`XLEN-1:0]         LSUBusHRDATA;
   logic [`XLEN-1:0]         LSUBusHWDATA;
   
@@ -156,8 +161,10 @@ module wallypipelinedcore (
   logic [4:0]             InstrClassM;
   logic             InstrAccessFaultF;
   logic [2:0]             LSUBusSize;
+  logic [2:0]             LSUBurstType;
+  logic [1:0]             LSUTransType;
+  logic             LSUTransComplete;
   
-  logic             ExceptionM;
   logic             DCacheMiss;
   logic             DCacheAccess;
   logic             ICacheMiss;
@@ -168,13 +175,11 @@ module wallypipelinedcore (
   
   ifu ifu(
     .clk, .reset,
-    .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
-
-    .ExceptionM,
+    .StallF, .StallD, .StallE, .StallM, 
+    .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
-    .IFUBusHRDATA, .IFUBusAck, .PCF, .IFUBusAdr,
-    .IFUBusRead, .IFUStallF,
+    .IFUBusHRDATA, .IFUBusAck, .IFUBusInit, .PCF, .IFUBusAdr,
+    .IFUBusRead, .IFUStallF, .IFUBurstType, .IFUTransType, .IFUTransComplete,
     .ICacheAccess, .ICacheMiss,
 
     // Execute
@@ -196,7 +201,7 @@ module wallypipelinedcore (
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ITLBWriteF, .ITLBFlushF,
+    .STATUS_MPP, .ITLBWriteF, .sfencevmaM,
     .ITLBMissF,
 
     // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
@@ -221,7 +226,6 @@ module wallypipelinedcore (
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
-     .AtomicE, // atomic control goes to LSU        
      .AtomicM, // atomic control goes to LSU
      .WriteDataE, // Write data to LSU
      .Funct3M, // size and signedness to LSU
@@ -229,9 +233,11 @@ module wallypipelinedcore (
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .ReadDataM, .MDUResultW,
-     .RdW, .ReadDataW,
+     .CSRReadValW, .MDUResultW,
+     .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
+     .FCvtIntResW,
+     .FResSelW,
 
      // hazards
      .StallD, .StallE, .StallM, .StallW,
@@ -239,7 +245,7 @@ module wallypipelinedcore (
      .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWritePendingDEM, .StoreStallD
+     .CSRWriteFencePendingDEM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
@@ -251,12 +257,14 @@ module wallypipelinedcore (
   .AtomicM, .TrapM,
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
+  .FpLoadStoreM,
+  .FWriteDataM, .FStore2,
   //.DataMisalignedM(DataMisalignedM),
   .IEUAdrE, .IEUAdrM, .WriteDataE,
-  .ReadDataM, .FlushDCacheM,
+  .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
-  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck,
-  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize,
+  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
+  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -269,7 +277,7 @@ module wallypipelinedcore (
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
 
-    .DTLBFlushM,                   // connects to privilege
+    .sfencevmaM,                   // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
@@ -287,28 +295,37 @@ module wallypipelinedcore (
   ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .IFUBusAdr,
-     .IFUBusRead, .IFUBusHRDATA, .IFUBusAck,
+     .IFUBusAdr, .IFUBusRead, 
+     .IFUBusHRDATA, 
+     .IFUBurstType, 
+     .IFUTransType, 
+     .IFUTransComplete,
+     .IFUBusAck, 
+     .IFUBusInit, 
      // Signals from Data Cache
      .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
      .LSUBusHRDATA,
      .LSUBusSize,
+     .LSUBurstType,
+     .LSUTransType,
+     .LSUTransComplete,
      .LSUBusAck,
+     .LSUBusInit,
  
      .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
-     .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST,
+     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
      .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
      .HWRITED);
 
   
    hazard     hzu(
-     .BPPredWrongE, .CSRWritePendingDEM, .RetM, .TrapM,
+     .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FPUStallD, .FStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-     .InvalidateICacheM, .wfiM, .IntPendingM,
+     .wfiM, .IntPendingM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
@@ -322,8 +339,8 @@ module wallypipelinedcore (
          .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
-         .ITLBFlushF, .DTLBFlushM,
-         .InstrValidM, .CommittedM, .DivE,
+         .sfencevmaM,
+         .InstrValidM, .CommittedM, 
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
@@ -331,7 +348,7 @@ module wallypipelinedcore (
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
          .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-         .TimerIntM, .MExtIntM, .SExtIntM, .SwIntM,
+         .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
          .MTIME_CLINT, 
          .IEUAdrM,
          .SetFflagsM,
@@ -339,7 +356,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-         .ExceptionM, .IllegalFPUInstrE,
+         .IllegalFPUInstrE,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
@@ -351,8 +368,7 @@ module wallypipelinedcore (
       assign RetM = 0;
       assign TrapM = 0;
       assign wfiM = 0;
-      assign ITLBFlushF = 0;
-      assign DTLBFlushM = 0;
+      assign sfencevmaM = 0;
       assign BigEndianM = 0;
    end
    if (`M_SUPPORTED) begin:mdu
@@ -360,7 +376,7 @@ module wallypipelinedcore (
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
-         .MDUResultW, .DivBusyE,  .DivE,
+         .MDUResultW, .DivBusyE,  
          .StallM, .StallW, .FlushM, .FlushW, .TrapM 
       ); 
    end else begin // no M instructions supported
@@ -373,17 +389,22 @@ module wallypipelinedcore (
          .clk, .reset,
          .FRM_REGW, // Rounding mode from CSR
          .InstrD, // instruction from IFU
-         .ReadDataW,// Read data from memory
+         .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
          .ForwardedSrcAE, // Integer input being processed (from IEU)
          .StallE, .StallM, .StallW, // stall signals from HZU
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
          .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
+         .FpLoadStoreM,
+         .FStore2,
          .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory
+         .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
+         .FCvtIntResW, // fp -> int conversion result to be stored in int register
+         .FResSelW,   // fpu result selection
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
          .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
          .SetFflagsM        // FPU flags (to privileged unit)

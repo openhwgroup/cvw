@@ -22,6 +22,8 @@
 ///////////////////////////////////////////
 
 #include "WALLY-TEST-LIB-64.h"
+RVTEST_ISA("RV64I")
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",trap)
 
 INIT_TESTS
 
@@ -77,7 +79,6 @@ jal cause_m_time_interrupt
 li a3, 0x40 // these interrupts involve a time loop waiting for the interrupt to go off.
 // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
 jal cause_s_ext_interrupt_GPIO
-li a3, 0x40
 jal cause_m_ext_interrupt
 
 

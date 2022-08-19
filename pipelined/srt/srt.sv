@@ -2,7 +2,7 @@
 // srt.sv
 //
 // Written: David_Harris@hmc.edu 13 January 2022
-// Modified: 
+// Modified: cturek@hmc.edu July 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
@@ -30,127 +30,156 @@
 
 `include "wally-config.vh"
 
-module srt #(parameter Nf=52) (
+module srt (
   input  logic clk,
   input  logic Start, 
   input  logic Stall, // *** multiple pipe stages
   input  logic Flush, // *** multiple pipe stages
-  // Floating Point Inputs
-  // later add exponents, signs, special cases
-  input  logic [10:0] SrcXExpE, SrcYExpE, // exponents, for double precision exponents are 11 bits
-  // end of floating point inputs
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
+  // Floating Point
+  input  logic       XSign, YSign,
+  input  logic [`NE-1:0] XExp, YExp,
+  input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
+  // Integer
   input  logic [`XLEN-1:0] SrcA, SrcB,
+  // Customization
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
+  // Selection
   input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
+  input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] Quot, Rem, // *** later handle integers
-  output logic [10:0] Exp,  // output exponent is hardcoded for 11 bits for double precision
+  output logic       rsign, done,
+  output logic [`DIVLEN-1:0] Result,
+  output logic [`NE-1:0] rExp,
   output logic [3:0] Flags
 );
 
-  logic          qp, qz, qm; // quotient is +1, 0, or -1
-  logic [Nf-1:0] X, Dpreproc;
-  logic [Nf+3:0] WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
-  logic [Nf+2:0] rp, rm;
+  logic                       qp, qz, qn; // result bits are +1, 0, or -1
+  logic [`NE-1:0]             calcExp;
+  logic                       calcSign;
+  logic [`DIVLEN+3:0]         X, Dpreproc, C, F, S, SM, AddIn;
+  logic [`DIVLEN+3:0]         WS, WSA, WSN, WC, WCA, WCN, D, Db, Dsel;
+  logic [$clog2(`XLEN+1)-1:0] zeroCntD, intExp, dur, calcDur;
+  logic                       intSign;
+  logic                       cin;
  
-  srtpreproc #(Nf) preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, Fmt, W64, Signed, Int, Sqrt, X, Dpreproc);
+  srtpreproc preproc(SrcA, SrcB, SrcXFrac, SrcYFrac, XExp, Fmt, W64, Signed, Int, Mod, Sqrt, X, Dpreproc, zeroCntD, intExp, calcDur, intSign);
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
   // Otherwise, the divisor is retained and the partial remainder
   // is fed back for the next iteration.
-  mux2   #(Nf+4) wsmux({WSA[54:0], 1'b0}, {4'b0001, X}, Start, WSN);
-  flop   #(Nf+4) wsflop(clk, WSN, WS);
-  mux2   #(Nf+4) wcmux({WCA[54:0], 1'b0}, 56'b0, Start, WCN);
-  flop   #(Nf+4) wcflop(clk, WCN, WC);
-  flopen #(Nf+4) dflop(clk, Start, {4'b0001, Dpreproc}, D);
+  mux2   #(`DIVLEN+4) wsmux({WSA[`DIVLEN+2:0], 1'b0}, X, Start, WSN);
+  flop   #(`DIVLEN+4) wsflop(clk, WSN, WS);
+  mux2   #(`DIVLEN+4) wcmux({WCA[`DIVLEN+2:0], 1'b0}, {(`DIVLEN+4){1'b0}}, Start, WCN);
+  flop   #(`DIVLEN+4) wcflop(clk, WCN, WC);
+  flopen #(`DIVLEN+4) dflop(clk, Start, Dpreproc, D);
 
   // Quotient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  // Accumulate quotient digits in a shift register
-  qsel #(Nf) qsel(WS[55:52], WC[55:52], qp, qz, qm);
-  qacc #(Nf+3) qacc(clk, Start, qp, qz, qm, rp, rm);
+  qsel2 qsel2(WS[`DIVLEN+3:`DIVLEN], WC[`DIVLEN+3:`DIVLEN], Sqrt, qp, qz, qn);
+
+  flopen #(`NE) expflop(clk, Start, calcExp, rExp);
+  flopen #(1) signflop(clk, Start, calcSign, rsign);
+  flopen #(7) durflop(clk, Start, calcDur, dur);
+  
+  srtcounter divcounter(clk, Start, dur, done);
 
   // Divisor Selection logic
-  inv dinv(D, Db);
-  mux3onehot divisorsel(Db, 56'b0, D, qp, qz, qm, Dsel);
+  assign Db = ~D;
+  mux3onehot #(`DIVLEN) divisorsel(Db, {(`DIVLEN+4){1'b0}}, D, qp, qz, qn, Dsel);
+
+  // If only implementing division, use divide otfc
+  // otfc2  #(`DIVLEN) otfc2(clk, Start, qp, qz, qn, Quot);
+  // otherwise use sotfc
+  creg   sotfcC(clk, Start, Sqrt, C);
+  sotfc2 sotfc2(clk, Start, qp, qn, Sqrt, C, S, SM);
+  fsel2 fsel(qp, qn, C, S, SM, F);
+
+  // Adder input selection
+  assign AddIn = Sqrt ? F : Dsel;
 
   // Partial Product Generation
-  csa csa(WS, WC, Dsel, qp, WSA, WCA);
+  assign cin = ~Sqrt & qp;
+  csa    #(`DIVLEN+4) csa(WS, WC, AddIn, cin, WSA, WCA);
+  
+  expcalc expcalc(.XExp, .YExp, .calcExp, .Sqrt);
 
-  // Exponent division 
-  exp exp(SrcXExpE, SrcYExpE, Exp);
-
-  srtpostproc postproc(rp, rm, Quot);
+  srtpostproc postproc(.WS, .WC, .X, .D, .S, .SM, .dur, .zeroCntD, .XSign, .YSign, .Signed, .Int, .Mod, .Result, .calcSign);
 endmodule
 
-module srtpostproc #(parameter N=52) (
-  input [N+2:0] rp, rm,
-  output [N-1:0] Quot
-);
+////////////////
+// Submodules //
+////////////////
 
-  //assign Quot = rp - rm;
-  finaladd finaladd(rp, rm, Quot);
-endmodule
-
-module srtpreproc #(parameter Nf=52) (
+///////////////////
+// Preprocessing //
+///////////////////
+module srtpreproc (
   input  logic [`XLEN-1:0] SrcA, SrcB,
-  input  logic [Nf-1:0] SrcXFrac, SrcYFrac,
+  input  logic [`NF-1:0] SrcXFrac, SrcYFrac,
+  input  logic [`NE-1:0] XExp,
   input  logic [1:0] Fmt, // Floats: 00 = 16 bit, 01 = 32 bit, 10 = 64 bit, 11 = 128 bit
   input  logic       W64, // 32-bit ints on XLEN=64
   input  logic       Signed, // Interpret integers as signed 2's complement
-  input  logic       Int, // Choose integer inputss
+  input  logic       Int, // Choose integer inputs
+  input  logic       Mod, // perform remainder calculation (modulo) instead of divide
   input  logic       Sqrt, // perform square root, not divide
-  output logic [Nf-1:0] X, D
+  output logic [`DIVLEN+3:0] X, D,
+  output logic [$clog2(`XLEN+1)-1:0] zeroCntB, intExp, dur, // Quotient integer exponent
+  output logic       intSign // Quotient integer sign
 );
 
-  // Initial: just pass X and Y through for simple fp division
-  assign X = SrcXFrac;
-  assign D = SrcYFrac;
+  logic  [$clog2(`XLEN+1)-1:0] zeroCntA;
+  logic  [`XLEN-1:0] PosA, PosB;
+  logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY, DivX;
+  logic  [`NF+4:0] SqrtX;
+
+  // Generate positive integer inputs if they are signed
+  assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
+  assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
+
+  // Calculate leading zeros of integer inputs
+  lzc #(`XLEN) lzcA (PosA, zeroCntA);
+  lzc #(`XLEN) lzcB (PosB, zeroCntB);
+
+  // Make integers have DIVLEN bits
+  assign ExtraA = {PosA, {`EXTRAINTBITS{1'b0}}};
+  assign ExtraB = {PosB, {`EXTRAINTBITS{1'b0}}};
+
+  // Shift integers to have leading ones
+  assign PreprocA = ExtraA << (zeroCntA + 1);
+  assign PreprocB = ExtraB << (zeroCntB + 1);
+
+  // Make mantissas have DIVLEN bits
+  assign PreprocX = {SrcXFrac, {`EXTRAFRACBITS{1'b0}}};
+  assign PreprocY = {SrcYFrac, {`EXTRAFRACBITS{1'b0}}};
+
+  // Selecting correct divider inputs
+  assign DivX = Int ? PreprocA : PreprocX;
+  assign SqrtX = XExp[0] ? {5'b11101, SrcXFrac} : {4'b1111, SrcXFrac, 1'b0};
+  assign X = Sqrt ? {SqrtX, {(`EXTRAFRACBITS-1){1'b0}}} : {4'b0001, DivX};
+  assign D = {4'b0001, Int ? PreprocB : PreprocY};
+
+  // Integer exponent and sign calculations
+  assign intExp = zeroCntB - zeroCntA - Mod + (PreprocA >= PreprocB);
+  assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
+
+  // Number of cycles of divider
+  assign dur = Int ? (intExp & {7{~intExp[6]}}) : (7)'(`DIVLEN);
 endmodule
 
-/*
-
-//////////
-// mux2 //
-//////////
-module mux2(input  logic [55:0] in0, in1, 
-            input  logic        sel, 
-            output logic [55:0] out);
- 
-   assign #1 out = sel ? in1 : in0;
-endmodule
-
-//////////
-// flop //
-//////////
-module flop(clk, in, out);
-  input 	clk;
-  input  [55:0] in;
-  output [55:0] out;
-
-  logic    [55:0] state;
-
-  always @(posedge clk)
-      state <= #1 in;
-
-  assign #1 out = state;
-endmodule
-
-*/
-
-//////////
-// qsel //
-//////////
-module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
-  input  logic [Nf+3:Nf] ps, pc, 
-  output logic         qp, qz, qm
+/////////////////////////////////
+// Quotient Selection, Radix 2 //
+/////////////////////////////////
+module qsel2 (
+  input  logic [`DIVLEN+3:`DIVLEN] ps, pc, 
+  input  logic         Sqrt,
+  output logic         qp, qz, qn
 );
  
-  logic [Nf+3:Nf]  p, g;
+  logic [`DIVLEN+3:`DIVLEN]  p, g;
   logic          magnitude, sign, cout;
 
   // The quotient selection logic is presented for simplicity, not
@@ -161,9 +190,9 @@ module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  assign #1 magnitude = ~(&p[54:52]);
-  assign #1 cout = g[54] | (p[54] & (g[53] | p[53] & g[52]));
-  assign #1 sign = p[55] ^ cout;
+  assign #1 magnitude = ~(&p[`DIVLEN+2:`DIVLEN]);
+  assign #1 cout = g[`DIVLEN+2] | (p[`DIVLEN+2] & (g[`DIVLEN+1] | p[`DIVLEN+1] & (g[`DIVLEN])));
+  assign #1 sign = p[`DIVLEN+3] ^ cout;
 /*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
 			  (ps[52]^pc[52]));
   assign #1 sign = (ps[55]^pc[55])^
@@ -174,56 +203,154 @@ module qsel #(parameter Nf=52) ( // *** eventually just change to 4 bits
   // Produce quotient = +1, 0, or -1
   assign #1 qp = magnitude & ~sign;
   assign #1 qz = ~magnitude;
-  assign #1 qm = magnitude & sign;
+  assign #1 qn = magnitude & sign;
 endmodule
 
-//////////
-// qacc //
-//////////
-module qacc #(parameter N=55) (
-  input  logic         clk, 
-  input  logic         req, 
-  input  logic         qp, qz, qm, 
-  output logic [N-1:0] rp, rm
+////////////////////////////////////
+// Adder Input Selection, Radix 2 //
+////////////////////////////////////
+module fsel2 (
+  input  logic sp, sn,
+  input  logic [`DIVLEN+3:0] C, S, SM,
+  output logic [`DIVLEN+3:0] F
 );
+  logic [`DIVLEN+3:0] FP, FN, FZ;
+  
+  // Generate for both positive and negative bits
+  assign FP = ~(S << 1) & C;
+  assign FN = (SM << 1) | (C & (~C << 2));
+  assign FZ = '0;
 
-  flopr #(N) rmreg(clk, req, {rm[53:0], qm}, rm);
-  flopr #(N) rpreg(clk, req, {rp[53:0], qp}, rp);
-/*  always @(posedge clk)
-    begin
-      if (req) 
-	begin
-	  rp <= #1 0;
-	  rm <= #1 0;
-	end
-      else 
-	begin
-	  rm <= #1 {rm[54:0], qm};
-	  rp <= #1 {rp[54:0], qp};
-	end
-    end */
+  // Choose which adder input will be used
+
+  always_comb
+    if (sp)       F = FP;
+    else if (sn)  F = FN;
+    else          F = FZ;
+
+  // assign F = sp ? FP : (sn ? FN : FZ);
+
 endmodule
 
-/////////
-// inv //
-/////////
-module inv(input  logic [55:0] in, 
-           output logic [55:0] out);
+///////////////////////////////////
+// On-The-Fly Converter, Radix 2 //
+///////////////////////////////////
+module otfc2 #(parameter N=66) (
+  input  logic         clk,
+  input  logic         Start,
+  input  logic         qp, qz, qn,
+  output logic [N-3:0] Result
+);
+  //  The on-the-fly converter transfers the quotient 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division only.
+  logic [N+2:0] Q, QM, QNext, QMNext, QMMux;
+  logic [N+1:0] QR, QMR;
 
-  assign #1 out = ~in;
+  flopr #(N+3) Qreg(clk, Start, QNext, Q);
+  mux2 #(`DIVLEN+3) Qmux(QMNext, {(`DIVLEN+3){1'b1}}, Start, QMMux);
+  flop #(`DIVLEN+3) QMreg(clk, QMMux, QM);
+
+  always_comb begin
+    QR  = Q[N+1:0];
+    QMR = QM[N+1:0];     // Shift Q and QM
+    if (qp) begin
+      QNext  = {QR,  1'b1};
+      QMNext = {QR,  1'b0};
+    end else if (qz) begin
+      QNext  = {QR,  1'b0};
+      QMNext = {QMR, 1'b1};
+    end else begin        // If qp and qz are not true, then qn is
+      QNext  = {QMR, 1'b1};
+      QMNext = {QMR, 1'b0};
+    end 
+  end
+  assign Result = Q[N] ? Q[N-1:2] : Q[N-2:1];
+
+endmodule
+
+///////////////////////////////
+// Square Root OTFC, Radix 2 //
+///////////////////////////////
+module sotfc2(
+  input  logic         clk,
+  input  logic         Start,
+  input  logic         sp, sn,
+  input  logic         Sqrt,
+  input  logic [`DIVLEN+3:0] C,
+  output logic [`DIVLEN+3:0] S, SM
+);
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
+  logic [`DIVLEN+3:0] SNext, SMNext, SMux;
+
+  flopr #(`DIVLEN+4) SMreg(clk, Start, SMNext, SM);
+  mux2 #(`DIVLEN+4) Smux(SNext, {3'b000, Sqrt, {(`DIVLEN){1'b0}}}, Start, SMux);
+  flop #(`DIVLEN+4) Sreg(clk, SMux, S);
+
+  always_comb begin
+    if (sp) begin
+      SNext  = S | (C & ~(C << 1));
+      SMNext = S;
+    end else if (sn) begin
+      SNext  = SM | (C & ~(C << 1));
+      SMNext = SM;
+    end else begin        // If sp and sn are not true, then sz is
+      SNext  = S;
+      SMNext = SM | (C & ~(C << 1));
+    end 
+  end
+endmodule
+
+//////////////////////////
+// C Register for SOTFC //
+//////////////////////////
+module creg(input  logic clk,
+            input  logic Start,
+            input  logic Sqrt,
+            output logic [`DIVLEN+3:0] C
+);
+  logic [`DIVLEN+3:0] CMux;
+
+  mux2 #(`DIVLEN+4) Cmux({1'b1, C[`DIVLEN+3:1]}, {4'b1111, Sqrt, {(`DIVLEN-1){1'b0}}}, Start, CMux);
+  flop #(`DIVLEN+4) cflop(clk, CMux, C);
+endmodule
+
+/////////////
+// counter //
+/////////////
+module srtcounter(input  logic clk, 
+                  input  logic req, 
+                  input  logic [$clog2(`XLEN+1)-1:0] dur,
+                  output logic done
+);
+ 
+  logic    [$clog2(`XLEN+1)-1:0]  count;
+
+  // This block of control logic sequences the divider
+  // through its iterations.  You may modify it if you
+  // build a divider which completes in fewer iterations.
+  // You are not responsible for the (trivial) circuit
+  // design of the block.
+
+  always @(posedge clk)
+    begin
+      if      (count == dur) done <= #1 1;
+      else if (done | req) done <= #1 0;	
+      if (req) count <= #1 0;
+      else     count <= #1 count+1;
+    end
 endmodule
 
 //////////
 // mux3 //
 //////////
-module mux3onehot(in0, in1, in2, sel0, sel1, sel2, out);
-  input  [55:0] in0;
-  input  [55:0] in1;
-  input  [55:0] in2;
-  input         sel0;
-  input         sel1;
-  input         sel2;
-  output [55:0] out;
+module mux3onehot #(parameter N=65) (
+  input  logic [N+3:0] in0, in1, in2,
+  input  logic         sel0, sel1, sel2,
+  output logic [N+3:0] out
+);
 
   // lazy inspection of the selects
   // really we should make sure selects are mutually exclusive
@@ -234,7 +361,7 @@ endmodule
 /////////
 // csa //
 /////////
-module csa #(parameter N=56) (
+module csa #(parameter N=69) (
   input  logic [N-1:0] in1, in2, in3, 
   input  logic         cin, 
   output logic [N-1:0] out1, out2
@@ -249,41 +376,99 @@ module csa #(parameter N=56) (
   // insert cin.
 
   assign #1 out1 = in1 ^ in2 ^ in3;
-  assign #1 out2 = {in1[54:0] & (in2[54:0] | in3[54:0]) | 
-		    (in2[54:0] & in3[54:0]), cin};
+  assign #1 out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
+		    (in2[N-2:0] & in3[N-2:0]), cin};
 endmodule
 
-//////////////
-// exponent //
-//////////////
-module exp(input [10:0] e1, e2,
-           output [10:0] e);       // for double precision, exponent is 11 bits
-  assign e = (e1 - e2) + 11'd1023; // bias is hardcoded
-endmodule
 
 //////////////
-// finaladd //
+// expcalc  //
 //////////////
-module finaladd(
-  input  logic [54:0] rp, rm, 
-  output logic [51:0] r
+module expcalc(
+  input  logic [`NE-1:0] XExp, YExp,
+  input  logic           Sqrt,
+  output logic [`NE-1:0] calcExp
 );
+  logic        [`NE+1:0] SExp, DExp, SXExp;
+  assign SXExp = {2'b00, XExp} - (`NE+2)'(`BIAS);
+  assign SExp  = (SXExp >> 1) + (`NE+2)'(`BIAS);
+  assign DExp  = {2'b00, XExp} - {2'b00, YExp} + (`NE+2)'(`BIAS);
+  assign calcExp = Sqrt ? SExp[`NE-1:0] : DExp[`NE-1:0];
 
-  logic   [54:0] diff;
+endmodule
 
-  // this magic block performs the final addition for you
-  // to convert the positive and negative quotient digits
-  // into a normalized mantissa.  It returns the 52 bit
-  // mantissa after shifting to guarantee a leading 1.
-  // You can assume this block operates in one cycle
-  // and do not need to budget it in your area and power
-  // calculations.
-	
-  // Since no rounding is performed, the result may be too 
-  // small by one unit in the least significant place (ulp).
-  // The checker ignores such an error.
+module srtpostproc(
+  input  logic [`DIVLEN+3:0] WS, WC, X, D, S, SM,
+  input  logic [$clog2(`XLEN+1)-1:0] dur, zeroCntD,
+  input  logic XSign, YSign, Signed, Int, Mod,
+  output logic [`DIVLEN-1:0] Result,
+  output logic calcSign
+);
+  logic [`DIVLEN+3:0] W, shiftRem, intRem, intS; 
+  logic [`DIVLEN-1:0] floatRes, intRes;
+  logic               WSign;
 
-  assign #1 diff = rp - rm;
-  assign #1 r = diff[54] ? diff[53:2] : diff[52:1];
+  assign W = WS + WC;
+  assign WSign = W[`DIVLEN+3];
+  // Remainder handling
+  always_comb begin
+    if (zeroCntD == ($clog2(`XLEN+1))'(`XLEN)) begin
+      intRem = X;
+      intS = -1;
+    end
+    else if (~Signed) begin
+      if (WSign) begin
+        intRem = W + D;
+        intS = SM;
+      end else begin 
+        intRem = W;
+        intS = S;
+      end
+    end
+    else case ({YSign, XSign, WSign})
+      3'b000: begin
+        intRem = W; 
+        intS = S; 
+      end
+      3'b001: begin
+        intRem = W + D;
+        intS = SM;
+      end
+      3'b010: begin
+        intRem = W - D;
+        intS = ~S;
+      end
+      3'b011: begin
+        intRem = W;
+        intS = ~SM;
+      end
+      3'b100: begin
+        intRem = W;
+        intS = ~SM;
+      end
+      3'b101: begin
+        intRem = W + D;
+        intS = ~SM + 1;
+      end 
+      3'b110: begin
+        intRem = W - D;
+        intS = S + 1;
+      end 
+      3'b111: begin
+        intRem = W;
+        intS = S;
+      end
+    endcase
+  end
+  assign floatRes = S[`DIVLEN] ? S[`DIVLEN:1] : S[`DIVLEN-1:0];
+  assign intRes = intS[`DIVLEN] ? intS[`DIVLEN:1] : intS[`DIVLEN-1:0];
+  assign shiftRem = (intRem >> (zeroCntD));
+  always_comb begin
+    if (Int) begin
+      if (Mod) Result = shiftRem[`DIVLEN-1:0];
+      else Result = intRes >> (`DIVLEN - dur);
+    end else Result = floatRes;
+  end
+  assign calcSign = XSign ^ YSign;
 endmodule
 

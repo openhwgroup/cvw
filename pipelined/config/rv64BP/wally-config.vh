@@ -66,10 +66,10 @@
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
-`define DCACHE_LINELENINBITS 256
+`define DCACHE_LINELENINBITS 512
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
-`define ICACHE_LINELENINBITS 256
+`define ICACHE_LINELENINBITS 512
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
@@ -130,14 +130,10 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define TWO_BIT_PRELOAD "../config/rv64BP/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/rv64BP/BTBPredictor.txt"
 `define BPRED_ENABLED 1
 //`define BPTYPE "BPGSHARE" // BPGLOBAL or BPTWOBIT or BPGSHARE
 `define BPTYPE "BPGSHARE" // BPTWOBIT or "BPGLOBAL"  or BPLOCALPAg or BPGSHARE
 `define TESTSBP 1
 `define BPRED_SIZE 10
 
-
-`define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 0

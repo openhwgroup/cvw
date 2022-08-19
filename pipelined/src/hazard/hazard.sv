@@ -32,13 +32,13 @@
 
 module hazard(
   // Detect hazards
-(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWritePendingDEM, RetM, TrapM,
+(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFencePendingDEM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
 (* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
 (* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)        input logic  InvalidateICacheM, wfiM, IntPendingM,
+(* mark_debug = "true" *)        input logic  wfiM, IntPendingM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
@@ -46,7 +46,6 @@ module hazard(
 
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
-
 
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -60,19 +59,21 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign StallFCause = CSRWritePendingDEM & ~(TrapM | RetM | BPPredWrongE);
+  // *** can stalls be pushed into earlier stages (e.g. no stall after Decode?)
+
+  assign StallFCause = CSRWriteFencePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    
-  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);
+  assign StallECause = (DivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
-  assign StallMCause = wfiM & (~TrapM & ~IntPendingM);  
+  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)) | FDivBusyE;  
   assign StallWCause = LSUStallM | IFUStallF;
 
-  assign StallF = StallFCause | StallD;
-  assign StallD = StallDCause | StallE;
-  assign StallE = StallECause | StallM;
-  assign StallM = StallMCause | StallW;
-  assign StallW = StallWCause;
+  assign #1 StallF = StallFCause | StallD;
+  assign #1 StallD = StallDCause | StallE;
+  assign #1 StallE = StallECause | StallM;
+  assign #1 StallM = StallMCause | StallW;
+  assign #1 StallW = StallWCause;
 
   assign FirstUnstalledD = ~StallD & StallF;
   assign FirstUnstalledE = ~StallE & StallD;
@@ -80,11 +81,11 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign FlushF = BPPredWrongE | InvalidateICacheM;
-  assign FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** does RetM only need to flush if the privilege changes?
-  assign FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | InvalidateICacheM; // *** why is BPPredWrongE here, but not needed in simple processor 
-  assign FlushM = FirstUnstalledM | TrapM | RetM | InvalidateICacheM;
+  assign #1 FlushF = BPPredWrongE;
+  assign #1 FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE; 
+  assign #1 FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE; // *** why is BPPredWrongE here, but not needed in simple processor 
+  assign #1 FlushM = FirstUnstalledM | TrapM | RetM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
-  assign FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
+  assign #1 FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
 endmodule

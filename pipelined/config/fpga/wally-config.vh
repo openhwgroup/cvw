@@ -65,10 +65,10 @@
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
 `define DCACHE_NUMWAYS 4
 `define DCACHE_WAYSIZEINBYTES 4096
-`define DCACHE_LINELENINBITS 256
+`define DCACHE_LINELENINBITS 512
 `define ICACHE_NUMWAYS 4
 `define ICACHE_WAYSIZEINBYTES 4096
-`define ICACHE_LINELENINBITS 256
+`define ICACHE_LINELENINBITS 512
 
 // Integer Divider Configuration
 // DIV_BITSPERCYCLE must be 1, 2, or 4
@@ -141,5 +141,4 @@
 `define BPRED_SIZE 10
 
 
-`define REPLAY 0
 `define HPTW_WRITES_SUPPORTED 1

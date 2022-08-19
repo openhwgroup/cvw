@@ -7,9 +7,9 @@ __pycache__/
 .vscode/
 
 #External repos
-addins
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
+benchmarks/embench/wally*.json
 
 #vsim work files to ignore
 transcript
@@ -28,6 +28,10 @@ testsBP/*/*/*.elf*
 testsBP/*/OBJ/*
 testsBP/*/*.a
 tests/wally-riscv-arch-test/riscv-test-suite/*/I/*/*
+tests/riscof/riscof_work/
+tests/riscof/config32.ini
+tests/riscof/config32e.ini
+tests/riscof/config64.ini
 tests/linux-testgen/linux-testvectors/*
 !tests/linux-testgen/linux-testvectors/tvCopier.py
 !tests/linux-testgen/linux-testvectors/tvLinker.sh
@@ -68,6 +72,11 @@ synthDC/alib-52
 synthDC/*.log
 synthDC/*.svf
 synthDC/runs/
+synthDC/newRuns
+synthDC/ppa/PPAruns
+synthDC/ppa/plots
+synthDC/plots/
+synthDC/runArchive
 synthDC/hdl
 /pipelined/regression/power.saif
 tests/fp/vectors/*.tv
@@ -103,3 +112,8 @@ pipelined/config/rv64ic_noMulDiv
 pipelined/config/rv64ic_noPriv
 pipelined/config/rv64ic_orig
 synthDC/Summary.csv
+pipelined/srt/exptestgen
+pipelined/srt/testgen
+pipelined/srt/qslc_r4a2
+pipelined/srt/qslc_r4a2.sv
+pipelined/srt/testvectors

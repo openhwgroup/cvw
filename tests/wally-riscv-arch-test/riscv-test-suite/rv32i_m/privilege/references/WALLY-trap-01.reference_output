@@ -6,16 +6,16 @@
 00000000 # mtval of faulting instruction (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
-80000168 # mtval of breakpoint instruction adress
+8000015c # mtval of breakpoint instruction adress
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000004 # mcause from load address misaligned
-80000171 # mtval of misaligned address
+80000165 # mtval of misaligned address
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000005 # mcause from load access
 00000000 # mtval of accessed adress (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000006 # mcause from store misaligned
-80000189 # mtval of address with misaligned store instr
+8000017d # mtval of address with misaligned store instr
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000007 # mcause from store access
 00000000 # mtval of accessed address (0x0)
@@ -62,16 +62,16 @@ fffff7ff # medeleg after attempted write of all 1's (only some bits are writeabl
 00000000 # mtval of faulting instruction (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
-80000168 # mtval of breakpoint instruction adress
+8000015c # mtval of breakpoint instruction adress
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000004 # mcause from load address misaligned
-80000171 # mtval of misaligned address
+80000165 # mtval of misaligned address
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000005 # mcause from load access
 00000000 # mtval of accessed adress (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000006 # mcause from store misaligned
-80000189 # mtval of address with misaligned store instr
+8000017d # mtval of address with misaligned store instr
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000007 # mcause from store access
 00000000 # mtval of accessed address (0x0)
@@ -94,6 +94,12 @@ fffff7ff # medeleg after attempted write of all 1's (only some bits are writeabl
 0000000b # mcause from M mode ecall from test termination
 00000000 # mtval of ecall (*** defined to be zero for now)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
+deadbeef
+deadbeef
+deadbeef
+deadbeef
+deadbeef
+deadbeef
 deadbeef
 deadbeef
 deadbeef

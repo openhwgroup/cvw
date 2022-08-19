@@ -38,6 +38,7 @@ module csrm #(parameter
     MARCHID = 12'hF12,
     MIMPID = 12'hF13,
     MHARTID = 12'hF14,
+    MCONFIGPTR = 12'hF15,
     MSTATUS = 12'h300,
     MISA_ADR = 12'h301,
     MEDELEG = 12'h302,
@@ -186,6 +187,7 @@ module csrm #(parameter
       MARCHID:   CSRMReadValM = 0;
       MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
       MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
+      MCONFIGPTR: CSRMReadValM = 0; // hardwired to 0
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
       MTVEC:     CSRMReadValM = MTVEC_REGW;

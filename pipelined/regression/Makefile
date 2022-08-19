@@ -1,30 +1,9 @@
-make allclean:
-	make clean
-	make all
-
-make clean:
-	make clean -C ../../addins/riscv-arch-test
-	make clean -C ../../tests/wally-riscv-arch-test
-#	make allclean -C ../../tests/imperas-riscv-tests
-
-make all:
+all: riscoftests memfiles
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
 	#make -C ../../tests/imperas-riscv-tests --jobs
 	#make -C ../../tests/imperas-riscv-tests XLEN=64 --jobs
-	
-	# Build riscv-arch-test 64 and 32-bit versions
-	make -C ../../addins/riscv-arch-test --jobs
-	make -C ../../addins/riscv-arch-test XLEN=32 --jobs
-
-	# Build wally-riscv-arch-test
-	make -C ../../tests/wally-riscv-arch-test/ --jobs
-	make -C ../../tests/wally-riscv-arch-test/ XLEN=32  --jobs
-
-# build the memfiles and address files.
-	make -f makefile-memfile wally-sim-files --jobs
-
 	# Only compile Imperas tests if they are installed locally.  
 	# They are usually a symlink to $RISCV/imperas-riscv-tests and only 
 	# get compiled there manually during installation
@@ -36,4 +15,19 @@ make all:
 	# Link Linux test vectors (fix this later***)
 	#cd ../../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
 
-	
+allclean: clean all
+
+clean:
+	make clean -C ../../tests/riscof
+#   make clean -C ../../tests/wally-riscv-arch-test
+#	make allclean -C ../../tests/imperas-riscv-tests
+
+riscoftests: 
+# 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
+	make -C ../../tests/riscof/ 
+#	make -C ../../tests/riscof/ XLEN=32
+#	make -C ../../tests/riscof/ XLEN=32 build_rv32e
+#	make -C ../../tests/riscof/ XLEN=64
+
+memfiles:
+	make -f makefile-memfile wally-sim-files --jobs

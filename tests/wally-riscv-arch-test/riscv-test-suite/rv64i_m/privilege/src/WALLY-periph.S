@@ -24,6 +24,8 @@
 #include "arch_test.h"
 
 RVTEST_ISA("RV64I")
+// this test is blocked, it won't build or run. To unblock it remove the check ISA:=regex(BLOCKED); 
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True",periph)
 
 .section .text.init
 .globl rvtest_entry_point
@@ -271,7 +273,7 @@ main_code: #####
     sw t1, 0x04(t0)
     # raise all output_en
     sw t1, 0x08(t0)
-    # raise all input_en
+    # raise all rise_en
     sw t1, 0x18(t0)
     # ========== Execute Test ==========
     # set MEIE
@@ -616,6 +618,9 @@ Intr02BEEF11:
     sw t1, 0x08(t0)
     # set initial output state
     sw x0, 0x0C(t0)
+    # clear XOR
+    li t1, 0x00000000
+    sw t1, 0x40(t0)
     # clear all pending interrupts
     li t1, 0xFFFFFFFF
     sw t1, 0x1C(t0)
@@ -843,7 +848,7 @@ Intr03BEEF1A:
     sw t1, 0x04(t0)
     # raise all output_en
     sw t1, 0x08(t0)
-    # raise all input_en
+    # raise all rise_en
     sw t1, 0x18(t0)
     # ========== Execute Test ==========
     # set MEIE and SEIE

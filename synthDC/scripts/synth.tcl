@@ -3,6 +3,9 @@
 # james.stine@okstate.edu 27 Sep 2015
 #
 
+# start run clock
+set t1 [clock seconds]
+
 # Ignore unnecessary warnings:
 # intraassignment delays for nonblocking assignments are ignored
 suppress_message {VER-130} 
@@ -18,18 +21,19 @@ set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
 # Config
 set hdl_src "../pipelined/src"
-set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
+set cfg "$outputDir/hdl/config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
+set drive $::env(DRIVE)
 
-eval file copy -force ${cfg} {hdl/}
-eval file copy -force ${cfg} $outputDir
-eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/*.sv] {hdl/}
-eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {hdl/}
+eval file copy -force ${cfg} {$outputDir/hdl/}
+#eval file copy -force ${cfg} $outputDir
+eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
-eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
+# eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
 
 # Enables name mapping
 if { $saifpower == 1 } {
@@ -37,7 +41,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
-set my_verilog_files [glob hdl/*]
+set my_verilog_files [glob $outputDir/hdl/*]
 
 # Set toplevel
 set my_toplevel $::env(DESIGN)
@@ -52,7 +56,8 @@ set vhdlout_show_unconnected_pins "true"
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
-define_design_lib WORK -path ./WORK
+#set alib_library_analysis_path ./$outputDir
+define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
 elaborate $my_toplevel -lib WORK 
 
@@ -70,7 +75,12 @@ if { $saifpower == 1 } {
 }
 
 # Set reset false path
-set_false_path -from [get_ports reset]
+if {$drive != "INV"} {
+    set_false_path -from [get_ports reset]
+}
+if {(($::env(DESIGN) == "ppa_mux2d_1") || ($::env(DESIGN) == "ppa_mux4d_1") || ($::env(DESIGN) == "ppa_mux8d_1"))} {
+    set_false_path -from {s}
+}
 
 # Set Frequency in [MHz] or period in [ns]
 set my_clock_pin clk
@@ -96,7 +106,7 @@ set_critical_range [expr $my_period*0.05] $current_design
 
 # Partitioning - flatten or hierarchically synthesize
 if { $maxopt == 1 } {
-    ungroup -all -flatten -simple_names
+    ungroup -all -simple_names -flatten 
 }
 
 # Set input pins except clock
@@ -111,22 +121,51 @@ set all_in_ex_clk [remove_from_collection [all_inputs] [get_ports $my_clk]]
 if {$tech == "sky130"} {
     set_driving_cell  -lib_cell sky130_osu_sc_12T_ms__dff_1 -pin Q $all_in_ex_clk
 } elseif {$tech == "sky90"} {
-    set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+    if {$drive == "INV"} {
+	set_driving_cell -lib_cell scc9gena_inv_1 -pin Y $all_in_ex_clk
+    } elseif {$drive == "FLOP"} {
+	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
+    }
+} elseif {$tech == "tsmc28"} {
+    if {$drive == "INV"} {
+	set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
+    } elseif {$drive == "FLOP"} {
+    set_driving_cell -lib_cell DFQD1BWP30P140 -pin Q $all_in_ex_clk
+    }
 }
 
 # Set input/output delay
-set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
-set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+if {$drive == "FLOP"} {
+    set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+} else {
+    set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.0 -max -clock $my_clk [all_outputs]
+}
 
 # Setting load constraint on output ports 
 if {$tech == "sky130"} {
     set_load [expr [load_of sky130_osu_sc_12T_ms_TT_1P8_25C.ccs/sky130_osu_sc_12T_ms__dff_1/D] * 1] [all_outputs]
 } elseif {$tech == "sky90"} {
-    set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+    if {$drive == "INV"} {
+	set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_inv_4/A] * 1] [all_outputs]
+    } elseif {$drive == "FLOP"} {
+        set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
+    }
+} elseif {$tech == "tsmc28"} {
+    if {$drive == "INV"} {
+	set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
+    } elseif {$drive == "FLOP"} {
+        set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/DFQD1BWP30P140/D] * 1] [all_outputs]
+    }
 }
 
 # Set the wire load model 
 set_wire_load_mode "top"
+
+# Set switching activities
+# default activity factors are 1 for clocks, 0.1 for others
+# static probability of 0.5 is used for leakage
 
 # Attempt Area Recovery - if looking for minimal area
 # set_max_area 2000
@@ -146,8 +185,8 @@ set_fix_multiple_port_nets -all -buffer_constants
 # group_path -name COMBO -from [all_inputs] -to [all_outputs]
 
 # Save Unmapped Design
-#set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
-#write_file -format ddc -hierarchy -o $filename
+# set filename [format "%s%s%s%s" $outputDir "/unmapped/" $my_toplevel ".ddc"]
+# write_file -format ddc -hierarchy -o $filename
 
 # Compile statements
 if { $maxopt == 1 } {
@@ -302,21 +341,15 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_fpu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/*} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fma1 ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma1/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fdivsqrt/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through faddcvt ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.faddcvt/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FMAResM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FMAResM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FDivResM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FDivResM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through FResE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.FResE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma/SumE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/SumE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma/ProdExpE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/ProdExpE} -nworst 1 }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
+redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
+redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mmu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through immu/physicaladdress ////\n\n\n" }
@@ -349,5 +382,10 @@ redirect $filename { report_constraint }
 
 set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
 # redirect $filename { report_hierarchy }
+
+# end run clock and echo run time in minutes
+set t2 [clock seconds]
+set t [expr $t2 - $t1]
+echo [expr $t/60]
 
 quit 

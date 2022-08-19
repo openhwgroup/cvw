@@ -26,7 +26,7 @@
 
 .macro INIT_TESTS
 
-RVTEST_ISA("RV32I")
+// RVTEST_ISA("RV32I")
 
 .section .text.init
 .globl rvtest_entry_point
@@ -152,7 +152,15 @@ cause_s_soft_interrupt:
     csrs sip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
     ret
 
+cause_s_soft_from_m_interrupt:
+    li t3, 0x2
+    csrs mip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    ret
+
 cause_m_ext_interrupt:
+    // these interrupts involve a time loop waiting for the interrupt to go off.
+    // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+    li a3, 0x40
     // ========== Configure PLIC ==========
     // m priority threshold = 0
     li t3, 0xC200000
@@ -189,6 +197,9 @@ m_ext_loop:
     ret
 
 cause_s_ext_interrupt_GPIO:
+    // these interrupts involve a time loop waiting for the interrupt to go off.
+    // since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
+    li a3, 0x40
     // ========== Configure PLIC ==========
     // s priority threshold = 0
     li t3, 0xC201000
@@ -827,6 +838,28 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     addi a6, a6, 4 
 .endm
 
+// Place this macro in peripheral tests to setup all the PLIC registers to generate external interrupts
+.macro SETUP_PLIC  
+    # Setup PLIC with a series of register writes
+
+    .equ PLIC_INTPRI_GPIO, 0x0C00000C       # GPIO is interrupt 3
+    .equ PLIC_INTPRI_UART, 0x0C000028       # UART is interrupt 10
+    .equ PLIC_INTPENDING0, 0x0C001000       # intPending0 register
+    .equ PLIC_INTEN00,     0x0C002000       # interrupt enables for context 0 (machine mode) sources 31:1
+    .equ PLIC_INTEN10,     0x0C002080       # interrupt enables for context 1 (supervisor mode) sources 31:1
+    .equ PLIC_THRESH0,     0x0C200000       # Priority threshold for context 0 (machine mode)
+    .equ PLIC_CLAIM0,      0x0C200004       # Claim/Complete register for context 0
+    .equ PLIC_THRESH1,     0x0C201000       # Priority threshold for context 1 (supervisor mode)
+    .equ PLIC_CLAIM1,      0x0C201004       # Claim/Complete register for context 1
+
+    .4byte PLIC_THRESH0, 0, write32_test    # Set PLIC machine mode interrupt threshold to 0 to accept all interrupts
+    .4byte PLIC_THRESH1, 7, write32_test    # Set PLIC supervisor mode interrupt threshold to 7 to accept no interrupts
+    .4byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
+    .4byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
+    .4byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
+    .4byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
+.endm
+
 .macro END_TESTS
     // invokes one final ecall to return to machine mode then terminates this program, so the output is
     //      0x8: termination called from U mode
@@ -936,6 +969,128 @@ read08_test:
     addi t1, t1, 4
     addi a6, a6, 4
     j test_loop // go to next test case
+
+read04_test:
+    // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lb t2, 0(t3)
+    andi t2, t2, 15 // mask lower 4 bits
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop // go to next test case
+
+readmip_test:  // read the MIP into the signature
+    csrr t2, mip
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop // go to next test case
+
+readsip_test:  // read the MIP into the signature
+    csrr t2, sip
+    sw t2, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop // go to next test case
+
+claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002000
+    li t3, 0x0C200004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002080
+    li t3, 0x0C201004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+uart_lsr_intr_wait: // waits for interrupts to be ready
+    li t2, 0x10000002 // IIR
+    li t4, 0x6
+uart_lsr_intr_loop:
+    lb t3, 0(t2)
+    andi t3, t3, 0x7
+    bne t3, t4, uart_lsr_intr_loop
+uart_save_iir_status:
+    sw t3, 0(t1)
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop
+
+uart_data_wait:
+    li t2, 0x10000005 // LSR
+    li t3, 0x10000002 // IIR
+    li a4, 0x61
+uart_read_LSR_IIR:
+    lb t4, 0(t3) // save IIR before reading LSR mgith clear it
+    lb t5, 0(t2) // read LSR
+    andi t6, t5, 0x61  // wait until all transmissions are done and data is ready
+    bne a4, t6, uart_read_LSR_IIR
+
+uart_data_ready:
+    li t2, 0
+    sw t2, 0(t1) // clear entry deadbeef from memory
+    andi t5, t5, 0x9F // mask THRE and TEMT from signature
+    sb t4, 1(t1) // IIR
+    sb t5, 0(t1) // LSR
+    addi t1, t1, 4
+    addi a6, a6, 4
+    j test_loop
+
+uart_clearmodemintr:
+    li t2, 0x10000006
+    lb t2, 0(t2)
+    j test_loop
 
 goto_s_mode:
     // return to address in t3, 

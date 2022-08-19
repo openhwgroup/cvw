@@ -34,11 +34,11 @@ vlib work
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
+    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -G NO_SPOOFING=0 -o testbenchopt 
+    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829  -fatal 7
 
     #-- Run the Simulation
-    run -all
+    #run -all
     add log -recursive /*
     do linux-wave.do
     run -all
@@ -48,8 +48,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 } elseif {$2 eq "buildroot-no-trace"} {
     vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
-    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_IE_MTIME_CHECKPOINT=1 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829
+    vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=0 -G INSTR_WAVEON=0 -G CHECKPOINT=0 -G NO_SPOOFING=1 -o testbenchopt 
+    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829  -fatal 7
 
     #-- Run the Simulation
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -69,7 +69,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
 
-    vsim workopt +nowarn3829
+    vsim workopt +nowarn3829  -fatal 7
 
     view wave
     #-- display input and output signals as hexidecimal values
@@ -78,12 +78,12 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     do wave.do
 
     # power add generates the logging necessary for saif generation.
-    power add -r /dut/core/*
+    #power add -r /dut/core/*
     #-- Run the Simulation 
 
     run -all
-    power off -r /dut/core/*
-    power report -all -bsaif power.saif
+    #power off -r /dut/core/*
+    #power report -all -bsaif power.saif
     noview ../testbench/testbench.sv
     view wave
 }

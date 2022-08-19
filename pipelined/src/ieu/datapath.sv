@@ -43,11 +43,12 @@ module datapath (
   input  logic             ALUSrcAE, ALUSrcBE,
   input  logic             ALUResultSrcE, 
   input  logic             JumpE,
+  input  logic             BranchSignedE,
   input  logic             IllegalFPUInstrE,
   input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
-  output logic [2:0]       FlagsE,
+  output logic [1:0]       FlagsE,
   output logic [`XLEN-1:0] IEUAdrE,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   // Memory stage signals
@@ -61,9 +62,11 @@ module datapath (
 (* mark_debug = "true" *)  input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
-  output logic [`XLEN-1:0] ReadDataW,
+  input logic [`XLEN-1:0]  FCvtIntResW,
+  input logic [1:0]        FResSelW,
+  input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
-  input  logic [`XLEN-1:0] CSRReadValW, ReadDataM, MDUResultW, 
+  input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -77,11 +80,7 @@ module datapath (
   // Execute stage signals
   logic [`XLEN-1:0] R1E, R2E;
   logic [`XLEN-1:0] ExtImmE;
-
-  // logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, SrcAE2, SrcBE2; // *** MAde forwardedsrcae an output to get rid of a mux in the critical path.
   logic [`XLEN-1:0] SrcAE, SrcBE;
-  logic [`XLEN-1:0] SrcAE2, SrcBE2;
-
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE;
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;
@@ -108,7 +107,7 @@ module datapath (
 	
   mux3  #(`XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
-  comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, FlagsE);
+  comparator_dc_flip #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
   alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
@@ -123,15 +122,23 @@ module datapath (
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
-  flopen #(`XLEN)   ReadDataWReg(clk, ~StallW, ReadDataM, ReadDataW);
-  mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
 
   // floating point interactions: fcvt, fp stores
-  if (`F_SUPPORTED) begin:fpmux
+  if (`F_SUPPORTED&(`LLEN>`XLEN)) begin:fpmux
+    logic [`XLEN-1:0] IFCvtResultW;
+    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
+    assign WriteDataE = ForwardedSrcBE;
+    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
+    mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
+  end else if (`F_SUPPORTED) begin:fpmux
+    logic [`XLEN-1:0] IFCvtResultW;
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
+    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
+    mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
   end else begin:fpmux
     assign IFResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
+    mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
   end
 
   // handle Store Conditional result if atomic extension supported
