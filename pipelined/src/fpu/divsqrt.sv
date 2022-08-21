@@ -57,14 +57,15 @@ module divsqrt(
   logic [`DIVb+3:0]  WS, WC;
   logic [`DIVb+3:0] StickyWSA;
   logic [`DIVb:0] X;
+  logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVN-2:0] Dpreproc;
   logic [`DURLEN-1:0] Dur;
   logic NegSticky;
 
   srtpreproc srtpreproc(.clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
 
-  srtfsm srtfsm(.reset, .XsE, .SqrtE, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
+  srtfsm srtfsm(.reset, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
                .StickyWSA, .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
-  srt srt(.clk, .SqrtE, .SqrtM, .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
+  srt srt(.clk, .D, .SqrtE, .SqrtM, .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
                 .StickyWSA, .DivBusy, .Qm(QmM));
 endmodule
