@@ -42,6 +42,7 @@ module srt(
   input  logic [`DIVN-2:0] Dpreproc,
   input  logic NegSticky,
   output logic [`DIVb-(`RADIX/4):0] Qm,
+  output logic [`DIVN-2:0]  D, // U0.N-1
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
   output logic [`DIVb+3:0]  StickyWSA,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
@@ -70,7 +71,6 @@ module srt(
   logic [`DIVb-1:0] C[`DIVCOPIES-1:0]; // 0.b
  /* verilator lint_on UNOPTFLAT */
   logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
-  logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
   logic [`DIVb:0] QMMux;
   logic [`DIVb-1:0] NextC;
