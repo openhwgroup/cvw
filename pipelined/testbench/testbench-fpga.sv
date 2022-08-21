@@ -136,14 +136,15 @@ logic [3:0] dummy;
       if (TEST == "coremark") 
 
       // read test vectors into memory
-      pathname = tvpaths[tests[0].atoi()];
+      //pathname = tvpaths[tests[0].atoi()];
+        pathname = "../../tests/testsBP/fpga-test-sdc/bin/";
 /*      if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
       else pathname = tvpaths[1]; */
-      memfilename = {pathname, tests[test], ".elf.memfile"};
+      memfilename = "../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile";
       romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
       sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
-      //$readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootrom.bootrom.memory.RAM);
+      $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootrom.bootrom.memory.RAM);
       $readmemh(sdcfilename, sdcard.FLASHmem);
 
       ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
@@ -286,11 +287,21 @@ logic [3:0] dummy;
 		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_ENABLED == 1) 
-    initial begin
-      $readmemb(`TWO_BIT_PRELOAD, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem);
-      $readmemb(`BTB_PRELOAD, dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem);    
-    end 
+  if (`BPRED_ENABLED == 1)
+    begin
+      genvar adrindex;
+      
+      // Initializing all zeroes into the branch predictor memory.
+      for(adrindex = 0; adrindex < 1024; adrindex++) begin
+        initial begin 
+        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+        #1;
+        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+        release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end
+      end
+    end
 endmodule
 
 module riscvassertions;
