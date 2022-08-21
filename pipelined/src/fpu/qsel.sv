@@ -158,7 +158,7 @@ module qsel4 (
           7: if(w2>=22)      QSel4[i] = 4'b1000; // was 24
             else if(w2>=8)   QSel4[i] = 4'b0100; 
             else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-23) QSel4[i] = 4'b0010; // was -24
+            else if(w2>=-23) QSel4[i] = 4'b0010; // was -24 ***use -22
             else             QSel4[i] = 4'b0001; 
         endcase
       end
