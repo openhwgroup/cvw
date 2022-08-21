@@ -197,25 +197,25 @@ module ifu (
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  ICacheBusWriteData;
+    logic [LINELEN-1:0]  ILSUBusBuffer;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
     logic                SelUncachedAdr;
     
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) 
     busdp(.clk, .reset,
-          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .LSUBusWriteCrit(),
+          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .SelLSUBusWord(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
           .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .DCacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .DCacheFetchLine(ICacheFetchLine),
           .DCacheWriteLine(1'b0), .DCacheBusAck(ICacheBusAck), 
-          .DCacheBusWriteData(ICacheBusWriteData), .LSUPAdrM(PCPF),
+          .DLSUBusBuffer(ILSUBusBuffer), .LSUPAdrM(PCPF),
           .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
-    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ICacheBusWriteData[32-1:0]),
+    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ILSUBusBuffer[32-1:0]),
       .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     
 
@@ -223,14 +223,14 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
-      icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM(TrapM), .IgnoreRequestTrapM('0),
-             .CacheBusWriteData(ICacheBusWriteData), .CacheBusAck(ICacheBusAck),
+      icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM,
+             .LSUBusBuffer(ILSUBusBuffer), .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
              .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
              .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
-             .ByteMask('0), .WordCount('0), .LSUBusWriteCrit('0),
+             .ByteMask('0), .WordCount('0), .SelLSUBusWord('0),
              .FinalWriteData('0),
              .RW(2'b10), 
              .Atomic('0), .FlushCache('0),

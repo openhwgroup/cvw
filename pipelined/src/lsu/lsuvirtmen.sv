@@ -65,8 +65,7 @@ module lsuvirtmem(
   output logic                InterlockStall,
   output logic                CPUBusy,
   output logic                SelHPTW,
-  output logic                IgnoreRequestTLB, 
-  output logic                IgnoreRequestTrapM);
+  output logic                IgnoreRequestTLB);
 
 
   logic                       AnyCPUReqM;
@@ -87,7 +86,7 @@ module lsuvirtmem(
   interlockfsm interlockfsm (
     .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelReplayMemE, .SelHPTW, .IgnoreRequestTLB, .IgnoreRequestTrapM);
+    .InterlockStall, .SelReplayMemE, .SelHPTW, .IgnoreRequestTLB);
   hptw hptw( 
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,

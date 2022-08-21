@@ -40,8 +40,10 @@ module srtfsm(
   input  logic DivStart, 
   input  logic XsE,
   input  logic SqrtE,
+  input  logic SqrtM,
   input  logic StallE,
   input  logic StallM,
+  input logic [`DIVN-2:0]  D, // U0.N-1
   input  logic [`DIVb+3:0] StickyWSA,
   input  logic [`DURLEN-1:0] Dur,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
@@ -58,18 +60,22 @@ module srtfsm(
   logic WZero;
   //logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
   logic [`DIVb+3:0] W;
-
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
-  assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0});
   // calculate sticky bit
   //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
   //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
   //      radix-4 division can't create a QM that continually adds 0's
-  if (`RADIX == 2)
-    assign DivSE = |W&~(StickyWSA == WS);
-  else
+  if (`RADIX == 2) begin
+    logic [`DIVb+3:0] FNext;
+    assign FNext = SqrtM ? 0 : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    // *** |... for continual -1 is not efficent fix - also only needed for radix-2
+    assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0})|((NextWSN+NextWCN+FNext)==0);
+    assign DivSE = |W&~((W+FNext)==0); //***not efficent fix ==
+  end else begin
+    assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0});
     assign DivSE = |W;
+  end
   assign DivDone = (state == DONE);
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
