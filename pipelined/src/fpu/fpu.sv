@@ -42,10 +42,9 @@ module fpu (
   input logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
   output logic 		      FRegWriteM, // FP register write enable (to privileged unit)
   output logic 		      FpLoadStoreM,  // Fp load instruction? (to LSU)
-  output logic             FStore2,       // store two words into memory (to LSU)
   output logic 		      FStallD,       // Stall the decode stage (To HZU)
   output logic 		      FWriteIntE,    // integer register write enable (to IEU)
-  output logic [`XLEN-1:0] FWriteDataE,   // Data to be written to memory (to IEU) - only used if `XLEN >`FLEN
+  output logic [`XLEN-1:0] FWriteDataE,   // Data to be written to memory (to IEU) - only used if `XLEN >`FLEN  *** delete this
   output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to IEU) - only used if `XLEN <`FLEN
   output logic [`XLEN-1:0] FIntResM,      // data to be written to integer register (to IEU)
   output logic [`XLEN-1:0] FCvtIntResW,   // convert result to to be written to integer register (to IEU)
@@ -290,22 +289,18 @@ module fpu (
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
    
-   if(`LLEN==`XLEN)
-      assign FWriteDataE = {{`XLEN-`FLEN{1'b1}}, YE};
-   else begin
-      logic [`FLEN-1:0] WriteDataE;
-      if(`FPSIZES == 1) assign WriteDataE = YE;
-      else if(`FPSIZES == 2) assign WriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
-      else 
-         always_comb
-               case(FmtE)
-                  `Q_FMT: WriteDataE = YE;
-                  `D_FMT: WriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
-                  `S_FMT: WriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
-                  `H_FMT: WriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
-               endcase
-      flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, WriteDataE, FWriteDataM);
-   end
+   logic [`FLEN-1:0] WriteDataE;
+   if(`FPSIZES == 1) assign WriteDataE = YE;
+   else if(`FPSIZES == 2) assign WriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
+   else 
+      always_comb
+            case(FmtE)
+               `Q_FMT: WriteDataE = YE;
+               `D_FMT: WriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
+               `S_FMT: WriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
+               `H_FMT: WriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
+            endcase
+   flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, WriteDataE, FWriteDataM);
 
    // NaN Block SrcA
    generate
