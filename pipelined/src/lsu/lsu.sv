@@ -58,7 +58,6 @@ module lsu (
    input logic              sfencevmaM,
    // fpu
    input logic [`FLEN-1:0]  FWriteDataM,
-   input logic              FStore2,
    input logic              FpLoadStoreM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
@@ -119,7 +118,7 @@ module lsu (
   // *** TO DO: Burst mode
 
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
-  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, WriteDataE, WriteDataM);  // *** move this flop to IEU
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
 
@@ -233,11 +232,14 @@ module lsu (
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
     
+    // *** Ross fix up location of mux to be here; remove from IEU datapath
+    // *** look over entire FPU write and read paths
+    // *** Why is 
     if(CACHE_ENABLED) begin : dcache
-      if (`LLEN>`XLEN)
-        mux2 #(`LLEN) datamux({IEUWriteDataM, IEUWriteDataM}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
+      if (`F_SUPPORTED)
+        mux2 #(`LLEN) datamux({{`LLEN/`XLEN}{IEUWriteDataM}}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
       else
-        assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
+        assign FinalWriteDataM = IEUWriteDataM;
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
@@ -280,8 +282,6 @@ module lsu (
 
   // Compute byte masks
   swbytemaskword #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
-  // *** fix when when fstore2 is valid.  I'm not sure this is even needed if LSUFunct3M can be 3'b100 for a 16 byte write.
-  //assign FinalByteMaskM = FStore2 ? '1 : ByteMaskM;
   assign FinalByteMaskM = ByteMaskM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
