@@ -253,28 +253,5 @@ module divinteration (
 endmodule
 
 
-/////////
-// csa //
-/////////
-module csa #(parameter N=69) (
-  input  logic [N-1:0] in1, in2, in3, 
-  input  logic         cin, 
-  output logic [N-1:0] out1, out2
-);
-
-  // This block adds in1, in2, in3, and cin to produce 
-  // a result out1 / out2 in carry-save redundant form.
-  // cin is just added to the least significant bit and
-  // is Startuired to handle adding a negative divisor.
-  // Fortunately, the carry (out2) is shifted left by one
-  // bit, leaving room in the least significant bit to 
-  // insert cin.
-
-  assign out1 = in1 ^ in2 ^ in3;
-  assign out2 = {in1[N-2:0] & (in2[N-2:0] | in3[N-2:0]) | 
-		    (in2[N-2:0] & in3[N-2:0]), cin};
-endmodule
-
-
 
 

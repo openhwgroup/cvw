@@ -123,6 +123,7 @@ module datapath (
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
+  // *** simplify WriteDataE in this merge
   // floating point interactions: fcvt, fp stores
   if (`F_SUPPORTED&(`LLEN>`XLEN)) begin:fpmux
     logic [`XLEN-1:0] IFCvtResultW;

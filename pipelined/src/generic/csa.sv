@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// forward.sv
+// csa.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: Katherine Parry and David_Harris@hmc.edu 21 August 2022
 // Modified: 
 //
-// Purpose: Determine datapath forwarding
+// Purpose: 3:2 carry-save adder
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -28,38 +28,18 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module forward(
-  // Detect hazards
-  input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input logic        MemReadE, MDUE, CSRReadE,
-  input logic        RegWriteM, RegWriteW,
-  input logic	       FWriteIntE, 
-  input logic        SCE,
-  // Forwarding controls
-  output logic [1:0] ForwardAE, ForwardBE,
-  output logic       FPUStallD, LoadStallD, MDUStallD, CSRRdStallD
+module csa #(parameter N=16) (
+  input  logic [N-1:0] x, y, z, 
+  input  logic         cin, 
+  output logic [N-1:0] s, c
 );
 
-  logic MatchDE;
-  
-  always_comb begin
-    ForwardAE = 2'b00;
-    ForwardBE = 2'b00;
-    if (Rs1E != 5'b0)
-      if      ((Rs1E == RdM) & RegWriteM) ForwardAE = 2'b10;
-      else if ((Rs1E == RdW) & RegWriteW) ForwardAE = 2'b01;
+  // This block adds x, y, z, and cin to produce 
+  // a result s / c in carry-save redundant form.
+  // cin is just added to the least significant bit
+  // s + c = x + y + z + cin
  
-    if (Rs2E != 5'b0)
-      if      ((Rs2E == RdM) & RegWriteM) ForwardBE = 2'b10;
-      else if ((Rs2E == RdW) & RegWriteW) ForwardBE = 2'b01;
-  end
-
-  // Stall on dependent operations that finish in Mem Stage and can't bypass in time
-  assign MatchDE = (Rs1D == RdE) | (Rs2D == RdE); // Decode-stage instruction source depends on result from execute stage instruction
-  assign FPUStallD = 0; // FWriteIntE & MatchDE; // FPU to Integer transfers have single-cycle latency
-  assign LoadStallD = (MemReadE|SCE) & MatchDE;  
-  assign MDUStallD = MDUE & MatchDE; 
-  assign CSRRdStallD = CSRReadE & MatchDE;
+  assign s = x ^ y ^ z;
+  assign c = {x[N-2:0] & (y[N-2:0] | z[N-2:0]) | 
+		    (y[N-2:0] & z[N-2:0]), cin};
 endmodule
