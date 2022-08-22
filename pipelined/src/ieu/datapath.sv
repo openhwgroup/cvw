@@ -45,7 +45,6 @@ module datapath (
   input  logic             JumpE,
   input  logic             BranchSignedE,
   input  logic             IllegalFPUInstrE,
-  input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [1:0]       FlagsE,
@@ -56,7 +55,7 @@ module datapath (
   input  logic             FWriteIntM,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataE, 
+  output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
 (* mark_debug = "true" *)  input  logic             RegWriteW, 
@@ -118,6 +117,7 @@ module datapath (
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
@@ -133,7 +133,6 @@ module datapath (
     assign IFResultM = IEUResultM; 
     mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
   end
-  assign WriteDataE = ForwardedSrcBE;
  
   // handle Store Conditional result if atomic extension supported
   if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
