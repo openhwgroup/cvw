@@ -44,8 +44,7 @@ module fpu (
   output logic 		      FpLoadStoreM,  // Fp load instruction? (to LSU)
   output logic 		      FStallD,       // Stall the decode stage (To HZU)
   output logic 		      FWriteIntE,    // integer register write enable (to IEU)
-  output logic [`XLEN-1:0] FWriteDataE,   // Data to be written to memory (to IEU) - only used if `XLEN >`FLEN  *** delete this
-  output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to IEU) - only used if `XLEN <`FLEN
+  output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to LSU) 
   output logic [`XLEN-1:0] FIntResM,      // data to be written to integer register (to IEU)
   output logic [`XLEN-1:0] FCvtIntResW,   // convert result to to be written to integer register (to IEU)
   output logic [1:0]       FResSelW,      // final result selection (to IEU)
@@ -59,6 +58,9 @@ module fpu (
    //        - if there are any unsused bits the most significant bits are filled with 1s
    //                single stored in a double: | 32 1s | single precision value |
    //    - sets the underflow after rounding
+
+   // LSU interface
+   logic [`FLEN-1:0] FWriteDataE;
   
    // control signals
    logic 		         FRegWriteW; // FP register write enable
@@ -289,18 +291,17 @@ module fpu (
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
    
-   logic [`FLEN-1:0] WriteDataE;
-   if(`FPSIZES == 1) assign WriteDataE = YE;
-   else if(`FPSIZES == 2) assign WriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
+   if(`FPSIZES == 1)      assign FWriteDataE = YE;
+   else if(`FPSIZES == 2) assign FWriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
    else 
       always_comb
             case(FmtE)
-               `Q_FMT: WriteDataE = YE;
-               `D_FMT: WriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
-               `S_FMT: WriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
-               `H_FMT: WriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
+               `Q_FMT: FWriteDataE = YE;
+               `D_FMT: FWriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
+               `S_FMT: FWriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
+               `H_FMT: FWriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
             endcase
-   flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, WriteDataE, FWriteDataM);
+   flopenrc #(`FLEN) FWriteDataMReg (clk, reset, FlushM, ~StallM, FWriteDataE, FWriteDataM);
 
    // NaN Block SrcA
    generate
