@@ -45,6 +45,11 @@ module srt(
   output logic [`DIVN-2:0]  D, // U0.N-1
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
   output logic [`DIVb+3:0]  StickyWSA,
+  output logic [`DIVb:0] LastSM,
+  output logic [`DIVb-1:0] LastC,
+  output logic [`DIVb:0] FirstSM,
+  output logic [`DIVb-1:0] FirstC,
+  output logic [`DIVCOPIES-1:0] qn,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
 );
 
@@ -119,7 +124,7 @@ module srt(
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
       divinteration divinteration(.D, .DBar, .D2, .DBar2, .SqrtM,
       .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
-      .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]));
+      .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       if(i<(`DIVCOPIES-1)) begin 
         if (`RADIX==2)begin 
           assign WS[i+1] = {WSA[i][`DIVb+2:0], 1'b0};
@@ -159,6 +164,11 @@ module srt(
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
 
+  assign LastSM = SM[`DIVCOPIES-1];
+  assign LastC = C[`DIVCOPIES-1];
+  assign FirstSM = SM[0];
+  assign FirstC = C[0];
+
   if(`RADIX==2)
     if (`DIVCOPIES == 1)
       assign StickyWSA = {WSA[0][`DIVb+2:0], 1'b0};
@@ -182,6 +192,7 @@ module divinteration (
   input logic [`DIVb-1:0] C,
   input logic SqrtM,
   output logic [`DIVb:0] QNext, QMNext, 
+  output logic qn,
   output logic [`DIVb:0] SNext, SMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
 );
@@ -202,7 +213,7 @@ module divinteration (
 	// 0010 = -1
 	// 0001 = -2
   if(`RADIX == 2) begin : qsel
-    qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz);
+    qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
     fgen2 fgen2(.sp(qp), .sz(qz), .C, .S, .SM, .F);
   end else begin
     qsel4 qsel4(.D, .WS, .WC, .Sqrt(SqrtM), .q);
