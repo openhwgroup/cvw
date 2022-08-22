@@ -92,7 +92,6 @@ module wallypipelinedcore (
   logic [4:0]        RdM, RdW;
   logic             FStallD;
   logic             FWriteIntE;
-  logic [`XLEN-1:0]         FWriteDataE;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
   logic [`XLEN-1:0]         FCvtIntResW;  
@@ -130,7 +129,7 @@ module wallypipelinedcore (
   // cpu lsu interface
   logic [2:0]       Funct3M;
   logic [`XLEN-1:0] IEUAdrE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
   logic [`LLEN-1:0] ReadDataW;  
   logic             CommittedM;
@@ -219,14 +218,14 @@ module wallypipelinedcore (
 
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-     .FWriteDataE, .IEUAdrE, .MDUE, .W64E,
+     .IEUAdrE, .MDUE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
      .AtomicM, // atomic control goes to LSU
-     .WriteDataE, // Write data to LSU
+     .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
@@ -259,7 +258,7 @@ module wallypipelinedcore (
   .FpLoadStoreM,
   .FWriteDataM, 
   //.DataMisalignedM(DataMisalignedM),
-  .IEUAdrE, .IEUAdrM, .WriteDataE,
+  .IEUAdrE, .IEUAdrM, .WriteDataM,
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
@@ -398,7 +397,6 @@ module wallypipelinedcore (
          .FpLoadStoreM,
         .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
-         .FWriteDataE, // Data to be written to memory
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
          .FCvtIntResW, // fp -> int conversion result to be stored in int register
@@ -410,7 +408,6 @@ module wallypipelinedcore (
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FStallD = 0;
       assign FWriteIntE = 0; 
-      assign FWriteDataE = 0;
       assign FIntResM = 0;
       assign FDivBusyE = 0;
       assign IllegalFPUInstrD = 1;
