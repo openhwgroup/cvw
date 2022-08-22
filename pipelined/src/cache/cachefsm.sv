@@ -42,7 +42,6 @@ module cachefsm
    input logic       CPUBusy,
    // interlock fsm
    input logic       IgnoreRequestTLB,
-   input logic       IgnoreRequestTrapM,
    input logic       TrapM,
    // Bus inputs
    input logic       CacheBusAck,
@@ -90,6 +89,7 @@ module cachefsm
 					               STATE_MISS_FETCH_WDV,
 					               STATE_MISS_EVICT_DIRTY,
 					               STATE_MISS_WRITE_CACHE_LINE,
+                                   STATE_MISS_READ_DELAY,  // required for back to back reads. structural hazard on writting SRAM
                                    // flush cache 
 					               STATE_FLUSH,
 					               STATE_FLUSH_CHECK,
@@ -98,12 +98,12 @@ module cachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
   logic               IgnoreRequest;
-  assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
+  assign IgnoreRequest = IgnoreRequestTLB | TrapM;
 
   // if the command is used in the READY state then the cache needs to be able to supress
-  // using both IgnoreRequestTLB and IgnoreRequestTrapM.  Otherwise we can just use IgnoreRequestTLB.
+  // using both IgnoreRequestTLB and DCacheTrapM.  Otherwise we can just use IgnoreRequestTLB.
 
-  assign DoFlush = FlushCache & ~IgnoreRequestTrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
+  assign DoFlush = FlushCache & ~TrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
   assign AMO = CacheAtomic[1] & (&CacheRW);
   assign DoAMO = AMO & ~IgnoreRequest; 
   assign DoRead = CacheRW[1] & ~IgnoreRequest; 
@@ -139,7 +139,11 @@ module cachefsm
       STATE_MISS_FETCH_WDV: if(CacheBusAck & ~VictimDirty)     NextState = STATE_MISS_WRITE_CACHE_LINE;
       else if(CacheBusAck & VictimDirty) NextState = STATE_MISS_EVICT_DIRTY;
                             else                               NextState = STATE_MISS_FETCH_WDV;
-      STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_READY; 
+      //STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_READY;
+      STATE_MISS_WRITE_CACHE_LINE: if(~(AMO | CacheRW[0]))     NextState = STATE_MISS_READ_DELAY;
+                                   else                        NextState = STATE_READY;
+      STATE_MISS_READ_DELAY: if(CPUBusy)                       NextState = STATE_MISS_READ_DELAY;
+                             else                              NextState = STATE_READY;
       STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                  NextState = STATE_MISS_WRITE_CACHE_LINE;
                               else                             NextState = STATE_MISS_EVICT_DIRTY;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
@@ -195,7 +199,7 @@ module cachefsm
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
-                  // use the raw requests as we don't want IgnoreRequestTrapM in the critical path
+                  // use the raw requests as we don't want DCacheTrapM in the critical path
                   (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (DoAnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
@@ -203,7 +207,7 @@ module cachefsm
                   (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                   resetDelay;
 
-  assign SelBusBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE;
+  assign SelBusBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE | CurrState == STATE_MISS_READ_DELAY;
   assign SRAMEnable = (CurrState == STATE_READY & ~CPUBusy | CacheStall) | (CurrState != STATE_READY) | reset;
                        
 endmodule // cachefsm

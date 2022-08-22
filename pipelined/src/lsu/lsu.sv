@@ -107,9 +107,9 @@ module lsu (
   logic                     CacheableM;
   logic                     BusStall;
   logic                     InterlockStall;
-  logic                     IgnoreRequestTLB, IgnoreRequestTrapM;
+  logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
-  logic                     LSUBusWriteCrit;
+  logic                     SelLSUBusWord;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         LSUWriteDataM;
   logic [`XLEN-1:0]         WriteDataM;
@@ -136,10 +136,10 @@ module lsu (
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
       .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
-      .IgnoreRequestTLB, .IgnoreRequestTrapM);
+      .IgnoreRequestTLB);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign IgnoreRequestTrapM = TrapM; assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
+    assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign LSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
@@ -197,7 +197,7 @@ module lsu (
   logic [`LLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
   logic                SelUncachedAdr;
-  assign IgnoreRequest = IgnoreRequestTLB | IgnoreRequestTrapM;
+  assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
@@ -212,7 +212,7 @@ module lsu (
     localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  DCacheBusWriteData;
+    logic [LINELEN-1:0]  DLSUBusBuffer;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
@@ -222,13 +222,13 @@ module lsu (
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
-      .WordCount, .LSUBusWriteCrit,
+      .WordCount, .SelLSUBusWord,
       .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DCacheBusWriteData, .LSUPAdrM,
+      .DCacheWriteLine, .DCacheBusAck, .DLSUBusBuffer, .LSUPAdrM,
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 
-    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DCacheBusWriteData[`XLEN-1:0]}),
+    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DLSUBusBuffer[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
@@ -240,14 +240,14 @@ module lsu (
         assign FinalWriteDataM = {{`LLEN-`XLEN{1'b0}}, IEUWriteDataM};
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .LSUBusWriteCrit, .RW(LSURWM), .Atomic(LSUAtomicM),
+        .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
         .ByteMask(FinalByteMaskM), .WordCount,
         .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
-        .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM(1'b0), .CacheCommitted(DCacheCommittedM), 
+        .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
-        .CacheBusWriteData(DCacheBusWriteData), .CacheFetchLine(DCacheFetchLine), 
+        .LSUBusBuffer(DLSUBusBuffer), .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
     end else begin : passthrough

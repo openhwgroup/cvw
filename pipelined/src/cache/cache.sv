@@ -31,37 +31,36 @@
 `include "wally-config.vh"
 
 module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, DCACHE) (
-  input logic                 clk,
-  input logic                 reset,
+  input logic                   clk,
+  input logic                   reset,
    // cpu side
-  input logic                 CPUBusy,
-  input logic [1:0]           RW,
-  input logic [1:0]           Atomic,
-  input logic                 FlushCache,
-  input logic                 InvalidateCache,
-  input logic [11:0]          NextAdr, // virtual address, but we only use the lower 12 bits.
-  input logic [`PA_BITS-1:0]  PAdr, // physical address
+  input logic                   CPUBusy,
+  input logic [1:0]             RW,
+  input logic [1:0]             Atomic,
+  input logic                   FlushCache,
+  input logic                   InvalidateCache,
+  input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
+  input logic [`PA_BITS-1:0]    PAdr, // physical address
   input logic [(WORDLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]   FinalWriteData,
-  output logic                CacheCommitted,
-  output logic                CacheStall,
+  input logic [WORDLEN-1:0]     FinalWriteData,
+  output logic                  CacheCommitted,
+  output logic                  CacheStall,
    // to performance counters to cpu
-  output logic                CacheMiss,
-  output logic                CacheAccess,
+  output logic                  CacheMiss,
+  output logic                  CacheAccess,
    // lsu control
-  input logic                 IgnoreRequestTLB,
-  input logic                 IgnoreRequestTrapM, 
-  input logic                 TrapM,
-  input logic                 Cacheable,
+  input logic                   IgnoreRequestTLB,
+  input logic                   TrapM, 
+  input logic                   Cacheable,
    // Bus fsm interface
-  output logic                CacheFetchLine,
-  output logic                CacheWriteLine,
-  input logic                 CacheBusAck,
-  input logic [LOGBWPL-1:0]    WordCount,
-  input logic                 LSUBusWriteCrit, 
-  output logic [`PA_BITS-1:0] CacheBusAdr,
-  input logic [LINELEN-1:0]   CacheBusWriteData,
-  output logic [WORDLEN-1:0]  ReadDataWord);
+  output logic                  CacheFetchLine,
+  output logic                  CacheWriteLine,
+  input logic                   CacheBusAck,
+  input logic                   SelLSUBusWord, 
+  input logic [LOGBWPL-1:0]     WordCount,
+  input logic [LINELEN-1:0]     LSUBusBuffer,
+  output logic [`PA_BITS-1:0]   CacheBusAdr,
+  output logic [WORDLEN-1:0]    ReadDataWord);
 
   // Cache parameters
   localparam                  LINEBYTELEN = LINELEN/8;
@@ -147,11 +146,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // like to fix this.
   if(DCACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
-      .d1(WordCount), .s(LSUBusWriteCrit),
+      .d1(WordCount), .s(SelLSUBusWord),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, CacheBusWriteData, SelBusBuffer, ReadDataLine);
+  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, LSUBusBuffer, SelBusBuffer, ReadDataLine);
 
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
     .PAdr(WordOffsetAddr),
@@ -174,10 +173,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   for(index = 0; index < LINELEN/8; index++) begin
     mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
-      .d1(CacheBusWriteData[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+      .d1(LSUBusBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
   end
   //mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-//  .d1(CacheBusWriteData),	.s(SetValid), .y(CacheWriteData));
+//  .d1(LSUBusBuffer),	.s(SetValid), .y(CacheWriteData));
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),
@@ -214,7 +213,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   assign CacheRW = Cacheable ? RW : 2'b00;
   assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
-		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .IgnoreRequestTrapM, .TrapM,
+		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .TrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
