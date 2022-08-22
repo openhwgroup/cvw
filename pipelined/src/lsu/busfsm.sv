@@ -78,6 +78,8 @@ module busfsm #(parameter integer   WordCountThreshold,
 				STATE_BUS_UNCACHED_READ_DONE,
 				STATE_BUS_CPU_BUSY} busstatetype;
 
+  typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
+
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
   // Used to send address for address stage of AHB.
@@ -154,7 +156,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
-  assign LSUTransType = (|WordCount) & ~UnCachedRW ? 2'b11 : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? 2'b10 : 2'b00; 
+  assign LSUTransType = (|WordCount) & ~UnCachedRW ? AHB_SEQ : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
   // Reset if we aren't initiating a transaction or if we are finishing a transaction.
   assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine) | LSUTransComplete; 
   
