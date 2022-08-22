@@ -123,25 +123,18 @@ module datapath (
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
-  // *** simplify WriteDataE in this merge
   // floating point interactions: fcvt, fp stores
-  if (`F_SUPPORTED&(`LLEN>`XLEN)) begin:fpmux
+  if (`F_SUPPORTED) begin:fpmux
     logic [`XLEN-1:0] IFCvtResultW;
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
-    assign WriteDataE = ForwardedSrcBE;
-    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
-    mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
-  end else if (`F_SUPPORTED) begin:fpmux
-    logic [`XLEN-1:0] IFCvtResultW;
-    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
-    mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
     mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
     mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
   end else begin:fpmux
-    assign IFResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
+    assign IFResultM = IEUResultM; 
     mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
   end
-
+  assign WriteDataE = ForwardedSrcBE;
+ 
   // handle Store Conditional result if atomic extension supported
   if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
   else              assign SCResultW = 0;
