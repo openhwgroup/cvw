@@ -93,7 +93,6 @@ module wallypipelinedcore (
   logic             FStallD;
   logic             FWriteIntE;
   logic [`XLEN-1:0]         FWriteDataE;
-  logic                     FStore2;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
   logic [`XLEN-1:0]         FCvtIntResW;  
@@ -258,7 +257,7 @@ module wallypipelinedcore (
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
   .FpLoadStoreM,
-  .FWriteDataM, .FStore2,
+  .FWriteDataM, 
   //.DataMisalignedM(DataMisalignedM),
   .IEUAdrE, .IEUAdrM, .WriteDataE,
   .ReadDataW, .FlushDCacheM,
@@ -397,8 +396,7 @@ module wallypipelinedcore (
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
-         .FStore2,
-         .FStallD, // Stall the decode stage
+        .FStallD, // Stall the decode stage
          .FWriteIntE, // integer register write enable
          .FWriteDataE, // Data to be written to memory
          .FWriteDataM, // Data to be written to memory
