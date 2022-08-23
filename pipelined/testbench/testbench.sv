@@ -395,9 +395,11 @@ module riscvassertions;
     assert (`PMP_ENTRIES == 0 | `PMP_ENTRIES==16 | `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`S_SUPPORTED | `VIRTMEM_SUPPORTED == 0) else $error("Virtual memory requires S mode support");
     assert (`DIV_BITSPERCYCLE == 1 | `DIV_BITSPERCYCLE==2 | `DIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: DIV_BITSPERCYCLE must be 1, 2, or 4");
-    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double (D) without supporting float (F)");
+    assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double fp (D) without supporting float (F)");
+    assert (`F_SUPPORTED | ~`Q_SUPPORTED) else $error("Can't support quad fp (Q) without supporting float (F)");
+    assert (`F_SUPPORTED | ~`ZFH_SUPPORTED) else $error("Can't support half-precision fp (ZFH) without supporting float (F)");
+    assert (`DMEM == `MEM_CACHE | ~`F_SUPPORTED | `FLEN <= `XLEN) else $error("Data cache required to support FLEN > XLEN");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    // assert (`XLEN == 64 | ~`D_SUPPORTED) else $error("Wally does not yet support D extensions on RV32");
     assert (`FLEN<=`XLEN | `DMEM == `MEM_CACHE) else $error("Wally does not support FLEN > XLEN unleses data cache is supported");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (`DMEM != `MEM_CACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
@@ -423,6 +425,8 @@ module riscvassertions;
     assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (`DMEM != `MEM_CACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
   end
+
+  // *** DH 8/23/
 endmodule
 
 
