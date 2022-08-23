@@ -67,22 +67,40 @@ module fctrl (
   logic [1:0] 	      FResSelD;       // Select one of the results that finish in the memory stage
   logic [2:0] FrmD, FrmE;                   // FP rounding mode
   logic [`FMTBITS-1:0] FmtD;             // FP format
-  //*** will putting x for don't cares reduce area in synthisis???
+  logic [1:0] Fmt;
+  logic       SupportedFmt;
+
   // FPU Instruction Decoder
+  assign Fmt = Funct7D[1:0];
+  // Note: only Fmt is checked; fcvt does not check destination format
+  assign SupportedFmt = (Fmt == 2'b00 | (Fmt == 2'b01 & `D_SUPPORTED) |
+                         (Fmt == 2'b10 & `ZFH_SUPPORTED) | (Fmt == 2'b11 & `Q_SUPPORTED));
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1;
+    else if (OpD != 7'b0000111 & OpD != 7'b0100111 & ~SupportedFmt) 
+      ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // for anything other than loads and stores, check for supported format
     else case(OpD)
     // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr
       7'b0000111: case(Funct3D)
-                    3'b010:  ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // flw
-                    3'b011:  ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // fld
-                    default: ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
+                    3'b010:                      ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // flw
+                    3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // fld
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // fld not supported
+                    3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // flq
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // flq not supported
+                    3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0; // flh
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // flh not supported
+                    default:                     ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
                   endcase
       7'b0100111: case(Funct3D)
-                    3'b010:  ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsw
-                    3'b011:  ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsd
-                    default: ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
+                    3'b010:                      ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsw
+                    3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsd
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // fsd not supported
+                    3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsq
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // fsq not supported
+                    3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0; // fsh
+                             else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // fsh not supported
+                    default:                     ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1; // non-implemented instruction
                   endcase
       7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0; // fmadd
       7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0; // fmsub
