@@ -59,9 +59,6 @@ module fpu (
    //                single stored in a double: | 32 1s | single precision value |
    //    - sets the underflow after rounding
 
-   // LSU interface
-   logic [`FLEN-1:0] FWriteDataE;
-  
    // control signals
    logic 		         FRegWriteW; // FP register write enable
    logic [2:0] 	      FrmM;                   // FP rounding mode
@@ -291,17 +288,7 @@ module fpu (
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
    
-   if(`FPSIZES == 1)      assign FWriteDataE = YE;
-   else if(`FPSIZES == 2) assign FWriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
-   else 
-      always_comb
-            case(FmtE)
-               `Q_FMT: FWriteDataE = YE;
-               `D_FMT: FWriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
-               `S_FMT: FWriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
-               `H_FMT: FWriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
-            endcase
-   flopenrc #(`FLEN) FWriteDataMReg (clk, reset, FlushM, ~StallM, FWriteDataE, FWriteDataM);
+   flopenrc #(`FLEN) FWriteDataMReg (clk, reset, FlushM, ~StallM, YE, FWriteDataM);
 
    // NaN Block SrcA
    generate
