@@ -187,7 +187,7 @@ module ifu (
 
   if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
     dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM({{(`XLEN-32){1'b0}}, PCPF[31:0]}), .IEUAdrE(PCNextFSpill),
-              .TrapM(1'b0), .FinalWriteDataM(), .ByteMaskM('0),
+              .TrapM(1'b0), .WriteDataM(), .ByteMaskM('0),
               .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
               .BusCommittedM(), .DCacheStallM(ICacheStallF), .Cacheable(CacheableF),
               .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
