@@ -92,13 +92,12 @@ module wallypipelinedcore (
   logic [4:0]        RdM, RdW;
   logic             FStallD;
   logic             FWriteIntE;
-  logic [`XLEN-1:0]         FWriteDataE;
-  logic                     FStore2;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
-  logic [`XLEN-1:0]         FCvtIntResW;  
+  logic [`XLEN-1:0]         FCvtIntResW; 
+  logic             FCvtIntW; 
   logic             FDivBusyE;
-  logic             IllegalFPUInstrD, IllegalFPUInstrE;
+  logic             IllegalFPUInstrM;
   logic             FRegWriteM;
   logic             FPUStallD;
   logic             FpLoadStoreM;
@@ -131,7 +130,7 @@ module wallypipelinedcore (
   // cpu lsu interface
   logic [2:0]       Funct3M;
   logic [`XLEN-1:0] IEUAdrE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataE;
+  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
   (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
   logic [`LLEN-1:0] ReadDataW;  
   logic             CommittedM;
@@ -172,6 +171,7 @@ module wallypipelinedcore (
   logic             BreakpointFaultM, EcallFaultM;
   logic             InstrDAPageFaultF;
   logic             BigEndianM;
+  logic             FCvtIntE;
   
   ifu ifu(
     .clk, .reset,
@@ -219,15 +219,15 @@ module wallypipelinedcore (
      .IllegalBaseInstrFaultD,
 
      // Execute Stage interface
-     .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
-     .FWriteDataE, .IEUAdrE, .MDUE, .W64E,
+     .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE,
+     .IEUAdrE, .MDUE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
      .AtomicM, // atomic control goes to LSU
-     .WriteDataE, // Write data to LSU
+     .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
@@ -237,7 +237,7 @@ module wallypipelinedcore (
      .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
-     .FResSelW,
+     .FCvtIntW,
 
      // hazards
      .StallD, .StallE, .StallM, .StallW,
@@ -258,9 +258,9 @@ module wallypipelinedcore (
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
   .FpLoadStoreM,
-  .FWriteDataM, .FStore2,
+  .FWriteDataM, 
   //.DataMisalignedM(DataMisalignedM),
-  .IEUAdrE, .IEUAdrM, .WriteDataE,
+  .IEUAdrE, .IEUAdrM, .WriteDataM,
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
@@ -346,7 +346,7 @@ module wallypipelinedcore (
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
          .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
-         .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+         .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
          .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
          .MTIME_CLINT, 
@@ -356,7 +356,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-         .IllegalFPUInstrE,
+         .IllegalFPUInstrM,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
@@ -397,25 +397,24 @@ module wallypipelinedcore (
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
-         .FStore2,
-         .FStallD, // Stall the decode stage
-         .FWriteIntE, // integer register write enable
-         .FWriteDataE, // Data to be written to memory
+        .FStallD, // Stall the decode stage
+         .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
          .FCvtIntResW, // fp -> int conversion result to be stored in int register
-         .FResSelW,   // fpu result selection
+         .FCvtIntW,   // fpu result selection
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
-         .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+         .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
          .SetFflagsM        // FPU flags (to privileged unit)
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FStallD = 0;
       assign FWriteIntE = 0; 
-      assign FWriteDataE = 0;
+      assign FCvtIntE = 0;
       assign FIntResM = 0;
+      assign FCvtIntW = 0;
       assign FDivBusyE = 0;
-      assign IllegalFPUInstrD = 1;
+      assign IllegalFPUInstrM = 1;
       assign SetFflagsM = 0;
    end
 endmodule
