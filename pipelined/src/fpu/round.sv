@@ -60,16 +60,14 @@ module round(
     output logic                    S,             // sticky bit
     output logic [`NE+1:0]          Me,
     output logic                    Plus1,
-    output logic                    R, UfL // bits needed to calculate rounding
+    output logic                    R, G // bits needed to calculate rounding
 );
-    logic           L;         // bit used for rounding - least significant bit of the normalized sum
     logic           UfCalcPlus1; 
     logic           NormS;  // normalized sum's sticky bit
-    logic           UfS;   // sticky bit for underlow calculation
     logic [`NF-1:0] RoundFrac;
     logic           FpRes, IntRes;
-    logic           UfR;
-    logic           FpRound, FpLSBRes, FpUfRound;
+    logic           FpG, FpL, FpR;
+    logic           L; // lsb of result
     logic           CalcPlus1, FpPlus1;
     logic [`FLEN:0] RoundAdd;           // how much to add to the result
 
@@ -176,106 +174,101 @@ module round(
 
     // only add the Addend sticky if doing an FMA opperation
     //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-    assign UfS = FmaZmS&FmaOp | NormS | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivS&DivOp;
+    assign S = FmaZmS&FmaOp | NormS | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivS&DivOp;
     
     // determine round and LSB of the rounded value
     //      - underflow round bit is used to determint the underflow flag
     if (`FPSIZES == 1) begin
-        assign FpRound = Mf[`CORRSHIFTSZ-`NF-1];
-        assign FpLSBRes = Mf[`CORRSHIFTSZ-`NF];
-        assign FpUfRound = Mf[`CORRSHIFTSZ-`NF-2];
+        assign FpG = Mf[`CORRSHIFTSZ-`NF-1];
+        assign FpL = Mf[`CORRSHIFTSZ-`NF];
+        assign FpR = Mf[`CORRSHIFTSZ-`NF-2];
 
     end else if (`FPSIZES == 2) begin
-        assign FpRound = OutFmt ? Mf[`CORRSHIFTSZ-`NF-1] : Mf[`CORRSHIFTSZ-`NF1-1];
-        assign FpLSBRes = OutFmt ? Mf[`CORRSHIFTSZ-`NF] : Mf[`CORRSHIFTSZ-`NF1];
-        assign FpUfRound = OutFmt ? Mf[`CORRSHIFTSZ-`NF-2] : Mf[`CORRSHIFTSZ-`NF1-2];
+        assign FpG = OutFmt ? Mf[`CORRSHIFTSZ-`NF-1] : Mf[`CORRSHIFTSZ-`NF1-1];
+        assign FpL = OutFmt ? Mf[`CORRSHIFTSZ-`NF] : Mf[`CORRSHIFTSZ-`NF1];
+        assign FpR = OutFmt ? Mf[`CORRSHIFTSZ-`NF-2] : Mf[`CORRSHIFTSZ-`NF1-2];
 
     end else if (`FPSIZES == 3) begin
         always_comb
             case (OutFmt)
                 `FMT: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`NF-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`NF];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`NF-2];
+                    FpG = Mf[`CORRSHIFTSZ-`NF-1];
+                    FpL = Mf[`CORRSHIFTSZ-`NF];
+                    FpR = Mf[`CORRSHIFTSZ-`NF-2];
                 end
                 `FMT1: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`NF1-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`NF1];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`NF1-2];
+                    FpG = Mf[`CORRSHIFTSZ-`NF1-1];
+                    FpL = Mf[`CORRSHIFTSZ-`NF1];
+                    FpR = Mf[`CORRSHIFTSZ-`NF1-2];
                 end
                 `FMT2: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`NF2-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`NF2];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`NF2-2];
+                    FpG = Mf[`CORRSHIFTSZ-`NF2-1];
+                    FpL = Mf[`CORRSHIFTSZ-`NF2];
+                    FpR = Mf[`CORRSHIFTSZ-`NF2-2];
                 end
                 default: begin
-                    FpRound = 1'bx;
-                    FpLSBRes = 1'bx;
-                    FpUfRound = 1'bx;
+                    FpG = 1'bx;
+                    FpL = 1'bx;
+                    FpR = 1'bx;
                 end
             endcase
     end else if (`FPSIZES == 4) begin
         always_comb
             case (OutFmt)
                 2'h3: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`Q_NF-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`Q_NF];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`Q_NF-2];
+                    FpG = Mf[`CORRSHIFTSZ-`Q_NF-1];
+                    FpL = Mf[`CORRSHIFTSZ-`Q_NF];
+                    FpR = Mf[`CORRSHIFTSZ-`Q_NF-2];
                 end
                 2'h1: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`D_NF-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`D_NF];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`D_NF-2];
+                    FpG = Mf[`CORRSHIFTSZ-`D_NF-1];
+                    FpL = Mf[`CORRSHIFTSZ-`D_NF];
+                    FpR = Mf[`CORRSHIFTSZ-`D_NF-2];
                 end
                 2'h0: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`S_NF-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`S_NF];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`S_NF-2];
+                    FpG = Mf[`CORRSHIFTSZ-`S_NF-1];
+                    FpL = Mf[`CORRSHIFTSZ-`S_NF];
+                    FpR = Mf[`CORRSHIFTSZ-`S_NF-2];
                 end
                 2'h2: begin
-                    FpRound = Mf[`CORRSHIFTSZ-`H_NF-1];
-                    FpLSBRes = Mf[`CORRSHIFTSZ-`H_NF];
-                    FpUfRound = Mf[`CORRSHIFTSZ-`H_NF-2];
+                    FpG = Mf[`CORRSHIFTSZ-`H_NF-1];
+                    FpL = Mf[`CORRSHIFTSZ-`H_NF];
+                    FpR = Mf[`CORRSHIFTSZ-`H_NF-2];
                 end
             endcase
     end
 
-    assign R = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-1] : FpRound;
-    assign L = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN] : FpLSBRes;
-    assign UfR = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-2] : FpUfRound;
-
-    // used to determine underflow flag
-    assign UfL = FpRound;
-    // determine sticky
-    assign S = UfS | UfR;
+    assign G = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-1] : FpG;
+    assign L = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN] : FpL;
+    assign R = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-2] : FpR;
 
 
     always_comb begin
         // Determine if you add 1
         case (Frm)
-            3'b000: CalcPlus1 = R & (S| L);//round to nearest even
+            3'b000: CalcPlus1 = G & (R|S|L);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
             3'b010: CalcPlus1 = Ms;//round down
             3'b011: CalcPlus1 = ~Ms;//round up
-            3'b100: CalcPlus1 = R;//round to nearest max magnitude
+            3'b100: CalcPlus1 = G;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
         case (Frm)
-            3'b000: UfCalcPlus1 = UfR & (UfS| UfL);//round to nearest even
+            3'b000: UfCalcPlus1 = R & (S|G);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
             3'b010: UfCalcPlus1 = Ms;//round down
             3'b011: UfCalcPlus1 = ~Ms;//round up
-            3'b100: UfCalcPlus1 = UfR;//round to nearest max magnitude
+            3'b100: UfCalcPlus1 = R;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
         endcase
    
     end
 
     // If an answer is exact don't round
-    assign Plus1 = CalcPlus1 & (S | R);
+    assign Plus1 = CalcPlus1 & (S|R|G);
     assign FpPlus1 = Plus1&~(ToInt&CvtOp);
-    assign UfPlus1 = UfCalcPlus1 & S; // UfR is part of sticky
+    assign UfPlus1 = UfCalcPlus1 & (S|R);
 
     // Compute rounded result
     if (`FPSIZES == 1) begin
