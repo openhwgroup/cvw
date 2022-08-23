@@ -39,6 +39,7 @@ module resultsign(
     input logic         Mult,
     input logic         R,
     input logic         S,
+    input logic         G,
     input logic         Ms,
     output logic        Ws
 );
@@ -60,7 +61,7 @@ module resultsign(
     //      - if a multiply opperation is done, then use the products sign(Ps)
     //      - if the zero sum is not exactly zero i.e. R|S use the sign of the exact result (which is the product's sign)
     //      - if an effective addition occurs (P+A or -P+-A or P--A) then use the product's sign
-    assign Zeros = (FmaPs^FmaAs)&~(R|S)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
+    assign Zeros = (FmaPs^FmaAs)&~(R|G|S)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
 
     // is the result negitive
