@@ -54,7 +54,7 @@ module lsuvirtmem(
   output logic [6:0]          LSUFunct7M,
   input logic [`XLEN-1:0]     IEUAdrE,
   output logic [`XLEN-1:0]    PTE,
-  output logic [`XLEN-1:0]    LSUWriteDataM,
+  output logic [`XLEN-1:0]    IMWriteDataM,
   output logic [1:0]          PageType,
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
@@ -112,8 +112,8 @@ module lsuvirtmem(
   mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
   mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, PreLSUPAdrM);
   if(`HPTW_WRITES_SUPPORTED)
-    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, LSUWriteDataM);
-  else assign LSUWriteDataM = WriteDataM;
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
+  else assign IMWriteDataM = WriteDataM;
   mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayMemE, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
 
   // always block interrupts when using the hardware page table walker.

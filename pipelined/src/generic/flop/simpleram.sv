@@ -34,15 +34,15 @@ module simpleram #(parameter BASE=0, RANGE = 65535) (
   input  logic             clk, 
   input  logic [31:0]      a,
   input  logic             we,
-  input  logic [`XLEN/8-1:0] ByteMask,
-  input  logic [`XLEN-1:0] wd,
-  output logic [`XLEN-1:0] rd
+  input  logic [`LLEN/8-1:0] ByteMask,
+  input  logic [`LLEN-1:0] wd,
+  output logic [`LLEN-1:0] rd
 );
 
   localparam ADDR_WDITH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`XLEN/8);
+  localparam OFFSET = $clog2(`LLEN/8);
 
-  bram1p1rw #(`XLEN/8, 8, ADDR_WDITH) 
+  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
     memory(.clk, .we, .bwe(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
 endmodule
 
