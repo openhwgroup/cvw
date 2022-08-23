@@ -40,10 +40,10 @@ module subwordwrite (
   if (`LLEN == 128) begin:sww
     always_comb 
       case(LSUFunct3M[2:0])
-        2'b000:  LittleEndianWriteDataM = {16{IMAFWriteDataM[7:0]}}; // sb
-        2'b001:  LittleEndianWriteDataM = {8{IMAFWriteDataM[15:0]}}; // sh
-        2'b010:  LittleEndianWriteDataM = {4{IMAFWriteDataM[31:0]}}; // sw
-        2'b011:  LittleEndianWriteDataM = {2{IMAFWriteDataM[63:0]}}; // sd
+        3'b000:  LittleEndianWriteDataM = {16{IMAFWriteDataM[7:0]}}; // sb
+        3'b001:  LittleEndianWriteDataM = {8{IMAFWriteDataM[15:0]}}; // sh
+        3'b010:  LittleEndianWriteDataM = {4{IMAFWriteDataM[31:0]}}; // sw
+        3'b011:  LittleEndianWriteDataM = {2{IMAFWriteDataM[63:0]}}; // sd
         default: LittleEndianWriteDataM = IMAFWriteDataM;            // sq
       endcase
   end else if (`LLEN == 64) begin:sww

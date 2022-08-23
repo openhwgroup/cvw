@@ -35,10 +35,9 @@ module privpiperegs (
   input  logic         StallD, StallE, StallM,
   input  logic         FlushD, FlushE, FlushM,
   input  logic         InstrPageFaultF, InstrAccessFaultF,
-  input  logic         IllegalIEUInstrFaultD, IllegalFPUInstrD,
-  output logic         IllegalFPUInstrE,
+  input  logic         IllegalIEUInstrFaultD,
   output logic         InstrPageFaultM, InstrAccessFaultM,
-  output logic         IllegalIEUInstrFaultM, IllegalFPUInstrM
+  output logic         IllegalIEUInstrFaultM
 );
 
   logic InstrPageFaultD, InstrAccessFaultD;
@@ -49,10 +48,10 @@ module privpiperegs (
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
                   {InstrPageFaultF, InstrAccessFaultF},
                   {InstrPageFaultD, InstrAccessFaultD});
-  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD, IllegalFPUInstrD}, 
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE});
-  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE, IllegalFPUInstrE},
-                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM, IllegalFPUInstrM});
+  flopenrc #(3) faultregE(clk, reset, FlushE, ~StallE,
+                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD}, 
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE});
+  flopenrc #(3) faultregM(clk, reset, FlushM, ~StallM,
+                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE},
+                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM});
 endmodule
