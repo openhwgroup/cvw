@@ -56,7 +56,7 @@ module srtfsm(
   output logic DivDone,
   output logic NegSticky,
   output logic DivBusy
-  );
+);
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
@@ -69,7 +69,7 @@ module srtfsm(
   assign DivBusy = (state == BUSY);
   // calculate sticky bit
   //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
-  //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
+  //      this is only a problem on radix 2 (and possibly maximally redundant 4) since minimally redundant
   //      radix-4 division can't create a QM that continually adds 0's
   if (`RADIX == 2) begin
     logic [`DIVb+3:0] FZero, FSticky;
