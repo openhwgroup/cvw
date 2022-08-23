@@ -41,7 +41,7 @@ module fctrl (
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
   input  logic [1:0] STATUS_FS, // is FPU enabled?
   input  logic       FDivBusyE,  // is the divider busy
-  output logic       IllegalFPUInstrD, IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
+  output logic       IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
   output logic 		         FRegWriteM, FRegWriteW, // FP register write enable
   output logic [2:0] 	      FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
@@ -52,12 +52,13 @@ module fctrl (
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
+  output logic              FCvtIntW,
   output logic [4:0] 	      Adr1E, Adr2E, Adr3E                // adresses of each input
   );
 
   `define FCTRLW 11
   logic [`FCTRLW-1:0] ControlsD;
-  logic       IllegalFPUInstrE;
+  logic       IllegalFPUInstrD, IllegalFPUInstrE;
   logic 		  FRegWriteD; // FP register write enable
   logic 		  DivStartD; // integer register write enable
   logic 		  FWriteIntD; // integer register write enable
@@ -257,23 +258,21 @@ module fctrl (
 //        10 - xor sign
     
   // D/E pipleine register
-  flopenrc #(12+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD},
-              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE});
-   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
+  flopenrc #(13+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, IllegalFPUInstrD},
+              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE});
+  flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, DivStartD, DivStartE);
-  if(`FLEN>`XLEN)
-    flopenrc #(1) DEIllegalReg(clk, reset, FlushE, ~StallE, IllegalFPUInstrD, IllegalFPUInstrE);
   // E/M pipleine register
-  flopenrc #(12+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
-              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE},
-              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM});
-  if(`FLEN>`XLEN)
-    flopenrc #(1) EMIllegalReg(clk, reset, FlushM, ~StallM, IllegalFPUInstrE, IllegalFPUInstrM);
+  flopenrc #(13+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE},
+              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, IllegalFPUInstrM});
   // M/W pipleine register
   flopenrc #(3)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM},
           {FRegWriteW, FResSelW});
+  
+  assign FCvtIntW = (FResSelW == 2'b01);
 
 endmodule

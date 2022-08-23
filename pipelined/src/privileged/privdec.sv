@@ -43,7 +43,7 @@ module privdec (
   output logic         EcallFaultM, BreakpointFaultM,
   output logic         sretM, mretM, wfiM, sfencevmaM);
 
-  logic IllegalPrivilegedInstrM, IllegalOrDisabledFPUInstrM;
+  logic IllegalPrivilegedInstrM;
   logic WFITimeoutM;
   logic       StallMQ;
   logic       ebreakM, ecallM;
@@ -92,7 +92,6 @@ module privdec (
   // Fault on illegal instructions
   ///////////////////////////////////////////
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalOrDisabledFPUInstrM = IllegalFPUInstrM | (STATUS_FS == 2'b00);
-  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalOrDisabledFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
+  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
                                WFITimeoutM; 
 endmodule
