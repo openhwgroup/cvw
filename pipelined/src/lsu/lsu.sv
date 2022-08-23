@@ -110,9 +110,10 @@ module lsu (
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     SelLSUBusWord;
   logic                     DataDAPageFaultM;
-  logic [`XLEN-1:0]         LSUWriteDataM;
+  logic [`XLEN-1:0]         IMWriteDataM, IMAWriteDataM;
+  logic [`LLEN-1:0]         IMAFWriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
-  logic [(`LLEN-1)/8:0]     ByteMaskM, FinalByteMaskM;
+  logic [(`LLEN-1)/8:0]     ByteMaskM;
   
   // *** TO DO: Burst mode
 
@@ -131,7 +132,7 @@ module lsu (
       .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
-      .IEUAdrExtM, .PTE, .LSUWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
+      .IEUAdrExtM, .PTE, .IMWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM, .IEUAdrE,
       .LSUAdrE, .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
       .IgnoreRequestTLB);
   end else begin
@@ -140,7 +141,7 @@ module lsu (
     assign LSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
-    assign LSUWriteDataM = WriteDataM;
+    assign IMWriteDataM = WriteDataM;
    end
 
   // CommittedM tells the CPU's privilege unit the current instruction
@@ -188,8 +189,7 @@ module lsu (
   //  Memory System
   //  Either Data Cache or Data Tightly Integrated Memory or just bus interface
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [`XLEN-1:0]    AMOWriteDataM, IEUWriteDataM, LittleEndianWriteDataM;
-  logic [`LLEN-1:0]    FinalWriteDataM;
+  logic [`LLEN-1:0]    LSUWriteDataM, LittleEndianWriteDataM;
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`LLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
@@ -202,7 +202,7 @@ module lsu (
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
-    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .FinalWriteDataM(IEUWriteDataM), //*** fix the dtim FinalWriteData
+    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),
               .DCacheMiss, .DCacheAccess);
@@ -230,23 +230,15 @@ module lsu (
 
     mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DLSUBusBuffer[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(IEUWriteDataM),
+    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
-    
-    // *** Ross fix up location of mux to be here; remove from IEU datapath
-    // *** look over entire FPU write and read paths
-    // *** Why is 
     if(CACHE_ENABLED) begin : dcache
-      if (`F_SUPPORTED)
-        mux2 #(`LLEN) datamux({{`LLEN/`XLEN}{IEUWriteDataM}}, FWriteDataM, FpLoadStoreM, FinalWriteDataM);
-      else
-        assign FinalWriteDataM = IEUWriteDataM;
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
-        .ByteMask(FinalByteMaskM), .WordCount,
-        .FinalWriteData(FinalWriteDataM), .Cacheable(CacheableM),
+        .ByteMask(ByteMaskM), .WordCount,
+        .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
@@ -266,24 +258,27 @@ module lsu (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .LSUWriteDataM, .LSUPAdrM, 
+    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .IMWriteDataM, .LSUPAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
-      .AMOWriteDataM, .SquashSCW, .LSURWM);
+      .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
-    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign AMOWriteDataM = LSUWriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign IMAWriteDataM = IMWriteDataM;
   end
 
+  if (`F_SUPPORTED) 
+    mux2 #(`LLEN) datamux({{{`LLEN-`XLEN}{1'b0}}, IMAWriteDataM}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
+  else assign IMAFWriteDataM = IMAWriteDataM;
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .AMOWriteDataM, .LittleEndianWriteDataM);
+    .LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
   swbytemaskword #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
-  assign FinalByteMaskM = ByteMaskM;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register
@@ -297,10 +292,10 @@ module lsu (
   //  swap the bytes when read from big-endian memory
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`BIGENDIAN_SUPPORTED) begin:endian
-    bigendianswap #(`XLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(IEUWriteDataM));
+    bigendianswap #(`LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
     bigendianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordM), .y(LittleEndianReadDataWordM));
   end else begin
-    assign IEUWriteDataM = LittleEndianWriteDataM;
+    assign LSUWriteDataM = LittleEndianWriteDataM;
     assign LittleEndianReadDataWordM = ReadDataWordM;
   end
 
