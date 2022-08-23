@@ -266,7 +266,7 @@ module lsu (
   end
 
   if (`F_SUPPORTED) 
-    mux2 #(`LLEN) datamux({{`LLEN/`XLEN}{IMAWriteDataM}}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
+    mux2 #(`LLEN) datamux({{{`LLEN-`XLEN}{1'b0}}, IMAWriteDataM}, FWriteDataM, FpLoadStoreM, IMAFWriteDataM);
   else assign IMAFWriteDataM = IMAWriteDataM;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
