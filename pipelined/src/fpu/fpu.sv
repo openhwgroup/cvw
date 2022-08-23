@@ -44,6 +44,7 @@ module fpu (
   output logic 		      FpLoadStoreM,  // Fp load instruction? (to LSU)
   output logic 		      FStallD,       // Stall the decode stage (To HZU)
   output logic 		      FWriteIntE,    // integer register write enable (to IEU)
+  output logic             FCvtIntE,      // Convert to int (to IEU)
   output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to LSU) 
   output logic [`XLEN-1:0] FIntResM,      // data to be written to integer register (to IEU)
   output logic [`XLEN-1:0] FCvtIntResW,   // convert result to to be written to integer register (to IEU)
@@ -163,7 +164,7 @@ module fpu (
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
                .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
-               .DivStartE, .FWriteIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
+               .DivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
                .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1E, .Adr2E, .Adr3E);
 
    // FP register file
