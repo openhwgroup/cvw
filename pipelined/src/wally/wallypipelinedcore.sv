@@ -171,6 +171,7 @@ module wallypipelinedcore (
   logic             BreakpointFaultM, EcallFaultM;
   logic             InstrDAPageFaultF;
   logic             BigEndianM;
+  logic             FCvtIntE;
   
   ifu ifu(
     .clk, .reset,
@@ -218,7 +219,7 @@ module wallypipelinedcore (
      .IllegalBaseInstrFaultD,
 
      // Execute Stage interface
-     .PCE, .PCLinkE, .FWriteIntE,
+     .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE,
      .IEUAdrE, .MDUE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
@@ -397,7 +398,7 @@ module wallypipelinedcore (
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
         .FStallD, // Stall the decode stage
-         .FWriteIntE, // integer register write enable
+         .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
          .FCvtIntResW, // fp -> int conversion result to be stored in int register
@@ -409,6 +410,7 @@ module wallypipelinedcore (
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FStallD = 0;
       assign FWriteIntE = 0; 
+      assign FCvtIntE = 0;
       assign FIntResM = 0;
       assign FCvtIntW = 0;
       assign FDivBusyE = 0;
