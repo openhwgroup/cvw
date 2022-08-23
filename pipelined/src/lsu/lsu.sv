@@ -196,6 +196,9 @@ module lsu (
   logic                SelUncachedAdr;
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
+  // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
+  // use the same RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
+  
   if (`DMEM == `MEM_TIM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
