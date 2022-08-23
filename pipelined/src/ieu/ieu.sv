@@ -39,9 +39,7 @@ module ieu (
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
-  input logic 		   FWriteIntE, 
-  input logic 		   IllegalFPUInstrE,
-  input logic [`XLEN-1:0]  FWriteDataE,
+  input logic 		   FWriteIntE, FCvtIntE, FCvtIntW,
   output logic [`XLEN-1:0] IEUAdrE,
   output logic 		   MDUE, W64E,
   output logic [2:0] 	   Funct3E,
@@ -51,7 +49,7 @@ module ieu (
   input logic 		   SquashSCW, // from LSU
   output logic [1:0] 	   MemRWM, // read/write control goes to LSU
   output logic [1:0] 	   AtomicM, // atomic control goes to LSU
-  output logic [`XLEN-1:0] WriteDataE, // Address and write data to LSU
+  output logic [`XLEN-1:0] WriteDataM, // write data to LSU
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
@@ -61,7 +59,6 @@ module ieu (
 
   // Writeback stage
   input logic [`XLEN-1:0]  CSRReadValW, MDUResultW,
-  input logic [1:0]        FResSelW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
   input logic [`XLEN-1:0] ReadDataW,
@@ -106,16 +103,16 @@ module ieu (
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
-    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, .IllegalFPUInstrE,
-    .FWriteDataE, .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
-    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataE, .FResSelW,
+    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, 
+    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
+    .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
     .MemReadE, .MDUE, .CSRReadE, .RegWriteM, .RegWriteW,
-    .FWriteIntE, .SCE, .ForwardAE, .ForwardBE,
+    .FCvtIntE, .SCE, .ForwardAE, .ForwardBE,
     .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
 endmodule
 

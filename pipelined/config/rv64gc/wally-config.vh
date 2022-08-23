@@ -86,7 +86,7 @@
 // WFI Timeout Wait
 `define WFI_TIMEOUT_BIT 16
 
-// Peripheral Physiccal Addresses
+// Peripheral Physical Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 

@@ -30,6 +30,29 @@
 
 `include "wally-config.vh"
 
+// This comparator is best
+module comparator_dc_flip #(parameter WIDTH=64) (
+  input  logic [WIDTH-1:0] a, b,
+  input  logic             sgnd,
+  output logic [1:0]       flags);
+
+  logic eq, lt, ltu;
+  logic [WIDTH-1:0] af, bf;
+
+  // For signed numbers, flip most significant bit
+  assign af = {a[WIDTH-1] ^ sgnd, a[WIDTH-2:0]};
+  assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
+
+  // behavioral description gives best results
+  assign eq = (a == b);
+  assign lt = (af < bf);
+  assign flags = {eq, lt};
+endmodule
+
+/*
+
+Other comparators evaluated
+
 module donedet #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   output logic        eq);
@@ -80,24 +103,6 @@ module comparator #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-// This comparator is best
-module comparator_dc_flip #(parameter WIDTH=64) (
-  input  logic [WIDTH-1:0] a, b,
-  input  logic             sgnd,
-  output logic [1:0]       flags);
-
-  logic eq, lt, ltu;
-  logic [WIDTH-1:0] af, bf;
-
-  // For signed numbers, flip most significant bit
-  assign af = {a[WIDTH-1] ^ sgnd, a[WIDTH-2:0]};
-  assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
-
-  // behavioral description gives best results
-  assign eq = (a == b);
-  assign lt = (af < bf);
-  assign flags = {eq, lt};
-endmodule
 
 module comparator2 #(parameter WIDTH=64) (
   input  logic             clk, reset,
@@ -106,7 +111,7 @@ module comparator2 #(parameter WIDTH=64) (
 
   logic eq, lt, ltu;
 
-  /* verilator lint_off UNOPTFLAT */
+  /* verilator lint_off UNOPTFLAT /
   // prefix implementation
   localparam levels=$clog2(WIDTH);
   genvar i;
@@ -133,7 +138,7 @@ module comparator2 #(parameter WIDTH=64) (
   // A < B signed if less than unsigned and msb is not < unsigned, or if A negative and B positive
   assign lt2 = ltu2 & ~l[0][WIDTH-1] | a[WIDTH-1] & ~b[WIDTH-1]; 
   assign flags = {eq2, lt2, ltu2};
-  /* verilator lint_on UNOPTFLAT */
+  /* verilator lint_on UNOPTFLAT /
 endmodule
 
 
@@ -143,7 +148,7 @@ module comparator_prefix #(parameter WIDTH=64) (
 
   logic eq, lt, ltu;
 
-  /* verilator lint_off UNOPTFLAT */
+  /* verilator lint_off UNOPTFLAT 
   // prefix implementation
   localparam levels=$clog2(WIDTH);
   genvar i;
@@ -170,7 +175,7 @@ module comparator_prefix #(parameter WIDTH=64) (
   // A < B signed if less than unsigned and msb is not < unsigned, or if A negative and B positive
   assign lt2 = ltu2 & ~l[0][WIDTH-1] | a[WIDTH-1] & ~b[WIDTH-1]; 
   assign flags = {eq2, lt2, ltu2};
-  /* verilator lint_on UNOPTFLAT */
+  /* verilator lint_on UNOPTFLAT /
 endmodule
 
 
@@ -317,3 +322,4 @@ module stinecomp64 (FCC, A, B, Sel);
    assign FCC = {LT, EQ};   
 
 endmodule // comp64
+*/

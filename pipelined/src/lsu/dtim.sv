@@ -36,10 +36,10 @@ module dtim(
   input logic [`XLEN-1:0]   IEUAdrM,
   input logic [`XLEN-1:0]   IEUAdrE,
   input logic               TrapM, 
-  input logic [`XLEN-1:0]   FinalWriteDataM,
-  input logic [`XLEN/8-1:0] ByteMaskM,
+  input logic [`LLEN-1:0]   WriteDataM,
+  input logic [`LLEN/8-1:0] ByteMaskM,
   input logic               Cacheable,
-  output logic [`XLEN-1:0]  ReadDataWordM,
+  output logic [`LLEN-1:0]  ReadDataWordM,
   output logic              BusStall,
   output logic              LSUBusWrite,
   output logic              LSUBusRead,
@@ -53,7 +53,7 @@ module dtim(
       .clk, .ByteMask(ByteMaskM),
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
       .we(LSURWM[0] & Cacheable & ~TrapM),  // have to ignore write if Trap.
-      .wd(FinalWriteDataM), .rd(ReadDataWordM));
+      .wd(WriteDataM), .rd(ReadDataWordM));
 
   // since we have a local memory the bus connections are all disabled.
   // There are no peripherals supported.

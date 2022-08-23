@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// simpleram.sv
+// csa.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: Katherine Parry and David_Harris@hmc.edu 21 August 2022
 // Modified: 
 //
-// Purpose: On-chip SIMPLERAM, external to core
+// Purpose: 3:2 carry-save adder
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -28,21 +28,18 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             clk, 
-  input  logic [31:0]      a,
-  input  logic             we,
-  input  logic [`LLEN/8-1:0] ByteMask,
-  input  logic [`LLEN-1:0] wd,
-  output logic [`LLEN-1:0] rd
+module csa #(parameter N=16) (
+  input  logic [N-1:0] x, y, z, 
+  input  logic         cin, 
+  output logic [N-1:0] s, c
 );
 
-  localparam ADDR_WDITH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`LLEN/8);
-
-  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    memory(.clk, .we, .bwe(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
+  // This block adds x, y, z, and cin to produce 
+  // a result s / c in carry-save redundant form.
+  // cin is just added to the least significant bit
+  // s + c = x + y + z + cin
+ 
+  assign s = x ^ y ^ z;
+  assign c = {x[N-2:0] & (y[N-2:0] | z[N-2:0]) | 
+		    (y[N-2:0] & z[N-2:0]), cin};
 endmodule
-
