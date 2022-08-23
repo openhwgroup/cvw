@@ -38,7 +38,7 @@ module adrdecs (
   output logic [8:0]          SelRegions
 );
 
-  localparam logic [3:0]          SUPPORTED_SIZE = (`XLEN == 64 ? 4'b1111 : 4'b0111);
+  localparam logic [3:0]          SUPPORTED_SIZE = (`LLEN == 32 ? 4'b0111 : 4'b1111);
  // Determine which region of physical memory (if any) is being accessed
   adrdec ddr4dec(PhysicalAddress, `EXT_MEM_BASE, `EXT_MEM_RANGE, `EXT_MEM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[7]);  
   adrdec boottimdec(PhysicalAddress, `BOOTROM_BASE, `BOOTROM_RANGE, `BOOTROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[6]);
