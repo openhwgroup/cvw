@@ -52,7 +52,7 @@ module privileged (
   input  logic             ICacheAccess,
   input  logic             PrivilegedM,
   input  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
-  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrD,
+  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrM,
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreAmoMisalignedFaultM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
@@ -69,7 +69,6 @@ module privileged (
   input logic StoreAmoAccessFaultM,
   input logic SelHPTW,
 
-  output logic		   IllegalFPUInstrE,
   output logic [1:0]       PrivilegeModeW,
   output logic [`XLEN-1:0] SATP_REGW,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -88,7 +87,6 @@ module privileged (
   logic sretM, mretM;
   logic IllegalCSRAccessM;
   logic IllegalIEUInstrFaultM;
-  logic IllegalFPUInstrM;
   logic InstrPageFaultM;
   logic InstrAccessFaultM;
   logic IllegalInstrFaultM;
@@ -148,9 +146,8 @@ module privileged (
           .IllegalCSRAccessM, .BigEndianM);
 
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-                  .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
-                  .IllegalFPUInstrE,
-                  .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM, .IllegalFPUInstrM);
+                  .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, 
+                  .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
 
   trap trap(.reset,
             .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,

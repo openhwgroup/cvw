@@ -56,7 +56,7 @@ module srtfsm(
   output logic DivDone,
   output logic NegSticky,
   output logic DivBusy
-  );
+);
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
@@ -69,15 +69,15 @@ module srtfsm(
   assign DivBusy = (state == BUSY);
   // calculate sticky bit
   //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
-  //      this is only a problem on radix 2 (and pssibly maximally redundant 4) since minimally redundant
+  //      this is only a problem on radix 2 (and possibly maximally redundant 4) since minimally redundant
   //      radix-4 division can't create a QM that continually adds 0's
   if (`RADIX == 2) begin
     logic [`DIVb+3:0] FZero, FSticky;
-    logic [`DIVb+3:0] LastK, FirstK;
-    assign LastK = ({4'b1111, LastC} & ~({4'b1111, LastC} << 1));
-    assign FirstK = ({4'b1111, FirstC<<1} & ~({4'b1111, FirstC<<1} << 1));
-    assign FZero = SqrtM ? {{2{LastSM[`DIVb]}}, LastSM, 2'b0} | {LastK,1'b0} : {4'b1,D,{`DIVb-`DIVN+2{1'b0}}};
-    assign FSticky = SqrtM ? {FirstSM, 2'b0} | {FirstK,1'b0} : {4'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    logic [`DIVb+2:0] LastK, FirstK;
+    assign LastK = ({3'b111, LastC} & ~({3'b111, LastC} << 1));
+    assign FirstK = ({3'b111, FirstC<<1} & ~({3'b111, FirstC<<1} << 1));
+    assign FZero = SqrtM ? {LastSM[`DIVb], LastSM, 2'b0} | {LastK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    assign FSticky = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     // *** |... for continual -1 is not efficent fix - also only needed for radix-2
     assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0})|(((NextWSN+NextWCN+FZero)==0)&qn[`DIVCOPIES-1]);
     assign DivSE = |W&~((W+FSticky)==0); //***not efficent fix == and need the & qn
