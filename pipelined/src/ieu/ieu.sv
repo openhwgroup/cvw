@@ -39,7 +39,7 @@ module ieu (
   // Execute Stage interface
   input logic [`XLEN-1:0]  PCE, 
   input logic [`XLEN-1:0]  PCLinkE,
-  input logic 		   FWriteIntE, FCvtIntW,
+  input logic 		   FWriteIntE, FCvtIntE, FCvtIntW,
   output logic [`XLEN-1:0] IEUAdrE,
   output logic 		   MDUE, W64E,
   output logic [2:0] 	   Funct3E,
@@ -112,7 +112,7 @@ module ieu (
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
     .MemReadE, .MDUE, .CSRReadE, .RegWriteM, .RegWriteW,
-    .FWriteIntE, .SCE, .ForwardAE, .ForwardBE,
+    .FCvtIntE, .SCE, .ForwardAE, .ForwardBE,
     .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
 endmodule
 

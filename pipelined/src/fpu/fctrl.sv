@@ -48,7 +48,7 @@ module fctrl (
   output logic 		         DivStartE,             // Start division or squareroot
   output logic              XEnE, YEnE, ZEnE,
   output logic              YEnForwardE, ZEnForwardE,
-  output logic 		         FWriteIntE, FWriteIntM,                         // Write to integer register
+  output logic 		         FWriteIntE, FCvtIntE, FWriteIntM,                         // Write to integer register
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
@@ -264,6 +264,8 @@ module fctrl (
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, DivStartD, DivStartE);
+  assign FCvtIntE = (FResSelE == 2'b01);
+
   // E/M pipleine register
   flopenrc #(13+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE},
