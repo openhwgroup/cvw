@@ -94,9 +94,10 @@ module wallypipelinedcore (
   logic             FWriteIntE;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
-  logic [`XLEN-1:0]         FCvtIntResW;  
+  logic [`XLEN-1:0]         FCvtIntResW; 
+  logic             FCvtIntW; 
   logic             FDivBusyE;
-  logic             IllegalFPUInstrD, IllegalFPUInstrE;
+  logic             IllegalFPUInstrM;
   logic             FRegWriteM;
   logic             FPUStallD;
   logic             FpLoadStoreM;
@@ -217,7 +218,7 @@ module wallypipelinedcore (
      .IllegalBaseInstrFaultD,
 
      // Execute Stage interface
-     .PCE, .PCLinkE, .FWriteIntE, .IllegalFPUInstrE,
+     .PCE, .PCLinkE, .FWriteIntE,
      .IEUAdrE, .MDUE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
@@ -235,7 +236,7 @@ module wallypipelinedcore (
      .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
-     .FResSelW,
+     .FCvtIntW,
 
      // hazards
      .StallD, .StallE, .StallM, .StallW,
@@ -344,7 +345,7 @@ module wallypipelinedcore (
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
          .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
-         .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, .IllegalFPUInstrD,
+         .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
          .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
          .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
          .MTIME_CLINT, 
@@ -354,7 +355,7 @@ module wallypipelinedcore (
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
          .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-         .IllegalFPUInstrE,
+         .IllegalFPUInstrM,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
@@ -400,17 +401,18 @@ module wallypipelinedcore (
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
          .FCvtIntResW, // fp -> int conversion result to be stored in int register
-         .FResSelW,   // fpu result selection
+         .FCvtIntW,   // fpu result selection
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
-         .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
+         .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
          .SetFflagsM        // FPU flags (to privileged unit)
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FStallD = 0;
       assign FWriteIntE = 0; 
       assign FIntResM = 0;
+      assign FCvtIntW = 0;
       assign FDivBusyE = 0;
-      assign IllegalFPUInstrD = 1;
+      assign IllegalFPUInstrM = 1;
       assign SetFflagsM = 0;
    end
 endmodule
