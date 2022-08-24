@@ -197,7 +197,7 @@ module lsu (
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
-  // use the same RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
+  // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
 
   if (`DMEM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  

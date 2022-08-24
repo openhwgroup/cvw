@@ -49,7 +49,7 @@ module dtim(
   output logic              DCacheMiss,
   output logic              DCacheAccess);
   
-  simpleram #(.BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+  simpleram #(.BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
       .clk, .ByteMask(ByteMaskM),
       .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
       .we(LSURWM[0] & Cacheable & ~TrapM),  // have to ignore write if Trap.
