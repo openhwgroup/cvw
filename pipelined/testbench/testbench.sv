@@ -103,6 +103,7 @@ logic [3:0] dummy;
         "wally64priv":                    tests = wally64priv;
         "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
+        "fpga":                           tests = fpga;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -167,7 +168,7 @@ logic [3:0] dummy;
     assign HRDATAEXT = 0;
   end
 
-  if(`FPGA) begin
+  if(`FPGA) begin : sdcard
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -178,7 +179,7 @@ logic [3:0] dummy;
     assign SDCDatIn = SDCDat;
   end else begin
     assign SDCCmd = '0;
-    assign SDDat = '0;
+    assign SDCDat = '0;
   end
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
@@ -219,12 +220,22 @@ logic [3:0] dummy;
       pathname = tvpaths[tests[0].atoi()];
       /* if (tests[0] == `IMPERASTEST)
         pathname = tvpaths[0];
-      else pathname = tvpaths[1]; */
+       else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-      else              $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-      if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+      if (TEST == "fpga") begin
+        string romfilename, sdcfilename;
+        romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
+        $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootrom.bootrom.memory.RAM);
+        $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+        // force sdc timers
+        force dut.uncore.sdc.SDC.LimitTimers = 1;
+      end else begin
+        if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+        else       $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+        if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+      end
 
       if (riscofTest) begin
         ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -235,8 +246,10 @@ logic [3:0] dummy;
       end
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
-      updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-      $display("Read memfile %s", memfilename);
+      if(!`FPGA) begin
+        updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+        $display("Read memfile %s", memfilename);
+      end
       reset_ext = 1; # 42; reset_ext = 0;
     end
 
@@ -248,7 +261,7 @@ logic [3:0] dummy;
     end
    
   logic [`XLEN-1:0] debugmemoryadr;
-  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
+//  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
 
   // check results
   always @(negedge clk)
@@ -316,7 +329,7 @@ logic [3:0] dummy;
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
             if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
-            else                   sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+            else if (`RAM_SUPPORTED) sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
               errors = errors+1;
@@ -348,9 +361,9 @@ logic [3:0] dummy;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-            else                   $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
-            if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+            if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+            else if (`RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -360,8 +373,10 @@ logic [3:0] dummy;
               ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
+          if(!`FPGA) begin
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
+          end
             reset_ext = 1; # 47; reset_ext = 0;
         end
       end
