@@ -339,6 +339,10 @@ module SDC
 //  assign SDCCLKIn = CLKGate;
   
 
+  // should always be 0 for real implementation, but for simulation set to 1.
+  logic LimitTimers;
+  assign LimitTimers = '0;
+  
   sd_top sd_top(.CLK(SDCCLKIn),
 		.a_RST(~HRESETn),
 		.i_SD_CMD(SDCCmdIn),
@@ -357,7 +361,7 @@ module SDC
 		.o_ERROR_CODE_Q(ErrorCode),
 		.o_FATAL_ERROR(FatalError),
 		.i_COUNT_IN_MAX(-8'd62),
-		.LIMIT_SD_TIMERS(1'b0)); // *** must change this to 0 for real hardware.
+		.LIMIT_SD_TIMERS(LimitTimers)); // *** must change this to 0 for real hardware.
 
   
 endmodule

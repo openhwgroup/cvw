@@ -1911,3 +1911,8 @@ string imperas32f[] = '{
     `WALLYTEST,
     "rv32i_m/D/src/WALLY-fld.S"
  };
+
+ string fpga[] = '{
+    `WALLYTEST,
+    "NULL"
+ };

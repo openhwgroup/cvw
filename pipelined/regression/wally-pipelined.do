@@ -64,7 +64,17 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #run -all
 
     exec ./slack-notifier/slack-notifier.py
+
+} elseif {$2 eq "fpga"} {
+    echo "hello"
+    vlog  -work work_fpga +incdir+../config/fpga +incdir+../config/shared ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063
+    vopt +acc work_fpga.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
+    vsim workopt +nowarn3829  -fatal 7
     
+    do fpga-wave.do
+    add log -r /*
+    run 20 ms
+
 } else {
     vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
