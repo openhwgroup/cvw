@@ -54,7 +54,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing
-  assign initTrans = HREADY & HSELRam & (HTRANS[1]); 
+  assign initTrans = HREADY & HSELRam & HTRANS[1]; 
   assign memwrite = initTrans & HWRITE;  
   assign memread = initTrans & ~HWRITE;
  
