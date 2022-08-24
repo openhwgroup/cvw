@@ -32,7 +32,7 @@
 
 module qsel2 ( // *** eventually just change to 4 bits
   input  logic [3:0] ps, pc, 
-  output logic         qp, qz//, qn
+  output logic         qp, qz, qn
 );
  
   logic [3:0]  p, g;
@@ -46,20 +46,20 @@ module qsel2 ( // *** eventually just change to 4 bits
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  assign magnitude = ~(&p[2:0]);
+  //assign magnitude = ~(&p[2:0]);
   assign cout = g[2] | (p[2] & (g[1] | p[1] & g[0]));
-  assign sign = p[3] ^ cout;
-/*  assign #1 magnitude = ~((ps[54]^pc[54]) & (ps[53]^pc[53]) & 
-			  (ps[52]^pc[52]));
-  assign #1 sign = (ps[55]^pc[55])^
-      (ps[54] & pc[54] | ((ps[54]^pc[54]) &
-			    (ps[53]&pc[53] | ((ps[53]^pc[53]) &
-						(ps[52]&pc[52]))))); */
+  //assign sign = p[3] ^ cout;
+  assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
+			  (ps[0]^pc[0]));
+  assign sign = (ps[3]^pc[3])^
+      (ps[2] & pc[2] | ((ps[2]^pc[2]) &
+			    (ps[1]&pc[1] | ((ps[1]^pc[1]) &
+						(ps[0]&pc[0])))));
 
   // Produce quotient = +1, 0, or -1
   assign qp = magnitude & ~sign;
   assign qz = ~magnitude;
-//   assign #1 qn = magnitude & sign;
+  assign qn = magnitude & sign;
 endmodule
 
 ////////////////////////////////////

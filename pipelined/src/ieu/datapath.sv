@@ -44,8 +44,6 @@ module datapath (
   input  logic             ALUResultSrcE, 
   input  logic             JumpE,
   input  logic             BranchSignedE,
-  input  logic             IllegalFPUInstrE,
-  input  logic [`XLEN-1:0] FWriteDataE,
   input  logic [`XLEN-1:0] PCE,
   input  logic [`XLEN-1:0] PCLinkE,
   output logic [1:0]       FlagsE,
@@ -53,17 +51,16 @@ module datapath (
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   // Memory stage signals
   input  logic             StallM, FlushM,
-  input  logic             FWriteIntM,
+  input  logic             FWriteIntM, FCvtIntW,
   input  logic [`XLEN-1:0] FIntResM,
   output logic [`XLEN-1:0] SrcAM,
-  output logic [`XLEN-1:0] WriteDataE, 
+  output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
 (* mark_debug = "true" *)  input  logic             RegWriteW, 
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
   input logic [`XLEN-1:0]  FCvtIntResW,
-  input logic [1:0]        FResSelW,
   input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
@@ -88,8 +85,8 @@ module datapath (
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ResultW;
-  logic [`XLEN-1:0] IFResultW;
-  
+  logic [`XLEN-1:0] IFResultW, IFCvtResultW;
+
   // Decode stage
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
@@ -118,30 +115,21 @@ module datapath (
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
   flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
+  flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
   
   // Writeback stage pipeline register and logic
   flopenrc #(`XLEN) IFResultWReg(clk, reset, FlushW, ~StallW, IFResultM, IFResultW);
   flopenrc #(5)     RdWReg(clk, reset, FlushW, ~StallW, RdM, RdW);
 
-  // *** simplify WriteDataE in this merge
-  // floating point interactions: fcvt, fp stores
-  if (`F_SUPPORTED&(`LLEN>`XLEN)) begin:fpmux
-    logic [`XLEN-1:0] IFCvtResultW;
+  // floating point inputs: FIntResM comes from fclass, fcmp, fmv; FCvtIntResW comes from fcvt
+  if (`F_SUPPORTED) begin:fpmux
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
-    assign WriteDataE = ForwardedSrcBE;
-    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
-    mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
-  end else if (`F_SUPPORTED) begin:fpmux
-    logic [`XLEN-1:0] IFCvtResultW;
-    mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
-    mux2  #(`XLEN)  writedatamux(ForwardedSrcBE, FWriteDataE, ~IllegalFPUInstrE, WriteDataE);
-    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, ~FResSelW[1]&FResSelW[0], IFCvtResultW);
-    mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
+    mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
   end else begin:fpmux
-    assign IFResultM = IEUResultM; assign WriteDataE = ForwardedSrcBE;
-    mux5  #(`XLEN)    resultmuxW(IFResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW);	 
+    assign IFResultM = IEUResultM; assign IFCvtResultW = IFResultW;
   end
-
+  mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
+ 
   // handle Store Conditional result if atomic extension supported
   if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};
   else              assign SCResultW = 0;

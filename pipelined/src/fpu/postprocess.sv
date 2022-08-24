@@ -83,15 +83,13 @@ module postprocess (
     logic [`NE+1:0] Me;
     logic [`CORRSHIFTSZ-1:0] Mf; // corectly shifted fraction
     logic [`NE+1:0] FullRe;  // Re with bits to determine sign and overflow
-    logic S;           // S bit
     logic UfPlus1;                    // do you add one (for determining underflow flag)
-    logic R;   // bits needed to determine rounding
     logic [$clog2(`NORMSHIFTSZ)-1:0] ShiftAmt;   // normalization shift count
     logic [`NORMSHIFTSZ-1:0] ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
     logic Plus1;      // add one to the final result?
     logic IntInvalid, Overflow, Invalid; // flags
-    logic UfL;
+    logic G, R, S; // bits needed to determine rounding
     logic [`FMTBITS-1:0] OutFmt;
     // fma signals
     logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
@@ -201,16 +199,16 @@ module postprocess (
     roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
                         .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
-    round round(.OutFmt, .Frm, .S, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
+    round round(.OutFmt, .Frm, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
                 .DivS, .DivDone,
-                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .R, .UfL, .Me);
+                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .S, .R, .G, .Me);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaMe, .R, .S,
+    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaMe, .R, .S, .G,
                           .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Ws);
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -220,7 +218,7 @@ module postprocess (
     flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
                 .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
                 .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
-                .UfL, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
+                .G, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
                 .Me, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
 
     ///////////////////////////////////////////////////////////////////////////////
