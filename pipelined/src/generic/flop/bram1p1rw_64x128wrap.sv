@@ -16,6 +16,12 @@ module bram1p1rw_64x128wrap
 	   input logic [DATA_WIDTH-1:0]  din
 	   );
 
+  logic                              we2;
+  logic [NUM_COL-1:0]                bwe2;
+  logic [ADDR_WIDTH-1:0]             addr2;
+  logic [DATA_WIDTH-1:0]             dout2;
+  logic [DATA_WIDTH-1:0]             din2;
+
     always_ff @(posedge clk) begin 
         we2 <= we;
         bwe2 <= bwe;

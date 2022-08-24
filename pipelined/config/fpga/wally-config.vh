@@ -49,10 +49,14 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-`define DMEM `MEM_CACHE
-`define IMEM `MEM_CACHE
+
+// LSU microarchitectural Features
+`define DMEM 0
+`define IROM 0
 `define DBUS 1
 `define IBUS 1
+`define DCACHE 1
+`define ICACHE 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 1
@@ -90,9 +94,9 @@
 `define BOOTROM_BASE   56'h00001000 
 `define BOOTROM_RANGE  56'h00000FFF
 
-`define RAM_SUPPORTED 1'b0
-`define RAM_BASE       56'h100000000
-`define RAM_RANGE      56'h07FFFFFF
+`define UNCORE_RAM_SUPPORTED 1'b0
+`define UNCORE_RAM_BASE       56'h100000000
+`define UNCORE_RAM_RANGE      56'h07FFFFFF
 
 `define EXT_MEM_SUPPORTED 1'b1
 `define EXT_MEM_BASE       56'h80000000
