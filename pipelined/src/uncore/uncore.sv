@@ -106,9 +106,9 @@ module uncore (
   assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
                 
   // on-chip RAM
-  if (`RAM_SUPPORTED) begin : ram
+  if (`UNCORE_RAM_SUPPORTED) begin : ram
     ram #(
-      .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+      .BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
       .HCLK, .HRESETn, 
       .HSELRam, .HADDR,
       .HWRITE, .HREADY, 

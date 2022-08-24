@@ -98,9 +98,9 @@
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 `define BOOTROM_RANGE  56'h00000FFF
-`define RAM_SUPPORTED 1'b1
-`define RAM_BASE       56'h80000000
-`define RAM_RANGE      56'h7FFFFFFF
+`define UNCORE_RAM_SUPPORTED 1'b1
+`define UNCORE_RAM_BASE       56'h80000000
+`define UNCORE_RAM_RANGE      56'h7FFFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       56'h80000000
 `define EXT_MEM_RANGE      56'h07FFFFFF

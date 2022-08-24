@@ -196,7 +196,7 @@ logic [3:0] dummy;
 
   // initialize tests
   localparam integer 	   MemStartAddr = 0;
-  localparam integer 	   MemEndAddr = `RAM_RANGE>>1+(`XLEN/32);
+  localparam integer 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -278,7 +278,7 @@ logic [3:0] dummy;
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
-        testadrNoBase = (begin_signature_addr - `RAM_BASE)/(`XLEN/8);
+        testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
         #600; // give time for instructions in pipeline to finish
         if (TEST == "embench") begin
           // Writes contents of begin_signature to .sim.output file
@@ -329,7 +329,7 @@ logic [3:0] dummy;
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
             if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
-            else if (`RAM_SUPPORTED) sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+            else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
               errors = errors+1;
@@ -362,7 +362,7 @@ logic [3:0] dummy;
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-            else if (`RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
             if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
             if (riscofTest) begin
@@ -452,7 +452,7 @@ module riscvassertions;
     assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (!`ICACHE)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
-    assert (`RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if RAM_RANGE is less than 56'h07FFFFFF");
+    assert (`UNCORE_RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 56'h07FFFFFF");
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
@@ -480,7 +480,7 @@ module DCacheFlushFSM
 
   genvar adr;
 
-  logic [`XLEN-1:0] ShadowRAM[`RAM_BASE>>(1+`XLEN/32):(`RAM_RANGE+`RAM_BASE)>>1+(`XLEN/32)];
+  logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
 	if(`DCACHE) begin
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
