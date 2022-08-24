@@ -49,11 +49,13 @@
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
-// *** replace with MEM_BUS
-`define DMEM `MEM_NONE
-`define IMEM `MEM_NONE
+// LSU microarchitectural Features
+`define DMEM 0
+`define IROM 0
 `define DBUS 1
 `define IBUS 1
+`define DCACHE 0
+`define ICACHE 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 0 
 `define BIGENDIAN_SUPPORTED 0
