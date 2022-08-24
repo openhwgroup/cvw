@@ -198,8 +198,8 @@ module lsu (
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
   // use the same RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
-  
-  if (`DMEM == `MEM_TIM) begin : dtim
+
+  if (`DMEM) begin : dtim
     // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
     // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData
@@ -208,10 +208,9 @@ module lsu (
               .DCacheMiss, .DCacheAccess);
   end 
   if (`DBUS) begin : bus  
-    localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
-    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  DLSUBusBuffer;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
@@ -219,7 +218,7 @@ module lsu (
     logic                DCacheBusAck;
     logic [LOGBWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .SelLSUBusWord,
@@ -232,7 +231,7 @@ module lsu (
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
-    if(CACHE_ENABLED) begin : dcache
+    if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
