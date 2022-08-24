@@ -138,24 +138,48 @@ logic [3:0] dummy;
   integer outputFilePointer;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
-  logic UARTSin, UARTSout;
+  logic        UARTSin, UARTSout;
 
-  logic SDCCLK;
-  logic      SDCCmdIn;
-  logic      SDCCmdOut;
-  logic      SDCCmdOE;
-  logic [3:0] SDCDatIn;
+  logic        SDCCLK;
+  logic        SDCCmdIn;
+  logic        SDCCmdOut;
+  logic        SDCCmdOE;
+  logic [3:0]  SDCDatIn;
+  tri1 [3:0]   SDCDat;
+  tri1         SDCCmd;
 
-  logic             HREADY;
-  logic 	    HSELEXT;
+  logic        HREADY;
+  logic        HSELEXT;
   
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
-  assign HREADYEXT = 1;
-  assign HRESPEXT = 0;
-  assign HRDATAEXT = 0;
+
+  if(`EXT_MEM_SUPPORTED) begin
+    ram #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 
+    ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
+         .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
+         .HWSTRB);
+  end else begin 
+    assign HREADYEXT = 1;
+    assign HRESPEXT = 0;
+    assign HRDATAEXT = 0;
+  end
+
+  if(`FPGA) begin
+    sdModel sdcard
+      (.sdClk(SDCCLK),
+       .cmd(SDCCmd), 
+       .dat(SDCDat));
+
+    assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
+    assign SDCCmdIn = SDCCmd;
+    assign SDCDatIn = SDCDat;
+  end else begin
+    assign SDCCmd = '0;
+    assign SDDat = '0;
+  end
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
