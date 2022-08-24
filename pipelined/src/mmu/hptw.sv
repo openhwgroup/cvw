@@ -48,7 +48,7 @@ module hptw
    output logic [1:0]          PageType, // page type to TLBs
    (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
-   output logic [1:0]          HPTWRW, // HPTW requesting to read memory
+   output logic [1:0]          HPTWRW, // HPTW requesting to write or read memory
    output logic [2:0]          HPTWSize // 32 or 64 bit access.
 );
 
@@ -114,13 +114,15 @@ module hptw
     logic [`PA_BITS-1:0]      HPTWWriteAdr;  
     logic                     SetDirty;
     logic                     Dirty, Accessed;
+	logic [`XLEN-1:0]		  AccessedPTE;
 
-    assign NextPTE = UpdatePTE ? {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]} : HPTWReadPTE; 
+	assign AccessedPTE = {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
+	mux2 #(`XLEN) NextPTEMux(HPTWReadPTE, AccessedPTE, UpdatePTE, NextPTE);
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
+	
     assign SaveHPTWAdr = WalkerState == L0_ADR;
     assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
     mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
-    
 
     assign {Dirty, Accessed} = PTE[7:6];
     assign WriteAccess = MemRWM[0] | (|AtomicM);
@@ -255,9 +257,7 @@ module hptw
            else                                  NextWalkerState = LEAF;
     LEAF: if (DAPageFault) NextWalkerState = UPDATE_PTE;
           else NextWalkerState = IDLE;
-      // *** TODO update PTE with dirty/access.  write to TLB and update memory.
-      // probably want to write the PTE in UPDATE_PTE then go to leaf and update TLB.
-    UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) NextWalkerState = UPDATE_PTE;
+     UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) NextWalkerState = UPDATE_PTE;
                 else NextWalkerState = LEAF;
 	default: begin
 		NextWalkerState = IDLE; // should never be reached

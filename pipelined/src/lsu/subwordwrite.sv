@@ -33,25 +33,34 @@
 module subwordwrite (
   input logic [2:0]          LSUPAdrM,
   input logic [2:0]          LSUFunct3M,
-  input logic [`XLEN-1:0]    AMOWriteDataM,
-  output logic [`XLEN-1:0]   LittleEndianWriteDataM);
+  input logic [`LLEN-1:0]    IMAFWriteDataM,
+  output logic [`LLEN-1:0]   LittleEndianWriteDataM);
 
   // Replicate data for subword writes
-  if (`XLEN == 64) begin:sww
+  if (`LLEN == 128) begin:sww
+    always_comb 
+      case(LSUFunct3M[2:0])
+        3'b000:  LittleEndianWriteDataM = {16{IMAFWriteDataM[7:0]}}; // sb
+        3'b001:  LittleEndianWriteDataM = {8{IMAFWriteDataM[15:0]}}; // sh
+        3'b010:  LittleEndianWriteDataM = {4{IMAFWriteDataM[31:0]}}; // sw
+        3'b011:  LittleEndianWriteDataM = {2{IMAFWriteDataM[63:0]}}; // sd
+        default: LittleEndianWriteDataM = IMAFWriteDataM;            // sq
+      endcase
+  end else if (`LLEN == 64) begin:sww
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  LittleEndianWriteDataM = {8{AMOWriteDataM[7:0]}};  // sb
-        2'b01:  LittleEndianWriteDataM = {4{AMOWriteDataM[15:0]}}; // sh
-        2'b10:  LittleEndianWriteDataM = {2{AMOWriteDataM[31:0]}}; // sw
-        2'b11:  LittleEndianWriteDataM = AMOWriteDataM;            // sw
+        2'b00:  LittleEndianWriteDataM = {8{IMAFWriteDataM[7:0]}};  // sb
+        2'b01:  LittleEndianWriteDataM = {4{IMAFWriteDataM[15:0]}}; // sh
+        2'b10:  LittleEndianWriteDataM = {2{IMAFWriteDataM[31:0]}}; // sw
+        2'b11:  LittleEndianWriteDataM = IMAFWriteDataM;            // sd
       endcase
   end else begin:sww // 32-bit
     always_comb 
       case(LSUFunct3M[1:0])
-        2'b00:  LittleEndianWriteDataM = {4{AMOWriteDataM[7:0]}};  // sb
-        2'b01:  LittleEndianWriteDataM = {2{AMOWriteDataM[15:0]}}; // sh
-        2'b10:  LittleEndianWriteDataM = AMOWriteDataM;            // sw
-        default: LittleEndianWriteDataM = AMOWriteDataM; // shouldn't happen
+        2'b00:  LittleEndianWriteDataM = {4{IMAFWriteDataM[7:0]}};  // sb
+        2'b01:  LittleEndianWriteDataM = {2{IMAFWriteDataM[15:0]}}; // sh
+        2'b10:  LittleEndianWriteDataM = IMAFWriteDataM;            // sw
+        default: LittleEndianWriteDataM = IMAFWriteDataM; // shouldn't happen
       endcase
   end
 endmodule

@@ -42,16 +42,15 @@ module fpu (
   input logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
   output logic 		      FRegWriteM, // FP register write enable (to privileged unit)
   output logic 		      FpLoadStoreM,  // Fp load instruction? (to LSU)
-  output logic             FStore2,       // store two words into memory (to LSU)
   output logic 		      FStallD,       // Stall the decode stage (To HZU)
   output logic 		      FWriteIntE,    // integer register write enable (to IEU)
-  output logic [`XLEN-1:0] FWriteDataE,   // Data to be written to memory (to IEU) - only used if `XLEN >`FLEN
-  output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to IEU) - only used if `XLEN <`FLEN
+  output logic             FCvtIntE,      // Convert to int (to IEU)
+  output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to LSU) 
   output logic [`XLEN-1:0] FIntResM,      // data to be written to integer register (to IEU)
   output logic [`XLEN-1:0] FCvtIntResW,   // convert result to to be written to integer register (to IEU)
-  output logic [1:0]       FResSelW,      // final result selection (to IEU)
+  output logic             FCvtIntW,      // select FCvtIntRes (to IEU)
   output logic 		      FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
-  output logic 		      IllegalFPUInstrD, // Is the instruction an illegal fpu instruction (to privileged unit)
+  output logic 		      IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
   output logic [4:0] 	   SetFflagsM        // FPU flags (to privileged unit)
   );
 
@@ -60,7 +59,7 @@ module fpu (
    //        - if there are any unsused bits the most significant bits are filled with 1s
    //                single stored in a double: | 32 1s | single precision value |
    //    - sets the underflow after rounding
-  
+
    // control signals
    logic 		         FRegWriteW; // FP register write enable
    logic [2:0] 	      FrmM;                   // FP rounding mode
@@ -69,10 +68,9 @@ module fpu (
    logic 		         FWriteIntM;                         // Write to integer register
    logic [1:0] 	      ForwardXE, ForwardYE, ForwardZE; // forwarding mux control signals
    logic [2:0] 	      OpCtrlE, OpCtrlM;       // Select which opperation to do in each component
-   logic [1:0] 	      FResSelE, FResSelM;       // Select one of the results that finish in the memory stage
+   logic [1:0] 	      FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
    logic [1:0] 	      PostProcSelE, PostProcSelM; // select result in the post processing unit
    logic [4:0] 	      Adr1E, Adr2E, Adr3E;                // adresses of each input
-   logic                IllegalFPUInstrM;
    logic                XEnE, YEnE, ZEnE;
    logic                YEnForwardE, ZEnForwardE;
 
@@ -149,7 +147,7 @@ module fpu (
    logic [`FLEN-1:0] 	 AlignedSrcAE;                       // align SrcA to the floating point format
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic [`FLEN-1:0]     BoxedOneE;                         // Zero value for Z for multiplication, with NaN boxing if needed
-   
+
    // DECODE STAGE
 
    //////////////////////////////////////////////////////////////////////////////////////////
@@ -165,9 +163,9 @@ module fpu (
    // calculate FP control signals
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-               .reset, .clk, .IllegalFPUInstrD, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
-               .DivStartE, .FWriteIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
-               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .Adr1E, .Adr2E, .Adr3E);
+               .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
+               .DivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
+               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1E, .Adr2E, .Adr3E);
 
    // FP register file
    fregfile fregfile (.clk, .reset, .we4(FRegWriteW),
@@ -290,22 +288,7 @@ module fpu (
    //    - FP uses NaN-blocking format
    //        - if there are any unsused bits the most significant bits are filled with 1s
    
-   if(`LLEN==`XLEN)
-      assign FWriteDataE = {{`XLEN-`FLEN{1'b1}}, YE};
-   else begin
-      logic [`FLEN-1:0] WriteDataE;
-      if(`FPSIZES == 1) assign WriteDataE = YE;
-      else if(`FPSIZES == 2) assign WriteDataE = FmtE ? YE : {`FLEN/`LEN1{YE[`LEN1-1:0]}};
-      else 
-         always_comb
-               case(FmtE)
-                  `Q_FMT: WriteDataE = YE;
-                  `D_FMT: WriteDataE = {`FLEN/`D_LEN{YE[`D_LEN-1:0]}};
-                  `S_FMT: WriteDataE = {`FLEN/`S_LEN{YE[`S_LEN-1:0]}};
-                  `H_FMT: WriteDataE = {`FLEN/`H_LEN{YE[`H_LEN-1:0]}};
-               endcase
-      flopenrc #(`FLEN) EMWriteDataReg (clk, reset, FlushM, ~StallM, WriteDataE, FWriteDataM);
-   end
+   flopenrc #(`FLEN) FWriteDataMReg (clk, reset, FlushM, ~StallM, YE, FWriteDataM);
 
    // NaN Block SrcA
    generate

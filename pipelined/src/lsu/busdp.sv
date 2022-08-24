@@ -71,14 +71,14 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
   logic [`PA_BITS-1:0]        LocalLSUBusAdr;
   logic [LOGWPL-1:0]   WordCountDelayed;
-
+  logic                BufferCaptureEn;
 
   // *** implement flops as an array if feasbile; DLSUBusBuffer might be a problem
   // *** better name than DLSUBusBuffer
   genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
-    assign CaptureWord[index] = LSUBusAck & LSUBusRead & (index == WordCountDelayed);
+    assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
     flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
       .q(DLSUBusBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
@@ -90,5 +90,6 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
     .clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
 		.LSUBusAck, .LSUBusInit, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .SelLSUBusWord, .LSUBusRead,
+        .BufferCaptureEn,
 		.LSUBurstType, .LSUTransType, .LSUTransComplete, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule
