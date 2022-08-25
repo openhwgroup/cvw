@@ -200,8 +200,6 @@ module lsu (
   // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
 
   if (`DMEM) begin : dtim
-    // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
-    // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
     dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
               .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),

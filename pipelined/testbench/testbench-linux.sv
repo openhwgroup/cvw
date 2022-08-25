@@ -246,6 +246,7 @@ module testbench;
   logic 	    HSELEXT;
   logic [31:0]      HADDR;
   logic [`AHBW-1:0] HWDATA;
+  logic [`XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
   logic [2:0]       HSIZE;
   logic [2:0]       HBURST;
@@ -270,7 +271,7 @@ module testbench;
   // Wally
   wallypipelinedsoc dut(.clk, .reset, .reset_ext,
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
-			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HSIZE, .HBURST, .HPROT, 
+			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HWSTRB, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
 			.TIMECLK('0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout,
