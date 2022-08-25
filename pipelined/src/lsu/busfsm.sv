@@ -37,13 +37,13 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic               reset,
 
    input logic               IgnoreRequest,
-   input logic [1:0]         RWM,
+   input logic [1:0]         RW,
    input logic               CacheFetchLine,
    input logic               CacheWriteLine,
    input logic               BusAck,
    input logic               BusInit, // This might be better as LSUBusLock, or to send this using BusAck.
    input logic               CPUBusy,
-   input logic               CacheableM,
+   input logic               Cacheable,
 
    output logic              BusStall,
    output logic              BusWrite,
@@ -53,7 +53,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic              BusTransComplete,
    output logic [1:0]        HTRANS,
    output logic              CacheBusAck,
-   output logic              BusCommittedM,
+   output logic              BusCommitted,
    output logic              SelUncachedAdr,
    output logic              BufferCaptureEn,
    output logic [LOGWPL-1:0] WordCount, WordCountDelayed);
@@ -105,7 +105,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]); // Detect when we are waiting on the final access.
   assign CntEn = (PreCntEn & BusAck | (BusInit)) & ~WordCountFlag & ~UnCachedRW; // Want to count when doing cache accesses and we aren't wrapping up.
 
-  assign UnCachedAccess = ~CACHE_ENABLED | ~CacheableM;
+  assign UnCachedAccess = ~CACHE_ENABLED | ~Cacheable;
 
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
@@ -114,8 +114,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)                   BusNextState = STATE_BUS_READY;
-	                             else if(RWM[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(RWM[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(RW[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(RW[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(CacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(CacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                                BusNextState = STATE_BUS_READY;
@@ -160,30 +160,30 @@ module busfsm #(parameter integer   WordCountThreshold,
   // Reset if we aren't initiating a transaction or if we are finishing a transaction.
   assign CntReset = BusCurrState == STATE_BUS_READY & ~(CacheFetchLine | CacheWriteLine) | BusTransComplete; 
   
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|RWM)) | CacheFetchLine | CacheWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|RW)) | CacheFetchLine | CacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
-  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[0] & ~IgnoreRequest) |
+  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign BusWrite = UnCachedBusWrite | (BusCurrState == STATE_BUS_WRITE & ~WordCountFlag);
-  assign SelLSUBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[0]) |
+  assign SelLSUBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
                            (BusCurrState == STATE_BUS_WRITE);
 
-  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[1] & ~IgnoreRequest) |
+  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign BusRead = UnCachedBusRead | (BusCurrState == STATE_BUS_FETCH & ~(WordCountFlag)) | (BusCurrState == STATE_BUS_READY & CacheFetchLine);
   assign BufferCaptureEn = UnCachedBusRead | BusCurrState == STATE_BUS_FETCH;
 
-  // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because CacheableM is 0 when flushing cache.
+  // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because Cacheable is 0 when flushing cache.
   assign UnCachedRW = UnCachedBusWrite | UnCachedBusRead; 
 
   assign CacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & BusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & BusAck);
-  assign BusCommittedM = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|RWM & UnCachedAccess)) |
+  assign BusCommitted = BusCurrState != STATE_BUS_READY;
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|RW & UnCachedAccess)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
