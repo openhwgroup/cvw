@@ -83,7 +83,6 @@ module ahblite (
   statetype BusState, NextBusState;
 
   logic LSUGrant;
-  logic [31:0] AccessAddress;
  
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -128,10 +127,9 @@ module ahblite (
     endcase
 
 
-  //  bus outputs
+  //  LSU/IFU mux: choose source of access
   assign #1 LSUGrant = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign AccessAddress = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
-  assign HADDR = AccessAddress;
+  assign HADDR = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
   assign HSIZE = LSUGrant ? {1'b0, LSUHSIZE[1:0]} : 3'b010; // Instruction reads are always 32 bits
   assign HBURST = LSUGrant ? LSUHBURST : IFUHBURST; // If doing memory accesses, use LSUburst, else use Instruction burst.
 
