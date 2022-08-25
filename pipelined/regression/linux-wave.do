@@ -420,27 +420,27 @@ add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/TLBWrite
 add wave -noupdate -group itlb /testbench/dut/core/ifu/ITLBMissF
 add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
 add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/PMAInstrAccessFaultF
-add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/UARTIntr
-add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/GPIOIntr
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsIn
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsOut
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsEn
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOIntr
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIME
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIMECMP
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/SIN
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/DSRb
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/DCDb
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/CTSb
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/RIb
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/SOUT
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/RTSb
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/DTRb
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/OUT1b
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/OUT2b
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/INTR
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/TXRDYb
-add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uart/uart/RXRDYb
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/UARTIntr
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/GPIOIntr
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsIn
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsOut
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsEn
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOIntr
+add wave -noupdate -group CLINT /testbench/dut/uncore/uncore/clint/clint/MTIME
+add wave -noupdate -group CLINT /testbench/dut/uncore/uncore/clint/clint/MTIMECMP
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/SIN
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/DSRb
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/DCDb
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/CTSb
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/RIb
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/SOUT
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/RTSb
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/DTRb
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/OUT1b
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/OUT2b
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/INTR
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/TXRDYb
+add wave -noupdate -group uart -expand -group outputs /testbench/dut/uncore/uncore/uart/uart/RXRDYb
 add wave -noupdate -group {debug trace} -expand -group mem -color Yellow /testbench/dut/core/FlushW
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/checkInstrM
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/core/PCM
