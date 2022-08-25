@@ -39,20 +39,19 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   input logic                 clk, reset,
   
   // bus interface
-  input logic [`XLEN-1:0]     LSUBusHRDATA,
-  input logic                 LSUBusAck,
-  input logic                 LSUBusInit,
-  output logic                LSUBusWrite,
-  output logic                LSUBusRead,
-  output logic [2:0]          LSUBusSize,
-  output logic [2:0]          LSUBurstType,
-  output logic [1:0]          LSUTransType, // For AHBLite
-  output logic                LSUTransComplete,
-  input logic [2:0]           LSUFunct3M,
-  output logic [`PA_BITS-1:0] LSUBusAdr, // ** change name to HADDR to make ahb lite.
+  input logic [`XLEN-1:0]     HRDATA,
+  input logic                 BusAck,
+  input logic                 BusInit,
+  output logic                BusWrite,
+  output logic                BusRead,
+  output logic [2:0]          HSIZE,
+  output logic [2:0]          HBURST,
+  output logic [1:0]          HTRANS, // For AHBLite
+  output logic                BusTransComplete,
+  output logic [`PA_BITS-1:0] HADDR,
   output logic [LOGWPL-1:0]   WordCount,
   
-  // cache interface.
+  // cache interface
   input logic [`PA_BITS-1:0]  CacheBusAdr,
   input logic                 CacheFetchLine,
   input logic                 CacheWriteLine,
@@ -66,12 +65,13 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   input logic [1:0]           LSURWM,
   input logic                 CPUBusy,
   input logic                 CacheableM,
+  input logic [2:0]           LSUFunct3M,
   output logic                SelLSUBusWord,
   output logic                BusStall,
   output logic                BusCommittedM);
   
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
-  logic [`PA_BITS-1:0]        LocalLSUBusAdr;
+  logic [`PA_BITS-1:0]        LocalHADDR;
   logic [LOGWPL-1:0]   WordCountDelayed;
   logic                BufferCaptureEn;
 
@@ -79,17 +79,17 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
     assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
-    flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
+    flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(HRDATA),
       .q(DLSUBusBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
-  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
-  assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
-    .s(SelUncachedAdr), .y(LSUBusSize));
+  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalHADDR);
+  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;
+  mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
+    .s(SelUncachedAdr), .y(HSIZE));
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
     .clk, .reset, .IgnoreRequest, .LSURWM, .CacheFetchLine, .CacheWriteLine,
-		.LSUBusAck, .LSUBusInit, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .SelLSUBusWord, .LSUBusRead,
+		.BusAck, .BusInit, .CPUBusy, .CacheableM, .BusStall, .BusWrite, .SelLSUBusWord, .BusRead,
         .BufferCaptureEn,
-		.LSUBurstType, .LSUTransType, .LSUTransComplete, .CacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
+		.HBURST, .HTRANS, .BusTransComplete, .CacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule

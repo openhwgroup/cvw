@@ -203,9 +203,9 @@ module ifu (
     
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
     busdp(.clk, .reset,
-          .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .SelLSUBusWord(),
-          .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
-          .LSUFunct3M(3'b010), .LSUBusAdr(IFUBusAdr), .CacheBusAdr(ICacheBusAdr),
+          .HRDATA(IFUBusHRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelLSUBusWord(),
+          .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUBurstType), .HTRANS(IFUTransType), .BusTransComplete(IFUTransComplete),
+          .LSUFunct3M(3'b010), .HADDR(IFUBusAdr), .CacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
@@ -214,6 +214,7 @@ module ifu (
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
+    
     mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ILSUBusBuffer[32-1:0]),
       .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     

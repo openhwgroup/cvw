@@ -51,14 +51,14 @@ module ahblite (
   input logic          IFUTransComplete,
 
   // Signals from Data Cache
-  input logic [`PA_BITS-1:0] LSUBusAdr,
+  input logic [`PA_BITS-1:0] LSUHADDR,
   input logic 				 LSUBusRead, 
   input logic 				 LSUBusWrite,
   input logic [`XLEN-1:0] 	 LSUBusHWDATA,
-  output logic [`XLEN-1:0] 	 LSUBusHRDATA,
-  input logic [2:0] 		 LSUBusSize,
-  input logic [2:0]      LSUBurstType,
-  input logic [1:0]    LSUTransType,
+  output logic [`XLEN-1:0] 	 LSUHRDATA,
+  input logic [2:0] 		 LSUHSIZE,
+  input logic [2:0]      LSUHBURST,
+  input logic [1:0]    LSUHTRANS,
   input logic          LSUTransComplete,
   output logic 				 LSUBusAck,
   output logic         LSUBusInit,
@@ -133,11 +133,11 @@ module ahblite (
 
   //  bus outputs
   assign #1 LSUGrant = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign AccessAddress = (LSUGrant) ? LSUBusAdr[31:0] : IFUBusAdr[31:0];
+  assign AccessAddress = (LSUGrant) ? LSUHADDR[31:0] : IFUBusAdr[31:0];
   assign HADDR = AccessAddress;
   assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign HSIZE = (LSUGrant) ? {1'b0, LSUBusSize[1:0]} : ISize;
-  assign HBURST = (LSUGrant) ? LSUBurstType : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
+  assign HSIZE = (LSUGrant) ? {1'b0, LSUHSIZE[1:0]} : ISize;
+  assign HBURST = (LSUGrant) ? LSUHBURST : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
 
   /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
         000: Single (SINGLE)
@@ -153,7 +153,7 @@ module ahblite (
 
 
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = (LSUGrant) ? LSUTransType : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HTRANS = (LSUGrant) ? LSUHTRANS : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // Byte mask for HWSTRB
@@ -169,7 +169,7 @@ module ahblite (
     // Route signals to Instruction and Data Caches
   // *** assumes AHBW = XLEN
   assign IFUBusHRDATA = HRDATA;
-  assign LSUBusHRDATA = HRDATA;
+  assign LSUHRDATA = HRDATA;
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
   assign LSUBusInit = (((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState != MEMWRITE) & (NextBusState == MEMWRITE));
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);
