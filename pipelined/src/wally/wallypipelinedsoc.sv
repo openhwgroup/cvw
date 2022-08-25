@@ -46,7 +46,7 @@ module wallypipelinedsoc (
   output logic 		   HSELEXT,
   // outputs to external memory, shared with uncore memory
   output logic 		   HCLK, HRESETn,
-  output logic [31:0] 	   HADDR,
+  output logic [`PA_BITS-1:0] HADDR,
   output logic [`AHBW-1:0] HWDATA,
   output logic [`XLEN/8-1:0] HWSTRB,
   output logic 		   HWRITE,

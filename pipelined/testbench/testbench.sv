@@ -53,7 +53,7 @@ logic [3:0] dummy;
 
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
-  logic [31:0]      HADDR;
+  logic [`PA_BITS-1:0] HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic [`XLEN/8-1:0] HWSTRB;
   logic             HWRITE;

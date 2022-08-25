@@ -244,7 +244,7 @@ module testbench;
   logic             HCLK, HRESETn;
   logic             HREADY;
   logic 	    HSELEXT;
-  logic [31:0]      HADDR;
+  logic [`PA_BITS-1:0] HADDR;
   logic [`AHBW-1:0] HWDATA;
   logic [`XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
