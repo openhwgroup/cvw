@@ -107,7 +107,7 @@ module uncore (
                 
   // on-chip RAM
   if (`UNCORE_RAM_SUPPORTED) begin : ram
-    ram #(
+    ram_ahb #(
       .BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
       .HCLK, .HRESETn, 
       .HSELRam, .HADDR,
@@ -116,9 +116,8 @@ module uncore (
       .HRESPRam, .HREADYRam);
   end
 
-  // *** switch to new RAM
-  if (`BOOTROM_SUPPORTED) begin : bootrom
-    ram #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+ if (`BOOTROM_SUPPORTED) begin : bootrom
+    rom_ahb #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
     bootrom(
       .HCLK, .HRESETn, 
       .HSELRam(HSELBootRom), .HADDR,
