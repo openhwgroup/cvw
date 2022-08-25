@@ -32,45 +32,23 @@
 
 module rom_ahb #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
-  input  logic             HSELRam,
+  input  logic             HSELRom,
   input  logic [31:0]      HADDR,
-  input  logic             HWRITE,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
-  input  logic [`XLEN-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  output logic [`XLEN-1:0] HREADRam,
-  output logic             HRESPRam, HREADYRam
+  output logic [`XLEN-1:0] HREADRom,
+  output logic             HRESPRom, HREADYRom
 );
 
   localparam ADDR_WIDTH = $clog2(RANGE/8);
   localparam OFFSET = $clog2(`XLEN/8);   
-
-  logic [`XLEN/8-1:0] 		  ByteMask;
-  logic [31:0]        HADDRD, RamAddr;
-  logic				  initTrans;
-  logic				  memwrite, memwriteD, memread;
-  logic         nextHREADYRam;
-
-  // a new AHB transactions starts when HTRANS requests a transaction, 
-  // the peripheral is selected, and the previous transaction is completing
-  assign initTrans = HREADY & HSELRam & HTRANS[1]; 
-  assign memwrite = initTrans & HWRITE;  
-  assign memread = initTrans & ~HWRITE;
  
-  flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
-  flopenr #(32)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
+  // Never stalls
+  assign HREADYRom = 1'b1;
+  assign HRESPRom = 0; // OK
 
-  // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
-  assign nextHREADYRam = ~(memwriteD & memread);
-  flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
-  assign HRESPRam = 0; // OK
-
-  // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
-  mux2 #(32) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
-
-  // single-ported RAM
-  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
-    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
+  // single-ported ROM
+  brom1p1r #(ADDR_WIDTH, `XLEN)
+    memory(.clk(HCLK), .addr(HADDR[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRom));  
 endmodule
   
