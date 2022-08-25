@@ -72,16 +72,14 @@ module ahblite (
   (* mark_debug = "true" *) output logic [2:0] HBURST,
   (* mark_debug = "true" *) output logic [3:0] HPROT,
   (* mark_debug = "true" *) output logic [1:0] HTRANS,
-  (* mark_debug = "true" *) output logic HMASTLOCK,
-  // Delayed signals for writes
-  (* mark_debug = "true" *) output logic [3:0] HSIZED,
-  (* mark_debug = "true" *) output logic HWRITED
+  (* mark_debug = "true" *) output logic HMASTLOCK
 );
 
   typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
   statetype BusState, NextBusState;
   logic LSUGrant;
   logic [2:0] HADDRD;
+  logic [3:0] HSIZED;
  
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -120,15 +118,14 @@ module ahblite (
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
-  // Byte mask for HWSTRB
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD), .ByteMask(HWSTRB));
 
   // delay write data by one cycle for
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
-  // delay signals for subword writes
+
+  // Byte mask for HWSTRB based on delayed signals
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
-  flop #(1)   writereg(HCLK, HWRITE, HWRITED);
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD), .ByteMask(HWSTRB));
 
   // Send control back to IFU and LSU
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);

@@ -51,9 +51,6 @@ module uncore (
   output logic [`AHBW-1:0] HRDATA,
   output logic             HREADY, HRESP,
   output logic             HSELEXT,
-  // delayed signals
-  input  logic [2:0]       HADDRD,
-  input  logic             HWRITED,
   // peripheral pins
   output logic             MTimerInt, MSwInt, MExtInt, SExtInt,
   input  logic [31:0]      GPIOPinsIn,

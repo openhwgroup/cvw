@@ -48,11 +48,7 @@ module wallypipelinedcore (
    output logic [2:0]         HBURST,
    output logic [3:0]         HPROT,
    output logic [1:0]         HTRANS,
-   output logic         HMASTLOCK,
-   // Delayed signals for subword write
-   output logic [2:0]         HADDRD,
-   output logic [3:0]         HSIZED,
-   output logic         HWRITED
+   output logic         HMASTLOCK
    );
 
   //  logic [1:0]  ForwardAE, ForwardBE;
@@ -311,7 +307,7 @@ module wallypipelinedcore (
  
      .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
-     .HPROT, .HTRANS, .HMASTLOCK, .HSIZED, .HWRITED);
+     .HPROT, .HTRANS, .HMASTLOCK);
   end
 
   

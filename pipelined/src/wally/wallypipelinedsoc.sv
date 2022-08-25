@@ -76,10 +76,6 @@ module wallypipelinedsoc (
   logic             MTimerInt, MSwInt; // from CLINT
   logic [63:0]      MTIME_CLINT; // from CLINT to CSRs
   logic             MExtInt,SExtInt; // from PLIC
-  logic [2:0]       HADDRD;
-  logic [3:0]       HSIZED;
-  logic             HWRITED;
-
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
@@ -89,13 +85,12 @@ module wallypipelinedsoc (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt, 
     .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK,
-    .HADDRD, .HSIZED, .HWRITED
+    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
    );
 
   uncore uncore(.HCLK, .HRESETn, .TIMECLK,
     .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-    .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HWRITED,
+    .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP,
     .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
 		.HSELEXT,
 		.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
