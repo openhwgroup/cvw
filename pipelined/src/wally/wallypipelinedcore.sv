@@ -292,7 +292,7 @@ module wallypipelinedcore (
 
    // *** Ross: please make EBU conditional when only supporting internal memories
 
-  if(`DBUS | `IBUS) begin : ebu
+  if(`BUS) begin : ebu
     ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),

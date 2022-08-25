@@ -192,7 +192,7 @@ module ifu (
     assign {BusStall, IFUBusRead} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
   end 
-  if (`IBUS) begin : bus
+  if (`BUS) begin : bus
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;

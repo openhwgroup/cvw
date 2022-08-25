@@ -210,7 +210,7 @@ module lsu (
     assign {DCacheStallM, DCacheCommittedM} = '0;
     assign {DCacheMiss, DCacheAccess} = '0;
   end 
-  if (`DBUS) begin : bus  
+  if (`BUS) begin : bus  
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;

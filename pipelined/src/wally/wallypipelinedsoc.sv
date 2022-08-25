@@ -93,7 +93,7 @@ module wallypipelinedsoc (
     .HADDRD, .HSIZED, .HWRITED
    );
 
-  if (`DBUS | `IBUS) begin : uncore
+  if (`BUS) begin : uncore
     uncore uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HWRITED, .HSELEXT,
