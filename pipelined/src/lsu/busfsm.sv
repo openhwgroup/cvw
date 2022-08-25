@@ -153,8 +153,7 @@ module busfsm #(parameter integer   WordCountThreshold,
     endcase
   end
 
-  // Would these be better as always_comb statements or muxes?
-  assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
+   assign LSUBurstType = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign LSUTransComplete = (UnCachedRW) ? LSUBusAck : WordCountFlag & LSUBusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
   assign LSUTransType = (|WordCount) & ~UnCachedRW ? AHB_SEQ : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
