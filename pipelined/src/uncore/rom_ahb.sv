@@ -33,7 +33,7 @@
 module rom_ahb #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELRom,
-  input  logic [31:0]      HADDR,
+  input  logic [`PA_BITS-1:0]  HADDR,
   input  logic             HREADY,
   input  logic [1:0]       HTRANS,
   output logic [`XLEN-1:0] HREADRom,

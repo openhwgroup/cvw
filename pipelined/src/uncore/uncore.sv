@@ -37,7 +37,7 @@ module uncore (
   // AHB Bus Interface
   input  logic             HCLK, HRESETn,
   input  logic             TIMECLK,
-  input  logic [31:0]      HADDR,
+  input  logic [`PA_BITS-1:0] HADDR,
   input  logic [`AHBW-1:0] HWDATA,
   input  logic [`XLEN/8-1:0] HWSTRB,
   input  logic             HWRITE,
@@ -93,7 +93,7 @@ module uncore (
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
   // Set access types to all 1 as don't cares because the MMU has already done access checking
-  adrdecs adrdecs({{(`PA_BITS-32){1'b0}}, HADDR}, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
+  adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
   assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];

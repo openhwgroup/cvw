@@ -32,7 +32,7 @@
 module ahbapbbridge #(PERIPHS = 2) (
   input  logic             HCLK, HRESETn,
   input  logic [PERIPHS-1:0] HSEL,  
-  input  logic [31:0]      HADDR, 
+  input  logic [`PA_BITS-1:0]  HADDR, 
   input  logic [`XLEN-1:0] HWDATA,
   input  logic [`XLEN/8-1:0] HWSTRB,
   input  logic             HWRITE,
@@ -68,7 +68,7 @@ module ahbapbbridge #(PERIPHS = 2) (
   assign initTransSel = initTrans & |HSEL; // capture data and address if any of the peripherals are selected
 
   // delay AHB Address phase signals to align with AHB Data phase because APB expects them at the same time
-  flopen #(32) addrreg(HCLK, HREADY, HADDR, PADDR);
+  flopen #(32) addrreg(HCLK, HREADY, HADDR[31:0], PADDR);
   flopenr #(1) writereg(HCLK, ~HRESETn, HREADY, HWRITE, PWRITE); 
   flopenr #(PERIPHS) selreg(HCLK, ~HRESETn, HREADY, HSEL & {PERIPHS{initTrans}}, PSEL); 
   // PPROT[2:0] = {Data/InstrB, Secure, Privileged};
