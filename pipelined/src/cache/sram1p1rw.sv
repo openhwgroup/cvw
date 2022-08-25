@@ -74,7 +74,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
     for(index = 0; index < WIDTH/8; index++) 
       always_ff @(posedge clk)
         if(ce & WriteEnable & ByteMask[index])
-    StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
+		  StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
 
     assign ReadData = StoredData[AdrD];
   end
