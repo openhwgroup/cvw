@@ -51,7 +51,7 @@ module ahblite (
 
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUHADDR,
-  input logic [`XLEN-1:0] 	 LSUHWDATA,
+  input logic [`XLEN-1:0] 	 LSUHWDATA,   // initially support AHBW = XLEN
   input logic [2:0] 		 LSUHSIZE,
   input logic [2:0]      LSUHBURST,
   input logic [1:0]    LSUHTRANS,
@@ -81,32 +81,17 @@ module ahblite (
 
   typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
   statetype BusState, NextBusState;
-
   logic LSUGrant;
  
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
-  // initially support AHBW = XLEN
-
-  // track bus state
+  // Bus State FSM
   // Data accesses have priority over instructions.  However, if a data access comes
-  // while an instruction read is occuring, the instruction read finishes before
+  // while an cache line read is occuring, the line read finishes before
   // the data access can take place.
-  //  *** This is no longer true when adding burst mode. We need to finish the current
-  //  read before doing another read. Need to work this out, but preliminarily we can
-  //  store the current read type in a flop and use that to figure out what burst type to use.
-
+  
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
-
-  // This case statement computes the desired next state for the AHBlite,
-  // prioritizing address translations, then atomics, then data accesses, and
-  // finally instructions. This proposition controls HADDR so the PMA and PMP
-  // checkers can determine whether the access is allowed. If not, the actual
-  // NextWalkerState is set to IDLE.
-
-  // *** This ability to squash accesses must be replicated by any bus
-  // interface that might be used in place of the ahblite.
   always_comb 
     case (BusState) 
       IDLE: if (LSUBusRead)                               NextBusState = MEMREAD;  // Memory has priority over instructions
@@ -126,26 +111,11 @@ module ahblite (
       default:                                            NextBusState = IDLE;
     endcase
 
-
   //  LSU/IFU mux: choose source of access
   assign #1 LSUGrant = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
   assign HADDR = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
   assign HSIZE = LSUGrant ? {1'b0, LSUHSIZE[1:0]} : 3'b010; // Instruction reads are always 32 bits
   assign HBURST = LSUGrant ? LSUHBURST : IFUHBURST; // If doing memory accesses, use LSUburst, else use Instruction burst.
-
-  /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
-        000: Single (SINGLE)
-        001: Increment burst of undefined length (INCR)
-        010: 4-beat wrapping burst (WRAP4) [wraps if X in 000X0000] 
-        011: 4-beat incrementing burst (INCR4)
-        100: 8-beat wrapping burst (WRAP8) [wraps if X in 00X00000 changes]
-        101: 8-beat incrementing burst (INCR8)
-        110: 16-beat wrapping burst (WRAP16) [wraps if X in 0X000000]
-        111: 16-beat incrementing burst (INCR16)
-        *** Remove if not necessary
-  */ 
-
-
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = LSUGrant ? LSUHTRANS : IFUHTRANS; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
