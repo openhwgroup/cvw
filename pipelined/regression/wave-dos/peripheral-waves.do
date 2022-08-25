@@ -110,7 +110,7 @@ add wave -hex /testbench/dut/uncore/uart/uart/u/*
 add wave -divider GPIO
 add wave -hex /testbench/dut/uncore/gpio/gpio/*
 #add wave -divider
-#add wave -hex /testbench/dut/core/ebu/*
+#add wave -hex /testbench/dut/core/ebu/ebu/*
 #add wave -divider
 #add wave -divider
 

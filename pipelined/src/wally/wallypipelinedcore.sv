@@ -292,7 +292,8 @@ module wallypipelinedcore (
 
    // *** Ross: please make EBU conditional when only supporting internal memories
 
-  ahblite ebu(// IFU connections
+  if(`DBUS | `IBUS) begin : ebu
+    ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
      .IFUBusAdr, .IFUBusRead, 
@@ -316,6 +317,7 @@ module wallypipelinedcore (
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
      .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
      .HWRITED);
+  end
 
   
    hazard     hzu(
