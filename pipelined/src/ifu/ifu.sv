@@ -185,7 +185,7 @@ module ifu (
   assign InstrRawF = AllInstrRawF[31:0];
 
   if (`IROM) begin : irom 
-    irom irom(.clk, .reset, .Adr(PCNextFSpill), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCPF : PCNextFSpill), .ReadData(FinalInstrRawF));
  
     assign {BusStall, IFUBusRead} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
