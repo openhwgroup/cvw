@@ -31,23 +31,13 @@
 
 module dtim(
   input logic               clk, reset,
-  input logic               CPUBusy,
   input logic [1:0]         LSURWM,
-  input logic [`XLEN-1:0]   IEUAdrM,
   input logic [`XLEN-1:0]   IEUAdrE,
   input logic               TrapM, 
   input logic [`LLEN-1:0]   WriteDataM,
   input logic [`LLEN/8-1:0] ByteMaskM,
   input logic               Cacheable,
-  output logic [`LLEN-1:0]  ReadDataWordM,
-  output logic              BusStall,
-  output logic              LSUBusWrite,
-  output logic              LSUBusRead,
-  output logic              BusCommittedM,
-  output logic              DCacheStallM,
-  output logic              DCacheCommittedM,
-  output logic              DCacheMiss,
-  output logic              DCacheAccess
+  output logic [`LLEN-1:0]  ReadDataWordM
 );
 
   logic we;
@@ -60,12 +50,5 @@ module dtim(
 
   bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
     ram(.clk, .we, .bwe(ByteMaskM), .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
-
-  // since we have a local memory the bus connections are all disabled.
-  // There are no peripherals supported.
-  assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
-  assign {DCacheStallM, DCacheCommittedM} = '0;
-  assign {DCacheMiss, DCacheAccess} = '0;
-
 endmodule  
   

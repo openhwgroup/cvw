@@ -200,10 +200,15 @@ module lsu (
   // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
 
   if (`DMEM) begin : dtim
-    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData
-              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),
-              .DCacheMiss, .DCacheAccess);
+    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData - is this done already?
+              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
+
+    // since we have a local memory the bus connections are all disabled.
+    // There are no peripherals supported.
+    // *** this will have to change to support TIM and bus (DH 8/25/22)
+    assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
+    assign {DCacheStallM, DCacheCommittedM} = '0;
+    assign {DCacheMiss, DCacheAccess} = '0;
   end 
   if (`DBUS) begin : bus  
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
