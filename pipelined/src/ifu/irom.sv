@@ -40,7 +40,7 @@ module irom(
   localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
   localparam OFFSET = $clog2(`LLEN/8);
 
-  brom1p1rw #(ADDR_WDITH, 32) 
+  brom1p1r #(ADDR_WDITH, 32) 
     rom(.clk, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
 endmodule  
   
