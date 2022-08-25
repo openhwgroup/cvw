@@ -201,7 +201,9 @@ module lsu (
   // *** becomes DTIM_RAM_BASE
 
   if (`DMEM) begin : dtim
-    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), 
+    dtim dtim(.clk, .reset, .LSURWM,
+              .IEUAdrE(CPUBusy | LSURWM[0] | reset ? IEUAdrM : IEUAdrE),
+              .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
 
     // since we have a local memory the bus connections are all disabled.
