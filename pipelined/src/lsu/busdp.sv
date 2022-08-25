@@ -60,9 +60,9 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   output logic                SelUncachedAdr,
  
   // lsu/ifu interface
-  input logic [`PA_BITS-1:0]  LSUPAdrM,
+  input logic [`PA_BITS-1:0]  PAdrM,
   input logic                 IgnoreRequest,
-  input logic [1:0]           LSURWM,
+  input logic [1:0]           RWM,
   input logic                 CPUBusy,
   input logic                 CacheableM,
   input logic [2:0]           LSUFunct3M,
@@ -75,21 +75,21 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   logic [LOGWPL-1:0]   WordCountDelayed;
   logic                BufferCaptureEn;
 
-   genvar                      index;
+  genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
     assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
     flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(HRDATA),
       .q(FetchBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
-  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalHADDR);
+
+  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, PAdrM, SelUncachedAdr, LocalHADDR);
   assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;
-  mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
-    .s(SelUncachedAdr), .y(HSIZE));
+
+  mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), .s(SelUncachedAdr), .y(HSIZE));
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
-    .clk, .reset, .IgnoreRequest, .LSURWM, .CacheFetchLine, .CacheWriteLine,
-		.BusAck, .BusInit, .CPUBusy, .CacheableM, .BusStall, .BusWrite, .SelLSUBusWord, .BusRead,
-        .BufferCaptureEn,
+    .clk, .reset, .IgnoreRequest, .RWM, .CacheFetchLine, .CacheWriteLine,
+		.BusAck, .BusInit, .CPUBusy, .CacheableM, .BusStall, .BusWrite, .SelLSUBusWord, .BusRead, .BufferCaptureEn,
 		.HBURST, .HTRANS, .BusTransComplete, .CacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule

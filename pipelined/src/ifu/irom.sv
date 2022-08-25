@@ -31,10 +31,8 @@
 
 module irom(
   input logic               clk, reset,
-  input logic [1:0]         LSURWM,
-  input logic [`XLEN-1:0]   IEUAdrE,
-  input logic               TrapM, 
-  output logic [`LLEN-1:0]  ReadDataWordM
+  input logic [`XLEN-1:0]   Adr,
+  output logic [31:0]  ReadData
 );
 
  
@@ -42,7 +40,7 @@ module irom(
   localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
   localparam OFFSET = $clog2(`LLEN/8);
 
-  brom1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    rom(.clk, .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM));
+  brom1p1rw #(ADDR_WDITH, 32) 
+    rom(.clk, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
 endmodule  
   
