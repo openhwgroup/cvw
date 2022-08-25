@@ -7,7 +7,7 @@ view wave
 add wave /testbench/clk
 add wave /testbench/reset
 add wave -divider
-#add wave /testbench/dut/core/ebu/IReadF
+#add wave /testbench/dut/core/ebu/ebu/IReadF
 #add wave /testbench/dut/core/DataStall
 add wave /testbench/dut/core/ICacheStallF
 add wave /testbench/dut/core/StallF

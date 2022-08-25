@@ -168,26 +168,26 @@ add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/Load
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -expand -group AHB -color Gold /testbench/dut/core/ebu/BusState
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/NextBusState
-add wave -noupdate -expand -group AHB -expand -group {input requests} /testbench/dut/core/ebu/AtomicMaskedM
-add wave -noupdate -expand -group AHB -expand -group {input requests} /testbench/dut/core/ebu/LSUBusSize
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HCLK
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HRESETn
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HRDATA
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HREADY
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HRESP
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HADDR
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HWDATA
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HWRITE
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HSIZE
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HBURST
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HPROT
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HTRANS
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HMASTLOCK
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HADDRD
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HSIZED
-add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/HWRITED
+add wave -noupdate -expand -group AHB -color Gold /testbench/dut/core/ebu/ebu/BusState
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/NextBusState
+add wave -noupdate -expand -group AHB -expand -group {input requests} /testbench/dut/core/ebu/ebu/AtomicMaskedM
+add wave -noupdate -expand -group AHB -expand -group {input requests} /testbench/dut/core/ebu/ebu/LSUBusSize
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HCLK
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRESETn
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRDATA
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HREADY
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRESP
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HADDR
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWDATA
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWRITE
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HSIZE
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HPROT
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HADDRD
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HSIZED
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWRITED
 add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/InterlockStall

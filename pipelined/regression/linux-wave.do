@@ -389,25 +389,25 @@ add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group typ
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/ITLBMissOrDAFaultF
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/ITLBWriteF
 add wave -noupdate -expand -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBWriteM
-add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/BusState
-add wave -noupdate -group AHB /testbench/dut/core/ebu/NextBusState
-add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/core/ebu/AtomicMaskedM
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HCLK
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HRESETn
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HRDATA
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HREADY
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HRESP
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HADDR
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HWDATA
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HWRITE
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HSIZE
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HBURST
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HPROT
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HTRANS
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HMASTLOCK
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HADDRD
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HSIZED
-add wave -noupdate -group AHB /testbench/dut/core/ebu/HWRITED
+add wave -noupdate -group AHB -color Gold /testbench/dut/core/ebu/ebu/BusState
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/NextBusState
+add wave -noupdate -group AHB -expand -group {input requests} /testbench/dut/core/ebu/ebu/AtomicMaskedM
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HCLK
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HRESETn
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HRDATA
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HREADY
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HRESP
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HADDR
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HWDATA
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HWRITE
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HSIZE
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HADDRD
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HSIZED
+add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HWRITED
 add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM

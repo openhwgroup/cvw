@@ -10,12 +10,12 @@
    </db_ref_list>
    <zoom_setting>
       <ZoomStartTime time="0fs"></ZoomStartTime>
-      <ZoomEndTime time="168fs"></ZoomEndTime>
+      <ZoomEndTime time="3838fs"></ZoomEndTime>
       <Cursor1Time time="0fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="452"></NameColumnWidth>
-      <ValueColumnWidth column_width="141"></ValueColumnWidth>
+      <ValueColumnWidth column_width="133"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="11" />
    <wave_markers>
@@ -69,14 +69,6 @@
          <obj_property name="LABELRADIX">true</obj_property>
          <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ReadDataM">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ReadDataM[63:0]</obj_property>
-         <obj_property name="ObjectShortName">ReadDataM[63:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
       <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/WriteDataM">
          <obj_property name="DisplayName">FullPathName</obj_property>
          <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/WriteDataM[63:0]</obj_property>
@@ -94,14 +86,6 @@
          <obj_property name="DisplayName">FullPathName</obj_property>
          <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIP_REGW_5[9:9]</obj_property>
          <obj_property name="ObjectShortName">MIP_REGW_5[9:9]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIP_REGW">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIP_REGW[9:9]</obj_property>
-         <obj_property name="ObjectShortName">SIP_REGW[9:9]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
          <obj_property name="LABELRADIX">true</obj_property>
          <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
@@ -147,22 +131,6 @@
          <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIDELEG_REGW[11:0]</obj_property>
          <obj_property name="ObjectShortName">MIDELEG_REGW[11:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/MPendingIntsM">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/MPendingIntsM[11:0]</obj_property>
-         <obj_property name="ObjectShortName">MPendingIntsM[11:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SPendingIntsM">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SPendingIntsM[11:0]</obj_property>
-         <obj_property name="ObjectShortName">SPendingIntsM[11:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="wallypipelinedsoc/core/priv.priv/InterruptM">
          <obj_property name="DisplayName">FullPathName</obj_property>
@@ -276,30 +244,6 @@
          <obj_property name="DisplayName">FullPathName</obj_property>
          <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/csr/csrm/MIE_REGW[11:11]</obj_property>
          <obj_property name="ObjectShortName">MIE_REGW[11:11]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW[9:9]</obj_property>
-         <obj_property name="ObjectShortName">SIE_REGW[9:9]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_1">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_1[1:1]</obj_property>
-         <obj_property name="ObjectShortName">SIE_REGW_1[1:1]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-         <obj_property name="LABELRADIX">true</obj_property>
-         <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_2">
-         <obj_property name="DisplayName">FullPathName</obj_property>
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/priv.priv/trap/SIE_REGW_2[5:5]</obj_property>
-         <obj_property name="ObjectShortName">SIE_REGW_2[5:5]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
          <obj_property name="LABELRADIX">true</obj_property>
          <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
