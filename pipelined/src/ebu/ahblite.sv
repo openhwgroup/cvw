@@ -64,7 +64,7 @@ module ahblite (
   // AHB-Lite external signals
   (* mark_debug = "true" *) input logic HREADY, HRESP,
   (* mark_debug = "true" *) output logic HCLK, HRESETn,
-  (* mark_debug = "true" *) output logic [31:0] HADDR, // *** one day switch to a different bus that supports the full physical address
+  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, // *** one day switch to a different bus that supports the full physical address
   (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
    output logic [`XLEN/8-1:0] HWSTRB,
   (* mark_debug = "true" *) output logic HWRITE, 
@@ -74,7 +74,6 @@ module ahblite (
   (* mark_debug = "true" *) output logic [1:0] HTRANS,
   (* mark_debug = "true" *) output logic HMASTLOCK,
   // Delayed signals for writes
-  (* mark_debug = "true" *) output logic [2:0] HADDRD,
   (* mark_debug = "true" *) output logic [3:0] HSIZED,
   (* mark_debug = "true" *) output logic HWRITED
 );
@@ -82,6 +81,7 @@ module ahblite (
   typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
   statetype BusState, NextBusState;
   logic LSUGrant;
+  logic [2:0] HADDRD;
  
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -113,15 +113,15 @@ module ahblite (
 
   //  LSU/IFU mux: choose source of access
   assign #1 LSUGrant = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign HADDR = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
+  assign HADDR = LSUGrant ? LSUHADDR : IFUHADDR;
   assign HSIZE = LSUGrant ? {1'b0, LSUHSIZE[1:0]} : 3'b010; // Instruction reads are always 32 bits
   assign HBURST = LSUGrant ? LSUHBURST : IFUHBURST; // If doing memory accesses, use LSUburst, else use Instruction burst.
-  assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = LSUGrant ? LSUHTRANS : IFUHTRANS; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // Byte mask for HWSTRB
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
+  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD), .ByteMask(HWSTRB));
 
   // delay write data by one cycle for
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN

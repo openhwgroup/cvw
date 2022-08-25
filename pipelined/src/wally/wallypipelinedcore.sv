@@ -40,7 +40,7 @@ module wallypipelinedcore (
    input logic [`AHBW-1:0]  HRDATA,
    input logic             HREADY, HRESP,
    output logic         HCLK, HRESETn,
-   output logic [31:0]         HADDR,
+   output logic [`PA_BITS-1:0] HADDR,
    output logic [`AHBW-1:0] HWDATA,
    output logic [`XLEN/8-1:0] HWSTRB,
    output logic         HWRITE,
@@ -311,8 +311,7 @@ module wallypipelinedcore (
  
      .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
-     .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
-     .HWRITED);
+     .HPROT, .HTRANS, .HMASTLOCK, .HSIZED, .HWRITED);
   end
 
   
