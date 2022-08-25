@@ -65,16 +65,16 @@ module lsu (
    // cpu hazard unit (trap)
    output logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
             // connect to ahb
-   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
+   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR,
    (* mark_debug = "true" *)   output logic LSUBusRead, 
    (* mark_debug = "true" *)   output logic LSUBusWrite,
    (* mark_debug = "true" *)   input logic LSUBusAck,
    (* mark_debug = "true" *)   input logic LSUBusInit,
-   (* mark_debug = "true" *)   input logic [`XLEN-1:0] LSUBusHRDATA,
-   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUBusHWDATA,
-   (* mark_debug = "true" *)   output logic [2:0] LSUBusSize, 
-   (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
-   (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
+   (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,
+   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,
+   (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE, 
+   (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
+   (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
@@ -108,7 +108,7 @@ module lsu (
   logic                     InterlockStall;
   logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
-  logic                     SelLSUBusWord;
+  logic                     SelBusWord;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         IMWriteDataM, IMAWriteDataM;
   logic [`LLEN-1:0]         IMAFWriteDataM;
@@ -198,9 +198,10 @@ module lsu (
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
   // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
+  // *** becomes DTIM_RAM_BASE
 
   if (`DMEM) begin : dtim
-    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData - is this done already?
+    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
 
     // since we have a local memory the bus connections are all disabled.
@@ -214,7 +215,7 @@ module lsu (
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  DLSUBusBuffer;
+    logic [LINELEN-1:0]  FetchBuffer;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
@@ -223,28 +224,29 @@ module lsu (
             
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
-      .WordCount, .SelLSUBusWord,
-      .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DLSUBusBuffer, .LSUPAdrM,
-      .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
-      .BusStall, .BusCommittedM);
+      .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
+      .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
+      .WordCount, .SelBusWord,
+      .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
+      .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
+      .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
+      .BusStall, .BusCommitted(BusCommittedM));
 
-    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DLSUBusBuffer[`XLEN-1:0]}),
+    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
-      .s(SelUncachedAdr), .y(LSUBusHWDATA));
+    mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
+      .s(SelUncachedAdr), .y(LSUHWDATA));
     if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
+        .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
         .ByteMask(ByteMaskM), .WordCount,
         .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM),
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
-        .LSUBusBuffer(DLSUBusBuffer), .CacheFetchLine(DCacheFetchLine), 
+        .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
     end else begin : passthrough
@@ -252,7 +254,7 @@ module lsu (
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
   end else begin: nobus // block: bus
-    assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
+    assign {LSUHWDATA, SelUncachedAdr} = '0; 
     assign ReadDataWordMuxM = LittleEndianReadDataWordM;
   end
 
