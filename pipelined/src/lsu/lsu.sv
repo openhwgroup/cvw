@@ -197,21 +197,23 @@ module lsu (
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
-  // use the same RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
-  
-  if (`DMEM == `MEM_TIM) begin : dtim
-    // *** directly instantiate RAM or ROM here.  Instantiate SRAM1P1RW.  
-    // Merge SimpleRAM and SRAM1p1rw into one that is good for synthesis and RAM libraries and flops
-    dtim dtim(.clk, .reset, .CPUBusy, .LSURWM, .IEUAdrM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData
-              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .BusStall, .LSUBusWrite,.LSUBusRead, .BusCommittedM,
-              .DCacheStallM, .DCacheCommittedM, .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM),
-              .DCacheMiss, .DCacheAccess);
+  // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
+
+  if (`DMEM) begin : dtim
+    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData - is this done already?
+              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
+
+    // since we have a local memory the bus connections are all disabled.
+    // There are no peripherals supported.
+    // *** this will have to change to support TIM and bus (DH 8/25/22)
+    assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
+    assign {DCacheStallM, DCacheCommittedM} = '0;
+    assign {DCacheMiss, DCacheAccess} = '0;
   end 
   if (`DBUS) begin : bus  
-    localparam           CACHE_ENABLED = `DMEM == `MEM_CACHE;
-    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (CACHE_ENABLED) ? `DCACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGBWPL = (CACHE_ENABLED) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  DLSUBusBuffer;
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
@@ -219,7 +221,7 @@ module lsu (
     logic                DCacheBusAck;
     logic [LOGBWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) busdp(
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .SelLSUBusWord,
@@ -232,7 +234,7 @@ module lsu (
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
     mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
       .s(SelUncachedAdr), .y(LSUBusHWDATA));
-    if(CACHE_ENABLED) begin : dcache
+    if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// dtim.sv
+// brom1p1r
 //
-// Written: Ross Thompson ross1728@gmail.com January 30, 2022
-// Modified: 
+// Written: David_Harris@hmc.edu 8/24/22
 //
-// Purpose: simple memory with bus or cache.
+// Purpose: Single-ported ROM
+// 
 // A component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
@@ -27,28 +27,26 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// This model actually works correctly with vivado.
+
 `include "wally-config.vh"
 
-module dtim(
-  input logic               clk, reset,
-  input logic [1:0]         LSURWM,
-  input logic [`XLEN-1:0]   IEUAdrE,
-  input logic               TrapM, 
-  input logic [`LLEN-1:0]   WriteDataM,
-  input logic [`LLEN/8-1:0] ByteMaskM,
-  input logic               Cacheable,
-  output logic [`LLEN-1:0]  ReadDataWordM
-);
+module brom1p1r
+  #(
+	//--------------------------------------------------------------------------
+	parameter ADDR_WIDTH = 8,
+	// Addr Width in bits : 2 **ADDR_WIDTH = RAM Depth
+	parameter DATA_WIDTH = 32 // Data Width in bits
+	//----------------------------------------------------------------------
+	) (
+	   input logic 					 clk,
+	   input logic [ADDR_WIDTH-1:0]  addr,
+	   output logic [DATA_WIDTH-1:0] dout
+	   );
+  // Core Memory
+  logic [DATA_WIDTH-1:0] 			 ROM [(2**ADDR_WIDTH)-1:0];
 
-  logic we;
- 
-//  localparam ADDR_WDITH = $clog2(`TIM_RAM_RANGE/8);  // *** replace with tihs when  defined
-  localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
-  localparam OFFSET = $clog2(`LLEN/8);
-
-  assign we = LSURWM[0] & Cacheable & ~TrapM;  // have to ignore write if Trap.
-
-  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    ram(.clk, .we, .bwe(ByteMaskM), .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
-endmodule  
-  
+  always @ (posedge clk) begin
+	dout <= ROM[addr];    
+  end
+endmodule // bytewrite_tdp_ram_rf
