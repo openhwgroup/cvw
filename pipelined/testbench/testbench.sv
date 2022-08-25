@@ -232,9 +232,9 @@ logic [3:0] dummy;
         // force sdc timers
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
-        if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+        if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+        if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -328,7 +328,7 @@ logic [3:0] dummy;
           /* verilator lint_off INFINITELOOP */
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
-            if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
+            if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
             else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
@@ -361,9 +361,9 @@ logic [3:0] dummy;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
+            if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
             else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
+            if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
