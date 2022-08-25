@@ -73,9 +73,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   logic [LOGWPL-1:0]   WordCountDelayed;
   logic                BufferCaptureEn;
 
-  // *** implement flops as an array if feasbile; DLSUBusBuffer might be a problem
-  // *** better name than DLSUBusBuffer
-  genvar                      index;
+   genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
     assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
