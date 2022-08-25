@@ -47,13 +47,19 @@ module dtim(
   output logic              DCacheStallM,
   output logic              DCacheCommittedM,
   output logic              DCacheMiss,
-  output logic              DCacheAccess);
-  
-  simpleram #(.BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
-      .clk, .ByteMask(ByteMaskM),
-      .a(CPUBusy | LSURWM[0] | reset ? IEUAdrM[31:0] : IEUAdrE[31:0]), // move mux out; this shouldn't be needed when stails are handled differently ***
-      .we(LSURWM[0] & Cacheable & ~TrapM),  // have to ignore write if Trap.
-      .wd(WriteDataM), .rd(ReadDataWordM));
+  output logic              DCacheAccess
+);
+
+  logic we;
+ 
+//  localparam ADDR_WDITH = $clog2(`TIM_RAM_RANGE/8);  // *** replace with tihs when  defined
+  localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
+  localparam OFFSET = $clog2(`LLEN/8);
+
+  assign we = LSURWM[0] & Cacheable & ~TrapM;  // have to ignore write if Trap.
+
+  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
+    ram(.clk, .we, .bwe(ByteMaskM), .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 
   // since we have a local memory the bus connections are all disabled.
   // There are no peripherals supported.

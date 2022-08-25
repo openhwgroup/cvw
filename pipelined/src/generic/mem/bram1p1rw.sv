@@ -5,8 +5,8 @@
 // March 29, 2022
 // Modified: Based on UG901 vivado documentation.
 //
-// Purpose: On-chip SIMPLERAM, external to core
-// 
+/// Purpose: On-chip RAM array
+//
 // A component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
