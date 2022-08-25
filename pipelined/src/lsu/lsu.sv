@@ -225,8 +225,8 @@ module lsu (
       .clk, .reset,
       .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
       .WordCount, .SelLSUBusWord,
-      .LSUFunct3M, .LSUBusAdr, .DCacheBusAdr, .DCacheFetchLine,
-      .DCacheWriteLine, .DCacheBusAck, .DLSUBusBuffer, .LSUPAdrM,
+      .LSUFunct3M, .LSUBusAdr, .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
+      .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .DLSUBusBuffer, .LSUPAdrM,
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
 

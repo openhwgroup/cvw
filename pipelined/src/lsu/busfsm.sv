@@ -38,8 +38,8 @@ module busfsm #(parameter integer   WordCountThreshold,
 
    input logic               IgnoreRequest,
    input logic [1:0]         LSURWM,
-   input logic               DCacheFetchLine,
-   input logic               DCacheWriteLine,
+   input logic               CacheFetchLine,
+   input logic               CacheWriteLine,
    input logic               LSUBusAck,
    input logic               LSUBusInit, // This might be better as LSUBusLock, or to send this using LSUBusAck.
    input logic               CPUBusy,
@@ -52,7 +52,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic [2:0]        LSUBurstType,
    output logic              LSUTransComplete,
    output logic [1:0]        LSUTransType,
-   output logic              DCacheBusAck,
+   output logic              CacheBusAck,
    output logic              BusCommittedM,
    output logic              SelUncachedAdr,
    output logic              BufferCaptureEn,
@@ -116,8 +116,8 @@ module busfsm #(parameter integer   WordCountThreshold,
 	  STATE_BUS_READY:           if(IgnoreRequest)                   BusNextState = STATE_BUS_READY;
 	                             else if(LSURWM[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
 		                         else if(LSURWM[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
-		                         else if(DCacheFetchLine)            BusNextState = STATE_BUS_FETCH;
-		                         else if(DCacheWriteLine)            BusNextState = STATE_BUS_WRITE;
+		                         else if(CacheFetchLine)            BusNextState = STATE_BUS_FETCH;
+		                         else if(CacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                                BusNextState = STATE_BUS_READY;
       STATE_BUS_UNCACHED_WRITE:  if(LSUBusAck)                       BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		                         else                                BusNextState = STATE_BUS_UNCACHED_WRITE;
@@ -130,13 +130,13 @@ module busfsm #(parameter integer   WordCountThreshold,
 	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                     BusNextState = STATE_BUS_CPU_BUSY;
                                      else                            BusNextState = STATE_BUS_READY;
       STATE_BUS_FETCH:           if (WordCountFlag & LSUBusAck) begin
-                                   if (DCacheFetchLine)  BusNextState = STATE_BUS_FETCH;
-                                   else if (DCacheWriteLine)  BusNextState = STATE_BUS_WRITE;
+                                   if (CacheFetchLine)  BusNextState = STATE_BUS_FETCH;
+                                   else if (CacheWriteLine)  BusNextState = STATE_BUS_WRITE;
                                    else BusNextState = STATE_BUS_READY;
 	                             end else                            BusNextState = STATE_BUS_FETCH;
       STATE_BUS_WRITE:           if(WordCountFlag & LSUBusAck) begin
-                                   if (DCacheFetchLine)  BusNextState = STATE_BUS_FETCH;
-                                   else if (DCacheWriteLine)  BusNextState = STATE_BUS_WRITE;
+                                   if (CacheFetchLine)  BusNextState = STATE_BUS_FETCH;
+                                   else if (CacheWriteLine)  BusNextState = STATE_BUS_WRITE;
                                    else  BusNextState = STATE_BUS_READY;
                                  end else                                BusNextState = STATE_BUS_WRITE;
 	  default:                                                       BusNextState = STATE_BUS_READY;
@@ -158,9 +158,9 @@ module busfsm #(parameter integer   WordCountThreshold,
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
   assign LSUTransType = (|WordCount) & ~UnCachedRW ? AHB_SEQ : (LSUBusRead | LSUBusWrite) & (~LSUTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
   // Reset if we aren't initiating a transaction or if we are finishing a transaction.
-  assign CntReset = BusCurrState == STATE_BUS_READY & ~(DCacheFetchLine | DCacheWriteLine) | LSUTransComplete; 
+  assign CntReset = BusCurrState == STATE_BUS_READY & ~(CacheFetchLine | CacheWriteLine) | LSUTransComplete; 
   
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | DCacheFetchLine | DCacheWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | CacheFetchLine | CacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
@@ -174,13 +174,13 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   assign UnCachedLSUBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign LSUBusRead = UnCachedLSUBusRead | (BusCurrState == STATE_BUS_FETCH & ~(WordCountFlag)) | (BusCurrState == STATE_BUS_READY & DCacheFetchLine);
+  assign LSUBusRead = UnCachedLSUBusRead | (BusCurrState == STATE_BUS_FETCH & ~(WordCountFlag)) | (BusCurrState == STATE_BUS_READY & CacheFetchLine);
   assign BufferCaptureEn = UnCachedLSUBusRead | BusCurrState == STATE_BUS_FETCH;
 
   // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because CacheableM is 0 when flushing cache.
   assign UnCachedRW = UnCachedLSUBusWrite | UnCachedLSUBusRead; 
 
-  assign DCacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LSUBusAck) |
+  assign CacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & LSUBusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & LSUBusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
   assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LSURWM & UnCachedAccess)) |
@@ -188,5 +188,5 @@ module busfsm #(parameter integer   WordCountThreshold,
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE) |
-						  ~CACHE_ENABLED; // if no dcache always select uncachedadr.
+						  ~CACHE_ENABLED; // if no Cache always select uncachedadr.
 endmodule
