@@ -7,7 +7,7 @@ add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/PCE
 add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -divider <NULL>
-add wave -noupdate /testbench/dut/core/ebu/IReadF
+add wave -noupdate /testbench/dut/core/ebu/ebu/IReadF
 add wave -noupdate /testbench/dut/core/DataStall
 add wave -noupdate /testbench/dut/core/InstrStall
 add wave -noupdate /testbench/dut/core/StallF
@@ -656,46 +656,46 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/rese
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/clear
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/d
 add wave -noupdate -radix hexadecimal /testbench/dut/core/dmem/ReadDataWReg/q
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/clk
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/reset
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/UnsignedLoadM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/InstrPAdrF
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/IReadF
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/IRData
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/MemPAdrM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/DReadM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/DWriteM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/WriteDataM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/DSizeM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/DRData
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HRDATA
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HREADY
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HRESP
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HCLK
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HRESETn
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HADDR
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HWDATA
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HWRITE
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HSIZE
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HBURST
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HPROT
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HTRANS
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HMASTLOCK
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/InstrAckD
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/MemAckW
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/GrantData
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ISize
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/HRDATAMasked
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/IReady
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/DReady
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/HRDATA
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/HADDR
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/UnsignedLoadM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/HSIZE
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/HRDATAMasked
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/ByteM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/HalfwordM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/swr/genblk1/WordM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/clk
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/reset
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/UnsignedLoadM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/InstrPAdrF
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/IReadF
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/IRData
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/MemPAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/DReadM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/DWriteM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/WriteDataM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/DSizeM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/DRData
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HRDATA
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HREADY
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HRESP
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HCLK
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HRESETn
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HADDR
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HWDATA
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HWRITE
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HSIZE
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HPROT
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HMASTLOCK
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/InstrAckD
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/MemAckW
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/GrantData
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/ISize
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/HRDATAMasked
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/IReady
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/DReady
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/HRDATA
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/HADDR
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/UnsignedLoadM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/HSIZE
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/HRDATAMasked
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/ByteM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/HalfwordM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/ebu/ebu/swr/genblk1/WordM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/hzu/PCSrcE
 add wave -noupdate -radix hexadecimal /testbench/dut/core/hzu/CSRWritePendingDEM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/hzu/RetM
