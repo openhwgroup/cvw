@@ -21,7 +21,7 @@ set outputDir $::env(OUTPUTDIR)
 set cfgName $::env(CONFIG)
 # Config
 set hdl_src "../pipelined/src"
-set cfg "$outputDir/hdl/config/${cfgName}/wally-config.vh"
+set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)

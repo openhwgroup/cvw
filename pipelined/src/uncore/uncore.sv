@@ -106,9 +106,9 @@ module uncore (
   assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
                 
   // on-chip RAM
-  if (`RAM_SUPPORTED) begin : ram
-    ram #(
-      .BASE(`RAM_BASE), .RANGE(`RAM_RANGE)) ram (
+  if (`UNCORE_RAM_SUPPORTED) begin : ram
+    ram_ahb #(
+      .BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
       .HCLK, .HRESETn, 
       .HSELRam, .HADDR,
       .HWRITE, .HREADY, 
@@ -116,15 +116,13 @@ module uncore (
       .HRESPRam, .HREADYRam);
   end
 
-  // *** switch to new RAM
-  if (`BOOTROM_SUPPORTED) begin : bootrom
-    ram #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+ if (`BOOTROM_SUPPORTED) begin : bootrom
+    rom_ahb #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
     bootrom(
       .HCLK, .HRESETn, 
-      .HSELRam(HSELBootRom), .HADDR,
-      .HWRITE, .HREADY, .HTRANS, 
-      .HWDATA, .HWSTRB,
-      .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
+      .HSELRom(HSELBootRom), .HADDR,
+      .HREADY, .HTRANS, 
+      .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
   end
 
   // memory-mapped I/O peripherals

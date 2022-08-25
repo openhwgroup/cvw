@@ -1,10 +1,12 @@
 ///////////////////////////////////////////
-// dtim.sv
+// block ram model should be equivalent to srsam.
 //
-// Written: Ross Thompson ross1728@gmail.com January 30, 2022
-// Modified: 
+// Written: Ross Thompson
+// March 29, 2022
+// Modified: Based on UG901 vivado documentation.
 //
-// Purpose: simple memory with bus or cache.
+// Purpose: On-chip RAM array
+// 
 // A component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
@@ -27,28 +29,39 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// This model actually works correctly with vivado.
+
 `include "wally-config.vh"
 
-module dtim(
-  input logic               clk, reset,
-  input logic [1:0]         LSURWM,
-  input logic [`XLEN-1:0]   IEUAdrE,
-  input logic               TrapM, 
-  input logic [`LLEN-1:0]   WriteDataM,
-  input logic [`LLEN/8-1:0] ByteMaskM,
-  input logic               Cacheable,
-  output logic [`LLEN-1:0]  ReadDataWordM
-);
+module bram1p1rw_64x128
+  #(
+	//--------------------------------------------------------------------------
+	parameter NUM_COL = 16,
+	parameter COL_WIDTH = 8,
+	parameter ADDR_WIDTH = 6,
+	// Addr Width in bits : 2 *ADDR_WIDTH = RAM Depth
+	parameter DATA_WIDTH = NUM_COL*COL_WIDTH // Data Width in bits
+	//----------------------------------------------------------------------
+	) (
+	   input logic 					 clk,
+	   input logic 					 we,
+	   input logic [NUM_COL-1:0] 	 bwe,
+	   input logic [ADDR_WIDTH-1:0]  addr,
+	   output logic [DATA_WIDTH-1:0] dout,
+	   input logic [DATA_WIDTH-1:0]  din
+	   );
+  // Core Memory
+  logic [DATA_WIDTH-1:0] 			 RAM [(2**ADDR_WIDTH)-1:0];
+  integer 							 i;
 
-  logic we;
- 
-//  localparam ADDR_WDITH = $clog2(`TIM_RAM_RANGE/8);  // *** replace with tihs when  defined
-  localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
-  localparam OFFSET = $clog2(`LLEN/8);
-
-  assign we = LSURWM[0] & Cacheable & ~TrapM;  // have to ignore write if Trap.
-
-  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    ram(.clk, .we, .bwe(ByteMaskM), .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
-endmodule  
-  
+  always @ (posedge clk) begin
+	dout <= RAM[addr];    
+	if(we) begin
+	  for(i=0;i<NUM_COL;i=i+1) begin
+		if(bwe[i]) begin
+		  RAM[addr][i*COL_WIDTH +: COL_WIDTH] <= din[i*COL_WIDTH +:COL_WIDTH];
+		end
+	  end
+	end
+  end
+endmodule // bytewrite_tdp_ram_rf

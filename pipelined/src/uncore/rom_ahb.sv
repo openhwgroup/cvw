@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// simpleram.sv
+// rom_ahb.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: On-chip SIMPLERAM, external to core
+// Purpose: On-chip ROM, external to core
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,19 +30,25 @@
 
 `include "wally-config.vh"
 
-module simpleram #(parameter BASE=0, RANGE = 65535) (
-  input  logic             clk, 
-  input  logic [31:0]      a,
-  input  logic             we,
-  input  logic [`LLEN/8-1:0] ByteMask,
-  input  logic [`LLEN-1:0] wd,
-  output logic [`LLEN-1:0] rd
+module rom_ahb #(parameter BASE=0, RANGE = 65535) (
+  input  logic             HCLK, HRESETn, 
+  input  logic             HSELRom,
+  input  logic [31:0]      HADDR,
+  input  logic             HREADY,
+  input  logic [1:0]       HTRANS,
+  output logic [`XLEN-1:0] HREADRom,
+  output logic             HRESPRom, HREADYRom
 );
 
-  localparam ADDR_WDITH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`LLEN/8);
+  localparam ADDR_WIDTH = $clog2(RANGE/8);
+  localparam OFFSET = $clog2(`XLEN/8);   
+ 
+  // Never stalls
+  assign HREADYRom = 1'b1;
+  assign HRESPRom = 0; // OK
 
-  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    memory(.clk, .we, .bwe(ByteMask), .addr(a[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(rd), .din(wd));
+  // single-ported ROM
+  brom1p1r #(ADDR_WIDTH, `XLEN)
+    memory(.clk(HCLK), .addr(HADDR[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRom));  
 endmodule
-
+  

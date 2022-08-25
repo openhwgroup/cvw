@@ -42,7 +42,7 @@ module adrdecs (
  // Determine which region of physical memory (if any) is being accessed
   adrdec ddr4dec(PhysicalAddress, `EXT_MEM_BASE, `EXT_MEM_RANGE, `EXT_MEM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[7]);  
   adrdec boottimdec(PhysicalAddress, `BOOTROM_BASE, `BOOTROM_RANGE, `BOOTROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[6]);
-  adrdec timdec(PhysicalAddress, `RAM_BASE, `RAM_RANGE, `RAM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[5]);
+  adrdec timdec(PhysicalAddress, `UNCORE_RAM_BASE, `UNCORE_RAM_RANGE, `UNCORE_RAM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[5]);
 
   adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[4]);
   adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[3]);

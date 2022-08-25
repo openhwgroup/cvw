@@ -84,7 +84,6 @@ module ifu (
     output logic                ICacheAccess,
     output logic                ICacheMiss
 );
-  localparam                    CACHE_ENABLED = `IMEM == `MEM_CACHE;
   (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
   logic                        BranchMisalignedFaultE;
   logic                        PrivilegedChangePCM;
@@ -126,7 +125,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport #(CACHE_ENABLED) spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
       .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
@@ -185,24 +184,24 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
-  if (`IMEM == `MEM_TIM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
-    dtim irom(.clk, .reset, .CPUBusy, .LSURWM(2'b10), .IEUAdrM({{(`XLEN-32){1'b0}}, PCPF[31:0]}), .IEUAdrE(PCNextFSpill),
-              .TrapM(1'b0), .WriteDataM(), .ByteMaskM('0),
-              .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}), .BusStall, .LSUBusWrite(), .LSUBusRead(IFUBusRead),
-              .BusCommittedM(), .DCacheStallM(ICacheStallF), .Cacheable(CacheableF),
-              .DCacheCommittedM(), .DCacheMiss(ICacheMiss), .DCacheAccess(ICacheAccess));
-    
+  if (`IROM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
+    irom irom(.clk, .reset, .LSURWM(2'b10), .IEUAdrE(PCNextFSpill),
+              .TrapM(1'b0), 
+              .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}));
+ 
+    assign {BusStall, IFUBusRead} = '0;   
+    assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
   end 
   if (`IBUS) begin : bus
-    localparam integer   WORDSPERLINE = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = (CACHE_ENABLED) ? `ICACHE_LINELENINBITS : `XLEN;
-    localparam integer   LOGBWPL = (`DMEM == `MEM_CACHE) ? $clog2(WORDSPERLINE) : 1;
+    localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
     logic [LINELEN-1:0]  ILSUBusBuffer;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
     logic                SelUncachedAdr;
     
-    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, CACHE_ENABLED) 
+    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
     busdp(.clk, .reset,
           .LSUBusHRDATA(IFUBusHRDATA), .LSUBusAck(IFUBusAck), .LSUBusInit(IFUBusInit), .LSUBusWrite(), .SelLSUBusWord(),
           .LSUBusRead(IFUBusRead), .LSUBusSize(), .LSUBurstType(IFUBurstType), .LSUTransType(IFUTransType), .LSUTransComplete(IFUTransComplete),
@@ -219,7 +218,7 @@ module ifu (
       .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     
 
-    if(CACHE_ENABLED) begin : icache
+    if(`ICACHE) begin : icache
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -259,7 +258,7 @@ module ifu (
   assign PrivilegedChangePCM = RetM | TrapM;
 
   mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
-  if(CACHE_ENABLED)
+  if(`ICACHE)
     mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), 
       .y(PCNext2F));
   else assign PCNext2F = PCNext1F;
