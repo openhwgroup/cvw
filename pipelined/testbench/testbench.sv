@@ -233,7 +233,7 @@ logic [3:0] dummy;
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
         if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-        else       $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        else if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
         if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
       end
 
@@ -459,8 +459,8 @@ module riscvassertions;
     //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
     assert (`DCACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`ICACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
-    //assert (`DMEM == `MEM_CACHE | `DBUS ==0) else $error("Dcache rquires DBUS.");
-    //assert (`IMEM == `MEM_CACHE | `IBUS ==0) else $error("Icache rquires IBUS.");    
+    //assert (`DCACHE == 1 & `BUS ==0) else $error("Dcache requires DBUS.");
+    //assert (`ICACHE == 1 & `BUS ==0) else $error("Icache requires IBUS.");    
     assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
   end
