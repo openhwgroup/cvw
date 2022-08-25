@@ -421,9 +421,9 @@ module testbench;
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
     memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
-    readResult = $fread(dut.uncore.bootrom.bootrom.memory.RAM,memFile);
+    readResult = $fread(dut.uncore.bootrom.bootrom.memory.ROM,memFile);
     $fclose(memFile);
-    // initialize RAM
+    // initialize RAM and ROM
     if (CHECKPOINT==0) 
       memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
     else

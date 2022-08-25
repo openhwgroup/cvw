@@ -120,10 +120,9 @@ module uncore (
     rom_ahb #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
     bootrom(
       .HCLK, .HRESETn, 
-      .HSELRam(HSELBootRom), .HADDR,
-      .HWRITE, .HREADY, .HTRANS, 
-      .HWDATA, .HWSTRB,
-      .HREADRam(HREADBootRom), .HRESPRam(HRESPBootRom), .HREADYRam(HREADYBootRom));
+      .HSELRom(HSELBootRom), .HADDR,
+      .HREADY, .HTRANS, 
+      .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
   end
 
   // memory-mapped I/O peripherals
