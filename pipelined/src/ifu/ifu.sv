@@ -201,7 +201,7 @@ module ifu (
     
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
     busdp(.clk, .reset,
-          .HRDATA(HRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelLSUBusWord(),
+          .HRDATA(HRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelBusWord(),
           .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .BusTransComplete(IFUTransComplete),
           .Funct3(3'b010), .HADDR(IFUHADDR), .CacheBusAdr(ICacheBusAdr),
           .WordCount(), 
@@ -228,7 +228,7 @@ module ifu (
              .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
              .Cacheable(CacheableF),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
-             .ByteMask('0), .WordCount('0), .SelLSUBusWord('0),
+             .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
              .RW(2'b10), 
              .Atomic('0), .FlushCache('0),
