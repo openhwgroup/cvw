@@ -207,10 +207,10 @@ module ifu (
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
-          .FetchBuffer, .PAdrM(PCPF),
+          .FetchBuffer, .PAdr(PCPF),
           .SelUncachedAdr,
-          .IgnoreRequest(ITLBMissF), .RWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
-          .BusStall, .BusCommittedM());
+          .IgnoreRequest(ITLBMissF), .RW(2'b10), .CPUBusy, .Cacheable(CacheableF),
+          .BusStall, .BusCommitted());
 
     
     mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
