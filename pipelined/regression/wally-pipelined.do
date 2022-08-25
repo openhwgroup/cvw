@@ -57,7 +57,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     #run 100 ns
     #force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-    #force -deposit testbench/dut/uncore/clint/clint/MTIMECMP 64'h1000
+    #force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
     run 14000 ms
     #add log -recursive /*
     #do linux-wave.do
@@ -109,7 +109,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #-- Run the Simulation
 #    run 100 ns
 #    force -deposit testbench/dut/core/priv/priv/csr/csri/IE_REGW 16'h2aa
-#    force -deposit testbench/dut/uncore/clint/clint/MTIMECMP 64'h1000
+#    force -deposit testbench/dut/uncore/uncore/clint/clint/MTIMECMP 64'h1000
 #    add log -recursive /*
 #    do linux-wave.do
 #    run -all

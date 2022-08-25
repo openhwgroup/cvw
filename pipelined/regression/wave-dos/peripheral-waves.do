@@ -45,7 +45,7 @@ add wave -hex /testbench/dut/core/ifu/PCM
 add wave -hex /testbench/dut/core/ifu/InstrM
 add wave -hex /testbench/dut/core/ieu/c/InstrValidM
 add wave /testbench/InstrMName
-add wave /testbench/dut/uncore/ram/memwrite
+add wave /testbench/dut/uncore/uncore/ram/memwrite
 add wave -hex /testbench/dut/core/WriteDataM
 add wave -hex /testbench/dut/core/lsu.bus.dcache/MemPAdrM
 add wave -hex /testbench/dut/core/lsu.bus.dcache/WriteDataM
@@ -102,13 +102,13 @@ add wave -hex /testbench/dut/core/ieu/dp/regf/rf[31]
 # peripherals
 add wave -divider PLIC
 add wave -hex /testbench/dut/core/priv/csr/TrapM
-add wave -hex /testbench/dut/uncore/plic/plic/*
-add wave -hex /testbench/dut/uncore/plic/plic/intPriority
-add wave -hex /testbench/dut/uncore/plic/plic/pendingArray
+add wave -hex /testbench/dut/uncore/uncore/plic/plic/*
+add wave -hex /testbench/dut/uncore/uncore/plic/plic/intPriority
+add wave -hex /testbench/dut/uncore/uncore/plic/plic/pendingArray
 add wave -divider UART
-add wave -hex /testbench/dut/uncore/uart/uart/u/*
+add wave -hex /testbench/dut/uncore/uncore/uart/uart/u/*
 add wave -divider GPIO
-add wave -hex /testbench/dut/uncore/gpio/gpio/*
+add wave -hex /testbench/dut/uncore/uncore/gpio/gpio/*
 #add wave -divider
 #add wave -hex /testbench/dut/core/ebu/ebu/*
 #add wave -divider

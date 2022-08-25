@@ -175,13 +175,13 @@ module testbench;
   `define STATUS_SPIE `CSR_BASE.csrsr.STATUS_SPIE
   `define STATUS_MIE  `CSR_BASE.csrsr.STATUS_MIE
   `define STATUS_SIE  `CSR_BASE.csrsr.STATUS_SIE
-  `define UART dut.uncore.uart.uart.u
+  `define UART dut.uncore.uncore.uart.uart.u
   `define UART_IER `UART.IER
   `define UART_LCR `UART.LCR
   `define UART_MCR `UART.MCR
   `define UART_SCR `UART.SCR
   `define UART_IP `UART.INTR
-  `define PLIC dut.uncore.plic.plic
+  `define PLIC dut.uncore.uncore.plic.plic
   `define PLIC_INT_PRIORITY `PLIC.intPriority
   `define PLIC_INT_ENABLE   `PLIC.intEn
   `define PLIC_THRESHOLD    `PLIC.intThreshold
@@ -422,14 +422,14 @@ module testbench;
     ProgramLabelMapFile = {linuxImageDir,"disassembly/vmlinux.objdump.lab"};
     // initialize bootrom
     memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
-    readResult = $fread(dut.uncore.bootrom.bootrom.memory.ROM,memFile);
+    readResult = $fread(dut.uncore.uncore.bootrom.bootrom.memory.ROM,memFile);
     $fclose(memFile);
     // initialize RAM and ROM
     if (CHECKPOINT==0) 
       memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
     else
       memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
-    readResult = $fread(dut.uncore.ram.ram.memory.RAM,memFile);
+    readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM,memFile);
     $fclose(memFile);
     // ---------- Ground-Zero -----------
     if (CHECKPOINT==0) begin
@@ -441,7 +441,7 @@ module testbench;
       AttemptedInstructionCount = 1; // offset needed here when running from ground zero
     // ---------- Checkpoint ----------
     end else begin
-      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.ram.ram.memory.RAM);
+      //$readmemh({checkpointDir,"ram.txt"}, dut.uncore.uncore.ram.ram.memory.RAM);
       traceFileE = $fopen({checkpointDir,"all.txt"}, "r");
       traceFileM = $fopen({checkpointDir,"all.txt"}, "r");
       interruptFile = $fopen({testvectorDir,"interrupts.txt"}, "r");
@@ -568,7 +568,7 @@ module testbench;
         if(textM.substr(0,5) == "rdtime") begin \
           //$display("%tns, %d instrs: Overwrite MTIME_CLINT on read of MTIME in memory stage.", $time, InstrCountW-1); \
           if(!NO_SPOOFING) \
-            force dut.uncore.clint.clint.MTIME = ExpectedRegValueM; \
+            force dut.uncore.uncore.clint.clint.MTIME = ExpectedRegValueM; \
         end \
       end \
     end \
@@ -645,7 +645,7 @@ module testbench;
         if(textW.substr(0,5) == "rdtime") begin
           //$display("%tns, %d instrs: Releasing force of MTIME_CLINT.", $time, AttemptedInstructionCount);
           if(!NO_SPOOFING)
-            release dut.uncore.clint.clint.MTIME;
+            release dut.uncore.uncore.clint.clint.MTIME;
         end 
         //if (ExpectedIEUAdrM == 'h10000005) begin
           //$display("%tns, %d instrs: releasing force of ReadDataM.", $time, AttemptedInstructionCount);
@@ -840,7 +840,7 @@ module testbench;
           PAdr = BaseAdr + (VPN[i] << 3);
           // ram.memory.RAM is 64-bit addressed. PAdr specifies a byte. We right shift
           // by 3 (the PTE size) to get the requested 64-bit PTE.
-          PTE = dut.uncore.ram.ram.memory.RAM[PAdr >> 3];
+          PTE = dut.uncore.uncore.ram.ram.memory.RAM[PAdr >> 3];
           PTE_R = PTE[1];
           PTE_X = PTE[3];
           if (PTE_R | PTE_X) begin
