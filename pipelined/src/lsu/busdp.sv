@@ -37,59 +37,59 @@
 module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   (
   input logic                 clk, reset,
+  
   // bus interface
-  input logic [`XLEN-1:0]     LSUBusHRDATA,
-  input logic                 LSUBusAck,
-  input logic                 LSUBusInit,
-  output logic                LSUBusWrite,
-  output logic                LSUBusRead,
-  output logic [2:0]          LSUBusSize,
-  output logic [2:0]          LSUBurstType,
-  output logic [1:0]          LSUTransType, // For AHBLite
-  output logic                LSUTransComplete,
-  input logic [2:0]           LSUFunct3M,
-  output logic [`PA_BITS-1:0] LSUBusAdr, // ** change name to HADDR to make ahb lite.
+  input logic [`XLEN-1:0]     HRDATA,
+  input logic                 BusAck,
+  input logic                 BusInit,
+  output logic                BusWrite,
+  output logic                BusRead,
+  output logic [2:0]          HSIZE,
+  output logic [2:0]          HBURST,
+  output logic [1:0]          HTRANS,
+  output logic                BusTransComplete,
+  output logic [`PA_BITS-1:0] HADDR,
   output logic [LOGWPL-1:0]   WordCount,
-  // cache interface.
-  input logic [`PA_BITS-1:0]  DCacheBusAdr,
-  input logic                 DCacheFetchLine,
-  input logic                 DCacheWriteLine,
-  output logic                DCacheBusAck,
-  output logic [LINELEN-1:0]  DLSUBusBuffer, //*** change name.
+  
+  // cache interface
+  input logic [`PA_BITS-1:0]  CacheBusAdr,
+  input logic                 CacheFetchLine,
+  input logic                 CacheWriteLine,
+  output logic                CacheBusAck,
+  output logic [LINELEN-1:0]  FetchBuffer, 
   output logic                SelUncachedAdr,
  
-  // lsu interface
-  input logic [`PA_BITS-1:0]  LSUPAdrM,
+  // lsu/ifu interface
+  input logic [`PA_BITS-1:0]  PAdr,
   input logic                 IgnoreRequest,
-  input logic [1:0]           LSURWM,
+  input logic [1:0]           RW,
   input logic                 CPUBusy,
-  input logic                 CacheableM,
-  output logic                SelLSUBusWord,
+  input logic                 Cacheable,
+  input logic [2:0]           Funct3,
+  output logic                SelBusWord,
   output logic                BusStall,
-  output logic                BusCommittedM);
+  output logic                BusCommitted);
   
   localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
-  logic [`PA_BITS-1:0]        LocalLSUBusAdr;
+  logic [`PA_BITS-1:0]        LocalHADDR;
   logic [LOGWPL-1:0]   WordCountDelayed;
   logic                BufferCaptureEn;
 
-  // *** implement flops as an array if feasbile; DLSUBusBuffer might be a problem
-  // *** better name than DLSUBusBuffer
   genvar                      index;
   for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
     logic [WORDSPERLINE-1:0] CaptureWord;
     assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
-    flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(LSUBusHRDATA),
-      .q(DLSUBusBuffer[(index+1)*`XLEN-1:index*`XLEN]));
+    flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(HRDATA),
+      .q(FetchBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
-  mux2 #(`PA_BITS) localadrmux(DCacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalLSUBusAdr);
-  assign LSUBusAdr = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalLSUBusAdr;
-  mux2 #(3) lsubussizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(LSUFunct3M), 
-    .s(SelUncachedAdr), .y(LSUBusSize));
+
+  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, PAdr, SelUncachedAdr, LocalHADDR);
+  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;
+
+  mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(Funct3), .s(SelUncachedAdr), .y(HSIZE));
 
   busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
-    .clk, .reset, .IgnoreRequest, .LSURWM, .DCacheFetchLine, .DCacheWriteLine,
-		.LSUBusAck, .LSUBusInit, .CPUBusy, .CacheableM, .BusStall, .LSUBusWrite, .SelLSUBusWord, .LSUBusRead,
-        .BufferCaptureEn,
-		.LSUBurstType, .LSUTransType, .LSUTransComplete, .DCacheBusAck, .BusCommittedM, .SelUncachedAdr, .WordCount, .WordCountDelayed);
+    .clk, .reset, .IgnoreRequest, .RW, .CacheFetchLine, .CacheWriteLine,
+		.BusAck, .BusInit, .CPUBusy, .Cacheable, .BusStall, .BusWrite, .SelBusWord, .BusRead, .BufferCaptureEn,
+		.HBURST, .HTRANS, .BusTransComplete, .CacheBusAck, .BusCommitted, .SelUncachedAdr, .WordCount, .WordCountDelayed);
 endmodule
