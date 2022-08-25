@@ -93,12 +93,14 @@ module wallypipelinedsoc (
     .HADDRD, .HSIZED, .HWRITED
    );
 
-  uncore uncore(.HCLK, .HRESETn, .TIMECLK,
-    .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-    .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HWRITED,
-    .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, .UARTSout, .MTIME_CLINT, 
-		.HSELEXT,
-		.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
-		
-);
+  if (`DBUS | `IBUS) begin : uncore
+    uncore uncore(.HCLK, .HRESETn, .TIMECLK,
+      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
+      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HADDRD, .HWRITED, .HSELEXT,
+      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
+	  .UARTSout, .MTIME_CLINT, 
+	  .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK
+    );
+  end
+
 endmodule

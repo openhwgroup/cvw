@@ -214,7 +214,7 @@ logic [3:0] dummy;
       // the design.
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
-          dut.uncore.ram.ram.memory.RAM[i] = 64'h0; 
+          dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
@@ -227,13 +227,13 @@ logic [3:0] dummy;
         string romfilename, sdcfilename;
         romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
-        $readmemh(romfilename, dut.wallypipelinedsoc.uncore.bootrom.bootrom.memory.RAM);
+        $readmemh(romfilename, dut.wallypipelinedsoc.uncore.uncore.bootrom.bootrom.memory.RAM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // force sdc timers
-        force dut.uncore.sdc.SDC.LimitTimers = 1;
+        force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
         if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-        else       $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+        else       $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
         if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
       end
 
@@ -261,7 +261,7 @@ logic [3:0] dummy;
     end
    
   logic [`XLEN-1:0] debugmemoryadr;
-//  assign debugmemoryadr = dut.uncore.ram.ram.memory.RAM[5140];
+//  assign debugmemoryadr = dut.uncore.uncore.ram.ram.memory.RAM[5140];
 
   // check results
   always @(negedge clk)
@@ -329,7 +329,7 @@ logic [3:0] dummy;
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
             if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.memory.RAM[testadrNoBase+i];
-            else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+            else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
               errors = errors+1;
@@ -360,9 +360,9 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
-            //$readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.ram.memory.RAM);
-            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.ram.ram.memory.RAM);
+            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.memory.RAM);
 
             if (riscofTest) begin
