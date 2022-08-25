@@ -145,11 +145,11 @@ module wallypipelinedcore (
   logic             IFUTransComplete;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0]         LSUBusAdr;
+  logic [`PA_BITS-1:0]         LSUHADDR;
   logic             LSUBusRead;
   logic             LSUBusWrite;
   logic             LSUBusAck, LSUBusInit;
-  logic [`XLEN-1:0]         LSUBusHRDATA;
+  logic [`XLEN-1:0]         LSUHRDATA;
   logic [`XLEN-1:0]         LSUBusHWDATA;
   
   logic             BPPredWrongE;
@@ -159,9 +159,9 @@ module wallypipelinedcore (
   logic             BPPredClassNonCFIWrongM;
   logic [4:0]             InstrClassM;
   logic             InstrAccessFaultF;
-  logic [2:0]             LSUBusSize;
-  logic [2:0]             LSUBurstType;
-  logic [1:0]             LSUTransType;
+  logic [2:0]             LSUHSIZE;
+  logic [2:0]             LSUHBURST;
+  logic [1:0]             LSUHTRANS;
   logic             LSUTransComplete;
   
   logic             DCacheMiss;
@@ -263,8 +263,8 @@ module wallypipelinedcore (
   .IEUAdrE, .IEUAdrM, .WriteDataM,
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
-  .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
-  .LSUBusHRDATA, .LSUBusHWDATA, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
+  .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
+  .LSUHRDATA, .LSUBusHWDATA, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -303,11 +303,11 @@ module wallypipelinedcore (
      .IFUBusAck, 
      .IFUBusInit, 
      // Signals from Data Cache
-     .LSUBusAdr, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
-     .LSUBusHRDATA,
-     .LSUBusSize,
-     .LSUBurstType,
-     .LSUTransType,
+     .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
+     .LSUHRDATA,
+     .LSUHSIZE,
+     .LSUHBURST,
+     .LSUHTRANS,
      .LSUTransComplete,
      .LSUBusAck,
      .LSUBusInit,

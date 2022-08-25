@@ -65,16 +65,16 @@ module lsu (
    // cpu hazard unit (trap)
    output logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
             // connect to ahb
-   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUBusAdr,
+   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR,
    (* mark_debug = "true" *)   output logic LSUBusRead, 
    (* mark_debug = "true" *)   output logic LSUBusWrite,
    (* mark_debug = "true" *)   input logic LSUBusAck,
    (* mark_debug = "true" *)   input logic LSUBusInit,
-   (* mark_debug = "true" *)   input logic [`XLEN-1:0] LSUBusHRDATA,
+   (* mark_debug = "true" *)   input logic [`XLEN-1:0] LSUHRDATA,
    (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUBusHWDATA,
-   (* mark_debug = "true" *)   output logic [2:0] LSUBusSize, 
-   (* mark_debug = "true" *)   output logic [2:0] LSUBurstType,
-   (* mark_debug = "true" *)   output logic [1:0] LSUTransType,
+   (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE, 
+   (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
+   (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
@@ -198,9 +198,10 @@ module lsu (
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
   // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
+  // *** becomes DTIM_RAM_BASE
 
   if (`DMEM) begin : dtim
-    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), //*** fix the dtim FinalWriteData - is this done already?
+    dtim dtim(.clk, .reset, .LSURWM, .IEUAdrE, .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
 
     // since we have a local memory the bus connections are all disabled.
@@ -223,9 +224,10 @@ module lsu (
             
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
       .clk, .reset,
-      .LSUBusHRDATA, .LSUBusAck, .LSUBusInit, .LSUBusWrite, .LSUBusRead, .LSUBusSize, .LSUBurstType, .LSUTransType, .LSUTransComplete,
+      .HRDATA(LSUHRDATA), .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
+      .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
       .WordCount, .SelLSUBusWord,
-      .LSUFunct3M, .LSUBusAdr, .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
+      .LSUFunct3M, .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
       .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .DLSUBusBuffer, .LSUPAdrM,
       .SelUncachedAdr, .IgnoreRequest, .LSURWM, .CPUBusy, .CacheableM,
       .BusStall, .BusCommittedM);
