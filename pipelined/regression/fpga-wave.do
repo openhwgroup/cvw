@@ -366,52 +366,52 @@ add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/VI
 add wave -noupdate -expand -group lsu -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/PTE
 add wave -noupdate -expand -group lsu -group ptwalker -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/ITLBWriteF
 add wave -noupdate -expand -group lsu -group ptwalker -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBWriteM
-add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/UARTIntr
-add wave -noupdate -group plic /testbench/dut/uncore/plic/plic/GPIOIntr
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intClaim
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intEn
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intInProgress
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intPending
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intPriority
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/intThreshold
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/nextIntPending
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/requests
-add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/plic/plic/threshMask
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsIn
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsOut
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOPinsEn
-add wave -noupdate -group GPIO /testbench/dut/uncore/gpio/gpio/GPIOIntr
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIME
-add wave -noupdate -group CLINT /testbench/dut/uncore/clint/clint/MTIMECMP
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/LSR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/MCR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/MSR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/RBR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/TXHR
-add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uart/uart/u/LCR
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/INTR
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxstate
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txstate
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txbitssent
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txbitsexpected
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxbitsreceived
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxbitsexpected
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxdata
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/rxshiftreg
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/SOUTbit
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/SINsync
-add wave -noupdate -group uart /testbench/dut/uncore/uart/uart/u/txsr
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/SIN
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/SOUT
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/RTSb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/DTRb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/OUT1b
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/OUT2b
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/DSRb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/DCDb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/CTSb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/TXRDYb
-add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uart/uart/RXRDYb
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/UARTIntr
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/GPIOIntr
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intClaim
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intEn
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intInProgress
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPending
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPriority
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intThreshold
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/nextIntPending
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/requests
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/threshMask
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsIn
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsOut
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsEn
+add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOIntr
+add wave -noupdate -group CLINT /testbench/dut/uncore/uncore/clint/clint/MTIME
+add wave -noupdate -group CLINT /testbench/dut/uncore/uncore/clint/clint/MTIMECMP
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/LSR
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/MCR
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/MSR
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/RBR
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/TXHR
+add wave -noupdate -group uart -group Registers /testbench/dut/uncore/uncore/uart/uart/u/LCR
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/INTR
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/rxstate
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/txstate
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/txbitssent
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/txbitsexpected
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/rxbitsreceived
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/rxbitsexpected
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/rxdata
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/rxshiftreg
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/SOUTbit
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/SINsync
+add wave -noupdate -group uart /testbench/dut/uncore/uncore/uart/uart/u/txsr
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/SIN
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/SOUT
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/RTSb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/DTRb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/OUT1b
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/OUT2b
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/DSRb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/DCDb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/CTSb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/TXRDYb
+add wave -noupdate -group uart -expand -group {Off-Chip Interface} /testbench/dut/uncore/uncore/uart/uart/RXRDYb
 add wave -noupdate -group {debug trace} -expand -group mem -color Yellow /testbench/dut/core/FlushW
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/core/PCM
 add wave -noupdate -group {debug trace} -expand -group mem -color Brown /testbench/dut/core/hzu/TrapM
@@ -461,14 +461,14 @@ add wave -noupdate -group sdc /testbench/dut/SDCCmdOut
 add wave -noupdate -group sdc /testbench/dut/SDCCmdOE
 add wave -noupdate -group sdc /testbench/dut/SDCDatIn
 add wave -noupdate -group sdc /testbench/dut/SDCCLK
-add wave -noupdate -group sdc -color Gold -label {cmd fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/r_curr_state
-add wave -noupdate -group sdc -color Gold -label {dat fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_dat_fsm/r_curr_state
-add wave -noupdate -group sdc -color Gold -label {clk fsm} /testbench/dut/uncore/sdc/SDC/sd_top/my_clk_fsm/r_curr_state
-add wave -noupdate -group sdc /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/i_CLK
-add wave -noupdate -group sdc /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/o_CLK
-add wave -noupdate -group sdc /testbench/dut/uncore/sdc/SDC/sd_top/slow_clk_divider/i_RST
-add wave -noupdate -group sdc /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_TIMER_OUT
-add wave -noupdate -group sdc /testbench/dut/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/TIMER_OUT_GT_ZERO
+add wave -noupdate -group sdc -color Gold -label {cmd fsm} /testbench/dut/uncore/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/r_curr_state
+add wave -noupdate -group sdc -color Gold -label {dat fsm} /testbench/dut/uncore/uncore/sdc/SDC/sd_top/my_sd_dat_fsm/r_curr_state
+add wave -noupdate -group sdc -color Gold -label {clk fsm} /testbench/dut/uncore/uncore/sdc/SDC/sd_top/my_clk_fsm/r_curr_state
+add wave -noupdate -group sdc /testbench/dut/uncore/uncore/sdc/SDC/sd_top/slow_clk_divider/i_CLK
+add wave -noupdate -group sdc /testbench/dut/uncore/uncore/sdc/SDC/sd_top/slow_clk_divider/o_CLK
+add wave -noupdate -group sdc /testbench/dut/uncore/uncore/sdc/SDC/sd_top/slow_clk_divider/i_RST
+add wave -noupdate -group sdc /testbench/dut/uncore/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/i_TIMER_OUT
+add wave -noupdate -group sdc /testbench/dut/uncore/uncore/sdc/SDC/sd_top/my_sd_cmd_fsm/TIMER_OUT_GT_ZERO
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 5} {2668546 ns} 1} {{Cursor 2} {2003 ns} 1} {{Cursor 3} {16308899 ns} 0}
 quietly wave cursor active 3

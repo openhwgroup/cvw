@@ -37,9 +37,9 @@ add wave -divider
 add wave -hex /testbench/dut/core/ifu/PCM
 add wave -hex /testbench/dut/core/ifu/InstrM
 add wave /testbench/InstrMName
-add wave /testbench/dut/uncore/ram/memwrite
-add wave -hex /testbench/dut/uncore/HADDR
-add wave -hex /testbench/dut/uncore/HWDATA
+add wave /testbench/dut/uncore/uncore/ram/memwrite
+add wave -hex /testbench/dut/uncore/uncore/HADDR
+add wave -hex /testbench/dut/uncore/uncore/HWDATA
 add wave -divider
 add wave -hex /testbench/PCW
 add wave -hex /testbench/InstrW

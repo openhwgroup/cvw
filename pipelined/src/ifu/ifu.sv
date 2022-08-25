@@ -185,12 +185,12 @@ module ifu (
   assign InstrRawF = AllInstrRawF[31:0];
 
   if (`IROM) begin : irom 
-    irom irom(.clk, .reset, .Adr(PCNextFSpill), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
     assign {BusStall, IFUBusRead} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
   end 
-  if (`IBUS) begin : bus
+  if (`BUS) begin : bus
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;

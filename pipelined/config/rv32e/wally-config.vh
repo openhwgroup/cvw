@@ -52,8 +52,7 @@
 // LSU microarchitectural Features
 `define DMEM 0
 `define IROM 0
-`define DBUS 1
-`define IBUS 1
+`define BUS 1
 `define DCACHE 0
 `define ICACHE 0
 `define VIRTMEM_SUPPORTED 0
