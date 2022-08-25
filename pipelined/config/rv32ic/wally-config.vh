@@ -49,11 +49,11 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
-`define DMEM 0
-`define IROM 0
+`define DMEM 1
+`define IROM 1
 `define BUS 0
-`define DCACHE 1
-`define ICACHE 1
+`define DCACHE 0
+`define ICACHE 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 0

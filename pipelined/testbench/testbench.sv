@@ -223,7 +223,7 @@ logic [3:0] dummy;
        else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (TEST == "fpga") begin
+      if (`FPGA) begin
         string romfilename, sdcfilename;
         romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
