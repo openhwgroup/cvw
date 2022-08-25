@@ -46,7 +46,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   output logic                BusRead,
   output logic [2:0]          HSIZE,
   output logic [2:0]          HBURST,
-  output logic [1:0]          HTRANS, // For AHBLite
+  output logic [1:0]          HTRANS,
   output logic                BusTransComplete,
   output logic [`PA_BITS-1:0] HADDR,
   output logic [LOGWPL-1:0]   WordCount,
@@ -56,7 +56,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   input logic                 CacheFetchLine,
   input logic                 CacheWriteLine,
   output logic                CacheBusAck,
-  output logic [LINELEN-1:0]  DLSUBusBuffer, //*** change name.
+  output logic [LINELEN-1:0]  FetchBuffer, 
   output logic                SelUncachedAdr,
  
   // lsu/ifu interface
@@ -80,7 +80,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
     logic [WORDSPERLINE-1:0] CaptureWord;
     assign CaptureWord[index] = BufferCaptureEn & (index == WordCountDelayed);
     flopen #(`XLEN) fb(.clk, .en(CaptureWord[index]), .d(HRDATA),
-      .q(DLSUBusBuffer[(index+1)*`XLEN-1:index*`XLEN]));
+      .q(FetchBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
   mux2 #(`PA_BITS) localadrmux(CacheBusAdr, LSUPAdrM, SelUncachedAdr, LocalHADDR);
   assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;

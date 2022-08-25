@@ -58,7 +58,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   CacheBusAck,
   input logic                   SelLSUBusWord, 
   input logic [LOGBWPL-1:0]     WordCount,
-  input logic [LINELEN-1:0]     LSUBusBuffer,
+  input logic [LINELEN-1:0]     FetchBuffer,
   output logic [`PA_BITS-1:0]   CacheBusAdr,
   output logic [WORDLEN-1:0]    ReadDataWord);
 
@@ -150,7 +150,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, LSUBusBuffer, SelBusBuffer, ReadDataLine);
+  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelBusBuffer, ReadDataLine);
 
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
     .PAdr(WordOffsetAddr),
@@ -173,10 +173,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   for(index = 0; index < LINELEN/8; index++) begin
     mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
-      .d1(LSUBusBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
   end
-  //mux2 #(LINELEN) WriteDataMux(.d0({WORDSPERLINE{FinalWriteData}}),
-//  .d1(LSUBusBuffer),	.s(SetValid), .y(CacheWriteData));
+
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),

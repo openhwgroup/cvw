@@ -196,7 +196,7 @@ module ifu (
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  ILSUBusBuffer;
+    logic [LINELEN-1:0]  FetchBuffer;
     logic [`PA_BITS-1:0] ICacheBusAdr;
     logic                ICacheBusAck;
     logic                SelUncachedAdr;
@@ -209,13 +209,13 @@ module ifu (
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
-          .DLSUBusBuffer(ILSUBusBuffer), .LSUPAdrM(PCPF),
+          .FetchBuffer, .LSUPAdrM(PCPF),
           .SelUncachedAdr,
           .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
     
-    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(ILSUBusBuffer[32-1:0]),
+    mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
       .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     
 
@@ -224,7 +224,7 @@ module ifu (
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM,
-             .LSUBusBuffer(ILSUBusBuffer), .CacheBusAck(ICacheBusAck),
+             .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheFetchLine(ICacheFetchLine),
              .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
