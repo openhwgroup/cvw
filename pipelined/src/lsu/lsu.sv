@@ -108,7 +108,7 @@ module lsu (
   logic                     InterlockStall;
   logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
-  logic                     SelLSUBusWord;
+  logic                     SelBusWord;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         IMWriteDataM, IMAWriteDataM;
   logic [`LLEN-1:0]         IMAFWriteDataM;
@@ -226,7 +226,7 @@ module lsu (
       .clk, .reset,
       .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
       .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
-      .WordCount, .SelLSUBusWord,
+      .WordCount, .SelBusWord,
       .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
       .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
       .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
@@ -239,7 +239,7 @@ module lsu (
     if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .SelLSUBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
+        .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(LSUAdrE), .PAdr(LSUPAdrM), 
         .ByteMask(ByteMaskM), .WordCount,
         .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM),

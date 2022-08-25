@@ -47,7 +47,7 @@ module busfsm #(parameter integer   WordCountThreshold,
 
    output logic              BusStall,
    output logic              BusWrite,
-   output logic              SelLSUBusWord,
+   output logic              SelBusWord,
    output logic              BusRead,
    output logic [2:0]        HBURST,
    output logic              BusTransComplete,
@@ -168,7 +168,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign BusWrite = UnCachedBusWrite | (BusCurrState == STATE_BUS_WRITE & ~WordCountFlag);
-  assign SelLSUBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0]) |
+  assign SelBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
                            (BusCurrState == STATE_BUS_WRITE);
 
