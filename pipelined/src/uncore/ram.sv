@@ -70,7 +70,7 @@ module ram #(parameter BASE=0, RANGE = 65535) (
   mux2 #(32) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH)
+  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH, `FPGA)
     memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));  
 endmodule
   
