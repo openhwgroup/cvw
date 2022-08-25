@@ -203,7 +203,7 @@ module ifu (
     busdp(.clk, .reset,
           .HRDATA(HRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelLSUBusWord(),
           .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .BusTransComplete(IFUTransComplete),
-          .LSUFunct3M(3'b010), .HADDR(IFUHADDR), .CacheBusAdr(ICacheBusAdr),
+          .Funct3(3'b010), .HADDR(IFUHADDR), .CacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
