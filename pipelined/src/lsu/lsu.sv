@@ -70,8 +70,8 @@ module lsu (
    (* mark_debug = "true" *)   output logic LSUBusWrite,
    (* mark_debug = "true" *)   input logic LSUBusAck,
    (* mark_debug = "true" *)   input logic LSUBusInit,
-   (* mark_debug = "true" *)   input logic [`XLEN-1:0] LSUHRDATA,
-   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUBusHWDATA,
+   (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,
+   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,
    (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE, 
    (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
    (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
@@ -224,7 +224,7 @@ module lsu (
             
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
       .clk, .reset,
-      .HRDATA(LSUHRDATA), .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
+      .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
       .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
       .WordCount, .SelLSUBusWord,
       .LSUFunct3M, .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
@@ -234,8 +234,8 @@ module lsu (
 
     mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, DLSUBusBuffer[`XLEN-1:0]}),
       .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LsuBushwdataMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
-      .s(SelUncachedAdr), .y(LSUBusHWDATA));
+    mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
+      .s(SelUncachedAdr), .y(LSUHWDATA));
     if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -254,7 +254,7 @@ module lsu (
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
   end else begin: nobus // block: bus
-    assign {LSUBusHWDATA, SelUncachedAdr} = '0; 
+    assign {LSUHWDATA, SelUncachedAdr} = '0; 
     assign ReadDataWordMuxM = LittleEndianReadDataWordM;
   end
 
