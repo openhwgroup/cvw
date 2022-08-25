@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// ram.sv
+// ram_ahb.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: On-chip RAM, external to core
+// Purpose: On-chip RAM, external to core, with AHB interface
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ram #(parameter BASE=0, RANGE = 65535) (
+module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELRam,
   input  logic [31:0]      HADDR,
