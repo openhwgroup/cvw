@@ -116,9 +116,9 @@ module ahblite (
   assign HADDR = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
   assign HSIZE = LSUGrant ? {1'b0, LSUHSIZE[1:0]} : 3'b010; // Instruction reads are always 32 bits
   assign HBURST = LSUGrant ? LSUHBURST : IFUHBURST; // If doing memory accesses, use LSUburst, else use Instruction burst.
-  assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HTRANS = LSUGrant ? LSUHTRANS : IFUHTRANS; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
-  assign HMASTLOCK = 0; // no locking supported
+   assign HPROT = 4'b0011; // not used; see Section 3.7
+ assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // Byte mask for HWSTRB
   swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
