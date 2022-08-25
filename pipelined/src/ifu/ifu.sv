@@ -184,10 +184,8 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
-  if (`IROM) begin : irom // *** fix up dtim taking PA_BITS rather than XLEN, *** IEUAdr is a bad name.  Probably use a ROM rather than DTIM
-    irom irom(.clk, .reset, .LSURWM(2'b10), .IEUAdrE(PCNextFSpill),
-              .TrapM(1'b0), 
-              .ReadDataWordM({{(`XLEN-32){1'b0}}, FinalInstrRawF}));
+  if (`IROM) begin : irom 
+    irom irom(.clk, .reset, .Adr(PCNextFSpill), .ReadData(FinalInstrRawF));
  
     assign {BusStall, IFUBusRead} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
@@ -209,9 +207,9 @@ module ifu (
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
-          .FetchBuffer, .LSUPAdrM(PCPF),
+          .FetchBuffer, .PAdrM(PCPF),
           .SelUncachedAdr,
-          .IgnoreRequest(ITLBMissF), .LSURWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
+          .IgnoreRequest(ITLBMissF), .RWM(2'b10), .CPUBusy, .CacheableM(CacheableF),
           .BusStall, .BusCommittedM());
 
     

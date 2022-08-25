@@ -37,7 +37,7 @@ module busfsm #(parameter integer   WordCountThreshold,
    input logic               reset,
 
    input logic               IgnoreRequest,
-   input logic [1:0]         LSURWM,
+   input logic [1:0]         RWM,
    input logic               CacheFetchLine,
    input logic               CacheWriteLine,
    input logic               BusAck,
@@ -114,8 +114,8 @@ module busfsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)                   BusNextState = STATE_BUS_READY;
-	                             else if(LSURWM[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(LSURWM[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(RWM[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(RWM[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
 		                         else if(CacheFetchLine)            BusNextState = STATE_BUS_FETCH;
 		                         else if(CacheWriteLine)            BusNextState = STATE_BUS_WRITE;
                                  else                                BusNextState = STATE_BUS_READY;
@@ -160,19 +160,19 @@ module busfsm #(parameter integer   WordCountThreshold,
   // Reset if we aren't initiating a transaction or if we are finishing a transaction.
   assign CntReset = BusCurrState == STATE_BUS_READY & ~(CacheFetchLine | CacheWriteLine) | BusTransComplete; 
   
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|LSURWM)) | CacheFetchLine | CacheWriteLine)) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|RWM)) | CacheFetchLine | CacheWriteLine)) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ) |
 					(BusCurrState == STATE_BUS_FETCH)  |
 					(BusCurrState == STATE_BUS_WRITE);
-  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[0] & ~IgnoreRequest) |
+  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign BusWrite = UnCachedBusWrite | (BusCurrState == STATE_BUS_WRITE & ~WordCountFlag);
-  assign SelLSUBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[0]) |
+  assign SelLSUBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
                            (BusCurrState == STATE_BUS_WRITE);
 
-  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & LSURWM[1] & ~IgnoreRequest) |
+  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RWM[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign BusRead = UnCachedBusRead | (BusCurrState == STATE_BUS_FETCH & ~(WordCountFlag)) | (BusCurrState == STATE_BUS_READY & CacheFetchLine);
   assign BufferCaptureEn = UnCachedBusRead | BusCurrState == STATE_BUS_FETCH;
@@ -183,7 +183,7 @@ module busfsm #(parameter integer   WordCountThreshold,
   assign CacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & BusAck) |
 						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & BusAck);
   assign BusCommittedM = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|LSURWM & UnCachedAccess)) |
+  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|RWM & UnCachedAccess)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
 						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
 						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
