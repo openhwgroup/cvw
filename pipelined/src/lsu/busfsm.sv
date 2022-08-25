@@ -153,7 +153,7 @@ module busfsm #(parameter integer   WordCountThreshold,
     endcase
   end
 
-   assign HBURST = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
+  assign HBURST = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign BusTransComplete = (UnCachedRW) ? BusAck : WordCountFlag & BusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
   assign HTRANS = (|WordCount) & ~UnCachedRW ? AHB_SEQ : (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
