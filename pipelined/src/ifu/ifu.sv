@@ -36,14 +36,14 @@ module ifu (
 	input logic 				StallF, StallD, StallE, StallM, 
 	input logic 				FlushF, FlushD, FlushE, FlushM, 
 	// Bus interface
-(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	IFUBusHRDATA,
+(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
 (* mark_debug = "true" *)	input logic 				IFUBusAck,
 (* mark_debug = "true" *)	input logic 				IFUBusInit,
-(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUBusAdr,
+(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUHADDR,
 (* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
-(* mark_debug = "true" *) output logic [2:0]  IFUBurstType,
-(* mark_debug = "true" *) output logic [1:0]  IFUTransType,
+(* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
+(* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
 (* mark_debug = "true" *) output logic        IFUTransComplete,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
@@ -203,9 +203,9 @@ module ifu (
     
     busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
     busdp(.clk, .reset,
-          .HRDATA(IFUBusHRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelLSUBusWord(),
-          .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUBurstType), .HTRANS(IFUTransType), .BusTransComplete(IFUTransComplete),
-          .LSUFunct3M(3'b010), .HADDR(IFUBusAdr), .CacheBusAdr(ICacheBusAdr),
+          .HRDATA(HRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelLSUBusWord(),
+          .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .BusTransComplete(IFUTransComplete),
+          .LSUFunct3M(3'b010), .HADDR(IFUHADDR), .CacheBusAdr(ICacheBusAdr),
           .WordCount(), 
           .CacheFetchLine(ICacheFetchLine),
           .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 

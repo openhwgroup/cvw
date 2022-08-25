@@ -41,29 +41,27 @@ module ahblite (
   input logic 				 UnsignedLoadM,
   input logic [1:0] 		 AtomicMaskedM,
   // Signals from Instruction Cache
-  input logic [`PA_BITS-1:0] IFUBusAdr, 
+  input logic [`PA_BITS-1:0] IFUHADDR, 
+  input logic [2:0]    IFUHBURST,
+  input logic [1:0]    IFUHTRANS,
   input logic 				 IFUBusRead,
-  output logic [`XLEN-1:0] 	 IFUBusHRDATA,
-  output logic 				 IFUBusAck,
-  output logic         IFUBusInit,
-  input logic [2:0]    IFUBurstType,
-  input logic [1:0]    IFUTransType,
   input logic          IFUTransComplete,
+  output logic         IFUBusInit,
+  output logic 				 IFUBusAck,
 
   // Signals from Data Cache
   input logic [`PA_BITS-1:0] LSUHADDR,
-  input logic 				 LSUBusRead, 
-  input logic 				 LSUBusWrite,
-  input logic [`XLEN-1:0] 	 LSUBusHWDATA,
-  output logic [`XLEN-1:0] 	 LSUHRDATA,
+  input logic [`XLEN-1:0] 	 LSUHWDATA,
   input logic [2:0] 		 LSUHSIZE,
   input logic [2:0]      LSUHBURST,
   input logic [1:0]    LSUHTRANS,
+  input logic 				 LSUBusRead, 
+  input logic 				 LSUBusWrite,
   input logic          LSUTransComplete,
-  output logic 				 LSUBusAck,
   output logic         LSUBusInit,
+  output logic 				 LSUBusAck,
+
   // AHB-Lite external signals
-  (* mark_debug = "true" *) input logic [`AHBW-1:0] HRDATA,
   (* mark_debug = "true" *) input logic HREADY, HRESP,
   (* mark_debug = "true" *) output logic HCLK, HRESETn,
   (* mark_debug = "true" *) output logic [31:0] HADDR, // *** one day switch to a different bus that supports the full physical address
@@ -86,8 +84,7 @@ module ahblite (
 
   logic LSUGrant;
   logic [31:0] AccessAddress;
-  logic [2:0] ISize;
-
+ 
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
@@ -133,11 +130,10 @@ module ahblite (
 
   //  bus outputs
   assign #1 LSUGrant = (NextBusState == MEMREAD) | (NextBusState == MEMWRITE);
-  assign AccessAddress = (LSUGrant) ? LSUHADDR[31:0] : IFUBusAdr[31:0];
+  assign AccessAddress = LSUGrant ? LSUHADDR[31:0] : IFUHADDR[31:0];
   assign HADDR = AccessAddress;
-  assign ISize = 3'b010; // 32 bit instructions for now; later improve for filling cache with full width; ignored on reads anyway
-  assign HSIZE = (LSUGrant) ? {1'b0, LSUHSIZE[1:0]} : ISize;
-  assign HBURST = (LSUGrant) ? LSUHBURST : IFUBurstType; // If doing memory accesses, use LSUburst, else use Instruction burst.
+  assign HSIZE = LSUGrant ? {1'b0, LSUHSIZE[1:0]} : 3'b010; // Instruction reads are always 32 bits
+  assign HBURST = LSUGrant ? LSUHBURST : IFUHBURST; // If doing memory accesses, use LSUburst, else use Instruction burst.
 
   /* Cache burst read/writes case statement (hopefully) WRAPS only have access to 4 wraps. X changes position based on HSIZE.
         000: Single (SINGLE)
@@ -153,23 +149,20 @@ module ahblite (
 
 
   assign HPROT = 4'b0011; // not used; see Section 3.7
-  assign HTRANS = (LSUGrant) ? LSUHTRANS : IFUTransType; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HTRANS = LSUGrant ? LSUHTRANS : IFUHTRANS; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = (NextBusState == MEMWRITE);
   // Byte mask for HWSTRB
   swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD[2:0]), .ByteMask(HWSTRB));
 
   // delay write data by one cycle for
-  flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUBusHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+  flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
   // delay signals for subword writes
   flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
   flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
   flop #(1)   writereg(HCLK, HWRITE, HWRITED);
 
-    // Route signals to Instruction and Data Caches
-  // *** assumes AHBW = XLEN
-  assign IFUBusHRDATA = HRDATA;
-  assign LSUHRDATA = HRDATA;
+  // Send control back to IFU and LSU
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
   assign LSUBusInit = (((BusState != MEMREAD) & (NextBusState == MEMREAD)) | (BusState != MEMWRITE) & (NextBusState == MEMWRITE));
   assign IFUBusAck = HREADY & (BusState == INSTRREAD);

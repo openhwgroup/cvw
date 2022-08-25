@@ -136,12 +136,11 @@ module wallypipelinedcore (
   logic             CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0]         IFUBusAdr;
-  logic [`XLEN-1:0]         IFUBusHRDATA;
+  logic [`PA_BITS-1:0]         IFUHADDR;
   logic             IFUBusRead;
   logic             IFUBusAck, IFUBusInit;
-  logic [2:0]       IFUBurstType;
-  logic [1:0]       IFUTransType;
+  logic [2:0]       IFUHBURST;
+  logic [1:0]       IFUHTRANS;
   logic             IFUTransComplete;
   
   // AHB LSU interface
@@ -149,8 +148,7 @@ module wallypipelinedcore (
   logic             LSUBusRead;
   logic             LSUBusWrite;
   logic             LSUBusAck, LSUBusInit;
-  logic [`XLEN-1:0]         LSUHRDATA;
-  logic [`XLEN-1:0]         LSUBusHWDATA;
+  logic [`XLEN-1:0]         LSUHWDATA;
   
   logic             BPPredWrongE;
   logic             BPPredDirWrongM;
@@ -178,8 +176,8 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, 
     .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
-    .IFUBusHRDATA, .IFUBusAck, .IFUBusInit, .PCF, .IFUBusAdr,
-    .IFUBusRead, .IFUStallF, .IFUBurstType, .IFUTransType, .IFUTransComplete,
+    .HRDATA, .IFUBusAck, .IFUBusInit, .PCF, .IFUHADDR,
+    .IFUBusRead, .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUTransComplete,
     .ICacheAccess, .ICacheMiss,
 
     // Execute
@@ -264,7 +262,7 @@ module wallypipelinedcore (
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
-  .LSUHRDATA, .LSUBusHWDATA, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
+  .HRDATA, .LSUHWDATA, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -296,16 +294,14 @@ module wallypipelinedcore (
     ahblite ebu(// IFU connections
      .clk, .reset,
      .UnsignedLoadM(1'b0), .AtomicMaskedM(2'b00),
-     .IFUBusAdr, .IFUBusRead, 
-     .IFUBusHRDATA, 
-     .IFUBurstType, 
-     .IFUTransType, 
+     .IFUHADDR, .IFUBusRead, 
+     .IFUHBURST, 
+     .IFUHTRANS, 
      .IFUTransComplete,
      .IFUBusAck, 
      .IFUBusInit, 
      // Signals from Data Cache
-     .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusHWDATA,
-     .LSUHRDATA,
+     .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUHWDATA,
      .LSUHSIZE,
      .LSUHBURST,
      .LSUHTRANS,
@@ -313,7 +309,7 @@ module wallypipelinedcore (
      .LSUBusAck,
      .LSUBusInit,
  
-     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn,
+     .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
      .HPROT, .HTRANS, .HMASTLOCK, .HADDRD, .HSIZED,
      .HWRITED);
