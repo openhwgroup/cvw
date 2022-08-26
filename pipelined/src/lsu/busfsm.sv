@@ -40,17 +40,15 @@ module busfsm #(parameter integer LOGWPL)
    input logic               BusAck,
    input logic               BusInit, // This might be better as LSUBusLock, or to send this using BusAck.
    input logic               CPUBusy,
-   input logic               Cacheable,
 
    output logic              BusStall,
    output logic              BusWrite,
    output logic              SelBusWord,
    output logic              BusRead,
-   output logic [2:0]        HBURST,
    output logic              BusTransComplete,
    output logic [1:0]        HTRANS,
-   output logic              BusCommitted,
-   output logic              BufferCaptureEn);
+   output logic              BusCommitted
+);
   
   typedef enum logic [2:0] {STATE_BUS_READY,
 				STATE_BUS_UNCACHED_WRITE,
@@ -87,22 +85,17 @@ module busfsm #(parameter integer LOGWPL)
 	endcase
   end
 
-  assign HBURST = 3'b0;
   assign BusTransComplete = BusAck;
-  // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
-  assign HTRANS = (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
-   
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & |RW) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ);
   assign BusWrite = (BusCurrState == STATE_BUS_READY & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
+  assign BusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
+							  (BusCurrState == STATE_BUS_UNCACHED_READ);
+  assign BusCommitted = BusCurrState != STATE_BUS_READY;
   assign SelBusWord = (BusCurrState == STATE_BUS_READY & RW[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
 
-  assign BusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
-							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign BufferCaptureEn = BusRead;
-
-  assign BusCommitted = BusCurrState != STATE_BUS_READY;
+  assign HTRANS = (BusRead | BusWrite) & (~BusAck) ? AHB_NONSEQ : AHB_IDLE; 
 endmodule

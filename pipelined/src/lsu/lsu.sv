@@ -251,19 +251,18 @@ module lsu (
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA));
     end else begin : passthrough // just needs a register to hold the value from the bus
-      logic                BufferCaptureEn;
-
-      flopen #(`XLEN) fb(.clk, .en(BufferCaptureEn), .d(HRDATA), .q(ReadDataWordMuxM));
+      flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordMuxM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
       busfsm #(LOGBWPL) busfsm(
         .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
-        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
-        .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
-        .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
+        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .BusStall, .BusWrite(LSUBusWrite), 
+        .SelBusWord, .BusRead(LSUBusRead), 
+        .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
         .BusCommitted(BusCommittedM));
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
+      assign LSUHBURST = 3'b0;
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
