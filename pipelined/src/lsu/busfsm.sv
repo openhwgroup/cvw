@@ -55,7 +55,7 @@ module busfsm #(parameter integer LOGWPL)
   logic 			   UnCachedBusRead;
   logic 			   UnCachedBusWrite;
   logic 			   WordCountFlag;
-  logic 			   UnCachedAccess, UnCachedRW;
+  logic 			   UnCachedAccess;
   logic [2:0]    LocalBurstType;
   
 
@@ -100,8 +100,8 @@ module busfsm #(parameter integer LOGWPL)
 
   assign LocalBurstType = 3'b000;
 
-  assign HBURST = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
-  assign BusTransComplete = (UnCachedRW) ? BusAck : WordCountFlag & BusAck;
+  assign HBURST = 3'b0;
+  assign BusTransComplete = BusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
   assign HTRANS = (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
    
@@ -119,8 +119,5 @@ module busfsm #(parameter integer LOGWPL)
   assign BusRead = UnCachedBusRead;
   assign BufferCaptureEn = UnCachedBusRead;
 
-  // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because Cacheable is 0 when flushing cache.
-  assign UnCachedRW = UnCachedBusWrite | UnCachedBusRead; 
-
-   assign BusCommitted = BusCurrState != STATE_BUS_READY;
+  assign BusCommitted = BusCurrState != STATE_BUS_READY;
 endmodule
