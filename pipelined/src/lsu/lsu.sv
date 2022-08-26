@@ -202,14 +202,11 @@ module lsu (
     dtim dtim(.clk, .reset, .LSURWM,
               .IEUAdrE(CPUBusy | LSURWM[0] | reset ? IEUAdrM : IEUAdrE),
               .TrapM, .WriteDataM(LSUWriteDataM), 
-              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]), .Cacheable(CacheableM));
+              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
 
     // since we have a local memory the bus connections are all disabled.
     // There are no peripherals supported.
     // *** this will have to change to support TIM and bus (DH 8/25/22)
-    assign {BusStall, LSUBusWrite, LSUBusRead, BusCommittedM} = '0;   
-    assign {DCacheStallM, DCacheCommittedM} = '0;
-    assign {DCacheMiss, DCacheAccess} = '0;
   end 
   if (`BUS) begin : bus  
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
@@ -256,20 +253,22 @@ module lsu (
 
       busfsm #(LOGBWPL) busfsm(
         .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
-        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .BusStall, .BusWrite(LSUBusWrite), 
-        .BusRead(LSUBusRead), 
-        .HTRANS(LSUHTRANS),  
-        .BusCommitted(BusCommittedM));
+        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, 
+        .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
+        .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign LSUHBURST = 3'b0;
-      assign LSUTransComplete = BusAck;
+      assign LSUTransComplete = LSUBusAck;
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
-      assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
-    end
+      assign {DCacheMiss, DCacheAccess} = '0;
+  end
   end else begin: nobus // block: bus
     assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = LittleEndianReadDataWordM;
+    assign {BusStall, BusCommittedM} = '0;   
+    assign {DCacheMiss, DCacheAccess} = '0;
+    assign {DCacheStallM, DCacheCommittedM} = '0;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
