@@ -108,7 +108,6 @@ module lsu (
   logic                     InterlockStall;
   logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
-  logic                     SelBusWord;
   logic                     DataDAPageFaultM;
   logic [`XLEN-1:0]         IMWriteDataM, IMAWriteDataM;
   logic [`LLEN-1:0]         IMAFWriteDataM;
@@ -224,6 +223,7 @@ module lsu (
             
     if(`DCACHE) begin : dcache
       logic                SelUncachedAdr, DCacheBusAck;
+      logic                     SelBusWord;
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -257,12 +257,13 @@ module lsu (
       busfsm #(LOGBWPL) busfsm(
         .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .BusStall, .BusWrite(LSUBusWrite), 
-        .SelBusWord, .BusRead(LSUBusRead), 
-        .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
+        .BusRead(LSUBusRead), 
+        .HTRANS(LSUHTRANS),  
         .BusCommitted(BusCommittedM));
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign LSUHBURST = 3'b0;
+      assign LSUTransComplete = BusAck;
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
