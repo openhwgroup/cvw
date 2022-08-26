@@ -257,7 +257,7 @@ module lsu (
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
       busfsm #(LOGBWPL, `DCACHE) busfsm(
-        .clk, .reset, .IgnoreRequest, .RW(LSURWM), .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine),
+        .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
         .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
         .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
