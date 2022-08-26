@@ -62,8 +62,6 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
   
 
   typedef enum logic [2:0] {STATE_BUS_READY,
-				STATE_BUS_FETCH,
-				STATE_BUS_WRITE,
 				STATE_BUS_UNCACHED_WRITE,
 				STATE_BUS_UNCACHED_WRITE_DONE,
 				STATE_BUS_UNCACHED_READ,
@@ -114,21 +112,19 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
 					(BusCurrState == STATE_BUS_UNCACHED_READ);
   assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
-  assign BusWrite = UnCachedBusWrite | (BusCurrState == STATE_BUS_WRITE & ~WordCountFlag);
+  assign BusWrite = UnCachedBusWrite;
   assign SelBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0]) |
-						   (BusCurrState == STATE_BUS_UNCACHED_WRITE) |
-                           (BusCurrState == STATE_BUS_WRITE);
+						   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
 
   assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign BusRead = UnCachedBusRead | (BusCurrState == STATE_BUS_FETCH & ~(WordCountFlag));
-  assign BufferCaptureEn = UnCachedBusRead | BusCurrState == STATE_BUS_FETCH;
+  assign BusRead = UnCachedBusRead;
+  assign BufferCaptureEn = UnCachedBusRead;
 
   // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because Cacheable is 0 when flushing cache.
   assign UnCachedRW = UnCachedBusWrite | UnCachedBusRead; 
 
-  assign CacheBusAck = (BusCurrState == STATE_BUS_FETCH & WordCountFlag & BusAck) |
-						(BusCurrState == STATE_BUS_WRITE & WordCountFlag & BusAck);
+  assign CacheBusAck = 0;
   assign BusCommitted = BusCurrState != STATE_BUS_READY;
   assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|RW & UnCachedAccess)) |
 						  (BusCurrState == STATE_BUS_UNCACHED_READ |
