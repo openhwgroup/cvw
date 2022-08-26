@@ -88,7 +88,7 @@ module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
 
   mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(Funct3), .s(SelUncachedAdr), .y(HSIZE));
 
-  busfsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) busfsm(
+  buscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) buscachefsm(
     .clk, .reset, .IgnoreRequest, .RW, .CacheFetchLine, .CacheWriteLine,
 		.BusAck, .BusInit, .CPUBusy, .Cacheable, .BusStall, .BusWrite, .SelBusWord, .BusRead, .BufferCaptureEn,
 		.HBURST, .HTRANS, .BusTransComplete, .CacheBusAck, .BusCommitted, .SelUncachedAdr, .WordCount, .WordCountDelayed);

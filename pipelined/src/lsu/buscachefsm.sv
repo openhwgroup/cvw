@@ -4,7 +4,7 @@
 // Written: Ross Thompson ross1728@gmail.com December 29, 2021
 // Modified: 
 //
-// Purpose: Load/Store Unit's interface to BUS for cacheless system
+// Purpose: Load/Store Unit's interface to BUS for cache-based system
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 
-module busfsm #(parameter integer   WordCountThreshold,
+module buscachefsm #(parameter integer   WordCountThreshold,
 				parameter integer LOGWPL, parameter logic CACHE_ENABLED )
   (input logic               clk,
    input logic               reset,
