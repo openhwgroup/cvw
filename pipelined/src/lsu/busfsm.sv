@@ -64,6 +64,8 @@ module busfsm #(parameter integer LOGWPL)
 				STATE_BUS_UNCACHED_READ_DONE,
 				STATE_BUS_CPU_BUSY} busstatetype;
 
+  typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
+
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
   always_ff @(posedge clk)
