@@ -256,7 +256,7 @@ module lsu (
       flopen #(`XLEN) fb(.clk, .en(BufferCaptureEn), .d(HRDATA), .q(ReadDataWordMuxM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
-      busfsm #(LOGBWPL, `DCACHE) busfsm(
+      busfsm #(LOGBWPL) busfsm(
         .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
         .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,

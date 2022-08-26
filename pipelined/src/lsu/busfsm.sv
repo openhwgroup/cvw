@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 
-module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
+module busfsm #(parameter integer LOGWPL)
   (input logic               clk,
    input logic               reset,
 
@@ -74,7 +74,7 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
 
    assign WordCountFlag = 1; // Detect when we are waiting on the final access.
 
-  assign UnCachedAccess = ~CACHE_ENABLED | ~Cacheable;
+  assign UnCachedAccess = 1;
 
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
@@ -126,10 +126,5 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
 
   assign CacheBusAck = 0;
   assign BusCommitted = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = (BusCurrState == STATE_BUS_READY & (|RW & UnCachedAccess)) |
-						  (BusCurrState == STATE_BUS_UNCACHED_READ |
-						   BusCurrState == STATE_BUS_UNCACHED_READ_DONE |
-						   BusCurrState == STATE_BUS_UNCACHED_WRITE |
-						   BusCurrState == STATE_BUS_UNCACHED_WRITE_DONE) |
-						  ~CACHE_ENABLED; // if no Cache always select uncachedadr.
+  assign SelUncachedAdr = 1;
 endmodule
