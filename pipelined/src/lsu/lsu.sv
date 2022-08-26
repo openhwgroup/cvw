@@ -208,19 +208,18 @@ module lsu (
     // There are no peripherals supported.
     // *** this will have to change to support TIM and bus (DH 8/25/22)
   end 
-  if (`BUS) begin : bus  
+  if (`BUS) begin : bus              
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
     localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;
-    logic [LINELEN-1:0]  FetchBuffer;
-    logic [`PA_BITS-1:0] DCacheBusAdr;
-    logic                DCacheWriteLine;
-    logic                DCacheFetchLine;
-    logic [LOGBWPL-1:0]   WordCount;
-            
     if(`DCACHE) begin : dcache
+      localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
+      logic [LINELEN-1:0]  FetchBuffer;
+      logic [`PA_BITS-1:0] DCacheBusAdr;
+      logic                DCacheWriteLine;
+      logic                DCacheFetchLine;
+      logic [LOGBWPL-1:0]  WordCount;
       logic                SelUncachedAdr, DCacheBusAck;
-      logic                     SelBusWord;
+      logic                SelBusWord;
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -233,7 +232,7 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
-      busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
+      cachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) cachedp(
         .clk, .reset,
         .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
         .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
@@ -248,6 +247,9 @@ module lsu (
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA));
     end else begin : passthrough // just needs a register to hold the value from the bus
+      assign LSUHADDR = LSUPAdrM;
+      assign LSUHSIZE = LSUFunct3M;
+ 
       flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordMuxM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
@@ -260,7 +262,7 @@ module lsu (
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign LSUHBURST = 3'b0;
       assign LSUTransComplete = LSUBusAck;
-      assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
+      assign {ReadDataWordM, DCacheStallM, DCacheCommittedM} = '0;
       assign {DCacheMiss, DCacheAccess} = '0;
   end
   end else begin: nobus // block: bus
