@@ -75,11 +75,13 @@ module ahblite (
   (* mark_debug = "true" *) output logic HMASTLOCK
 );
 
+  localparam ADRBITS = $clog2(`XLEN/8); // address bits for Byte Mask generator
+
   typedef enum logic [1:0] {IDLE, MEMREAD, MEMWRITE, INSTRREAD} statetype;
   statetype BusState, NextBusState;
   logic LSUGrant;
-  logic [2:0] HADDRD;
-  logic [3:0] HSIZED;
+  logic [ADRBITS-1:0] HADDRD;
+  logic [1:0] HSIZED;
  
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -123,9 +125,9 @@ module ahblite (
   flopen #(`XLEN) wdreg(HCLK, (LSUBusAck | LSUBusInit), LSUHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
 
   // Byte mask for HWSTRB based on delayed signals
-  flop #(3)   adrreg(HCLK, HADDR[2:0], HADDRD);
-  flop #(4)   sizereg(HCLK, {UnsignedLoadM, HSIZE}, HSIZED);
-  swbytemask swbytemask(.Size(HSIZED[1:0]), .Adr(HADDRD), .ByteMask(HWSTRB));
+  flop #(ADRBITS)   adrreg(HCLK, HADDR[ADRBITS-1:0], HADDRD);
+  flop #(2)   sizereg(HCLK, HSIZE[1:0], HSIZED);
+  swbytemask swbytemask(.Size({1'b0, HSIZED}), .Adr(HADDRD), .ByteMask(HWSTRB));
 
   // Send control back to IFU and LSU
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
