@@ -58,7 +58,6 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
   
   logic 			   UnCachedBusRead;
   logic 			   UnCachedBusWrite;
-  logic 			   CntEn, PreCntEn;
   logic 			   CntReset;
   logic 			   WordCountFlag;
   logic 			   UnCachedAccess, UnCachedRW;
@@ -78,9 +77,7 @@ module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
-  assign PreCntEn = (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_WRITE);
-  assign WordCountFlag = 1; // Detect when we are waiting on the final access.
-  assign CntEn = (PreCntEn & BusAck | BusInit) & ~WordCountFlag & ~UnCachedRW; // Want to count when doing cache accesses and we aren't wrapping up.
+   assign WordCountFlag = 1; // Detect when we are waiting on the final access.
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~Cacheable;
 
