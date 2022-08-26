@@ -49,7 +49,6 @@ module busfsm #(parameter integer LOGWPL)
    output logic [2:0]        HBURST,
    output logic              BusTransComplete,
    output logic [1:0]        HTRANS,
-   output logic              CacheBusAck,
    output logic              BusCommitted,
    output logic              BufferCaptureEn);
   
@@ -123,6 +122,5 @@ module busfsm #(parameter integer LOGWPL)
   // Makes bus only do uncached reads/writes when we actually do uncached reads/writes. Needed because Cacheable is 0 when flushing cache.
   assign UnCachedRW = UnCachedBusWrite | UnCachedBusRead; 
 
-  assign CacheBusAck = 0;
-  assign BusCommitted = BusCurrState != STATE_BUS_READY;
+   assign BusCommitted = BusCurrState != STATE_BUS_READY;
 endmodule
