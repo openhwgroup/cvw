@@ -51,7 +51,6 @@ module busfsm #(parameter integer LOGWPL)
    output logic [1:0]        HTRANS,
    output logic              CacheBusAck,
    output logic              BusCommitted,
-   output logic              SelUncachedAdr,
    output logic              BufferCaptureEn);
   
   logic 			   UnCachedBusRead;
@@ -126,5 +125,4 @@ module busfsm #(parameter integer LOGWPL)
 
   assign CacheBusAck = 0;
   assign BusCommitted = BusCurrState != STATE_BUS_READY;
-  assign SelUncachedAdr = 1;
 endmodule

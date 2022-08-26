@@ -193,7 +193,6 @@ module lsu (
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`LLEN-1:0]    ReadDataWordMuxM;
   logic                IgnoreRequest;
-  logic                SelUncachedAdr;
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
   // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
@@ -225,6 +224,8 @@ module lsu (
     logic [LOGBWPL-1:0]   WordCount;
             
     if(`DCACHE) begin : dcache
+      logic                SelUncachedAdr;
+
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
@@ -261,14 +262,14 @@ module lsu (
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
         .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
         .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
-        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM), .SelUncachedAdr);
+        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM));
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end
   end else begin: nobus // block: bus
-    assign {LSUHWDATA, SelUncachedAdr} = '0; 
+    assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = LittleEndianReadDataWordM;
   end
 
