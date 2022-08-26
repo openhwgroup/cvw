@@ -31,8 +31,7 @@
 `include "wally-config.vh"
 
 
-module busfsm #(parameter integer   WordCountThreshold,
-				parameter integer LOGWPL, parameter logic CACHE_ENABLED )
+module busfsm #(parameter integer LOGWPL, parameter logic CACHE_ENABLED )
   (input logic               clk,
    input logic               reset,
 
@@ -55,17 +54,13 @@ module busfsm #(parameter integer   WordCountThreshold,
    output logic              CacheBusAck,
    output logic              BusCommitted,
    output logic              SelUncachedAdr,
-   output logic              BufferCaptureEn,
-   output logic [LOGWPL-1:0] WordCount, WordCountDelayed);
-  
-
+   output logic              BufferCaptureEn);
   
   logic 			   UnCachedBusRead;
   logic 			   UnCachedBusWrite;
   logic 			   CntEn, PreCntEn;
   logic 			   CntReset;
   logic 			   WordCountFlag;
-  logic [LOGWPL-1:0]   NextWordCount;
   logic 			   UnCachedAccess, UnCachedRW;
   logic [2:0]    LocalBurstType;
   
@@ -83,26 +78,8 @@ module busfsm #(parameter integer   WordCountThreshold,
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
 
-  // Used to send address for address stage of AHB.
-  flopenr #(LOGWPL) 
-  WordCountReg(.clk(clk),
-		.reset(reset | CntReset),
-		.en(CntEn),
-		.d(NextWordCount),
-		.q(WordCount));  
-  
-  // Used to store data from data phase of AHB.
-  flopenr #(LOGWPL) 
-  WordCountDelayedReg(.clk(clk),
-		.reset(reset | CntReset),
-		.en(CntEn),
-		.d(WordCount),
-		.q(WordCountDelayed));
-
-  assign NextWordCount = WordCount + 1'b1;
-
   assign PreCntEn = (BusCurrState == STATE_BUS_FETCH) | (BusCurrState == STATE_BUS_WRITE);
-  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0]); // Detect when we are waiting on the final access.
+  assign WordCountFlag = 1; // Detect when we are waiting on the final access.
   assign CntEn = (PreCntEn & BusAck | BusInit) & ~WordCountFlag & ~UnCachedRW; // Want to count when doing cache accesses and we aren't wrapping up.
 
   assign UnCachedAccess = ~CACHE_ENABLED | ~Cacheable;
@@ -143,20 +120,12 @@ module busfsm #(parameter integer   WordCountThreshold,
 	endcase
   end
 
-  always_comb begin
-    case(WordCountThreshold)
-      0:        LocalBurstType = 3'b000;
-      3:        LocalBurstType = 3'b011; // INCR4
-      7:        LocalBurstType = 3'b101; // INCR8
-      15:       LocalBurstType = 3'b111; // INCR16
-      default:  LocalBurstType = 3'b001; // INCR without end.
-    endcase
-  end
+  assign LocalBurstType = 3'b000;
 
   assign HBURST = (UnCachedRW) ? 3'b0 : LocalBurstType; // Don't want to use burst when doing an Uncached Access.
   assign BusTransComplete = (UnCachedRW) ? BusAck : WordCountFlag & BusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
-  assign HTRANS = (|WordCount) & ~UnCachedRW ? AHB_SEQ : (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
+  assign HTRANS = (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
   // Reset if we aren't initiating a transaction or if we are finishing a transaction.
   assign CntReset = BusCurrState == STATE_BUS_READY & ~(CacheFetchLine | CacheWriteLine) | BusTransComplete; 
   

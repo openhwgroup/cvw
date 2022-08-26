@@ -256,22 +256,12 @@ module lsu (
       flopen #(`XLEN) fb(.clk, .en(BufferCaptureEn), .d(HRDATA), .q(ReadDataWordMuxM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
-      busfsm #(0, LOGBWPL, `DCACHE) busfsm(
+      busfsm #(LOGBWPL, `DCACHE) busfsm(
         .clk, .reset, .IgnoreRequest, .RW(LSURWM), .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine),
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
         .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
         .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
-        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM), .SelUncachedAdr, .WordCount(), .WordCountDelayed());
-
-/*      busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
-        .clk, .reset,
-        .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
-        .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
-        .WordCount, .SelBusWord,
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
-        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
-        .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
-        .BusStall, .BusCommitted(BusCommittedM)); */
+        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM), .SelUncachedAdr);
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
