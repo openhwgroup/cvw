@@ -55,7 +55,6 @@ module busfsm #(parameter integer LOGWPL)
   logic 			   UnCachedBusRead;
   logic 			   UnCachedBusWrite;
   logic 			   WordCountFlag;
-  logic 			   UnCachedAccess;
   logic [2:0]    LocalBurstType;
   
 
@@ -72,8 +71,6 @@ module busfsm #(parameter integer LOGWPL)
 
    assign WordCountFlag = 1; // Detect when we are waiting on the final access.
 
-  assign UnCachedAccess = 1;
-
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
     else BusCurrState <= #1 BusNextState;  
@@ -81,8 +78,8 @@ module busfsm #(parameter integer LOGWPL)
   always_comb begin
 	case(BusCurrState)
 	  STATE_BUS_READY:           if(IgnoreRequest)                   BusNextState = STATE_BUS_READY;
-	                             else if(RW[0] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(RW[1] & UnCachedAccess) BusNextState = STATE_BUS_UNCACHED_READ;
+	                             else if(RW[0]) BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                         else if(RW[1]) BusNextState = STATE_BUS_UNCACHED_READ;
                                  else                                BusNextState = STATE_BUS_READY;
       STATE_BUS_UNCACHED_WRITE:  if(BusAck)                       BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
 		                         else                                BusNextState = STATE_BUS_UNCACHED_WRITE;
@@ -105,16 +102,16 @@ module busfsm #(parameter integer LOGWPL)
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
   assign HTRANS = (BusRead | BusWrite) & (~BusTransComplete) ? AHB_NONSEQ : AHB_IDLE; 
    
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & ((UnCachedAccess & (|RW)))) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & |RW) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0] & ~IgnoreRequest) |
+  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
   assign BusWrite = UnCachedBusWrite;
-  assign SelBusWord = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[0]) |
+  assign SelBusWord = (BusCurrState == STATE_BUS_READY & RW[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
 
-  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & UnCachedAccess & RW[1] & ~IgnoreRequest) |
+  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign BusRead = UnCachedBusRead;
   assign BufferCaptureEn = UnCachedBusRead;
