@@ -220,11 +220,10 @@ module lsu (
     logic [`PA_BITS-1:0] DCacheBusAdr;
     logic                DCacheWriteLine;
     logic                DCacheFetchLine;
-    logic                DCacheBusAck;
     logic [LOGBWPL-1:0]   WordCount;
             
     if(`DCACHE) begin : dcache
-      logic                SelUncachedAdr;
+      logic                SelUncachedAdr, DCacheBusAck;
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -262,7 +261,7 @@ module lsu (
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
         .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
         .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
-        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM));
+        .BusCommitted(BusCommittedM));
     
       // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
