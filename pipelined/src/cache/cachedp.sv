@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// busdp.sv
+// cachedp.sv
 //
 // Written: Ross Thompson ross1728@gmail.com January 30, 2022
 // Modified: 
 //
-// Purpose: Bus data path.
+// Purpose: Cache/Bus data path.
 // Bus Side logic
 // register the fetch data from the next level of memory.
 // This register should be necessary for timing.  There is no register in the uncore or
@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module busdp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
+module cachedp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   (
   input logic                 clk, reset,
   
