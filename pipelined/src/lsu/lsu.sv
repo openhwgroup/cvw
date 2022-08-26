@@ -224,20 +224,6 @@ module lsu (
     logic                DCacheBusAck;
     logic [LOGBWPL-1:0]   WordCount;
             
-    busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
-      .clk, .reset,
-      .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
-      .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
-      .WordCount, .SelBusWord,
-      .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
-      .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
-      .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
-      .BusStall, .BusCommitted(BusCommittedM));
-
-    mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
-      .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-    mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
-      .s(SelUncachedAdr), .y(LSUHWDATA));
     if(`DCACHE) begin : dcache
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -250,8 +236,44 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+      busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
+        .clk, .reset,
+        .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
+        .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
+        .WordCount, .SelBusWord,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
+        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
+        .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
+        .BusStall, .BusCommitted(BusCommittedM));
 
-    end else begin : passthrough
+      mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
+        .s(SelUncachedAdr), .y(ReadDataWordMuxM));
+      mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
+        .s(SelUncachedAdr), .y(LSUHWDATA));
+    end else begin : passthrough // just needs a register to hold the value from the bus
+      logic                BufferCaptureEn;
+
+      flopen #(`XLEN) fb(.clk, .en(BufferCaptureEn), .d(HRDATA), .q(ReadDataWordMuxM));
+      assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
+
+      busfsm #(0, LOGBWPL, `DCACHE) busfsm(
+        .clk, .reset, .IgnoreRequest, .RW(LSURWM), .CacheFetchLine(DCacheFetchLine), .CacheWriteLine(DCacheWriteLine),
+        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, .Cacheable(1'b0), .BusStall, .BusWrite(LSUBusWrite), 
+        .SelBusWord, .BusRead(LSUBusRead), .BufferCaptureEn,
+        .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete), 
+        .CacheBusAck(DCacheBusAck), .BusCommitted(BusCommittedM), .SelUncachedAdr, .WordCount(), .WordCountDelayed());
+
+/*      busdp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) busdp(
+        .clk, .reset,
+        .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
+        .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
+        .WordCount, .SelBusWord,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
+        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
+        .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
+        .BusStall, .BusCommitted(BusCommittedM)); */
+    
+      // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
       assign {ReadDataWordM, DCacheStallM, DCacheCommittedM, DCacheFetchLine, DCacheWriteLine} = '0;
       assign DCacheMiss = CacheableM; assign DCacheAccess = CacheableM;
     end

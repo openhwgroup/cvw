@@ -127,7 +127,7 @@ module ahblite (
   // Byte mask for HWSTRB based on delayed signals
   flop #(ADRBITS)   adrreg(HCLK, HADDR[ADRBITS-1:0], HADDRD);
   flop #(2)   sizereg(HCLK, HSIZE[1:0], HSIZED);
-  swbytemask swbytemask(.Size({1'b0, HSIZED}), .Adr(HADDRD), .ByteMask(HWSTRB));
+  swbytemask  swbytemask(.Size({1'b0, HSIZED}), .Adr(HADDRD), .ByteMask(HWSTRB));
 
   // Send control back to IFU and LSU
   assign IFUBusInit = (BusState != INSTRREAD) & (NextBusState == INSTRREAD);
