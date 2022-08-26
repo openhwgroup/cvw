@@ -52,11 +52,6 @@ module busfsm #(parameter integer LOGWPL)
    output logic              BusCommitted,
    output logic              BufferCaptureEn);
   
-  logic 			   UnCachedBusRead;
-  logic 			   UnCachedBusWrite;
-  logic [2:0]    LocalBurstType;
-  
-
   typedef enum logic [2:0] {STATE_BUS_READY,
 				STATE_BUS_UNCACHED_WRITE,
 				STATE_BUS_UNCACHED_WRITE_DONE,
@@ -92,8 +87,6 @@ module busfsm #(parameter integer LOGWPL)
 	endcase
   end
 
-  assign LocalBurstType = 3'b000;
-
   assign HBURST = 3'b0;
   assign BusTransComplete = BusAck;
   // Use SEQ if not doing first word, NONSEQ if doing the first read/write, and IDLE if finishing up.
@@ -102,16 +95,14 @@ module busfsm #(parameter integer LOGWPL)
   assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & |RW) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign UnCachedBusWrite = (BusCurrState == STATE_BUS_READY & RW[0] & ~IgnoreRequest) |
+  assign BusWrite = (BusCurrState == STATE_BUS_READY & RW[0] & ~IgnoreRequest) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
-  assign BusWrite = UnCachedBusWrite;
   assign SelBusWord = (BusCurrState == STATE_BUS_READY & RW[0]) |
 						   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
 
-  assign UnCachedBusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
+  assign BusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign BusRead = UnCachedBusRead;
-  assign BufferCaptureEn = UnCachedBusRead;
+  assign BufferCaptureEn = BusRead;
 
   assign BusCommitted = BusCurrState != STATE_BUS_READY;
 endmodule
