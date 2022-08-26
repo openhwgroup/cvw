@@ -65,20 +65,20 @@ module busfsm #(parameter integer LOGWPL)
   
   always_comb begin
 	case(BusCurrState)
-	  STATE_BUS_READY:           if(IgnoreRequest)                   BusNextState = STATE_BUS_READY;
-	                             else if(RW[0]) BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                         else if(RW[1]) BusNextState = STATE_BUS_UNCACHED_READ;
-                                 else                                BusNextState = STATE_BUS_READY;
-      STATE_BUS_UNCACHED_WRITE:  if(BusAck)                       BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
-		                         else                                BusNextState = STATE_BUS_UNCACHED_WRITE;
-      STATE_BUS_UNCACHED_READ:   if(BusAck)                       BusNextState = STATE_BUS_UNCACHED_READ_DONE;
-		                         else                                BusNextState = STATE_BUS_UNCACHED_READ;
-      STATE_BUS_UNCACHED_WRITE_DONE: if(CPUBusy)                     BusNextState = STATE_BUS_CPU_BUSY;
-                                     else                            BusNextState = STATE_BUS_READY;
-      STATE_BUS_UNCACHED_READ_DONE:  if(CPUBusy)                     BusNextState = STATE_BUS_CPU_BUSY;
-                                     else                            BusNextState = STATE_BUS_READY;
-	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                     BusNextState = STATE_BUS_CPU_BUSY;
-                                     else                            BusNextState = STATE_BUS_READY;
+	  STATE_BUS_READY:                 if(IgnoreRequest)             BusNextState = STATE_BUS_READY;
+	                                   else if(RW[0])                BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                                 else if(RW[1])                BusNextState = STATE_BUS_UNCACHED_READ;
+                                     else                          BusNextState = STATE_BUS_READY;
+      STATE_BUS_UNCACHED_WRITE:      if(BusAck)                    BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
+		                                 else                          BusNextState = STATE_BUS_UNCACHED_WRITE;
+      STATE_BUS_UNCACHED_READ:       if(BusAck)                    BusNextState = STATE_BUS_UNCACHED_READ_DONE;
+		                                 else                          BusNextState = STATE_BUS_UNCACHED_READ;
+      STATE_BUS_UNCACHED_WRITE_DONE: if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                          BusNextState = STATE_BUS_READY;
+      STATE_BUS_UNCACHED_READ_DONE:  if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                          BusNextState = STATE_BUS_READY;
+	  STATE_BUS_CPU_BUSY:              if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
+                                     else                          BusNextState = STATE_BUS_READY;
 	  default:                                                       BusNextState = STATE_BUS_READY;
 	endcase
   end
