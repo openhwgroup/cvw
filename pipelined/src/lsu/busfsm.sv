@@ -54,7 +54,6 @@ module busfsm #(parameter integer LOGWPL)
   
   logic 			   UnCachedBusRead;
   logic 			   UnCachedBusWrite;
-  logic 			   WordCountFlag;
   logic [2:0]    LocalBurstType;
   
 
@@ -68,8 +67,6 @@ module busfsm #(parameter integer LOGWPL)
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
-
-   assign WordCountFlag = 1; // Detect when we are waiting on the final access.
 
   always_ff @(posedge clk)
     if (reset)    BusCurrState <= #1 STATE_BUS_READY;
