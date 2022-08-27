@@ -250,7 +250,7 @@ module lsu (
       assign LSUHADDR = LSUPAdrM;
       assign LSUHSIZE = LSUFunct3M;
  
-      flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordMuxM));
+      flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
       busfsm #(LOGBWPL) busfsm(
@@ -259,12 +259,11 @@ module lsu (
         .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
         .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
     
-      // *** possible bug - ReadDatWordM vs. ReadDataWordMuxW - is byte swapping needed for endian
+     assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
       assign LSUTransComplete = LSUBusAck;
-      assign {ReadDataWordM, DCacheStallM, DCacheCommittedM} = '0;
-      assign {DCacheMiss, DCacheAccess} = '0;
-  end
+      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+ end
   end else begin: nobus // block: bus
     assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = LittleEndianReadDataWordM;
