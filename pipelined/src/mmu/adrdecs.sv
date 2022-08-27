@@ -52,7 +52,7 @@ module adrdecs (
   adrdec iromdec(PhysicalAddress, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[1]);
   adrdec dtimdec(PhysicalAddress, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[0]);
 
-  assign SelRegions[10] = ~|(SelRegions[7:2]); // none of the bus regions are selected
+  assign SelRegions[10] = ~|(SelRegions[7:0]); // none of the regions are selected
 
 endmodule
 

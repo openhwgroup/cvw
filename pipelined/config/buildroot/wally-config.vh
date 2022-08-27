@@ -85,10 +85,10 @@
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-`define DTIM_SUPPORTED 0
+`define DTIM_SUPPORTED 1'b0
 `define DTIM_BASE       34'h80000000
 `define DTIM_RANGE      34'h00001FFF
-`define IROM_SUPPORTED 0
+`define IROM_SUPPORTED 1'b0
 `define IROM_BASE       34'h80000000
 `define IROM_RANGE      34'h00001FFF
 `define BOOTROM_SUPPORTED 1'b1
