@@ -49,7 +49,7 @@
 `define UARCH_SINGLECYCLE 0
 
 // LSU microarchitectural Features
-`define DMEM 0
+`define DTIM 0
 `define IROM 0
 `define BUS 1
 `define DCACHE 1
