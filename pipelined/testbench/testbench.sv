@@ -232,9 +232,9 @@ logic [3:0] dummy;
         // force sdc timers
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
-        if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+        if (`IROM_SUPPORTED) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DTIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        if (`DTIM_SUPPORTED) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -328,12 +328,12 @@ logic [3:0] dummy;
           /* verilator lint_off INFINITELOOP */
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
-            if (`DTIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+            if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
             else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
               errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM) = %h, signature = %h", 
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
               $stop;//***debug
              end
@@ -361,9 +361,9 @@ logic [3:0] dummy;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+            if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
             else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`DTIM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -456,7 +456,7 @@ module riscvassertions;
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
-    assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM == 0 & `IROM == 0)) else $error("Can't simultaneously have virtual memory and DTIM/IROM because local memories don't translate addresses");
+    assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM_SUPPORTED == 0 & `IROM_SUPPORTED == 0)) else $error("Can't simultaneously have virtual memory and DTIM_SUPPORTED/IROM_SUPPORTED because local memories don't translate addresses");
     assert (`DCACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`ICACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
     assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS) else $error("Dcache and Icache requires DBUS.");

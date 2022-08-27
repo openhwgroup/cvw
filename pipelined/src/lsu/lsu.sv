@@ -198,7 +198,7 @@ module lsu (
   // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
   // *** becomes DTIM_RAM_BASE
 
-  if (`DTIM) begin : dtim
+  if (`DTIM_SUPPORTED) begin : dtim
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     dtim dtim(.clk, .reset, .LSURWM,
               .IEUAdrE(CPUBusy | LSURWM[0] | reset ? IEUAdrM : IEUAdrE),

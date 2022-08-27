@@ -184,7 +184,7 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
-  if (`IROM) begin : irom 
+  if (`IROM_SUPPORTED) begin : irom 
     irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
   end 
