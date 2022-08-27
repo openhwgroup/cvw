@@ -128,14 +128,13 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
                         .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
                         .Cacheable, .Idempotent, .AtomicAllowed,
                         .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
-
+ 
   pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
                         .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
                         .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
                         .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
 
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
-//  assign SquashBusAccess = PMASquashBusAccess | PMPSquashBusAccess;
   assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
   assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
   assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~(Translate & ~TLBHit);

@@ -41,8 +41,7 @@ module dtim(
 
   logic we;
  
-//  localparam ADDR_WDITH = $clog2(`TIM_RAM_RANGE/8);  // *** replace with tihs when  defined
-  localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
+  localparam ADDR_WDITH = $clog2(`DTIM_RANGE/8);
   localparam OFFSET = $clog2(`LLEN/8);
 
   assign we = LSURWM[0]  & ~TrapM;  // have to ignore write if Trap.
