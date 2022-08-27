@@ -31,8 +31,8 @@
 
 module dtim(
   input logic               clk, reset,
-  input logic [1:0]         LSURWM,
-  input logic [`XLEN-1:0]   IEUAdrE,
+  input logic [1:0]         MemRWM,
+  input logic [`PA_BITS-1:0]   Adr,
   input logic               TrapM, 
   input logic [`LLEN-1:0]   WriteDataM,
   input logic [`LLEN/8-1:0] ByteMaskM,
@@ -44,9 +44,9 @@ module dtim(
   localparam ADDR_WDITH = $clog2(`DTIM_RANGE/8);
   localparam OFFSET = $clog2(`LLEN/8);
 
-  assign we = LSURWM[0]  & ~TrapM;  // have to ignore write if Trap.
+  assign we = MemRWM[0]  & ~TrapM;  // have to ignore write if Trap.
 
   bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    ram(.clk, .we, .bwe(ByteMaskM), .addr(IEUAdrE[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
+    ram(.clk, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   
