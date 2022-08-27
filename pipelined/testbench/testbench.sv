@@ -234,7 +234,7 @@ logic [3:0] dummy;
       end else begin
         if (`IROM) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DMEM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        if (`DTIM) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -328,12 +328,12 @@ logic [3:0] dummy;
           /* verilator lint_off INFINITELOOP */
           while (signature[i] !== 'bx) begin
             logic [`XLEN-1:0] sig;
-            if (`DMEM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+            if (`DTIM) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
             else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
             //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
             if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
               errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DMEM) = %h, signature = %h", 
+              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
               $stop;//***debug
              end
@@ -363,7 +363,7 @@ logic [3:0] dummy;
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`IROM)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
             else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`DMEM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            if (`DTIM)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -456,11 +456,10 @@ module riscvassertions;
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
-    //    assert (`MEM_DCACHE == 0 | `MEM_DTIM == 0) else $error("Can't simultaneously have a data cache and TIM");
+    assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM == 0 & `IROM == 0)) else $error("Can't simultaneously have virtual memory and DTIM/IROM because local memories don't translate addresses");
     assert (`DCACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`ICACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
-    //assert (`DCACHE == 1 & `BUS ==0) else $error("Dcache requires DBUS.");
-    //assert (`ICACHE == 1 & `BUS ==0) else $error("Icache requires IBUS.");    
+    assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS) else $error("Dcache and Icache requires DBUS.");
     assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
   end
