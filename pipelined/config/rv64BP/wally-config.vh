@@ -51,8 +51,6 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
-`define DTIM 0
-`define IROM 0
 `define BUS 1
 `define DCACHE 1
 `define ICACHE 1
@@ -92,6 +90,12 @@
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
+`define DTIM_SUPPORTED 0
+`define DTIM_BASE       34'h80000000
+`define DTIM_RANGE      34'h00001FFF
+`define IROM_SUPPORTED 0
+`define IROM_BASE       34'h80000000
+`define IROM_RANGE      34'h00001FFF
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   56'h00001000 
 `define BOOTROM_RANGE  56'h00000FFF

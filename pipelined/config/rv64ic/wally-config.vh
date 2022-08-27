@@ -51,8 +51,6 @@
 `define UARCH_SINGLECYCLE 0
 
 // LSU microarchitectural Features
-`define DTIM 1
-`define IROM 1
 `define BUS 0
 `define DCACHE 0
 `define ICACHE 0
@@ -94,10 +92,16 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
-`define BOOTROM_SUPPORTED 1'b1
+`define DTIM_SUPPORTED 1
+`define DTIM_BASE       34'h80000000
+`define DTIM_RANGE      34'h00001FFF
+`define IROM_SUPPORTED 1
+`define IROM_BASE       34'h80000000
+`define IROM_RANGE      34'h00001FFF
+`define BOOTROM_SUPPORTED 1'b0
 `define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 `define BOOTROM_RANGE  56'h00000FFF
-`define UNCORE_RAM_SUPPORTED 1'b1
+`define UNCORE_RAM_SUPPORTED 1'b0
 `define UNCORE_RAM_BASE       56'h80000000
 `define UNCORE_RAM_RANGE      56'h7FFFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
