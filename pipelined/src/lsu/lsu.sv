@@ -101,6 +101,7 @@ module lsu (
   logic [1:0]               LSUAtomicM;
   (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   PreLSUPAdrM;
   logic [11:0]              LSUAdrE;  
+  logic                     SelDTIM;
   logic                     CPUBusy;
   logic                     DCacheStallM;
   logic                     CacheableM;
@@ -114,8 +115,6 @@ module lsu (
   logic [`LLEN-1:0]         ReadDataM;
   logic [(`LLEN-1)/8:0]     ByteMaskM;
   
-  // *** TO DO: Burst mode
-
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
@@ -194,21 +193,25 @@ module lsu (
   logic                IgnoreRequest;
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
-  // The LSU allows both a DTIM and bus with cache.  However, the PMA decoding presently 
-  // use the same UNCORE_RAM_BASE addresss for both the DTIM and any RAM in the Uncore.
-  // *** becomes DTIM_RAM_BASE
-
   if (`DTIM_SUPPORTED) begin : dtim
+    logic [`PA_BITS-1:0] DTIMAdr;
+    logic             DTIMAccessRW;
+
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-    dtim dtim(.clk, .reset, .LSURWM,
-              .IEUAdrE(CPUBusy | LSURWM[0] | reset ? IEUAdrM : IEUAdrE),
+    // Don't perform size checking on DTIM
+    /* verilator lint_off WIDTH */
+    assign DTIMAdr = CPUBusy | MemRWM[0] | reset ? IEUAdrM : IEUAdrE; // zero extend or contract to PA_BITS
+    /* verilator lint_on WIDTH */
+    assign DTIMAccessRW = |MemRWM; 
+    adrdec dtimdec(DTIMAdr, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM);
+
+    dtim dtim(.clk, .reset, .MemRWM,
+              .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
-
-    // since we have a local memory the bus connections are all disabled.
-    // There are no peripherals supported.
-    // *** this will have to change to support TIM and bus (DH 8/25/22)
-  end 
+  end else begin
+    assign SelDTIM = 0;
+  end
   if (`BUS) begin : bus              
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LOGBWPL = `DCACHE ? $clog2(WORDSPERLINE) : 1;
