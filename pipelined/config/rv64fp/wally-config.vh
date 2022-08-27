@@ -94,11 +94,11 @@
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
 `define DTIM_SUPPORTED 0
-`define DTIM_BASE       34'h80000000
-`define DTIM_RANGE      34'h00001FFF
+`define DTIM_BASE       56'h80000000
+`define DTIM_RANGE      56'h00001FFF
 `define IROM_SUPPORTED 0
-`define IROM_BASE       34'h80000000
-`define IROM_RANGE      34'h00001FFF
+`define IROM_BASE       56'h80000000
+`define IROM_RANGE      56'h00001FFF
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 `define BOOTROM_RANGE  56'h00000FFF
