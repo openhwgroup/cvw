@@ -35,12 +35,9 @@ module irom(
   output logic [31:0]  ReadData
 );
 
- 
-//  localparam ADDR_WDITH = $clog2(`IROM_RAM_RANGE/8);  // *** replace with tihs when  defined
-  localparam ADDR_WDITH = $clog2(`UNCORE_RAM_RANGE/8); // *** this is the wrong size
+  localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
   localparam OFFSET = $clog2(`LLEN/8);
 
-  brom1p1r #(ADDR_WDITH, 32) 
-    rom(.clk, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
+  brom1p1r #(ADDR_WDITH, 32) rom(.clk, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
 endmodule  
   

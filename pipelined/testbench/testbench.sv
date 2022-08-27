@@ -439,7 +439,7 @@ module riscvassertions;
     assert (`F_SUPPORTED | ~`ZFH_SUPPORTED) else $error("Can't support half-precision fp (ZFH) without supporting float (F)");
     assert (`DCACHE | ~`F_SUPPORTED | `FLEN <= `XLEN) else $error("Data cache required to support FLEN > XLEN because AHB bus width is XLEN");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    assert (`FLEN<=`XLEN | `DCACHE) else $error("Wally does not support FLEN > XLEN unleses data cache is supported");
+    assert (`FLEN<=`XLEN | `DCACHE | `DTIM_SUPPORTED) else $error("Wally does not support FLEN > XLEN unleses data cache or DTIM is supported");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (!`DCACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`DCACHE_LINELENINBITS >= 128 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
