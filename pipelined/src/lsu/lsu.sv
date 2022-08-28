@@ -34,7 +34,7 @@
 // cpubusy means the cpu is stalled and the lsu must ensure ReadDataM stalls constant until the stall is removed.
 // chap 5 handling faults to memory by delaying writes to memory stage.
 // chap 6 combing bus with dtim
-
+// chap 9 complete lsu.
 
 `include "wally-config.vh"
 

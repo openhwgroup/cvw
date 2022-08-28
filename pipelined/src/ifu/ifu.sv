@@ -194,7 +194,7 @@ module ifu (
     assign IROMAdr = CPUBusy | reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
  
-    adrdec iromdec(IROMAdr, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
+    adrdec iromdec(PCFExt, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
     assign NonIROMMemRWM = {~SelIROM, 1'b0};
     irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
