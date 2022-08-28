@@ -30,6 +30,12 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// committed means the memory operation in flight cannot be interrupted.
+// cpubusy means the cpu is stalled and the lsu must ensure ReadDataM stalls constant until the stall is removed.
+// chap 5 handling faults to memory by delaying writes to memory stage.
+// chap 6 combing bus with dtim
+
+
 `include "wally-config.vh"
 
 module lsu (
@@ -91,6 +97,7 @@ module lsu (
   );
 
   logic [`XLEN+1:0]         IEUAdrExtM;
+  logic [`XLEN+1:0]         IEUAdrExtE;
   logic [`PA_BITS-1:0]      LSUPAdrM;
   logic                     DTLBMissM;
   logic                     DTLBWriteM;
@@ -116,6 +123,7 @@ module lsu (
   
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
+  assign IEUAdrExtE = {2'b00, IEUAdrE}; 
   assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -201,10 +209,10 @@ module lsu (
     // Don't perform size checking on DTIM
     /* verilator lint_off WIDTH */
     assign MemStage = CPUBusy | MemRWM[0] | reset; // 1 = M stage; 0 = E stage
-    assign DTIMAdr = MemStage ? IEUAdrM : IEUAdrE; // zero extend or contract to PA_BITS
+    assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
     assign DTIMAccessRW = |MemRWM; 
-    adrdec dtimdec(DTIMAdr, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW | ~MemStage, 2'b10, 4'b1111, SelDTIM);
+    adrdec dtimdec(IEUAdrExtM, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM);
     assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
 
     dtim dtim(.clk, .reset, .MemRWM,
