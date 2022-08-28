@@ -48,6 +48,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // x1 - TLB is accessed for a write
   // 11 - TLB is accessed for both read and write
   input logic                 DisableTranslation,
+  input logic                 SelTIM, // access to DTIM or IROM; ignore other access checking
 
   // VAdr is the virtual/physical address from IEU or physical address from HPTW.
   // PhysicalAddress is selected to be PAdr when no translation or the translated VAdr (TLBPAdr)
@@ -125,7 +126,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   ///////////////////////////////////////////
 
   pmachecker pmachecker(.PhysicalAddress, .Size,
-                        .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+                        .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .SelTIM,
                         .Cacheable, .Idempotent, .AtomicAllowed,
                         .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
