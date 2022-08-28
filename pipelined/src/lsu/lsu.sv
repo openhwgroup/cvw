@@ -94,8 +94,7 @@ module lsu (
   logic [`PA_BITS-1:0]      LSUPAdrM;
   logic                     DTLBMissM;
   logic                     DTLBWriteM;
-  logic [1:0]               LSURWM;
-  logic [1:0]               PreLSURWM;
+  logic [1:0]               NonDTIMMemRWM, PreLSURWM, LSURWM;
   logic [2:0]               LSUFunct3M;
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
@@ -125,7 +124,7 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
-    lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
+    lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM(NonDTIMMemRWM), .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, 
       .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
@@ -135,7 +134,7 @@ module lsu (
       .IgnoreRequestTLB);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
+    assign CPUBusy = StallW; assign PreLSURWM = NonDTIMMemRWM; 
     assign LSUAdrE = IEUAdrE[11:0]; 
     assign PreLSUPAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
@@ -156,7 +155,7 @@ module lsu (
     assign DisableTranslation = SelHPTW | FlushDCacheM;
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-      .PrivilegeModeW, .DisableTranslation,
+      .PrivilegeModeW, .DisableTranslation, .SelTIM(SelDTIM),
       .VAdr(PreLSUPAdrM),
       .Size(LSUFunct3M[1:0]),
       .PTE,
@@ -196,21 +195,24 @@ module lsu (
   if (`DTIM_SUPPORTED) begin : dtim
     logic [`PA_BITS-1:0] DTIMAdr;
     logic             DTIMAccessRW;
+    logic             MemStage;
 
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     // Don't perform size checking on DTIM
     /* verilator lint_off WIDTH */
-    assign DTIMAdr = CPUBusy | MemRWM[0] | reset ? IEUAdrM : IEUAdrE; // zero extend or contract to PA_BITS
+    assign MemStage = CPUBusy | MemRWM[0] | reset; // 1 = M stage; 0 = E stage
+    assign DTIMAdr = MemStage ? IEUAdrM : IEUAdrE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
     assign DTIMAccessRW = |MemRWM; 
-    adrdec dtimdec(DTIMAdr, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM);
+    adrdec dtimdec(DTIMAdr, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW | ~MemStage, 2'b10, 4'b1111, SelDTIM);
+    assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
 
     dtim dtim(.clk, .reset, .MemRWM,
               .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
-    assign SelDTIM = 0;
+    assign SelDTIM = 0;  assign NonDTIMMemRWM = MemRWM;
   end
   if (`BUS) begin : bus              
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;

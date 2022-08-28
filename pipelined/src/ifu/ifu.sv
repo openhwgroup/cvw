@@ -93,6 +93,7 @@ module ifu (
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF;
   logic [31:0]                 FinalInstrRawF;
+  logic [1:0]                  NonIROMMemRWM;
   
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
@@ -113,6 +114,7 @@ module ifu (
   logic 					   BusStall;
   logic 					   ICacheStallF, IFUCacheBusStallF;
   logic 					   CPUBusy;
+  logic              SelIROM;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
@@ -154,7 +156,7 @@ module ifu (
 
     mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-         .PrivilegeModeW, .DisableTranslation(1'b0),
+         .PrivilegeModeW, .DisableTranslation(1'b0), .SelTIM(SelIROM),
          .VAdr(PCFExt),
          .Size(2'b10),
          .PTE(PTE),
@@ -184,10 +186,21 @@ module ifu (
   logic [`XLEN-1:0] AllInstrRawF;
   assign InstrRawF = AllInstrRawF[31:0];
 
+  // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
+    logic [`PA_BITS-1:0] IROMAdr;
+    logic             IROMAccessRW;
+    /* verilator lint_off WIDTH */
+    assign IROMAdr = CPUBusy | reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
+    /* verilator lint_on WIDTH */
+ 
+    adrdec iromdec(IROMAdr, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
+    assign NonIROMMemRWM = {~SelIROM, 1'b0};
     irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
-  end 
+  end else begin
+    assign SelIROM = 0; assign NonIROMMemRWM = 2'b10;
+  end
   if (`BUS) begin : bus
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
@@ -210,7 +223,7 @@ module ifu (
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
-             .RW(2'b10), 
+             .RW(NonIROMMemRWM), 
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
@@ -225,7 +238,7 @@ module ifu (
             .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
             .SelUncachedAdr,
-            .IgnoreRequest(ITLBMissF), .RW(2'b10), .CPUBusy, .Cacheable(CacheableF),
+            .IgnoreRequest(ITLBMissF), .RW(NonIROMMemRWM), .CPUBusy, .Cacheable(CacheableF),
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
@@ -235,7 +248,7 @@ module ifu (
       flopen #(`XLEN) fb(.clk, .en(IFUBusRead), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
       busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .IgnoreRequest(ITLBMissF), .RW(2'b10), 
+        .clk, .reset, .IgnoreRequest(ITLBMissF), .RW(NonIROMMemRWM), 
         .BusAck(IFUBusAck), .BusInit(IFUBusInit), .CPUBusy, 
         .BusStall, .BusWrite(), .BusRead(IFUBusRead), 
         .HTRANS(IFUHTRANS), .BusCommitted());

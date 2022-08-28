@@ -67,7 +67,7 @@ module uncore (
   
   logic [`XLEN-1:0] HREADRam, HREADSDC;
 
-  logic [10:0]      HSELRegions;
+  logic [8:0]      HSELRegions;
   logic            HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
   logic            HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic            HRESPRam,  HRESPSDC;
@@ -93,7 +93,7 @@ module uncore (
   adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[9:2];
+  assign {HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[7:0];
 
   // AHB -> APB bridge
   ahbapbbridge #(4) ahbapbbridge
@@ -197,7 +197,7 @@ module uncore (
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
-  flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions[10:2], {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
+  flopr #(9) hseldelayreg(HCLK, ~HRESETn, HSELRegions, {HSELNoneD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
   flopr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HSELBRIDGE, HSELBRIDGED);
 endmodule
 
