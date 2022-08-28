@@ -156,7 +156,7 @@ module ifu (
 
     mmu #(.TLB_ENTRIES(`ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-         .PrivilegeModeW, .DisableTranslation(1'b0), .SelTIM(SelIROM),
+         .PrivilegeModeW, .DisableTranslation(1'b0),
          .VAdr(PCFExt),
          .Size(2'b10),
          .PTE(PTE),
@@ -195,7 +195,8 @@ module ifu (
     /* verilator lint_on WIDTH */
  
     adrdec iromdec(PCFExt, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
-    assign NonIROMMemRWM = {~SelIROM, 1'b0};
+    //assign NonIROMMemRWM = {~SelIROM, 1'b0};
+    assign NonIROMMemRWM = 2'b10;
     irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
   end else begin

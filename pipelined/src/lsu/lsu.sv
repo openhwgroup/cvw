@@ -163,7 +163,7 @@ module lsu (
     assign DisableTranslation = SelHPTW | FlushDCacheM;
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-      .PrivilegeModeW, .DisableTranslation, .SelTIM(SelDTIM),
+      .PrivilegeModeW, .DisableTranslation,
       .VAdr(PreLSUPAdrM),
       .Size(LSUFunct3M[1:0]),
       .PTE,
@@ -212,8 +212,9 @@ module lsu (
     assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
     assign DTIMAccessRW = |MemRWM; 
-    adrdec dtimdec(IEUAdrExtM, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM);
-    assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
+    adrdec dtimdec(IEUAdrExtM, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM); // maybe we pull this out of the mmu?
+    //assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
+    assign NonDTIMMemRWM = MemRWM; // *** fix
 
     dtim dtim(.clk, .reset, .MemRWM,
               .Adr(DTIMAdr),
@@ -273,7 +274,7 @@ module lsu (
         .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
         .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
     
-     assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
+      assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
       assign LSUTransComplete = LSUBusAck;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
