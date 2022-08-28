@@ -58,12 +58,12 @@ module pmachecker (
   adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable
-  assign Cacheable = SelRegions[7] | SelRegions[6] | SelRegions[5];
-  assign Idempotent = SelRegions[7] | SelRegions[5];
-  assign AtomicAllowed = SelRegions[7] | SelRegions[5];
+  assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];
+  assign Idempotent = SelRegions[8] | SelRegions[6];
+  assign AtomicAllowed = SelRegions[8] | SelRegions[6];
 
   // Detect access faults
-  assign PMAAccessFault = (SelRegions[8] & ~SelTIM) & AccessRWX;  
+  assign PMAAccessFault = (SelRegions[0] & ~SelTIM) & AccessRWX;  
   assign PMAInstrAccessFaultF = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
