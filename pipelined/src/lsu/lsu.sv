@@ -269,7 +269,7 @@ module lsu (
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
       busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
+        .clk, .reset, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, 
         .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
         .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
