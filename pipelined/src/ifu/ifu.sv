@@ -249,7 +249,7 @@ module ifu (
       flopen #(`XLEN) fb(.clk, .en(IFUBusRead), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
       busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .IgnoreRequest(ITLBMissF), .RW(NonIROMMemRWM), 
+        .clk, .reset, .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}), 
         .BusAck(IFUBusAck), .BusInit(IFUBusInit), .CPUBusy, 
         .BusStall, .BusWrite(), .BusRead(IFUBusRead), 
         .HTRANS(IFUHTRANS), .BusCommitted());

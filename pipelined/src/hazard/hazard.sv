@@ -61,6 +61,7 @@ module hazard(
 
   // *** can stalls be pushed into earlier stages (e.g. no stall after Decode?)
 
+  // *** consider replacing CSRWriteFencePendingDEM with a flush rather than a stall.  
   assign StallFCause = CSRWriteFencePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    
