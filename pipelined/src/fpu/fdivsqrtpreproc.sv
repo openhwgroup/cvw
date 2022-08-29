@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// srt.sv
+// fdivsqrtpreproc.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
 // Modified:13 January 2022
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module srtpreproc (
+module fdivsqrtpreproc (
   input  logic clk,
   input  logic DivStart, 
   input  logic [`NF:0] Xm, Ym,

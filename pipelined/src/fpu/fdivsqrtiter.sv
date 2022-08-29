@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// srt.sv
+// fdivsqrtiter.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module srt(
+module fdivsqrtiter(
   input  logic clk,
   input  logic DivStart, 
   input  logic DivBusy, 
@@ -122,9 +122,15 @@ module srt(
   genvar i;
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
-      divinteration divinteration(.D, .DBar, .D2, .DBar2, .SqrtM,
-      .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
-      .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
+      if (`RADIX == 2) begin: stage
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
+        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
+        .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
+      end else begin: stage
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
+        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
+        .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
+      end
       if(i<(`DIVCOPIES-1)) begin 
         if (`RADIX==2)begin 
           assign WS[i+1] = {WSA[i][`DIVb+2:0], 1'b0};
@@ -174,84 +180,5 @@ module srt(
       assign StickyWSA = {WSA[0][`DIVb+2:0], 1'b0};
     else
       assign StickyWSA = {WSA[1][`DIVb+2:0], 1'b0};
-
-
 endmodule
-
-////////////////
-// Submodules //
-////////////////
-
- /* verilator lint_off UNOPTFLAT */
-module divinteration (
-  input logic [`DIVN-2:0] D,
-  input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] Q, QM,
-  input logic [`DIVb:0] S, SM,
-  input logic [`DIVb+3:0]  WS, WC,
-  input logic [`DIVb-1:0] C,
-  input logic SqrtM,
-  output logic [`DIVb:0] QNext, QMNext, 
-  output logic qn,
-  output logic [`DIVb:0] SNext, SMNext, 
-  output logic [`DIVb+3:0]  WSA, WCA
-);
- /* verilator lint_on UNOPTFLAT */
-
-  logic [`DIVb+3:0]  Dsel;
-  logic [3:0]     q;
-  logic qp, qz;
-  logic [`DIVb+3:0] F;
-  logic [`DIVb+3:0] AddIn;
-
-  // Qmient Selection logic
-  // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  // q encoding:
-	// 1000 = +2
-	// 0100 = +1
-	// 0000 =  0
-	// 0010 = -1
-	// 0001 = -2
-  if(`RADIX == 2) begin : qsel
-    qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
-    fgen2 fgen2(.sp(qp), .sz(qz), .C, .S, .SM, .F);
-  end else begin
-    qsel4 qsel4(.D, .WS, .WC, .Sqrt(SqrtM), .q);
-    // fgen4 fgen4(.s(q), .C, .S, .SM, .F);
-  end
-
-  if(`RADIX == 2) begin : dsel
-    assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
-  end else begin
-    always_comb
-      case (q)
-        4'b1000: Dsel = DBar2;
-        4'b0100: Dsel = DBar;
-        4'b0000: Dsel = '0;
-        4'b0010: Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}};
-        4'b0001: Dsel = D2;
-        default: Dsel = 'x;
-      endcase
-  end
-  // Partial Product Generation
-  //  WSA, WCA = WS + WC - qD
-  assign AddIn = SqrtM ? F : Dsel;
-  if (`RADIX == 2) begin : csa
-    csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
-  end else begin
-    csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~SqrtM, WSA, WCA);
-  end
-
-  if (`RADIX == 2) begin : otfc
-    otfc2 otfc2(.qp, .qz, .Q, .QM, .QNext, .QMNext);
-    sotfc2 sotfc2(.sp(qp), .sz(qz), .C, .S, .SM, .SNext, .SMNext);
-  end else begin
-    otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-    // sotfc4 sotfc4(.s(q), .SqrtM, .C, .S, .SM, .SNext, .SMNext);
-  end
-
-endmodule
-
-
-
 

@@ -9,7 +9,7 @@ add wave -noupdate /testbenchfp/Res
 add wave -noupdate /testbenchfp/Ans
 add wave -noupdate /testbenchfp/DivStart
 add wave -noupdate /testbenchfp/DivBusy
-add wave -noupdate /testbenchfp/divsqrt/srtfsm/state
+add wave -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtfsm/state
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/specialcase/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/flags/*
@@ -20,21 +20,21 @@ add wave -group {PostProc} -noupdate /testbenchfp/postprocess/round/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/fmashiftcalc/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/divshiftcalc/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/cvtshiftcalc/*
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/WC
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/WS
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/WCA
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/WSA
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/Q
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/QM
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/QNext
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/QMNext
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srt/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/otfc/otfc2/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/qsel/qsel2/*
-# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/divsqrt/srt/interations[0]/divinteration/genblk1/qsel4/*
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtpreproc/*
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtpreproc/expcalc/*
-add wave -group {Divide} -noupdate /testbenchfp/divsqrt/srtfsm/*
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WC
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WS
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WCA
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WSA
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/Q
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QM
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QNext
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QMNext
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/otfc/otfc2/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/qsel/qsel2/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/fdivsqrtstage/stage/genblk1/qsel4/*
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/*
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/expcalc/*
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtfsm/*
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*
