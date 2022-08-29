@@ -66,6 +66,7 @@ module fdivsqrtfsm(
   //logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
   logic [`DIVb+3:0] W;
   logic SpecialCase;
+  logic WZeroDelayed; // *** later remove
 
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
@@ -87,7 +88,8 @@ module fdivsqrtfsm(
     assign WZero = ((NextWSN^NextWCN)=={NextWSN[`DIVb+2:0]|NextWCN[`DIVb+2:0], 1'b0});
     assign DivSE = |W;
   end
-  assign DivDone = (state == DONE);
+  flopr #(1) WZeroReg(clk, reset | DivStart, WZero, WZeroDelayed);
+  assign DivDone = (state == DONE) | WZeroDelayed;
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
   assign EarlyTermShiftE = step;
@@ -102,14 +104,14 @@ module fdivsqrtfsm(
           step <= Dur;
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
+      end else if (DivDone) begin
+        if (StallM) state <= #1 DONE;
+        else        state <= #1 IDLE;
       end else if (state == BUSY) begin
-          if ((step == 1) | WZero) begin
+          if (step == 0) begin
               state <= #1 DONE;
           end
           step <= step - 1;
-      end else if (state == DONE) begin
-        if (StallM) state <= #1 DONE;
-        else        state <= #1 IDLE;
       end 
   end
 endmodule
