@@ -46,6 +46,8 @@ module ahblite (
   input logic [1:0]    IFUHTRANS,
   input logic 				 IFUBusRead,
   input logic          IFUTransComplete,
+  logic                     IFUHWRITE,
+  logic                     IFUHREADY,
   output logic         IFUBusInit,
   output logic 				 IFUBusAck,
 
@@ -58,6 +60,8 @@ module ahblite (
   input logic 				 LSUBusRead, 
   input logic 				 LSUBusWrite,
   input logic          LSUTransComplete,
+  logic                     LSUHWRITE,
+  logic                     LSUHREADY,
   output logic         LSUBusInit,
   output logic 				 LSUBusAck,
 

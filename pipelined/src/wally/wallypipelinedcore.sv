@@ -138,6 +138,8 @@ module wallypipelinedcore (
   logic [2:0]       IFUHBURST;
   logic [1:0]       IFUHTRANS;
   logic             IFUTransComplete;
+  logic                     IFUHWRITE;
+  logic                     IFUHREADY;
   
   // AHB LSU interface
   logic [`PA_BITS-1:0]         LSUHADDR;
@@ -145,6 +147,8 @@ module wallypipelinedcore (
   logic             LSUBusWrite;
   logic             LSUBusAck, LSUBusInit;
   logic [`XLEN-1:0]         LSUHWDATA;
+  logic                     LSUHWRITE;
+  logic                     LSUHREADY;
   
   logic             BPPredWrongE;
   logic             BPPredDirWrongM;
@@ -166,6 +170,7 @@ module wallypipelinedcore (
   logic             InstrDAPageFaultF;
   logic             BigEndianM;
   logic             FCvtIntE;
+
   
   ifu ifu(
     .clk, .reset,
@@ -174,6 +179,7 @@ module wallypipelinedcore (
     // Fetch
     .HRDATA, .IFUBusAck, .IFUBusInit, .PCF, .IFUHADDR,
     .IFUBusRead, .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUTransComplete,
+          .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
 
     // Execute
@@ -259,6 +265,7 @@ module wallypipelinedcore (
   // connected to ahb (all stay the same)
   .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
   .HRDATA, .LSUHWDATA, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
+          .LSUHWRITE, .LSUHREADY,
 
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
@@ -295,7 +302,10 @@ module wallypipelinedcore (
      .IFUHTRANS, 
      .IFUTransComplete,
      .IFUBusAck, 
-     .IFUBusInit, 
+     .IFUBusInit,
+     .IFUHWRITE,
+     .IFUHREADY,
+                
      // Signals from Data Cache
      .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUHWDATA,
      .LSUHSIZE,
@@ -304,6 +314,8 @@ module wallypipelinedcore (
      .LSUTransComplete,
      .LSUBusAck,
      .LSUBusInit,
+     .LSUHWRITE,
+     .LSUHREADY,
  
      .HREADY, .HRESP, .HCLK, .HRESETn,
      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
