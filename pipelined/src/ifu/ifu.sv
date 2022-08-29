@@ -248,7 +248,9 @@ module ifu (
         .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
-      flopen #(`XLEN) fb(.clk, .en(IFUBusRead), .d(HRDATA), .q(AllInstrRawF[31:0]));
+      logic CaptureEn;
+      
+      flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
 /* -----\/----- EXCLUDED -----\/-----
       busfsm #(LOGBWPL) busfsm(
@@ -258,7 +260,7 @@ module ifu (
         .HTRANS(IFUHTRANS), .BusCommitted());
  -----/\----- EXCLUDED -----/\----- */
 
-      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}),
+      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}), .CaptureEn,
                        .BusCommitted(), .CPUBusy, .HREADY(IFUHREADY), .BusStall, .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE));
           
       assign IFUHBURST = 3'b0;
