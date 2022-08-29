@@ -272,10 +272,11 @@ module lsu (
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA));
     end else begin : passthrough // just needs a register to hold the value from the bus
+      logic CaptureEn;
       assign LSUHADDR = LSUPAdrM;
       assign LSUHSIZE = LSUFunct3M;
  
-      flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordM));
+      flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(ReadDataWordM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
 /* -----\/----- EXCLUDED -----\/-----
@@ -287,7 +288,7 @@ module lsu (
  -----/\----- EXCLUDED -----/\----- */
 
       AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}),
-                       .BusCommitted(BusCommittedM), .CPUBusy, .BusStall, .HREADY(LSUHREADY), .HTRANS(LSUHTRANS),
+                       .BusCommitted(BusCommittedM), .CPUBusy, .BusStall, .CaptureEn, .HREADY(LSUHREADY), .HTRANS(LSUHTRANS),
                        .HWRITE(LSUHWRITE));
           
       assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
