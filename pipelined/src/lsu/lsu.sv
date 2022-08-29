@@ -185,7 +185,6 @@ module lsu (
 
   end else begin
     // Determine which region of physical memory (if any) is being accessed
-    adrdecs adrdecs(.PhysicalAddress(LSUPAdrM), AccessRW, AccessRX, AccessRWX, Size, .SelRegions(LSUHSel));
 
     // conditionally move adredecs to here and ifu.
     // the lsu will output LSUHSel to EBU (need the same for ifu).
