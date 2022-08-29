@@ -35,7 +35,6 @@ module busfsm #(parameter integer LOGWPL)
   (input logic               clk,
    input logic               reset,
 
-   input logic               IgnoreRequest,
    input logic [1:0]         RW,
    input logic               BusAck,
    input logic               BusInit, // This might be better as LSUBusLock, or to send this using BusAck.
@@ -65,30 +64,29 @@ module busfsm #(parameter integer LOGWPL)
   
   always_comb begin
 	case(BusCurrState)
-	  STATE_BUS_READY:                 if(IgnoreRequest)             BusNextState = STATE_BUS_READY;
-	                                   else if(RW[0])                BusNextState = STATE_BUS_UNCACHED_WRITE;
-		                                 else if(RW[1])                BusNextState = STATE_BUS_UNCACHED_READ;
+	  STATE_BUS_READY:               if(RW[0])                BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                             else if(RW[1])                BusNextState = STATE_BUS_UNCACHED_READ;
                                      else                          BusNextState = STATE_BUS_READY;
       STATE_BUS_UNCACHED_WRITE:      if(BusAck)                    BusNextState = STATE_BUS_UNCACHED_WRITE_DONE;
-		                                 else                          BusNextState = STATE_BUS_UNCACHED_WRITE;
+		                             else                          BusNextState = STATE_BUS_UNCACHED_WRITE;
       STATE_BUS_UNCACHED_READ:       if(BusAck)                    BusNextState = STATE_BUS_UNCACHED_READ_DONE;
-		                                 else                          BusNextState = STATE_BUS_UNCACHED_READ;
+		                             else                          BusNextState = STATE_BUS_UNCACHED_READ;
       STATE_BUS_UNCACHED_WRITE_DONE: if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
                                      else                          BusNextState = STATE_BUS_READY;
       STATE_BUS_UNCACHED_READ_DONE:  if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
                                      else                          BusNextState = STATE_BUS_READY;
-	  STATE_BUS_CPU_BUSY:              if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
+	  STATE_BUS_CPU_BUSY:            if(CPUBusy)                   BusNextState = STATE_BUS_CPU_BUSY;
                                      else                          BusNextState = STATE_BUS_READY;
-	  default:                                                       BusNextState = STATE_BUS_READY;
+	  default:                                                     BusNextState = STATE_BUS_READY;
 	endcase
   end
 
-  assign BusStall = (BusCurrState == STATE_BUS_READY & ~IgnoreRequest & |RW) |
+  assign BusStall = (BusCurrState == STATE_BUS_READY & |RW) |
 					(BusCurrState == STATE_BUS_UNCACHED_WRITE) |
 					(BusCurrState == STATE_BUS_UNCACHED_READ);
-  assign BusWrite = (BusCurrState == STATE_BUS_READY & RW[0] & ~IgnoreRequest) |
+  assign BusWrite = (BusCurrState == STATE_BUS_READY & RW[0]) |
 							   (BusCurrState == STATE_BUS_UNCACHED_WRITE);
-  assign BusRead = (BusCurrState == STATE_BUS_READY & RW[1] & ~IgnoreRequest) |
+  assign BusRead = (BusCurrState == STATE_BUS_READY & RW[1]) |
 							  (BusCurrState == STATE_BUS_UNCACHED_READ);
   assign BusCommitted = BusCurrState != STATE_BUS_READY;
 

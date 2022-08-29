@@ -184,6 +184,14 @@ module lsu (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin
+    // Determine which region of physical memory (if any) is being accessed
+
+    // conditionally move adredecs to here and ifu.
+    // the lsu will output LSUHSel to EBU (need the same for ifu).
+    // The ebu will have a mux to select between LSUHSel, IFUHSel
+    // mux for HWSTRB
+    // adrdecs out of uncore.
+    
     assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign LSUPAdrM = PreLSUPAdrM;
@@ -269,7 +277,7 @@ module lsu (
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
       busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .IgnoreRequest, .RW(LSURWM), 
+        .clk, .reset, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, 
         .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
         .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
