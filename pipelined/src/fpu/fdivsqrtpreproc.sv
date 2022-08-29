@@ -73,7 +73,7 @@ module fdivsqrtpreproc (
   assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
   assign X = Sqrt ? {SqrtX, {`DIVb-1-`NF{1'b0}}} : {~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
-  assign Dur = (`DURLEN)'(`FPDUR-1);
+  assign Dur = (`DURLEN)'(`FPDUR);
 
   //           radix 2     radix 4
   // 1 copies  DIVLEN+2    DIVLEN+2/2
