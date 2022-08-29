@@ -83,6 +83,7 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE, 
    (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
    (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
+   (* mark_debug = "true" *)   output logic [`XLEN/8-1:0] LSUHWSTRB,
    (* mark_debug = "true" *)   output logic LSUTransComplete,
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
@@ -277,7 +278,9 @@ module lsu (
       assign LSUHSIZE = LSUFunct3M;
  
       flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(ReadDataWordM));
-      assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
+
+      flop #(`XLEN) wdreg(clk, LSUWriteDataM, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flop #(`XLEN/8) HWSTRBReg(clk, ByteMaskM, LSUHWSTRB);
 
 /* -----\/----- EXCLUDED -----\/-----
       busfsm #(LOGBWPL) busfsm(
