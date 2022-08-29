@@ -147,6 +147,7 @@ module wallypipelinedcore (
   logic             LSUBusWrite;
   logic             LSUBusAck, LSUBusInit;
   logic [`XLEN-1:0]         LSUHWDATA;
+  logic [`XLEN/8-1:0]       LSUHWSTRB;
   logic                     LSUHWRITE;
   logic                     LSUHREADY;
   
@@ -264,7 +265,7 @@ module wallypipelinedcore (
   .ReadDataW, .FlushDCacheM,
   // connected to ahb (all stay the same)
   .LSUHADDR, .LSUBusRead, .LSUBusWrite, .LSUBusAck, .LSUBusInit,
-  .HRDATA, .LSUHWDATA, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
+  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, .LSUHBURST, .LSUHTRANS, .LSUTransComplete,
           .LSUHWRITE, .LSUHREADY,
 
     // connect to csr or privilege and stay the same.
@@ -333,6 +334,7 @@ module wallypipelinedcore (
      // Signals from Data Cache
      .LSUHADDR,
      .LSUHWDATA,
+     .LSUHWSTRB,
      .LSUHSIZE,
      .LSUHBURST,
      .LSUHTRANS,
