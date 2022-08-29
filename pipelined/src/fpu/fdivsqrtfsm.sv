@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// srt.sv
+// fdivsqrtfsm.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
 // Modified:13 January 2022
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module srtfsm(
+module fdivsqrtfsm(
   input  logic clk, 
   input  logic reset, 
   input logic [`DIVb+3:0] NextWSN, NextWCN, WS, WC,

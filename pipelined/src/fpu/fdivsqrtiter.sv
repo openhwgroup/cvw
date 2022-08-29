@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// srt.sv
+// fdivsqrtiter.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module srt(
+module fdivsqrtiter(
   input  logic clk,
   input  logic DivStart, 
   input  logic DivBusy, 

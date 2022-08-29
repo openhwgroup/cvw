@@ -669,12 +669,14 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
-          .Xe(Xe), .Ye(Ye), .Ze(Ze), 
-          .Xm(Xm), .Ym(Ym), .Zm(Zm),
-          .XZero, .YZero, .ZZero, .Ss, .Se,
-          .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .SCnt, .As, .Ps,
-          .Pe, .ZmSticky, .KillProd); 
+  if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "all") begin : fma
+    fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
+            .Xe(Xe), .Ye(Ye), .Ze(Ze), 
+            .Xm(Xm), .Ym(Ym), .Zm(Zm),
+            .XZero, .YZero, .ZZero, .Ss, .Se,
+            .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .SCnt, .As, .Ps,
+            .Pe, .ZmSticky, .KillProd); 
+  end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
               .Ze(Ze),  .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
@@ -687,16 +689,23 @@ module testbenchfp;
               .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
-  fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
-            .XZero(XZero), .XDenorm(XDenorm), .OpCtrl(OpCtrlVal), .IntZero,
-            .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
-  fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
-              .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
-              .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
-  divsqrt divsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
-                  .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
-                  .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
-                  .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
+  if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
+    fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+              .XZero(XZero), .XDenorm(XDenorm), .OpCtrl(OpCtrlVal), .IntZero,
+              .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
+  end
+
+  if (TEST === "cmp" | TEST === "all") begin: fcmp
+    fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+                .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
+                .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
+  end
+  if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
+    fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+                    .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
+                    .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
+                    .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
+  end
 
   assign CmpFlg[3:0] = 0;
 
