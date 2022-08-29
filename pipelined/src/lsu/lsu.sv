@@ -56,7 +56,7 @@ module lsu (
    // address and write data
    input logic [`XLEN-1:0]  IEUAdrE,
    (* mark_debug = "true" *)output logic [`XLEN-1:0] IEUAdrM,
-   (* mark_debug = "true" *)input logic [`XLEN-1:0]  WriteDataM, 
+   (* mark_debug = "true" *)input logic [`XLEN-1:0] WriteDataM, 
    output logic [`LLEN-1:0] ReadDataW,
    // cpu privilege
    input logic [1:0]        PrivilegeModeW, 
@@ -78,6 +78,8 @@ module lsu (
    (* mark_debug = "true" *)   input logic LSUBusInit,
    (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,
    (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,
+   (* mark_debug = "true" *)   input logic LSUHREADY,
+   (* mark_debug = "true" *)   output logic LSUHWRITE,
    (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE, 
    (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
    (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
@@ -276,12 +278,18 @@ module lsu (
       flopen #(`XLEN) fb(.clk, .en(LSUBusRead), .d(HRDATA), .q(ReadDataWordM));
       assign LSUHWDATA = LSUWriteDataM[`XLEN-1:0];
 
+/* -----\/----- EXCLUDED -----\/-----
       busfsm #(LOGBWPL) busfsm(
         .clk, .reset, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}), 
         .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, 
         .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
         .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
-    
+ -----/\----- EXCLUDED -----/\----- */
+
+      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}),
+                       .BusCommitted(BusCommittedM), .CPUBusy, .BusStall, .HREADY(LSUHREADY), .HTRANS(LSUHTRANS),
+                       .HWRITE(LSUHWRITE));
+          
       assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
       assign LSUTransComplete = LSUBusAck;
