@@ -29,10 +29,10 @@ add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/Q
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QNext
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QMNext
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/divinteration/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/divinteration/otfc/otfc2/*
-add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/divinteration/qsel/qsel2/*
-# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/divinteration/genblk1/qsel4/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/otfc/otfc2/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/qsel/qsel2/*
+# add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/fdivsqrtstage/stage/genblk1/qsel4/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/expcalc/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtfsm/*
