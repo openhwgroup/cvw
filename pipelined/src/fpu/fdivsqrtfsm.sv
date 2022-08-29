@@ -103,7 +103,7 @@ module fdivsqrtfsm(
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (state == BUSY) begin
-          if ((~|step[`DURLEN-1:1]&step[0])|WZero) begin
+          if ((step == 1) | WZero) begin
               state <= #1 DONE;
           end
           step <= step - 1;
