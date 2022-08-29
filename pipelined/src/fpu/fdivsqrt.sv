@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// srt.sv
+// fdivsqrt.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
 // Modified:13 January 2022
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module divsqrt(
+module fdivsqrt(
   input  logic clk, 
   input  logic reset, 
   input  logic [`FMTBITS-1:0] FmtE,
@@ -67,10 +67,10 @@ module divsqrt(
   logic NegSticky;
   logic [`DIVCOPIES-1:0] qn;
 
-  srtpreproc srtpreproc(.clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
+  fdivsqrtpreproc fdivsqrtpreproc(.clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
 
-  srtfsm srtfsm(.reset, .qn, .LastSM, .LastC, .FirstSM, .FirstC, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
+  fdivsqrtfsm fdivsqrtfsm(.reset, .qn, .LastSM, .LastC, .FirstSM, .FirstC, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, .DivSE(DivSM), .XNaNE, .YNaNE,
                .StickyWSA, .XInfE, .YInfE, .NegSticky(NegSticky), .EarlyTermShiftE(EarlyTermShiftM));
-  srt srt(.clk, .qn, .D, .LastSM, .LastC, .FirstSM, .FirstC, .SqrtE, .SqrtM, .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
+  fdivsqrtiter fdivsqrtiter(.clk, .qn, .D, .LastSM, .LastC, .FirstSM, .FirstC, .SqrtE, .SqrtM, .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
                 .StickyWSA, .DivBusy, .Qm(QmM));
 endmodule
