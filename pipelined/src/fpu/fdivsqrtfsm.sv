@@ -65,6 +65,8 @@ module fdivsqrtfsm(
   logic WZero;
   //logic [$clog2(`DIVLEN/2+3)-1:0] Dur;
   logic [`DIVb+3:0] W;
+  logic SpecialCase;
+
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
   assign DivBusy = (state == BUSY);
   // calculate sticky bit
@@ -90,13 +92,16 @@ module fdivsqrtfsm(
   assign NegSticky = W[`DIVb+3];
   assign EarlyTermShiftE = step;
 
+  // terminate immediately on special cases
+  assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
+
   always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
           step <= Dur;
-          if (XZeroE|(YZeroE&~SqrtE)|XInfE|YInfE|XNaNE|YNaNE|(XsE&SqrtE)) state <= #1 DONE;
-          else         state <= #1 BUSY;
+          if (SpecialCase) state <= #1 DONE;
+          else             state <= #1 BUSY;
       end else if (state == BUSY) begin
           if ((~|step[`DURLEN-1:1]&step[0])|WZero) begin
               state <= #1 DONE;
