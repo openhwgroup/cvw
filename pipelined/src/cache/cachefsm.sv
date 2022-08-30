@@ -194,8 +194,9 @@ module cachefsm
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss);
-  assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |  
+  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss) | (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck);
+  assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
+                          (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
