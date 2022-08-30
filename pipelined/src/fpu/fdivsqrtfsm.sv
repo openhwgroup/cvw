@@ -103,8 +103,8 @@ module fdivsqrtfsm(
   end
 
   flopr #(1) WZeroReg(clk, reset | DivStart, WZero, WZeroDelayed);
-  assign DivDone = (state == DONE);
-//  assign DivDone = (state == DONE) | (WZeroDelayed & (state == BUSY));
+//  assign DivDone = (state == DONE);
+  assign DivDone = (state == DONE) | (WZeroDelayed & (state == BUSY));
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
   assign EarlyTermShiftE = step;
@@ -123,8 +123,8 @@ module fdivsqrtfsm(
         if (StallM) state <= #1 DONE;
         else        state <= #1 IDLE;
       end else if (state == BUSY) begin
-          if (step == 1 | WZero ) begin
-//          if (step == 1 /* | WZero */) begin
+//          if (step == 1 | WZero ) begin
+          if (step == 1 /* | WZero */) begin
               state <= #1 DONE;
           end
           step <= step - 1;
