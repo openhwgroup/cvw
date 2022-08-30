@@ -276,7 +276,12 @@ module lsu (
         .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
 
       flop #(`XLEN) wdreg(clk, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
-      flop #(`XLEN/8) HWSTRBReg(clk, ByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
+
+      // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
+      logic [`XLEN/8-1:0]  BusByteMaskM;
+      swbytemask #(`XLEN) busswbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
+      
+      flop #(`XLEN/8) HWSTRBReg(clk, BusByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
       
 
     end else begin : passthrough // just needs a register to hold the value from the bus

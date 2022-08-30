@@ -50,11 +50,11 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/RegWriteD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/RdD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs1D
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs2D
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -group {Execution Stage} /testbench/InstrEName
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
-add wave -noupdate -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/PCE
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
+add wave -noupdate -expand -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
@@ -169,48 +169,48 @@ add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/Load
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -group AHB -expand -group multimanager -color Gold /testbench/dut/core/ebu/ebu/BusState
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/both
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/save
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/restore
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/dis
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/sel
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/IFUActive
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/LSUActive
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/Threshold
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURSTD
-add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHTRANS
-add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHADDR
-add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHBURST
-add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHREADY
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUReq
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHTRANS
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHSIZE
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHBURST
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHADDR
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/HRDATA
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWRITE
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWSTRB
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWDATA
-add wave -noupdate -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHREADY
-add wave -noupdate -group AHB -expand -group LSU -color Pink /testbench/dut/core/lsu/LSUHREADY
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/NextBusState
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HCLK
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HRESETn
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HREADY
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HRESP
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HADDR
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HWDATA
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HWRITE
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HSIZE
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HADDRD
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HSIZED
+add wave -noupdate -expand -group AHB -expand -group multimanager -color Gold /testbench/dut/core/ebu/ebu/BusState
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/both
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/save
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/restore
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/dis
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/sel
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/IFUActive
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/LSUActive
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/Threshold
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURSTD
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHTRANS
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHADDR
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHBURST
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHREADY
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUReq
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHTRANS
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHSIZE
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHBURST
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHADDR
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/HRDATA
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWRITE
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWSTRB
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWDATA
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHREADY
+add wave -noupdate -expand -group AHB -expand -group LSU -color Pink /testbench/dut/core/lsu/LSUHREADY
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/NextBusState
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HCLK
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRESETn
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HREADY
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRESP
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HADDR
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWDATA
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWRITE
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HSIZE
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HPROT
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HADDRD
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HSIZED
 add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/InterlockStall
@@ -404,8 +404,12 @@ add wave -noupdate -expand -group CLINT /testbench/dut/uncore/uncore/clint/clint
 add wave -noupdate -expand -group CLINT /testbench/dut/uncore/uncore/clint/clint/MTIMECMP
 add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PSEL
 add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PADDR
+add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PWDATA
 add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PSTRB
+add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PWRITE
+add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PENABLE
 add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PRDATA
+add wave -noupdate -expand -group CLINT -expand -group {clint bus} /testbench/dut/uncore/uncore/clint/clint/PREADY
 add wave -noupdate -group uart -expand -group Registers -expand /testbench/dut/uncore/uncore/uart/uart/u/LSR
 add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uncore/uart/uart/u/MCR
 add wave -noupdate -group uart -expand -group Registers /testbench/dut/uncore/uncore/uart/uart/u/MSR
@@ -544,8 +548,9 @@ add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HSIZ
 add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HTRANS
 add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/CacheBusAck
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/WordCountFlag
+add wave -noupdate /testbench/dut/core/lsu/ByteMaskM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {34777 ns} 0} {{Cursor 3} {334914 ns} 1} {{Cursor 4} {335206 ns} 1}
+WaveRestoreCursors {{Cursor 2} {34315 ns} 0} {{Cursor 3} {34791 ns} 1} {{Cursor 4} {335206 ns} 1}
 quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -561,4 +566,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {34617 ns} {34937 ns}
+WaveRestoreZoom {34151 ns} {34471 ns}
