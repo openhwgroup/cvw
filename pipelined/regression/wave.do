@@ -169,11 +169,33 @@ add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/Load
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
+add wave -noupdate -expand -group AHB -expand -group multimanager -color Gold /testbench/dut/core/ebu/ebu/BusState
 add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/both
 add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/save
 add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/restore
 add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/dis
 add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/sel
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/IFUActive
+add wave -noupdate -expand -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/LSUActive
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HTRANS
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/Threshold
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURST
+add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HBURSTD
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHTRANS
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHADDR
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHBURST
+add wave -noupdate -expand -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHREADY
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUReq
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHTRANS
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHSIZE
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHBURST
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHADDR
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/HRDATA
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWRITE
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWSTRB
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHWDATA
+add wave -noupdate -expand -group AHB -expand -group LSU /testbench/dut/core/ebu/ebu/LSUHREADY
+add wave -noupdate -expand -group AHB -expand -group LSU -color Pink /testbench/dut/core/lsu/LSUHREADY
 add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/NextBusState
 add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HCLK
 add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HRESETn
@@ -196,11 +218,16 @@ add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/WriteDataM
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/ebu/ebu/HCLK
 add wave -noupdate -expand -group lsu -expand -group bus -color Gold /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/BusCurrState
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/RW
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/CacheRW
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/Cacheable
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/BusStall
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/HTRANS
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/FetchBuffer
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/HRDATA
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/bus/dcache/cachedp/WordCount
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
 add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
@@ -305,6 +332,7 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU 
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/FlushCache
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheStall
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/ReadDataWordM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/FinalWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheFetchLine
@@ -513,8 +541,8 @@ add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HTRA
 add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/CacheBusAck
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/WordCountFlag
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {989221 ns} 1} {{Cursor 3} {999815 ns} 1} {{Cursor 4} {2306 ns} 0}
-quietly wave cursor active 3
+WaveRestoreCursors {{Cursor 2} {27610 ns} 0} {{Cursor 3} {334914 ns} 1} {{Cursor 4} {335206 ns} 1}
+quietly wave cursor active 1
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
 configure wave -justifyvalue left
@@ -529,4 +557,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {2137 ns} {2477 ns}
+WaveRestoreZoom {27292 ns} {27764 ns}
