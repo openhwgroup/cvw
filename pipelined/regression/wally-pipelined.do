@@ -86,6 +86,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     #do ./wave-dos/peripheral-waves.do
     add log -recursive /*
     do wave.do
+    #do wave-bus.do
 
     # power add generates the logging necessary for saif generation.
     #power add -r /dut/core/*
