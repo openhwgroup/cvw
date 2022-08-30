@@ -279,7 +279,7 @@ module lsu (
 
       // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
       logic [`XLEN/8-1:0]  BusByteMaskM;
-      swbytemask #(`XLEN) busswbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
+      swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
       
       flop #(`XLEN/8) HWSTRBReg(clk, BusByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
       

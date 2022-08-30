@@ -197,6 +197,7 @@ module cachefsm
   assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss) | (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck);
   assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
+                          (CurrState == STATE_FLUSH_WRITE_BACK) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.

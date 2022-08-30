@@ -134,7 +134,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 
   assign HTRANS = (BusCurrState == STATE_READY & HREADY & (|RW | |CacheRW)) |
                   (BusCurrState == STATE_CAPTURE & ~HREADY) |
-                  (BusCurrState == STATE_CACHE_ACCESS & ~HREADY & |WordCount) ? AHB_NONSEQ :
+                  (BusCurrState == STATE_CACHE_ACCESS & ~HREADY & ~|WordCount) ? AHB_NONSEQ :
                   (BusCurrState == STATE_CACHE_ACCESS & |WordCount) ? AHB_SEQ : AHB_IDLE;
 
   assign HWRITE = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |  // *** might not be necessary, maybe just RW[0]
