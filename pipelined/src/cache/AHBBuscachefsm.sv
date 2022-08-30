@@ -96,7 +96,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 		.q(WordCountDelayed));
   assign NextWordCount = WordCount + 1'b1;
 
-  assign WordCountFlag = (WordCount == WordCountThreshold[LOGWPL-1:0] ); // Detect when we are waiting on the final access.
+  assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0] ); // Detect when we are waiting on the final access.
   assign WordCntEn = (BusNextState == STATE_CACHE_ACCESS & HREADY) |
                      (BusNextState == STATE_READY & |CacheRW & HREADY);
   
@@ -128,10 +128,10 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   
   assign BusCommitted = BusCurrState != STATE_READY; // *** might not be correct
 
-  assign HTRANS = (BusCurrState == STATE_READY & HREADY & |RW) |
+  assign HTRANS = (BusCurrState == STATE_READY & HREADY & (|RW | |CacheRW)) |
                   (BusCurrState == STATE_CAPTURE & ~HREADY) |
                   (BusCurrState == STATE_CACHE_ACCESS & ~HREADY & |WordCount) ? AHB_NONSEQ :
-                  (BusCurrState == STATE_CACHE_ACCESS & ~HREADY & ~|WordCount) ? AHB_SEQ : AHB_IDLE;
+                  (BusCurrState == STATE_CACHE_ACCESS) ? AHB_SEQ : AHB_IDLE;
 
   assign HWRITE = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |  // *** might not be necessary, maybe just RW[0]
                   (BusCurrState == STATE_CACHE_ACCESS & CacheRW[0]);
@@ -152,7 +152,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
                           (BusCurrState == STATE_CAPTURE) |
                           (BusCurrState == STATE_DELAY);
 
-  assign CacheBusAck = (BusCurrState == STATE_CAPTURE & HREADY & WordCountFlag);
+  assign CacheBusAck = (BusCurrState == STATE_CACHE_ACCESS & HREADY & WordCountFlag);
 
   assign SelBusWord = (BusCurrState == STATE_READY & RW[0]) |
 						   (BusCurrState == STATE_CAPTURE & RW[0]) |

@@ -231,17 +231,15 @@ module ifu (
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCache(InvalidateICacheM));
-      cachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
-      cachedp(.clk, .reset,
-            .HRDATA(HRDATA), .BusAck(IFUBusAck), .BusInit(IFUBusInit), .BusWrite(), .SelBusWord(),
-            .BusRead(IFUBusRead), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .BusTransComplete(IFUTransComplete),
-            .Funct3(3'b010), .HADDR(IFUHADDR), .CacheBusAdr(ICacheBusAdr),
-            .WordCount(), 
-            .CacheFetchLine(ICacheFetchLine),
-            .CacheWriteLine(1'b0), .CacheBusAck(ICacheBusAck), 
+      AHBCachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
+      cachedp(.HCLK(clk), .HRESETn(~reset),
+            .HRDATA,
+            .CacheRW({ICacheFetchLine, 1'b0} & ~{ITLBMissF, ITLBMissF}), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
+            .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
+            .WordCount(), .SelUncachedAdr, .SelBusWord(),
+              .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
-            .SelUncachedAdr,
-            .IgnoreRequest(ITLBMissF), .RW(NonIROMMemRWM), .CPUBusy, .Cacheable(CacheableF),
+            .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF}), .CPUBusy, .Cacheable(CacheableF),
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
