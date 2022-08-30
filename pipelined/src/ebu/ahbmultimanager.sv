@@ -93,7 +93,13 @@ module ahbmultimanager
 
   logic                       IFUReq, LSUReq;
   logic                       IFUActive, LSUActive;
-  
+
+  logic                       WordCntEn;
+  logic [4-1:0]               NextWordCount, WordCount, WordCountDelayed;
+  logic                       WordCountFlag;
+  logic [2:0]                 LocalBurstType;
+  logic                       CntReset;
+  logic [3:0]                 Threshold;
   
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -149,7 +155,7 @@ module ahbmultimanager
   assign save[1] = 1'b0;
   assign restore[1] = 1'b0;
   assign dis[1] = 1'b0;
-  assign sel[1] = NextBusState == ARBITRATE ? LSUReq : 1'b0;
+  assign sel[1] = NextBusState == ARBITRATE ? 1'b1: LSUReq;
   
   
 
@@ -163,7 +169,7 @@ module ahbmultimanager
     case (BusState) 
       IDLE: if (both)       NextBusState = ARBITRATE; 
       else            NextBusState = IDLE;
-      ARBITRATE: if (HREADY)NextBusState = IDLE;
+      ARBITRATE: if (HREADY & WordCountFlag) NextBusState = IDLE;
       else       NextBusState = ARBITRATE;
       default:              NextBusState = IDLE;
     endcase // case (BusState)
@@ -173,5 +179,39 @@ module ahbmultimanager
   assign HWDATA = LSUHWDATA;
   assign HWSTRB = LSUHWSTRB;
 
+  flopenr #(4) 
+  WordCountReg(.clk(HCLK),
+		.reset(~HRESETn | CntReset),
+		.en(WordCntEn),
+		.d(NextWordCount),
+		.q(WordCount));  
+  
+  // Used to store data from data phase of AHB.
+  flopenr #(4) 
+  WordCountDelayedReg(.clk(HCLK),
+		.reset(~HRESETn | CntReset),
+		.en(WordCntEn),
+		.d(WordCount),
+		.q(WordCountDelayed));
+  assign NextWordCount = WordCount + 1'b1;
+
+  assign CntReset = NextBusState == IDLE;
+  assign WordCountFlag = (WordCountDelayed == Threshold); // Detect when we are waiting on the final access.
+  assign WordCntEn = (NextBusState == ARBITRATE & HREADY);
+
+  logic [2:0]                 HBURSTD;
+  
+  flopenr #(3) HBURSTReg(.clk(HCLK), .reset(~HRESETn), .en(HTRANS == 2'b10), .d(HBURST), .q(HBURSTD));
+
+  always_comb begin
+    case(HBURSTD)
+      0:        Threshold = 4'b0000;
+      3:        Threshold = 4'b0011; // INCR4
+      5:        Threshold = 4'b0111; // INCR8
+      7:        Threshold = 4'b1111; // INCR16
+      default:  Threshold = 4'b0000; // INCR without end.
+    endcase
+  end
+  
 
 endmodule

@@ -246,6 +246,8 @@ module lsu (
       logic [LOGBWPL-1:0]  WordCount;
       logic                SelUncachedAdr, DCacheBusAck;
       logic                SelBusWord;
+      logic [`XLEN-1:0]    LSUHWDATA_noDELAY; //*** change name
+      logic [`XLEN/8-1:0]  ByteMaskMDelay;
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -268,10 +270,15 @@ module lsu (
         .SelUncachedAdr, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM}), .CPUBusy, .Cacheable(CacheableM),
         .BusStall, .BusCommitted(BusCommittedM));
 
-      mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
+      mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
         .s(SelUncachedAdr), .y(ReadDataWordMuxM));
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
-        .s(SelUncachedAdr), .y(LSUHWDATA));
+        .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
+
+      flop #(`XLEN) wdreg(clk, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flop #(`XLEN/8) HWSTRBReg(clk, ByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
+      
+
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
       assign LSUHADDR = LSUPAdrM;
