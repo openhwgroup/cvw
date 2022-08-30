@@ -75,7 +75,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   logic                WordCountFlag;
   logic [2:0]          LocalBurstType;
   logic                CntReset;
-  
+  logic [1:0]          RWDelay, CacheRWDelay;
   
   assign CntReset = BusNextState == STATE_READY;
   
@@ -99,7 +99,11 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0] ); // Detect when we are waiting on the final access.
   assign WordCntEn = (BusNextState == STATE_CACHE_ACCESS & HREADY) |
                      (BusNextState == STATE_READY & |CacheRW & HREADY);
-  
+
+  // replace with fsm with two more states.
+  flopenr #(2) RWReg(HCLK, ~HRESETn, 1'b1, RW, RWDelay);
+  flopenr #(2) CacheRWReg(HCLK, ~HRESETn, 1'b1, CacheRW, CacheRWDelay);  
+                     
 
   always_ff @(posedge HCLK)
     if (~HRESETn)    BusCurrState <= #1 STATE_READY;
@@ -135,7 +139,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 
   assign HWRITE = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |  // *** might not be necessary, maybe just RW[0]
                   (BusCurrState == STATE_CACHE_ACCESS & CacheRW[0]);
-  assign CaptureEn = BusCurrState == STATE_CAPTURE | (BusCurrState == STATE_CACHE_ACCESS & HREADY);
+  assign CaptureEn = (BusCurrState == STATE_CAPTURE & RWDelay[1]) | (BusCurrState == STATE_CACHE_ACCESS & HREADY & CacheRWDelay[1]);
   assign HBURST = (|CacheRW) ? LocalBurstType : 3'b0; // Don't want to use burst when doing an Uncached Access.
   
   always_comb begin
@@ -154,7 +158,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 
   assign CacheBusAck = (BusCurrState == STATE_CACHE_ACCESS & HREADY & WordCountFlag);
 
-  assign SelBusWord = (BusCurrState == STATE_READY & RW[0]) |
+  assign SelBusWord = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |
 						   (BusCurrState == STATE_CAPTURE & RW[0]) |
                            (BusCurrState == STATE_CACHE_ACCESS & CacheRW[0]);
 
