@@ -258,14 +258,14 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
-      cachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) cachedp(
-        .clk, .reset,
-        .HRDATA, .BusAck(LSUBusAck), .BusInit(LSUBusInit), .BusWrite(LSUBusWrite), 
-        .BusRead(LSUBusRead), .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .BusTransComplete(LSUTransComplete),
+      AHBCachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) cachedp(
+        .HCLK(clk), .HRESETn(~reset),
+        .HRDATA, 
+        .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .WordCount, .SelBusWord,
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheFetchLine(DCacheFetchLine),
-        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
-        .SelUncachedAdr, .IgnoreRequest, .RW(LSURWM), .CPUBusy, .Cacheable(CacheableM),
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheRW({DCacheFetchLine, DCacheWriteLine} & ~{IgnoreRequest, IgnoreRequest}),
+        .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
+        .SelUncachedAdr, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}), .CPUBusy, .Cacheable(CacheableM),
         .BusStall, .BusCommitted(BusCommittedM));
 
       mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
