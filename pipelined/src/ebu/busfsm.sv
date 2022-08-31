@@ -48,8 +48,7 @@ module busfsm
   
   typedef enum logic [2:0] {STATE_READY,
 				            STATE_CAPTURE,
-				            STATE_DELAY,
-				            STATE_CPU_BUSY} busstatetype;
+				            STATE_DELAY} busstatetype;
 
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
@@ -65,10 +64,8 @@ module busfsm
                    else        BusNextState = STATE_READY;
       STATE_CAPTURE: if(HREADY)  BusNextState = STATE_DELAY;
 		           else        BusNextState = STATE_CAPTURE;
-      STATE_DELAY: if(CPUBusy) BusNextState = STATE_CPU_BUSY;
+      STATE_DELAY: if(CPUBusy) BusNextState = STATE_DELAY;
 		           else        BusNextState = STATE_READY;
-      STATE_CPU_BUSY: if(CPUBusy) BusNextState = STATE_CPU_BUSY;
-                   else        BusNextState = STATE_READY;
 	  default:                 BusNextState = STATE_READY;
 	endcase
   end

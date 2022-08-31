@@ -62,7 +62,6 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   typedef enum logic [2:0] {STATE_READY,
 				            STATE_CAPTURE,
 				            STATE_DELAY,
-				            STATE_CPU_BUSY,
                             STATE_CACHE_FETCH,
                             STATE_CACHE_EVICT} busstatetype;
 
@@ -89,10 +88,8 @@ module buscachefsm #(parameter integer   WordCountThreshold,
                    else                          BusNextState = STATE_READY;
       STATE_CAPTURE: if(HREADY)                  BusNextState = STATE_DELAY;
 		           else                          BusNextState = STATE_CAPTURE;
-      STATE_DELAY: if(CPUBusy)                   BusNextState = STATE_CPU_BUSY;
+      STATE_DELAY: if(CPUBusy)                   BusNextState = STATE_DELAY;
 		           else                          BusNextState = STATE_READY;
-      STATE_CPU_BUSY: if(CPUBusy)                BusNextState = STATE_CPU_BUSY;
-                   else                          BusNextState = STATE_READY;
       STATE_CACHE_FETCH: if(HREADY & FinalWordCount) BusNextState = STATE_READY;
                          else                       BusNextState = STATE_CACHE_FETCH;
       STATE_CACHE_EVICT: if(HREADY & FinalWordCount) BusNextState = STATE_READY;
