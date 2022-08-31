@@ -64,7 +64,8 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 				            STATE_CAPTURE,
 				            STATE_DELAY,
 				            STATE_CPU_BUSY,
-                            STATE_CACHE_ACCESS} busstatetype;
+                            STATE_CACHE_FETCH,
+                            STATE_CACHE_EVICT} busstatetype;
 
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
@@ -75,7 +76,6 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   logic                WordCountFlag;
   logic [2:0]          LocalBurstType;
   logic                WordCntReset;
-  logic [1:0]          RWDelay, CacheRWDelay;
   
   
   // Used to send address for address stage of AHB.
@@ -96,14 +96,9 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   assign NextWordCount = WordCount + 1'b1;
 
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0] ); // Detect when we are waiting on the final access.
-  assign WordCntEn = (BusNextState == STATE_CACHE_ACCESS & HREADY) |
+  assign WordCntEn = ((BusNextState == STATE_CACHE_EVICT | BusNextState == STATE_CACHE_FETCH) & HREADY) |
                      (BusNextState == STATE_READY & |CacheRW & HREADY);
   assign WordCntReset = BusNextState == STATE_READY;
-
-  // replace with fsm with two more states.
-  flopenr #(2) RWReg(HCLK, ~HRESETn, 1'b1, RW, RWDelay);
-  flopenr #(2) CacheRWReg(HCLK, ~HRESETn, 1'b1, CacheRW, CacheRWDelay);  
-                     
 
   always_ff @(posedge HCLK)
     if (~HRESETn)    BusCurrState <= #1 STATE_READY;
@@ -112,7 +107,8 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   always_comb begin
 	case(BusCurrState)
 	  STATE_READY: if(HREADY & |RW)  BusNextState = STATE_CAPTURE;
-                   else if (HREADY & |CacheRW) BusNextState = STATE_CACHE_ACCESS;
+                   else if (HREADY & CacheRW[0]) BusNextState = STATE_CACHE_EVICT;
+                   else if (HREADY & CacheRW[1]) BusNextState = STATE_CACHE_FETCH;
                    else        BusNextState = STATE_READY;
       STATE_CAPTURE: if(HREADY)  BusNextState = STATE_DELAY;
 		           else        BusNextState = STATE_CAPTURE;
@@ -120,26 +116,29 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
 		           else        BusNextState = STATE_READY;
       STATE_CPU_BUSY: if(CPUBusy) BusNextState = STATE_CPU_BUSY;
                    else        BusNextState = STATE_READY;
-      STATE_CACHE_ACCESS: if(HREADY & WordCountFlag) BusNextState = STATE_READY;
-                          else BusNextState = STATE_CACHE_ACCESS;
+      STATE_CACHE_FETCH: if(HREADY & WordCountFlag) BusNextState = STATE_READY;
+                          else BusNextState = STATE_CACHE_FETCH;
+      STATE_CACHE_EVICT: if(HREADY & WordCountFlag) BusNextState = STATE_READY;
+                          else BusNextState = STATE_CACHE_EVICT;
 	  default:                 BusNextState = STATE_READY;
 	endcase
   end
 
   assign BusStall = (BusCurrState == STATE_READY & (|RW | |CacheRW)) |
 					(BusCurrState == STATE_CAPTURE) | 
-                    (BusCurrState == STATE_CACHE_ACCESS);
+                    (BusCurrState == STATE_CACHE_FETCH) |
+                    (BusCurrState == STATE_CACHE_EVICT);
   
   assign BusCommitted = BusCurrState != STATE_READY; // *** might not be correct
 
   assign HTRANS = (BusCurrState == STATE_READY & HREADY & (|RW | |CacheRW)) |
                   (BusCurrState == STATE_CAPTURE & ~HREADY) |
-                  (BusCurrState == STATE_CACHE_ACCESS & ~HREADY & ~|WordCount) ? AHB_NONSEQ :
-                  (BusCurrState == STATE_CACHE_ACCESS & |WordCount) ? AHB_SEQ : AHB_IDLE;
+                  ((BusCurrState == STATE_CACHE_FETCH | BusCurrState == STATE_CACHE_EVICT) & ~HREADY & ~|WordCount) ? AHB_NONSEQ :
+                  ((BusCurrState == STATE_CACHE_FETCH | BusCurrState == STATE_CACHE_EVICT) & |WordCount) ? AHB_SEQ : AHB_IDLE;
 
   assign HWRITE = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |  // *** might not be necessary, maybe just RW[0]
-                  (BusCurrState == STATE_CACHE_ACCESS & CacheRW[0]);
-  assign CaptureEn = (BusCurrState == STATE_CAPTURE & RWDelay[1]) | (BusCurrState == STATE_CACHE_ACCESS & HREADY & CacheRWDelay[1]);
+                  (BusCurrState == STATE_CACHE_EVICT);
+  assign CaptureEn = (BusCurrState == STATE_CAPTURE & RW[1]) | (BusCurrState == STATE_CACHE_FETCH & HREADY);
   assign HBURST = (|CacheRW) ? LocalBurstType : 3'b0; // Don't want to use burst when doing an Uncached Access.
   
   always_comb begin
@@ -156,10 +155,10 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
                           (BusCurrState == STATE_CAPTURE) |
                           (BusCurrState == STATE_DELAY);
 
-  assign CacheBusAck = (BusCurrState == STATE_CACHE_ACCESS & HREADY & WordCountFlag);
+  assign CacheBusAck = ((BusCurrState == STATE_CACHE_FETCH | BusCurrState == STATE_CACHE_EVICT) & HREADY & WordCountFlag);
 
   assign SelBusWord = (BusCurrState == STATE_READY & (RW[0] | CacheRW[0])) |
 						   (BusCurrState == STATE_CAPTURE & RW[0]) |
-                           (BusCurrState == STATE_CACHE_ACCESS & CacheRW[0]);
+                           (BusCurrState == STATE_CACHE_EVICT);
 
 endmodule
