@@ -262,7 +262,7 @@ module lsu (
         .WordCount, .SelBusWord,
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheRW({DCacheFetchLine, DCacheWriteLine} & ~{IgnoreRequest, IgnoreRequest}),
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
-        .SelUncachedAdr, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM}), .CPUBusy, .Cacheable(CacheableM),
+        .SelUncachedAdr, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM}), .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
       mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),

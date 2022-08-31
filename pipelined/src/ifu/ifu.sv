@@ -235,7 +235,7 @@ module ifu (
             .WordCount(), .SelUncachedAdr, .SelBusWord(),
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
-            .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF}), .CPUBusy, .Cacheable(CacheableF),
+            .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF}), .CPUBusy,
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
