@@ -78,7 +78,7 @@ module fdivsqrtstage4 (
   csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~SqrtM, WSA, WCA);
  
   otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-  sotfc4 sotfc4(.s(q), .SqrtM, .C, .S, .SM, .SNext, .SMNext);
+  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C, .S, .SM, .SNext, .SMNext);
 endmodule
 
 
