@@ -80,7 +80,7 @@ module busfsm
 
   assign HTRANS = (BusCurrState == STATE_READY & HREADY & |RW) |
                   (BusCurrState == STATE_CAPTURE & ~HREADY) ? AHB_NONSEQ : AHB_IDLE;
-  assign HWRITE = (BusCurrState == STATE_READY) & RW[0]; // *** might not be necessary, maybe just RW[0]
+  assign HWRITE = RW[0];
   assign CaptureEn = BusCurrState == STATE_CAPTURE;
   
 endmodule
