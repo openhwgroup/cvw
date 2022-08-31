@@ -230,8 +230,8 @@ module ifu (
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(), .InvalidateCache(InvalidateICacheM));
-      AHBCachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
-      cachedp(.HCLK(clk), .HRESETn(~reset),
+      ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
+      ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .CacheRW, .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),

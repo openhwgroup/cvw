@@ -219,15 +219,15 @@ add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -expand -group lsu -radix hexadecimal /testbench/dut/core/lsu/WriteDataM
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/ebu/ebu/HCLK
-add wave -noupdate -expand -group lsu -expand -group bus -color Gold /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/BusCurrState
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/RW
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/CacheRW
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/AHBBuscachefsm/Cacheable
+add wave -noupdate -expand -group lsu -expand -group bus -color Gold /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm/BusCurrState
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm/RW
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm/CacheRW
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm/Cacheable
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/BusStall
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/HTRANS
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/FetchBuffer
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/HRDATA
-add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/cachedp/WordCount
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/HTRANS
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/FetchBuffer
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/HRDATA
+add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/WordCount
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/bus/dcache/LSUHWDATA_noDELAY
 add wave -noupdate -expand -group lsu -expand -group bus /testbench/dut/core/lsu/LSUHWDATA
 add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
@@ -545,18 +545,18 @@ add wave -noupdate -group {Performance Counters} -expand -group ICACHE -label {I
 add wave -noupdate -group {Performance Counters} -expand -group ICACHE -label {ICACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
 add wave -noupdate -group {Performance Counters} -expand -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
 add wave -noupdate -group {Performance Counters} -expand -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
-add wave -noupdate -group {ifu } -color Gold /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/BusCurrState
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/CacheRW
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/RW
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/HREADY
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/WordCount
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/FetchBuffer
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/CaptureEn
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HADDR
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HSIZE
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/HTRANS
-add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/CacheBusAck
-add wave -noupdate /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/WordCountFlag
+add wave -noupdate -group {ifu } -color Gold /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/BusCurrState
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/CacheRW
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/RW
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/HREADY
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/WordCount
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/FetchBuffer
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/CaptureEn
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HADDR
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HSIZE
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HTRANS
+add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/CacheBusAck
+add wave -noupdate /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/WordCountFlag
 add wave -noupdate /testbench/dut/core/lsu/ByteMaskM
 add wave -noupdate /testbench/dut/core/fpu/fpu/FWriteDataM
 TreeUpdate [SetDefaultTree]
