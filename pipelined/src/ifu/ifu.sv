@@ -248,12 +248,12 @@ module ifu (
       logic CaptureEn;
       logic [1:0] RW;
       assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF};
-      flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
+      ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
+        .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
+        .HWSTRB(), .RW, .ByteMask(), .WriteData('0),
+        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWordM(AllInstrRawF[31:0]));
 
-      busfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW, .CaptureEn,
-                       .BusCommitted(), .CPUBusy, .HREADY(IFUHREADY), .BusStall, .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE));
-          
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
       assign {ICacheMiss, ICacheAccess} = '0;
