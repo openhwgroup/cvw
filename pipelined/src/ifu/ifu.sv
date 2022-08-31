@@ -209,7 +209,10 @@ module ifu (
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
       logic                SelUncachedAdr;
-
+      logic [1:0]          CacheRW, RW;
+      
+      assign CacheRW = {ICacheFetchLine, 1'b0} & ~{ITLBMissF, ITLBMissF};
+      assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -230,12 +233,12 @@ module ifu (
       AHBCachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       cachedp(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .CacheRW({ICacheFetchLine, 1'b0} & ~{ITLBMissF, ITLBMissF}), .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
+            .CacheRW, .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .WordCount(), .SelUncachedAdr, .SelBusWord(),
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
-            .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF}), .CPUBusy,
+            .RW, .CPUBusy,
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
@@ -243,11 +246,12 @@ module ifu (
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic CaptureEn;
-      
+      logic [1:0] RW;
+      assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF};
       flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
 
-      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}), .CaptureEn,
+      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW, .CaptureEn,
                        .BusCommitted(), .CPUBusy, .HREADY(IFUHREADY), .BusStall, .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE));
           
       assign IFUHBURST = 3'b0;
