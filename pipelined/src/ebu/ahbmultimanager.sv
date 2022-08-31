@@ -79,7 +79,6 @@ module ahbmultimanager
 
   logic [1:0]                 save, restore, dis, sel;
   logic                       both;
-  logic                       DoArbitration;
 
   logic [`PA_BITS-1:0]        IFUHADDRSave, IFUHADDRRestore;
   logic [1:0]                 IFUHTRANSSave, IFUHTRANSRestore;
@@ -145,40 +144,35 @@ module ahbmultimanager
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = sel[1] ? LSUHWRITERestore : sel[0] ? 1'b0 : '0;
 
+  // data phase muxing
+  assign HWDATA = LSUHWDATA;
+  assign HWSTRB = LSUHWSTRB;
+  // HRDATA is sent to all managers at the core level.
+
   // basic arb always selects LSU when both
+  // Manager 0 (IFU)
   assign save[0] = CurrState == IDLE & both;
   assign restore[0] = CurrState == ARBITRATE;
   assign dis[0] = CurrState == ARBITRATE;
   assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
-
-  //
+  // Manager 1 (LSU)
   assign save[1] = 1'b0;
   assign restore[1] = 1'b0;
   assign dis[1] = 1'b0;
   assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
-  
-  
 
   // Bus State FSM
-  // Data accesses have priority over instructions.  However, if a data access comes
-  // while an cache line read is occuring, the line read finishes before
-  // the data access can take place.
-  
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
-      IDLE: if (both)       NextState = ARBITRATE; 
-      else            NextState = IDLE;
+      IDLE: if (both)                        NextState = ARBITRATE; 
+      else                                   NextState = IDLE;
       ARBITRATE: if (HREADY & WordCountFlag) NextState = IDLE;
-      else       NextState = ARBITRATE;
-      default:              NextState = IDLE;
-    endcase // case (CurrState)
+      else                                   NextState = ARBITRATE;
+      default:                               NextState = IDLE;
+    endcase
 
-  assign DoArbitration = CurrState == ARBITRATE;
-
-  assign HWDATA = LSUHWDATA;
-  assign HWSTRB = LSUHWSTRB;
-
+  // Manager needs to count beats.
   flopenr #(4) 
   WordCountReg(.clk(HCLK),
 		.reset(~HRESETn | CntReset),
