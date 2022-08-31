@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 // HCLK and clk must be the same clock!
-module AHBBuscachefsm #(parameter integer   WordCountThreshold,
+module buscachefsm #(parameter integer   WordCountThreshold,
    parameter integer LOGWPL, parameter logic CACHE_ENABLED )
   (input logic               HCLK,
    input logic               HRESETn,

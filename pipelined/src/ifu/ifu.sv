@@ -251,7 +251,7 @@ module ifu (
       flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
 
-      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW, .CaptureEn,
+      busfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW, .CaptureEn,
                        .BusCommitted(), .CPUBusy, .HREADY(IFUHREADY), .BusStall, .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE));
           
       assign IFUHBURST = 3'b0;

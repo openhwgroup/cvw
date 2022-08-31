@@ -68,7 +68,7 @@ module ahbinterface #(parameter WRITEABLE = 0)
     assign HWSTRB = '0;
   end    
 
-  AHBBusfsm busfsm(.HCLK, .HRESETn, .RW,
+  busfsm busfsm(.HCLK, .HRESETn, .RW,
     .BusCommitted, .CPUBusy, .BusStall, .CaptureEn, .HREADY,
     .HTRANS, .HWRITE);
 endmodule
