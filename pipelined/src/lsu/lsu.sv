@@ -72,10 +72,6 @@ module lsu (
    output logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
             // connect to ahb
    (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR,
-   (* mark_debug = "true" *)   output logic LSUBusRead, 
-   (* mark_debug = "true" *)   output logic LSUBusWrite,
-   (* mark_debug = "true" *)   input logic LSUBusAck,
-   (* mark_debug = "true" *)   input logic LSUBusInit,
    (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,
    (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,
    (* mark_debug = "true" *)   input logic LSUHREADY,
@@ -84,7 +80,6 @@ module lsu (
    (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,
    (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,
    (* mark_debug = "true" *)   output logic [`XLEN/8-1:0] LSUHWSTRB,
-   (* mark_debug = "true" *)   output logic LSUTransComplete,
             // page table walker
    input logic [`XLEN-1:0]  SATP_REGW, // from csr
    input logic              STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -278,6 +273,7 @@ module lsu (
       flop #(`XLEN) wdreg(clk, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
 
       // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
+      // probably can merge by muxing LSUPAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
       logic [`XLEN/8-1:0]  BusByteMaskM;
       swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
       
@@ -294,21 +290,12 @@ module lsu (
       flop #(`XLEN) wdreg(clk, LSUWriteDataM, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
       flop #(`XLEN/8) HWSTRBReg(clk, ByteMaskM, LSUHWSTRB);
 
-/* -----\/----- EXCLUDED -----\/-----
-      busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}), 
-        .BusAck(LSUBusAck), .BusInit(LSUBusInit), .CPUBusy, 
-        .BusStall, .BusWrite(LSUBusWrite), .BusRead(LSUBusRead), 
-        .HTRANS(LSUHTRANS), .BusCommitted(BusCommittedM));
- -----/\----- EXCLUDED -----/\----- */
-
       AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(LSURWM & ~{IgnoreRequest, IgnoreRequest}),
                        .BusCommitted(BusCommittedM), .CPUBusy, .BusStall, .CaptureEn, .HREADY(LSUHREADY), .HTRANS(LSUHTRANS),
                        .HWRITE(LSUHWRITE));
           
       assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
-      assign LSUTransComplete = LSUBusAck;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
   end else begin: nobus // block: bus
