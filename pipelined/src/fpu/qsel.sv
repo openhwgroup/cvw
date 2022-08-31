@@ -124,6 +124,80 @@ module qsel4 (
             else if(w2>=-13) QSel4[i] = 4'b0010; 
             else             QSel4[i] = 4'b0001; 
           1: if(w2>=14)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100;  
+            else if(w2>=-4)  QSel4[i] = 4'b0000; 
+            else if(w2>=-14) QSel4[i] = 4'b0010;  
+            else             QSel4[i] = 4'b0001; 
+          2: if(w2>=16)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-16) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          3: if(w2>=16)      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-17) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          4: if(w2>=18)      QSel4[i] = 4'b1000;
+            else if(w2>=6)   QSel4[i] = 4'b0100; 
+            else if(w2>=-6)  QSel4[i] = 4'b0000; 
+            else if(w2>=-18) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          5: if(w2>=20)      QSel4[i] = 4'b1000;
+            else if(w2>=6)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-20) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          6: if(w2>=20)      QSel4[i] = 4'b1000;
+            else if(w2>=8)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-22) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          7: if(w2>=24)      QSel4[i] = 4'b1000; 
+            else if(w2>=8)   QSel4[i] = 4'b0100; 
+            else if(w2>=-8)  QSel4[i] = 4'b0000; 
+            else if(w2>=-22) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+        endcase
+      end
+  end
+	assign q = QSel4[{Dmsbs,Wmsbs}];
+	
+endmodule
+
+// qsel4old was working for divide
+module qsel4old (
+	input logic [`DIVN-2:0] D,
+	input logic [`DIVb+3:0] WS, WC,
+  input logic Sqrt,
+	output logic [3:0] q
+);
+	logic [6:0] Wmsbs;
+	logic [7:0] PreWmsbs;
+	logic [2:0] Dmsbs;
+	assign PreWmsbs = WC[`DIVb+3:`DIVb-4] + WS[`DIVb+3:`DIVb-4];
+	assign Wmsbs = PreWmsbs[7:1];
+	assign Dmsbs = D[`DIVN-2:`DIVN-4];//|{3{D[`DIVN-2]&Sqrt}};
+	// D = 0001.xxx...
+	// Dmsbs = |   |
+  // W =      xxxx.xxx...
+	// Wmsbs = |        |
+
+	logic [3:0] QSel4[1023:0];
+
+  always_comb begin 
+    integer d, w, i, w2;
+    for(d=0; d<8; d++)
+      for(w=0; w<128; w++)begin
+        i = d*128+w;
+        w2 = w-128*(w>=64); // convert to two's complement
+        case(d)
+          0: if($signed(w2)>=$signed(12))      QSel4[i] = 4'b1000;
+            else if(w2>=4)   QSel4[i] = 4'b0100; 
+            else if(w2>=-4)  QSel4[i] = 4'b0000; 
+            else if(w2>=-13) QSel4[i] = 4'b0010; 
+            else             QSel4[i] = 4'b0001; 
+          1: if(w2>=14)      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-5)  QSel4[i] = 4'b0000; // was -6
             else if(~Sqrt&(w2>=-15)) QSel4[i] = 4'b0010; // divide case
@@ -192,7 +266,4 @@ module fgen4 (
     else if (s[1])  F = FN1;
     else if (s[0])  F = FN2;
     else            F = F0;
-
-  // assign F = sp ? FP : (sn ? FN : FZ);
-
 endmodule

@@ -90,20 +90,20 @@ module fdivsqrtfsm(
   end
   
   if (`RADIX == 2) begin
-    logic [`DIVb+3:0] FZero, FSticky;
+    logic [`DIVb+3:0] FZeroD, FSticky;
     logic [`DIVb+2:0] LastK, FirstK;
     assign LastK = ({3'b111, LastC} & ~({3'b111, LastC} << 1));
     assign FirstK = ({3'b111, FirstC<<1} & ~({3'b111, FirstC<<1} << 1));
-    assign FZero = SqrtM ? {LastSM[`DIVb], LastSM, 2'b0} | {LastK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    assign FZeroD = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     assign FSticky = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     // *** |... for continual -1 is not efficent fix - also only needed for radix-2
-    assign WZeroD = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0})|(((WS+WC+FZero)==0)&qn[`DIVCOPIES-1]);
+    assign WZeroD = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0})|(((WS+WC+FZeroD)==0)&qn[`DIVCOPIES-1]);
   end else begin
     assign WZeroD = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0});
   end
 
   flopr #(1) WZeroReg(clk, reset | DivStart, WZero, WZeroDelayed);
-//  assign DivDone = (state == DONE);
+//  assign DivDone = (state == DONE) | (WZeroD & (state == BUSY));
   assign DivDone = (state == DONE) | (WZeroDelayed & (state == BUSY));
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
@@ -123,8 +123,7 @@ module fdivsqrtfsm(
         if (StallM) state <= #1 DONE;
         else        state <= #1 IDLE;
       end else if (state == BUSY) begin
-//          if (step == 1 | WZero ) begin
-          if (step == 1 /* | WZero */) begin
+          if (step == 1) begin
               state <= #1 DONE;
           end
           step <= step - 1;
