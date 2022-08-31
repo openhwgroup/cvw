@@ -59,7 +59,6 @@ module AHBCachedp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   input logic [`PA_BITS-1:0]  PAdr,
   input logic [1:0]           RW,
   input logic                 CPUBusy,
-  input logic                 Cacheable,
   input logic [2:0]           Funct3,
   output logic                SelBusWord,
   output logic                BusStall,
@@ -85,6 +84,6 @@ module AHBCachedp #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
 
   AHBBuscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
     .HCLK, .HRESETn, .RW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
-    .CacheRW, .CacheBusAck, .Cacheable, .SelUncachedAdr, .WordCount, .WordCountDelayed,
+    .CacheRW, .CacheBusAck, .SelUncachedAdr, .WordCount, .WordCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule
