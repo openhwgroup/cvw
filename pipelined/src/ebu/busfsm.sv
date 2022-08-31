@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 // HCLK and clk must be the same clock!
-module AHBBusfsm 
+module busfsm 
   (input logic        HCLK,
    input logic        HRESETn,
 

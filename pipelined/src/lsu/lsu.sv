@@ -293,7 +293,8 @@ module lsu (
 
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
-        .HWSTRB(LSUHWSTRB), .RW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM), .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .ReadDataWordM);
+        .HWSTRB(LSUHWSTRB), .RW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
+        .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .ReadDataWordM);
           
       assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;

@@ -82,7 +82,7 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
 
   mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(Funct3), .s(SelUncachedAdr), .y(HSIZE));
 
-  AHBBuscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
+  buscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
     .HCLK, .HRESETn, .RW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
     .CacheRW, .CacheBusAck, .SelUncachedAdr, .WordCount, .WordCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
