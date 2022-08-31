@@ -61,6 +61,7 @@ string tvpaths[] = '{
     "bd_speedopt_speed/src/nsichneu/nsichneu",
     "bd_speedopt_speed/src/picojpeg/picojpeg",
     // "bd_speedopt_speed/src/primecount/primecount",
+    "bd_speedopt_speed/src/qrduino/qrduino",
     "bd_speedopt_speed/src/sglib-combined/sglib-combined",
     "bd_speedopt_speed/src/slre/slre",
     "bd_speedopt_speed/src/st/st",

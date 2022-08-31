@@ -792,8 +792,9 @@ always_comb begin
       `CVTFPUNIT: ResFlg = Flg;
     endcase
 end
-  // check results on falling edge of clk
-  always @(negedge clk) begin
+
+// check results on falling edge of clk
+always @(negedge clk) begin
 
 
     // check if the NaN value is good. IEEE754-2019 sections 6.3 and 6.2.3 specify:
@@ -860,10 +861,11 @@ end
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+   // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
-      $display("There is an error in %s", Tests[TestNum]);
-      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+      $display("Error in %s", Tests[TestNum]);
+      $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       $stop;
     end
     
