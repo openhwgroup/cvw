@@ -72,7 +72,7 @@ module ahbmultimanager
   localparam                  ADRBITS = $clog2(`XLEN/8); // address bits for Byte Mask generator
 
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
-  statetype BusState, NextBusState;
+  statetype CurrState, NextState;
   logic                       LSUGrant;
   logic [ADRBITS-1:0]         HADDRD;
   logic [1:0]                 HSIZED;
@@ -106,7 +106,7 @@ module ahbmultimanager
 
 
   // if two requests come in at once pick one to select and save the others Address phase
-  // inputs.
+  // inputs.  Abritration scheme is LSU always goes first.
 
   // input stage IFU
   flopenr #(3+2+`PA_BITS) IFUSaveReg(HCLK, ~HRESETn, save[0],
@@ -146,16 +146,16 @@ module ahbmultimanager
   assign HWRITE = sel[1] ? LSUHWRITERestore : sel[0] ? 1'b0 : '0;
 
   // basic arb always selects LSU when both
-  assign save[0] = BusState == IDLE & both;
-  assign restore[0] = BusState == ARBITRATE;
-  assign dis[0] = BusState == ARBITRATE;
-  assign sel[0] = (NextBusState == ARBITRATE) ? 1'b0 : IFUReq;
+  assign save[0] = CurrState == IDLE & both;
+  assign restore[0] = CurrState == ARBITRATE;
+  assign dis[0] = CurrState == ARBITRATE;
+  assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
 
   //
   assign save[1] = 1'b0;
   assign restore[1] = 1'b0;
   assign dis[1] = 1'b0;
-  assign sel[1] = NextBusState == ARBITRATE ? 1'b1: LSUReq;
+  assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
   
   
 
@@ -164,17 +164,17 @@ module ahbmultimanager
   // while an cache line read is occuring, the line read finishes before
   // the data access can take place.
   
-  flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextBusState, IDLE, BusState);
+  flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
-    case (BusState) 
-      IDLE: if (both)       NextBusState = ARBITRATE; 
-      else            NextBusState = IDLE;
-      ARBITRATE: if (HREADY & WordCountFlag) NextBusState = IDLE;
-      else       NextBusState = ARBITRATE;
-      default:              NextBusState = IDLE;
-    endcase // case (BusState)
+    case (CurrState) 
+      IDLE: if (both)       NextState = ARBITRATE; 
+      else            NextState = IDLE;
+      ARBITRATE: if (HREADY & WordCountFlag) NextState = IDLE;
+      else       NextState = ARBITRATE;
+      default:              NextState = IDLE;
+    endcase // case (CurrState)
 
-  assign DoArbitration = BusState == ARBITRATE;
+  assign DoArbitration = CurrState == ARBITRATE;
 
   assign HWDATA = LSUHWDATA;
   assign HWSTRB = LSUHWSTRB;
@@ -195,9 +195,9 @@ module ahbmultimanager
 		.q(WordCountDelayed));
   assign NextWordCount = WordCount + 1'b1;
 
-  assign CntReset = NextBusState == IDLE;
+  assign CntReset = NextState == IDLE;
   assign WordCountFlag = (WordCountDelayed == Threshold); // Detect when we are waiting on the final access.
-  assign WordCntEn = (NextBusState == ARBITRATE & HREADY);
+  assign WordCntEn = (NextState == ARBITRATE & HREADY);
 
   logic [2:0]                 HBURSTD;
   
