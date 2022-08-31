@@ -37,16 +37,12 @@ module ifu (
 	input logic 				FlushF, FlushD, FlushE, FlushM, 
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
-(* mark_debug = "true" *)	input logic 				IFUBusAck,
-(* mark_debug = "true" *)	input logic 				IFUBusInit,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUHADDR,
-(* mark_debug = "true" *)	output logic 				IFUBusRead,
 (* mark_debug = "true" *)	output logic 				IFUStallF,
 (* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
 (* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
 (* mark_debug = "true" *) output logic  IFUHWRITE,
 (* mark_debug = "true" *) input logic   IFUHREADY,
-(* mark_debug = "true" *) output logic        IFUTransComplete,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
@@ -250,24 +246,16 @@ module ifu (
       
       flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(AllInstrRawF[31:0]));
 
-/* -----\/----- EXCLUDED -----\/-----
-      busfsm #(LOGBWPL) busfsm(
-        .clk, .reset, .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}), 
-        .BusAck(IFUBusAck), .BusInit(IFUBusInit), .CPUBusy, 
-        .BusStall, .BusWrite(), .BusRead(IFUBusRead), 
-        .HTRANS(IFUHTRANS), .BusCommitted());
- -----/\----- EXCLUDED -----/\----- */
 
       AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW(NonIROMMemRWM & ~{ITLBMissF, ITLBMissF}), .CaptureEn,
                        .BusCommitted(), .CPUBusy, .HREADY(IFUHREADY), .BusStall, .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE));
           
       assign IFUHBURST = 3'b0;
-      assign IFUTransComplete = IFUBusAck;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
       assign {ICacheMiss, ICacheAccess} = '0;
     end
   end else begin : nobus // block: bus
-    assign {BusStall, IFUBusRead} = '0;   
+    assign BusStall = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
     assign AllInstrRawF = FinalInstrRawF;
   end

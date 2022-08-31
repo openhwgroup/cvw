@@ -74,15 +74,14 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   logic [LOGWPL-1:0]   NextWordCount;
   logic                WordCountFlag;
   logic [2:0]          LocalBurstType;
-  logic                CntReset;
+  logic                WordCntReset;
   logic [1:0]          RWDelay, CacheRWDelay;
   
-  assign CntReset = BusNextState == STATE_READY;
   
   // Used to send address for address stage of AHB.
   flopenr #(LOGWPL) 
   WordCountReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset),
+		.reset(~HRESETn | WordCntReset),
 		.en(WordCntEn),
 		.d(NextWordCount),
 		.q(WordCount));  
@@ -90,7 +89,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   // Used to store data from data phase of AHB.
   flopenr #(LOGWPL) 
   WordCountDelayedReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset),
+		.reset(~HRESETn | WordCntReset),
 		.en(WordCntEn),
 		.d(WordCount),
 		.q(WordCountDelayed));
@@ -99,6 +98,7 @@ module AHBBuscachefsm #(parameter integer   WordCountThreshold,
   assign WordCountFlag = (WordCountDelayed == WordCountThreshold[LOGWPL-1:0] ); // Detect when we are waiting on the final access.
   assign WordCntEn = (BusNextState == STATE_CACHE_ACCESS & HREADY) |
                      (BusNextState == STATE_READY & |CacheRW & HREADY);
+  assign WordCntReset = BusNextState == STATE_READY;
 
   // replace with fsm with two more states.
   flopenr #(2) RWReg(HCLK, ~HRESETn, 1'b1, RW, RWDelay);
