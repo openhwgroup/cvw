@@ -83,6 +83,8 @@ module ahbmultimanager
   logic [`PA_BITS-1:0]        IFUHADDRSave, IFUHADDRRestore;
   logic [1:0]                 IFUHTRANSSave, IFUHTRANSRestore;
   logic [2:0]                 IFUHBURSTSave, IFUHBURSTRestore;
+  logic [2:0]                 IFUHSIZERestore;
+  logic                       IFUHWRITERestore;
   
   logic [`PA_BITS-1:0]        LSUHADDRSave, LSUHADDRRestore;
   logic [1:0]                 LSUHTRANSSave, LSUHTRANSRestore;
@@ -93,9 +95,9 @@ module ahbmultimanager
   logic                       IFUReq, LSUReq;
   logic                       IFUActive, LSUActive;
 
-  logic                       WordCntEn;
-  logic [4-1:0]               NextWordCount, WordCount, WordCountDelayed;
-  logic                       WordCountFlag;
+  logic                       BeatCntEn;
+  logic [4-1:0]               NextBeatCount, BeatCount, BeatCountDelayed;
+  logic                       FinalBeat;
   logic [2:0]                 LocalBurstType;
   logic                       CntReset;
   logic [3:0]                 Threshold;
@@ -108,32 +110,18 @@ module ahbmultimanager
   // inputs.  Abritration scheme is LSU always goes first.
 
   // input stage IFU
-  flopenr #(3+2+`PA_BITS) IFUSaveReg(HCLK, ~HRESETn, save[0],
-                                     {IFUHBURST, IFUHTRANS, IFUHADDR}, 
-                                     {IFUHBURSTSave, IFUHTRANSSave, IFUHADDRSave});
-  mux2 #(3+2+`PA_BITS) IFURestorMux({IFUHBURST, IFUHTRANS, IFUHADDR}, 
-                                    {IFUHBURSTSave, IFUHTRANSSave, IFUHADDRSave},
-                                    restore[0],
-                                    {IFUHBURSTRestore, IFUHTRANSRestore, IFUHADDRRestore});
-  assign IFUReq = IFUHTRANSRestore != 2'b00;
-  
-  assign IFUHREADY = HREADY & ~dis[0];
-  assign IFUActive = IFUReq & IFUHREADY;
+  managerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
+    .Request(IFUReq), .Active(IFUActive),
+    .HWRITEin(1'b0), .HSIZEin(3'b010), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
+    .HWRITERestore(IFUHWRITERestore), .HSIZERestore(IFUHSIZERestore), .HBURSTRestore(IFUHBURSTRestore), .HREADYRestore(IFUHREADY),
+    .HTRANSRestore(IFUHTRANSRestore), .HADDRRestore(IFUHADDRRestore), .HREADYin(HREADY));
 
   // input stage LSU
-  flopenr #(1+3+3+2+`PA_BITS) LSUSaveReg(HCLK, ~HRESETn, save[1],
-                                         {LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHADDR}, 
-                                         {LSUHWRITESave, LSUHSIZESave, LSUHBURSTSave, LSUHTRANSSave, LSUHADDRSave});
-  mux2 #(1+3+3+2+`PA_BITS) LSURestorMux({LSUHWRITE, LSUHSIZE, LSUHBURST, LSUHTRANS, LSUHADDR}, 
-                                        {LSUHWRITESave, LSUHSIZESave, LSUHBURSTSave, LSUHTRANSSave, LSUHADDRSave},
-                                        restore[1],
-                                        {LSUHWRITERestore, LSUHSIZERestore, LSUHBURSTRestore, LSUHTRANSRestore, LSUHADDRRestore});
-
-  assign LSUReq = LSUHTRANSRestore != 2'b00;
-  assign LSUHREADY = HREADY & ~dis[1];
-  assign LSUActive = LSUReq & LSUHREADY;
-
-  assign both = LSUActive & IFUActive;
+  managerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
+    .Request(LSUReq), .Active(LSUActive),
+    .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYRestore(LSUHREADY),
+    .HWRITERestore(LSUHWRITERestore), .HSIZERestore(LSUHSIZERestore), .HBURSTRestore(LSUHBURSTRestore),
+    .HTRANSRestore(LSUHTRANSRestore), .HADDRRestore(LSUHADDRRestore), .HREADYin(HREADY));
 
   // output mux //*** rewrite for general number of managers.
   assign HADDR = sel[1] ? LSUHADDRRestore : sel[0] ? IFUHADDRRestore : '0;
@@ -144,59 +132,50 @@ module ahbmultimanager
   assign HMASTLOCK = 0; // no locking supported
   assign HWRITE = sel[1] ? LSUHWRITERestore : sel[0] ? 1'b0 : '0;
 
-  // data phase muxing
+  // data phase muxing.  This would be a mux if IFU wrote data.
   assign HWDATA = LSUHWDATA;
   assign HWSTRB = LSUHWSTRB;
   // HRDATA is sent to all managers at the core level.
 
-  // basic arb always selects LSU when both
-  // Manager 0 (IFU)
-  assign save[0] = CurrState == IDLE & both;
-  assign restore[0] = CurrState == ARBITRATE;
-  assign dis[0] = CurrState == ARBITRATE;
-  assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
-  // Manager 1 (LSU)
-  assign save[1] = 1'b0;
-  assign restore[1] = 1'b0;
-  assign dis[1] = 1'b0;
-  assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
-
-  // Bus State FSM
+  // FSM decides if arbitration needed.  Arbitration is held until the last beat of
+  // a burst is completed.
+  assign both = LSUActive & IFUActive;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
-      IDLE: if (both)                        NextState = ARBITRATE; 
-      else                                   NextState = IDLE;
-      ARBITRATE: if (HREADY & WordCountFlag) NextState = IDLE;
-      else                                   NextState = ARBITRATE;
-      default:                               NextState = IDLE;
+      IDLE: if (both)                    NextState = ARBITRATE; 
+      else                               NextState = IDLE;
+      ARBITRATE: if (HREADY & FinalBeat) NextState = IDLE;
+      else                               NextState = ARBITRATE;
+      default:                           NextState = IDLE;
     endcase
 
   // Manager needs to count beats.
   flopenr #(4) 
-  WordCountReg(.clk(HCLK),
+  BeatCountReg(.clk(HCLK),
 		.reset(~HRESETn | CntReset),
-		.en(WordCntEn),
-		.d(NextWordCount),
-		.q(WordCount));  
+		.en(BeatCntEn),
+		.d(NextBeatCount),
+		.q(BeatCount));  
   
   // Used to store data from data phase of AHB.
   flopenr #(4) 
-  WordCountDelayedReg(.clk(HCLK),
+  BeatCountDelayedReg(.clk(HCLK),
 		.reset(~HRESETn | CntReset),
-		.en(WordCntEn),
-		.d(WordCount),
-		.q(WordCountDelayed));
-  assign NextWordCount = WordCount + 1'b1;
+		.en(BeatCntEn),
+		.d(BeatCount),
+		.q(BeatCountDelayed));
+  assign NextBeatCount = BeatCount + 1'b1;
 
   assign CntReset = NextState == IDLE;
-  assign WordCountFlag = (WordCountDelayed == Threshold); // Detect when we are waiting on the final access.
-  assign WordCntEn = (NextState == ARBITRATE & HREADY);
+  assign FinalBeat = (BeatCountDelayed == Threshold); // Detect when we are waiting on the final access.
+  assign BeatCntEn = (NextState == ARBITRATE & HREADY);
 
   logic [2:0]                 HBURSTD;
   
   flopenr #(3) HBURSTReg(.clk(HCLK), .reset(~HRESETn), .en(HTRANS == 2'b10), .d(HBURST), .q(HBURSTD));
 
+  // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
   always_comb begin
     case(HBURSTD)
       0:        Threshold = 4'b0000;
@@ -207,5 +186,17 @@ module ahbmultimanager
     endcase
   end
   
+  // basic arb always selects LSU when both
+  // replace this block for more sophisticated arbitration.
+  // Manager 0 (IFU)
+  assign save[0] = CurrState == IDLE & both;
+  assign restore[0] = CurrState == ARBITRATE;
+  assign dis[0] = CurrState == ARBITRATE;
+  assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
+  // Manager 1 (LSU)
+  assign save[1] = 1'b0;
+  assign restore[1] = 1'b0;
+  assign dis[1] = 1'b0;
+  assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
 
 endmodule
