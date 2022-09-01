@@ -71,7 +71,8 @@ module busfsm
   end
 
   assign BusStall = (BusCurrState == STATE_READY & |RW) |
-					(BusCurrState == STATE_CAPTURE);
+//					(BusCurrState == STATE_CAPTURE & ~RW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
+					(BusCurrState == STATE_CAPTURE); 
   
   assign BusCommitted = BusCurrState != STATE_READY;
 

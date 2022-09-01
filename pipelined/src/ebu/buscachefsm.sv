@@ -124,6 +124,7 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   assign CacheAccess = BusCurrState == STATE_CACHE_FETCH | BusCurrState == STATE_CACHE_EVICT;
 
   assign BusStall = (BusCurrState == STATE_READY & (|RW | |CacheRW)) |
+					//(BusCurrState == STATE_CAPTURE & ~RW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
 					(BusCurrState == STATE_CAPTURE) | 
                     (BusCurrState == STATE_CACHE_FETCH) |
                     (BusCurrState == STATE_CACHE_EVICT);

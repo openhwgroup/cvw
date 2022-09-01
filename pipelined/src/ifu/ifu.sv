@@ -252,7 +252,7 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .RW, .ByteMask(), .WriteData('0),
-        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWordM(AllInstrRawF[31:0]));
+        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWord(AllInstrRawF[31:0]));
 
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
