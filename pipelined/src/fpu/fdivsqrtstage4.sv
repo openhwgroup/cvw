@@ -38,7 +38,7 @@ module fdivsqrtstage4 (
   input logic [`DIVb:0] S, SM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb-1:0] C,
-  input logic SqrtM,
+  input logic SqrtM, j1,
   output logic [`DIVb:0] QNext, QMNext, 
   output logic qn,
   output logic [`DIVb:0] SNext, SMNext, 
@@ -50,6 +50,7 @@ module fdivsqrtstage4 (
   logic [3:0]     q;
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
+  logic [4:0] Smsbs;
 
   // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -59,7 +60,8 @@ module fdivsqrtstage4 (
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  qsel4 qsel4(.D, .WS, .WC, .Sqrt(SqrtM), .q);
+  assign Smsbs = S[`DIVb:`DIVb-4];
+  qsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
   fgen4 fgen4(.s(q), .C({4'b1111, C}), .S({3'b000, S}), .SM({3'b000, SM}), .F);
 
   always_comb
