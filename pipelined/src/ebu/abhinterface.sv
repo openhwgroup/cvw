@@ -53,11 +53,11 @@ module ahbinterface #(parameter WRITEABLE = 0)
   input logic                CPUBusy,
   output logic               BusStall,
   output logic               BusCommitted,
-  output logic [`XLEN-1:0]   ReadDataWordM);
+  output logic [`XLEN-1:0]   ReadDataWord);
   
   logic                       CaptureEn;
 
-  flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(ReadDataWordM));
+  flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(ReadDataWord));
 
   if(WRITEABLE) begin
     // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN    
