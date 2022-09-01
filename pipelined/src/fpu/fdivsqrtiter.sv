@@ -74,6 +74,8 @@ module fdivsqrtiter(
   logic [`DIVb:0] SNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] SMNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb-1:0] C[`DIVCOPIES-1:0]; // 0.b
+  logic [`DIVb-1:0] initC; // 0.b
+
  /* verilator lint_on UNOPTFLAT */
   logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
   logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
@@ -100,6 +102,8 @@ module fdivsqrtiter(
     assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
   end
 
+  if (`RADIX == 2) assign initC = {1'b1, {(`DIVb-1){1'b0}}}; // *** note that these are preshifted right by r compared to book
+  else             assign initC = {2'b11, {(`DIVb-2){1'b0}}};
 
   // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
   mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
@@ -107,7 +111,7 @@ module fdivsqrtiter(
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVb) Cmux(NextC, {1'b1, {(`DIVb-1){1'b0}}}, DivStart, CMux);
+  mux2 #(`DIVb) Cmux(NextC, initC, DivStart, CMux); 
   flopen #(`DIVb) cflop(clk, DivStart|DivBusy, CMux, C[0]);
 
   // Divisor Selections
@@ -127,7 +131,9 @@ module fdivsqrtiter(
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
         .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end else begin: stage
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
+        logic j1;
+        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]); // not quite right ***
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
         .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end

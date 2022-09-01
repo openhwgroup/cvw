@@ -94,13 +94,15 @@ endmodule
 
 module qsel4 (
 	input logic [`DIVN-2:0] D,
+  input logic [4:0] Smsbs,
 	input logic [`DIVb+3:0] WS, WC,
-  input logic Sqrt,
+  input logic Sqrt, j1,
 	output logic [3:0] q
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
-	logic [2:0] Dmsbs;
+	logic [2:0] Dmsbs, A;
+
 	assign PreWmsbs = WC[`DIVb+3:`DIVb-4] + WS[`DIVb+3:`DIVb-4];
 	assign Wmsbs = PreWmsbs[7:1];
 	assign Dmsbs = D[`DIVN-2:`DIVN-4];//|{3{D[`DIVN-2]&Sqrt}};
@@ -161,7 +163,13 @@ module qsel4 (
         endcase
       end
   end
-	assign q = QSel4[{Dmsbs,Wmsbs}];
+  always_comb
+    if (Sqrt) begin 
+      if (j1) A = 3'b101;
+      else if (Smsbs == 5'b10000) A = 3'b111;
+      else A = Smsbs[2:0];
+    end else A = Dmsbs;
+	assign q = QSel4[{A,Wmsbs}];
 	
 endmodule
 
