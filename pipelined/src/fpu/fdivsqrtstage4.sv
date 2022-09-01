@@ -60,7 +60,7 @@ module fdivsqrtstage4 (
 	// 0010 = -1
 	// 0001 = -2
   qsel4 qsel4(.D, .WS, .WC, .Sqrt(SqrtM), .q);
-  fgen4 fgen4(.s(q), .C, .S, .SM, .F);
+  fgen4 fgen4(.s(q), .C({4'b1111, C}), .S({3'b000, S}), .SM({3'b000, SM}), .F);
 
   always_comb
   case (q)
@@ -78,7 +78,7 @@ module fdivsqrtstage4 (
   csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~SqrtM, WSA, WCA);
  
   otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C, .S, .SM, .SNext, .SMNext);
+  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C({1'b1, C}), .S, .SM, .SNext, .SMNext);
 endmodule
 
 
