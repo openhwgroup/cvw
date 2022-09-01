@@ -36,5 +36,6 @@ add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtpreproc/expcalc/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtfsm/*
+add wave -group {Sqrt} -noupdate -recursive /testbenchfp/fdivsqrt/fdivsqrt/*
 add wave -group {Testbench} -noupdate /testbenchfp/*
 add wave -group {Testbench} -noupdate /testbenchfp/readvectors/*

@@ -112,12 +112,12 @@ module qsel4 (
 	logic [3:0] QSel4[1023:0];
 
   always_comb begin 
-    integer d, w, i, w2;
-    for(d=0; d<8; d++)
+    integer a, w, i, w2;
+    for(a=0; a<8; a++)
       for(w=0; w<128; w++)begin
-        i = d*128+w;
+        i = a*128+w;
         w2 = w-128*(w>=64); // convert to two's complement
-        case(d)
+        case(a)
           0: if($signed(w2)>=$signed(12))      QSel4[i] = 4'b1000;
             else if(w2>=4)   QSel4[i] = 4'b0100; 
             else if(w2>=-4)  QSel4[i] = 4'b0000; 

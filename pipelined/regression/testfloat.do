@@ -39,7 +39,7 @@ vsim -voptargs=+acc work.testbenchfp -G TEST=$2 -suppress 4014
 view wave
 #-- display input and output signals as hexidecimal values
 #do ./wave-dos/peripheral-waves.do
-#add log -recursive /*
+add log -recursive /*
 #do wave.do deal with when ready
 
 do wave-fpu.do
