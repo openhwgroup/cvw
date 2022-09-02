@@ -135,8 +135,7 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 
   // AHB bus interface
   assign HTRANS = (BusCurrState == STATE_READY & HREADY & (|RW | |CacheRW)) |
-                  (BusCurrState == STATE_CAPTURE & ~HREADY) |
-                  (CacheAccess & ~HREADY & ~|WordCount) ? AHB_NONSEQ :
+                  (BusCurrState == STATE_CAPTURE & ~HREADY) ? AHB_NONSEQ :
                   (CacheAccess & |WordCount) ? AHB_SEQ : AHB_IDLE;
 
   assign HWRITE = RW[0] | CacheRW[0];
