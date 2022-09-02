@@ -48,7 +48,7 @@ module rom_ahb #(parameter BASE=0, RANGE = 65535) (
   assign HRESPRom = 0; // OK
 
   // single-ported ROM
-  brom1p1r #(ADDR_WIDTH, `XLEN)
+  brom1p1r #(ADDR_WIDTH, `XLEN, `FPGA)
     memory(.clk(HCLK), .addr(HADDR[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRom));  
 endmodule
   
