@@ -9,13 +9,13 @@
       </db_ref>
    </db_ref_list>
    <zoom_setting>
-      <ZoomStartTime time="11990fs"></ZoomStartTime>
-      <ZoomEndTime time="12131fs"></ZoomEndTime>
-      <Cursor1Time time="12013fs"></Cursor1Time>
+      <ZoomStartTime time="8081fs"></ZoomStartTime>
+      <ZoomEndTime time="8103fs"></ZoomEndTime>
+      <Cursor1Time time="8083fs"></Cursor1Time>
    </zoom_setting>
    <column_width_setting>
       <NameColumnWidth column_width="355"></NameColumnWidth>
-      <ValueColumnWidth column_width="174"></ValueColumnWidth>
+      <ValueColumnWidth column_width="170"></ValueColumnWidth>
    </column_width_setting>
    <WVObjectSize size="15" />
    <wave_markers>
@@ -133,6 +133,7 @@
    <wvobject type="group" fp_name="group463">
       <obj_property name="label">LSU to Bus</obj_property>
       <obj_property name="DisplayName">label</obj_property>
+      <obj_property name="isExpanded"></obj_property>
       <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/LSUHADDR">
          <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUHADDR[31:0]</obj_property>
          <obj_property name="ObjectShortName">LSUHADDR[31:0]</obj_property>
@@ -161,27 +162,9 @@
          <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/LSUHWRITE</obj_property>
          <obj_property name="ObjectShortName">LSUHWRITE</obj_property>
       </wvobject>
-   </wvobject>
-   <wvobject type="group" fp_name="group290">
-      <obj_property name="label">IFU to Bus</obj_property>
-      <obj_property name="DisplayName">label</obj_property>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ifu/IFUHADDR">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ifu/IFUHADDR[31:0]</obj_property>
-         <obj_property name="ObjectShortName">IFUHADDR[31:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="wallypipelinedsoc/core/ifu/IFUHREADY">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ifu/IFUHREADY</obj_property>
-         <obj_property name="ObjectShortName">IFUHREADY</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ifu/IFUHTRANS">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ifu/IFUHTRANS[0:0]</obj_property>
-         <obj_property name="ObjectShortName">IFUHTRANS[0:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ifu/IFUHTRANS_1">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ifu/IFUHTRANS_1[0:0]</obj_property>
-         <obj_property name="ObjectShortName">IFUHTRANS_1[0:0]</obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/HRDATA">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/HRDATA[63:0]</obj_property>
+         <obj_property name="ObjectShortName">HRDATA[63:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
    </wvobject>
@@ -244,7 +227,6 @@
    <wvobject type="group" fp_name="group267">
       <obj_property name="label">dcache</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <obj_property name="isExpanded"></obj_property>
       <wvobject type="array" fp_name="wallypipelinedsoc/core/lsu/bus.dcache.dcache/cachefsm/CurrState">
          <obj_property name="DisplayName">FullPathName</obj_property>
          <obj_property name="ElementShortName">wallypipelinedsoc/core/lsu/bus.dcache.dcache/cachefsm/CurrState[3:0]</obj_property>
@@ -254,22 +236,42 @@
          <obj_property name="WaveformStyle">STYLE_DIGITAL</obj_property>
       </wvobject>
    </wvobject>
-   <wvobject type="group" fp_name="group279">
+   <wvobject type="group" fp_name="group334">
       <obj_property name="label">EBU</obj_property>
       <obj_property name="DisplayName">label</obj_property>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HADDR">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HADDR[31:0]</obj_property>
-         <obj_property name="ObjectShortName">HADDR[31:0]</obj_property>
+      <obj_property name="isExpanded"></obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HTRANS">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HTRANS[1:0]</obj_property>
+         <obj_property name="ObjectShortName">HTRANS[1:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject type="logic" fp_name="wallypipelinedsoc/core/ebu.ebu/HWRITE">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HWRITE</obj_property>
+         <obj_property name="ObjectShortName">HWRITE</obj_property>
       </wvobject>
       <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HBURST">
          <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HBURST[2:0]</obj_property>
          <obj_property name="ObjectShortName">HBURST[2:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HPROT">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HPROT[3:0]</obj_property>
-         <obj_property name="ObjectShortName">HPROT[3:0]</obj_property>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HSIZE">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HSIZE[2:0]</obj_property>
+         <obj_property name="ObjectShortName">HSIZE[2:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HADDR">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HADDR[31:0]</obj_property>
+         <obj_property name="ObjectShortName">HADDR[31:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/HRDATA">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/HRDATA[63:0]</obj_property>
+         <obj_property name="ObjectShortName">HRDATA[63:0]</obj_property>
+         <obj_property name="Radix">HEXRADIX</obj_property>
+      </wvobject>
+      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HWDATA">
+         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HWDATA[63:0]</obj_property>
+         <obj_property name="ObjectShortName">HWDATA[63:0]</obj_property>
          <obj_property name="Radix">HEXRADIX</obj_property>
       </wvobject>
       <wvobject type="logic" fp_name="wallypipelinedsoc/core/ebu.ebu/HREADY">
@@ -280,34 +282,10 @@
          <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HRESP</obj_property>
          <obj_property name="ObjectShortName">HRESP</obj_property>
       </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HSIZE">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HSIZE[2:0]</obj_property>
-         <obj_property name="ObjectShortName">HSIZE[2:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HTRANS">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HTRANS[1:0]</obj_property>
-         <obj_property name="ObjectShortName">HTRANS[1:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HTRANS_1">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HTRANS_1[1:0]</obj_property>
-         <obj_property name="ObjectShortName">HTRANS_1[1:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/ebu.ebu/HWDATA">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HWDATA[63:0]</obj_property>
-         <obj_property name="ObjectShortName">HWDATA[63:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
-      <wvobject type="logic" fp_name="wallypipelinedsoc/core/ebu.ebu/HWRITE">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/ebu.ebu/HWRITE</obj_property>
-         <obj_property name="ObjectShortName">HWRITE</obj_property>
-      </wvobject>
-      <wvobject type="array" fp_name="wallypipelinedsoc/core/HRDATA">
-         <obj_property name="ElementShortName">wallypipelinedsoc/core/HRDATA[63:0]</obj_property>
-         <obj_property name="ObjectShortName">HRDATA[63:0]</obj_property>
-         <obj_property name="Radix">HEXRADIX</obj_property>
-      </wvobject>
+   </wvobject>
+   <wvobject type="array" fp_name="wallypipelinedsoc/core/HRDATA">
+      <obj_property name="ElementShortName">wallypipelinedsoc/core/HRDATA[63:0]</obj_property>
+      <obj_property name="ObjectShortName">HRDATA[63:0]</obj_property>
+      <obj_property name="Radix">HEXRADIX</obj_property>
    </wvobject>
 </wave_config>
