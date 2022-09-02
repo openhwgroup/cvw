@@ -17,15 +17,15 @@ endgroup
 connect_debug_port u_ila_0/clk [get_nets [list xlnx_ddr4_c0/inst/u_ddr4_infrastructure/addn_ui_clkout1 ]]
 set_property port_width 64 [get_debug_ports u_ila_0/probe0]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
-connect_debug_port u_ila_0/probe0 [get_nets [list {wallypipelinedsoc/core/lsu/LSUBusHWDATA[0]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[1]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[2]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[3]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[4]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[5]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[6]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[7]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[8]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[9]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[10]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[11]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[12]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[13]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[14]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[15]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[16]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[17]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[18]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[19]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[20]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[21]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[22]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[23]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[24]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[25]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[26]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[27]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[28]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[29]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[30]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[31]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[32]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[33]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[34]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[35]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[36]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[37]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[38]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[39]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[40]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[41]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[42]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[43]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[44]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[45]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[46]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[47]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[48]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[49]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[50]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[51]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[52]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[53]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[54]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[55]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[56]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[57]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[58]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[59]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[60]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[61]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[62]} {wallypipelinedsoc/core/lsu/LSUBusHWDATA[63]} ]]
+connect_debug_port u_ila_0/probe0 [get_nets [list {wallypipelinedsoc/core/lsu/LSUHWDATA[0]} {wallypipelinedsoc/core/lsu/LSUHWDATA[1]} {wallypipelinedsoc/core/lsu/LSUHWDATA[2]} {wallypipelinedsoc/core/lsu/LSUHWDATA[3]} {wallypipelinedsoc/core/lsu/LSUHWDATA[4]} {wallypipelinedsoc/core/lsu/LSUHWDATA[5]} {wallypipelinedsoc/core/lsu/LSUHWDATA[6]} {wallypipelinedsoc/core/lsu/LSUHWDATA[7]} {wallypipelinedsoc/core/lsu/LSUHWDATA[8]} {wallypipelinedsoc/core/lsu/LSUHWDATA[9]} {wallypipelinedsoc/core/lsu/LSUHWDATA[10]} {wallypipelinedsoc/core/lsu/LSUHWDATA[11]} {wallypipelinedsoc/core/lsu/LSUHWDATA[12]} {wallypipelinedsoc/core/lsu/LSUHWDATA[13]} {wallypipelinedsoc/core/lsu/LSUHWDATA[14]} {wallypipelinedsoc/core/lsu/LSUHWDATA[15]} {wallypipelinedsoc/core/lsu/LSUHWDATA[16]} {wallypipelinedsoc/core/lsu/LSUHWDATA[17]} {wallypipelinedsoc/core/lsu/LSUHWDATA[18]} {wallypipelinedsoc/core/lsu/LSUHWDATA[19]} {wallypipelinedsoc/core/lsu/LSUHWDATA[20]} {wallypipelinedsoc/core/lsu/LSUHWDATA[21]} {wallypipelinedsoc/core/lsu/LSUHWDATA[22]} {wallypipelinedsoc/core/lsu/LSUHWDATA[23]} {wallypipelinedsoc/core/lsu/LSUHWDATA[24]} {wallypipelinedsoc/core/lsu/LSUHWDATA[25]} {wallypipelinedsoc/core/lsu/LSUHWDATA[26]} {wallypipelinedsoc/core/lsu/LSUHWDATA[27]} {wallypipelinedsoc/core/lsu/LSUHWDATA[28]} {wallypipelinedsoc/core/lsu/LSUHWDATA[29]} {wallypipelinedsoc/core/lsu/LSUHWDATA[30]} {wallypipelinedsoc/core/lsu/LSUHWDATA[31]} {wallypipelinedsoc/core/lsu/LSUHWDATA[32]} {wallypipelinedsoc/core/lsu/LSUHWDATA[33]} {wallypipelinedsoc/core/lsu/LSUHWDATA[34]} {wallypipelinedsoc/core/lsu/LSUHWDATA[35]} {wallypipelinedsoc/core/lsu/LSUHWDATA[36]} {wallypipelinedsoc/core/lsu/LSUHWDATA[37]} {wallypipelinedsoc/core/lsu/LSUHWDATA[38]} {wallypipelinedsoc/core/lsu/LSUHWDATA[39]} {wallypipelinedsoc/core/lsu/LSUHWDATA[40]} {wallypipelinedsoc/core/lsu/LSUHWDATA[41]} {wallypipelinedsoc/core/lsu/LSUHWDATA[42]} {wallypipelinedsoc/core/lsu/LSUHWDATA[43]} {wallypipelinedsoc/core/lsu/LSUHWDATA[44]} {wallypipelinedsoc/core/lsu/LSUHWDATA[45]} {wallypipelinedsoc/core/lsu/LSUHWDATA[46]} {wallypipelinedsoc/core/lsu/LSUHWDATA[47]} {wallypipelinedsoc/core/lsu/LSUHWDATA[48]} {wallypipelinedsoc/core/lsu/LSUHWDATA[49]} {wallypipelinedsoc/core/lsu/LSUHWDATA[50]} {wallypipelinedsoc/core/lsu/LSUHWDATA[51]} {wallypipelinedsoc/core/lsu/LSUHWDATA[52]} {wallypipelinedsoc/core/lsu/LSUHWDATA[53]} {wallypipelinedsoc/core/lsu/LSUHWDATA[54]} {wallypipelinedsoc/core/lsu/LSUHWDATA[55]} {wallypipelinedsoc/core/lsu/LSUHWDATA[56]} {wallypipelinedsoc/core/lsu/LSUHWDATA[57]} {wallypipelinedsoc/core/lsu/LSUHWDATA[58]} {wallypipelinedsoc/core/lsu/LSUHWDATA[59]} {wallypipelinedsoc/core/lsu/LSUHWDATA[60]} {wallypipelinedsoc/core/lsu/LSUHWDATA[61]} {wallypipelinedsoc/core/lsu/LSUHWDATA[62]} {wallypipelinedsoc/core/lsu/LSUHWDATA[63]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe1]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe1]
-connect_debug_port u_ila_0/probe1 [get_nets [list {wallypipelinedsoc/core/lsu/LSUBusHRDATA[0]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[1]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[2]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[3]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[4]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[5]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[6]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[7]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[8]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[9]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[10]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[11]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[12]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[13]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[14]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[15]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[16]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[17]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[18]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[19]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[20]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[21]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[22]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[23]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[24]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[25]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[26]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[27]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[28]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[29]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[30]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[31]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[32]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[33]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[34]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[35]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[36]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[37]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[38]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[39]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[40]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[41]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[42]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[43]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[44]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[45]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[46]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[47]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[48]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[49]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[50]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[51]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[52]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[53]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[54]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[55]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[56]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[57]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[58]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[59]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[60]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[61]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[62]} {wallypipelinedsoc/core/lsu/LSUBusHRDATA[63]} ]]
+connect_debug_port u_ila_0/probe1 [get_nets [list {wallypipelinedsoc/core/HRDATA[0]} {wallypipelinedsoc/core/HRDATA[1]} {wallypipelinedsoc/core/HRDATA[2]} {wallypipelinedsoc/core/HRDATA[3]} {wallypipelinedsoc/core/HRDATA[4]} {wallypipelinedsoc/core/HRDATA[5]} {wallypipelinedsoc/core/HRDATA[6]} {wallypipelinedsoc/core/HRDATA[7]} {wallypipelinedsoc/core/HRDATA[8]} {wallypipelinedsoc/core/HRDATA[9]} {wallypipelinedsoc/core/HRDATA[10]} {wallypipelinedsoc/core/HRDATA[11]} {wallypipelinedsoc/core/HRDATA[12]} {wallypipelinedsoc/core/HRDATA[13]} {wallypipelinedsoc/core/HRDATA[14]} {wallypipelinedsoc/core/HRDATA[15]} {wallypipelinedsoc/core/HRDATA[16]} {wallypipelinedsoc/core/HRDATA[17]} {wallypipelinedsoc/core/HRDATA[18]} {wallypipelinedsoc/core/HRDATA[19]} {wallypipelinedsoc/core/HRDATA[20]} {wallypipelinedsoc/core/HRDATA[21]} {wallypipelinedsoc/core/HRDATA[22]} {wallypipelinedsoc/core/HRDATA[23]} {wallypipelinedsoc/core/HRDATA[24]} {wallypipelinedsoc/core/HRDATA[25]} {wallypipelinedsoc/core/HRDATA[26]} {wallypipelinedsoc/core/HRDATA[27]} {wallypipelinedsoc/core/HRDATA[28]} {wallypipelinedsoc/core/HRDATA[29]} {wallypipelinedsoc/core/HRDATA[30]} {wallypipelinedsoc/core/HRDATA[31]} {wallypipelinedsoc/core/HRDATA[32]} {wallypipelinedsoc/core/HRDATA[33]} {wallypipelinedsoc/core/HRDATA[34]} {wallypipelinedsoc/core/HRDATA[35]} {wallypipelinedsoc/core/HRDATA[36]} {wallypipelinedsoc/core/HRDATA[37]} {wallypipelinedsoc/core/HRDATA[38]} {wallypipelinedsoc/core/HRDATA[39]} {wallypipelinedsoc/core/HRDATA[40]} {wallypipelinedsoc/core/HRDATA[41]} {wallypipelinedsoc/core/HRDATA[42]} {wallypipelinedsoc/core/HRDATA[43]} {wallypipelinedsoc/core/HRDATA[44]} {wallypipelinedsoc/core/HRDATA[45]} {wallypipelinedsoc/core/HRDATA[46]} {wallypipelinedsoc/core/HRDATA[47]} {wallypipelinedsoc/core/HRDATA[48]} {wallypipelinedsoc/core/HRDATA[49]} {wallypipelinedsoc/core/HRDATA[50]} {wallypipelinedsoc/core/HRDATA[51]} {wallypipelinedsoc/core/HRDATA[52]} {wallypipelinedsoc/core/HRDATA[53]} {wallypipelinedsoc/core/HRDATA[54]} {wallypipelinedsoc/core/HRDATA[55]} {wallypipelinedsoc/core/HRDATA[56]} {wallypipelinedsoc/core/HRDATA[57]} {wallypipelinedsoc/core/HRDATA[58]} {wallypipelinedsoc/core/HRDATA[59]} {wallypipelinedsoc/core/HRDATA[60]} {wallypipelinedsoc/core/HRDATA[61]} {wallypipelinedsoc/core/HRDATA[62]} {wallypipelinedsoc/core/HRDATA[63]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 32 [get_debug_ports u_ila_0/probe2]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe2]
-connect_debug_port u_ila_0/probe2 [get_nets [list {wallypipelinedsoc/core/lsu/LSUBusAdr[0]} {wallypipelinedsoc/core/lsu/LSUBusAdr[1]} {wallypipelinedsoc/core/lsu/LSUBusAdr[2]} {wallypipelinedsoc/core/lsu/LSUBusAdr[3]} {wallypipelinedsoc/core/lsu/LSUBusAdr[4]} {wallypipelinedsoc/core/lsu/LSUBusAdr[5]} {wallypipelinedsoc/core/lsu/LSUBusAdr[6]} {wallypipelinedsoc/core/lsu/LSUBusAdr[7]} {wallypipelinedsoc/core/lsu/LSUBusAdr[8]} {wallypipelinedsoc/core/lsu/LSUBusAdr[9]} {wallypipelinedsoc/core/lsu/LSUBusAdr[10]} {wallypipelinedsoc/core/lsu/LSUBusAdr[11]} {wallypipelinedsoc/core/lsu/LSUBusAdr[12]} {wallypipelinedsoc/core/lsu/LSUBusAdr[13]} {wallypipelinedsoc/core/lsu/LSUBusAdr[14]} {wallypipelinedsoc/core/lsu/LSUBusAdr[15]} {wallypipelinedsoc/core/lsu/LSUBusAdr[16]} {wallypipelinedsoc/core/lsu/LSUBusAdr[17]} {wallypipelinedsoc/core/lsu/LSUBusAdr[18]} {wallypipelinedsoc/core/lsu/LSUBusAdr[19]} {wallypipelinedsoc/core/lsu/LSUBusAdr[20]} {wallypipelinedsoc/core/lsu/LSUBusAdr[21]} {wallypipelinedsoc/core/lsu/LSUBusAdr[22]} {wallypipelinedsoc/core/lsu/LSUBusAdr[23]} {wallypipelinedsoc/core/lsu/LSUBusAdr[24]} {wallypipelinedsoc/core/lsu/LSUBusAdr[25]} {wallypipelinedsoc/core/lsu/LSUBusAdr[26]} {wallypipelinedsoc/core/lsu/LSUBusAdr[27]} {wallypipelinedsoc/core/lsu/LSUBusAdr[28]} {wallypipelinedsoc/core/lsu/LSUBusAdr[29]} {wallypipelinedsoc/core/lsu/LSUBusAdr[30]} {wallypipelinedsoc/core/lsu/LSUBusAdr[31]} ]]
+connect_debug_port u_ila_0/probe2 [get_nets [list {wallypipelinedsoc/core/lsu/LSUHADDR[0]} {wallypipelinedsoc/core/lsu/LSUHADDR[1]} {wallypipelinedsoc/core/lsu/LSUHADDR[2]} {wallypipelinedsoc/core/lsu/LSUHADDR[3]} {wallypipelinedsoc/core/lsu/LSUHADDR[4]} {wallypipelinedsoc/core/lsu/LSUHADDR[5]} {wallypipelinedsoc/core/lsu/LSUHADDR[6]} {wallypipelinedsoc/core/lsu/LSUHADDR[7]} {wallypipelinedsoc/core/lsu/LSUHADDR[8]} {wallypipelinedsoc/core/lsu/LSUHADDR[9]} {wallypipelinedsoc/core/lsu/LSUHADDR[10]} {wallypipelinedsoc/core/lsu/LSUHADDR[11]} {wallypipelinedsoc/core/lsu/LSUHADDR[12]} {wallypipelinedsoc/core/lsu/LSUHADDR[13]} {wallypipelinedsoc/core/lsu/LSUHADDR[14]} {wallypipelinedsoc/core/lsu/LSUHADDR[15]} {wallypipelinedsoc/core/lsu/LSUHADDR[16]} {wallypipelinedsoc/core/lsu/LSUHADDR[17]} {wallypipelinedsoc/core/lsu/LSUHADDR[18]} {wallypipelinedsoc/core/lsu/LSUHADDR[19]} {wallypipelinedsoc/core/lsu/LSUHADDR[20]} {wallypipelinedsoc/core/lsu/LSUHADDR[21]} {wallypipelinedsoc/core/lsu/LSUHADDR[22]} {wallypipelinedsoc/core/lsu/LSUHADDR[23]} {wallypipelinedsoc/core/lsu/LSUHADDR[24]} {wallypipelinedsoc/core/lsu/LSUHADDR[25]} {wallypipelinedsoc/core/lsu/LSUHADDR[26]} {wallypipelinedsoc/core/lsu/LSUHADDR[27]} {wallypipelinedsoc/core/lsu/LSUHADDR[28]} {wallypipelinedsoc/core/lsu/LSUHADDR[29]} {wallypipelinedsoc/core/lsu/LSUHADDR[30]} {wallypipelinedsoc/core/lsu/LSUHADDR[31]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 6 [get_debug_ports u_ila_0/probe3]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
@@ -74,15 +74,15 @@ connect_debug_port u_ila_0/probe13 [get_nets [list {wallypipelinedsoc/core/priv.
 create_debug_port u_ila_0 probe
 set_property port_width 5 [get_debug_ports u_ila_0/probe14]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe14]
-connect_debug_port u_ila_0/probe14 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[3]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[4]} ]]
+connect_debug_port u_ila_0/probe14 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[3]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/r_curr_state[4]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe15]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe15]
-connect_debug_port u_ila_0/probe15 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[2]} ]]
+connect_debug_port u_ila_0/probe15 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_ERROR_CODE_Q[2]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe16]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe16]
-connect_debug_port u_ila_0/probe16 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_Q[3]} ]]
+connect_debug_port u_ila_0/probe16 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_DAT_Q[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_DAT_Q[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_DAT_Q[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_DAT_Q[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe17]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
@@ -100,12 +100,12 @@ connect_debug_port u_ila_0/probe19 [get_nets [list {wallypipelinedsoc/core/priv.
 create_debug_port u_ila_0 probe
 set_property port_width 5 [get_debug_ports u_ila_0/probe20]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe20]
-connect_debug_port u_ila_0/probe20 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/MCR[0]} {wallypipelinedsoc/uncore/uart.uart/u/MCR[1]} {wallypipelinedsoc/uncore/uart.uart/u/MCR[2]} {wallypipelinedsoc/uncore/uart.uart/u/MCR[3]} {wallypipelinedsoc/uncore/uart.uart/u/MCR[4]} ]]
+connect_debug_port u_ila_0/probe20 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/MCR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MCR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MCR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MCR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MCR[4]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe21]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe21]
-connect_debug_port u_ila_0/probe21 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/FCR[0]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[1]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[2]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[3]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[4]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[5]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[6]} {wallypipelinedsoc/uncore/uart.uart/u/FCR[7]} ]]
+connect_debug_port u_ila_0/probe21 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/FCR[7]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe22]
@@ -121,11 +121,11 @@ connect_debug_port u_ila_0/probe23 [get_nets [list {wallypipelinedsoc/core/priv.
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe24]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe24]
-connect_debug_port u_ila_0/probe24 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[3]} ]]
+connect_debug_port u_ila_0/probe24 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_clk_fsm/r_curr_state[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe25]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe25]
-connect_debug_port u_ila_0/probe25 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/i_SD_DAT[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/i_SD_DAT[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/i_SD_DAT[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/i_SD_DAT[3]} ]]
+connect_debug_port u_ila_0/probe25 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/i_SD_DAT[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/i_SD_DAT[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/i_SD_DAT[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/i_SD_DAT[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe26]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe26]
@@ -134,7 +134,7 @@ connect_debug_port u_ila_0/probe26 [get_nets [list {wallypipelinedsoc/core/priv.
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe27]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe27]
-connect_debug_port u_ila_0/probe27 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/MSR[0]} {wallypipelinedsoc/uncore/uart.uart/u/MSR[1]} {wallypipelinedsoc/uncore/uart.uart/u/MSR[2]} {wallypipelinedsoc/uncore/uart.uart/u/MSR[3]} ]]
+connect_debug_port u_ila_0/probe27 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/MSR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MSR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MSR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/MSR[3]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 6 [get_debug_ports u_ila_0/probe28]
@@ -143,27 +143,28 @@ connect_debug_port u_ila_0/probe28 [get_nets [list {wallypipelinedsoc/core/priv.
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe29]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe29]
-connect_debug_port u_ila_0/probe29 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_IC_OUT[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_IC_OUT[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_IC_OUT[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_IC_OUT[3]} ]]
+connect_debug_port u_ila_0/probe29 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_IC_OUT[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_IC_OUT[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_IC_OUT[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_IC_OUT[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe30]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe30]
-connect_debug_port u_ila_0/probe30 [get_nets [list {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[3]} ]]
+connect_debug_port u_ila_0/probe30 [get_nets [list {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[0]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[1]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[2]} {wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/r_curr_state[3]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 2 [get_debug_ports u_ila_0/probe31]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe31]
-connect_debug_port u_ila_0/probe31 [get_nets [list {wallypipelinedsoc/core/lsu/LSUBusSize[0]} {wallypipelinedsoc/core/lsu/LSUBusSize[1]} ]]
+connect_debug_port u_ila_0/probe31 [get_nets [list {wallypipelinedsoc/core/lsu/LSUHSIZE[0]} {wallypipelinedsoc/core/lsu/LSUHSIZE[1]} ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe32]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe32]
-connect_debug_port u_ila_0/probe32 [get_nets [list wallypipelinedsoc/core/lsu/LSUBusAck ]]
+connect_debug_port u_ila_0/probe32 [get_nets [list wallypipelinedsoc/core/lsu/LSUHREADY ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe33]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe33]
-connect_debug_port u_ila_0/probe33 [get_nets [list wallypipelinedsoc/core/lsu/LSUBusRead ]]
+connect_debug_port u_ila_0/probe33 [get_nets [list wallypipelinedsoc/core/lsu/LSUHWRITE ]]
+
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe34]
+set_property port_width 3 [get_debug_ports u_ila_0/probe34]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe34]
-connect_debug_port u_ila_0/probe34 [get_nets [list wallypipelinedsoc/core/lsu/LSUBusWrite ]]
+connect_debug_port u_ila_0/probe34 [get_nets [list {wallypipelinedsoc/core/lsu/LSUHBURST[0]} wallypipelinedsoc/core/lsu/LSUHBURST[1] wallypipelinedsoc/core/lsu/LSUHBURST[2] ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe35]
@@ -172,7 +173,7 @@ connect_debug_port u_ila_0/probe35 [get_nets [list wallypipelinedsoc/core/priv.p
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe36]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe36]
-connect_debug_port u_ila_0/probe36 [get_nets [list wallypipelinedsoc/uncore/uart.uart/DTRb ]]
+connect_debug_port u_ila_0/probe36 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/DTRb ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe37]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe37]
@@ -180,19 +181,19 @@ connect_debug_port u_ila_0/probe37 [get_nets [list wallypipelinedsoc/core/priv.p
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe38]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe38]
-connect_debug_port u_ila_0/probe38 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/i_DAT0_Q ]]
+connect_debug_port u_ila_0/probe38 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/i_DAT0_Q ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe39]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe39]
-connect_debug_port u_ila_0/probe39 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_dat_fsm/i_DATA_CRC16_GOOD ]]
+connect_debug_port u_ila_0/probe39 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_dat_fsm/i_DATA_CRC16_GOOD ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe40]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe40]
-connect_debug_port u_ila_0/probe40 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_CRC16 ]]
+connect_debug_port u_ila_0/probe40 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_CRC16 ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe41]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe41]
-connect_debug_port u_ila_0/probe41 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_DAT_TIMES_OUT ]]
+connect_debug_port u_ila_0/probe41 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/i_ERROR_DAT_TIMES_OUT ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe42]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe42]
@@ -214,7 +215,7 @@ connect_debug_port u_ila_0/probe45 [get_nets [list wallypipelinedsoc/core/InstrV
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe46]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe46]
-connect_debug_port u_ila_0/probe46 [get_nets [list wallypipelinedsoc/uncore/uart.uart/INTR ]]
+connect_debug_port u_ila_0/probe46 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/INTR ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe47]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe47]
@@ -234,51 +235,51 @@ connect_debug_port u_ila_0/probe50 [get_nets [list wallypipelinedsoc/core/priv.p
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe51]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe51]
-connect_debug_port u_ila_0/probe51 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_clk_fsm/o_G_CLK_SD_EN ]]
+connect_debug_port u_ila_0/probe51 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_clk_fsm/o_G_CLK_SD_EN ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe52]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe52]
-connect_debug_port u_ila_0/probe52 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/o_SD_CLK ]]
+connect_debug_port u_ila_0/probe52 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/o_SD_CLK ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe53]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe53]
-connect_debug_port u_ila_0/probe53 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/o_SD_CMD ]]
+connect_debug_port u_ila_0/probe53 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/o_SD_CMD ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe54]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe54]
-connect_debug_port u_ila_0/probe54 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/o_SD_CMD_OE ]]
+connect_debug_port u_ila_0/probe54 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/o_SD_CMD_OE ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe55]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe55]
-connect_debug_port u_ila_0/probe55 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_SD_CMD_OE ]]
+connect_debug_port u_ila_0/probe55 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/my_sd_cmd_fsm/o_SD_CMD_OE ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe56]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe56]
-connect_debug_port u_ila_0/probe56 [get_nets [list wallypipelinedsoc/uncore/uart.uart/OUT1b ]]
+connect_debug_port u_ila_0/probe56 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/OUT1b ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe57]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe57]
-connect_debug_port u_ila_0/probe57 [get_nets [list wallypipelinedsoc/uncore/uart.uart/OUT2b ]]
+connect_debug_port u_ila_0/probe57 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/OUT2b ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe58]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe58]
-connect_debug_port u_ila_0/probe58 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/r_DAT_ERROR_Q ]]
+connect_debug_port u_ila_0/probe58 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/r_DAT_ERROR_Q ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe59]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe59]
-connect_debug_port u_ila_0/probe59 [get_nets [list wallypipelinedsoc/uncore/uart.uart/RTSb ]]
+connect_debug_port u_ila_0/probe59 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/RTSb ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe60]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe60]
-connect_debug_port u_ila_0/probe60 [get_nets [list wallypipelinedsoc/uncore/uart.uart/RXRDYb ]]
+connect_debug_port u_ila_0/probe60 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/RXRDYb ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe61]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe61]
-connect_debug_port u_ila_0/probe61 [get_nets [list wallypipelinedsoc/uncore/uart.uart/SIN ]]
+connect_debug_port u_ila_0/probe61 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/SIN ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe62]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe62]
-connect_debug_port u_ila_0/probe62 [get_nets [list wallypipelinedsoc/uncore/uart.uart/SOUT ]]
+connect_debug_port u_ila_0/probe62 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/SOUT ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe63]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe63]
@@ -302,21 +303,21 @@ connect_debug_port u_ila_0/probe67 [get_nets [list wallypipelinedsoc/core/TrapM 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe68]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe68]
-connect_debug_port u_ila_0/probe68 [get_nets [list wallypipelinedsoc/uncore/uart.uart/TXRDYb ]]
+connect_debug_port u_ila_0/probe68 [get_nets [list wallypipelinedsoc/uncore.uncore/uart.uart/TXRDYb ]]
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe69]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe69]
-connect_debug_port u_ila_0/probe69 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/w_IC_EN ]]
+connect_debug_port u_ila_0/probe69 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/w_IC_EN ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe70]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe70]
-connect_debug_port u_ila_0/probe70 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/w_IC_RST ]]
+connect_debug_port u_ila_0/probe70 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/w_IC_RST ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe71]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe71]
-connect_debug_port u_ila_0/probe71 [get_nets [list wallypipelinedsoc/uncore/sdc.SDC/sd_top/w_IC_UP_DOWN ]]
+connect_debug_port u_ila_0/probe71 [get_nets [list wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/w_IC_UP_DOWN ]]
 
 
 create_debug_port u_ila_0 probe
@@ -402,7 +403,7 @@ connect_debug_port u_ila_0/probe87 [get_nets [list wallypipelinedsoc/core/hzu/Br
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe88]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe88]
-connect_debug_port u_ila_0/probe88 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/RXerrIP} ]]
+connect_debug_port u_ila_0/probe88 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/RXerrIP} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe89]
@@ -433,7 +434,7 @@ connect_debug_port u_ila_0/probe93 [get_nets [list wallypipelinedsoc/core/hzu/St
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe94]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe94]
-connect_debug_port u_ila_0/probe94 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/RXerrIP} ]]
+connect_debug_port u_ila_0/probe94 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/RXerrIP} ]]
 
 
 create_debug_port u_ila_0 probe
@@ -463,24 +464,24 @@ connect_debug_port u_ila_0/probe99 [get_nets [list {wallypipelinedsoc/core/ifu/b
 
 
 create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe100]
+set_property port_width 2 [get_debug_ports u_ila_0/probe100]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe100]
-connect_debug_port u_ila_0/probe100 [get_nets [list {wallypipelinedsoc/core/ifu/IFUBusHRDATA[0]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[1]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[2]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[3]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[4]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[5]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[6]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[7]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[8]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[9]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[10]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[11]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[12]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[13]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[14]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[15]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[16]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[17]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[18]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[19]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[20]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[21]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[22]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[23]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[24]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[25]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[26]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[27]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[28]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[29]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[30]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[31]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[32]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[33]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[34]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[35]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[36]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[37]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[38]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[39]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[40]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[41]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[42]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[43]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[44]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[45]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[46]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[47]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[48]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[49]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[50]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[51]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[52]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[53]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[54]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[55]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[56]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[57]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[58]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[59]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[60]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[61]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[62]} {wallypipelinedsoc/core/ifu/IFUBusHRDATA[63]}]]
+connect_debug_port u_ila_0/probe100 [get_nets [list {wallypipelinedsoc/core/ebu.ebu/HTRANS[0]} {wallypipelinedsoc/core/ebu.ebu/HTRANS[1]}]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe101]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe101]
-connect_debug_port u_ila_0/probe101 [get_nets [list wallypipelinedsoc/core/ifu/IFUBusAck ]]
+connect_debug_port u_ila_0/probe101 [get_nets [list wallypipelinedsoc/core/ifu/IFUHREADY ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 32 [get_debug_ports u_ila_0/probe102]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe102]
-connect_debug_port u_ila_0/probe102 [get_nets [list {wallypipelinedsoc/core/ifu/IFUBusAdr[0]} {wallypipelinedsoc/core/ifu/IFUBusAdr[1]} {wallypipelinedsoc/core/ifu/IFUBusAdr[2]} {wallypipelinedsoc/core/ifu/IFUBusAdr[3]} {wallypipelinedsoc/core/ifu/IFUBusAdr[4]} {wallypipelinedsoc/core/ifu/IFUBusAdr[5]} {wallypipelinedsoc/core/ifu/IFUBusAdr[6]} {wallypipelinedsoc/core/ifu/IFUBusAdr[7]} {wallypipelinedsoc/core/ifu/IFUBusAdr[8]} {wallypipelinedsoc/core/ifu/IFUBusAdr[9]} {wallypipelinedsoc/core/ifu/IFUBusAdr[10]} {wallypipelinedsoc/core/ifu/IFUBusAdr[11]} {wallypipelinedsoc/core/ifu/IFUBusAdr[12]} {wallypipelinedsoc/core/ifu/IFUBusAdr[13]} {wallypipelinedsoc/core/ifu/IFUBusAdr[14]} {wallypipelinedsoc/core/ifu/IFUBusAdr[15]} {wallypipelinedsoc/core/ifu/IFUBusAdr[16]} {wallypipelinedsoc/core/ifu/IFUBusAdr[17]} {wallypipelinedsoc/core/ifu/IFUBusAdr[18]} {wallypipelinedsoc/core/ifu/IFUBusAdr[19]} {wallypipelinedsoc/core/ifu/IFUBusAdr[20]} {wallypipelinedsoc/core/ifu/IFUBusAdr[21]} {wallypipelinedsoc/core/ifu/IFUBusAdr[22]} {wallypipelinedsoc/core/ifu/IFUBusAdr[23]} {wallypipelinedsoc/core/ifu/IFUBusAdr[24]} {wallypipelinedsoc/core/ifu/IFUBusAdr[25]} {wallypipelinedsoc/core/ifu/IFUBusAdr[26]} {wallypipelinedsoc/core/ifu/IFUBusAdr[27]} {wallypipelinedsoc/core/ifu/IFUBusAdr[28]} {wallypipelinedsoc/core/ifu/IFUBusAdr[29]} {wallypipelinedsoc/core/ifu/IFUBusAdr[30]} {wallypipelinedsoc/core/ifu/IFUBusAdr[31]}]]
+connect_debug_port u_ila_0/probe102 [get_nets [list {wallypipelinedsoc/core/ifu/IFUHADDR[0]} {wallypipelinedsoc/core/ifu/IFUHADDR[1]} {wallypipelinedsoc/core/ifu/IFUHADDR[2]} {wallypipelinedsoc/core/ifu/IFUHADDR[3]} {wallypipelinedsoc/core/ifu/IFUHADDR[4]} {wallypipelinedsoc/core/ifu/IFUHADDR[5]} {wallypipelinedsoc/core/ifu/IFUHADDR[6]} {wallypipelinedsoc/core/ifu/IFUHADDR[7]} {wallypipelinedsoc/core/ifu/IFUHADDR[8]} {wallypipelinedsoc/core/ifu/IFUHADDR[9]} {wallypipelinedsoc/core/ifu/IFUHADDR[10]} {wallypipelinedsoc/core/ifu/IFUHADDR[11]} {wallypipelinedsoc/core/ifu/IFUHADDR[12]} {wallypipelinedsoc/core/ifu/IFUHADDR[13]} {wallypipelinedsoc/core/ifu/IFUHADDR[14]} {wallypipelinedsoc/core/ifu/IFUHADDR[15]} {wallypipelinedsoc/core/ifu/IFUHADDR[16]} {wallypipelinedsoc/core/ifu/IFUHADDR[17]} {wallypipelinedsoc/core/ifu/IFUHADDR[18]} {wallypipelinedsoc/core/ifu/IFUHADDR[19]} {wallypipelinedsoc/core/ifu/IFUHADDR[20]} {wallypipelinedsoc/core/ifu/IFUHADDR[21]} {wallypipelinedsoc/core/ifu/IFUHADDR[22]} {wallypipelinedsoc/core/ifu/IFUHADDR[23]} {wallypipelinedsoc/core/ifu/IFUHADDR[24]} {wallypipelinedsoc/core/ifu/IFUHADDR[25]} {wallypipelinedsoc/core/ifu/IFUHADDR[26]} {wallypipelinedsoc/core/ifu/IFUHADDR[27]} {wallypipelinedsoc/core/ifu/IFUHADDR[28]} {wallypipelinedsoc/core/ifu/IFUHADDR[29]} {wallypipelinedsoc/core/ifu/IFUHADDR[30]} {wallypipelinedsoc/core/ifu/IFUHADDR[31]}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe103]
+set_property port_width 2 [get_debug_ports u_ila_0/probe103]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe103]
-connect_debug_port u_ila_0/probe103 [get_nets [list wallypipelinedsoc/core/ifu/IFUBusRead ]]
+connect_debug_port u_ila_0/probe103 [get_nets [list {wallypipelinedsoc/core/ifu/IFUHTRANS[0]} {wallypipelinedsoc/core/ifu/IFUHTRANS[0]}]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe104]
@@ -489,9 +490,9 @@ connect_debug_port u_ila_0/probe104 [get_nets [list {wallypipelinedsoc/core/priv
 
 
 create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe105]
+set_property port_width 2 [get_debug_ports u_ila_0/probe105]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe105]
-connect_debug_port u_ila_0/probe105 [get_nets [list {wallypipelinedsoc/core/ebu.ebu/HRDATA[0]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[1]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[2]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[3]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[4]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[5]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[6]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[7]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[8]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[9]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[10]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[11]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[12]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[13]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[14]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[15]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[16]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[17]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[18]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[19]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[20]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[21]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[22]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[23]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[24]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[25]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[26]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[27]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[28]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[29]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[30]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[31]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[32]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[33]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[34]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[35]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[36]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[37]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[38]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[39]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[40]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[41]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[42]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[43]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[44]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[45]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[46]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[47]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[48]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[49]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[50]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[51]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[52]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[53]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[54]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[55]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[56]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[57]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[58]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[59]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[60]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[61]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[62]} {wallypipelinedsoc/core/ebu.ebu/HRDATA[63]}]]
+connect_debug_port u_ila_0/probe105 [get_nets [list {wallypipelinedsoc/core/ebu.ebu/HTRANS[0]} {wallypipelinedsoc/core/ebu.ebu/HTRANS[1]}]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe106]
@@ -538,7 +539,7 @@ connect_debug_port u_ila_0/probe113 [get_nets [list {wallypipelinedsoc/core/ebu.
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe114]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe114]
-connect_debug_port u_ila_0/probe114 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/IER[0]} {wallypipelinedsoc/uncore/uart.uart/u/IER[1]} {wallypipelinedsoc/uncore/uart.uart/u/IER[2]} {wallypipelinedsoc/uncore/uart.uart/u/IER[3]} ]]
+connect_debug_port u_ila_0/probe114 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/IER[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/IER[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/IER[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/IER[3]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe115]
@@ -587,7 +588,7 @@ connect_debug_port u_ila_0/probe122 [get_nets [list {wallypipelinedsoc/core/ifu/
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe123]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe123]
-connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[0]} {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[1]} {wallypipelinedsoc/core/ifu/bus.busdp/busfsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[0]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[1]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe124]
@@ -598,13 +599,12 @@ connect_debug_port u_ila_0/probe124 [get_nets [list wallypipelinedsoc/core/ifu/S
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe125]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe125]
-connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[0]} {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[1]} {wallypipelinedsoc/core/lsu/bus.busdp/busfsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[0]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[1]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe126]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe126]
 connect_debug_port u_ila_0/probe126 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState[2]} ]]
-
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe127]
@@ -645,28 +645,28 @@ connect_debug_port u_ila_0/probe133 [get_nets [list {wallypipelinedsoc/core/ifu/
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe134]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe134]
-connect_debug_port u_ila_0/probe134 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/DLM[0]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[1]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[2]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[3]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[4]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[5]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[6]} {wallypipelinedsoc/uncore/uart.uart/u/DLM[7]} ]]
+connect_debug_port u_ila_0/probe134 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLM[7]} ]]
 
 
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe135]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe135]
-connect_debug_port u_ila_0/probe135 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/LSR[0]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[1]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[2]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[3]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[4]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[5]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[6]} {wallypipelinedsoc/uncore/uart.uart/u/LSR[7]} ]]
+connect_debug_port u_ila_0/probe135 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LSR[7]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe136]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe136]
-connect_debug_port u_ila_0/probe136 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/SCR[0]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[1]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[2]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[3]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[4]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[5]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[6]} {wallypipelinedsoc/uncore/uart.uart/u/SCR[7]} ]]
+connect_debug_port u_ila_0/probe136 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/SCR[7]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe137]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe137]
-connect_debug_port u_ila_0/probe137 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/DLL[0]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[1]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[2]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[3]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[4]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[5]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[6]} {wallypipelinedsoc/uncore/uart.uart/u/DLL[7]} ]]
+connect_debug_port u_ila_0/probe137 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/DLL[7]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 2 [get_debug_ports u_ila_0/probe138]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe138]
-connect_debug_port u_ila_0/probe138 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/txstate[0]} {wallypipelinedsoc/uncore/uart.uart/u/txstate[1]} ]]
+connect_debug_port u_ila_0/probe138 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/txstate[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/txstate[1]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe139]
@@ -691,27 +691,27 @@ connect_debug_port u_ila_0/probe142 [get_nets [list {wallypipelinedsoc/core/priv
 create_debug_port u_ila_0 probe
 set_property port_width 11 [get_debug_ports u_ila_0/probe143]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe143]
-connect_debug_port u_ila_0/probe143 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/RBR[0]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[1]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[2]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[3]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[4]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[5]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[6]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[7]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[8]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[9]} {wallypipelinedsoc/uncore/uart.uart/u/RBR[10]} ]]
+connect_debug_port u_ila_0/probe143 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[7]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[8]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[9]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/RBR[10]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe144]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe144]
-connect_debug_port u_ila_0/probe144 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxparityerr} ]]
+connect_debug_port u_ila_0/probe144 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxparityerr} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 2 [get_debug_ports u_ila_0/probe145]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe145]
-connect_debug_port u_ila_0/probe145 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxstate[0]} {wallypipelinedsoc/uncore/uart.uart/u/rxstate[1]} ]]
+connect_debug_port u_ila_0/probe145 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxstate[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxstate[1]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe146]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe146]
-connect_debug_port u_ila_0/probe146 [get_nets [list {wallypipelinedsoc/uncore/clint.clint/MTIME[0]} {wallypipelinedsoc/uncore/clint.clint/MTIME[1]} {wallypipelinedsoc/uncore/clint.clint/MTIME[2]} {wallypipelinedsoc/uncore/clint.clint/MTIME[3]} {wallypipelinedsoc/uncore/clint.clint/MTIME[4]} {wallypipelinedsoc/uncore/clint.clint/MTIME[5]} {wallypipelinedsoc/uncore/clint.clint/MTIME[6]} {wallypipelinedsoc/uncore/clint.clint/MTIME[7]} {wallypipelinedsoc/uncore/clint.clint/MTIME[8]} {wallypipelinedsoc/uncore/clint.clint/MTIME[9]} {wallypipelinedsoc/uncore/clint.clint/MTIME[10]} {wallypipelinedsoc/uncore/clint.clint/MTIME[11]} {wallypipelinedsoc/uncore/clint.clint/MTIME[12]} {wallypipelinedsoc/uncore/clint.clint/MTIME[13]} {wallypipelinedsoc/uncore/clint.clint/MTIME[14]} {wallypipelinedsoc/uncore/clint.clint/MTIME[15]} {wallypipelinedsoc/uncore/clint.clint/MTIME[16]} {wallypipelinedsoc/uncore/clint.clint/MTIME[17]} {wallypipelinedsoc/uncore/clint.clint/MTIME[18]} {wallypipelinedsoc/uncore/clint.clint/MTIME[19]} {wallypipelinedsoc/uncore/clint.clint/MTIME[20]} {wallypipelinedsoc/uncore/clint.clint/MTIME[21]} {wallypipelinedsoc/uncore/clint.clint/MTIME[22]} {wallypipelinedsoc/uncore/clint.clint/MTIME[23]} {wallypipelinedsoc/uncore/clint.clint/MTIME[24]} {wallypipelinedsoc/uncore/clint.clint/MTIME[25]} {wallypipelinedsoc/uncore/clint.clint/MTIME[26]} {wallypipelinedsoc/uncore/clint.clint/MTIME[27]} {wallypipelinedsoc/uncore/clint.clint/MTIME[28]} {wallypipelinedsoc/uncore/clint.clint/MTIME[29]} {wallypipelinedsoc/uncore/clint.clint/MTIME[30]} {wallypipelinedsoc/uncore/clint.clint/MTIME[31]} {wallypipelinedsoc/uncore/clint.clint/MTIME[32]} {wallypipelinedsoc/uncore/clint.clint/MTIME[33]} {wallypipelinedsoc/uncore/clint.clint/MTIME[34]} {wallypipelinedsoc/uncore/clint.clint/MTIME[35]} {wallypipelinedsoc/uncore/clint.clint/MTIME[36]} {wallypipelinedsoc/uncore/clint.clint/MTIME[37]} {wallypipelinedsoc/uncore/clint.clint/MTIME[38]} {wallypipelinedsoc/uncore/clint.clint/MTIME[39]} {wallypipelinedsoc/uncore/clint.clint/MTIME[40]} {wallypipelinedsoc/uncore/clint.clint/MTIME[41]} {wallypipelinedsoc/uncore/clint.clint/MTIME[42]} {wallypipelinedsoc/uncore/clint.clint/MTIME[43]} {wallypipelinedsoc/uncore/clint.clint/MTIME[44]} {wallypipelinedsoc/uncore/clint.clint/MTIME[45]} {wallypipelinedsoc/uncore/clint.clint/MTIME[46]} {wallypipelinedsoc/uncore/clint.clint/MTIME[47]} {wallypipelinedsoc/uncore/clint.clint/MTIME[48]} {wallypipelinedsoc/uncore/clint.clint/MTIME[49]} {wallypipelinedsoc/uncore/clint.clint/MTIME[50]} {wallypipelinedsoc/uncore/clint.clint/MTIME[51]} {wallypipelinedsoc/uncore/clint.clint/MTIME[52]} {wallypipelinedsoc/uncore/clint.clint/MTIME[53]} {wallypipelinedsoc/uncore/clint.clint/MTIME[54]} {wallypipelinedsoc/uncore/clint.clint/MTIME[55]} {wallypipelinedsoc/uncore/clint.clint/MTIME[56]} {wallypipelinedsoc/uncore/clint.clint/MTIME[57]} {wallypipelinedsoc/uncore/clint.clint/MTIME[58]} {wallypipelinedsoc/uncore/clint.clint/MTIME[59]} {wallypipelinedsoc/uncore/clint.clint/MTIME[60]} {wallypipelinedsoc/uncore/clint.clint/MTIME[61]} {wallypipelinedsoc/uncore/clint.clint/MTIME[62]} {wallypipelinedsoc/uncore/clint.clint/MTIME[63]} ]]
+connect_debug_port u_ila_0/probe146 [get_nets [list {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[0]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[1]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[2]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[3]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[4]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[5]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[6]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[7]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[8]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[9]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[10]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[11]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[12]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[13]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[14]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[15]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[16]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[17]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[18]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[19]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[20]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[21]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[22]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[23]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[24]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[25]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[26]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[27]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[28]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[29]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[30]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[31]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[32]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[33]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[34]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[35]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[36]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[37]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[38]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[39]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[40]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[41]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[42]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[43]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[44]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[45]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[46]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[47]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[48]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[49]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[50]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[51]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[52]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[53]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[54]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[55]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[56]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[57]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[58]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[59]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[60]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[61]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[62]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIME[63]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe147]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe147]
-connect_debug_port u_ila_0/probe147 [get_nets [list {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[0]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[1]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[2]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[3]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[4]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[5]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[6]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[7]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[8]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[9]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[10]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[11]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[12]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[13]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[14]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[15]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[16]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[17]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[18]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[19]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[20]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[21]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[22]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[23]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[24]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[25]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[26]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[27]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[28]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[29]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[30]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[31]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[32]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[33]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[34]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[35]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[36]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[37]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[38]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[39]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[40]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[41]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[42]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[43]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[44]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[45]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[46]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[47]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[48]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[49]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[50]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[51]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[52]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[53]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[54]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[55]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[56]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[57]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[58]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[59]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[60]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[61]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[62]} {wallypipelinedsoc/uncore/clint.clint/MTIMECMP[63]} ]]
+connect_debug_port u_ila_0/probe147 [get_nets [list {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[0]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[1]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[2]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[3]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[4]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[5]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[6]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[7]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[8]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[9]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[10]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[11]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[12]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[13]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[14]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[15]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[16]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[17]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[18]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[19]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[20]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[21]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[22]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[23]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[24]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[25]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[26]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[27]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[28]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[29]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[30]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[31]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[32]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[33]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[34]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[35]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[36]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[37]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[38]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[39]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[40]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[41]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[42]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[43]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[44]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[45]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[46]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[47]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[48]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[49]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[50]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[51]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[52]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[53]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[54]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[55]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[56]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[57]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[58]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[59]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[60]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[61]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[62]} {wallypipelinedsoc/uncore.uncore/clint.clint/MTIMECMP[63]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe148]
@@ -751,69 +751,69 @@ connect_debug_port u_ila_0/probe154 [get_nets [list {wallypipelinedsoc/core/priv
 create_debug_port u_ila_0 probe
 set_property port_width 8 [get_debug_ports u_ila_0/probe155]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe155]
-connect_debug_port u_ila_0/probe155 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/LCR[0]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[1]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[2]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[3]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[4]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[5]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[6]} {wallypipelinedsoc/uncore/uart.uart/u/LCR[7]} ]]
+connect_debug_port u_ila_0/probe155 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[3]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[4]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[5]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[6]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/LCR[7]} ]]
 
 
 create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe156]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe156]
-connect_debug_port u_ila_0/probe156 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/requests[1]} {wallypipelinedsoc/uncore/plic.plic/requests[2]} {wallypipelinedsoc/uncore/plic.plic/requests[3]} {wallypipelinedsoc/uncore/plic.plic/requests[4]} {wallypipelinedsoc/uncore/plic.plic/requests[5]} {wallypipelinedsoc/uncore/plic.plic/requests[6]} {wallypipelinedsoc/uncore/plic.plic/requests[7]} {wallypipelinedsoc/uncore/plic.plic/requests[8]} {wallypipelinedsoc/uncore/plic.plic/requests[9]} {wallypipelinedsoc/uncore/plic.plic/requests[10]} {wallypipelinedsoc/uncore/plic.plic/requests[11]} {wallypipelinedsoc/uncore/plic.plic/requests[12]}]]
+connect_debug_port u_ila_0/probe156 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/requests[1]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[2]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[3]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[4]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[5]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[6]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[7]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[8]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[9]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[10]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[11]} {wallypipelinedsoc/uncore.uncore/plic.plic/requests[12]}]]
  
 create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe157]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe157]
-connect_debug_port u_ila_0/probe157 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/intInProgress[1]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[2]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[3]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[4]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[5]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[6]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[7]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[8]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[9]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[10]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[11]} {wallypipelinedsoc/uncore/plic.plic/intInProgress[12]}]]
+connect_debug_port u_ila_0/probe157 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[1]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[2]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[3]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[4]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[5]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[6]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[7]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[8]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[9]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[10]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[11]} {wallypipelinedsoc/uncore.uncore/plic.plic/intInProgress[12]}]]
  
 create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe158]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe158]
-connect_debug_port u_ila_0/probe158 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/intPending[1]} {wallypipelinedsoc/uncore/plic.plic/intPending[2]} {wallypipelinedsoc/uncore/plic.plic/intPending[3]} {wallypipelinedsoc/uncore/plic.plic/intPending[4]} {wallypipelinedsoc/uncore/plic.plic/intPending[5]} {wallypipelinedsoc/uncore/plic.plic/intPending[6]} {wallypipelinedsoc/uncore/plic.plic/intPending[7]} {wallypipelinedsoc/uncore/plic.plic/intPending[8]} {wallypipelinedsoc/uncore/plic.plic/intPending[9]} {wallypipelinedsoc/uncore/plic.plic/intPending[10]} {wallypipelinedsoc/uncore/plic.plic/intPending[11]} {wallypipelinedsoc/uncore/plic.plic/intPending[12]}]]
+connect_debug_port u_ila_0/probe158 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[1]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[2]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[3]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[4]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[5]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[6]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[7]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[8]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[9]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[10]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[11]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPending[12]}]]
 
 
 create_debug_port u_ila_0 probe
 set_property port_width 70 [get_debug_ports u_ila_0/probe159]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe159]
-connect_debug_port u_ila_0/probe159 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][1][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][2][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][3][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][4][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][5][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][6][10]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][1]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][2]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][3]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][4]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][5]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][6]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][7]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][8]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][9]} {wallypipelinedsoc/uncore/plic.plic/irqMatrix[1][7][10]} ]]
+connect_debug_port u_ila_0/probe159 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][1][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][2][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][3][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][4][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][5][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][6][10]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][2]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][3]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][4]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][5]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][6]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][7]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][8]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][9]} {wallypipelinedsoc/uncore.uncore/plic.plic/irqMatrix[1][7][10]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe160]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe160]
-connect_debug_port u_ila_0/probe160 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/intPriority[10][0]} {wallypipelinedsoc/uncore/plic.plic/intPriority[10][1]} {wallypipelinedsoc/uncore/plic.plic/intPriority[10][2]} ]]
+connect_debug_port u_ila_0/probe160 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/intPriority[10][0]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPriority[10][1]} {wallypipelinedsoc/uncore.uncore/plic.plic/intPriority[10][2]} ]]
  
 create_debug_port u_ila_0 probe
 set_property port_width 10 [get_debug_ports u_ila_0/probe161]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe161]
-connect_debug_port u_ila_0/probe161 [get_nets [list {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[1]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[2]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[3]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[4]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[5]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[6]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[7]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[8]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[9]} {wallypipelinedsoc/uncore/plic.plic/intEn[1]__0[10]} ]]
+connect_debug_port u_ila_0/probe161 [get_nets [list {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[1]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[2]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[3]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[4]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[5]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[6]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[7]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[8]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[9]} {wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[10]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe162]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe162]
-connect_debug_port u_ila_0/probe162 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/intrID[0]} {wallypipelinedsoc/uncore/uart.uart/u/intrID[1]} {wallypipelinedsoc/uncore/uart.uart/u/intrID[2]} ]]
+connect_debug_port u_ila_0/probe162 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/intrID[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/intrID[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/intrID[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe163]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe163]
-connect_debug_port u_ila_0/probe163 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxdataavailintr} ]]
+connect_debug_port u_ila_0/probe163 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxdataavailintr} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe164]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe164]
-connect_debug_port u_ila_0/probe164 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/fifoenabled} ]]
+connect_debug_port u_ila_0/probe164 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/fifoenabled} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe165]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe165]
-connect_debug_port u_ila_0/probe165 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifotriggered} ]]
+connect_debug_port u_ila_0/probe165 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxfifotriggered} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe166]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe166]
-connect_debug_port u_ila_0/probe166 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[0]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[1]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[2]} {wallypipelinedsoc/uncore/uart.uart/u/rxfifoentries[3]} ]]
+connect_debug_port u_ila_0/probe166 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxfifoentries[0]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxfifoentries[1]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxfifoentries[2]} {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxfifoentries[3]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe167]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe167]
-connect_debug_port u_ila_0/probe167 [get_nets [list {wallypipelinedsoc/uncore/uart.uart/u/rxdataready} ]]
+connect_debug_port u_ila_0/probe167 [get_nets [list {wallypipelinedsoc/uncore.uncore/uart.uart/u/rxdataready} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe168]
@@ -826,7 +826,3 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe169]
 connect_debug_port u_ila_0/probe169 [get_nets [list {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[0]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[1]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[2]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[3]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[4]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[5]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[6]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[7]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[8]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[9]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[10]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[11]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[12]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[13]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[14]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[15]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[16]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[17]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[18]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[19]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[20]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[21]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[22]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[23]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[24]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[25]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[26]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[27]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[28]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[29]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[30]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[31]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[32]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[33]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[34]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[35]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[36]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[37]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[38]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[39]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[40]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[41]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[42]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[43]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[44]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[45]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[46]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[47]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[48]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[49]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[50]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[51]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[52]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[53]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[54]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[55]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[56]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[57]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[58]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[59]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[60]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[61]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[62]} {wallypipelinedsoc/core/priv.priv/csr/counters/counters.HPMCOUNTER_REGW[0]__0[63]}]]
 
 
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe170]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe170]
-connect_debug_port u_ila_0/probe170 [get_nets [list {wallypipelinedsoc/core/ebu.ebu/HTRANS[0]} {wallypipelinedsoc/core/ebu.ebu/HTRANS[1]}]]
