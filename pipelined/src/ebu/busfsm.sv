@@ -46,39 +46,39 @@ module busfsm
    output logic       HWRITE
 );
   
-  typedef enum logic [2:0] {STATE_READY,
-				            STATE_CAPTURE,
-				            STATE_DELAY} busstatetype;
+  typedef enum logic [2:0] {ADR_PHASE,
+				            DATA_PHASE,
+				            MEM3} busstatetype;
 
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
-  (* mark_debug = "true" *) busstatetype BusCurrState, BusNextState;
+  (* mark_debug = "true" *) busstatetype CurrState, NextState;
 
   always_ff @(posedge HCLK)
-    if (~HRESETn)    BusCurrState <= #1 STATE_READY;
-    else BusCurrState <= #1 BusNextState;  
+    if (~HRESETn) CurrState <= #1 ADR_PHASE;
+    else          CurrState <= #1 NextState;  
   
   always_comb begin
-	case(BusCurrState)
-	  STATE_READY: if(HREADY & |RW)  BusNextState = STATE_CAPTURE;
-                   else        BusNextState = STATE_READY;
-      STATE_CAPTURE: if(HREADY)  BusNextState = STATE_DELAY;
-		           else        BusNextState = STATE_CAPTURE;
-      STATE_DELAY: if(CPUBusy) BusNextState = STATE_DELAY;
-		           else        BusNextState = STATE_READY;
-	  default:                 BusNextState = STATE_READY;
+	case(CurrState)
+	  ADR_PHASE: if(HREADY & |RW) NextState = DATA_PHASE;
+                 else             NextState = ADR_PHASE;
+      DATA_PHASE: if(HREADY)      NextState = MEM3;
+		          else            NextState = DATA_PHASE;
+      MEM3: if(CPUBusy)           NextState = MEM3;
+		    else                  NextState = ADR_PHASE;
+	  default:                    NextState = ADR_PHASE;
 	endcase
   end
 
-  assign BusStall = (BusCurrState == STATE_READY & |RW) |
-//					(BusCurrState == STATE_CAPTURE & ~RW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
-					(BusCurrState == STATE_CAPTURE); 
+  assign BusStall = (CurrState == ADR_PHASE & |RW) |
+//					(CurrState == DATA_PHASE & ~RW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
+					(CurrState == DATA_PHASE); 
   
-  assign BusCommitted = BusCurrState != STATE_READY;
+  assign BusCommitted = CurrState != ADR_PHASE;
 
-  assign HTRANS = (BusCurrState == STATE_READY & HREADY & |RW) |
-                  (BusCurrState == STATE_CAPTURE & ~HREADY) ? AHB_NONSEQ : AHB_IDLE;
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |RW) |
+                  (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ : AHB_IDLE;
   assign HWRITE = RW[0];
-  assign CaptureEn = BusCurrState == STATE_CAPTURE;
+  assign CaptureEn = CurrState == DATA_PHASE;
   
 endmodule
