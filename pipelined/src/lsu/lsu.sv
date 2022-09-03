@@ -274,7 +274,7 @@ module lsu (
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
 
-      flop #(`XLEN) wdreg(clk, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flopen #(`XLEN) wdreg(clk, LSUHREADY, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
 
       // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
       // probably can merge by muxing LSUPAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
