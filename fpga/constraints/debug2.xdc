@@ -588,7 +588,7 @@ connect_debug_port u_ila_0/probe122 [get_nets [list {wallypipelinedsoc/core/ifu/
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe123]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe123]
-connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[0]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[1]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe123 [get_nets [list {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/CurrState[0]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/CurrState[1]} {wallypipelinedsoc/core/ifu/bus.icache.ahbcacheinterface/AHBBuscachefsm/CurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe124]
@@ -599,7 +599,7 @@ connect_debug_port u_ila_0/probe124 [get_nets [list wallypipelinedsoc/core/ifu/S
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe125]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe125]
-connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[0]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[1]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/BusCurrState[2]} ]]
+connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/CurrState[0]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/CurrState[1]} {wallypipelinedsoc/core/lsu/bus.dcache.ahbcacheinterface/AHBBuscachefsm/CurrState[2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe126]
