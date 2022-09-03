@@ -163,7 +163,7 @@ module srtpreproc (
   assign D = {4'b0001, Int ? PreprocB : PreprocY};
 
   // Integer exponent and sign calculations
-  assign intExp = zeroCntB - zeroCntA - Mod + (PreprocA >= PreprocB);
+  assign intExp = zeroCntB - zeroCntA + (PreprocA >= PreprocB);
   assign intSign = Signed & (SrcA[`XLEN - 1] ^ SrcB[`XLEN - 1]);
 
   // Number of cycles of divider
@@ -462,7 +462,7 @@ module srtpostproc(
   end
   assign floatRes = S[`DIVLEN] ? S[`DIVLEN:1] : S[`DIVLEN-1:0];
   assign intRes = intS[`DIVLEN] ? intS[`DIVLEN:1] : intS[`DIVLEN-1:0];
-  assign shiftRem = (intRem >> (zeroCntD));
+  assign shiftRem = (intRem >> (zeroCntD+1));
   always_comb begin
     if (Int) begin
       if (Mod) Result = shiftRem[`DIVLEN-1:0];

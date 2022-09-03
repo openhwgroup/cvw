@@ -70,9 +70,9 @@ module testbench;
   integer testnum, errors;
 
   // Equip Int, Sqrt, or IntMod test
-  assign Int =  1'b0;
-  assign Mod =  1'b0;
-  assign Sqrt = 1'b1;
+  assign Int =  1'b1;
+  assign Mod =  1'b1;
+  assign Sqrt = 1'b0;
 
   // Divider
   srt srt(.clk, .Start(req), 
@@ -101,7 +101,7 @@ module testbench;
     begin
       testnum = 0; 
       errors = 0;
-      $readmemh ("sqrttestvectors", Tests);
+      $readmemh ("modtestvectors", Tests);
       Vec = Tests[testnum];
       a = Vec[`mema];
       {asign, aExp, afrac} = a;
