@@ -145,7 +145,7 @@ module ahbmultimanager
     case (CurrState) 
       IDLE: if (both)                    NextState = ARBITRATE; 
       else                               NextState = IDLE;
-      ARBITRATE: if (HREADY & FinalBeat) NextState = IDLE;
+      ARBITRATE: if (HREADY & FinalBeat & ~(LSUReq & IFUReq)) NextState = IDLE;
       else                               NextState = ARBITRATE;
       default:                           NextState = IDLE;
     endcase
@@ -153,7 +153,7 @@ module ahbmultimanager
   // Manager needs to count beats.
   flopenr #(4) 
   BeatCountReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset),
+		.reset(~HRESETn | CntReset | FinalBeat),
 		.en(BeatCntEn),
 		.d(NextBeatCount),
 		.q(BeatCount));  
@@ -189,6 +189,9 @@ module ahbmultimanager
   // basic arb always selects LSU when both
   // replace this block for more sophisticated arbitration.
   // Manager 0 (IFU)
+  // this logic is all wrong.
+  // test by removing burst.
+  // 2nd want to test with slower memory.
   assign save[0] = CurrState == IDLE & both;
   assign restore[0] = CurrState == ARBITRATE;
   assign dis[0] = CurrState == ARBITRATE;

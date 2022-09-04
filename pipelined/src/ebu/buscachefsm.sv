@@ -136,10 +136,12 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|RW | |CacheRW)) |
                   (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ :
-                  (CacheAccess & |WordCount) ? AHB_SEQ : AHB_IDLE;
-
+//                  (CacheAccess & |WordCount) ? AHB_SEQ : AHB_IDLE;
+                  (CacheAccess & |WordCount) ? AHB_NONSEQ : AHB_IDLE;
   assign HWRITE = RW[0] | CacheRW[0];
-  assign HBURST = (|CacheRW) ? LocalBurstType : 3'b0;
+//  assign HBURST = (|CacheRW) ? LocalBurstType : 3'b0;
+  // try disabling burst as it is not working with the fpga.
+  assign HBURST = 3'b0;
   
   always_comb begin
     case(WordCountThreshold)
