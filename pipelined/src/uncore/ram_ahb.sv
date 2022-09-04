@@ -56,7 +56,7 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   logic             DelayReady;
 
   logic [7:0]       CycleThreshold;
-  assign CycleThreshold = 3;
+  assign CycleThreshold = 0;
   
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
