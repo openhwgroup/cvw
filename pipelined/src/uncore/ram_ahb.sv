@@ -51,12 +51,8 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   logic				  initTrans;
   logic				  memwrite, memwriteD, memread;
   logic         nextHREADYRam;
-  logic         HREADYRam_TEMP; // *** eventurally remove
-  logic [`XLEN-1:0] HREADRam_TEMP;
   logic             DelayReady;
 
-  logic [7:0]       CycleThreshold;
-  assign CycleThreshold = 0;
   
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
@@ -70,11 +66,8 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
 
   // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
   assign nextHREADYRam = (~(memwriteD & memread)) & ~DelayReady;
-  flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam_TEMP);
+  flopr #(1) readyreg(HCLK, ~HRESETn, nextHREADYRam, HREADYRam);
 
-  // *** bug extra delay for testing.
-  //flopr #(1) readyreg2(HCLK, ~HRESETn, HREADYRam_TEMP, HREADYRam);
-  assign HREADYRam = HREADYRam_TEMP;
   assign HRESPRam = 0; // OK
 
   // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
@@ -82,20 +75,17 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
 
   // single-ported RAM
   bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH, `FPGA)
-    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam_TEMP), .din(HWDATA));
+    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));
 
-  // *** also temporary
-//  flop #(`XLEN) HREADRamReg(HCLK, HREADRam_TEMP, HREADRam);
-  assign HREADRam = HREADRam_TEMP;
-
-  // **** temporary
+  // use this to add arbitrary latency to ram. Helps test AHB controller correctness
   logic [7:0]       NextCycle, Cycle;
   logic             CntEn, CntRst;
   logic CycleFlag;
+  logic [7:0]       CycleThreshold;
+  assign CycleThreshold = 0;
   
   flopenr #(8) counter (HCLK, ~HRESETn | CntRst, CntEn, NextCycle, Cycle);
   assign NextCycle = Cycle + 1'b1;
-  
 
   typedef enum logic  {READY, DELAY} statetype;
   statetype CurrState, NextState;
