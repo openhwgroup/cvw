@@ -29,6 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
+`define RAM_LATENCY 0
 
 module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
@@ -53,8 +54,6 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   logic         nextHREADYRam;
   logic             DelayReady;
 
-  
-
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing
   assign initTrans = HREADY & HSELRam & HTRANS[1] ; 
@@ -78,36 +77,38 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
     memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));
 
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
-  logic [7:0]       NextCycle, Cycle;
-  logic             CntEn, CntRst;
-  logic CycleFlag;
-  logic [7:0]       CycleThreshold;
-  assign CycleThreshold = 0;
-  
-  flopenr #(8) counter (HCLK, ~HRESETn | CntRst, CntEn, NextCycle, Cycle);
-  assign NextCycle = Cycle + 1'b1;
+  if(`RAM_LATENCY > 0) begin
+    logic [7:0]       NextCycle, Cycle;
+    logic             CntEn, CntRst;
+    logic             CycleFlag;
+    
+    flopenr #(8) counter (HCLK, ~HRESETn | CntRst, CntEn, NextCycle, Cycle);
+    assign NextCycle = Cycle + 1'b1;
 
-  typedef enum logic  {READY, DELAY} statetype;
-  statetype CurrState, NextState;
-  
-  always_ff @(posedge HCLK)
-    if (~HRESETn)    CurrState <= #1 READY;
-    else CurrState <= #1 NextState;  
+    typedef enum      logic  {READY, DELAY} statetype;
+    statetype CurrState, NextState;
+    
+    always_ff @(posedge HCLK)
+      if (~HRESETn)    CurrState <= #1 READY;
+      else CurrState <= #1 NextState;  
 
-  always_comb begin
-	case(CurrState)
-	  READY: if(initTrans & ~CycleFlag) NextState = DELAY;
-                   else                          NextState = READY;
-      DELAY: if(CycleFlag)                  NextState = READY;
-		           else                          NextState = DELAY;
-	  default:                                      NextState = READY;
-	endcase
+    always_comb begin
+	  case(CurrState)
+	    READY: if(initTrans & ~CycleFlag) NextState = DELAY;
+        else                          NextState = READY;
+        DELAY: if(CycleFlag)                  NextState = READY;
+		else                          NextState = DELAY;
+	    default:                                      NextState = READY;
+	  endcase
+    end
+
+    assign CycleFlag = Cycle == `RAM_LATENCY;
+    assign CntEn = NextState == DELAY;
+    assign DelayReady = NextState == DELAY;
+    assign CntRst = NextState == READY;
+  end else begin
+    assign DelayReady = 0;
   end
-
-  assign CycleFlag = Cycle == CycleThreshold;
-  assign CntEn = NextState == DELAY;
-  assign DelayReady = NextState == DELAY;
-  assign CntRst = NextState == READY;
   
   
 endmodule
