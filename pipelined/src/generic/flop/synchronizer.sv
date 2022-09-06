@@ -40,7 +40,7 @@ module synchronizer (
 
   always_ff @(posedge clk) begin
     mid <= #1 d;
-    q <= #1 d;
+    q <= #1 mid;
   end
 endmodule
 
