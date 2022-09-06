@@ -29,6 +29,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
+`define BURST_EN 1
 
 // HCLK and clk must be the same clock!
 module buscachefsm #(parameter integer   WordCountThreshold,
@@ -136,12 +137,10 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|RW | |CacheRW)) |
                   (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ :
-//                  (CacheAccess & |WordCount) ? AHB_SEQ : AHB_IDLE; /// this line is for burst
-                  (CacheAccess & |WordCount) ? AHB_NONSEQ : AHB_IDLE;
+                  (CacheAccess & |WordCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
+
   assign HWRITE = RW[0] | CacheRW[0];
-//  assign HBURST = (|CacheRW) ? LocalBurstType : 3'b0;  // this line is for burst.
-  // try disabling burst as it is not working with the fpga.
-  assign HBURST = 3'b0;
+  assign HBURST = `BURST_EN ? ((|CacheRW) ? LocalBurstType : 3'b0) : 3'b0;  // this line is for burst.
   
   always_comb begin
     case(WordCountThreshold)
