@@ -80,17 +80,17 @@ module ahbmultimanager
   logic [1:0]                 save, restore, dis, sel;
   logic                       both;
 
-  logic [`PA_BITS-1:0]        IFUHADDRSave, IFUHADDRRestore;
-  logic [1:0]                 IFUHTRANSSave, IFUHTRANSRestore;
-  logic [2:0]                 IFUHBURSTSave, IFUHBURSTRestore;
-  logic [2:0]                 IFUHSIZERestore;
-  logic                       IFUHWRITERestore;
+  logic [`PA_BITS-1:0]        IFUHADDRSave, IFUHADDROut;
+  logic [1:0]                 IFUHTRANSSave, IFUHTRANSOut;
+  logic [2:0]                 IFUHBURSTSave, IFUHBURSTOut;
+  logic [2:0]                 IFUHSIZEOut;
+  logic                       IFUHWRITEOut;
   
-  logic [`PA_BITS-1:0]        LSUHADDRSave, LSUHADDRRestore;
-  logic [1:0]                 LSUHTRANSSave, LSUHTRANSRestore;
-  logic [2:0]                 LSUHBURSTSave, LSUHBURSTRestore;
-  logic [2:0]                 LSUHSIZESave, LSUHSIZERestore;
-  logic                       LSUHWRITESave, LSUHWRITERestore;
+  logic [`PA_BITS-1:0]        LSUHADDRSave, LSUHADDROut;
+  logic [1:0]                 LSUHTRANSSave, LSUHTRANSOut;
+  logic [2:0]                 LSUHBURSTSave, LSUHBURSTOut;
+  logic [2:0]                 LSUHSIZESave, LSUHSIZEOut;
+  logic                       LSUHWRITESave, LSUHWRITEOut;
 
   logic                       IFUReq, LSUReq;
   logic                       IFUActive, LSUActive;
@@ -113,24 +113,24 @@ module ahbmultimanager
   managerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
     .Request(IFUReq), .Active(IFUActive),
     .HWRITEin(1'b0), .HSIZEin(3'b010), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
-    .HWRITERestore(IFUHWRITERestore), .HSIZERestore(IFUHSIZERestore), .HBURSTRestore(IFUHBURSTRestore), .HREADYRestore(IFUHREADY),
-    .HTRANSRestore(IFUHTRANSRestore), .HADDRRestore(IFUHADDRRestore), .HREADYin(HREADY));
+    .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
+    .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
 
   // input stage LSU
   managerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
     .Request(LSUReq), .Active(LSUActive),
-    .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYRestore(LSUHREADY),
-    .HWRITERestore(LSUHWRITERestore), .HSIZERestore(LSUHSIZERestore), .HBURSTRestore(LSUHBURSTRestore),
-    .HTRANSRestore(LSUHTRANSRestore), .HADDRRestore(LSUHADDRRestore), .HREADYin(HREADY));
+    .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYOut(LSUHREADY),
+    .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
+    .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYin(HREADY));
 
   // output mux //*** rewrite for general number of managers.
-  assign HADDR = sel[1] ? LSUHADDRRestore : sel[0] ? IFUHADDRRestore : '0;
-  assign HSIZE = sel[1] ? LSUHSIZERestore : sel[0] ? 3'b010: '0; // Instruction reads are always 32 bits
-  assign HBURST = sel[1] ? LSUHBURSTRestore : sel[0] ? IFUHBURSTRestore : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
-  assign HTRANS = sel[1] ? LSUHTRANSRestore : sel[0] ? IFUHTRANSRestore: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HADDR = sel[1] ? LSUHADDROut : sel[0] ? IFUHADDROut : '0;
+  assign HSIZE = sel[1] ? LSUHSIZEOut : sel[0] ? 3'b010: '0; // Instruction reads are always 32 bits
+  assign HBURST = sel[1] ? LSUHBURSTOut : sel[0] ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
+  assign HTRANS = sel[1] ? LSUHTRANSOut : sel[0] ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HWRITE = sel[1] ? LSUHWRITEOut : sel[0] ? 1'b0 : '0;
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HMASTLOCK = 0; // no locking supported
-  assign HWRITE = sel[1] ? LSUHWRITERestore : sel[0] ? 1'b0 : '0;
 
   // data phase muxing.  This would be a mux if IFU wrote data.
   assign HWDATA = LSUHWDATA;
@@ -150,6 +150,7 @@ module ahbmultimanager
       default:                           NextState = IDLE;
     endcase
 
+  // This part is only used when burst mode is supported.
   // Manager needs to count beats.
   flopenr #(4) 
   BeatCountReg(.clk(HCLK),
@@ -185,13 +186,11 @@ module ahbmultimanager
       default:  Threshold = 4'b0000; // INCR without end.
     endcase
   end
+  // end of burst mode.
   
   // basic arb always selects LSU when both
-  // replace this block for more sophisticated arbitration.
+  // replace this block for more sophisticated arbitration as needed.
   // Manager 0 (IFU)
-  // this logic is all wrong.
-  // test by removing burst.
-  // 2nd want to test with slower memory.
   assign save[0] = CurrState == IDLE & both;
   assign restore[0] = CurrState == ARBITRATE;
   assign dis[0] = CurrState == ARBITRATE;
