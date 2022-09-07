@@ -45,7 +45,7 @@ module fdivsqrtiter(
   output logic [`DIVb:0] FirstS, FirstSM,
   output logic [`DIVb:0] FirstQ, FirstQM,
   output logic [`DIVb-1:0] FirstC,
-  output logic [`DIVCOPIES-1:0] qn,
+  output logic             Firstqn,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
 );
 
@@ -71,6 +71,8 @@ module fdivsqrtiter(
   logic [`DIVb:0] SMNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb-1:0] C[`DIVCOPIES-1:0]; // 0.b
   logic [`DIVb-1:0] initC; // 0.b
+  logic [`DIVCOPIES-1:0] qn; 
+
 
  /* verilator lint_on UNOPTFLAT */
   logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
@@ -169,5 +171,6 @@ module fdivsqrtiter(
   assign FirstQ = Q[0];
   assign FirstQM = QM[0];
   assign FirstC = C[0];
+  assign Firstqn = qn[0];
 endmodule
 
