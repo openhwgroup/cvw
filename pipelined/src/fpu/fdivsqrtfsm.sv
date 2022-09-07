@@ -69,7 +69,7 @@ module fdivsqrtfsm(
   logic WZeroDelayed, WZeroD; // *** later remove
 
   //flopen #($clog2(`DIVLEN/2+3)) durflop(clk, DivStart, CalcDur, Dur);
-  assign DivBusy = (state == BUSY);
+  assign DivBusy = (state == BUSY & ~DivDone);
   // calculate sticky bit
   //    - there is a chance that a value is subtracted infinitly, resulting in an exact QM result
   //      this is only a problem on radix 2 (and possibly maximally redundant 4) since minimally redundant
@@ -100,11 +100,11 @@ module fdivsqrtfsm(
     assign WZeroD = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0})|(((WS+WC+FZeroD)==0)&qn[`DIVCOPIES-1]);
   end else begin
     assign WZeroD = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0});
-  end
+  end 
 
   flopr #(1) WZeroReg(clk, reset | DivStart, WZero, WZeroDelayed);
-//  assign DivDone = (state == DONE) | (WZeroD & (state == BUSY));
-  assign DivDone = (state == DONE) | (WZeroDelayed & (state == BUSY));
+  assign DivDone = (state == DONE) | (WZeroD & (state == BUSY));
+//  assign DivDone = (state == DONE) | (WZeroDelayed & (state == BUSY));
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
   assign EarlyTermShiftE = step;
