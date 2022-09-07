@@ -33,24 +33,18 @@
 module fdivsqrtfsm(
   input  logic clk, 
   input  logic reset, 
-  input logic [`DIVb+3:0] NextWSN, NextWCN, WS, WC,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
   input  logic DivStart, 
   input  logic XsE,
   input  logic SqrtE,
-  input  logic SqrtM,
   input  logic StallE,
   input  logic StallM,
-  input logic [`DIVN-2:0]  D, // U0.N-1
   input  logic [`DURLEN-1:0] Dur,
-  input logic [`DIVCOPIES-1:0] qn,
   input logic WZero,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
-//  output logic DivSE,
   output logic DivDone,
-//  output logic NegSticky,
   output logic DivBusy
 );
   

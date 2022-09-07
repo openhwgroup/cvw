@@ -70,8 +70,8 @@ module fdivsqrt(
     .clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
     .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
   fdivsqrtfsm fdivsqrtfsm(
-    .reset, .qn, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, 
-    .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
+    .reset, .XsE, .SqrtE, 
+    .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
     .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
   fdivsqrtiter fdivsqrtiter(
