@@ -585,7 +585,7 @@ module testbenchfp;
       end
       if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f16sqrt};
+        Tests = {f16sqrt, Tests};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
