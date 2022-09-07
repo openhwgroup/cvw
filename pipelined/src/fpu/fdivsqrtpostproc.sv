@@ -33,16 +33,17 @@
 module fdivsqrtpostproc(
   input logic [`DIVb+3:0] WS, WC,
   input logic [`DIVN-2:0]  D, // U0.N-1
-  input logic [`DIVb:0] FirstSM,
+  input logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM,
   input logic [`DIVb-1:0] FirstC,
   input logic [`DIVCOPIES-1:0] qn,
   input logic SqrtM,
+  output logic [`DIVb-(`RADIX/4):0] QmM,
   output logic WZero,
-  output logic DivSM,
-  output logic NegSticky
+  output logic DivSM
 );
   
   logic [`DIVb+3:0] W;
+  logic NegSticky;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   if (`RADIX == 2) begin
@@ -59,5 +60,14 @@ module fdivsqrtpostproc(
   // Determine if sticky bit is negative
   assign W = WC+WS;
   assign NegSticky = W[`DIVb+3];
+
+   // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
+  always_comb
+    if(SqrtM) // sqrt ouputs in the range (1, .5]
+      if(NegSticky) QmM = {FirstSM[`DIVb-1-(`RADIX/4):0], 1'b0};
+      else          QmM = {FirstS[`DIVb-1-(`RADIX/4):0], 1'b0};
+    else  
+      if(NegSticky) QmM = FirstQM[`DIVb-(`RADIX/4):0];
+      else          QmM = FirstQ[`DIVb-(`RADIX/4):0];
 
 endmodule

@@ -40,14 +40,10 @@ module fdivsqrtiter(
   input  logic SqrtM,
   input  logic [`DIVb:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
-  input  logic NegSticky,
-  output logic [`DIVb-(`RADIX/4):0] Qm,
   output logic [`DIVN-2:0]  D, // U0.N-1
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
-  output logic [`DIVb+3:0]  StickyWSA,
-  output logic [`DIVb:0] LastSM,
-  output logic [`DIVb-1:0] LastC,
-  output logic [`DIVb:0] FirstSM,
+  output logic [`DIVb:0] FirstS, FirstSM,
+  output logic [`DIVb:0] FirstQ, FirstQM,
   output logic [`DIVb-1:0] FirstC,
   output logic [`DIVCOPIES-1:0] qn,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
@@ -164,27 +160,14 @@ module fdivsqrtiter(
   flopenr #(`DIVb+1) SMreg(clk, DivStart, DivBusy, SMNext[`DIVCOPIES-1], SM[0]);
   mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {1'b1, {(`DIVb){1'b0}}}, DivStart, SMux);
   flopen #(`DIVb+1) Sreg(clk, DivStart|DivBusy, SMux, S[0]);
- // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-  always_comb
-    if(SqrtM) // sqrt ouputs in the range (1, .5]
-      if(NegSticky) Qm = {SM[0][`DIVb-1-(`RADIX/4):0], 1'b0};
-      else          Qm = {S[0][`DIVb-1-(`RADIX/4):0], 1'b0};
-    else  
-      if(NegSticky) Qm = QM[0][`DIVb-(`RADIX/4):0];
-      else          Qm = Q[0][`DIVb-(`RADIX/4):0];
 
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
 
-  assign LastSM = SM[`DIVCOPIES-1];
-  assign LastC = C[`DIVCOPIES-1];
+  assign FirstS = S[0];
   assign FirstSM = SM[0];
+  assign FirstQ = Q[0];
+  assign FirstQM = QM[0];
   assign FirstC = C[0];
-
-  if(`RADIX==2)
-    if (`DIVCOPIES == 1)
-      assign StickyWSA = {WSA[0][`DIVb+2:0], 1'b0};
-    else
-      assign StickyWSA = {WSA[1][`DIVb+2:0], 1'b0};
 endmodule
 

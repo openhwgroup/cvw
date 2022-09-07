@@ -59,9 +59,7 @@ module fdivsqrt(
   logic [`DIVb:0] X;
   logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVN-2:0] Dpreproc;
-  logic [`DIVb:0] LastSM;
-  logic [`DIVb-1:0] LastC;
-  logic [`DIVb:0] FirstSM;
+  logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
   logic [`DIVb-1:0] FirstC;
   logic [`DURLEN-1:0] Dur;
   logic NegSticky;
@@ -72,14 +70,14 @@ module fdivsqrt(
     .clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
     .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
   fdivsqrtfsm fdivsqrtfsm(
-    .reset, .qn, .LastSM, .LastC, .FirstSM, .FirstC, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, 
+    .reset, .qn, .D, .XsE, .SqrtE, .SqrtM, .NextWSN, .NextWCN, 
     .WS, .WC, .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
-    .StickyWSA, .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
+    .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .qn, .D, .LastSM, .LastC, .FirstSM, .FirstC, .SqrtE, .SqrtM, 
-    .X,.Dpreproc, .NegSticky, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
+    .clk, .qn, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .SqrtE, .SqrtM, 
+    .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
     .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
-    .StickyWSA, .DivBusy, .Qm(QmM));
-  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstSM, .FirstC, .qn, .SqrtM, .WZero, .DivSM, .NegSticky);
+    .DivBusy);
+  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .qn, .SqrtM, .QmM, .WZero, .DivSM);
 endmodule
