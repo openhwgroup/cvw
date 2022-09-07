@@ -35,7 +35,7 @@ module fdivsqrtpostproc(
   input logic [`DIVN-2:0]  D, // U0.N-1
   input logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM,
   input logic [`DIVb-1:0] FirstC,
-  input logic [`DIVCOPIES-1:0] qn,
+  input logic  Firstqn,
   input logic SqrtM,
   output logic [`DIVb-(`RADIX/4):0] QmM,
   output logic WZero,
@@ -46,14 +46,23 @@ module fdivsqrtpostproc(
   logic NegSticky;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
+  logic weq0;
+  aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
+
   if (`RADIX == 2) begin
     logic [`DIVb+3:0] FZero;
     logic [`DIVb+2:0] FirstK;
+    logic wfeq0;
+    logic [`DIVb+3:0] WCF, WSF;
+
     assign FirstK = ({3'b111, FirstC<<1} & ~({3'b111, FirstC<<1} << 1));
     assign FZero = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
-    assign WZero = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0})|(((WS+WC+FZero)==0)&qn[`DIVCOPIES-1]);
+    csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
+    aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
+//    assign WZero = weq0|(wfeq0&qn[`DIVCOPIES-1]);
+    assign WZero = weq0|(wfeq0 & Firstqn);
   end else begin
-    assign WZero = ((WS^WC)=={WS[`DIVb+2:0]|WC[`DIVb+2:0], 1'b0});
+    assign WZero = weq0;
   end 
   assign DivSM = ~WZero;
 
