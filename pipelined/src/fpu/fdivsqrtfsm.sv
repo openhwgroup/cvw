@@ -44,12 +44,7 @@ module fdivsqrtfsm(
   input  logic StallE,
   input  logic StallM,
   input logic [`DIVN-2:0]  D, // U0.N-1
-  input  logic [`DIVb+3:0] StickyWSA,
   input  logic [`DURLEN-1:0] Dur,
-  input logic [`DIVb:0] LastSM,
-  input logic [`DIVb:0] FirstSM,
-  input logic [`DIVb-1:0] LastC,
-  input logic [`DIVb-1:0] FirstC,
   input logic [`DIVCOPIES-1:0] qn,
   input logic WZero,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
