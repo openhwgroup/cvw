@@ -62,7 +62,7 @@ module fdivsqrt(
   logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
   logic [`DIVb-1:0] FirstC;
   logic NegSticky;
-  logic [`DIVCOPIES-1:0] qn;
+  logic Firstqn;
   logic WZero;
 
   fdivsqrtpreproc fdivsqrtpreproc(
@@ -74,9 +74,9 @@ module fdivsqrt(
     .XNaNE, .YNaNE,
     .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .qn, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .SqrtE, .SqrtM, 
+    .clk, .Firstqn, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .SqrtE, .SqrtM, 
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
     .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
-  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .qn, .SqrtM, .QmM, .WZero, .DivSM);
+  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .Firstqn, .SqrtM, .QmM, .WZero, .DivSM);
 endmodule
