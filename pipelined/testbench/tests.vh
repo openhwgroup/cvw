@@ -1917,3 +1917,8 @@ string imperas32f[] = '{
     `WALLYTEST,
     "NULL"
  };
+
+ string ahb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/F/src/fadd_b11-01.S"
+ };
