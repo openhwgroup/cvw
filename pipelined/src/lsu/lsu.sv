@@ -269,7 +269,7 @@ module lsu (
         .SelUncachedAdr, .RW(UnCacheRW), .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
-      mux2 #(`LLEN) UnCachedDataMux(.d0(LittleEndianReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
+      mux2 #(`LLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
         .s(SelUncachedAdr), .y(ReadDataWordMuxM));
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
@@ -296,13 +296,13 @@ module lsu (
         .HWSTRB(LSUHWSTRB), .RW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .ReadDataWord(ReadDataWordM));
           
-      assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
+      assign ReadDataWordMuxM = ReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
   end else begin: nobus // block: bus
     assign LSUHWDATA = '0; 
-    assign ReadDataWordMuxM = LittleEndianReadDataWordM;
+    assign ReadDataWordMuxM = ReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;
     assign {DCacheStallM, DCacheCommittedM} = '0;
@@ -326,7 +326,10 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
-  subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
+  // *** Ross Thompson: I think swr needs to be modified to support bigendian.  Both the subword
+  // selected and the sign extension are probably wrong.  I think it should be an invertion of
+  // the address bits and a different bit selected for extension.
+  subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
@@ -346,10 +349,10 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`BIGENDIAN_SUPPORTED) begin:endian
     bigendianswap #(`LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
-    bigendianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordM), .y(LittleEndianReadDataWordM));
+    bigendianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
   end else begin
     assign LSUWriteDataM = LittleEndianWriteDataM;
-    assign LittleEndianReadDataWordM = ReadDataWordM;
+    assign LittleEndianReadDataWordM = ReadDataWordMuxM;
   end
 
 endmodule
