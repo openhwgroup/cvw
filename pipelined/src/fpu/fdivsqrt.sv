@@ -61,17 +61,16 @@ module fdivsqrt(
   logic [`DIVN-2:0] Dpreproc;
   logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
   logic [`DIVb-1:0] FirstC;
-  logic [`DURLEN-1:0] Dur;
   logic NegSticky;
   logic [`DIVCOPIES-1:0] qn;
   logic WZero;
 
   fdivsqrtpreproc fdivsqrtpreproc(
     .clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
-    .Sqrt(SqrtE), .Dur, .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
+    .Sqrt(SqrtE), .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
   fdivsqrtfsm fdivsqrtfsm(
     .reset, .XsE, .SqrtE, 
-    .Dur, .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
+    .DivBusy, .clk, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
     .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
   fdivsqrtiter fdivsqrtiter(

@@ -91,6 +91,16 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
+tests32i = ["wally32periph"] 
+for test in tests32i:
+  tc = TestCase(
+        name=test,
+        variant="rv32i",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32i "+test+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+
+
 tests32e = ["wally32e"] 
 for test in tests32e:
   tc = TestCase(
