@@ -104,6 +104,7 @@ logic [3:0] dummy;
         "wally64periph":                  tests = wally64periph;
         "coremark":                       tests = coremark;
         "fpga":                           tests = fpga;
+        "ahb" :                           tests = ahb;
       endcase 
     end else begin // RV32
       case (TEST)
