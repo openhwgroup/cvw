@@ -110,6 +110,15 @@ for test in tests32e:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
+ahbTests = [("0", "0"), ("0", "1"), ("1", "0"), ("1", "1"), ("2", "0"), ("2", "1")] 
+for test in ahbTests:
+  tc = TestCase(
+        name="ram_latency_" + test[0] + "_burst_en_" + test[1],
+        variant="ahb",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
+  
 
 import os
 from multiprocessing import Pool, TimeoutError
