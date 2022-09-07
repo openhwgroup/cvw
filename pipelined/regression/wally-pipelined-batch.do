@@ -20,11 +20,17 @@
 onbreak {resume}
 
 # create library
-if [file exists wkdir/work_${1}_${2}] {
-    vdel -lib wkdir/work_${1}_${2} -all
+if {$2 eq "ahb"} {
+    if [file exists wkdir/work_${1}_${2}_${3}_${4}] {
+        vdel -lib wkdir/work_${1}_${2}_${3}_${4} -all
+    }
+    vlib wkdir/work_${1}_${2}_${3}_${4}
+} else {
+    if [file exists wkdir/work_${1}_${2}] {
+        vdel -lib wkdir/work_${1}_${2} -all
+    }
+    vlib wkdir/work_${1}_${2}
 }
-vlib wkdir/work_${1}_${2}
-
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
