@@ -559,6 +559,7 @@ add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/cachedp/AHBB
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/cachedp/AHBBuscachefsm/WordCountFlag
 add wave -noupdate /testbench/dut/core/lsu/ByteMaskM
 add wave -noupdate /testbench/dut/core/fpu/fpu/FWriteDataM
+#add wave -group {Sqrt} -noupdate -recursive /testbench/dut/core/fpu/fpu/fdivsqrt/*
 TreeUpdate [SetDefaultTree]
 WaveRestoreCursors {{Cursor 2} {377526 ns} 0} {{Cursor 3} {377441 ns} 1} {{Cursor 4} {378225 ns} 1}
 quietly wave cursor active 1
