@@ -41,7 +41,6 @@ module fdivsqrtfsm(
   input  logic SqrtE,
   input  logic StallE,
   input  logic StallM,
-  input  logic [`DURLEN-1:0] Dur,
   input logic WZero,
   output logic [`DURLEN-1:0] EarlyTermShiftE,
   output logic DivDone,
@@ -63,7 +62,7 @@ module fdivsqrtfsm(
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
-          step <= Dur;
+          step <= (`DURLEN)'(`FPDUR); // *** this should be adjusted to depend on the precision
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (DivDone) begin

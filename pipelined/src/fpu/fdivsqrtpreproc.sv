@@ -40,8 +40,7 @@ module fdivsqrtpreproc (
   input logic XZero,
   output logic  [`NE+1:0] QeM,
   output logic [`DIVb:0] X,
-  output logic [`DIVN-2:0] Dpreproc,
-  output logic [`DURLEN-1:0] Dur
+  output logic [`DIVN-2:0] Dpreproc
 );
   // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
@@ -73,7 +72,6 @@ module fdivsqrtpreproc (
   assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
   assign X = Sqrt ? {SqrtX, {`DIVb-1-`NF{1'b0}}} : {~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
-  assign Dur = (`DURLEN)'(`FPDUR);
 
   //           radix 2     radix 4
   // 1 copies  DIVLEN+2    DIVLEN+2/2
