@@ -259,7 +259,7 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
         .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
         .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
-      AHBCachedp #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) cachedp(
+      ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset),
         .HRDATA, 
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
@@ -274,7 +274,7 @@ module lsu (
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
 
-      flop #(`XLEN) wdreg(clk, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flopen #(`XLEN) wdreg(clk, LSUHREADY, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
 
       // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
       // probably can merge by muxing LSUPAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
@@ -282,7 +282,6 @@ module lsu (
       swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
       
       flop #(`XLEN/8) HWSTRBReg(clk, BusByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
-      
 
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
@@ -291,15 +290,11 @@ module lsu (
       
       assign LSUHADDR = LSUPAdrM;
       assign LSUHSIZE = LSUFunct3M;
- 
-      flopen #(`XLEN) fb(.clk, .en(CaptureEn), .d(HRDATA), .q(ReadDataWordM));
 
-      flop #(`XLEN) wdreg(clk, LSUWriteDataM, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
-      flop #(`XLEN/8) HWSTRBReg(clk, ByteMaskM, LSUHWSTRB);
-
-      AHBBusfsm busfsm(.HCLK(clk), .HRESETn(~reset), .RW,
-                       .BusCommitted(BusCommittedM), .CPUBusy, .BusStall, .CaptureEn, .HREADY(LSUHREADY), .HTRANS(LSUHTRANS),
-                       .HWRITE(LSUHWRITE));
+      ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
+        .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
+        .HWSTRB(LSUHWSTRB), .RW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
+        .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .ReadDataWord(ReadDataWordM));
           
       assign ReadDataWordMuxM = LittleEndianReadDataWordM;  // from byte swapping
       assign LSUHBURST = 3'b0;
@@ -333,8 +328,7 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   subwordread subwordread(.ReadDataWordMuxM, .LSUPAdrM(LSUPAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
-  subwordwrite subwordwrite(.LSUPAdrM(LSUPAdrM[2:0]),
-    .LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
+  subwordwrite subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
   swbytemask #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));

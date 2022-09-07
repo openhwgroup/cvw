@@ -47,13 +47,13 @@ module managerinputstage
    input logic [2:0]           HBURSTin,
    input logic [1:0]           HTRANSin,
    input logic [`PA_BITS-1:0]  HADDRin,
-   output logic                HREADYRestore,
+   output logic                HREADYOut,
    // manager output
-   output logic                HWRITERestore,
-   output logic [2:0]          HSIZERestore,
-   output logic [2:0]          HBURSTRestore,
-   output logic [1:0]          HTRANSRestore,
-   output logic [`PA_BITS-1:0] HADDRRestore,
+   output logic                HWRITEOut,
+   output logic [2:0]          HSIZEOut,
+   output logic [2:0]          HBURSTOut,
+   output logic [1:0]          HTRANSOut,
+   output logic [`PA_BITS-1:0] HADDROut,
    input logic                 HREADYin
    );
 
@@ -69,11 +69,11 @@ module managerinputstage
   mux2 #(1+3+3+2+`PA_BITS) RestorMux({HWRITEin, HSIZEin, HBURSTin, HTRANSin, HADDRin}, 
                                      {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave},
                                      Restore,
-                                     {HWRITERestore, HSIZERestore, HBURSTRestore, HTRANSRestore, HADDRRestore});
+                                     {HWRITEOut, HSIZEOut, HBURSTOut, HTRANSOut, HADDROut});
 
-  assign Request = HTRANSRestore != 2'b00;
-  assign HREADYRestore = HREADYin & ~Disable;
-  assign Active = Request & HREADYRestore;
+  assign Request = HTRANSOut != 2'b00;
+  assign HREADYOut = HREADYin & ~Disable;
+  assign Active = Request & HREADYOut;
 
 endmodule
   
