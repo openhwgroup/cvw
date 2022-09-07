@@ -585,13 +585,21 @@ module testbenchfp;
       end
       if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
+        // reverse order
         Tests = {f16sqrt, Tests};
+        OpCtrl = {`SQRT_OPCTRL, OpCtrl};
+        WriteInt = {1'b0, WriteInt};
+        for(int i = 0; i<5; i++) begin
+          Unit = {`DIVUNIT, Unit};
+          Fmt = {2'b10, Fmt};
+        end
+/*        Tests = {Tests, f16sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
-        end
+        end */
       end
       if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
         Tests = {Tests, f16fma};
