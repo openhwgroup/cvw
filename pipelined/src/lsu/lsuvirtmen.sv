@@ -38,6 +38,7 @@ module lsuvirtmem(
   input logic                 DTLBMissM,
   output logic                DTLBWriteM,
   input logic                 InstrDAPageFaultF,
+  output logic                SelReplay,
   input logic                 DataDAPageFaultM,
   input logic                 TrapM,
   input logic                 DCacheStallM,
@@ -52,13 +53,11 @@ module lsuvirtmem(
   output logic [2:0]          LSUFunct3M,
   input logic [6:0]           Funct7M,
   output logic [6:0]          LSUFunct7M,
-  input logic [`XLEN-1:0]     IEUAdrE,
   output logic [`XLEN-1:0]    PTE,
   output logic [`XLEN-1:0]    IMWriteDataM,
   output logic [1:0]          PageType,
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
-  output logic [11:0]         LSUAdrE,
   output logic [`XLEN+1:0] PreLSUPAdrM,
   input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
@@ -74,7 +73,6 @@ module lsuvirtmem(
   logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
   logic                       SelReplayMemE;
-  logic [11:0]                PreLSUAdrE;  
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
   logic                       SelHPTWAdr;
@@ -97,8 +95,10 @@ module lsuvirtmem(
 
   // Once the walk is done and it is time to update the DTLB we need to switch back 
   // to the orignal data virtual address.
-  assign SelHPTWAdr = SelHPTW & ~DTLBWriteM;
-  
+  assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
+
+  assign SelReplay = SelHPTWAdr | SelReplayMemE;
+
   // multiplex the outputs to LSU
   if(`XLEN+2-`PA_BITS > 0) begin
     logic [(`XLEN+2-`PA_BITS)-1:0] zeros;
@@ -109,12 +109,10 @@ module lsuvirtmem(
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
-  mux2 #(12) adremux(IEUAdrE[11:0], HPTWAdr[11:0], SelHPTW, PreLSUAdrE);
   mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, PreLSUPAdrM);
   if(`HPTW_WRITES_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
   else assign IMWriteDataM = WriteDataM;
-  mux2 #(12) replaymux(PreLSUAdrE, IEUAdrExtM[11:0], SelReplayMemE, LSUAdrE); // replay cpu request after hptw.  *** redudant with mux in cache.
 
   // always block interrupts when using the hardware page table walker.
   assign CPUBusy = StallW & ~SelHPTW;
