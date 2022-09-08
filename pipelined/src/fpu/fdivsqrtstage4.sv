@@ -51,6 +51,7 @@ module fdivsqrtstage4 (
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
   logic [4:0] Smsbs;
+  logic CarryIn;
 
   // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -77,7 +78,8 @@ module fdivsqrtstage4 (
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
   assign AddIn = SqrtM ? F : Dsel;
-  csa #(`DIVb+4) csa(WS, WC, AddIn, |q[3:2]&~SqrtM, WSA, WCA);
+  assign CarryIn = ~SqrtM & (q[3] | q[2]); // +1 for 2's complement of -D and -2D 
+  csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
   otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
   sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C({1'b1, C}), .S, .SM, .SNext, .SMNext);
