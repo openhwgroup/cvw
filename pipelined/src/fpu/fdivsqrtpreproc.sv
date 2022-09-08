@@ -85,7 +85,6 @@ module fdivsqrtpreproc (
   flopen #(`NE+2) expflop(clk, DivStart, Qe, QeM);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .XZeroCnt, .YZeroCnt, .Qe);
 
-
 endmodule
 
 module expcalc(
