@@ -94,7 +94,7 @@ module fdivsqrtiter(
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
     assign NextC   = {1'b1, C[`DIVCOPIES-1][`DIVb-1:1]};
-  end else begin
+  end else begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
@@ -102,6 +102,7 @@ module fdivsqrtiter(
 
   if (`RADIX == 2) assign initC = {1'b1, {(`DIVb-1){1'b0}}}; // *** note that these are preshifted right by r compared to book
   else             assign initC = {2'b11, {(`DIVb-2){1'b0}}};
+ // assign initC = 0;
 
   // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
   mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
@@ -130,7 +131,7 @@ module fdivsqrtiter(
         .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end else begin: stage
         logic j1;
-        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]); // not quite right ***
+        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
         .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
@@ -159,6 +160,7 @@ module fdivsqrtiter(
   mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
   flopen #(`DIVb+1) QMreg(clk, DivStart|DivBusy, QMMux, QM[0]);
 
+  // if starting new square root, set S to 1 and SM to 0
   flopenr #(`DIVb+1) SMreg(clk, DivStart, DivBusy, SMNext[`DIVCOPIES-1], SM[0]);
   mux2 #(`DIVb+1) Smux(SNext[`DIVCOPIES-1], {1'b1, {(`DIVb){1'b0}}}, DivStart, SMux);
   flopen #(`DIVb+1) Sreg(clk, DivStart|DivBusy, SMux, S[0]);
