@@ -55,7 +55,7 @@ module fdivsqrtpostproc(
     logic wfeq0;
     logic [`DIVb+3:0] WCF, WSF;
 
-    assign FirstK = ({3'b111, FirstC<<1} & ~({3'b111, FirstC<<1} << 1));
+    assign FirstK = ({3'b111, FirstC} & ~({3'b111, FirstC} << 1));
     assign FZero = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);

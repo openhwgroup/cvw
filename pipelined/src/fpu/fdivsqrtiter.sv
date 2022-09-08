@@ -69,7 +69,7 @@ module fdivsqrtiter(
   logic [`DIVb:0] SM[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] SNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] SMNext[`DIVCOPIES-1:0];// U1.b
-  logic [`DIVb-1:0] C[`DIVCOPIES-1:0]; // 0.b
+  logic [`DIVb-1:0] C[`DIVCOPIES:0]; // 0.b
   logic [`DIVb-1:0] initC; // 0.b
   logic [`DIVCOPIES-1:0] qn; 
 
@@ -93,16 +93,17 @@ module fdivsqrtiter(
   if (`RADIX == 2) begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
-    assign NextC   = {1'b1, C[`DIVCOPIES-1][`DIVb-1:1]};
+//    assign NextC   = {1'b1, C[`DIVCOPIES-1][`DIVb-1:1]};
   end else begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
-    assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
+//    assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
   end
-
+/*
   if (`RADIX == 2) assign initC = {1'b1, {(`DIVb-1){1'b0}}}; // *** note that these are preshifted right by r compared to book
   else             assign initC = {2'b11, {(`DIVb-2){1'b0}}};
- // assign initC = 0;
+  */
+  assign initC = 0;
 
   // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
   mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
@@ -110,7 +111,7 @@ module fdivsqrtiter(
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVb) Cmux(NextC, initC, DivStart, CMux); 
+  mux2 #(`DIVb) Cmux(C[`DIVCOPIES], initC, DivStart, CMux); 
   flopen #(`DIVb) cflop(clk, DivStart|DivBusy, CMux, C[0]);
 
   // Divisor Selections
@@ -128,23 +129,23 @@ module fdivsqrtiter(
       if (`RADIX == 2) begin: stage
         fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
-        .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
+        .C(C[i]), .S(S[i]), .SM(SM[i]), .CNext(C[i+1]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
-        .C(C[i]), .S(S[i]), .SM(SM[i]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
+        .C(C[i]), .S(S[i]), .SM(SM[i]), .CNext(C[i+1]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end
       if(i<(`DIVCOPIES-1)) begin 
         if (`RADIX==2)begin 
           assign WS[i+1] = {WSA[i][`DIVb+2:0], 1'b0};
           assign WC[i+1] = {WCA[i][`DIVb+2:0], 1'b0};
-          assign  C[i+1] = {1'b1, C[i][`DIVb-1:1]};
+//          assign  C[i+1] = {1'b1, C[i][`DIVb-1:1]};
         end else begin
           assign WS[i+1] = {WSA[i][`DIVb+1:0], 2'b0};
           assign WC[i+1] = {WCA[i][`DIVb+1:0], 2'b0};
-          assign  C[i+1] = {2'b11, C[i][`DIVb-1:2]};
+//          assign  C[i+1] = {2'b11, C[i][`DIVb-1:2]};
         end
         assign Q[i+1] = QNext[i];
         assign QM[i+1] = QMNext[i];
