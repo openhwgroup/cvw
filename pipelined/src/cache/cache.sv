@@ -52,6 +52,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   IgnoreRequestTLB,
   input logic                   TrapM, 
   input logic                   Cacheable,
+  input logic                   SelReplay,
    // Bus fsm interface
   output logic                  CacheFetchLine,
   output logic                  CacheWriteLine,
@@ -123,7 +124,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // and FlushAdr when handling D$ flushes  
   mux3 #(SETLEN) AdrSelMux(
     .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
-    .s({SelFlush, SelAdr}), .y(RAdr));
+    .s({SelFlush, (SelAdr | SelReplay)}), .y(RAdr));
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
