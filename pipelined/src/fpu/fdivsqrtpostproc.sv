@@ -59,7 +59,6 @@ module fdivsqrtpostproc(
     assign FZero = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
-//    assign WZero = weq0|(wfeq0&qn[`DIVCOPIES-1]);
     assign WZero = weq0|(wfeq0 & Firstqn);
   end else begin
     assign WZero = weq0;
