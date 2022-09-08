@@ -41,6 +41,7 @@ module fdivsqrtstage2 (
   input logic SqrtM,
   output logic [`DIVb:0] QNext, QMNext, 
   output logic qn,
+  output logic [`DIVb-1:0] CNext,
   output logic [`DIVb:0] SNext, SMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
 );
@@ -51,6 +52,8 @@ module fdivsqrtstage2 (
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
 
+  assign CNext = {1'b1, C[`DIVb-1:1]};
+
   // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
   // q encoding:
@@ -60,7 +63,7 @@ module fdivsqrtstage2 (
 	// 0010 = -1
 	// 0001 = -2
   qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
-  fgen2 fgen2(.sp(qp), .sz(qz), .C, .S, .SM, .F);
+  fgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .S, .SM, .F);
 
   assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
   // Partial Product Generation
@@ -70,7 +73,7 @@ module fdivsqrtstage2 (
 
   // *** dh 8/29/22: will need to trim down to just sotfc
   otfc2 otfc2(.qp, .qz, .Q, .QM, .QNext, .QMNext);
-  sotfc2 sotfc2(.sp(qp), .sz(qz), .C, .S, .SM, .SNext, .SMNext);
+  sotfc2 sotfc2(.sp(qp), .sz(qz), .C(CNext), .S, .SM, .SNext, .SMNext);
 endmodule
 
 

@@ -76,7 +76,7 @@ module fgen2 (
 
   assign SExt = {3'b0, S};
   assign SMExt = {3'b0, SM};
-  assign CExt = {4'hf, C};
+  assign CExt = {4'hf, C}; // extend C from U0.k to Q4.k
 
   // Generate for both positive and negative bits
   assign FP = ~(SExt << 1) & CExt;
