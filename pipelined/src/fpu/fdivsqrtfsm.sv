@@ -62,7 +62,7 @@ module fdivsqrtfsm(
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
-          step <= (`DURLEN)'(`FPDUR); // *** this should be adjusted to depend on the precision
+          step <= (`DURLEN)'(`FPDUR); // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (DivDone) begin
