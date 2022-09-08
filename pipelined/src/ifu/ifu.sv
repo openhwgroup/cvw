@@ -222,6 +222,7 @@ module ifu (
              .CacheFetchLine(ICacheFetchLine),
              .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
              .Cacheable(CacheableF),
+             .SelReplay('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
