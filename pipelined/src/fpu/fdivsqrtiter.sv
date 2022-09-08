@@ -155,8 +155,8 @@ module fdivsqrtiter(
 
 
   // if starting a new divison set Q to 0 and QM to -1
-  mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
   flopenr #(`DIVb+1) Qreg(clk, DivStart, DivBusy, QNext[`DIVCOPIES-1], Q[0]);
+  mux2 #(`DIVb+1) QMmux(QMNext[`DIVCOPIES-1], '1, DivStart, QMMux);
   flopen #(`DIVb+1) QMreg(clk, DivStart|DivBusy, QMMux, QM[0]);
 
   flopenr #(`DIVb+1) SMreg(clk, DivStart, DivBusy, SMNext[`DIVCOPIES-1], SM[0]);
