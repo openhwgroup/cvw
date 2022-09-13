@@ -91,10 +91,14 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 		           else                          NextState = DATA_PHASE;
       MEM3: if(CPUBusy)                   NextState = MEM3;
 		           else                          NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalWordCount) NextState = ADR_PHASE;
-                         else                       NextState = CACHE_FETCH;
-      CACHE_EVICT: if(HREADY & FinalWordCount) NextState = ADR_PHASE;
-                         else                       NextState = CACHE_EVICT;
+      CACHE_FETCH: if(HREADY & FinalWordCount & CacheRW[0]) NextState = CACHE_EVICT;
+                   else if(HREADY & FinalWordCount & CacheRW[1]) NextState = CACHE_FETCH;
+                   else if(HREADY & FinalWordCount & ~|CacheRW) NextState = ADR_PHASE;
+                   else                       NextState = CACHE_FETCH;
+      CACHE_EVICT: if(HREADY & FinalWordCount & CacheRW[0]) NextState = CACHE_EVICT;
+                   else if(HREADY & FinalWordCount & CacheRW[1]) NextState = CACHE_FETCH;
+                   else if(HREADY & FinalWordCount & ~|CacheRW) NextState = ADR_PHASE;
+                   else                       NextState = CACHE_EVICT;
 	  default:                                      NextState = ADR_PHASE;
 	endcase
   end
@@ -136,7 +140,8 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|RW | |CacheRW)) |
-                  (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ :
+                  (CurrState == DATA_PHASE & ~HREADY) |
+                  (CacheAccess & ~|WordCount & |CacheRW) ? AHB_NONSEQ :
                   (CacheAccess & |WordCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
   assign HWRITE = RW[0] | CacheRW[0];
@@ -155,7 +160,8 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   // communication to cache
   assign CacheBusAck = (CacheAccess & HREADY & FinalWordCount);
   assign SelBusWord = (CurrState == ADR_PHASE & (RW[0] | CacheRW[0])) |
-						   (CurrState == DATA_PHASE & RW[0]) |
-                           (CurrState == CACHE_EVICT);
+					  (CurrState == DATA_PHASE & RW[0]) |
+                      (CurrState == CACHE_EVICT) |
+                      (CurrState == CACHE_FETCH);
 
 endmodule
