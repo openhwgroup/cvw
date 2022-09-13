@@ -39,7 +39,7 @@ module lrsc
     input  logic [1:0]          PreLSURWM,
     output logic [1:0]          LSURWM,
     input  logic [1:0] 	        LSUAtomicM,
-    input  logic [`PA_BITS-1:0] LSUPAdrM,  // from mmu to dcache
+    input  logic [`PA_BITS-1:0] PAdrM,  // from mmu to dcache
     output logic                SquashSCW
 );
   // Handle atomic load reserved / store conditional
@@ -50,7 +50,7 @@ module lrsc
 
   assign lrM = MemReadM & LSUAtomicM[0];
   assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
-  assign WriteAdrMatchM = PreLSURWM[0] & (LSUPAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
+  assign WriteAdrMatchM = PreLSURWM[0] & (PAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
   assign SquashSCM = scM & ~WriteAdrMatchM;
   assign LSURWM = SquashSCM ? 2'b00 : PreLSURWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
@@ -59,7 +59,7 @@ module lrsc
     else if (scM) ReservationValidM = 0; // clear valid on store to same address or any sc
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
-  flopenr #(`PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, LSUPAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+  flopenr #(`PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, PAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
   flopenr #(1) resvldreg(clk, reset, ~StallW, ReservationValidM, ReservationValidW);
   flopenr #(1) squashreg(clk, reset, ~StallW, SquashSCM, SquashSCW);
 endmodule
