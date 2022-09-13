@@ -58,7 +58,7 @@ module lsuvirtmem(
   output logic [1:0]          PageType,
   output logic [1:0]          PreLSURWM,
   output logic [1:0]          LSUAtomicM,
-  output logic [`XLEN+1:0] PreLSUPAdrM,
+  output logic [`XLEN+1:0] IHAdrM,
   input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
   output logic                InterlockStall,
@@ -109,7 +109,7 @@ module lsuvirtmem(
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
-  mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, PreLSUPAdrM);
+  mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if(`HPTW_WRITES_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
   else assign IMWriteDataM = WriteDataM;

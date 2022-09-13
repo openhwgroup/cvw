@@ -194,7 +194,7 @@ add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/immu/i
 add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/ITLBMissF
 add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/immu/immu/PhysicalAddress
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/IEUAdrM
-add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUPAdrM
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/PAdrM
 add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/InterlockStall
