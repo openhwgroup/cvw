@@ -96,14 +96,14 @@ module lsu (
 
   logic [`XLEN+1:0]         IEUAdrExtM;
   logic [`XLEN+1:0]         IEUAdrExtE;
-  logic [`PA_BITS-1:0]      LSUPAdrM;
+  logic [`PA_BITS-1:0]      PAdrM;
   logic                     DTLBMissM;
   logic                     DTLBWriteM;
   logic [1:0]               NonDTIMMemRWM, PreLSURWM, LSURWM;
   logic [2:0]               LSUFunct3M;
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
-  (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   PreLSUPAdrM;
+  (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   IHAdrM;
   logic                     SelDTIM;
   logic                     CPUBusy;
   logic                     DCacheStallM;
@@ -136,12 +136,12 @@ module lsu (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IMWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .PreLSUPAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
+      .IHAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
       .IgnoreRequestTLB);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign CPUBusy = StallW; assign PreLSURWM = NonDTIMMemRWM; 
-    assign PreLSUPAdrM = IEUAdrExtM;
+    assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign IMWriteDataM = WriteDataM;
    end
@@ -161,13 +161,13 @@ module lsu (
     mmu #(.TLB_ENTRIES(`DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation,
-      .VAdr(PreLSUPAdrM),
+      .VAdr(IHAdrM),
       .Size(LSUFunct3M[1:0]),
       .PTE,
       .PageTypeWriteVal(PageType),
       .TLBWrite(DTLBWriteM),
       .TLBFlush(sfencevmaM),
-      .PhysicalAddress(LSUPAdrM),
+      .PhysicalAddress(PAdrM),
       .TLBMiss(DTLBMissM),
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
@@ -175,7 +175,7 @@ module lsu (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .DAPageFault(DataDAPageFaultM),
          // *** should use LSURWM as this is includes the lr/sc squash. However this introduces a combo loop
-         // from squash, depends on LSUPAdrM, depends on TLBHit, depends on these *AccessM inputs.
+         // from squash, depends on PAdrM, depends on TLBHit, depends on these *AccessM inputs.
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
@@ -191,7 +191,7 @@ module lsu (
     
     assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
-    assign LSUPAdrM = PreLSUPAdrM;
+    assign PAdrM = IHAdrM;
     assign CacheableM = '1;
   end
   
@@ -240,7 +240,7 @@ module lsu (
       logic [LOGBWPL-1:0]  WordCount;
       logic                SelUncachedAdr, DCacheBusAck;
       logic                SelBusWord;
-      logic [`XLEN-1:0]    LSUHWDATA_noDELAY; //*** change name
+      logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheRW, UnCacheRW;
 
@@ -250,7 +250,7 @@ module lsu (
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
-        .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(LSUPAdrM), 
+        .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .WordCount,
         .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM), .SelReplay,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
@@ -264,21 +264,21 @@ module lsu (
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .WordCount, .SelBusWord,
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheRW,
-        .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(LSUPAdrM),
+        .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .SelUncachedAdr, .RW(UnCacheRW), .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
       mux2 #(`LLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
         .s(SelUncachedAdr), .y(ReadDataWordMuxM));
       mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
-        .s(SelUncachedAdr), .y(LSUHWDATA_noDELAY));
+        .s(SelUncachedAdr), .y(PreHWDATA));
 
-      flopen #(`XLEN) wdreg(clk, LSUHREADY, LSUHWDATA_noDELAY, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flopen #(`XLEN) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
 
       // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
-      // probably can merge by muxing LSUPAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
+      // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
       logic [`XLEN/8-1:0]  BusByteMaskM;
-      swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(LSUPAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
+      swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(PAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
       
       flop #(`XLEN/8) HWSTRBReg(clk, BusByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
 
@@ -287,7 +287,7 @@ module lsu (
       logic [1:0] RW;
       assign RW = LSURWM & ~{IgnoreRequest, IgnoreRequest};
       
-      assign LSUHADDR = LSUPAdrM;
+      assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
 
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
@@ -311,7 +311,7 @@ module lsu (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .IMWriteDataM, .LSUPAdrM, 
+    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .IMWriteDataM, .PAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
@@ -328,12 +328,12 @@ module lsu (
   // *** Ross Thompson: I think swr needs to be modified to support bigendian.  Both the subword
   // selected and the sign extension are probably wrong.  I think it should be an invertion of
   // the address bits and a different bit selected for extension.
-  subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .LSUPAdrM(LSUPAdrM[2:0]),
+  subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]),
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks
-  swbytemask #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(LSUPAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
+  swbytemask #(`LLEN) swbytemask(.Size(LSUFunct3M), .Adr(PAdrM[$clog2(`LLEN/8)-1:0]), .ByteMask(ByteMaskM));
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MW Pipeline Register

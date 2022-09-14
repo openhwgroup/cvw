@@ -35,7 +35,7 @@ module atomic (
   input logic                reset, StallW,
   input logic [`XLEN-1:0]    ReadDataM,
   input logic [`XLEN-1:0]    IMWriteDataM, 
-  input logic [`PA_BITS-1:0] LSUPAdrM,
+  input logic [`PA_BITS-1:0] PAdrM,
   input logic [6:0]          LSUFunct7M,
   input logic [2:0]          LSUFunct3M,
   input logic [1:0]          LSUAtomicM,
@@ -52,7 +52,7 @@ module atomic (
                 .result(AMOResult));
   mux2 #(`XLEN) wdmux(IMWriteDataM, AMOResult, LSUAtomicM[1], IMAWriteDataM);
   assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
-  lrsc lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .LSUPAdrM,
+  lrsc lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM,
     .SquashSCW, .LSURWM);
 
 endmodule  
