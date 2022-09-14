@@ -56,7 +56,7 @@ module fdivsqrt(
   logic [`DIVb+3:0]  NextWSN, NextWCN;
   logic [`DIVb+3:0]  WS, WC;
   logic [`DIVb+3:0] StickyWSA;
-  logic [`DIVb:0] X;
+  logic [`DIVb+3:0] X;
   logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVN-2:0] Dpreproc;
   logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
