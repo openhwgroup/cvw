@@ -169,16 +169,16 @@ add wave -noupdate -group Forward -color Thistle /testbench/dut/core/ieu/fw/Load
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -group AHB -expand -group multimanager -color Gold /testbench/dut/core/ebu/ebu/CurrState
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/both
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/save
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/restore
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/dis
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/sel
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/IFUActive
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/LSUActive
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/BeatCount
-add wave -noupdate -group AHB -expand -group multimanager /testbench/dut/core/ebu/ebu/BeatCountDelayed
+add wave -noupdate -group AHB -expand -group multicontroller -color Gold /testbench/dut/core/ebu/ebu/CurrState
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/both
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/save
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/restore
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/dis
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/sel
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFUActive
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/LSUActive
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/BeatCount
+add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/BeatCountDelayed
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/Threshold
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST

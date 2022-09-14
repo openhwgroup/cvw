@@ -288,7 +288,7 @@ module wallypipelinedcore (
    // *** Ross: please make EBU conditional when only supporting internal memories
 
   if(`BUS) begin : ebu
-    ahbmultimanager ebu(// IFU connections
+    ahbmulticontroller ebu(// IFU connections
      .clk, .reset,
      // IFU interface
      .IFUHADDR,
