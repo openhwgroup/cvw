@@ -33,7 +33,7 @@
 module subwordread 
   (
    input logic [`LLEN-1:0] 	ReadDataWordMuxM,
-   input logic [2:0] 		LSUPAdrM,
+   input logic [2:0] 		PAdrM,
    input logic [2:0] 		Funct3M,
    input logic          FpLoadStoreM, 
    output logic [`LLEN-1:0] ReadDataM
@@ -47,7 +47,7 @@ module subwordread
   if (`XLEN == 64) begin:swrmux
     // ByteMe mux
     always_comb
-    case(LSUPAdrM[2:0])
+    case(PAdrM[2:0])
       3'b000: ByteM = ReadDataWordMuxM[7:0];
       3'b001: ByteM = ReadDataWordMuxM[15:8];
       3'b010: ByteM = ReadDataWordMuxM[23:16];
@@ -60,7 +60,7 @@ module subwordread
   
     // halfword mux
     always_comb
-    case(LSUPAdrM[2:1])
+    case(PAdrM[2:1])
       2'b00: HalfwordM = ReadDataWordMuxM[15:0];
       2'b01: HalfwordM = ReadDataWordMuxM[31:16];
       2'b10: HalfwordM = ReadDataWordMuxM[47:32];
@@ -70,7 +70,7 @@ module subwordread
     logic [31:0] WordM;
     
     always_comb
-      case(LSUPAdrM[2])
+      case(PAdrM[2])
         1'b0: WordM = ReadDataWordMuxM[31:0];
         1'b1: WordM = ReadDataWordMuxM[63:32];
       endcase
@@ -103,7 +103,7 @@ module subwordread
   end else begin:swrmux // 32-bit
     // byte mux
     always_comb
-    case(LSUPAdrM[1:0])
+    case(PAdrM[1:0])
       2'b00: ByteM = ReadDataWordMuxM[7:0];
       2'b01: ByteM = ReadDataWordMuxM[15:8];
       2'b10: ByteM = ReadDataWordMuxM[23:16];
@@ -112,7 +112,7 @@ module subwordread
   
     // halfword mux
     always_comb
-    case(LSUPAdrM[1])
+    case(PAdrM[1])
       1'b0: HalfwordM = ReadDataWordMuxM[15:0];
       1'b1: HalfwordM = ReadDataWordMuxM[31:16];
     endcase

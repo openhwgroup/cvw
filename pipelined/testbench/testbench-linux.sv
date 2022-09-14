@@ -557,7 +557,7 @@ module testbench;
       end \
       if(`"STAGE`"=="M") begin \
         // override on special conditions \
-        if ((dut.core.lsu.LSUPAdrM == 'h10000002) | (dut.core.lsu.LSUPAdrM == 'h10000005) | (dut.core.lsu.LSUPAdrM == 'h10000006)) begin \
+        if ((dut.core.lsu.PAdrM == 'h10000002) | (dut.core.lsu.PAdrM == 'h10000005) | (dut.core.lsu.PAdrM == 'h10000006)) begin \
           if(!NO_SPOOFING) begin \
             $display("%tns, %d instrs: Overwrite UART's Register in memory stage.", $time, AttemptedInstructionCount); \
             force dut.core.lsu.ReadDataM = ExpectedMemReadDataM; \
