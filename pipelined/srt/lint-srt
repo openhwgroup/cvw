@@ -1,1 +1,0 @@
-verilator --lint-only --top-module srt srt.sv -I../config/rv64gc -I../config/shared ../src/generic/*.sv ../src/generic/flop/*.sv
