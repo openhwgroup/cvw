@@ -106,7 +106,7 @@ module fdivsqrtiter(
   assign initC = 0;
 
   // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
-  mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
+  mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE}}, X}, DivStart, WSN);
   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
