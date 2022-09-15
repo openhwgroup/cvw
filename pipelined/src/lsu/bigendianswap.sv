@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// bigendianswap.sv
+// endianswap.sv
 //
 // Written: David_Harris@hmc.edu 7 May 2022
 // Modified: 
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module bigendianswap #(parameter LEN=`XLEN) (
+module endianswap #(parameter LEN=`XLEN) (
   input  logic             BigEndianM,
   input  logic [LEN-1:0] a,
   output logic [LEN-1:0] y); 
