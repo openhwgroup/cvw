@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// abhmultimanager
+// abhmulticontroller
 //
 // Written: Ross Thompson August 29, 2022
 // ross1728@gmail.com
 // Modified: 
 //
-// Purpose: AHB multi manager interface to merge LSU and IFU controls.
+// Purpose: AHB multi controller interface to merge LSU and IFU controls.
 //          See ARM_HIH0033A_AMBA_AHB-Lite_SPEC 1.0
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
@@ -36,7 +36,7 @@
 
 `include "wally-config.vh"
 
-module ahbmultimanager
+module ahbmulticontroller
   (
    input logic                clk, reset,
    // Signals from IFU
@@ -110,20 +110,20 @@ module ahbmultimanager
   // inputs.  Abritration scheme is LSU always goes first.
 
   // input stage IFU
-  managerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
+  controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
     .Request(IFUReq), .Active(IFUActive),
     .HWRITEin(1'b0), .HSIZEin(3'b010), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
 
   // input stage LSU
-  managerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
+  controllerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
     .Request(LSUReq), .Active(LSUActive),
     .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYOut(LSUHREADY),
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYin(HREADY));
 
-  // output mux //*** rewrite for general number of managers.
+  // output mux //*** rewrite for general number of controllers.
   assign HADDR = sel[1] ? LSUHADDROut : sel[0] ? IFUHADDROut : '0;
   assign HSIZE = sel[1] ? LSUHSIZEOut : sel[0] ? 3'b010: '0; // Instruction reads are always 32 bits
   assign HBURST = sel[1] ? LSUHBURSTOut : sel[0] ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
@@ -135,7 +135,7 @@ module ahbmultimanager
   // data phase muxing.  This would be a mux if IFU wrote data.
   assign HWDATA = LSUHWDATA;
   assign HWSTRB = LSUHWSTRB;
-  // HRDATA is sent to all managers at the core level.
+  // HRDATA is sent to all controllers at the core level.
 
   // FSM decides if arbitration needed.  Arbitration is held until the last beat of
   // a burst is completed.
@@ -151,7 +151,7 @@ module ahbmultimanager
     endcase
 
   // This part is only used when burst mode is supported.
-  // Manager needs to count beats.
+  // Controller needs to count beats.
   flopenr #(4) 
   BeatCountReg(.clk(HCLK),
 		.reset(~HRESETn | CntReset | FinalBeat),
@@ -190,12 +190,12 @@ module ahbmultimanager
   
   // basic arb always selects LSU when both
   // replace this block for more sophisticated arbitration as needed.
-  // Manager 0 (IFU)
+  // Controller 0 (IFU)
   assign save[0] = CurrState == IDLE & both;
   assign restore[0] = CurrState == ARBITRATE;
   assign dis[0] = CurrState == ARBITRATE;
   assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
-  // Manager 1 (LSU)
+  // Controller 1 (LSU)
   assign save[1] = 1'b0;
   assign restore[1] = 1'b0;
   assign dis[1] = 1'b0;
