@@ -39,7 +39,7 @@ module fdivsqrtpreproc (
   input  logic Sqrt,
   input logic XZero,
   output logic  [`NE+1:0] QeM,
-  output logic [`DIVb:0] X,
+  output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
 );
   // logic  [`XLEN-1:0] PosA, PosB;
@@ -47,30 +47,22 @@ module fdivsqrtpreproc (
   logic  [`NF-1:0] PreprocA, PreprocX;
   logic  [`NF-1:0] PreprocB, PreprocY;
   logic  [`NF+1:0] SqrtX;
+  logic [`DIVb+3:0] DivX;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`NE+1:0] Qe;
-
-  // assign PosA = (Signed & SrcA[`XLEN - 1]) ? -SrcA : SrcA;
-  // assign PosB = (Signed & SrcB[`XLEN - 1]) ? -SrcB : SrcB;
-  // lzc #(`XLEN) lzcA (PosA, zeroCntA);
-  // lzc #(`XLEN) lzcB (PosB, zeroCntB);
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
   lzc #(`NF+1) lzcX (Xm, XZeroCnt);
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
 
-  // assign ExtraA = {PosA, {`DIVLEN-`XLEN{1'b0}}};
-  // assign ExtraB = {PosB, {`DIVLEN-`XLEN{1'b0}}};
-
-  // assign PreprocA = ExtraA << zeroCntA;
-  // assign PreprocB = ExtraB << (zeroCntB + 1);
   assign PreprocX = Xm[`NF-1:0]<<XZeroCnt;
   assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
 
-  
   assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
-  assign X = Sqrt ? {SqrtX, {`DIVb-1-`NF{1'b0}}} : {~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
+  assign DivX = {3'b000, ~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
+  if (`RADIX == 2)  assign X = Sqrt ? {3'b111, SqrtX, {`DIVb-1-`NF{1'b0}}} : DivX;
+  else              assign X = Sqrt ? {2'b11, SqrtX, {`DIVb-1-`NF{1'b0}}, 1'b0} : DivX;
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
 
   //           radix 2     radix 4

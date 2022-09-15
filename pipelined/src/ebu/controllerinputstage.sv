@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// manager input stage
+// controller input stage
 //
 // Written: Ross Thompson August 31, 2022
 // ross1728@gmail.com
 // Modified: 
 //
-// Purpose: AHB multi manager interface to merge LSU and IFU controls.
+// Purpose: AHB multi controller interface to merge LSU and IFU controls.
 //          See ARM_HIH0033A_AMBA_AHB-Lite_SPEC 1.0
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
@@ -36,19 +36,19 @@
 
 `include "wally-config.vh"
 
-module managerinputstage
+module controllerinputstage
   (input logic HCLK,
    input logic                 HRESETn,
    input logic                 Save, Restore, Disable,
    output logic                Request, Active,
-   // manager input
+   // controller input
    input logic                 HWRITEin,
    input logic [2:0]           HSIZEin,
    input logic [2:0]           HBURSTin,
    input logic [1:0]           HTRANSin,
    input logic [`PA_BITS-1:0]  HADDRin,
    output logic                HREADYOut,
-   // manager output
+   // controller output
    output logic                HWRITEOut,
    output logic [2:0]          HSIZEOut,
    output logic [2:0]          HBURSTOut,

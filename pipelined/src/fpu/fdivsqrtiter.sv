@@ -38,7 +38,7 @@ module fdivsqrtiter(
   input  logic XZeroE, YZeroE, 
   input  logic SqrtE,
   input  logic SqrtM,
-  input  logic [`DIVb:0] X,
+  input  logic [`DIVb+3:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
   output logic [`DIVN-2:0]  D, // U0.N-1
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
@@ -93,20 +93,13 @@ module fdivsqrtiter(
   if (`RADIX == 2) begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
-//    assign NextC   = {1'b1, C[`DIVCOPIES-1][`DIVb-1:1]};
   end else begin : nextw
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
-//    assign NextC   = {2'b11, C[`DIVCOPIES-1][`DIVb-1:2]};
   end
-/*
-  if (`RADIX == 2) assign initC = {1'b1, {(`DIVb-1){1'b0}}}; // *** note that these are preshifted right by r compared to book
-  else             assign initC = {2'b11, {(`DIVb-2){1'b0}}};
-  */
   assign initC = 0;
 
-  // mux2   #(`DIVb+4) wsmux(NextWSN, {3'b0, X}, DivStart, WSN);
-  mux2   #(`DIVb+4) wsmux(NextWSN, {{3{SqrtE&~XZeroE}}, X}, DivStart, WSN);
+  mux2   #(`DIVb+4) wsmux(NextWSN, X, DivStart, WSN);
   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
