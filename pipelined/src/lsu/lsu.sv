@@ -328,7 +328,7 @@ module lsu (
   // *** Ross Thompson: I think swr needs to be modified to support bigendian.  Both the subword
   // selected and the sign extension are probably wrong.  I think it should be an invertion of
   // the address bits and a different bit selected for extension.
-  subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]),
+  subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
 		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
