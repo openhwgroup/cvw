@@ -125,7 +125,8 @@ module fdivsqrtiter(
         .C(C[i]), .S(S[i]), .SM(SM[i]), .CNext(C[i+1]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
       end else begin: stage
         logic j1;
-        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]);
+        assign j1 = (i == 0 & ~C[0][`DIVb-1]);
+//        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), .Q(Q[i]), .QM(QM[i]), .QNext(QNext[i]), .QMNext(QMNext[i]),
         .C(C[i]), .S(S[i]), .SM(SM[i]), .CNext(C[i+1]), .SNext(SNext[i]), .SMNext(SMNext[i]), .qn(qn[i]));
