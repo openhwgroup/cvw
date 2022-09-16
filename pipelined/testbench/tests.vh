@@ -1817,7 +1817,8 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/WALLY-trap-s-01.S",
     "rv64i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv64i_m/privilege/src/WALLY-trap-u-01.S",
-    "rv64i_m/privilege/src/WALLY-wfi-01.S"
+    "rv64i_m/privilege/src/WALLY-wfi-01.S",
+    "rv64i_m/privilege/src/WALLY-endianness-01.S"
  };
 
  string wally64periph[] = '{
