@@ -1,26 +1,62 @@
-00000011 # Test *** NUMBER: Read of 1st byte of 0xAABBCCDDEEFF1122 in M mode little endian
+eeff1122 # Test *** Number: M mode little endian load/store double of 0xaabbccddeeff1122
+aabbccdd # NOTE: since we're doing a store that matches the width of the load, we cut out all the sign extension
+eeff1122 # M mode little endian load/store word of 0xaabbccddeeff1122
+deadbeef # NOTE: the memory was already filled with deadbeef's so subword overwrite some, but not all of them. this is why the values are filled with deadbeefs, rather than 00's or ff's
+dead1122 # M mode little endian load/store halfword of 0xaabbccddeeff1122
+deadbeef
+deadbe22 # M mode little endian load/store byte of 0xaabbccddeeff1122
+deadbeef
+ddccbbaa # M mode big endian load/store double of 0x2211ffeeddccbbaa
+2211ffee
+ddccbbaa # M mode big endian load/store word of 0x2211ffeeddccbbaa
+deadbeef
+deadbbaa # M mode big endian load/store halfword of 0x2211ffeeddccbbaa
+deadbeef
+deadbeaa # M mode big endian load/store byte of 0x2211ffeeddccbbaa
+deadbeef
+0000000b # ecall after going from M mode to S mode
 00000000
-ffffffff # sign extended value after Read of 1st byte of 0xAABBCCDDEEFF1122 in M mode big endian
-bbffffff # This is 0xbb sign extended and stored in big endian mode
-0000000b # mcause from ecall going from M mode to S mode
+eeff1122 # S mode little endian load/store double of 0xaabbccddeeff1122
+aabbccdd
+eeff1122 # S mode little endian load/store word of 0xaabbccddeeff1122
+deadbeef
+dead1122 # S mode little endian load/store halfword of 0xaabbccddeeff1122
+deadbeef
+deadbe22 # S mode little endian load/store byte of 0xaabbccddeeff1122
+deadbeef
+00000009 # ecall after going from S mode to M mode
 00000000
-00000011 # Read of 1st byte of 0xAABBCCDDEEFF1122 in S mode little endian
+0000000b # ecall after going from M mode to S mode
 00000000
-00000009 # mcause from ecall going from S mode to M mode (necessary to change mstatus bits)
+ddccbbaa # S mode big endian load/store double of 0x2211ffeeddccbbaa
+2211ffee
+ddccbbaa # S mode big endian load/store word of 0x2211ffeeddccbbaa
+deadbeef
+deadbbaa # S mode big endian load/store halfword of 0x2211ffeeddccbbaa
+deadbeef
+deadbeaa # S mode big endian load/store byte of 0x2211ffeeddccbbaa
+deadbeef
+00000009 # ecall after going from S mode to U mode
 00000000
-0000000b # mcause from ecall going back from M mode to S mode
-00000000 
-ffffffff # sign extended value after Read of 1st byte of 0xAABBCCDDEEFF1122 in S mode big endian
-bbffffff # This is 0xbb sign extended and stored in big endian mode
-00000009 # mcause from ecall going from S mode to U mode
+eeff1122 # U mode little endian load/store double of 0xaabbccddeeff1122
+aabbccdd
+eeff1122 # U mode little endian load/store word of 0xaabbccddeeff1122
+deadbeef
+dead1122 # U mode little endian load/store halfword of 0xaabbccddeeff1122
+deadbeef
+deadbe22 # U mode little endian load/store byte of 0xaabbccddeeff1122
+deadbeef
+00000008 # ecall after going from U mode to M mode
 00000000
-00000011 # Read of 1st byte of 0xAABBCCDDEEFF1122 in U mode little endian
+0000000b # ecall after going from M mode to U mode
 00000000
-00000008 # mcause from ecall going from U mode to M mode (necessary to change mstatus bits)
-00000000
-0000000b # mcause from ecall going back from M mode to U mode
-00000000
-ffffffff # sign extended value after Read of 1st byte of 0xAABBCCDDEEFF1122 in U mode big endian
-bbffffff # This is 0xbb sign extended and stored in big endian mode
-00000008 # Ecall from terminating tests in U mode.
+ddccbbaa # U mode big endian load/store double of 0x2211ffeeddccbbaa
+2211ffee
+ddccbbaa # U mode big endian load/store word of 0x2211ffeeddccbbaa
+deadbeef
+deadbbaa # U mode big endian load/store halfword of 0x2211ffeeddccbbaa
+deadbeef
+deadbeaa # U mode big endian load/store byte of 0x2211ffeeddccbbaa
+deadbeef
+00000008 # ecall after ending tests in U mode
 00000000

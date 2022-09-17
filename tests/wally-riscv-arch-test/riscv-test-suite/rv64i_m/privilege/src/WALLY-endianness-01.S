@@ -34,25 +34,62 @@ TRAP_HANDLER m
 // correctly with the relevant status bit indicating endianness for each mode. 
 // do this by going to each mode with and testing loads with the big endian bit on and off work correctly
 
-// *** It appears  has the MBE, SBE, and UBE bits of mstatus hardwired to zero
+// *** It appears Sail has the MBE, SBE, and UBE bits of mstatus hardwired to zero
+
+// M Mode little Endianness tests:
 
 li x28, 0xAABBCCDDEEFF1122
 li x29, 0x8000F000
-sd x28, 0(x29) // Store test value into memory address in little endian mode
-// in little endian mode, byte at 0x1(x29) is 0x11
-// in big endian mode, 0x1(x29) should be 0xBB
+sd x28, 0(x29) // value stored in memory as 0xAABBCCDDEEFF1122
 
-lb x30, 0x1(x29) // Test M Mode Little endianness, should return 0x11
-sd x30, 0(t1) // store recorded M mode Little endian value to output
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0xAABBCCDDEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lw x30, 0(x29) // test load word, should read out 0xEEFF1122
+sw x30, 0(t1) // test store word, should save 0xEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0x1122
+sh x30, 0(t1) // test store half, should save 0x1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0x22
+sb x30, 0(t1) // test store byte, should save 0x22
 addi t1, t1, 8
 addi a6, a6, 8
 
 li x28, 0x2000000000
 csrs mstatus, x28 // turn on big endianness for M mode
 
-lb x30, 0x1(x29) // Test M mode big endaianness, should return 0xBB
-sd x30, 0(t1) // store recorded M mode big endian value to output
-addi t1, t1, 8 
+// M mode Big Endianness tests
+// In big endian modes, all values are sign extended to the right, rather than left
+
+li x28, 0xAABBCCDDEEFF1122
+li x29, 0x8000F000
+sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
+sw x30, 0(t1) // test store word, should save 0xDDCCBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0xAABB
+sh x30, 0(t1) // test store half, should save 0xBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0xAA
+sb x30, 0(t1) // test store byte, should save 0xAA
+addi t1, t1, 8
 addi a6, a6, 8
 
 li x28, 0x2000000000
@@ -60,8 +97,29 @@ csrc mstatus, x28 // Turn off big endianness for M mode before going into the tr
 
 GOTO_S_MODE
 
-lb x30, 0x1(x29) // Test S Mode Little endianness, should return 0x11
-sd x30, 0(t1) // store recorded M mode Little endian value to output
+// S mode Little endian tests
+
+li x28, 0xAABBCCDDEEFF1122
+li x29, 0x8000F000
+sd x28, 0(x29) // value stored in memory as 0xAABBCCDDEEFF1122
+
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0xAABBCCDDEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lw x30, 0(x29) // test load word, should read out 0xEEFF1122
+sw x30, 0(t1) // test store word, should save 0xEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0x1122
+sh x30, 0(t1) // test store half, should save 0x1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0x22
+sb x30, 0(t1) // test store byte, should save 0x22
 addi t1, t1, 8
 addi a6, a6, 8
 
@@ -72,18 +130,57 @@ csrs mstatus, x28 // turn on big endianness for S mode
 
 GOTO_S_MODE 
 
-lb x30, 0x1(x29) // Test S mode big endaianness, should return 0xBB
-sd x30, 0(t1) // store recorded S mode big endian value to output
-addi t1, t1, 8 
+// S mode Big endian tests
+
+li x28, 0xAABBCCDDEEFF1122
+li x29, 0x8000F000
+sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
+addi t1, t1, 8
 addi a6, a6, 8
 
-# li x28, 0x1000000000
-# csrc sstatus, x28 // Turn off big endianness for S mode before going into the trap handler
+lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
+sw x30, 0(t1) // test store word, should save 0xDDCCBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0xAABB
+sh x30, 0(t1) // test store half, should save 0xBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0xAA
+sb x30, 0(t1) // test store byte, should save 0xAA
+addi t1, t1, 8
+addi a6, a6, 8
 
 GOTO_U_MODE
 
-lb x30, 0x1(x29) // Test U Mode Little endianness, should return 0x11
-sd x30, 0(t1) // store recorded M mode Little endian value to output
+// U mode Little endian tests
+
+li x28, 0xAABBCCDDEEFF1122
+li x29, 0x8000F000
+sd x28, 0(x29) // value stored in memory as 0xAABBCCDDEEFF1122
+
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0xAABBCCDDEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lw x30, 0(x29) // test load word, should read out 0xEEFF1122
+sw x30, 0(t1) // test store word, should save 0xEEFF1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0x1122
+sh x30, 0(t1) // test store half, should save 0x1122
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0x22
+sb x30, 0(t1) // test store byte, should save 0x22
 addi t1, t1, 8
 addi a6, a6, 8
 
@@ -94,8 +191,29 @@ csrs mstatus, x28 // turn on big endianness for U mode
 
 GOTO_U_MODE
 
-lb x30, 0x1(x29) // Test U mode big endaianness, should return 0xBB
-sd x30, 0(t1) // store recorded U mode big endian value to output
+// U mode Big endian tests
+
+li x28, 0xAABBCCDDEEFF1122
+li x29, 0x8000F000
+sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+
+ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
+sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
+sw x30, 0(t1) // test store word, should save 0xDDCCBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lh x30, 0(x29) // test load half, should read out 0xAABB
+sh x30, 0(t1) // test store half, should save 0xBBAA
+addi t1, t1, 8
+addi a6, a6, 8
+
+lb x30, 0(x29) // test load byte, should read out 0xAA
+sb x30, 0(t1) // test store byte, should save 0xAA
 addi t1, t1, 8
 addi a6, a6, 8
 
