@@ -52,17 +52,20 @@ module fdivsqrtfsm(
 
   logic [`DURLEN-1:0] step;
   logic SpecialCase;
+  logic [`DURLEN-1:0] cycles;
 
   assign EarlyTermShiftE = step;
 
   // terminate immediately on special cases
   assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
 
+  assign cycles = (`DURLEN)'((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4));
+
   always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
-          step <= (`DURLEN)'(`FPDUR); // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
+          step <= cycles; // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (DivDone) begin
