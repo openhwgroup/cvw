@@ -33,6 +33,7 @@
 module fdivsqrtfsm(
   input  logic clk, 
   input  logic reset, 
+  input  logic [`FMTBITS-1:0] FmtE,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
@@ -59,13 +60,53 @@ module fdivsqrtfsm(
   // terminate immediately on special cases
   assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
 
-  assign cycles = (`DURLEN)'((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4));
+// DIVN = `NF+3
+// NS = NF + 1
+// N = NS or NS+2 for div/sqrt.  
+
+/* verilator lint_off WIDTH */
+  logic [`DURLEN+1:0] Nf, fbits; // number of fractional bits
+  if (`FPSIZES == 1)
+    assign Nf = `NF;
+  else if (`FPSIZES == 2)
+    always_comb
+      case (FmtE)
+        1'b0: Nf = `NF1;
+        1'b1: Nf = `NF;
+      endcase
+  else if (`FPSIZES == 3)
+    always_comb
+      case (FmtE)
+        `FMT: Nf = `NF;
+        `FMT1: Nf = `NF1;
+        `FMT2: Nf = `NF2; 
+      endcase
+  else if (`FPSIZES == 4)  
+    always_comb
+      case(FmtE)
+        `S_FMT: Nf = `S_NF;
+        `D_FMT: Nf = `D_NF;
+        `H_FMT: Nf = `H_NF;
+        `Q_FMT: Nf = `Q_NF;
+      endcase 
+
+
+  always_comb begin 
+    if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
+    else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
+    if (SqrtE) cycles =  (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);  // ceiling(fbits / r*k)
+    else       cycles = `FPDUR; // *** line above should work once otfc is used to put results in upper bits
+  end 
+
+  /* verilator lint_on WIDTH */
 
   always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStart&~StallE) begin 
           step <= cycles; // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
+//          $display("Setting Nf = %d fbits %d cycles = %d FmtE %d FPSIZES = %d Q_NF = %d num = %d denom = %d\n", Nf, fbits, cycles, FmtE, `FPSIZES, `Q_NF,
+//          (fbits +(`LOGR*`DIVCOPIES)-1), (`LOGR*`DIVCOPIES));
           if (SpecialCase) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (DivDone) begin
