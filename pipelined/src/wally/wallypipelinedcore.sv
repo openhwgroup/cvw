@@ -132,18 +132,19 @@ module wallypipelinedcore (
   logic             CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0]         IFUHADDR;
-  logic [2:0]       IFUHBURST;
-  logic [1:0]       IFUHTRANS;
-  logic                     IFUHWRITE;
-  logic                     IFUHREADY;
+  logic [`PA_BITS-1:0] IFUHADDR;
+  logic [2:0]          IFUHBURST;
+  logic [1:0]          IFUHTRANS;
+  logic [2:0]          IFUHSIZE;
+  logic                IFUHWRITE;
+  logic                IFUHREADY;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0]         LSUHADDR;
-  logic [`XLEN-1:0]         LSUHWDATA;
-  logic [`XLEN/8-1:0]       LSUHWSTRB;
-  logic                     LSUHWRITE;
-  logic                     LSUHREADY;
+  logic [`PA_BITS-1:0] LSUHADDR;
+  logic [`XLEN-1:0]    LSUHWDATA;
+  logic [`XLEN/8-1:0]  LSUHWSTRB;
+  logic                LSUHWRITE;
+  logic                LSUHREADY;
   
   logic             BPPredWrongE;
   logic             BPPredDirWrongM;
@@ -172,7 +173,7 @@ module wallypipelinedcore (
     .FlushF, .FlushD, .FlushE, .FlushM, 
     // Fetch
     .HRDATA, .PCF, .IFUHADDR,
-    .IFUStallF, .IFUHBURST, .IFUHTRANS,
+    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
 
@@ -295,6 +296,7 @@ module wallypipelinedcore (
      .IFUHBURST, 
      .IFUHTRANS, 
      .IFUHREADY,
+     .IFUHSIZE,
      // LSU interface
      .LSUHADDR,
      .LSUHWDATA,

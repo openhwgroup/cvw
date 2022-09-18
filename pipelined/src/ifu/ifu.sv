@@ -41,6 +41,7 @@ module ifu (
 (* mark_debug = "true" *)	output logic 				IFUStallF,
 (* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
 (* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
+(* mark_debug = "true" *) output logic [2:0]  IFUHSIZE,
 (* mark_debug = "true" *) output logic  IFUHWRITE,
 (* mark_debug = "true" *) input logic   IFUHREADY,
 	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
@@ -234,7 +235,7 @@ module ifu (
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .CacheRW, .HSIZE(), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
+            .CacheRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .WordCount(), .SelUncachedAdr, .SelBusWord(),
               .CacheBusAck(ICacheBusAck), 
@@ -249,6 +250,7 @@ module ifu (
       logic CaptureEn;
       logic [1:0] RW;
       assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF};
+      assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
