@@ -130,7 +130,7 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
-    lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM(NonDTIMMemRWM), .AtomicM, .ITLBMissF, .ITLBWriteF,
+    lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM, .SelReplay,
       .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
@@ -140,7 +140,7 @@ module lsu (
       .IgnoreRequestTLB);
   end else begin
     assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign CPUBusy = StallW; assign PreLSURWM = NonDTIMMemRWM; 
+    assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign IMWriteDataM = WriteDataM;
@@ -207,7 +207,6 @@ module lsu (
   
   if (`DTIM_SUPPORTED) begin : dtim
     logic [`PA_BITS-1:0] DTIMAdr;
-    logic             DTIMAccessRW;
     logic             MemStage;
 
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
@@ -216,11 +215,6 @@ module lsu (
     assign MemStage = CPUBusy | MemRWM[0] | reset; // 1 = M stage; 0 = E stage
     assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
-    assign DTIMAccessRW = |MemRWM;
-    // *** Ross remove this.
-    adrdec dtimdec(IEUAdrExtM, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM); // maybe we pull this out of the mmu?
-    //assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
-    assign NonDTIMMemRWM = MemRWM; // *** fix
 
     dtim dtim(.clk, .reset, .MemRWM,
               .Adr(DTIMAdr),

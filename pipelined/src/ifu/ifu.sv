@@ -92,7 +92,7 @@ module ifu (
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF;
   logic [31:0]                 FinalInstrRawF;
-  logic [1:0]                  NonIROMMemRWM;
+  logic [1:0]                  RWF;
   
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
@@ -113,7 +113,6 @@ module ifu (
   logic 					   BusStall;
   logic 					   ICacheStallF, IFUCacheBusStallF;
   logic 					   CPUBusy;
-  logic              SelIROM;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
@@ -193,13 +192,11 @@ module ifu (
     assign IROMAdr = CPUBusy | reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
  
-    adrdec iromdec(PCFExt, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
-    //assign NonIROMMemRWM = {~SelIROM, 1'b0};
-    assign NonIROMMemRWM = 2'b10;
+    assign RWF = 2'b10;
     irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
   end else begin
-    assign SelIROM = 0; assign NonIROMMemRWM = 2'b10;
+    assign RWF = 2'b10;
   end
   if (`BUS) begin : bus
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
@@ -213,7 +210,7 @@ module ifu (
       logic [1:0]          CacheRW, RW;
       
       assign CacheRW = {ICacheFetchLine, 1'b0} & ~{ITLBMissF, ITLBMissF};
-      assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
+      assign RW = RWF & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -227,7 +224,7 @@ module ifu (
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
-             .RW(NonIROMMemRWM), 
+             .RW(RWF), 
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
@@ -249,7 +246,7 @@ module ifu (
       assign IFUHADDR = PCPF;
       logic CaptureEn;
       logic [1:0] RW;
-      assign RW = NonIROMMemRWM & ~{ITLBMissF, ITLBMissF};
+      assign RW = RWF & ~{ITLBMissF, ITLBMissF};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
