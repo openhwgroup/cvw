@@ -575,13 +575,20 @@ module testbenchfp;
       end
       if (TEST === "div"   | TEST === "all") begin // if division is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f16div};
+        Tests = {f16div, Tests};
+        OpCtrl = {`DIV_OPCTRL, OpCtrl};
+        WriteInt = {1'b0, WriteInt};
+        for(int i = 0; i<5; i++) begin
+          Unit = {`DIVUNIT, Unit};
+          Fmt = {2'b10, Fmt};
+        end
+        /* Tests = {Tests, f16div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
-        end
+        end */
       end
       if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
