@@ -1,0 +1,4 @@
+00000000 # Test *** Number : Read out SXL, UXL of mstatus as 2 and 2 for 64 bit systems
+0000000a
+00000000 # read of read-only uxl, sxl bits after attmepted write
+0000000a
