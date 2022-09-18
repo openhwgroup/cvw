@@ -30,7 +30,7 @@ INIT_TESTS
 
 TRAP_HANDLER m
 
-// Test ***Number: testing that accesses to sub-word memory acceses not on a word boundary go 
+// Test 5.3.2.4: testing that accesses to sub-word memory acceses not on a word boundary go 
 // correctly with the relevant status bit indicating endianness for each mode. 
 // do this by going to each mode with and testing loads with the big endian bit on and off work correctly
 
@@ -70,7 +70,7 @@ csrs mstatus, x28 // turn on big endianness for M mode
 
 li x28, 0xAABBCCDDEEFF1122
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+sd x28, 0(x29) // value stored in memory as 0x2211FFEEDDCCBBAA
 
 ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
 sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
@@ -134,7 +134,7 @@ GOTO_S_MODE
 
 li x28, 0xAABBCCDDEEFF1122
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+sd x28, 0(x29) // value stored in memory as 0x2211FFEEDDCCBBAA
 
 ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
 sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
@@ -195,7 +195,7 @@ GOTO_U_MODE
 
 li x28, 0xAABBCCDDEEFF1122
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0x2211FFEECCDDBBAA
+sd x28, 0(x29) // value stored in memory as 0x2211FFEEDDCCBBAA
 
 ld x30, 0(x29) // test load double, should read out 0xAABBCCDDEEFF1122
 sd x30, 0(t1) // test store double, should save 0x2211FFEEDDCCBBAA
