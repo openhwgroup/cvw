@@ -216,7 +216,8 @@ module lsu (
     assign MemStage = CPUBusy | MemRWM[0] | reset; // 1 = M stage; 0 = E stage
     assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
-    assign DTIMAccessRW = |MemRWM; 
+    assign DTIMAccessRW = |MemRWM;
+    // *** Ross remove this.
     adrdec dtimdec(IEUAdrExtM, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, DTIMAccessRW, 2'b10, 4'b1111, SelDTIM); // maybe we pull this out of the mmu?
     //assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
     assign NonDTIMMemRWM = MemRWM; // *** fix

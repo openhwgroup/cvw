@@ -41,6 +41,7 @@ module ahbmulticontroller
    input logic                clk, reset,
    // Signals from IFU
    input logic [`PA_BITS-1:0] IFUHADDR, 
+   input logic [2:0]          IFUHSIZE,
    input logic [2:0]          IFUHBURST,
    input logic [1:0]          IFUHTRANS,
    output logic               IFUHREADY, 
@@ -69,28 +70,23 @@ module ahbmulticontroller
    (* mark_debug = "true" *) output logic HMASTLOCK
    );
 
-  localparam                  ADRBITS = $clog2(`XLEN/8); // address bits for Byte Mask generator
-
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype CurrState, NextState;
-  logic                       LSUGrant;
-  logic [ADRBITS-1:0]         HADDRD;
-  logic [1:0]                 HSIZED;
 
   logic [1:0]                 save, restore, dis, sel;
   logic                       both;
 
-  logic [`PA_BITS-1:0]        IFUHADDRSave, IFUHADDROut;
-  logic [1:0]                 IFUHTRANSSave, IFUHTRANSOut;
-  logic [2:0]                 IFUHBURSTSave, IFUHBURSTOut;
+  logic [`PA_BITS-1:0]        IFUHADDROut;
+  logic [1:0]                 IFUHTRANSOut;
+  logic [2:0]                 IFUHBURSTOut;
   logic [2:0]                 IFUHSIZEOut;
   logic                       IFUHWRITEOut;
   
-  logic [`PA_BITS-1:0]        LSUHADDRSave, LSUHADDROut;
-  logic [1:0]                 LSUHTRANSSave, LSUHTRANSOut;
-  logic [2:0]                 LSUHBURSTSave, LSUHBURSTOut;
-  logic [2:0]                 LSUHSIZESave, LSUHSIZEOut;
-  logic                       LSUHWRITESave, LSUHWRITEOut;
+  logic [`PA_BITS-1:0]        LSUHADDROut;
+  logic [1:0]                 LSUHTRANSOut;
+  logic [2:0]                 LSUHBURSTOut;
+  logic [2:0]                 LSUHSIZEOut;
+  logic                       LSUHWRITEOut;
 
   logic                       IFUReq, LSUReq;
   logic                       IFUActive, LSUActive;
@@ -112,7 +108,7 @@ module ahbmulticontroller
   // input stage IFU
   controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
     .Request(IFUReq), .Active(IFUActive),
-    .HWRITEin(1'b0), .HSIZEin(3'b010), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
+    .HWRITEin(1'b0), .HSIZEin(IFUHSIZE), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
 
@@ -125,7 +121,7 @@ module ahbmulticontroller
 
   // output mux //*** rewrite for general number of controllers.
   assign HADDR = sel[1] ? LSUHADDROut : sel[0] ? IFUHADDROut : '0;
-  assign HSIZE = sel[1] ? LSUHSIZEOut : sel[0] ? 3'b010: '0; // Instruction reads are always 32 bits
+  assign HSIZE = sel[1] ? LSUHSIZEOut : sel[0] ? IFUHSIZEOut: '0; 
   assign HBURST = sel[1] ? LSUHBURSTOut : sel[0] ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
   assign HTRANS = sel[1] ? LSUHTRANSOut : sel[0] ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
   assign HWRITE = sel[1] ? LSUHWRITEOut : sel[0] ? 1'b0 : '0;
