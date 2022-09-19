@@ -104,7 +104,7 @@ module fdivsqrtiter(
   logic [1:0] initCSqrt, initCDiv2, initCDiv4, initCUpper;
   assign initCSqrt = 2'b11;
   assign initCDiv2 = 2'b10;
-  assign initCDiv4 = 2'b00;
+  assign initCDiv4 = 2'b10; // *** not sure why this works; seems like it should be 00 for initializing to -4
   assign initCUpper = SqrtE ? initCSqrt : (`RADIX == 4) ? initCDiv4 : initCDiv2;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
 
