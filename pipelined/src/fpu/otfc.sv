@@ -31,45 +31,44 @@
 `include "wally-config.vh"
 
 ///////////////////////////////
-// Square Root OTFC, Radix 2 //
+// Un ified OTFC, Radix 2 //
 ///////////////////////////////
-module sotfc2(
+module uotfc2(
   input  logic         sp, sz,
   input  logic [`DIVb+1:0] C,
-  input logic [`DIVb:0] S, SM,
-  output logic [`DIVb:0] SNext, SMNext
+  input logic [`DIVb:0] U, UM,
+  output logic [`DIVb:0] UNext, UMNext
 );
-  //  The on-the-fly converter transfers the square root 
+  //  The on-the-fly converter transfers the divsqrt
   //  bits to the quotient as they come.
-  //  Use this otfc for division and square root.
   logic [`DIVb:0] K;
 
   assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
 
   always_comb begin
     if (sp) begin
-      SNext  = S | K;
-      SMNext = S;
+      UNext  = U | K;
+      UMNext = U;
     end else if (sz) begin
-      SNext  = S;
-      SMNext = SM | K;
+      UNext  = U;
+      UMNext = UM | K;
     end else begin        // If sp and sz are not true, then sn is
-      SNext  = SM | K;
-      SMNext = SM;
+      UNext  = UM | K;
+      UMNext = UM;
     end 
   end
 
 endmodule
 
 ///////////////////////////////
-// Square Root OTFC, Radix 4 //
+// Unified OTFC, Radix 4 //
 ///////////////////////////////
-module sotfc4(
+module uotfc4(
   input  logic [3:0]   s,
   input  logic         Sqrt,
-  input  logic [`DIVb:0] S, SM,
+  input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb:0] C,
-  output logic [`DIVb:0] SNext, SMNext
+  output logic [`DIVb:0] UNext, UMNext
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
@@ -82,20 +81,20 @@ module sotfc4(
 
   always_comb begin
     if (s[3]) begin
-      SNext  = S | K2;
-      SMNext = S | K1;
+      UNext  = U | K2;
+      UMNext = U | K1;
     end else if (s[2]) begin
-      SNext  = S | K1;
-      SMNext = S;
+      UNext  = U | K1;
+      UMNext = U;
     end else if (s[1]) begin
-      SNext  = SM | K3;
-      SMNext = SM | K2;
+      UNext  = UM | K3;
+      UMNext = UM | K2;
     end else if (s[0]) begin
-      SNext  = SM | K2;
-      SMNext = SM | K1;
+      UNext  = UM | K2;
+      UMNext = UM | K1;
     end else begin        // If sp and sn are not true, then sz is
-      SNext  = S;
-      SMNext = SM | K3;
+      UNext  = U;
+      UMNext = UM | K3;
     end 
   end
 

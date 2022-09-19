@@ -34,13 +34,13 @@
 module fdivsqrtstage2 (
   input logic [`DIVN-2:0] D,
   input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] S, SM,
+  input logic [`DIVb:0] U, UM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
   input logic SqrtM,
   output logic qn,
   output logic [`DIVb+1:0] CNext,
-  output logic [`DIVb:0] SNext, SMNext, 
+  output logic [`DIVb:0] UNext, UMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
 );
  /* verilator lint_on UNOPTFLAT */
@@ -61,7 +61,7 @@ module fdivsqrtstage2 (
 	// 0010 = -1
 	// 0001 = -2
   qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
-  fgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .S, .SM, .F);
+  fgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .F);
 
   assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
   // Partial Product Generation
@@ -69,7 +69,7 @@ module fdivsqrtstage2 (
   assign AddIn = SqrtM ? F : Dsel;
   csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
 
-  sotfc2 sotfc2(.sp(qp), .sz(qz), .C(CNext), .S, .SM, .SNext, .SMNext);
+  uotfc2 uotfc2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

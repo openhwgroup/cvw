@@ -119,13 +119,13 @@ module fdivsqrtiter(
       if (`RADIX == 2) begin: stage
         fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
-        .C(C[i]), .S(U[i]), .SM(UM[i]), .CNext(C[i+1]), .SNext(UNext[i]), .SMNext(UMNext[i]), .qn(qn[i]));
+        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .qn(qn[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
-        .C(C[i]), .S(U[i]), .SM(UM[i]), .CNext(C[i+1]), .SNext(UNext[i]), .SMNext(UMNext[i]), .qn(qn[i]));
+        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .qn(qn[i]));
       end
       if(i<(`DIVCOPIES-1)) begin 
         assign WS[i+1] = WSA[i] << `LOGR;
