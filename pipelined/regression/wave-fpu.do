@@ -24,10 +24,10 @@ add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/W
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WS
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WCA
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WSA
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/Q
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QM
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QNext
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/QMNext
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/U
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/UM
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/UNext
+add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/UMNext
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/*
 # add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/*
 # add wave -group {Divide} -group inter0 -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/interations[0]/stage/fdivsqrtstage/otfc/otfc2/*

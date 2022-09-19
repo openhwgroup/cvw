@@ -33,7 +33,7 @@
 module fdivsqrtpostproc(
   input logic [`DIVb+3:0] WS, WC,
   input logic [`DIVN-2:0]  D, // U0.N-1
-  input logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM,
+  input logic [`DIVb:0] FirstU, FirstUM, 
   input logic [`DIVb+1:0] FirstC,
   input logic  Firstqn,
   input logic SqrtM,
@@ -56,7 +56,7 @@ module fdivsqrtpostproc(
     logic [`DIVb+3:0] WCF, WSF;
 
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZero = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    assign FZero = SqrtM ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
     assign WZero = weq0|(wfeq0 & Firstqn);
@@ -72,10 +72,10 @@ module fdivsqrtpostproc(
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
     if(SqrtM) // sqrt ouputs in the range (1, .5]
-      if(NegSticky) QmM = {FirstSM[`DIVb-1-(`RADIX/4):0], 1'b0};
-      else          QmM = {FirstS[`DIVb-1-(`RADIX/4):0], 1'b0};
+      if(NegSticky) QmM = {FirstUM[`DIVb-1-(`RADIX/4):0], 1'b0};
+      else          QmM = {FirstU[`DIVb-1-(`RADIX/4):0], 1'b0};
     else  
-      if(NegSticky) QmM = FirstSM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstS[`DIVb-(`RADIX/4):0];
+      if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0];
+      else          QmM = FirstU[`DIVb-(`RADIX/4):0];
 
 endmodule
