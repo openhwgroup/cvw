@@ -59,7 +59,7 @@ module fdivsqrt(
   logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVN-2:0] Dpreproc;
   logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
-  logic [`DIVb-1:0] FirstC;
+  logic [`DIVb+1:0] FirstC;
   logic Firstqn;
   logic WZero;
 

@@ -37,8 +37,8 @@ module fdivsqrtstage4 (
   input logic [`DIVb:0] Q, QM,
   input logic [`DIVb:0] S, SM,
   input logic [`DIVb+3:0]  WS, WC,
-  input logic [`DIVb-1:0] C,
-  output logic [`DIVb-1:0] CNext,
+  input logic [`DIVb+1:0] C,
+  output logic [`DIVb+1:0] CNext,
   input logic SqrtM, j1,
   output logic [`DIVb:0] QNext, QMNext, 
   output logic qn,
@@ -54,7 +54,7 @@ module fdivsqrtstage4 (
   logic [4:0] Smsbs;
   logic CarryIn;
 
-  assign CNext = {2'b11, C[`DIVb-1:2]};
+  assign CNext = {2'b11, C[`DIVb+1:2]};
 
   // Qmient Selection logic
   // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
@@ -66,7 +66,7 @@ module fdivsqrtstage4 (
 	// 0001 = -2
   assign Smsbs = S[`DIVb:`DIVb-4];
   qsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
-  fgen4 fgen4(.s(q), .C({4'b1111, CNext}), .S({3'b000, S}), .SM({3'b000, SM}), .F);
+  fgen4 fgen4(.s(q), .C({2'b11, CNext}), .S({3'b000, S}), .SM({3'b000, SM}), .F);
 
   always_comb
   case (q)
@@ -85,7 +85,7 @@ module fdivsqrtstage4 (
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
   otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
-  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C({1'b1, CNext}), .S, .SM, .SNext, .SMNext);
+  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .S, .SM, .SNext, .SMNext);
 endmodule
 
 

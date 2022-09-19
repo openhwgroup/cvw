@@ -63,7 +63,7 @@ endmodule
 ///////////////////////////////
 module sotfc2(
   input  logic         sp, sz,
-  input  logic [`DIVb-1:0] C,
+  input  logic [`DIVb+1:0] C,
   input logic [`DIVb:0] S, SM,
   output logic [`DIVb:0] SNext, SMNext
 );
@@ -72,7 +72,7 @@ module sotfc2(
   //  Use this otfc for division and square root.
   logic [`DIVb:0] CExt;
 
-  assign CExt = {1'b1, C};
+  assign CExt = {1'b1, C[`DIVb-1:0]};
 
   always_comb begin
     if (sp) begin

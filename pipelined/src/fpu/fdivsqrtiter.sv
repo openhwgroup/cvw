@@ -44,7 +44,7 @@ module fdivsqrtiter(
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
   output logic [`DIVb:0] FirstS, FirstSM,
   output logic [`DIVb:0] FirstQ, FirstQM,
-  output logic [`DIVb-1:0] FirstC,
+  output logic [`DIVb+1:0] FirstC,
   output logic             Firstqn,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
 );
@@ -69,8 +69,8 @@ module fdivsqrtiter(
   logic [`DIVb:0] SM[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] SNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] SMNext[`DIVCOPIES-1:0];// U1.b
-  logic [`DIVb-1:0] C[`DIVCOPIES:0]; // 0.b
-  logic [`DIVb-1:0] initC; // 0.b
+  logic [`DIVb+1:0] C[`DIVCOPIES:0]; // Q2.b
+  logic [`DIVb+1:0] initC; // Q2.b
   logic [`DIVCOPIES-1:0] qn; 
 
 
@@ -78,8 +78,8 @@ module fdivsqrtiter(
   logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
   logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
   logic [`DIVb:0] QMMux;
-  logic [`DIVb-1:0] NextC;
-  logic [`DIVb-1:0] CMux;
+  logic [`DIVb+1:0] NextC;
+  logic [`DIVb+1:0] CMux;
   logic [`DIVb:0] SMux;
 
   // Top Muxes and Registers
@@ -97,15 +97,22 @@ module fdivsqrtiter(
     assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
     assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
   end
-  assign initC = 0;
+
+  // Initialize C to -1 for sqrt and -R for division
+  logic [1:0] initCSqrt, initCDiv2, initCDiv4, initCUpper;
+  assign initCSqrt = 2'b11;
+  assign initCDiv2 = 2'b10;
+  assign initCDiv4 = 2'b00;
+  assign initCUpper = SqrtE ? initCSqrt : (`RADIX == 4) ? initCDiv4 : initCDiv2;
+  assign initC = {initCUpper, {`DIVb{1'b0}}};
 
   mux2   #(`DIVb+4) wsmux(NextWSN, X, DivStart, WSN);
   flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
   mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
   flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVb) Cmux(C[`DIVCOPIES], initC, DivStart, CMux); 
-  flopen #(`DIVb) cflop(clk, DivStart|DivBusy, CMux, C[0]);
+  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, DivStart, CMux); 
+  flopen #(`DIVb+2) cflop(clk, DivStart|DivBusy, CMux, C[0]);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
