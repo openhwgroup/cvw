@@ -181,8 +181,8 @@ module ifu (
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  logic [`XLEN-1:0] AllInstrRawF;
-  assign InstrRawF = AllInstrRawF[31:0];
+//  logic [`XLEN-1:0] InstrRawF;
+//  assign InstrRawF = InstrRawF[31:0];
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
@@ -241,7 +241,7 @@ module ifu (
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
-        .s(SelUncachedAdr), .y(AllInstrRawF[31:0]));
+        .s(SelUncachedAdr), .y(InstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic CaptureEn;
@@ -252,7 +252,7 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .RW, .ByteMask(), .WriteData('0),
-        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWord(AllInstrRawF[31:0]));
+        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWord(InstrRawF[31:0]));
 
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
@@ -261,7 +261,7 @@ module ifu (
   end else begin : nobus // block: bus
     assign BusStall = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
-    assign AllInstrRawF = FinalInstrRawF;
+    assign InstrRawF = FinalInstrRawF;
   end
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
