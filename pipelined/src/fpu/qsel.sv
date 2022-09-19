@@ -67,7 +67,7 @@ endmodule
 ////////////////////////////////////
 module fgen2 (
   input  logic sp, sz,
-  input  logic [`DIVb-1:0] C,
+  input  logic [`DIVb+1:0] C,
   input  logic [`DIVb:0] S, SM,
   output logic [`DIVb+3:0] F
 );
@@ -76,7 +76,7 @@ module fgen2 (
 
   assign SExt = {3'b0, S};
   assign SMExt = {3'b0, SM};
-  assign CExt = {4'hf, C}; // extend C from U0.k to Q4.k
+  assign CExt = {2'b11, C}; // extend C from Q2.k to Q4.k
 
   // Generate for both positive and negative bits
   assign FP = ~(SExt << 1) & CExt;
