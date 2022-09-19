@@ -55,7 +55,8 @@ module fdivsqrtfsm(
   logic SpecialCase;
   logic [`DURLEN-1:0] cycles;
 
-  assign EarlyTermShiftE = step;
+  assign EarlyTermShiftE = 0; // *** remove this signal when having unified design
+//  assign EarlyTermShiftE = step; 
 
   // terminate immediately on special cases
   assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);

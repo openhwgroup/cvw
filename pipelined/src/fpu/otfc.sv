@@ -73,6 +73,7 @@ module sotfc2(
   logic [`DIVb:0] CExt;
 
   assign CExt = C[`DIVb:0]; // {1'b1, C[`DIVb-1:0]};
+  // *** define K and use it; show in textbook
 
   always_comb begin
     if (sp) begin

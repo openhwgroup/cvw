@@ -75,7 +75,9 @@ module fdivsqrtpostproc(
       if(NegSticky) QmM = {FirstSM[`DIVb-1-(`RADIX/4):0], 1'b0};
       else          QmM = {FirstS[`DIVb-1-(`RADIX/4):0], 1'b0};
     else  
-      if(NegSticky) QmM = FirstQM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstQ[`DIVb-(`RADIX/4):0];
+      if(NegSticky) QmM = FirstSM[`DIVb-(`RADIX/4):0];
+      else          QmM = FirstS[`DIVb-(`RADIX/4):0];
+      //if(NegSticky) QmM = FirstQM[`DIVb-(`RADIX/4):0];
+      //else          QmM = FirstQ[`DIVb-(`RADIX/4):0];
 
 endmodule
