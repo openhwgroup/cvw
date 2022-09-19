@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrt.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
