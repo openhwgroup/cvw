@@ -82,7 +82,7 @@ module uartPC16550D(
   logic 	   DLAB; // Divisor Latch Access Bit (LCR bit 7)
 
   // Baud and rx/tx timing
-  logic 	   baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
+  (* mark_debug = "true" *) logic 	   baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
   logic [16+`UART_PRESCALE-1:0] baudcount;
   logic [3:0] 					rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
   logic [3:0] 					rxbitsreceived, txbitssent;
@@ -90,8 +90,8 @@ module uartPC16550D(
 
   // shift registrs and FIFOs
   logic [9:0] 					rxshiftreg;
-  logic [10:0] 					rxfifo[15:0];
-  logic [7:0] 					txfifo[15:0];
+  (* mark_debug = "true" *) logic [10:0] 					rxfifo[15:0];
+  (* mark_debug = "true" *) logic [7:0] 					txfifo[15:0];
   logic [4:0] 					rxfifotailunwrapped;
 (* mark_debug = "true" *)  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
 (* mark_debug = "true" *)  logic [3:0] 					rxfifoentries, txfifoentries;
@@ -99,7 +99,7 @@ module uartPC16550D(
 
   // receive data
    (* mark_debug = "true" *)  logic [10:0] 					RXBR;
-  logic [6:0] 					rxtimeoutcnt;
+  (* mark_debug = "true" *) logic [6:0] 					rxtimeoutcnt;
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
    (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
@@ -107,16 +107,16 @@ module uartPC16550D(
 (* mark_debug = "true" *)  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
   logic 						rxfifodmaready;
   logic [8:0] 					rxdata9;
-  logic [7:0] 					rxdata;
-  logic [15:0] 					RXerrbit, rxfullbit;
-  logic [31:0] 					rxfullbitunwrapped;
+  (* mark_debug = "true" *) logic [7:0] 					rxdata;
+  (* mark_debug = "true" *) logic [15:0] 					RXerrbit, rxfullbit;
+  (* mark_debug = "true" *) logic [31:0] 					rxfullbitunwrapped;
 
   // transmit data
   logic [7:0] 					TXHR, nexttxdata;
-  logic [11:0] 					txdata, txsr;
-  logic 						txnextbit, txhrfull, txsrfull;
+  (* mark_debug = "true" *) logic [11:0] 					txdata, txsr;
+  (* mark_debug = "true" *) logic 						txnextbit, txhrfull, txsrfull;
   logic 						txparity;
-  logic 						txfifoempty, txfifofull, txfifodmaready;
+  (* mark_debug = "true" *) logic 						txfifoempty, txfifofull, txfifodmaready;
 
   // control signals
 (* mark_debug = "true" *)  logic 						fifoenabled, fifodmamodesel, evenparitysel;
@@ -154,7 +154,7 @@ module uartPC16550D(
 		//DLL <= #1 8'd38; // 35Mhz
 		//DLL <= #1 8'd11; // 10 Mhz
 		//DLL <= #1 8'd33; // 30 Mhz
-		DLL <= #1 8'd8; // 30 Mhz 230400
+		DLL <= #1 8'd11; // 30 Mhz 230400
 		DLM <= #1 8'b0;
       end else begin
 		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
@@ -178,7 +178,7 @@ module uartPC16550D(
 		  // freq /baud / 16 = div
           //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
 		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
-		      3'b000: if (DLAB) DLL <= #1 8'd8; //else TXHR <= #1 Din; // TX handled in 		  
+		      3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in 		  
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
@@ -275,7 +275,7 @@ module uartPC16550D(
         rxstate <= #1 UART_ACTIVE;
         rxoversampledcnt <= #1 0;
         rxbitsreceived <= #1 0;
-        rxtimeoutcnt <= #1 0; // reset timeout when new character is arriving
+        if (~rxfifotimeout) rxtimeoutcnt <= #1 0; // reset timeout when new character is arriving. Jacob Pease: Only if the timeout was not already reached. p.16 PC16550D.pdf
       end else if (rxbaudpulse & (rxstate == UART_ACTIVE)) begin
         rxoversampledcnt <= #1 rxoversampledcnt + 1;  // 16x oversampled counter
         if (rxcentered) rxbitsreceived <= #1 rxbitsreceived + 1;
@@ -357,8 +357,8 @@ module uartPC16550D(
                          (rxfifohead + 16 - rxfifotail);
   // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  //assign rxfifotimeout = rxtimeoutcnt[6]; // time out after 4 character periods; *** probably not right yet
-  assign rxfifotimeout = 0; // disabled pending fix
+  assign rxfifotimeout = rxtimeoutcnt[6]; // time out after 4 character periods; *** probably not right yet
+  //assign rxfifotimeout = 0; // disabled pending fix
 
   // detect any errors in rx fifo
   // although rxfullbit looks like a combinational loop, in one bit rxfifotail == i and breaks the loop
