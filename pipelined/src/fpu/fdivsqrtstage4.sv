@@ -53,7 +53,6 @@ module fdivsqrtstage4 (
   logic [`DIVb+3:0] AddIn;
   logic [4:0] Smsbs;
   logic CarryIn;
-
   assign CNext = {2'b11, C[`DIVb+1:2]};
 
   // Qmient Selection logic
@@ -86,6 +85,8 @@ module fdivsqrtstage4 (
  
   otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
   sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .S, .SM, .SNext, .SMNext);
+
+  assign qn = 0; // unused for radix 4
 endmodule
 
 
