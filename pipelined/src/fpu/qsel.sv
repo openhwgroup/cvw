@@ -68,14 +68,14 @@ endmodule
 module fgen2 (
   input  logic sp, sz,
   input  logic [`DIVb+1:0] C,
-  input  logic [`DIVb:0] S, SM,
+  input  logic [`DIVb:0] U, UM,
   output logic [`DIVb+3:0] F
 );
   logic [`DIVb+3:0] FP, FN, FZ;
   logic [`DIVb+3:0] SExt, SMExt, CExt;
 
-  assign SExt = {3'b0, S};
-  assign SMExt = {3'b0, SM};
+  assign SExt = {3'b0, U};
+  assign SMExt = {3'b0, UM};
   assign CExt = {2'b11, C}; // extend C from Q2.k to Q4.k
 
   // Generate for both positive and negative bits
@@ -254,17 +254,17 @@ endmodule
 ////////////////////////////////////
 module fgen4 (
   input  logic [3:0] s,
-  input  logic [`DIVb+3:0] C, S, SM,
+  input  logic [`DIVb+3:0] C, U, UM,
   output logic [`DIVb+3:0] F
 );
   logic [`DIVb+3:0] F2, F1, F0, FN1, FN2;
   
   // Generate for both positive and negative bits
-  assign F2  = (~S << 2) & (C << 2);
-  assign F1  = ~(S << 1) & C;
+  assign F2  = (~U << 2) & (C << 2);
+  assign F1  = ~(U << 1) & C;
   assign F0  = '0;
-  assign FN1 = (SM << 1) | (C & ~(C << 3));
-  assign FN2 = (SM << 2) | ((C << 2)&~(C << 4));
+  assign FN1 = (UM << 1) | (C & ~(C << 3));
+  assign FN2 = (UM << 2) | ((C << 2)&~(C << 4));
 
   // Choose which adder input will be used
 

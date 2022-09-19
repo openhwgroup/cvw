@@ -34,13 +34,13 @@
 module fdivsqrtstage4 (
   input logic [`DIVN-2:0] D,
   input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] S, SM,
+  input logic [`DIVb:0] U, UM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
   output logic [`DIVb+1:0] CNext,
   input logic SqrtM, j1,
   output logic qn,
-  output logic [`DIVb:0] SNext, SMNext, 
+  output logic [`DIVb:0] UNext, UMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
 );
  /* verilator lint_on UNOPTFLAT */
@@ -61,9 +61,9 @@ module fdivsqrtstage4 (
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  assign Smsbs = S[`DIVb:`DIVb-4];
+  assign Smsbs = U[`DIVb:`DIVb-4];
   qsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
-  fgen4 fgen4(.s(q), .C({2'b11, CNext}), .S({3'b000, S}), .SM({3'b000, SM}), .F);
+  fgen4 fgen4(.s(q), .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
   always_comb
   case (q)
@@ -81,7 +81,7 @@ module fdivsqrtstage4 (
   assign CarryIn = ~SqrtM & (q[3] | q[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
-  sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .S, .SM, .SNext, .SMNext);
+  uotfc4 uotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 
   assign qn = 0; // unused for radix 4
 endmodule

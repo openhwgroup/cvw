@@ -71,11 +71,13 @@ module fdivsqrtpostproc(
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
-    if(SqrtM) // sqrt ouputs in the range (1, .5]
+    if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0] << SqrtM;
+    else          QmM = FirstU[`DIVb-(`RADIX/4):0]  << SqrtM;
+/*    if(SqrtM) // sqrt ouputs in the range (1, .5]
       if(NegSticky) QmM = {FirstUM[`DIVb-1-(`RADIX/4):0], 1'b0};
       else          QmM = {FirstU[`DIVb-1-(`RADIX/4):0], 1'b0};
     else  
       if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstU[`DIVb-(`RADIX/4):0];
+      else          QmM = FirstU[`DIVb-(`RADIX/4):0]; */
 
 endmodule
