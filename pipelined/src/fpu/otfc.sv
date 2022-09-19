@@ -30,34 +30,6 @@
 
 `include "wally-config.vh"
 
-module otfc2 (
-  input  logic         qp, qz,
-  input  logic [`DIVb:0] Q, QM,
-  output logic [`DIVb:0] QNext, QMNext
-);
-  //  The on-the-fly converter transfers the quotient 
-  //  bits to the quotient as they come.
-  //  Use this otfc for division only.
-  logic [`DIVb-1:0] QR, QMR;
-
-  assign QR  = Q[`DIVb-1:0];
-  assign QMR = QM[`DIVb-1:0];     // Shifted Q and QM
-
-  always_comb begin
-    if (qp) begin
-      QNext  = {QR,  1'b1};
-      QMNext = {QR,  1'b0};
-    end else if (qz) begin
-      QNext  = {QR,  1'b0};
-      QMNext = {QMR, 1'b1};
-    end else begin        // If qp and qz are not true, then qn is
-      QNext  = {QMR, 1'b1};
-      QMNext = {QMR, 1'b0};
-    end 
-  end
-
-endmodule
-
 ///////////////////////////////
 // Square Root OTFC, Radix 2 //
 ///////////////////////////////
@@ -70,75 +42,22 @@ module sotfc2(
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
-  logic [`DIVb:0] CExt;
+  logic [`DIVb:0] K;
 
-  assign CExt = C[`DIVb:0]; // {1'b1, C[`DIVb-1:0]};
-  // *** define K and use it; show in textbook
+  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
 
   always_comb begin
     if (sp) begin
-      SNext  = S | (CExt & ~(CExt << 1));
+      SNext  = S | K;
       SMNext = S;
     end else if (sz) begin
       SNext  = S;
-      SMNext = SM | (CExt & ~(CExt << 1));
+      SMNext = SM | K;
     end else begin        // If sp and sz are not true, then sn is
-      SNext  = SM | (CExt & ~(CExt << 1));
+      SNext  = SM | K;
       SMNext = SM;
     end 
   end
-
-endmodule
-
-module otfc4 (
-  input  logic [3:0]   q,
-  input  logic [`DIVb:0] Q, QM,
-  output logic [`DIVb:0] QNext, QMNext
-);
-
-  //  The on-the-fly converter transfers the quotient 
-  //  bits to the quotient as they come. 
-  //
-  //  This code follows the psuedocode presented in the 
-  //  floating point chapter of the book. Right now, 
-  //  it is written for Radix-4 division.
-  //
-  //  QM is Q-1. It allows us to write negative bits 
-  //  without using a costly CPA. 
-
-  //  QR and QMR are the shifted versions of Q and QM.
-  //  They are treated as [N-1:r] size signals, and 
-  //  discard the r most significant bits of Q and QM. 
-  logic [`DIVb-2:0] QR, QMR;
-
-  // shift Q (quotent) and QM (quotent-1)
-		// if 	q = 2  	    Q = {Q, 10} 	QM = {Q, 01}		
-		// else if 	q = 1   Q = {Q, 01} 	QM = {Q, 00}	
-		// else if 	q = 0   Q = {Q, 00} 	QM = {QM, 11}	
-		// else if 	q = -1	Q = {QM, 11} 	QM = {QM, 10}
-		// else if 	q = -2	Q = {QM, 10} 	QM = {QM, 01}
-
-  assign QR  = Q[`DIVb-2:0];
-  assign QMR = QM[`DIVb-2:0];     // Shifted Q and QM
-  always_comb begin
-    if (q[3]) begin // +2
-      QNext  = {QR,  2'b10};
-      QMNext = {QR,  2'b01};
-    end else if (q[2]) begin // +1
-      QNext  = {QR,  2'b01};
-      QMNext = {QR,  2'b00};
-    end else if (q[1]) begin // -1
-      QNext  = {QMR,  2'b11};
-      QMNext = {QMR,  2'b10};
-    end else if (q[0]) begin // -2
-      QNext  = {QMR,  2'b10};
-      QMNext = {QMR,  2'b01};
-    end else begin           // 0
-      QNext  = {QR,  2'b00};
-      QMNext = {QMR, 2'b11};
-    end 
-  end
-  // Final Qmeint is in the range [.5, 2)
 
 endmodule
 
