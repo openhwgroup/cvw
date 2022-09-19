@@ -53,7 +53,7 @@ module fdivsqrtiter(
 // WC/WS is dependent on D so 4.N-1 ie N+3 bits or N+2:0 + one more bit in fraction for possible sqrt right shift
 // D is 1.N-1, but the msb is always 1 so 0.N-1 or N-1 bits or N-1:0
 // Dsel should match WC/WS so 4.N-1 ie N+3 bits or N+2:0
-// Q/QM/S/SM should be 1.b so b+1 bits or b:0
+// U/UM should be 1.b so b+1 bits or b:0
 // C needs to be the lenght of the final fraction 0.b so b or b-1:0
  /* verilator lint_off UNOPTFLAT */
   logic [`DIVb+3:0]  WSA[`DIVCOPIES-1:0]; // Q4.b
@@ -85,13 +85,8 @@ module fdivsqrtiter(
   //  - otherwise load WSA into the flipflop
   //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
   //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
-  if (`RADIX == 2) begin : nextw
-    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
-    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+2:0], 1'b0};
-  end else begin : nextw
-    assign NextWSN = {WSA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
-    assign NextWCN = {WCA[`DIVCOPIES-1][`DIVb+1:0], 2'b0};
-  end
+  assign NextWSN = WSA[`DIVCOPIES-1] << `LOGR;
+  assign NextWCN = WCA[`DIVCOPIES-1] << `LOGR;
 
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCSqrt, initCDiv2, initCDiv4, initCUpper;
@@ -128,21 +123,13 @@ module fdivsqrtiter(
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-//        assign j1 = (i == 0 &  C[0][`DIVb-2] & ~C[0][`DIVb-3]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
         .C(C[i]), .S(U[i]), .SM(UM[i]), .CNext(C[i+1]), .SNext(UNext[i]), .SMNext(UMNext[i]), .qn(qn[i]));
       end
       if(i<(`DIVCOPIES-1)) begin 
-        if (`RADIX==2)begin 
-          assign WS[i+1] = {WSA[i][`DIVb+2:0], 1'b0};
-          assign WC[i+1] = {WCA[i][`DIVb+2:0], 1'b0};
-//          assign  C[i+1] = {1'b1, C[i][`DIVb-1:1]};
-        end else begin
-          assign WS[i+1] = {WSA[i][`DIVb+1:0], 2'b0};
-          assign WC[i+1] = {WCA[i][`DIVb+1:0], 2'b0};
-//          assign  C[i+1] = {2'b11, C[i][`DIVb-1:2]};
-        end
+        assign WS[i+1] = WSA[i] << `LOGR;
+        assign WC[i+1] = WCA[i] << `LOGR;
         assign U[i+1] = UNext[i];
         assign UM[i+1] = UMNext[i];
       end
@@ -157,10 +144,8 @@ module fdivsqrtiter(
   flopen #(`DIVb+1) UReg(clk, DivStart|DivBusy, UMux, U[0]);
   flopen #(`DIVb+1) UMReg(clk, DivStart|DivBusy, UMMux, UM[0]);
   
-
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
-
   assign FirstU = U[0];
   assign FirstUM = UM[0];
   assign FirstC = C[0];
