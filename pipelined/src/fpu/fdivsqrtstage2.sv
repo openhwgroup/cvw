@@ -34,12 +34,10 @@
 module fdivsqrtstage2 (
   input logic [`DIVN-2:0] D,
   input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] Q, QM,
   input logic [`DIVb:0] S, SM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
   input logic SqrtM,
-  output logic [`DIVb:0] QNext, QMNext, 
   output logic qn,
   output logic [`DIVb+1:0] CNext,
   output logic [`DIVb:0] SNext, SMNext, 
@@ -71,8 +69,6 @@ module fdivsqrtstage2 (
   assign AddIn = SqrtM ? F : Dsel;
   csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
 
-  // *** dh 8/29/22: will need to trim down to just sotfc
-  otfc2 otfc2(.qp, .qz, .Q, .QM, .QNext, .QMNext);
   sotfc2 sotfc2(.sp(qp), .sz(qz), .C(CNext), .S, .SM, .SNext, .SMNext);
 endmodule
 

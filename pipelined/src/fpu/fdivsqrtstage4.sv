@@ -34,13 +34,11 @@
 module fdivsqrtstage4 (
   input logic [`DIVN-2:0] D,
   input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] Q, QM,
   input logic [`DIVb:0] S, SM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
   output logic [`DIVb+1:0] CNext,
   input logic SqrtM, j1,
-  output logic [`DIVb:0] QNext, QMNext, 
   output logic qn,
   output logic [`DIVb:0] SNext, SMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
@@ -83,7 +81,6 @@ module fdivsqrtstage4 (
   assign CarryIn = ~SqrtM & (q[3] | q[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
-  otfc4 otfc4(.q, .Q, .QM, .QNext, .QMNext);
   sotfc4 sotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .S, .SM, .SNext, .SMNext);
 
   assign qn = 0; // unused for radix 4
