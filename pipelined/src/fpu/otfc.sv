@@ -72,7 +72,7 @@ module sotfc2(
   //  Use this otfc for division and square root.
   logic [`DIVb:0] CExt;
 
-  assign CExt = {1'b1, C[`DIVb-1:0]};
+  assign CExt = C[`DIVb:0]; // {1'b1, C[`DIVb-1:0]};
 
   always_comb begin
     if (sp) begin
