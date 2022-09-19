@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrtpostproc.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
@@ -71,6 +71,6 @@ module fdivsqrtpostproc(
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
-    if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0] << SqrtM;
-    else          QmM = FirstU[`DIVb-(`RADIX/4):0]  << SqrtM;
+    if(NegSticky) QmM = FirstUM[`DIVb:(`RADIX/4)] << SqrtM;
+    else          QmM = FirstU[`DIVb:(`RADIX/4)]  << SqrtM;
 endmodule
