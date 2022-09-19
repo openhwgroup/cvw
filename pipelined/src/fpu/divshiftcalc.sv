@@ -4,7 +4,6 @@ module divshiftcalc(
     input logic  [`DIVb-(`RADIX/4):0] DivQm,
     input logic  [`FMTBITS-1:0] Fmt,
     input logic Sqrt,
-    input logic [`DURLEN-1:0] DivEarlyTermShift,
     input logic [`NE+1:0] DivQe,
     output logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt,
     output logic [`NORMSHIFTSZ-1:0] DivShiftIn,
@@ -12,6 +11,8 @@ module divshiftcalc(
     output logic [`NE+1:0] DivDenormShift
 );
     logic [`NE+1:0] NormShift;
+
+    logic [`DURLEN-1:0] DivEarlyTermShift = 0;
 
     // is the result denromalized
     // if the exponent is 1 then the result needs to be normalized then the result is denormalizes
@@ -35,7 +36,8 @@ module divshiftcalc(
     assign NormShift = (`NE+2)'(`NF);
     // if the shift amount is negitive then dont shift (keep sticky bit)
     // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, DivEarlyTermShift&{`DURLEN{~(DivDenormShift[`NE+1]|Sqrt)}}, {$clog2(`LOGR*`DIVCOPIES){1'b0}}};
+    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, 
+    DivEarlyTermShift&{`DURLEN{~(DivDenormShift[`NE+1]|Sqrt)}}, {$clog2(`LOGR*`DIVCOPIES){1'b0}}};
 
     assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1+(`RADIX/4)-`NF{1'b0}}};
 

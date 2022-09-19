@@ -48,7 +48,6 @@ module fdivsqrt(
   output logic DivBusy,
   output logic DivDone,
   output logic [`NE+1:0] QeM,
-  output logic [`DURLEN-1:0] EarlyTermShiftM,
   output logic [`DIVb-(`RADIX/4):0] QmM
 //   output logic [`XLEN-1:0] RemM,
 );
@@ -70,7 +69,7 @@ module fdivsqrt(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
     .DivBusy, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
-    .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
+    .XInfE, .YInfE, .WZero);
   fdivsqrtiter fdivsqrtiter(
     .clk, .Firstqn, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
