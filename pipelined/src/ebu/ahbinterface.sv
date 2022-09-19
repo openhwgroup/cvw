@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ahbinterface #(parameter WRITEABLE = 0)
+module ahbinterface #(parameter WRITEABLE = 0) // **** modify to use LSU/ifu parameter to control widths of buses
   (
   input logic                HCLK, HRESETn,
   
@@ -57,6 +57,7 @@ module ahbinterface #(parameter WRITEABLE = 0)
   
   logic                       CaptureEn;
 
+  /// *** only 32 bit for IFU.
   flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(ReadDataWord));
 
   if(WRITEABLE) begin
