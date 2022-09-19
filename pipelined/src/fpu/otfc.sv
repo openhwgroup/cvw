@@ -75,22 +75,27 @@ module sotfc4(
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
 
+  logic [`DIVb:0] K1, K2, K3;
+  assign K1 = (C&~(C << 1));        // K
+  assign K2 = ((C << 1)&~(C << 2)); // 2K
+  assign K3 = (C & ~(C << 2));      // 3K
+
   always_comb begin
     if (s[3]) begin
-      SNext  = S | ((C << 1)&~(C << 2));
-      SMNext = S | (C&~(C << 1));
+      SNext  = S | K2;
+      SMNext = S | K1;
     end else if (s[2]) begin
-      SNext  = S | (C&~(C << 1));
+      SNext  = S | K1;
       SMNext = S;
     end else if (s[1]) begin
-      SNext  = SM | (C&~(C << 2));
-      SMNext = SM | ((C << 1)&~(C << 2));
+      SNext  = SM | K3;
+      SMNext = SM | K2;
     end else if (s[0]) begin
-      SNext  = SM | ((C << 1)&~(C << 2));
-      SMNext = SM | (C&~(C << 1));
+      SNext  = SM | K2;
+      SMNext = SM | K1;
     end else begin        // If sp and sn are not true, then sz is
       SNext  = S;
-      SMNext = SM | (C & ~(C << 2));
+      SMNext = SM | K3;
     end 
   end
 
