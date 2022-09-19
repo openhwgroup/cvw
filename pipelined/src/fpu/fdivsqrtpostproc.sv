@@ -44,9 +44,9 @@ module fdivsqrtpostproc(
   
   logic [`DIVb+3:0] W;
   logic NegSticky;
+  logic weq0;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
-  logic weq0;
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
 
   if (`RADIX == 2) begin
@@ -73,11 +73,4 @@ module fdivsqrtpostproc(
   always_comb
     if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0] << SqrtM;
     else          QmM = FirstU[`DIVb-(`RADIX/4):0]  << SqrtM;
-/*    if(SqrtM) // sqrt ouputs in the range (1, .5]
-      if(NegSticky) QmM = {FirstUM[`DIVb-1-(`RADIX/4):0], 1'b0};
-      else          QmM = {FirstU[`DIVb-1-(`RADIX/4):0], 1'b0};
-    else  
-      if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstU[`DIVb-(`RADIX/4):0]; */
-
 endmodule

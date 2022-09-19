@@ -56,7 +56,6 @@ module postprocess (
     input logic                             FmaSs,
     input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
-    input logic  [`DURLEN-1:0]              DivEarlyTermShift,
     input logic                             DivS,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
@@ -152,7 +151,7 @@ module postprocess (
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaSCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)

@@ -127,7 +127,6 @@ module fpu (
    logic [`NE+1:0]      QeE, QeM; 
    logic                DivSE, DivSM;
    logic                DivDoneM;
-   logic [`DURLEN-1:0]  EarlyTermShiftM;
 
    // result and flag signals
    logic [`XLEN-1:0] ClassResE;               // classify result
@@ -260,7 +259,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), .XsE,
                   .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
-                  .EarlyTermShiftM, .QmM, .DivDone(DivDoneM));
+                  .QmM, .DivDone(DivDoneM));
    // compare
    //    - fmin/fmax
    //    - flt/fle/feq
@@ -364,7 +363,7 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(PeM), .DivEarlyTermShift(EarlyTermShiftM),
+   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(PeM), 
                            .FmaZmS(ZmStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), .DivDone(DivDoneM),
                            .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),

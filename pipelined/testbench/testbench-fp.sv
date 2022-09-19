@@ -82,7 +82,6 @@ module testbenchfp;
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
 	logic [`DIVb-(`RADIX/4):0] Quot;
   logic CvtResDenormUfE;
-  logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
@@ -701,7 +700,7 @@ module testbenchfp;
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
@@ -719,7 +718,7 @@ module testbenchfp;
     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
                     .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
-                    .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
+                    .QmM(Quot), .DivDone);
   end
 
   assign CmpFlg[3:0] = 0;
