@@ -80,7 +80,7 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVb-(`RADIX/4):0] Quot;
+	logic [`DIVb:0] Quot;
   logic CvtResDenormUfE;
   logic DivStart, DivBusy;
   logic reset = 1'b0;

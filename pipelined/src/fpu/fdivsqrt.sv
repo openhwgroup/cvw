@@ -48,7 +48,7 @@ module fdivsqrt(
   output logic DivBusy,
   output logic DivDone,
   output logic [`NE+1:0] QeM,
-  output logic [`DIVb-(`RADIX/4):0] QmM
+  output logic [`DIVb:0] QmM
 //   output logic [`XLEN-1:0] RemM,
 );
 

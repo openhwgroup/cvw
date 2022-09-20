@@ -123,7 +123,7 @@ module fpu (
    logic [`CVTLEN-1:0]     CvtLzcInE, CvtLzcInM;      // input to the Leading Zero Counter (priority encoder)
    
    //divide signals
-   logic [`DIVb-(`RADIX/4):0] QmM;
+   logic [`DIVb:0]      QmM;
    logic [`NE+1:0]      QeE, QeM; 
    logic                DivSE, DivSM;
    logic                DivDoneM;
