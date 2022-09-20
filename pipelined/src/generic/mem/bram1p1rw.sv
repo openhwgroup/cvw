@@ -45,6 +45,7 @@ module bram1p1rw
 	//----------------------------------------------------------------------
 	) (
 	   input logic 					 clk,
+	   input logic 					 ce,
 	   input logic 					 we,
 	   input logic [NUM_COL-1:0] 	 bwe,
 	   input logic [ADDR_WIDTH-1:0]  addr,
@@ -105,13 +106,15 @@ end
   
 
   always @ (posedge clk) begin
-	dout <= RAM[addr];    
-	if(we) begin
-	  for(i=0;i<NUM_COL;i=i+1) begin
-		if(bwe[i]) begin
-		  RAM[addr][i*COL_WIDTH +: COL_WIDTH] <= din[i*COL_WIDTH +:COL_WIDTH];
-		end
-	  end
+    if(ce) begin
+	  dout <= RAM[addr];    
+	  if(we) begin
+	    for(i=0;i<NUM_COL;i=i+1) begin
+		  if(bwe[i]) begin
+		    RAM[addr][i*COL_WIDTH +: COL_WIDTH] <= din[i*COL_WIDTH +:COL_WIDTH];
+		  end
+	    end
+      end
 	end
   end
 endmodule // bytewrite_tdp_ram_rf

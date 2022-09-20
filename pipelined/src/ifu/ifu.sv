@@ -189,11 +189,11 @@ module ifu (
     logic [`PA_BITS-1:0] IROMAdr;
     logic             IROMAccessRW;
     /* verilator lint_off WIDTH */
-    assign IROMAdr = CPUBusy | reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
+    assign IROMAdr = reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
  
     assign RWF = 2'b10;
-    irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
   end else begin
     assign RWF = 2'b10;
