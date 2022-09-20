@@ -80,9 +80,8 @@ module testbenchfp;
   logic CvtResSgnE;
   logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVb-(`RADIX/4):0] Quot;
+	logic [`DIVb:0] Quot;
   logic CvtResDenormUfE;
-  logic [`DURLEN-1:0] EarlyTermShift;
   logic DivStart, DivBusy;
   logic reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
@@ -575,13 +574,20 @@ module testbenchfp;
       end
       if (TEST === "div"   | TEST === "all") begin // if division is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {Tests, f16div};
+        Tests = {f16div, Tests};
+        OpCtrl = {`DIV_OPCTRL, OpCtrl};
+        WriteInt = {1'b0, WriteInt};
+        for(int i = 0; i<5; i++) begin
+          Unit = {`DIVUNIT, Unit};
+          Fmt = {2'b10, Fmt};
+        end
+        /* Tests = {Tests, f16div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
-        end
+        end */
       end
       if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
@@ -694,7 +700,7 @@ module testbenchfp;
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .DivEarlyTermShift(EarlyTermShift), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
@@ -712,7 +718,7 @@ module testbenchfp;
     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
                     .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
-                    .EarlyTermShiftM(EarlyTermShift), .QmM(Quot), .DivDone);
+                    .QmM(Quot), .DivDone);
   end
 
   assign CmpFlg[3:0] = 0;
@@ -801,6 +807,8 @@ always_comb begin
     endcase
 end
 
+  logic ResMatch, FlagMatch, CheckNow;
+
 // check results on falling edge of clk
 always @(negedge clk) begin
 
@@ -870,7 +878,11 @@ always @(negedge clk) begin
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
    // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
-    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+    assign ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
+    assign FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
+    assign CheckNow = (DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
+    if(~(ResMatch & FlagMatch) & CheckNow) begin
+//    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
       $display("Error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);

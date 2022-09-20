@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fclassivy.sv
+// fdivsqrtqsel2.sv
 //
-// Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
+// Modified:13 January 2022
 //
-// Purpose: classify unit
+// Purpose: Radix 2 Quotient Digit Selection
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,44 +27,37 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
-module fclassify (
-    input logic         Xs,     // sign bit
-    input logic         XNaN,   // is NaN
-    input logic         XSNaN,  // is signaling NaN
-    input logic         XDenorm,// is denormal
-    input logic         XZero,  // is zero
-    input logic         XInf,   // is infinity
-    output logic [`XLEN-1:0] ClassRes// classify result
+module fdivsqrtqsel2 ( 
+  input  logic [3:0] ps, pc, 
+  output logic         up, uz, un
 );
+ 
+  logic [3:0]  p, g;
+  logic          magnitude, sign, cout;
 
-    logic PInf, PZero, PNorm, PDenorm;
-    logic NInf, NZero, NNorm, NDenorm;
-    logic XNorm;
-   
-    // determine the sub categories
-    assign XNorm= ~(XNaN | XInf| XDenorm| XZero);
-    assign PInf = ~Xs&XInf;
-    assign NInf = Xs&XInf;
-    assign PNorm = ~Xs&XNorm;
-    assign NNorm = Xs&XNorm;
-    assign PDenorm = ~Xs&XDenorm;
-    assign NDenorm = Xs&XDenorm;
-    assign PZero = ~Xs&XZero;
-    assign NZero = Xs&XZero;
+  // The quotient selection logic is presented for simplicity, not
+  // for efficiency.  You can probably optimize your logic to
+  // select the proper divisor with less delay.
 
-    // determine sub category and combine into the result
-    //  bit 0 - -Inf
-    //  bit 1 - -Norm
-    //  bit 2 - -Denorm
-    //  bit 3 - -Zero
-    //  bit 4 - +Zero
-    //  bit 5 - +Denorm
-    //  bit 6 - +Norm
-    //  bit 7 - +Inf
-    //  bit 8 - signaling NaN
-    //  bit 9 - quiet NaN
-    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+  // Quotient equations from EE371 lecture notes 13-20
+  assign p = ps ^ pc;
+  assign g = ps & pc;
 
+  //assign magnitude = ~(&p[2:0]);
+  assign cout = g[2] | (p[2] & (g[1] | p[1] & g[0]));
+  //assign sign = p[3] ^ cout;
+  assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
+			  (ps[0]^pc[0]));
+  assign sign = (ps[3]^pc[3])^
+      (ps[2] & pc[2] | ((ps[2]^pc[2]) &
+			    (ps[1]&pc[1] | ((ps[1]^pc[1]) &
+						(ps[0]&pc[0])))));
+
+  // Produce digit = +1, 0, or -1
+  assign up = magnitude & ~sign;
+  assign uz = ~magnitude;
+  assign un = magnitude & sign;
 endmodule

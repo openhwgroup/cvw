@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// fpuhazard.sv
+// fhazard.sv
 //
 // Written: me@KatherineParry.com 19 May 2021
 // Modified: 

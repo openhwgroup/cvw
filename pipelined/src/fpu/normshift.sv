@@ -1,4 +1,5 @@
 ///////////////////////////////////////////
+// normshift.sv
 //
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
@@ -65,7 +66,7 @@
     //              - plus 1 to shift out the first 1
 
 module normshift(
-    input logic  [$clog2(`NORMSHIFTSZ)-1:0]      ShiftAmt,   // normalization shift count
+    input logic  [`LOGNORMSHIFTSZ-1:0]      ShiftAmt,   // normalization shift count
     input logic  [`NORMSHIFTSZ-1:0]              ShiftIn,        // is the sum zero
     output logic [`NORMSHIFTSZ-1:0]             Shifted        // is the sum zero
 );

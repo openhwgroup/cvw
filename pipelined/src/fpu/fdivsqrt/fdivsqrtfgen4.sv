@@ -1,9 +1,10 @@
 ///////////////////////////////////////////
+// fdivsqrtfgen4.sv
 //
-// Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
+// Modified:13 January 2022
 //
-// Purpose: Negate integer result
+// Purpose: Radix 4 F Addend Generator
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -26,28 +27,29 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
-module negateintres(
-    input logic         Xs,
-    input logic [`NORMSHIFTSZ-1:0]  Shifted,
-    input logic         Signed,
-    input logic         Int64,
-    input logic         Plus1,
-    output logic [1:0]          CvtNegResMsbs,
-    output logic [`XLEN+1:0]    CvtNegRes
+module fdivsqrtfgen4 (
+  input  logic [3:0] u,
+  input  logic [`DIVb+3:0] C, U, UM,
+  output logic [`DIVb+3:0] F
 );
+  logic [`DIVb+3:0] F2, F1, F0, FN1, FN2;
+  
+  // Generate for both positive and negative bits
+  assign F2  = (~U << 2) & (C << 2);
+  assign F1  = ~(U << 1) & C;
+  assign F0  = '0;
+  assign FN1 = (UM << 1) | (C & ~(C << 3));
+  assign FN2 = (UM << 2) | ((C << 2)&~(C << 4));
 
-    
-    // round and negate the positive res if needed
-    assign CvtNegRes = Xs ? -({2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1}) : {2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1};
-    
-    always_comb
-        if(Signed)
-            if(Int64)   CvtNegResMsbs = CvtNegRes[`XLEN:`XLEN-1];
-            else        CvtNegResMsbs = CvtNegRes[32:31];
-        else
-            if(Int64)   CvtNegResMsbs = CvtNegRes[`XLEN+1:`XLEN];
-            else        CvtNegResMsbs = CvtNegRes[33:32];
+  // Choose which adder input will be used
 
+  always_comb
+    if (u[3])       F = F2;
+    else if (u[2])  F = F1;
+    else if (U[1])  F = FN1;
+    else if (u[0])  F = FN2;
+    else            F = F0;
 endmodule

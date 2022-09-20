@@ -1,4 +1,5 @@
 ///////////////////////////////////////////
+// postprocess.sv
 //
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
@@ -56,11 +57,10 @@ module postprocess (
     input logic                             FmaSs,
     input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
-    input logic  [`DURLEN-1:0]              DivEarlyTermShift,
     input logic                             DivS,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
-    input logic  [`DIVb-(`RADIX/4):0]                DivQm,
+    input logic  [`DIVb:0]                  DivQm,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
@@ -84,7 +84,7 @@ module postprocess (
     logic [`CORRSHIFTSZ-1:0] Mf; // corectly shifted fraction
     logic [`NE+1:0] FullRe;  // Re with bits to determine sign and overflow
     logic UfPlus1;                    // do you add one (for determining underflow flag)
-    logic [$clog2(`NORMSHIFTSZ)-1:0] ShiftAmt;   // normalization shift count
+    logic [`LOGNORMSHIFTSZ-1:0] ShiftAmt;   // normalization shift count
     logic [`NORMSHIFTSZ-1:0] ShiftIn;        // is the sum zero
     logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
     logic Plus1;      // add one to the final result?
@@ -99,12 +99,12 @@ module postprocess (
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
     logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
     // division singals
-    logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt;
+    logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0] DivShiftIn;
     logic [`NE+1:0] Qe;
     logic DivByZero;
     logic DivResDenorm;
-    logic [`NE+1:0] DivDenormShift;
+    logic DivDenormShiftPos;
     // conversion signals
     logic [`CVTLEN+`NF:0] CvtShiftIn;    // number to be shifted
     logic [1:0] CvtNegResMsbs;
@@ -152,16 +152,16 @@ module postprocess (
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaSCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivEarlyTermShift, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShiftPos, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
             2'b10: begin // fma
-                ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(3*`NF+7){1'b0}}, FmaShiftAmt};
+                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+7){1'b0}}, FmaShiftAmt};
                 ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+8){1'b0}}};
             end
             2'b00: begin // cvt
-                ShiftAmt = {{$clog2(`NORMSHIFTSZ)-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};
+                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
             2'b01: begin //div
@@ -174,7 +174,7 @@ module postprocess (
                 end
             end
             default: begin 
-                ShiftAmt = {$clog2(`NORMSHIFTSZ){1'bx}}; 
+                ShiftAmt = {`LOGNORMSHIFTSZ{1'bx}}; 
                 ShiftIn = {`NORMSHIFTSZ{1'bx}}; 
             end
         endcase
@@ -182,7 +182,7 @@ module postprocess (
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
     shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .NormSumExp,
-                                .DivResDenorm, .DivDenormShift, .DivOp, .DivQe,
+                                .DivResDenorm, .DivDenormShiftPos, .DivOp, .DivQe,
                                 .Qe, .FmaSZero, .Shifted, .FmaMe, .Mf);
 
     ///////////////////////////////////////////////////////////////////////////////

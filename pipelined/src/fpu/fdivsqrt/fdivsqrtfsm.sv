@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrtfsm.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
@@ -43,7 +43,6 @@ module fdivsqrtfsm(
   input  logic StallE,
   input  logic StallM,
   input logic WZero,
-  output logic [`DURLEN-1:0] EarlyTermShiftE,
   output logic DivDone,
   output logic DivBusy
 );
@@ -54,8 +53,6 @@ module fdivsqrtfsm(
   logic [`DURLEN-1:0] step;
   logic SpecialCase;
   logic [`DURLEN-1:0] cycles;
-
-  assign EarlyTermShiftE = step;
 
   // terminate immediately on special cases
   assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
@@ -94,8 +91,7 @@ module fdivsqrtfsm(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    if (SqrtE) cycles =  (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);  // ceiling(fbits / r*k)
-    else       cycles = `FPDUR; // *** line above should work once otfc is used to put results in upper bits
+    cycles =  (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */

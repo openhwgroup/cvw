@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrt.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
@@ -48,8 +48,7 @@ module fdivsqrt(
   output logic DivBusy,
   output logic DivDone,
   output logic [`NE+1:0] QeM,
-  output logic [`DURLEN-1:0] EarlyTermShiftM,
-  output logic [`DIVb-(`RADIX/4):0] QmM
+  output logic [`DIVb:0] QmM
 //   output logic [`XLEN-1:0] RemM,
 );
 
@@ -58,9 +57,9 @@ module fdivsqrt(
   logic [`DIVb+3:0] X;
   logic [`DIVN-2:0]  D; // U0.N-1
   logic [`DIVN-2:0] Dpreproc;
-  logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM;
-  logic [`DIVb-1:0] FirstC;
-  logic Firstqn;
+  logic [`DIVb:0] FirstU, FirstUM;
+  logic [`DIVb+1:0] FirstC;
+  logic Firstun;
   logic WZero;
 
   fdivsqrtpreproc fdivsqrtpreproc(
@@ -70,11 +69,11 @@ module fdivsqrt(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
     .DivBusy, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
-    .XInfE, .YInfE, .EarlyTermShiftE(EarlyTermShiftM), .WZero);
+    .XInfE, .YInfE, .WZero);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .Firstqn, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .SqrtE, .SqrtM, 
+    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
     .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
-  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstS, .FirstSM, .FirstQ, .FirstQM, .FirstC, .Firstqn, .SqrtM, .QmM, .WZero, .DivSM);
+  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .QmM, .WZero, .DivSM);
 endmodule

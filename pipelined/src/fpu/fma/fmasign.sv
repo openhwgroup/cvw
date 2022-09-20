@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fclassivy.sv
+// fmasign.sv
 //
-// Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
+// Modified: 
 //
-// Purpose: classify unit
+// Purpose: FMA Sign Logic
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,44 +27,24 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
-module fclassify (
-    input logic         Xs,     // sign bit
-    input logic         XNaN,   // is NaN
-    input logic         XSNaN,  // is signaling NaN
-    input logic         XDenorm,// is denormal
-    input logic         XZero,  // is zero
-    input logic         XInf,   // is infinity
-    output logic [`XLEN-1:0] ClassRes// classify result
+module fmasign(    
+    input  logic [2:0]  OpCtrl,               // opperation contol
+    input  logic        Xs, Ys, Zs,    // sign of the inputs
+    output logic        Ps,     // the product's sign - takes opperation into account
+    output logic        As,   // aligned addend sign used in fma - takes opperation into account
+    output logic        InvA // Effective subtraction: invert addend
 );
 
-    logic PInf, PZero, PNorm, PDenorm;
-    logic NInf, NZero, NNorm, NDenorm;
-    logic XNorm;
-   
-    // determine the sub categories
-    assign XNorm= ~(XNaN | XInf| XDenorm| XZero);
-    assign PInf = ~Xs&XInf;
-    assign NInf = Xs&XInf;
-    assign PNorm = ~Xs&XNorm;
-    assign NNorm = Xs&XNorm;
-    assign PDenorm = ~Xs&XDenorm;
-    assign NDenorm = Xs&XDenorm;
-    assign PZero = ~Xs&XZero;
-    assign NZero = Xs&XZero;
-
-    // determine sub category and combine into the result
-    //  bit 0 - -Inf
-    //  bit 1 - -Norm
-    //  bit 2 - -Denorm
-    //  bit 3 - -Zero
-    //  bit 4 - +Zero
-    //  bit 5 - +Denorm
-    //  bit 6 - +Norm
-    //  bit 7 - +Inf
-    //  bit 8 - signaling NaN
-    //  bit 9 - quiet NaN
-    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
-
+    // Calculate the product's sign
+    //      Negate product's sign if FNMADD or FNMSUB
+    
+    // flip is negation opperation
+    assign Ps = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]);
+    // flip addend sign for subtraction
+    assign As = Zs^OpCtrl[0];
+   // Effective subtraction when product and addend have opposite signs
+    assign InvA = As ^ Ps;
 endmodule
