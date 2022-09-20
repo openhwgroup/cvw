@@ -213,7 +213,7 @@ module lsu (
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     // Don't perform size checking on DTIM
     /* verilator lint_off WIDTH */
-    assign MemStage = CPUBusy | MemRWM[0] | reset; // 1 = M stage; 0 = E stage
+    assign MemStage = MemRWM[0] | reset; // 1 = M stage; 0 = E stage
     assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
     assign DTIMAccessRW = |MemRWM;
@@ -222,7 +222,7 @@ module lsu (
     //assign NonDTIMMemRWM = MemRWM & ~{2{SelDTIM}}; // disable access to bus-based memory map when DTIM is selected
     assign NonDTIMMemRWM = MemRWM; // *** fix
 
-    dtim dtim(.clk, .reset, .MemRWM,
+    dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM,
               .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));

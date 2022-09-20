@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module irom(
-  input logic               clk, reset,
+  input logic               clk, reset, ce,
   input logic [`XLEN-1:0]   Adr,
   output logic [31:0]  ReadData
 );
@@ -38,6 +38,6 @@ module irom(
   localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
   localparam OFFSET = $clog2(`LLEN/8);
 
-  brom1p1r #(ADDR_WDITH, 32) rom(.clk, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
+  brom1p1r #(ADDR_WDITH, 32) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
 endmodule  
   
