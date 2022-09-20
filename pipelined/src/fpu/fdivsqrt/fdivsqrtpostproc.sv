@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrtpostproc.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
@@ -33,20 +33,21 @@
 module fdivsqrtpostproc(
   input logic [`DIVb+3:0] WS, WC,
   input logic [`DIVN-2:0]  D, // U0.N-1
-  input logic [`DIVb:0] FirstS, FirstSM, FirstQ, FirstQM,
-  input logic [`DIVb-1:0] FirstC,
-  input logic  Firstqn,
+  input logic [`DIVb:0] FirstU, FirstUM, 
+  input logic [`DIVb+1:0] FirstC,
+  input logic  Firstun,
   input logic SqrtM,
-  output logic [`DIVb-(`RADIX/4):0] QmM,
+  output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM
 );
   
   logic [`DIVb+3:0] W;
+  logic [`DIVb:0] PreQmM;
   logic NegSticky;
+  logic weq0;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
-  logic weq0;
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
 
   if (`RADIX == 2) begin
@@ -55,11 +56,11 @@ module fdivsqrtpostproc(
     logic wfeq0;
     logic [`DIVb+3:0] WCF, WSF;
 
-    assign FirstK = ({3'b111, FirstC} & ~({3'b111, FirstC} << 1));
-    assign FZero = SqrtM ? {FirstSM[`DIVb], FirstSM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
+    assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
+    assign FZero = SqrtM ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
-    assign WZero = weq0|(wfeq0 & Firstqn);
+    assign WZero = weq0|(wfeq0 & Firstun);
   end else begin
     assign WZero = weq0;
   end 
@@ -70,12 +71,7 @@ module fdivsqrtpostproc(
   assign NegSticky = W[`DIVb+3];
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-  always_comb
-    if(SqrtM) // sqrt ouputs in the range (1, .5]
-      if(NegSticky) QmM = {FirstSM[`DIVb-1-(`RADIX/4):0], 1'b0};
-      else          QmM = {FirstS[`DIVb-1-(`RADIX/4):0], 1'b0};
-    else  
-      if(NegSticky) QmM = FirstQM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstQ[`DIVb-(`RADIX/4):0];
 
+  assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
+  assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 endmodule

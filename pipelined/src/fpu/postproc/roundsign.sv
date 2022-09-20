@@ -1,9 +1,10 @@
 ///////////////////////////////////////////
+// roundsign.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Written: me@KatherineParry.com
+// Modified: 7/5/2022
 //
-// Purpose: Leading Zero Anticipator
+// Purpose: Sign calculation ofr rounding
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -26,35 +27,28 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
 `include "wally-config.vh"
 
-module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
-    input logic [WIDTH-1:0] 	       A, // addend
-    input logic [2*`NF+3:0] 	       Pm, // product
-    input logic 		       Cin, // carry in
-    input logic sub,
-    output logic [$clog2(WIDTH+1)-1:0] SCnt   // normalization shift count for the positive result
-    ); 
+module roundsign(
+    input logic         FmaPs, FmaAs,
+    input logic         FmaInvA,
+    input logic         Xs,
+    input logic         Ys,
+    input logic         FmaNegSum,
+    input logic         Sqrt,
+    input logic         FmaOp,
+    input logic         DivOp,
+    input logic         CvtOp,
+    input logic         CvtCs,
+    input logic         FmaSs,
+    output logic        Ms
+);
 
-   logic [WIDTH:0] 	       F;
-   logic [WIDTH-1:0]  B, P, G, K;
-    logic [WIDTH-1:0] Pp1, Gm1, Km1;
+    logic Qs;
 
-    assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
+    assign Qs = Xs^(Ys&~Sqrt);
 
-    assign P = A^B;
-    assign G = A&B;
-    assign K= ~A&~B;
+    // Sign for rounding calulation
+    assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
 
-   assign Pp1 = {sub, P[WIDTH-1:1]};
-   assign Gm1 = {G[WIDTH-2:0], Cin};
-   assign Km1 = {K[WIDTH-2:0], ~Cin};
-   
-    // Apply function to determine Leading pattern
-    //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
-    assign F[WIDTH] = ~sub&P[WIDTH-1];
-    assign F[WIDTH-1:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
-
-    lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule

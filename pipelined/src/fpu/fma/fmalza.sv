@@ -1,9 +1,10 @@
 ///////////////////////////////////////////
+// fmalza.sv
 //
 // Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
 // Modified: 
 //
-// Purpose: FMA Sign Logic
+// Purpose: Leading Zero Anticipator
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -29,21 +30,32 @@
 
 `include "wally-config.vh"
 
-module fmasign(    
-    input  logic [2:0]  OpCtrl,               // opperation contol
-    input  logic        Xs, Ys, Zs,    // sign of the inputs
-    output logic        Ps,     // the product's sign - takes opperation into account
-    output logic        As,   // aligned addend sign used in fma - takes opperation into account
-    output logic        InvA // Effective subtraction: invert addend
-);
+module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
+    input logic [WIDTH-1:0] 	       A, // addend
+    input logic [2*`NF+3:0] 	       Pm, // product
+    input logic 		       Cin, // carry in
+    input logic sub,
+    output logic [$clog2(WIDTH+1)-1:0] SCnt   // normalization shift count for the positive result
+    ); 
 
-    // Calculate the product's sign
-    //      Negate product's sign if FNMADD or FNMSUB
-    
-    // flip is negation opperation
-    assign Ps = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]);
-    // flip addend sign for subtraction
-    assign As = Zs^OpCtrl[0];
-   // Effective subtraction when product and addend have opposite signs
-    assign InvA = As ^ Ps;
+   logic [WIDTH:0] 	       F;
+   logic [WIDTH-1:0]  B, P, G, K;
+    logic [WIDTH-1:0] Pp1, Gm1, Km1;
+
+    assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
+
+    assign P = A^B;
+    assign G = A&B;
+    assign K= ~A&~B;
+
+   assign Pp1 = {sub, P[WIDTH-1:1]};
+   assign Gm1 = {G[WIDTH-2:0], Cin};
+   assign Km1 = {K[WIDTH-2:0], ~Cin};
+   
+    // Apply function to determine Leading pattern
+    //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
+    assign F[WIDTH] = ~sub&P[WIDTH-1];
+    assign F[WIDTH-1:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
+
+    lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule

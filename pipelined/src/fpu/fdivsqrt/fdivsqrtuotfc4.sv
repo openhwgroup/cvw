@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fclassivy.sv
+// fdivsqrtuotfc4.sv
 //
-// Written: me@KatherineParry.com
-// Modified: 7/5/2022
+// Written: me@KatherineParry.com, cturek@hmc.edu 
+// Modified:7/14/2022
 //
-// Purpose: classify unit
+// Purpose: Radix 4 unified on-the-fly converter
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -27,44 +27,42 @@
 //   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
-module fclassify (
-    input logic         Xs,     // sign bit
-    input logic         XNaN,   // is NaN
-    input logic         XSNaN,  // is signaling NaN
-    input logic         XDenorm,// is denormal
-    input logic         XZero,  // is zero
-    input logic         XInf,   // is infinity
-    output logic [`XLEN-1:0] ClassRes// classify result
+module fdivsqrtuotfc4(
+  input  logic [3:0]   u,
+  input  logic         Sqrt,
+  input  logic [`DIVb:0] U, UM,
+  input  logic [`DIVb:0] C,
+  output logic [`DIVb:0] UNext, UMNext
 );
+  //  The on-the-fly converter transfers the square root 
+  //  bits to the quotient as they come.
+  //  Use this otfc for division and square root.
 
-    logic PInf, PZero, PNorm, PDenorm;
-    logic NInf, NZero, NNorm, NDenorm;
-    logic XNorm;
-   
-    // determine the sub categories
-    assign XNorm= ~(XNaN | XInf| XDenorm| XZero);
-    assign PInf = ~Xs&XInf;
-    assign NInf = Xs&XInf;
-    assign PNorm = ~Xs&XNorm;
-    assign NNorm = Xs&XNorm;
-    assign PDenorm = ~Xs&XDenorm;
-    assign NDenorm = Xs&XDenorm;
-    assign PZero = ~Xs&XZero;
-    assign NZero = Xs&XZero;
+  logic [`DIVb:0] K1, K2, K3;
+  assign K1 = (C&~(C << 1));        // K
+  assign K2 = ((C << 1)&~(C << 2)); // 2K
+  assign K3 = (C & ~(C << 2));      // 3K
 
-    // determine sub category and combine into the result
-    //  bit 0 - -Inf
-    //  bit 1 - -Norm
-    //  bit 2 - -Denorm
-    //  bit 3 - -Zero
-    //  bit 4 - +Zero
-    //  bit 5 - +Denorm
-    //  bit 6 - +Norm
-    //  bit 7 - +Inf
-    //  bit 8 - signaling NaN
-    //  bit 9 - quiet NaN
-    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+  always_comb begin
+    if (u[3]) begin
+      UNext  = U | K2;
+      UMNext = U | K1;
+    end else if (u[2]) begin
+      UNext  = U | K1;
+      UMNext = U;
+    end else if (u[1]) begin
+      UNext  = UM | K3;
+      UMNext = UM | K2;
+    end else if (u[0]) begin
+      UNext  = UM | K2;
+      UMNext = UM | K1;
+    end else begin        // digit = 0
+      UNext  = U;
+      UMNext = UM | K3;
+    end 
+  end
 
 endmodule
