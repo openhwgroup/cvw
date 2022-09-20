@@ -8,11 +8,10 @@ module divshiftcalc(
     output logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt,
     output logic [`NORMSHIFTSZ-1:0] DivShiftIn,
     output logic DivResDenorm,
-    output logic [`NE+1:0] DivDenormShift
+    output logic DivDenormShiftPos
 );
     logic [`LOGNORMSHIFTSZ-1:0] NormShift, DivDenormShiftAmt;
-    //logic [`NE+1:0] DivDenormShift;
-    logic DivDenormShiftPos;
+    logic [`NE+1:0] DivDenormShift;
 
     logic [`DURLEN-1:0] DivEarlyTermShift = 0;
 
@@ -38,9 +37,10 @@ module divshiftcalc(
     // inital Left shift amount  = NF
     // shift one more if the it's a minimally redundent radix 4 - one entire cycle needed for integer bit
     assign NormShift = (`LOGNORMSHIFTSZ)'(`NF);
+
     // if the shift amount is negitive then don't shift (keep sticky bit)
     // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-    assign DivDenormShiftAmt = DivDenormShift[`LOGNORMSHIFTSZ-1:0]&{`LOGNORMSHIFTSZ{DivDenormShiftPos}};
+    assign DivDenormShiftAmt = DivDenormShiftPos ? DivDenormShift[`LOGNORMSHIFTSZ-1:0] : '0;
     assign DivShiftAmt = DivResDenorm ? DivDenormShiftAmt : NormShift;
 
     assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1+(`RADIX/4)-`NF{1'b0}}};
