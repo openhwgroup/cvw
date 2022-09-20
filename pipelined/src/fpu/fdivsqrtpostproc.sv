@@ -37,7 +37,7 @@ module fdivsqrtpostproc(
   input logic [`DIVb+1:0] FirstC,
   input logic  Firstqn,
   input logic SqrtM,
-  output logic [`DIVb-(`RADIX/4):0] QmM, // *** why
+  output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM
 );
@@ -72,10 +72,10 @@ module fdivsqrtpostproc(
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   always_comb
     if (SqrtM) begin
-      if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0] << 1;
-      else          QmM = FirstU[`DIVb-(`RADIX/4):0]  << 1;
+      if(NegSticky) QmM = FirstUM[`DIVb:0] << 1;
+      else          QmM = FirstU[`DIVb:0]  << 1;
     end else begin // divide
-      if(NegSticky) QmM = FirstUM[`DIVb-(`RADIX/4):0];
-      else          QmM = FirstU[`DIVb-(`RADIX/4):0];
+      if(NegSticky) QmM = FirstUM[`DIVb:0];
+      else          QmM = FirstU[`DIVb:0];
     end
 endmodule

@@ -59,7 +59,7 @@ module postprocess (
     input logic                             DivS,
     input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
-    input logic  [`DIVb-(`RADIX/4):0]                DivQm,
+    input logic  [`DIVb:0]                  DivQm,
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
