@@ -117,7 +117,7 @@ module fdivsqrtiter(
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
       if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM,
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .qn(qn[i]));
       end else begin: stage

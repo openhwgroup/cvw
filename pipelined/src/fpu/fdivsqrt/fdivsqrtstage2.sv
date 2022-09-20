@@ -33,7 +33,7 @@
 /* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 (
   input logic [`DIVN-2:0] D,
-  input logic [`DIVb+3:0]  DBar, D2, DBar2,
+  input logic [`DIVb+3:0]  DBar, 
   input logic [`DIVb:0] U, UM,
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
