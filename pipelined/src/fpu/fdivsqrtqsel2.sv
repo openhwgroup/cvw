@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fmamult.sv
+// fdivsqrtqsel2.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
+// Modified:13 January 2022
 //
-// Purpose: FMA Significand Multiplier
+// Purpose: Radix 2 Quotient Digit Selection
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,10 +30,34 @@
 
 `include "wally-config.vh"
 
-module fmamult(
-    input logic [`NF:0] Xm, Ym,
-    output logic [2*`NF+1:0] Pm
+module fdivsqrtqsel2 ( 
+  input  logic [3:0] ps, pc, 
+  output logic         qp, qz, qn
 );
-    assign Pm = Xm * Ym;
-endmodule
+ 
+  logic [3:0]  p, g;
+  logic          magnitude, sign, cout;
 
+  // The quotient selection logic is presented for simplicity, not
+  // for efficiency.  You can probably optimize your logic to
+  // select the proper divisor with less delay.
+
+  // Qmient equations from EE371 lecture notes 13-20
+  assign p = ps ^ pc;
+  assign g = ps & pc;
+
+  //assign magnitude = ~(&p[2:0]);
+  assign cout = g[2] | (p[2] & (g[1] | p[1] & g[0]));
+  //assign sign = p[3] ^ cout;
+  assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
+			  (ps[0]^pc[0]));
+  assign sign = (ps[3]^pc[3])^
+      (ps[2] & pc[2] | ((ps[2]^pc[2]) &
+			    (ps[1]&pc[1] | ((ps[1]^pc[1]) &
+						(ps[0]&pc[0])))));
+
+  // Produce quotient = +1, 0, or -1
+  assign qp = magnitude & ~sign;
+  assign qz = ~magnitude;
+  assign qn = magnitude & sign;
+endmodule

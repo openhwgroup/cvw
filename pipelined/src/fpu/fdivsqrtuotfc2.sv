@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fmamult.sv
+// fdivsqrtuotfc2.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Written: me@KatherineParry.com, cturek@hmc.edu 
+// Modified:7/14/2022
 //
-// Purpose: FMA Significand Multiplier
+// Purpose: Radix 2 unified on-the-fly converter
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,10 +30,32 @@
 
 `include "wally-config.vh"
 
-module fmamult(
-    input logic [`NF:0] Xm, Ym,
-    output logic [2*`NF+1:0] Pm
+///////////////////////////////
+// Unified OTFC, Radix 2 //
+///////////////////////////////
+module fdivsqrtuotfc2(
+  input  logic         sp, sz,
+  input  logic [`DIVb+1:0] C,
+  input logic [`DIVb:0] U, UM,
+  output logic [`DIVb:0] UNext, UMNext
 );
-    assign Pm = Xm * Ym;
-endmodule
+  //  The on-the-fly converter transfers the divsqrt
+  //  bits to the quotient as they come.
+  logic [`DIVb:0] K;
 
+  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
+
+  always_comb begin
+    if (sp) begin
+      UNext  = U | K;
+      UMNext = U;
+    end else if (sz) begin
+      UNext  = U;
+      UMNext = UM | K;
+    end else begin        // If sp and sz are not true, then sn is
+      UNext  = UM | K;
+      UMNext = UM;
+    end 
+  end
+
+endmodule

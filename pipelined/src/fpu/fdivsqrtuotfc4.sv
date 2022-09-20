@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// otfc.sv
+// fdivsqrtuotfc4.sv
 //
 // Written: me@KatherineParry.com, cturek@hmc.edu 
 // Modified:7/14/2022
 //
-// Purpose: On the fly conversion
+// Purpose: Radix 4 unified on-the-fly converter
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,40 +30,7 @@
 
 `include "wally-config.vh"
 
-///////////////////////////////
-// Un ified OTFC, Radix 2 //
-///////////////////////////////
-module uotfc2(
-  input  logic         sp, sz,
-  input  logic [`DIVb+1:0] C,
-  input logic [`DIVb:0] U, UM,
-  output logic [`DIVb:0] UNext, UMNext
-);
-  //  The on-the-fly converter transfers the divsqrt
-  //  bits to the quotient as they come.
-  logic [`DIVb:0] K;
-
-  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
-
-  always_comb begin
-    if (sp) begin
-      UNext  = U | K;
-      UMNext = U;
-    end else if (sz) begin
-      UNext  = U;
-      UMNext = UM | K;
-    end else begin        // If sp and sz are not true, then sn is
-      UNext  = UM | K;
-      UMNext = UM;
-    end 
-  end
-
-endmodule
-
-///////////////////////////////
-// Unified OTFC, Radix 4 //
-///////////////////////////////
-module uotfc4(
+module fdivsqrtuotfc4(
   input  logic [3:0]   s,
   input  logic         Sqrt,
   input  logic [`DIVb:0] U, UM,
