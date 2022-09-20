@@ -43,5 +43,8 @@ module divshiftcalc(
     assign DivDenormShiftAmt = DivDenormShiftPos ? DivDenormShift[`LOGNORMSHIFTSZ-1:0] : '0;
     assign DivShiftAmt = DivResDenorm ? DivDenormShiftAmt : NormShift;
 
-    assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1+(`RADIX/4)-`NF{1'b0}}};
+    if (`RADIX == 4)
+        assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1+(`RADIX/4)-`NF{1'b0}}};
+    else
+        assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
 endmodule
