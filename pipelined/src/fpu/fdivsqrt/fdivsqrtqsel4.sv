@@ -35,7 +35,7 @@ module fdivsqrtqsel4 (
   input logic [4:0] Smsbs,
   input logic [`DIVb+3:0] WS, WC,
   input logic Sqrt, j1,
-  output logic [3:0] q
+  output logic [3:0] u
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
@@ -49,7 +49,7 @@ module fdivsqrtqsel4 (
   // W =      xxxx.xxx...
 	// Wmsbs = |        |
 
-	logic [3:0] QSel4[1023:0];
+	logic [3:0] USel4[1023:0];
 
   always_comb begin 
     integer a, w, i, w2;
@@ -58,46 +58,46 @@ module fdivsqrtqsel4 (
         i = a*128+w;
         w2 = w-128*(w>=64); // convert to two's complement
         case(a)
-          0: if($signed(w2)>=$signed(12))      QSel4[i] = 4'b1000;
-            else if(w2>=4)   QSel4[i] = 4'b0100; 
-            else if(w2>=-4)  QSel4[i] = 4'b0000; 
-            else if(w2>=-13) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          1: if(w2>=14)      QSel4[i] = 4'b1000;
-            else if(w2>=4)   QSel4[i] = 4'b0100;  
-            else if(w2>=-4)  QSel4[i] = 4'b0000; 
-            else if(w2>=-14) QSel4[i] = 4'b0010;  
-            else             QSel4[i] = 4'b0001; 
-          2: if(w2>=16)      QSel4[i] = 4'b1000;
-            else if(w2>=4)   QSel4[i] = 4'b0100; 
-            else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-16) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          3: if(w2>=16)      QSel4[i] = 4'b1000;
-            else if(w2>=4)   QSel4[i] = 4'b0100; 
-            else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-17) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          4: if(w2>=18)      QSel4[i] = 4'b1000;
-            else if(w2>=6)   QSel4[i] = 4'b0100; 
-            else if(w2>=-6)  QSel4[i] = 4'b0000; 
-            else if(w2>=-18) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          5: if(w2>=20)      QSel4[i] = 4'b1000;
-            else if(w2>=6)   QSel4[i] = 4'b0100; 
-            else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-20) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          6: if(w2>=20)      QSel4[i] = 4'b1000;
-            else if(w2>=8)   QSel4[i] = 4'b0100; 
-            else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-22) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
-          7: if(w2>=24)      QSel4[i] = 4'b1000; 
-            else if(w2>=8)   QSel4[i] = 4'b0100; 
-            else if(w2>=-8)  QSel4[i] = 4'b0000; 
-            else if(w2>=-22) QSel4[i] = 4'b0010; 
-            else             QSel4[i] = 4'b0001; 
+          0: if($signed(w2)>=$signed(12))      USel4[i] = 4'b1000;
+            else if(w2>=4)   USel4[i] = 4'b0100; 
+            else if(w2>=-4)  USel4[i] = 4'b0000; 
+            else if(w2>=-13) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          1: if(w2>=14)      USel4[i] = 4'b1000;
+            else if(w2>=4)   USel4[i] = 4'b0100;  
+            else if(w2>=-4)  USel4[i] = 4'b0000; 
+            else if(w2>=-14) USel4[i] = 4'b0010;  
+            else             USel4[i] = 4'b0001; 
+          2: if(w2>=16)      USel4[i] = 4'b1000;
+            else if(w2>=4)   USel4[i] = 4'b0100; 
+            else if(w2>=-6)  USel4[i] = 4'b0000; 
+            else if(w2>=-16) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          3: if(w2>=16)      USel4[i] = 4'b1000;
+            else if(w2>=4)   USel4[i] = 4'b0100; 
+            else if(w2>=-6)  USel4[i] = 4'b0000; 
+            else if(w2>=-17) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          4: if(w2>=18)      USel4[i] = 4'b1000;
+            else if(w2>=6)   USel4[i] = 4'b0100; 
+            else if(w2>=-6)  USel4[i] = 4'b0000; 
+            else if(w2>=-18) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          5: if(w2>=20)      USel4[i] = 4'b1000;
+            else if(w2>=6)   USel4[i] = 4'b0100; 
+            else if(w2>=-8)  USel4[i] = 4'b0000; 
+            else if(w2>=-20) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          6: if(w2>=20)      USel4[i] = 4'b1000;
+            else if(w2>=8)   USel4[i] = 4'b0100; 
+            else if(w2>=-8)  USel4[i] = 4'b0000; 
+            else if(w2>=-22) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
+          7: if(w2>=24)      USel4[i] = 4'b1000; 
+            else if(w2>=8)   USel4[i] = 4'b0100; 
+            else if(w2>=-8)  USel4[i] = 4'b0000; 
+            else if(w2>=-22) USel4[i] = 4'b0010; 
+            else             USel4[i] = 4'b0001; 
         endcase
       end
   end
@@ -107,6 +107,6 @@ module fdivsqrtqsel4 (
       else if (Smsbs == 5'b10000) A = 3'b111;
       else A = Smsbs[2:0];
     end else A = Dmsbs;
-	assign q = QSel4[{A,Wmsbs}];
+	assign u = USel4[{A,Wmsbs}];
 	
 endmodule

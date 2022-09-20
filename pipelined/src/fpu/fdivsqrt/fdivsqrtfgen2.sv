@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module fdivsqrtfgen2 (
-  input  logic sp, sz,
+  input  logic up, uz,
   input  logic [`DIVb+1:0] C,
   input  logic [`DIVb:0] U, UM,
   output logic [`DIVb+3:0] F
@@ -51,8 +51,8 @@ module fdivsqrtfgen2 (
   // Choose which adder input will be used
 
   always_comb
-    if (sp)       F = FP;
-    else if (sz)  F = FZ;
+    if (up)       F = FP;
+    else if (uz)  F = FZ;
     else          F = FN;
 
 endmodule

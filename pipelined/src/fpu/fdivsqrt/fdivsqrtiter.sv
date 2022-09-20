@@ -44,7 +44,7 @@ module fdivsqrtiter(
   output logic [`DIVb+3:0]  NextWSN, NextWCN,
   output logic [`DIVb:0] FirstU, FirstUM,
   output logic [`DIVb+1:0] FirstC,
-  output logic             Firstqn,
+  output logic             Firstun,
   output logic [`DIVb+3:0]  FirstWS, FirstWC
 );
 
@@ -66,7 +66,7 @@ module fdivsqrtiter(
   logic [`DIVb:0] UMNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb+1:0] C[`DIVCOPIES:0]; // Q2.b
   logic [`DIVb+1:0] initC; // Q2.b
-  logic [`DIVCOPIES-1:0] qn; 
+  logic [`DIVCOPIES-1:0] un; 
 
  /* verilator lint_on UNOPTFLAT */
   logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
@@ -119,13 +119,13 @@ module fdivsqrtiter(
       if (`RADIX == 2) begin: stage
         fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .qn(qn[i]));
+        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
-        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .qn(qn[i]));
+        .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
       if(i<(`DIVCOPIES-1)) begin 
         assign WS[i+1] = WSA[i] << `LOGR;
@@ -149,6 +149,6 @@ module fdivsqrtiter(
   assign FirstU = U[0];
   assign FirstUM = UM[0];
   assign FirstC = C[0];
-  assign Firstqn = qn[0];
+  assign Firstun = un[0];
 endmodule
 
