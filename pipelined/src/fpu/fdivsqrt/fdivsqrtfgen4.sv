@@ -49,7 +49,7 @@ module fdivsqrtfgen4 (
   always_comb
     if (u[3])       F = F2;
     else if (u[2])  F = F1;
-    else if (U[1])  F = FN1;
+    else if (u[1])  F = FN1;
     else if (u[0])  F = FN2;
     else            F = F0;
 endmodule
