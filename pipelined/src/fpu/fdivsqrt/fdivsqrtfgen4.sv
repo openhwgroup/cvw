@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
 // Modified:13 January 2022
 //
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
+// Purpose: Radix 4 F Addend Generator
 // 
 // A component of the Wally configurable RISC-V project.
 // 
