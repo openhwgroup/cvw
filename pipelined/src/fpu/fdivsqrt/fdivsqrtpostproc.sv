@@ -35,7 +35,7 @@ module fdivsqrtpostproc(
   input logic [`DIVN-2:0]  D, // U0.N-1
   input logic [`DIVb:0] FirstU, FirstUM, 
   input logic [`DIVb+1:0] FirstC,
-  input logic  Firstqn,
+  input logic  Firstun,
   input logic SqrtM,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
@@ -60,7 +60,7 @@ module fdivsqrtpostproc(
     assign FZero = SqrtM ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
-    assign WZero = weq0|(wfeq0 & Firstqn);
+    assign WZero = weq0|(wfeq0 & Firstun);
   end else begin
     assign WZero = weq0;
   end 

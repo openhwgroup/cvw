@@ -34,7 +34,7 @@
 // Unified OTFC, Radix 2 //
 ///////////////////////////////
 module fdivsqrtuotfc2(
-  input  logic         sp, sz,
+  input  logic         up, uz,
   input  logic [`DIVb+1:0] C,
   input logic [`DIVb:0] U, UM,
   output logic [`DIVb:0] UNext, UMNext
@@ -46,13 +46,13 @@ module fdivsqrtuotfc2(
   assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
 
   always_comb begin
-    if (sp) begin
+    if (up) begin
       UNext  = U | K;
       UMNext = U;
-    end else if (sz) begin
+    end else if (uz) begin
       UNext  = U;
       UMNext = UM | K;
-    end else begin        // If sp and sz are not true, then sn is
+    end else begin        // If up and uz are not true, then un is
       UNext  = UM | K;
       UMNext = UM;
     end 

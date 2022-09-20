@@ -39,34 +39,33 @@ module fdivsqrtstage4 (
   input logic [`DIVb+1:0] C,
   output logic [`DIVb+1:0] CNext,
   input logic SqrtM, j1,
-  output logic qn,
+  output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
 );
  /* verilator lint_on UNOPTFLAT */
 
   logic [`DIVb+3:0]  Dsel;
-  logic [3:0]     q;
+  logic [3:0]     u;
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
   logic [4:0] Smsbs;
   logic CarryIn;
   assign CNext = {2'b11, C[`DIVb+1:2]};
 
-  // Qmient Selection logic
-  // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
-  // q encoding:
+  // Digit Selection logic
+  // u encoding:
 	// 1000 = +2
 	// 0100 = +1
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
   assign Smsbs = U[`DIVb:`DIVb-4];
-  fdivsqrtqsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
-  fdivsqrtfgen4 fgen4(.s(q), .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
+  fdivsqrtqsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .u);
+  fdivsqrtfgen4 fgen4(.u, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
   always_comb
-  case (q)
+  case (u)
     4'b1000: Dsel = DBar2;
     4'b0100: Dsel = DBar;
     4'b0000: Dsel = '0;
@@ -78,12 +77,12 @@ module fdivsqrtstage4 (
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
   assign AddIn = SqrtM ? F : Dsel;
-  assign CarryIn = ~SqrtM & (q[3] | q[2]); // +1 for 2's complement of -D and -2D 
+  assign CarryIn = ~SqrtM & (u[3] | u[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.u, .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 
-  assign qn = 0; // unused for radix 4
+  assign un = 0; // unused for radix 4
 endmodule
 
 

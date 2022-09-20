@@ -32,7 +32,7 @@
 
 module fdivsqrtqsel2 ( 
   input  logic [3:0] ps, pc, 
-  output logic         qp, qz, qn
+  output logic         up, uz, un
 );
  
   logic [3:0]  p, g;
@@ -42,7 +42,7 @@ module fdivsqrtqsel2 (
   // for efficiency.  You can probably optimize your logic to
   // select the proper divisor with less delay.
 
-  // Qmient equations from EE371 lecture notes 13-20
+  // Quotient equations from EE371 lecture notes 13-20
   assign p = ps ^ pc;
   assign g = ps & pc;
 
@@ -56,8 +56,8 @@ module fdivsqrtqsel2 (
 			    (ps[1]&pc[1] | ((ps[1]^pc[1]) &
 						(ps[0]&pc[0])))));
 
-  // Produce quotient = +1, 0, or -1
-  assign qp = magnitude & ~sign;
-  assign qz = ~magnitude;
-  assign qn = magnitude & sign;
+  // Produce digit = +1, 0, or -1
+  assign up = magnitude & ~sign;
+  assign uz = ~magnitude;
+  assign un = magnitude & sign;
 endmodule

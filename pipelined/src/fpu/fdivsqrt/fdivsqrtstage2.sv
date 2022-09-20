@@ -38,7 +38,7 @@ module fdivsqrtstage2 (
   input logic [`DIVb+3:0]  WS, WC,
   input logic [`DIVb+1:0] C,
   input logic SqrtM,
-  output logic qn,
+  output logic un,
   output logic [`DIVb+1:0] CNext,
   output logic [`DIVb:0] UNext, UMNext, 
   output logic [`DIVb+3:0]  WSA, WCA
@@ -46,30 +46,34 @@ module fdivsqrtstage2 (
  /* verilator lint_on UNOPTFLAT */
 
   logic [`DIVb+3:0]  Dsel;
-  logic qp, qz;
+  logic up, uz;
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
 
   assign CNext = {1'b1, C[`DIVb+1:1]};
 
   // Qmient Selection logic
-  // Given partial remainder, select quotient of +1, 0, or -1 (qp, qz, pm)
+  // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
   // q encoding:
 	// 1000 = +2
 	// 0100 = +1
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
-  fdivsqrtfgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .F);
+  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
+  fdivsqrtfgen2 fgen2(.up, .uz, .C(CNext), .U, .UM, .F);
 
-  assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
+  always_comb
+    if      (up) Dsel = DBar;
+    else if (uz) Dsel = '0; // qz
+    else         Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}}; // un
+
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
   assign AddIn = SqrtM ? F : Dsel;
-  csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
+  csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtM, WSA, WCA);
 
-  fdivsqrtuotfc2 uotfc2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc2 uotfc2(.up, .uz, .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 
