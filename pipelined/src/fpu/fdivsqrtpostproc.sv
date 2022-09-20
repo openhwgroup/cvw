@@ -43,6 +43,7 @@ module fdivsqrtpostproc(
 );
   
   logic [`DIVb+3:0] W;
+  logic [`DIVb:0] PreQmM;
   logic NegSticky;
   logic weq0;
 
@@ -70,12 +71,7 @@ module fdivsqrtpostproc(
   assign NegSticky = W[`DIVb+3];
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-  always_comb
-    if (SqrtM) begin
-      if(NegSticky) QmM = FirstUM[`DIVb:0] << 1;
-      else          QmM = FirstU[`DIVb:0]  << 1;
-    end else begin // divide
-      if(NegSticky) QmM = FirstUM[`DIVb:0];
-      else          QmM = FirstU[`DIVb:0];
-    end
+
+  assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
+  assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 endmodule
