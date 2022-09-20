@@ -103,7 +103,7 @@ module postprocess (
     logic [`NE+1:0] Qe;
     logic DivByZero;
     logic DivResDenorm;
-    logic [`NE+1:0] DivDenormShift;
+    logic DivDenormShiftPos;
     // conversion signals
     logic [`CVTLEN+`NF:0] CvtShiftIn;    // number to be shifted
     logic [1:0] CvtNegResMsbs;
@@ -151,7 +151,7 @@ module postprocess (
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaPe, .FmaSCnt, .Fmt, .FmaKillProd, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShift, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShiftPos, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
@@ -181,7 +181,7 @@ module postprocess (
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
     shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .NormSumExp,
-                                .DivResDenorm, .DivDenormShift, .DivOp, .DivQe,
+                                .DivResDenorm, .DivDenormShiftPos, .DivOp, .DivQe,
                                 .Qe, .FmaSZero, .Shifted, .FmaMe, .Mf);
 
     ///////////////////////////////////////////////////////////////////////////////

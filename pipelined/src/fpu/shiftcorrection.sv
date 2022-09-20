@@ -34,7 +34,7 @@ module shiftcorrection(
     input logic                     DivOp,
     input logic                     DivResDenorm,
     input logic  [`NE+1:0]          DivQe,
-    input logic  [`NE+1:0]          DivDenormShift,
+    input logic                     DivDenormShiftPos,
     input logic  [`NE+1:0]          NormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     input logic                     FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
     input logic                     FmaSZero,
@@ -66,5 +66,5 @@ module shiftcorrection(
 
     // the quotent is in the range [.5,2) if there is no early termination
     // if the quotent < 1 and not denormal then subtract 1 to account for the normalization shift
-    assign Qe = ((DivResDenorm)&~DivDenormShift[`NE+1]) ? (`NE+2)'(0) : DivQe - {(`NE+1)'(0), ~LZAPlus1};
+    assign Qe = (DivResDenorm & DivDenormShiftPos) ? '0 : DivQe - {(`NE+1)'(0), ~LZAPlus1};
 endmodule
