@@ -190,13 +190,13 @@ module ifu (
     logic [`PA_BITS-1:0] IROMAdr;
     logic             IROMAccessRW;
     /* verilator lint_off WIDTH */
-    assign IROMAdr = CPUBusy | reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
+    assign IROMAdr = reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
  
     adrdec iromdec(PCFExt, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, 1'b1, 2'b10, 4'b1111, SelIROM);
     //assign NonIROMMemRWM = {~SelIROM, 1'b0};
     assign NonIROMMemRWM = 2'b10;
-    irom irom(.clk, .reset, .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
  
   end else begin
     assign SelIROM = 0; assign NonIROMMemRWM = 2'b10;

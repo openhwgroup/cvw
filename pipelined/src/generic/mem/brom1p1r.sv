@@ -41,6 +41,7 @@ module brom1p1r
 	//----------------------------------------------------------------------
 	) (
 	   input logic 					 clk,
+	   input logic 					 ce,
 	   input logic [ADDR_WIDTH-1:0]  addr,
 	   output logic [DATA_WIDTH-1:0] dout
 	   );
@@ -48,7 +49,7 @@ module brom1p1r
   logic [DATA_WIDTH-1:0] 			 ROM [(2**ADDR_WIDTH)-1:0];
 
   always @ (posedge clk) begin
-	dout <= ROM[addr];    
+    if(ce) dout <= ROM[addr];    
   end
 
   if(PRELOAD_ENABLED) begin
