@@ -136,9 +136,9 @@ module fdivsqrtiter(
     end
   endgenerate
 
-  // Initialize U to 1 and UM to 0 for square root; U to 0 and UM to -1 for division
+  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
   assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
-  assign initUM = SqrtE ? 0 : '1; 
+  assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
   mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStart, UMux);
   mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStart, UMMux);
   flopen #(`DIVb+1) UReg(clk, DivStart|DivBusy, UMux, U[0]);
