@@ -5,7 +5,7 @@ module divshiftcalc(
     input logic  [`FMTBITS-1:0] Fmt,
     input logic Sqrt,
     input logic [`NE+1:0] DivQe,
-    output logic [$clog2(`NORMSHIFTSZ)-1:0] DivShiftAmt,
+    output logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt,
     output logic [`NORMSHIFTSZ-1:0] DivShiftIn,
     output logic DivResDenorm,
     output logic [`NE+1:0] DivDenormShift
@@ -36,7 +36,7 @@ module divshiftcalc(
     assign NormShift = (`NE+2)'(`NF);
     // if the shift amount is negitive then dont shift (keep sticky bit)
     // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
-    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[$clog2(`NORMSHIFTSZ)-1:0]&{$clog2(`NORMSHIFTSZ){~DivDenormShift[`NE+1]}} : NormShift[$clog2(`NORMSHIFTSZ)-1:0])+{{$clog2(`NORMSHIFTSZ)-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, 
+    assign DivShiftAmt = (DivResDenorm ?  DivDenormShift[`LOGNORMSHIFTSZ-1:0]&{`LOGNORMSHIFTSZ{~DivDenormShift[`NE+1]}} : NormShift[`LOGNORMSHIFTSZ-1:0])+{{`LOGNORMSHIFTSZ-`DURLEN-$clog2(`LOGR*`DIVCOPIES){1'b0}}, 
     DivEarlyTermShift&{`DURLEN{~(DivDenormShift[`NE+1]|Sqrt)}}, {$clog2(`LOGR*`DIVCOPIES){1'b0}}};
 
     assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1+(`RADIX/4)-`NF{1'b0}}};
