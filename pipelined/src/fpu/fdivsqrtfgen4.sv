@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fmamult.sv
+// fdivsqrtfgen4.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
+// Modified:13 January 2022
 //
-// Purpose: FMA Significand Multiplier
+// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,10 +30,26 @@
 
 `include "wally-config.vh"
 
-module fmamult(
-    input logic [`NF:0] Xm, Ym,
-    output logic [2*`NF+1:0] Pm
+module fdivsqrtfgen4 (
+  input  logic [3:0] s,
+  input  logic [`DIVb+3:0] C, U, UM,
+  output logic [`DIVb+3:0] F
 );
-    assign Pm = Xm * Ym;
-endmodule
+  logic [`DIVb+3:0] F2, F1, F0, FN1, FN2;
+  
+  // Generate for both positive and negative bits
+  assign F2  = (~U << 2) & (C << 2);
+  assign F1  = ~(U << 1) & C;
+  assign F0  = '0;
+  assign FN1 = (UM << 1) | (C & ~(C << 3));
+  assign FN2 = (UM << 2) | ((C << 2)&~(C << 4));
 
+  // Choose which adder input will be used
+
+  always_comb
+    if (s[3])       F = F2;
+    else if (s[2])  F = F1;
+    else if (s[1])  F = FN1;
+    else if (s[0])  F = FN2;
+    else            F = F0;
+endmodule

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fmamult.sv
+// fdivsqrtfgen2.sv
 //
-// Written:  6/23/2021 me@KatherineParry.com, David_Harris@hmc.edu
-// Modified: 
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu 
+// Modified:13 January 2022
 //
-// Purpose: FMA Significand Multiplier
+// Purpose: Radix 2 F Addend Generator
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -30,10 +30,29 @@
 
 `include "wally-config.vh"
 
-module fmamult(
-    input logic [`NF:0] Xm, Ym,
-    output logic [2*`NF+1:0] Pm
+module fdivsqrtfgen2 (
+  input  logic sp, sz,
+  input  logic [`DIVb+1:0] C,
+  input  logic [`DIVb:0] U, UM,
+  output logic [`DIVb+3:0] F
 );
-    assign Pm = Xm * Ym;
-endmodule
+  logic [`DIVb+3:0] FP, FN, FZ;
+  logic [`DIVb+3:0] SExt, SMExt, CExt;
 
+  assign SExt = {3'b0, U};
+  assign SMExt = {3'b0, UM};
+  assign CExt = {2'b11, C}; // extend C from Q2.k to Q4.k
+
+  // Generate for both positive and negative bits
+  assign FP = ~(SExt << 1) & CExt;
+  assign FN = (SMExt << 1) | (CExt & ~(CExt << 2));
+  assign FZ = '0;
+
+  // Choose which adder input will be used
+
+  always_comb
+    if (sp)       F = FP;
+    else if (sz)  F = FZ;
+    else          F = FN;
+
+endmodule

@@ -62,8 +62,8 @@ module fdivsqrtstage4 (
 	// 0010 = -1
 	// 0001 = -2
   assign Smsbs = U[`DIVb:`DIVb-4];
-  qsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
-  fgen4 fgen4(.s(q), .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
+  fdivsqrtqsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .q);
+  fdivsqrtfgen4 fgen4(.s(q), .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
   always_comb
   case (q)
@@ -81,7 +81,7 @@ module fdivsqrtstage4 (
   assign CarryIn = ~SqrtM & (q[3] | q[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
  
-  uotfc4 uotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.s(q), .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 
   assign qn = 0; // unused for radix 4
 endmodule

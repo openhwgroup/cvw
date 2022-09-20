@@ -60,8 +60,8 @@ module fdivsqrtstage2 (
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  qsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
-  fgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .F);
+  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], qp, qz, qn);
+  fdivsqrtfgen2 fgen2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .F);
 
   assign Dsel = {`DIVb+4{~qz}}&(qp ? DBar : {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}});
   // Partial Product Generation
@@ -69,7 +69,7 @@ module fdivsqrtstage2 (
   assign AddIn = SqrtM ? F : Dsel;
   csa #(`DIVb+4) csa(WS, WC, AddIn, qp&~SqrtM, WSA, WCA);
 
-  uotfc2 uotfc2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc2 uotfc2(.sp(qp), .sz(qz), .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 
