@@ -37,6 +37,7 @@ module fdivsqrtpostproc(
   input logic [`DIVb+1:0] FirstC,
   input logic  Firstun,
   input logic SqrtM,
+  input logic SpecialCase,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM
@@ -64,7 +65,7 @@ module fdivsqrtpostproc(
   end else begin
     assign WZero = weq0;
   end 
-  assign DivSM = ~WZero;
+  assign DivSM = ~WZero & ~(SpecialCase & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
   // Determine if sticky bit is negative
   assign W = WC+WS;
