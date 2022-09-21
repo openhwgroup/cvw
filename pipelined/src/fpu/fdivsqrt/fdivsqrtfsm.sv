@@ -45,7 +45,7 @@ module fdivsqrtfsm(
   input logic WZero,
   output logic DivDone,
   output logic DivBusy,
-  output logic SpecialCase
+  output logic SpecialCaseM
 );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
@@ -53,9 +53,12 @@ module fdivsqrtfsm(
 
   logic [`DURLEN-1:0] step;
   logic [`DURLEN-1:0] cycles;
+  logic SpecialCaseE;
 
   // terminate immediately on special cases
-  assign SpecialCase = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
+  assign SpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
+
+  flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM);
 
 // DIVN = `NF+3
 // NS = NF + 1
@@ -103,7 +106,7 @@ module fdivsqrtfsm(
           step <= cycles; // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
 //          $display("Setting Nf = %d fbits %d cycles = %d FmtE %d FPSIZES = %d Q_NF = %d num = %d denom = %d\n", Nf, fbits, cycles, FmtE, `FPSIZES, `Q_NF,
 //          (fbits +(`LOGR*`DIVCOPIES)-1), (`LOGR*`DIVCOPIES));
-          if (SpecialCase) state <= #1 DONE;
+          if (SpecialCaseE) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (DivDone) begin
         if (StallM) state <= #1 DONE;
