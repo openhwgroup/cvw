@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic               clk, reset,
+  input logic               clk, reset, ce,
   input logic [1:0]         MemRWM,
   input logic [`PA_BITS-1:0]   Adr,
   input logic               TrapM, 
@@ -46,7 +46,7 @@ module dtim(
 
   assign we = MemRWM[0]  & ~TrapM;  // have to ignore write if Trap.
 
-  bram1p1rw #(`LLEN/8, 8, ADDR_WDITH) 
-    ram(.clk, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
+  sram1p1rw #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
+    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   

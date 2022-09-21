@@ -89,8 +89,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
-    .Adr(RAdr), .ReadData(ReadTag), .ByteMask('1),
-    .CacheWriteData(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .WriteEnable(SetValidWay));
+    .addr(RAdr), .dout(ReadTag), .bwe('1),
+    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidWay));
 
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
@@ -110,11 +110,11 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .Adr(RAdr),
-      .ReadData(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .CacheWriteData(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(RAdr),
+      .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .din(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       //.WriteEnable(1'b1), .ByteMask(SRAMLineByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
-      .WriteEnable(SelectedWriteWordEn), .ByteMask(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
   // AND portion of distributed read multiplexers

@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ahbinterface #(parameter WRITEABLE = 0) // **** modify to use LSU/ifu parameter to control widths of buses
+module ahbinterface #(parameter LSU = 0) // **** modify to use LSU/ifu parameter to control widths of buses
   (
   input logic                HCLK, HRESETn,
   
@@ -53,14 +53,16 @@ module ahbinterface #(parameter WRITEABLE = 0) // **** modify to use LSU/ifu par
   input logic                CPUBusy,
   output logic               BusStall,
   output logic               BusCommitted,
-  output logic [`XLEN-1:0]   ReadDataWord);
+  output logic [(LSU ? `XLEN : 32)-1:0]   ReadDataWord);
   
   logic                       CaptureEn;
 
   /// *** only 32 bit for IFU.
-  flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA), .q(ReadDataWord));
+  localparam                  LEN = (LSU ? `XLEN : 32);
+  
+  flopen #(LEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA[LEN-1:0]), .q(ReadDataWord));
 
-  if(WRITEABLE) begin
+  if(LSU) begin
     // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN    
     flop #(`XLEN) wdreg(HCLK, WriteData, HWDATA); 
     flop #(`XLEN/8) HWSTRBReg(HCLK, ByteMask, HWSTRB);
