@@ -44,14 +44,14 @@ module fdivsqrtfsm(
   input  logic StallM,
   input logic WZero,
   output logic DivDone,
-  output logic DivBusy
+  output logic DivBusy,
+  output logic SpecialCase
 );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
   logic [`DURLEN-1:0] step;
-  logic SpecialCase;
   logic [`DURLEN-1:0] cycles;
 
   // terminate immediately on special cases
