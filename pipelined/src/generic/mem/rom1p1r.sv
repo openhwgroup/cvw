@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// brom1p1r
+// rom1p1r
 //
 // Written: David_Harris@hmc.edu 8/24/22
 //
@@ -31,7 +31,7 @@
 
 `include "wally-config.vh"
 
-module brom1p1r
+module rom1p1r
   #(
 	//--------------------------------------------------------------------------
 	parameter ADDR_WIDTH = 8,
