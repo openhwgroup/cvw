@@ -77,5 +77,5 @@ module divshiftcalc(
     // *** explain why radix 4 division needs a left shift by 1
     // *** can this shift be moved into the shiftcorrection logic?
     assign PreDivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
-    assign DivShiftIn = PreDivShiftIn << (`RADIX==4 & ~Sqrt); // {{`NF{1'b0}}, DivQm[`DIVb-1:0], {`NORMSHIFTSZ-`DIVb+2-`NF{1'b0}}};
+    assign DivShiftIn = PreDivShiftIn << (`RADIX==4 & ~Sqrt); 
 endmodule
