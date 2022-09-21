@@ -42,6 +42,7 @@ module divshiftcalc(
 );
     logic [`LOGNORMSHIFTSZ-1:0] NormShift, DivDenormShiftAmt;
     logic [`NE+1:0] DivDenormShift;
+    logic [`NORMSHIFTSZ-1:0] PreDivShiftIn;
 
     logic [`DURLEN-1:0] DivEarlyTermShift = 0;
 
@@ -75,8 +76,6 @@ module divshiftcalc(
 
     // *** explain why radix 4 division needs a left shift by 1
     // *** can this shift be moved into the shiftcorrection logic?
-    if (`RADIX == 4)
-        assign DivShiftIn = Sqrt ? {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}} : {{`NF{1'b0}}, DivQm[`DIVb-1:0], {`NORMSHIFTSZ-`DIVb+2-`NF{1'b0}}};
-    else
-        assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
+    assign PreDivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
+    assign DivShiftIn = PreDivShiftIn << (`RADIX==4 & ~Sqrt); // {{`NF{1'b0}}, DivQm[`DIVb-1:0], {`NORMSHIFTSZ-`DIVb+2-`NF{1'b0}}};
 endmodule
