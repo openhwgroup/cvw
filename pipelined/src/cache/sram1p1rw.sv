@@ -35,49 +35,95 @@
 
 `include "wally-config.vh"
 
-module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
+// SRAM is hard sram macro
+// read first is a verilog model of SRAM with extra hardware to make it appear as write first.
+// write first is a verilog model of flops which implements write first behavior.
+
+// If the goal is to use flops use write first.  This implements the least amount of hardware for
+// the ram.  If the goal is to use SRAM use SRAM  This currently only supports 64x128 SRAMs.
+// If the goal is model SRAM behavior then use READ_FIRST.  sram1p1rw adds extra hardware to
+// ensure write first behavior is observered.
+
+module sram1p1rw #(parameter DEPTH=128, WIDTH=256, RAM_TYPE = "READ_FIRST") (
   input logic                     clk,
   input logic                     ce,
-  input logic [$clog2(DEPTH)-1:0] Adr,
-  input logic [WIDTH-1:0]         CacheWriteData,
-  input logic                     WriteEnable,
-  input logic [(WIDTH-1)/8:0]     ByteMask,
-  output logic [WIDTH-1:0]        ReadData);
+  input logic [$clog2(DEPTH)-1:0] addr,
+  input logic [WIDTH-1:0]         din,
+  input logic                     we,
+  input logic [(WIDTH-1)/8:0]     bwe,
+  output logic [WIDTH-1:0]        dout);
 
-  logic [WIDTH-1:0]               StoredData[DEPTH-1:0];
-  logic [$clog2(DEPTH)-1:0]       AdrD;
-
-  always_ff @(posedge clk)    if(ce)   AdrD <= Adr;
-
-  genvar                          index;
+  logic [WIDTH-1:0]               RAM[DEPTH-1:0];
+  logic [WIDTH-1:0]               doutInternal, DinD;
+  logic                           weD;
 
 
-   if (`USE_SRAM == 1) begin
+  // ***************************************************************************
+  // TRUE SRAM macro
+  // ***************************************************************************
+  if (RAM_TYPE == "SRAM") begin
+    genvar index;
     // 64 x 128-bit SRAM
     // check if the size is ok, complain if not***
     logic [WIDTH-1:0] BitWriteMask;
     for (index=0; index < WIDTH; index++) 
-      assign BitWriteMask[index] = ByteMask[index/8];
-    TS1N28HPCPSVTB64X128M4SWBASO sram(
-      .CLK(clk), .CEB(1'b0), .WEB(~WriteEnable),
-      .A(Adr), .D(CacheWriteData), 
-      .BWEB(~BitWriteMask), .Q(ReadData)
-    );
-
-  end else begin 
+      assign BitWriteMask[index] = bwe[index/8];
+    TS1N28HPCPSVTB64X128M4SW sram(
+      .CLK(clk), .CEB(~ce), .WEB(~we),
+      .A(addr), .D(din), 
+      .BWEB(~BitWriteMask), .Q(doutInternal));
+    
+  // ***************************************************************************
+  // Correctly modeled SRAM as read first.  Extra hardware to make it behave like
+  // write first.
+  // ***************************************************************************
+  end else if (RAM_TYPE == "READ_FIRST") begin
+    integer index2;
     if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
       always_ff @(posedge clk) 
-        if (ce & WriteEnable & ByteMask[WIDTH/8])
-          StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 
-      CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
+        if (ce & we & bwe[WIDTH/8])
+          RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
     
-    for(index = 0; index < WIDTH/8; index++) 
-      always_ff @(posedge clk)
-        if(ce & WriteEnable & ByteMask[index])
-		  StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
-
-    assign ReadData = StoredData[AdrD];
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        if(we) begin
+          for(index2 = 0; index2 < WIDTH/8; index2++) 
+            if(ce & we & bwe[index2])
+		      RAM[addr][index2*8 +: 8] <= #1 din[index2*8 +: 8];
+        end
+        doutInternal <= #1 RAM[addr];
+      end
+    end
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        weD <= we;
+        if(we) DinD <= #1 din;
+      end
+    end
+    assign dout = weD ? DinD : doutInternal; // convert to Write First SRAM by forwarding the write data on write
+    
+  // ***************************************************************************
+  // Memory modeled as wrire first.  best as flip flop implementation.
+  // ***************************************************************************
+  end else if (RAM_TYPE == "WRITE_FIRST") begin
+    logic [$clog2(DEPTH)-1:0]       addrD;
+    flopen #($clog2(DEPTH)) RaddrDelayReg(clk, ce, addr, addrD);
+    integer                         index2;
+    if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
+      always_ff @(posedge clk) 
+        if (ce & we & bwe[WIDTH/8])
+          RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
+    
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        if(we) begin
+          for(index2 = 0; index2 < WIDTH/8; index2++) 
+            if(ce & we & bwe[index2])
+		      RAM[addr][index2*8 +: 8] <= #1 din[index2*8 +: 8];
+        end
+      end
+    end
+    assign dout = RAM[addrD];
   end
+
 endmodule
-
-

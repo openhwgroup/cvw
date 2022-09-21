@@ -513,10 +513,10 @@ module DCacheFlushFSM
 					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
 			    copyShadow(.clk,
           .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.StoredData[index]),
+          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index]),
           .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
           .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.StoredData[index]),
+          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.RAM[index]),
           .index(index),
           .cacheWord(cacheWord),
           .CacheData(CacheData[way][index][cacheWord]),

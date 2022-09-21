@@ -73,8 +73,9 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   mux2 #(`PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  bram1p1rw #(`XLEN/8, 8, ADDR_WIDTH, `FPGA)
-    memory(.clk(HCLK), .we(memwriteD), .bwe(HWSTRB), .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .dout(HREADRam), .din(HWDATA));
+  sram1p1rw #(.DEPTH(RANGE/8), .WIDTH(`XLEN)) memory(.clk(HCLK), .ce(1'b1), 
+    .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
+  
 
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
   if(`RAM_LATENCY > 0) begin
