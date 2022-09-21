@@ -38,6 +38,6 @@ module irom(
   localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
   localparam OFFSET = $clog2(`LLEN/8);
 
-  brom1p1r #(ADDR_WDITH, 32) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
+  rom1p1r #(ADDR_WDITH, 32) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
 endmodule  
   
