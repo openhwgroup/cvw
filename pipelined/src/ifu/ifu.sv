@@ -193,7 +193,7 @@ module ifu (
     /* verilator lint_on WIDTH */
  
     assign RWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(CPUBusy | reset ? PCFSpill : PCNextFSpill), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(IROMAdr[`XLEN-1:0]), .ReadData(FinalInstrRawF));
  
   end else begin
     assign RWF = 2'b10;
