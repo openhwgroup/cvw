@@ -42,11 +42,8 @@ module divshiftcalc(
 );
     logic [`LOGNORMSHIFTSZ-1:0] NormShift, DivDenormShiftAmt;
     logic [`NE+1:0] DivDenormShift;
-    logic [`NORMSHIFTSZ-1:0] PreDivShiftIn;
-
-    logic [`DURLEN-1:0] DivEarlyTermShift = 0;
-
-    // is the result denromalized
+ 
+    // is the result denormalized
     // if the exponent is 1 then the result needs to be normalized then the result is denormalizes
     assign DivResDenorm = DivQe[`NE+1]|(~|DivQe[`NE+1:0]);
 
@@ -74,8 +71,5 @@ module divshiftcalc(
     assign DivDenormShiftAmt = DivDenormShiftPos ? DivDenormShift[`LOGNORMSHIFTSZ-1:0] : '0;
     assign DivShiftAmt = DivResDenorm ? DivDenormShiftAmt : NormShift;
 
-    // *** explain why radix 4 division needs a left shift by 1
-    // *** can this shift be moved into the shiftcorrection logic?
-    assign PreDivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
-    assign DivShiftIn = PreDivShiftIn << (`RADIX==4 & ~Sqrt); 
+    assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb+1-`NF{1'b0}}};
 endmodule
