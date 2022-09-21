@@ -50,7 +50,7 @@ module testbenchfp;
   logic [31:0]        errors=0;     // how many errors
   logic [31:0]        VectorNum=0;  // index for test vector
   logic [31:0]        FrmNum=0;     // index for rounding mode
-  logic [`FLEN*4+7:0] TestVectors[6133248:0];     // list of test vectors
+  logic [`FLEN*4+7:0] TestVectors[8388609:0];     // list of test vectors
 
   logic [1:0]           FmtVal;          // value of the current Fmt
   logic [2:0]           UnitVal, OpCtrlVal, FrmVal; // vlaue of the currnet Unit/OpCtrl/FrmVal
