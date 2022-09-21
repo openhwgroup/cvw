@@ -236,5 +236,7 @@ module controller(
   // Stall pipeline at Fetch if a CSR Write or Fence is pending in the subsequent stages
   assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FencePendingD | FencePendingE | FencePendingM;
 
-  assign StoreStallD = MemRWE[0] & ((|MemRWD) | (|AtomicD));
+  // the synchronous DTIM cannot read immediately after write
+  // a cache cannot read or write immediately after a write
+  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & `DCACHE)) | (|AtomicD));
 endmodule
