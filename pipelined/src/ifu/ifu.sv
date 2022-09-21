@@ -186,14 +186,8 @@ module ifu (
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
-    logic [`PA_BITS-1:0] IROMAdr;
-    logic             IROMAccessRW;
-    /* verilator lint_off WIDTH */
-    assign IROMAdr = reset ? PCFSpill : PCNextFSpill; // zero extend or contract to PA_BITS
-    /* verilator lint_on WIDTH */
- 
     assign RWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(IROMAdr[`XLEN-1:0]), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(FinalInstrRawF));
  
   end else begin
     assign RWF = 2'b10;
@@ -322,8 +316,10 @@ module ifu (
   assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
+  // *** consider gating PCPlusUpperF to provide the reset.
   always_comb
-    if (CompressedF) // add 2
+    if(reset) PCPlus2or4F = '0;
+    else if (CompressedF) // add 2
       if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
