@@ -35,7 +35,16 @@
 
 `include "wally-config.vh"
 
-module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
+// SRAM is hard sram macro
+// read first is a verilog model of SRAM with extra hardware to make it appear as write first.
+// write first is a verilog model of flops which implements write first behavior.
+
+// If the goal is to use flops use write first.  This implements the least amount of hardware for
+// the ram.  If the goal is to use SRAM use SRAM  This currently only supports 64x128 SRAMs.
+// If the goal is model SRAM behavior then use READ_FIRST.  sram1p1rw adds extra hardware to
+// ensure write first behavior is observered.
+
+module sram1p1rw #(parameter DEPTH=128, WIDTH=256, RAM_TYPE = "READ_FIRST") (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] Adr,
@@ -45,39 +54,75 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   output logic [WIDTH-1:0]        ReadData);
 
   logic [WIDTH-1:0]               StoredData[DEPTH-1:0];
-  logic [$clog2(DEPTH)-1:0]       AdrD;
-
-  always_ff @(posedge clk)    if(ce)   AdrD <= Adr;
-
-  genvar                          index;
+  logic [WIDTH-1:0]               ReadDataInternal, WriteDataD;
+  logic                           WriteEnableD;
 
 
-   if (`USE_SRAM == 1) begin
+  // ***************************************************************************
+  // TRUE SRAM macro
+  // ***************************************************************************
+  if (RAM_TYPE == "SRAM") begin
+    genvar index;
     // 64 x 128-bit SRAM
     // check if the size is ok, complain if not***
     logic [WIDTH-1:0] BitWriteMask;
     for (index=0; index < WIDTH; index++) 
       assign BitWriteMask[index] = ByteMask[index/8];
-    TS1N28HPCPSVTB64X128M4SWBASO sram(
-      .CLK(clk), .CEB(1'b0), .WEB(~WriteEnable),
+    TS1N28HPCPSVTB64X128M4SW sram(
+      .CLK(clk), .CEB(~ce), .WEB(~WriteEnable),
       .A(Adr), .D(CacheWriteData), 
-      .BWEB(~BitWriteMask), .Q(ReadData)
-    );
-
-  end else begin 
+      .BWEB(~BitWriteMask), .Q(ReadDataInternal));
+    
+  // ***************************************************************************
+  // Correctly modeled SRAM as read first 
+  // ***************************************************************************
+  end else if (RAM_TYPE == "READ_FIRST") begin
+    integer index2;
     if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
       always_ff @(posedge clk) 
         if (ce & WriteEnable & ByteMask[WIDTH/8])
-          StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 
-      CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
+          StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
     
-    for(index = 0; index < WIDTH/8; index++) 
-      always_ff @(posedge clk)
-        if(ce & WriteEnable & ByteMask[index])
-		  StoredData[Adr][index*8 +: 8] <= #1 CacheWriteData[index*8 +: 8];
-
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        if(WriteEnable) begin
+          for(index2 = 0; index2 < WIDTH/8; index2++) 
+            if(ce & WriteEnable & ByteMask[index2])
+		      StoredData[Adr][index2*8 +: 8] <= #1 CacheWriteData[index2*8 +: 8];
+        end
+        ReadDataInternal <= #1 StoredData[Adr];
+      end
+    end
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        WriteEnableD <= WriteEnable;
+        if(WriteEnable) WriteDataD <= #1 CacheWriteData;
+      end
+    end
+    assign ReadData = WriteEnableD ? WriteDataD : ReadDataInternal; // convert to Write First SRAM by forwarding the write data on write
+    
+  // ***************************************************************************
+  // Memory modeled as wrire first.  best as flip flop implementation.
+  // ***************************************************************************
+  end else if (RAM_TYPE == "WRITE_FIRST") begin
+    logic [$clog2(DEPTH)-1:0]       AdrD;
+    flopen #($clog2(DEPTH)) RAdrDelayReg(clk, ce, Adr, AdrD);
+    integer                         index2;
+    if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
+      always_ff @(posedge clk) 
+        if (ce & WriteEnable & ByteMask[WIDTH/8])
+          StoredData[Adr][WIDTH-1:WIDTH-WIDTH%8] <= #1 CacheWriteData[WIDTH-1:WIDTH-WIDTH%8];
+    
+    always_ff @(posedge clk) begin
+      if(ce) begin
+        if(WriteEnable) begin
+          for(index2 = 0; index2 < WIDTH/8; index2++) 
+            if(ce & WriteEnable & ByteMask[index2])
+		      StoredData[Adr][index2*8 +: 8] <= #1 CacheWriteData[index2*8 +: 8];
+        end
+      end
+    end
     assign ReadData = StoredData[AdrD];
   end
+
 endmodule
-
-
