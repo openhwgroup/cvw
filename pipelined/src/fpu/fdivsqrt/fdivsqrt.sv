@@ -61,7 +61,7 @@ module fdivsqrt(
   logic [`DIVb+1:0] FirstC;
   logic Firstun;
   logic WZero;
-  logic SpecialCase;
+  logic SpecialCaseM;
 
   fdivsqrtpreproc fdivsqrtpreproc(
     .clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
@@ -70,11 +70,11 @@ module fdivsqrt(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
     .DivBusy, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
-    .XInfE, .YInfE, .WZero, .SpecialCase);
+    .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
     .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
     .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
-  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .SpecialCase, .QmM, .WZero, .DivSM);
+  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .SpecialCaseM, .QmM, .WZero, .DivSM);
 endmodule
