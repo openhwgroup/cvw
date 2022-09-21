@@ -104,6 +104,7 @@ module testbenchfp;
   logic       DivDone;
   logic       DivNegSticky;
   logic [`NE+1:0] DivCalcExp;
+  logic divsqrtop;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -878,12 +879,16 @@ always @(negedge clk) begin
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
    // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
-    assign ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
-    assign FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
-    assign CheckNow = (DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
+    ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
+    FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
+    divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
+
+    //assign divsqrtop = OpCtrl[TestNum] == `SQRT_OPCTRL | OpCtrl[TestNum] == `DIV_OPCTRL;
+    CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
     if(~(ResMatch & FlagMatch) & CheckNow) begin
 //    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
+      $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
       $display("Error in %s", Tests[TestNum]);
       $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       $stop;
