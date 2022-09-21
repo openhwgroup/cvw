@@ -57,8 +57,7 @@ module fdivsqrtfsm(
 
   // terminate immediately on special cases
   assign SpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
-
-  flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM);
+  flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
 // DIVN = `NF+3
 // NS = NF + 1
