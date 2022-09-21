@@ -35,7 +35,7 @@ module fdivsqrtqsel4 (
   input logic [4:0] Smsbs,
   input logic [`DIVb+3:0] WS, WC,
   input logic Sqrt, j1,
-  output logic [3:0] u
+  output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
@@ -107,6 +107,6 @@ module fdivsqrtqsel4 (
       else if (Smsbs == 5'b10000) A = 3'b111;
       else A = Smsbs[2:0];
     end else A = Dmsbs;
-	assign u = USel4[{A,Wmsbs}];
+	assign udigit = USel4[{A,Wmsbs}];
 	
 endmodule

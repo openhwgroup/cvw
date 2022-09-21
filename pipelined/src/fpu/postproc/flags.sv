@@ -128,10 +128,12 @@ module flags(
     //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
     //                  |                    |                    |                                      |                     |               |
     assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&G)))&(R|S|G))&~(InfIn|NaNIn|DivByZero|Invalid);
+   //assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&G)))&(R|S|G))&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
 
     // Set Inexact flag if the res is diffrent from what would be outputed given infinite precision
     //      - Don't set the underflow flag if an underflowed res isn't outputed
     assign FpInexact = (S|G|Overflow|R)&~(InfIn|NaNIn|DivByZero|Invalid);
+    //assign FpInexact = (S|G|Overflow|R)&~(InfIn|NaNIn|DivByZero|Invalid|XZero);
 
     //                  if the res is too small to be represented and not 0
     //                  |                                     and if the res is not invalid (outside the integer bounds)
