@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module fdivsqrtuotfc4(
-  input  logic [3:0]   u,
+  input  logic [3:0]   udigit,
   input  logic         Sqrt,
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb:0] C,
@@ -47,19 +47,19 @@ module fdivsqrtuotfc4(
   assign K3 = (C & ~(C << 2));      // 3K
 
   always_comb begin
-    if (u[3]) begin
+    if (udigit[3]) begin
       UNext  = U | K2;
       UMNext = U | K1;
-    end else if (u[2]) begin
+    end else if (udigit[2]) begin
       UNext  = U | K1;
       UMNext = U;
-    end else if (u[1]) begin
+    end else if (udigit[1]) begin
       UNext  = UM | K3;
       UMNext = UM | K2;
-    end else if (u[0]) begin
+    end else if (udigit[0]) begin
       UNext  = UM | K2;
       UMNext = UM | K1;
-    end else begin        // digit = 0
+    end else begin        // udigit = 0
       UNext  = U;
       UMNext = UM | K3;
     end 
