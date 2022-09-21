@@ -212,10 +212,9 @@ module lsu (
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     // Don't perform size checking on DTIM
     /* verilator lint_off WIDTH */
-    assign MemStage = MemRWM[0] | reset; // 1 = M stage; 0 = E stage
+    assign MemStage = MemRWM[0]; // 1 = M stage; 0 = E stage // **** is reset needed.
     assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     /* verilator lint_on WIDTH */
-    // *** add ce to bram1... to remove this extra mux control.
 
     dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM,
               .Adr(DTIMAdr),
