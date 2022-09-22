@@ -70,11 +70,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              Dirty;
   logic                              SelData;
   logic                              SelTag;
-  logic [$clog2(NUMLINES)-1:0]       RAdrD;
-  logic [2**LOGWPL-1:0]              MemPAdrDecoded;
-  logic           SelectedWriteWordEn;
-//  logic [WORDSPERLINE-1:0]          SelectedWriteWordEn;
-//  logic [(`XLEN-1)/8:0]              FinalByteMask;
+  logic                              SelectedWriteWordEn;
   logic [LINELEN/8-1:0]              FinalByteMask;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,7 +109,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(RAdr),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      //.WriteEnable(1'b1), .ByteMask(SRAMLineByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
@@ -127,12 +122,11 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | Invalidate) ValidBits        <= #1 '0;
-    else if (ce & SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
-    else if (ce & ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
-    if(ce) Valid <= #1 ValidBits[RAdr];
-	end
-  flopen #($clog2(NUMLINES)) RAdrDelayReg(clk, ce, RAdr, RAdrD);
-  //assign Valid = ValidBits[RAdrD];
+    if(ce) begin Valid <= #1 ValidBits[RAdr];
+      if (SetValidWay)      ValidBits[RAdr] <= #1 1'b1;
+      else if (ClearValidWay)    ValidBits[RAdr] <= #1 1'b0;
+    end
+  end
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Dirty Bits
@@ -142,11 +136,12 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
       if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      else if (ce & SetDirtyWay)   DirtyBits[RAdr] <= #1 1'b1;
-      else if (ce & ClearDirtyWay) DirtyBits[RAdr] <= #1 1'b0;
-      if(ce) Dirty <= #1 DirtyBits[RAdr];
+      if(ce) begin
+        Dirty <= #1 DirtyBits[RAdr];
+        if (SetDirtyWay)   DirtyBits[RAdr] <= #1 1'b1;
+        else if (ClearDirtyWay) DirtyBits[RAdr] <= #1 1'b0;
+      end
     end
-//    assign Dirty = DirtyBits[RAdrD];
   end else assign Dirty = 1'b0;
 
 endmodule
