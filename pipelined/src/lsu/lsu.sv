@@ -99,12 +99,11 @@ module lsu (
   logic [`PA_BITS-1:0]      PAdrM;
   logic                     DTLBMissM;
   logic                     DTLBWriteM;
-  logic [1:0]               NonDTIMMemRWM, PreLSURWM, LSURWM;
+  logic [1:0]               PreLSURWM, LSURWM;
   logic [2:0]               LSUFunct3M;
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
   (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   IHAdrM;
-  logic                     SelDTIM;
   logic                     CPUBusy;
   logic                     DCacheStallM;
   logic                     CacheableM;
@@ -207,21 +206,14 @@ module lsu (
   
   if (`DTIM_SUPPORTED) begin : dtim
     logic [`PA_BITS-1:0] DTIMAdr;
-    logic             MemStage;
 
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-    // Don't perform size checking on DTIM
-    /* verilator lint_off WIDTH */
-    assign MemStage = MemRWM[0]; // 1 = M stage; 0 = E stage // **** is reset needed.
-    assign DTIMAdr = MemStage ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
-    /* verilator lint_on WIDTH */
-
+    assign DTIMAdr = MemRWM[0] ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
     dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM,
               .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
-    assign SelDTIM = 0;  assign NonDTIMMemRWM = MemRWM;
   end
   if (`BUS) begin : bus              
     localparam integer   WORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`XLEN : 1;

@@ -91,21 +91,14 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256, RAM_TYPE = "READ_FIRST") (
             if(ce & we & bwe[index2])
 		      RAM[addr][index2*8 +: 8] <= #1 din[index2*8 +: 8];
         end
-        doutInternal <= #1 RAM[addr];
+        dout <= #1 RAM[addr];
       end
     end
-    always_ff @(posedge clk) begin
-      if(ce) begin
-        weD <= we;
-        if(we) DinD <= #1 din;
-      end
-    end
-    assign dout = weD ? DinD : doutInternal; // convert to Write First SRAM by forwarding the write data on write
-    
+  end    
   // ***************************************************************************
   // Memory modeled as wrire first.  best as flip flop implementation.
   // ***************************************************************************
-  end else if (RAM_TYPE == "WRITE_FIRST") begin
+  else if (RAM_TYPE == "WRITE_FIRST") begin
     logic [$clog2(DEPTH)-1:0]       addrD;
     flopen #($clog2(DEPTH)) RaddrDelayReg(clk, ce, addr, addrD);
     integer                         index2;
