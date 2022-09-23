@@ -92,7 +92,7 @@ module ifu (
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF;
   logic [31:0]                 FinalInstrRawF;
-  logic [1:0]                  RWF;
+  logic [1:0]                  IFURWF;
   
   logic [31:0]                 InstrE;
   logic [`XLEN-1:0]            PCD;
@@ -186,11 +186,11 @@ module ifu (
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
-    assign RWF = 2'b10;
+    assign IFURWF = 2'b10;
     irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(FinalInstrRawF));
  
   end else begin
-    assign RWF = 2'b10;
+    assign IFURWF = 2'b10;
   end
   if (`BUS) begin : bus
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
@@ -201,24 +201,23 @@ module ifu (
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
       logic                SelUncachedAdr;
-      logic [1:0]          CacheRW, RW;
+      logic [1:0]          CacheBusRW, BusRW;
       
-      assign CacheRW = {ICacheFetchLine, 1'b0} & ~{ITLBMissF, ITLBMissF};
-      assign RW = RWF & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
+      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
       icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM,
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
-             .CacheFetchLine(ICacheFetchLine),
-             .CacheWriteLine(), .ReadDataWord(FinalInstrRawF),
+             .CacheBusRW,
+             .ReadDataWord(FinalInstrRawF),
              .Cacheable(CacheableF),
              .SelReplay('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
-             .RW(RWF), 
+             .RW(IFURWF), 
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
@@ -226,12 +225,12 @@ module ifu (
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .CacheRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
+            .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .WordCount(), .SelUncachedAdr, .SelBusWord(),
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
-            .RW, .CPUBusy,
+            .BusRW, .CPUBusy,
             .BusStall, .BusCommitted());
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
@@ -239,13 +238,13 @@ module ifu (
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic CaptureEn;
-      logic [1:0] RW;
-      assign RW = RWF & ~{ITLBMissF, ITLBMissF};
+      logic [1:0] BusRW;
+      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
-        .HWSTRB(), .RW, .ByteMask(), .WriteData('0),
+        .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
         .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWord(InstrRawF[31:0]));
 
       assign IFUHBURST = 3'b0;

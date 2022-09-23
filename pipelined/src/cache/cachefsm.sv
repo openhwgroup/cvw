@@ -32,50 +32,49 @@
 
 module cachefsm
   (input logic clk,
-   input logic       reset,
+   input logic        reset,
    // inputs from IEU
-   input logic [1:0] CacheRW,
-   input logic [1:0] CacheAtomic,
-   input logic       FlushCache,
-   input logic       InvalidateCache,
+   input logic [1:0]  CacheRW,
+   input logic [1:0]  CacheAtomic,
+   input logic        FlushCache,
+   input logic        InvalidateCache,
    // hazard inputs
-   input logic       CPUBusy,
+   input logic        CPUBusy,
    // interlock fsm
-   input logic       IgnoreRequestTLB,
-   input logic       TrapM,
+   input logic        IgnoreRequestTLB,
+   input logic        TrapM,
    // Bus inputs
-   input logic       CacheBusAck,
+   input logic        CacheBusAck,
    // dcache internals
-   input logic       CacheHit,
-   input logic       VictimDirty,
-   input logic       FlushAdrFlag,
-   input logic       FlushWayFlag, 
+   input logic        CacheHit,
+   input logic        VictimDirty,
+   input logic        FlushAdrFlag,
+   input logic        FlushWayFlag, 
   
    // hazard outputs
-   output logic      CacheStall,
+   output logic       CacheStall,
    // counter outputs
-   output logic      CacheMiss,
-   output logic      CacheAccess,
+   output logic       CacheMiss,
+   output logic       CacheAccess,
    // Bus outputs
-   output logic      CacheCommitted,
-   output logic      CacheWriteLine,
-   output logic      CacheFetchLine,
+   output logic       CacheCommitted,
+   output logic [1:0] CacheBusRW,
 
    // dcache internals
-   output logic      SelAdr,
-   output logic      ClearValid,
-   output logic      ClearDirty,
-   output logic      SetDirty,
-   output logic      SetValid,
-   output logic      SelEvict,
-   output logic      LRUWriteEn,
-   output logic      SelFlush,
-   output logic      FlushAdrCntEn,
-   output logic      FlushWayCntEn, 
-   output logic      FlushAdrCntRst,
-   output logic      FlushWayCntRst,
-   output logic      SelBusBuffer, 
-   output logic      SRAMEnable);
+   output logic       SelAdr,
+   output logic       ClearValid,
+   output logic       ClearDirty,
+   output logic       SetDirty,
+   output logic       SetValid,
+   output logic       SelEvict,
+   output logic       LRUWriteEn,
+   output logic       SelFlush,
+   output logic       FlushAdrCntEn,
+   output logic       FlushWayCntEn, 
+   output logic       FlushAdrCntRst,
+   output logic       FlushWayCntRst,
+   output logic       SelBusBuffer, 
+   output logic       SRAMEnable);
   
   logic               resetDelay;
   logic               AMO;
@@ -194,8 +193,8 @@ module cachefsm
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheFetchLine = (CurrState == STATE_READY & DoAnyMiss) | (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck);
-  assign CacheWriteLine = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
+  assign CacheBusRW[1] = (CurrState == STATE_READY & DoAnyMiss) | (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck);
+  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);

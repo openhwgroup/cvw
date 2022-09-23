@@ -36,7 +36,7 @@ module busfsm
    input logic        HRESETn,
 
    // IEU interface
-   input logic [1:0]  RW,
+   input logic [1:0]  BusRW,
    input logic        CPUBusy,
    output logic       BusCommitted,
    output logic       BusStall,
@@ -60,7 +60,7 @@ module busfsm
   
   always_comb begin
 	case(CurrState)
-	  ADR_PHASE: if(HREADY & |RW) NextState = DATA_PHASE;
+	  ADR_PHASE: if(HREADY & |BusRW) NextState = DATA_PHASE;
                  else             NextState = ADR_PHASE;
       DATA_PHASE: if(HREADY)      NextState = MEM3;
 		          else            NextState = DATA_PHASE;
@@ -70,15 +70,15 @@ module busfsm
 	endcase
   end
 
-  assign BusStall = (CurrState == ADR_PHASE & |RW) |
-//					(CurrState == DATA_PHASE & ~RW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
+  assign BusStall = (CurrState == ADR_PHASE & |BusRW) |
+//					(CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
 					(CurrState == DATA_PHASE); 
   
   assign BusCommitted = CurrState != ADR_PHASE;
 
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |RW) |
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW) |
                   (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ : AHB_IDLE;
-  assign HWRITE = RW[0];
+  assign HWRITE = BusRW[0];
   assign CaptureEn = CurrState == DATA_PHASE;
   
 endmodule
