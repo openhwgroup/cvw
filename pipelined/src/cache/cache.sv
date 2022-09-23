@@ -54,8 +54,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   Cacheable,
   input logic                   SelReplay,
    // Bus fsm interface
-  output logic                  CacheFetchLine,
-  output logic                  CacheWriteLine,
+  output logic [1:0]            CacheBusRW,
   input logic                   CacheBusAck,
   input logic                   SelBusWord, 
   input logic [LOGBWPL-1:0]     WordCount,
@@ -212,7 +211,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   assign CacheRW = Cacheable ? RW : 2'b00;
   assign CacheAtomic = Cacheable ? Atomic : 2'b00;
-  cachefsm cachefsm(.clk, .reset, .CacheFetchLine, .CacheWriteLine, .CacheBusAck, 
+  cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
 		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .TrapM,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 

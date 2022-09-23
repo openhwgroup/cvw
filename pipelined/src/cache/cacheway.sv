@@ -98,7 +98,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  genvar 							  words;
+  genvar                             words;
 
   localparam integer           SRAMLEN = 128;
   localparam integer           NUMSRAM = LINELEN/SRAMLEN;

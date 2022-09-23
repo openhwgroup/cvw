@@ -229,10 +229,9 @@ module lsu (
       logic                SelBusWord;
       logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
-      logic [1:0]          CacheRW, UnCacheRW;
+      logic [1:0]          CacheBusRW, BusRW;
 
-      assign CacheRW = {DCacheFetchLine, DCacheWriteLine} & ~{IgnoreRequest, IgnoreRequest};
-      assign UnCacheRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM};
+      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM};
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -243,16 +242,16 @@ module lsu (
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
-        .FetchBuffer, .CacheFetchLine(DCacheFetchLine), 
-        .CacheWriteLine(DCacheWriteLine), .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+        .FetchBuffer, .CacheBusRW, 
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset),
         .HRDATA, 
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .WordCount, .SelBusWord,
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheRW,
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
-        .SelUncachedAdr, .RW(UnCacheRW), .CPUBusy,
+        .SelUncachedAdr, .BusRW, .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
       mux2 #(`LLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
@@ -271,15 +270,15 @@ module lsu (
 
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
-      logic [1:0] RW;
-      assign RW = LSURWM & ~{IgnoreRequest, IgnoreRequest};
+      logic [1:0] BusRW;
+      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest};
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
 
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
-        .HWSTRB(LSUHWSTRB), .RW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
+        .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .ReadDataWord(ReadDataWordM));
           
       assign ReadDataWordMuxM = ReadDataWordM;  // from byte swapping

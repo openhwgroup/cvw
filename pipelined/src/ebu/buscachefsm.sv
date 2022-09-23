@@ -38,14 +38,14 @@ module buscachefsm #(parameter integer   WordCountThreshold,
    input logic               HRESETn,
 
    // IEU interface
-   input logic [1:0]         RW,
+   input logic [1:0]         BusRW,
    input logic               CPUBusy,
    output logic              BusCommitted,
    output logic              BusStall,
    output logic              CaptureEn,
 
    // cache interface
-   input logic [1:0]         CacheRW,
+   input logic [1:0]         CacheBusRW,
    output logic              CacheBusAck,
    
    // lsu interface
@@ -83,21 +83,21 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   
   always_comb begin
 	case(CurrState)
-	  ADR_PHASE: if(HREADY & |RW)              NextState = DATA_PHASE;
-                   else if (HREADY & CacheRW[0]) NextState = CACHE_EVICT;
-                   else if (HREADY & CacheRW[1]) NextState = CACHE_FETCH;
+	  ADR_PHASE: if(HREADY & |BusRW)              NextState = DATA_PHASE;
+                   else if (HREADY & CacheBusRW[0]) NextState = CACHE_EVICT;
+                   else if (HREADY & CacheBusRW[1]) NextState = CACHE_FETCH;
                    else                          NextState = ADR_PHASE;
       DATA_PHASE: if(HREADY)                  NextState = MEM3;
 		           else                          NextState = DATA_PHASE;
       MEM3: if(CPUBusy)                   NextState = MEM3;
 		           else                          NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalWordCount & CacheRW[0]) NextState = CACHE_EVICT;
-                   else if(HREADY & FinalWordCount & CacheRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalWordCount & ~|CacheRW) NextState = ADR_PHASE;
+      CACHE_FETCH: if(HREADY & FinalWordCount & CacheBusRW[0]) NextState = CACHE_EVICT;
+                   else if(HREADY & FinalWordCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+                   else if(HREADY & FinalWordCount & ~|CacheBusRW) NextState = ADR_PHASE;
                    else                       NextState = CACHE_FETCH;
-      CACHE_EVICT: if(HREADY & FinalWordCount & CacheRW[0]) NextState = CACHE_EVICT;
-                   else if(HREADY & FinalWordCount & CacheRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalWordCount & ~|CacheRW) NextState = ADR_PHASE;
+      CACHE_EVICT: if(HREADY & FinalWordCount & CacheBusRW[0]) NextState = CACHE_EVICT;
+                   else if(HREADY & FinalWordCount & CacheBusRW[1]) NextState = CACHE_FETCH;
+                   else if(HREADY & FinalWordCount & ~|CacheBusRW) NextState = ADR_PHASE;
                    else                       NextState = CACHE_EVICT;
 	  default:                                      NextState = ADR_PHASE;
 	endcase
@@ -122,30 +122,30 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 
   assign FinalWordCount = WordCountDelayed == WordCountThreshold[LOGWPL-1:0];
   assign WordCntEn = ((NextState == CACHE_EVICT | NextState == CACHE_FETCH) & HREADY) |
-                     (NextState == ADR_PHASE & |CacheRW & HREADY);
+                     (NextState == ADR_PHASE & |CacheBusRW & HREADY);
   assign WordCntReset = NextState == ADR_PHASE;
 
-  assign CaptureEn = (CurrState == DATA_PHASE & RW[1]) | (CurrState == CACHE_FETCH & HREADY);
+  assign CaptureEn = (CurrState == DATA_PHASE & BusRW[1]) | (CurrState == CACHE_FETCH & HREADY);
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_EVICT;
 
-  assign BusStall = (CurrState == ADR_PHASE & (|RW | |CacheRW)) |
-					//(CurrState == DATA_PHASE & ~RW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
+  assign BusStall = (CurrState == ADR_PHASE & (|BusRW | |CacheBusRW)) |
+					//(CurrState == DATA_PHASE & ~BusRW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
 					(CurrState == DATA_PHASE) | 
                     (CurrState == CACHE_FETCH) |
                     (CurrState == CACHE_EVICT);
   assign BusCommitted = CurrState != ADR_PHASE;
-  assign SelUncachedAdr = (CurrState == ADR_PHASE & |RW) |
+  assign SelUncachedAdr = (CurrState == ADR_PHASE & |BusRW) |
                           (CurrState == DATA_PHASE) |
                           (CurrState == MEM3);
 
   // AHB bus interface
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|RW | |CacheRW)) |
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|BusRW | |CacheBusRW)) |
                   (CurrState == DATA_PHASE & ~HREADY) |
-                  (CacheAccess & ~|WordCount & |CacheRW) ? AHB_NONSEQ :
+                  (CacheAccess & ~|WordCount & |CacheBusRW) ? AHB_NONSEQ :
                   (CacheAccess & |WordCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = RW[0] | CacheRW[0];
-  assign HBURST = `BURST_EN ? ((|CacheRW) ? LocalBurstType : 3'b0) : 3'b0;  // this line is for burst.
+  assign HWRITE = BusRW[0] | CacheBusRW[0];
+  assign HBURST = `BURST_EN ? ((|CacheBusRW) ? LocalBurstType : 3'b0) : 3'b0;  // this line is for burst.
   
   always_comb begin
     case(WordCountThreshold)
@@ -159,8 +159,8 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 
   // communication to cache
   assign CacheBusAck = (CacheAccess & HREADY & FinalWordCount);
-  assign SelBusWord = (CurrState == ADR_PHASE & (RW[0] | CacheRW[0])) |
-					  (CurrState == DATA_PHASE & RW[0]) |
+  assign SelBusWord = (CurrState == ADR_PHASE & (BusRW[0] | CacheBusRW[0])) |
+					  (CurrState == DATA_PHASE & BusRW[0]) |
                       (CurrState == CACHE_EVICT) |
                       (CurrState == CACHE_FETCH);
 
