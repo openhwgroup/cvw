@@ -1,5 +1,5 @@
-aabbccdd # Test 5.3.2.4: M mode little endian load/store word of 0xAABBCCDD # NOTE: the memory was already filled with's so subword overwrite some, but not all of them. this is why the values are filled with deadbeefs, rather than 00's or ff's
-deadccdd # M mode little endian load/store halfword of 0xAABBCCDD # NOTE: since we're doing a store that matches the width of the load, we cut out all the sign extension
+aabbccdd # Test 5.3.2.4: M mode little endian load/store word of 0xAABBCCDD NOTE: the memory was already filled with's so subword overwrite some, but not all of them. this is why the values are filled with deadbeefs, rather than 00's or ff's
+deadccdd # M mode little endian load/store halfword of 0xAABBCCDD NOTE: since we're doing a store that matches the width of the load, we cut out all the sign extension
 deadbedd # M mode little endian load/store byte of 0xAABBCCDD
 ddccbbaa # M mode big endian load/store word of 0xDDCCBBAA
 deadbbaa # M mode big endian load/store halfword of 0xDDCCBBAA

@@ -24,7 +24,7 @@
 #include "WALLY-TEST-LIB-32.h" 
 
 RVTEST_ISA("RV32I")
-RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True; def NO_SAIL=True;",endianness)
+RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",endianness)
 
 INIT_TESTS
 
@@ -36,7 +36,7 @@ TRAP_HANDLER m
 
 // *** It appears Sail has the MBE, SBE, and UBE bits of mstatus hardwired to zero
 
-// M Mode little Endianness tests:
+// M Mode little endianness tests:
 
 li x28, 0xAABBCCDD
 li x29, 0x8000F000
@@ -57,10 +57,10 @@ sb x30, 0(t1) // test store byte, should save 0xDD
 addi t1, t1, 4
 addi a6, a6, 4
 
-li x28, 0x2000000000
-csrs mstatus, x28 // turn on big endianness for M mode
+li x28, 0x20
+csrs mstatush, x28 // turn on big endianness for M mode
 
-// M mode Big Endianness tests
+// M mode Big endianness tests
 // In big endian modes, all values are sign extended to the right, rather than left
 
 li x28, 0xAABBCCDD
@@ -82,8 +82,8 @@ sb x30, 0(t1) // test store byte, should save 0xAA
 addi t1, t1, 4
 addi a6, a6, 4
 
-li x28, 0x2000000000
-csrc mstatus, x28 // Turn off big endianness for M mode before going into the trap handler
+li x28, 0x20
+csrc mstatush, x28 // Turn off big endianness for M mode before going into the trap handler
 
 GOTO_S_MODE
 
@@ -110,8 +110,8 @@ addi a6, a6, 4
 
 GOTO_M_MODE // Go back to M mode to be able to toggle SBE bit of mstatus
 
-li x28, 0x1000000000
-csrs mstatus, x28 // turn on big endianness for S mode
+li x28, 0x10
+csrs mstatush, x28 // turn on big endianness for S mode
 
 GOTO_S_MODE 
 
