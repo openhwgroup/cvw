@@ -66,22 +66,22 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   // READ first SRAM model
   // ***************************************************************************
   end else begin
-    integer index2;
+    integer i;
     if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
-      always_ff @(posedge clk) 
+      always @(posedge clk) 
         if (ce & we & bwe[WIDTH/8])
           RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
-    
-    always_ff @(posedge clk) begin
+  
+    always @(posedge clk) begin
       if(ce) begin
-        if(we) begin
-          for(index2 = 0; index2 < WIDTH/8; index2++) 
-            if(ce & we & bwe[index2])
-		      RAM[addr][index2*8 +: 8] <= #1 din[index2*8 +: 8];
-        end
         dout <= #1 RAM[addr];
+        if(we) begin
+          for(i = 0; i < WIDTH/8; i++) 
+            if(bwe[i])
+		          RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
+        end
       end
     end
-  end    
+  end 
 
 endmodule
