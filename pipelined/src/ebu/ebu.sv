@@ -36,7 +36,7 @@
 
 `include "wally-config.vh"
 
-module ahbmulticontroller
+module ebu
   (
    input logic                clk, reset,
    // Signals from IFU
@@ -113,6 +113,7 @@ module ahbmulticontroller
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
 
   // input stage LSU
+  // LSU always has priority so there should never be a need to save and restore the address phase inputs.
   controllerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
     .Request(LSUReq), .Active(LSUActive),
     .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYOut(LSUHREADY),
