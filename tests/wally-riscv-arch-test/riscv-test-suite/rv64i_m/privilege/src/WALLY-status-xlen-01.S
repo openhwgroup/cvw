@@ -24,7 +24,7 @@
 #include "WALLY-TEST-LIB-64.h" 
 
 RVTEST_ISA("RV64I")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",endianness)
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;",xlen)
 
 INIT_TESTS
 
@@ -34,13 +34,6 @@ TRAP_HANDLER m
 
 csrr x28, mstatus
 li x29, 0xF00000000 // mask bits for uxl and sxl
-and x28, x28, x29
-sd x28, 0(t1) // should store 0xA00000000 to memory
-addi t1, t1, 8
-addi a6, a6, 8
-
-csrs mstatus, x29 // attempt to write to uxl and sxl, should not work
-csrr x28, mstatus
 and x28, x28, x29
 sd x28, 0(t1) // should store 0xA00000000 to memory
 addi t1, t1, 8
