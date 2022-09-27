@@ -97,6 +97,8 @@ module ebu
   logic [2:0]                 LocalBurstType;
   logic                       CntReset;
   logic [3:0]                 Threshold;
+  logic                       IFUReqD;
+  
   
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -195,7 +197,10 @@ module ebu
   // Controller 1 (LSU)
   assign save[1] = 1'b0;
   assign restore[1] = 1'b0;
-  assign dis[1] = 1'b0;
+  assign dis[1] = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeat));
   assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
+
+  flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
+  
 
 endmodule
