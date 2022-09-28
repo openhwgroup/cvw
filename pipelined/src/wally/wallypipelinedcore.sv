@@ -165,7 +165,7 @@ module wallypipelinedcore (
   logic             InstrDAPageFaultF;
   logic             BigEndianM;
   logic             FCvtIntE;
-
+  logic             CommittedF;
   
   ifu ifu(
     .clk, .reset,
@@ -182,7 +182,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
+    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
@@ -336,7 +336,7 @@ module wallypipelinedcore (
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
          .sfencevmaM,
-         .InstrValidM, .CommittedM, 
+         .InstrValidM, .CommittedM, .CommittedF,
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,

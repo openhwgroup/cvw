@@ -42,7 +42,7 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW, 
   input logic [`XLEN-1:0] MEDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic 		   InstrValidM, CommittedM, 
+  input logic 		   InstrValidM, CommittedM, CommittedF,
   output logic 		   TrapM, RetM,
   output logic 		   InterruptM, IntPendingM, DelegateM,
   output logic [`LOG_XLEN-1:0] CauseM 
@@ -63,7 +63,7 @@ module trap (
   assign PendingIntsM = MIP_REGW & MIE_REGW;
   assign IntPendingM = |PendingIntsM;
   assign ValidIntsM = {12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW; 
-  assign InterruptM = (|ValidIntsM) && InstrValidM && ~(CommittedM);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
+  assign InterruptM = (|ValidIntsM) && InstrValidM && ~(CommittedM | CommittedF);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 
