@@ -53,6 +53,7 @@ module ifu (
 	output logic 				BPPredWrongE, 
 	// Mem
 	input logic 				RetM, TrapM, 
+    output logic                CommittedF, 
 	input logic [`XLEN-1:0] 	PrivilegedNextPCM, 
 	input logic 				InvalidateICacheM,
 	output logic [31:0] 		InstrD, InstrM, 
@@ -116,6 +117,8 @@ module ifu (
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
+  logic                        BusCommittedF, CacheCommittedF;
+  
 
   assign PCFExt = {2'b00, PCFSpill};
 
@@ -180,6 +183,12 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
+  // CommittedM tells the CPU's privilege unit the current instruction
+  // in the memory stage is a memory operaton and that memory operation is either completed
+  // or is partially executed. Partially completed memory operations need to prevent an interrupts.
+  // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
+  // delay the interrupt until the LSU is in a clean state.
+  assign CommittedF = CacheCommittedF | BusCommittedF;
 
 //  logic [`XLEN-1:0] InstrRawF;
 //  assign InstrRawF = InstrRawF[31:0];
@@ -221,7 +230,7 @@ module ifu (
              .Atomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
-             .CacheCommitted(), .InvalidateCache(InvalidateICacheM));
+             .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
@@ -231,7 +240,7 @@ module ifu (
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
             .BusRW, .CPUBusy,
-            .BusStall, .BusCommitted());
+            .BusStall, .BusCommitted(BusCommittedF));
 
       mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
         .s(SelUncachedAdr), .y(InstrRawF[31:0]));
@@ -245,7 +254,7 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
-        .CPUBusy, .BusStall, .BusCommitted(), .ReadDataWord(InstrRawF[31:0]));
+        .CPUBusy, .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(InstrRawF[31:0]));
 
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
