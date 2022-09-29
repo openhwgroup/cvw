@@ -109,7 +109,7 @@ module ebu
 
   // input stage IFU
   controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
-    .Request(IFUReq), .Active(IFUActive),
+    .Request(IFUReq),
     .HWRITEin(1'b0), .HSIZEin(IFUHSIZE), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
@@ -117,7 +117,7 @@ module ebu
   // input stage LSU
   // LSU always has priority so there should never be a need to save and restore the address phase inputs.
   controllerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
-    .Request(LSUReq), .Active(LSUActive),
+    .Request(LSUReq),
     .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYOut(LSUHREADY),
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYin(HREADY));
@@ -138,7 +138,7 @@ module ebu
 
   // FSM decides if arbitration needed.  Arbitration is held until the last beat of
   // a burst is completed.
-  assign both = LSUActive & IFUActive;
+  assign both = LSUReq & IFUReq;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
