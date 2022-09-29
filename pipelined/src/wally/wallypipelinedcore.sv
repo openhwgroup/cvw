@@ -393,7 +393,9 @@ module wallypipelinedcore (
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
-        .FStallD, // Stall the decode stage
+         .ForwardedSrcBE, // Integer input for intdiv
+         .Funct3E, .Funct3M, .MDUE, .W64E, // Integer flags and functions
+         .FStallD, // Stall the decode stage
          .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register

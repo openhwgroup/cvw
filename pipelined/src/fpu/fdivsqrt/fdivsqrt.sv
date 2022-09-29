@@ -44,6 +44,9 @@ module fdivsqrt(
   input  logic StallM,
   input  logic StallE,
   input  logic SqrtE, SqrtM,
+	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	input  logic [2:0] 	Funct3E, Funct3M,
+	input  logic MDUE, W64E,
   output logic DivSM,
   output logic DivBusy,
   output logic DivDone,
