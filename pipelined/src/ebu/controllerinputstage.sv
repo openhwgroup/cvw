@@ -40,7 +40,7 @@ module controllerinputstage
   (input logic HCLK,
    input logic                 HRESETn,
    input logic                 Save, Restore, Disable,
-   output logic                Request, Active,
+   output logic                Request,
    // controller input
    input logic                 HWRITEin,
    input logic [2:0]           HSIZEin,
@@ -73,7 +73,6 @@ module controllerinputstage
 
   assign Request = HTRANSOut != 2'b00;
   assign HREADYOut = HREADYin & ~Disable;
-  assign Active = Request & HREADYOut;
 
 endmodule
   
