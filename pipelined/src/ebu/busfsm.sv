@@ -76,8 +76,7 @@ module busfsm
   
   assign BusCommitted = CurrState != ADR_PHASE;
 
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW) |
-                  (CurrState == DATA_PHASE & ~HREADY) ? AHB_NONSEQ : AHB_IDLE;
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW) ? AHB_NONSEQ : AHB_IDLE;
   assign HWRITE = BusRW[0];
   assign CaptureEn = CurrState == DATA_PHASE;
   
