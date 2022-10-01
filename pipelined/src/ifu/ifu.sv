@@ -211,8 +211,10 @@ module ifu (
       logic                ICacheBusAck;
       logic                SelUncachedAdr;
       logic [1:0]          CacheBusRW, BusRW;
+  	  logic 			   IgnoreRequest;
       
-      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{CacheableF, CacheableF};
+	  assign IgnoreRequest = ITLBMissF | TrapM;
+      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF};    
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -248,7 +250,7 @@ module ifu (
       assign IFUHADDR = PCPF;
       logic CaptureEn;
       logic [1:0] BusRW;
-      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF};
+      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{TrapM, TrapM};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
