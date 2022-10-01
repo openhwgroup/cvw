@@ -38,7 +38,8 @@ module fctrl (
   input  logic [6:0] Funct7D,   // bits 31:25 of instruction - may contain percision
   input  logic [6:0] OpD,       // bits 6:0 of instruction
   input  logic [4:0] Rs2D,      // bits 24:20 of instruction
-  input  logic [2:0] Funct3D,   // bits 14:12 of instruction - may contain rounding mode
+  input  logic [2:0] Funct3D, Funct3E,   // bits 14:12 of instruction - may contain rounding mode
+  input  logic       MDUE,
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
   input  logic [1:0] STATUS_FS, // is FPU enabled?
   input  logic       FDivBusyE,  // is the divider busy
@@ -61,7 +62,7 @@ module fctrl (
   logic [`FCTRLW-1:0] ControlsD;
   logic       IllegalFPUInstrD, IllegalFPUInstrE;
   logic 		  FRegWriteD; // FP register write enable
-  logic 		  DivStartD; // integer register write enable
+  logic 		  FDivStartD, FDivStartE, IDivStartE; // integer register write enable
   logic 		  FWriteIntD; // integer register write enable
   logic 		         FRegWriteE; // FP register write enable
   logic [2:0] 	      OpCtrlD;       // Select which opperation to do in each component
@@ -169,7 +170,7 @@ module fctrl (
     endcase
 
   // unswizzle control bits
-  assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, DivStartD, IllegalFPUInstrD} = ControlsD;
+  assign {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD} = ControlsD;
   
   // rounding modes:
   //    000 - round to nearest, ties to even
@@ -264,7 +265,12 @@ module fctrl (
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
-  flopenrc #(1) DEDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, DivStartD, DivStartE);
+  flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
+  if (`M_SUPPORTED) begin
+    assign IDivStartE = MDUE & Funct3E[2];
+    assign DivStartE = FDivStartE | IDivStartE; // integer or floating-point division
+  end else assign DivStartE = FDivStartE;
+
   assign FCvtIntE = (FResSelE == 2'b01);
 
   // E/M pipleine register

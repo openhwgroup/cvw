@@ -37,7 +37,7 @@ module fdivsqrtfsm(
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
-  input  logic DivStart, 
+  input  logic DivStartE, 
   input  logic XsE,
   input  logic SqrtE,
   input  logic StallE,
@@ -101,8 +101,8 @@ module fdivsqrtfsm(
   always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
-      end else if (DivStart&~StallE) begin 
-          step <= cycles; // *** this should be adjusted to depend on the precision; sqrt should use one fewer step becasue firststep=1
+      end else if (DivStartE&~StallE) begin 
+          step <= cycles; 
 //          $display("Setting Nf = %d fbits %d cycles = %d FmtE %d FPSIZES = %d Q_NF = %d num = %d denom = %d\n", Nf, fbits, cycles, FmtE, `FPSIZES, `Q_NF,
 //          (fbits +(`LOGR*`DIVCOPIES)-1), (`LOGR*`DIVCOPIES));
           if (SpecialCaseE) state <= #1 DONE;

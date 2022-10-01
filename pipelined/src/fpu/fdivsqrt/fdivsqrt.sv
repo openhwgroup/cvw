@@ -44,6 +44,9 @@ module fdivsqrt(
   input  logic StallM,
   input  logic StallE,
   input  logic SqrtE, SqrtM,
+	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	input  logic [2:0] 	Funct3E, Funct3M,
+	input  logic MDUE, W64E,
   output logic DivSM,
   output logic DivBusy,
   output logic DivDone,
@@ -64,17 +67,18 @@ module fdivsqrt(
   logic SpecialCaseM;
 
   fdivsqrtpreproc fdivsqrtpreproc(
-    .clk, .DivStart(DivStartE), .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
-    .Sqrt(SqrtE), .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc);
+    .clk, .DivStartE, .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
+    .Sqrt(SqrtE), .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc, 
+    .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E);
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
-    .DivBusy, .DivStart(DivStartE),.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
+    .DivBusy, .DivStartE,.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE,
     .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
     .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
-    .DivStart(DivStartE), .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
+    .DivStartE, .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
   fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .SpecialCaseM, .QmM, .WZero, .DivSM);
 endmodule

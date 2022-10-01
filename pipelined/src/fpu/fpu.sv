@@ -31,28 +31,30 @@
 `include "wally-config.vh"
 
 module fpu (
-  input logic 		         clk,
-  input logic 		         reset,
-  input logic  [2:0] 	   FRM_REGW,   // Rounding mode (from CSR)
-  input logic  [31:0] 	   InstrD,     // instruction (from IFU)
-  input logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
-  input logic  [`XLEN-1:0] ForwardedSrcAE, // Integer input (from IEU)
-  input logic 		         StallE, StallM, StallW, // stall signals (from HZU)
-  input logic 		         FlushE, FlushM, FlushW, // flush signals (from HZU)
-  input logic  [4:0] 	   RdM, RdW,   // which FP register to write to (from IEU)
-  input logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
-  output logic 		      FRegWriteM, // FP register write enable (to privileged unit)
-  output logic 		      FpLoadStoreM,  // Fp load instruction? (to LSU)
-  output logic 		      FStallD,       // Stall the decode stage (To HZU)
-  output logic 		      FWriteIntE,    // integer register write enable (to IEU)
-  output logic             FCvtIntE,      // Convert to int (to IEU)
-  output logic [`FLEN-1:0] FWriteDataM,   // Data to be written to memory (to LSU) 
-  output logic [`XLEN-1:0] FIntResM,      // data to be written to integer register (to IEU)
-  output logic [`XLEN-1:0] FCvtIntResW,   // convert result to to be written to integer register (to IEU)
-  output logic             FCvtIntW,      // select FCvtIntRes (to IEU)
-  output logic 		      FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
-  output logic 		      IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
-  output logic [4:0] 	   SetFflagsM        // FPU flags (to privileged unit)
+   input  logic 		        clk,
+   input  logic 		        reset,
+   input  logic  [2:0] 	     FRM_REGW,   // Rounding mode (from CSR)
+   input  logic  [31:0] 	  InstrD,     // instruction (from IFU)
+   input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
+   input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
+   input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
+   input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
+   input  logic  [4:0] 	     RdM, RdW,   // which FP register to write to (from IEU)
+   input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
+   input  logic  [2:0] 	     Funct3E, Funct3M,
+	input  logic 		        MDUE, W64E,
+   output logic 		        FRegWriteM, // FP register write enable (to privileged unit)
+   output logic 		        FpLoadStoreM,  // Fp load instruction? (to LSU)
+   output logic 		        FStallD,       // Stall the decode stage (To HZU)
+   output logic 		        FWriteIntE,    // integer register write enable (to IEU)
+   output logic              FCvtIntE,      // Convert to int (to IEU)
+   output logic [`FLEN-1:0]  FWriteDataM,   // Data to be written to memory (to LSU) 
+   output logic [`XLEN-1:0]  FIntResM,      // data to be written to integer register (to IEU)
+   output logic [`XLEN-1:0]  FCvtIntResW,   // convert result to to be written to integer register (to IEU)
+   output logic              FCvtIntW,      // select FCvtIntRes (to IEU)
+   output logic 		        FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
+   output logic 		        IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
+   output logic [4:0] 	     SetFflagsM        // FPU flags (to privileged unit)
   );
 
    // FPU specifics:
@@ -161,7 +163,8 @@ module fpu (
    //////////////////////////////////////////////////////////////////////////////////////////
 
    // calculate FP control signals
-   fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), .InstrD,
+   fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
+               .Funct3E, .MDUE, .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
                .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
                .DivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
@@ -259,8 +262,11 @@ module fpu (
    // *** add other opperations
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), .XsE,
+                  .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
                   .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
                   .QmM, .DivDone(DivDoneM));
+
+                  //
    // compare
    //    - fmin/fmax
    //    - flt/fle/feq
