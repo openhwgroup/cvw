@@ -203,6 +203,6 @@ module uncore (
   // However on reset None must be seleted.
   flopenr #(10) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[10:1], {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
   flopenl #(1) hseldelayreg2(HCLK, ~HRESETn, HREADY, HSELRegions[0], 1'b1, HSELNoneD);  
-  flopr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HSELBRIDGE, HSELBRIDGED);
+  flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
 

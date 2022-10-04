@@ -39,7 +39,7 @@ module privileged (
   output logic [`XLEN-1:0] PrivilegedNextPCM,
   output logic             RetM, TrapM, 
   output logic             sfencevmaM,
-  input  logic             InstrValidM, CommittedM, 
+  input  logic             InstrValidM, CommittedM, CommittedF, 
   input  logic             FRegWriteM, LoadStallD,
   input  logic 		   BPPredDirWrongM,
   input  logic 		   BTBPredPCWrongM,
@@ -158,7 +158,7 @@ module privileged (
             .PrivilegeModeW, 
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
-            .InstrValidM, .CommittedM,  
+            .InstrValidM, .CommittedM, .CommittedF,
             .TrapM, .RetM,
             .InterruptM, .IntPendingM, .DelegateM,
             .CauseM);

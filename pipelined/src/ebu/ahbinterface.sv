@@ -53,14 +53,14 @@ module ahbinterface #(parameter LSU = 0) // **** modify to use LSU/ifu parameter
   input logic                CPUBusy,
   output logic               BusStall,
   output logic               BusCommitted,
-  output logic [(LSU ? `XLEN : 32)-1:0]   ReadDataWord);
+  output logic [(LSU ? `XLEN : 32)-1:0]   FetchBuffer);
   
   logic                       CaptureEn;
 
   /// *** only 32 bit for IFU.
   localparam                  LEN = (LSU ? `XLEN : 32);
   
-  flopen #(LEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA[LEN-1:0]), .q(ReadDataWord));
+  flopen #(LEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA[LEN-1:0]), .q(FetchBuffer));
 
   if(LSU) begin
     // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN    

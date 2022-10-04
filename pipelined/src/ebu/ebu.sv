@@ -36,7 +36,7 @@
 
 `include "wally-config.vh"
 
-module ahbmulticontroller
+module ebu
   (
    input logic                clk, reset,
    // Signals from IFU
@@ -73,7 +73,8 @@ module ahbmulticontroller
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype CurrState, NextState;
 
-  logic [1:0]                 save, restore, dis, sel;
+  logic                       LSUDisable, LSUSelect;
+  logic                       IFUSave, IFURestore, IFUDisable, IFUSelect;
   logic                       both;
 
   logic [`PA_BITS-1:0]        IFUHADDROut;
@@ -97,6 +98,8 @@ module ahbmulticontroller
   logic [2:0]                 LocalBurstType;
   logic                       CntReset;
   logic [3:0]                 Threshold;
+  logic                       IFUReqD;
+  
   
   assign HCLK = clk;
   assign HRESETn = ~reset;
@@ -106,25 +109,26 @@ module ahbmulticontroller
   // inputs.  Abritration scheme is LSU always goes first.
 
   // input stage IFU
-  controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(save[0]), .Restore(restore[0]), .Disable(dis[0]),
-    .Request(IFUReq), .Active(IFUActive),
-    .HWRITEin(1'b0), .HSIZEin(IFUHSIZE), .HBURSTin(IFUHBURST), .HTRANSin(IFUHTRANS), .HADDRin(IFUHADDR),
+  controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(IFUSave), .Restore(IFURestore), .Disable(IFUDisable),
+    .Request(IFUReq),
+    .HWRITEIn(1'b0), .HSIZEIn(IFUHSIZE), .HBURSTIn(IFUHBURST), .HTRANSIn(IFUHTRANS), .HADDRIn(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
-    .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYin(HREADY));
+    .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYIn(HREADY));
 
   // input stage LSU
-  controllerinputstage LSUInput(.HCLK, .HRESETn, .Save(save[1]), .Restore(restore[1]), .Disable(dis[1]),
-    .Request(LSUReq), .Active(LSUActive),
-    .HWRITEin(LSUHWRITE), .HSIZEin(LSUHSIZE), .HBURSTin(LSUHBURST), .HTRANSin(LSUHTRANS), .HADDRin(LSUHADDR), .HREADYOut(LSUHREADY),
+  // LSU always has priority so there should never be a need to save and restore the address phase inputs.
+  controllerinputstage #(0) LSUInput(.HCLK, .HRESETn, .Save(1'b0), .Restore(1'b0), .Disable(LSUDisable),
+    .Request(LSUReq),
+    .HWRITEIn(LSUHWRITE), .HSIZEIn(LSUHSIZE), .HBURSTIn(LSUHBURST), .HTRANSIn(LSUHTRANS), .HADDRIn(LSUHADDR), .HREADYOut(LSUHREADY),
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
-    .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYin(HREADY));
+    .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYIn(HREADY));
 
   // output mux //*** rewrite for general number of controllers.
-  assign HADDR = sel[1] ? LSUHADDROut : sel[0] ? IFUHADDROut : '0;
-  assign HSIZE = sel[1] ? LSUHSIZEOut : sel[0] ? IFUHSIZEOut: '0; 
-  assign HBURST = sel[1] ? LSUHBURSTOut : sel[0] ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
-  assign HTRANS = sel[1] ? LSUHTRANSOut : sel[0] ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
-  assign HWRITE = sel[1] ? LSUHWRITEOut : sel[0] ? 1'b0 : '0;
+  assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : '0;
+  assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0; 
+  assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
+  assign HTRANS = LSUSelect ? LSUHTRANSOut : IFUSelect ? IFUHTRANSOut: '0; // SEQ if not first read or write, NONSEQ if first read or write, IDLE otherwise
+  assign HWRITE = LSUSelect ? LSUHWRITEOut : IFUSelect ? 1'b0 : '0;
   assign HPROT = 4'b0011; // not used; see Section 3.7
   assign HMASTLOCK = 0; // no locking supported
 
@@ -135,7 +139,7 @@ module ahbmulticontroller
 
   // FSM decides if arbitration needed.  Arbitration is held until the last beat of
   // a burst is completed.
-  assign both = LSUActive & IFUActive;
+  assign both = LSUReq & IFUReq;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
@@ -187,14 +191,15 @@ module ahbmulticontroller
   // basic arb always selects LSU when both
   // replace this block for more sophisticated arbitration as needed.
   // Controller 0 (IFU)
-  assign save[0] = CurrState == IDLE & both;
-  assign restore[0] = CurrState == ARBITRATE;
-  assign dis[0] = CurrState == ARBITRATE;
-  assign sel[0] = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
+  assign IFUSave = CurrState == IDLE & both;
+  assign IFURestore = CurrState == ARBITRATE;
+  assign IFUDisable = CurrState == ARBITRATE;
+  assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
   // Controller 1 (LSU)
-  assign save[1] = 1'b0;
-  assign restore[1] = 1'b0;
-  assign dis[1] = 1'b0;
-  assign sel[1] = NextState == ARBITRATE ? 1'b1: LSUReq;
+  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeat));
+  assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
+
+  flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
+  
 
 endmodule

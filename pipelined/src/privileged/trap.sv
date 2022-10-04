@@ -42,7 +42,7 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW, 
   input logic [`XLEN-1:0] MEDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic 		   InstrValidM, CommittedM, 
+  input logic 		   InstrValidM, CommittedM, CommittedF,
   output logic 		   TrapM, RetM,
   output logic 		   InterruptM, IntPendingM, DelegateM,
   output logic [`LOG_XLEN-1:0] CauseM 
@@ -50,6 +50,8 @@ module trap (
 
   logic MIntGlobalEnM, SIntGlobalEnM;
   logic ExceptionM;
+  logic Committed;
+  
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
 
   ///////////////////////////////////////////
@@ -62,8 +64,9 @@ module trap (
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = MIP_REGW & MIE_REGW;
   assign IntPendingM = |PendingIntsM;
-  assign ValidIntsM = {12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW; 
-  assign InterruptM = (|ValidIntsM) && InstrValidM && ~(CommittedM);  // *** RT. CommittedM is a temporary hack to prevent integer division from having an interrupt during divide.
+  assign Committed = CommittedM | CommittedF;
+  assign ValidIntsM = {12{~Committed}} & ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW); 
+  assign InterruptM = (|ValidIntsM) && InstrValidM && ~Committed; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 

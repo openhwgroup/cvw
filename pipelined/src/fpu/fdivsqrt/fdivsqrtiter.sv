@@ -32,7 +32,7 @@
 
 module fdivsqrtiter(
   input  logic clk,
-  input  logic DivStart, 
+  input  logic DivStartE, 
   input  logic DivBusy, 
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
@@ -90,19 +90,19 @@ module fdivsqrtiter(
 
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCSqrt, initCDiv2, initCDiv4, initCUpper;
-  assign initCSqrt = 2'b11;
-  assign initCDiv2 = 2'b10;
-  assign initCDiv4 = 2'b00; // *** not sure why this works; seems like it should be 00 for initializing to -4
+  assign initCSqrt = 2'b11; // -1
+  assign initCDiv2 = 2'b10; // -2
+  assign initCDiv4 = 2'b00; // -4
   assign initCUpper = SqrtE ? initCSqrt : (`RADIX == 4) ? initCDiv4 : initCDiv2;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
 
-  mux2   #(`DIVb+4) wsmux(NextWSN, X, DivStart, WSN);
-  flopen   #(`DIVb+4) wsflop(clk, DivStart|DivBusy, WSN, WS[0]);
-  mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStart, WCN);
-  flopen   #(`DIVb+4) wcflop(clk, DivStart|DivBusy, WCN, WC[0]);
-  flopen #(`DIVN-1) dflop(clk, DivStart, Dpreproc, D);
-  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, DivStart, CMux); 
-  flopen #(`DIVb+2) cflop(clk, DivStart|DivBusy, CMux, C[0]);
+  mux2   #(`DIVb+4) wsmux(NextWSN, X, DivStartE, WSN);
+  flopen   #(`DIVb+4) wsflop(clk, DivStartE|DivBusy, WSN, WS[0]);
+  mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStartE, WCN);
+  flopen   #(`DIVb+4) wcflop(clk, DivStartE|DivBusy, WCN, WC[0]);
+  flopen #(`DIVN-1) dflop(clk, DivStartE, Dpreproc, D);
+  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, DivStartE, CMux); 
+  flopen #(`DIVb+2) cflop(clk, DivStartE|DivBusy, CMux, C[0]);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
@@ -139,10 +139,10 @@ module fdivsqrtiter(
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
   assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
   assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStart, UMux);
-  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStart, UMMux);
-  flopen #(`DIVb+1) UReg(clk, DivStart|DivBusy, UMux, U[0]);
-  flopen #(`DIVb+1) UMReg(clk, DivStart|DivBusy, UMMux, UM[0]);
+  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStartE, UMux);
+  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStartE, UMMux);
+  flopen #(`DIVb+1) UReg(clk, DivStartE|DivBusy, UMux, U[0]);
+  flopen #(`DIVb+1) UMReg(clk, DivStartE|DivBusy, UMMux, UM[0]);
   
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];

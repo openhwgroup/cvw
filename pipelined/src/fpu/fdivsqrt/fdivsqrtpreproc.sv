@@ -32,12 +32,15 @@
 
 module fdivsqrtpreproc (
   input  logic clk,
-  input  logic DivStart, 
+  input  logic DivStartE, 
   input  logic [`NF:0] Xm, Ym,
   input  logic [`NE-1:0] Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic Sqrt,
   input logic XZero,
+  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	input  logic [2:0] 	Funct3E, Funct3M,
+	input  logic MDUE, W64E,
   output logic  [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -76,7 +79,7 @@ module fdivsqrtpreproc (
   // DIVRESLEN = DIVLEN or DIVLEN+2
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
-  flopen #(`NE+2) expflop(clk, DivStart, Qe, QeM);
+  flopen #(`NE+2) expflop(clk, DivStartE, Qe, QeM);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .XZeroCnt, .YZeroCnt, .Qe);
 
 endmodule
