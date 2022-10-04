@@ -58,7 +58,7 @@ addi t1, t1, 4
 addi a6, a6, 4
 
 li x28, 0x20
-csrs mstatush, x28 // turn on big endianness for M mode
+csrs 0x310, x28 // turn on big endianness for M mode // using '0x310' instead of mstatush because GCC doesn't recognize just mstatush
 
 // M mode Big endianness tests
 // In big endian modes, all values are sign extended to the right, rather than left
@@ -83,7 +83,7 @@ addi t1, t1, 4
 addi a6, a6, 4
 
 li x28, 0x20
-csrc mstatush, x28 // Turn off big endianness for M mode before going into the trap handler
+csrc 0x310, x28 // Turn off big endianness for M mode before going into the trap handler // using '0x310' instead of mstatush because GCC doesn't recognize just mstatush
 
 GOTO_S_MODE
 
@@ -91,7 +91,7 @@ GOTO_S_MODE
 
 li x28, 0xAABBCCDD
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0xAABBCCDD
+sw x28, 0(x29) // value stored in memory as 0xAABBCCDD
 
 lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
 sw x30, 0(t1) // test store word, should save 0xAABBCCDD
@@ -111,7 +111,7 @@ addi a6, a6, 4
 GOTO_M_MODE // Go back to M mode to be able to toggle SBE bit of mstatus
 
 li x28, 0x10
-csrs mstatush, x28 // turn on big endianness for S mode
+csrs 0x310, x28 // turn on big endianness for S mode // using '0x310' instead of mstatush because GCC doesn't recognize just mstatush
 
 GOTO_S_MODE 
 
@@ -119,7 +119,7 @@ GOTO_S_MODE
 
 li x28, 0xAABBCCDD
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0xDDCCBBAA
+sw x28, 0(x29) // value stored in memory as 0xDDCCBBAA
 
 lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
 sw x30, 0(t1) // test store word, should save 0xDDCCBBAA
@@ -142,7 +142,7 @@ GOTO_U_MODE
 
 li x28, 0xAABBCCDD
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0xAABBCCDD
+sw x28, 0(x29) // value stored in memory as 0xAABBCCDD
 
 lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
 sw x30, 0(t1) // test store word, should save 0xAABBCCDD
@@ -170,7 +170,7 @@ GOTO_U_MODE
 
 li x28, 0xAABBCCDD
 li x29, 0x8000F000
-sd x28, 0(x29) // value stored in memory as 0xDDCCBBAA
+sw x28, 0(x29) // value stored in memory as 0xDDCCBBAA
 
 lw x30, 0(x29) // test load word, should read out 0xAABBCCDD
 sw x30, 0(t1) // test store word, should save 0xDDCCBBAA
@@ -186,6 +186,9 @@ lb x30, 0(x29) // test load byte, should read out 0xAA
 sb x30, 0(t1) // test store byte, should save 0xAA
 addi t1, t1, 4
 addi a6, a6, 4
+
+//store_location:
+//.fill
 
 END_TESTS
 
