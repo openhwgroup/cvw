@@ -139,8 +139,8 @@ module cachefsm
       else if(CacheBusAck & VictimDirty) NextState = STATE_MISS_EVICT_DIRTY;
                             else                               NextState = STATE_MISS_FETCH_WDV;
       //STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_READY;
-      STATE_MISS_WRITE_CACHE_LINE: if(~(AMO | CacheRW[0]))     NextState = STATE_MISS_READ_DELAY;
-                                   else                        NextState = STATE_READY;
+      STATE_MISS_WRITE_CACHE_LINE:      NextState = STATE_MISS_READ_DELAY;
+                                   //else                        NextState = STATE_READY;
       STATE_MISS_READ_DELAY: if(CPUBusy)                       NextState = STATE_MISS_READ_DELAY;
                              else                              NextState = STATE_READY;
       STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                  NextState = STATE_MISS_WRITE_CACHE_LINE;
@@ -194,10 +194,13 @@ module cachefsm
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
   assign CacheBusRW[1] = (CurrState == STATE_READY & DoAnyMiss) | (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck);
+//  assign CacheBusRW[1] = CurrState == STATE_READY & DoAnyMiss;
   assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
+//  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
+//                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
                   // use the raw requests as we don't want DCacheTrapM in the critical path

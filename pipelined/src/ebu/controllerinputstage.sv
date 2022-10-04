@@ -36,17 +36,17 @@
 
 `include "wally-config.vh"
 
-module controllerinputstage
+module controllerinputstage #(parameter SAVE_ENABLED = 1)
   (input logic HCLK,
    input logic                 HRESETn,
    input logic                 Save, Restore, Disable,
-   output logic                Request, Active,
+   output logic                Request,
    // controller input
-   input logic                 HWRITEin,
-   input logic [2:0]           HSIZEin,
-   input logic [2:0]           HBURSTin,
-   input logic [1:0]           HTRANSin,
-   input logic [`PA_BITS-1:0]  HADDRin,
+   input logic                 HWRITEIn,
+   input logic [2:0]           HSIZEIn,
+   input logic [2:0]           HBURSTIn,
+   input logic [1:0]           HTRANSIn,
+   input logic [`PA_BITS-1:0]  HADDRIn,
    output logic                HREADYOut,
    // controller output
    output logic                HWRITEOut,
@@ -54,7 +54,7 @@ module controllerinputstage
    output logic [2:0]          HBURSTOut,
    output logic [1:0]          HTRANSOut,
    output logic [`PA_BITS-1:0] HADDROut,
-   input logic                 HREADYin
+   input logic                 HREADYIn
    );
 
   logic                        HWRITESave;
@@ -63,17 +63,24 @@ module controllerinputstage
   logic [1:0]                  HTRANSSave;
   logic [`PA_BITS-1:0]         HADDRSave;
 
+  if (SAVE_ENABLED) begin
   flopenr #(1+3+3+2+`PA_BITS) SaveReg(HCLK, ~HRESETn, Save,
-                                      {HWRITEin, HSIZEin, HBURSTin, HTRANSin, HADDRin}, 
+                                      {HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
                                       {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave});
-  mux2 #(1+3+3+2+`PA_BITS) RestorMux({HWRITEin, HSIZEin, HBURSTin, HTRANSin, HADDRin}, 
+  mux2 #(1+3+3+2+`PA_BITS) RestorMux({HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
                                      {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave},
                                      Restore,
                                      {HWRITEOut, HSIZEOut, HBURSTOut, HTRANSOut, HADDROut});
+  end else begin
+    assign HWRITEOut = HWRITEIn;
+    assign HSIZEOut = HSIZEIn;
+    assign HBURSTOut = HBURSTIn;
+    assign HTRANSOut = HTRANSIn;
+    assign HADDROut = HADDRIn;
+  end
 
   assign Request = HTRANSOut != 2'b00;
-  assign HREADYOut = HREADYin & ~Disable;
-  assign Active = Request & HREADYOut;
+  assign HREADYOut = HREADYIn & ~Disable;
 
 endmodule
   

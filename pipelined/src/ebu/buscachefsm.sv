@@ -140,12 +140,11 @@ module buscachefsm #(parameter integer   WordCountThreshold,
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|BusRW | |CacheBusRW)) |
-                  (CurrState == DATA_PHASE & ~HREADY) |
-                  (CacheAccess & ~|WordCount & |CacheBusRW) ? AHB_NONSEQ :
+                  (CacheAccess & FinalWordCount & |CacheBusRW & HREADY) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |WordCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = BusRW[0] | CacheBusRW[0];
-  assign HBURST = `BURST_EN ? ((|CacheBusRW) ? LocalBurstType : 3'b0) : 3'b0;  // this line is for burst.
+  assign HWRITE = BusRW[0] | CacheBusRW[0] | (CurrState == CACHE_EVICT & |WordCount);
+  assign HBURST = `BURST_EN & (|CacheBusRW | (CacheAccess & |WordCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
     case(WordCountThreshold)

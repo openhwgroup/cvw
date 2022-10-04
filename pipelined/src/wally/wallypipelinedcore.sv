@@ -165,7 +165,7 @@ module wallypipelinedcore (
   logic             InstrDAPageFaultF;
   logic             BigEndianM;
   logic             FCvtIntE;
-
+  logic             CommittedF;
   
   ifu ifu(
     .clk, .reset,
@@ -182,7 +182,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .PrivilegedNextPCM, .InvalidateICacheM,
+    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
@@ -289,7 +289,7 @@ module wallypipelinedcore (
    // *** Ross: please make EBU conditional when only supporting internal memories
 
   if(`BUS) begin : ebu
-    ahbmulticontroller ebu(// IFU connections
+    ebu ebu(// IFU connections
      .clk, .reset,
      // IFU interface
      .IFUHADDR,
@@ -336,7 +336,7 @@ module wallypipelinedcore (
          .InstrM, .CSRReadValW, .PrivilegedNextPCM,
          .RetM, .TrapM, 
          .sfencevmaM,
-         .InstrValidM, .CommittedM, 
+         .InstrValidM, .CommittedM, .CommittedF,
          .FRegWriteM, .LoadStallD,
          .BPPredDirWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
@@ -393,7 +393,9 @@ module wallypipelinedcore (
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
-        .FStallD, // Stall the decode stage
+         .ForwardedSrcBE, // Integer input for intdiv
+         .Funct3E, .Funct3M, .MDUE, .W64E, // Integer flags and functions
+         .FStallD, // Stall the decode stage
          .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
