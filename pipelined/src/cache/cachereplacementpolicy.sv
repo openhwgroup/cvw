@@ -56,8 +56,12 @@ module cachereplacementpolicy
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
     if(ce) begin
-      LineReplacementBits <= #1 ReplacementBits[RAdr];
-      if (LRUWriteEn) ReplacementBits[RAdr] <= NewReplacement;
+      if (LRUWriteEn) begin 
+        ReplacementBits[RAdr] <= NewReplacement;
+        LineReplacementBits <= #1 NewReplacement;
+      end else begin
+        LineReplacementBits <= #1 ReplacementBits[RAdr];
+      end
     end
   end  
 
