@@ -193,6 +193,7 @@ module lsu (
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM;
     assign CacheableM = '1;
+    assign SelDTIM = '0;
   end
   
   /////////////////////////////////////////////////////////////////////////////////////////////
