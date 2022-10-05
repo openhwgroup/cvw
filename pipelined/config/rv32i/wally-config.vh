@@ -51,9 +51,9 @@
 `define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
 `define BUS 1
-`define DCACHE 1
-`define ICACHE 1
-`define VIRTMEM_SUPPORTED 1
+`define DCACHE 0
+`define ICACHE 0
+`define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 0
 
@@ -86,16 +86,16 @@
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-`define DTIM_SUPPORTED 1'b0
+`define DTIM_SUPPORTED 1'b1
 `define DTIM_BASE       34'h80000000
-`define DTIM_RANGE      34'h00001FFF
-`define IROM_SUPPORTED 1'b0
+`define DTIM_RANGE      34'h07FFFFFF
+`define IROM_SUPPORTED 1'b1
 `define IROM_BASE       34'h80000000
-`define IROM_RANGE      34'h00001FFF
+`define IROM_RANGE      34'h07FFFFFF
 `define BOOTROM_SUPPORTED 1'b1
 `define BOOTROM_BASE   34'h00001000 
 `define BOOTROM_RANGE  34'h00000FFF
-`define UNCORE_RAM_SUPPORTED 1'b1
+`define UNCORE_RAM_SUPPORTED 1'b0
 `define UNCORE_RAM_BASE       34'h80000000
 `define UNCORE_RAM_RANGE      34'h07FFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
