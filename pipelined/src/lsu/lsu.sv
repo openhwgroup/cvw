@@ -117,6 +117,7 @@ module lsu (
   logic [`LLEN-1:0]         ReadDataM;
   logic [(`LLEN-1)/8:0]     ByteMaskM;
   logic                     SelReplay;
+  logic                     SelDTIM;
     
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
@@ -168,7 +169,7 @@ module lsu (
       .TLBFlush(sfencevmaM),
       .PhysicalAddress(PAdrM),
       .TLBMiss(DTLBMissM),
-      .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(),
+      .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(), .SelTIM(SelDTIM),
       .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
@@ -200,19 +201,21 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   logic [`LLEN-1:0]    LSUWriteDataM, LittleEndianWriteDataM;
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
-  logic [`LLEN-1:0]    ReadDataWordMuxM;
+  logic [`LLEN-1:0]    ReadDataWordMuxM, DTIMReadDataWordM, ReadDataWordMux2M, DCacheReadDataWordM;
   logic                IgnoreRequest;
   assign IgnoreRequest = IgnoreRequestTLB | TrapM;
   
   if (`DTIM_SUPPORTED) begin : dtim
     logic [`PA_BITS-1:0] DTIMAdr;
-
+    logic [1:0]          DTIMMemRWM;
+    
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     assign DTIMAdr = MemRWM[0] ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
-    dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM,
+    assign DTIMMemRWM = LSURWM & ~{IgnoreRequest, IgnoreRequest} & {SelDTIM, SelDTIM};
+    dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM(DTIMMemRWM),
               .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
-              .ReadDataWordM(ReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
+              .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
   if (`BUS) begin : bus              
@@ -231,7 +234,7 @@ module lsu (
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
 
-      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM};
+      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableM, CacheableM} & ~{SelDTIM, SelDTIM};
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`XLEN), .DCACHE(1)) dcache(
@@ -241,7 +244,7 @@ module lsu (
         .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM), .SelReplay,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
-        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(ReadDataWordM), 
+        .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `DCACHE) ahbcacheinterface(
@@ -254,9 +257,11 @@ module lsu (
         .SelUncachedAdr, .BusRW, .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
-      mux2 #(`LLEN) UnCachedDataMux(.d0(ReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
+      mux2 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
         .s(SelUncachedAdr), .y(ReadDataWordMuxM));
-      mux2 #(`XLEN) LSUHWDATAMux(.d0(ReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
+      mux2 #(`LLEN) ReadDataMux2(.d0(ReadDataWordMuxM), .d1({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
+        .s(SelUncachedAdr), .y(ReadDataWordMux2M));
+      mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(PreHWDATA));
 
       flopen #(`XLEN) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
@@ -271,6 +276,7 @@ module lsu (
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
       logic [1:0] BusRW;
+      logic [`XLEN-1:0] FetchBuffer;
       assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest};
       
       assign LSUHADDR = PAdrM;
@@ -279,15 +285,16 @@ module lsu (
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
-        .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(ReadDataWordM));
-          
-      assign ReadDataWordMuxM = ReadDataWordM;  // from byte swapping
+        .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
+
+      if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMux2M);
+      else assign ReadDataWordMux2M = FetchBuffer[`XLEN-1:0];
       assign LSUHBURST = 3'b0;
       assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
   end else begin: nobus // block: bus
     assign LSUHWDATA = '0; 
-    assign ReadDataWordMuxM = ReadDataWordM;
+    assign ReadDataWordMux2M = DTIMReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;
     assign {DCacheStallM, DCacheCommittedM} = '0;
@@ -334,10 +341,10 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`BIGENDIAN_SUPPORTED) begin:endian
     endianswap #(`LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
-    endianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
+    endianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordMux2M), .y(LittleEndianReadDataWordM));
   end else begin
     assign LSUWriteDataM = LittleEndianWriteDataM;
-    assign LittleEndianReadDataWordM = ReadDataWordMuxM;
+    assign LittleEndianReadDataWordM = ReadDataWordMux2M;
   end
 
 endmodule
