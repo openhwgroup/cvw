@@ -277,7 +277,7 @@ module lsu (
       logic CaptureEn;
       logic [1:0] BusRW;
       logic [`XLEN-1:0] FetchBuffer;
-      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest};
+      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{SelDTIM, SelDTIM};
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;

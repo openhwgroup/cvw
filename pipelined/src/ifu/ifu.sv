@@ -136,7 +136,7 @@ module ifu (
   end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
-    assign PostSpillInstrRawF = InstrRawF;
+    assign PostSpillInstrRawF = InstrRaw2F;
     assign {SelNextSpillF, CompressedF} = 0;
   end
 
@@ -198,7 +198,7 @@ module ifu (
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
     assign IFURWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrRawF));
  
   end else begin
     assign IFURWF = 2'b10;
@@ -216,7 +216,7 @@ module ifu (
   	  logic 			   IgnoreRequest;
       
 	  assign IgnoreRequest = ITLBMissF | TrapM;
-      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF};    
+      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF} & ~{SelIROM, SelIROM};    
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -255,7 +255,7 @@ module ifu (
       logic CaptureEn;
       logic [31:0]  FetchBuffer;
       logic [1:0] BusRW;
-      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{TrapM, TrapM};
+      assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{TrapM, TrapM} & ~{SelIROM, SelIROM};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
