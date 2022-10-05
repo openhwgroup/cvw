@@ -91,7 +91,7 @@ module ifu (
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0]            PCPlusUpperF;
   logic                        CompressedF;
-  logic [31:0]                 InstrRawD, InstrRawF;
+  logic [31:0]                 InstrRawD, InstrRawF, InstrRaw2F, IROMInstrRawF, ICacheInstrRawF;
   logic [31:0]                 FinalInstrRawF;
   logic [1:0]                  IFURWF;
   
@@ -118,6 +118,8 @@ module ifu (
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
   logic                        BusCommittedF, CacheCommittedF;
+  logic                        SelIROM;
+  
   
 
   assign PCFExt = {2'b00, PCFSpill};
@@ -128,7 +130,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF,
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF(InstrRaw2F),
       .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
@@ -166,7 +168,7 @@ module ifu (
          .TLBFlush,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
-         .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(),
+         .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(), .SelTIM(SelIROM),
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
@@ -196,7 +198,7 @@ module ifu (
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
     assign IFURWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(FinalInstrRawF));
+    irom irom(.clk, .reset, .ce(~CPUBusy), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrRawF));
  
   end else begin
     assign IFURWF = 2'b10;
@@ -222,7 +224,7 @@ module ifu (
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
-             .ReadDataWord(FinalInstrRawF),
+             .ReadDataWord(ICacheInstrRawF),
              .Cacheable(CacheableF),
              .SelReplay('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
@@ -244,11 +246,14 @@ module ifu (
             .BusRW, .CPUBusy,
             .BusStall, .BusCommitted(BusCommittedF));
 
-      mux2 #(32) UnCachedDataMux(.d0(FinalInstrRawF), .d1(FetchBuffer[32-1:0]),
-        .s(SelUncachedAdr), .y(InstrRawF[31:0]));
+      mux2 #(32) UnCachedDataMux(.d0(ICacheInstrRawF), .d1(FetchBuffer[32-1:0]),
+        .s(SelUncachedAdr), .y(InstrRawF));
+      mux2 #(32) UnCachedDataMux2(.d0(InstrRawF), .d1(IROMInstrRawF),
+        .s(SelIROM), .y(InstrRaw2F[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic CaptureEn;
+      logic [31:0]  FetchBuffer;
       logic [1:0] BusRW;
       assign BusRW = IFURWF & ~{ITLBMissF, ITLBMissF} & ~{TrapM, TrapM};
       assign IFUHSIZE = 3'b010;
@@ -256,8 +261,10 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
-        .CPUBusy, .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(InstrRawF[31:0]));
+        .CPUBusy, .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
+      if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrRawF, SelIROM, InstrRaw2F);
+      else assign InstrRaw2F = FetchBuffer;
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
       assign {ICacheMiss, ICacheAccess} = '0;
@@ -265,7 +272,7 @@ module ifu (
   end else begin : nobus // block: bus
     assign BusStall = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
-    assign InstrRawF = FinalInstrRawF;
+    assign InstrRaw2F = IROMInstrRawF;
   end
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
