@@ -260,7 +260,7 @@ module lsu (
       mux2 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0] }),
         .s(SelUncachedAdr), .y(ReadDataWordMuxM));
       mux2 #(`LLEN) ReadDataMux2(.d0(ReadDataWordMuxM), .d1({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
-        .s(SelUncachedAdr), .y(ReadDataWordMux2M));
+        .s(SelDTIM), .y(ReadDataWordMux2M));
       mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordM[`XLEN-1:0]), .d1(LSUWriteDataM[`XLEN-1:0]),
         .s(SelUncachedAdr), .y(PreHWDATA));
 
