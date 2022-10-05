@@ -216,7 +216,8 @@ module ifu (
       logic [1:0]          CacheBusRW, BusRW;
 
       
-      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF} & ~{SelIROM, SelIROM};    
+      //assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF} & ~{SelIROM, SelIROM};
+      assign BusRW = ~IgnoreRequest & ~CacheableF & ~SelIROM ? IFURWF : '0;
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
@@ -253,7 +254,8 @@ module ifu (
       logic CaptureEn;
       logic [31:0]  FetchBuffer;
       logic [1:0] BusRW;
-      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{SelIROM, SelIROM};
+      assign BusRW = ~IgnoreRequest & ~SelIROM ? IFURWF : '0;
+//      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{SelIROM, SelIROM};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(IFUHREADY), 
