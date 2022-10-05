@@ -154,7 +154,7 @@ module ebu
   // Controller needs to count beats.
   flopenr #(4) 
   BeatCountReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset | FinalBeatD),
+		.reset(~HRESETn | CntReset | FinalBeat),
 		.en(BeatCntEn),
 		.d(NextBeatCount),
 		.q(BeatCount));  
