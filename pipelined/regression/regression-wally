@@ -82,7 +82,7 @@ for test in tests32gc:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32ic = ["arch32i", "arch32c", "imperas32i", "imperas32c"] 
+tests32ic = ["arch32i", "arch32c", "imperas32i", "imperas32c", "wally32periph"] 
 for test in tests32ic:
   tc = TestCase(
         name=test,
@@ -91,7 +91,7 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32i = ["arch32i", "wally32periph"] 
+tests32i = ["arch32i", "imperas32i"] 
 for test in tests32i:
   tc = TestCase(
         name=test,
