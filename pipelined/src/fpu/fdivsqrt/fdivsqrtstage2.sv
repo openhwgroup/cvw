@@ -41,7 +41,7 @@ module fdivsqrtstage2 (
   output logic un,
   output logic [`DIVb+1:0] CNext,
   output logic [`DIVb:0] UNext, UMNext, 
-  output logic [`DIVb+3:0]  WSA, WCA
+  output logic [`DIVb+3:0]  WSNext, WCNext
 );
  /* verilator lint_on UNOPTFLAT */
 
@@ -49,8 +49,7 @@ module fdivsqrtstage2 (
   logic up, uz;
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
-
-  assign CNext = {1'b1, C[`DIVb+1:1]};
+  logic [`DIVb+3:0]  WSA, WCA;
 
   // Qmient Selection logic
   // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
@@ -61,8 +60,11 @@ module fdivsqrtstage2 (
 	// 0010 = -1
 	// 0001 = -2
   fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
+
+  // Sqrt F generatin
   fdivsqrtfgen2 fgen2(.up, .uz, .C(CNext), .U, .UM, .F);
 
+  // Divisor multiple
   always_comb
     if      (up) Dsel = DBar;
     else if (uz) Dsel = '0; // qz
@@ -72,7 +74,13 @@ module fdivsqrtstage2 (
   //  WSA, WCA = WS + WC - qD
   assign AddIn = SqrtM ? F : Dsel;
   csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtM, WSA, WCA);
+  assign WSNext = WSA << 1;
+  assign WCNext = WCA << 1;
 
+  // Shift thermometer code C
+  assign CNext = {1'b1, C[`DIVb+1:1]};
+
+  // Unified On-The-Fly Converter to accumulate result
   fdivsqrtuotfc2 uotfc2(.up, .uz, .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
