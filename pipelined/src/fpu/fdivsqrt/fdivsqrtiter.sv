@@ -55,8 +55,8 @@ module fdivsqrtiter(
 // U/UM should be 1.b so b+1 bits or b:0
 // C needs to be the lenght of the final fraction 0.b so b or b-1:0
  /* verilator lint_off UNOPTFLAT */
-  logic [`DIVb+3:0]  WSA[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WCA[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WSNext[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WCNext[`DIVCOPIES-1:0]; // Q4.b
   logic [`DIVb+3:0]  WS[`DIVCOPIES:0]; // Q4.b
   logic [`DIVb+3:0]  WC[`DIVCOPIES:0]; // Q4.b
   logic [`DIVb:0] U[`DIVCOPIES:0]; // U1.b
@@ -78,12 +78,8 @@ module fdivsqrtiter(
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
-  // Otherwise, the divisor is retained and the partial remainder
-  // is fed back for the next iteration.
-  //  - when the start signal is asserted X and 0 are loaded into WS and WC
-  //  - otherwise load WSA into the flipflop
-  //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
-  //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
+  // Otherwise, the divisor is retained and the residual and result
+  // are fed back for the next iteration.
  
   // Residual WS/SC registers/initializaiton mux
   mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, DivStartE, WSN);
@@ -126,17 +122,17 @@ module fdivsqrtiter(
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
       if (`RADIX == 2) begin: stage
         fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM,
-        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
+        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
-        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
+        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
-      assign WS[i+1] = WSA[i] << `LOGR;
-      assign WC[i+1] = WCA[i] << `LOGR;
+      assign WS[i+1] = WSNext[i];
+      assign WC[i+1] = WCNext[i];
       assign U[i+1]  = UNext[i];
       assign UM[i+1] = UMNext[i];
     end
