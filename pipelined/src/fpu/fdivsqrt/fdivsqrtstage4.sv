@@ -48,6 +48,8 @@ module fdivsqrtstage4 (
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
   logic [4:0] Smsbs;
+  logic [2:0] Dmsbs;
+  logic [7:0] WCmsbs, WSmsbs;
   logic CarryIn;
   logic [`DIVb+3:0]  WSA, WCA;
 
@@ -59,7 +61,11 @@ module fdivsqrtstage4 (
 	// 0010 = -1
 	// 0001 = -2
   assign Smsbs = U[`DIVb:`DIVb-4];
-  fdivsqrtqsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .udigit);
+  assign Dmsbs = D[`DIVN-2:`DIVN-4];
+  assign WCmsbs = WC[`DIVb+3:`DIVb-4];
+  assign WSmsbs = WS[`DIVb+3:`DIVb-4];
+
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .Sqrt(SqrtM), .j1, .udigit);
   assign un = 0; // unused for radix 4
 
   // F generation logic
