@@ -38,11 +38,11 @@
 `define IEEE754 0
 
 // MISA RISC-V configuration per specification
-`define MISA (32'h00000104)
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 )
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 0
+`define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 0
+`define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 
 // Microarchitectural Features
@@ -51,7 +51,7 @@
 `define UARCH_SINGLECYCLE 0
 
 // LSU microarchitectural Features
-`define BUS 0
+`define BUS 1
 `define DCACHE 0
 `define ICACHE 0
 `define VIRTMEM_SUPPORTED 0

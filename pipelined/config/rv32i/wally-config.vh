@@ -38,11 +38,11 @@
 `define IEEE754 0
 
 // I
-`define MISA (32'h00000100 | 1 << 20 | 1 << 18 )
+`define MISA (32'h00000104)
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 0
 `define ZFH_SUPPORTED 0
 
 // Microarchitectural Features
@@ -50,11 +50,11 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
-`define BUS 1
+`define BUS 0
 `define DCACHE 0
 `define ICACHE 0
 `define VIRTMEM_SUPPORTED 0
-`define VECTORED_INTERRUPTS_SUPPORTED 1 
+`define VECTORED_INTERRUPTS_SUPPORTED 1
 `define BIGENDIAN_SUPPORTED 0
 
 // TLB configuration.  Entries should be a power of 2
@@ -101,16 +101,16 @@
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       34'h80000000
 `define EXT_MEM_RANGE      34'h07FFFFFF
-`define CLINT_SUPPORTED 1'b1
+`define CLINT_SUPPORTED 1'b0
 `define CLINT_BASE  34'h02000000
 `define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b1
+`define GPIO_SUPPORTED 1'b0
 `define GPIO_BASE   34'h10060000
 `define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b1
+`define UART_SUPPORTED 1'b0
 `define UART_BASE   34'h10000000
 `define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b1
+`define PLIC_SUPPORTED 1'b0
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
 `define SDC_SUPPORTED 1'b0

@@ -38,11 +38,11 @@
 `define IEEE754 0
 
 // MISA RISC-V configuration per specification I
-`define MISA (32'h00000100 | 1 << 20 | 1 << 18 )
+`define MISA (32'h00000104 )
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 1
+`define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 1
+`define ZICOUNTERS_SUPPORTED 0
 `define ZFH_SUPPORTED 0
 
 /// Microarchitectural Features
