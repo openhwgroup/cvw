@@ -37,30 +37,30 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-// MISA RISC-V configuration per specification I
-`define MISA (32'h00000104 )
-`define ZICSR_SUPPORTED 1
+// MISA RISC-V configuration per specification
+`define MISA (32'h00000104)
+`define ZICSR_SUPPORTED 0
 `define ZIFENCEI_SUPPORTED 0
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 0
 `define ZFH_SUPPORTED 0
 
-/// Microarchitectural Features
+// Microarchitectural Features
 `define UARCH_PIPELINED 1
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 
 // LSU microarchitectural Features
-`define BUS 1
-`define DCACHE 1
-`define ICACHE 1
-`define VIRTMEM_SUPPORTED 1
+`define BUS 0
+`define DCACHE 0
+`define ICACHE 0
+`define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 0
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 32
-`define DTLB_ENTRIES 32
+`define ITLB_ENTRIES 0
+`define DTLB_ENTRIES 0
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
@@ -76,13 +76,13 @@
 `define DIV_BITSPERCYCLE 4
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 0
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
 
 // Bus Interface width
-`define AHBW 64
+`define AHBW (`XLEN)
 
 // WFI Timeout Wait
 `define WFI_TIMEOUT_BIT 16
@@ -92,31 +92,31 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 
 // *** each of these is `PA_BITS wide. is this paramaterizable INSIDE the config file?
-`define DTIM_SUPPORTED 1'b0
+`define DTIM_SUPPORTED 1'b1
 `define DTIM_BASE       56'h80000000
-`define DTIM_RANGE      56'h00001FFF
-`define IROM_SUPPORTED 1'b0
+`define DTIM_RANGE      56'h007FFFFF
+`define IROM_SUPPORTED 1'b1
 `define IROM_BASE       56'h80000000
-`define IROM_RANGE      56'h00001FFF
-`define BOOTROM_SUPPORTED 1'b1
+`define IROM_RANGE      56'h007FFFFF
+`define BOOTROM_SUPPORTED 1'b0
 `define BOOTROM_BASE   56'h00001000 // spec had been 0x1000 to 0x2FFF, but dh truncated to 0x1000 to 0x1FFF because upper half seems to be all zeros and this is easier for decoder
 `define BOOTROM_RANGE  56'h00000FFF
-`define UNCORE_RAM_SUPPORTED 1'b1
+`define UNCORE_RAM_SUPPORTED 1'b0
 `define UNCORE_RAM_BASE       56'h80000000
 `define UNCORE_RAM_RANGE      56'h7FFFFFFF
 `define EXT_MEM_SUPPORTED 1'b0
 `define EXT_MEM_BASE       56'h80000000
 `define EXT_MEM_RANGE      56'h07FFFFFF
-`define CLINT_SUPPORTED 1'b1
+`define CLINT_SUPPORTED 1'b0
 `define CLINT_BASE  56'h02000000
 `define CLINT_RANGE 56'h0000FFFF
-`define GPIO_SUPPORTED 1'b1
+`define GPIO_SUPPORTED 1'b0
 `define GPIO_BASE   56'h10060000
 `define GPIO_RANGE  56'h000000FF
-`define UART_SUPPORTED 1'b1
+`define UART_SUPPORTED 1'b0
 `define UART_BASE   56'h10000000
 `define UART_RANGE  56'h00000007
-`define PLIC_SUPPORTED 1'b1
+`define PLIC_SUPPORTED 1'b0
 `define PLIC_BASE   56'h0C000000
 `define PLIC_RANGE  56'h03FFFFFF
 `define SDC_SUPPORTED 1'b0
@@ -138,7 +138,7 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define BPRED_ENABLED 1
+`define BPRED_ENABLED 0
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 `define BPRED_SIZE 10

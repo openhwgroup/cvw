@@ -191,7 +191,7 @@ module lsu (
     
     assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
-    assign PAdrM = IHAdrM;
+    assign PAdrM = IHAdrM[`PA_BITS-1:0];
     assign CacheableM = '1;
     assign SelDTIM = '0; // if no pma then always select the bus or cache.
   end
@@ -211,7 +211,7 @@ module lsu (
     logic [1:0]          DTIMMemRWM;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-    assign DTIMAdr = MemRWM[0] ? IEUAdrExtM : IEUAdrExtE; // zero extend or contract to PA_BITS
+    assign DTIMAdr = MemRWM[0] ? IEUAdrExtM[`PA_BITS-1:0] : IEUAdrExtE[`PA_BITS-1:0]; // zero extend or contract to PA_BITS
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequest ? LSURWM : '0;
 //    assign DTIMMemRWM = LSURWM & ~{IgnoreRequest, IgnoreRequest} & {SelDTIM, SelDTIM};
     dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM(DTIMMemRWM),
