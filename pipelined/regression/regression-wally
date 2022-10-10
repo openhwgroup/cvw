@@ -73,7 +73,7 @@ for test in tests64gc:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests64i = ["arch64i", "imperas64i"] 
+tests64i = ["arch64i"] 
 for test in tests64i:
   tc = TestCase(
         name=test,
@@ -100,7 +100,7 @@ for test in tests32ic:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32i = ["arch32i", "imperas32i"] 
+tests32i = ["arch32i"] 
 for test in tests32i:
   tc = TestCase(
         name=test,

@@ -154,7 +154,6 @@ module lsu (
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
 
   // MMU and Misalignment fault logic required if privileged unit exists
-  // *** DH: This is too strong a requirement.  Separate MMU in `VIRTMEM_SUPPORTED from simpler faults in `ZICSR_SUPPORTED
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
