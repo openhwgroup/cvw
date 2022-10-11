@@ -192,7 +192,8 @@ module lsu (
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[`PA_BITS-1:0];
     assign CacheableM = '1;
-    assign SelDTIM = '0; // if no pma then always select the bus or cache.
+    assign SelDTIM = `DTIM_SUPPORTED & ~`BUS; // if no pma then select dtim if there is a DTIM.  If there is 
+    // a bus then this is always 0. Cannot have both without PMA.
   end
   
   /////////////////////////////////////////////////////////////////////////////////////////////
