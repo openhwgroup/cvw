@@ -350,9 +350,13 @@ module lsu (
   //  hart works little-endian internally
   //  swap the bytes when read from big-endian memory
   /////////////////////////////////////////////////////////////////////////////////////////////
+
   if (`BIGENDIAN_SUPPORTED) begin:endian
+    logic [`LLEN-1:0] ReadDataWordMuxSwapM; // *** swap the top and bottom XLEN bits based on endianness // Ross doesn't like this
+    if (`LLEN == 2*`XLEN) assign ReadDataWordMuxSwapM = BigEndianM ? {ReadDataWordMuxM[`XLEN-1:0], ReadDataWordMuxM[`LLEN-1:`XLEN]} : ReadDataWordMuxM; 
+    else assign ReadDataWordMuxSwapM = ReadDataWordMuxM;
     endianswap #(`LLEN) storeswap(.BigEndianM, .a(LittleEndianWriteDataM), .y(LSUWriteDataM));
-    endianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxM), .y(LittleEndianReadDataWordM));
+    endianswap #(`LLEN) loadswap(.BigEndianM, .a(ReadDataWordMuxSwapM), .y(LittleEndianReadDataWordM));
   end else begin
     assign LSUWriteDataM = LittleEndianWriteDataM;
     assign LittleEndianReadDataWordM = ReadDataWordMuxM;
