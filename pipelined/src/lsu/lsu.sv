@@ -264,24 +264,28 @@ module lsu (
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, SelUncachedAdr}), .y(ReadDataWordMuxM));
 
-
-
-      // **** need to generalize
+      // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
       logic [`AHBW-1:0]    DCacheReadDataWordAHB;
-      if(`LLEN > `AHBW) begin
-        assign DCacheReadDataWordAHB = WordCount[0] ? DCacheReadDataWordM[2*`AHBW-1:`AHBW] : DCacheReadDataWordM[`AHBW-1:0];
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
+      if(LLENPOVERAHBW > 1) begin
+        logic [`AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
+        genvar                     index;
+        for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
+	      assign AHBWordSets[index] = DCacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
+        end
+        assign DCacheReadDataWordAHB = AHBWordSets[WordCount[$clog2(LLENPOVERAHBW)-1:0]];
       end else assign DCacheReadDataWordAHB = DCacheReadDataWordM[`AHBW-1:0];      
       mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordAHB), .d1(LSUWriteDataM[`AHBW-1:0]),
         .s(SelUncachedAdr), .y(PreHWDATA));
 
-      flopen #(`XLEN) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec; *** assumes AHBW = XLEN
+      flopen #(`AHBW) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec
 
-      // *** bummer need a second byte mask for bus as it is XLEN rather than LLEN.
+      // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
       // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-      logic [`XLEN/8-1:0]  BusByteMaskM;
-      swbytemask #(`XLEN) busswbytemask(.Size(LSUHSIZE), .Adr(PAdrM[$clog2(`XLEN/8)-1:0]), .ByteMask(BusByteMaskM));
+      logic [`AHBW/8-1:0]  BusByteMaskM;
+      swbytemask #(`AHBW) busswbytemask(.Size(LSUHSIZE), .Adr(PAdrM[$clog2(`AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
       
-      flop #(`XLEN/8) HWSTRBReg(clk, BusByteMaskM[`XLEN/8-1:0], LSUHWSTRB);
+      flop #(`ABHW/8) HWSTRBReg(clk, BusByteMaskM[`AHBW/8-1:0], LSUHWSTRB);
 
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
