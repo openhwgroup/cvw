@@ -47,7 +47,7 @@ module subwordread
   // Funct3M[1:0] is the size of the memory access.
   assign PAdrSwap = PAdrM ^ {3{BigEndianM}};
 
-  if (`XLEN == 64) begin:swrmux
+  if (`LLEN == 64) begin:swrmux
     // ByteMe mux
     always_comb
     case(PAdrSwap[2:0])
