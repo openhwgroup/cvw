@@ -31,7 +31,7 @@ export PATH=/cad/mentor/questa_sim-2022.1_1/questasim/bin:$PATH    # Change this
 export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH    # Change this for your path to Modelsim, or delete
 export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu # Change this to your Siemens license server
 export PATH=/cad/synopsys/SYN/bin:$PATH  # Change this for your path to Design Compiler
-export SNPSLMD_LICENSE_FILE=27020@134.173.38.214
+export SNPSLMD_LICENSE_FILE=27020@134.173.38.184 # Change this to your license manager file
 
 # Imperas; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  

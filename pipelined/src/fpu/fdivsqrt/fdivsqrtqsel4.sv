@@ -31,19 +31,18 @@
 `include "wally-config.vh"
 
 module fdivsqrtqsel4 (
-  input logic [`DIVN-2:0] D,
+  input logic [2:0] Dmsbs,
   input logic [4:0] Smsbs,
-  input logic [`DIVb+3:0] WS, WC,
+  input logic [7:0] WSmsbs, WCmsbs,
   input logic Sqrt, j1,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
-	logic [2:0] Dmsbs, A;
+	logic [2:0] A;
 
-	assign PreWmsbs = WC[`DIVb+3:`DIVb-4] + WS[`DIVb+3:`DIVb-4];
+	assign PreWmsbs = WCmsbs + WSmsbs;
 	assign Wmsbs = PreWmsbs[7:1];
-	assign Dmsbs = D[`DIVN-2:`DIVN-4];//|{3{D[`DIVN-2]&Sqrt}};
 	// D = 0001.xxx...
 	// Dmsbs = |   |
   // W =      xxxx.xxx...
@@ -51,6 +50,7 @@ module fdivsqrtqsel4 (
 
 	logic [3:0] USel4[1023:0];
 
+  // Prepopulate selection table; this is constant at compile time
   always_comb begin 
     integer a, w, i, w2;
     for(a=0; a<8; a++)
@@ -101,12 +101,15 @@ module fdivsqrtqsel4 (
         endcase
       end
   end
+
+  // Select A
   always_comb
     if (Sqrt) begin 
       if (j1) A = 3'b101;
       else if (Smsbs == 5'b10000) A = 3'b111;
       else A = Smsbs[2:0];
     end else A = Dmsbs;
+
+  // Select quotient digit from lookup table based on A and W
 	assign udigit = USel4[{A,Wmsbs}];
-	
 endmodule
