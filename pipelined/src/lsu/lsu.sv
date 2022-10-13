@@ -236,6 +236,7 @@ module lsu (
       logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
 
       assign BusRW = ~CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
 
@@ -260,13 +261,14 @@ module lsu (
         .SelUncachedAdr, .BusRW, .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
-      mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({{`LLEN-`XLEN{1'b0}}, FetchBuffer[`XLEN-1:0]}),
+      // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
+      // DTIMReadDataWordM should be increased to LLEN.
+      mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, SelUncachedAdr}), .y(ReadDataWordMuxM));
 
       // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
       logic [`AHBW-1:0]    DCacheReadDataWordAHB;
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
       if(LLENPOVERAHBW > 1) begin
         logic [`AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
         genvar                     index;
@@ -285,7 +287,7 @@ module lsu (
       logic [`AHBW/8-1:0]  BusByteMaskM;
       swbytemask #(`AHBW) busswbytemask(.Size(LSUHSIZE), .Adr(PAdrM[$clog2(`AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
       
-      flop #(`ABHW/8) HWSTRBReg(clk, BusByteMaskM[`AHBW/8-1:0], LSUHWSTRB);
+      flop #(`AHBW/8) HWSTRBReg(clk, BusByteMaskM[`AHBW/8-1:0], LSUHWSTRB);
 
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
