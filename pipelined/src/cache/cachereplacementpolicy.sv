@@ -31,7 +31,7 @@
 
 module cachereplacementpolicy
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
-   input logic                clk, reset,
+   input logic                clk, reset, ce,
    input logic [NUMWAYS-1:0]  HitWay,
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [SETLEN-1:0]   RAdr,
@@ -51,17 +51,19 @@ module cachereplacementpolicy
       assert (NUMWAYS == 2 || NUMWAYS == 4) else $error("Only 2 or 4 ways supported");
   end
   
-  // Pipeline Delay Registers
-  flopr #(SETLEN) RAdrDelayReg(clk, reset, RAdr, RAdrD);
-  flopr #(1) LRUWriteEnDelayReg(clk, reset, LRUWriteEn, LRUWriteEnD);
-  flopr #(NUMWAYS-1) NewReplacementDelayReg(clk, reset, NewReplacement, NewReplacementD);
-
   // Replacement Bits: Register file
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
-  always_ff @(posedge clk) 
+  always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
-    else if (LRUWriteEnD) ReplacementBits[RAdrD] <= NewReplacementD;
-  assign LineReplacementBits = ReplacementBits[RAdrD];
+    if(ce) begin
+      if (LRUWriteEn) begin 
+        ReplacementBits[RAdr] <= NewReplacement;
+        LineReplacementBits <= #1 NewReplacement;
+      end else begin
+        LineReplacementBits <= #1 ReplacementBits[RAdr];
+      end
+    end
+  end  
 
   genvar 		      index;
   if(NUMWAYS == 2) begin : PseudoLRU
