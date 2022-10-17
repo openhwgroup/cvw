@@ -212,7 +212,6 @@ module ifu (
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
-      logic                SelUncachedAdr;
       logic [1:0]          CacheBusRW, BusRW;
 
       
@@ -241,14 +240,14 @@ module ifu (
             .HRDATA,
             .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
-            .WordCount(), .SelUncachedAdr, .SelBusWord(),
+            .WordCount(), .Cacheable(CacheableF), .SelBusWord(),
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
             .BusRW, .CPUBusy,
             .BusStall, .BusCommitted(BusCommittedF));
 
       mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(FetchBuffer[32-1:0]), .d2(IROMInstrF),
-                                 .s({SelIROM, SelUncachedAdr}), .y(InstrRawF[31:0]));
+                                 .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
       logic CaptureEn;
