@@ -231,21 +231,23 @@ module lsu (
       logic                DCacheWriteLine;
       logic                DCacheFetchLine;
       logic [AHBWLOGBWPL-1:0]  WordCount;
-      logic                SelUncachedAdr, DCacheBusAck;
+      logic                DCacheBusAck;
       logic                SelBusWord;
       logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
       localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
+      logic                CacheableOrFlushCacheM;
 
       assign BusRW = ~CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
+      assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
 
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
         .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
         .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .WordCount(WordCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
-        .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableM), .SelReplay,
+        .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableOrFlushCacheM), .SelReplay,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
@@ -258,14 +260,14 @@ module lsu (
         .WordCount, .SelBusWord,
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
-        .SelUncachedAdr, .BusRW, .CPUBusy,
+        .Cacheable(CacheableOrFlushCacheM), .BusRW, .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
 
       // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
       // DTIMReadDataWordM should be increased to LLEN.
       mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
-                                    .s({SelDTIM, SelUncachedAdr}), .y(ReadDataWordMuxM));
+                                    .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
 
       // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
       logic [`AHBW-1:0]    DCacheReadDataWordAHB;
@@ -278,7 +280,7 @@ module lsu (
         assign DCacheReadDataWordAHB = AHBWordSets[WordCount[$clog2(LLENPOVERAHBW)-1:0]];
       end else assign DCacheReadDataWordAHB = DCacheReadDataWordM[`AHBW-1:0];      
       mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordAHB), .d1(LSUWriteDataM[`AHBW-1:0]),
-        .s(SelUncachedAdr), .y(PreHWDATA));
+        .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
 
       flopen #(`AHBW) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec
 

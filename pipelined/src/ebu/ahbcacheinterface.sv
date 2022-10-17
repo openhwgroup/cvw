@@ -53,7 +53,7 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   input logic [1:0]           CacheBusRW,
   output logic                CacheBusAck,
   output logic [LINELEN-1:0]  FetchBuffer, 
-  output logic                SelUncachedAdr,
+  input logic                 Cacheable,
  
   // lsu/ifu interface
   input logic [`PA_BITS-1:0]  PAdr,
@@ -77,13 +77,13 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
       .q(FetchBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
 
-  mux2 #(`PA_BITS) localadrmux(CacheBusAdr, PAdr, SelUncachedAdr, LocalHADDR);
+  mux2 #(`PA_BITS) localadrmux(PAdr, CacheBusAdr, Cacheable, LocalHADDR);
   assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;
 
-  mux2 #(3) sizemux(.d0(`XLEN == 32 ? 3'b010 : 3'b011), .d1(Funct3), .s(SelUncachedAdr), .y(HSIZE));
+  mux2 #(3) sizemux(.d0(Funct3), .d1(`XLEN == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
 
   buscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
     .HCLK, .HRESETn, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
-    .CacheBusRW, .CacheBusAck, .SelUncachedAdr, .WordCount, .WordCountDelayed,
+    .CacheBusRW, .CacheBusAck, .WordCount, .WordCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule
