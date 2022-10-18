@@ -79,7 +79,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     if {$2 eq "ahb"} {
         vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063 +define+RAM_LATENCY=$3 +define+BURST_EN=$4
     } else {
-        vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063
+        vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063 +define+DTIM_RANGE=8388607 +define+IROM_RANGE=8388607
     }
     vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
 

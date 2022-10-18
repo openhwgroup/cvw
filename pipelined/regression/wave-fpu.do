@@ -22,8 +22,8 @@ add wave -group {PostProc} -noupdate /testbenchfp/postprocess/divshiftcalc/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/cvtshiftcalc/*
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WC
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WS
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WCA
-add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WSA
+#add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WCA
+#add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/WSA
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/U
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/UM
 add wave -group {Divide} -noupdate /testbenchfp/fdivsqrt/fdivsqrt/fdivsqrtiter/UNext

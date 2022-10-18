@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrt.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu, amaiuolo@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
@@ -55,7 +55,6 @@ module fdivsqrt(
 //   output logic [`XLEN-1:0] RemM,
 );
 
-  logic [`DIVb+3:0]  NextWSN, NextWCN;
   logic [`DIVb+3:0]  WS, WC;
   logic [`DIVb+3:0] X;
   logic [`DIVN-2:0]  D; // U0.N-1
@@ -77,7 +76,7 @@ module fdivsqrt(
     .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
     .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
-    .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC), .NextWSN, .NextWCN, 
+    .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC),
     .DivStartE, .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
   fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .SpecialCaseM, .QmM, .WZero, .DivSM);

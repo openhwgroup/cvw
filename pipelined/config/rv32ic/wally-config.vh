@@ -37,11 +37,11 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-`define MISA (32'h00000104)
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 )
 `define ZICSR_SUPPORTED 1
-`define ZIFENCEI_SUPPORTED 0
+`define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
-`define ZICOUNTERS_SUPPORTED 0
+`define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 
 // Microarchitectural Features
@@ -49,7 +49,7 @@
 `define UARCH_SUPERSCALR 0
 `define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
-`define BUS 0
+`define BUS 1
 `define DCACHE 0
 `define ICACHE 0
 `define VIRTMEM_SUPPORTED 0
@@ -87,10 +87,10 @@
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 `define DTIM_SUPPORTED 1'b1
 `define DTIM_BASE       34'h80000000
-`define DTIM_RANGE      34'h007FFFFF
+`define DTIM_RANGE      34'h00000FFF
 `define IROM_SUPPORTED 1'b1
 `define IROM_BASE       34'h80000000
-`define IROM_RANGE      34'h007FFFFF
+`define IROM_RANGE      34'h00003FFF
 `define BOOTROM_SUPPORTED 1'b0
 `define BOOTROM_BASE   34'h00001000 
 `define BOOTROM_RANGE  34'h00000FFF
@@ -103,13 +103,13 @@
 `define CLINT_SUPPORTED 1'b1
 `define CLINT_BASE  34'h02000000
 `define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b0
+`define GPIO_SUPPORTED 1'b1
 `define GPIO_BASE   34'h10060000
 `define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b0
+`define UART_SUPPORTED 1'b1
 `define UART_BASE   34'h10000000
 `define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b0
+`define PLIC_SUPPORTED 1'b1
 `define PLIC_BASE   34'h0C000000
 `define PLIC_RANGE  34'h03FFFFFF
 `define SDC_SUPPORTED 1'b0

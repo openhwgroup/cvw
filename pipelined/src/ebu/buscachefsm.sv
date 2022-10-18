@@ -49,7 +49,6 @@ module buscachefsm #(parameter integer   WordCountThreshold,
    output logic              CacheBusAck,
    
    // lsu interface
-   output logic              SelUncachedAdr,
    output logic [LOGWPL-1:0] WordCount, WordCountDelayed,
    output logic              SelBusWord,
 
@@ -134,9 +133,6 @@ module buscachefsm #(parameter integer   WordCountThreshold,
                     (CurrState == CACHE_FETCH) |
                     (CurrState == CACHE_EVICT);
   assign BusCommitted = CurrState != ADR_PHASE;
-  assign SelUncachedAdr = (CurrState == ADR_PHASE & |BusRW) |
-                          (CurrState == DATA_PHASE) |
-                          (CurrState == MEM3);
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|BusRW | |CacheBusRW)) |

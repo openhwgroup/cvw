@@ -30,7 +30,6 @@
 
 `include "wally-config.vh"
 
-/* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage4 (
   input logic [`DIVN-2:0] D,
   input logic [`DIVb+3:0]  DBar, D2, DBar2,
@@ -41,17 +40,18 @@ module fdivsqrtstage4 (
   input logic SqrtM, j1,
   output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
-  output logic [`DIVb+3:0]  WSA, WCA
+  output logic [`DIVb+3:0]  WSNext, WCNext
 );
- /* verilator lint_on UNOPTFLAT */
 
   logic [`DIVb+3:0]  Dsel;
   logic [3:0]     udigit;
   logic [`DIVb+3:0] F;
   logic [`DIVb+3:0] AddIn;
   logic [4:0] Smsbs;
+  logic [2:0] Dmsbs;
+  logic [7:0] WCmsbs, WSmsbs;
   logic CarryIn;
-  assign CNext = {2'b11, C[`DIVb+1:2]};
+  logic [`DIVb+3:0]  WSA, WCA;
 
   // Digit Selection logic
   // u encoding:
@@ -61,28 +61,40 @@ module fdivsqrtstage4 (
 	// 0010 = -1
 	// 0001 = -2
   assign Smsbs = U[`DIVb:`DIVb-4];
-  fdivsqrtqsel4 qsel4(.D, .Smsbs, .WS, .WC, .Sqrt(SqrtM), .j1, .udigit);
+  assign Dmsbs = D[`DIVN-2:`DIVN-4];
+  assign WCmsbs = WC[`DIVb+3:`DIVb-4];
+  assign WSmsbs = WS[`DIVb+3:`DIVb-4];
+
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .Sqrt(SqrtM), .j1, .udigit);
+  assign un = 0; // unused for radix 4
+
+  // F generation logic
   fdivsqrtfgen4 fgen4(.udigit, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
+  // Divisor multiple logic
   always_comb
-  case (udigit)
-    4'b1000: Dsel = DBar2;
-    4'b0100: Dsel = DBar;
-    4'b0000: Dsel = '0;
-    4'b0010: Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}};
-    4'b0001: Dsel = D2;
-    default: Dsel = 'x;
-  endcase
+    case (udigit)
+      4'b1000: Dsel = DBar2;
+      4'b0100: Dsel = DBar;
+      4'b0000: Dsel = '0;
+      4'b0010: Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}};
+      4'b0001: Dsel = D2;
+      default: Dsel = 'x;
+    endcase
 
-  // Partial Product Generation
-  //  WSA, WCA = WS + WC - qD
+  // Residual Update
+  //  {WS, WC}}Next = (WS + WC - qD or F) << 2
   assign AddIn = SqrtM ? F : Dsel;
   assign CarryIn = ~SqrtM & (udigit[3] | udigit[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
- 
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  assign WSNext = WSA << 2;
+  assign WCNext = WCA << 2;
 
-  assign un = 0; // unused for radix 4
+  // Shift thermometer code C
+  assign CNext = {2'b11, C[`DIVb+1:2]};
+ 
+  // On-the-fly converter to accumulate result
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .Sqrt(SqrtM), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

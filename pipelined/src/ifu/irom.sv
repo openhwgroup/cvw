@@ -36,8 +36,17 @@ module irom(
 );
 
   localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
-  localparam OFFSET = $clog2(`LLEN/8);
+  localparam OFFSET = $clog2(`XLEN/8);
 
-  rom1p1r #(ADDR_WDITH, 32) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadData));
+  logic [`XLEN-1:0] ReadDataFull;
+
+  rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataFull));
+  if (`XLEN == 32) assign ReadData = ReadDataFull;
+  // have to delay Ardr[OFFSET-1] by 1 cycle
+  else             begin
+    logic AdrD;
+    flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
+    assign ReadData = AdrD ? ReadDataFull[63:32] : ReadDataFull[31:0];
+  end
 endmodule  
   
