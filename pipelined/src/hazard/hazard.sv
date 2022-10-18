@@ -69,7 +69,7 @@ module hazard(
   assign StallECause = (DivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
 //  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  
-  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)) | FDivBusyE;  
+  assign StallMCause = ((wfiM | FDivBusyE) & (~TrapM & ~IntPendingM));  //*** Ross: should FDivBusyE trigger StallECause rather than StallMCause similar to DivBusyE?
   assign StallWCause = LSUStallM | IFUStallF;
 
   assign #1 StallF = StallFCause | StallD;
