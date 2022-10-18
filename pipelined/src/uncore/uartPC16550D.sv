@@ -154,7 +154,7 @@ module uartPC16550D(
 		//DLL <= #1 8'd38; // 35Mhz
 		//DLL <= #1 8'd11; // 10 Mhz
 		//DLL <= #1 8'd33; // 30 Mhz
-		DLL <= #1 8'd11; // 30 Mhz 230400
+		DLL <= #1 8'd8; // 30 Mhz 230400
 		DLM <= #1 8'b0;
       end else begin
 		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
@@ -178,7 +178,7 @@ module uartPC16550D(
 		  // freq /baud / 16 = div
           //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
 		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
-		      3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in 		  
+		      3'b000: if (DLAB) DLL <= #1 8'd8; //else TXHR <= #1 Din; // TX handled in 		  
           3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
