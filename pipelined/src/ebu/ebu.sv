@@ -94,7 +94,7 @@ module ebu
 
   logic                       BeatCntEn;
   logic [4-1:0]               NextBeatCount, BeatCount, BeatCountDelayed;
-  logic                       FinalBeat;
+  logic                       FinalBeat, FinalBeatD;
   logic [2:0]                 LocalBurstType;
   logic                       CntReset;
   logic [3:0]                 Threshold;
@@ -145,7 +145,7 @@ module ebu
     case (CurrState) 
       IDLE: if (both)                    NextState = ARBITRATE; 
       else                               NextState = IDLE;
-      ARBITRATE: if (HREADY & FinalBeat & ~(LSUReq & IFUReq)) NextState = IDLE;
+      ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq)) NextState = IDLE;
       else                               NextState = ARBITRATE;
       default:                           NextState = IDLE;
     endcase
@@ -158,27 +158,25 @@ module ebu
 		.en(BeatCntEn),
 		.d(NextBeatCount),
 		.q(BeatCount));  
-  
-  // Used to store data from data phase of AHB.
-  flopenr #(4) 
-  BeatCountDelayedReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset),
-		.en(BeatCntEn),
-		.d(BeatCount),
-		.q(BeatCountDelayed));
   assign NextBeatCount = BeatCount + 1'b1;
 
   assign CntReset = NextState == IDLE;
-  assign FinalBeat = (BeatCountDelayed == Threshold); // Detect when we are waiting on the final access.
+  assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
   assign BeatCntEn = (NextState == ARBITRATE & HREADY);
 
   logic [2:0]                 HBURSTD;
   
-  flopenr #(3) HBURSTReg(.clk(HCLK), .reset(~HRESETn), .en(HTRANS == 2'b10), .d(HBURST), .q(HBURSTD));
+  // Used to store data from data phase of AHB.
+  flopenr #(1) 
+  FinalBeatReg(.clk(HCLK),
+		.reset(~HRESETn | CntReset),
+		.en(BeatCntEn),
+		.d(FinalBeat),
+		.q(FinalBeatD));
 
   // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
   always_comb begin
-    case(HBURSTD)
+    case(HBURST)
       0:        Threshold = 4'b0000;
       3:        Threshold = 4'b0011; // INCR4
       5:        Threshold = 4'b0111; // INCR8
@@ -196,7 +194,7 @@ module ebu
   assign IFUDisable = CurrState == ARBITRATE;
   assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
   // Controller 1 (LSU)
-  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeat));
+  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
   assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
 
   flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);

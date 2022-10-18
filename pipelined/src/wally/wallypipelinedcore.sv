@@ -414,5 +414,6 @@ module wallypipelinedcore (
       assign FDivBusyE = 0;
       assign IllegalFPUInstrM = 1;
       assign SetFflagsM = 0;
+      assign FpLoadStoreM = 0;
    end
 endmodule

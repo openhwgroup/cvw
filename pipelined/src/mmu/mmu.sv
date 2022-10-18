@@ -66,7 +66,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // Physical address outputs
   output logic [`PA_BITS-1:0] PhysicalAddress,
   output logic                TLBMiss,
-  output logic                Cacheable, Idempotent, AtomicAllowed,
+  output logic                Cacheable, Idempotent, AtomicAllowed, SelTIM,
 
   // Faults
   output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,
@@ -126,7 +126,7 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
 
   pmachecker pmachecker(.PhysicalAddress, .Size,
                         .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-                        .Cacheable, .Idempotent, .AtomicAllowed,
+                        .Cacheable, .Idempotent, .AtomicAllowed, .SelTIM,
                         .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
   pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,

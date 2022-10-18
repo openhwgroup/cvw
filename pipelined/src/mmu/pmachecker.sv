@@ -38,7 +38,7 @@ module pmachecker (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
   input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
-  output logic        Cacheable, Idempotent, AtomicAllowed,
+  output logic        Cacheable, Idempotent, AtomicAllowed, SelTIM,
   output logic        PMAInstrAccessFaultF,
   output logic        PMALoadAccessFaultM,
   output logic        PMAStoreAmoAccessFaultM
@@ -60,6 +60,7 @@ module pmachecker (
   assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];
   assign Idempotent = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[6];
   assign AtomicAllowed = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[6];
+  assign SelTIM = SelRegions[10] | SelRegions[9];
 
   // Detect access faults
   assign PMAAccessFault = (SelRegions[0]) & AccessRWX;  

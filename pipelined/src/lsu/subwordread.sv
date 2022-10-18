@@ -47,7 +47,7 @@ module subwordread
   // Funct3M[1:0] is the size of the memory access.
   assign PAdrSwap = PAdrM ^ {3{BigEndianM}};
 
-  if (`XLEN == 64) begin:swrmux
+  if (`LLEN == 64) begin:swrmux
     // ByteMe mux
     always_comb
     case(PAdrSwap[2:0])
@@ -85,19 +85,10 @@ module subwordread
     always_comb
     case(Funct3M)
       3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  if(`ZFH_SUPPORTED) 
-                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-               else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
-      3'b010:  if(`F_SUPPORTED) 
-                    ReadDataM = {{`LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
-               else ReadDataM = {{`LLEN-32{WordM[31]}}, WordM[31:0]};                 // lw
-      3'b011:  if(`D_SUPPORTED) 
-                    ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-               else ReadDataM = {{`LLEN-64{DblWordM[63]}}, DblWordM[63:0]};           // ld/fld
-      3'b100:    if(`Q_SUPPORTED) 
-                    ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
-                 else 
-                    ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};    // lbu
+      3'b001:  ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
+      3'b010:  ReadDataM = {{`LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
+      3'b011:  ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
+      3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
       3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu
       3'b110:  ReadDataM = {{`LLEN-32{1'b0}}, WordM[31:0]};       // lwu
       default: ReadDataM = ReadDataWordMuxM; // Shouldn't happen
@@ -124,12 +115,8 @@ module subwordread
     always_comb
     case(Funct3M)
       3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  if(`ZFH_SUPPORTED) 
-                    ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-               else ReadDataM = {{`LLEN-16{HalfwordM[15]}}, HalfwordM[15:0]};         // lh 
-      3'b010:  if(`F_SUPPORTED) 
-                    ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]};         // lw/flw
-               else ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]}}, ReadDataWordMuxM[31:0]};                 // lw
+      3'b001:  ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
+      3'b010:  ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]};         // lw/flw
       3'b011:  ReadDataM = ReadDataWordMuxM;                      // fld
       3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};         // lbu
       3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu

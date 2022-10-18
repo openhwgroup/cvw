@@ -41,7 +41,6 @@ module fdivsqrtiter(
   input  logic [`DIVb+3:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
   output logic [`DIVN-2:0]  D, // U0.N-1
-  output logic [`DIVb+3:0]  NextWSN, NextWCN,
   output logic [`DIVb:0] FirstU, FirstUM,
   output logic [`DIVb+1:0] FirstC,
   output logic             Firstun,
@@ -56,12 +55,12 @@ module fdivsqrtiter(
 // U/UM should be 1.b so b+1 bits or b:0
 // C needs to be the lenght of the final fraction 0.b so b or b-1:0
  /* verilator lint_off UNOPTFLAT */
-  logic [`DIVb+3:0]  WSA[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WCA[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WS[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WC[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb:0] U[`DIVCOPIES-1:0]; // U1.b
-  logic [`DIVb:0] UM[`DIVCOPIES-1:0];// 1.b
+  logic [`DIVb+3:0]  WSNext[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WCNext[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]  WS[`DIVCOPIES:0]; // Q4.b
+  logic [`DIVb+3:0]  WC[`DIVCOPIES:0]; // Q4.b
+  logic [`DIVb:0] U[`DIVCOPIES:0]; // U1.b
+  logic [`DIVb:0] UM[`DIVCOPIES:0];// 1.b
   logic [`DIVb:0] UNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb:0] UMNext[`DIVCOPIES-1:0];// U1.b
   logic [`DIVb+1:0] C[`DIVCOPIES:0]; // Q2.b
@@ -79,30 +78,34 @@ module fdivsqrtiter(
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
-  // Otherwise, the divisor is retained and the partial remainder
-  // is fed back for the next iteration.
-  //  - when the start signal is asserted X and 0 are loaded into WS and WC
-  //  - otherwise load WSA into the flipflop
-  //  - the assumed one is added to D since it's always normalized (and X/0 is a special case handeled by result selection)
-  //  - XZeroE is used as the assumed one to avoid creating a sticky bit - all other numbers are normalized
-  assign NextWSN = WSA[`DIVCOPIES-1] << `LOGR;
-  assign NextWCN = WCA[`DIVCOPIES-1] << `LOGR;
-
-  // Initialize C to -1 for sqrt and -R for division
-  logic [1:0] initCSqrt, initCDiv2, initCDiv4, initCUpper;
-  assign initCSqrt = 2'b11; // -1
-  assign initCDiv2 = 2'b10; // -2
-  assign initCDiv4 = 2'b00; // -4
-  assign initCUpper = SqrtE ? initCSqrt : (`RADIX == 4) ? initCDiv4 : initCDiv2;
-  assign initC = {initCUpper, {`DIVb{1'b0}}};
-
-  mux2   #(`DIVb+4) wsmux(NextWSN, X, DivStartE, WSN);
+  // Otherwise, the divisor is retained and the residual and result
+  // are fed back for the next iteration.
+ 
+  // Residual WS/SC registers/initializaiton mux
+  mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, DivStartE, WSN);
+  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, DivStartE, WCN);
   flopen   #(`DIVb+4) wsflop(clk, DivStartE|DivBusy, WSN, WS[0]);
-  mux2   #(`DIVb+4) wcmux(NextWCN, '0, DivStartE, WCN);
   flopen   #(`DIVb+4) wcflop(clk, DivStartE|DivBusy, WCN, WC[0]);
-  flopen #(`DIVN-1) dflop(clk, DivStartE, Dpreproc, D);
+
+  // UOTFC Result U and UM registers/initialization mux
+  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
+  assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
+  assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
+  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStartE, UMux);
+  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStartE, UMMux);
+  flopen #(`DIVb+1) UReg(clk, DivStartE|DivBusy, UMux, U[0]);
+  flopen #(`DIVb+1) UMReg(clk, DivStartE|DivBusy, UMMux, UM[0]);
+
+  // C register/initialization mux
+  // Initialize C to -1 for sqrt and -R for division
+  logic [1:0] initCUpper;
+  assign initCUpper = SqrtE ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
+  assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, DivStartE, CMux); 
   flopen #(`DIVb+2) cflop(clk, DivStartE|DivBusy, CMux, C[0]);
+
+   // Divisior register
+  flopen #(`DIVN-1) dflop(clk, DivStartE, Dpreproc, D);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
@@ -113,37 +116,29 @@ module fdivsqrtiter(
     assign D2 = {2'b0, 1'b1, D, {`DIVb+2-`DIVN{1'b0}}};
   end
 
+  // k=DIVCOPIES of the recurrence logic
   genvar i;
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
       if (`RADIX == 2) begin: stage
         fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM,
-        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
+        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
         fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
-        .WS(WS[i]), .WC(WC[i]), .WSA(WSA[i]), .WCA(WCA[i]), 
+        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
-      if(i<(`DIVCOPIES-1)) begin 
-        assign WS[i+1] = WSA[i] << `LOGR;
-        assign WC[i+1] = WCA[i] << `LOGR;
-        assign U[i+1] = UNext[i];
-        assign UM[i+1] = UMNext[i];
-      end
+      assign WS[i+1] = WSNext[i];
+      assign WC[i+1] = WCNext[i];
+      assign U[i+1]  = UNext[i];
+      assign UM[i+1] = UMNext[i];
     end
   endgenerate
 
-  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
-  assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
-  assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStartE, UMux);
-  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStartE, UMMux);
-  flopen #(`DIVb+1) UReg(clk, DivStartE|DivBusy, UMux, U[0]);
-  flopen #(`DIVb+1) UMReg(clk, DivStartE|DivBusy, UMMux, UM[0]);
-  
+  // Send values from start of cycle for postprocessing
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
   assign FirstU = U[0];
