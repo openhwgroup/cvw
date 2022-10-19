@@ -38,7 +38,6 @@ module lsuvirtmem(
   input logic                 DTLBMissM,
   output logic                DTLBWriteM,
   input logic                 InstrDAPageFaultF,
-  output logic                SelReplay,
   input logic                 DataDAPageFaultM,
   input logic                 TrapM,
   input logic                 DCacheStallM,
@@ -72,7 +71,6 @@ module lsuvirtmem(
   logic [`XLEN+1:0]           HPTWAdrExt;
   logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize;
-  logic                       SelReplayMemE;
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
   logic                       SelHPTWAdr;
@@ -84,7 +82,7 @@ module lsuvirtmem(
   interlockfsm interlockfsm (
     .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
     .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelReplayMemE, .SelHPTW, .IgnoreRequestTLB);
+    .InterlockStall, .SelHPTW, .IgnoreRequestTLB);
   hptw hptw( 
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
@@ -96,8 +94,6 @@ module lsuvirtmem(
   // Once the walk is done and it is time to update the DTLB we need to switch back 
   // to the orignal data virtual address.
   assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
-
-  assign SelReplay = SelHPTWAdr | SelReplayMemE;
 
   // multiplex the outputs to LSU
   if(`XLEN+2-`PA_BITS > 0) begin
