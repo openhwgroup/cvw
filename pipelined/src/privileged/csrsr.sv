@@ -126,6 +126,7 @@ module csrsr (
       else if (PrivilegeModeW == `M_MODE & STATUS_MPRV)  EndiannessPrivMode = STATUS_MPP;
       else                                               EndiannessPrivMode = PrivilegeModeW;
 
+      // *** Ross possible BUG: HPTW needs to match the endianness of SBE not xBE.
       case (EndiannessPrivMode) 
         `M_MODE: BigEndianM = STATUS_MBE;
         `S_MODE: BigEndianM = STATUS_SBE;

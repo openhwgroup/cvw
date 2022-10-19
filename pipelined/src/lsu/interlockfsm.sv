@@ -81,7 +81,7 @@ module interlockfsm(
                       else if(ToITLBMiss)         InterlockNextState = STATE_T5_ITLB_MISS;
 	                  else if(ToBoth)             InterlockNextState = STATE_T7_DITLB_MISS;
 	                  else                        InterlockNextState = STATE_T0_READY;
-	  STATE_T1_REPLAY:     if(DCacheStallM)       InterlockNextState = STATE_T1_REPLAY;
+	  STATE_T1_REPLAY:     if(0)                  InterlockNextState = STATE_T1_REPLAY;
 	                       else                   InterlockNextState = STATE_T0_READY;
 	  STATE_T3_DTLB_MISS:  if(DTLBWriteM)         InterlockNextState = STATE_T1_REPLAY;
 	                       else                   InterlockNextState = STATE_T3_DTLB_MISS;
@@ -98,7 +98,7 @@ module interlockfsm(
    assign InterlockStall = (InterlockCurrState == STATE_T0_READY & (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF) & ~TrapM) | 
                            (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
                            (InterlockCurrState == STATE_T5_ITLB_MISS) | (InterlockCurrState == STATE_T7_DITLB_MISS);
-  assign SelReplayMemE = (InterlockCurrState == STATE_T1_REPLAY & DCacheStallM) |
+  assign SelReplayMemE = (InterlockCurrState == STATE_T1_REPLAY) |
                          (InterlockCurrState == STATE_T3_DTLB_MISS & DTLBWriteM) | 
                          (InterlockCurrState == STATE_T5_ITLB_MISS & ITLBWriteF);
   assign SelHPTW = (InterlockCurrState == STATE_T3_DTLB_MISS) | (InterlockCurrState == STATE_T4_ITLB_MISS) |
