@@ -44,7 +44,6 @@ module interlockfsm(
   input logic       DCacheStallM,
 
   output logic      InterlockStall,
-  output logic      SelReplayMemE,
   output logic      SelHPTW,
   output logic      IgnoreRequestTLB);
 
@@ -53,7 +52,7 @@ module interlockfsm(
   logic             EitherTLBMiss;
   logic             EitherTLBWrite;
 
-  typedef enum      logic[2:0]  {STATE_T0_READY,
+  typedef enum      logic  {STATE_T0_READY,
 				                 STATE_T3_TLB_MISS} statetype;
 
   (* mark_debug = "true" *)	  statetype InterlockCurrState, InterlockNextState;
@@ -81,7 +80,6 @@ module interlockfsm(
 	  
    assign InterlockStall = (InterlockCurrState == STATE_T0_READY & EitherTLBMiss & ~TrapM) | 
                            (InterlockCurrState == STATE_T3_TLB_MISS);
-  assign SelReplayMemE = (InterlockCurrState == STATE_T3_TLB_MISS & EitherTLBWrite & ~PendingTLBMiss);
   assign SelHPTW = (InterlockCurrState == STATE_T3_TLB_MISS);
   assign IgnoreRequestTLB = (InterlockCurrState == STATE_T0_READY & EitherTLBMiss);
 endmodule
