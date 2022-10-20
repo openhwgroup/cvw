@@ -21,7 +21,8 @@
 	cpus {
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
-		timebase-frequency = <0x989680>;
+		clock-frequency = <0x1C9C380>;
+		timebase-frequency = <0x1C9C380>;
 
 		cpu@0 {
 			phandle = <0x01>;
