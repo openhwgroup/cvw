@@ -357,7 +357,7 @@ module uartPC16550D(
                          (rxfifohead + 16 - rxfifotail);
   // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  assign rxfifotimeout = rxtimeoutcnt[6]; // time out after 4 character periods; *** probably not right yet
+  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; *** probably not right yet
   //assign rxfifotimeout = 0; // disabled pending fix
 
   // detect any errors in rx fifo
