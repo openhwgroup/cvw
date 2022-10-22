@@ -68,13 +68,12 @@ module interlockfsm(
 
   always_comb begin
 	case(InterlockCurrState)
-	  STATE_T0_READY:     if(EitherTLBMiss & ~TrapM)     InterlockNextState = STATE_T3_TLB_MISS;
-	                      else                           InterlockNextState = STATE_T0_READY;
-	  STATE_T3_TLB_MISS:  if(~(EitherTLBWrite)) InterlockNextState = STATE_T3_TLB_MISS;
-                    	  else if(PendingTLBMiss)        InterlockNextState = STATE_T3_TLB_MISS;
-                          else if(AnyCPUReqM)            InterlockNextState = STATE_T0_READY;
-                          else                           InterlockNextState = STATE_T0_READY;
-	  default:                                           InterlockNextState = STATE_T0_READY;
+	  STATE_T0_READY:     if(EitherTLBMiss & ~TrapM)             InterlockNextState = STATE_T3_TLB_MISS;
+	                      else                                   InterlockNextState = STATE_T0_READY;
+	  STATE_T3_TLB_MISS:  if(PendingTLBMiss | ~(EitherTLBWrite)) InterlockNextState = STATE_T3_TLB_MISS;
+                          else if(AnyCPUReqM)                    InterlockNextState = STATE_T0_READY;
+                          else                                   InterlockNextState = STATE_T0_READY;
+	  default:                                                   InterlockNextState = STATE_T0_READY;
 	endcase
   end // always_comb
 	  
