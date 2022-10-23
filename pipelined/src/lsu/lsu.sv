@@ -108,7 +108,7 @@ module lsu (
   logic                     DCacheStallM;
   logic                     CacheableM;
   logic                     BusStall;
-  logic                     InterlockStall;
+  logic                     HPTWStall;
   logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     DataDAPageFaultM;
@@ -120,8 +120,8 @@ module lsu (
     
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
-  assign IEUAdrExtE = {2'b00, IEUAdrE}; 
-  assign LSUStallM = DCacheStallM | InterlockStall | BusStall;
+  assign IEUAdrExtE = {2'b00, IEUAdrE};
+  assign LSUStallM = DCacheStallM | HPTWStall | BusStall;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW and Interlock FSM (only needed if VM supported)
@@ -135,10 +135,10 @@ module lsu (
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IMWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .IHAdrM, .CPUBusy, .InterlockStall, .SelHPTW,
+      .IHAdrM, .CPUBusy, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB);
   end else begin
-    assign {InterlockStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
+    assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
