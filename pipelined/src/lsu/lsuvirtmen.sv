@@ -60,7 +60,7 @@ module lsuvirtmem(
   output logic [`XLEN+1:0] IHAdrM,
   input logic [`XLEN+1:0]     IEUAdrExtM, // *** can move internally.
                   
-  output logic                InterlockStall,
+  output logic                HPTWStall,
   output logic                CPUBusy,
   output logic                SelHPTW,
   output logic                IgnoreRequestTLB);
@@ -79,19 +79,16 @@ module lsuvirtmem(
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
   assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
-  interlockfsm interlockfsm (
-    .clk, .reset, .MemRWM, .AtomicM, .ITLBMissOrDAFaultF, .ITLBWriteF,
-    .DTLBMissOrDAFaultM, .DTLBWriteM, .TrapM, .DCacheStallM,
-    .InterlockStall, .SelHPTW, .IgnoreRequestTLB);
+
   hptw hptw( 
     .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),  // *** should it be HPTWReadDataM
-    .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize);
+    .DCacheStallM, .HPTWAdr, .HPTWRW, .HPTWSize, .IgnoreRequestTLB, .SelHPTW, .HPTWStall);
   // *** possible future optimization of simplifying page table entry with precomputed misalignment (Ross) low priority
 
-  // Once the walk is done and it is time to update the DTLB we need to switch back 
+  // Once the walk is done and it is time to update the TLB we need to switch back 
   // to the orignal data virtual address.
   assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
 
