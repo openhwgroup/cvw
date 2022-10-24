@@ -633,7 +633,7 @@ connect_debug_port u_ila_0/probe125 [get_nets [list {wallypipelinedsoc/core/lsu/
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe126]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe126]
-connect_debug_port u_ila_0/probe126 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/interlockfsm/InterlockCurrState} ]]
+connect_debug_port u_ila_0/probe126 [get_nets [list {m_axi_rready} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe127]
@@ -924,8 +924,4 @@ set_property port_width 1 [get_debug_ports u_ila_0/probe183]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe183]
 connect_debug_port u_ila_0/probe183 [get_nets [list {m_axi_rlast} ]]
 
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe184]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe184]
-connect_debug_port u_ila_0/probe184 [get_nets [list {m_axi_rready} ]]
 
