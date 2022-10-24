@@ -1,0 +1,76 @@
+/dts-v1/;
+
+/ {
+	#address-cells = <0x02>;
+	#size-cells = <0x02>;
+	compatible = "wally-virt";
+	model = "wally-virt,qemu";
+
+	chosen {
+		linux,initrd-end = <0x85c43a00>;
+		linux,initrd-start = <0x84200000>;
+		bootargs = "root=/dev/vda ro";
+		stdout-path = "/soc/uart@10000000";
+	};
+
+	memory@80000000 {
+		device_type = "memory";
+		reg = <0x00 0x80000000 0x00 0x08000000>;
+	};
+
+	cpus {
+		#address-cells = <0x01>;
+		#size-cells = <0x00>;
+		clock-frequency = <0x14FB180>;
+		timebase-frequency = <0x14FB180>;
+
+		cpu@0 {
+			phandle = <0x01>;
+			device_type = "cpu";
+			reg = <0x00>;
+			status = "okay";
+			compatible = "riscv";
+			riscv,isa = "rv64imafdcsu";
+			mmu-type = "riscv,sv48";
+
+			interrupt-controller {
+				#interrupt-cells = <0x01>;
+				interrupt-controller;
+				compatible = "riscv,cpu-intc";
+				phandle = <0x02>;
+			};
+		};
+	};
+
+	soc {
+		#address-cells = <0x02>;
+		#size-cells = <0x02>;
+		compatible = "simple-bus";
+		ranges;
+
+		uart@10000000 {
+			interrupts = <0x0a>;
+			interrupt-parent = <0x03>;
+			clock-frequency = <0x14FB180>;
+			reg = <0x00 0x10000000 0x00 0x100>;
+			compatible = "ns16550a";
+		};
+
+		plic@c000000 {
+			phandle = <0x03>;
+			riscv,ndev = <0x35>;
+			reg = <0x00 0xc000000 0x00 0x210000>;
+			interrupts-extended = <0x02 0x0b 0x02 0x09>;
+			interrupt-controller;
+			compatible = "sifive,plic-1.0.0\0riscv,plic0";
+			#interrupt-cells = <0x01>;
+			#address-cells = <0x00>;
+		};
+
+		clint@2000000 {
+			interrupts-extended = <0x02 0x03 0x02 0x07>;
+			reg = <0x00 0x2000000 0x00 0x10000>;
+			compatible = "sifive,clint0\0riscv,clint0";
+		};
+	};
+};
