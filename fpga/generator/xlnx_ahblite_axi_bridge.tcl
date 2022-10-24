@@ -1,10 +1,10 @@
 
-#set partNumber $::env(XILINX_PART)
-#set boardNmae $::env(XILINX_BOARD)
+set partNumber $::env(XILINX_PART)
+set boardName $::env(XILINX_BOARD)
 
 # vcu118 board
-set partNumber xcvu9p-flga2104-2L-e
-set boardName  xilinx.com:vcu118:part0:2.4
+#set partNumber xcvu9p-flga2104-2L-e
+#set boardName  xilinx.com:vcu118:part0:2.4
 
 # kcu105 board
 #set partNumber  xcku040-ffva1156-2-e

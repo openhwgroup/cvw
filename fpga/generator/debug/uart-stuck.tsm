@@ -1,0 +1,49 @@
+##################################################
+#
+# For info on creating trigger state machines:
+#   1) In the main Vivado menu bar, select
+#      Window > Language Templates
+#   2) In the Templates window, select
+#      Debug > Trigger State Machine
+#   3) Refer to the entry 'Info' for an overview
+#      of the trigger state machine language.
+#
+# More information can be found in this document:
+#
+#   Vivado Design Suite User Guide: Programming
+#   and Debugging (UG908)
+#
+##################################################
+state state_reset:
+    if(wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b1) then
+        reset_counter $counter0;
+        reset_counter $counter1;
+        goto state_begin_count;
+    else
+        goto state_reset;
+    endif
+    
+state state_begin_count:
+    if(wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b0) then
+        reset_counter $counter0;
+        reset_counter $counter1;	
+        goto state_reset;
+    elseif($counter0 == 16'hFFFF && wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b1) then
+        goto state_count1;
+       else
+     	  increment_counter $counter0;
+          goto state_begin_count;
+       #endif
+    endif
+
+state state_count1:
+    if($counter1 == 16'h000F && wallypipelinedsoc/uncore.uncore/uart.uart/INTR == 1'b1) then
+           goto state_trigger;
+    else
+       increment_counter $counter1;
+       reset_counter $counter0;
+       goto state_begin_count;
+    endif
+    
+state state_trigger:
+    trigger;
