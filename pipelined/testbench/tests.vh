@@ -874,12 +874,13 @@ string imperas32f[] = '{
 
   string testsBP64[] = '{
     `IMPERASTEST,
-    "rv64BP/simple",
-    "rv64BP/mmm",
-    "rv64BP/linpack_bench",
-    "rv64BP/sieve",
-    "rv64BP/qsort",
-    "rv64BP/dhrystone"
+    "rv64BP/floating-point-bug",
+    "rv64BP/simple"
+//    "rv64BP/mmm",
+//    "rv64BP/linpack_bench",
+//    "rv64BP/sieve",
+//    "rv64BP/qsort",
+//    "rv64BP/dhrystone"
   };
 
   string imperas32p[] = '{

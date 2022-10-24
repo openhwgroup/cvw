@@ -7,6 +7,7 @@ LIBRARY_FILES	:= crt0
 MARCH           :=-march=rv64imfdc
 MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles -Wl,-Map=$(TARGET).map
+LINKER          := ${ROOT}/linker8000-0000.x
 
 CFLAGS =$(MARCH) $(MABI) -Wa,-alhs -Wa,-L -mcmodel=medany  -mstrict-align -O2
 
