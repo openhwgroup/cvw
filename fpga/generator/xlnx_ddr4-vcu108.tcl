@@ -1,9 +1,8 @@
 
-#set partNumber $::env(XILINX_PART)
-#set boardNmae $::env(XILINX_BOARD)
-set partNumber xcvu095-ffva2104-2-e
-set boardName  xilinx.com:vcu108:part0:1.2
-
+set partNumber $::env(XILINX_PART)
+set boardName $::env(XILINX_BOARD)
+#set partNumber xcvu9p-flga2104-2L-e
+#set boardName  xilinx.com:vcu118:part0:2.4
 
 set ipName xlnx_ddr4
 

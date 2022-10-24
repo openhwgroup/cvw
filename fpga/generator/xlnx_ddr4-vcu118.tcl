@@ -1,9 +1,8 @@
 
-#set partNumber $::env(XILINX_PART)
-#set boardNmae $::env(XILINX_BOARD)
-set partNumber xcvu095-ffva2104-2-e
-set boardName  xilinx.com:vcu108:part0:1.2
-
+set partNumber $::env(XILINX_PART)
+set boardName $::env(XILINX_BOARD)
+#set partNumber xcvu9p-flga2104-2L-e
+#set boardName  xilinx.com:vcu118:part0:2.4
 
 set ipName xlnx_ddr4
 
@@ -42,7 +41,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_CLKOUT0_DIVIDE {6} \
 			CONFIG.Reference_Clock {Differential} \
 			CONFIG.ADDN_UI_CLKOUT1.INSERT_VIP {0} \
-			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {22} \
+			CONFIG.ADDN_UI_CLKOUT1_FREQ_HZ {30} \
 			CONFIG.ADDN_UI_CLKOUT2.INSERT_VIP {0} \
 			CONFIG.ADDN_UI_CLKOUT2_FREQ_HZ {208} \
 			CONFIG.ADDN_UI_CLKOUT3.INSERT_VIP {0} \
@@ -107,7 +106,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_CustomParts {no_file_loaded} \
 			CONFIG.C0.DDR4_EN_PARITY {false} \
 			CONFIG.C0.DDR4_Enable_LVAUX {false} \
-			CONFIG.C0.DDR4_InputClockPeriod {3359} \
+			CONFIG.C0.DDR4_InputClockPeriod {4000} \
 			CONFIG.C0.DDR4_LR_SKEW_0 {0} \
 			CONFIG.C0.DDR4_LR_SKEW_1 {0} \
 			CONFIG.C0.DDR4_MemoryName {MainMemory} \
@@ -116,6 +115,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.DDR4_ODT_SKEW_2 {0} \
 			CONFIG.C0.DDR4_ODT_SKEW_3 {0} \
 			CONFIG.C0.DDR4_OnDieTermination {RZQ/6} \
+			CONFIG.C0.DDR4_OutputDriverImpedenceControl {RZQ/7} \
 			CONFIG.C0.DDR4_PAR_SKEW {0} \
 			CONFIG.C0.DDR4_Specify_MandD {false} \
 			CONFIG.C0.DDR4_TREFI {0} \
@@ -131,7 +131,7 @@ set_property -dict [list CONFIG.C0.ControllerType {DDR4_SDRAM} \
 			CONFIG.C0.LR_WIDTH {1} \
 			CONFIG.C0.ODT_WIDTH {1} \
 			CONFIG.C0.StackHeight {1} \
-			CONFIG.C0_CLOCK_BOARD_INTERFACE {default_sysclk1_300} \
+			CONFIG.C0_CLOCK_BOARD_INTERFACE {default_250mhz_clk1} \
 			CONFIG.C0_DDR4_ARESETN.INSERT_VIP {0} \
 			CONFIG.C0_DDR4_BOARD_INTERFACE {Custom} \
 			CONFIG.C0_DDR4_CLOCK.INSERT_VIP {0} \
