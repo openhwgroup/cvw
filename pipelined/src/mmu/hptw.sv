@@ -49,7 +49,10 @@ module hptw
    (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    output logic [`PA_BITS-1:0] HPTWAdr,
    output logic [1:0]          HPTWRW, // HPTW requesting to write or read memory
-   output logic [2:0]          HPTWSize // 32 or 64 bit access.
+   output logic [2:0]          HPTWSize, // 32 or 64 bit access.
+   output logic IgnoreRequestTLB,
+   output logic SelHPTW,
+   output logic HPTWStall
 );
 
 	typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -262,5 +265,10 @@ module hptw
 	default: begin
 		NextWalkerState = IDLE; // should never be reached
 	end
-	endcase
+	endcase // case (WalkerState)
+
+  assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
+  assign SelHPTW = WalkerState != IDLE;
+  assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
+  
 endmodule

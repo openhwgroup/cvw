@@ -7,8 +7,7 @@ OBJEXT		:= o
 DEPEXT		:= d
 SRCDIR		:= .
 BUILDDIR	:= OBJ
-LINKER          := ${ROOT}/linker.x
-
+WIDTH           := 64
 SOURCES		?= $(shell find $(SRCDIR) -type f -regex ".*\.$(SRCEXT)" | sort)
 OBJECTS		:= $(SOURCES:.$(CEXT)=.$(OBJEXT))
 OBJECTS		:= $(OBJECTS:.$(AEXT)=.$(OBJEXT))
@@ -88,7 +87,7 @@ $(TARGET).memfile: $(TARGET)
 	@echo 'Making object dump file.'
 	@riscv64-unknown-elf-objdump -D $< > $<.objdump
 	@echo 'Making memory file'
-	exe2memfile0.pl $<
+	riscv64-unknown-elf-elf2hex --bit-width $(WIDTH) --input $< --output $@
 	extractFunctionRadix.sh $<.objdump
 	mkdir -p ../../imperas-riscv-tests/work/rv64BP/
 	cp -f $(TARGETDIR)/* ../../imperas-riscv-tests/work/rv64BP/
