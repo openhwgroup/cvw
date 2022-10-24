@@ -99,7 +99,7 @@ module uartPC16550D(
 
   // receive data
    (* mark_debug = "true" *)  logic [10:0] 					RXBR;
-  (* mark_debug = "true" *) logic [6:0] 					rxtimeoutcnt;
+  (* mark_debug = "true" *) logic [9:0] 					rxtimeoutcnt;
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
    (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
