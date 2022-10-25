@@ -37,7 +37,8 @@ module fdivsqrtpreproc (
   input  logic [`NE-1:0] Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic Sqrt,
-  input logic XZero,
+  input  logic Int,
+  input  logic XZero,
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
@@ -49,6 +50,7 @@ module fdivsqrtpreproc (
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
   logic  [`NF-1:0] PreprocA, PreprocX;
   logic  [`NF-1:0] PreprocB, PreprocY;
+  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
   logic  [`NF+1:0] SqrtX;
   logic [`DIVb+3:0] DivX;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
@@ -56,6 +58,9 @@ module fdivsqrtpreproc (
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
+  // Muxes needed for Int; add after Cedar Commit
+  // assign ZeroBufX = Int ? {ForwardedSrcAE, {`DIVN-`XLEN{1'b0}}} : {Xm, {`DIVN-`NF{1'b0}}};
+  // assign ZeroBufY = Int ? {ForwardedSrcBE, {`DIVN-`XLEN{1'b0}}} : {Ym, {`DIVN-`NF{1'b0}}};
   lzc #(`NF+1) lzcX (Xm, XZeroCnt);
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
 
@@ -65,7 +70,7 @@ module fdivsqrtpreproc (
   assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
   assign DivX = {3'b000, ~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
 
-  // *** explain why X is shifted between radices
+  // *** explain why X is shifted between radices (initial assignment of WS=RX)
   if (`RADIX == 2)  assign X = Sqrt ? {3'b111, SqrtX, {`DIVb-1-`NF{1'b0}}} : DivX;
   else              assign X = Sqrt ? {2'b11, SqrtX, {`DIVb-1-`NF{1'b0}}, 1'b0} : DivX;
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
