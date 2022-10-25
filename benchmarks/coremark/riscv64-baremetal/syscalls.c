@@ -164,11 +164,15 @@ void _init(int cid, int nc)
   counters[9] = read_csr(mhpmcounter9) - counters[9];
   counters[10] = read_csr(mhpmcounter10) - counters[10];
   counters[11] = read_csr(mhpmcounter11) - counters[11];
-  counters[12] = read_csr(mhpmcounter12) - counters[12];    
+  counters[12] = read_csr(mhpmcounter12) - counters[12];
+  counters[13] = read_csr(mhpmcounter13) - counters[13];
+  counters[14] = read_csr(mhpmcounter14) - counters[14];
 
   ee_printf("Load Stalls %d\n", counters[3]);
   ee_printf("D-Cache Accesses %d\n", counters[11]);
-  ee_printf("D-Cache Misses %d\n", counters[12]);    
+  ee_printf("D-Cache Misses %d\n", counters[12]); 
+  ee_printf("I-Cache Accesses %d\n", counters[13]);
+  ee_printf("I-Cache Misses %d\n", counters[14]);
   ee_printf("Branches %d\n", counters[5]);
   ee_printf("Branches Miss Predictions %d\n", counters[4]);
   ee_printf("BTB Misses %d\n", counters[6]);
