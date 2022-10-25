@@ -61,7 +61,7 @@ module plic_apb (
 
   logic memwrite, memread, initTrans;
   logic [23:0] entry;
-  logic [31:0] Din, Dout;
+  (* mark_debug = "true" *) logic [31:0] Din, Dout;
 
   // context-independent signals
     (* mark_debug = "true" *)  logic [`N:1]      requests;
@@ -69,14 +69,14 @@ module plic_apb (
     (* mark_debug = "true" *)  logic [`N:1]      intInProgress, intPending, nextIntPending;
   
   // context-dependent signals
-  logic [`C-1:0][2:0]       intThreshold;
+  (* mark_debug = "true" *) logic [`C-1:0][2:0]       intThreshold;
     (* mark_debug = "true" *)  logic [`C-1:0][`N:1]      intEn;
-  logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
+  (* mark_debug = "true" *) logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
     (* mark_debug = "true" *)  logic [`C-1:0][7:1][`N:1] irqMatrix;
-  logic [`C-1:0][7:1]       priorities_with_irqs;
-  logic [`C-1:0][7:1]       max_priority_with_irqs;
-  logic [`C-1:0][`N:1]      irqs_at_max_priority;
-  logic [`C-1:0][7:1]       threshMask;
+  (* mark_debug = "true" *) logic [`C-1:0][7:1]       priorities_with_irqs;
+  (* mark_debug = "true" *) logic [`C-1:0][7:1]       max_priority_with_irqs;
+  (* mark_debug = "true" *) logic [`C-1:0][`N:1]      irqs_at_max_priority;
+  (* mark_debug = "true" *) logic [`C-1:0][7:1]       threshMask;
 
   // =======
   // AHB I/O
