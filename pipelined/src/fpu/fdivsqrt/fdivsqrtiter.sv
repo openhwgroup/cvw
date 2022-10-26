@@ -50,7 +50,7 @@ module fdivsqrtiter(
 //QLEN = 1.(number of bits created for division)
 // N is NF+1 or XLEN
 // WC/WS is dependent on D so 4.N-1 ie N+3 bits or N+2:0 + one more bit in fraction for possible sqrt right shift
-// D is 1.N-1, but the msb is always 1 so 0.N-1 or N-1 bits or N-1:0
+// D is 1.N-1, but the msb is always 1 so 0.N-1 or N-1 bits or N-2:0
 // Dsel should match WC/WS so 4.N-1 ie N+3 bits or N+2:0
 // U/UM should be 1.b so b+1 bits or b:0
 // C needs to be the lenght of the final fraction 0.b so b or b-1:0
