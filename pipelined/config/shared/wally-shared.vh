@@ -26,7 +26,7 @@
 `include "wally-constants.vh"
 
 // macros to define supported modes
-// NOTE: No hardware support foR Q yet
+// NOTE: No hardware support for Q yet
 
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
@@ -111,9 +111,9 @@
 // division constants
 `define RADIX 32'h4
 `define DIVCOPIES 32'h3
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : (`NF + 3))
+`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : `NF+3)
 // `define DIVN (`NF < `XLEN ? `XLEN : `NF+1) // length of input
-`define DIVN (`NF < `XLEN ? `XLEN : (`NF + 3)) // length of input
+`define DIVN (`NF<`XLEN ? `XLEN : (`NF + 3)) // length of input
 `define EXTRAFRACBITS ((`NF < (`XLEN)) ? (`XLEN - `NF) : 3)
 `define EXTRAINTBITS ((`NF < `XLEN) ? 0 : (`NF - `XLEN + 3))
 `define DIVRESLEN ((`NF>`XLEN) ? (`NF + 4) : `XLEN)
@@ -123,7 +123,7 @@
 `define FPDUR ((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN ($clog2(`FPDUR+1))
 `define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
-`define DIVb (`QLEN - 1)
+`define DIVb (`FPDUR*`LOGR*`DIVCOPIES)-1
 
 
 `define USE_SRAM 0
