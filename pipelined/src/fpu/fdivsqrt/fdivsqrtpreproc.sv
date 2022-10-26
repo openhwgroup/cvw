@@ -55,6 +55,7 @@ module fdivsqrtpreproc (
   logic [`DIVb+3:0] DivX;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`NE+1:0] Qe;
+  logic Signed;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
@@ -63,6 +64,8 @@ module fdivsqrtpreproc (
   // assign ZeroBufY = Int ? {ForwardedSrcBE, {`DIVN-`XLEN{1'b0}}} : {Ym, {`DIVN-`NF{1'b0}}};
   lzc #(`NF+1) lzcX (Xm, XZeroCnt);
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
+
+  assign Signed = Funct3E[0];
 
   assign PreprocX = Xm[`NF-1:0]<<XZeroCnt;
   assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
