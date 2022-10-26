@@ -128,6 +128,7 @@ module uartPC16550D(
 (* mark_debug = "true" *)  logic [2:0] 					intrID;
 
   logic 						baudpulseComb;
+  logic 						HeadPointerLastMove;
 
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
@@ -150,37 +151,15 @@ module uartPC16550D(
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
-      if (`FPGA) begin
-		//DLL <= #1 8'd38; // 35Mhz
-		//DLL <= #1 8'd11; // 10 Mhz
-		//DLL <= #1 8'd33; // 30 Mhz
-		DLL <= #1 8'd8; // 30 Mhz 230400
-		DLL <= #1 8'd24; // 22 Mhz 57600
-		DLM <= #1 8'b0;
-      end else begin
-		DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
-		DLM <= #1 8'b0;
-      end	
-	  /* -----\/----- EXCLUDED -----\/-----
-	   -----/\----- EXCLUDED -----/\----- */
+	  DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+	  DLM <= #1 8'b0;
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         /* verilator lint_off CASEINCOMPLETE */
         case (A)
-		  /* -----\/----- EXCLUDED -----\/-----
            3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
            3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
-		   -----/\----- EXCLUDED -----/\----- */
-		  // *** BUG FIX ME for now for the divider to be 38.  Our clock is 35 Mhz.  35Mhz /(38 * 16) ~= 57600 baud, which is close enough to 57600 baud
-		  // dll = freq / (baud * 16)
-		  // 30Mhz / (57600 * 16) = 32.5
-		  // 30Mhz / (230400 * 16) = 8.13
-		  // freq /baud / 16 = div
-          //3'b000: if (DLAB) DLL <= #1 8'd38; //else TXHR <= #1 Din; // TX handled in TX register/FIFO section
-		  //3'b000: if (DLAB) DLL <= #1 8'd11; //else TXHR <= #1 Din; // TX handled in
-		      3'b000: if (DLAB) DLL <= #1 8'd24; //else TXHR <= #1 Din; // TX handled in 		  
-          3'b001: if (DLAB) DLM <= #1 8'b0; else IER <= #1 Din[3:0];
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
           3'b100: MCR <= #1 Din[4:0];
@@ -485,12 +464,30 @@ module uartPC16550D(
         end
     end
 
-  assign txfifoempty = (txfifohead == txfifotail);
+  always_ff @(posedge PCLK, negedge PRESETn) begin
+	// special condition to check if the fifo is empty or full.  Because the head
+	// pointer indicates where the next write goes and not the location of the
+	// current head, the head and tail pointer being equal imply two different
+	// things.  First it could mean the fifo is empty and second it could mean
+	// the fifo is full.  To differenciate we need to know which pointer moved
+	// to cause them to be equal.  If the head pointer moved then it is full.
+	// If the tail pointer moved then it is empty.  it resets to empty so
+	// if reset with the tail pointer indicating the last update.
+	if(~PRESETn) 
+	  HeadPointerLastMove <= 1'b0;
+	else if(fifoenabled & ~MEMWb & A == 3'b000 & ~DLAB)
+	  HeadPointerLastMove <= 1'b1;
+	else if(fifoenabled & ~txfifoempty & ~txsrfull & txstate == UART_IDLE)
+	  HeadPointerLastMove <= 1'b0;
+  end
+
+  assign txfifoempty = (txfifohead == txfifotail) & ~HeadPointerLastMove;
   // verilator lint_off WIDTH
   assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
                          (txfifohead + 16 - txfifotail);
   // verilator lint_on WIDTH
-  assign txfifofull = (txfifoentries == 4'b1111);
+  //assign txfifofull = (txfifoentries == 4'b1111);
+	assign txfifofull = (txfifohead == txfifotail) & HeadPointerLastMove;
 
   // transmit buffer ready bit
   always_ff @(posedge PCLK, negedge PRESETn) // track txrdy for DMA mode (FCR3 = FCR0 = 1)
