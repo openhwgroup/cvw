@@ -46,16 +46,17 @@ module fdivsqrtpreproc (
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
 );
-  // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
   logic  [`NF-1:0] PreprocA, PreprocX;
   logic  [`NF-1:0] PreprocB, PreprocY;
-  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
   logic  [`NF+1:0] SqrtX;
-  logic [`DIVb+3:0] DivX;
-  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [`NE+1:0] Qe;
-  logic Signed;
+  logic  [`DIVb+3:0] DivX;
+  logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
+  logic  [`NE+1:0] Qe;
+  // Intdiv signals
+  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
+  logic  [`XLEN-1:0] PosA, PosB;
+  logic  Signed, Aneg, Bneg;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
@@ -66,6 +67,10 @@ module fdivsqrtpreproc (
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
 
   assign Signed = Funct3E[0];
+  assign Aneg = ForwardedSrcAE[`XLEN-1] & Signed;
+  assign Bneg = ForwardedSrcBE[`XLEN-1] & Signed;
+  assign PosA = Aneg ? -ForwardedSrcAE : ForwardedSrcAE;
+  assign PosB = Bneg ? -ForwardedSrcBE : ForwardedSrcBE;
 
   assign PreprocX = Xm[`NF-1:0]<<XZeroCnt;
   assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
