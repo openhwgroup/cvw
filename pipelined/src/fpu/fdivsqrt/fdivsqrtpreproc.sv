@@ -37,7 +37,6 @@ module fdivsqrtpreproc (
   input  logic [`NE-1:0] Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic Sqrt,
-  input  logic Int,
   input  logic XZero,
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
@@ -46,15 +45,17 @@ module fdivsqrtpreproc (
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
 );
-  // logic  [`XLEN-1:0] PosA, PosB;
   // logic  [`DIVLEN-1:0] ExtraA, ExtraB, PreprocA, PreprocB, PreprocX, PreprocY;
   logic  [`NF-1:0] PreprocA, PreprocX;
   logic  [`NF-1:0] PreprocB, PreprocY;
-  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
   logic  [`NF+1:0] SqrtX;
-  logic [`DIVb+3:0] DivX;
-  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [`NE+1:0] Qe;
+  logic  [`DIVb+3:0] DivX;
+  logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
+  logic  [`NE+1:0] Qe;
+  // Intdiv signals
+  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
+  logic  [`XLEN-1:0] PosA, PosB;
+  logic  Signed, Aneg, Bneg;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
@@ -63,6 +64,12 @@ module fdivsqrtpreproc (
   // assign ZeroBufY = Int ? {ForwardedSrcBE, {`DIVN-`XLEN{1'b0}}} : {Ym, {`DIVN-`NF{1'b0}}};
   lzc #(`NF+1) lzcX (Xm, XZeroCnt);
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
+
+  assign Signed = Funct3E[0];
+  assign Aneg = ForwardedSrcAE[`XLEN-1] & Signed;
+  assign Bneg = ForwardedSrcBE[`XLEN-1] & Signed;
+  assign PosA = Aneg ? -ForwardedSrcAE : ForwardedSrcAE;
+  assign PosB = Bneg ? -ForwardedSrcBE : ForwardedSrcBE;
 
   assign PreprocX = Xm[`NF-1:0]<<XZeroCnt;
   assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
