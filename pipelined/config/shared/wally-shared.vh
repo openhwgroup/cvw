@@ -123,7 +123,7 @@
 `define FPDUR ((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN ($clog2(`FPDUR+1))
 `define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
-`define DIVb (`FPDUR*`LOGR*`DIVCOPIES)-1
+`define DIVb (`QLEN-1)
 
 
 `define USE_SRAM 0
