@@ -212,26 +212,25 @@ module ifu (
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
-      logic [1:0]          CacheBusRW, BusRW;
-
+      logic [1:0]          CacheBusRW, BusRW, CacheRWF;
       
       //assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF} & ~{SelIROM, SelIROM};
       assign BusRW = ~IgnoreRequest & ~CacheableF & ~SelIROM ? IFURWF : '0;
+      assign CacheRWF = ~IgnoreRequest & CacheableF & ~SelIROM ? IFURWF : '0;
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
-      icache(.clk, .reset, .CPUBusy, .IgnoreRequestTLB(ITLBMissF), .TrapM,
+      icache(.clk, .reset, .CPUBusy,
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
              .ReadDataWord(ICacheInstrF),
-             .Cacheable(CacheableF),
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .WordCount('0), .SelBusWord('0),
              .FinalWriteData('0),
-             .RW(IFURWF), 
-             .Atomic('0), .FlushCache('0),
+             .CacheRW(CacheRWF), 
+             .CacheAtomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));

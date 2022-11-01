@@ -40,9 +40,6 @@ module cachefsm
    input logic        InvalidateCache,
    // hazard inputs
    input logic        CPUBusy,
-   // interlock fsm
-   input logic        IgnoreRequestTLB,
-   input logic        TrapM,
    // Bus inputs
    input logic        CacheBusAck,
    // dcache internals
@@ -96,17 +93,12 @@ module cachefsm
 					               STATE_FLUSH_WRITE_BACK} statetype;
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
-  logic               IgnoreRequest;
-  assign IgnoreRequest = IgnoreRequestTLB | TrapM;
 
-  // if the command is used in the READY state then the cache needs to be able to supress
-  // using both IgnoreRequestTLB and DCacheTrapM.  Otherwise we can just use IgnoreRequestTLB.
-
-  assign DoFlush = FlushCache & ~TrapM; // do NOT suppress flush on DTLBMissM. Does not depend on address translation.
+  assign DoFlush = FlushCache;
   assign AMO = CacheAtomic[1] & (&CacheRW);
-  assign DoAMO = AMO & ~IgnoreRequest; 
-  assign DoRead = CacheRW[1] & ~IgnoreRequest; 
-  assign DoWrite = CacheRW[0] & ~IgnoreRequest; 
+  assign DoAMO = AMO; 
+  assign DoRead = CacheRW[1]; 
+  assign DoWrite = CacheRW[0]; 
 
   assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit & ~InvalidateCache;
   assign DoAnyUpdateHit = (DoAMO | DoWrite) & CacheHit;
@@ -129,7 +121,7 @@ module cachefsm
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(IgnoreRequest | InvalidateCache)         NextState = STATE_READY;
+      STATE_READY: if(InvalidateCache)         NextState = STATE_READY;
                    else if(DoFlush)                            NextState = STATE_FLUSH;
       // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
       // To optimize do the fetch first, then eviction if necessary.
@@ -204,9 +196,7 @@ module cachefsm
 //  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
 //                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
-  assign SelAdr = (CurrState == STATE_READY & (IgnoreRequestTLB & ~TrapM)) | // Ignore Request is needed on TLB miss.
-                  // use the raw requests as we don't want TrapM in the critical path
-                  (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
+  assign SelAdr = (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (DoAnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |

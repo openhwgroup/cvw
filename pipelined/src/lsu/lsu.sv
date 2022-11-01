@@ -212,6 +212,8 @@ module lsu (
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     assign DTIMAdr = MemRWM[0] ? IEUAdrExtM[`PA_BITS-1:0] : IEUAdrExtE[`PA_BITS-1:0]; // zero extend or contract to PA_BITS
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequest ? LSURWM : '0;
+    // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
+    // **** create config to support DTIM with floating point.
     dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM(DTIMMemRWM),
               .Adr(DTIMAdr),
               .TrapM, .WriteDataM(LSUWriteDataM), 
@@ -237,18 +239,23 @@ module lsu (
       logic [1:0]          CacheBusRW, BusRW;
       localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
       logic                CacheableOrFlushCacheM;
-
+      logic [1:0]          CacheRWM, CacheAtomicM;
+      logic                CacheFlushM;
+      
       assign BusRW = ~CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
-
+      assign CacheRWM = CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
+      assign CacheAtomicM = CacheableM & ~IgnoreRequest & ~SelDTIM ? LSUAtomicM : '0;
+      assign CacheFlushM  = ~TrapM & FlushDCacheM;
+      
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .SelBusWord, .RW(LSURWM), .Atomic(LSUAtomicM),
-        .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .clk, .reset, .CPUBusy, .SelBusWord, .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .WordCount(WordCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
-        .FinalWriteData(LSUWriteDataM), .Cacheable(CacheableOrFlushCacheM), .SelHPTW,
+        .FinalWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
-        .IgnoreRequestTLB, .TrapM, .CacheCommitted(DCacheCommittedM), 
+        .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
@@ -264,6 +271,8 @@ module lsu (
 
       // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
       // DTIMReadDataWordM should be increased to LLEN.
+      // *** DTIMReadDataWordM should be LLEN
+      // pma should generate expection for LLEN read to periph.
       mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
