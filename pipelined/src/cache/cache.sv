@@ -35,8 +35,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   reset,
    // cpu side
   input logic                   CPUBusy,
-  input logic [1:0]             RW,
-  input logic [1:0]             Atomic,
+  input logic [1:0]             CacheRW,
+  input logic [1:0]             CacheAtomic,
   input logic                   FlushCache,
   input logic                   InvalidateCache,
   input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
@@ -49,9 +49,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   output logic                  CacheMiss,
   output logic                  CacheAccess,
    // lsu control
-  input logic                   IgnoreRequestTLB,
-  input logic                   TrapM, 
-  input logic                   Cacheable,
   input logic                   SelHPTW,
    // Bus fsm interface
   output logic [1:0]            CacheBusRW,
@@ -102,7 +99,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [1:0]                 CacheRW, CacheAtomic;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelBusBuffer;
@@ -209,10 +205,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-  assign CacheRW = Cacheable ? RW : 2'b00;
-  assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .TrapM,
+		.CacheRW, .CacheAtomic, .CPUBusy,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,

@@ -74,7 +74,10 @@ module lsuvirtmem(
   logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
   logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
   logic                       SelHPTWAdr;
-  
+
+  /// **** move to HPTW
+  // **** rename to walker mux?
+  // move all the muxes to walkermux and instantiate these in lsu under virtmem_supported.
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
   assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
