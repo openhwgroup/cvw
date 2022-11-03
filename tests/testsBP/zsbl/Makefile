@@ -24,7 +24,7 @@ LIBRARY_FILES	:=
 MARCH           :=-march=rv64imfdc
 MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
-LINKER		:=$(ROOT)/linker1000.x
+LINKER		:=linker.x
 
 
 AFLAGS =$(MARCH) $(MABI) -W
