@@ -90,7 +90,7 @@ end_of_bios:
 
 
 
-.section .dtb
+.section .rodata
 .globl _dtb
 .align 4, 0
 _dtb:
