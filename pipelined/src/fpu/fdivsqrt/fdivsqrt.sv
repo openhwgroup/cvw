@@ -81,6 +81,6 @@ module fdivsqrt(
     .DivBusy);
   fdivsqrtpostproc fdivsqrtpostproc(
     .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, 
-    .SqrtM, .SpecialCaseM, .remOp(Funct3E[1]),
+    .SqrtM, .SpecialCaseM, .RemOp(Funct3E[1]),
     .QmM, .WZero, .DivSM);
 endmodule
