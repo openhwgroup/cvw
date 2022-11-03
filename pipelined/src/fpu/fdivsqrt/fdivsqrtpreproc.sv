@@ -53,15 +53,15 @@ module fdivsqrtpreproc (
   logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic  [`NE+1:0] Qe;
   // Intdiv signals
-  // logic  [`DIVN-1:0] ZeroBufX, ZeroBufY; add after Cedar Commit
+  logic  [`DIVN-1:0] ZeroBufX, ZeroBufY;
   logic  [`XLEN-1:0] PosA, PosB;
   logic  Signed, Aneg, Bneg;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
   // Muxes needed for Int; add after Cedar Commit
-  // assign ZeroBufX = Int ? {ForwardedSrcAE, {`DIVN-`XLEN{1'b0}}} : {Xm, {`DIVN-`NF{1'b0}}};
-  // assign ZeroBufY = Int ? {ForwardedSrcBE, {`DIVN-`XLEN{1'b0}}} : {Ym, {`DIVN-`NF{1'b0}}};
+  assign ZeroBufX = MDUE ? {ForwardedSrcAE, {`DIVN-`XLEN{1'b0}}} : {Xm, {`DIVN-`NF-1{1'b0}}};
+  assign ZeroBufY = MDUE ? {ForwardedSrcBE, {`DIVN-`XLEN{1'b0}}} : {Ym, {`DIVN-`NF-1{1'b0}}};
   lzc #(`NF+1) lzcX (Xm, XZeroCnt);
   lzc #(`NF+1) lzcY (Ym, YZeroCnt);
 

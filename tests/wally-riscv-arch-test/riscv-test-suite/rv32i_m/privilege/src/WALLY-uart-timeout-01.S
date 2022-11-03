@@ -85,3 +85,23 @@ END_TESTS
 
 TEST_STACK_AND_DATA
 
+        // in your isa
+        // first claim the plic's uart interrupt by reading the claim register corresponding to 10 on context 0.
+        // then you'll read all entires in the fifo. 
+        // then you'll write the completed plic register to 10 on context 0.
+        // claim and completed have the same address.
+        // then you'll return by mret.
+
+trap_handler:   
+        // this will only get uart interrupts
+        li s0, plicBaseAddr
+        addi s0, s0, 0x200004 // claim offset 
+        lw s1, 0(s0)
+
+        // check that s1 is 10 and not something else
+        // read uart rx fifo
+        
+
+        // completed
+        sw s1, 0(s0) // tells the plic the isr is done.
+        mret
