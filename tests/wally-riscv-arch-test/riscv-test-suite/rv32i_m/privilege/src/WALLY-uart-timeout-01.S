@@ -92,16 +92,16 @@ TEST_STACK_AND_DATA
         // claim and completed have the same address.
         // then you'll return by mret.
 
-trap_handler:   
-        // this will only get uart interrupts
-        li s0, plicBaseAddr
-        addi s0, s0, 0x200004 // claim offset 
-        lw s1, 0(s0)
+# trap_handler:   
+#         // this will only get uart interrupts
+#         //li s0, plicBaseAddr
+#         addi s0, s0, 0x200004 // claim offset 
+#         lw s1, 0(s0)
 
-        // check that s1 is 10 and not something else
-        // read uart rx fifo
+#         // check that s1 is 10 and not something else
+#         // read uart rx fifo
         
 
-        // completed
-        sw s1, 0(s0) // tells the plic the isr is done.
-        mret
+#         // completed
+#         sw s1, 0(s0) // tells the plic the isr is done.
+#         mret
