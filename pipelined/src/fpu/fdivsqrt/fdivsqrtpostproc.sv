@@ -31,13 +31,14 @@
 `include "wally-config.vh"
 
 module fdivsqrtpostproc(
-  input logic [`DIVb+3:0] WS, WC,
-  input logic [`DIVN-2:0]  D, // U0.N-1
-  input logic [`DIVb:0] FirstU, FirstUM, 
-  input logic [`DIVb+1:0] FirstC,
-  input logic  Firstun,
-  input logic SqrtM,
-  input logic SpecialCaseM,
+  input  logic [`DIVb+3:0] WS, WC,
+  input  logic [`DIVN-2:0]  D, // U0.N-1
+  input  logic [`DIVb:0] FirstU, FirstUM, 
+  input  logic [`DIVb+1:0] FirstC,
+  input  logic  Firstun,
+  input  logic SqrtM,
+  input  logic SpecialCaseM,
+  input  logic RemOp,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM

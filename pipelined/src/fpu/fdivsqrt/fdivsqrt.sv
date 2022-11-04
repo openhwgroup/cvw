@@ -79,5 +79,8 @@ module fdivsqrt(
     .X,.Dpreproc, .FirstWS(WS), .FirstWC(WC),
     .DivStartE, .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE,
     .DivBusy);
-  fdivsqrtpostproc fdivsqrtpostproc(.WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, .SqrtM, .SpecialCaseM, .QmM, .WZero, .DivSM);
+  fdivsqrtpostproc fdivsqrtpostproc(
+    .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, 
+    .SqrtM, .SpecialCaseM, .RemOp(Funct3E[1]),
+    .QmM, .WZero, .DivSM);
 endmodule
