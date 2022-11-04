@@ -68,22 +68,12 @@ module tlbcontrol #(parameter ITLB = 0) (
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
   assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
-  if (`XLEN==64) begin:rv64
-      assign SV39Mode = (SATP_MODE == `SV39);
-      // page fault if upper bits aren't all the same
-      logic UpperEqual39, UpperEqual48;
-      assign UpperEqual39 = &(VAdr[63:38]) | ~|(VAdr[63:38]);
-      assign UpperEqual48 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
-      assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
-  end else begin
-      assign SV39Mode = 0;
-      assign UpperBitsUnequalPageFault = 0;
-  end           
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;
 
   // Check whether upper bits of virtual addresss are all equal
+  vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequalPageFault);
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
@@ -99,7 +89,7 @@ module tlbcontrol #(parameter ITLB = 0) (
       assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
       assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end else begin
-    // fault for software handling if access bit is off
+      // fault for software handling if access bit is off
       assign DAPageFault = ~PTE_A;
       assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end
