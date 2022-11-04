@@ -116,16 +116,16 @@ module tlb #(parameter TLB_ENTRIES = 8,
   // we cache Misaligned along with the PTE?  This only has to be computed once
   // in the hptw as it is always the same regardless of the VPN.
   if(`XLEN == 32) begin
-	assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
-	assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
+    assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
+    assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
   end else begin
-	logic 				 GigapageMisaligned, TerapageMisaligned;
-	assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
-	assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
-	assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0		  
-	assign Misaligned = ((HitPageType == 2'b11) & TerapageMisaligned) | 
-						((HitPageType == 2'b10) & GigapageMisaligned) | 
-						((HitPageType == 2'b01) & MegapageMisaligned);
+    logic 				 GigapageMisaligned, TerapageMisaligned;
+    assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
+    assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
+    assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0		  
+    assign Misaligned = ((HitPageType == 2'b11) & TerapageMisaligned) | 
+              ((HitPageType == 2'b10) & GigapageMisaligned) | 
+              ((HitPageType == 2'b01) & MegapageMisaligned);
   end
 
   assign VPN = VAdr[`VPN_BITS+11:12];
@@ -137,7 +137,7 @@ module tlb #(parameter TLB_ENTRIES = 8,
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
-    tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
+  tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);
   tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs);
 
