@@ -1072,9 +1072,9 @@ uart_data_wait:
     li t3, 0x10000002 // IIR
     li a4, 0x61
 uart_read_LSR_IIR:
-    lb t4, 0(t3) // save IIR before reading LSR mgith clear it
+    lbu t4, 0(t3) // save IIR before reading LSR might clear it
     //  check if IIR is the rxfifotimeout interrupt. if it is, then read the fifo then go back and repeat this.
-    li t5, 6
+    li t5, 0xCC // Value in IIR for Fifo Enabled, with timeout interrupt pending
     beq t4, t5, uart_rxfifo_timout
     lb t5, 0(t2) // read LSR
     andi t6, t5, 0x61  // wait until all transmissions are done and data is ready
@@ -1082,7 +1082,6 @@ uart_read_LSR_IIR:
     j uart_data_ready
 uart_rxfifo_timout:
     li t4, 0x10000000 // read from the fifo
-    lb t5, 0(t4)
     lb t5, 0(t4)
     //read the fifo until empty
     j uart_read_LSR_IIR
