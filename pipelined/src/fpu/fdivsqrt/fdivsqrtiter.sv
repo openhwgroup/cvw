@@ -38,6 +38,7 @@ module fdivsqrtiter(
   input  logic XZeroE, YZeroE, 
   input  logic SqrtE,
   input  logic SqrtM,
+  input  logic OTFCSwap,
   input  logic [`DIVb+3:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
   output logic [`DIVN-2:0]  D, // U0.N-1
