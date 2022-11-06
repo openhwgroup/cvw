@@ -96,9 +96,9 @@ module fdivsqrtpreproc (
   assign DivX = {3'b000, ~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
 
   // *** explain why X is shifted between radices (initial assignment of WS=RX)
-  if (`RADIX == 2)  assign X = Sqrt ? {3'b111, SqrtX, {`DIVb-1-`NF{1'b0}}} : DivX;
-  else              assign X = Sqrt ? {2'b11, SqrtX, {`DIVb-1-`NF{1'b0}}, 1'b0} : DivX;
-  // assign X = MDUE ? PreShiftX >> RightShiftX : PreShiftX;
+  if (`RADIX == 2)  assign PreShiftX = Sqrt ? {3'b111, SqrtX, {`DIVb-1-`NF{1'b0}}} : DivX;
+  else              assign PreShiftX = Sqrt ? {2'b11, SqrtX, {`DIVb-1-`NF{1'b0}}, 1'b0} : DivX;
+  assign X = MDUE ? PreShiftX >> RightShiftX : PreShiftX;
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
 
   //           radix 2     radix 4
