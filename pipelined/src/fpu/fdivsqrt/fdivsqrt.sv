@@ -64,10 +64,11 @@ module fdivsqrt(
   logic Firstun;
   logic WZero;
   logic SpecialCaseM;
+  logic [`DIVBLEN:0] n;
 
   fdivsqrtpreproc fdivsqrtpreproc(
     .clk, .DivStartE, .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
-    .Sqrt(SqrtE), .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc, 
+    .Sqrt(SqrtE), .Ym(YmE), .XZero(XZeroE), .X, .Dpreproc, .n,
     .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E);
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 

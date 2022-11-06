@@ -110,7 +110,7 @@
 
 // division constants
 `define RADIX 32'h4
-`define DIVCOPIES 32'h3
+`define DIVCOPIES 32'h2
 `define DIVLEN ((`NF < `XLEN) ? (`XLEN) : `NF+3)
 // `define DIVN (`NF < `XLEN ? `XLEN : `NF+1) // length of input
 `define DIVN (`NF<`XLEN ? `XLEN : (`NF + 3)) // length of input
@@ -118,12 +118,16 @@
 `define EXTRAINTBITS ((`NF < `XLEN) ? 0 : (`NF - `XLEN + 3))
 `define DIVRESLEN ((`NF>`XLEN) ? (`NF + 4) : `XLEN)
 `define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
-// FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES))
+`define RK (`DIVCOPIES*`LOGR) // r*k used for intdiv preproc
+`define LOGK ($clog2(`DIVCOPIES))
+`define LOGRK ($clog2(`RK))
+// FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES)) 
 // one iteration is required for the integer bit for minimally redundent radix-4
 `define FPDUR ((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN ($clog2(`FPDUR+1))
 `define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
 `define DIVb (`QLEN-1)
+`define DIVBLEN ($clog2(`DIVb))
 
 
 `define USE_SRAM 0
