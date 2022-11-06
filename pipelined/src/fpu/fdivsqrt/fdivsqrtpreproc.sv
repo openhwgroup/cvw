@@ -81,8 +81,8 @@ module fdivsqrtpreproc (
   assign PreprocX = Xm[`NF-1:0]<<L;
   assign PreprocY = Ym[`NF-1:0]<<m;
 
-  // assign ZeroDiff = m - L;
-  // assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
+  assign ZeroDiff = m - L;
+  assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
 
   // assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
   // assign pPrTrunc = pPlusr[`LOGRK-1:0];
