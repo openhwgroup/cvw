@@ -59,7 +59,8 @@ module fdivsqrtpreproc (
   logic  As, Bs;
   logic  [`XLEN-1:0] A64, B64;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
-  logic  [`DIVBLEN:0] pPlusr, pPrTrunc, pPrCeil;
+  logic  [`DIVBLEN:0] pPlusr, pPrCeil;
+  logic  [`LOGRK-1:0] pPrTrunc;
   logic  [`DIVb+3:0] PreShiftX;
 
   // ***can probably merge X LZC with conversion
@@ -84,12 +85,12 @@ module fdivsqrtpreproc (
   assign ZeroDiff = m - L;
   assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
 
-  // assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
-  // assign pPrTrunc = pPlusr[`LOGRK-1:0];
-  // assign pPrCeil = (pPlusr >> `LOGRK) + |(pPrTrunc);
-  // assign n = (pPrCeil << `LOGK) - ((`DIVBLEN)'b1);
-  // assign IntBits = (`DIVBLEN)'(`RK) + p;
-  // assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
+  assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
+  assign pPrTrunc = pPlusr[`LOGRK-1:0];
+  assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN-1{1'b0}}, |(pPrTrunc)};
+  assign n = (pPrCeil << `LOGK) - 1;
+  assign IntBits = (`DIVBLEN)'(`RK) + p;
+  assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
 
   assign SqrtX = Xe[0]^L[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
   assign DivX = {3'b000, ~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
