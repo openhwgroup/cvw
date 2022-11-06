@@ -39,6 +39,7 @@ module fdivsqrtpostproc(
   input  logic SqrtM,
   input  logic SpecialCaseM,
   input  logic RemOp,
+  input  logic [`DIVBLEN:0] n, p, m,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM

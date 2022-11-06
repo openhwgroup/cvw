@@ -41,7 +41,7 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
-  output logic [`DIVBLEN:0] n,
+  output logic [`DIVBLEN:0] n, p, m,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -58,7 +58,7 @@ module fdivsqrtpreproc (
   logic  [`XLEN-1:0] PosA, PosB;
   logic  As, Bs;
   logic  [`XLEN-1:0] A64, B64;
-  logic  [`DIVBLEN:0] p, ZeroDiff, IntBits, RightShiftX;
+  logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrTrunc, pPrCeil;
   logic  [`DIVb+3:0] PreShiftX;
 
