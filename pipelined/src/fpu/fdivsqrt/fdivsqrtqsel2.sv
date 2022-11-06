@@ -32,11 +32,13 @@
 
 module fdivsqrtqsel2 ( 
   input  logic [3:0] ps, pc, 
-  output logic         up, uz, un
+  input  logic  swap,
+  output logic  up, uz, un
 );
  
   logic [3:0]  p, g;
-  logic          magnitude, sign, cout;
+  logic        magnitude, sign, cout;
+  logic        pos, neg;
 
   // The quotient selection logic is presented for simplicity, not
   // for efficiency.  You can probably optimize your logic to
@@ -57,7 +59,11 @@ module fdivsqrtqsel2 (
 						(ps[0]&pc[0])))));
 
   // Produce digit = +1, 0, or -1
-  assign up = magnitude & ~sign;
-  assign uz = ~magnitude;
-  assign un = magnitude & sign;
+  assign pos = magnitude & ~sign;
+  assign uz  = ~magnitude;
+  assign neg = magnitude & sign;
+
+  // Check for swap (int div only)
+  assign un = swap ? pos : neg;
+  assign up = swap ? neg : pos;
 endmodule

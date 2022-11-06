@@ -120,15 +120,15 @@ module fdivsqrtiter(
   // k=DIVCOPIES of the recurrence logic
   genvar i;
   generate
-    for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : interations
+    for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : iterations
       if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM,
-        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM, .OTFCSwap,
+        .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1,
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1, .OTFCSwap,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
@@ -142,9 +142,9 @@ module fdivsqrtiter(
   // Send values from start of cycle for postprocessing
   assign FirstWS = WS[0];
   assign FirstWC = WC[0];
-  assign FirstU = U[0];
+  assign FirstU  = U[0];
   assign FirstUM = UM[0];
-  assign FirstC = C[0];
+  assign FirstC  = C[0];
   assign Firstun = un[0];
 endmodule
 
