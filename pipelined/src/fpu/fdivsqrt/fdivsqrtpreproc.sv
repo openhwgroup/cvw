@@ -51,7 +51,7 @@ module fdivsqrtpreproc (
   logic  [`NF-1:0] PreprocB, PreprocY;
   logic  [`NF+1:0] SqrtX;
   logic  [`DIVb+3:0] DivX;
-  logic  [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
+  logic  [`DIVBLEN:0] L;
   logic  [`NE+1:0] Qe;
   // Intdiv signals
   logic  [`DIVb-1:0] ZeroBufX, ZeroBufY;
@@ -75,13 +75,13 @@ module fdivsqrtpreproc (
 
   assign ZeroBufX = MDUE ? {PosA, {`DIVb-`XLEN{1'b0}}} : {Xm, {`DIVb-`NF-1{1'b0}}};
   assign ZeroBufY = MDUE ? {PosB, {`DIVb-`XLEN{1'b0}}} : {Ym, {`DIVb-`NF-1{1'b0}}};
-  lzc #(`NF+1) lzcX (Xm, XZeroCnt);
-  lzc #(`NF+1) lzcY (Ym, YZeroCnt);
+  lzc #(`DIVb) lzcX (ZeroBufX, L);
+  lzc #(`DIVb) lzcY (ZeroBufY, m);
 
-  assign PreprocX = Xm[`NF-1:0]<<XZeroCnt;
-  assign PreprocY = Ym[`NF-1:0]<<YZeroCnt;
+  assign PreprocX = Xm[`NF-1:0]<<L;
+  assign PreprocY = Ym[`NF-1:0]<<m;
 
-  // assign ZeroDiff = YZeroCnt - XZeroCnt;
+  // assign ZeroDiff = m - L;
   // assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
 
   // assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
@@ -91,7 +91,7 @@ module fdivsqrtpreproc (
   // assign IntBits = (`DIVBLEN)'(`RK) + p;
   // assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
 
-  assign SqrtX = Xe[0]^XZeroCnt[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
+  assign SqrtX = Xe[0]^L[0] ? {1'b0, ~XZero, PreprocX} : {~XZero, PreprocX, 1'b0};
   assign DivX = {3'b000, ~XZero, PreprocX, {`DIVb-`NF{1'b0}}};
 
   // *** explain why X is shifted between radices (initial assignment of WS=RX)
@@ -110,17 +110,17 @@ module fdivsqrtpreproc (
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
   flopen #(`NE+2) expflop(clk, DivStartE, Qe, QeM);
-  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .XZeroCnt, .YZeroCnt, .Qe);
+  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m, .Qe);
 
 endmodule
 
 module expcalc(
-  input logic  [`FMTBITS-1:0] Fmt,
+  input  logic [`FMTBITS-1:0] Fmt,
   input  logic [`NE-1:0] Xe, Ye,
-  input logic Sqrt,
-  input logic XZero, 
-  input logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt,
-  output logic  [`NE+1:0] Qe
+  input  logic Sqrt,
+  input  logic XZero, 
+  input  logic [`DIVBLEN:0] L, m,
+  output logic [`NE+1:0] Qe
   );
   logic [`NE-2:0] Bias;
   logic [`NE+1:0] SXExp;
@@ -151,10 +151,10 @@ module expcalc(
             2'h2: Bias =  (`NE-1)'(`H_BIAS);
         endcase
   end
-  assign SXExp = {2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - (`NE+1)'(`BIAS);
+  assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, L} - (`NE+2)'(`BIAS);
   assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
   // correct exponent for denormalized input's normalization shifts
-  assign DExp = ({2'b0, Xe} - {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, XZeroCnt} - {2'b0, Ye} + {{`NE+1-$unsigned($clog2(`NF+2)){1'b0}}, YZeroCnt} + {3'b0, Bias})&{`NE+2{~XZero}};
+  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, L} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZero}};
   
   assign Qe = Sqrt ? SExp : DExp;
 endmodule
