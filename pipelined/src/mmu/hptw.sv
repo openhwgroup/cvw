@@ -42,7 +42,7 @@ module hptw
    input logic [1:0]           STATUS_MPP,
    input logic [1:0]           PrivilegeModeW,
    (* mark_debug = "true" *) input logic ITLBMissOrDAFaultNoTrapF, DTLBMissOrDAFaultNoTrapM, // TLB Miss
-   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU
+   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU  *** change to ReadDataM
    input logic                 DCacheStallM, // stall from LSU
    output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
    output logic [1:0]          PageType, // page type to TLBs
@@ -106,7 +106,6 @@ module hptw
 
   if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
 
-    logic                     SV39Mode;
     logic                     ReadAccess, WriteAccess;
     logic                     InvalidRead, InvalidWrite;
     logic                     UpperBitsUnequalPageFault; 
@@ -136,19 +135,9 @@ module hptw
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
                                ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
-    // *** turn into module common with code in tlbcontrol.
-    if (`XLEN==64) begin:rv64
-      assign SV39Mode = (SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS] == `SV39);
-      // page fault if upper bits aren't all the same
-      logic UpperEqual39, UpperEqual48;
-      assign UpperEqual39 = &(TranslationVAdr[63:38]) | ~|(TranslationVAdr[63:38]);
-      assign UpperEqual48 = &(TranslationVAdr[63:47]) | ~|(TranslationVAdr[63:47]); 
-      assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
-    end else begin
-      assign SV39Mode = 0;
-      assign UpperBitsUnequalPageFault = 0;
-    end           
-
+    // Check for page faults
+	vm64check vm64check(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]), .VAdr(TranslationVAdr), 
+	                               .SV39Mode(), .UpperBitsUnequalPageFault);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
     assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
@@ -190,26 +179,26 @@ module hptw
 
 	// HPTWAdr muxing
 	if (`XLEN==32) begin // RV32
-	logic [9:0] VPN;
-	logic [`PPN_BITS-1:0] PPN;
-	assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
-	assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
-	assign HPTWReadAdr = {PPN, VPN, 2'b00};
-	assign HPTWSize = 3'b010;
+		logic [9:0] VPN;
+		logic [`PPN_BITS-1:0] PPN;
+		assign VPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? TranslationVAdr[31:22] : TranslationVAdr[21:12]; // select VPN field based on HPTW state
+		assign PPN = ((WalkerState == L1_ADR) | (WalkerState == L1_RD)) ? BasePageTablePPN : CurrentPPN; 
+		assign HPTWReadAdr = {PPN, VPN, 2'b00};
+		assign HPTWSize = 3'b010;
 	end else begin // RV64
-	logic [8:0] VPN;
-	logic [`PPN_BITS-1:0] PPN;
-	always_comb
-		case (WalkerState) // select VPN field based on HPTW state
-			L3_ADR, L3_RD:  			VPN = TranslationVAdr[47:39];
-			L2_ADR, L2_RD:    VPN = TranslationVAdr[38:30];
-			L1_ADR, L1_RD: 	VPN = TranslationVAdr[29:21];
-			default:		 						VPN = TranslationVAdr[20:12];
-		endcase
-	assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
-					(SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
-	assign HPTWReadAdr = {PPN, VPN, 3'b000};
-	assign HPTWSize = 3'b011;
+		logic [8:0] VPN;
+		logic [`PPN_BITS-1:0] PPN;
+		always_comb
+			case (WalkerState) // select VPN field based on HPTW state
+				L3_ADR, L3_RD:  VPN = TranslationVAdr[47:39];
+				L2_ADR, L2_RD:  VPN = TranslationVAdr[38:30];
+				L1_ADR, L1_RD: 	VPN = TranslationVAdr[29:21];
+				default:		VPN = TranslationVAdr[20:12];
+			endcase
+		assign PPN = ((WalkerState == L3_ADR) | (WalkerState == L3_RD) | 
+						(SvMode != `SV48 & ((WalkerState == L2_ADR) | (WalkerState == L2_RD)))) ? BasePageTablePPN : CurrentPPN;
+		assign HPTWReadAdr = {PPN, VPN, 3'b000};
+		assign HPTWSize = 3'b011;
 	end
 
 	// Initial state and misalignment for RV32/64
@@ -228,44 +217,33 @@ module hptw
 	end
 
 	// Page Table Walker FSM
-	// If the setup time on the D$ RAM is short, it should be possible to merge the LEVELx_READ and LEVELx states
-	// to decrease the latency of the HPTW.  However, if the D$ is a cycle limiter, it's better to leave the
-	// HPTW as shown below to keep the D$ setup time out of the critical path.
-	// *** Is this really true.  Talk with Ross.  Seems like it's the next state logic on critical path instead.
-	// *** address TYPE(statetype)
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
-	case (WalkerState)
-	IDLE: if (TLBMiss)	 		NextWalkerState = InitialWalkerState;
-		  else 					NextWalkerState = IDLE;
-	L3_ADR:                     NextWalkerState = L3_RD; // first access in SV48
-	L3_RD: if (DCacheStallM)    NextWalkerState = L3_RD;
-           else     			NextWalkerState = L2_ADR;
-	L2_ADR: if (InitialWalkerState == L2_ADR)    NextWalkerState = L2_RD; // first access in SV39
-			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE)            NextWalkerState = L2_RD;
-			else 				                 NextWalkerState = LEAF;
-	L2_RD: if (DCacheStallM)                     NextWalkerState = L2_RD;
-           else                                  NextWalkerState = L1_ADR;
-	L1_ADR: if (InitialWalkerState == L1_ADR)    NextWalkerState = L1_RD; // first access in SV32
-			else if (ValidLeafPTE & ~Misaligned) NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE)            NextWalkerState = L1_RD;
-			else 				                 NextWalkerState = LEAF;	
-	L1_RD: if (DCacheStallM)                     NextWalkerState = L1_RD;
-           else                                  NextWalkerState = L0_ADR;
-	L0_ADR: if (ValidLeafPTE & ~Misaligned)      NextWalkerState = LEAF; // could shortcut this by a cyle for all Lx_ADR superpages
-			else if (ValidNonLeafPTE)            NextWalkerState = L0_RD;
-			else                                 NextWalkerState = LEAF;
-	L0_RD: if (DCacheStallM)                     NextWalkerState = L0_RD;
-           else                                  NextWalkerState = LEAF;
-    LEAF: if (DAPageFault) NextWalkerState = UPDATE_PTE;
-          else NextWalkerState = IDLE;
-     UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) NextWalkerState = UPDATE_PTE;
-                else NextWalkerState = LEAF;
-	default: begin
-		NextWalkerState = IDLE; // should never be reached
-	end
-	endcase // case (WalkerState)
+		case (WalkerState)
+			IDLE: if (TLBMiss)	 										NextWalkerState = InitialWalkerState;
+				  else 													NextWalkerState = IDLE;
+			L3_ADR:                     								NextWalkerState = L3_RD; // first access in SV48
+			L3_RD: if (DCacheStallM)    								NextWalkerState = L3_RD;
+				   else     											NextWalkerState = L2_ADR;
+			L2_ADR: if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
+					else 				                 				NextWalkerState = LEAF;
+			L2_RD: if (DCacheStallM)                     				NextWalkerState = L2_RD;
+				else                                     				NextWalkerState = L1_ADR;
+			L1_ADR: if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
+					else if (ValidNonLeafPTE)            				NextWalkerState = L1_RD;
+					else 				                				NextWalkerState = LEAF;	
+			L1_RD: if (DCacheStallM)                     				NextWalkerState = L1_RD;
+				else                                     				NextWalkerState = L0_ADR;
+			L0_ADR: if (ValidNonLeafPTE)                 				NextWalkerState = L0_RD;
+					else                                 				NextWalkerState = LEAF;
+			L0_RD: if (DCacheStallM)                     				NextWalkerState = L0_RD;
+				   else                                     			NextWalkerState = LEAF;
+			LEAF: if (DAPageFault)                       				NextWalkerState = UPDATE_PTE;
+				  else 													NextWalkerState = IDLE;
+			UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) 		NextWalkerState = UPDATE_PTE;
+						else 											NextWalkerState = LEAF;
+			default: 													NextWalkerState = IDLE; // should never be reached
+		endcase // case (WalkerState)
 
   assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
   assign SelHPTW = WalkerState != IDLE;

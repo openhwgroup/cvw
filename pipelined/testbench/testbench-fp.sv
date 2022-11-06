@@ -718,6 +718,7 @@ module testbenchfp;
   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
+                    .MDUE(1'b0), .W64E(1'b0),
                     .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
                     .QmM(Quot), .DivDone);
   end
