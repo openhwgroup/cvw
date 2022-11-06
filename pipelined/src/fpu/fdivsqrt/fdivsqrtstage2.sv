@@ -61,7 +61,7 @@ module fdivsqrtstage2 (
 	// 0001 = -2
   fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
 
-  // Sqrt F generatin
+  // Sqrt F generation
   fdivsqrtfgen2 fgen2(.up, .uz, .C(CNext), .U, .UM, .F);
 
   // Divisor multiple

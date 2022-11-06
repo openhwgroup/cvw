@@ -42,6 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] n, p, m,
+  output logic OTFCSwap,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -56,7 +57,7 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] ZeroBufX, ZeroBufY;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  As, Bs;
+  logic  As, Bs, OTFCSwapTemp;
   logic  [`XLEN-1:0] A64, B64;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil;
@@ -70,6 +71,8 @@ module fdivsqrtpreproc (
   assign Bs = ForwardedSrcBE[`XLEN-1] & Funct3E[0];
   assign A64 = W64E ? {{(`XLEN-32){As}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){Bs}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
+
+  assign OTFCSwapTemp = (As ^ Bs) & MDUE;
   
   assign PosA = As ? -A64 : A64;
   assign PosB = Bs ? -B64 : B64;
@@ -111,6 +114,7 @@ module fdivsqrtpreproc (
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
   flopen #(`NE+2) expflop(clk, DivStartE, Qe, QeM);
+  flopen #(1) swapflop(clk, DivStartE, OTFCSwapTemp, OTFCSwap);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m, .Qe);
 
 endmodule
