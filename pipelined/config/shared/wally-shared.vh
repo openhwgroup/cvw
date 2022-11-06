@@ -127,7 +127,7 @@
 `define DURLEN ($clog2(`FPDUR+1))
 `define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
 `define DIVb (`QLEN-1)
-`define DIVBLEN ($clog2(`DIVb))
+`define DIVBLEN ($clog2(`DIVb+1)-1)
 
 
 `define USE_SRAM 0
