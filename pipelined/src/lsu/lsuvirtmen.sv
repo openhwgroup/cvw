@@ -39,7 +39,7 @@ module lsuvirtmem(
   output logic                DTLBWriteM,
   input logic                 InstrDAPageFaultF,
   input logic                 DataDAPageFaultM,
-  input logic                 TrapM,
+  input logic                 FlushW,
   input logic                 DCacheStallM,
   input logic [`XLEN-1:0]     SATP_REGW, // from csr
   input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -80,11 +80,13 @@ module lsuvirtmem(
   // move all the muxes to walkermux and instantiate these in lsu under virtmem_supported.
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
-  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
-  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
+  //assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
+  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF;
+  //assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
+  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM;
 
   hptw hptw( 
-    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM,
+    .clk, .reset, .SATP_REGW, .PCF, .IEUAdrExtM, .MemRWM, .AtomicM, .FlushW,
     .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
     .ITLBMissOrDAFaultNoTrapF, .DTLBMissOrDAFaultNoTrapM,
     .PTE, .PageType, .ITLBWriteF, .DTLBWriteM, .HPTWReadPTE(ReadDataM),  // *** should it be HPTWReadDataM
