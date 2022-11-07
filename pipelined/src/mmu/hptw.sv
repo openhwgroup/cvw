@@ -30,29 +30,39 @@
 
 `include "wally-config.vh"
 
-module hptw
-  (
-   input logic                 clk, reset,
-   input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-   input logic [`XLEN-1:0]     PCF,  // addresses to translate
-   input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
-   input logic [1:0]           MemRWM, AtomicM,
-   // system status
-   input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-   input logic [1:0]           STATUS_MPP,
-   input logic [1:0]           PrivilegeModeW,
-   (* mark_debug = "true" *) input logic ITLBMissOrDAFaultNoTrapF, DTLBMissOrDAFaultNoTrapM, // TLB Miss
-   input logic [`XLEN-1:0]     HPTWReadPTE, // page table entry from LSU  *** change to ReadDataM
-   input logic                 DCacheStallM, // stall from LSU
-   output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
-   output logic [1:0]          PageType, // page type to TLBs
-   (* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   output logic [`PA_BITS-1:0] HPTWAdr,
-   output logic [1:0]          HPTWRW, // HPTW requesting to write or read memory
-   output logic [2:0]          HPTWSize, // 32 or 64 bit access.
-   output logic IgnoreRequestTLB,
-   output logic SelHPTW,
-   output logic HPTWStall
+module hptw (
+	input logic                 clk, reset, StallW,
+   	input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
+	input logic [`XLEN-1:0]     PCF,  // addresses to translate
+ 	input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
+   	input logic [1:0]           MemRWM, AtomicM,
+   	// system status
+   	input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  	input logic [1:0]           STATUS_MPP,
+  	input logic [1:0]           PrivilegeModeW,
+   	input logic [`XLEN-1:0]     ReadDataM, // page table entry from LSU 
+  	input logic [`XLEN-1:0]     WriteDataM,
+   	input logic                 DCacheStallM, // stall from LSU
+  	input logic [2:0]           Funct3M,
+   	input logic [6:0]           Funct7M,
+   	input logic                 ITLBMissF,
+   	input logic                 DTLBMissM,
+	input logic                 TrapM,
+   	input logic                 InstrDAPageFaultF,
+   	input logic                 DataDAPageFaultM,
+   	output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
+   	output logic [1:0]          PageType, // page type to TLBs
+   	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
+   	output logic [1:0]          PreLSURWM,
+   	output logic [`XLEN+1:0]    IHAdrM,
+   	output logic [`XLEN-1:0]    IMWriteDataM,
+   	output logic [1:0]          LSUAtomicM,
+   	output logic [2:0]          LSUFunct3M,
+   	output logic [6:0]          LSUFunct7M,
+   	output logic IgnoreRequestTLB,
+   	output logic SelHPTW,
+   	output logic                CPUBusy,
+   	output logic HPTWStall
 );
 
 	typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -77,7 +87,15 @@ module hptw
   logic                     UpdatePTE;
   logic                     DAPageFault;
   logic [`PA_BITS-1:0]      HPTWReadAdr;
+    logic                       SelHPTWAdr;
+  logic [`XLEN+1:0]           HPTWAdrExt;
+  logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
+  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
+  logic [`PA_BITS-1:0]        HPTWAdr;
+  logic [1:0]                 HPTWRW;
+  logic [2:0]                 HPTWSize; // 32 or 64 bit access.
                        
+
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 	// Extract bits from CSRs and inputs
@@ -119,7 +137,7 @@ module hptw
 	logic [`XLEN-1:0]		  AccessedPTE;
 
 	assign AccessedPTE = {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-	mux2 #(`XLEN) NextPTEMux(HPTWReadPTE, AccessedPTE, UpdatePTE, NextPTE);
+	mux2 #(`XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE);
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
 	
     assign SaveHPTWAdr = WalkerState == L0_ADR;
@@ -150,9 +168,9 @@ module hptw
     assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
     assign HPTWRW[0] = (WalkerState == UPDATE_PTE);
-    assign UpdatePTE = WalkerState == LEAF & DAPageFault;
+    assign UpdatePTE = (WalkerState == LEAF) & DAPageFault;
   end else begin // block: hptwwrites
-    assign NextPTE = HPTWReadPTE;
+    assign NextPTE = ReadDataM;
     assign HPTWAdr = HPTWReadAdr;
     assign DAPageFault = '0;
     assign UpdatePTE = '0;
@@ -248,5 +266,34 @@ module hptw
   assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
-  
+
+
+  assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
+  assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
+  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
+  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
+
+  // HTPW address/data/control muxing
+
+  // Once the walk is done and it is time to update the TLB we need to switch back 
+  // to the orignal data virtual address.
+  assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
+  // always block interrupts when using the hardware page table walker.
+  assign CPUBusy = StallW & ~SelHPTW;
+
+  // multiplex the outputs to LSU
+  if(`XLEN+2-`PA_BITS > 0) begin  // *** replace with XLEN=32
+    logic [(`XLEN+2-`PA_BITS)-1:0] zeros;
+    assign zeros = '0;
+    assign HPTWAdrExt = {zeros, HPTWAdr};
+  end else assign HPTWAdrExt = HPTWAdr;
+  mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
+  mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
+  mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
+  mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
+  mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
+  if(`HPTW_WRITES_SUPPORTED)
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
+  else assign IMWriteDataM = WriteDataM;
+
 endmodule
