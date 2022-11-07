@@ -47,7 +47,6 @@ module lsu (
    input logic [2:0]        Funct3M,
    input logic [6:0]        Funct7M, 
    input logic [1:0]        AtomicM,
-   input logic              TrapM,
    input logic              FlushDCacheM,
    output logic             CommittedM, 
    output logic             SquashSCW,
@@ -131,7 +130,7 @@ module lsu (
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     lsuvirtmem lsuvirtmem(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
-      .TrapM, .DCacheStallM, .SATP_REGW, .PCF,
+      .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IMWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
@@ -203,7 +202,7 @@ module lsu (
   logic [`LLEN-1:0]    ReadDataWordM, LittleEndianReadDataWordM;
   logic [`LLEN-1:0]    ReadDataWordMuxM, DTIMReadDataWordM, DCacheReadDataWordM;
   logic                IgnoreRequest;
-  assign IgnoreRequest = IgnoreRequestTLB | TrapM;
+  assign IgnoreRequest = IgnoreRequestTLB | FlushW;
   
   if (`DTIM_SUPPORTED) begin : dtim
     logic [`PA_BITS-1:0] DTIMAdr;
@@ -211,12 +210,12 @@ module lsu (
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
     assign DTIMAdr = MemRWM[0] ? IEUAdrExtM[`PA_BITS-1:0] : IEUAdrExtE[`PA_BITS-1:0]; // zero extend or contract to PA_BITS
-    assign DTIMMemRWM = SelDTIM & ~IgnoreRequest ? LSURWM : '0;
+    assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM(DTIMMemRWM),
               .Adr(DTIMAdr),
-              .TrapM, .WriteDataM(LSUWriteDataM), 
+              .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
@@ -242,15 +241,15 @@ module lsu (
       logic [1:0]          CacheRWM, CacheAtomicM;
       logic                CacheFlushM;
       
-      assign BusRW = ~CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
-      assign CacheRWM = CacheableM & ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
-      assign CacheAtomicM = CacheableM & ~IgnoreRequest & ~SelDTIM ? LSUAtomicM : '0;
-      assign CacheFlushM  = ~TrapM & FlushDCacheM;
+      assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
+      assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
+      assign CacheFlushM  = FlushDCacheM;
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .SelBusWord, .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .CPUBusy, .SelBusWord, .Flush(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .WordCount(WordCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .FinalWriteData(LSUWriteDataM), .SelHPTW,
@@ -260,7 +259,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
       ahbcacheinterface #(.WORDSPERLINE(AHBWWORDSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
-        .HCLK(clk), .HRESETn(~reset),
+        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, 
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .WordCount, .SelBusWord,
@@ -303,13 +302,13 @@ module lsu (
       logic CaptureEn;
       logic [1:0] BusRW;
       logic [`XLEN-1:0] FetchBuffer;
-      assign BusRW = ~IgnoreRequest & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
 //      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{SelDTIM, SelDTIM};
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
 
-      ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .HREADY(LSUHREADY), 
+      ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));

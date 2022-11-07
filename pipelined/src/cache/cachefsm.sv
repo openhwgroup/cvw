@@ -34,6 +34,7 @@ module cachefsm
   (input logic clk,
    input logic        reset,
    // inputs from IEU
+   input logic        Flush,
    input logic [1:0]  CacheRW,
    input logic [1:0]  CacheAtomic,
    input logic        FlushCache,
@@ -75,9 +76,8 @@ module cachefsm
   
   logic               resetDelay;
   logic               AMO;
-  logic               DoAMO, DoRead, DoWrite, DoFlush;
-  logic               DoAnyUpdateHit, DoAnyHit;
-  logic               DoAnyMiss;
+  logic               AnyUpdateHit, AnyHit;
+  logic               AnyMiss;
   logic               FlushFlag, FlushWayAndNotAdrFlag;
     
   typedef enum logic [3:0]		  {STATE_READY, // hit states
@@ -94,19 +94,15 @@ module cachefsm
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
-  assign DoFlush = FlushCache;
   assign AMO = CacheAtomic[1] & (&CacheRW);
-  assign DoAMO = AMO; 
-  assign DoRead = CacheRW[1]; 
-  assign DoWrite = CacheRW[0]; 
 
-  assign DoAnyMiss = (DoAMO | DoRead | DoWrite) & ~CacheHit & ~InvalidateCache;
-  assign DoAnyUpdateHit = (DoAMO | DoWrite) & CacheHit;
-  assign DoAnyHit = DoAnyUpdateHit | (DoRead & CacheHit);  
+  assign AnyMiss = (AMO | CacheRW[1] | CacheRW[0]) & ~CacheHit & ~InvalidateCache;
+  assign AnyUpdateHit = (AMO | CacheRW[0]) & CacheHit;
+  assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);  
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
-  assign CacheAccess = (DoAMO | DoRead | DoWrite) & CurrState == STATE_READY;
+  assign CacheAccess = (AMO | CacheRW[1] | CacheRW[0]) & CurrState == STATE_READY;
   assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
@@ -115,18 +111,18 @@ module cachefsm
   flop #(1) resetDelayReg(.clk, .d(reset), .q(resetDelay));
 
   always_ff @(posedge clk)
-    if (reset)    CurrState <= #1 STATE_READY;
+    if (reset | Flush)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;  
   
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
       STATE_READY: if(InvalidateCache)         NextState = STATE_READY;
-                   else if(DoFlush)                            NextState = STATE_FLUSH;
+                   else if(FlushCache)                            NextState = STATE_FLUSH;
       // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
       // To optimize do the fetch first, then eviction if necessary.
-                   else if(DoAnyMiss & ~VictimDirty)           NextState = STATE_MISS_FETCH_WDV;
-                   else if(DoAnyMiss & VictimDirty)            NextState = STATE_MISS_EVICT_DIRTY;
+                   else if(AnyMiss & ~VictimDirty)           NextState = STATE_MISS_FETCH_WDV;
+                   else if(AnyMiss & VictimDirty)            NextState = STATE_MISS_EVICT_DIRTY;
                    else                                        NextState = STATE_READY;
       STATE_MISS_FETCH_WDV: if(CacheBusAck)                    NextState = STATE_MISS_WRITE_CACHE_LINE;
                             else                               NextState = STATE_MISS_FETCH_WDV;
@@ -155,7 +151,7 @@ module cachefsm
 
   // com back to CPU
   assign CacheCommitted = CurrState != STATE_READY;
-  assign CacheStall = (CurrState == STATE_READY & (DoFlush | DoAnyMiss)) | 
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(AMO | CacheRW[0])) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
@@ -165,16 +161,16 @@ module cachefsm
                       (CurrState == STATE_FLUSH_WRITE_BACK & ~(FlushFlag) & CacheBusAck);
   // write enables internal to cache
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
-  assign SetDirty = (CurrState == STATE_READY & DoAnyUpdateHit) |
+  assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |
                     (CurrState == STATE_MISS_WRITE_CACHE_LINE & (AMO | CacheRW[0]));
   assign ClearValid = '0;
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(AMO | CacheRW[0])) |
                       (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
-  assign LRUWriteEn = (CurrState == STATE_READY & DoAnyHit) |
+  assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls
   assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
-                    (CurrState == STATE_READY & DoAnyMiss & VictimDirty);
+                    (CurrState == STATE_READY & AnyMiss & VictimDirty);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
   assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
@@ -185,11 +181,11 @@ module cachefsm
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheBusRW[1] = (CurrState == STATE_READY & DoAnyMiss & ~VictimDirty) | 
+  assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~VictimDirty) | 
                          (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck) | 
                          (CurrState == STATE_MISS_EVICT_DIRTY & CacheBusAck);
-//  assign CacheBusRW[1] = CurrState == STATE_READY & DoAnyMiss;
-  assign CacheBusRW[0] = (CurrState == STATE_READY & DoAnyMiss & VictimDirty) |
+//  assign CacheBusRW[1] = CurrState == STATE_READY & AnyMiss;
+  assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & VictimDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_CHECK & VictimDirty);
@@ -197,7 +193,7 @@ module cachefsm
 //                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
-                  (CurrState == STATE_READY & (DoAnyMiss)) |
+                  (CurrState == STATE_READY & (AnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |
                   (CurrState == STATE_MISS_WRITE_CACHE_LINE) |

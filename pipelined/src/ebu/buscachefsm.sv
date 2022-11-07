@@ -38,6 +38,7 @@ module buscachefsm #(parameter integer   WordCountThreshold,
    input logic               HRESETn,
 
    // IEU interface
+   input logic               Flush,
    input logic [1:0]         BusRW,
    input logic               CPUBusy,
    output logic              BusCommitted,
@@ -77,7 +78,7 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   logic              CacheAccess;
   
   always_ff @(posedge HCLK)
-    if (~HRESETn)    CurrState <= #1 ADR_PHASE;
+    if (~HRESETn | Flush)    CurrState <= #1 ADR_PHASE;
     else CurrState <= #1 NextState;  
   
   always_comb begin
@@ -135,7 +136,7 @@ module buscachefsm #(parameter integer   WordCountThreshold,
   assign BusCommitted = CurrState != ADR_PHASE;
 
   // AHB bus interface
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|BusRW | |CacheBusRW)) |
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & (|BusRW | |CacheBusRW) & ~Flush) |
                   (CacheAccess & FinalWordCount & |CacheBusRW & HREADY) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |WordCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 

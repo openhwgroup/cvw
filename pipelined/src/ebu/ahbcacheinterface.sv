@@ -56,6 +56,7 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   input logic                 Cacheable,
  
   // lsu/ifu interface
+  input logic                 Flush,
   input logic [`PA_BITS-1:0]  PAdr,
   input logic [1:0]           BusRW,
   input logic                 CPUBusy,
@@ -83,7 +84,7 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   mux2 #(3) sizemux(.d0(Funct3), .d1(`XLEN == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
 
   buscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
-    .HCLK, .HRESETn, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
+    .HCLK, .HRESETn, .Flush, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
     .CacheBusRW, .CacheBusAck, .WordCount, .WordCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

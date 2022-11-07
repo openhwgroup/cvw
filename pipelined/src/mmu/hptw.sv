@@ -37,6 +37,7 @@ module hptw
    input logic [`XLEN-1:0]     PCF,  // addresses to translate
    input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
    input logic [1:0]           MemRWM, AtomicM,
+   input logic                 FlushW,
    // system status
    input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
    input logic [1:0]           STATUS_MPP,
@@ -217,7 +218,14 @@ module hptw
 	end
 
 	// Page Table Walker FSM
-	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
+  // there is a bug here.  Each memory access needs to be potentially flushed if the PMA/P checkers
+  // generate an access fault.  Specially the store on UDPATE_PTE needs to check for access violation.
+  // I think the solution is to do 1 of the following
+  // 1. Allow the HPTW to generate exceptions and stop walking immediately.
+  // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
+  // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
+  // rather than physical address of the translated instruction/data.  So we must generate the exception.
+	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 		case (WalkerState)
 			IDLE: if (TLBMiss)	 										NextWalkerState = InitialWalkerState;
@@ -250,3 +258,7 @@ module hptw
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
   
 endmodule
+
+// another idea.  We keep gating the control by ~TrapM, but this adds considerable length to the critical path.
+// should we do this differently?  For example TLBMiss is gated by ~TrapM and then drives HPTWStall, which drives LSUStallM, which drives
+// the hazard unit to issue stall and flush controlls. ~TrapM already suppresses these in the hazard unit.
