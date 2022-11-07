@@ -1081,8 +1081,9 @@ uart_read_LSR_IIR:
     bne a4, t6, uart_read_LSR_IIR
     j uart_data_ready
 uart_rxfifo_timout:
-    li t4, 0x10000000 // read from the fifo
+    li t4, 0x10000000 // read from the fifo to clear the rx timeout error
     lb t5, 0(t4)
+    sb t5, 0(t4) // write back to the fifo to make sure we have the same data so expected future overrun errors still occur.
     //read the fifo until empty
     j uart_read_LSR_IIR
 
@@ -1090,6 +1091,7 @@ uart_rxfifo_timout:
 uart_data_ready:
     li t2, 0
     sw t2, 0(t1) // clear entry deadbeef from memory
+    lbu t4, 0(t3) // re read IIR
     andi t5, t5, 0x9F // mask THRE and TEMT from signature
     sb t4, 1(t1) // IIR
     sb t5, 0(t1) // LSR

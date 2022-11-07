@@ -32,12 +32,13 @@
 
 /* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 (
-  input logic [`DIVN-2:0] D,
-  input logic [`DIVb+3:0]  DBar, 
-  input logic [`DIVb:0] U, UM,
-  input logic [`DIVb+3:0]  WS, WC,
-  input logic [`DIVb+1:0] C,
-  input logic SqrtM,
+  input  logic [`DIVN-2:0] D,
+  input  logic [`DIVb+3:0]  DBar, 
+  input  logic [`DIVb:0] U, UM,
+  input  logic [`DIVb+3:0]  WS, WC,
+  input  logic [`DIVb+1:0] C,
+  input  logic SqrtM,
+  input  logic OTFCSwap,
   output logic un,
   output logic [`DIVb+1:0] CNext,
   output logic [`DIVb:0] UNext, UMNext, 
@@ -59,7 +60,7 @@ module fdivsqrtstage2 (
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
+  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], OTFCSwap, up, uz, un);
 
   // Sqrt F generation
   fdivsqrtfgen2 fgen2(.up, .uz, .C(CNext), .U, .UM, .F);

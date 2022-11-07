@@ -31,13 +31,13 @@
 `include "wally-config.vh"
 
 module fdivsqrtstage4 (
-  input logic [`DIVN-2:0] D,
-  input logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input logic [`DIVb:0] U, UM,
-  input logic [`DIVb+3:0]  WS, WC,
-  input logic [`DIVb+1:0] C,
+  input  logic [`DIVN-2:0] D,
+  input  logic [`DIVb+3:0]  DBar, D2, DBar2,
+  input  logic [`DIVb:0] U, UM,
+  input  logic [`DIVb+3:0]  WS, WC,
+  input  logic [`DIVb+1:0] C,
+  input  logic SqrtM, j1, OTFCSwap,
   output logic [`DIVb+1:0] CNext,
-  input logic SqrtM, j1,
   output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
   output logic [`DIVb+3:0]  WSNext, WCNext
@@ -65,8 +65,8 @@ module fdivsqrtstage4 (
   assign WCmsbs = WC[`DIVb+3:`DIVb-4];
   assign WSmsbs = WS[`DIVb+3:`DIVb-4];
 
-  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .Sqrt(SqrtM), .j1, .udigit);
-  assign un = 0; // unused for radix 4
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .Sqrt(SqrtM), .j1, .udigit, .OTFCSwap);
+  assign un = 1'b0; // unused for radix 4
 
   // F generation logic
   fdivsqrtfgen4 fgen4(.udigit, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
