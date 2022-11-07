@@ -34,12 +34,13 @@ module fdivsqrtqsel4cmp (
   input logic [2:0] Dmsbs,
   input logic [4:0] Smsbs,
   input logic [7:0] WSmsbs, WCmsbs,
-  input logic Sqrt, j1,
+  input logic Sqrt, j1, OTFCSwap,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
 	logic [2:0] A;
+  logic [3:0] udigitsel, udigitswap;
 
 	assign PreWmsbs = WCmsbs + WSmsbs;
 	assign Wmsbs = PreWmsbs[7:1];
@@ -85,9 +86,12 @@ module fdivsqrtqsel4cmp (
  
   // Compare residual W to selection constants to choose digit
   always_comb 
-    if ($signed(Wmsbs) >= $signed(mk2)) udigit = 4'b1000; // choose 2
-    else if ($signed(Wmsbs) >= $signed(mk1)) udigit = 4'b0100; // choose 1
-    else if ($signed(Wmsbs) >= $signed(mk0)) udigit = 4'b0000; // choose 0
-    else if ($signed(Wmsbs) >= $signed(mkm1)) udigit = 4'b0010; // choose -1
-    else udigit = 4'b0001; // choose -2	
+    if ($signed(Wmsbs) >= $signed(mk2)) udigitsel = 4'b1000; // choose 2
+    else if ($signed(Wmsbs) >= $signed(mk1)) udigitsel = 4'b0100; // choose 1
+    else if ($signed(Wmsbs) >= $signed(mk0)) udigitsel = 4'b0000; // choose 0
+    else if ($signed(Wmsbs) >= $signed(mkm1)) udigitsel = 4'b0010; // choose -1
+    else udigitsel = 4'b0001; // choose -2	
+
+  assign udigitswap = {udigitsel[0], udigitsel[1], udigitsel[2], udigitsel[3]};
+  assign udigit = OTFCSwap ? udigitswap : udigitsel;
 endmodule
