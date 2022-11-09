@@ -508,7 +508,7 @@ connect_debug_port u_ila_0/probe97 [get_nets [list wallypipelinedsoc/core/lsu/DT
 create_debug_port u_ila_0 probe
 set_property port_width 4 [get_debug_ports u_ila_0/probe98]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe98]
-connect_debug_port u_ila_0/probe98 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.lsuvirtmem/hptw/WalkerState[3]}]]
+connect_debug_port u_ila_0/probe98 [get_nets [list {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.hptw/WalkerState[0]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.hptw/WalkerState[1]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.hptw/WalkerState[2]} {wallypipelinedsoc/core/lsu/VIRTMEM_SUPPORTED.hptw/WalkerState[3]}]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 64 [get_debug_ports u_ila_0/probe99]
