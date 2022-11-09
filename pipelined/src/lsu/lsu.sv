@@ -222,17 +222,17 @@ module lsu (
   if (`BUS) begin : bus              
     localparam integer   LLENWORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`LLEN : 1;
     localparam integer   LLENLOGBWPL = `DCACHE ? $clog2(LLENWORDSPERLINE) : 1;
-    localparam integer   AHBWWORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`AHBW : 1;
-    localparam integer   AHBWLOGBWPL = `DCACHE ? $clog2(AHBWWORDSPERLINE) : 1;
+    localparam integer   BEATSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`AHBW : 1;
+    localparam integer   AHBWLOGBWPL = `DCACHE ? $clog2(BEATSPERLINE) : 1;
     if(`DCACHE) begin : dcache
       localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] DCacheBusAdr;
       logic                DCacheWriteLine;
       logic                DCacheFetchLine;
-      logic [AHBWLOGBWPL-1:0]  WordCount;
+      logic [AHBWLOGBWPL-1:0]  BeatCount;
       logic                DCacheBusAck;
-      logic                SelBusWord;
+      logic                SelBusBeat;
       logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
@@ -249,20 +249,20 @@ module lsu (
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .CPUBusy, .SelBusWord, .Flush(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .CPUBusy, .SelBusBeat, .Flush(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
-        .ByteMask(ByteMaskM), .WordCount(WordCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
+        .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .FinalWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
-      ahbcacheinterface #(.WORDSPERLINE(AHBWWORDSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, 
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
-        .WordCount, .SelBusWord,
+        .BeatCount, .SelBusBeat,
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .CPUBusy,
@@ -284,7 +284,7 @@ module lsu (
         for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
 	      assign AHBWordSets[index] = DCacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
         end
-        assign DCacheReadDataWordAHB = AHBWordSets[WordCount[$clog2(LLENPOVERAHBW)-1:0]];
+        assign DCacheReadDataWordAHB = AHBWordSets[BeatCount[$clog2(LLENPOVERAHBW)-1:0]];
       end else assign DCacheReadDataWordAHB = DCacheReadDataWordM[`AHBW-1:0];      
       mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordAHB), .d1(LSUWriteDataM[`AHBW-1:0]),
         .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
