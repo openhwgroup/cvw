@@ -67,8 +67,8 @@ module fdivsqrtpreproc (
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
 
-  assign As = ForwardedSrcAE[`XLEN-1] & Funct3E[0];
-  assign Bs = ForwardedSrcBE[`XLEN-1] & Funct3E[0];
+  assign As = ForwardedSrcAE[`XLEN-1] & ~Funct3E[0];
+  assign Bs = ForwardedSrcBE[`XLEN-1] & ~Funct3E[0];
   assign A64 = W64E ? {{(`XLEN-32){As}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){Bs}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
 
