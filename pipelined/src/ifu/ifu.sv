@@ -205,6 +205,7 @@ module ifu (
     assign IFURWF = 2'b10;
   end
   if (`BUS) begin : bus
+    // **** must fix words per line vs beats per line as in lsu.
     localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
     if(`ICACHE) begin : icache
@@ -227,7 +228,7 @@ module ifu (
              .ReadDataWord(ICacheInstrF),
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
-             .ByteMask('0), .WordCount('0), .SelBusWord('0),
+             .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
              .FinalWriteData('0),
              .CacheRW(CacheRWF), 
              .CacheAtomic('0), .FlushCache('0),
@@ -239,7 +240,7 @@ module ifu (
             .HRDATA,
             .Flush(FlushW), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
-            .WordCount(), .Cacheable(CacheableF), .SelBusWord(),
+            .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(),
               .CacheBusAck(ICacheBusAck), 
             .FetchBuffer, .PAdr(PCPF),
             .BusRW, .CPUBusy,

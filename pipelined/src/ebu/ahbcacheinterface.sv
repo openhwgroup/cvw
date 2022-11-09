@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
+module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
   (
   input logic                 HCLK, HRESETn,
   
@@ -46,7 +46,7 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   output logic [1:0]          HTRANS,
   output logic                HWRITE,
   output logic [`PA_BITS-1:0] HADDR,
-  output logic [LOGWPL-1:0]   WordCount,
+  output logic [LOGWPL-1:0]   BeatCount,
   
   // cache interface
   input logic [`PA_BITS-1:0]  CacheBusAdr,
@@ -61,30 +61,30 @@ module ahbcacheinterface #(parameter WORDSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   input logic [1:0]           BusRW,
   input logic                 CPUBusy,
   input logic [2:0]           Funct3,
-  output logic                SelBusWord,
+  output logic                SelBusBeat,
   output logic                BusStall,
   output logic                BusCommitted);
   
-  localparam integer   WordCountThreshold = CACHE_ENABLED ? WORDSPERLINE - 1 : 0;
+  localparam integer   BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
   logic [`PA_BITS-1:0] LocalHADDR;
-  logic [LOGWPL-1:0]   WordCountDelayed;
+  logic [LOGWPL-1:0]   BeatCountDelayed;
   logic                CaptureEn;
 
   genvar                      index;
-  for (index = 0; index < WORDSPERLINE; index++) begin:fetchbuffer
-    logic [WORDSPERLINE-1:0] CaptureWord;
-    assign CaptureWord[index] = CaptureEn & (index == WordCountDelayed);
-    flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureWord[index]), .d(HRDATA),
+  for (index = 0; index < BEATSPERLINE; index++) begin:fetchbuffer
+    logic [BEATSPERLINE-1:0] CaptureBeat;
+    assign CaptureBeat[index] = CaptureEn & (index == BeatCountDelayed);
+    flopen #(`XLEN) fb(.clk(HCLK), .en(CaptureBeat[index]), .d(HRDATA),
       .q(FetchBuffer[(index+1)*`XLEN-1:index*`XLEN]));
   end
 
   mux2 #(`PA_BITS) localadrmux(PAdr, CacheBusAdr, Cacheable, LocalHADDR);
-  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, WordCount} << $clog2(`XLEN/8)) + LocalHADDR;
+  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, BeatCount} << $clog2(`XLEN/8)) + LocalHADDR;
 
   mux2 #(3) sizemux(.d0(Funct3), .d1(`XLEN == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
 
-  buscachefsm #(WordCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
-    .HCLK, .HRESETn, .Flush, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusWord,
-    .CacheBusRW, .CacheBusAck, .WordCount, .WordCountDelayed,
+  buscachefsm #(BeatCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
+    .HCLK, .HRESETn, .Flush, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
+    .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

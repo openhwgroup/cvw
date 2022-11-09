@@ -54,8 +54,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
    // Bus fsm interface
   output logic [1:0]            CacheBusRW,
   input logic                   CacheBusAck,
-  input logic                   SelBusWord, 
-  input logic [LOGBWPL-1:0]     WordCount,
+  input logic                   SelBusBeat, 
+  input logic [LOGBWPL-1:0]     BeatCount,
   input logic [LINELEN-1:0]     FetchBuffer,
   output logic [`PA_BITS-1:0]   CacheBusAdr,
   output logic [WORDLEN-1:0]    ReadDataWord);
@@ -143,7 +143,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // like to fix this.
   if(DCACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
-      .d1(WordCount), .s(SelBusWord),
+      .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
