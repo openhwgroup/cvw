@@ -108,7 +108,7 @@ module hptw (
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoFlushW, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRW[1] & ~DCacheStallM;
   
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
