@@ -233,7 +233,6 @@ module lsu (
       logic [AHBWLOGBWPL-1:0]  BeatCount;
       logic                DCacheBusAck;
       logic                SelBusBeat;
-      logic [`XLEN-1:0]    PreHWDATA; //*** change name
       logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
       localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
@@ -260,10 +259,10 @@ module lsu (
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
       ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
-        .HRDATA, 
+        .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
-        .BeatCount, .SelBusBeat,
-        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW,
+        .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
+        .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .CPUBusy,
         .BusStall, .BusCommitted(BusCommittedM));
@@ -275,29 +274,6 @@ module lsu (
       mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
-
-      // When AHBW is less than LLEN need extra muxes to select the subword from cache's read data.
-      logic [`AHBW-1:0]    DCacheReadDataWordAHB;
-      if(LLENPOVERAHBW > 1) begin
-        logic [`AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
-        genvar                     index;
-        for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
-	      assign AHBWordSets[index] = DCacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
-        end
-        assign DCacheReadDataWordAHB = AHBWordSets[BeatCount[$clog2(LLENPOVERAHBW)-1:0]];
-      end else assign DCacheReadDataWordAHB = DCacheReadDataWordM[`AHBW-1:0];      
-      mux2 #(`XLEN) LSUHWDATAMux(.d0(DCacheReadDataWordAHB), .d1(LSUWriteDataM[`AHBW-1:0]),
-        .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
-
-      flopen #(`AHBW) wdreg(clk, LSUHREADY, PreHWDATA, LSUHWDATA); // delay HWDATA by 1 cycle per spec
-
-      // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
-      // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-      logic [`AHBW/8-1:0]  BusByteMaskM;
-      swbytemask #(`AHBW) busswbytemask(.Size(LSUHSIZE), .Adr(PAdrM[$clog2(`AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
-      
-      flop #(`AHBW/8) HWSTRBReg(clk, BusByteMaskM[`AHBW/8-1:0], LSUHWSTRB);
-
     end else begin : passthrough // just needs a register to hold the value from the bus
       logic CaptureEn;
       logic [1:0] BusRW;
