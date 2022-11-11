@@ -21,8 +21,8 @@
 	cpus {
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
-		clock-frequency = <0x1C9C380>;
-		timebase-frequency = <0x1C9C380>;
+		clock-frequency = <0x211D0D0>;
+		timebase-frequency = <0x211D0D0>;
 
 		cpu@0 {
 			phandle = <0x01>;
@@ -51,7 +51,7 @@
 		uart@10000000 {
 			interrupts = <0x0a>;
 			interrupt-parent = <0x03>;
-			clock-frequency = <0x1C9C380>;
+			clock-frequency = <0x211D0D0>;
 			reg = <0x00 0x10000000 0x00 0x100>;
 			compatible = "ns16550a";
 		};
