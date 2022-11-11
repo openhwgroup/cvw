@@ -74,7 +74,7 @@ module fdivsqrt(
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
     .DivBusy, .DivStartE,.StallE, .StallM, .DivDone, .XZeroE, .YZeroE, 
-    .XNaNE, .YNaNE,
+    .XNaNE, .YNaNE, .MDUE, .n,
     .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
     .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .SqrtM, 
