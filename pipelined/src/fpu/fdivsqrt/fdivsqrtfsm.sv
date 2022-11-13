@@ -42,7 +42,9 @@ module fdivsqrtfsm(
   input  logic SqrtE,
   input  logic StallE,
   input  logic StallM,
-  input logic WZero,
+  input  logic WZero,
+  input  logic MDUE,
+  input  logic [`DIVBLEN:0] n,
   output logic DivDone,
   output logic DivBusy,
   output logic SpecialCaseM
@@ -93,7 +95,7 @@ module fdivsqrtfsm(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    cycles =  (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    cycles =  MDUE ? n : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */
@@ -118,6 +120,7 @@ module fdivsqrtfsm(
       end 
   end
 
+  // *** start logic is presently in fctl.  Make it look more like integer division start logic
   assign DivDone = (state == DONE) | (WZero & (state == BUSY));
   assign DivBusy = (state == BUSY & ~DivDone);
 

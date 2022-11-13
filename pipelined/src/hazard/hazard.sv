@@ -70,7 +70,11 @@ module hazard(
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
 //  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  
   assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM));  //*** Ross: should FDivBusyE trigger StallECause rather than StallMCause similar to DivBusyE?
+  // *** ross: my changes to cache and lsu need to disable ifu/lsu stalls on a Trap.
   assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM) | (FDivBusyE & ~TrapM & ~IntPendingM);
+  // head version
+  // assign StallWCause = LSUStallM | IFUStallF  | (FDivBusyE & ~TrapM & ~IntPendingM); // *** FDivBusyE should look like DivBusyE  
+
 
   assign #1 StallF = StallFCause | StallD;
   assign #1 StallD = StallDCause | StallE;
