@@ -55,7 +55,7 @@ module hptw (
    	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    	output logic [1:0]          PreLSURWM,
    	output logic [`XLEN+1:0]    IHAdrM,
-   	output logic [`XLEN-1:0]    IMWriteDataM,
+   	output logic [`XLEN-1:0]    IHWriteDataM,
    	output logic [1:0]          LSUAtomicM,
    	output logic [2:0]          LSUFunct3M,
    	output logic [6:0]          LSUFunct7M,
@@ -295,8 +295,8 @@ module hptw (
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if(`HPTW_WRITES_SUPPORTED)
-    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
-  else assign IMWriteDataM = WriteDataM;
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
+  else assign IHWriteDataM = WriteDataM;
 
 endmodule
 
