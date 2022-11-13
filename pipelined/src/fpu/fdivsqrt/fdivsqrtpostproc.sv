@@ -38,16 +38,16 @@ module fdivsqrtpostproc(
   input  logic Firstun,
   input  logic SqrtM,
   input  logic SpecialCaseM,
-  input  logic RemOp, MDUE, ALTB, BZero,
+  input  logic RemOp, MDUE, ALTB, BZero, As,
   input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM
 );
   
-  logic [`DIVb+3:0] W;
+  logic [`DIVb+3:0] W, Sum;
   logic [`DIVb:0] PreQmM;
-  logic NegSticky;
+  logic NegSticky, PostInc;
   logic weq0;
   logic [`DIVb:0] IntQuot, IntRem;
 
@@ -73,9 +73,33 @@ module fdivsqrtpostproc(
   
 
   // Determine if sticky bit is negative
-  assign W = WC + WS;
+  assign Sum = WC + WS;
+  assign W = $signed(Sum) >>> `LOGR;
   assign NegSticky = W[`DIVb+3];
+  assign RemD = {4'b0000, D, {(`DIVb-`DIVN){1'b0}}};
 
+  always_comb 
+    if (~As)
+      if (NegSticky) begin
+        assign IntQuot = FirstUM;
+        assign IntRem  = W + RemD;
+        assign PostInc = 0;
+      end else begin
+        assign IntQuot = FirstU;
+        assign IntRem  = W;
+        assign PostInc = 0;
+      end
+    else 
+      if (NegSticky | weq0) begin
+        assign IntQuot = FirstU;
+        assign IntRem  = W;
+        assign PostInc = 0;
+      end else begin 
+        assign IntQuot = FirstU;
+        assign IntRem  = W - RemD;
+        assign PostInc = 1;
+      end
+  
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
