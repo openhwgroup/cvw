@@ -41,8 +41,8 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
-  output logic [`DIVBLEN:0] n, p, m,
-  output logic OTFCSwap,
+  output logic [`DIVBLEN:0] n, p, m, L,
+  output logic OTFCSwap, ALTB,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -52,7 +52,6 @@ module fdivsqrtpreproc (
   logic  [`NF-1:0] PreprocB, PreprocY;
   logic  [`NF+1:0] SqrtX;
   logic  [`DIVb+3:0] DivX;
-  logic  [`DIVBLEN:0] L;
   logic  [`NE+1:0] Qe;
   // Intdiv signals
   logic  [`DIVb-1:0] ZeroBufX, ZeroBufY;
@@ -86,7 +85,8 @@ module fdivsqrtpreproc (
   assign PreprocY = Ym[`NF-1:0]<<m;
 
   assign ZeroDiff = m - L;
-  assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
+  assign ALTB = ZeroDiff[`DIVBLEN]; // A less than B
+  assign p = ALTB ? '0 : ZeroDiff;
 
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
   assign pPrTrunc = pPlusr[`LOGRK-1:0];
