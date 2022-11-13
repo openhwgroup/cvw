@@ -118,6 +118,7 @@ module fdivsqrtfsm(
       end 
   end
 
+  // *** start logic is presently in fctl.  Make it look more like integer division start logic
   assign DivDone = (state == DONE) | (WZero & (state == BUSY));
   assign DivBusy = (state == BUSY & ~DivDone);
 
