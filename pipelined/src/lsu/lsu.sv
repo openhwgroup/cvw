@@ -111,7 +111,7 @@ module lsu (
   logic                     IgnoreRequestTLB;
   logic                     BusCommittedM, DCacheCommittedM;
   logic                     DataDAPageFaultM;
-  logic [`XLEN-1:0]         IMWriteDataM, IMAWriteDataM;
+  logic [`XLEN-1:0]         IHWriteDataM, IMAWriteDataM;
   logic [`LLEN-1:0]         IMAFWriteDataM;
   logic [`LLEN-1:0]         ReadDataM;
   logic [(`LLEN-1)/8:0]     ByteMaskM;
@@ -133,7 +133,7 @@ module lsu (
       .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
-      .IEUAdrExtM, .PTE, .IMWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
+      .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .CPUBusy, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB);
   end else begin
@@ -141,7 +141,7 @@ module lsu (
     assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
-    assign IMWriteDataM = WriteDataM;
+    assign IHWriteDataM = WriteDataM;
    end
 
   // CommittedM tells the CPU's privilege unit the current instruction
@@ -306,11 +306,11 @@ module lsu (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (`A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .IMWriteDataM, .PAdrM, 
+    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[`XLEN-1:0]), .IHWriteDataM, .PAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc
-    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign IMAWriteDataM = IMWriteDataM;
+    assign SquashSCW = 0; assign LSURWM = PreLSURWM; assign IMAWriteDataM = IHWriteDataM;
   end
 
   if (`F_SUPPORTED) 
