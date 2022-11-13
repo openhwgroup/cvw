@@ -35,11 +35,11 @@ module fdivsqrtpostproc(
   input  logic [`DIVN-2:0]  D, // U0.N-1
   input  logic [`DIVb:0] FirstU, FirstUM, 
   input  logic [`DIVb+1:0] FirstC,
-  input  logic  Firstun,
+  input  logic Firstun,
   input  logic SqrtM,
   input  logic SpecialCaseM,
-  input  logic RemOp,
-  input  logic [`DIVBLEN:0] n, p, m,
+  input  logic RemOp, MDUE, ALTB,
+  input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
   output logic DivSM
@@ -49,6 +49,7 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] PreQmM;
   logic NegSticky;
   logic weq0;
+  logic [`DIVb:0] IntQuot, IntRem;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -69,8 +70,10 @@ module fdivsqrtpostproc(
   end 
   assign DivSM = ~WZero & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
+
+
   // Determine if sticky bit is negative
-  assign W = WC+WS;
+  assign W = WC + WS;
   assign NegSticky = W[`DIVb+3];
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
