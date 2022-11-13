@@ -1403,12 +1403,12 @@ string imperas32f[] = '{
     `RISCVARCHTEST,
     "rv32i_m/M/src/div-01.S",
     "rv32i_m/M/src/divu-01.S",
+    "rv32i_m/M/src/rem-01.S",
+    "rv32i_m/M/src/remu-01.S",
     "rv32i_m/M/src/mul-01.S",
     "rv32i_m/M/src/mulh-01.S",
     "rv32i_m/M/src/mulhsu-01.S",
-    "rv32i_m/M/src/mulhu-01.S",
-    "rv32i_m/M/src/rem-01.S",
-    "rv32i_m/M/src/remu-01.S"
+    "rv32i_m/M/src/mulhu-01.S"
    };
 
   string arch32f[] = '{
