@@ -104,14 +104,15 @@ module hptw (
 	assign TLBMiss = (DTLBMissOrDAFaultNoTrapM | ITLBMissOrDAFaultNoTrapF);
 
 	// Determine which address to translate
-	assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
+	mux2 #(`XLEN) vadrmux(PCF, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
+	//assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRW[1] & ~DCacheStallM;
-  
-	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
+	assign PRegEn = HPTWRW[1] & ~DCacheStallM | UpdatePTE;
+ 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+ 
+	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
     
 	// Assign PTE descriptors common across all XLEN values
@@ -282,11 +283,8 @@ module hptw (
   assign CPUBusy = StallW & ~SelHPTW;
 
   // multiplex the outputs to LSU
-  if(`XLEN+2-`PA_BITS > 0) begin  // *** replace with XLEN=32
-    logic [(`XLEN+2-`PA_BITS)-1:0] zeros;
-    assign zeros = '0;
-    assign HPTWAdrExt = {zeros, HPTWAdr};
-  end else assign HPTWAdrExt = HPTWAdr;
+  if(`XLEN == 64) assign HPTWAdrExt = {{(`XLEN+2-`PA_BITS){1'b0}}, HPTWAdr}; // extend to 66 bits
+  else            assign HPTWAdrExt = HPTWAdr;
   mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
