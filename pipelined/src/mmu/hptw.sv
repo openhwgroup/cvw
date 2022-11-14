@@ -262,9 +262,9 @@ module hptw (
 					else                                 				NextWalkerState = LEAF;
 			L0_RD: if (DCacheStallM)                     				NextWalkerState = L0_RD;
 				   else                                     			NextWalkerState = LEAF;
-			LEAF: if (DAPageFault)                       				NextWalkerState = UPDATE_PTE;
+			LEAF: if (`HPTW_WRITES_SUPPORTED & DAPageFault)             NextWalkerState = UPDATE_PTE;
 				  else 													NextWalkerState = IDLE;
-			UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) 		NextWalkerState = UPDATE_PTE;
+			UPDATE_PTE: if(DCacheStallM) 		                        NextWalkerState = UPDATE_PTE;
 						else 											NextWalkerState = LEAF;
 			default: 													NextWalkerState = IDLE; // should never be reached
 		endcase // case (WalkerState)
