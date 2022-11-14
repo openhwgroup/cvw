@@ -34,7 +34,7 @@ module cachefsm
   (input logic clk,
    input logic        reset,
    // inputs from IEU
-   input logic        Flush,
+   input logic        FlushStage,
    input logic [1:0]  CacheRW,
    input logic [1:0]  CacheAtomic,
    input logic        FlushCache,
@@ -111,7 +111,7 @@ module cachefsm
   flop #(1) resetDelayReg(.clk, .d(reset), .q(resetDelay));
 
   always_ff @(posedge clk)
-    if (reset | Flush)    CurrState <= #1 STATE_READY;
+    if (reset | FlushStage)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;  
   
   always_comb begin

@@ -48,7 +48,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        VictimWay,
   input logic                        FlushWay,
   input logic                        Invalidate,
-  input logic                        Flush,
+  input logic                        FlushStage,
 //  input logic [(`XLEN-1)/8:0]        ByteMask,
   input logic [LINELEN/8-1:0]        LineByteMask,
 
@@ -87,7 +87,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
     .addr(RAdr), .dout(ReadTag), .bwe('1),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidWay & ~Flush));
+    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidWay & ~FlushStage));
 
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
@@ -110,7 +110,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(RAdr),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .we(SelectedWriteWordEn & ~Flush), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+      .we(SelectedWriteWordEn & ~FlushStage), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
   // AND portion of distributed read multiplexers
@@ -124,8 +124,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | Invalidate) ValidBits        <= #1 '0;
     if(ce) begin Valid <= #1 ValidBits[RAdr];
-      if (SetValidWay & ~Flush)      ValidBits[RAdr] <= #1 1'b1;
-      else if (ClearValidWay & ~Flush)    ValidBits[RAdr] <= #1 1'b0;
+      if (SetValidWay & ~FlushStage)      ValidBits[RAdr] <= #1 1'b1;
+      else if (ClearValidWay & ~FlushStage)    ValidBits[RAdr] <= #1 1'b0;
     end
   end
 
@@ -139,8 +139,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
       if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
       if(ce) begin
         Dirty <= #1 DirtyBits[RAdr];
-        if (SetDirtyWay & ~Flush)   DirtyBits[RAdr] <= #1 1'b1;
-        else if (ClearDirtyWay & ~Flush) DirtyBits[RAdr] <= #1 1'b0;
+        if (SetDirtyWay & ~FlushStage)   DirtyBits[RAdr] <= #1 1'b1;
+        else if (ClearDirtyWay & ~FlushStage) DirtyBits[RAdr] <= #1 1'b0;
       end
     end
   end else assign Dirty = 1'b0;
