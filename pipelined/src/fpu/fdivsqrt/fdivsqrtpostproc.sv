@@ -49,7 +49,9 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] PreQmM;
   logic NegSticky, PostInc;
   logic weq0;
-  logic [`DIVb:0] IntQuot, IntRem;
+  logic [`DIVBLEN:0] NormShift;
+  logic [`DIVb:0] IntQuot, IntRem, NormQuot, NormRem;
+  logic [`DIVb:0] PreResult, Result;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -70,8 +72,6 @@ module fdivsqrtpostproc(
   end 
   assign DivSM = ~WZero & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
-  
-
   // Determine if sticky bit is negative
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
@@ -81,26 +81,61 @@ module fdivsqrtpostproc(
   always_comb 
     if (~As)
       if (NegSticky) begin
-        assign IntQuot = FirstUM;
-        assign IntRem  = W + RemD;
+        assign NormQuot = FirstUM;
+        assign NormRem  = W + RemD;
         assign PostInc = 0;
       end else begin
-        assign IntQuot = FirstU;
-        assign IntRem  = W;
+        assign NormQuot = FirstU;
+        assign NormRem  = W;
         assign PostInc = 0;
       end
     else 
       if (NegSticky | weq0) begin
-        assign IntQuot = FirstU;
-        assign IntRem  = W;
+        assign NormQuot = FirstU;
+        assign NormRem  = W;
         assign PostInc = 0;
       end else begin 
-        assign IntQuot = FirstU;
-        assign IntRem  = W - RemD;
+        assign NormQuot = FirstU;
+        assign NormRem  = W - RemD;
         assign PostInc = 1;
       end
+
+/*
+  always_comb
+    if(ALTB) begin
+      assign   IntQuot = '0;
+      assign   IntRem  = ForwardedSrcAE;
+    end else if (BZero) begin
+      assign   IntQuot = '1;
+      assign   IntRem  = ForwardedSrcAE;
+    end else if (EarlyTerm) begin
+      if (weq0) begin
+        assign IntQuot = FirstU;
+        assign IntRem  = '0;
+      end else begin
+        assign IntQuot = FirstUM;
+        assign IntRem  = '0;
+      end
+    end else begin 
+      assign   IntQuot = NormQuot;
+      assign   IntRem  = NormRem;
+    end 
+  */
   
+  /*
+  always_comb
+    if (RemOp) begin
+      assign NormShift = m + (`DIVBLEN)'(`DIVa);
+      assign PreResult = IntRem;
+    end else begin
+      assign NormShift = DIVb - (j << `LOGR);
+      assign PreResult = IntQuot;
+    end
+  */
+
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
+
+  assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
