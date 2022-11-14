@@ -30,13 +30,13 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic               clk, reset, ce,
-  input logic [1:0]         MemRWM,
-  input logic [`PA_BITS-1:0]   Adr,
-  input logic               TrapM, 
-  input logic [`LLEN-1:0]   WriteDataM,
-  input logic [`LLEN/8-1:0] ByteMaskM,
-  output logic [`LLEN-1:0]  ReadDataWordM
+  input logic                clk, reset, ce,
+  input logic [1:0]          MemRWM,
+  input logic [`PA_BITS-1:0] Adr,
+  input logic                FlushW, 
+  input logic [`LLEN-1:0]    WriteDataM,
+  input logic [`LLEN/8-1:0]  ByteMaskM,
+  output logic [`LLEN-1:0]   ReadDataWordM
 );
 
   logic we;
@@ -44,7 +44,7 @@ module dtim(
   localparam ADDR_WDITH = $clog2(`DTIM_RANGE/8);
   localparam OFFSET = $clog2(`LLEN/8);
 
-  assign we = MemRWM[0]  & ~TrapM;  // have to ignore write if Trap.
+  assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
   sram1p1rw #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
     ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));

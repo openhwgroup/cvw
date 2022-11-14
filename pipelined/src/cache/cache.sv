@@ -34,9 +34,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   clk,
   input logic                   reset,
    // cpu side
+  input logic                   Flush,
   input logic                   CPUBusy,
-  input logic [1:0]             RW,
-  input logic [1:0]             Atomic,
+  input logic [1:0]             CacheRW,
+  input logic [1:0]             CacheAtomic,
   input logic                   FlushCache,
   input logic                   InvalidateCache,
   input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
@@ -49,15 +50,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   output logic                  CacheMiss,
   output logic                  CacheAccess,
    // lsu control
-  input logic                   IgnoreRequestTLB,
-  input logic                   TrapM, 
-  input logic                   Cacheable,
   input logic                   SelHPTW,
    // Bus fsm interface
   output logic [1:0]            CacheBusRW,
   input logic                   CacheBusAck,
-  input logic                   SelBusWord, 
-  input logic [LOGBWPL-1:0]     WordCount,
+  input logic                   SelBusBeat, 
+  input logic [LOGBWPL-1:0]     BeatCount,
   input logic [LINELEN-1:0]     FetchBuffer,
   output logic [`PA_BITS-1:0]   CacheBusAdr,
   output logic [WORDLEN-1:0]    ReadDataWord);
@@ -102,7 +100,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [1:0]                 CacheRW, CacheAtomic;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelBusBuffer;
@@ -129,11 +126,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, .Flush,
     .Invalidate(InvalidateCache));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn);
+      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn(LRUWriteEn & ~Flush));
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
@@ -146,7 +143,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // like to fix this.
   if(DCACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
-      .d1(WordCount), .s(SelBusWord),
+      .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
@@ -209,10 +206,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-  assign CacheRW = Cacheable ? RW : 2'b00;
-  assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .TrapM,
+		.Flush, .CacheRW, .CacheAtomic, .CPUBusy,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
