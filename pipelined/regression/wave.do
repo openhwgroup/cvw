@@ -385,15 +385,15 @@ add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpch
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
-add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/WalkerState
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/PCF
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/HPTWReadPTE
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/HPTWAdr
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/PTE
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBMissOrDAFaultNoTrapM
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/ITLBMissOrDAFaultNoTrapF
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/ITLBWriteF
-add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/DTLBWriteM
+add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/WalkerState
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PCF
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/HPTWReadPTE
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/HPTWAdr
+add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PTE
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/DTLBMissOrDAFaultNoTrapM
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ITLBMissOrDAFaultNoTrapF
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ITLBWriteF
+add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/DTLBWriteM
 add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/UARTIntr
 add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/GPIOIntr
 add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/MExtInt
@@ -607,7 +607,7 @@ add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/fregfile/rf
 add wave -noupdate /testbench/dut/core/fpu/fpu/XE
 add wave -noupdate /testbench/dut/core/fpu/fpu/YE
 add wave -noupdate /testbench/dut/core/fpu/fpu/ZE
-add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/hptw/HPTWRW
+add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/HPTWRW
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/AHBBuscachefsm/CurrState
 add wave -noupdate /testbench/dut/core/hzu/IntPendingM
 add wave -noupdate /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/CacheBusRW
