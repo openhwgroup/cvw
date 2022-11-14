@@ -223,7 +223,6 @@ module hptw (
 	if (`XLEN == 32) begin
 		assign InitialWalkerState = L1_ADR;
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
-			// *** Possible bug - should be L1_ADR?  If so, applies to 64 bits as well
 		assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
 	end else begin
 		logic  GigapageMisaligned, TerapageMisaligned;
