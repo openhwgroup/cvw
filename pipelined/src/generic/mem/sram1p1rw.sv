@@ -3,7 +3,7 @@
 //
 // Written: ross1728@gmail.com May 3, 2021
 //          Basic sram with 1 read write port.
-//          When clk rises Addr and CacheWriteData are sampled.
+//          When clk rises Addr and LineWriteData are sampled.
 //          Following the clk edge read data is output from the sampled Addr.
 //          Write 
 //

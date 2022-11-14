@@ -38,7 +38,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   input logic [$clog2(NUMLINES)-1:0] RAdr,
   input logic [`PA_BITS-1:0]         PAdr,
-  input logic [LINELEN-1:0]          CacheWriteData,
+  input logic [LINELEN-1:0]          LineWriteData,
   input logic                        SetValidWay,
   input logic                        ClearValidWay,
   input logic                        SetDirtyWay,
@@ -109,7 +109,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   for(words = 0; words < NUMSRAM; words++) begin: word
     sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(RAdr),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .din(CacheWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn & ~Flush), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
