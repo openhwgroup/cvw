@@ -43,7 +43,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]    PAdr, // physical address
   input logic [(WORDLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]     FinalWriteData,
+  input logic [WORDLEN-1:0]     CacheWriteData,
   output logic                  CacheCommitted,
   output logic                  CacheStall,
    // to performance counters to cpu
@@ -71,7 +71,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   logic                       SelAdr;
   logic [SETLEN-1:0]          RAdr;
-  logic [LINELEN-1:0]         CacheWriteData;
+  logic [LINELEN-1:0]         LineWriteData;
   logic                       ClearValid;
   logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
@@ -124,7 +124,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, .Flush,
     .Invalidate(InvalidateCache));
@@ -156,8 +156,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [LINELEN-1:0] FinalWriteDataDup;
-  assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
+  logic [LINELEN-1:0] CacheWriteDataDup;
+  assign CacheWriteDataDup = {WORDSPERLINE{CacheWriteData}};
 
   onehotdecoder #(LOGCWPL) adrdec(
     .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
@@ -169,8 +169,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 
   for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+    mux2 #(8) WriteDataMux(.d0(CacheWriteDataDup[8*index+7:8*index]),
+      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(LineWriteData[8*index+7:8*index]));
   end
 
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),

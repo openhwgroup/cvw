@@ -229,7 +229,7 @@ module ifu (
              .SelHPTW('0),
              .CacheMiss(ICacheMiss), .CacheAccess(ICacheAccess),
              .ByteMask('0), .BeatCount('0), .SelBusBeat('0),
-             .FinalWriteData('0),
+             .CacheWriteData('0),
              .CacheRW(CacheRWF), 
              .CacheAtomic('0), .FlushCache('0),
              .NextAdr(PCNextFSpill[11:0]),
