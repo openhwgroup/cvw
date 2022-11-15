@@ -45,12 +45,13 @@ module fdivsqrtpostproc(
   output logic DivSM
 );
   
-  logic [`DIVb+3:0] W, Sum;
+  logic [`DIVb+3:0] W, Sum, RemD;
   logic [`DIVb:0] PreQmM;
   logic NegSticky, PostInc;
   logic weq0;
   logic [`DIVBLEN:0] NormShift;
-  logic [`DIVb:0] IntQuot, IntRem, NormQuot, NormRem;
+  logic [`DIVb:0] IntQuot, NormQuot;
+  logic [`DIVb+3:0] IntRem, NormRem;
   logic [`DIVb:0] PreResult, Result;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
@@ -76,7 +77,7 @@ module fdivsqrtpostproc(
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegSticky = W[`DIVb+3];
-  assign RemD = {4'b0000, D, {(`DIVb-`DIVN){1'b0}}};
+  assign RemD = {4'b0000, D, {(`DIVb-`DIVN+1){1'b0}}};
 
   always_comb 
     if (~As)
@@ -134,8 +135,8 @@ module fdivsqrtpostproc(
   */
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-
-  assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
+  
+  // assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
