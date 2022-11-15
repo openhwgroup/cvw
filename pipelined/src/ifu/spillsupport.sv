@@ -35,7 +35,7 @@
 module spillsupport #(parameter CACHE_ENABLED)
   (input logic              clk,
    input logic              reset,
-   input logic              StallF,
+   input logic              StallF, Flush,
    input logic [`XLEN-1:0]  PCF,
    input logic [`XLEN-3:0]  PCPlusUpperF,
    input logic [`XLEN-1:0]  PCNextF,
@@ -61,7 +61,7 @@ module spillsupport #(parameter CACHE_ENABLED)
 
   mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), 
     .s(PCF[1]), .y(PCPlus2F));
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF),
+  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~Flush),
     .y(PCNextFSpill));
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
@@ -69,7 +69,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
   
   always_ff @(posedge clk)
-    if (reset)    CurrState <= #1 STATE_READY;
+    if (reset | Flush)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;
 
   always_comb begin
@@ -89,7 +89,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];
   
   flopenr #(16) SpillInstrReg(.clk(clk),
-                              .en(SpillSaveF),
+                              .en(SpillSaveF  & ~Flush),
                               .reset(reset),
                               .d(SavedInstr),
                               .q(SpillDataLine0));

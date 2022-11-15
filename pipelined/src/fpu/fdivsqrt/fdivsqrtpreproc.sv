@@ -41,8 +41,8 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
-  output logic [`DIVBLEN:0] n, p, m,
-  output logic OTFCSwap,
+  output logic [`DIVBLEN:0] n, m,
+  output logic OTFCSwap, ALTB, BZero, As,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -52,23 +52,23 @@ module fdivsqrtpreproc (
   logic  [`NF-1:0] PreprocB, PreprocY;
   logic  [`NF+1:0] SqrtX;
   logic  [`DIVb+3:0] DivX;
-  logic  [`DIVBLEN:0] L;
   logic  [`NE+1:0] Qe;
   // Intdiv signals
   logic  [`DIVb-1:0] ZeroBufX, ZeroBufY;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  As, Bs, OTFCSwapTemp;
+  logic  Bs, OTFCSwapTemp;
   logic  [`XLEN-1:0] A64, B64;
+  logic  [`DIVBLEN:0] Calcn, Calcm;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
-  logic  [`DIVBLEN:0] pPlusr, pPrCeil;
+  logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, L;
   logic  [`LOGRK-1:0] pPrTrunc;
   logic  [`DIVb+3:0] PreShiftX;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
 
-  assign As = ForwardedSrcAE[`XLEN-1] & Funct3E[0];
-  assign Bs = ForwardedSrcBE[`XLEN-1] & Funct3E[0];
+  assign As = ForwardedSrcAE[`XLEN-1] & ~Funct3E[0];
+  assign Bs = ForwardedSrcBE[`XLEN-1] & ~Funct3E[0];
   assign A64 = W64E ? {{(`XLEN-32){As}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){Bs}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
 
@@ -76,22 +76,24 @@ module fdivsqrtpreproc (
   
   assign PosA = As ? -A64 : A64;
   assign PosB = Bs ? -B64 : B64;
+  assign BZero = |ForwardedSrcBE;
 
   assign ZeroBufX = MDUE ? {PosA, {`DIVb-`XLEN{1'b0}}} : {Xm, {`DIVb-`NF-1{1'b0}}};
   assign ZeroBufY = MDUE ? {PosB, {`DIVb-`XLEN{1'b0}}} : {Ym, {`DIVb-`NF-1{1'b0}}};
   lzc #(`DIVb) lzcX (ZeroBufX, L);
-  lzc #(`DIVb) lzcY (ZeroBufY, m);
+  lzc #(`DIVb) lzcY (ZeroBufY, Calcm);
 
   assign PreprocX = Xm[`NF-1:0]<<L;
-  assign PreprocY = Ym[`NF-1:0]<<m;
+  assign PreprocY = Ym[`NF-1:0]<<Calcm;
 
-  assign ZeroDiff = m - L;
-  assign p = ZeroDiff[`DIVBLEN] ? '0 : ZeroDiff;
+  assign ZeroDiff = Calcm - L;
+  assign ALTB = ZeroDiff[`DIVBLEN]; // A less than B
+  assign p = ALTB ? '0 : ZeroDiff;
 
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
   assign pPrTrunc = pPlusr[`LOGRK-1:0];
   assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN-1{1'b0}}, |(pPrTrunc)};
-  assign n = (pPrCeil << `LOGK) - 1;
+  assign Calcn = (pPrCeil << `LOGK) - 1;
   assign IntBits = (`DIVBLEN)'(`RK) + p;
   assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
 
@@ -115,7 +117,9 @@ module fdivsqrtpreproc (
   // DIVRESLEN/(r*`DIVCOPIES)
   flopen #(`NE+2) expflop(clk, DivStartE, Qe, QeM);
   flopen #(1) swapflop(clk, DivStartE, OTFCSwapTemp, OTFCSwap);
-  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m, .Qe);
+  flopen #(`DIVBLEN+1) nflop(clk, DivStartE, Calcn, n);
+  flopen #(`DIVBLEN+1) mflop(clk, DivStartE, Calcm, m);
+  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m(Calcm), .Qe);
 
 endmodule
 

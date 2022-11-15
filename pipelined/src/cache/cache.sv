@@ -34,30 +34,28 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   clk,
   input logic                   reset,
    // cpu side
+  input logic                   FlushStage,
   input logic                   CPUBusy,
-  input logic [1:0]             RW,
-  input logic [1:0]             Atomic,
+  input logic [1:0]             CacheRW,
+  input logic [1:0]             CacheAtomic,
   input logic                   FlushCache,
   input logic                   InvalidateCache,
   input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
   input logic [`PA_BITS-1:0]    PAdr, // physical address
   input logic [(WORDLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]     FinalWriteData,
+  input logic [WORDLEN-1:0]     CacheWriteData,
   output logic                  CacheCommitted,
   output logic                  CacheStall,
    // to performance counters to cpu
   output logic                  CacheMiss,
   output logic                  CacheAccess,
    // lsu control
-  input logic                   IgnoreRequestTLB,
-  input logic                   TrapM, 
-  input logic                   Cacheable,
   input logic                   SelHPTW,
    // Bus fsm interface
   output logic [1:0]            CacheBusRW,
   input logic                   CacheBusAck,
-  input logic                   SelBusWord, 
-  input logic [LOGBWPL-1:0]     WordCount,
+  input logic                   SelBusBeat, 
+  input logic [LOGBWPL-1:0]     BeatCount,
   input logic [LINELEN-1:0]     FetchBuffer,
   output logic [`PA_BITS-1:0]   CacheBusAdr,
   output logic [WORDLEN-1:0]    ReadDataWord);
@@ -73,7 +71,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   logic                       SelAdr;
   logic [SETLEN-1:0]          RAdr;
-  logic [LINELEN-1:0]         CacheWriteData;
+  logic [LINELEN-1:0]         LineWriteData;
   logic                       ClearValid;
   logic                       ClearDirty;
   logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
@@ -102,7 +100,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [NUMWAYS-1:0]         SelectedWay;
   logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
-  logic [1:0]                 CacheRW, CacheAtomic;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelBusBuffer;
@@ -127,13 +124,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .CacheWriteData, .LineByteMask,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, 
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, .FlushStage,
     .Invalidate(InvalidateCache));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn);
+      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage));
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
@@ -146,7 +143,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // like to fix this.
   if(DCACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
-      .d1(WordCount), .s(SelBusWord),
+      .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
@@ -159,8 +156,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [LINELEN-1:0] FinalWriteDataDup;
-  assign FinalWriteDataDup = {WORDSPERLINE{FinalWriteData}};
+  logic [LINELEN-1:0] CacheWriteDataDup;
+  assign CacheWriteDataDup = {WORDSPERLINE{CacheWriteData}};
 
   onehotdecoder #(LOGCWPL) adrdec(
     .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
@@ -172,8 +169,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 
   for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(FinalWriteDataDup[8*index+7:8*index]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(CacheWriteData[8*index+7:8*index]));
+    mux2 #(8) WriteDataMux(.d0(CacheWriteDataDup[8*index+7:8*index]),
+      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(LineWriteData[8*index+7:8*index]));
   end
 
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
@@ -209,10 +206,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-  assign CacheRW = Cacheable ? RW : 2'b00;
-  assign CacheAtomic = Cacheable ? Atomic : 2'b00;
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.CacheRW, .CacheAtomic, .CPUBusy, .IgnoreRequestTLB, .TrapM,
+		.FlushStage, .CacheRW, .CacheAtomic, .CPUBusy,
  		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
