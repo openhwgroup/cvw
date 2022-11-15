@@ -45,12 +45,13 @@ module fdivsqrtpostproc(
   output logic DivSM
 );
   
-  logic [`DIVb+3:0] W, Sum;
+  logic [`DIVb+3:0] W, Sum, RemD;
   logic [`DIVb:0] PreQmM;
   logic NegSticky, PostInc;
   logic weq0;
   logic [`DIVBLEN:0] NormShift;
-  logic [`DIVb:0] IntQuot, IntRem, NormQuot, NormRem;
+  logic [`DIVb:0] IntQuot, NormQuot;
+  logic [`DIVb+3:0] IntRem, NormRem;
   logic [`DIVb:0] PreResult, Result;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
@@ -76,66 +77,66 @@ module fdivsqrtpostproc(
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegSticky = W[`DIVb+3];
-  assign RemD = {4'b0000, D, {(`DIVb-`DIVN){1'b0}}};
+  assign RemD = {4'b0000, D, {(`DIVb-`DIVN+1){1'b0}}};
 
   always_comb 
     if (~As)
       if (NegSticky) begin
-        assign NormQuot = FirstUM;
-        assign NormRem  = W + RemD;
-        assign PostInc = 0;
+        NormQuot = FirstUM;
+        NormRem  = W + RemD;
+        PostInc = 0;
       end else begin
-        assign NormQuot = FirstU;
-        assign NormRem  = W;
-        assign PostInc = 0;
+        NormQuot = FirstU;
+        NormRem  = W;
+        PostInc = 0;
       end
     else 
       if (NegSticky | weq0) begin
-        assign NormQuot = FirstU;
-        assign NormRem  = W;
-        assign PostInc = 0;
+        NormQuot = FirstU;
+        NormRem  = W;
+        PostInc = 0;
       end else begin 
-        assign NormQuot = FirstU;
-        assign NormRem  = W - RemD;
-        assign PostInc = 1;
+        NormQuot = FirstU;
+        NormRem  = W - RemD;
+        PostInc = 1;
       end
 
 /*
   always_comb
     if(ALTB) begin
-      assign   IntQuot = '0;
-      assign   IntRem  = ForwardedSrcAE;
+      IntQuot = '0;
+      IntRem  = ForwardedSrcAE;
     end else if (BZero) begin
-      assign   IntQuot = '1;
-      assign   IntRem  = ForwardedSrcAE;
+      IntQuot = '1;
+      IntRem  = ForwardedSrcAE;
     end else if (EarlyTerm) begin
       if (weq0) begin
-        assign IntQuot = FirstU;
-        assign IntRem  = '0;
+        IntQuot = FirstU;
+        IntRem  = '0;
       end else begin
-        assign IntQuot = FirstUM;
-        assign IntRem  = '0;
+        IntQuot = FirstUM;
+        IntRem  = '0;
       end
     end else begin 
-      assign   IntQuot = NormQuot;
-      assign   IntRem  = NormRem;
+      IntQuot = NormQuot;
+      IntRem  = NormRem;
     end 
   */
   
   /*
   always_comb
     if (RemOp) begin
-      assign NormShift = m + (`DIVBLEN)'(`DIVa);
-      assign PreResult = IntRem;
+      NormShift = m + (`DIVBLEN)'(`DIVa);
+      PreResult = IntRem;
     end else begin
-      assign NormShift = DIVb - (j << `LOGR);
-      assign PreResult = IntQuot;
+      NormShift = DIVb - (j << `LOGR);
+      PreResult = IntQuot;
     end
   */
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-
-  assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
+  
+  // assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
