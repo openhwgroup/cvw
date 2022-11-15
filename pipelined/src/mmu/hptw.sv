@@ -47,7 +47,7 @@ module hptw (
    	input logic [6:0]           Funct7M,
    	input logic                 ITLBMissF,
    	input logic                 DTLBMissM,
-	input logic                 TrapM,
+	input logic                 FlushW,
    	input logic                 InstrDAPageFaultF,
    	input logic                 DataDAPageFaultM,
    	output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
@@ -55,7 +55,7 @@ module hptw (
    	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
    	output logic [1:0]          PreLSURWM,
    	output logic [`XLEN+1:0]    IHAdrM,
-   	output logic [`XLEN-1:0]    IMWriteDataM,
+   	output logic [`XLEN-1:0]    IHWriteDataM,
    	output logic [1:0]          LSUAtomicM,
    	output logic [2:0]          LSUFunct3M,
    	output logic [6:0]          LSUFunct7M,
@@ -89,8 +89,8 @@ module hptw (
   logic [`PA_BITS-1:0]      HPTWReadAdr;
     logic                       SelHPTWAdr;
   logic [`XLEN+1:0]           HPTWAdrExt;
-  logic                       ITLBMissOrDAFaultF, ITLBMissOrDAFaultNoTrapF;
-  logic                       DTLBMissOrDAFaultM, DTLBMissOrDAFaultNoTrapM;
+  logic                       ITLBMissOrDAFaultF;
+  logic                       DTLBMissOrDAFaultM;
   logic [`PA_BITS-1:0]        HPTWAdr;
   logic [1:0]                 HPTWRW;
   logic [2:0]                 HPTWSize; // 32 or 64 bit access.
@@ -101,17 +101,17 @@ module hptw (
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 	assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-	assign TLBMiss = (DTLBMissOrDAFaultNoTrapM | ITLBMissOrDAFaultNoTrapF);
+	assign TLBMiss = (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF);
 
 	// Determine which address to translate
-	assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
+	mux2 #(`XLEN) vadrmux(PCF, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
+	//assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultNoTrapM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRW[1] & ~DCacheStallM;
-  
-	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn | UpdatePTE, NextPTE, PTE); // Capture page table entry from data cache
+	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+	assign PRegEn = HPTWRW[1] & ~DCacheStallM | UpdatePTE;
+	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
     
 	// Assign PTE descriptors common across all XLEN values
@@ -223,7 +223,6 @@ module hptw (
 	if (`XLEN == 32) begin
 		assign InitialWalkerState = L1_ADR;
 		assign MegapageMisaligned = |(CurrentPPN[9:0]); // must have zero PPN0
-			// *** Possible bug - should be L1_ADR?
 		assign Misaligned = ((WalkerState == L0_ADR) & MegapageMisaligned);
 	end else begin
 		logic  GigapageMisaligned, TerapageMisaligned;
@@ -235,7 +234,14 @@ module hptw (
 	end
 
 	// Page Table Walker FSM
-	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset, 1'b1, NextWalkerState, IDLE, WalkerState); 
+  // there is a bug here.  Each memory access needs to be potentially flushed if the PMA/P checkers
+  // generate an access fault.  Specially the store on UDPATE_PTE needs to check for access violation.
+  // I think the solution is to do 1 of the following
+  // 1. Allow the HPTW to generate exceptions and stop walking immediately.
+  // 2. If the store would generate an exception don't store to dcache but still write the TLB.  When we go back
+  // to LEAF then the PMA/P.  Wait this does not work.  The PMA/P won't be looking a the address in the table, but
+  // rather than physical address of the translated instruction/data.  So we must generate the exception.
+	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 		case (WalkerState)
 			IDLE: if (TLBMiss)	 										NextWalkerState = InitialWalkerState;
@@ -256,9 +262,9 @@ module hptw (
 					else                                 				NextWalkerState = LEAF;
 			L0_RD: if (DCacheStallM)                     				NextWalkerState = L0_RD;
 				   else                                     			NextWalkerState = LEAF;
-			LEAF: if (DAPageFault)                       				NextWalkerState = UPDATE_PTE;
+			LEAF: if (`HPTW_WRITES_SUPPORTED & DAPageFault)             NextWalkerState = UPDATE_PTE;
 				  else 													NextWalkerState = IDLE;
-			UPDATE_PTE: if(`HPTW_WRITES_SUPPORTED & DCacheStallM) 		NextWalkerState = UPDATE_PTE;
+			UPDATE_PTE: if(DCacheStallM) 		                        NextWalkerState = UPDATE_PTE;
 						else 											NextWalkerState = LEAF;
 			default: 													NextWalkerState = IDLE; // should never be reached
 		endcase // case (WalkerState)
@@ -270,8 +276,6 @@ module hptw (
 
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
-  assign ITLBMissOrDAFaultNoTrapF = ITLBMissOrDAFaultF & ~TrapM;
-  assign DTLBMissOrDAFaultNoTrapM = DTLBMissOrDAFaultM & ~TrapM;
 
   // HTPW address/data/control muxing
 
@@ -282,18 +286,19 @@ module hptw (
   assign CPUBusy = StallW & ~SelHPTW;
 
   // multiplex the outputs to LSU
-  if(`XLEN+2-`PA_BITS > 0) begin  // *** replace with XLEN=32
-    logic [(`XLEN+2-`PA_BITS)-1:0] zeros;
-    assign zeros = '0;
-    assign HPTWAdrExt = {zeros, HPTWAdr};
-  end else assign HPTWAdrExt = HPTWAdr;
+  if(`XLEN == 64) assign HPTWAdrExt = {{(`XLEN+2-`PA_BITS){1'b0}}, HPTWAdr}; // extend to 66 bits
+  else            assign HPTWAdrExt = HPTWAdr;
   mux2 #(2) rwmux(MemRWM, HPTWRW, SelHPTW, PreLSURWM);
   mux2 #(3) sizemux(Funct3M, HPTWSize, SelHPTW, LSUFunct3M);
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
   if(`HPTW_WRITES_SUPPORTED)
-    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IMWriteDataM);
-  else assign IMWriteDataM = WriteDataM;
+    mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
+  else assign IHWriteDataM = WriteDataM;
 
 endmodule
+
+// another idea.  We keep gating the control by ~FlushW, but this adds considerable length to the critical path.
+// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
+// the hazard unit to issue stall and flush controlls. ~FlushW already suppresses these in the hazard unit.

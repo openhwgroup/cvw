@@ -123,11 +123,11 @@
 `define LOGRK ($clog2(`RK))
 // FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES)) 
 // one iteration is required for the integer bit for minimally redundent radix-4
-`define FPDUR ((`DIVN+2+(`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES)+(`RADIX/4))
+`define FPDUR ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN ($clog2(`FPDUR+1))
 `define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
 `define DIVb (`QLEN-1)
-`define DIVa (`DIVb+4-`XLEN)
+`define DIVa (`DIVb+1-`XLEN)
 `define DIVBLEN ($clog2(`DIVb+1)-1)
 
 

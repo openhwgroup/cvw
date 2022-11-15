@@ -36,6 +36,7 @@ module busfsm
    input logic        HRESETn,
 
    // IEU interface
+   input logic        Flush,
    input logic [1:0]  BusRW,
    input logic        CPUBusy,
    output logic       BusCommitted,
@@ -55,8 +56,8 @@ module busfsm
   (* mark_debug = "true" *) busstatetype CurrState, NextState;
 
   always_ff @(posedge HCLK)
-    if (~HRESETn) CurrState <= #1 ADR_PHASE;
-    else          CurrState <= #1 NextState;  
+    if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;
+    else                  CurrState <= #1 NextState;  
   
   always_comb begin
 	case(CurrState)
@@ -76,7 +77,7 @@ module busfsm
   
   assign BusCommitted = CurrState != ADR_PHASE;
 
-  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW) ? AHB_NONSEQ : AHB_IDLE;
+  assign HTRANS = (CurrState == ADR_PHASE & HREADY & |BusRW & ~Flush) ? AHB_NONSEQ : AHB_IDLE;
   assign HWRITE = BusRW[0];
   assign CaptureEn = CurrState == DATA_PHASE;
   

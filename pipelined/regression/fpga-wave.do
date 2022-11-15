@@ -318,7 +318,7 @@ add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU 
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheStall
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/ReadDataWordM
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/WriteDataM
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/FinalWriteData
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteData
 add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
 add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheFetchLine

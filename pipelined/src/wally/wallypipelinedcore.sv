@@ -170,7 +170,7 @@ module wallypipelinedcore (
   ifu ifu(
     .clk, .reset,
     .StallF, .StallD, .StallE, .StallM, 
-    .FlushF, .FlushD, .FlushE, .FlushM, 
+    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
@@ -249,7 +249,7 @@ module wallypipelinedcore (
   .FlushW,
   // CPU interface
   .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
-  .AtomicM, .TrapM,
+  .AtomicM,
   .CommittedM, .DCacheMiss, .DCacheAccess,
   .SquashSCW,            
   .FpLoadStoreM,
