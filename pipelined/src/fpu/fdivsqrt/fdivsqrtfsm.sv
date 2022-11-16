@@ -61,8 +61,8 @@ module fdivsqrtfsm(
   // *** start logic is presently in fctl.  Make it look more like integer division start logic
   // DivStartE comes from fctrl, reflecitng the start of floating-point and possibly integer division
   assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
-  assign DivDone = (state == DONE) | (WZero & (state == BUSY));
-  assign FDivBusyE = (state == BUSY & ~DivDone);
+  assign DivDone = (state == DONE) | (WZero & (state == BUSY)); // *** used in postprocess.sv and round.sv.  This doesn't seem proper.  They break when removed.
+  assign FDivBusyE = (state == BUSY & ~DivDone); // *** want to add | DivStartE but it creates comb loop
 
     // Divider control signals from MDU
   //assign DivBusyE = (state == BUSY) | DivStartE;
