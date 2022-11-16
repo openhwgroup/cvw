@@ -263,7 +263,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
+                  .StallE, .StallM, .DivSM, .FDivBusyE, .QeM, 
                   .QmM, .DivDone(DivDoneM));
 
                   //

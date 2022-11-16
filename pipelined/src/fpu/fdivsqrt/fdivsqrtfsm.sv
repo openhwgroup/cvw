@@ -47,7 +47,7 @@ module fdivsqrtfsm(
   input  logic [`DIVBLEN:0] n,
   output logic DivStartE,
   output logic DivDone,
-  output logic DivBusy,
+  output logic FDivBusyE,
   output logic SpecialCaseM
 );
   
@@ -60,13 +60,11 @@ module fdivsqrtfsm(
 
   // *** start logic is presently in fctl.  Make it look more like integer division start logic
   // DivStartE comes from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign DivStartE = (FDivStartE | IDivStartE); // & (state == IDLE) & ~StallM;
-  //assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
+  assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
   assign DivDone = (state == DONE) | (WZero & (state == BUSY));
-  assign DivBusy = (state == BUSY & ~DivDone);
+  assign FDivBusyE = (state == BUSY & ~DivDone);
 
     // Divider control signals from MDU
- //assign DivStartE = DivE & (state == IDLE) & ~StallM; 
   //assign DivBusyE = (state == BUSY) | DivStartE;
 
   // terminate immediately on special cases
