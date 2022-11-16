@@ -246,7 +246,7 @@ module wallypipelinedcore (
 
   lsu lsu(
      .clk, .reset, .StallM, .FlushM, .StallW,
-  .FlushW,
+  .FlushW(TrapM),
   // CPU interface
   .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
   .AtomicM,
