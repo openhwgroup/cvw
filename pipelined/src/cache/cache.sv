@@ -117,13 +117,15 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // Choose read address (RAdr).  Normally use NextAdr, but use PAdr during stalls
-  // and FlushAdr when handling D$ flushes  
+  // and FlushAdr when handling D$ flushes
+  // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
+  // sets PCNextF to XTVEC and the icache must start reading the instruction.
   mux3 #(SETLEN) AdrSelMux(
     .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
-    .s({SelFlush, (SelAdr | SelHPTW)}), .y(RAdr));
+    .s({SelFlush, ((SelAdr | SelHPTW) & ~((DCACHE == 0) & FlushStage))}), .y(RAdr));
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN) 
+  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce(SRAMEnable), .RAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .VictimDirtyWay, .VictimTagWay, .FlushStage,
