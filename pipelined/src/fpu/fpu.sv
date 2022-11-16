@@ -67,7 +67,7 @@ module fpu (
    logic 		         FRegWriteW; // FP register write enable
    logic [2:0] 	      FrmM;                   // FP rounding mode
    logic [`FMTBITS-1:0] FmtE, FmtM;             // FP precision 0-single 1-double
-   logic 		         DivStartE;             // Start division or squareroot
+   logic 		         FDivStartE, IDivStartE;             // Start division or squareroot
    logic 		         FWriteIntM;                         // Write to integer register
    logic [1:0] 	      ForwardXE, ForwardYE, ForwardZE; // forwarding mux control signals
    logic [2:0] 	      OpCtrlE, OpCtrlM;       // Select which opperation to do in each component
@@ -167,7 +167,7 @@ module fpu (
                .Funct3E, .MDUE, .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
                .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
-               .DivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
+               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
                .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1E, .Adr2E, .Adr3E);
 
    // FP register file
@@ -261,7 +261,7 @@ module fpu (
    //    - fsqrt
    // *** add other opperations
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
-                  .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .DivStartE(DivStartE), .XsE,
+                  .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
                   .StallE, .StallM, .DivSM, .DivBusy(FDivBusyE), .QeM, //***change divbusyE to M signal
                   .QmM, .DivDone(DivDoneM));

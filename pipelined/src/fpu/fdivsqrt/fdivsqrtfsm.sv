@@ -37,7 +37,7 @@ module fdivsqrtfsm(
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
-  input  logic DivStartE, 
+  input  logic FDivStartE, IDivStartE,
   input  logic XsE,
   input  logic SqrtE,
   input  logic StallE,
@@ -45,6 +45,7 @@ module fdivsqrtfsm(
   input  logic WZero,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] n,
+  output logic DivStartE,
   output logic DivDone,
   output logic DivBusy,
   output logic SpecialCaseM
@@ -56,6 +57,17 @@ module fdivsqrtfsm(
   logic [`DURLEN-1:0] step;
   logic [`DURLEN-1:0] cycles;
   logic SpecialCaseE;
+
+  // *** start logic is presently in fctl.  Make it look more like integer division start logic
+  // DivStartE comes from fctrl, reflecitng the start of floating-point and possibly integer division
+  assign DivStartE = (FDivStartE | IDivStartE); // & (state == IDLE) & ~StallM;
+  //assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
+  assign DivDone = (state == DONE) | (WZero & (state == BUSY));
+  assign DivBusy = (state == BUSY & ~DivDone);
+
+    // Divider control signals from MDU
+ //assign DivStartE = DivE & (state == IDLE) & ~StallM; 
+  //assign DivBusyE = (state == BUSY) | DivStartE;
 
   // terminate immediately on special cases
   assign SpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
@@ -120,8 +132,5 @@ module fdivsqrtfsm(
       end 
   end
 
-  // *** start logic is presently in fctl.  Make it look more like integer division start logic
-  assign DivDone = (state == DONE) | (WZero & (state == BUSY));
-  assign DivBusy = (state == BUSY & ~DivDone);
 
 endmodule
