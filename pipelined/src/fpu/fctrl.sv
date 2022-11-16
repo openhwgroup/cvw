@@ -47,7 +47,7 @@ module fctrl (
   output logic 		         FRegWriteM, FRegWriteW, // FP register write enable
   output logic [2:0] 	      FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
-  output logic 		         DivStartE,             // Start division or squareroot
+  output logic 		         FDivStartE, IDivStartE,             // Start division or squareroot
   output logic              XEnE, YEnE, ZEnE,
   output logic              YEnForwardE, ZEnForwardE,
   output logic 		         FWriteIntE, FCvtIntE, FWriteIntM,                         // Write to integer register
@@ -62,7 +62,7 @@ module fctrl (
   logic [`FCTRLW-1:0] ControlsD;
   logic       IllegalFPUInstrD, IllegalFPUInstrE;
   logic 		  FRegWriteD; // FP register write enable
-  logic 		  FDivStartD, FDivStartE, IDivStartE; // integer register write enable
+  logic 		  FDivStartD; // integer register write enable
   logic 		  FWriteIntD; // integer register write enable
   logic 		         FRegWriteE; // FP register write enable
   logic [2:0] 	      OpCtrlD;       // Select which opperation to do in each component
@@ -266,10 +266,8 @@ module fctrl (
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
                            {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
-  if (`M_SUPPORTED) begin
-    assign IDivStartE = MDUE & Funct3E[2];
-    assign DivStartE = FDivStartE | IDivStartE; // integer or floating-point division
-  end else assign DivStartE = FDivStartE;
+  if (`M_SUPPORTED) assign IDivStartE = MDUE & Funct3E[2];
+  else              assign IDivStartE = 0; 
 
   assign FCvtIntE = (FResSelE == 2'b01);
 
