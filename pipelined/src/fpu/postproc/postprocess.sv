@@ -129,7 +129,7 @@ module postprocess (
     assign Mult = OpCtrl[2]&~OpCtrl[1]&~OpCtrl[0];
     assign CvtOp = (PostProcSel == 2'b00);
     assign FmaOp = (PostProcSel == 2'b10);
-    assign DivOp = (PostProcSel == 2'b01)&DivDone;
+    assign DivOp = (PostProcSel == 2'b01) & DivDone;
     assign Sqrt =  OpCtrl[0];
 
     // is there an input of infinity or NaN being used
