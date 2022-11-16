@@ -46,10 +46,115 @@ module cachereplacementpolicy
   logic [SETLEN-1:0]                   RAdrD;
   logic                                LRUWriteEnD;
 
+
+  localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
+  localparam                           LEN = NUMWAYS-1;
+
+  logic [LOGNUMWAYS-1:0]               HitWayEnc;
+  logic [LEN-1:0]                      HitWayExpand;
+  genvar                               row;
+
+  logic [NUMWAYS-2:0]                  cEn;
+  
+/* -----\/----- EXCLUDED -----\/-----
+  // proposed generic solution
+  
+  binencoder #(NUMWAYS) encoder(HitWay, HitWayEnc);
+
+  // bit duplication
+  // expand HitWay as HitWay[3], {{2}{HitWay[2]}}, {{4}{HitWay[1]}, {{8{HitWay[0]}}, ...
+  for(row = 0; row < LOGNUMWAYS; row++) begin
+    localparam integer DuplicationFactor = 2**(LOGNUMWAYS-row-1);
+    localparam integer StartIndex = NUMWAYS-2 - DuplicationFactor + 1;
+    localparam integer EndIndex = NUMWAYS-2 - 2 * DuplicationFactor + 2;
+    assign HitWayExpand[StartIndex : EndIndex] = {{DuplicationFactor}{HitWayEnc[row]}};
+  end
+
+
+  genvar               r, a,s;
+  //localparam           s = NUMWAYS-2;
+
+
+  assign cEn[NUMWAYS-2] = '1;
+  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin : enables
+    localparam p = NUMWAYS - s;
+    localparam g = $clog2(p);
+    localparam t0 = s - g;
+    localparam t1 = t0 - 1;
+    localparam r = LOGNUMWAYS - g;
+    assign cEn[t0] = cEn[s] & ~HitWayEnc[r];
+    assign cEn[t1] = cEn[s] & HitWayEnc[r];
+  end
+
+  mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, HitWayExpand, cEn, NewReplacement);
+
+  assign VictimWay[0] = ~LineReplacementBits[2] & ~LineReplacementBits[0];
+  assign VictimWay[1] = ~LineReplacementBits[2] & LineReplacementBits[0];
+  assign VictimWay[2] = LineReplacementBits[2] & ~LineReplacementBits[1];
+  assign VictimWay[3] = LineReplacementBits[2] & LineReplacementBits[1];      
+ -----/\----- EXCLUDED -----/\----- */
+
+  
+
+/* -----\/----- EXCLUDED -----\/-----
+//  logic [NUMWAYS/2-1:0]                rawEn [LOGNUMWAYS-1:0];
+  for(r = LOGNUMWAYS-1; r >= 0; r--) begin
+    localparam integer g = 2**(LOGNUMWAYS-r-1);
+    for(a = g-1; a > 0; a--) begin
+      localparam t0 = s - 2**(g-1);
+      localparam t1 = t0 - 1;
+      localparam s = s - 1;
+      assign cEn[t0] = cEn[s] & ~HitWayEnc[r];
+      assign cEn[t1] = cEn[s] & HitWayEnc[r];
+    end
+ -----/\----- EXCLUDED -----/\----- */
+/* -----\/----- EXCLUDED -----\/-----
+      for(a = g-1; a > 0; a--) begin
+        localparam t0 = s - 2**(g-1);
+        localparam t1 = t0 - 1;
+        s = s - 1;
+      end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+  
+/* -----\/----- EXCLUDED -----\/-----
+  always_comb begin
+    for(r = LOGNUMWAYS-1; r > 0; r--) begin
+      localparam g = 2**(LOGNUMWAYS-r-1);
+      for(a = g-1; a > 0; a--) begin
+        localparam t0 = s - 2**(g-1);
+        localparam t1 = t0 - 1;
+        s = s - 1;
+      end
+    end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+
+/* -----\/----- EXCLUDED -----\/-----
+
+  genvar row2;
+  logic [LOGNUMWAYS-1:0] indices [LOGNUMWAYS-1:0];
+  integer                jindex;
+  always_comb begin
+    rawEn[LOGNUMWAYS-1] = 1;
+    for(jindex = 0; jindex < LOGNUMWAYS-1; jindex++) begin
+      rawEn[jindex] = 0;
+      rawEn[jindex][~(HitWayEnc>>(jindex+1))] = 1;
+
+      //cEn[2**(LOGNUMWAYS-jindex)-1+jindex:0] = rawEn[jindex][2**(LOGNUMWAYS-jindex)-1:0];
+      
+    end
+  end
+ -----/\----- EXCLUDED -----/\----- */
+
+  
+    
   // *** high priority to clean up
+/* -----\/----- EXCLUDED -----\/-----
   initial begin
       assert (NUMWAYS == 2 || NUMWAYS == 4) else $error("Only 2 or 4 ways supported");
   end
+ -----/\----- EXCLUDED -----/\----- */
   
   // Replacement Bits: Register file
   // Needs to be resettable for simulation, but could omit reset for synthesis ***
