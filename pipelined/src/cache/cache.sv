@@ -132,7 +132,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     .Invalidate(InvalidateCache));
   if(NUMWAYS > 1) begin:vict
     cachereplacementpolicy #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cachereplacementpolicy(
-      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage));
+      .clk, .reset, .ce(SRAMEnable), .HitWay, .VictimWay, .RAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage), .SetValid);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
   assign VictimDirty = | VictimDirtyWay;
