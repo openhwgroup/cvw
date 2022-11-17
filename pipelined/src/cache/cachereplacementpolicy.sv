@@ -3,6 +3,7 @@
 //
 // Written: ross1728@gmail.com July 20, 2021
 //          Implements Pseudo LRU
+//          Tested for Powers of 2.
 //
 //
 // A component of the Wally configurable RISC-V project.
@@ -35,30 +36,35 @@ module cachereplacementpolicy
    input logic [NUMWAYS-1:0]  HitWay,
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [SETLEN-1:0]   RAdr,
-   input logic                LRUWriteEn);
+   input logic                LRUWriteEn, SetValid);
 
-  logic [NUMWAYS-2:0]                  LRUEn, LRUMask;
   logic [NUMWAYS-2:0]                  ReplacementBits [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  LineReplacementBits;
   logic [NUMWAYS-2:0]                  NewReplacement;
-  logic [NUMWAYS-2:0]                  NewReplacementD;  
-  logic [SETLEN+OFFSETLEN-1:OFFSETLEN] PAdrD;
-  logic [SETLEN-1:0]                   RAdrD;
-  logic                                LRUWriteEnD;
-
+  logic [NUMWAYS-1:0]                  Way;
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
-  localparam                           LEN = NUMWAYS-1;
 
-  logic [LOGNUMWAYS-1:0]               HitWayEnc;
-  logic [LEN-1:0]                      HitWayExpand;
+  logic [LOGNUMWAYS-1:0]               WayEncoded;
+  logic [NUMWAYS-2:0]                  WayExpanded;
   genvar                               row;
 
-  logic [NUMWAYS-2:0]                  cEn;
-  
+  /* verilator lint_off UNOPTFLAT */
+  // Ross: For some reason verilator does not like this.  I checked and it is not a circular path.
+  logic [NUMWAYS-2:0]                  MuxEnables;
+  logic [LOGNUMWAYS-1:0] Intermediate [NUMWAYS-2:0];
+  /* verilator lint_on UNOPTFLAT */
+
+  function integer log2 (integer value);
+    for (log2=0; value>0; log2=log2+1)
+      value = value>>1;
+    return log2;
+  endfunction // log2
+
   // proposed generic solution
-/* -----\/----- EXCLUDED -----\/-----
-  binencoder #(NUMWAYS) encoder(HitWay, HitWayEnc);
+  // mux between HitWay on a hit and victimway on a miss.
+  mux2 #(NUMWAYS) WayMux(HitWay, VictimWay, SetValid, Way);
+  binencoder #(NUMWAYS) encoder(Way, WayEncoded);
 
   // bit duplication
   // expand HitWay as HitWay[3], {{2}{HitWay[2]}}, {{4}{HitWay[1]}, {{8{HitWay[0]}}, ...
@@ -66,22 +72,22 @@ module cachereplacementpolicy
     localparam integer DuplicationFactor = 2**(LOGNUMWAYS-row-1);
     localparam integer StartIndex = NUMWAYS-2 - DuplicationFactor + 1;
     localparam integer EndIndex = NUMWAYS-2 - 2 * DuplicationFactor + 2;
-    assign HitWayExpand[StartIndex : EndIndex] = {{DuplicationFactor}{HitWayEnc[row]}};
+    assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{WayEncoded[row]}};
   end
 
-  genvar               r, a,s;
-  assign cEn[NUMWAYS-2] = '1;
+  genvar               r, a, s;
+  assign MuxEnables[NUMWAYS-2] = '1;
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin : enables
-    localparam p = NUMWAYS - s;
-    localparam g = $clog2(p);
-    localparam t0 = s - g;
+    localparam p = NUMWAYS - s - 1;
+    localparam g = log2(p);
+    localparam t0 = s - p;
     localparam t1 = t0 - 1;
     localparam r = LOGNUMWAYS - g;
-    assign cEn[t0] = cEn[s] & ~HitWayEnc[r];
-    assign cEn[t1] = cEn[s] & HitWayEnc[r];
+    assign MuxEnables[t0] = MuxEnables[s] & ~WayEncoded[r];
+    assign MuxEnables[t1] = MuxEnables[s] & WayEncoded[r];
   end
 
-  mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, ~HitWayExpand, cEn, NewReplacement);
+  mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, ~WayExpanded, MuxEnables, NewReplacement);
 
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
@@ -94,113 +100,19 @@ module cachereplacementpolicy
       end
     end
   end
-
-  localparam HalfPoint = (2**$clog2(NUMWAYS)) / 2;
-  logic [NUMWAYS-2:0] ivec;
-
-
-  assign ivec[HalfPoint-1:0] = LineReplacementBits[HalfPoint-1:0];
-  for(r = NUMWAYS-2; r >= HalfPoint; r--) begin
-    
+  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
+    localparam p = NUMWAYS - s - 1;
+    localparam t0 = s - p;
+    localparam t1 = t0 - 1;
+    assign Intermediate[s] = LineReplacementBits[s] ? Intermediate[t1] : Intermediate[t0];
+  end
+  for(s = NUMWAYS/2-1; s >= 0; s--) begin
+    localparam int1 = (NUMWAYS/2-1-s)*2 + 1;
+    localparam int0 = int1-1;
+    assign Intermediate[s] = LineReplacementBits[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
-  assign VictimWay[0] = ~LineReplacementBits[2] & ~LineReplacementBits[0];
-  assign VictimWay[1] = ~LineReplacementBits[2] & LineReplacementBits[0];
-  assign VictimWay[2] = LineReplacementBits[2] & ~LineReplacementBits[1];
-  assign VictimWay[3] = LineReplacementBits[2] & LineReplacementBits[1];      
-
- -----/\----- EXCLUDED -----/\----- */
-  
-
-
-  
-    
-  // *** high priority to clean up
-  initial begin
-      assert (NUMWAYS == 2 || NUMWAYS == 4) else $error("Only 2 or 4 ways supported");
-  end
-  
-  // Replacement Bits: Register file
-  // Needs to be resettable for simulation, but could omit reset for synthesis ***
-  always_ff @(posedge clk) begin
-    if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
-    if(ce) begin
-      if (LRUWriteEn) begin 
-        ReplacementBits[RAdr] <= NewReplacement;
-        LineReplacementBits <= #1 NewReplacement;
-      end else begin
-        LineReplacementBits <= #1 ReplacementBits[RAdr];
-      end
-    end
-  end  
-
-  genvar 		      index;
-  if(NUMWAYS == 2) begin : PseudoLRU
-    assign LRUEn[0] = 1'b0;
-    assign NewReplacement[0] = HitWay[1];
-    assign VictimWay[1] = ~LineReplacementBits[0];
-    assign VictimWay[0] = LineReplacementBits[0];
-  end else if (NUMWAYS == 4) begin : PseudoLRU
-    // 1 hot encoding for VictimWay; LRU = LineReplacementBits
-    //| LRU 2 | LRU 1 | LRU 0 |  VictimWay
-    //+-------+-------+-------+-----------
-    //|     1 | -     | 1     | 0001
-    //|     1 | -     | 0     | 0010
-    //|     0 | 1     | -     | 0100
-    //|     0 | 0     | -     | 1000
-
-    assign VictimWay[0] = ~LineReplacementBits[2] & ~LineReplacementBits[0];
-    assign VictimWay[1] = ~LineReplacementBits[2] & LineReplacementBits[0];
-    assign VictimWay[2] = LineReplacementBits[2] & ~LineReplacementBits[1];
-    assign VictimWay[3] = LineReplacementBits[2] & LineReplacementBits[1];      
-
-    // New LRU bits which are updated is function only of the HitWay.
-    // However the not updated bits come from the old LRU.
-    assign LRUEn[2] = |HitWay;
-    assign LRUEn[1] = HitWay[3] | HitWay[2];
-    assign LRUEn[0] = HitWay[1] | HitWay[0];
-
-    assign LRUMask[2] = HitWay[1] | HitWay[0];
-    assign LRUMask[1] = HitWay[2];
-    assign LRUMask[0] = HitWay[0];
-
-    mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, LRUMask, LRUEn, NewReplacement);
-  end 
-  /*  *** 8-way not yet working - look for a general way to write this for all NUMWAYS
-  else if (NUMWAYS == 8) begin : PseudoLRU
-
-    // selects
-    assign LRUEn[6] = 1'b1;
-    assign LRUEn[5] = HitWay[7] | HitWay[6] | HitWay[5] | HitWay[4];
-    assign LRUEn[4] = HitWay[7] | HitWay[6];
-    assign LRUEn[3] = HitWay[5] | HitWay[4];
-    assign LRUEn[2] = HitWay[3] | HitWay[2] | HitWay[1] | HitWay[0];
-    assign LRUEn[1] = HitWay[3] | HitWay[2];
-    assign LRUEn[0] = HitWay[1] | HitWay[0];
-
-    // mask
-    assign LRUMask[6] = HitWay[7] | HitWay[6] | HitWay[5] | HitWay[4];
-    assign LRUMask[5] = HitWay[7] | HitWay[6];
-    assign LRUMask[4] = HitWay[7];
-    assign LRUMask[3] = HitWay[5];
-    assign LRUMask[2] = HitWay[3] | HitWay[2];
-    assign LRUMask[1] = HitWay[2];
-    assign LRUMask[0] = HitWay[0];
-
-    for(index = 0; index < NUMWAYS-1; index++)
-      assign NewReplacement[index] = LRUEn[index] ? LRUMask[index] : LineReplacementBits[index];
-
-    assign EncVicWay[2] = LineReplacementBits[6];
-    assign EncVicWay[1] = LineReplacementBits[6] ? LineReplacementBits[5] : LineReplacementBits[2];
-    assign EncVicWay[0] = LineReplacementBits[6] ? LineReplacementBits[5] ? LineReplacementBits[4] : LineReplacementBits[3] :
-        LineReplacementBits[2] ? LineReplacementBits[1] : LineReplacementBits[0];
-    
-
-    onehotdecoder #(3) 
-    waydec(.bin(EncVicWay),
-      .decoded({VictimWay[0], VictimWay[1], VictimWay[2], VictimWay[3],
-          VictimWay[4], VictimWay[5], VictimWay[6], VictimWay[7]}));
-  end */
+  decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
 endmodule
 
 
