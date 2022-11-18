@@ -27,108 +27,108 @@
 `include "wally-config.vh"
 
 module fpgaTop 
-  (input        default_250mhz_clk1_0_n,
-   input 	   default_250mhz_clk1_0_p, 
-   input 	   reset,
-   input 	   south_rst,
+  (input           default_250mhz_clk1_0_n,
+   input 		   default_250mhz_clk1_0_p, 
+   input 		   reset,
+   input 		   south_rst,
 
    input [3:0] 	   GPI,
    output [4:0]    GPO,
 
-   input 	   UARTSin,
-   output 	   UARTSout,
+   input 		   UARTSin,
+   output 		   UARTSout,
 
    input [3:0] 	   SDCDat,
-   output 	   SDCCLK,
-   inout 	   SDCCmd,
+   output 		   SDCCLK,
+   inout 		   SDCCmd,
 
-   output 	   calib,
-   output 	   cpu_reset,
-   output 	   ahblite_resetn,
+   output 		   calib,
+   output 		   cpu_reset,
+   output 		   ahblite_resetn,
 
    output [16 : 0] c0_ddr4_adr,
    output [1 : 0]  c0_ddr4_ba,
    output [0 : 0]  c0_ddr4_cke,
    output [0 : 0]  c0_ddr4_cs_n,
-   inout [7 : 0]  c0_ddr4_dm_dbi_n,
-   inout [63 : 0] c0_ddr4_dq,
-   inout [7 : 0]  c0_ddr4_dqs_c,
-   inout [7 : 0]  c0_ddr4_dqs_t,
+   inout [7 : 0]   c0_ddr4_dm_dbi_n,
+   inout [63 : 0]  c0_ddr4_dq,
+   inout [7 : 0]   c0_ddr4_dqs_c,
+   inout [7 : 0]   c0_ddr4_dqs_t,
    output [0 : 0]  c0_ddr4_odt,
    output [0 : 0]  c0_ddr4_bg,
-   output 	   c0_ddr4_reset_n,
-   output 	   c0_ddr4_act_n,
+   output 		   c0_ddr4_reset_n,
+   output 		   c0_ddr4_act_n,
    output [0 : 0]  c0_ddr4_ck_c,
    output [0 : 0]  c0_ddr4_ck_t
-);
+   );
 
-  wire 		CPUCLK;
-  wire 		c0_ddr4_ui_clk_sync_rst;
-  wire 		bus_struct_reset;
-  wire 		peripheral_reset;
-  wire 		interconnect_aresetn;
-  wire 		peripheral_aresetn;
-  wire 		mb_reset;
+  wire 			   CPUCLK;
+  wire 			   c0_ddr4_ui_clk_sync_rst;
+  wire 			   bus_struct_reset;
+  wire 			   peripheral_reset;
+  wire 			   interconnect_aresetn;
+  wire 			   peripheral_aresetn;
+  wire 			   mb_reset;
   
-  wire 		   HCLKOpen;
-  wire 		   HRESETnOpen;
-(* mark_debug = "true" *)  wire [`AHBW-1:0] HRDATAEXT;
-(* mark_debug = "true" *)  wire 		   HREADYEXT;
-(* mark_debug = "true" *)  wire 		   HRESPEXT;
-(* mark_debug = "true" *)  wire 		   HSELEXT;
-(* mark_debug = "true" *)  wire [31:0] 	   HADDR;
-(* mark_debug = "true" *)  wire [`AHBW-1:0] HWDATA;
-(* mark_debug = "true" *)  wire 		   HWRITE;
-(* mark_debug = "true" *)  wire [2:0] 	   HSIZE;
-(* mark_debug = "true" *)  wire [2:0] 	   HBURST;
-(* mark_debug = "true" *)  wire [1:0] 	   HTRANS;
-(* mark_debug = "true" *)  wire 		   HREADY;
+  wire 			   HCLKOpen;
+  wire 			   HRESETnOpen;
+  wire [`AHBW-1:0] HRDATAEXT;
+  wire 			   HREADYEXT;
+  wire 			   HRESPEXT;
+  wire 			   HSELEXT;
+  wire [31:0] 	   HADDR;
+  wire [`AHBW-1:0] HWDATA;
+  wire 			   HWRITE;
+  wire [2:0] 	   HSIZE;
+  wire [2:0] 	   HBURST;
+  wire [1:0] 	   HTRANS;
+  wire 			   HREADY;
   wire [3:0] 	   HPROT;
-  wire 		   HMASTLOCK;
+  wire 			   HMASTLOCK;
   
   
 
   wire [31:0] 	   GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
 
-  wire 		   SDCCmdIn;
-  wire 		   SDCCmdOE;
-  wire 		   SDCCmdOut;
+  wire 			   SDCCmdIn;
+  wire 			   SDCCmdOE;
+  wire 			   SDCCmdOut;
 
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_awid;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_awlen;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_awsize;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_awburst;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_awcache;
-(* mark_debug = "true" *)  wire [31:0] 	   m_axi_awaddr;
+  wire [3:0] 	   m_axi_awid;
+  wire [7:0] 	   m_axi_awlen;
+  wire [2:0] 	   m_axi_awsize;
+  wire [1:0] 	   m_axi_awburst;
+  wire [3:0] 	   m_axi_awcache;
+  wire [31:0] 	   m_axi_awaddr;
   wire [2:0] 	   m_axi_awprot;
-(* mark_debug = "true" *)  wire 		   m_axi_awvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_awready;
-(* mark_debug = "true" *)  wire 		   m_axi_awlock;
-(* mark_debug = "true" *)  wire [63:0] 	   m_axi_wdata;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_wstrb;
-(* mark_debug = "true" *)  wire 		   m_axi_wlast;
-(* mark_debug = "true" *)  wire 		   m_axi_wvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_wready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_bid;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_bresp;
-(* mark_debug = "true" *)  wire 		   m_axi_bvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_bready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_arid;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_arlen;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_arsize;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_arburst;
+  wire 		   m_axi_awvalid;
+  wire 		   m_axi_awready;
+  wire 		   m_axi_awlock;
+  wire [63:0] 	   m_axi_wdata;
+  wire [7:0] 	   m_axi_wstrb;
+  wire 		   m_axi_wlast;
+  wire 		   m_axi_wvalid;
+  wire 		   m_axi_wready;
+  wire [3:0] 	   m_axi_bid;
+  wire [1:0] 	   m_axi_bresp;
+  wire 		   m_axi_bvalid;
+  wire 		   m_axi_bready;
+  wire [3:0] 	   m_axi_arid;
+  wire [7:0] 	   m_axi_arlen;
+  wire [2:0] 	   m_axi_arsize;
+  wire [1:0] 	   m_axi_arburst;
   wire [2:0] 	   m_axi_arprot;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_arcache;
-(* mark_debug = "true" *)  wire 		   m_axi_arvalid;
-(* mark_debug = "true" *)  wire [31:0] 	   m_axi_araddr;
-  wire 		   m_axi_arlock;
-(* mark_debug = "true" *)  wire 		   m_axi_arready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_rid;
-(* mark_debug = "true" *)  wire [63:0] 	   m_axi_rdata;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_rresp;
-(* mark_debug = "true" *)  wire 		   m_axi_rvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_rlast;
-(* mark_debug = "true" *)  wire 		   m_axi_rready;
+  wire [3:0] 	   m_axi_arcache;
+  wire 		   m_axi_arvalid;
+  wire [31:0] 	   m_axi_araddr;
+  wire 			   m_axi_arlock;
+  wire 		   m_axi_arready;
+  wire [3:0] 	   m_axi_rid;
+  wire [63:0] 	   m_axi_rdata;
+  wire [1:0] 	   m_axi_rresp;
+  wire 		   m_axi_rvalid;
+  wire 		   m_axi_rlast;
+  wire 		   m_axi_rready;
 
   wire [3:0] 	   BUS_axi_arregion;
   wire [3:0] 	   BUS_axi_arqos;
@@ -142,43 +142,43 @@ module fpgaTop
   wire [3:0] 	   BUS_axi_awcache;
   wire [30:0] 	   BUS_axi_awaddr;
   wire [2:0] 	   BUS_axi_awprot;
-  wire 		   BUS_axi_awvalid;
-  wire 		   BUS_axi_awready;
-  wire 		   BUS_axi_awlock;
+  wire 			   BUS_axi_awvalid;
+  wire 			   BUS_axi_awready;
+  wire 			   BUS_axi_awlock;
   wire [63:0] 	   BUS_axi_wdata;
   wire [7:0] 	   BUS_axi_wstrb;
-  wire 		   BUS_axi_wlast;
-  wire 		   BUS_axi_wvalid;
-  wire 		   BUS_axi_wready;
+  wire 			   BUS_axi_wlast;
+  wire 			   BUS_axi_wvalid;
+  wire 			   BUS_axi_wready;
   wire [3:0] 	   BUS_axi_bid;
   wire [1:0] 	   BUS_axi_bresp;
-  wire 		   BUS_axi_bvalid;
-  wire 		   BUS_axi_bready;
+  wire 			   BUS_axi_bvalid;
+  wire 			   BUS_axi_bready;
   wire [3:0] 	   BUS_axi_arid;
   wire [7:0] 	   BUS_axi_arlen;
   wire [2:0] 	   BUS_axi_arsize;
   wire [1:0] 	   BUS_axi_arburst;
   wire [2:0] 	   BUS_axi_arprot;
   wire [3:0] 	   BUS_axi_arcache;
-  wire 		   BUS_axi_arvalid;
+  wire 			   BUS_axi_arvalid;
   wire [30:0] 	   BUS_axi_araddr;
-  wire 		   BUS_axi_arlock;
-  wire 		   BUS_axi_arready;
+  wire 			   BUS_axi_arlock;
+  wire 			   BUS_axi_arready;
   wire [3:0] 	   BUS_axi_rid;
   wire [63:0] 	   BUS_axi_rdata;
   wire [1:0] 	   BUS_axi_rresp;
-  wire 		   BUS_axi_rvalid;
-  wire 		   BUS_axi_rlast;
-  wire 		   BUS_axi_rready;
+  wire 			   BUS_axi_rvalid;
+  wire 			   BUS_axi_rlast;
+  wire 			   BUS_axi_rready;
   
-  wire 		   BUSCLK;
+  wire 			   BUSCLK;
   
 
-  wire 		   c0_init_calib_complete;
-  wire 		   dbg_clk;
+  wire 			   c0_init_calib_complete;
+  wire 			   dbg_clk;
   wire [511 : 0]   dbg_bus;
 
-  wire 		   CLK208;
+  wire 			   CLK208;
   
 
   
@@ -192,9 +192,9 @@ module fpgaTop
   
   // SD Card Tristate
   IOBUF iobufSDCMD(.T(~SDCCmdOE), // iobuf's T is active low
-		   .I(SDCCmdOut),
-		   .O(SDCCmdIn),
-		   .IO(SDCCmd));
+				   .I(SDCCmdOut),
+				   .O(SDCCmdIn),
+				   .IO(SDCCmd));
 
   // reset controller XILINX IP
   xlnx_proc_sys_reset xlnx_proc_sys_reset_0
