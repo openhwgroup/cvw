@@ -38,9 +38,9 @@ module cachereplacementpolicy
    input logic [SETLEN-1:0]   RAdr,
    input logic                LRUWriteEn, SetValid);
 
-  logic [NUMWAYS-2:0]                  ReplacementBits [NUMLINES-1:0];
-  logic [NUMWAYS-2:0]                  LineReplacementBits;
-  logic [NUMWAYS-2:0]                  NewReplacement;
+  logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
+  logic [NUMWAYS-2:0]                  CurrLRU;
+  logic [NUMWAYS-2:0]                  NewLRU;
   logic [NUMWAYS-1:0]                  Way;
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
@@ -87,29 +87,31 @@ module cachereplacementpolicy
     assign MuxEnables[t1] = MuxEnables[s] & WayEncoded[r];
   end
 
-  mux2 #(1) LRUMuxes[NUMWAYS-2:0](LineReplacementBits, ~WayExpanded, MuxEnables, NewReplacement);
+  mux2 #(1) LRUMuxes[NUMWAYS-2:0](CurrLRU, ~WayExpanded, MuxEnables, NewLRU);
 
   always_ff @(posedge clk) begin
-    if (reset) for (int set = 0; set < NUMLINES; set++) ReplacementBits[set] <= '0;
+    if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
       if (LRUWriteEn) begin 
-        ReplacementBits[RAdr] <= NewReplacement;
-        LineReplacementBits <= #1 NewReplacement;
+        LRUMemory[RAdr] <= NewLRU;
+        CurrLRU <= #1 NewLRU;
       end else begin
-        LineReplacementBits <= #1 ReplacementBits[RAdr];
+        CurrLRU <= #1 LRUMemory[RAdr];
       end
     end
   end
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
-    localparam p = NUMWAYS - s - 1;
-    localparam t0 = s - p;
-    localparam t1 = t0 - 1;
-    assign Intermediate[s] = LineReplacementBits[s] ? Intermediate[t1] : Intermediate[t0];
+    //localparam p = NUMWAYS - s - 1;
+    //localparam t0 = s - p;
+    //localparam t1 = t0 - 1;
+    localparam t1 = 2*s - NUMWAYS;
+    localparam t0 = t1 + 1;
+    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t1] : Intermediate[t0];
   end
   for(s = NUMWAYS/2-1; s >= 0; s--) begin
     localparam int1 = (NUMWAYS/2-1-s)*2 + 1;
     localparam int0 = int1-1;
-    assign Intermediate[s] = LineReplacementBits[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
+    assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
   decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
