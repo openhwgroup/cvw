@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module cachereplacementpolicy
+module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
    input logic                clk, reset, ce,
    input logic [NUMWAYS-1:0]  HitWay,
@@ -61,8 +61,7 @@ module cachereplacementpolicy
     return log2;
   endfunction // log2
 
-  // proposed generic solution
-  // mux between HitWay on a hit and victimway on a miss.
+  // On a miss we need to ignore HitWay and derive the new replacement bits with the VictimWay.
   mux2 #(NUMWAYS) WayMux(HitWay, VictimWay, SetValid, Way);
   binencoder #(NUMWAYS) encoder(Way, WayEncoded);
 
