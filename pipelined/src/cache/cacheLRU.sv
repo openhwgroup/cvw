@@ -55,6 +55,7 @@ module cacheLRU
   logic [LOGNUMWAYS-1:0] Intermediate [NUMWAYS-2:0];
   /* verilator lint_on UNOPTFLAT */
 
+  ///// Update replacement bits.
   function integer log2 (integer value);
     for (log2=0; value>0; log2=log2+1)
       value = value>>1;
@@ -88,6 +89,21 @@ module cacheLRU
 
   mux2 #(1) LRUMuxes[NUMWAYS-2:0](CurrLRU, ~WayExpanded, MuxEnables, NewLRU);
 
+  // Compute next victim way.
+  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
+    localparam t0 = 2*s - NUMWAYS;
+    localparam t1 = t0 + 1;
+    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t1] : Intermediate[t0];
+  end
+  for(s = NUMWAYS/2-1; s >= 0; s--) begin
+    localparam int0 = (NUMWAYS/2-1-s)*2;
+    localparam int1 = int0 + 1;
+    assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
+  end
+
+  decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
+
+  // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
@@ -99,21 +115,7 @@ module cacheLRU
       end
     end
   end
-  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
-    //localparam p = NUMWAYS - s - 1;
-    //localparam t0 = s - p;
-    //localparam t1 = t0 - 1;
-    localparam t1 = 2*s - NUMWAYS;
-    localparam t0 = t1 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t1] : Intermediate[t0];
-  end
-  for(s = NUMWAYS/2-1; s >= 0; s--) begin
-    localparam int1 = (NUMWAYS/2-1-s)*2 + 1;
-    localparam int0 = int1-1;
-    assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
-  end
 
-  decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
 endmodule
 
 
