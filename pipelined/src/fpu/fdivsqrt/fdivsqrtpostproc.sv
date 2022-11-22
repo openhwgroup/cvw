@@ -38,6 +38,7 @@ module fdivsqrtpostproc(
   input  logic Firstun,
   input  logic SqrtM,
   input  logic SpecialCaseM,
+	input  logic [`XLEN-1:0] ForwardedSrcAE,
   input  logic RemOp, MDUE, ALTB, BZero, As,
   input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0] QmM, 
@@ -52,7 +53,7 @@ module fdivsqrtpostproc(
   logic [`DIVBLEN:0] NormShift;
   logic [`DIVb:0] IntQuot, NormQuot;
   logic [`DIVb+3:0] IntRem, NormRem;
-  logic [`DIVb:0] PreResult, Result;
+  logic [`DIVb+3:0] PreResult, Result;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -84,32 +85,31 @@ module fdivsqrtpostproc(
       if (NegSticky) begin
         NormQuot = FirstUM;
         NormRem  = W + RemD;
-        PostInc = 0;
+        PostInc  = 0;
       end else begin
         NormQuot = FirstU;
         NormRem  = W;
-        PostInc = 0;
+        PostInc  = 0;
       end
     else 
       if (NegSticky | weq0) begin
         NormQuot = FirstU;
         NormRem  = W;
-        PostInc = 0;
+        PostInc  = 0;
       end else begin 
         NormQuot = FirstU;
         NormRem  = W - RemD;
-        PostInc = 1;
+        PostInc  = 1;
       end
 
-/*
   always_comb
     if(ALTB) begin
       IntQuot = '0;
-      IntRem  = ForwardedSrcAE;
+      IntRem  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
     end else if (BZero) begin
       IntQuot = '1;
-      IntRem  = ForwardedSrcAE;
-    end else if (EarlyTerm) begin
+      IntRem  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
+    end else if (WZero) begin
       if (weq0) begin
         IntQuot = FirstU;
         IntRem  = '0;
@@ -121,22 +121,20 @@ module fdivsqrtpostproc(
       IntQuot = NormQuot;
       IntRem  = NormRem;
     end 
-  */
   
-  /*
   always_comb
     if (RemOp) begin
-      NormShift = m + (`DIVBLEN)'(`DIVa);
+      NormShift = (m + (`DIVBLEN)'(`DIVa));
       PreResult = IntRem;
     end else begin
-      NormShift = DIVb - (j << `LOGR);
-      PreResult = IntQuot;
+      NormShift = ((`DIVBLEN)'(`DIVb) - (n << `LOGR));
+      PreResult = {3'b000, IntQuot};
     end
-  */
+  
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
-  // assign Result = ($signed(PreResult) >>> NormShift) + (PostInc & ~RemOp);
+  assign Result = ($signed(PreResult) >>> NormShift) + {{(`DIVb+3){1'b0}}, (PostInc & ~RemOp)};
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
