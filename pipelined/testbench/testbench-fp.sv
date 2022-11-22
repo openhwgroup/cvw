@@ -82,7 +82,7 @@ module testbenchfp;
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
 	logic [`DIVb:0] Quot;
   logic CvtResDenormUfE;
-  logic DivStart, DivBusy;
+  logic DivStart, FDivBusyE;
   logic reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DURLEN-1:0] Dur;
@@ -717,9 +717,9 @@ module testbenchfp;
   end
   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
-                    .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), .DivStartE(DivStart), 
-                    .MDUE(1'b0), .W64E(1'b0),
-                    .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .DivBusy, .QeM(DivCalcExp),
+                    .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), 
+                    .FDivStartE(DivStart), .IDivStartE(1'b0), .MDUE(1'b0), .W64E(1'b0),
+                    .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
                     .QmM(Quot), .DivDone);
   end
 
@@ -879,7 +879,7 @@ always @(negedge clk) begin
 
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-   // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((DivBusy===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
+   // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((FDivBusyE===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
     ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
     FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
     divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
@@ -911,7 +911,7 @@ always @(negedge clk) begin
       $stop;
     end
 
-    if(~(DivBusy|DivStart)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
+    if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
 
     if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the end of file
 
