@@ -51,7 +51,7 @@ module privileged (
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic             PrivilegedM,
-  input  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
+  input  logic             InstrPageFaultF, HPTWInstrAccessFaultM, LoadPageFaultM, StoreAmoPageFaultM,
   input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrM,
   input  logic             LoadMisalignedFaultM,
   input  logic             StoreAmoMisalignedFaultM,
@@ -150,7 +150,7 @@ module privileged (
                   .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
 
   trap trap(.reset,
-            .InstrMisalignedFaultM, .InstrAccessFaultM, .IllegalInstrFaultM,
+            .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
             .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
             .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
             .LoadPageFaultM, .StoreAmoPageFaultM,

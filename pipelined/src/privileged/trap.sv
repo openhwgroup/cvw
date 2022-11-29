@@ -33,7 +33,7 @@
 
 module trap (
    input logic 		   reset, 
-  (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, IllegalInstrFaultM,
+  (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
   (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
   (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
   (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
@@ -51,6 +51,7 @@ module trap (
   logic MIntGlobalEnM, SIntGlobalEnM;
   logic ExceptionM;
   logic Committed;
+  logic BothInstrAccessFaultM;
   
   (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
 
@@ -75,7 +76,8 @@ module trap (
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   ///////////////////////////////////////////
-  assign ExceptionM = InstrMisalignedFaultM | InstrAccessFaultM | IllegalInstrFaultM |
+  assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
+  assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
@@ -96,7 +98,7 @@ module trap (
     else if (ValidIntsM[1])            CauseM = 1;  // Supervisor Sw Int       
     else if (ValidIntsM[5])            CauseM = 5;  // Supervisor Timer Int    
     else if (InstrPageFaultM)          CauseM = 12;
-    else if (InstrAccessFaultM)        CauseM = 1;
+    else if (BothInstrAccessFaultM)    CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
     else if (InstrMisalignedFaultM)    CauseM = 0;
     else if (BreakpointFaultM)         CauseM = 3;

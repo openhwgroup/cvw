@@ -62,7 +62,9 @@ module hptw (
    	output logic IgnoreRequestTLB,
    	output logic SelHPTW,
    	output logic                CPUBusy,
-   	output logic HPTWStall
+   	output logic HPTWStall,
+    input logic  LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
+    output logic LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
 );
 
 	typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -97,6 +99,12 @@ module hptw (
                        
 
 	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
+
+
+  // map hptw access faults onto either the original LSU load/store fault or instruction access fault
+  assign LoadAccessFaultM = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign StoreAmoAccessFaultM = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
+  assign HPTWInstrAccessFaultM = WalkerState == IDLE ? 1'b0: (LSUStoreAmoAccessFaultM | LSULoadAccessFaultM) & ~DTLBWalk;
 
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];

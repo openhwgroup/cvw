@@ -152,7 +152,7 @@ module wallypipelinedcore (
   logic             RASPredPCWrongM;
   logic             BPPredClassNonCFIWrongM;
   logic [4:0]             InstrClassM;
-  logic             InstrAccessFaultF;
+  logic             InstrAccessFaultF, HPTWInstrAccessFaultM;
   logic [2:0]             LSUHSIZE;
   logic [2:0]             LSUHBURST;
   logic [1:0]             LSUHTRANS;
@@ -278,6 +278,7 @@ module wallypipelinedcore (
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
     .LoadAccessFaultM,         // connects to privilege
+    .HPTWInstrAccessFaultM,         // connects to privilege
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
@@ -351,7 +352,7 @@ module wallypipelinedcore (
          // Trap signals from pmp/pma in mmu
          // *** do these need to be split up into one for dmem and one for ifu?
          // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
-         .InstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+         .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
          .IllegalFPUInstrM,
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
