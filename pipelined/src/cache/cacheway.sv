@@ -47,7 +47,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        SelFlush,
   input logic                        VictimWay,
   input logic                        FlushWay,
-  input logic                        Invalidate,
+  input logic                        InvalidateCache,
   input logic                        FlushStage,
 //  input logic [(`XLEN-1)/8:0]        ByteMask,
   input logic [LINELEN/8-1:0]        LineByteMask,
@@ -127,7 +127,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     if (reset) ValidBits        <= #1 '0;
     if(ce) begin 
 	  ValidWay <= #1 ValidBits[CAdr];
-	  if(Invalidate & ~FlushStage) ValidBits <= #1 '0;
+	  if(InvalidateCache & ~FlushStage) ValidBits <= #1 '0;
       else if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
       else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
     end

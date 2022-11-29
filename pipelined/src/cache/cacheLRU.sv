@@ -37,7 +37,8 @@ module cacheLRU
    input logic [NUMWAYS-1:0]  ValidWay,
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [SETLEN-1:0]   CAdr,
-   input logic                LRUWriteEn, SetValid);
+   input logic [SETLEN-1:0]   PAdr,
+   input logic                LRUWriteEn, SetValid, InvalidateCache);
 
   logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
@@ -120,8 +121,9 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
-      if (LRUWriteEn) begin 
-        LRUMemory[CAdr] <= NextLRU;
+      if(InvalidateCache) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+      else if (LRUWriteEn) begin 
+        LRUMemory[PAdr] <= NextLRU;
         CurrLRU <= #1 NextLRU;
       end else begin
         CurrLRU <= #1 LRUMemory[CAdr];
