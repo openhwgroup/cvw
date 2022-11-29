@@ -54,6 +54,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       HitWay,
+  output logic                       ValidWay,
   output logic                       VictimDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
@@ -67,7 +68,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic [NUMLINES-1:0]               DirtyBits;
   logic [LINELEN-1:0]                ReadDataLine;
   logic [TAGLEN-1:0]                 ReadTag;
-  logic                              Valid;
   logic                              Dirty;
   logic                              SelData;
   logic                              SelTag;
@@ -94,8 +94,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
-  assign VictimDirtyWay = SelTag & Dirty & Valid;
-  assign HitWay = Valid & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign VictimDirtyWay = SelTag & Dirty & ValidWay;
+  assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -124,9 +124,11 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   
   always_ff @(posedge clk) begin // Valid bit array, 
-    if (reset | Invalidate) ValidBits        <= #1 '0;
-    if(ce) begin Valid <= #1 ValidBits[CAdr];
-      if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
+    if (reset) ValidBits        <= #1 '0;
+    if(ce) begin 
+	  ValidWay <= #1 ValidBits[CAdr];
+	  if(Invalidate & ~FlushStage) ValidBits <= #1 '0;
+      else if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
       else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
     end
   end
