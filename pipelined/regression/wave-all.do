@@ -881,7 +881,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/UnalignedNext
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/NextEPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/NextCauseM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/NextMtvalM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/SIP_REGW
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/SIE_REGW
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/UIP_REGW
@@ -896,7 +896,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/CSRMWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/CSRSWriteM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/ExtIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/TimerIntM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csri/SwIntM
@@ -959,7 +959,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/count
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/InstrValidM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/LoadStallD
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/CSRMWriteM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/PrivilegeModeW
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/CSRWriteValM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/counters/MCOUNTINHIBIT_REGW
@@ -1004,7 +1004,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/CSRMWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/MTrapM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/NextEPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/NextCauseM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrm/NextMtvalM
@@ -1114,7 +1114,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/CSRSWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/STrapM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/NextEPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/NextCauseM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrs/NextMtvalM
@@ -1188,7 +1188,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/CSRNWriteM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/UTrapM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/NextEPCM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/NextCauseM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/NextMtvalM
@@ -1204,7 +1204,7 @@ add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csrn/
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/clk
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/reset
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/CSRUWriteM
-add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/CSRAdrM
+add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/CSCAdrM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/CSRWriteValM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/CSRUReadValM
 add wave -noupdate -radix hexadecimal /testbench/dut/core/priv/csr/genblk1/csru/SetFflagsM
