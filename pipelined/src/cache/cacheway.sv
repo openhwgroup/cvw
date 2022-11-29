@@ -36,7 +36,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        ce,
   input logic                        reset,
 
-  input logic [$clog2(NUMLINES)-1:0] RAdr,
+  input logic [$clog2(NUMLINES)-1:0] CAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          LineWriteData,
   input logic                        SetValidWay,
@@ -73,21 +73,23 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              SelTag;
   logic                              SelectedWriteWordEn;
   logic [LINELEN/8-1:0]              FinalByteMask;
+  logic                              SetValidEN;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = SetValidWay | SetDirtyWay;// ? '1 : SetDirtyWay ? MemPAdrDecoded : '0; // OR-AND
+  assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
+  assign SetValidEN = SetValidWay & ~FlushStage;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
-    .addr(RAdr), .dout(ReadTag), .bwe('1),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidWay & ~FlushStage));
+    .addr(CAdr), .dout(ReadTag), .bwe('1),
+    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
@@ -107,10 +109,10 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(RAdr),
+    sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce, .addr(CAdr),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
-      .we(SelectedWriteWordEn & ~FlushStage), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+      .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
   end
 
   // AND portion of distributed read multiplexers
@@ -123,9 +125,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset | Invalidate) ValidBits        <= #1 '0;
-    if(ce) begin Valid <= #1 ValidBits[RAdr];
-      if (SetValidWay & ~FlushStage)      ValidBits[RAdr] <= #1 1'b1;
-      else if (ClearValidWay & ~FlushStage)    ValidBits[RAdr] <= #1 1'b0;
+    if(ce) begin Valid <= #1 ValidBits[CAdr];
+      if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
+      else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
     end
   end
 
@@ -138,9 +140,9 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     always_ff @(posedge clk) begin
       if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
       if(ce) begin
-        Dirty <= #1 DirtyBits[RAdr];
-        if (SetDirtyWay & ~FlushStage)   DirtyBits[RAdr] <= #1 1'b1;
-        else if (ClearDirtyWay & ~FlushStage) DirtyBits[RAdr] <= #1 1'b0;
+        Dirty <= #1 DirtyBits[CAdr];
+        if (SetDirtyWay & ~FlushStage)   DirtyBits[CAdr] <= #1 1'b1;
+        else if (ClearDirtyWay & ~FlushStage) DirtyBits[CAdr] <= #1 1'b0;
       end
     end
   end else assign Dirty = 1'b0;
