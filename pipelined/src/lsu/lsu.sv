@@ -66,7 +66,7 @@ module lsu (
    input logic              FpLoadStoreM,
    // faults
    output logic             LoadPageFaultM, StoreAmoPageFaultM,
-   output logic             LoadMisalignedFaultM, LoadAccessFaultM,
+   output logic             LoadMisalignedFaultM, LoadAccessFaultM, HPTWInstrAccessFaultM,
    // cpu hazard unit (trap)
    output logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM,
             // connect to ahb
@@ -116,6 +116,7 @@ module lsu (
   logic [`LLEN-1:0]         ReadDataM;
   logic [(`LLEN-1)/8:0]     ByteMaskM;
   logic                     SelDTIM;
+  logic                     LSULoadAccessFaultM, LSUStoreAmoAccessFaultM;
     
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
@@ -135,13 +136,17 @@ module lsu (
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
       .IHAdrM, .CPUBusy, .HPTWStall, .SelHPTW,
-      .IgnoreRequestTLB);
+      .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
+      .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultM);
   end else begin
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
     assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataM;
+    assign LoadAccessFaultM = LSULoadAccessFaultM;
+    assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
+    assign HPTWInstrAccessFaultM = '0;
    end
 
   // CommittedM tells the CPU's privilege unit the current instruction
@@ -167,7 +172,7 @@ module lsu (
       .PhysicalAddress(PAdrM),
       .TLBMiss(DTLBMissM),
       .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(), .SelTIM(SelDTIM),
-      .InstrAccessFaultF(), .LoadAccessFaultM, .StoreAmoAccessFaultM,
+      .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM),
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .DAPageFault(DataDAPageFaultM),
@@ -186,7 +191,7 @@ module lsu (
     // mux for HWSTRB
     // adrdecs out of uncore.
     
-    assign {DTLBMissM, LoadAccessFaultM, StoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
+    assign {DTLBMissM, LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM} = '0;
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[`PA_BITS-1:0];
     assign CacheableM = '1;
