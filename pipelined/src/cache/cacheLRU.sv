@@ -34,26 +34,31 @@ module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
    input logic                clk, reset, ce,
    input logic [NUMWAYS-1:0]  HitWay,
+   input logic [NUMWAYS-1:0]  ValidWay,
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [SETLEN-1:0]   CAdr,
    input logic                LRUWriteEn, SetValid);
 
   logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
-  logic [NUMWAYS-2:0]                  NewLRU;
+  logic [NUMWAYS-2:0]                  NextLRU;
   logic [NUMWAYS-1:0]                  Way;
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
 
   logic [LOGNUMWAYS-1:0]               WayEncoded;
   logic [NUMWAYS-2:0]                  WayExpanded;
+  logic                                AllValid;
+  
   genvar                               row;
 
   /* verilator lint_off UNOPTFLAT */
   // Ross: For some reason verilator does not like this.  I checked and it is not a circular path.
-  logic [NUMWAYS-2:0]                  MuxEnables;
+  logic [NUMWAYS-2:0]                  LRUUpdate;
   logic [LOGNUMWAYS-1:0] Intermediate [NUMWAYS-2:0];
   /* verilator lint_on UNOPTFLAT */
+
+  assign AllValid = &ValidWay;
 
   ///// Update replacement bits.
   function integer log2 (integer value);
@@ -76,18 +81,18 @@ module cacheLRU
   end
 
   genvar               r, a, s;
-  assign MuxEnables[NUMWAYS-2] = '1;
+  assign LRUUpdate[NUMWAYS-2] = '1;
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin : enables
     localparam p = NUMWAYS - s - 1;
     localparam g = log2(p);
     localparam t0 = s - p;
     localparam t1 = t0 - 1;
     localparam r = LOGNUMWAYS - g;
-    assign MuxEnables[t0] = MuxEnables[s] & ~WayEncoded[r];
-    assign MuxEnables[t1] = MuxEnables[s] & WayEncoded[r];
+    assign LRUUpdate[t0] = LRUUpdate[s] & ~WayEncoded[r];
+    assign LRUUpdate[t1] = LRUUpdate[s] & WayEncoded[r];
   end
 
-  mux2 #(1) LRUMuxes[NUMWAYS-2:0](CurrLRU, ~WayExpanded, MuxEnables, NewLRU);
+  mux2 #(1) LRUMuxes[NUMWAYS-2:0](CurrLRU, ~WayExpanded, LRUUpdate, NextLRU);
 
   // Compute next victim way.
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
@@ -101,15 +106,23 @@ module cacheLRU
     assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
-  decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
+  logic [NUMWAYS-1:0] FirstZero;
+  logic [LOGNUMWAYS-1:0] FirstZeroWay;
+  logic [LOGNUMWAYS-1:0] VictimWayEnc;
+  
+  priorityonehot #(NUMWAYS) FirstZeroEncoder(~ValidWay, FirstZero);
+  binencoder #(NUMWAYS) FirstZeroWayEncoder(FirstZero, FirstZeroWay);
+  mux2 #(LOGNUMWAYS) VictimMux(FirstZeroWay, Intermediate[NUMWAYS-2], AllValid, VictimWayEnc);
+  //decoder #(LOGNUMWAYS) decoder (Intermediate[NUMWAYS-2], VictimWay);
+  decoder #(LOGNUMWAYS) decoder (VictimWayEnc, VictimWay);
 
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
       if (LRUWriteEn) begin 
-        LRUMemory[CAdr] <= NewLRU;
-        CurrLRU <= #1 NewLRU;
+        LRUMemory[CAdr] <= NextLRU;
+        CurrLRU <= #1 NextLRU;
       end else begin
         CurrLRU <= #1 LRUMemory[CAdr];
       end
