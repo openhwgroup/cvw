@@ -130,9 +130,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     if (reset) ValidBits        <= #1 '0;
     if(ce) begin 
 	  ValidWay <= #1 ValidBits[CAdr];
-	  if(InvalidateCache & ~FlushStage) ValidBits <= #1 '0;
-      else if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
-      else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
+	  if(InvalidateCache & ~FlushStage)                    ValidBits <= #1 '0;
+      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CAdr] <= #1 SetValidWay;
     end
   end
 
@@ -143,7 +142,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Dirty bits
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
-      if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}}; // reset is optional.  Consider merging with TAG array in the future.
+      // reset is optional.  Consider merging with TAG array in the future.
+      //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(ce) begin
         Dirty <= #1 DirtyBits[CAdr];
         if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CAdr] <= #1 SetDirtyWay;
