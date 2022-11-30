@@ -116,7 +116,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+  //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+  mux2 #(1) selecteddatamux(HitWay, SelTag, SelFlush | SelEvict, SelData);
   assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
