@@ -48,14 +48,14 @@ module intdivrestoring (
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
-  logic [`XLEN-1:0] WM[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] XQM[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] W[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] XQ[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
   logic DivStartE, SignXE, SignDE, NegQE, NegWM, NegQM;
-  logic [`XLEN-1:0] WNextE, XQNextE;
+  logic [`XLEN-1:0] WNext, XQNext;
  
   //////////////////////////////
   // Execute Stage: prepare for division calculation with control logic, W logic and absolute values, initialize W and XQ
@@ -86,31 +86,37 @@ module intdivrestoring (
   neg #(`XLEN) negx(XinE, XnE);
   mux3 #(`XLEN) xabsmux(XinE, XnE, ForwardedSrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
 
-  // initialization multiplexers on first cycle of operation
-  mux2 #(`XLEN) wmux(WM[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNextE);
-  mux2 #(`XLEN) xmux(XQM[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNextE);
 
   //////////////////////////////
-  // Memory Stage: division iterations, output sign correction
+  // Division Iterations (effectively stalled execute stage, no suffix)
   //////////////////////////////
+
+  // initialization multiplexers on first cycle of operation
+  mux2 #(`XLEN) wmux(W[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNext);
+  mux2 #(`XLEN) xmux(XQ[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNext);
 
   // registers before division steps
-  flopen #(`XLEN) wreg(clk, DivBusyE, WNextE, WM[0]); 
-  flopen #(`XLEN) xreg(clk, DivBusyE, XQNextE, XQM[0]);
-  flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
-  flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
-  
+  flopen #(`XLEN) wreg(clk, DivBusyE, WNext, W[0]); 
+  flopen #(`XLEN) xreg(clk, DivBusyE, XQNext, XQ[0]);
+
   // one copy of divstep for each bit produced per cycle
   genvar i;
   for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
-    intdivrestoringstep divstep(WM[i], XQM[i], DAbsBM, WM[i+1], XQM[i+1]);
+    intdivrestoringstep divstep(W[i], XQ[i], DAbsBM, W[i+1], XQ[i+1]);
 
+  //////////////////////////////
+  // Memory Stage: output sign correction and special cases
+  //////////////////////////////
+
+  flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
+  flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
+  
   // On final setp of signed operations, negate outputs as needed to get correct sign
-  neg #(`XLEN) qneg(XQM[0], XQnM);
-  neg #(`XLEN) wneg(WM[0], WnM);
+  neg #(`XLEN) qneg(XQ[0], XQnM);
+  neg #(`XLEN) wneg(W[0], WnM);
   // Select appropriate output: normal, negated, or for divide by zero
-  mux3 #(`XLEN) qmux(XQM[0], XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
-  mux3 #(`XLEN) remmux(WM[0], WnM, XQM[0], {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
+  mux3 #(`XLEN) qmux(XQ[0], XQnM, {`XLEN{1'b1}}, {Div0M, NegQM}, QuotM); // Q taken from XQ register, negated if necessary, or all 1s when dividing by zero
+  mux3 #(`XLEN) remmux(W[0], WnM, XQ[0], {Div0M, NegWM}, RemM); // REM taken from W register, negated if necessary, or from X when dividing by zero
 
   //////////////////////////////
   // Divider FSM to sequence Busy and Done
