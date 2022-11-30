@@ -1,2 +1,2 @@
-vsim -do "do wally-pipelined.do rv32ic wally32periph"
+vsim -do "do wally-pipelined.do rv32gc arch32m"
 
