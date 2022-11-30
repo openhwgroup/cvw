@@ -86,21 +86,28 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
-  //logic [DIRTY_BITS+TAGLEN/8-1:0] TagByteEn;
-  //logic [DIRTY_BITS+TAGLEN-1:0]         TagDin, TagDout;
-  
-  //assign TagByteEn = {(SetDirtyWay | ClearDirtyWay) & ~FlushStage, {{TAGLEN/8}{SetValidEN}}};
-  //assign TagDin = {SetDirtyWay, PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN] };
-  //if(DIRTY_BITS) assign Dirty = TagDout[TAGLEN];
-  //else assign Dirty = '0;
-  //assign ReadTag = TagDout[TAGLEN-1:0];
-  
 /* -----\/----- EXCLUDED -----\/-----
-  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN+DIRTY_BITS)) CacheTagMem(.clk, .ce,
+  localparam                         BYTEENLEN = DIRTY_BITS+((TAGLEN-1)/8);
+  logic [BYTEENLEN:0] TagByteEn;
+  logic [DIRTY_BITS+TAGLEN-1:0]       TagDin, TagDout;
+  
+  if(DIRTY_BITS) begin
+    assign TagByteEn = {(SetDirtyWay | ClearDirtyWay) & ~FlushStage, {{BYTEENLEN}{SetValidEN}}};
+    assign TagDin = {SetDirtyWay, PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN] };
+    assign Dirty = TagDout[TAGLEN];
+  end else begin
+    assign TagByteEn = {{BYTEENLEN}{SetValidEN}};
+    assign TagDin = PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN];
+    assign Dirty = '0;
+  end
+  assign ReadTag = TagDout[TAGLEN-1:0];
+  
+  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(DIRTY_BITS+TAGLEN)) CacheTagMem(.clk, .ce,
     .addr(CAdr), .dout(TagDout), .bwe(TagByteEn),
     .din(TagDin), .we(1'b1));
-
  -----/\----- EXCLUDED -----/\----- */
+
+
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
     .addr(CAdr), .dout(ReadTag), .bwe({{(TAGLEN+7)/8}{SetValidEN}}),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(1'b1));
