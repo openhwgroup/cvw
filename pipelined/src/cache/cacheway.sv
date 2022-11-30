@@ -87,8 +87,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
-    .addr(CAdr), .dout(ReadTag), .bwe({{(TAGLEN+7)/8}{SetValidEN}}),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(1'b1));
+    .addr(CAdr), .dout(ReadTag), .bwe('1),
+    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   
 
