@@ -35,7 +35,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        clk,
   input logic                        ce,
   input logic                        reset,
-
   input logic [$clog2(NUMLINES)-1:0] CAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          LineWriteData,
@@ -55,7 +54,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       HitWay,
   output logic                       ValidWay,
-  output logic                       VictimDirtyWay,
+  output logic                       VictimDirtyWay, HitDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
   localparam integer                 WORDSPERLINE = LINELEN/`XLEN;
@@ -65,7 +64,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   localparam integer                 BYTESPERWORD = `XLEN/8;
 
   logic [NUMLINES-1:0]               ValidBits;
-//  logic [NUMLINES-1:0]               DirtyBits;
+  logic [NUMLINES-1:0]               DirtyBits;
   logic [LINELEN-1:0]                ReadDataLine;
   logic [TAGLEN-1:0]                 ReadTag;
   logic                              Dirty;
@@ -86,63 +85,18 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
-/* -----\/----- EXCLUDED -----\/-----
-  localparam                         BYTEENLEN = DIRTY_BITS+((TAGLEN-1)/8);
-  logic [BYTEENLEN:0] TagByteEn;
-  logic [DIRTY_BITS+TAGLEN-1:0]       TagDin, TagDout;
-  
-  if(DIRTY_BITS) begin
-    assign TagByteEn = {(SetDirtyWay | ClearDirtyWay) & ~FlushStage, {{BYTEENLEN}{SetValidEN}}};
-    assign TagDin = {SetDirtyWay, PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN] };
-    assign Dirty = TagDout[TAGLEN];
-  end else begin
-    assign TagByteEn = {{BYTEENLEN}{SetValidEN}};
-    assign TagDin = PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN];
-    assign Dirty = '0;
-  end
-  assign ReadTag = TagDout[TAGLEN-1:0];
-  
-  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(DIRTY_BITS+TAGLEN)) CacheTagMem(.clk, .ce,
-    .addr(CAdr), .dout(TagDout), .bwe(TagByteEn),
-    .din(TagDin), .we(1'b1));
- -----/\----- EXCLUDED -----/\----- */
-
 
   sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce,
     .addr(CAdr), .dout(ReadTag), .bwe({{(TAGLEN+7)/8}{SetValidEN}}),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(1'b1));
 
-  if (DIRTY_BITS)  begin : dirty
-  sram1p1rw #(.DEPTH(NUMLINES), .WIDTH(1)) DirtyMem(.clk, .ce,
-    .addr(CAdr), .dout(Dirty), .bwe((SetDirtyWay | ClearDirtyWay) & ~FlushStage),
-    .din(SetDirtyWay), .we(1'b1));
-  end else assign Dirty = 1'b0;
-
-
-  /////////////////////////////////////////////////////////////////////////////////////////////
-  // Dirty Bits
-  /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Dirty bits
-/* -----\/----- EXCLUDED -----\/-----
-  if (DIRTY_BITS) begin:dirty
-    always_ff @(posedge clk) begin
-      //if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
-      if(ce) begin
-        Dirty <= #1 DirtyBits[CAdr];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CAdr] <= #1 SetDirtyWay;
-        //if (SetDirtyWay & ~FlushStage)   DirtyBits[CAdr] <= #1 1'b1;
-        //else if (ClearDirtyWay & ~FlushStage) DirtyBits[CAdr] <= #1 1'b0;
-      end
-    end
-  end else assign Dirty = 1'b0;
- -----/\----- EXCLUDED -----/\----- */
   
 
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & ValidWay;
+  assign HitDirtyWay = Dirty & HitWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,6 +135,21 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
       else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
     end
   end
+
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Dirty Bits
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Dirty bits
+  if (DIRTY_BITS) begin:dirty
+    always_ff @(posedge clk) begin
+      if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}}; // reset is optional.  Consider merging with TAG array in the future.
+      if(ce) begin
+        Dirty <= #1 DirtyBits[CAdr];
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CAdr] <= #1 SetDirtyWay;
+      end
+    end
+  end else assign Dirty = 1'b0;
 
 
 endmodule
