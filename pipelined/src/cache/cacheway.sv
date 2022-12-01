@@ -35,7 +35,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic                        clk,
   input logic                        ce,
   input logic                        reset,
-
   input logic [$clog2(NUMLINES)-1:0] CAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          LineWriteData,
@@ -55,7 +54,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   output logic [LINELEN-1:0]         ReadDataLineWay,
   output logic                       HitWay,
   output logic                       ValidWay,
-  output logic                       VictimDirtyWay,
+  output logic                       VictimDirtyWay, HitDirtyWay,
   output logic [TAGLEN-1:0]          VictimTagWay);
 
   localparam integer                 WORDSPERLINE = LINELEN/`XLEN;
@@ -91,10 +90,13 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     .addr(CAdr), .dout(ReadTag), .bwe('1),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
+  
+
   // AND portion of distributed tag multiplexer
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & ValidWay;
+  assign HitDirtyWay = Dirty & HitWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,9 +130,8 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
     if (reset) ValidBits        <= #1 '0;
     if(ce) begin 
 	  ValidWay <= #1 ValidBits[CAdr];
-	  if(InvalidateCache & ~FlushStage) ValidBits <= #1 '0;
-      else if (SetValidEN)      ValidBits[CAdr] <= #1 1'b1;
-      else if (ClearValidWay & ~FlushStage)    ValidBits[CAdr] <= #1 1'b0;
+	  if(InvalidateCache & ~FlushStage)                    ValidBits <= #1 '0;
+      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CAdr] <= #1 SetValidWay;
     end
   end
 
@@ -141,14 +142,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   // Dirty bits
   if (DIRTY_BITS) begin:dirty
     always_ff @(posedge clk) begin
-      if (reset)              DirtyBits        <= #1 {NUMLINES{1'b0}};
+      // reset is optional.  Consider merging with TAG array in the future.
+      //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(ce) begin
         Dirty <= #1 DirtyBits[CAdr];
-        if (SetDirtyWay & ~FlushStage)   DirtyBits[CAdr] <= #1 1'b1;
-        else if (ClearDirtyWay & ~FlushStage) DirtyBits[CAdr] <= #1 1'b0;
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CAdr] <= #1 SetDirtyWay;
       end
     end
   end else assign Dirty = 1'b0;
+
 
 endmodule
 

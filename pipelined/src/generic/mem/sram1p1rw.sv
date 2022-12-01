@@ -71,17 +71,23 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
       always @(posedge clk) 
         if (ce & we & bwe[WIDTH/8])
           RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
-  
+
     always @(posedge clk) begin
       if(ce) begin
         dout <= #1 RAM[addr];
-        if(we) begin
-          for(i = 0; i < WIDTH/8; i++) 
-            if(bwe[i])
-		          RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
+      end
+    end
+    if(WIDTH >= 8) begin
+      always @(posedge clk) begin
+        if(ce) begin
+          if(we) begin
+            for(i = 0; i < WIDTH/8; i++) 
+              if(bwe[i])
+		        RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
+          end
         end
       end
     end
-  end 
+  end
 
 endmodule
