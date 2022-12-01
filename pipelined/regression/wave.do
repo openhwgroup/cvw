@@ -5,39 +5,39 @@ add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/CSRWriteFencePendingDEM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
-add wave -noupdate -expand -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
-add wave -noupdate -expand -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
-add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/core/hzu/FlushF
-add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushD
-add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushE
-add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushM
-add wave -noupdate -expand -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushW
-add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallF
-add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallD
-add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallE
-add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallM
-add wave -noupdate -expand -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallW
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/CSRWriteFencePendingDEM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
+add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
+add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
+add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/hzu/FlushF
+add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushD
+add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushE
+add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushM
+add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushW
+add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallF
+add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallD
+add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallE
+add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallM
+add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallW
 add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
@@ -237,131 +237,127 @@ add wave -noupdate -expand -group lsu -group bus /testbench/dut/core/lsu/LSUHWDA
 add wave -noupdate -expand -group lsu -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/BusStall
 add wave -noupdate -expand -group lsu -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/CacheBusRW
 add wave -noupdate -expand -group lsu -group bus /testbench/dut/core/lsu/bus/dcache/ahbcacheinterface/CacheBusAck
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheRW
-add wave -noupdate -expand -group lsu -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/IEUAdrE
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/IEUAdrM
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
-add wave -noupdate -expand -group lsu -group dcache {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ClearDirtyWay}
-add wave -noupdate -expand -group lsu -group dcache {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/Dirty}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/HitWay
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUWriteEn
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/CAdr
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} -color {Orange Red} {/testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUMemory[0]}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/CurrLRU
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/NextLRU
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/VictimWay
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} -expand -group DETAILS -expand /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/Intermediate
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} -expand -group DETAILS /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUUpdate
-add wave -noupdate -expand -group lsu -group dcache -expand -group {replacement policy} -expand -group DETAILS /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/WayExpanded
-add wave -noupdate -expand -group lsu -group dcache -group flush -radix unsigned /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdr
-add wave -noupdate -expand -group lsu -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
-add wave -noupdate -expand -group lsu -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirtyWay
-add wave -noupdate -expand -group lsu -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimTag
-add wave -noupdate -expand -group lsu -group dcache -group flush /testbench/dut/core/lsu/CacheableM
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelectedWriteWordEn}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetValidWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetDirtyWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/CacheTagMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/DirtyBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ValidBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word0 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[0]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[0]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[1]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[1]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/RAM[62]}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SelectedWriteWordEn}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SetValidWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SetDirtyWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/CacheTagMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/DirtyBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ValidBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[0]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[0]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[1]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[1]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[2]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word2 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[2]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[3]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[3]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SelectedWriteWordEn}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SetValidWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SetDirtyWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/CacheTagMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/DirtyBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ValidBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word0 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[0]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[0]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[1]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[1]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[2]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[2]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[3]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[3]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SelectedWriteWordEn}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SetValidWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SetDirtyWay}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/CacheTagMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/DirtyBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ValidBits}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[0]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[0]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[1]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[1]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[2]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[2]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[3]/CacheDataMem/we}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[3]/CacheDataMem/RAM}
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -group valid/dirty /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
-add wave -noupdate -expand -group lsu -group dcache -expand -group {Cache SRAM writes} -group valid/dirty /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/HitWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ValidWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/Dirty}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ReadTag}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/HitWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ValidWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/Dirty}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ReadTag}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/HitWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ValidWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/Dirty}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ReadTag}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/HitWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ValidWay}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/Dirty}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ReadTag}
-add wave -noupdate -expand -group lsu -group dcache -group {Cache SRAM read} /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimTag
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimWay
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirtyWay
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirty
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/SelEvict
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLine
-add wave -noupdate -expand -group lsu -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/WordOffsetAddr
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/NextAdr
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/FlushCache
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheStall
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/ReadDataWordM
-add wave -noupdate -expand -group lsu -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteData
-add wave -noupdate -expand -group lsu -group dcache -group status /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
-add wave -noupdate -expand -group lsu -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
-add wave -noupdate -expand -group lsu -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAdr
-add wave -noupdate -expand -group lsu -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAck
-add wave -noupdate -expand -group lsu -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataWord
-add wave -noupdate -expand -group lsu -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CacheRW
+add wave -noupdate -expand -group lsu -expand -group dcache -color Gold /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/CurrState
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetValid
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SetDirty
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrE
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/IEUAdrM
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
+add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ClearDirtyWay}
+add wave -noupdate -expand -group lsu -expand -group dcache {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/HitWay
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUWriteEn
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/CAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} -color {Orange Red} {/testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUMemory[0]}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/CurrLRU
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/NextLRU
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/VictimWay
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} -expand -group DETAILS -expand /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/Intermediate
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} -expand -group DETAILS /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/LRUUpdate
+add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} -expand -group DETAILS /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/WayExpanded
+add wave -noupdate -expand -group lsu -expand -group dcache -group flush -radix unsigned /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
+add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirtyWay
+add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/bus/dcache/dcache/VictimTag
+add wave -noupdate -expand -group lsu -expand -group dcache -group flush /testbench/dut/core/lsu/CacheableM
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelectedWriteWordEn}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetDirtyWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/CacheTagMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ValidBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word0 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[0]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[0]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[1]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[1]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/RAM[62]}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[2]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way0 -group Way0Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/word[3]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SelectedWriteWordEn}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SetValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/SetDirtyWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/CacheTagMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ValidBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[0]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[0]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[1]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[1]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[2]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word2 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[2]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[3]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way1 -group Way1Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/word[3]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SelectedWriteWordEn}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SetValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/SetDirtyWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/CacheTagMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ValidBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word0 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[0]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[0]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[1]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[1]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[2]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[2]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[3]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way2 -group Way2Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/word[3]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SelectedWriteWordEn}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SetValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/SetDirtyWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -label TAG {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/CacheTagMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ValidBits}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[0]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[0]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[1]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[1]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[2]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word2 -expand {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[2]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[3]/CacheDataMem/we}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -expand -group way3 -group Way3Word3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/word[3]/CacheDataMem/RAM}
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -group valid/dirty /testbench/dut/core/lsu/bus/dcache/dcache/ClearValid
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group {Cache SRAM writes} -group valid/dirty /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/HitWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/ReadTag}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/HitWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -expand -group way1 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/ReadTag}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/HitWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way2 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/ReadTag}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/HitWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ValidWay}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/Dirty}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} -group way3 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/ReadTag}
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM read} /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimTag
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimWay
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirtyWay
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/VictimDirty
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/SelAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/SelEvict
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/CAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataLine
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group Victim /testbench/dut/core/lsu/bus/dcache/dcache/WordOffsetAddr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/NextAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/PAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/FlushCache
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheStall
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/ReadDataWordM
+add wave -noupdate -expand -group lsu -expand -group dcache -group {CPU side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheWriteData
+add wave -noupdate -expand -group lsu -expand -group dcache -group status /testbench/dut/core/lsu/bus/dcache/dcache/HitWay
+add wave -noupdate -expand -group lsu -expand -group dcache -group status -color {Medium Orchid} /testbench/dut/core/lsu/bus/dcache/dcache/CacheHit
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAdr
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/CacheBusAck
+add wave -noupdate -expand -group lsu -expand -group dcache -group {Memory Side} /testbench/dut/core/lsu/bus/dcache/dcache/ReadDataWord
+add wave -noupdate -expand -group lsu -expand -group dcache /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/VAdr
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/tlbcontrol/EffectivePrivilegeMode
 add wave -noupdate -expand -group lsu -group dtlb /testbench/dut/core/lsu/dmmu/dmmu/tlb/tlb/PTE
@@ -627,8 +623,20 @@ add wave -noupdate /testbench/dut/core/lsu/LSURWM
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/CacheRWM
 add wave -noupdate /testbench/dut/core/lsu/CacheableM
 add wave -noupdate /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/IHAdrM
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/dirty/DirtyMem/RAM}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[1]/dirty/DirtyMem/RAM}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/RAM}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[3]/dirty/DirtyMem/RAM}
+add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/ValidWay
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/Dirty}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/ce}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/addr}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/din}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/we}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/bwe}
+add wave -noupdate {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[2]/dirty/DirtyMem/dout}
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {313524 ns} 1} {{Cursor 4} {313364 ns} 1} {{Cursor 5} {1439336 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {313524 ns} 1} {{Cursor 4} {313364 ns} 1} {{Cursor 5} {313675 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -644,4 +652,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1439150 ns} {1439522 ns}
+WaveRestoreZoom {313598 ns} {313752 ns}
