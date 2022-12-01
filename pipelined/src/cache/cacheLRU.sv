@@ -32,7 +32,7 @@
 
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
-   input logic                clk, reset, ce,
+   input logic                clk, reset, ce, FlushStage,
    input logic [NUMWAYS-1:0]  HitWay,
    input logic [NUMWAYS-1:0]  ValidWay,
    output logic [NUMWAYS-1:0] VictimWay,
@@ -121,8 +121,8 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
-      if(InvalidateCache) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
-      else if (LRUWriteEn) begin 
+      if(InvalidateCache & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+      else if (LRUWriteEn & ~FlushStage) begin 
         LRUMemory[PAdr] <= NextLRU;
         CurrLRU <= #1 NextLRU;
       end else begin
