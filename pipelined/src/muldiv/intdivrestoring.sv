@@ -50,7 +50,7 @@ module intdivrestoring (
 
   logic [`XLEN-1:0] W[`DIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] XQ[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsBM, XnE, XInitE, WnM, XQnM;
+  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsB, XnE, XInitE, WnM, XQnM;
   localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
@@ -86,7 +86,6 @@ module intdivrestoring (
   neg #(`XLEN) negx(XinE, XnE);
   mux3 #(`XLEN) xabsmux(XinE, XnE, ForwardedSrcAE, {Div0E, SignXE}, XInitE);  // take absolute value for signed operations, or keep original value for divide by 0
 
-
   //////////////////////////////
   // Division Iterations (effectively stalled execute stage, no suffix)
   //////////////////////////////
@@ -98,17 +97,17 @@ module intdivrestoring (
   // registers before division steps
   flopen #(`XLEN) wreg(clk, DivBusyE, WNext, W[0]); 
   flopen #(`XLEN) xreg(clk, DivBusyE, XQNext, XQ[0]);
+  flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsB);
 
   // one copy of divstep for each bit produced per cycle
   genvar i;
   for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
-    intdivrestoringstep divstep(W[i], XQ[i], DAbsBM, W[i+1], XQ[i+1]);
+    intdivrestoringstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
 
   //////////////////////////////
   // Memory Stage: output sign correction and special cases
   //////////////////////////////
 
-  flopen #(`XLEN) dabsreg(clk, DivStartE, DAbsBE, DAbsBM);
   flopen #(3) Div0eMReg(clk, DivStartE, {Div0E, NegQE, SignXE}, {Div0M, NegQM, NegWM});
   
   // On final setp of signed operations, negate outputs as needed to get correct sign
