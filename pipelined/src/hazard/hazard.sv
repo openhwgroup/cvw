@@ -65,15 +65,15 @@ module hazard(
   assign StallFCause = CSRWriteFencePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    
-//  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
   assign StallECause = (DivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
-//  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  
-  assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM));  //*** Ross: should FDivBusyE trigger StallECause rather than StallMCause similar to DivBusyE?
-  // *** ross: my changes to cache and lsu need to disable ifu/lsu stalls on a Trap.
+  assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
   assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM) | (FDivBusyE & ~TrapM & ~IntPendingM);
   // head version
   // assign StallWCause = LSUStallM | IFUStallF  | (FDivBusyE & ~TrapM & ~IntPendingM); // *** FDivBusyE should look like DivBusyE  
+//  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  
+//  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
+  // *** ross: my changes to cache and lsu need to disable ifu/lsu stalls on a Trap.
 
 
   assign #1 StallF = StallFCause | StallD;
