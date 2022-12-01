@@ -45,7 +45,6 @@ module cachefsm
    input logic        CacheBusAck,
    // dcache internals
    input logic        CacheHit,
-   input logic        CacheHitDirty,
    input logic        VictimDirty,
    input logic        FlushAdrFlag,
    input logic        FlushWayFlag, 
