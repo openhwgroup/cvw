@@ -42,7 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] n, m,
-  output logic OTFCSwap, ALTB, BZero, As,
+  output logic OTFCSwap, ALTBM, BZero, As,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVN-2:0] Dpreproc
@@ -56,7 +56,7 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] ZeroBufX, ZeroBufY;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  Bs, OTFCSwapTemp;
+  logic  Bs, OTFCSwapTemp, ALTBE;
   logic  [`XLEN-1:0] A64, B64;
   logic  [`DIVBLEN:0] Calcn, Calcm;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
@@ -87,8 +87,8 @@ module fdivsqrtpreproc (
   assign PreprocY = Ym[`NF-1:0]<<Calcm;
 
   assign ZeroDiff = Calcm - L;
-  assign ALTB = ZeroDiff[`DIVBLEN]; // A less than B
-  assign p = ALTB ? '0 : ZeroDiff;
+  assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
+  assign p = ALTBE ? '0 : ZeroDiff;
 
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
   assign pPrTrunc = pPlusr[`LOGRK-1:0];
@@ -103,7 +103,7 @@ module fdivsqrtpreproc (
   // *** explain why X is shifted between radices (initial assignment of WS=RX)
   if (`RADIX == 2)  assign PreShiftX = Sqrt ? {3'b111, SqrtX, {`DIVb-1-`NF{1'b0}}} : DivX;
   else              assign PreShiftX = Sqrt ? {2'b11, SqrtX, {`DIVb-1-`NF{1'b0}}, 1'b0} : DivX;
-  assign X = MDUE ? PreShiftX >> RightShiftX : PreShiftX;
+  assign X = MDUE ? DivX >> RightShiftX : PreShiftX;
   assign Dpreproc = {PreprocY, {`DIVN-1-`NF{1'b0}}};
 
   //           radix 2     radix 4
@@ -115,10 +115,12 @@ module fdivsqrtpreproc (
   // DIVRESLEN = DIVLEN or DIVLEN+2
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
-  flopen #(`NE+2) expflop(clk, IFDivStartE, Qe, QeM);
-  flopen #(1) swapflop(clk, IFDivStartE, OTFCSwapTemp, OTFCSwap);
-  flopen #(`DIVBLEN+1) nflop(clk, IFDivStartE, Calcn, n);
-  flopen #(`DIVBLEN+1) mflop(clk, IFDivStartE, Calcm, m);
+
+  flopen #(`NE+2)    expreg(clk, IFDivStartE, Qe, QeM);
+  flopen #(1)       swapreg(clk, IFDivStartE, OTFCSwapTemp, OTFCSwap);
+  flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
+  flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, Calcn, n);
+  flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, Calcm, m);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m(Calcm), .Qe);
 
 endmodule
