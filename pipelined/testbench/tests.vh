@@ -136,6 +136,7 @@ string tvpaths[] = '{
   
 string imperas32f[] = '{
     `IMPERASTEST,
+    "rv32i_m/F/FDIV-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RMM-01",
     "rv32i_m/F/FADD-S-DYN-RNE-01",
@@ -470,7 +471,6 @@ string imperas32f[] = '{
 
   string imperas64d[] = '{
     `IMPERASTEST,
-    "rv64i_m/D/FDIV-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RMM-01",
     "rv64i_m/D/FADD-D-DYN-RNE-01",
@@ -1414,17 +1414,6 @@ string imperas32f[] = '{
 
   string arch32f[] = '{
     `RISCVARCHTEST,
-    "rv32i_m/F/src/fdiv_b20-01.S",
-    "rv32i_m/F/src/fdiv_b1-01.S",
-    "rv32i_m/F/src/fdiv_b2-01.S",
-    "rv32i_m/F/src/fdiv_b21-01.S",
-    "rv32i_m/F/src/fdiv_b3-01.S",
-    "rv32i_m/F/src/fdiv_b4-01.S",
-    "rv32i_m/F/src/fdiv_b5-01.S",
-    "rv32i_m/F/src/fdiv_b6-01.S",
-    "rv32i_m/F/src/fdiv_b7-01.S",
-    "rv32i_m/F/src/fdiv_b8-01.S",
-    "rv32i_m/F/src/fdiv_b9-01.S",
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
@@ -1455,6 +1444,17 @@ string imperas32f[] = '{
     "rv32i_m/F/src/fcvt.wu.s_b27-01.S",
     "rv32i_m/F/src/fcvt.wu.s_b28-01.S",
     "rv32i_m/F/src/fcvt.wu.s_b29-01.S",
+    "rv32i_m/F/src/fdiv_b20-01.S",
+    "rv32i_m/F/src/fdiv_b1-01.S",
+    "rv32i_m/F/src/fdiv_b2-01.S",
+    "rv32i_m/F/src/fdiv_b21-01.S",
+    "rv32i_m/F/src/fdiv_b3-01.S",
+    "rv32i_m/F/src/fdiv_b4-01.S",
+    "rv32i_m/F/src/fdiv_b5-01.S",
+    "rv32i_m/F/src/fdiv_b6-01.S",
+    "rv32i_m/F/src/fdiv_b7-01.S",
+    "rv32i_m/F/src/fdiv_b8-01.S",
+    "rv32i_m/F/src/fdiv_b9-01.S",
     "rv32i_m/F/src/feq_b1-01.S",
     "rv32i_m/F/src/feq_b19-01.S",
     "rv32i_m/F/src/fle_b1-01.S",
