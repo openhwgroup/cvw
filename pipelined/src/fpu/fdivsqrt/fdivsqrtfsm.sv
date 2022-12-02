@@ -46,8 +46,7 @@ module fdivsqrtfsm(
   input  logic WZero,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] n,
-  output logic DivStartE,
-//  output logic DivDone,
+  output logic IFDivStartE,
   output logic FDivBusyE, FDivDoneE,
   output logic SpecialCaseM
 );
@@ -60,15 +59,10 @@ module fdivsqrtfsm(
   logic SpecialCaseE;
 
   // *** start logic is presently in fctl.  Make it look more like integer division start logic
-  // DivStartE comes from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
+  // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
+  assign IFDivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
- // assign DivDone = (state == DONE) | (WZero & (state == BUSY)); // *** used in postprocess.sv and round.sv.  This doesn't seem proper.  They break when removed.
-  //assign FDivBusyE = (state == BUSY & ~DivDone); // *** want to add | DivStartE but it creates comb loop
-  assign FDivBusyE = (state == BUSY) | DivStartE; 
-
-    // Divider control signals from MDU
-  //assign DivBusyE = (state == BUSY) | DivStartE;
+  assign FDivBusyE = (state == BUSY) | IFDivStartE; 
 
   // terminate immediately on special cases
   assign SpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
@@ -116,7 +110,7 @@ module fdivsqrtfsm(
   always_ff @(posedge clk) begin
       if (reset | TrapM) begin
           state <= #1 IDLE; 
-      end else if (DivStartE) begin 
+      end else if (IFDivStartE) begin 
           step <= cycles; 
           if (SpecialCaseE) state <= #1 DONE;
           else             state <= #1 BUSY;
@@ -128,27 +122,5 @@ module fdivsqrtfsm(
         else        state <= #1 IDLE;
       end 
   end
-
-/*
-  always_ff @(posedge clk) begin
-      if (reset) begin
-          state <= #1 IDLE; 
-      end else if (DivStartE&~StallE) begin 
-          step <= cycles; 
-//          $display("Setting Nf = %d fbits %d cycles = %d FmtE %d FPSIZES = %d Q_NF = %d num = %d denom = %d\n", Nf, fbits, cycles, FmtE, `FPSIZES, `Q_NF,
-//          (fbits +(`LOGR*`DIVCOPIES)-1), (`LOGR*`DIVCOPIES));
-          if (SpecialCaseE) state <= #1 DONE;
-          else             state <= #1 BUSY;
-      end else if (DivDone) begin
-        if (StallM) state <= #1 DONE;
-        else        state <= #1 IDLE;
-      end else if (state == BUSY) begin
-          if (step == 1) begin
-              state <= #1 DONE;
-          end
-          step <= step - 1;
-      end 
-  end
-*/
 
 endmodule

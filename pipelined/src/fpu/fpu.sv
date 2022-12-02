@@ -131,7 +131,7 @@ module fpu (
    logic [`NE+1:0]      QeE, QeM; 
    logic                DivSE, DivSM;
 //   logic                DivDoneM;
-   logic                FDivDoneE, DivStartE;
+   logic                FDivDoneE, IFDivStartE;
 
    // result and flag signals
    logic [`XLEN-1:0] ClassResE;               // classify result
@@ -151,7 +151,7 @@ module fpu (
    logic [`FLEN-1:0] 	 AlignedSrcAE;                       // align SrcA to the floating point format
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic [`FLEN-1:0]     BoxedOneE;                         // Zero value for Z for multiplication, with NaN boxing if needed
-   logic             EMRegEn;
+   logic             StallUnpackedM;
 
    // DECODE STAGE
 
@@ -266,7 +266,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .DivStartE, .FDivDoneE, .QeM, 
+                  .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
                   .QmM /*, .DivDone(DivDoneM) */);
 
                   //
@@ -340,20 +340,16 @@ module fpu (
 
    // E/M pipe registers
 
-   assign EMRegEn = ~StallM & (~FDivBusyE & ~FDivDoneE | DivStartE);
+   assign StallUnpackedM = StallM | (FDivBusyE & ~IFDivStartE | FDivDoneE); // Need to stall during divsqrt iterations to avoid capturing bad flags from stale forwarded sources
 
-   // flopenrc #(64) EMFpReg1(clk, reset, FlushM, EMRegEn, XE, FSrcXM);
    flopenrc #(`NF+1) EMFpReg2 (clk, reset, FlushM, ~StallM, XmE, XmM);
    flopenrc #(`NF+1) EMFpReg3 (clk, reset, FlushM, ~StallM, YmE, YmM);
    flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZeE,ZmE}, {ZeM,ZmM});
    flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
    flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
-   flopenr #(15) EMFpReg5 (clk, reset, EMRegEn, 
+   flopenr #(15) EMFpReg5 (clk, reset, ~StallUnpackedM, 
             {XsE, YsE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
             {XsM, YsM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
-   /* flopenrc #(13) EMFpReg5 (clk, reset, FlushM, ~StallM, 
-            {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
-            {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});   */   
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
    flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM); 
    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, PeE, PeM);  
