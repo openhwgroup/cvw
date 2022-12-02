@@ -470,6 +470,7 @@ string imperas32f[] = '{
 
   string imperas64d[] = '{
     `IMPERASTEST,
+    "rv64i_m/D/FDIV-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RMM-01",
     "rv64i_m/D/FADD-D-DYN-RNE-01",
