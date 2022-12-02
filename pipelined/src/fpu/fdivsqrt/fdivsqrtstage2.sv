@@ -32,7 +32,7 @@
 
 /* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 (
-  input  logic [`DIVN-2:0] D,
+  input  logic [`DIVb-1:0] D,
   input  logic [`DIVb+3:0]  DBar, 
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb+3:0]  WS, WC,
@@ -69,7 +69,7 @@ module fdivsqrtstage2 (
   always_comb
     if      (up) Dsel = DBar;
     else if (uz) Dsel = '0; // qz
-    else         Dsel = {3'b0, 1'b1, D, {`DIVb-`DIVN+1{1'b0}}}; // un
+    else         Dsel = {3'b000, 1'b1, D}; // un
 
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
