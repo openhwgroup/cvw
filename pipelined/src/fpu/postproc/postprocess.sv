@@ -58,7 +58,7 @@ module postprocess (
     input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
     input logic                             DivS,
-    input logic                             DivDone,
+//    input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
     input logic  [`DIVb:0]                  DivQm,
     // conversion signals
@@ -129,7 +129,7 @@ module postprocess (
     assign Mult = OpCtrl[2]&~OpCtrl[1]&~OpCtrl[0];
     assign CvtOp = (PostProcSel == 2'b00);
     assign FmaOp = (PostProcSel == 2'b10);
-    assign DivOp = (PostProcSel == 2'b01) & DivDone;
+    assign DivOp = (PostProcSel == 2'b01); // & DivDone;
     assign Sqrt =  OpCtrl[0];
 
     // is there an input of infinity or NaN being used
@@ -165,13 +165,13 @@ module postprocess (
                 ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
             end
             2'b01: begin //div
-                if(DivDone) begin
+               /* if(DivDone) begin */
                     ShiftAmt = DivShiftAmt;
                     ShiftIn =  DivShiftIn;
-                end else begin
+              /*  end else begin
                     ShiftAmt = '0;
                     ShiftIn =  '0;
-                end
+                end */
             end
             default: begin 
                 ShiftAmt = {`LOGNORMSHIFTSZ{1'bx}}; 
@@ -201,7 +201,7 @@ module postprocess (
 
     round round(.OutFmt, .Frm, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
-                .DivS, .DivDone,
+                .DivS, //.DivDone,
                 .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .S, .R, .G, .Me);
 
     ///////////////////////////////////////////////////////////////////////////////

@@ -37,7 +37,7 @@ module fdivsqrtstage2 (
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtM,
+  input  logic SqrtE,
   input  logic OTFCSwap,
   output logic un,
   output logic [`DIVb+1:0] CNext,
@@ -73,8 +73,8 @@ module fdivsqrtstage2 (
 
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
-  assign AddIn = SqrtM ? F : Dsel;
-  csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtM, WSA, WCA);
+  assign AddIn = SqrtE ? F : Dsel;
+  csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);
   assign WSNext = WSA << 1;
   assign WCNext = WCA << 1;
 

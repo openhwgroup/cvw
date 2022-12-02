@@ -134,6 +134,7 @@ module fdivsqrtpostproc(
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
+  // *** Result is unused right now
   assign Result = ($signed(PreResult) >>> NormShift) + {{(`DIVb+3){1'b0}}, (PostInc & ~RemOp)};
 
   assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit

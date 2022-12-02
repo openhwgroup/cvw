@@ -42,12 +42,13 @@ module fdivsqrtfsm(
   input  logic SqrtE,
   input  logic StallE,
   input  logic StallM,
+  input  logic TrapM,
   input  logic WZero,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] n,
   output logic DivStartE,
-  output logic DivDone,
-  output logic FDivBusyE,
+//  output logic DivDone,
+  output logic FDivBusyE, FDivDoneE,
   output logic SpecialCaseM
 );
   
@@ -61,8 +62,10 @@ module fdivsqrtfsm(
   // *** start logic is presently in fctl.  Make it look more like integer division start logic
   // DivStartE comes from fctrl, reflecitng the start of floating-point and possibly integer division
   assign DivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
-  assign DivDone = (state == DONE) | (WZero & (state == BUSY)); // *** used in postprocess.sv and round.sv.  This doesn't seem proper.  They break when removed.
-  assign FDivBusyE = (state == BUSY & ~DivDone); // *** want to add | DivStartE but it creates comb loop
+  assign FDivDoneE = (state == DONE);
+ // assign DivDone = (state == DONE) | (WZero & (state == BUSY)); // *** used in postprocess.sv and round.sv.  This doesn't seem proper.  They break when removed.
+  //assign FDivBusyE = (state == BUSY & ~DivDone); // *** want to add | DivStartE but it creates comb loop
+  assign FDivBusyE = (state == BUSY) | DivStartE; 
 
     // Divider control signals from MDU
   //assign DivBusyE = (state == BUSY) | DivStartE;
@@ -111,6 +114,23 @@ module fdivsqrtfsm(
   /* verilator lint_on WIDTH */
 
   always_ff @(posedge clk) begin
+      if (reset | TrapM) begin
+          state <= #1 IDLE; 
+      end else if (DivStartE) begin 
+          step <= cycles; 
+          if (SpecialCaseE) state <= #1 DONE;
+          else             state <= #1 BUSY;
+      end else if (state == BUSY) begin
+          if (step == 1)  state <= #1 DONE;
+          step <= step - 1;
+      end else if ((state == DONE) | (WZero & (state == BUSY))) begin
+        if (StallM) state <= #1 DONE;
+        else        state <= #1 IDLE;
+      end 
+  end
+
+/*
+  always_ff @(posedge clk) begin
       if (reset) begin
           state <= #1 IDLE; 
       end else if (DivStartE&~StallE) begin 
@@ -129,6 +149,6 @@ module fdivsqrtfsm(
           step <= step - 1;
       end 
   end
-
+*/
 
 endmodule

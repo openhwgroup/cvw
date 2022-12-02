@@ -43,7 +43,7 @@ module round(
     input logic                     DivOp,
     input logic                     CvtOp,
     input logic                     ToInt,
-    input logic                     DivDone,
+//    input logic                     DivDone,
     input logic  [1:0]              PostProcSel,
     input logic                     CvtResDenormUf,
     input logic                     CvtResUf,
@@ -295,7 +295,8 @@ module round(
         case(PostProcSel)
             2'b10: Me = FmaMe; // fma
             2'b00: Me = {CvtCe[`NE], CvtCe}&{`NE+2{~CvtResDenormUf|CvtResUf}}; // cvt
-            2'b01: Me = DivDone ? Qe : '0; // divide
+            // 2'b01: Me = DivDone ? Qe : '0; // divide
+            2'b01: Me = Qe; // divide
             default: Me = '0; 
         endcase
 
