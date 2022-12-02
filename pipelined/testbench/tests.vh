@@ -470,6 +470,7 @@ string imperas32f[] = '{
 
   string imperas64d[] = '{
     `IMPERASTEST,
+    "rv64i_m/D/FDIV-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RDN-01",
     "rv64i_m/D/FADD-D-DYN-RMM-01",
     "rv64i_m/D/FADD-D-DYN-RNE-01",
@@ -1207,7 +1208,6 @@ string imperas32f[] = '{
 
   string arch64d[] = '{
     `RISCVARCHTEST,
-    "rv64i_m/D/src/fsqrt.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
