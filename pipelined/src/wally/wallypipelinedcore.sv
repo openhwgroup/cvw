@@ -95,7 +95,7 @@ module wallypipelinedcore (
   logic             FDivBusyE;
   logic             IllegalFPUInstrM;
   logic             FRegWriteM;
-  logic             FPUStallD;
+  logic             FCvtIntStallD;
   logic             FpLoadStoreM;
   logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
@@ -237,7 +237,7 @@ module wallypipelinedcore (
      // hazards
      .StallD, .StallE, .StallM, .StallW,
      .FlushD, .FlushE, .FlushM, .FlushW,
-     .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
+     .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
      .CSRWriteFencePendingDEM, .StoreStallD
@@ -319,7 +319,7 @@ module wallypipelinedcore (
      .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
-     .FPUStallD, .FStallD,
+     .FCvtIntStallD, .FStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
      .wfiM, .IntPendingM,

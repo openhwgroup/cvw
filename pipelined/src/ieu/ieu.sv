@@ -67,7 +67,7 @@ module ieu (
   // hazards
   input logic 		   StallD, StallE, StallM, StallW,
   input logic 		   FlushD, FlushE, FlushM, FlushW,
-  output logic 		   FPUStallD, LoadStallD, MDUStallD, CSRRdStallD,
+  output logic 		   FCvtIntStallD, LoadStallD, MDUStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
   output logic 		   CSRWriteFencePendingDEM,
@@ -113,6 +113,6 @@ module ieu (
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
     .MemReadE, .MDUE, .CSRReadE, .RegWriteM, .RegWriteW,
     .FCvtIntE, .SCE, .ForwardAE, .ForwardBE,
-    .FPUStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
+    .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
 endmodule
 

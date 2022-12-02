@@ -35,7 +35,7 @@ module hazard(
 (* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFencePendingDEM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
 (* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
-(* mark_debug = "true" *)              input logic  FPUStallD, FStallD,
+(* mark_debug = "true" *)              input logic  FCvtIntStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
 (* mark_debug = "true" *)        input logic  wfiM, IntPendingM,
@@ -64,11 +64,12 @@ module hazard(
   // *** consider replacing CSRWriteFencePendingDEM with a flush rather than a stall.  
   assign StallFCause = CSRWriteFencePendingDEM & ~(TrapM | RetM | BPPredWrongE);
   // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FPUStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    
+  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE);    
   assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
   assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
   assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM); // | (FDivBusyE & ~TrapM & ~IntPendingM);
+
   // head version
   // assign StallWCause = LSUStallM | IFUStallF  | (FDivBusyE & ~TrapM & ~IntPendingM); // *** FDivBusyE should look like DivBusyE  
 //  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  

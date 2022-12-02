@@ -58,7 +58,6 @@ module fdivsqrtfsm(
   logic [`DURLEN-1:0] cycles;
   logic SpecialCaseE;
 
-  // *** start logic is presently in fctl.  Make it look more like integer division start logic
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
   assign IFDivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
