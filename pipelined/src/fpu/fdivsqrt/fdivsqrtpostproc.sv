@@ -39,7 +39,7 @@ module fdivsqrtpostproc(
   input  logic SqrtM,
   input  logic SpecialCaseM,
 	input  logic [`XLEN-1:0] ForwardedSrcAE,
-  input  logic RemOp, MDUE, ALTB, BZero, As,
+  input  logic RemOpM, ALTBM, BZero, As,
   input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0] QmM, 
   output logic WZero,
@@ -48,12 +48,12 @@ module fdivsqrtpostproc(
   
   logic [`DIVb+3:0] W, Sum, RemD;
   logic [`DIVb:0] PreQmM;
-  logic NegSticky, PostInc;
+  logic NegStickyM, PostIncM;
   logic weq0;
-  logic [`DIVBLEN:0] NormShift;
-  logic [`DIVb:0] IntQuot, NormQuot;
-  logic [`DIVb+3:0] IntRem, NormRem;
-  logic [`DIVb+3:0] PreResult, Result;
+  logic [`DIVBLEN:0] NormShiftM;
+  logic [`DIVb:0] IntQuotM, NormQuotM;
+  logic [`DIVb+3:0] IntRemM, NormRemM;
+  logic [`DIVb+3:0] PreResultM, ResultM;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -77,66 +77,67 @@ module fdivsqrtpostproc(
   // Determine if sticky bit is negative
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
-  assign NegSticky = W[`DIVb+3];
+  assign NegStickyM = W[`DIVb+3];
   assign RemD = {4'b0000, D, {(`DIVb-`DIVN+1){1'b0}}};
 
+  // Integer division: sign handling for div and rem
   always_comb 
     if (~As)
-      if (NegSticky) begin
-        NormQuot = FirstUM;
-        NormRem  = W + RemD;
-        PostInc  = 0;
+      if (NegStickyM) begin
+        NormQuotM = FirstUM;
+        NormRemM  = W + RemD;
+        PostIncM  = 0;
       end else begin
-        NormQuot = FirstU;
-        NormRem  = W;
-        PostInc  = 0;
+        NormQuotM = FirstU;
+        NormRemM  = W;
+        PostIncM  = 0;
       end
     else 
-      if (NegSticky | weq0) begin
-        NormQuot = FirstU;
-        NormRem  = W;
-        PostInc  = 0;
+      if (NegStickyM | weq0) begin
+        NormQuotM = FirstU;
+        NormRemM  = W;
+        PostIncM  = 0;
       end else begin 
-        NormQuot = FirstU;
-        NormRem  = W - RemD;
-        PostInc  = 1;
+        NormQuotM = FirstU;
+        NormRemM  = W - RemD;
+        PostIncM  = 1;
       end
 
+  // Integer division: Special cases
   always_comb
-    if(ALTB) begin
-      IntQuot = '0;
-      IntRem  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
+    if(ALTBM) begin
+      IntQuotM = '0;
+      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
     end else if (BZero) begin
-      IntQuot = '1;
-      IntRem  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
+      IntQuotM = '1;
+      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
     end else if (WZero) begin
       if (weq0) begin
-        IntQuot = FirstU;
-        IntRem  = '0;
+        IntQuotM = FirstU;
+        IntRemM  = '0;
       end else begin
-        IntQuot = FirstUM;
-        IntRem  = '0;
+        IntQuotM = FirstUM;
+        IntRemM  = '0;
       end
     end else begin 
-      IntQuot = NormQuot;
-      IntRem  = NormRem;
+      IntQuotM = NormQuotM;
+      IntRemM  = NormRemM;
     end 
   
   always_comb
-    if (RemOp) begin
-      NormShift = (m + (`DIVBLEN)'(`DIVa));
-      PreResult = IntRem;
+    if (RemOpM) begin
+      NormShiftM = (m + (`DIVBLEN)'(`DIVa));
+      PreResultM = IntRemM;
     end else begin
-      NormShift = ((`DIVBLEN)'(`DIVb) - (n << `LOGR));
-      PreResult = {3'b000, IntQuot};
+      NormShiftM = ((`DIVBLEN)'(`DIVb) - (n << `LOGR));
+      PreResultM = {3'b000, IntQuotM};
     end
   
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
-  // *** Result is unused right now
-  assign Result = ($signed(PreResult) >>> NormShift) + {{(`DIVb+3){1'b0}}, (PostInc & ~RemOp)};
+  assign ResultM = ($signed(PreResultM) >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
 
-  assign PreQmM = NegSticky ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
+  assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 endmodule
