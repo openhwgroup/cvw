@@ -32,7 +32,7 @@
 
 module fdivsqrtpreproc (
   input  logic clk,
-  input  logic DivStartE, 
+  input  logic IFDivStartE, 
   input  logic [`NF:0] Xm, Ym,
   input  logic [`NE-1:0] Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
@@ -115,10 +115,10 @@ module fdivsqrtpreproc (
   // DIVRESLEN = DIVLEN or DIVLEN+2
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
-  flopen #(`NE+2) expflop(clk, DivStartE, Qe, QeM);
-  flopen #(1) swapflop(clk, DivStartE, OTFCSwapTemp, OTFCSwap);
-  flopen #(`DIVBLEN+1) nflop(clk, DivStartE, Calcn, n);
-  flopen #(`DIVBLEN+1) mflop(clk, DivStartE, Calcm, m);
+  flopen #(`NE+2) expflop(clk, IFDivStartE, Qe, QeM);
+  flopen #(1) swapflop(clk, IFDivStartE, OTFCSwapTemp, OTFCSwap);
+  flopen #(`DIVBLEN+1) nflop(clk, IFDivStartE, Calcn, n);
+  flopen #(`DIVBLEN+1) mflop(clk, IFDivStartE, Calcm, m);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .L, .m(Calcm), .Qe);
 
 endmodule

@@ -32,7 +32,7 @@
 
 module fdivsqrtiter(
   input  logic clk,
-  input  logic DivStartE, 
+  input  logic IFDivStartE, 
   input  logic FDivBusyE, 
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
@@ -83,8 +83,8 @@ module fdivsqrtiter(
   // are fed back for the next iteration.
  
   // Residual WS/SC registers/initializaiton mux
-  mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, DivStartE, WSN);
-  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, DivStartE, WCN);
+  mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, IFDivStartE, WSN);
+  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, IFDivStartE, WCN);
   flopen   #(`DIVb+4) wsflop(clk, FDivBusyE, WSN, WS[0]);
   flopen   #(`DIVb+4) wcflop(clk, FDivBusyE, WCN, WC[0]);
 
@@ -92,21 +92,21 @@ module fdivsqrtiter(
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
   assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
   assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, DivStartE, UMux);
-  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, DivStartE, UMMux);
-  flopen #(`DIVb+1) UReg(clk, DivStartE|FDivBusyE, UMux, U[0]);
-  flopen #(`DIVb+1) UMReg(clk, DivStartE|FDivBusyE, UMMux, UM[0]);
+  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
+  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
+  flopen #(`DIVb+1) UReg(clk, IFDivStartE|FDivBusyE, UMux, U[0]);
+  flopen #(`DIVb+1) UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
   assign initCUpper = SqrtE ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
-  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, DivStartE, CMux); 
-  flopen #(`DIVb+2) cflop(clk, DivStartE|FDivBusyE, CMux, C[0]);
+  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, CMux); 
+  flopen #(`DIVb+2) cflop(clk, IFDivStartE|FDivBusyE, CMux, C[0]);
 
    // Divisior register
-  flopen #(`DIVN-1) dflop(clk, DivStartE, Dpreproc, D);
+  flopen #(`DIVN-1) dflop(clk, IFDivStartE, Dpreproc, D);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
