@@ -38,6 +38,7 @@ module fpu (
    input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
    input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
+   input  logic              TrapM,
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
    input  logic  [4:0] 	     RdM, RdW,   // which FP register to write to (from IEU)
    input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
@@ -129,7 +130,8 @@ module fpu (
    logic [`DIVb:0]      QmM;
    logic [`NE+1:0]      QeE, QeM; 
    logic                DivSE, DivSM;
-   logic                DivDoneM;
+//   logic                DivDoneM;
+   logic                FDivDoneE, DivStartE;
 
    // result and flag signals
    logic [`XLEN-1:0] ClassResE;               // classify result
@@ -149,6 +151,7 @@ module fpu (
    logic [`FLEN-1:0] 	 AlignedSrcAE;                       // align SrcA to the floating point format
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic [`FLEN-1:0]     BoxedOneE;                         // Zero value for Z for multiplication, with NaN boxing if needed
+   logic             EMRegEn;
 
    // DECODE STAGE
 
@@ -176,7 +179,7 @@ module fpu (
       .a4(RdW), .wd4(FPUResultW),
       .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));	
 
-   // D/E pipeline registers
+   // D/E pipeline registers  
    flopenrc #(`FLEN) DEReg1(clk, reset, FlushE, ~StallE, FRD1D, FRD1E);
    flopenrc #(`FLEN) DEReg2(clk, reset, FlushE, ~StallE, FRD2D, FRD2E);
    flopenrc #(`FLEN) DEReg3(clk, reset, FlushE, ~StallE, FRD3D, FRD3E);
@@ -263,8 +266,8 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .DivSM, .FDivBusyE, .QeM, 
-                  .QmM, .DivDone(DivDoneM));
+                  .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .DivStartE, .FDivDoneE, .QeM, 
+                  .QmM /*, .DivDone(DivDoneM) */);
 
                   //
    // compare
@@ -337,15 +340,20 @@ module fpu (
 
    // E/M pipe registers
 
-   // flopenrc #(64) EMFpReg1(clk, reset, FlushM, ~StallM, XE, FSrcXM);
-   flopenrc #(`NF+2) EMFpReg2 (clk, reset, FlushM, ~StallM, {XsE,XmE}, {XsM,XmM});
-   flopenrc #(`NF+2) EMFpReg3 (clk, reset, FlushM, ~StallM, {YsE,YmE}, {YsM,YmM});
+   assign EMRegEn = ~StallM & (~FDivBusyE & ~FDivDoneE | DivStartE);
+
+   // flopenrc #(64) EMFpReg1(clk, reset, FlushM, EMRegEn, XE, FSrcXM);
+   flopenrc #(`NF+1) EMFpReg2 (clk, reset, FlushM, ~StallM, XmE, XmM);
+   flopenrc #(`NF+1) EMFpReg3 (clk, reset, FlushM, ~StallM, YmE, YmM);
    flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZeE,ZmE}, {ZeM,ZmM});
    flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
    flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
-   flopenrc #(13) EMFpReg5 (clk, reset, FlushM, ~StallM, 
+   flopenr #(15) EMFpReg5 (clk, reset, EMRegEn, 
+            {XsE, YsE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
+            {XsM, YsM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
+   /* flopenrc #(13) EMFpReg5 (clk, reset, FlushM, ~StallM, 
             {XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
-            {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
+            {XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});   */   
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
    flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM); 
    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, PeE, PeM);  
@@ -372,7 +380,7 @@ module fpu (
 
    postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(PeM), 
                            .FmaZmS(ZmStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
-                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), .DivDone(DivDoneM),
+                           .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
                            .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
                            .CvtCe(CeM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), .ToInt(FWriteIntM), .DivS(DivSM),
                            .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));

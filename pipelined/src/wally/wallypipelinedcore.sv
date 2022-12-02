@@ -389,6 +389,7 @@ module wallypipelinedcore (
          .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
          .ForwardedSrcAE, // Integer input being processed (from IEU)
          .StallE, .StallM, .StallW, // stall signals from HZU
+         .TrapM,
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
          .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?

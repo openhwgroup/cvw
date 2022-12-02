@@ -37,7 +37,7 @@ module fdivsqrtiter(
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
   input  logic SqrtE,
-  input  logic SqrtM,
+//  input  logic SqrtM,
   input  logic OTFCSwap,
   input  logic [`DIVb+3:0] X,
   input  logic [`DIVN-2:0] Dpreproc,
@@ -85,8 +85,8 @@ module fdivsqrtiter(
   // Residual WS/SC registers/initializaiton mux
   mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, DivStartE, WSN);
   mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, DivStartE, WCN);
-  flopen   #(`DIVb+4) wsflop(clk, DivStartE|FDivBusyE, WSN, WS[0]);
-  flopen   #(`DIVb+4) wcflop(clk, DivStartE|FDivBusyE, WCN, WC[0]);
+  flopen   #(`DIVb+4) wsflop(clk, FDivBusyE, WSN, WS[0]);
+  flopen   #(`DIVb+4) wcflop(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
@@ -122,13 +122,13 @@ module fdivsqrtiter(
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : iterations
       if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtM, .OTFCSwap,
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE, .OTFCSwap,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtM, .j1, .OTFCSwap,
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .OTFCSwap,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
