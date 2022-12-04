@@ -127,7 +127,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValidWay, .ClearValidWay, .SetDirtyWay, .ClearDirtyWay, .SelEvict, .VictimWay,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .VictimDirtyWay, .VictimTagWay, .FlushStage, .InvalidateCache);
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
@@ -195,12 +195,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write Enables
   /////////////////////////////////////////////////////////////////////////////////////////////
-  mux3 #(NUMWAYS) selectwaymux(HitWay, VictimWay, FlushWay, 
-    {SelFlush, SetValid}, SelectedWay);
+/* -----\/----- EXCLUDED -----\/-----
+  mux3 #(NUMWAYS) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
   assign SetValidWay = SetValid ? SelectedWay : '0;
   assign ClearValidWay = ClearValid ? SelectedWay : '0;
   assign SetDirtyWay = SetDirty ? SelectedWay : '0;
   assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
+ -----/\----- EXCLUDED -----/\----- */
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
