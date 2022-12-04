@@ -38,7 +38,7 @@ module cacheLRU
    output logic [NUMWAYS-1:0] VictimWay,
    input logic [SETLEN-1:0]   CAdr,
    input logic [SETLEN-1:0]   PAdr,
-   input logic                LRUWriteEn, SetValid, InvalidateCache);
+   input logic                LRUWriteEn, SetValid, InvalidateCache, FlushCache);
 
   logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
@@ -121,9 +121,9 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(ce) begin
-      if(InvalidateCache & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+      if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
       else if (LRUWriteEn & ~FlushStage) begin 
-        LRUMemory[PAdr] <= NextLRU;
+        LRUMemory[CAdr] <= NextLRU; ///***** RT: This is not right. Logically should be PAdr, but it breaks linux.
         CurrLRU <= #1 NextLRU;
       end else begin
         CurrLRU <= #1 LRUMemory[CAdr];

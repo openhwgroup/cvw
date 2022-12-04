@@ -68,7 +68,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic [LINELEN-1:0]                ReadDataLine;
   logic [TAGLEN-1:0]                 ReadTag;
   logic                              Dirty;
-  logic                              SelData;
   logic                              SelTag;
   logic                              SelectedWriteWordEn;
   logic [LINELEN/8-1:0]              FinalByteMask;
@@ -79,14 +78,15 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              ClearDirtyWay;
   logic                              SelectedWay;
   
+  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
+  mux2 #(1) selectedwaymux(HitWay, SelTag, SelFlush | SetValid | SelEvict, SelectedWay);
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  mux2 #(1) selectedwaymux(HitWay, SelTag, SelFlush | SetValid, SelectedWay);
-
   // RT: Can we merge these two muxes?  This is also shared in cacheLRU.
-  //  mux3 #(1) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
+  //mux3 #(1) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
   //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
 
   assign SetValidWay = SetValid & SelectedWay;
@@ -110,7 +110,6 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
 
   // AND portion of distributed tag multiplexer
-  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign VictimDirtyWay = SelTag & Dirty & ValidWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
@@ -134,9 +133,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
-  mux2 #(1) selecteddatamux(HitWay, SelTag, SelFlush | SelEvict, SelData);
-  assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
+  assign ReadDataLineWay = SelectedWay ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
