@@ -85,7 +85,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
 
   mux2 #(1) selectedwaymux(HitWay, SelTag, SelFlush | SetValid, SelectedWay);
 
-  // RT: Can we merge these two muxes?
+  // RT: Can we merge these two muxes?  This is also shared in cacheLRU.
   //  mux3 #(1) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
   //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
 
