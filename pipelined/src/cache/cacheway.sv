@@ -38,10 +38,10 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   input logic [$clog2(NUMLINES)-1:0] CAdr,
   input logic [`PA_BITS-1:0]         PAdr,
   input logic [LINELEN-1:0]          LineWriteData,
-  input logic                        SetValidWay,
-  input logic                        ClearValidWay,
-  input logic                        SetDirtyWay,
-  input logic                        ClearDirtyWay,
+  input logic                        SetValid,
+  input logic                        ClearValid,
+  input logic                        SetDirty,
+  input logic                        ClearDirty,
   input logic                        SelEvict,
   input logic                        SelFlush,
   input logic                        VictimWay,
@@ -73,10 +73,27 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              SelectedWriteWordEn;
   logic [LINELEN/8-1:0]              FinalByteMask;
   logic                              SetValidEN;
+  logic                              SetValidWay;
+  logic                              ClearValidWay;
+  logic                              SetDirtyWay;
+  logic                              ClearDirtyWay;
+  logic                              SelectedWay;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
+
+  mux2 #(1) selectedwaymux(HitWay, SelTag, SelFlush | SetValid, SelectedWay);
+
+  // RT: Can we merge these two muxes?
+  //  mux3 #(1) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
+  //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelEvict}, SelData);
+
+  assign SetValidWay = SetValid & SelectedWay;
+  assign ClearValidWay = ClearValid & SelectedWay;
+  assign SetDirtyWay = SetDirty & SelectedWay;
+  assign ClearDirtyWay = ClearDirty & SelectedWay;
+  
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
