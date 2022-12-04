@@ -109,7 +109,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
   localparam                  LOGCWPL = $clog2(CACHEWORDSPERLINE);
   logic [CACHEWORDSPERLINE-1:0] MemPAdrDecoded;
-  logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, LineByteMux;
+  logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, FetchBufferByteSel;
   genvar                      index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -158,21 +158,18 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
   /////////////////////////////////////////////////////////////////////////////////////////////
-  logic [LINELEN-1:0] CacheWriteDataDup;
-  assign CacheWriteDataDup = {WORDSPERLINE{CacheWriteData}};
-
   onehotdecoder #(LOGCWPL) adrdec(
     .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
   for(index = 0; index < 2**LOGCWPL; index++) begin
     assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
   end
 
-  assign LineByteMux = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+  assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
   assign LineByteMask = ~SetValid & ~SetDirty ? '0 : ~SetValid & SetDirty ? DemuxedByteMask : '1; // if store hit only enable the word and subword bytes, else write all bytes.
 
   for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(CacheWriteDataDup[8*index+7:8*index]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(LineByteMux[index]), .y(LineWriteData[8*index+7:8*index]));
+    mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
+      .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
   end
 
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
