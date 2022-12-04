@@ -45,7 +45,7 @@ module cachefsm
    input logic        CacheBusAck,
    // dcache internals
    input logic        CacheHit,
-   input logic        VictimDirty,
+   input logic        LineDirty,
    input logic        FlushAdrFlag,
    input logic        FlushWayFlag, 
   
@@ -75,7 +75,7 @@ module cachefsm
    output logic       ce);
   
   logic               resetDelay;
-  logic               AMO;
+  logic               AMO, StoreAMO;
   logic               AnyUpdateHit, AnyHit;
   logic               AnyMiss;
   logic               FlushFlag, FlushWayAndNotAdrFlag;
@@ -95,9 +95,10 @@ module cachefsm
   (* mark_debug = "true" *) statetype CurrState, NextState;
 
   assign AMO = CacheAtomic[1] & (&CacheRW);
+  assign StoreAMO = AMO | CacheRW[0];
 
-  assign AnyMiss = (AMO | CacheRW[1] | CacheRW[0]) & ~CacheHit & ~InvalidateCache;
-  assign AnyUpdateHit = (AMO | CacheRW[0]) & CacheHit;
+  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache;
+  assign AnyUpdateHit = (StoreAMO) & CacheHit;
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);  
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
@@ -121,8 +122,8 @@ module cachefsm
                    else if(FlushCache)                            NextState = STATE_FLUSH;
       // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
       // To optimize do the fetch first, then eviction if necessary.
-                   else if(AnyMiss & ~VictimDirty)           NextState = STATE_MISS_FETCH_WDV;
-                   else if(AnyMiss & VictimDirty)            NextState = STATE_MISS_EVICT_DIRTY;
+                   else if(AnyMiss & ~LineDirty)           NextState = STATE_MISS_FETCH_WDV;
+                   else if(AnyMiss & LineDirty)            NextState = STATE_MISS_EVICT_DIRTY;
                    else                                        NextState = STATE_READY;
       STATE_MISS_FETCH_WDV: if(CacheBusAck)                    NextState = STATE_MISS_WRITE_CACHE_LINE;
                             else                               NextState = STATE_MISS_FETCH_WDV;
@@ -135,7 +136,7 @@ module cachefsm
                               else                             NextState = STATE_MISS_EVICT_DIRTY;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
 	  STATE_FLUSH:                                             NextState = STATE_FLUSH_CHECK;
-      STATE_FLUSH_CHECK: if(VictimDirty)                       NextState = STATE_FLUSH_WRITE_BACK;
+      STATE_FLUSH_CHECK: if(LineDirty)                       NextState = STATE_FLUSH_WRITE_BACK;
                          else if(FlushFlag)                    NextState = STATE_READY;
                          else if(FlushWayFlag)                 NextState = STATE_FLUSH_INCR;
                          else                                  NextState = STATE_FLUSH_CHECK;
@@ -154,7 +155,7 @@ module cachefsm
   assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
-                      (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(AMO | CacheRW[0])) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
+                      (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(StoreAMO)) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
                       (CurrState == STATE_FLUSH_INCR) |
@@ -162,37 +163,37 @@ module cachefsm
   // write enables internal to cache
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |
-                    (CurrState == STATE_MISS_WRITE_CACHE_LINE & (AMO | CacheRW[0]));
+                    (CurrState == STATE_MISS_WRITE_CACHE_LINE & (StoreAMO));
   assign ClearValid = '0;
-  assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(AMO | CacheRW[0])) |
+  assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(StoreAMO)) |
                       (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls
   assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
-                    (CurrState == STATE_READY & AnyMiss & VictimDirty);
+                    (CurrState == STATE_READY & AnyMiss & LineDirty);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
   assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
-  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & FlushWayAndNotAdrFlag) |
+  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & FlushWayAndNotAdrFlag) |
                          (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayAndNotAdrFlag & CacheBusAck);                         
-  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~VictimDirty & ~(FlushFlag)) |
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & ~(FlushFlag)) |
                          (CurrState == STATE_FLUSH_WRITE_BACK & ~FlushFlag & CacheBusAck);
   assign FlushAdrCntRst = (CurrState == STATE_READY);
   assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
   // Bus interface controls
-  assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~VictimDirty) | 
+  assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
                          (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck) | 
                          (CurrState == STATE_MISS_EVICT_DIRTY & CacheBusAck);
 //  assign CacheBusRW[1] = CurrState == STATE_READY & AnyMiss;
-  assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & VictimDirty) |
+  assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                           (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck) |
-                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
-//  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & VictimDirty) |
+                          (CurrState == STATE_FLUSH_CHECK & LineDirty);
+//  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & LineDirty) |
 //                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
   // **** can this be simplified?
-  assign SelAdr = (CurrState == STATE_READY & ((AMO | CacheRW[0]) & CacheHit)) | // changes if store delay hazard removed
+  assign SelAdr = (CurrState == STATE_READY & ((StoreAMO) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (AnyMiss)) |
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |

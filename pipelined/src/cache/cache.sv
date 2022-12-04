@@ -80,8 +80,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       SetDirty;
   logic                       SetValid;
   logic [NUMWAYS-1:0]         VictimWay;
-  logic [NUMWAYS-1:0]         VictimDirtyWay;
-  logic                       VictimDirty;
+  logic [NUMWAYS-1:0]         DirtyWay;
+  logic                       LineDirty;
   logic [TAGLEN-1:0]          VictimTagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0]          VictimTag;
   logic [SETLEN-1:0]          FlushAdr;
@@ -128,14 +128,14 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .VictimDirtyWay, .VictimTagWay, .FlushStage, .InvalidateCache);
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .VictimTagWay, .FlushStage, .InvalidateCache);
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
       .clk, .reset, .ce, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
-  assign VictimDirty = | VictimDirtyWay;
+  assign LineDirty = | DirtyWay;
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
@@ -208,7 +208,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
 		.FlushStage, .CacheRW, .CacheAtomic, .CPUBusy,
- 		.CacheHit, .VictimDirty, .CacheStall, .CacheCommitted, 
+ 		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelEvict, .SelFlush,
