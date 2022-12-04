@@ -27,7 +27,7 @@ fsd_fld_tempfix:
 	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*d_fsd-align*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
 
 arch32:
-	riscof run --work-dir=$(work_dir) --config=config32.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
+	riscof --verbose debug run --work-dir=$(work_dir) --config=config32.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
 	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv32i_m/ || echo "error suppressed"
 
 arch64:
