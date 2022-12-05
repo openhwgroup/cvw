@@ -1008,19 +1008,140 @@ read08_test:
     addi a6, a6, 8
     j test_loop // go to next test case
 
+    
+read04_test:
+    // address to read in t3, expected 8 bit value in t4 (unused, but there for your perusal).
+    li t2, 0xBAD // bad value that will be overwritten on good reads.
+    lb t2, 0(t3)
+    andi t2, t2, 0xF // mask lower 4 bits
+    sd t2, 0(t1)
+    addi t1, t1, 8
+    addi a6, a6, 8
+    j test_loop // go to next test case
+
 readmip_test:  // read the MIP into the signature
     csrr t2, mip
-    sw t2, 0(t1)
-    addi t1, t1, 4
-    addi a6, a6, 4
+    sd t2, 0(t1)
+    addi t1, t1, 8
+    addi a6, a6, 8
     j test_loop // go to next test case
 
 readsip_test:  // read the MIP into the signature
     csrr t2, sip
-    sw t2, 0(t1)
-    addi t1, t1, 4
-    addi a6, a6, 4
+    sd t2, 0(t1)
+    addi t1, t1, 8
+    addi a6, a6, 8
     j test_loop // go to next test case
+
+claim_m_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002000
+    li t3, 0x0C200004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+claim_s_plic_interrupts: // clears one non-pending PLIC interrupt
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C000028 // UART priority
+    li t3, 7
+    lw t4, 0(t2)
+    sw t3, 0(t2)
+    sw t4, -4(sp)
+    addi sp, sp, -4
+    li t2, 0x0C002080
+    li t3, 0x0C201004
+    li t4, 0xFFF
+    lw t6, 0(t2) // save current enable status
+    sw t4, 0(t2) // enable all relevant interrupts on PLIC
+    lw t5, 0(t3) // make PLIC claim
+    sw t5, 0(t3) // complete claim made
+    sw t6, 0(t2) // restore saved enable status
+    li t2, 0x0C00000C // GPIO priority
+    li t3, 0x0C000028 // UART priority
+    lw t4, 4(sp) // load stored GPIO and UART priority
+    lw t5, 0(sp)
+    addi sp, sp, 8 // restore stack pointer
+    sw t4, 0(t2)
+    sw t5, 0(t3)
+    j test_loop
+
+uart_lsr_intr_wait: // waits for interrupts to be ready
+    li t2, 0x10000002 // IIR
+    li t4, 0x6
+uart_lsr_intr_loop:
+    lb t3, 0(t2)
+    andi t3, t3, 0x7
+    bne t3, t4, uart_lsr_intr_loop
+uart_save_iir_status:
+    sd t3, 0(t1)
+    addi t1, t1, 8
+    addi a6, a6, 8
+    j test_loop
+
+uart_data_wait:
+    li t2, 0x10000005 // LSR
+    li t3, 0x10000002 // IIR
+    li a4, 0x61
+uart_read_LSR_IIR:
+    lbu t4, 0(t3) // save IIR before reading LSR might clear it
+    //  check if IIR is the rxfifotimeout interrupt. if it is, then read the fifo then go back and repeat this.
+    li t5, 0xCC // Value in IIR for Fifo Enabled, with timeout interrupt pending
+    beq t4, t5, uart_rxfifo_timout
+    lb t5, 0(t2) // read LSR
+    andi t6, t5, 0x61  // wait until all transmissions are done and data is ready
+    bne a4, t6, uart_read_LSR_IIR
+    j uart_data_ready
+uart_rxfifo_timout:
+    li t4, 0x10000000 // read from the fifo to clear the rx timeout error
+    lb t5, 0(t4)
+    sb t5, 0(t4) // write back to the fifo to make sure we have the same data so expected future overrun errors still occur.
+    //read the fifo until empty
+    j uart_read_LSR_IIR
+
+
+uart_data_ready:
+    li t2, 0
+    sd t2, 0(t1) // clear entry deadbeef from memory
+    lbu t4, 0(t3) // re read IIR
+    andi t5, t5, 0x9F // mask THRE and TEMT from signature
+    sb t4, 1(t1) // IIR
+    sb t5, 0(t1) // LSR
+    addi t1, t1, 8
+    addi a6, a6, 8
+    j test_loop
+
+uart_clearmodemintr:
+    li t2, 0x10000006
+    lb t2, 0(t2)
+    j test_loop
 
 goto_s_mode:
     // return to address in t3, 
