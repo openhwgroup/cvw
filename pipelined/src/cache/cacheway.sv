@@ -55,7 +55,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   output logic                       HitWay,
   output logic                       ValidWay,
   output logic                       DirtyWay,
-  output logic [TAGLEN-1:0]          VictimTagWay);
+  output logic [TAGLEN-1:0]          TagWay);
 
   localparam integer                 WORDSPERLINE = LINELEN/`XLEN;
   localparam integer                 BYTESPERLINE = LINELEN/8;
@@ -110,7 +110,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   
 
   // AND portion of distributed tag multiplexer
-  assign VictimTagWay = SelTag ? ReadTag : '0; // AND part of AOMux
+  assign TagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign DirtyWay = SelTag & Dirty & ValidWay;
   assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
