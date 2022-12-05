@@ -82,8 +82,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [NUMWAYS-1:0]         VictimWay;
   logic [NUMWAYS-1:0]         DirtyWay;
   logic                       LineDirty;
-  logic [TAGLEN-1:0]          VictimTagWay [NUMWAYS-1:0];
-  logic [TAGLEN-1:0]          VictimTag;
+  logic [TAGLEN-1:0]          TagWay [NUMWAYS-1:0];
+  logic [TAGLEN-1:0]          Tag;
   logic [SETLEN-1:0]          FlushAdr;
   logic [SETLEN-1:0]          FlushAdrP1;
   logic                       FlushAdrCntEn;
@@ -128,7 +128,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
     CacheWays[NUMWAYS-1:0](.clk, .reset, .ce, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay,
-    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .VictimTagWay, .FlushStage, .InvalidateCache);
+    .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
       .clk, .reset, .ce, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
@@ -140,7 +140,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineCache));
-  or_rows #(NUMWAYS, TAGLEN) VictimTagAOMux(.a(VictimTagWay), .y(VictimTag));
+  or_rows #(NUMWAYS, TAGLEN) TagAOMux(.a(TagWay), .y(Tag));
 
   // like to fix this.
   if(DCACHE) 
@@ -173,8 +173,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   end
 
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d1({VictimTag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d2({VictimTag, FlushAdr, {OFFSETLEN{1'b0}}}),
+		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
 		.s({SelFlush, SelEvict}), .y(CacheBusAdr));
 
   /////////////////////////////////////////////////////////////////////////////////////////////
