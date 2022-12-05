@@ -71,7 +71,7 @@ module cachefsm
    output logic       FlushWayCntEn, 
    output logic       FlushAdrCntRst,
    output logic       FlushWayCntRst,
-   output logic       SelBusBuffer, 
+   output logic       SelFetchBuffer, 
    output logic       ce);
   
   logic               resetDelay;
@@ -200,7 +200,7 @@ module cachefsm
                   (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
                   resetDelay;
 
-  assign SelBusBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE | CurrState == STATE_MISS_READ_DELAY;
+  assign SelFetchBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE | CurrState == STATE_MISS_READ_DELAY;
   assign ce = (CurrState == STATE_READY & ~CPUBusy | CacheStall) | (CurrState != STATE_READY) | reset;
                        
 endmodule // cachefsm
