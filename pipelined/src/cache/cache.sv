@@ -98,8 +98,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       LRUWriteEn;
   logic                       SelFlush;
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
-  logic [NUMWAYS-1:0]         SelectedWay;
-  logic [NUMWAYS-1:0]         SetValidWay, ClearValidWay, SetDirtyWay, ClearDirtyWay;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelBusBuffer;
@@ -192,17 +190,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
   else assign NextFlushWay = FlushWay[NUMWAYS-1];
 
-  /////////////////////////////////////////////////////////////////////////////////////////////
-  // Write Path: Write Enables
-  /////////////////////////////////////////////////////////////////////////////////////////////
-/* -----\/----- EXCLUDED -----\/-----
-  mux3 #(NUMWAYS) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelectedWay);
-  assign SetValidWay = SetValid ? SelectedWay : '0;
-  assign ClearValidWay = ClearValid ? SelectedWay : '0;
-  assign SetDirtyWay = SetDirty ? SelectedWay : '0;
-  assign ClearDirtyWay = ClearDirty ? SelectedWay : '0;
- -----/\----- EXCLUDED -----/\----- */
-  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
