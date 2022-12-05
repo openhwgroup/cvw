@@ -1826,7 +1826,12 @@ string imperas32f[] = '{
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/src/WALLY-periph-01.S"
+    "rv64i_m/privilege/src/WALLY-periph-01.S",
+    "rv64i_m/privilege/src/WALLY-clint-01.S",
+    //"rv64i_m/privilege/src/WALLY-gpio-01.S",
+    "rv64i_m/privilege/src/WALLY-plic-01.S",
+    "rv64i_m/privilege/src/WALLY-plic-s-01.S",
+    "rv64i_m/privilege/src/WALLY-uart-01.S"
  };
 
  string wally32e[] = '{
@@ -1900,11 +1905,13 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",
-    "rv32i_m/privilege/src/WALLY-endianness-01.S"
+    "rv32i_m/privilege/src/WALLY-endianness-01.S",
+    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S"
  };
 
  string wally32periph[] = '{
     `WALLYTEST,
+    "rv32i_m/privilege/src/WALLY-periph-01.S",
     "rv32i_m/privilege/src/WALLY-gpio-01.S",
     "rv32i_m/privilege/src/WALLY-clint-01.S",
     "rv32i_m/privilege/src/WALLY-uart-01.S",
