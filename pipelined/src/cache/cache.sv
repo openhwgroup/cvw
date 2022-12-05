@@ -100,7 +100,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
-  logic                       SelBusBuffer;
+  logic                       SelFetchBuffer;
   logic                       ce;
 
   localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
@@ -147,7 +147,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
       .y(WordOffsetAddr)); 
   else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
-  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelBusBuffer, ReadDataLine);
+  mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelFetchBuffer, ReadDataLine);
 
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
     .PAdr(WordOffsetAddr),
@@ -200,7 +200,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelEvict, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
-		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelBusBuffer,
+		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
         .InvalidateCache,
         .ce,
         .LRUWriteEn);
