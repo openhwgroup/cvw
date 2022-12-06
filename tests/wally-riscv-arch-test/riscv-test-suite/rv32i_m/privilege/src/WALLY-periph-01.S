@@ -59,8 +59,8 @@ trap_handler: #####
     #
     # <offset>: <contents>
     # 0x00: test ID = 0x<group_num>BEEF<intr_num>
-    # 0x04: mcause (low)  = 0x0000000B (MEIP) or 0x00000009 (SEIP)
-    # 0x08: mcause (high) = 0x80000000
+    # 0x04: mcause (low)  = 0x8000000B (MEIP) or 0x80000009 (SEIP)
+    # 0x08: mcause (high) = 0x00000000
     # ----- If GPIO -----
     # 0x0C: claim ID = 3
     # 0x10: input_val 
