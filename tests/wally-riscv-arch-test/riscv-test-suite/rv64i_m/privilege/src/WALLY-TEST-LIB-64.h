@@ -873,12 +873,12 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .equ PLIC_THRESH1,     0x0C201000       # Priority threshold for context 1 (supervisor mode)
     .equ PLIC_CLAIM1,      0x0C201004       # Claim/Complete register for context 1
 
-    .4byte PLIC_THRESH0, 0, write32_test    # Set PLIC machine mode interrupt threshold to 0 to accept all interrupts
-    .4byte PLIC_THRESH1, 7, write32_test    # Set PLIC supervisor mode interrupt threshold to 7 to accept no interrupts
-    .4byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
-    .4byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
-    .4byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
-    .4byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
+    .8byte PLIC_THRESH0, 0, write32_test    # Set PLIC machine mode interrupt threshold to 0 to accept all interrupts
+    .8byte PLIC_THRESH1, 7, write32_test    # Set PLIC supervisor mode interrupt threshold to 7 to accept no interrupts
+    .8byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
+    .8byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
+    .8byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
+    .8byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
 .endm
 
 .macro END_TESTS
