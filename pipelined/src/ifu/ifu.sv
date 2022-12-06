@@ -262,6 +262,7 @@ module ifu (
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
         .CPUBusy, .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
+      assign CacheCommittedF = '0;
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = FetchBuffer;
       assign IFUHBURST = 3'b0;
@@ -269,7 +270,7 @@ module ifu (
       assign {ICacheMiss, ICacheAccess} = '0;
     end
   end else begin : nobus // block: bus
-    assign BusStall = '0;   
+    assign {BusStall, CacheCommittedF} = '0;   
     assign {ICacheStallF, ICacheMiss, ICacheAccess} = '0;
     assign InstrRawF = IROMInstrF;
   end
