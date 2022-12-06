@@ -907,15 +907,15 @@ string imperas32f[] = '{
 
  string wally64a[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/src/WALLY-amo.S",
-    "rv64i_m/privilege/src/WALLY-lrsc.S",
+    "rv64i_m/privilege/src/WALLY-amo-01.S",
+    "rv64i_m/privilege/src/WALLY-lrsc-01.S",
     "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S"
   };
 
  string wally32a[] = '{
     `WALLYTEST,
-    "rv32i_m/privilege/src/WALLY-amo.S",
-    "rv32i_m/privilege/src/WALLY-lrsc.S",
+    "rv32i_m/privilege/src/WALLY-amo-01.S",
+    "rv32i_m/privilege/src/WALLY-lrsc-01.S",
     "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S"
  };
 
@@ -1804,11 +1804,11 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/WALLY-mie-01.S",
     "rv64i_m/privilege/src/WALLY-minfo-01.S",
     "rv64i_m/privilege/src/WALLY-misa-01.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv39.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv48.S",
+    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",
+    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
-    "rv64i_m/privilege/src/WALLY-pma.S",
-    "rv64i_m/privilege/src/WALLY-pmp.S",
+    "rv64i_m/privilege/src/WALLY-pma-01.S",
+    "rv64i_m/privilege/src/WALLY-pmp-01.S",
     "rv64i_m/privilege/src/WALLY-sie-01.S",
     "rv64i_m/privilege/src/WALLY-status-mie-01.S",
     "rv64i_m/privilege/src/WALLY-status-sie-01.S",
@@ -1826,7 +1826,12 @@ string imperas32f[] = '{
 
  string wally64periph[] = '{
     `WALLYTEST,
-    "rv64i_m/privilege/src/WALLY-periph.S"
+    "rv64i_m/privilege/src/WALLY-periph-01.S",
+    "rv64i_m/privilege/src/WALLY-clint-01.S",
+    "rv64i_m/privilege/src/WALLY-gpio-01.S",
+    "rv64i_m/privilege/src/WALLY-plic-01.S",
+    "rv64i_m/privilege/src/WALLY-plic-s-01.S",
+    "rv64i_m/privilege/src/WALLY-uart-01.S"
  };
 
  string wally32e[] = '{
@@ -1886,10 +1891,10 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
-    "rv32i_m/privilege/src/WALLY-mmu-sv32.S",
+    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
-    "rv32i_m/privilege/src/WALLY-pma.S",
-    "rv32i_m/privilege/src/WALLY-pmp.S",
+    "rv32i_m/privilege/src/WALLY-pma-01.S",
+    "rv32i_m/privilege/src/WALLY-pmp-01.S",
     "rv32i_m/privilege/src/WALLY-sie-01.S",
     "rv32i_m/privilege/src/WALLY-status-mie-01.S",
     "rv32i_m/privilege/src/WALLY-status-sie-01.S",
@@ -1900,11 +1905,13 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",
-    "rv32i_m/privilege/src/WALLY-endianness-01.S"
+    "rv32i_m/privilege/src/WALLY-endianness-01.S",
+    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S"
  };
 
  string wally32periph[] = '{
     `WALLYTEST,
+    //"rv32i_m/privilege/src/WALLY-periph-01.S",
     "rv32i_m/privilege/src/WALLY-gpio-01.S",
     "rv32i_m/privilege/src/WALLY-clint-01.S",
     "rv32i_m/privilege/src/WALLY-uart-01.S",
@@ -1915,7 +1922,7 @@ string imperas32f[] = '{
 
  string wally32d[] = '{
     `WALLYTEST,
-    "rv32i_m/D/src/WALLY-fld.S"
+    "rv32i_m/D/src/WALLY-fld-01.S"
  };
 
  string fpga[] = '{
