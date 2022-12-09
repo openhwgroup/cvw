@@ -174,7 +174,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
 		.s({SelFlush, SelEvict}), .y(CacheBusAdr));
-
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
   /////////////////////////////////////////////////////////////////////////////////////////////
