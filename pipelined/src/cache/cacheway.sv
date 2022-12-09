@@ -77,9 +77,22 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              SetDirtyWay;
   logic                              ClearDirtyWay;
   logic                              SelectedWay;
+  logic                              SelWriteback;
+  logic                              SelData;
+  logic                              FlushWayEn, VictimWayEn;
+  
+
+  assign FlushWayEn = FlushWay & SelFlush;
+  assign VictimWayEn = VictimWay & SelEvict;
+  
+  assign SelWriteback = SelFlush | SetValid | SelEvict;
+  //assign SelWriteback = FlushWay | SetValid | SelEvict;
   
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
-  mux2 #(1) selectedwaymux(HitWay, SelTag, SelFlush | SetValid | SelEvict, SelectedWay);
+  //assign SelTag = VictimWay | FlushWay;
+  assign SelData = HitWay | FlushWayEn | VictimWayEn;
+  
+  mux2 #(1) selectedwaymux(HitWay, SelTag, SelWriteback , SelectedWay);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
@@ -133,7 +146,7 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   end
 
   // AND portion of distributed read multiplexers
-  assign ReadDataLineWay = SelectedWay ? ReadDataLine : '0;  // AND part of AO mux.
+  assign ReadDataLineWay = SelData ? ReadDataLine : '0;  // AND part of AO mux.
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Valid Bits
