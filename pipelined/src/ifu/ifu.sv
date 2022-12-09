@@ -265,6 +265,7 @@ module ifu (
       assign CacheCommittedF = '0;
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = FetchBuffer;
+      assign CacheCommittedF = 1'b0;
       assign IFUHBURST = 3'b0;
       assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
       assign {ICacheMiss, ICacheAccess} = '0;
