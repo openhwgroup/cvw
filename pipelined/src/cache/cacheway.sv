@@ -82,11 +82,12 @@ module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
   logic                              FlushWayEn, VictimWayEn;
   
 
+  // FlushWay and VictimWay are part of a one hot way selection.  Must clear them if FlushWay not selected
+  // or VictimWay not selected.
   assign FlushWayEn = FlushWay & SelFlush;
   assign VictimWayEn = VictimWay & SelEvict;
   
-  assign SelWriteback = SelFlush | SetValid | SelEvict;
-  //assign SelWriteback = FlushWay | SetValid | SelEvict;
+  assign SelWriteback = FlushWayEn | SetValid | SelEvict;
   
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
   //assign SelTag = VictimWay | FlushWay;
