@@ -32,8 +32,8 @@
 
 module fdivsqrtpostproc(
   input  logic [`DIVb+3:0] WS, WC,
-  input  logic [`DIVN-2:0]  D, // U0.N-1
-  input  logic [`DIVb:0] FirstU, FirstUM, 
+  input  logic [`DIVb-1:0] D, 
+  input  logic [`DIVb:0]   FirstU, FirstUM, 
   input  logic [`DIVb+1:0] FirstC,
   input  logic Firstun,
   input  logic SqrtM,
@@ -41,12 +41,12 @@ module fdivsqrtpostproc(
 	input  logic [`XLEN-1:0] ForwardedSrcAE,
   input  logic RemOpM, ALTBM, BZero, As,
   input  logic [`DIVBLEN:0] n, m,
-  output logic [`DIVb:0] QmM, 
+  output logic [`DIVb:0]    QmM, 
   output logic WZero,
   output logic DivSM
 );
   
-  logic [`DIVb+3:0] W, Sum, RemD;
+  logic [`DIVb+3:0] W, Sum, RemDM;
   logic [`DIVb:0] PreQmM;
   logic NegStickyM, PostIncM;
   logic weq0;
@@ -78,14 +78,14 @@ module fdivsqrtpostproc(
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegStickyM = W[`DIVb+3];
-  assign RemD = {4'b0000, D, {(`DIVb-`DIVN+1){1'b0}}};
+  assign RemDM = {4'b0000, D};
 
   // Integer division: sign handling for div and rem
   always_comb 
     if (~As)
       if (NegStickyM) begin
         NormQuotM = FirstUM;
-        NormRemM  = W + RemD;
+        NormRemM  = W + RemDM;
         PostIncM  = 0;
       end else begin
         NormQuotM = FirstU;
@@ -99,7 +99,7 @@ module fdivsqrtpostproc(
         PostIncM  = 0;
       end else begin 
         NormQuotM = FirstU;
-        NormRemM  = W - RemD;
+        NormRemM  = W - RemDM;
         PostIncM  = 1;
       end
 
