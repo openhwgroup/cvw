@@ -129,18 +129,18 @@ module lsu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
-    hptw hptw(.clk, .reset, .StallW, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
+    hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
       .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
-      .IHAdrM, .CPUBusy, .HPTWStall, .SelHPTW,
+      .IHAdrM, .HPTWStall, .SelHPTW,
       .IgnoreRequestTLB, .LSULoadAccessFaultM, .LSUStoreAmoAccessFaultM, 
       .LoadAccessFaultM, .StoreAmoAccessFaultM, .HPTWInstrAccessFaultM);
   end else begin
     assign {HPTWStall, SelHPTW, PTE, PageType, DTLBWriteM, ITLBWriteF, IgnoreRequestTLB} = '0;
-    assign CPUBusy = StallW; assign PreLSURWM = MemRWM; 
+    assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;  assign LSUFunct7M = Funct7M; assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataM;
@@ -155,6 +155,7 @@ module lsu (
   // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
+  assign CPUBusy = StallW & ~SelHPTW;
 
   // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
