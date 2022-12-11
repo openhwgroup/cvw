@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module hptw (
-	input logic                 clk, reset, StallW,
+	input logic                 clk, reset,
    	input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
 	input logic [`XLEN-1:0]     PCF,  // addresses to translate
  	input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
@@ -61,7 +61,6 @@ module hptw (
    	output logic [6:0]          LSUFunct7M,
    	output logic IgnoreRequestTLB,
    	output logic SelHPTW,
-   	output logic                CPUBusy,
    	output logic HPTWStall,
     input logic  LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
     output logic LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
@@ -291,7 +290,6 @@ module hptw (
   // to the orignal data virtual address.
   assign SelHPTWAdr = SelHPTW & ~(DTLBWriteM | ITLBWriteF);
   // always block interrupts when using the hardware page table walker.
-  assign CPUBusy = StallW & ~SelHPTW;
 
   // multiplex the outputs to LSU
   if(`XLEN == 64) assign HPTWAdrExt = {{(`XLEN+2-`PA_BITS){1'b0}}, HPTWAdr}; // extend to 66 bits
