@@ -113,7 +113,7 @@ module ifu (
   logic 					   ICacheFetchLine;
   logic 					   BusStall;
   logic 					   ICacheStallF, IFUCacheBusStallF;
-  logic 					   CPUBusy;
+  logic 					   GatedStallF;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
   logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
@@ -199,7 +199,7 @@ module ifu (
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
     assign IFURWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~CPUBusy | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrF));
+    irom irom(.clk, .reset, .ce(~GatedStallF | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrF));
  
   end else begin
     assign IFURWF = 2'b10;
@@ -221,7 +221,7 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
-      icache(.clk, .reset, .FlushStage(TrapM), .Stall(CPUBusy),
+      icache(.clk, .reset, .FlushStage(TrapM), .Stall(GatedStallF),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
@@ -243,7 +243,7 @@ module ifu (
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
              .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
-            .BusRW, .Stall(CPUBusy),
+            .BusRW, .Stall(GatedStallF),
             .BusStall, .BusCommitted(BusCommittedF));
 
       mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(FetchBuffer[32-1:0]), .d2(IROMInstrF),
@@ -260,7 +260,7 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(TrapM), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
-        .Stall(CPUBusy), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
+        .Stall(GatedStallF), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
       assign CacheCommittedF = '0;
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
@@ -277,7 +277,7 @@ module ifu (
   
   assign IFUCacheBusStallF = ICacheStallF | BusStall;
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
-  assign CPUBusy = StallF & ~SelNextSpillF;
+  assign GatedStallF = StallF & ~SelNextSpillF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
 
