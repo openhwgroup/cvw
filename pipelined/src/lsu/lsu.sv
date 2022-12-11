@@ -103,7 +103,7 @@ module lsu (
   logic [6:0]               LSUFunct7M;
   logic [1:0]               LSUAtomicM;
   (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   IHAdrM;
-  logic                     CPUBusy;
+  logic                     GatedStallW;
   logic                     DCacheStallM;
   logic                     CacheableM;
   logic                     BusStall;
@@ -155,7 +155,7 @@ module lsu (
   // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
-  assign CPUBusy = StallW & ~SelHPTW;
+  assign GatedStallW = StallW & ~SelHPTW;
 
   // MMU and Misalignment fault logic required if privileged unit exists
   if(`ZICSR_SUPPORTED == 1) begin : dmmu
@@ -219,7 +219,7 @@ module lsu (
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
-    dtim dtim(.clk, .reset, .ce(~CPUBusy), .MemRWM(DTIMMemRWM),
+    dtim dtim(.clk, .reset, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
               .Adr(DTIMAdr),
               .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
@@ -254,7 +254,7 @@ module lsu (
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
-        .clk, .reset, .Stall(CPUBusy), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
@@ -270,7 +270,7 @@ module lsu (
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
-        .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(CPUBusy),
+        .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
       // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
@@ -293,7 +293,7 @@ module lsu (
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
-        .Stall(CPUBusy), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
+        .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
 
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];
