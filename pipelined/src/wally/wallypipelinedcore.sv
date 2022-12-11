@@ -53,7 +53,7 @@ module wallypipelinedcore (
 
   //  logic [1:0]  ForwardAE, ForwardBE;
   logic             StallF, StallD, StallE, StallM, StallW;
-  logic             FlushF, FlushD, FlushE, FlushM, FlushW;
+  logic             FlushD, FlushE, FlushM, FlushW;
   logic             RetM;
   (* mark_debug = "true" *) logic TrapM;
 
@@ -170,7 +170,7 @@ module wallypipelinedcore (
   ifu ifu(
     .clk, .reset,
     .StallF, .StallD, .StallE, .StallM, 
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW,
+    .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
@@ -325,7 +325,7 @@ module wallypipelinedcore (
      .wfiM, .IntPendingM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushF, .FlushD, .FlushE, .FlushM, .FlushW
+    .FlushD, .FlushE, .FlushM, .FlushW
      );    // global stall and flush control
 
    if (`ZICSR_SUPPORTED) begin:priv
