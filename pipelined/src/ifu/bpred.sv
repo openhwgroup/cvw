@@ -36,7 +36,7 @@
 module bpred 
   (input logic              clk, reset,
    input logic              StallF, StallD, StallE, StallM,
-   input logic              FlushF, FlushD, FlushE, FlushM,
+   input logic              FlushD, FlushE, FlushM,
    // Fetch stage
    // the prediction
    input logic [31:0]       InstrD, 
@@ -103,7 +103,7 @@ module bpred
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
     localHistoryPredictor DirPredictor(.clk,
-      .reset, .StallF, .StallE, .FlushF,
+      .reset, .StallF, .StallE,
       .LookUpPC(PCNextF),
       .Prediction(BPPredF),
       // update
