@@ -51,7 +51,7 @@ module ahbinterface #(parameter LSU = 0) // **** modify to use LSU/ifu parameter
   input logic [1:0]          BusRW,
   input logic [`XLEN/8-1:0]  ByteMask,
   input logic [`XLEN-1:0]    WriteData,
-  input logic                CPUBusy,
+  input logic                Stall,
   output logic               BusStall,
   output logic               BusCommitted,
   output logic [(LSU ? `XLEN : 32)-1:0]   FetchBuffer);
@@ -73,6 +73,6 @@ module ahbinterface #(parameter LSU = 0) // **** modify to use LSU/ifu parameter
   end    
 
   busfsm busfsm(.HCLK, .HRESETn, .Flush, .BusRW,
-    .BusCommitted, .CPUBusy, .BusStall, .CaptureEn, .HREADY,
+    .BusCommitted, .Stall, .BusStall, .CaptureEn, .HREADY,
     .HTRANS, .HWRITE);
 endmodule

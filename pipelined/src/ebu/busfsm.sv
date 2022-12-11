@@ -38,7 +38,7 @@ module busfsm
    // IEU interface
    input logic        Flush,
    input logic [1:0]  BusRW,
-   input logic        CPUBusy,
+   input logic        Stall,
    output logic       BusCommitted,
    output logic       BusStall,
    output logic       CaptureEn,
@@ -65,7 +65,7 @@ module busfsm
                  else             NextState = ADR_PHASE;
       DATA_PHASE: if(HREADY)      NextState = MEM3;
 		          else            NextState = DATA_PHASE;
-      MEM3: if(CPUBusy)           NextState = MEM3;
+      MEM3: if(Stall)           NextState = MEM3;
 		    else                  NextState = ADR_PHASE;
 	  default:                    NextState = ADR_PHASE;
 	endcase

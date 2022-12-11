@@ -270,7 +270,7 @@ module lsu (
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
         .Funct3(LSUFunct3M), .HADDR(LSUHADDR), .CacheBusAdr(DCacheBusAdr), .CacheBusRW, .CacheableOrFlushCacheM,
         .CacheBusAck(DCacheBusAck), .FetchBuffer, .PAdr(PAdrM),
-        .Cacheable(CacheableOrFlushCacheM), .BusRW, .CPUBusy,
+        .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(CPUBusy),
         .BusStall, .BusCommitted(BusCommittedM));
 
       // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
@@ -293,7 +293,7 @@ module lsu (
       ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
-        .CPUBusy, .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
+        .Stall(CPUBusy), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
 
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];

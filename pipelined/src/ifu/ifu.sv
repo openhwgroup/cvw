@@ -243,7 +243,7 @@ module ifu (
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
              .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
-            .BusRW, .CPUBusy,
+            .BusRW, .Stall(CPUBusy),
             .BusStall, .BusCommitted(BusCommittedF));
 
       mux3 #(32) UnCachedDataMux(.d0(ICacheInstrF), .d1(FetchBuffer[32-1:0]), .d2(IROMInstrF),
@@ -260,7 +260,7 @@ module ifu (
       ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(TrapM), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
-        .CPUBusy, .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
+        .Stall(CPUBusy), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
 
       assign CacheCommittedF = '0;
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
