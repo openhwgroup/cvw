@@ -41,7 +41,7 @@ module hazard(
 (* mark_debug = "true" *)        input logic  wfiM, IntPendingM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
-(* mark_debug = "true" *)	      output logic FlushF, FlushD, FlushE, FlushM, FlushW
+(* mark_debug = "true" *)	      output logic FlushD, FlushE, FlushM, FlushW
 );
 
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
@@ -89,7 +89,6 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign #1 FlushF = BPPredWrongE;
   assign #1 FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE; 
   assign #1 FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE; // *** why is BPPredWrongE here, but not needed in simple processor 
   assign #1 FlushM = FirstUnstalledM | TrapM | RetM;

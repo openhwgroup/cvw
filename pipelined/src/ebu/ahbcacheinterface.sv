@@ -64,7 +64,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   input logic                 Flush,
   input logic [`PA_BITS-1:0]  PAdr,
   input logic [1:0]           BusRW,
-  input logic                 CPUBusy,
+  input logic                 Stall,
   input logic [2:0]           Funct3,
   output logic                SelBusBeat,
   output logic                BusStall,
@@ -114,7 +114,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   
 
   buscachefsm #(BeatCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
-    .HCLK, .HRESETn, .Flush, .BusRW, .CPUBusy, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
+    .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

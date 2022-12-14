@@ -35,7 +35,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input logic                   reset,
    // cpu side
   input logic                   FlushStage,
-  input logic                   CPUBusy,
+  input logic                   Stall,
   input logic [1:0]             CacheRW,
   input logic [1:0]             CacheAtomic,
   input logic                   FlushCache,
@@ -194,7 +194,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.FlushStage, .CacheRW, .CacheAtomic, .CPUBusy,
+		.FlushStage, .CacheRW, .CacheAtomic, .Stall,
  		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,

@@ -38,7 +38,7 @@ module localHistoryPredictor
       )
   (input logic             clk,
    input logic             reset,
-   input logic             StallF,  StallE, FlushF,
+   input logic             StallF,  StallE,
    input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0]      Prediction,
    // update
@@ -116,7 +116,7 @@ module localHistoryPredictor
   flopenrc #(k) LHRFReg(.clk(clk),
    .reset(reset),
    .en(~StallF),
-   .clear(FlushF),
+   .clear(1'b0),
    .d(ForwardLHRNext),
    .q(LHRF));
   /*
