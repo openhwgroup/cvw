@@ -40,7 +40,7 @@ module cachefsm
    input logic        FlushCache,
    input logic        InvalidateCache,
    // hazard inputs
-   input logic        CPUBusy,
+   input logic        Stall,
    // Bus inputs
    input logic        CacheBusAck,
    // dcache internals
@@ -130,7 +130,7 @@ module cachefsm
       //STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_READY;
       STATE_MISS_WRITE_CACHE_LINE:                             NextState = STATE_MISS_READ_DELAY;
                                    //else                        NextState = STATE_READY;
-      STATE_MISS_READ_DELAY: if(CPUBusy)                       NextState = STATE_MISS_READ_DELAY;
+      STATE_MISS_READ_DELAY: if(Stall)                       NextState = STATE_MISS_READ_DELAY;
                              else                              NextState = STATE_READY;
       STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                  NextState = STATE_MISS_FETCH_WDV;
                               else                             NextState = STATE_MISS_EVICT_DIRTY;
@@ -201,6 +201,6 @@ module cachefsm
                   resetDelay;
 
   assign SelFetchBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE | CurrState == STATE_MISS_READ_DELAY;
-  assign ce = (CurrState == STATE_READY & ~CPUBusy | CacheStall) | (CurrState != STATE_READY) | reset;
+  assign ce = (CurrState == STATE_READY & ~Stall | CacheStall) | (CurrState != STATE_READY) | reset;
                        
 endmodule // cachefsm
