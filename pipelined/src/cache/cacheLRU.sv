@@ -32,7 +32,7 @@
 
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
-   input logic                clk, reset, ce, FlushStage,
+   input logic                clk, reset, CacheEn, FlushStage,
    input logic [NUMWAYS-1:0]  HitWay,
    input logic [NUMWAYS-1:0]  ValidWay,
    output logic [NUMWAYS-1:0] VictimWay,
@@ -120,7 +120,7 @@ module cacheLRU
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
-    if(ce) begin
+    if(CacheEn) begin
       if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
       else if (LRUWriteEn & ~FlushStage) begin 
         LRUMemory[CAdr] <= NextLRU; ///***** RT: This is not right. Logically should be PAdr, but it breaks linux.
