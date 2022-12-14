@@ -94,14 +94,14 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [NUMWAYS-1:0]         NextFlushWay;
   logic                       FlushWayCntEn;
   logic                       FlushWayCntRst;  
-  logic                       SelEvict;
+  logic                       SelWriteback;
   logic                       LRUWriteEn;
   logic                       SelFlush;
   logic                       ResetOrFlushAdr, ResetOrFlushWay;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelFetchBuffer;
-  logic                       ce;
+  logic                       CacheEn;
 
   localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
   localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
@@ -124,12 +124,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .ce, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelEvict, .VictimWay,
+    CacheWays[NUMWAYS-1:0](.clk, .reset, .CacheEn, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .ce, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
+      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else assign VictimWay = 1'b1; // one hot.
   assign CacheHit = | HitWay;
@@ -174,7 +174,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-		.s({SelFlush, SelEvict}), .y(CacheBusAdr));
+		.s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
@@ -199,10 +199,10 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
  		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
-		.SetValid, .SelEvict, .SelFlush,
+		.SetValid, .SelWriteback, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
         .InvalidateCache,
-        .ce,
+        .CacheEn,
         .LRUWriteEn);
 endmodule 
