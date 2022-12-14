@@ -40,42 +40,34 @@ module fdivsqrtiter(
 //  input  logic SqrtM,
   input  logic OTFCSwap,
   input  logic [`DIVb+3:0] X,
-  input  logic [`DIVN-2:0] Dpreproc,
-  output logic [`DIVN-2:0]  D, // U0.N-1
-  output logic [`DIVb:0] FirstU, FirstUM,
+  input  logic [`DIVb-1:0] DPreproc,
+  output logic [`DIVb-1:0] D,
+  output logic [`DIVb:0]   FirstU, FirstUM,
   output logic [`DIVb+1:0] FirstC,
   output logic             Firstun,
-  output logic [`DIVb+3:0]  FirstWS, FirstWC
+  output logic [`DIVb+3:0] FirstWS, FirstWC
 );
 
-//QLEN = 1.(number of bits created for division)
-// N is NF+1 or XLEN
-// WC/WS is dependent on D so 4.N-1 ie N+3 bits or N+2:0 + one more bit in fraction for possible sqrt right shift
-// D is 1.N-1, but the msb is always 1 so 0.N-1 or N-1 bits or N-2:0
-// Dsel should match WC/WS so 4.N-1 ie N+3 bits or N+2:0
-// U/UM should be 1.b so b+1 bits or b:0
-// C needs to be the lenght of the final fraction 0.b so b or b-1:0
- /* verilator lint_off UNOPTFLAT */
-  logic [`DIVb+3:0]  WSNext[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WCNext[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]  WS[`DIVCOPIES:0]; // Q4.b
-  logic [`DIVb+3:0]  WC[`DIVCOPIES:0]; // Q4.b
-  logic [`DIVb:0] U[`DIVCOPIES:0]; // U1.b
-  logic [`DIVb:0] UM[`DIVCOPIES:0];// 1.b
-  logic [`DIVb:0] UNext[`DIVCOPIES-1:0];// U1.b
-  logic [`DIVb:0] UMNext[`DIVCOPIES-1:0];// U1.b
-  logic [`DIVb+1:0] C[`DIVCOPIES:0]; // Q2.b
-  logic [`DIVb+1:0] initC; // Q2.b
+  /* verilator lint_off UNOPTFLAT */
+  logic [`DIVb+3:0]      WSNext[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]      WCNext[`DIVCOPIES-1:0]; // Q4.b
+  logic [`DIVb+3:0]      WS[`DIVCOPIES:0];       // Q4.b
+  logic [`DIVb+3:0]      WC[`DIVCOPIES:0];       // Q4.b
+  logic [`DIVb:0]        U[`DIVCOPIES:0];        // U1.b
+  logic [`DIVb:0]        UM[`DIVCOPIES:0];       // U1.b
+  logic [`DIVb:0]        UNext[`DIVCOPIES-1:0];  // U1.b
+  logic [`DIVb:0]        UMNext[`DIVCOPIES-1:0]; // U1.b
+  logic [`DIVb+1:0]      C[`DIVCOPIES:0];        // Q2.b
+  logic [`DIVb+1:0]      initC;                  // Q2.b
   logic [`DIVCOPIES-1:0] un; 
 
- /* verilator lint_on UNOPTFLAT */
-  logic [`DIVb+3:0]  WSN, WCN; // Q4.N-1
-  logic [`DIVb+3:0]  DBar, D2, DBar2; // Q4.N-1
-  logic [`DIVb+1:0] NextC;
-  logic [`DIVb+1:0] CMux;
-  logic [`DIVb:0] UMux, UMMux;
-  logic [`DIVb:0] initU, initUM;
-
+  logic [`DIVb+3:0]      WSN, WCN;               // Q4.b
+  logic [`DIVb+3:0]      DBar, D2, DBar2;        // Q4.b
+  logic [`DIVb+1:0]      NextC;
+  logic [`DIVb+1:0]      CMux;
+  logic [`DIVb:0]        UMux, UMMux;
+  logic [`DIVb:0]        initU, initUM;
+  /* verilator lint_on UNOPTFLAT */
 
   // Top Muxes and Registers
   // When start is asserted, the inputs are loaded into the divider.
@@ -85,15 +77,15 @@ module fdivsqrtiter(
   // Residual WS/SC registers/initializaiton mux
   mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, IFDivStartE, WSN);
   mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, IFDivStartE, WCN);
-  flopen   #(`DIVb+4) wsflop(clk, FDivBusyE, WSN, WS[0]);
-  flopen   #(`DIVb+4) wcflop(clk, FDivBusyE, WCN, WC[0]);
+  flopen #(`DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
+  flopen #(`DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
   assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
   assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  mux2 #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
-  mux2 #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
+  mux2   #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
+  mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
   flopen #(`DIVb+1) UReg(clk, IFDivStartE|FDivBusyE, UMux, U[0]);
   flopen #(`DIVb+1) UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
 
@@ -103,18 +95,18 @@ module fdivsqrtiter(
   assign initCUpper = SqrtE ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, CMux); 
-  flopen #(`DIVb+2) cflop(clk, IFDivStartE|FDivBusyE, CMux, C[0]);
+  flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, CMux, C[0]);
 
    // Divisior register
-  flopen #(`DIVN-1) dflop(clk, IFDivStartE, Dpreproc, D);
+  flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected
-  //  - D is only the fraction
-  assign DBar = {3'b111, 1'b0, ~D, {`DIVb-`DIVN+1{1'b1}}};
+  //  - D is a 0.b mantissa
+  assign DBar    = {3'b111, 1'b0, ~D};
   if(`RADIX == 4) begin : d2
-    assign DBar2 = {2'b11, 1'b0, ~D, {`DIVb+2-`DIVN{1'b1}}};
-    assign D2 = {2'b0, 1'b1, D, {`DIVb+2-`DIVN{1'b0}}};
+    assign DBar2 = {2'b11, 1'b0, ~D, 1'b1};
+    assign D2    = {2'b0, 1'b1, D, 1'b0};
   end
 
   // k=DIVCOPIES of the recurrence logic
