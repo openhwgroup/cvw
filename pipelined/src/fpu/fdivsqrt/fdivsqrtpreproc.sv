@@ -75,7 +75,7 @@ module fdivsqrtpreproc (
   
   assign PosA = As ? -A64 : A64;
   assign PosB = Bs ? -B64 : B64;
-  assign BZero = |ForwardedSrcBE;
+  assign BZero = ~(|ForwardedSrcBE);
 
   assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
   assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};

@@ -36,7 +36,7 @@ module fdivsqrtiter(
   input  logic FDivBusyE, 
   input  logic [`NE-1:0] Xe, Ye,
   input  logic XZeroE, YZeroE, 
-  input  logic SqrtE,
+  input  logic SqrtE, MDUE,
 //  input  logic SqrtM,
   input  logic OTFCSwap,
   input  logic [`DIVb+3:0] X,
@@ -82,8 +82,8 @@ module fdivsqrtiter(
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 for division
-  assign initU = SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
-  assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
+  assign initU = (SqrtE & ~(MDUE)) ? {1'b1, {(`DIVb){1'b0}}} : 0;
+  assign initUM = (SqrtE & ~(MDUE)) ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
   mux2   #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
   mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
   flopen #(`DIVb+1) UReg(clk, IFDivStartE|FDivBusyE, UMux, U[0]);

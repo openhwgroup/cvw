@@ -80,7 +80,7 @@ module fdivsqrt(
     .XNaNE, .YNaNE, .MDUE, .n,
     .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, // .SqrtM, 
+    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .MDUE, .SqrtE, // .SqrtM,
     .X,.DPreproc, .FirstWS(WS), .FirstWC(WC),
     .IFDivStartE, .Xe(XeE), .Ye(YeE), .XZeroE, .YZeroE, .OTFCSwap,
     .FDivBusyE);
