@@ -48,10 +48,10 @@ module intdivrestoring (
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
-  logic [`XLEN-1:0] W[`DIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] XQ[`DIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] W[`IDIV_BITSPERCYCLE:0];
+  logic [`XLEN-1:0] XQ[`IDIV_BITSPERCYCLE:0];
   logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsB, XnE, XInitE, WnM, XQnM;
-  localparam STEPBITS = $clog2(`XLEN/`DIV_BITSPERCYCLE);
+  localparam STEPBITS = $clog2(`XLEN/`IDIV_BITSPERCYCLE);
   logic [STEPBITS:0] step;
   logic Div0E, Div0M;
   logic DivStartE, SignXE, SignDE, NegQE, NegWM, NegQM;
@@ -91,8 +91,8 @@ module intdivrestoring (
   //////////////////////////////
 
   // initialization multiplexers on first cycle of operation
-  mux2 #(`XLEN) wmux(W[`DIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNext);
-  mux2 #(`XLEN) xmux(XQ[`DIV_BITSPERCYCLE], XInitE, DivStartE, XQNext);
+  mux2 #(`XLEN) wmux(W[`IDIV_BITSPERCYCLE], {`XLEN{1'b0}}, DivStartE, WNext);
+  mux2 #(`XLEN) xmux(XQ[`IDIV_BITSPERCYCLE], XInitE, DivStartE, XQNext);
 
   // registers before division steps
   flopen #(`XLEN) wreg(clk, DivBusyE, WNext, W[0]); 
@@ -101,7 +101,7 @@ module intdivrestoring (
 
   // one copy of divstep for each bit produced per cycle
   genvar i;
-  for (i=0; i<`DIV_BITSPERCYCLE; i = i+1)
+  for (i=0; i<`IDIV_BITSPERCYCLE; i = i+1)
     intdivrestoringstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
 
   //////////////////////////////

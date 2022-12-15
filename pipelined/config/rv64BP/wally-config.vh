@@ -74,8 +74,8 @@
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 64
 // Integer Divider Configuration
-// DIV_BITSPERCYCLE must be 1, 2, or 4
-`define DIV_BITSPERCYCLE 4
+// IDIV_BITSPERCYCLE must be 1, 2, or 4
+`define IDIV_BITSPERCYCLE 4
 `define IDIV_ON_FPU 0
 
 // Address space
