@@ -38,7 +38,7 @@ module fpu (
    input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
    input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
-   input  logic              TrapM,
+   //input  logic              TrapM,
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
    input  logic  [4:0] 	     RdM, RdW,   // which FP register to write to (from IEU)
    input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
@@ -268,7 +268,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
+                  .StallE, .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
                   .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //

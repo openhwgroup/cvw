@@ -62,7 +62,7 @@ module hazard(
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
   assign FlushDCause = TrapM | RetM | BPPredWrongE | CSRWriteFenceM;
-  assign FlushECause = TrapM | RetM | BPPredWrongE | CSRWriteFenceM;
+  assign FlushECause = TrapM | RetM | (BPPredWrongE & ~(DivBusyE | FDivBusyE)) | CSRWriteFenceM;
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
   // on Trap the memory stage should be flushed going into the W stage,
   // except if the instruction causing the Trap is an ecall or ebreak.
@@ -70,11 +70,11 @@ module hazard(
 
   assign StallFCause = '0;
   // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FStallD) & ~(FlushDCause);
-  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM | CSRWriteFenceM);  // *** can we move to decode stage (KP?)
+  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FStallD) & ~FlushDCause;
+  assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
   assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
-  assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM); // | (FDivBusyE & ~TrapM & ~IntPendingM);
+  assign StallWCause = (IFUStallF | LSUStallM) & ~TrapM; 
 
   assign #1 StallF = StallFCause | StallD;
   assign #1 StallD = StallDCause | StallE;

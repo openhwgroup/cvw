@@ -42,7 +42,7 @@ module fdivsqrtfsm(
   input  logic SqrtE,
   input  logic StallE,
   input  logic StallM,
-  input  logic TrapM,
+  input  logic FlushE,
   input  logic WZero,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] n,
@@ -107,7 +107,7 @@ module fdivsqrtfsm(
   /* verilator lint_on WIDTH */
 
   always_ff @(posedge clk) begin
-      if (reset | TrapM) begin
+      if (reset | FlushE) begin
           state <= #1 IDLE; 
       end else if (IFDivStartE) begin 
           step <= cycles; 
