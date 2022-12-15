@@ -58,6 +58,7 @@ module ieu (
   output logic       InvalidateICacheM, FlushDCacheM,
 
   // Writeback stage
+  input logic [`XLEN-1:0] FPIntDivResultW,
   input logic [`XLEN-1:0]  CSRReadValW, MDUResultW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
@@ -83,6 +84,7 @@ module ieu (
   logic        SCE;
   logic [4:0]  RdE;
   logic        FWriteIntM;
+  logic        DivW;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
@@ -99,15 +101,15 @@ module ieu (
     .Funct3E, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .ResultSrcW, .CSRWriteFencePendingDEM, .StoreStallD);
+    .StallW, .FlushW, .RegWriteW, .DivW, .ResultSrcW, .CSRWriteFencePendingDEM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
-    .StallW, .FlushW, .RegWriteW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
+    .StallW, .FlushW, .RegWriteW, .DivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
+    .CSRReadValW, .MDUResultW, .FPIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,

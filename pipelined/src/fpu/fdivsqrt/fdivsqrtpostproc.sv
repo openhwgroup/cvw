@@ -32,8 +32,8 @@
 
 module fdivsqrtpostproc(
   input  logic [`DIVb+3:0] WS, WC,
-  input  logic [`DIVN-2:0]  D, // U0.N-1
-  input  logic [`DIVb:0] FirstU, FirstUM, 
+  input  logic [`DIVb-1:0] D, 
+  input  logic [`DIVb:0]   FirstU, FirstUM, 
   input  logic [`DIVb+1:0] FirstC,
   input  logic Firstun,
   input  logic SqrtM,
@@ -41,19 +41,20 @@ module fdivsqrtpostproc(
 	input  logic [`XLEN-1:0] ForwardedSrcAE,
   input  logic RemOpM, ALTBM, BZero, As,
   input  logic [`DIVBLEN:0] n, m,
-  output logic [`DIVb:0] QmM, 
+  output logic [`DIVb:0]    QmM, 
   output logic WZero,
-  output logic DivSM
+  output logic DivSM,
+  output logic [`XLEN-1:0] FPIntDivResultM
 );
   
-  logic [`DIVb+3:0] W, Sum, RemD;
+  logic [`DIVb+3:0] W, Sum, RemDM;
   logic [`DIVb:0] PreQmM;
   logic NegStickyM, PostIncM;
   logic weq0;
   logic [`DIVBLEN:0] NormShiftM;
   logic [`DIVb:0] IntQuotM, NormQuotM;
   logic [`DIVb+3:0] IntRemM, NormRemM;
-  logic [`DIVb+3:0] PreResultM, ResultM;
+  logic [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -78,14 +79,14 @@ module fdivsqrtpostproc(
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegStickyM = W[`DIVb+3];
-  assign RemD = {4'b0000, D, {(`DIVb-`DIVN+1){1'b0}}};
+  assign RemDM = {4'b0000, D};
 
   // Integer division: sign handling for div and rem
   always_comb 
     if (~As)
       if (NegStickyM) begin
         NormQuotM = FirstUM;
-        NormRemM  = W + RemD;
+        NormRemM  = W + RemDM;
         PostIncM  = 0;
       end else begin
         NormQuotM = FirstU;
@@ -99,7 +100,7 @@ module fdivsqrtpostproc(
         PostIncM  = 0;
       end else begin 
         NormQuotM = FirstU;
-        NormRemM  = W - RemD;
+        NormRemM  = W - RemDM;
         PostIncM  = 1;
       end
 
@@ -136,8 +137,9 @@ module fdivsqrtpostproc(
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
-  assign ResultM = ($signed(PreResultM) >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
-
+  assign PreFPIntDivResultM = ($signed(PreResultM) >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
+  assign FPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
+ 
   assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 endmodule

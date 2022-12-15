@@ -64,7 +64,7 @@ module cachefsm
    output logic       ClearDirty,
    output logic       SetDirty,
    output logic       SetValid,
-   output logic       SelEvict,
+   output logic       SelWriteback,
    output logic       LRUWriteEn,
    output logic       SelFlush,
    output logic       FlushAdrCntEn,
@@ -72,7 +72,7 @@ module cachefsm
    output logic       FlushAdrCntRst,
    output logic       FlushWayCntRst,
    output logic       SelFetchBuffer, 
-   output logic       ce);
+   output logic       CacheEn);
   
   logic               resetDelay;
   logic               AMO, StoreAMO;
@@ -170,7 +170,7 @@ module cachefsm
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls
-  assign SelEvict = (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
+  assign SelWriteback = (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
@@ -201,6 +201,6 @@ module cachefsm
                   resetDelay;
 
   assign SelFetchBuffer = CurrState == STATE_MISS_WRITE_CACHE_LINE | CurrState == STATE_MISS_READ_DELAY;
-  assign ce = (CurrState == STATE_READY & ~Stall | CacheStall) | (CurrState != STATE_READY) | reset;
+  assign CacheEn = (CurrState == STATE_READY & ~Stall | CacheStall) | (CurrState != STATE_READY) | reset;
                        
 endmodule // cachefsm
