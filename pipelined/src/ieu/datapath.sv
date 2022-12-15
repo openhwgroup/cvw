@@ -126,7 +126,11 @@ module datapath (
   if (`F_SUPPORTED) begin:fpmux
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
-    mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, DivW, MulDivResultW);
+    if (`IDIV_ON_FPU) begin
+      mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, DivW, MulDivResultW);
+    end else begin 
+      assign MulDivResultW = MDUResultW;
+    end
   end else begin:fpmux
     assign IFResultM = IEUResultM; assign IFCvtResultW = IFResultW;
     assign MulDivResultW = MDUResultW;
