@@ -42,7 +42,7 @@ module muldiv (
 	       // Divide Done
 	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallM, StallW, FlushM, FlushW, TrapM 
+	       input logic 		StallM, StallW, FlushE, FlushM, FlushW 
 	       );
 
 	logic [`XLEN-1:0] MDUResultM;
@@ -67,7 +67,7 @@ module muldiv (
 	end else begin
 		assign DivE = MDUE & Funct3E[2];
 		assign DivSignedE = ~Funct3E[0];
-		intdivrestoring div(.clk, .reset, .StallM, .TrapM, .DivSignedE, .W64E, .DivE, 
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .DivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		

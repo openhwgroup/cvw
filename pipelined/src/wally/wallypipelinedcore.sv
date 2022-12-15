@@ -375,7 +375,7 @@ module wallypipelinedcore (
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
          .MDUResultW, .DivBusyE,  
-         .StallM, .StallW, .FlushM, .FlushW, .TrapM 
+         .StallM, .StallW, .FlushE, .FlushM, .FlushW
       ); 
    end else begin // no M instructions supported
       assign MDUResultW = 0; 

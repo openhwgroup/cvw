@@ -36,7 +36,7 @@ module intdivrestoring (
   input  logic clk,
   input  logic reset,
   input  logic StallM,
-  input  logic TrapM,
+  input  logic FlushE,
   input  logic DivSignedE, W64E,
   input  logic DivE,
   //input logic [`XLEN-1:0] 	SrcAE, SrcBE,
@@ -122,7 +122,7 @@ module intdivrestoring (
   //////////////////////////////
 
  always_ff @(posedge clk) 
-    if (reset | TrapM) begin
+    if (reset | FlushE) begin
         state <= IDLE; 
     end else if (DivStartE) begin 
         step <= 1;
