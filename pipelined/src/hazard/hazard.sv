@@ -32,13 +32,13 @@
 
 module hazard(
   // Detect hazards
-(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFencePendingDEM, RetM, TrapM,
+(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
 (* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
-(* mark_debug = "true" *)              input logic  FCvtIntStallD, FStallD,
+(* mark_debug = "true" *)         input logic  FCvtIntStallD, FStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)        input logic  wfiM, IntPendingM,
+(* mark_debug = "true" *)         input logic  wfiM, IntPendingM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushD, FlushE, FlushM, FlushW
@@ -46,7 +46,6 @@ module hazard(
 
   logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
-  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
 
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -60,22 +59,24 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
-  assign FlushDCause = TrapM | RetM | BPPredWrongE;
-  assign FlushECause = TrapM | RetM | BPPredWrongE;
-  assign FlushMCause = TrapM | RetM;
-  // on Trap the memory stage should be flushed going into the W stage,
-  // except if the instruction causing the Trap is an ecall or ebreak.
-  assign FlushWCause = TrapM & ~(BreakpointFaultM | EcallFaultM);
-  
+  // *** can stalls be pushed into earlier stages (e.g. no stall after Decode?)
+
   // *** consider replacing CSRWriteFencePendingDEM with a flush rather than a stall.  
-  assign StallFCause = CSRWriteFencePendingDEM & ~FlushDCause;
+  //assign StallFCause = CSRWriteFencePendingDEM & ~(TrapM | RetM | BPPredWrongE);
+  assign StallFCause = '0;
   // stall in decode if instruction is a load/mul/csr dependent on previous
-  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FStallD) & ~FlushECause;
-  assign StallECause = (DivBusyE | FDivBusyE) & ~FlushMCause;
+  assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FStallD) & ~(TrapM | RetM | BPPredWrongE | CSRWriteFenceM);    
+  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM | CSRWriteFenceM);  // *** can we move to decode stage (KP?)
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
-  assign StallMCause = wfiM & ~FlushWCause & ~IntPendingM; 
-    assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM);
-  //assign StallWCause = (IFUStallF | LSUStallM) & ~FlushWCause;  // if the fpga fails this is likely why.
+  assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
+  assign StallWCause = ((IFUStallF | LSUStallM) & ~TrapM); // | (FDivBusyE & ~TrapM & ~IntPendingM);
+
+  // head version
+  // assign StallWCause = LSUStallM | IFUStallF  | (FDivBusyE & ~TrapM & ~IntPendingM); // *** FDivBusyE should look like DivBusyE  
+//  assign StallMCause = (wfiM & (~TrapM & ~IntPendingM)); // | FDivBusyE;  
+//  assign StallECause = (DivBusyE | FDivBusyE) & ~(TrapM);  // *** can we move to decode stage (KP?)
+  // *** ross: my changes to cache and lsu need to disable ifu/lsu stalls on a Trap.
+
 
   assign #1 StallF = StallFCause | StallD;
   assign #1 StallD = StallDCause | StallE;
@@ -89,8 +90,10 @@ module hazard(
   assign FirstUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign #1 FlushD = FirstUnstalledD | FlushDCause; 
-  assign #1 FlushE = FirstUnstalledE | FlushECause;
-  assign #1 FlushM = FirstUnstalledM | FlushMCause;
-  assign #1 FlushW = FirstUnstalledW | FlushWCause;
+  assign #1 FlushD = FirstUnstalledD | TrapM | RetM | BPPredWrongE | CSRWriteFenceM; 
+  assign #1 FlushE = FirstUnstalledE | TrapM | RetM | BPPredWrongE | CSRWriteFenceM ; // *** why is BPPredWrongE here, but not needed in simple processor 
+  assign #1 FlushM = FirstUnstalledM | TrapM | RetM | CSRWriteFenceM;
+  // on Trap the memory stage should be flushed going into the W stage,
+  // except if the instruction causing the Trap is an ecall or ebreak.
+  assign #1 FlushW = FirstUnstalledW | (TrapM & ~(BreakpointFaultM | EcallFaultM));
 endmodule

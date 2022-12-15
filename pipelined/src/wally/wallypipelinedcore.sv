@@ -79,7 +79,7 @@ module wallypipelinedcore (
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
-  logic             CSRWriteFencePendingDEM;
+  logic             CSRWriteFenceM;
   logic             DivBusyE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
@@ -183,7 +183,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM,
+    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
@@ -241,7 +241,7 @@ module wallypipelinedcore (
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWriteFencePendingDEM, .StoreStallD
+     .CSRWriteFenceM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
@@ -317,7 +317,7 @@ module wallypipelinedcore (
 
   
    hazard     hzu(
-     .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
+     .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FCvtIntStallD, .FStallD,
