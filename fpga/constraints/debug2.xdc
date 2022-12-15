@@ -271,7 +271,7 @@ connect_debug_port u_ila_0/probe51 [get_nets [list wallypipelinedsoc/core/hzu/BP
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe52]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe52]
-connect_debug_port u_ila_0/probe52 [get_nets [list wallypipelinedsoc/core/hzu/CSRWriteFencePendingDEM ]]
+connect_debug_port u_ila_0/probe52 [get_nets [list wallypipelinedsoc/core/hzu/CSRWriteFenceM ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe53]
@@ -356,7 +356,7 @@ connect_debug_port u_ila_0/probe68 [get_nets [list wallypipelinedsoc/core/hzu/St
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe69]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe69]
-connect_debug_port u_ila_0/probe69 [get_nets [list wallypipelinedsoc/core/hzu/StallD ]]
+connect_debug_port u_ila_0/probe69 [get_nets [list wallypipelinedsoc/core/hzu/StallD_inferred_i_2_n_0 ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe70]
