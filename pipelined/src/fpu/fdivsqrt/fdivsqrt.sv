@@ -43,7 +43,7 @@ module fdivsqrt(
   input  logic FDivStartE, IDivStartE,
   input  logic StallM,
   input  logic StallE,
-  input  logic TrapM,
+  input  logic FlushE,
   input  logic SqrtE, SqrtM,
 	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
@@ -77,7 +77,7 @@ module fdivsqrt(
     .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E);
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, 
-    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallE, .StallM, .TrapM, /*.DivDone, */ .XZeroE, .YZeroE, 
+    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallE, .StallM, .FlushE, /*.DivDone, */ .XZeroE, .YZeroE, 
     .XNaNE, .YNaNE, .MDUE, .n,
     .XInfE, .YInfE, .WZero, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
