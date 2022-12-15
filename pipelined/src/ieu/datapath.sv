@@ -57,14 +57,15 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
-(* mark_debug = "true" *)  input  logic             RegWriteW, 
+(* mark_debug = "true" *)  input  logic             RegWriteW, DivW,
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   input logic [`XLEN-1:0] ReadDataW,
   // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
-  // Hazard Unit signals 
+  input logic [`XLEN-1:0] FPIntDivResultW,
+   // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
 );
@@ -85,7 +86,7 @@ module datapath (
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;
   logic [`XLEN-1:0] ResultW;
-  logic [`XLEN-1:0] IFResultW, IFCvtResultW;
+  logic [`XLEN-1:0] IFResultW, IFCvtResultW, MulDivResultW;
 
   // Decode stage
   assign Rs1D      = InstrD[19:15];
@@ -125,10 +126,12 @@ module datapath (
   if (`F_SUPPORTED) begin:fpmux
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
+    mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, DivW, MulDivResultW);
   end else begin:fpmux
     assign IFResultM = IEUResultM; assign IFCvtResultW = IFResultW;
+    assign MulDivResultW = MDUResultW;
   end
-  mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MDUResultW, SCResultW, ResultSrcW, ResultW); 
+  mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW); 
  
   // handle Store Conditional result if atomic extension supported
   if (`A_SUPPORTED) assign SCResultW = {{(`XLEN-1){1'b0}}, SquashSCW};

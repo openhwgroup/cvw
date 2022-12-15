@@ -65,7 +65,7 @@ module controller(
   output logic       FWriteIntM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
-  output logic 	     RegWriteW,     // for datapath and Hazard Unit
+  output logic 	     RegWriteW, DivW,    // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   // Stall during CSRs
   output logic       CSRWriteFencePendingDEM,
@@ -109,6 +109,7 @@ module controller(
   logic        IllegalERegAdrD;
   logic [1:0]  AtomicE;
    logic       FencePendingD, FencePendingE, FencePendingM;
+   logic       DivE, DivM;
    
 
   // Extract fields
@@ -222,16 +223,17 @@ module controller(
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
+  assign DivE = MDUE & Funct3E[2]; // Division operation
   
   // Memory stage pipeline control register
-  flopenrc #(19) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FencePendingE, InstrValidE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FencePendingM, InstrValidM});
+  flopenrc #(20) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FencePendingE, InstrValidE, DivE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FencePendingM, InstrValidM, DivM});
   
   // Writeback stage pipeline control register
-  flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM},
-                         {RegWriteW, ResultSrcW});  
+  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
+                         {RegWriteM, ResultSrcM, DivM},
+                         {RegWriteW, ResultSrcW, DivW});  
 
   // Stall pipeline at Fetch if a CSR Write or Fence is pending in the subsequent stages
   assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FencePendingD | FencePendingE | FencePendingM;
