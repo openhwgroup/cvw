@@ -55,7 +55,8 @@ module ifu (
 	input logic 				RetM, TrapM, 
     output logic                CommittedF, 
 	input logic [`XLEN-1:0] 	PrivilegedNextPCM, 
-	input logic 				InvalidateICacheM,
+	input logic         	    CSRWriteFenceM,
+    input logic                 InvalidateICacheM,
 	output logic [31:0] 		InstrD, InstrM, 
 	output logic [`XLEN-1:0] 	PCM, 
 	// branch predictor
@@ -288,10 +289,10 @@ module ifu (
   assign PrivilegedChangePCM = RetM | TrapM;
 
   mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
-  if(`ICACHE)
-    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(InvalidateICacheM), 
+//  if(`ICACHE | `ZICSR_SUPPORTED)
+    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(CSRWriteFenceM), 
       .y(PCNext2F));
-  else assign PCNext2F = PCNext1F;
+//  else assign PCNext2F = PCNext1F;
   if(`ZICSR_SUPPORTED)
     mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
       .y(UnalignedPCNextF));

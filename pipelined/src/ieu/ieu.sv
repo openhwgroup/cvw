@@ -71,7 +71,7 @@ module ieu (
   output logic 		   FCvtIntStallD, LoadStallD, MDUStallD, CSRRdStallD,
   output logic 		   PCSrcE,
   output logic 		   CSRReadM, CSRWriteM, PrivilegedM,
-  output logic 		   CSRWriteFencePendingDEM,
+  output logic 		   CSRWriteFenceM,
   output logic             StoreStallD
 );
 
@@ -101,7 +101,7 @@ module ieu (
     .Funct3E, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .DivW, .ResultSrcW, .CSRWriteFencePendingDEM, .StoreStallD);
+    .StallW, .FlushW, .RegWriteW, .DivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
