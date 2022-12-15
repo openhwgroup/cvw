@@ -60,7 +60,7 @@ module muldiv (
 	// Divide
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	// When F extensions are supported, use the FPU divider instead
-	if (`F_SUPPORTED) begin  
+	if (`IDIV_ON_FPU) begin  
 	  assign QuotM = 0;
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
