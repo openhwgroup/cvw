@@ -52,7 +52,8 @@ module fdivsqrt(
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
 //  output logic DivDone,
   output logic [`NE+1:0] QeM,
-  output logic [`DIVb:0] QmM
+  output logic [`DIVb:0] QmM,
+  output logic [`XLEN-1:0] FPIntDivResultM
 //   output logic [`XLEN-1:0] RemM,
 );
 
@@ -88,5 +89,5 @@ module fdivsqrt(
     .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .Firstun, 
     .SqrtM, .SpecialCaseM, .RemOpM(Funct3M[1]), .ForwardedSrcAE,
     .n, .ALTBM, .m, .BZero, .As,
-    .QmM, .WZero, .DivSM);
+    .QmM, .WZero, .DivSM, .FPIntDivResultM);
 endmodule

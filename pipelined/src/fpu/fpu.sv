@@ -55,7 +55,8 @@ module fpu (
    output logic              FCvtIntW,      // select FCvtIntRes (to IEU)
    output logic 		        FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
    output logic 		        IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
-   output logic [4:0] 	     SetFflagsM        // FPU flags (to privileged unit)
+   output logic [4:0] 	     SetFflagsM,        // FPU flags (to privileged unit)
+   output logic [`XLEN-1:0]  FPIntDivResultW
   );
 
    // FPU specifics:
@@ -152,6 +153,7 @@ module fpu (
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic [`FLEN-1:0]     BoxedOneE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic             StallUnpackedM;
+   logic [`XLEN-1:0] FPIntDivResultM;
 
    // DECODE STAGE
 
@@ -267,7 +269,7 @@ module fpu (
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
                   .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
-                  .QmM /*, .DivDone(DivDoneM) */);
+                  .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //
    // compare
@@ -387,7 +389,8 @@ module fpu (
 
    // M/W pipe registers
    flopenrc #(`FLEN) MWRegFp(clk, reset, FlushW, ~StallW, FpResM, FpResW); 
-   flopenrc #(`XLEN) MWRegInt(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
+   flopenrc #(`XLEN) MWRegIntCvtRes(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
+   flopenrc #(`XLEN) MWRegIntDivRes(clk, reset, FlushW, ~StallW, FPIntDivResultM, FPIntDivResultW); 
 
    // BEGIN WRITEBACK STAGE
 
