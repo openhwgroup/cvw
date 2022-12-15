@@ -8,8 +8,7 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 #XLEN    ?= 64
 
-all: root fsd_fld_tempfix arch32 wally32  wally32e arch64 wally64
-#all: root fsd_fld_tempfix wally32
+all: root arch32 wally32  wally32e arch64 wally64
 
 root:
 	mkdir -p $(work_dir)
@@ -20,14 +19,8 @@ root:
 	sed 's,{0},$(current_dir),g;s,{1},64gc,g' config.ini > config64.ini
 	sed 's,{0},$(current_dir),g;s,{1},32e,g' config.ini > config32e.ini
 
-fsd_fld_tempfix:
-    # this is a temporary fix, there's a typo on the rv64i_m/D/src/d_fsd-align-01.S and rv64i_m/D/src/d_fld-align-01.S tests
-    # https://github.com/riscv-non-isa/riscv-arch-test/issues/266
-	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*d_fld-align*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
-	find ../../addins/riscv-arch-test/riscv-test-suite -type f -name "*d_fsd-align*.S" | xargs -I{} sed -i 's,regex(\.\*32\.\*),regex(\.\*64\.\*),g' {}
-
 arch32:
-	riscof --verbose debug run --work-dir=$(work_dir) --config=config32.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
+	riscof run --work-dir=$(work_dir) --config=config32.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
 	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv32i_m/ || echo "error suppressed"
 
 arch64:

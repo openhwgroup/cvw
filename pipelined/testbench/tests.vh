@@ -1413,6 +1413,7 @@ string imperas32f[] = '{
 
   string arch32f[] = '{
     `RISCVARCHTEST,
+    "rv32i_m/F/src/fdiv_b20-01.S",
     "rv32i_m/F/src/fadd_b10-01.S",
     "rv32i_m/F/src/fadd_b1-01.S",
     "rv32i_m/F/src/fadd_b11-01.S",
