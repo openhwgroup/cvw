@@ -178,8 +178,7 @@ module cachefsm
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                      (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck);
   // **** can this be simplified?
-  assign SelAdr = (CurrState == STATE_READY & ((StoreAMO) & CacheHit)) | // changes if store delay hazard removed
-                  (CurrState == STATE_READY & (AnyMiss)) |
+  assign SelAdr = (CurrState == STATE_READY & (StoreAMO | AnyMiss)) | // changes if store delay hazard removed
                   (CurrState == STATE_MISS_FETCH_WDV) |
                   (CurrState == STATE_MISS_EVICT_DIRTY) |
                   (CurrState == STATE_MISS_WRITE_CACHE_LINE) |
