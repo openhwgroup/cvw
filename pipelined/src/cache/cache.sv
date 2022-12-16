@@ -85,6 +85,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [TAGLEN-1:0]          TagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0]          Tag;
   logic [SETLEN-1:0]          FlushAdr;
+  logic [SETLEN-1:0]          OldFlushAdr, NextFlushAdr, RawFlushAdr;
   logic [SETLEN-1:0]          FlushAdrP1;
   logic                       FlushAdrCntEn;
   logic                       FlushAdrCntRst;
@@ -102,6 +103,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelFetchBuffer;
   logic                       CacheEn;
+  logic 					  SelOldFlushAdr;
+  
 
   localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
   localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
@@ -181,10 +184,15 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   assign ResetOrFlushAdr = reset | FlushAdrCntRst;
   flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
-    .d(FlushAdrP1), .q(FlushAdr));
-  assign FlushAdrP1 = FlushAdr + 1'b1;
-  assign FlushAdrFlag = (FlushAdr == FlushAdrThreshold[SETLEN-1:0]);
+    .d(FlushAdrP1), .q(RawFlushAdr));
+  assign NextFlushAdr = FlushAdrCntEn ? FlushAdrP1 : RawFlushAdr;
+  assign FlushAdrP1 = RawFlushAdr + 1'b1;
+  assign FlushAdrFlag = (RawFlushAdr == FlushAdrThreshold[SETLEN-1:0]);
   assign ResetOrFlushWay = reset | FlushWayCntRst;
+  flopenr #(SETLEN) OldFlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
+    .d(NextFlushAdr), .q(OldFlushAdr));
+  mux2 #(SETLEN) FlushAdrMux(NextFlushAdr, OldFlushAdr, SelOldFlushAdr, FlushAdr);
+
   flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
@@ -200,7 +208,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelWriteback, .SelFlush,
-		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst,
+		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst, .SelOldFlushAdr,
 		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
         .InvalidateCache,
         .CacheEn,
