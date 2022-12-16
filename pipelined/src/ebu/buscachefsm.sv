@@ -131,8 +131,8 @@ module buscachefsm #(parameter integer   BeatCountThreshold,
   assign BusStall = (CurrState == ADR_PHASE & (|BusRW | |CacheBusRW)) |
 					//(CurrState == DATA_PHASE & ~BusRW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
 					(CurrState == DATA_PHASE) | 
-                    (CurrState == CACHE_FETCH) |
-                    (CurrState == CACHE_WRITEBACK);
+                    (CurrState == CACHE_FETCH & ~HREADY) |
+                    (CurrState == CACHE_WRITEBACK & ~HREADY);
   assign BusCommitted = CurrState != ADR_PHASE;
 
   // AHB bus interface

@@ -72,6 +72,7 @@ module cachefsm
    output logic       FlushAdrCntRst,
    output logic       FlushWayCntRst,
    output logic       SelFetchBuffer, 
+   output logic       SelOldFlushAdr,
    output logic       CacheEn);
   
   logic               resetDelay;
@@ -135,6 +136,14 @@ module cachefsm
       STATE_MISS_EVICT_DIRTY: if(CacheBusAck)                  NextState = STATE_MISS_FETCH_WDV;
                               else                             NextState = STATE_MISS_EVICT_DIRTY;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
+      STATE_FLUSH: if(LineDirty) NextState = STATE_FLUSH_WRITE_BACK;
+	               else if (FlushFlag & FlushWayFlag) NextState = STATE_READY;
+	               else NextState = STATE_FLUSH;
+	  STATE_FLUSH_WRITE_BACK: if(CacheBusAck & ~(FlushFlag & FlushWayFlag)) NextState = STATE_FLUSH;
+	  else if(CacheBusAck) NextState = STATE_READY;
+	  else NextState = STATE_FLUSH_WRITE_BACK;
+	  
+/* -----\/----- EXCLUDED -----\/-----
 	  STATE_FLUSH:                                             NextState = STATE_FLUSH_CHECK;
       STATE_FLUSH_CHECK: if(LineDirty)                       NextState = STATE_FLUSH_WRITE_BACK;
                          else if(FlushFlag)                    NextState = STATE_READY;
@@ -146,6 +155,7 @@ module cachefsm
                                 else if(FlushWayFlag)          NextState = STATE_FLUSH_INCR;
                                 else                           NextState = STATE_FLUSH_CHECK;
       end                       else                           NextState = STATE_FLUSH_WRITE_BACK;
+ -----/\----- EXCLUDED -----/\----- */
       default:                                                 NextState = STATE_READY;
     endcase
   end
@@ -156,10 +166,10 @@ module cachefsm
                       (CurrState == STATE_MISS_FETCH_WDV) |
                       (CurrState == STATE_MISS_EVICT_DIRTY) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(StoreAMO)) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
-                      (CurrState == STATE_FLUSH) |
-                      (CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
-                      (CurrState == STATE_FLUSH_INCR) |
-                      (CurrState == STATE_FLUSH_WRITE_BACK & ~(FlushFlag) & CacheBusAck);
+                      (CurrState == STATE_FLUSH & ~(FlushFlag & ~LineDirty)) |
+                      //(CurrState == STATE_FLUSH_CHECK & ~(FlushFlag)) |
+                      //(CurrState == STATE_FLUSH_INCR) |
+                      (CurrState == STATE_FLUSH_WRITE_BACK & ~(FlushFlag & CacheBusAck));
   // write enables internal to cache
   assign SetValid = CurrState == STATE_MISS_WRITE_CACHE_LINE;
   assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |
@@ -175,12 +185,17 @@ module cachefsm
   assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
                     (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
   assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
-  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & FlushWayAndNotAdrFlag) |
-                         (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayAndNotAdrFlag & CacheBusAck);                         
-  assign FlushWayCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & ~(FlushFlag)) |
-                         (CurrState == STATE_FLUSH_WRITE_BACK & ~FlushFlag & CacheBusAck);
-  assign FlushAdrCntRst = (CurrState == STATE_READY);
-  assign FlushWayCntRst = (CurrState == STATE_READY) | (CurrState == STATE_FLUSH_INCR);
+  //assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & FlushWayAndNotAdrFlag) |
+  //                       (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayAndNotAdrFlag & CacheBusAck);
+  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayFlag & CacheBusAck) |
+						 (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
+						 (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
+  assign FlushAdrCntRst = (CurrState == STATE_FLUSH & FlushFlag & FlushWayFlag & ~LineDirty) |
+						  (CurrState == STATE_FLUSH_WRITE_BACK & FlushFlag & FlushWayFlag & CacheBusAck);
+  assign FlushWayCntRst = FlushAdrCntRst;
+  assign SelOldFlushAdr = (CurrState == STATE_FLUSH & LineDirty) |
+						  (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck);
   // Bus interface controls
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
                          (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck) | 
