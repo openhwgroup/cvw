@@ -163,8 +163,12 @@ def main():
         #print(regressionDir)
     except:
         pass
-    shutil.rmtree("wkdir")
-    os.mkdir("wkdir")
+    try:
+        shutil.rmtree("wkdir")
+    except:
+        pass
+    finally:
+        os.mkdir("wkdir")
  
     if '-makeTests' in sys.argv:
         os.chdir(regressionDir)
