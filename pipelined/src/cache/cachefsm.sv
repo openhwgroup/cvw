@@ -77,7 +77,7 @@ module cachefsm
   logic               AMO, StoreAMO;
   logic               AnyUpdateHit, AnyHit;
   logic               AnyMiss;
-  logic               FlushFlag, FlushWayAndNotAdrFlag;
+  logic               FlushFlag;
     
   typedef enum logic [3:0]		  {STATE_READY, // hit states
                                    // miss states
@@ -87,8 +87,6 @@ module cachefsm
                                    STATE_MISS_READ_DELAY,  // required for back to back reads. structural hazard on writting SRAM
                                    // flush cache 
 					               STATE_FLUSH,
-					               STATE_FLUSH_CHECK,
-					               STATE_FLUSH_INCR,
 					               STATE_FLUSH_WRITE_BACK} statetype;
 
   (* mark_debug = "true" *) statetype CurrState, NextState;
@@ -140,20 +138,6 @@ module cachefsm
 	  STATE_FLUSH_WRITE_BACK: if(CacheBusAck & ~(FlushFlag & FlushWayFlag)) NextState = STATE_FLUSH;
 	  else if(CacheBusAck) NextState = STATE_READY;
 	  else NextState = STATE_FLUSH_WRITE_BACK;
-	  
-/* -----\/----- EXCLUDED -----\/-----
-	  STATE_FLUSH:                                             NextState = STATE_FLUSH_CHECK;
-      STATE_FLUSH_CHECK: if(LineDirty)                       NextState = STATE_FLUSH_WRITE_BACK;
-                         else if(FlushFlag)                    NextState = STATE_READY;
-                         else if(FlushWayFlag)                 NextState = STATE_FLUSH_INCR;
-                         else                                  NextState = STATE_FLUSH_CHECK;
-	  STATE_FLUSH_INCR:                                        NextState = STATE_FLUSH_CHECK;
-      STATE_FLUSH_WRITE_BACK: if(CacheBusAck) begin
-                                if(FlushFlag)                  NextState = STATE_READY;
-                                else if(FlushWayFlag)          NextState = STATE_FLUSH_INCR;
-                                else                           NextState = STATE_FLUSH_CHECK;
-      end                       else                           NextState = STATE_FLUSH_WRITE_BACK;
- -----/\----- EXCLUDED -----/\----- */
       default:                                                 NextState = STATE_READY;
     endcase
   end
@@ -180,11 +164,10 @@ module cachefsm
   // Flush and eviction controls
   assign SelWriteback = (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
-  assign SelFlush = (CurrState == STATE_FLUSH) | (CurrState == STATE_FLUSH_CHECK) |
-                    (CurrState == STATE_FLUSH_INCR) | (CurrState == STATE_FLUSH_WRITE_BACK);
-  assign FlushWayAndNotAdrFlag = FlushWayFlag & ~FlushAdrFlag;
-  //assign FlushAdrCntEn = (CurrState == STATE_FLUSH_CHECK & ~LineDirty & FlushWayAndNotAdrFlag) |
-  //                       (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayAndNotAdrFlag & CacheBusAck);
+
+  assign SelFlush = (CurrState == STATE_READY & FlushCache) |
+					(CurrState == STATE_FLUSH & ~FlushFlag) | 
+					(CurrState == STATE_FLUSH_WRITE_BACK & ~(CacheBusAck & FlushFlag));
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITE_BACK & FlushWayFlag & CacheBusAck) |
 						 (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
@@ -195,13 +178,9 @@ module cachefsm
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
                          (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck) | 
                          (CurrState == STATE_MISS_EVICT_DIRTY & CacheBusAck);
-//  assign CacheBusRW[1] = CurrState == STATE_READY & AnyMiss;
   assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) |
                           (CurrState == STATE_MISS_EVICT_DIRTY & ~CacheBusAck) |
-                          (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck) |
-                          (CurrState == STATE_FLUSH_CHECK & LineDirty);
-//  assign CacheBusRW[0] = (CurrState == STATE_MISS_FETCH_WDV & CacheBusAck & LineDirty) |
-//                          (CurrState == STATE_FLUSH_CHECK & VictimDirty);
+                     (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck);
   // **** can this be simplified?
   assign SelAdr = (CurrState == STATE_READY & ((StoreAMO) & CacheHit)) | // changes if store delay hazard removed
                   (CurrState == STATE_READY & (AnyMiss)) |
