@@ -42,7 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] n, m,
-  output logic OTFCSwap, ALTBM, BZero, As,
+  output logic OTFCSwap, ALTBM, As, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc
@@ -75,7 +75,8 @@ module fdivsqrtpreproc (
   
   assign PosA = As ? -A64 : A64;
   assign PosB = Bs ? -B64 : B64;
-  assign BZero = ~(|ForwardedSrcBE);
+  assign AZeroE = ~(|ForwardedSrcAE);
+  assign BZeroE = ~(|ForwardedSrcBE);
 
   assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
   assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};

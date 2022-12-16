@@ -36,6 +36,7 @@ module fdivsqrtfsm(
   input  logic [`FMTBITS-1:0] FmtE,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
+  input  logic AZeroE, BZeroE,
   input  logic XNaNE, YNaNE, 
   input  logic FDivStartE, IDivStartE,
   input  logic XsE,
@@ -43,7 +44,7 @@ module fdivsqrtfsm(
   input  logic StallE,
   input  logic StallM,
   input  logic FlushE,
-  input  logic WZero,
+  input  logic WZeroM,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] n,
   output logic IFDivStartE,
@@ -56,7 +57,7 @@ module fdivsqrtfsm(
 
   logic [`DURLEN-1:0] step;
   logic [`DURLEN-1:0] cycles;
-  logic SpecialCaseE;
+  logic SpecialCaseE, FSpecialCaseE, ISpecialCaseE;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
   assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
@@ -64,7 +65,9 @@ module fdivsqrtfsm(
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
 
   // terminate immediately on special cases
-  assign SpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
+  assign FSpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
+  assign ISpecialCaseE = AZeroE | BZeroE;
+  assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
 // DIVN = `NF+3
@@ -116,7 +119,7 @@ module fdivsqrtfsm(
       end else if (state == BUSY) begin
           if (step == 1)  state <= #1 DONE;
           step <= step - 1;
-      end else if ((state == DONE) | (WZero & (state == BUSY))) begin
+      end else if ((state == DONE) | (WZeroM & (state == BUSY))) begin
         if (StallM) state <= #1 DONE;
         else        state <= #1 IDLE;
       end 

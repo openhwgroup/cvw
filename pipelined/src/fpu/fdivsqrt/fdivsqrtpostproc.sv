@@ -31,20 +31,20 @@
 `include "wally-config.vh"
 
 module fdivsqrtpostproc(
-  input  logic [`DIVb+3:0] WS, WC,
-  input  logic [`DIVb-1:0] D, 
-  input  logic [`DIVb:0]   FirstU, FirstUM, 
-  input  logic [`DIVb+1:0] FirstC,
-  input  logic Firstun,
-  input  logic SqrtM,
-  input  logic SpecialCaseM,
-	input  logic [`XLEN-1:0] ForwardedSrcAE,
-  input  logic RemOpM, ALTBM, BZero, As,
+  input  logic [`DIVb+3:0]  WS, WC,
+  input  logic [`DIVb-1:0]  D, 
+  input  logic [`DIVb:0]    FirstU, FirstUM, 
+  input  logic [`DIVb+1:0]  FirstC,
+  input  logic              Firstun,
+  input  logic              SqrtM,
+  input  logic              SpecialCaseM,
+	input  logic [`XLEN-1:0]  ForwardedSrcAE,
+  input  logic              RemOpM, ALTBM, BZeroE, As,
   input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0]    QmM, 
-  output logic WZero,
-  output logic DivSM,
-  output logic [`XLEN-1:0] FPIntDivResultM
+  output logic              WZeroM,
+  output logic              DivSM,
+  output logic [`XLEN-1:0]  FPIntDivResultM
 );
   
   logic [`DIVb+3:0] W, Sum, RemDM;
@@ -69,11 +69,11 @@ module fdivsqrtpostproc(
     assign FZero = SqrtM ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b1,D,{`DIVb-`DIVN+2{1'b0}}};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
-    assign WZero = weq0|(wfeq0 & Firstun);
+    assign WZeroM = weq0|(wfeq0 & Firstun);
   end else begin
-    assign WZero = weq0;
+    assign WZeroM = weq0;
   end 
-  assign DivSM = ~WZero & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+  assign DivSM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
   // Determine if sticky bit is negative
   assign Sum = WC + WS;
@@ -109,10 +109,10 @@ module fdivsqrtpostproc(
     if(ALTBM) begin
       IntQuotM = '0;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
-    end else if (BZero) begin
+    end else if (BZeroE) begin
       IntQuotM = '1;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
-    end else if (WZero) begin
+    end else if (WZeroM) begin
       if (weq0) begin
         IntQuotM = FirstU;
         IntRemM  = '0;
