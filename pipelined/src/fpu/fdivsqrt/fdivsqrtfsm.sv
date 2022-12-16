@@ -59,7 +59,7 @@ module fdivsqrtfsm(
   logic SpecialCaseE;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign IFDivStartE = (FDivStartE | IDivStartE) & (state == IDLE) & ~StallM;
+  assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
 
