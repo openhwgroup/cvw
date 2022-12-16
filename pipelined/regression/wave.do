@@ -260,15 +260,13 @@ add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement 
 add wave -noupdate -expand -group lsu -expand -group dcache -group {replacement policy} -expand -group DETAILS /testbench/dut/core/lsu/bus/dcache/dcache/vict/cacheLRU/WayExpanded
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/LineDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/RawFlushAdr
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/OldFlushAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/NextFlushAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush -radix hexadecimal /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdr
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushWayFlag
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWayCntEn
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushAdrCntEn
-add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushWayCntRst
 add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/FlushAdrFlag
+add wave -noupdate -expand -group lsu -expand -group dcache -expand -group flush /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/SelFlush
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} /testbench/dut/core/lsu/bus/dcache/dcache/ClearDirty
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SelectedWriteWordEn}
 add wave -noupdate -expand -group lsu -expand -group dcache -group {Cache SRAM writes} -expand -group way0 {/testbench/dut/core/lsu/bus/dcache/dcache/CacheWays[0]/SetValidWay}
@@ -601,7 +599,7 @@ add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushAdrCntEn
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushWayCntEn
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {408937 ns} 0} {{Cursor 4} {329828 ns} 1} {{Cursor 5} {408936 ns} 1}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {329696 ns} 0} {{Cursor 4} {329828 ns} 1} {{Cursor 5} {408936 ns} 1}
 quietly wave cursor active 3
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 314
@@ -617,4 +615,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {408747 ns} {409125 ns}
+WaveRestoreZoom {329508 ns} {329874 ns}
