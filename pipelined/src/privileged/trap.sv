@@ -53,7 +53,7 @@ module trap (
   logic Committed;
   logic BothInstrAccessFaultM;
   
-  (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM; 
+  (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM, EnabledIntsM; 
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -66,8 +66,9 @@ module trap (
   assign PendingIntsM = MIP_REGW & MIE_REGW;
   assign IntPendingM = |PendingIntsM;
   assign Committed = CommittedM | CommittedF;
-  assign ValidIntsM = {12{~Committed}} & ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW); 
-  assign InterruptM = (|ValidIntsM) && InstrValidM && ~Committed; // suppress interrupt if the memory system has partially processed a request.
+  assign EnabledIntsM = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
+  assign ValidIntsM = {12{~Committed}} & EnabledIntsM;
+  assign InterruptM = (|ValidIntsM) && InstrValidM; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 
