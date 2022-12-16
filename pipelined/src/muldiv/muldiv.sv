@@ -42,7 +42,7 @@ module muldiv (
 	       // Divide Done
 	       output logic 		DivBusyE, 
 	       // hazards
-	       input logic 		StallM, StallW, FlushM, FlushW, TrapM 
+	       input logic 		StallM, StallW, FlushE, FlushM, FlushW 
 	       );
 
 	logic [`XLEN-1:0] MDUResultM;
@@ -59,10 +59,17 @@ module muldiv (
 
 	// Divide
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	assign DivE = MDUE & Funct3E[2];
-	assign DivSignedE = ~Funct3E[0];
-	intdivrestoring div(.clk, .reset, .StallM, .TrapM, .DivSignedE, .W64E, .DivE, 
-	                    .ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
+	// When F extensions are supported, use the FPU divider instead
+	if (`IDIV_ON_FPU) begin  
+	  assign QuotM = 0;
+	  assign RemM = 0;
+	  assign DivBusyE = 0;
+	end else begin
+		assign DivE = MDUE & Funct3E[2];
+		assign DivSignedE = ~Funct3E[0];
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .DivE, 
+							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
+	end
 		
 	// Result multiplexer
 	always_comb

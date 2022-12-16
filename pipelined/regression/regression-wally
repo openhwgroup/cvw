@@ -10,7 +10,7 @@
 # output.
 #
 ##################################
-import sys,os
+import sys,os,shutil
 
 class bcolors:
     HEADER = '\033[95m'
@@ -26,6 +26,7 @@ class bcolors:
 from collections import namedtuple
 regressionDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(regressionDir)
+
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
@@ -158,9 +159,13 @@ def main():
     try:
         os.chdir(regressionDir)
         os.mkdir("logs")
+        #print(os.getcwd())
+        #print(regressionDir)
     except:
         pass
-
+    shutil.rmtree("wkdir")
+    os.mkdir("wkdir")
+ 
     if '-makeTests' in sys.argv:
         os.chdir(regressionDir)
         os.system('./make-tests.sh | tee ./logs/make-tests.log')

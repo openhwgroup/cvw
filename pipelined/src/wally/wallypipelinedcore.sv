@@ -79,7 +79,7 @@ module wallypipelinedcore (
   logic             StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
   logic       InvalidateICacheM, FlushDCacheM;
   logic             PCSrcE;
-  logic             CSRWriteFencePendingDEM;
+  logic             CSRWriteFenceM;
   logic             DivBusyE;
   logic             LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic             SquashSCW;
@@ -99,6 +99,7 @@ module wallypipelinedcore (
   logic             FpLoadStoreM;
   logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
+  logic [`XLEN-1:0] FPIntDivResultW;
 
   // memory management unit signals
   logic             ITLBWriteF;
@@ -182,7 +183,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM,
+    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
@@ -228,7 +229,7 @@ module wallypipelinedcore (
      .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .MDUResultW,
+     .CSRReadValW, .MDUResultW, .FPIntDivResultW,
      .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
@@ -240,7 +241,7 @@ module wallypipelinedcore (
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
      .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWriteFencePendingDEM, .StoreStallD
+     .CSRWriteFenceM, .StoreStallD
 
   ); // integer execution unit: integer register file, datapath and controller
 
@@ -316,7 +317,7 @@ module wallypipelinedcore (
 
   
    hazard     hzu(
-     .BPPredWrongE, .CSRWriteFencePendingDEM, .RetM, .TrapM,
+     .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
      .FCvtIntStallD, .FStallD,
@@ -374,7 +375,7 @@ module wallypipelinedcore (
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,
          .MDUResultW, .DivBusyE,  
-         .StallM, .StallW, .FlushM, .FlushW, .TrapM 
+         .StallM, .StallW, .FlushE, .FlushM, .FlushW
       ); 
    end else begin // no M instructions supported
       assign MDUResultW = 0; 
@@ -389,7 +390,7 @@ module wallypipelinedcore (
          .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
          .ForwardedSrcAE, // Integer input being processed (from IEU)
          .StallE, .StallM, .StallW, // stall signals from HZU
-         .TrapM,
+         //.TrapM,
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
          .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?
@@ -405,7 +406,8 @@ module wallypipelinedcore (
          .FCvtIntW,   // fpu result selection
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
          .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
-         .SetFflagsM        // FPU flags (to privileged unit)
+         .SetFflagsM,        // FPU flags (to privileged unit)
+         .FPIntDivResultW
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FStallD = 0;
