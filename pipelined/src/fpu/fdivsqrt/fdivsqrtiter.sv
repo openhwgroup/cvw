@@ -92,7 +92,7 @@ module fdivsqrtiter(
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
-  assign initCUpper = SqrtE ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
+  assign initCUpper = (SqrtE & ~(MDUE)) ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, CMux); 
   flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, CMux, C[0]);
