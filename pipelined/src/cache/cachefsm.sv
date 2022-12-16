@@ -69,10 +69,8 @@ module cachefsm
    output logic       SelFlush,
    output logic       FlushAdrCntEn,
    output logic       FlushWayCntEn, 
-   output logic       FlushAdrCntRst,
-   output logic       FlushWayCntRst,
+   output logic       FlushCntRst,
    output logic       SelFetchBuffer, 
-   output logic       SelOldFlushAdr,
    output logic       CacheEn);
   
   logic               resetDelay;
@@ -191,11 +189,8 @@ module cachefsm
 						 (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
 						 (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
-  assign FlushAdrCntRst = (CurrState == STATE_FLUSH & FlushFlag & FlushWayFlag & ~LineDirty) |
+  assign FlushCntRst = (CurrState == STATE_FLUSH & FlushFlag & FlushWayFlag & ~LineDirty) |
 						  (CurrState == STATE_FLUSH_WRITE_BACK & FlushFlag & FlushWayFlag & CacheBusAck);
-  assign FlushWayCntRst = FlushAdrCntRst;
-  assign SelOldFlushAdr = (CurrState == STATE_FLUSH & LineDirty) |
-						  (CurrState == STATE_FLUSH_WRITE_BACK & ~CacheBusAck);
   // Bus interface controls
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
                          (CurrState == STATE_MISS_FETCH_WDV & ~CacheBusAck) | 

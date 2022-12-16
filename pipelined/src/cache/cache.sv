@@ -85,25 +85,23 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [TAGLEN-1:0]          TagWay [NUMWAYS-1:0];
   logic [TAGLEN-1:0]          Tag;
   logic [SETLEN-1:0]          FlushAdr;
-  logic [SETLEN-1:0]          OldFlushAdr, NextFlushAdr, RawFlushAdr;
+  logic [SETLEN-1:0]          NextFlushAdr;
   logic [SETLEN-1:0]          FlushAdrP1;
   logic                       FlushAdrCntEn;
-  logic                       FlushAdrCntRst;
+  logic                       FlushCntRst;
   logic                       FlushAdrFlag;
   logic                       FlushWayFlag;
   logic [NUMWAYS-1:0]         FlushWay;
   logic [NUMWAYS-1:0]         NextFlushWay;
   logic                       FlushWayCntEn;
-  logic                       FlushWayCntRst;  
   logic                       SelWriteback;
   logic                       LRUWriteEn;
   logic                       SelFlush;
-  logic                       ResetOrFlushAdr, ResetOrFlushWay;
+  logic                       ResetOrFlushCntRst;
   logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
   logic                       SelFetchBuffer;
   logic                       CacheEn;
-  logic 					  SelOldFlushAdr;
   
 
   localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
@@ -182,18 +180,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
   /////////////////////////////////////////////////////////////////////////////////////////////
-  assign ResetOrFlushAdr = reset | FlushAdrCntRst;
-  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
-    .d(FlushAdrP1), .q(RawFlushAdr));
-  assign NextFlushAdr = FlushAdrCntEn ? FlushAdrP1 : RawFlushAdr;
-  assign FlushAdrP1 = RawFlushAdr + 1'b1;
-  assign FlushAdrFlag = (RawFlushAdr == FlushAdrThreshold[SETLEN-1:0]);
-  assign ResetOrFlushWay = reset | FlushWayCntRst;
-  flopenr #(SETLEN) OldFlushAdrReg(.clk, .reset(ResetOrFlushAdr), .en(FlushAdrCntEn), 
-    .d(NextFlushAdr), .q(OldFlushAdr));
-  mux2 #(SETLEN) FlushAdrMux(NextFlushAdr, OldFlushAdr, SelOldFlushAdr, FlushAdr);
-
-  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushWay), .en(FlushWayCntEn), 
+  assign ResetOrFlushCntRst = reset | FlushCntRst;
+  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushCntRst), .en(FlushAdrCntEn), 
+    .d(FlushAdrP1), .q(NextFlushAdr));
+  assign FlushAdr = FlushAdrCntEn ? FlushAdrP1 : NextFlushAdr;
+  assign FlushAdrP1 = NextFlushAdr + 1'b1;
+  assign FlushAdrFlag = (NextFlushAdr == FlushAdrThreshold[SETLEN-1:0]);
+  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushCntRst), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
   if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
@@ -208,8 +201,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 		.CacheMiss, .CacheAccess, .SelAdr, 
 		.ClearValid, .ClearDirty, .SetDirty,
 		.SetValid, .SelWriteback, .SelFlush,
-		.FlushAdrCntEn, .FlushWayCntEn, .FlushAdrCntRst, .SelOldFlushAdr,
-		.FlushWayCntRst, .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
+		.FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
+		.FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
         .InvalidateCache,
         .CacheEn,
         .LRUWriteEn);
