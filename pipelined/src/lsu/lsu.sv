@@ -31,7 +31,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // committed means the memory operation in flight cannot be interrupted.
-// cpubusy means the cpu is stalled and the lsu must ensure ReadDataM stalls constant until the stall is removed.
 // chap 5 handling faults to memory by delaying writes to memory stage.
 // chap 6 combing bus with dtim
 // chap 9 complete lsu.
@@ -285,7 +284,6 @@ module lsu (
       logic [1:0] BusRW;
       logic [`XLEN-1:0] FetchBuffer;
       assign BusRW = ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
-//      assign BusRW = LSURWM & ~{IgnoreRequest, IgnoreRequest} & ~{SelDTIM, SelDTIM};
       
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
