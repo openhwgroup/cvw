@@ -38,7 +38,7 @@ module fpu (
    input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
    input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
-   input  logic              TrapM,
+   //input  logic              TrapM,
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
    input  logic  [4:0] 	     RdM, RdW,   // which FP register to write to (from IEU)
    input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
@@ -55,7 +55,8 @@ module fpu (
    output logic              FCvtIntW,      // select FCvtIntRes (to IEU)
    output logic 		        FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
    output logic 		        IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
-   output logic [4:0] 	     SetFflagsM        // FPU flags (to privileged unit)
+   output logic [4:0] 	     SetFflagsM,        // FPU flags (to privileged unit)
+   output logic [`XLEN-1:0]  FPIntDivResultW
   );
 
    // FPU specifics:
@@ -152,6 +153,7 @@ module fpu (
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic [`FLEN-1:0]     BoxedOneE;                         // Zero value for Z for multiplication, with NaN boxing if needed
    logic             StallUnpackedM;
+   logic [`XLEN-1:0] FPIntDivResultM;
 
    // DECODE STAGE
 
@@ -266,8 +268,8 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .TrapM, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
-                  .QmM /*, .DivDone(DivDoneM) */);
+                  .StallE, .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
+                  .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //
    // compare
@@ -387,7 +389,8 @@ module fpu (
 
    // M/W pipe registers
    flopenrc #(`FLEN) MWRegFp(clk, reset, FlushW, ~StallW, FpResM, FpResW); 
-   flopenrc #(`XLEN) MWRegInt(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
+   flopenrc #(`XLEN) MWRegIntCvtRes(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
+   flopenrc #(`XLEN) MWRegIntDivRes(clk, reset, FlushW, ~StallW, FPIntDivResultM, FPIntDivResultW); 
 
    // BEGIN WRITEBACK STAGE
 

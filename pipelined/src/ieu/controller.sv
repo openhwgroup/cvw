@@ -65,10 +65,11 @@ module controller(
   output logic       FWriteIntM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
-  output logic 	     RegWriteW,     // for datapath and Hazard Unit
+  output logic 	     RegWriteW, DivW,    // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   // Stall during CSRs
-  output logic       CSRWriteFencePendingDEM,
+  //output logic       CSRWriteFencePendingDEM,
+  output logic       CSRWriteFenceM,
   output logic       StoreStallD
 );
 
@@ -92,7 +93,7 @@ module controller(
   logic       CSRZeroSrcD;
   logic       CSRReadD;
   logic [1:0] AtomicD;
-  logic       FenceD;
+  logic       FenceXD;
   logic       InvalidateICacheD, FlushDCacheD;
   logic       CSRWriteD, CSRWriteE;
   logic       InstrValidD, InstrValidE;
@@ -108,7 +109,9 @@ module controller(
   logic        IEURegWriteE;
   logic        IllegalERegAdrD;
   logic [1:0]  AtomicE;
-   logic       FencePendingD, FencePendingE, FencePendingM;
+   logic       FenceD, FenceE, FenceM;
+  logic        SFenceVmaD;
+   logic       DivE, DivM;
    
 
   // Extract fields
@@ -176,11 +179,12 @@ module controller(
   assign IllegalBaseInstrFaultD = ControlsD[0] | IllegalERegAdrD;
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, W64D, CSRReadD, 
-          PrivilegedD, FenceD, MDUD, AtomicD, unused} = IllegalIEUInstrFaultD ? `CTRLW'b0 : ControlsD;
+          PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUInstrFaultD ? `CTRLW'b0 : ControlsD;
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]); // Don't write if setting or clearing zeros
-  assign FencePendingD = PrivilegedD & (InstrD[31:25] ==  7'b0001001) | FenceD; // possible sfence.vma or fence.i
+  assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
+  assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
   assign sltD = (Funct3D == 3'b010);
@@ -195,7 +199,7 @@ module controller(
   // FENCE.I flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
   if (`ZIFENCEI_SUPPORTED & `ICACHE) begin:fencei
     logic FenceID;
-    assign FenceID = FenceD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
+    assign FenceID = FenceXD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
     assign InvalidateICacheD = FenceID;
     assign FlushDCacheD = FenceID;
   end else begin:fencei
@@ -208,8 +212,8 @@ module controller(
 
   // Execute stage pipeline control register and logic
   flopenrc #(28) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FencePendingD, InstrValidD},
-                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FencePendingE, InstrValidE});
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
+                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
 
   // Branch Logic
   assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
@@ -222,19 +226,21 @@ module controller(
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
+  assign DivE = MDUE & Funct3E[2]; // Division operation
   
   // Memory stage pipeline control register
-  flopenrc #(19) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FencePendingE, InstrValidE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FencePendingM, InstrValidM});
+  flopenrc #(20) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, DivE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, DivM});
   
   // Writeback stage pipeline control register
-  flopenrc #(4) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM},
-                         {RegWriteW, ResultSrcW});  
+  flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
+                         {RegWriteM, ResultSrcM, DivM},
+                         {RegWriteW, ResultSrcW, DivW});  
 
-  // Stall pipeline at Fetch if a CSR Write or Fence is pending in the subsequent stages
-  assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FencePendingD | FencePendingE | FencePendingM;
+  // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
+  assign CSRWriteFenceM = CSRWriteM | FenceM;
+//  assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FenceD | FenceE | FenceM;
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write

@@ -117,3 +117,4 @@ pipelined/srt/testgen
 pipelined/srt/qslc_r4a2
 pipelined/srt/qslc_r4a2.sv
 pipelined/srt/testvectors
+pipelined/regression/wkdir
