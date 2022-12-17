@@ -118,16 +118,21 @@ module cacheLRU
   decoder #(LOGNUMWAYS) decoder (VictimWayEnc, VictimWay);
 
   // LRU storage must be reset for modelsim to run. However the reset value does not actually matter in practice.
+  // This is a two port memory.
+  // Every cycle must read from CAdr and each load/store must write the new LRU.
+  // this is still wrong.***************************
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
       if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
       else if (LRUWriteEn & ~FlushStage) begin 
-        LRUMemory[CAdr] <= NextLRU; ///***** RT: This is not right. Logically should be PAdr, but it breaks linux.
-        CurrLRU <= #1 NextLRU;
-      end else begin
-        CurrLRU <= #1 LRUMemory[CAdr];
+        LRUMemory[PAdr] <= NextLRU;
       end
+  // this is still wrong.***************************
+      if(LRUWriteEn & ~FlushStage & (PAdr == CAdr))
+        CurrLRU <= #1 NextLRU;
+      else 
+        CurrLRU <= #1 LRUMemory[CAdr];
     end
   end
 
