@@ -1,4 +1,4 @@
-TARGETDIR	:= simple
+TARGETDIR	:= cacheTest
 TARGET		:= $(TARGETDIR)/$(TARGETDIR).elf
 ROOT		:= ..
 LIBRARY_DIRS	:= ${ROOT}/crt0
