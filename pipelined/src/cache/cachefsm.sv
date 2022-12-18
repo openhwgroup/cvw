@@ -154,7 +154,7 @@ module cachefsm
                     (CurrState == STATE_MISS_WRITE_CACHE_LINE & (StoreAMO));
   assign ClearValid = '0;
   assign ClearDirty = (CurrState == STATE_MISS_WRITE_CACHE_LINE & ~(StoreAMO)) |
-                      (CurrState == STATE_FLUSH_WRITE_BACK & CacheBusAck);
+                      (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_MISS_WRITE_CACHE_LINE);
   // Flush and eviction controls

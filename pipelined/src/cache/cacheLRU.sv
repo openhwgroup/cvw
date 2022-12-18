@@ -128,7 +128,6 @@ module cacheLRU
       else if (LRUWriteEn & ~FlushStage) begin 
         LRUMemory[PAdr] <= NextLRU;
       end
-  // this is still wrong.***************************
       if(LRUWriteEn & ~FlushStage & (PAdr == CAdr))
         CurrLRU <= #1 NextLRU;
       else 
