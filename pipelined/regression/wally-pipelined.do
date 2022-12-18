@@ -67,8 +67,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 
 } elseif {$2 eq "fpga"} {
     echo "hello"
-    vlog  -work work_fpga +incdir+../config/fpga +incdir+../config/shared ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063
-    vopt +acc work_fpga.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
+    vlog  -work work +incdir+../config/fpga +incdir+../config/shared ../testbench/testbench.sv ../testbench/sdc/*.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv  ../../fpga/sim/*.sv -suppress 8852,12070,3084,3829,2583,7063
+    vopt +acc work.testbench -G TEST=$2 -G DEBUG=0 -o workopt     
     vsim workopt +nowarn3829  -fatal 7
     
     do fpga-wave.do

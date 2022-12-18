@@ -29,6 +29,7 @@
 `define MYIMPERASTEST   "3"
 `define COREMARK "4"
 `define EMBENCH "5"
+`define CUSTOM "6"
 // *** remove MYIMPERASTEST cases when ported 
 
 string tvpaths[] = '{
@@ -37,7 +38,8 @@ string tvpaths[] = '{
     "../../tests/riscof/work/wally-riscv-arch-test/",
     "../../tests/imperas-riscv-tests/work/",
     "../../benchmarks/coremark/work/",
-    "../../addins/embench-iot/"
+    "../../addins/embench-iot/",
+    "../../tests/custom/work/"
     };
 
   string coremark[] = '{
@@ -874,7 +876,6 @@ string imperas32f[] = '{
 
   string testsBP64[] = '{
     `IMPERASTEST,
-    "rv64BP/floating-point-bug",
     "rv64BP/simple"
 //    "rv64BP/mmm",
 //    "rv64BP/linpack_bench",
@@ -1927,8 +1928,13 @@ string imperas32f[] = '{
  };
 
  string fpga[] = '{
-    `WALLYTEST,
+    `CUSTOM,
     "NULL"
+ };
+
+ string custom[] = '{
+    `CUSTOM,
+    "simple"
  };
 
  string ahb[] = '{
