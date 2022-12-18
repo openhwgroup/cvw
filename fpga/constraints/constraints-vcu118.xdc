@@ -36,9 +36,9 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_por
 
 ##### UART #####
 #set_property PACKAGE_PIN AW25 [get_ports UARTSin]
-set_property PACKAGE_PIN R29 [get_ports UARTSin]
+set_property PACKAGE_PIN L31 [get_ports UARTSin]
 #set_property PACKAGE_PIN BB21 [get_ports UARTSout]
-set_property PACKAGE_PIN M31 [get_ports UARTSout]
+set_property PACKAGE_PIN P29 [get_ports UARTSout]
 set_max_delay -from [get_ports UARTSin] 10.000
 set_max_delay -to [get_ports UARTSout] 10.000
 set_property IOSTANDARD LVCMOS12 [get_ports UARTSin]
