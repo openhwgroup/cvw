@@ -44,7 +44,7 @@ _start:
 
 
 	# set the stack pointer to the top of memory - 8 bytes (pointer size)
-	li sp, 0x07FFFFF8
+	li sp, 0x87FFFFF8
 
 	jal ra, pre_main
 	jal ra, _halt

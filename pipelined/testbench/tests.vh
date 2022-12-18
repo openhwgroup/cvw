@@ -874,16 +874,6 @@ string imperas32f[] = '{
     "rv32i_m/I/XORI-01"   
   };
 
-  string testsBP64[] = '{
-    `IMPERASTEST,
-    "rv64BP/simple"
-//    "rv64BP/mmm",
-//    "rv64BP/linpack_bench",
-//    "rv64BP/sieve",
-//    "rv64BP/qsort",
-//    "rv64BP/dhrystone"
-  };
-
   string imperas32p[] = '{
     `MYIMPERASTEST,
     "rv32p/WALLY-MSTATUS",
@@ -1934,8 +1924,19 @@ string imperas32f[] = '{
 
  string custom[] = '{
     `CUSTOM,
+    "cacheTest",   
     "simple"
  };
+  string testsBP64[] = '{
+    `IMPERASTEST,
+    "rv64BP/simple"
+//    "rv64BP/mmm",
+//    "rv64BP/linpack_bench",
+//    "rv64BP/sieve",
+//    "rv64BP/qsort",
+//    "rv64BP/dhrystone"
+  };
+
 
  string ahb[] = '{
     `RISCVARCHTEST,

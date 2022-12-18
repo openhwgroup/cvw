@@ -50,6 +50,7 @@ pass:
 done:
 	li t0, 0x30
 	csrrs x0, 0x320, t0  # set bits 4 and 5
+	ecall
 	ret
 
 fail:

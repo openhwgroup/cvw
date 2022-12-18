@@ -98,7 +98,7 @@ logic [3:0] dummy;
         "wally64a":     if (`A_SUPPORTED) tests = wally64a;
         "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
                         else              tests = imperas64iNOc;
-        "testsBP64":                      tests = testsBP64;
+        "custom":                         tests = custom;
         "wally64i":                       tests = wally64i; 
         "wally64priv":                    tests = wally64priv;
         "wally64periph":                  tests = wally64periph;
