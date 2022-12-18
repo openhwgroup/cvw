@@ -159,7 +159,7 @@ logic [3:0] dummy;
   assign UARTSin = 1;
 
   if(`EXT_MEM_SUPPORTED) begin
-    ram #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 
+    ram_ahb #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
          .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
          .HWSTRB);
@@ -226,9 +226,9 @@ logic [3:0] dummy;
       else memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`FPGA) begin
         string romfilename, sdcfilename;
-        romfilename = {"../../tests/testsBP/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
-        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};      
-        $readmemh(romfilename, dut.wallypipelinedsoc.uncore.uncore.bootrom.bootrom.memory.RAM);
+        romfilename = {"../../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
+        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // force sdc timers
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
