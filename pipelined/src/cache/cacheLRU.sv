@@ -99,11 +99,13 @@ module cacheLRU
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
     localparam t0 = 2*s - NUMWAYS;
     localparam t1 = t0 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t1] : Intermediate[t0];
+    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t0] : Intermediate[t1];
   end
   for(s = NUMWAYS/2-1; s >= 0; s--) begin
     localparam int0 = (NUMWAYS/2-1-s)*2;
     localparam int1 = int0 + 1;
+	//localparam int0 = s*2;
+	//localparam int1 = int0 + 1;	
     assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
