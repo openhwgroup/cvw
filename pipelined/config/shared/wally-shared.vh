@@ -109,8 +109,8 @@
 `define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+8) ? (`DIVRESLEN+`NF) : (3*`NF+6))
 
 // division constants
-`define RADIX 32'h4
-`define DIVCOPIES 32'h2
+`define RADIX 32'h2
+`define DIVCOPIES 32'h1
 `define DIVLEN ((`NF < `XLEN) ? (`XLEN) : `NF+3)
 // `define DIVN (`NF < `XLEN ? `XLEN : `NF+1) // length of input
 `define DIVN (`NF<`XLEN ? `XLEN : (`NF + 3)) // length of input
@@ -120,7 +120,7 @@
 `define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
 `define RK (`DIVCOPIES*`LOGR) // r*k used for intdiv preproc
 `define LOGK ($clog2(`DIVCOPIES))
-`define LOGRK ($clog2(`RK))
+`define LOGRK ($clog2(`RADIX*`DIVCOPIES)) // log2(R*k)
 // FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES)) 
 // one iteration is required for the integer bit for minimally redundent radix-4
 `define FPDUR ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
