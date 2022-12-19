@@ -114,13 +114,13 @@ module fdivsqrtiter(
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : iterations
       if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE, .OTFCSwap,
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE, .OTFCSwap, .MDUE,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .OTFCSwap,
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .OTFCSwap, .MDUE,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end
