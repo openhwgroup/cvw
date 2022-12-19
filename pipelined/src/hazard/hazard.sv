@@ -48,7 +48,6 @@ module hazard(
   logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
   logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
   
-
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
   // branches and jumps: flush the next two instructions if the branch is taken in EXE
@@ -61,21 +60,35 @@ module hazard(
   // A stage must stall if the next stage is stalled
   // If any stages are stalled, the first stage that isn't stalled must flush.
 
+  // Flush causes
+  // Traps (TrapM) flush the entire pipeline.  
+  //   However, breakpoint and ecall traps must finish the writeback stage (commit their results) because these instructions complete before trapping.
+  // Trap returns (RetM) also flush the entire pipeline after the RetM (all stages except W) because all the subsequent instructions must be discarded.
+  // Similarly, CSR writes and fences flush all subsequent instructions and refetch them in light of the new operating modes and cache/TLB contents
+  // Branch misprediction is found in the Execute stage and must flush the next two instructions.
+  //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
   assign FlushDCause = TrapM | RetM | BPPredWrongE | CSRWriteFenceM;
   assign FlushECause = TrapM | RetM | (BPPredWrongE & ~(DivBusyE | FDivBusyE)) | CSRWriteFenceM;
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
-  // on Trap the memory stage should be flushed going into the W stage,
-  // except if the instruction causing the Trap is an ecall or ebreak.
   assign FlushWCause = TrapM & ~(BreakpointFaultM | EcallFaultM);
 
+  // Stall causes
+  //  Most data depenency stalls are identified in the decode stage
+  //  Division stalls in the execute stage
+  //  Flushing the decode or execute stage has priority over stalls.  
+  //    Even if the register gave clear priority over enable, various FSMs still need to disable the stall, so it's best to gate the stall here with flush
+  //  WFI is an odd case.  It stalls in the Memory stage until a pending interrupt or timeout trap
+  //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.  
+  //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
+  //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
   assign StallFCause = '0;
-  // stall in decode if instruction is a load/mul/csr dependent on previous
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
   assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
   assign StallWCause = (IFUStallF | LSUStallM) & ~TrapM; 
 
+  // Stall each stage for cause or if the next stage is stalled
   assign #1 StallF = StallFCause | StallD;
   assign #1 StallD = StallDCause | StallE;
   assign #1 StallE = StallECause | StallM;
@@ -89,7 +102,7 @@ module hazard(
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
   assign #1 FlushD = FirstUnstalledD | FlushDCause; 
-  assign #1 FlushE = FirstUnstalledE | FlushECause ; // *** why is BPPredWrongE here, but not needed in simple processor 
+  assign #1 FlushE = FirstUnstalledE | FlushECause;
   assign #1 FlushM = FirstUnstalledM | FlushMCause;
   assign #1 FlushW = FirstUnstalledW | FlushWCause;
 endmodule
