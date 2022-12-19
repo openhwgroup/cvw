@@ -46,7 +46,7 @@ module fpu (
 	input  logic 		        MDUE, W64E,
    output logic 		        FRegWriteM, // FP register write enable (to privileged unit)
    output logic 		        FpLoadStoreM,  // Fp load instruction? (to LSU)
-   output logic 		        FStallD,       // Stall the decode stage (To HZU)
+   output logic 		        FPUStallD,       // Stall the decode stage (To HZU)
    output logic 		        FWriteIntE,    // integer register write enable (to IEU)
    output logic              FCvtIntE,      // Convert to int (to IEU)
    output logic [`FLEN-1:0]  FWriteDataM,   // Data to be written to memory (to LSU) 
@@ -201,7 +201,7 @@ module fpu (
    // Hazard unit for FPU  
    //    - determines if any forwarding or stalls are needed
    fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResSelM, 
-                   .XEnE, .YEnE(YEnForwardE), .ZEnE(ZEnForwardE), .FStallD, .ForwardXE, .ForwardYE, .ForwardZE);
+                   .XEnE, .YEnE(YEnForwardE), .ZEnE(ZEnForwardE), .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
 
    // forwarding muxs
    mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, ForwardXE, XE);
