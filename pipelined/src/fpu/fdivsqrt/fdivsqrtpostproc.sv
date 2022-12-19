@@ -39,7 +39,7 @@ module fdivsqrtpostproc(
   input  logic              SqrtM,
   input  logic              SpecialCaseM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAE,
-  input  logic              RemOpM, ALTBM, BZeroE, As,
+  input  logic              RemOpM, ALTBM, BZeroM, As,
   input  logic [`DIVBLEN:0] n, m,
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroM,
@@ -109,7 +109,7 @@ module fdivsqrtpostproc(
     if(ALTBM) begin
       IntQuotM = '0;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
-    end else if (BZeroE) begin
+    end else if (BZeroM) begin
       IntQuotM = '1;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
     end else if (WZeroM) begin

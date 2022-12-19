@@ -37,12 +37,12 @@ module fdivsqrtpreproc (
   input  logic [`NE-1:0] Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic Sqrt,
-  input  logic XZero,
+  input  logic XZeroE,
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] n, m,
-  output logic OTFCSwap, ALTBM, As, AZeroE, BZeroE,
+  output logic OTFCSwap, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc
@@ -56,12 +56,13 @@ module fdivsqrtpreproc (
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
   logic  Bs, CalcOTFCSwap, ALTBE;
-  logic  [`XLEN-1:0] A64, B64;
+  logic  [`XLEN-1:0]  A64, B64;
   logic  [`DIVBLEN:0] Calcn, Calcm;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
   logic  [`LOGRK-1:0] pPrTrunc;
-  logic  [`DIVb+3:0] PreShiftX;
+  logic  [`DIVb+3:0]  PreShiftX;
+  logic  NumZeroE;
 
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
@@ -83,8 +84,8 @@ module fdivsqrtpreproc (
   lzc #(`DIVb) lzcX (IFNormLenX, ell);
   lzc #(`DIVb) lzcY (IFNormLenD, Calcm);
 
-  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, ~MDUE}); // had issue with (`DIVBLEN+1)'(~MDUE) so using this instead
-  assign DPreproc = IFNormLenD << (Calcm + {{`DIVBLEN{1'b0}}, ~MDUE});
+  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // had issue with (`DIVBLEN+1)'(~MDUE) so using this instead
+  assign DPreproc = IFNormLenD << (Calcm + {{`DIVBLEN{1'b0}}, 1'b1}); // replaced ~MDUE with 1 bc we always want that extra left shift
 
   assign ZeroDiff = Calcm - ell;
   assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
@@ -97,8 +98,10 @@ module fdivsqrtpreproc (
   assign IntBits = (`DIVBLEN)'(`RK) + p;
   assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
 
-  assign SqrtX = (Xe[0]^ell[0]) ? {1'b0, ~XZero, XPreproc[`DIVb-1:1]} : {~XZero, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
-  assign DivX = {3'b000, ~XZero, XPreproc};
+  assign NumZeroE = MDUE ? AZeroE : XZeroE;
+
+  assign SqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
+  assign DivX = {3'b000, ~NumZeroE, XPreproc};
 
   // *** explain why X is shifted between radices (initial assignment of WS=RX)
   if (`RADIX == 2)  assign PreShiftX = Sqrt ? {3'b111, SqrtX} : DivX;
@@ -118,9 +121,12 @@ module fdivsqrtpreproc (
   flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
   flopen #(1)       swapreg(clk, IFDivStartE, CalcOTFCSwap, OTFCSwap);
   flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
+  flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
+  flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, Calcn, n);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, Calcm, m);
-  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero, .ell, .m(Calcm), .Qe(QeE));
+  //flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM); //HERE
+  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(Calcm), .Qe(QeE));
 
 endmodule
 
@@ -128,7 +134,7 @@ module expcalc(
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic [`NE-1:0] Xe, Ye,
   input  logic Sqrt,
-  input  logic XZero, 
+  input  logic XZeroE, 
   input  logic [`DIVBLEN:0] ell, m,
   output logic [`NE+1:0] Qe
   );
@@ -164,7 +170,7 @@ module expcalc(
   assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - (`NE+2)'(`BIAS);
   assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
   // correct exponent for denormalized input's normalization shifts
-  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZero}};
+  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZeroE}};
   
   assign Qe = Sqrt ? SExp : DExp;
 endmodule
