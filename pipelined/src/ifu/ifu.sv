@@ -280,7 +280,7 @@ module ifu (
   assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
   assign GatedStallF = StallF & ~SelNextSpillF;
   
-  flopenl #(32) AlignedInstrRawDFlop(clk, reset, ~StallD, FlushD ? nop : PostSpillInstrRawF, nop, InstrRawD);
+  flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // PCNextF logic
