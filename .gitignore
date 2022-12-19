@@ -118,3 +118,10 @@ pipelined/srt/qslc_r4a2
 pipelined/srt/qslc_r4a2.sv
 pipelined/srt/testvectors
 pipelined/regression/wkdir
+tests/custom/work
+tests/custom/*/*/*.list
+tests/custom/*/*/*.elf
+tests/custom/*/*/*.map
+tests/custom/*/*/*.memfile
+tests/custom/crt0/*.a
+/pipelined/regression/sd_model.log
