@@ -86,7 +86,7 @@ module wallypipelinedcore (
   // floating point unit signals
   logic [2:0]             FRM_REGW;
   logic [4:0]        RdM, RdW;
-  logic             FStallD;
+  logic             FPUStallD;
   logic             FWriteIntE;
   logic [`FLEN-1:0]         FWriteDataM;
   logic [`XLEN-1:0]         FIntResM;  
@@ -320,7 +320,7 @@ module wallypipelinedcore (
      .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
      .LSUStallM, .IFUStallF,
-     .FCvtIntStallD, .FStallD,
+     .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
      .wfiM, .IntPendingM,
@@ -398,7 +398,7 @@ module wallypipelinedcore (
          .FpLoadStoreM,
          .ForwardedSrcBE, // Integer input for intdiv
          .Funct3E, .Funct3M, .MDUE, .W64E, // Integer flags and functions
-         .FStallD, // Stall the decode stage
+         .FPUStallD, // Stall the decode stage
          .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
          .FIntResM, // data to be written to integer register
@@ -410,7 +410,7 @@ module wallypipelinedcore (
          .FPIntDivResultW
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-      assign FStallD = 0;
+      assign FPUStallD = 0;
       assign FWriteIntE = 0; 
       assign FCvtIntE = 0;
       assign FIntResM = 0;
