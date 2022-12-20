@@ -30,11 +30,8 @@
 `include "wally-config.vh"
 
 module roundsign(
-    input logic         FmaPs, FmaAs,
-    input logic         FmaInvA,
     input logic         Xs,
     input logic         Ys,
-    input logic         FmaNegSum,
     input logic         Sqrt,
     input logic         FmaOp,
     input logic         DivOp,
