@@ -305,19 +305,13 @@ module ifu (
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
   if (`BPRED_ENABLED) begin : bpred
-    logic                        BPPredWrongM;
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext0F, .PCE, .PCSrcE, .IEUAdrE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .BPPredWrongM, 
+                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext0F, .PCE, .PCSrcE, .IEUAdrE, .PCCorrectE, .PCF, .PCBPWrongInvalidate,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
 
-    // Mux only required on instruction class miss prediction.
-    mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-                                              .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-    mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
-    
   end else begin : bpred
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
