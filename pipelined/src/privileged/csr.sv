@@ -40,7 +40,7 @@ module csr #(parameter
   input  logic             FlushE, FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM,
+  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PCNext2F,
   input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
@@ -70,7 +70,7 @@ module csr #(parameter
   
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
-  output logic [`XLEN-1:0] CSRReadValW, PrivilegedNextPCM,
+  output logic [`XLEN-1:0] CSRReadValW, UnalignedPCNextF,
   output logic             IllegalCSRAccessM, BigEndianM
 );
 
@@ -100,6 +100,8 @@ module csr #(parameter
   logic [`XLEN-1:0] TVec, TrapVector, NextFaultMtvalM;
   logic MTrapM, STrapM;
 
+  logic [`XLEN-1:0] PrivilegedNextPCM;
+  
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -148,6 +150,10 @@ module csr #(parameter
     if      (TrapM)                         PrivilegedNextPCM = TrapVector;
     else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else                                    PrivilegedNextPCM = SEPC_REGW;
+
+  logic PrivilegedChangePCM;
+  assign PrivilegedChangePCM = mretM | sretM | TrapM;
+  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
 
   ///////////////////////////////////////////
   // CSRWriteValM

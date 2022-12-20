@@ -69,7 +69,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
  logic [`XLEN-1:0]         CSRReadValW, MDUResultW;
-   logic [`XLEN-1:0]         PrivilegedNextPCM;
+   logic [`XLEN-1:0]         UnalignedPCNextF, PCNext2F;
   (* mark_debug = "true" *) logic [1:0]             MemRWM;
   (* mark_debug = "true" *) logic             InstrValidM;
   logic             InstrMisalignedFaultM;
@@ -173,7 +173,7 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, 
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
-    .HRDATA, .PCF, .IFUHADDR,
+    .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
@@ -183,7 +183,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .CommittedF, .PrivilegedNextPCM, .InvalidateICacheM, .CSRWriteFenceM,
+    .RetM, .TrapM, .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
@@ -334,8 +334,8 @@ module wallypipelinedcore (
          .clk, .reset,
          .FlushD, .FlushE, .FlushM, .FlushW, 
          .StallD, .StallE, .StallM, .StallW,
-         .CSRReadM, .CSRWriteM, .SrcAM, .PCM,
-         .InstrM, .CSRReadValW, .PrivilegedNextPCM,
+         .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCNext2F,
+         .InstrM, .CSRReadValW, .UnalignedPCNextF,
          .RetM, .TrapM, 
          .sfencevmaM,
          .InstrValidM, .CommittedM, .CommittedF,
@@ -362,7 +362,7 @@ module wallypipelinedcore (
       );
    end else begin
       assign CSRReadValW = 0;
-      assign PrivilegedNextPCM = 0;
+      assign UnalignedPCNextF = PCNext2F;
       assign RetM = 0;
       assign TrapM = 0;
       assign wfiM = 0;
