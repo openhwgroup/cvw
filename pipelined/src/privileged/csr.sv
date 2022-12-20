@@ -97,7 +97,7 @@ module csr #(parameter
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
   logic [11:0] MIP_REGW_writeable;
-  logic [`XLEN-1:0] PrivilegedTrapVector, PrivilegedVectoredTrapVector, NextFaultMtvalM;
+  logic [`XLEN-1:0] TVec, TrapVector, NextFaultMtvalM;
   logic MTrapM, STrapM;
 
   
@@ -126,26 +126,26 @@ module csr #(parameter
   // > Allowing coarser alignments in Vectored mode enables vectoring to be
   // > implemented without a hardware adder circuit.
   // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
-  // [untested] PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:7], CauseM[3:0], 4'b0000}
+  // [untested] TrapVector = {TVec[`XLEN-1:7], CauseM[3:0], 4'b0000}
   // However, this is program dependent, so not implemented at this time.
 
   always_comb
-    if (NextPrivilegeModeM == `S_MODE) PrivilegedTrapVector = STVEC_REGW;
-    else                               PrivilegedTrapVector = MTVEC_REGW; 
+    if (NextPrivilegeModeM == `S_MODE) TVec = STVEC_REGW;
+    else                               TVec = MTVEC_REGW; 
 
   if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
       always_comb
-        if (PrivilegedTrapVector[1:0] == 2'b01 & InterruptM)
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2] + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM}, 2'b00};
+        if (TVec[1:0] == 2'b01 & InterruptM)
+          TrapVector = {TVec[`XLEN-1:2] + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM}, 2'b00};
         else
-          PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+          TrapVector = {TVec[`XLEN-1:2], 2'b00};
   end
   else begin
-    assign PrivilegedVectoredTrapVector = {PrivilegedTrapVector[`XLEN-1:2], 2'b00};
+    assign TrapVector = {TVec[`XLEN-1:2], 2'b00};
   end
 
   always_comb 
-    if      (TrapM)                         PrivilegedNextPCM = PrivilegedVectoredTrapVector;
+    if      (TrapM)                         PrivilegedNextPCM = TrapVector;
     else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
     else                                    PrivilegedNextPCM = SEPC_REGW;
 
