@@ -68,7 +68,7 @@ module trap (
   assign Committed = CommittedM | CommittedF;
   assign EnabledIntsM = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
   assign ValidIntsM = {12{~Committed}} & EnabledIntsM;
-  assign InterruptM = (|ValidIntsM) && InstrValidM; // suppress interrupt if the memory system has partially processed a request.
+  assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 
