@@ -59,10 +59,11 @@ module spillsupport #(parameter CACHE_ENABLED)
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
-  mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), 
-    .s(PCF[1]), .y(PCPlus2F));
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~Flush),
-    .y(PCNextFSpill));
+  // compute PCF+2
+  mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlusUpperF, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
+  // select between PCNextF and PCF+2
+  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~Flush), .y(PCNextFSpill));
+  // select between PCF adn PCF+2
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
