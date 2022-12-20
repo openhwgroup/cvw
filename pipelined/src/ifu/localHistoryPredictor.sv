@@ -60,7 +60,7 @@ module localHistoryPredictor
   assign LookUpPCIndex = {LookUpPC[m+1] ^ LookUpPC[1], LookUpPC[m:2]};  
 
   // INCASE we do ahead pipelining
-  //    SRAM2P1R1W #(m,k) LHR(.clk(clk)),
+  //    sram2p1r1w #(m,k) LHR(.clk(clk)),
   //                 .reset(reset),
   //                 .RA1(LookUpPCIndex), // need hashing function to get correct PC address 
   //                 .RD1(LHRF),
@@ -84,7 +84,7 @@ module localHistoryPredictor
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // LHR referes to the address that the past k branches points to in the prediction stage 
   // LHRE refers to the address that the past k branches points to in the exectution stage
-  SRAM2P1R1W #(k, 2) PHT(.clk(clk), 
+  sram2p1r1w #(k, 2) PHT(.clk(clk), 
     .reset(reset),
     .RA1(ForwardLHRNext),
     .RD1(PredictionMemory),

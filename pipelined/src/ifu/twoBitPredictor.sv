@@ -60,7 +60,7 @@ module twoBitPredictor
   assign LookUpPCIndex = {LookUpPC[Depth+1] ^ LookUpPC[1], LookUpPC[Depth:2]};  
 
 
-  SRAM2P1R1W #(Depth, 2) PHT(.clk(clk),
+  sram2p1r1w #(Depth, 2) PHT(.clk(clk),
     .reset(reset),
     .RA1(LookUpPCIndex),
     .RD1(PredictionMemory),
