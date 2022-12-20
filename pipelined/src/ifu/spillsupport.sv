@@ -37,7 +37,7 @@ module spillsupport #(parameter CACHE_ENABLED)
    input logic              reset,
    input logic              StallF, Flush,
    input logic [`XLEN-1:0]  PCF,
-   input logic [`XLEN-3:0]  PCPlusUpperF,
+   input logic [`XLEN-1:2]  PCPlusUpperF,
    input logic [`XLEN-1:0]  PCNextF,
    input logic [31:0]       InstrRawF,
    input logic              IFUCacheBusStallF,

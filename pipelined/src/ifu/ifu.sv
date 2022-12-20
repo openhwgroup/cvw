@@ -89,7 +89,7 @@ module ifu (
   logic                        BranchMisalignedFaultE;
   logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
-  logic [`XLEN-3:0]            PCPlusUpperF;
+  logic [`XLEN-1:2]            PCPlusUpperF;
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF, IROMInstrF, ICacheInstrF;
   logic [31:0]                 FinalInstrRawF;
@@ -304,6 +304,12 @@ module ifu (
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
   // *** consider gating PCPlusUpperF to provide the reset.
+/* -----\/----- EXCLUDED -----\/-----
+  assign PCPlus2or4F[0] = '0;
+  assign PCPlus2or4F[1] = CompressedF ^ PCF[1];
+  assign PCPlus2or4F[`XLEN-1:2] = CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlusUpperF;
+ -----/\----- EXCLUDED -----/\----- */
+  
   always_comb
     if(reset) PCPlus2or4F = '0;
     else if (CompressedF) // add 2
