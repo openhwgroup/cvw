@@ -52,8 +52,6 @@ module postprocess (
     input logic  [3*`NF+5:0]                FmaSm,       // the positive sum
     input logic                             FmaZmS,  // sticky bit that is calculated during alignment
     input logic                             FmaKillProd,      // set the product to zero before addition if the product is too small to matter
-    input logic                             FmaNegSum,    // was the sum negitive
-    input logic                             FmaInvA,      // do you invert Z
     input logic                             FmaSs,
     input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
@@ -196,8 +194,7 @@ module postprocess (
     // round to nearest max magnitude
 
                           
-    roundsign roundsign(.FmaPs, .FmaAs, .FmaInvA, .FmaOp, .DivOp, .CvtOp, .FmaNegSum, 
-                        .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
+    roundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
     round round(.OutFmt, .Frm, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
@@ -208,7 +205,7 @@ module postprocess (
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .FmaMe, .R, .S, .G,
+    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .R, .S, .G,
                           .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Ws);
 
     ///////////////////////////////////////////////////////////////////////////////

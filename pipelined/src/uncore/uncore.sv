@@ -201,8 +201,7 @@ module uncore (
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenr #(10) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[10:1], {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD});
-  flopenl #(1) hseldelayreg2(HCLK, ~HRESETn, HREADY, HSELRegions[0], 1'b1, HSELNoneD);  
+  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
 

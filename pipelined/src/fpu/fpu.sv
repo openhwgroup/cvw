@@ -113,7 +113,6 @@ module fpu (
    logic [`NE+1:0]   SeE,SeM;
    logic 			   KillProdE, KillProdM;
    logic 			   InvAE, InvAM;
-   logic 			   NegSumE, NegSumM;
    logic 			   AsE, AsM;
    logic 			   PsE, PsM;
    logic 			   SsE, SsM;
@@ -258,7 +257,7 @@ module fpu (
             .OpCtrl(OpCtrlE), .Fmt(FmtE), 
             .As(AsE), .Ps(PsE), .Ss(SsE), .Se(SeE),
             .Sm(SmE), .Pe(PeE), 
-            .NegSum(NegSumE), .InvA(InvAE), .SCnt(SCntE), 
+            .InvA(InvAE), .SCnt(SCntE), 
             .ZmSticky(ZmStickyE), .KillProd(KillProdE)); 
 
    // divide and squareroot
@@ -355,9 +354,9 @@ module fpu (
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
    flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM); 
    flopenrc #(`NE+2) EMRegFma3(clk, reset, FlushM, ~StallM, PeE, PeM);  
-   flopenrc #($clog2(3*`NF+7)+9+`NE) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                           {ZmStickyE, KillProdE, InvAE, SCntE, NegSumE, AsE, PsE, SsE, SeE},
-                           {ZmStickyM, KillProdM, InvAM, SCntM, NegSumM, AsM, PsM, SsM, SeM});
+   flopenrc #($clog2(3*`NF+7)+8+`NE) EMRegFma4(clk, reset, FlushM, ~StallM, 
+                           {ZmStickyE, KillProdE, InvAE, SCntE, AsE, PsE, SsE, SeE},
+                           {ZmStickyM, KillProdM, InvAM, SCntM, AsM, PsM, SsM, SeM});
    flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
                            {CeE, CvtShiftAmtE, CvtResDenormUfE, CsE, IntZeroE, CvtLzcInE},
                            {CeM, CvtShiftAmtM, CvtResDenormUfM, CsM, IntZeroM, CvtLzcInM});
@@ -379,7 +378,7 @@ module fpu (
    postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), .FmaPe(PeM), 
                            .FmaZmS(ZmStickyM), .FmaKillProd(KillProdM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
-                           .FmaNegSum(NegSumM), .FmaInvA(InvAM), .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
+                           .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
                            .CvtCe(CeM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), .ToInt(FWriteIntM), .DivS(DivSM),
                            .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 

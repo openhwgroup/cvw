@@ -37,7 +37,7 @@ module fdivsqrtqsel2 (
 );
  
   logic [3:0]  p, g;
-  logic        magnitude, sign, cout;
+  logic        magnitude, sign;
   logic        pos, neg;
 
   // The quotient selection logic is presented for simplicity, not
@@ -48,9 +48,6 @@ module fdivsqrtqsel2 (
   assign p = ps ^ pc;
   assign g = ps & pc;
 
-  //assign magnitude = ~(&p[2:0]);
-  assign cout = g[2] | (p[2] & (g[1] | p[1] & g[0]));
-  //assign sign = p[3] ^ cout;
   assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
 			  (ps[0]^pc[0]));
   assign sign = (ps[3]^pc[3])^
