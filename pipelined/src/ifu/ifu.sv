@@ -285,16 +285,15 @@ module ifu (
   // PCNextF logic
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`ICACHE | `ZIFENCEI_SUPPORTED)
+  if(`ZICSR_SUPPORTED | `ZIFENCEI_SUPPORTED)
     mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
-//    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCM+4), .s(CSRWriteFenceM),.y(PCNext2F));  
   else assign PCNext2F = PCNext1F;
   if(`ZICSR_SUPPORTED) begin
-	logic PrivilegedChangePCM;
-	assign PrivilegedChangePCM = RetM | TrapM;
-    mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
-	 .y(UnalignedPCNextF));
-  end else assign UnalignedPCNextF = PCNext2F;
+    logic PrivilegedChangePCM;
+    assign PrivilegedChangePCM = RetM | TrapM;
+    mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
+  end else 
+    assign UnalignedPCNextF = PCNext2F;
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
 
