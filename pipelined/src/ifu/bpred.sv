@@ -269,8 +269,14 @@ module bpred
 
   mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
-  // could also just use PCM+4
+  // could also just use PCM+4, which should be pclinke
   mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(NextValidPCE));
+  //logic [`XLEN-1:0] PCLinkM;
+  //flopenr #(`XLEN) PCPEReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
+  //assign NextValidPCE = PCLinkM;
+  // of the three, the mux is the cheapest, but the least clear.
+  // this could move entirely into ifu with no relation to bp with the third.
+  
   //assign NextValidPCE = PCE;
   
   
