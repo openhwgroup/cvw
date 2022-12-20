@@ -52,6 +52,7 @@ module rom1p1r
     if(ce) dout <= ROM[addr];    
   end
 
+  // for FPGA, initialize with zero-stage bootloader
   if(PRELOAD_ENABLED) begin
     initial begin
       ROM[0] =  64'h9581819300002197; 
