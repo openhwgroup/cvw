@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// SRAM2P1R1W
+// sram2p1r1w
 //
 // Written: Ross Thomposn
 // Email: ross1728@gmail.com
@@ -103,7 +103,7 @@ module BTBPredictor
   // *** need to add forwarding.
 
   // *** optimize for byte write enables
-  SRAM2P1R1W #(Depth, `XLEN+5) memory(.clk(clk),
+  sram2p1r1w #(Depth, `XLEN+5) memory(.clk(clk),
           .reset(reset),
           .RA1(LookUpPCIndex),
           .RD1({{InstrClass, TargetPC}}),
