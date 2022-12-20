@@ -102,7 +102,7 @@ module ifu (
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
   logic [31:0] NextInstrD, NextInstrE;
 
-  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
+  logic [`XLEN-1:0] 		   NextValidPCE;
   
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
@@ -288,10 +288,10 @@ module ifu (
 
   assign PrivilegedChangePCM = RetM | TrapM;
 
-  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
+
 //  if(`ICACHE | `ZICSR_SUPPORTED)
-    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(CSRWriteFenceM), 
-      .y(PCNext2F));
+    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
+//    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCM+4), .s(CSRWriteFenceM),.y(PCNext2F));  
 //  else assign PCNext2F = PCNext1F;
   if(`ZICSR_SUPPORTED)
     mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
@@ -308,16 +308,17 @@ module ifu (
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext0F, .PCE, .PCSrcE, .IEUAdrE, .PCCorrectE, .PCF, .PCBPWrongInvalidate,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCSrcE, .IEUAdrE, .PCCorrectE, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
 
   end else begin : bpred
+    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
     assign PCNext0F = PCPlus2or4F;
     assign PCCorrectE = IEUAdrE;
-    assign PCBPWrongInvalidate = PCE;
+    assign NextValidPCE = PCE;
   end      
 
   // pcadder

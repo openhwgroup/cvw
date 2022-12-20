@@ -42,9 +42,9 @@ module bpred
    input logic [31:0]       InstrD, 
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
    input logic [`XLEN-1:0]  PCPlus2or4F,
-   output logic [`XLEN-1:0] PCNext0F,
+   output logic [`XLEN-1:0] PCNext1F,
    output logic [`XLEN-1:0] PCCorrectE,
-   output logic [`XLEN-1:0]  PCBPWrongInvalidate, // The address of the currently executing instruction
+   output logic [`XLEN-1:0]  NextValidPCE, // The address of the currently executing instruction
 
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
@@ -83,6 +83,8 @@ module bpred
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
   logic                     BPPredWrongM;
+  logic [`XLEN-1:0]         PCNext0F;
+  
   
   
   
@@ -262,11 +264,16 @@ module bpred
 
 
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+
+
+
   mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
-  // Mux only required on instruction class miss prediction.
-  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-                                            .s(BPPredWrongM), .y(PCBPWrongInvalidate));
+  // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
+  // could also just use PCM+4
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(NextValidPCE));
+  //assign NextValidPCE = PCE;
   
   
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));  
 
 endmodule
