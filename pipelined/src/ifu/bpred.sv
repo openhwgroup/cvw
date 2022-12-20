@@ -41,8 +41,8 @@ module bpred
    // the prediction
    input logic [31:0]       InstrD, 
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
-   output logic [`XLEN-1:0] BPPredPCF,
-   output logic             SelBPPredF,
+   input logic [`XLEN-1:0]  PCPlus2or4F,
+   output logic [`XLEN-1:0] PCNext0F,
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
    // 1 hot encoding
@@ -57,7 +57,7 @@ module bpred
    output logic [4:0]       InstrClassM,
    // Report branch prediction status
    output logic             BPPredWrongE,
-   output logic             BPPredWrongM,   
+   output logic             BPPredWrongM, 
    output logic             BPPredDirWrongM,
    output logic             BTBPredPCWrongM,
    output logic             RASPredPCWrongM,
@@ -75,6 +75,10 @@ module bpred
   logic                     PredictionInstrClassWrongE;
   logic [4:0]               InstrClassD, InstrClassE;
   logic                     BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+  
+  logic                     SelBPPredF;
+  logic [`XLEN-1:0]         BPPredPCF;
+  
   
 
   // Part 1 branch direction prediction
@@ -249,5 +253,9 @@ module bpred
   satCounter2 BPDirUpdate(.BrDir(PCSrcE),
      .OldState(BPPredE),
      .NewState(UpdateBPPredE));
+
+
+  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+  
 
 endmodule

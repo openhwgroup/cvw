@@ -306,16 +306,13 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   if (`BPRED_ENABLED) begin : bpred
     logic                        BPPredWrongM;
-    logic                        SelBPPredF;
-    logic [`XLEN-1:0]            BPPredPCF;
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext0F, .PCE, .PCSrcE, .IEUAdrE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .BPPredWrongM, 
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
 
-    mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
     // Mux only required on instruction class miss prediction.
     mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
                                               .s(BPPredWrongM), .y(PCBPWrongInvalidate));
