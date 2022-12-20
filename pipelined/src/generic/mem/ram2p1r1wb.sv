@@ -70,6 +70,12 @@ module ram2p1r1wb
 
   
   // SRAMs address busses are always registered first
+  // *** likely issued DH and RT 12/20/22
+  //   wrong enable for write port registers
+  //  prefer to code read like ram1p1rw
+  //  prefer not to have two-cycle write latency
+  //  will require branch predictor changes
+  
   flopenr #(DEPTH) RA1Reg(clk, reset, REN1, RA1, RA1Q);
   flopenr #(DEPTH) WA1Reg(clk, reset, REN1, WA1, WA1Q);
   flopr   #(1)     WEN1Reg(clk, reset, WEN1, WEN1Q);
