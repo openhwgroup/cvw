@@ -285,10 +285,10 @@ module ifu (
   // PCNextF logic
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-//  if(`ICACHE | `ZICSR_SUPPORTED)
+  if(`ICACHE | `ZIFENCEI_SUPPORTED)
     mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
 //    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCM+4), .s(CSRWriteFenceM),.y(PCNext2F));  
-//  else assign PCNext2F = PCNext1F;
+  else assign PCNext2F = PCNext1F;
   if(`ZICSR_SUPPORTED) begin
 	logic PrivilegedChangePCM;
 	assign PrivilegedChangePCM = RetM | TrapM;
