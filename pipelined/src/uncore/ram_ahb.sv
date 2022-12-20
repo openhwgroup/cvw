@@ -73,7 +73,7 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   mux2 #(`PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  sram1p1rw #(.DEPTH(RANGE/8), .WIDTH(`XLEN)) memory(.clk(HCLK), .ce(1'b1), 
+  ram1p1rwbe #(.DEPTH(RANGE/8), .WIDTH(`XLEN)) memory(.clk(HCLK), .ce(1'b1), 
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
 
