@@ -43,8 +43,13 @@ module bpred
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
    input logic [`XLEN-1:0]  PCPlus2or4F,
    output logic [`XLEN-1:0] PCNext0F,
+   output logic [`XLEN-1:0] PCCorrectE,
+   output logic [`XLEN-1:0]  PCBPWrongInvalidate, // The address of the currently executing instruction
+
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
+   input logic [`XLEN-1:0]  PCF, // The address of the currently executing instruction
+
    // 1 hot encoding
    // return, jump register, jump, branch
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
@@ -57,7 +62,6 @@ module bpred
    output logic [4:0]       InstrClassM,
    // Report branch prediction status
    output logic             BPPredWrongE,
-   output logic             BPPredWrongM, 
    output logic             BPPredDirWrongM,
    output logic             BTBPredPCWrongM,
    output logic             RASPredPCWrongM,
@@ -78,6 +82,8 @@ module bpred
   
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
+  logic                     BPPredWrongM;
+  
   
   
 
@@ -256,6 +262,11 @@ module bpred
 
 
   mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  // Mux only required on instruction class miss prediction.
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
+                                            .s(BPPredWrongM), .y(PCBPWrongInvalidate));
+  
   
 
 endmodule
