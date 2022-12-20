@@ -41,7 +41,6 @@ module fma(
     output logic                ZmSticky,  // sticky bit that is calculated during alignment
     output logic                KillProd,  // set the product to zero before addition if the product is too small to matter
     output logic [3*`NF+5:0]    Sm,           // the positive sum's significand
-    output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // Was A inverted for effective subtraction (P-A or -P+A)
     output logic                As,       // the aligned addend's sign (modified Z sign for other opperations)
     output logic                Ps,          // the product's sign
@@ -84,7 +83,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
+    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
     fmalza #(3*`NF+6) lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
 endmodule
