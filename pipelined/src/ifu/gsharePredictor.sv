@@ -110,7 +110,7 @@ module gsharePredictor
   assign GHRLookup = |GHRMuxSel[6:1] ? GHRNext[`BPRED_SIZE-1:0] : GHR[`BPRED_SIZE-1:0];
   
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
-  sram2p1r1w #(`BPRED_SIZE, 2) PHT(.clk(clk),
+  ram2p1r1wb #(`BPRED_SIZE, 2) PHT(.clk(clk),
     .reset(reset),
     //.RA1(GHR[`BPRED_SIZE-1:0]),
     .RA1(GHRLookup ^ PCNextF[`BPRED_SIZE:1]),
