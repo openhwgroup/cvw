@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// sram2p1r1w
+// ram2p1r1wb
 //
 // Written: Ross Thomposn
 // Email: ross1728@gmail.com
@@ -40,7 +40,7 @@
 
 `include "wally-config.vh"
 
-module sram2p1r1w
+module ram2p1r1wb
   #(parameter int DEPTH = 10,
     parameter int WIDTH = 2
     )
