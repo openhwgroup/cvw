@@ -85,9 +85,8 @@ module ifu (
     output logic                ICacheAccess,
     output logic                ICacheMiss
 );
-  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0]            UnalignedPCNextF, PCNextF;
   logic                        BranchMisalignedFaultE;
-  logic                        PrivilegedChangePCM;
   logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-3:0]            PCPlusUpperF;
@@ -286,40 +285,18 @@ module ifu (
   // PCNextF logic
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign PrivilegedChangePCM = RetM | TrapM;
-
-
 //  if(`ICACHE | `ZICSR_SUPPORTED)
     mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
 //    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCM+4), .s(CSRWriteFenceM),.y(PCNext2F));  
 //  else assign PCNext2F = PCNext1F;
-  if(`ZICSR_SUPPORTED)
+  if(`ZICSR_SUPPORTED) begin
+	logic PrivilegedChangePCM;
+	assign PrivilegedChangePCM = RetM | TrapM;
     mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
-      .y(UnalignedPCNextF));
-  else assign UnalignedPCNextF = PCNext2F;
-
+	 .y(UnalignedPCNextF));
+  end else assign UnalignedPCNextF = PCNext2F;
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  // Branch and Jump Predictor
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  if (`BPRED_ENABLED) begin : bpred
-    bpred bpred(.clk, .reset,
-                .StallF, .StallD, .StallE, .StallM, 
-                .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCSrcE, .IEUAdrE, .PCCorrectE, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
-                .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
-
-  end else begin : bpred
-    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
-    assign BPPredWrongE = PCSrcE;
-    assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
-    assign PCNext0F = PCPlus2or4F;
-    assign PCCorrectE = IEUAdrE;
-    assign NextValidPCE = PCE;
-  end      
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
@@ -333,6 +310,27 @@ module ifu (
       if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
+
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  // Branch and Jump Predictor
+  ////////////////////////////////////////////////////////////////////////////////////////////////
+  if (`BPRED_ENABLED) begin : bpred
+    bpred bpred(.clk, .reset,
+                .StallF, .StallD, .StallE, .StallM, 
+                .FlushD, .FlushE, .FlushM,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
+                .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
+
+  end else begin : bpred
+    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
+    assign BPPredWrongE = PCSrcE;
+    assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
+    assign PCNext0F = PCPlus2or4F;
+    assign NextValidPCE = PCE;
+  end      
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Decode stage pipeline register and compressed instruction decoding.
