@@ -316,7 +316,7 @@ connect_debug_port u_ila_0/probe60 [get_nets [list wallypipelinedsoc/core/hzu/IF
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe61]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe61]
-connect_debug_port u_ila_0/probe61 [get_nets [list wallypipelinedsoc/core/hzu/FStallD ]]
+connect_debug_port u_ila_0/probe61 [get_nets [list wallypipelinedsoc/core/hzu/FPUStallD ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe62]
