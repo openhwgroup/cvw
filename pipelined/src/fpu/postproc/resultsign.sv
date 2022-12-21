@@ -35,7 +35,6 @@ module resultsign(
     input logic         ZInf,
     input logic         InfIn,
     input logic         FmaOp,
-    input logic [`NE+1:0] FmaMe,
     input logic         FmaSZero,
     input logic         Mult,
     input logic         R,

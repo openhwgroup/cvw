@@ -32,10 +32,8 @@
 module fmashiftcalc(
     input logic  [3*`NF+5:0]            FmaSm,       // the positive sum
     input logic  [`NE-1:0]              Ze,      // exponent of Z
-    input logic  [`NE+1:0]              FmaPe,   // X exponent + Y exponent - bias
     input logic  [$clog2(3*`NF+7)-1:0]  FmaSCnt,   // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,       // precision 1 = double 0 = single
-    input logic                         FmaKillProd,  // is the product set to zero
     input logic [`NE+1:0] FmaSe,
     output logic [`NE+1:0]              NormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     output logic                        FmaSZero,    // is the result denormalized - calculated before LZA corection

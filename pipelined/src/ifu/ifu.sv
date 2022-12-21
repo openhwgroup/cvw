@@ -54,7 +54,8 @@ module ifu (
 	// Mem
 	input logic 				RetM, TrapM, 
     output logic                CommittedF, 
-	input logic [`XLEN-1:0] 	PrivilegedNextPCM, 
+	input logic [`XLEN-1:0] 	UnalignedPCNextF,
+    output logic [`XLEN-1:0]    PCNext2F,
 	input logic         	    CSRWriteFenceM,
     input logic                 InvalidateICacheM,
 	output logic [31:0] 		InstrD, InstrM, 
@@ -85,12 +86,11 @@ module ifu (
     output logic                ICacheAccess,
     output logic                ICacheMiss
 );
-  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCCorrectE, UnalignedPCNextF, PCNextF;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;
   logic                        BranchMisalignedFaultE;
-  logic                        PrivilegedChangePCM;
   logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
-  logic [`XLEN-3:0]            PCPlusUpperF;
+  logic [`XLEN-1:2]            PCPlus4F;
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF, IROMInstrF, ICacheInstrF;
   logic [31:0]                 FinalInstrRawF;
@@ -102,7 +102,7 @@ module ifu (
   localparam [31:0]            nop = 32'h00000013; // instruction for NOP
   logic [31:0] NextInstrD, NextInstrE;
 
-  logic [`XLEN-1:0] 		   PCBPWrongInvalidate;
+  logic [`XLEN-1:0] 		   NextValidPCE;
   
 (* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
   logic [`XLEN+1:0]            PCFExt;
@@ -117,7 +117,7 @@ module ifu (
   logic 					   GatedStallF;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
-  logic [`XLEN-1:0]            PCNext1F, PCNext2F, PCNext0F;
+  logic [`XLEN-1:0]            PCNext1F, PCNext0F;
   logic                        BusCommittedF, CacheCommittedF;
   logic                        SelIROM;
   
@@ -131,7 +131,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF(InstrRawF),
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
       .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
@@ -286,61 +286,58 @@ module ifu (
   // PCNextF logic
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign PrivilegedChangePCM = RetM | TrapM;
-
-  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));
-//  if(`ICACHE | `ZICSR_SUPPORTED)
-    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCBPWrongInvalidate), .s(CSRWriteFenceM), 
-      .y(PCNext2F));
-//  else assign PCNext2F = PCNext1F;
-  if(`ZICSR_SUPPORTED)
-    mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), 
-      .y(UnalignedPCNextF));
-  else assign UnalignedPCNextF = PCNext2F;
+  if(`ZICSR_SUPPORTED | `ZIFENCEI_SUPPORTED)
+    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
+  else assign PCNext2F = PCNext1F;
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
+
+  // pcadder
+  // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
+  assign PCPlus4F = PCF[`XLEN-1:2] + 1; // add 4 to PC
+  // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
+  // Speeds up critical path as compared to selecting adder input based on CompressedF
+  // *** consider gating PCPlus4F to provide the reset.
+/* -----\/----- EXCLUDED -----\/-----
+  assign PCPlus2or4F[0] = '0;
+  assign PCPlus2or4F[1] = ~reset & (CompressedF ^ PCF[1]);
+  assign PCPlus2or4F[`XLEN-1:2] = reset ? '0 : CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlus4F;
+ -----/\----- EXCLUDED -----/\----- */
+/* -----\/----- EXCLUDED -----\/-----
+  assign PCPlus2or4F[1:0] = reset ? 2'b00 : CompressedF ? PCF[1] ? 2'b00 : 2'b10 : PCF[1:0];
+ -----/\----- EXCLUDED -----/\----- */
+
+  // *** There is actually a bug in the regression test.  We fetched an address which returns data with
+  // an X.  This version of the code does not die because if CompressedF is an X it just defaults to the last
+  // option.  The above code would work, but propagates the x.
+  always_comb
+    if(reset) PCPlus2or4F = '0;
+    else if (CompressedF) // add 2
+      if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
+      else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
+    else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
+
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
   if (`BPRED_ENABLED) begin : bpred
-    logic                        BPPredWrongM;
-    logic                        SelBPPredF;
-    logic [`XLEN-1:0]            BPPredPCF;
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .BPPredPCF, .SelBPPredF, .PCE, .PCSrcE, .IEUAdrE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .BPPredWrongM, 
+                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
 
-    mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
-    // Mux only required on instruction class miss prediction.
-    mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), 
-                                              .s(BPPredWrongM), .y(PCBPWrongInvalidate));
-    mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
-    
   end else begin : bpred
+    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
     assign BPPredWrongE = PCSrcE;
     assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
     assign PCNext0F = PCPlus2or4F;
-    assign PCCorrectE = IEUAdrE;
-    assign PCBPWrongInvalidate = PCE;
+    assign NextValidPCE = PCE;
   end      
 
-  // pcadder
-  // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
-  // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
-  // Speeds up critical path as compared to selecting adder input based on CompressedF
-  // *** consider gating PCPlusUpperF to provide the reset.
-  always_comb
-    if(reset) PCPlus2or4F = '0;
-    else if (CompressedF) // add 2
-      if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
-      else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
-    else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Decode stage pipeline register and compressed instruction decoding.

@@ -52,7 +52,7 @@ module privdec (
   // Decode privileged instructions
   ///////////////////////////////////////////
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
-                      (PrivilegeModeW == `M_MODE || PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
+                      (PrivilegeModeW == `M_MODE | PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);

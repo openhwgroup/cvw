@@ -46,7 +46,7 @@ module dtim(
 
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
-  sram1p1rw #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
+  ram1p1rwbe #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
     ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   

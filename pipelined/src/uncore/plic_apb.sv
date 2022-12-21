@@ -59,7 +59,7 @@ module plic_apb (
   input  logic             UARTIntr,GPIOIntr,
     (* mark_debug = "true" *)  output logic             MExtInt, SExtInt);
 
-  logic memwrite, memread, initTrans;
+  logic memwrite, memread;
   logic [23:0] entry;
   (* mark_debug = "true" *) logic [31:0] Din, Dout;
 
@@ -130,7 +130,8 @@ module plic_apb (
       // Read synchronously because a read can have side effect of changing intInProgress
       if (memread)
         casez(entry)
-          24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};
+          24'h000000: Dout <= #1 32'b0;  // there is no intPriority[0]
+          24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};		  
           `ifdef PLIC_NUM_SRC_LT_32
           24'h001000: Dout <= #1 {{(31-`N){1'b0}},intPending,1'b0};
           24'h002000: Dout <= #1 {{(31-`N){1'b0}},intEn[0],1'b0};
