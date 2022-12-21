@@ -484,6 +484,7 @@ module riscvassertions;
     assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS) else $error("Dcache and Icache requires DBUS.");
     assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
+    assert (`DCACHE | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
     assert (`IDIV_ON_FPU == 0 | `F_SUPPORTED) else $error("IDIV on FPU needs F_SUPPORTED");
   end
 
