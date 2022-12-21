@@ -1295,6 +1295,12 @@ write_pmpaddr_end:
     addi a6, a6, 4
     j test_loop
 
+write_mideleg:
+    // writes the value in t4 to the mideleg register
+    // Doesn't log anything
+    csrw mideleg, t4
+    j test_loop
+
 executable_test:
     // Execute the code at the address in t3, returning the value in t2.
     // Assumes the code modifies t2, to become the value stored in t4 for this test.  
