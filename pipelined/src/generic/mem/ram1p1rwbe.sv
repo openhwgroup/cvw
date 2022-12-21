@@ -35,7 +35,7 @@
 
 `include "wally-config.vh"
 
-module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
+module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -44,8 +44,7 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   input logic [(WIDTH-1)/8:0]     bwe,
   output logic [WIDTH-1:0]        dout);
 
-  logic [WIDTH-1:0]               RAM[DEPTH-1:0];
-
+    logic [WIDTH-1:0]               RAM[DEPTH-1:0];
 
   // ***************************************************************************
   // TRUE SRAM macro
@@ -65,29 +64,24 @@ module sram1p1rw #(parameter DEPTH=128, WIDTH=256) (
   // ***************************************************************************
   // READ first SRAM model
   // ***************************************************************************
-  end else begin
+  end else begin: ram
     integer i;
-    if (WIDTH%8 != 0) // handle msbs if not a multiple of 8
+
+    // Read
+    always @(posedge clk) 
+      if(ce) dout <= #1 RAM[addr];
+ 
+    // Write divided into part for bytes and part for extra msbs
+    if(WIDTH >= 8) 
+      always @(posedge clk) 
+        if (ce & we) 
+          for(i = 0; i < WIDTH/8; i++) 
+            if(bwe[i]) RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
+          
+    if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 
         if (ce & we & bwe[WIDTH/8])
           RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
-
-    always @(posedge clk) begin
-      if(ce) begin
-        dout <= #1 RAM[addr];
-      end
-    end
-    if(WIDTH >= 8) begin
-      always @(posedge clk) begin
-        if(ce) begin
-          if(we) begin
-            for(i = 0; i < WIDTH/8; i++) 
-              if(bwe[i])
-		        RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
-          end
-        end
-      end
-    end
   end
 
 endmodule

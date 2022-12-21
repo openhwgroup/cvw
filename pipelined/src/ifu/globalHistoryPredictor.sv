@@ -113,7 +113,7 @@ module globalHistoryPredictor
   assign GHRLookup = |GHRMuxSel[6:1] ? GHRNext[k-1:0] : GHR[k-1:0];
   
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
-  SRAM2P1R1W #(k, 2) PHT(.clk(clk),
+  ram2p1r1wb #(k, 2) PHT(.clk(clk),
     .reset(reset),
     //.RA1(GHR[k-1:0]),
     .RA1(GHRLookup),

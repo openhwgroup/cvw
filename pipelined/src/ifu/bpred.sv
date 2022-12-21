@@ -41,10 +41,14 @@ module bpred
    // the prediction
    input logic [31:0]       InstrD, 
    input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
-   output logic [`XLEN-1:0] BPPredPCF,
-   output logic             SelBPPredF,
+   input logic [`XLEN-1:0]  PCPlus2or4F,
+   output logic [`XLEN-1:0] PCNext1F,
+   output logic [`XLEN-1:0]  NextValidPCE, // The address of the currently executing instruction
+
    // Update Predictor
    input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
+   input logic [`XLEN-1:0]  PCF, // The address of the currently executing instruction
+
    // 1 hot encoding
    // return, jump register, jump, branch
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
@@ -57,7 +61,6 @@ module bpred
    output logic [4:0]       InstrClassM,
    // Report branch prediction status
    output logic             BPPredWrongE,
-   output logic             BPPredWrongM,   
    output logic             BPPredDirWrongM,
    output logic             BTBPredPCWrongM,
    output logic             RASPredPCWrongM,
@@ -76,9 +79,14 @@ module bpred
   logic [4:0]               InstrClassD, InstrClassE;
   logic                     BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
+  logic                     SelBPPredF;
+  logic [`XLEN-1:0]         BPPredPCF;
+  logic                     BPPredWrongM;
+  logic [`XLEN-1:0]         PCNext0F;
+  logic [`XLEN-1:0] 		PCCorrectE;
 
   // Part 1 branch direction prediction
-
+  // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
     twoBitPredictor DirPredictor(.clk, .reset, .StallF,
       .LookUpPC(PCNextF),
@@ -249,5 +257,30 @@ module bpred
   satCounter2 BPDirUpdate(.BrDir(PCSrcE),
      .OldState(BPPredE),
      .NewState(UpdateBPPredE));
+
+
+  // Selects the BP or PC+2/4.
+  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+  // If the prediction is wrong select the correct address.
+  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));  
+
+  // Correct branch/jump target.
+  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  
+  // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
+  // could also just use PCM+4, or PCLinkM
+  // ONLY valid for class prediction. add option for class prediction.
+//  if(`BPCLASS) begin
+	mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(NextValidPCE));
+//  end else begin
+//	assign NextValidPCE = PCE;
+//  end
+  
+  //logic [`XLEN-1:0] PCLinkM;
+  //flopenr #(`XLEN) PCPEReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
+  //assign NextValidPCE = PCLinkM;
+  // of the three, the mux is the cheapest, but the least clear.
+  // this could move entirely into ifu with no relation to bp with the third.
+
 
 endmodule

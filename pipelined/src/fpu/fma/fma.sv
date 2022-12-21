@@ -37,23 +37,23 @@ module fma(
     input logic                 XZero, YZero, ZZero, // is the input zero
     input logic  [2:0]          OpCtrl,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
     input logic  [`FMTBITS-1:0] Fmt,       // format of the result single double half or quad
-    output logic [`NE+1:0]      Pe,       // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
     output logic                ZmSticky,  // sticky bit that is calculated during alignment
-    output logic                KillProd,  // set the product to zero before addition if the product is too small to matter
     output logic [3*`NF+5:0]    Sm,           // the positive sum's significand
-    output logic                NegSum,        // was the sum negitive
     output logic                InvA,          // Was A inverted for effective subtraction (P-A or -P+A)
     output logic                As,       // the aligned addend's sign (modified Z sign for other opperations)
     output logic                Ps,          // the product's sign
     output logic                Ss,          // the sum's sign
     output logic [`NE+1:0]      Se,
     output logic [$clog2(3*`NF+7)-1:0]          SCnt        // normalization shift count
-    );
+);
 
     logic [2*`NF+1:0]   Pm;           // the product's significand in U(2.2Nf) format
     logic [3*`NF+5:0]   Am;     // addend aligned's mantissa for addition in U(NF+5.2NF+1)
     logic [3*`NF+5:0]   AmInv;   // aligned addend's mantissa possibly inverted
     logic [2*`NF+1:0]   PmKilled;      // the product's mantissa possibly killed
+    logic               KillProd;  // set the product to zero before addition if the product is too small to matter
+    logic [`NE+1:0]     Pe;       // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
+
     ///////////////////////////////////////////////////////////////////////////////
     // Calculate the product
     //      - When multipliying two fp numbers, add the exponents
@@ -84,7 +84,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .NegSum, .InvA, .Sm, .Se, .Ss);
+    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
     fmalza #(3*`NF+6) lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
 endmodule

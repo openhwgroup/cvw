@@ -1,12 +1,12 @@
 ///////////////////////////////////////////
-// SRAM2P1R1W
+// ram2p1r1wb
 //
 // Written: Ross Thomposn
 // Email: ross1728@gmail.com
 // Created: February 14, 2021
 // Modified: 
 //
-// Purpose: Behavioral model of two port SRAM.  While this is synthesizable it will produce a flip flop based memory whi
+// Purpose: Behavioral model of two port SRAM.  While this is synthesizable it will produce a flip flop based memory which
 //          behaves with the timing of an SRAM typical of GF 14nm, 32nm, and 45nm.
 //          
 // 
@@ -40,13 +40,12 @@
 
 `include "wally-config.vh"
 
-module SRAM2P1R1W
+module ram2p1r1wb
   #(parameter int DEPTH = 10,
     parameter int WIDTH = 2
     )
 
   (input logic              clk,
-   // *** have to remove reset eventually
    input logic              reset,
   
    // port 1 is read only
@@ -59,7 +58,7 @@ module SRAM2P1R1W
    input logic [WIDTH-1:0]  WD1,
    input logic              WEN1,
    input logic [WIDTH-1:0]  BitWEN1
-   );
+);
   
 
   logic [DEPTH-1:0]         RA1Q, WA1Q;
@@ -70,32 +69,18 @@ module SRAM2P1R1W
   logic [WIDTH-1:0]         bwe;
 
   
-  // SRAMs address busses are always registered first.
-
-  flopenr #(DEPTH) RA1Reg(.clk(clk),
-     .reset(reset),
-     .en(REN1),
-     .d(RA1),
-     .q(RA1Q));
+  // SRAMs address busses are always registered first
+  // *** likely issued DH and RT 12/20/22
+  //   wrong enable for write port registers
+  //  prefer to code read like ram1p1rw
+  //  prefer not to have two-cycle write latency
+  //  will require branch predictor changes
   
+  flopenr #(DEPTH) RA1Reg(clk, reset, REN1, RA1, RA1Q);
+  flopenr #(DEPTH) WA1Reg(clk, reset, REN1, WA1, WA1Q);
+  flopr   #(1)     WEN1Reg(clk, reset, WEN1, WEN1Q);
+  flopenr #(WIDTH) WD1Reg(clk, reset, REN1, WD1, WD1Q);
 
-  flopenr #(DEPTH) WA1Reg(.clk(clk),
-     .reset(reset),
-     .en(REN1),
-     .d(WA1),
-     .q(WA1Q));
-
-  flopenr #(1) WEN1Reg(.clk(clk),
-         .reset(reset),
-         .en(1'b1),
-         .d(WEN1),
-         .q(WEN1Q));
-  
-  flopenr #(WIDTH) WD1Reg(.clk(clk),
-     .reset(reset),
-     .en(REN1),
-     .d(WD1),
-     .q(WD1Q));
   // read port
   assign RD1 = mem[RA1Q];
   

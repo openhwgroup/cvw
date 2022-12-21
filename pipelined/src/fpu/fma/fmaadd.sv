@@ -41,12 +41,12 @@ module fmaadd(
     input logic  [`NE+1:0]      Pe,
     output logic [3*`NF+5:0]    AmInv,  // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
-    output logic                NegSum,        // was the sum negitive
     output logic                Ss,          
     output logic [`NE+1:0]      Se,
     output logic [3*`NF+5:0]    Sm           // the positive sum
 );
     logic [3*`NF+5:0]    PreSum, NegPreSum; // possibly negitive sum
+    logic                NegSum;        // was the sum negitive
 
     ///////////////////////////////////////////////////////////////////////////////
     // Addition
