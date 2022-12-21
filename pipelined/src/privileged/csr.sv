@@ -100,8 +100,9 @@ module csr #(parameter
   logic [`XLEN-1:0] TVec, TrapVector, NextFaultMtvalM;
   logic MTrapM, STrapM;
 
-  logic [`XLEN-1:0] XEPC_REG;
+  logic [`XLEN-1:0] EPC;
   logic 			RetM;
+  logic       SelMtvec;
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -120,7 +121,7 @@ module csr #(parameter
     endcase
 
   ///////////////////////////////////////////
-  // Trap Vectoring
+  // Trap Vectoring & Returns
   ///////////////////////////////////////////
   //
   // POSSIBLE OPTIMIZATION: 
@@ -131,9 +132,8 @@ module csr #(parameter
   // [untested] TrapVector = {TVec[`XLEN-1:7], CauseM[3:0], 4'b0000}
   // However, this is program dependent, so not implemented at this time.
 
-  always_comb
-    if (NextPrivilegeModeM == `S_MODE) TVec = STVEC_REGW;
-    else                               TVec = MTVEC_REGW; 
+  assign SelMtvec = (NextPrivilegeModeM == `M_MODE);
+  mux2 #(`XLEN) tvecmux(STVEC_REGW, MTVEC_REGW, SelMtvec, TVec);
 
   if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
       always_comb
@@ -146,9 +146,12 @@ module csr #(parameter
     assign TrapVector = {TVec[`XLEN-1:2], 2'b00};
   end
 
+  // Trap Returns
+  // A trap sets the PC to TrapVector
+  // A return sets the PC to MEPC or SEPC
   assign RetM = mretM | sretM;
-  mux2 #(`XLEN) xepcMux(SEPC_REGW, MEPC_REGW, mretM, XEPC_REG);
-  mux3 #(`XLEN) pcmux3(PCNext2F, XEPC_REG, TrapVector, {TrapM, RetM}, UnalignedPCNextF);
+  mux2 #(`XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
+  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVector, {TrapM, RetM}, UnalignedPCNextF);
   
 
   ///////////////////////////////////////////
