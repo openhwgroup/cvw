@@ -100,8 +100,8 @@ module csr #(parameter
   logic [`XLEN-1:0] TVec, TrapVector, NextFaultMtvalM;
   logic MTrapM, STrapM;
 
-  logic [`XLEN-1:0] PrivilegedNextPCM;
-  
+  logic [`XLEN-1:0] XEPC_REG;
+  logic 			RetM;
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -146,14 +146,10 @@ module csr #(parameter
     assign TrapVector = {TVec[`XLEN-1:2], 2'b00};
   end
 
-  always_comb 
-    if      (TrapM)                         PrivilegedNextPCM = TrapVector;
-    else if (mretM)                         PrivilegedNextPCM = MEPC_REGW;
-    else                                    PrivilegedNextPCM = SEPC_REGW;
-
-  logic PrivilegedChangePCM;
-  assign PrivilegedChangePCM = mretM | sretM | TrapM;
-  mux2 #(`XLEN) pcmux3(.d0(PCNext2F), .d1(PrivilegedNextPCM), .s(PrivilegedChangePCM), .y(UnalignedPCNextF));
+  assign RetM = mretM | sretM;
+  mux2 #(`XLEN) xepcMux(SEPC_REGW, MEPC_REGW, mretM, XEPC_REG);
+  mux3 #(`XLEN) pcmux3(PCNext2F, XEPC_REG, TrapVector, {TrapM, RetM}, UnalignedPCNextF);
+  
 
   ///////////////////////////////////////////
   // CSRWriteValM
