@@ -299,11 +299,9 @@ module ifu (
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
   // *** consider gating PCPlusUpperF to provide the reset.
-/* -----\/----- EXCLUDED -----\/-----
   assign PCPlus2or4F[0] = '0;
   assign PCPlus2or4F[1] = ~reset & (CompressedF ^ PCF[1]);
   assign PCPlus2or4F[`XLEN-1:2] = reset ? '0 : CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlusUpperF;
- -----/\----- EXCLUDED -----/\----- */
 /* -----\/----- EXCLUDED -----\/-----
   assign PCPlus2or4F[1:0] = reset ? 2'b00 : CompressedF ? PCF[1] ? 2'b00 : 2'b10 : PCF[1:0];
  -----/\----- EXCLUDED -----/\----- */
@@ -311,12 +309,14 @@ module ifu (
   // *** There is actually a bug in the regression test.  We fetched an address which returns data with
   // an X.  This version of the code does not die because if CompressedF is an X it just defaults to the last
   // option.  The above code would work, but propagates the x.
+/* -----\/----- EXCLUDED -----\/-----
   always_comb
     if(reset) PCPlus2or4F = '0;
     else if (CompressedF) // add 2
       if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
+ -----/\----- EXCLUDED -----/\----- */
 
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
