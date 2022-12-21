@@ -299,23 +299,23 @@ end_trap_triggers:
     // --------------------------------------------------------------------------------------------
 
 
-.align 2
+.align 6
 trap_handler_\MODE\():
     j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
     // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
     // otherwise, a vectored interrupt handler should jump to trap_handler_\MODE\() + 4 * Interrupt cause code
     // No matter the value of VECTORED, exceptions (not interrupts) are handled in an unvecotred way
     j s_soft_vector_\MODE\()    // 1: instruction access fault // the zero spot is taken up by the instruction to skip this table.
-    j segfault_\MODE\()            // 2: reserved
-    j m_soft_vector_\MODE\()    // 3: breakpoint
-    j segfault_\MODE\()            // 4: reserved
-    j s_time_vector_\MODE\()    // 5: load access fault
-    j segfault_\MODE\()            // 6: reserved
-    j m_time_vector_\MODE\()    // 7: store access fault
-    j segfault_\MODE\()            // 8: reserved
-    j s_ext_vector_\MODE\()     // 9: ecall from S-mode
-    j segfault_\MODE\()            // 10: reserved
-    j m_ext_vector_\MODE\()     // 11: ecall from M-mode
+    j segfault_\MODE\()
+    j m_soft_vector_\MODE\()
+    j segfault_\MODE\()     
+    j s_time_vector_\MODE\()
+    j segfault_\MODE\()     
+    j m_time_vector_\MODE\()
+    j segfault_\MODE\()     
+    j s_ext_vector_\MODE\() 
+    j segfault_\MODE\()     
+    j m_ext_vector_\MODE\() 
     // 12 through >=16 are reserved or designated for platform use
 
 trap_unvectored_\MODE\():

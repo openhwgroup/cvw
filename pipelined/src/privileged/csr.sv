@@ -143,7 +143,8 @@ module csr #(parameter
     logic VectoredM;
     logic [`XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-    assign TVecPlusCauseM = TVecAlignedM + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM, 2'b00};
+    //assign TVecPlusCauseM = TVecAlignedM + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM, 2'b00};
+	assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00};
     mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else 
     assign TrapVectorM = TVecAlignedM;
