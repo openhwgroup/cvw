@@ -784,6 +784,7 @@ test_cases:
 
 # =========== S-mode enable tests (7.X) ===========
 
+.8byte 0x0, 0x222, write_mideleg                    # delegate supervisor interrupts to S mode
 .8byte 0x0, 0x0, goto_s_mode                        # go to s-mode. 0xb written to output
 .8byte PLIC_THRESH0, 0x00000000, write32_test       # set m-mode threshold to 0
 .8byte PLIC_THRESH1, 0x00000000, write32_test       # set s-mode threshold to 0
