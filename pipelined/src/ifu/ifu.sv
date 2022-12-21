@@ -90,7 +90,7 @@ module ifu (
   logic                        BranchMisalignedFaultE;
   logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
-  logic [`XLEN-1:2]            PCPlusUpperF;
+  logic [`XLEN-1:2]            PCPlus4F;
   logic                        CompressedF;
   logic [31:0]                 InstrRawD, InstrRawF, IROMInstrF, ICacheInstrF;
   logic [31:0]                 FinalInstrRawF;
@@ -131,7 +131,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlusUpperF, .PCNextF, .InstrRawF(InstrRawF),
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
       .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
@@ -295,13 +295,13 @@ module ifu (
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
-  assign PCPlusUpperF = PCF[`XLEN-1:2] + 1; // add 4 to PC
+  assign PCPlus4F = PCF[`XLEN-1:2] + 1; // add 4 to PC
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
-  // *** consider gating PCPlusUpperF to provide the reset.
+  // *** consider gating PCPlus4F to provide the reset.
   assign PCPlus2or4F[0] = '0;
   assign PCPlus2or4F[1] = ~reset & (CompressedF ^ PCF[1]);
-  assign PCPlus2or4F[`XLEN-1:2] = reset ? '0 : CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlusUpperF;
+  assign PCPlus2or4F[`XLEN-1:2] = reset ? '0 : CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlus4F;
 /* -----\/----- EXCLUDED -----\/-----
   assign PCPlus2or4F[1:0] = reset ? 2'b00 : CompressedF ? PCF[1] ? 2'b00 : 2'b10 : PCF[1:0];
  -----/\----- EXCLUDED -----/\----- */
@@ -313,9 +313,9 @@ module ifu (
   always_comb
     if(reset) PCPlus2or4F = '0;
     else if (CompressedF) // add 2
-      if (PCF[1]) PCPlus2or4F = {PCPlusUpperF, 2'b00}; 
+      if (PCF[1]) PCPlus2or4F = {PCPlus4F, 2'b00}; 
       else        PCPlus2or4F = {PCF[`XLEN-1:2], 2'b10};
-    else          PCPlus2or4F = {PCPlusUpperF, PCF[1:0]}; // add 4
+    else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
  -----/\----- EXCLUDED -----/\----- */
 
 
