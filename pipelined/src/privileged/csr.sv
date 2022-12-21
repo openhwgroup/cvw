@@ -233,7 +233,7 @@ module csr #(parameter
               .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
               .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
               .SCOUNTEREN_REGW,
-              .SATP_REGW, .MIP_REGW, .MIE_REGW,
+              .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
               .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
