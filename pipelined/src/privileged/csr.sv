@@ -97,12 +97,13 @@ module csr #(parameter
   logic IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
   logic [11:0] MIP_REGW_writeable;
-  logic [`XLEN-1:0] TVec, TrapVector, NextFaultMtvalM;
+  logic [`XLEN-1:0] TVecM, TrapVectorM, NextFaultMtvalM;
   logic MTrapM, STrapM;
 
   logic [`XLEN-1:0] EPC;
   logic 			RetM;
-  logic       SelMtvec;
+  logic       SelMtvecM;
+  logic [`XLEN-1:0] TVecAlignedM;
   
   logic InstrValidNotFlushedM;
   assign InstrValidNotFlushedM = ~StallW & ~FlushW;
@@ -129,30 +130,30 @@ module csr #(parameter
   // > Allowing coarser alignments in Vectored mode enables vectoring to be
   // > implemented without a hardware adder circuit.
   // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
-  // [untested] TrapVector = {TVec[`XLEN-1:7], CauseM[3:0], 4'b0000}
+  // [untested] TrapVectorM = {TVec[`XLEN-1:7], CauseM[3:0], 4'b0000}
   // However, this is program dependent, so not implemented at this time.
 
-  assign SelMtvec = (NextPrivilegeModeM == `M_MODE);
-  mux2 #(`XLEN) tvecmux(STVEC_REGW, MTVEC_REGW, SelMtvec, TVec);
+  // Select trap vector from STVEC or MTVEC and word-align
+  assign SelMtvecM = (NextPrivilegeModeM == `M_MODE);
+  mux2 #(`XLEN) tvecmux(STVEC_REGW, MTVEC_REGW, SelMtvecM, TVecM);
+  assign TVecAlignedM = {TVecM[`XLEN-1:2], 2'b00};
 
+  // Support vectored interrupts
   if(`VECTORED_INTERRUPTS_SUPPORTED) begin:vec
-      always_comb
-        if (TVec[1:0] == 2'b01 & InterruptM)
-          TrapVector = {TVec[`XLEN-1:2] + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM}, 2'b00};
-        else
-          TrapVector = {TVec[`XLEN-1:2], 2'b00};
-  end
-  else begin
-    assign TrapVector = {TVec[`XLEN-1:2], 2'b00};
-  end
+    logic VectoredM;
+    logic [`XLEN-1:0] TVecPlusCauseM;
+    assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
+    assign TVecPlusCauseM = TVecAlignedM + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM, 2'b00};
+    mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
+  end else 
+    assign TrapVectorM = TVecAlignedM;
 
   // Trap Returns
   // A trap sets the PC to TrapVector
   // A return sets the PC to MEPC or SEPC
   assign RetM = mretM | sretM;
   mux2 #(`XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
-  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVector, {TrapM, RetM}, UnalignedPCNextF);
-  
+  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
   ///////////////////////////////////////////
   // CSRWriteValM
