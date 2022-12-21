@@ -286,9 +286,8 @@ module ifu (
   // PCNextF logic
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`ICACHE | `ZIFENCEI_SUPPORTED)
+  if(`ZICSR_SUPPORTED | `ZIFENCEI_SUPPORTED)
     mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
-//    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(PCM+4), .s(CSRWriteFenceM),.y(PCNext2F));  
   else assign PCNext2F = PCNext1F;
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
