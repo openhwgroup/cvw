@@ -293,7 +293,8 @@ end_trap_triggers:
     //     
     // --------------------------------------------------------------------------------------------
 
-.align 6
+//.align 6
+.align 3
 trap_handler_\MODE\():
     j trap_unvectored_\MODE\() // for the unvectored implimentation: jump past this table of addresses into the actual handler
     // *** ASSUMES that a cause value of 0 for an interrupt is unimplemented
