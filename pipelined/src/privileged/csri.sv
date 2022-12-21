@@ -62,7 +62,7 @@ module csri #(parameter
   // SSIP is writable in SIP if S mode exists
   if (`S_SUPPORTED) begin:mask
     assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writeable in MIP (20210108-draft 3.1.9)
-    assign SIP_WRITE_MASK = 12'h002; // SSIP is writeable in SIP (privileged 20210108-draft 4.1.3)
+    assign SIP_WRITE_MASK = 12'h002; // SSIP is writeable in SIP (privileged 20210108-draft 4.1.3) 
     assign MIE_WRITE_MASK = 12'hAAA;
   end else begin:mask
     assign MIP_WRITE_MASK = 12'h000;
