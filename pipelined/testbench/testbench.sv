@@ -428,6 +428,27 @@ logic [3:0] dummy;
         end
       end
     end
+
+  // check for hange up.
+  logic [`XLEN-1:0] OldPCW;
+  integer 			WatchDogTimerCount;
+  localparam WatchDogTimerThreshold = 1000000;
+  logic 			WatchDogTimeOut;
+  always_ff @(posedge clk) begin
+	OldPCW <= PCW;
+	if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
+	else WatchDogTimerCount = '0;
+  end
+
+  always_comb begin
+	WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
+	if(WatchDogTimeOut) begin
+	  $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
+	  $stop;
+	end
+  end
+  
+  
 endmodule
 
 module riscvassertions;
