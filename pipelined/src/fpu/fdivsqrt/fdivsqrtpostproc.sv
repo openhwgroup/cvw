@@ -127,10 +127,10 @@ module fdivsqrtpostproc(
   
   always_comb
     if (RemOpM) begin
-      NormShiftM = (m + (`DIVBLEN)'(`DIVa));
+      NormShiftM = (m + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
     end else begin
-      NormShiftM = ((`DIVBLEN)'(`DIVb) - (n << `LOGR));
+      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (n << `LOGR));
       PreResultM = {3'b000, IntQuotM};
     end
   

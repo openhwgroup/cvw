@@ -151,8 +151,8 @@ module csrm #(parameter
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
   if (`S_SUPPORTED) begin:deleg // DELEG registers should exist
-    flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK /*12'h7FF*/, MEDELEG_REGW);
-    flopenr #(12)    MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK /*12'h222*/, MIDELEG_REGW);
+    flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, MEDELEG_REGW);
+    flopenr #(12)    MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
   end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
 
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);

@@ -102,6 +102,7 @@ test_cases:
 
 # =========== Enter Supervisor Mode ===========
 
+.4byte 0x0, 0x222, write_mideleg                    # delegate supervisor interrupts to S mode
 .4byte 0x0, 0x0, goto_s_mode                        # Enter supervisor mode
 
 # =========== Test interrupt enables and priorities ===========
