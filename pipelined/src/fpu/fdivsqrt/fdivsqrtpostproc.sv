@@ -40,7 +40,7 @@ module fdivsqrtpostproc(
   input  logic              SpecialCaseM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAE,
   input  logic              RemOpM, ALTBM, BZeroM, As,
-  input  logic [`DIVBLEN:0] n, m,
+  input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroM,
   output logic              DivSM,
@@ -127,10 +127,10 @@ module fdivsqrtpostproc(
   
   always_comb
     if (RemOpM) begin
-      NormShiftM = (m + (`DIVBLEN+1)'(`DIVa));
+      NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
     end else begin
-      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (n << `LOGR));
+      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM << `LOGR));
       PreResultM = {3'b000, IntQuotM};
     end
   

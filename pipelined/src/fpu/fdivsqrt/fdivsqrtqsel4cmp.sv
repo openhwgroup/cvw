@@ -34,7 +34,7 @@ module fdivsqrtqsel4cmp (
   input logic [2:0] Dmsbs,
   input logic [4:0] Smsbs,
   input logic [7:0] WSmsbs, WCmsbs,
-  input logic SqrtE, j1, OTFCSwap, MDUE,
+  input logic SqrtE, j1, OTFCSwapE, MDUE,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
@@ -93,5 +93,5 @@ module fdivsqrtqsel4cmp (
     else udigitsel = 4'b0001; // choose -2	
 
   assign udigitswap = {udigitsel[0], udigitsel[1], udigitsel[2], udigitsel[3]};
-  assign udigit = OTFCSwap ? udigitswap : udigitsel;
+  assign udigit = OTFCSwapE ? udigitswap : udigitsel;
 endmodule
