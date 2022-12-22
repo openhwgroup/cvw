@@ -46,7 +46,7 @@ module fdivsqrtfsm(
   input  logic FlushE,
   input  logic WZeroM,
   input  logic MDUE,
-  input  logic [`DIVBLEN:0] n,
+  input  logic [`DIVBLEN:0] nE,
   output logic IFDivStartE,
   output logic FDivBusyE, FDivDoneE,
   output logic SpecialCaseM
@@ -104,7 +104,7 @@ module fdivsqrtfsm(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    cycles =  MDUE ? n : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    cycles =  MDUE ? nE : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */
