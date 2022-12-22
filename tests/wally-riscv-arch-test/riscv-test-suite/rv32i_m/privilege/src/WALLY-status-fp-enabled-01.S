@@ -71,6 +71,10 @@ sw x29, 0(x6) // read dirty FS, SD bits, which should be 11 and 1 respectively
 addi x6, x6, 4
 addi x16, x16, 4
 
+li x29, 0x6000
+csrc mstatus, x29 // clear FS to be 00, disabling floating point
+fmv.s ft0, ft0 // should be an illegal instruction with fs set to 00 
+
 END_TESTS
 
 TEST_STACK_AND_DATA
