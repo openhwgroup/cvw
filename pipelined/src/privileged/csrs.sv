@@ -102,7 +102,7 @@ module csrs #(parameter
       case (CSRAdrM) 
         SSTATUS:   CSRSReadValM = SSTATUS_REGW;
         STVEC:     CSRSReadValM = STVEC_REGW;
-        SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields  // *** and with MIDELEG instead of 222
+        SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields  
         SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW & 12'h222}; // only read supervisor fields
         SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
         SEPC:      CSRSReadValM = SEPC_REGW;
