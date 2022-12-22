@@ -42,7 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
+  output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc,
@@ -56,7 +56,7 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  Bs, CalcOTFCSwapE, ALTBE;
+  logic  Bs, ALTBE;
   logic  [`XLEN-1:0]  A64, B64;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
