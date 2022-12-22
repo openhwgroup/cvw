@@ -65,7 +65,7 @@ module fdivsqrtstage4 (
   assign WCmsbs = WC[`DIVb+3:`DIVb-4];
   assign WSmsbs = WS[`DIVb+3:`DIVb-4];
 
-  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit, .OTFCSwapE, .MDUE);
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit, .MDUE);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
@@ -94,7 +94,7 @@ module fdivsqrtstage4 (
   assign CNext = {2'b11, C[`DIVb+1:2]};
  
   // On-the-fly converter to accumulate result
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .Sqrt(SqrtE), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .swap(OTFCSwapE), .Sqrt(SqrtE), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
 
 
