@@ -38,7 +38,7 @@ module fdivsqrtpostproc(
   input  logic              Firstun,
   input  logic              SqrtM,
   input  logic              SpecialCaseM,
-	input  logic [`XLEN-1:0]  ForwardedSrcAE,
+	input  logic [`XLEN-1:0]  ForwardedSrcAM,
   input  logic              RemOpM, ALTBM, BZeroM, As,
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
@@ -106,12 +106,12 @@ module fdivsqrtpostproc(
 
   // Integer division: Special cases
   always_comb
-    if(ALTBM) begin
-      IntQuotM = '0;
-      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
-    end else if (BZeroM) begin
+    if (BZeroM) begin
       IntQuotM = '1;
-      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAE};
+      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
+    end else if (ALTBM) begin
+      IntQuotM = '0;
+      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
     end else if (WZeroM) begin
       if (weq0) begin
         IntQuotM = FirstU;
@@ -130,8 +130,14 @@ module fdivsqrtpostproc(
       NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
     end else begin
-      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-      PreResultM = {3'b000, IntQuotM};
+      if (BZeroM) begin
+        NormShiftM = 0;
+        PreResultM = {3'b111, IntQuotM};
+      end else begin
+        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
+        PreResultM = {3'b000, IntQuotM};
+      end
+      //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
     end
   
 
