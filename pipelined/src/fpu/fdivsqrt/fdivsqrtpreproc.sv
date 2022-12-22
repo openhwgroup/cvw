@@ -41,8 +41,8 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
-  output logic [`DIVBLEN:0] n, m,
-  output logic OTFCSwap, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
+  output logic [`DIVBLEN:0] nE, nM, mM,
+  output logic OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc
@@ -55,9 +55,9 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  Bs, CalcOTFCSwap, ALTBE;
+  logic  Bs, CalcOTFCSwapE, ALTBE;
   logic  [`XLEN-1:0]  A64, B64;
-  logic  [`DIVBLEN:0] Calcn, Calcm;
+  logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
   logic  [`LOGRK-1:0] pPrTrunc;
@@ -72,7 +72,7 @@ module fdivsqrtpreproc (
   assign A64 = W64E ? {{(`XLEN-32){As}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){Bs}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
 
-  assign CalcOTFCSwap = (As ^ Bs) & MDUE;
+  assign CalcOTFCSwapE = (As ^ Bs) & MDUE;
   
   assign PosA = As ? -A64 : A64;
   assign PosB = Bs ? -B64 : B64;
@@ -82,19 +82,19 @@ module fdivsqrtpreproc (
   assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
   assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};
   lzc #(`DIVb) lzcX (IFNormLenX, ell);
-  lzc #(`DIVb) lzcY (IFNormLenD, Calcm);
+  lzc #(`DIVb) lzcY (IFNormLenD, mE);
 
   assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // had issue with (`DIVBLEN+1)'(~MDUE) so using this instead
-  assign DPreproc = IFNormLenD << (Calcm + {{`DIVBLEN{1'b0}}, 1'b1}); // replaced ~MDUE with 1 bc we always want that extra left shift
+  assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); // replaced ~MDUE with 1 bc we always want that extra left shift
 
-  assign ZeroDiff = Calcm - ell;
+  assign ZeroDiff = mE - ell;
   assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
   assign p = ALTBE ? '0 : ZeroDiff;
 
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
   assign pPrTrunc = pPlusr[`LOGRK-1:0];
   assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
-  assign Calcn = (pPrCeil << `LOGK) - 1;
+  assign nE = (pPrCeil << `LOGK) - 1;
   assign IntBits = (`DIVBLEN)'(`RK) + p;
   assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
 
@@ -119,14 +119,14 @@ module fdivsqrtpreproc (
   // DIVRESLEN/(r*`DIVCOPIES)
 
   flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
-  flopen #(1)       swapreg(clk, IFDivStartE, CalcOTFCSwap, OTFCSwap);
+  flopen #(1)       swapreg(clk, IFDivStartE, CalcOTFCSwapE, OTFCSwapE); // Retain value for each iteration of divider in Execute stage
   flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
   flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
-  flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, Calcn, n);
-  flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, Calcm, m);
+  flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
+  flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
   //flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM); //HERE
-  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(Calcm), .Qe(QeE));
+  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
 
 endmodule
 

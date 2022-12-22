@@ -36,7 +36,7 @@ module fdivsqrtstage4 (
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtE, j1, OTFCSwap, MDUE,
+  input  logic SqrtE, j1, OTFCSwapE, MDUE,
   output logic [`DIVb+1:0] CNext,
   output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
@@ -65,7 +65,7 @@ module fdivsqrtstage4 (
   assign WCmsbs = WC[`DIVb+3:`DIVb-4];
   assign WSmsbs = WS[`DIVb+3:`DIVb-4];
 
-  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit, .OTFCSwap, .MDUE);
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit, .OTFCSwapE, .MDUE);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
