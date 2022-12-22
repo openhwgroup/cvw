@@ -131,7 +131,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : SpillSupport
 
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM | BPPredWrongE), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
       .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
@@ -222,7 +222,7 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
-      icache(.clk, .reset, .FlushStage(TrapM), .Stall(GatedStallD),
+      icache(.clk, .reset, .FlushStage(TrapM | BPPredWrongE), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
@@ -239,7 +239,7 @@ module ifu (
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .Flush(TrapM), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
+            .Flush(TrapM | BPPredWrongE), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
              .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
