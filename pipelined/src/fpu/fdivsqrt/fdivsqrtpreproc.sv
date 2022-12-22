@@ -45,7 +45,8 @@ module fdivsqrtpreproc (
   output logic OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
-  output logic [`DIVb-1:0] DPreproc
+  output logic [`DIVb-1:0] DPreproc,
+  output logic [`XLEN-1:0] ForwardedSrcAM
 );
 
   logic  [`DIVb-1:0] XPreproc;
@@ -129,7 +130,7 @@ module fdivsqrtpreproc (
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
-  //flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM); //HERE
+  flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
 
 endmodule
