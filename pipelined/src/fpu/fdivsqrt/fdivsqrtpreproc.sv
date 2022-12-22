@@ -60,7 +60,7 @@ module fdivsqrtpreproc (
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
-  logic  [`LOGRK-1:0] pPrTrunc;
+  logic  [`LOGRK:0] pPrTrunc;
   logic  [`DIVb+3:0]  PreShiftX;
   logic  NumZeroE;
 
@@ -91,12 +91,16 @@ module fdivsqrtpreproc (
   assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
   assign p = ALTBE ? '0 : ZeroDiff;
 
+/* verilator lint_off WIDTH */
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
-  assign pPrTrunc = pPlusr[`LOGRK-1:0];
+  assign pPrTrunc = pPlusr % `RK;
+//assign pPrTrunc = (`LOGRK == 0) ? 0 : pPlusr[`LOGRK-1:0];
   assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
-  assign nE = (pPrCeil << `LOGK) - 1;
-  assign IntBits = (`DIVBLEN)'(`RK) + p;
-  assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
+  assign nE = (pPrCeil * (`DIVBLEN+1)'(`DIVCOPIES)) - {{(`DIVBLEN){1'b0}}, 1'b1};
+  assign IntBits = (`DIVBLEN)'(`LOGR) + p - {{(`DIVBLEN){1'b0}}, 1'b1};
+  assign RightShiftX = ((`DIVBLEN)'(`RK) - 1) - (IntBits % `RK);
+//assign RightShiftX = (`LOGRK == 0) ? 0 : ((`DIVBLEN)'(`RK) - 1) - {{(`DIVBLEN - `RK){1'b0}}, IntBits[`LOGRK-1:0]};
+/* verilator lint_on WIDTH */
 
   assign NumZeroE = MDUE ? AZeroE : XZeroE;
 
