@@ -130,7 +130,7 @@ module fdivsqrtpostproc(
       NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
     end else begin
-      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM << `LOGR));
+      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
       PreResultM = {3'b000, IntQuotM};
     end
   
