@@ -6,10 +6,10 @@
 00000000
 00006000 # read SD = 1, FS = 11
 80000000
+00000002 # mcause from attempting fmv with status.FS cleared
+00000000
 0000000b # mcause from M mode ecall from test termination
 00000000
-deadbeef
-deadbeef
 deadbeef
 deadbeef
 deadbeef
