@@ -31,7 +31,6 @@
 `include "wally-config.vh"
 
 module fmaexpadd(    
-    input  logic [`FMTBITS-1:0] Fmt,          // format of the output: single double half quad
     input  logic [`NE-1:0]      Xe, Ye,  // input's exponents
     input  logic                XZero, YZero,        // are the inputs zero
     output logic [`NE+1:0]      Pe       // product's exponent B^(1023)NE+2

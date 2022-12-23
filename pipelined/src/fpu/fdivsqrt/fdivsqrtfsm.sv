@@ -41,7 +41,6 @@ module fdivsqrtfsm(
   input  logic FDivStartE, IDivStartE,
   input  logic XsE,
   input  logic SqrtE,
-  input  logic StallE,
   input  logic StallM,
   input  logic FlushE,
   input  logic WZeroM,

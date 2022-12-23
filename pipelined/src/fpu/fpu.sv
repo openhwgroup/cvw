@@ -252,7 +252,7 @@ module fpu (
             .Xe(XeE), .Ye(YeE), .Ze(ZeE), 
             .Xm(XmE), .Ym(YmE), .Zm(ZmE), 
             .XZero(XZeroE), .YZero(YZeroE), .ZZero(ZZeroE), 
-            .OpCtrl(OpCtrlE), .Fmt(FmtE), 
+            .OpCtrl(OpCtrlE), 
             .As(AsE), .Ps(PsE), .Ss(SsE), .Se(SeE),
             .Sm(SmE), 
             .InvA(InvAE), .SCnt(SCntE), 
@@ -265,7 +265,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallE, .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
+                  .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
                   .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //
@@ -372,7 +372,7 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
+   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
                            .FmaZmS(ZmStickyM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
                            .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
