@@ -49,7 +49,6 @@ module fctrl (
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
   output logic 		         FDivStartE, IDivStartE,             // Start division or squareroot
   output logic              XEnE, YEnE, ZEnE,
-  output logic              YEnForwardE, ZEnForwardE,
   output logic 		         FWriteIntE, FCvtIntE, FWriteIntM,                         // Write to integer register
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
@@ -206,9 +205,9 @@ module fctrl (
     assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
 //                  load/class                                    mv               cvt
     assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
-    assign ZEnE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
-    assign YEnForwardE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
-    assign ZEnForwardE = (PostProcSelE==2'b10)&(FResSelE==2'b01)&~OpCtrlE[2];
+
+    assign ZEnE        = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
+  
 
 //  Final Res Sel:
 //        fp      int

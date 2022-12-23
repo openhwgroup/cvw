@@ -77,7 +77,6 @@ module fpu (
    logic [1:0] 	      PostProcSelE, PostProcSelM; // select result in the post processing unit
    logic [4:0] 	      Adr1E, Adr2E, Adr3E;                // adresses of each input
    logic                XEnE, YEnE, ZEnE;
-   logic                YEnForwardE, ZEnForwardE;
 
    // regfile signals
    logic [`FLEN-1:0] FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -168,7 +167,7 @@ module fpu (
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
                .Funct3E, .MDUE, .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-               .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM, .YEnForwardE, .ZEnForwardE,
+               .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
                .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
                .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1E, .Adr2E, .Adr3E);
 
@@ -198,7 +197,7 @@ module fpu (
    // Hazard unit for FPU  
    //    - determines if any forwarding or stalls are needed
    fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResSelM, 
-                   .XEnE, .YEnE(YEnForwardE), .ZEnE(ZEnForwardE), .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
+                   .XEnE, .YEnE, .ZEnE, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
 
    // forwarding muxs
    mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, ForwardXE, XE);
