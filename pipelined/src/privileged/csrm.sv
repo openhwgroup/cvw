@@ -72,7 +72,7 @@ module csrm #(parameter
     MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
   ) (
     input logic 	     clk, reset, 
-    input logic 	     InstrValidNotFlushedM, StallW,
+    input logic 	     InstrValidNotFlushedM, 
     input logic 	     CSRMWriteM, MTrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
