@@ -306,12 +306,12 @@ connect_debug_port u_ila_0/probe58 [get_nets [list wallypipelinedsoc/core/hzu/CS
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe59]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe59]
-connect_debug_port u_ila_0/probe59 [get_nets [list wallypipelinedsoc/core/hzu/LSUStallM ]]
+connect_debug_port u_ila_0/probe59 [get_nets [list wallypipelinedsoc/core/hzu/LSUStallW ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe60]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe60]
-connect_debug_port u_ila_0/probe60 [get_nets [list wallypipelinedsoc/core/hzu/IFUStallF ]]
+connect_debug_port u_ila_0/probe60 [get_nets [list wallypipelinedsoc/core/hzu/IFUStallD ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe61]

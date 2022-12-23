@@ -40,7 +40,7 @@ module spillsupport #(parameter CACHE_ENABLED)
    input logic [`XLEN-1:2]  PCPlus4F,
    input logic [`XLEN-1:0]  PCNextF,
    input logic [31:0]       InstrRawF,
-   input logic              IFUCacheBusStallF,
+   input logic              IFUCacheBusStallD,
    input logic              ITLBMissF, 
    input logic              InstrDAPageFaultF, 
    output logic [`XLEN-1:0] PCNextFSpill,
@@ -67,7 +67,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
   
   always_ff @(posedge clk)
     if (reset | Flush)    CurrState <= #1 STATE_READY;
@@ -77,7 +77,7 @@ module spillsupport #(parameter CACHE_ENABLED)
     case (CurrState)
       STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
-      STATE_SPILL: if(IFUCacheBusStallF | StallF) NextState = STATE_SPILL;
+      STATE_SPILL: if(IFUCacheBusStallD | StallF) NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       default:                                    NextState = STATE_READY;
     endcase
@@ -85,7 +85,7 @@ module spillsupport #(parameter CACHE_ENABLED)
 
   assign SelSpillF = (CurrState == STATE_SPILL);
   assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
-                         (CurrState == STATE_SPILL & IFUCacheBusStallF);
+                         (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
   assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];
   

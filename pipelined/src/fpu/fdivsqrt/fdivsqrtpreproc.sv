@@ -42,10 +42,11 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
+  output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
-  output logic [`DIVb-1:0] DPreproc
+  output logic [`DIVb-1:0] DPreproc,
+  output logic [`XLEN-1:0] ForwardedSrcAM
 );
 
   logic  [`DIVb-1:0] XPreproc;
@@ -55,12 +56,12 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  Bs, CalcOTFCSwapE, ALTBE;
+  logic  Bs, ALTBE;
   logic  [`XLEN-1:0]  A64, B64;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
-  logic  [`LOGRK-1:0] pPrTrunc;
+  logic  [`LOGRK:0] pPrTrunc;
   logic  [`DIVb+3:0]  PreShiftX;
   logic  NumZeroE;
 
@@ -91,12 +92,16 @@ module fdivsqrtpreproc (
   assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
   assign p = ALTBE ? '0 : ZeroDiff;
 
+/* verilator lint_off WIDTH */
   assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
-  assign pPrTrunc = pPlusr[`LOGRK-1:0];
+  assign pPrTrunc = pPlusr % `RK;
+//assign pPrTrunc = (`LOGRK == 0) ? 0 : pPlusr[`LOGRK-1:0];
   assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
-  assign nE = (pPrCeil << `LOGK) - 1;
-  assign IntBits = (`DIVBLEN)'(`RK) + p;
-  assign RightShiftX = (`DIVBLEN)'(`RK) - {{(`DIVBLEN-`RK){1'b0}}, IntBits[`RK-1:0]};
+  assign nE = (pPrCeil * (`DIVBLEN+1)'(`DIVCOPIES)) - {{(`DIVBLEN){1'b0}}, 1'b1};
+  assign IntBits = (`DIVBLEN)'(`LOGR) + p - {{(`DIVBLEN){1'b0}}, 1'b1};
+  assign RightShiftX = ((`DIVBLEN)'(`RK) - 1) - (IntBits % `RK);
+//assign RightShiftX = (`LOGRK == 0) ? 0 : ((`DIVBLEN)'(`RK) - 1) - {{(`DIVBLEN - `RK){1'b0}}, IntBits[`LOGRK-1:0]};
+/* verilator lint_on WIDTH */
 
   assign NumZeroE = MDUE ? AZeroE : XZeroE;
 
@@ -125,7 +130,7 @@ module fdivsqrtpreproc (
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
-  //flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM); //HERE
+  flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM);
   expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
 
 endmodule

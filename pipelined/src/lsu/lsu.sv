@@ -40,7 +40,7 @@
 module lsu (
    input logic              clk, reset,
    input logic              StallM, FlushM, StallW, FlushW,
-   output logic             LSUStallM,
+   output logic             LSUStallW,
    // connected to cpu (controls)
    input logic [1:0]        MemRWM,
    input logic [2:0]        Funct3M,
@@ -103,7 +103,7 @@ module lsu (
   logic [1:0]               LSUAtomicM;
   (* mark_debug = "true" *)  logic [`XLEN+1:0] 		   IHAdrM;
   logic                     GatedStallW;
-  logic                     DCacheStallM;
+  logic                     DCacheStallW;
   logic                     CacheableM;
   logic                     BusStall;
   logic                     HPTWStall;
@@ -120,7 +120,7 @@ module lsu (
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign IEUAdrExtE = {2'b00, IEUAdrE};
-  assign LSUStallM = DCacheStallM | HPTWStall | BusStall;
+  assign LSUStallW = DCacheStallW | HPTWStall | BusStall;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW(only needed if VM supported)
@@ -130,7 +130,7 @@ module lsu (
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
-      .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
+      .FlushW, .DCacheStallW, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
       .IEUAdrExtM, .PTE, .IHWriteDataM, .PageType, .PreLSURWM, .LSUAtomicM,
@@ -257,7 +257,7 @@ module lsu (
         .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
-        .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+        .CacheStall(DCacheStallW), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
@@ -296,14 +296,14 @@ module lsu (
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];
       assign LSUHBURST = 3'b0;
-      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+      assign {DCacheStallW, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
   end else begin: nobus // block: bus
     assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = DTIMReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;
-    assign {DCacheStallM, DCacheCommittedM} = '0;
+    assign {DCacheStallW, DCacheCommittedM} = '0;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////

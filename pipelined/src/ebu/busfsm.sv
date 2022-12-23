@@ -65,7 +65,7 @@ module busfsm
                  else             NextState = ADR_PHASE;
       DATA_PHASE: if(HREADY)      NextState = MEM3;
 		          else            NextState = DATA_PHASE;
-      MEM3: if(Stall)           NextState = MEM3;
+      MEM3: if(Stall)             NextState = MEM3;
 		    else                  NextState = ADR_PHASE;
 	  default:                    NextState = ADR_PHASE;
 	endcase

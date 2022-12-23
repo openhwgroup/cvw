@@ -38,7 +38,7 @@ module ifu (
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUHADDR,
-(* mark_debug = "true" *)	output logic 				IFUStallF,
+(* mark_debug = "true" *)	output logic 				IFUStallD,
 (* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
 (* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
 (* mark_debug = "true" *) output logic [2:0]  IFUHSIZE,
@@ -113,7 +113,7 @@ module ifu (
   logic 					   SelNextSpillF;
   logic 					   ICacheFetchLine;
   logic 					   BusStall;
-  logic 					   ICacheStallF, IFUCacheBusStallF;
+  logic 					   ICacheStallF, IFUCacheBusStallD;
   logic 					   GatedStallD;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
@@ -121,8 +121,6 @@ module ifu (
   logic                        BusCommittedF, CacheCommittedF;
   logic                        SelIROM;
   
-  
-
   assign PCFExt = {2'b00, PCFSpill};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,9 +128,8 @@ module ifu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : SpillSupport
-
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(TrapM), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
-      .InstrDAPageFaultF, .IFUCacheBusStallF, .ITLBMissF, .PCNextFSpill, .PCFSpill,
+    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(FlushD), .PCF, .PCPlus4F, .PCNextF, .InstrRawF(InstrRawF),
+      .InstrDAPageFaultF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill,
       .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
@@ -222,7 +219,7 @@ module ifu (
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
               .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
-      icache(.clk, .reset, .FlushStage(TrapM), .Stall(GatedStallD),
+      icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
              .CacheBusRW,
@@ -239,7 +236,7 @@ module ifu (
       ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
-            .Flush(TrapM), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
+            .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
              .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
@@ -258,7 +255,7 @@ module ifu (
 //      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{SelIROM, SelIROM};
       assign IFUHSIZE = 3'b010;
 
-      ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(TrapM), .HRESETn(~reset), .HREADY(IFUHREADY), 
+      ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
@@ -276,8 +273,8 @@ module ifu (
     assign InstrRawF = IROMInstrF;
   end
   
-  assign IFUCacheBusStallF = ICacheStallF | BusStall;
-  assign IFUStallF = IFUCacheBusStallF | SelNextSpillF;
+  assign IFUCacheBusStallD = ICacheStallF | BusStall;
+  assign IFUStallD = IFUCacheBusStallD | SelNextSpillF;
   assign GatedStallD = StallD & ~SelNextSpillF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
