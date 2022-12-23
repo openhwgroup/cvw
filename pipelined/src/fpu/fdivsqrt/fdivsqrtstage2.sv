@@ -60,7 +60,7 @@ module fdivsqrtstage2 (
 	// 0000 =  0
 	// 0010 = -1
 	// 0001 = -2
-  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], OTFCSwapE, up, uz, un);
+  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
 
   // Sqrt F generation
   fdivsqrtfgen2 fgen2(.up, .uz, .C(CNext), .U, .UM, .F);
@@ -82,7 +82,7 @@ module fdivsqrtstage2 (
   assign CNext = {1'b1, C[`DIVb+1:1]};
 
   // Unified On-The-Fly Converter to accumulate result
-  fdivsqrtuotfc2 uotfc2(.up, .uz, .C(CNext), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc2 uotfc2(.up, .un, .swap(OTFCSwapE), .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

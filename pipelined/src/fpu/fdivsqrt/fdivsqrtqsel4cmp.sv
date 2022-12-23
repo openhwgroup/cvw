@@ -34,7 +34,7 @@ module fdivsqrtqsel4cmp (
   input logic [2:0] Dmsbs,
   input logic [4:0] Smsbs,
   input logic [7:0] WSmsbs, WCmsbs,
-  input logic SqrtE, j1, OTFCSwapE, MDUE,
+  input logic SqrtE, j1, MDUE,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
@@ -86,12 +86,9 @@ module fdivsqrtqsel4cmp (
  
   // Compare residual W to selection constants to choose digit
   always_comb 
-    if ($signed(Wmsbs) >= $signed(mk2)) udigitsel = 4'b1000; // choose 2
-    else if ($signed(Wmsbs) >= $signed(mk1)) udigitsel = 4'b0100; // choose 1
-    else if ($signed(Wmsbs) >= $signed(mk0)) udigitsel = 4'b0000; // choose 0
-    else if ($signed(Wmsbs) >= $signed(mkm1)) udigitsel = 4'b0010; // choose -1
-    else udigitsel = 4'b0001; // choose -2	
-
-  assign udigitswap = {udigitsel[0], udigitsel[1], udigitsel[2], udigitsel[3]};
-  assign udigit = OTFCSwapE ? udigitswap : udigitsel;
+    if ($signed(Wmsbs) >= $signed(mk2)) udigit = 4'b1000; // choose 2
+    else if ($signed(Wmsbs) >= $signed(mk1)) udigit = 4'b0100; // choose 1
+    else if ($signed(Wmsbs) >= $signed(mk0)) udigit = 4'b0000; // choose 0
+    else if ($signed(Wmsbs) >= $signed(mkm1)) udigit = 4'b0010; // choose -1
+    else udigit = 4'b0001; // choose -2	
 endmodule
