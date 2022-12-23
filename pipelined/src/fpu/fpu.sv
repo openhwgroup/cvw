@@ -200,7 +200,7 @@ module fpu (
    // Hazard unit for FPU  
    //    - determines if any forwarding or stalls are needed
    fhazard fhazard(.Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E, .FRegWriteE, .FRegWriteM, .FRegWriteW, .RdE, .RdM, .RdW, .FResSelM, 
-                   .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
+                   .XEnD, .YEnD, .ZEnD, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
 
    // forwarding muxs
    mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, ForwardXE, XE);
