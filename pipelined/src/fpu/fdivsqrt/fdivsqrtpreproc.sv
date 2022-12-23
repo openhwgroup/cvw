@@ -39,7 +39,7 @@ module fdivsqrtpreproc (
   input  logic Sqrt,
   input  logic XZeroE,
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	input  logic [2:0] 	Funct3E,
+	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
   output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
