@@ -65,13 +65,13 @@ module busfsm
                  else             NextState = ADR_PHASE;
       DATA_PHASE: if(HREADY)      NextState = MEM3;
 		          else            NextState = DATA_PHASE;
-      MEM3: if(Stall)           NextState = MEM3;
+      MEM3: if(Stall)             NextState = MEM3;
 		    else                  NextState = ADR_PHASE;
 	  default:                    NextState = ADR_PHASE;
 	endcase
   end
 
-  assign BusStall = (CurrState == ADR_PHASE & |BusRW) |
+  assign BusStall = (CurrState == ADR_PHASE & |BusRW & ~Flush) |
 //					(CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
 					(CurrState == DATA_PHASE); 
   
