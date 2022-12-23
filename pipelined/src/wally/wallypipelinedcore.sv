@@ -119,8 +119,8 @@ module wallypipelinedcore (
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
-  logic             IFUStallF;
-  logic             LSUStallM;
+  logic             IFUStallD;
+  logic             LSUStallW;
 
   
 
@@ -174,7 +174,7 @@ module wallypipelinedcore (
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
-    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
+    .IFUStallD, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
 
@@ -285,7 +285,7 @@ module wallypipelinedcore (
     .InstrDAPageFaultF,
     
     .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallM);                     // change to LSUStallM
+    .LSUStallW);                     // change to LSUStallW
 
 
    // *** Ross: please make EBU conditional when only supporting internal memories
@@ -319,7 +319,7 @@ module wallypipelinedcore (
    hazard     hzu(
      .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
-     .LSUStallM, .IFUStallF,
+     .LSUStallW, .IFUStallD,
      .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,

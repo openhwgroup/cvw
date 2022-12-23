@@ -42,7 +42,7 @@ module hptw (
   	input logic [1:0]           PrivilegeModeW,
    	input logic [`XLEN-1:0]     ReadDataM, // page table entry from LSU 
   	input logic [`XLEN-1:0]     WriteDataM,
-   	input logic                 DCacheStallM, // stall from LSU
+   	input logic                 DCacheStallW, // stall from LSU
   	input logic [2:0]           Funct3M,
    	input logic [6:0]           Funct7M,
    	input logic                 ITLBMissF,
@@ -117,7 +117,7 @@ module hptw (
 
 	// State flops
 	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
-	assign PRegEn = HPTWRW[1] & ~DCacheStallM | UpdatePTE;
+	assign PRegEn = HPTWRW[1] & ~DCacheStallW | UpdatePTE;
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
     
@@ -254,24 +254,24 @@ module hptw (
 			IDLE: if (TLBMiss)	 										NextWalkerState = InitialWalkerState;
 				  else 													NextWalkerState = IDLE;
 			L3_ADR:                     								NextWalkerState = L3_RD; // first access in SV48
-			L3_RD: if (DCacheStallM)    								NextWalkerState = L3_RD;
+			L3_RD: if (DCacheStallW)    								NextWalkerState = L3_RD;
 				   else     											NextWalkerState = L2_ADR;
 			L2_ADR: if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
 					else 				                 				NextWalkerState = LEAF;
-			L2_RD: if (DCacheStallM)                     				NextWalkerState = L2_RD;
+			L2_RD: if (DCacheStallW)                     				NextWalkerState = L2_RD;
 				else                                     				NextWalkerState = L1_ADR;
 			L1_ADR: if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
 					else if (ValidNonLeafPTE)            				NextWalkerState = L1_RD;
 					else 				                				NextWalkerState = LEAF;	
-			L1_RD: if (DCacheStallM)                     				NextWalkerState = L1_RD;
+			L1_RD: if (DCacheStallW)                     				NextWalkerState = L1_RD;
 				else                                     				NextWalkerState = L0_ADR;
 			L0_ADR: if (ValidNonLeafPTE)                 				NextWalkerState = L0_RD;
 					else                                 				NextWalkerState = LEAF;
-			L0_RD: if (DCacheStallM)                     				NextWalkerState = L0_RD;
+			L0_RD: if (DCacheStallW)                     				NextWalkerState = L0_RD;
 				   else                                     			NextWalkerState = LEAF;
 			LEAF: if (`HPTW_WRITES_SUPPORTED & DAPageFault)             NextWalkerState = UPDATE_PTE;
 				  else 													NextWalkerState = IDLE;
-			UPDATE_PTE: if(DCacheStallM) 		                        NextWalkerState = UPDATE_PTE;
+			UPDATE_PTE: if(DCacheStallW) 		                        NextWalkerState = UPDATE_PTE;
 						else 											NextWalkerState = LEAF;
 			default: 													NextWalkerState = IDLE; // should never be reached
 		endcase // case (WalkerState)
@@ -306,5 +306,5 @@ module hptw (
 endmodule
 
 // another idea.  We keep gating the control by ~FlushW, but this adds considerable length to the critical path.
-// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
+// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallW, which drives
 // the hazard unit to issue stall and flush controlls. ~FlushW already suppresses these in the hazard unit.
