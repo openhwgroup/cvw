@@ -32,7 +32,8 @@
 `include "wally-config.vh"
 
 module csrsr (
-  input  logic             clk, reset, StallW,
+  input  logic             clk, reset, 
+  input  logic             StallW,
   input  logic             WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM, 
   input  logic             TrapM, FRegWriteM,
   input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,

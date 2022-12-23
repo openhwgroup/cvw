@@ -41,7 +41,6 @@ module fdivsqrtfsm(
   input  logic FDivStartE, IDivStartE,
   input  logic XsE,
   input  logic SqrtE,
-  input  logic StallE,
   input  logic StallM,
   input  logic FlushE,
   input  logic WZeroM,
@@ -117,9 +116,9 @@ module fdivsqrtfsm(
           if (SpecialCaseE) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (state == BUSY) begin
-          if (step == 1)  state <= #1 DONE;
+          if (step == 1 | WZeroM)  state <= #1 DONE; // terminate early when residual is zero
           step <= step - 1;
-      end else if ((state == DONE) | (WZeroM & (state == BUSY))) begin
+      end else if ((state == DONE)) begin
         if (StallM) state <= #1 DONE;
         else        state <= #1 IDLE;
       end 
