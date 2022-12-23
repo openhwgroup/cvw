@@ -196,26 +196,21 @@ module fctrl (
     else if (`FPSIZES == 3|`FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
-      
-
-// enables:
-//    X - all except int->fp, store, load, mv int->fp
-//    Y - all except cvt, mv, load, class, sqrt
-//    Z - fma ops only
-
-
-  // Enables indicate that a source register is used and may need forwarding. Also indicate special cases for infinity or NaN.
+  // Enables indicate that a source register is used and may need stalls. Also indicate special cases for infinity or NaN.
   // When disabled infinity and NaN on source registers are ignored by the unpacker and thus special case logic.
   
-    assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)| // load/store
-                    ((FResSelD==2'b11)&FRegWriteD)|  // mv int to float
-                    ((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2])); // cvt int to float
+  //    X - all except int->fp, store, load, mv int->fp
+  assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)|                                                 // load/store
+                  ((FResSelD==2'b11)&FRegWriteD)|                                                  // mv int to float
+                  ((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2]));                           // cvt int to float
 
-    assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))| // load or class
-                    (FResSelD==2'b11)|  // mv both ways
-                    ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
+  //    Y - all except cvt, mv, load, class, sqrt
+  assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|                                     // load or class
+                  (FResSelD==2'b11)|                                                               // mv both ways
+                  ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
-    assign ZEnD = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]); // fma, add, sub
+  //    Z - fma ops only
+  assign ZEnD = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]);                  // fma, add, sub
   
 
 //  Final Res Sel:
