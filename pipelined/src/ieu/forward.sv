@@ -57,7 +57,7 @@ module forward(
   end
 
   // Stall on dependent operations that finish in Mem Stage and can't bypass in time
-  assign MatchDE = (Rs1D == RdE) | (Rs2D == RdE); // Decode-stage instruction source depends on result from execute stage instruction
+  assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
   assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
   assign LoadStallD = (MemReadE|SCE) & MatchDE;  
   assign MDUStallD = MDUE & MatchDE; 
