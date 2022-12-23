@@ -9,8 +9,8 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPP
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallW
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
@@ -218,7 +218,7 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
 add wave -noupdate -group lsu /testbench/dut/core/lsu/SelHPTW
-add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallM
+add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallW
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu -radix hexadecimal /testbench/dut/core/lsu/WriteDataM

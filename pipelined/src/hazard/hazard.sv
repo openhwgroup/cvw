@@ -34,7 +34,7 @@ module hazard(
   // Detect hazards
 (* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
-(* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
+(* mark_debug = "true" *)	      input logic  LSUStallW, IFUStallD,
 (* mark_debug = "true" *)         input logic  FCvtIntStallD, FPUStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
@@ -86,8 +86,8 @@ module hazard(
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
   // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
   assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
-  //assign StallWCause = (IFUStallF | LSUStallM) & ~TrapM;
-  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause); 
+  //assign StallWCause = (IFUStallD | LSUStallW) & ~TrapM;
+  assign StallWCause = (IFUStallD & ~FlushDCause) | (LSUStallW & ~FlushWCause); 
 
   // Stall each stage for cause or if the next stage is stalled
   assign #1 StallF = StallFCause | StallD;
