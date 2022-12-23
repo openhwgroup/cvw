@@ -46,7 +46,9 @@ module fmaadd(
     output logic [3*`NF+5:0]    Sm           // the positive sum
 );
     logic [3*`NF+5:0]    PreSum, NegPreSum; // possibly negitive sum
+    logic [3*`NF+5:0]    PreSumdebug, NegPreSumdebug; // possibly negitive sum
     logic                NegSum;        // was the sum negitive
+    logic                NegSumdebug;        // was the sum negitive
 
     ///////////////////////////////////////////////////////////////////////////////
     // Addition
@@ -58,12 +60,13 @@ module fmaadd(
     assign PmKilled = KillProd ? '0 : Pm;
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
-    //              Zsticky             Psticky
-    // PreSum    -1 = don't add 1     +1 = add 2
-    // NegPreSum +1 = add 2           -1 = don't add 1
-    // for NegPreSum the product is set to -1 whenever the product is killed, therefore add 1, 2 or 0
-    assign {NegSum, PreSum} = {{`NF+3{1'b0}}, PmKilled, 1'b0, InvA&ZmSticky&KillProd} + {InvA, AmInv} + {{3*`NF+6{1'b0}}, InvA&~((ZmSticky&~KillProd))};
-    assign NegPreSum = Am + {{`NF+2{1'b1}}, ~PmKilled, 2'b11} + {(3*`NF+4)'(0), ZmSticky&~KillProd, ~(ZmSticky)};
+    // if there was a small negitive number killed in the alignment stage one needs to be subtracted from the sum
+    //      prod - addend where some of the addend is put into the sticky bit then don't add +1 from negation 
+    //          ie ~(InvA&ZmSticky&~KillProd)&InvA = (~ZmSticky|KillProd)&InvA
+    //      addend - prod where product is killed (and not exactly zero) then don't add +1 from negation 
+    //          ie ~(InvA&ZmSticky&KillProd)&InvA = (~ZmSticky|~KillProd)&InvA
+    assign {NegSum, PreSum} = {{`NF+3{1'b0}}, PmKilled, 2'b0} + {InvA, AmInv} + {{3*`NF+6{1'b0}}, (~ZmSticky|KillProd)&InvA};
+    assign NegPreSum = Am + {{`NF+2{1'b1}}, ~PmKilled, 2'b0} + {(3*`NF+3)'(0), (~ZmSticky|~KillProd)&InvA, 2'b0};
      
     // Choose the positive sum and accompanying LZA result.
     assign Sm = NegSum ? NegPreSum : PreSum;

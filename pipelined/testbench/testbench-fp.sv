@@ -689,8 +689,8 @@ module testbenchfp;
             .Xe(Xe), .Ye(Ye), .Ze(Ze), 
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
             .XZero, .YZero, .ZZero, .Ss, .Se,
-            .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .NegSum, .InvA, .SCnt, .As, .Ps,
-            .Pe, .ZmSticky, .KillProd); 
+            .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .InvA, .SCnt, .As, .Ps,
+            .ZmSticky); 
   end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
@@ -700,8 +700,8 @@ module testbenchfp;
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaKillProd(KillProd), .FmaZmS(ZmSticky), .FmaPe(Pe), .DivDone, .FmaSe(Se),
-              .FmaSm(Sm), .FmaNegSum(NegSum), .FmaInvA(InvA), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+              .FmaZmS(ZmSticky), .FmaSe(Se),
+              .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
