@@ -37,7 +37,7 @@ module csru #(parameter
   FRM = 12'h002,
   FCSR = 12'h003) (
     input  logic             clk, reset, 
-    input  logic             InstrValidNotFlushedM,
+    input  logic             InstrValidNotFlushedM, StallW,
     input  logic             CSRUWriteM,
     input  logic [11:0]      CSRAdrM,
     input  logic [`XLEN-1:0] CSRWriteValM,

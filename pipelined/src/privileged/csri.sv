@@ -38,7 +38,7 @@ module csri #(parameter
     SIP = 12'h144
   ) (
     input logic 			clk, reset, 
-    input logic 			InstrValidNotFlushedM, 
+    input logic 			InstrValidNotFlushedM, StallW,
     input logic 			CSRMWriteM, CSRSWriteM,
     input logic [`XLEN-1:0] CSRWriteValM,
     input logic [11:0] 		CSRAdrM,

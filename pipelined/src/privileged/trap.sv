@@ -63,12 +63,12 @@ module trap (
   ///////////////////////////////////////////
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
-  assign Committed = CommittedM | CommittedF;
-  assign EnabledIntsM = {12{~Committed & InstrValidM}} & ({12{MIntGlobalEnM}} & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & MIDELEG_REGW);
   assign PendingIntsM = MIP_REGW & MIE_REGW;
   assign IntPendingM = |PendingIntsM;
-  assign ValidIntsM = PendingIntsM & EnabledIntsM;
-  assign InterruptM = (|ValidIntsM) ; // suppress interrupt if the memory system has partially processed a request.
+  assign Committed = CommittedM | CommittedF;
+  assign EnabledIntsM = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
+  assign ValidIntsM = {12{~Committed}} & EnabledIntsM;
+  assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
 
