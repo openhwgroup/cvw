@@ -167,7 +167,7 @@ module bpred
 
   // The prediction and its results need to be passed through the pipeline
   // *** for other predictors will will be different.
-  
+  // *** should these be flushed?
   flopenr #(2) BPPredRegD(.clk(clk),
       .reset(reset),
       .en(~StallD),
@@ -188,37 +188,20 @@ module bpred
   assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
   assign InstrClassD[1] = InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
-  flopenrc #(5) InstrClassRegE(.clk, .reset, .en(~StallE), .clear(FlushE), .d(InstrClassD), .q(InstrClassE));
-  flopenrc #(5) InstrClassRegM(.clk, .reset, .en(~StallM), .clear(FlushM), .d(InstrClassE), .q(InstrClassM));
-  flopenrc #(1) BPPredWrongMReg(.clk, .reset, .en(~StallM), .clear(FlushM), .d(BPPredWrongE), .q(BPPredWrongM));
-
+  flopenrc #(5) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
+  flopenrc #(5) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
+  flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
-  flopenrc #(4) BPPredWrongRegM(.clk, .reset, .en(~StallM), .clear(FlushM),
-                                .d({BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE}),
-                                .q({BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM}));
-  
-
+  flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
+    {BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE},
+    {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM});
 
   // pipeline the class
-  flopenrc #(5) BPInstrClassRegD(.clk(clk),
-          .reset(reset),
-          .en(~StallD),
-          .clear(FlushD),
-          .d(BPInstrClassF),
-          .q(BPInstrClassD));
+  flopenrc #(5) BPInstrClassRegD(clk, reset, FlushD, ~StallD, BPInstrClassF, BPInstrClassD);
+  flopenrc #(5) BPInstrClassRegE(clk, reset, FlushE, ~StallE, BPInstrClassD, BPInstrClassE);
 
-  flopenrc #(5) BPInstrClassRegE(.clk(clk),
-          .reset(reset),
-          .en(~StallE),
-          .clear(FlushE),
-          .d(BPInstrClassD),
-          .q(BPInstrClassE));
-
-  
-
-  // Check the prediction makes execution.
-
+  // Check the prediction
   // first check if the target or fallthrough address matches what was predicted.
   assign TargetWrongE = IEUAdrE != PCD;
   assign FallThroughWrongE = PCLinkE != PCD;
@@ -239,10 +222,6 @@ module bpred
   // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
   // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
   // need this information to verify the accuracy of the predictors.
-  
-  
-  //assign BPPredWrongE = ((PredictionPCWrongE | BPPredDirWrongE) & (|InstrClassE)) | PredictionInstrClassWrongE;
-
   assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
 
   // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
@@ -252,35 +231,22 @@ module bpred
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
   
-  // Update predictors
-
-  satCounter2 BPDirUpdate(.BrDir(PCSrcE),
-     .OldState(BPPredE),
-     .NewState(UpdateBPPredE));
-
+  // 2 bit saturating counter
+  satCounter2 BPDirUpdate(.BrDir(PCSrcE), .OldState(BPPredE), .NewState(UpdateBPPredE));
 
   // Selects the BP or PC+2/4.
-  mux2 #(`XLEN) pcmux0(.d0(PCPlus2or4F), .d1(BPPredPCF), .s(SelBPPredF), .y(PCNext0F));
+  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
   // If the prediction is wrong select the correct address.
-  mux2 #(`XLEN) pcmux1(.d0(PCNext0F), .d1(PCCorrectE), .s(BPPredWrongE), .y(PCNext1F));  
-
+  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
   // Correct branch/jump target.
-  mux2 #(`XLEN) pccorrectemux(.d0(PCLinkE), .d1(IEUAdrE), .s(PCSrcE), .y(PCCorrectE));
+  mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
-  // could also just use PCM+4, or PCLinkM
-  // ONLY valid for class prediction. add option for class prediction.
-//  if(`BPCLASS) begin
-	mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(.d0(PCE), .d1(PCF), .s(BPPredWrongM), .y(NextValidPCE));
-//  end else begin
-//	assign NextValidPCE = PCE;
-//  end
+  // Effectively this is PCM+4 or the non-existant PCLinkM
+  //  if(`BPCLASS) begin
+  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
+  //  end else begin
+  //	assign NextValidPCE = PCE;
+  //  end
   
-  //logic [`XLEN-1:0] PCLinkM;
-  //flopenr #(`XLEN) PCPEReg(clk, reset, ~StallM, PCLinkE, PCLinkM);
-  //assign NextValidPCE = PCLinkM;
-  // of the three, the mux is the cheapest, but the least clear.
-  // this could move entirely into ifu with no relation to bp with the third.
-
-
 endmodule
