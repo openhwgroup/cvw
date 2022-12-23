@@ -35,9 +35,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb-1:0]  D, 
   input  logic [`DIVb:0]    FirstU, FirstUM, 
   input  logic [`DIVb+1:0]  FirstC,
-  input  logic              Firstun,
-  input  logic              SqrtM,
-  input  logic              SpecialCaseM,
+  input  logic              Firstun, SqrtM, SpecialCaseM, OTFCSwapEM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
   input  logic              RemOpM, ALTBM, BZeroM, As,
   input  logic [`DIVBLEN:0] nM, mM,
@@ -54,7 +52,7 @@ module fdivsqrtpostproc(
   logic [`DIVBLEN:0] NormShiftM;
   logic [`DIVb:0] IntQuotM, NormQuotM;
   logic [`DIVb+3:0] IntRemM, NormRemM;
-  logic [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
+  logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
 
   // check for early termination on an exact result.  If the result is not exact, the sticky should be set
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
@@ -130,11 +128,10 @@ module fdivsqrtpostproc(
       NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
     end else begin
-      if (BZeroM) begin
-        NormShiftM = 0;
+      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
+      if (BZeroM | (~ALTBM & OTFCSwapEM)) begin
         PreResultM = {3'b111, IntQuotM};
       end else begin
-        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
         PreResultM = {3'b000, IntQuotM};
       end
       //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
@@ -143,7 +140,7 @@ module fdivsqrtpostproc(
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
-  assign PreFPIntDivResultM = ($signed(PreResultM) >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
+  assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
   assign FPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
  
   assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit

@@ -34,7 +34,7 @@
 // Unified OTFC, Radix 2 //
 ///////////////////////////////
 module fdivsqrtuotfc2(
-  input  logic         up, uz,
+  input  logic         up, un, swap,
   input  logic [`DIVb+1:0] C,
   input logic [`DIVb:0] U, UM,
   output logic [`DIVb:0] UNext, UMNext
@@ -42,20 +42,24 @@ module fdivsqrtuotfc2(
   //  The on-the-fly converter transfers the divsqrt
   //  bits to the quotient as they come.
   logic [`DIVb:0] K;
+  logic unSwap, upSwap;
+  
+  // Check for swap (int div only)
+  assign unSwap = swap ? up : un;
+  assign upSwap = swap ? un : up;
 
   assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
 
   always_comb begin
-    if (up) begin
+    if (upSwap) begin
       UNext  = U | K;
       UMNext = U;
-    end else if (uz) begin
-      UNext  = U;
-      UMNext = UM | K;
-    end else begin        // If up and uz are not true, then un is
+    end else if (unSwap) begin
       UNext  = UM | K;
       UMNext = UM;
-    end 
+    end else begin // If up and un are not true, then uz is
+      UNext  = U;
+      UMNext = UM | K;
+    end
   end
-
 endmodule
