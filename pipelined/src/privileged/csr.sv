@@ -199,7 +199,7 @@ module csr #(parameter
   // CSRs
   ///////////////////////////////////////////
 
-  csri   csri(.clk, .reset, .InstrValidNotFlushedM, .StallW, 
+  csri   csri(.clk, .reset, .InstrValidNotFlushedM, 
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
               .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
               .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
@@ -219,7 +219,7 @@ module csr #(parameter
               .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
               .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
               .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
-  csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, .StallW,
+  csrm  csrm(.clk, .reset, .InstrValidNotFlushedM,
               .CSRMWriteM, .MTrapM, .CSRAdrM,
               .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
               .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
@@ -227,7 +227,7 @@ module csr #(parameter
               .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
               .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
               .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
-  csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM, .StallW,
+  csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
               .CSRSWriteM, .STrapM, .CSRAdrM,
               .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
               .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
@@ -235,7 +235,7 @@ module csr #(parameter
               .SCOUNTEREN_REGW,
               .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
               .WriteSSTATUSM, .IllegalCSRSAccessM);
-  csru  csru(.clk, .reset, .InstrValidNotFlushedM, .StallW,
+  csru  csru(.clk, .reset, .InstrValidNotFlushedM,
               .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
               .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
               .IllegalCSRUAccessM);

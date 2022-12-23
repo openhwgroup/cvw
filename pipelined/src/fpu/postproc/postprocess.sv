@@ -33,7 +33,6 @@
 module postprocess (
     // general signals
     input logic                             Xs, Ys,  // input signs
-    input logic  [`NE-1:0]                  Ze, // input exponents
     input logic  [`NF:0]                    Xm, Ym, Zm, // input mantissas
     input logic  [2:0]                      Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic  [`FMTBITS-1:0]             Fmt,       // precision 1 = double 0 = single
@@ -146,9 +145,9 @@ module postprocess (
 
     cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
-    fmashiftcalc fmashiftcalc(.FmaSm, .Ze, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
+    fmashiftcalc fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Fmt, .Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShiftPos, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShiftPos, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
