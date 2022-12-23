@@ -202,19 +202,20 @@ module fctrl (
 //    X - all except int->fp, store, load, mv int->fp
 //    Y - all except cvt, mv, load, class, sqrt
 //    Z - fma ops only
-//                  load/store                        mv int->fp                      cvt int->fp
-/// *** turn into registers.
-    assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
-//                  load/class                                    mv               cvt
-    assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
 
-    assign ZEnE        = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
 
-    assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)|((FResSelD==2'b11)&FRegWriteD)|((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2]));
-//                  load/class                                    mv               cvt
-    assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|(FResSelD==2'b11)|((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0]))));    
+  // Enables indicate that a source register is used and may need forwarding. Also indicate special cases for infinity or NaN.
+  // When disabled infinity and NaN on source registers are ignored by the unpacker and thus special case logic.
+  
+    assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)| // load/store
+                    ((FResSelD==2'b11)&FRegWriteD)|  // mv int to float
+                    ((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2])); // cvt int to float
 
-    assign ZEnD        = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]);
+    assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))| // load or class
+                    (FResSelD==2'b11)|  // mv both ways
+                    ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
+
+    assign ZEnD = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]); // fma, add, sub
   
 
 //  Final Res Sel:
@@ -277,6 +278,7 @@ module fctrl (
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
+  flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
   if (`M_SUPPORTED) assign IDivStartE = MDUE & Funct3E[2];
   else              assign IDivStartE = 0; 
 
