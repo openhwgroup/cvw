@@ -33,8 +33,8 @@
 module fmaadd(
     input logic  [3*`NF+5:0]    Am, // aligned addend's mantissa for addition in U(NF+5.2NF+1)
     input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
-    input logic                 Ps,// the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
-    input logic                 InvA,          // invert the aligned addend
+    input logic                 Ps, As,// the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
+    input logic                InvA,          // invert the aligned addend
     input logic                 KillProd,      // should the product be set to 0
     input logic                 ZmSticky,
     input logic  [`NE-1:0]      Ze,
