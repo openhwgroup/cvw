@@ -34,6 +34,8 @@ module fdivsqrtiter(
   input  logic clk,
   input  logic IFDivStartE, 
   input  logic FDivBusyE, 
+  input  logic [`NE-1:0] Xe, Ye,
+  input  logic XZeroE, YZeroE, 
   input  logic SqrtE, MDUE,
 //  input  logic SqrtM,
   input  logic OTFCSwapE,
@@ -62,6 +64,7 @@ module fdivsqrtiter(
   logic [`DIVb+3:0]      WSN, WCN;               // Q4.b
   logic [`DIVb+3:0]      DBar, D2, DBar2;        // Q4.b
   logic [`DIVb+1:0]      NextC;
+  logic [`DIVb+1:0]      CMux;
   logic [`DIVb:0]        UMux, UMMux;
   logic [`DIVb:0]        initU, initUM;
   /* verilator lint_on UNOPTFLAT */
@@ -91,8 +94,8 @@ module fdivsqrtiter(
   logic [1:0] initCUpper;
   assign initCUpper = (SqrtE & ~(MDUE)) ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
   assign initC = {initCUpper, {`DIVb{1'b0}}};
-  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
-  flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, NextC, C[0]);
+  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, CMux); 
+  flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, CMux, C[0]);
 
    // Divisior register
   flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);

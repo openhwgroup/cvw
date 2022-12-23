@@ -91,6 +91,7 @@ module fpu (
    logic 		      XsE, YsE, ZsE;                // input's sign - execute stage
    logic 		      XsM, YsM;                       // input's sign - memory stage
    logic [`NE-1:0] 	XeE, YeE, ZeE;                // input's exponent - execute stage
+   logic [`NE-1:0] 	ZeM;                              // input's exponent - memory stage
    logic [`NF:0] 	   XmE, YmE, ZmE;                // input's fraction - execute stage
    logic [`NF:0] 	   XmM, YmM, ZmM;                // input's fraction - memory stage
    logic 		      XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
@@ -264,7 +265,7 @@ module fpu (
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
-                  .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
+                  .StallE, .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
                   .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //
@@ -342,6 +343,7 @@ module fpu (
 
    flopenrc #(`NF+1) EMFpReg2 (clk, reset, FlushM, ~StallM, XmE, XmM);
    flopenrc #(`NF+1) EMFpReg3 (clk, reset, FlushM, ~StallM, YmE, YmM);
+   flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZeE,ZmE}, {ZeM,ZmM});
    flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
    flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
    flopenr #(15) EMFpReg5 (clk, reset, ~StallUnpackedM, 
@@ -370,7 +372,7 @@ module fpu (
 
    assign FpLoadStoreM = FResSelM[1];
 
-   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
+   postprocess postprocess(.Xs(XsM), .Ys(YsM), .Ze(ZeM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
                            .FmaZmS(ZmStickyM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
                            .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),

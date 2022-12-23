@@ -125,7 +125,7 @@ module fdivsqrtpostproc(
       IntRemM  = NormRemM;
     end 
   
-  always_comb  // could merge into postprocessor shifter
+  always_comb
     if (RemOpM) begin
       NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
       PreResultM = IntRemM;
