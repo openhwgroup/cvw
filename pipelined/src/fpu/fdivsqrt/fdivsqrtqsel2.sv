@@ -32,7 +32,6 @@
 
 module fdivsqrtqsel2 ( 
   input  logic [3:0] ps, pc, 
-  input  logic  swap,
   output logic  up, uz, un
 );
  
@@ -56,11 +55,7 @@ module fdivsqrtqsel2 (
 						(ps[0]&pc[0])))));
 
   // Produce digit = +1, 0, or -1
-  assign pos = magnitude & ~sign;
+  assign up = magnitude & ~sign;
   assign uz  = ~magnitude;
-  assign neg = magnitude & sign;
-
-  // Check for swap (int div only)
-  assign un = swap ? pos : neg;
-  assign up = swap ? neg : pos;
+  assign un = magnitude & sign;
 endmodule

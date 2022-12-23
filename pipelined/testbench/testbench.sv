@@ -153,6 +153,9 @@ logic [3:0] dummy;
   logic        HREADY;
   logic        HSELEXT;
   
+  logic             InitializingMemories;
+  integer           ResetCount, ResetThreshold;
+  logic             InReset;
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
@@ -201,6 +204,9 @@ logic [3:0] dummy;
 
   initial
     begin
+      ResetCount = 0;
+      ResetThreshold = 2;
+      InReset = 1;
       test = 1;
       totalerrors = 0;
       testadr = 0;
@@ -251,7 +257,6 @@ logic [3:0] dummy;
         updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
         $display("Read memfile %s", memfilename);
       end
-      reset_ext = 1; # 42; reset_ext = 0;
     end
 
   // generate clock to sequence tests
@@ -265,8 +270,19 @@ logic [3:0] dummy;
 //  assign debugmemoryadr = dut.uncore.uncore.ram.ram.memory.RAM[5140];
 
   // check results
+  assign reset_ext = InReset;
+  
   always @(negedge clk)
     begin    
+      InitializingMemories = 0;
+      if(InReset == 1) begin
+        // once the test inidicates it's done we need to immediately hold reset for a number of cycles.
+        if(ResetCount < ResetThreshold) ResetCount = ResetCount + 1;
+        else begin // hit reset threshold so we remove reset.
+          InReset = 0;
+          ResetCount = 0;
+        end
+      end else begin
       if (TEST == "coremark")
         if (dut.core.priv.priv.EcallFaultM) begin
           $display("Benchmark: coremark is done.");
@@ -274,7 +290,8 @@ logic [3:0] dummy;
         end
       // Termination condition (i.e. we finished running current test) 
       if (DCacheFlushDone) begin
-        integer begin_signature_addr; 
+        integer begin_signature_addr;
+        InReset = 1;
         begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
@@ -357,6 +374,7 @@ logic [3:0] dummy;
           $stop;
         end
         else begin
+            InitializingMemories = 1;
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
@@ -378,8 +396,8 @@ logic [3:0] dummy;
             updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
             $display("Read memfile %s", memfilename);
           end
-            reset_ext = 1; # 47; reset_ext = 0;
         end
+      end // if (DCacheFlushDone)
       end
     end // always @ (negedge clk)
 

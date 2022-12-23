@@ -9,8 +9,8 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPP
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallD
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallW
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
@@ -41,12 +41,12 @@ add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpi
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
-add wave -noupdate -group PCS /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -group PCS /testbench/dut/core/PCF
-add wave -noupdate -group PCS /testbench/dut/core/ifu/PCD
-add wave -noupdate -group PCS /testbench/dut/core/PCE
-add wave -noupdate -group PCS /testbench/dut/core/PCM
-add wave -noupdate -group PCS /testbench/PCW
+add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCNextF
+add wave -noupdate -expand -group PCS /testbench/dut/core/PCF
+add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCD
+add wave -noupdate -expand -group PCS /testbench/dut/core/PCE
+add wave -noupdate -expand -group PCS /testbench/dut/core/PCM
+add wave -noupdate -expand -group PCS /testbench/PCW
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/PCD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {Decode Stage} /testbench/InstrDName
@@ -218,7 +218,7 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
 add wave -noupdate -group lsu /testbench/dut/core/lsu/SelHPTW
-add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallM
+add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallW
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu -radix hexadecimal /testbench/dut/core/lsu/WriteDataM
@@ -411,24 +411,24 @@ add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/du
 add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
 add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ITLBWriteF
 add wave -noupdate -group lsu -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/DTLBWriteM
-add wave -noupdate -expand -group plic /testbench/dut/uncore/uncore/plic/plic/UARTIntr
-add wave -noupdate -expand -group plic /testbench/dut/uncore/uncore/plic/plic/GPIOIntr
-add wave -noupdate -expand -group plic /testbench/dut/uncore/uncore/plic/plic/MExtInt
-add wave -noupdate -expand -group plic /testbench/dut/uncore/uncore/plic/plic/SExtInt
-add wave -noupdate -expand -group plic /testbench/dut/uncore/uncore/plic/plic/Dout
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intClaim
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intEn
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intInProgress
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPending
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPriority
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intThreshold
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/nextIntPending
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/requests
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/irqMatrix
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/priorities_with_irqs
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/max_priority_with_irqs
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/irqs_at_max_priority
-add wave -noupdate -expand -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/threshMask
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/UARTIntr
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/GPIOIntr
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/MExtInt
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/SExtInt
+add wave -noupdate -group plic /testbench/dut/uncore/uncore/plic/plic/Dout
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intClaim
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intEn
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intInProgress
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPending
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intPriority
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/intThreshold
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/nextIntPending
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/requests
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/irqMatrix
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/priorities_with_irqs
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/max_priority_with_irqs
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/irqs_at_max_priority
+add wave -noupdate -group plic -expand -group internals /testbench/dut/uncore/uncore/plic/plic/threshMask
 add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsIn
 add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsOut
 add wave -noupdate -group GPIO /testbench/dut/uncore/uncore/gpio/gpio/GPIOPinsEn
@@ -615,8 +615,12 @@ add wave -noupdate -expand -group uncore /testbench/dut/uncore/uncore/HSELRegion
 add wave -noupdate -expand -group uncore /testbench/dut/uncore/uncore/HSELNoneD
 add wave -noupdate -expand -group uncore /testbench/dut/uncore/uncore/HSELPLICD
 add wave -noupdate -expand -group uncore /testbench/dut/uncore/uncore/HRDATA
+add wave -noupdate /testbench/ResetCount
+add wave -noupdate /testbench/InReset
+add wave -noupdate /testbench/DCacheFlushDone
+add wave -noupdate /testbench/DCacheFlushStart
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {471877 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {128608 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -632,4 +636,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {471640 ns} {472086 ns}
+WaveRestoreZoom {128173 ns} {130237 ns}

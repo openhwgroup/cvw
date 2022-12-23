@@ -35,8 +35,8 @@ RVTEST_CODE_BEGIN
 
     # ---------------------------------------------------------------------------------------------
     j main_code
-# Thanks to MTVEC[1:0], trap handler addresses need to be aligned to a 4-byte boundary
-.align 2
+# 64 byte alignment for vectored traps to align with xtev
+.align 6
 ###################
 ###################
 trap_handler: #####
