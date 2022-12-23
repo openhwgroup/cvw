@@ -106,7 +106,7 @@ module csr #(parameter
   logic [`XLEN-1:0] TVecAlignedM;
   
   logic InstrValidNotFlushedM;
-  assign InstrValidNotFlushedM = ~StallW & ~FlushW;
+  assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
 
   ///////////////////////////////////////////
   // MTVAL
@@ -212,8 +212,8 @@ module csr #(parameter
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
               .STATUS_FS, .BigEndianM);
   csrc  counters(.clk, .reset,
-              .StallE, .StallM, .StallW, .FlushM, .FlushW,   
-              .InstrValidM, .LoadStallD, .CSRMWriteM,
+              .StallE, .StallM, .StallW, .FlushM,
+              .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
               .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
               .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
               .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
