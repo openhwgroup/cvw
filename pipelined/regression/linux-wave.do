@@ -15,7 +15,7 @@ add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -expand -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallW
+add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
 add wave -noupdate -expand -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/priv/trap/ExceptionM
 add wave -noupdate -expand -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
@@ -185,7 +185,7 @@ add wave -noupdate -group ifu -expand -group itlb /testbench/dut/core/ifu/immu/i
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/IEUAdrM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/PAdrM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
-add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallW
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/WriteDataM

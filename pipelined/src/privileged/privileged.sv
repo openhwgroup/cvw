@@ -77,7 +77,7 @@ module privileged (
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
   output logic [2:0]       FRM_REGW,
-  output logic             BreakpointFaultM, EcallFaultM, wfiM, IntPendingM, BigEndianM
+  output logic             BreakpointFaultM, EcallFaultM, WFIStallM, BigEndianM
 );
 
   logic [`LOG_XLEN-1:0] CauseM;
@@ -98,6 +98,7 @@ module privileged (
   logic [11:0] MIP_REGW, MIE_REGW;
   logic [1:0] NextPrivilegeModeM;
   logic       DelegateM;
+  logic       wfiM, IntPendingM;
 
   ///////////////////////////////////////////
   // track the current privilege level
@@ -123,7 +124,7 @@ module privileged (
           .FlushE, .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
-          .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .InterruptM,
+          .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
           .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
           .MTIME_CLINT, 
           .InstrValidM, .FRegWriteM, .LoadStallD,
@@ -159,8 +160,8 @@ module privileged (
             .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW,
             .STATUS_MIE, .STATUS_SIE,
             .InstrValidM, .CommittedM, .CommittedF,
-            .TrapM, .RetM,
-            .InterruptM, .IntPendingM, .DelegateM,
+            .TrapM, .RetM, .wfiM,
+            .InterruptM, .IntPendingM, .DelegateM, .WFIStallM,
             .CauseM);
 endmodule
 

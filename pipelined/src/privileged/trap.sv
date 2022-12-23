@@ -42,9 +42,9 @@ module trap (
   (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW, 
   input logic [`XLEN-1:0] MEDELEG_REGW,
   input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic 		   InstrValidM, CommittedM, CommittedF,
+  input logic 		   InstrValidM, wfiM, CommittedM, CommittedF,
   output logic 		   TrapM, RetM,
-  output logic 		   InterruptM, IntPendingM, DelegateM,
+  output logic 		   InterruptM, IntPendingM, DelegateM, WFIStallM,
   output logic [`LOG_XLEN-1:0] CauseM 
 );
 
@@ -71,6 +71,7 @@ module trap (
   assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
+  assign WFIStallM = wfiM & ~IntPendingM;
 
   ///////////////////////////////////////////
   // Trigger Traps and RET

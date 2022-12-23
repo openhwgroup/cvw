@@ -9,8 +9,8 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPP
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallW
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
@@ -218,7 +218,7 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
 add wave -noupdate -group lsu /testbench/dut/core/lsu/SelHPTW
-add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallW
+add wave -noupdate -group lsu /testbench/dut/core/lsu/LSUStallM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -group lsu -radix hexadecimal /testbench/dut/core/lsu/WriteDataM
@@ -593,18 +593,18 @@ add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/tlb/tlb/VPN
 add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/tlb/tlb/TLBWrite
 add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/PTE
 add wave -noupdate -group itlb /testbench/dut/core/ifu/immu/immu/VAdr
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/FRD1E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/FRD2E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/FRD3E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcAE
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcBE
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/Funct3E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/MDUE
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/W64E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/X
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/Y
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/Z
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/fregfile/rf
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/FRD1E
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/FRD2E
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/FRD3E
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcAE
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcBE
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/Funct3E
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/MDUE
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/W64E
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/unpack/X
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/unpack/Y
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/unpack/Z
+add wave -noupdate -expand -group FPU /testbench/dut/core/fpu/fpu/fregfile/rf
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/FlushWay
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushAdrCntEn
 add wave -noupdate /testbench/dut/core/lsu/bus/dcache/dcache/cachefsm/FlushWayCntEn
@@ -619,8 +619,17 @@ add wave -noupdate /testbench/ResetCount
 add wave -noupdate /testbench/InReset
 add wave -noupdate /testbench/DCacheFlushDone
 add wave -noupdate /testbench/DCacheFlushStart
+add wave -noupdate /testbench/dut/core/fpu/fpu/XE
+add wave -noupdate /testbench/dut/core/fpu/fpu/YE
+add wave -noupdate /testbench/dut/core/fpu/fpu/ZE
+add wave -noupdate /testbench/dut/core/fpu/fpu/PostProcResM
+add wave -noupdate /testbench/dut/core/fpu/fpu/fregfile/rf
+add wave -noupdate /testbench/dut/core/fpu/fpu/fhazard/ForwardXE
+add wave -noupdate /testbench/dut/core/fpu/fpu/fhazard/ForwardYE
+add wave -noupdate /testbench/dut/core/fpu/fpu/fhazard/ForwardZE
+add wave -noupdate /testbench/dut/core/fpu/fpu/fhazard/YEnE
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {128608 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {4266 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -636,4 +645,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {128173 ns} {130237 ns}
+WaveRestoreZoom {4234 ns} {4338 ns}

@@ -40,7 +40,7 @@
 module lsu (
    input logic              clk, reset,
    input logic              StallM, FlushM, StallW, FlushW,
-   output logic             LSUStallW,
+   output logic             LSUStallM,
    // connected to cpu (controls)
    input logic [1:0]        MemRWM,
    input logic [2:0]        Funct3M,
@@ -120,7 +120,7 @@ module lsu (
   flopenrc #(`XLEN) AddressMReg(clk, reset, FlushM, ~StallM, IEUAdrE, IEUAdrM);
   assign IEUAdrExtM = {2'b00, IEUAdrM}; 
   assign IEUAdrExtE = {2'b00, IEUAdrE};
-  assign LSUStallW = DCacheStallW | HPTWStall | BusStall;
+  assign LSUStallM = DCacheStallW | HPTWStall | BusStall;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // HPTW(only needed if VM supported)
