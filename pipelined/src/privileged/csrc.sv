@@ -43,8 +43,8 @@ module csrc #(parameter
 ) (
     input logic 	     clk, reset,
     input logic 	     StallE, StallM, StallW,
-    input logic        FlushM, FlushW,   
-    input logic 	     InstrValidM, LoadStallD, CSRMWriteM,
+    input logic        FlushM, 
+    input logic 	     InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
     input logic 	     BPPredDirWrongM,
     input logic 	     BTBPredPCWrongM,
     input logic 	     RASPredPCWrongM,
@@ -78,7 +78,6 @@ module csrc #(parameter
     // Interface signals
     flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
     flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
-    assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
     
     // Determine when to increment each counter
     assign CounterEvent[0] = 1'b1;  // MCYCLE always increments
