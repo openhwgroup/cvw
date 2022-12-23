@@ -116,7 +116,7 @@ module fdivsqrtfsm(
           if (SpecialCaseE) state <= #1 DONE;
           else             state <= #1 BUSY;
       end else if (state == BUSY) begin 
-          if (step == 1 | WZeroM)  state <= #1 DONE; // finished steps or terminate early on zero residual
+          if (step == 1 /*| WZeroM */)  state <= #1 DONE; // finished steps or terminate early on zero residual
           step <= step - 1;
       end else if (state == DONE) begin
         if (StallM) state <= #1 DONE;
