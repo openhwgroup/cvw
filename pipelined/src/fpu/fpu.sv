@@ -40,7 +40,7 @@ module fpu (
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
    //input  logic              TrapM,
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
-   input  logic  [4:0] 	     RdM, RdW,   // which FP register to write to (from IEU)
+   input  logic  [4:0] 	     RdE, RdM, RdW,   // which FP register to write to (from IEU)
    input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
    input  logic  [2:0] 	     Funct3E, Funct3M,
 	input  logic 		        MDUE, W64E,
@@ -75,8 +75,11 @@ module fpu (
    logic [2:0] 	      OpCtrlE, OpCtrlM;       // Select which opperation to do in each component
    logic [1:0] 	      FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
    logic [1:0] 	      PostProcSelE, PostProcSelM; // select result in the post processing unit
+   logic [4:0] 	      Adr1D, Adr2D, Adr3D;                // adresses of each input
    logic [4:0] 	      Adr1E, Adr2E, Adr3E;                // adresses of each input
+   logic                XEnD, YEnD, ZEnD;
    logic                XEnE, YEnE, ZEnE;
+   logic                 FRegWriteE;
 
    // regfile signals
    logic [`FLEN-1:0] FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
@@ -167,9 +170,9 @@ module fpu (
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
                .Funct3E, .MDUE, .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
-               .reset, .clk, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
-               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnE, .YEnE, .ZEnE,
-               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1E, .Adr2E, .Adr3E);
+               .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
+               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
+               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
    // FP register file
    fregfile fregfile (.clk, .reset, .we4(FRegWriteW),
@@ -196,8 +199,8 @@ module fpu (
 
    // Hazard unit for FPU  
    //    - determines if any forwarding or stalls are needed
-   fhazard fhazard(.Adr1E, .Adr2E, .Adr3E, .FRegWriteM, .FRegWriteW, .RdM, .RdW, .FResSelM, 
-                   .XEnE, .YEnE, .ZEnE, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
+   fhazard fhazard(.Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E, .FRegWriteE, .FRegWriteM, .FRegWriteW, .RdE, .RdM, .RdW, .FResSelM, 
+                   .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
 
    // forwarding muxs
    mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, ForwardXE, XE);

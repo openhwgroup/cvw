@@ -85,7 +85,7 @@ module wallypipelinedcore (
   logic             SquashSCW;
   // floating point unit signals
   logic [2:0]             FRM_REGW;
-  logic [4:0]        RdM, RdW;
+  logic [4:0]        RdE, RdM, RdW;
   logic             FPUStallD;
   logic             FWriteIntE;
   logic [`FLEN-1:0]         FWriteDataM;
@@ -226,7 +226,7 @@ module wallypipelinedcore (
      .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
-     .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FPIntDivResultW,
@@ -392,7 +392,7 @@ module wallypipelinedcore (
          .StallE, .StallM, .StallW, // stall signals from HZU
          //.TrapM,
          .FlushE, .FlushM, .FlushW, // flush signals from HZU
-         .RdM, .RdW, // which FP register to write to (from IEU)
+         .RdE, .RdM, .RdW, // which FP register to write to (from IEU)
          .STATUS_FS, // is floating-point enabled?
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,

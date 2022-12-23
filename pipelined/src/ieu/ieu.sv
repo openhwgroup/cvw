@@ -53,7 +53,7 @@ module ieu (
 
   output logic [2:0] 	   Funct3M, // size and signedness to LSU
   output logic [`XLEN-1:0] SrcAM, // to privilege and fpu
-  output logic [4:0]    RdM,
+  output logic [4:0]    RdE, RdM,
   input logic [`XLEN-1:0]  FIntResM, 
   output logic       InvalidateICacheM, FlushDCacheM,
 
@@ -82,7 +82,6 @@ module ieu (
   logic [2:0]  ResultSrcW;
   logic        ALUResultSrcE;
   logic        SCE;
-  logic [4:0]  RdE;
   logic        FWriteIntM;
   logic        DivW;
 

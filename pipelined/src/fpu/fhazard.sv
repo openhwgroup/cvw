@@ -31,29 +31,34 @@
 `include "wally-config.vh"
 
 module fhazard(
+    input  logic [4:0]  Adr1D, Adr2D, Adr3D,    // read data adresses
     input  logic [4:0]  Adr1E, Adr2E, Adr3E,    // read data adresses
-    input  logic        FRegWriteM, FRegWriteW, // is the fp register being written to
-	  input  logic [4:0]  RdM, RdW,               // the adress being written to
+    input  logic        FRegWriteE, FRegWriteM, FRegWriteW, // is the fp register being written to
+    input  logic [4:0]  RdE, RdM, RdW,               // the adress being written to
     input  logic [1:0]  FResSelM,            // the result being selected
+    input  logic        XEnD, YEnD, ZEnD,
     input  logic        XEnE, YEnE, ZEnE,
     output logic        FPUStallD,                // stall the decode stage
     output logic [1:0]  ForwardXE, ForwardYE, ForwardZE // select a forwarded value
 );
 
+  logic                 MatchDE;
 
+  // Decode-stage instruction source depends on result from execute stage instruction
+  assign MatchDE = ((Adr1D == RdE) & XEnD) | ((Adr2D == RdE) & YEnD) | ((Adr3D == RdE) & ZEnD);
+  assign FPUStallD = MatchDE & FRegWriteE;
+  
   always_comb begin
     // set defaults
     ForwardXE = 2'b00; // choose FRD1E
     ForwardYE = 2'b00; // choose FRD2E
     ForwardZE = 2'b00; // choose FRD3E
-    FPUStallD = 0;
 
     // if the needed value is in the memory stage - input 1
     if(XEnE)
       if ((Adr1E == RdM) & FRegWriteM) 
         // if the result will be FResM (can be taken from the memory stage)
         if(FResSelM == 2'b00) ForwardXE = 2'b10; // choose FResM
-        else FPUStallD = 1;                             // otherwise stall
       // if the needed value is in the writeback stage
       else if ((Adr1E == RdW) & FRegWriteW) ForwardXE = 2'b01; // choose FPUResult64W
   
@@ -63,7 +68,6 @@ module fhazard(
       if ((Adr2E == RdM) & FRegWriteM)
         // if the result will be FResM (can be taken from the memory stage)
         if(FResSelM == 2'b00) ForwardYE = 2'b10; // choose FResM
-        else FPUStallD = 1;                             // otherwise stall
       // if the needed value is in the writeback stage
       else if ((Adr2E == RdW) & FRegWriteW) ForwardYE = 2'b01; // choose FPUResult64W
 
@@ -73,7 +77,6 @@ module fhazard(
       if ((Adr3E == RdM) & FRegWriteM)
         // if the result will be FResM (can be taken from the memory stage)
         if(FResSelM == 2'b00) ForwardZE = 2'b10; // choose FResM
-        else FPUStallD = 1;                             // otherwise stall
       // if the needed value is in the writeback stage
       else if ((Adr3E == RdW) & FRegWriteW) ForwardZE = 2'b01; // choose FPUResult64W
 
