@@ -71,7 +71,7 @@ module busfsm
 	endcase
   end
 
-  assign BusStall = (CurrState == ADR_PHASE & |BusRW & ~Flush) |
+  assign BusStall = (CurrState == ADR_PHASE & |BusRW) |
 //					(CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
 					(CurrState == DATA_PHASE); 
   

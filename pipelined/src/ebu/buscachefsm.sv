@@ -128,7 +128,7 @@ module buscachefsm #(parameter integer   BeatCountThreshold,
   assign CaptureEn = (CurrState == DATA_PHASE & BusRW[1]) | (CurrState == CACHE_FETCH & HREADY);
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_WRITEBACK;
 
-  assign BusStall = (CurrState == ADR_PHASE & (|BusRW | |CacheBusRW) & ~Flush) |
+  assign BusStall = (CurrState == ADR_PHASE & (|BusRW | |CacheBusRW)) |
 					//(CurrState == DATA_PHASE & ~BusRW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
 					(CurrState == DATA_PHASE) | 
                     (CurrState == CACHE_FETCH & ~HREADY) |

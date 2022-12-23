@@ -84,7 +84,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   end
 
   assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF & ~Flush) |
+  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
                          (CurrState == STATE_SPILL & IFUCacheBusStallF);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
   assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];

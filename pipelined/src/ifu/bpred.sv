@@ -33,38 +33,36 @@
 
 `include "wally-config.vh"
 
-module bpred 
-  (input logic              clk, reset,
+module bpred (
+   input logic              clk, reset,
    input logic              StallF, StallD, StallE, StallM,
    input logic              FlushD, FlushE, FlushM,
    // Fetch stage
    // the prediction
-   input logic [31:0]       InstrD, 
-   input logic [`XLEN-1:0]  PCNextF, // *** forgot to include this one on the I/O list
-   input logic [`XLEN-1:0]  PCPlus2or4F,
-   output logic [`XLEN-1:0] PCNext1F,
-   output logic [`XLEN-1:0]  NextValidPCE, // The address of the currently executing instruction
+   input logic [31:0]       InstrD,        // Decompressed decode stage instruction 
+   input logic [`XLEN-1:0]  PCNextF,       // Next Fetch Address
+   input logic [`XLEN-1:0]  PCPlus2or4F,   // PCF+2/4
+   output logic [`XLEN-1:0] PCNext1F,      // Branch Predictor predicted or corrected fetch address on miss prediction
+   output logic [`XLEN-1:0] NextValidPCE,  // Address of next valid instruction after the instruction in the Memory stage.
 
    // Update Predictor
-   input logic [`XLEN-1:0]  PCE, // The address of the currently executing instruction
-   input logic [`XLEN-1:0]  PCF, // The address of the currently executing instruction
+   input logic [`XLEN-1:0]  PCF,           // Fetch stage instruction address.
+   input logic [`XLEN-1:0]  PCD,           // Decode stage instruction address. Also the address the branch predictor took.
+   input logic [`XLEN-1:0]  PCE,           // Execution stage instruction address.
 
-   // 1 hot encoding
-   // return, jump register, jump, branch
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
    // *** the specifics of how this is encode is subject to change.
-   input logic              PCSrcE, // AKA Branch Taken
-   // Signals required to check the branch prediction accuracy.
-   input logic [`XLEN-1:0]  IEUAdrE, // The branch destination if the branch is taken.
-   input logic [`XLEN-1:0]  PCD, // The address the branch predictor took.
-   input logic [`XLEN-1:0]  PCLinkE, // The address following the branch instruction. (AKA Fall through address)
-   output logic [4:0]       InstrClassM,
+   input logic              PCSrcE,        // Executation stage branch is taken
+   input logic [`XLEN-1:0]  IEUAdrE,       // The branch/jump target address
+   input logic [`XLEN-1:0]  PCLinkE,       // The address following the branch instruction. (AKA Fall through address)
+   output logic [4:0]       InstrClassM,   // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+
    // Report branch prediction status
-   output logic             BPPredWrongE,
-   output logic             BPPredDirWrongM,
-   output logic             BTBPredPCWrongM,
-   output logic             RASPredPCWrongM,
-   output logic             BPPredClassNonCFIWrongM
+   output logic             BPPredWrongE,  // Prediction is wrong.
+   output logic             BPPredDirWrongM, // Prediction direction is wrong.
+   output logic             BTBPredPCWrongM, // Prediction target wrong.
+   output logic             RASPredPCWrongM, // RAS prediction is wrong.
+   output logic             BPPredClassNonCFIWrongM // Class prediction is wrong.
    );
 
   logic                     BTBValidF;
@@ -126,12 +124,10 @@ module bpred
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-
   assign SelBPPredF = ((BPInstrClassF[0] & BPPredF[1] & BTBValidF) | 
          BPInstrClassF[3] |
          (BPInstrClassF[2] & BTBValidF) | 
          BPInstrClassF[1] & BTBValidF) ;
-
 
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
@@ -162,8 +158,6 @@ module bpred
        .pushPC(PCLinkE));
 
   assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
-  
-  
 
   // The prediction and its results need to be passed through the pipeline
   // *** for other predictors will will be different.

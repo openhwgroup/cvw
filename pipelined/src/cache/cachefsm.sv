@@ -142,7 +142,7 @@ module cachefsm
 
   // com back to CPU
   assign CacheCommitted = CurrState != STATE_READY;
-  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss) & ~FlushStage) | 
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
                       (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
