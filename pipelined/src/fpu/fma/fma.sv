@@ -36,7 +36,6 @@ module fma(
     input logic  [`NF:0]        Xm, Ym, Zm,    // input's significands in U(0.NF) format
     input logic                 XZero, YZero, ZZero, // is the input zero
     input logic  [2:0]          OpCtrl,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
-    input logic  [`FMTBITS-1:0] Fmt,       // format of the result single double half or quad
     output logic                ZmSticky,  // sticky bit that is calculated during alignment
     output logic [3*`NF+5:0]    Sm,           // the positive sum's significand
     output logic                InvA,          // Was A inverted for effective subtraction (P-A or -P+A)
@@ -64,7 +63,7 @@ module fma(
    
 
    // calculate the product's exponent 
-    fmaexpadd expadd(.Fmt, .Xe, .Ye, .XZero, .YZero, .Pe);
+    fmaexpadd expadd(.Xe, .Ye, .XZero, .YZero, .Pe);
 
     // multiplication of the mantissa's
     fmamult mult(.Xm, .Ym, .Pm);
@@ -84,7 +83,7 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .As, .KillProd, .ZmSticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
+    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ZmSticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
     fmalza #(3*`NF+6) lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
 endmodule

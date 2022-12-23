@@ -31,7 +31,6 @@
 
 module fmashiftcalc(
     input logic  [3*`NF+5:0]            FmaSm,       // the positive sum
-    input logic  [`NE-1:0]              Ze,      // exponent of Z
     input logic  [$clog2(3*`NF+7)-1:0]  FmaSCnt,   // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,       // precision 1 = double 0 = single
     input logic [`NE+1:0] FmaSe,

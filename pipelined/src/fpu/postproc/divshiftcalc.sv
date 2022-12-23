@@ -32,7 +32,6 @@
 
 module divshiftcalc(
     input logic  [`DIVb:0] DivQm,
-    input logic  [`FMTBITS-1:0] Fmt,
     input logic Sqrt,
     input logic [`NE+1:0] DivQe,
     output logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt,
