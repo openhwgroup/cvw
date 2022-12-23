@@ -50,7 +50,7 @@ module csrs #(parameter
 
   ) (
     input logic 	     clk, reset, 
-    input logic 	     InstrValidNotFlushedM, StallW,
+    input logic 	     InstrValidNotFlushedM, 
     input logic 	     CSRSWriteM, STrapM,
     input logic [11:0] 	     CSRAdrM,
     input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
