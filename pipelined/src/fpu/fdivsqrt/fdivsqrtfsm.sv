@@ -115,10 +115,10 @@ module fdivsqrtfsm(
           step <= cycles; 
           if (SpecialCaseE) state <= #1 DONE;
           else             state <= #1 BUSY;
-      end else if (state == BUSY) begin
-          if (step == 1)  state <= #1 DONE;
+      end else if (state == BUSY) begin 
+          if (step == 1 | WZeroM)  state <= #1 DONE; // finished steps or terminate early on zero residual
           step <= step - 1;
-      end else if ((state == DONE) | (WZeroM & (state == BUSY))) begin
+      end else if (state == DONE) begin
         if (StallM) state <= #1 DONE;
         else        state <= #1 IDLE;
       end 
