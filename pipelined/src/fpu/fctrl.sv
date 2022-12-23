@@ -44,16 +44,18 @@ module fctrl (
   input  logic [1:0] STATUS_FS, // is FPU enabled?
   input  logic       FDivBusyE,  // is the divider busy
   output logic       IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
-  output logic 		         FRegWriteM, FRegWriteW, // FP register write enable
+  output logic 		         FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
   output logic [2:0] 	      FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
   output logic 		         FDivStartE, IDivStartE,             // Start division or squareroot
+  output logic              XEnD, YEnD, ZEnD,
   output logic              XEnE, YEnE, ZEnE,
   output logic 		         FWriteIntE, FCvtIntE, FWriteIntM,                         // Write to integer register
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
   output logic              FCvtIntW,
+  output logic [4:0] 	      Adr1D, Adr2D, Adr3D,                // adresses of each input
   output logic [4:0] 	      Adr1E, Adr2E, Adr3E                // adresses of each input
   );
 
@@ -63,7 +65,6 @@ module fctrl (
   logic 		  FRegWriteD; // FP register write enable
   logic 		  FDivStartD; // integer register write enable
   logic 		  FWriteIntD; // integer register write enable
-  logic 		         FRegWriteE; // FP register write enable
   logic [2:0] 	      OpCtrlD;       // Select which opperation to do in each component
   logic [1:0] 	      PostProcSelD; // select result in the post processing unit
   logic [1:0] 	      FResSelD;       // Select one of the results that finish in the memory stage
@@ -202,11 +203,18 @@ module fctrl (
 //    Y - all except cvt, mv, load, class, sqrt
 //    Z - fma ops only
 //                  load/store                        mv int->fp                      cvt int->fp
+/// *** turn into registers.
     assign XEnE = ~(((FResSelE==2'b10)&~FWriteIntE)|((FResSelE==2'b11)&FRegWriteE)|((FResSelE==2'b01)&(PostProcSelE==2'b00)&OpCtrlE[2]));
 //                  load/class                                    mv               cvt
     assign YEnE = ~(((FResSelE==2'b10)&(FWriteIntE|FRegWriteE))|(FResSelE==2'b11)|((FResSelE==2'b01)&((PostProcSelE==2'b00)|((PostProcSelE==2'b01)&OpCtrlE[0]))));    
 
     assign ZEnE        = (PostProcSelE==2'b10)&(FResSelE==2'b01)&(~OpCtrlE[2]|OpCtrlE[1]);
+
+    assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)|((FResSelD==2'b11)&FRegWriteD)|((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2]));
+//                  load/class                                    mv               cvt
+    assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|(FResSelD==2'b11)|((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0]))));    
+
+    assign ZEnD        = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]);
   
 
 //  Final Res Sel:
@@ -258,13 +266,16 @@ module fctrl (
 //        00 - sign
 //        01 - negate sign
 //        10 - xor sign
-    
+
+  assign Adr1D = InstrD[19:15];
+  assign Adr2D = InstrD[24:20];
+  assign Adr3D = InstrD[31:27];
+ 
   // D/E pipleine register
   flopenrc #(14+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, IllegalFPUInstrD, FCvtIntD},
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE});
-  flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {InstrD[19:15], InstrD[24:20], InstrD[31:27]}, 
-                           {Adr1E, Adr2E, Adr3E});
+  flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   if (`M_SUPPORTED) assign IDivStartE = MDUE & Funct3E[2];
   else              assign IDivStartE = 0; 
