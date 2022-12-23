@@ -34,11 +34,11 @@ module hazard(
   // Detect hazards
 (* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
-(* mark_debug = "true" *)	      input logic  LSUStallW, IFUStallD,
+(* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
 (* mark_debug = "true" *)         input logic  FCvtIntStallD, FPUStallD,
 (* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)         input logic  wfiM, IntPendingM,
+(* mark_debug = "true" *)         input logic  WFIStallM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushD, FlushE, FlushM, FlushW
@@ -75,19 +75,19 @@ module hazard(
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
   //  Division stalls in the execute stage
-  //  Flushing the decode or execute stage has priority over stalls.  
+  //  Flushing any stage has priority over the corresponding stage stall.  
   //    Even if the register gave clear priority over enable, various FSMs still need to disable the stall, so it's best to gate the stall here with flush
-  //  WFI is an odd case.  It stalls in the Memory stage until a pending interrupt or timeout trap
   //  The IFU and LSU stall the entire pipeline on a cache miss, bus access, or other long operation.  
   //    The IFU stalls the entire pipeline rather than just Fetch to avoid complications with instructions later in the pipeline causing Exceptions
   //    A trap could be asserted at the start of a IFU/LSU stall, and should flush the memory operation
   assign StallFCause = '0;
   assign StallDCause = (LoadStallD | StoreStallD | MDUStallD | CSRRdStallD | FCvtIntStallD | FPUStallD) & ~FlushDCause;
   assign StallECause = (DivBusyE | FDivBusyE) & ~FlushECause; 
-  // WFI terminates if any enabled interrupt is pending, even if global interrupts are disabled.  It could also terminate with TW trap
-  assign StallMCause = ((wfiM) & (~TrapM & ~IntPendingM)); 
-  //assign StallWCause = (IFUStallD | LSUStallW) & ~TrapM;
-  assign StallWCause = (IFUStallD & ~FlushDCause) | (LSUStallW & ~FlushWCause); 
+  assign StallMCause = WFIStallM & ~FlushMCause; 
+  // Need to gate IFUStallF when the equivalent FlushFCause = FlushDCause = 1.
+  //assign StallWCause = ((IFUStallF & ~FlushDCause) | LSUStallM) & ~FlushWCause;
+  // Because FlushWCause is a strict subset of FlushDCause, FlushWCause is factored out.
+  assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
 
   // Stall each stage for cause or if the next stage is stalled
   assign #1 StallF = StallFCause | StallD;

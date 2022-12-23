@@ -306,5 +306,5 @@ module hptw (
 endmodule
 
 // another idea.  We keep gating the control by ~FlushW, but this adds considerable length to the critical path.
-// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallW, which drives
+// should we do this differently?  For example TLBMiss is gated by ~FlushW and then drives HPTWStall, which drives LSUStallM, which drives
 // the hazard unit to issue stall and flush controlls. ~FlushW already suppresses these in the hazard unit.

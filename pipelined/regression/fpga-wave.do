@@ -10,7 +10,7 @@ add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/Ret
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/StoreStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallW
+add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
 add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
@@ -191,7 +191,7 @@ add wave -noupdate -expand -group AHB /testbench/dut/core/ebu/ebu/HWRITED
 add wave -noupdate -expand -group lsu -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/lsuvirtmem/interlockfsm/InterlockCurrState
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/SelHPTW
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/InterlockStall
-add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallW
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/LSUStallM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataWordMuxM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataM
 add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/WriteDataM

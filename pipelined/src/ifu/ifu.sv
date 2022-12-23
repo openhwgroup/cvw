@@ -38,7 +38,7 @@ module ifu (
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
 (* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUHADDR,
-(* mark_debug = "true" *)	output logic 				IFUStallD,
+(* mark_debug = "true" *)	output logic 				IFUStallF,
 (* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
 (* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
 (* mark_debug = "true" *) output logic [2:0]  IFUHSIZE,
@@ -274,7 +274,7 @@ module ifu (
   end
   
   assign IFUCacheBusStallD = ICacheStallF | BusStall;
-  assign IFUStallD = IFUCacheBusStallD | SelNextSpillF;
+  assign IFUStallF = IFUCacheBusStallD | SelNextSpillF;
   assign GatedStallD = StallD & ~SelNextSpillF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);

@@ -110,7 +110,7 @@ module wallypipelinedcore (
   logic [1:0]             PrivilegeModeW;
   logic [`XLEN-1:0]     PTE;
   logic [1:0]             PageType;
-  logic              sfencevmaM, wfiM, IntPendingM;
+  logic              sfencevmaM, WFIStallM;
   logic             SelHPTW;
 
 
@@ -119,8 +119,8 @@ module wallypipelinedcore (
   var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
-  logic             IFUStallD;
-  logic             LSUStallW;
+  logic             IFUStallF;
+  logic             LSUStallM;
 
   
 
@@ -174,7 +174,7 @@ module wallypipelinedcore (
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
-    .IFUStallD, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
+    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
 
@@ -285,7 +285,7 @@ module wallypipelinedcore (
     .InstrDAPageFaultF,
     
     .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
-    .LSUStallW);                     // change to LSUStallW
+    .LSUStallM);                     // change to LSUStallM
 
 
    // *** Ross: please make EBU conditional when only supporting internal memories
@@ -319,11 +319,11 @@ module wallypipelinedcore (
    hazard     hzu(
      .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
      .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
-     .LSUStallW, .IFUStallD,
+     .LSUStallM, .IFUStallF,
      .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-     .wfiM, .IntPendingM,
+     .WFIStallM,
      // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW
@@ -358,14 +358,14 @@ module wallypipelinedcore (
          .PrivilegeModeW, .SATP_REGW,
          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-         .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM
+         .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM
       );
    end else begin
       assign CSRReadValW = 0;
       assign UnalignedPCNextF = PCNext2F;
       assign RetM = 0;
       assign TrapM = 0;
-      assign wfiM = 0;
+      assign WFIStallM = 0;
       assign sfencevmaM = 0;
       assign BigEndianM = 0;
    end

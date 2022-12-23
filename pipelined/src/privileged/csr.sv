@@ -41,7 +41,7 @@ module csr #(parameter
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PCNext2F,
-  input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, InterruptM,
+  input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, IntPendingM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic             InstrValidM, FRegWriteM, LoadStallD,
@@ -185,7 +185,7 @@ module csr #(parameter
   // CSR Write values
   ///////////////////////////////////////////
   assign CSRAdrM = InstrM[31:20];
-  assign UnalignedNextEPCM = TrapM ? ((wfiM & InterruptM) ? PCM+4 : PCM) : CSRWriteValM;
+  assign UnalignedNextEPCM = TrapM ? ((wfiM & IntPendingM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? {InterruptM, {(`XLEN-`LOG_XLEN-1){1'b0}}, CauseM}: CSRWriteValM;
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
