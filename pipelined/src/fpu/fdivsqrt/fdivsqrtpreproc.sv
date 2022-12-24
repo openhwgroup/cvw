@@ -42,7 +42,8 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, As, AZeroM, BZeroM, AZeroE, BZeroE,
+  output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, MDUM,
+  output logic AsM, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc,
@@ -56,7 +57,7 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  Bs, ALTBE;
+  logic  AsE, BsE, ALTBE;
   logic  [`XLEN-1:0]  A64, B64;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
@@ -68,15 +69,15 @@ module fdivsqrtpreproc (
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
 
-  assign As = ForwardedSrcAE[`XLEN-1] & ~Funct3E[0];
-  assign Bs = ForwardedSrcBE[`XLEN-1] & ~Funct3E[0];
-  assign A64 = W64E ? {{(`XLEN-32){As}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
-  assign B64 = W64E ? {{(`XLEN-32){Bs}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
+  assign AsE = ForwardedSrcAE[`XLEN-1] & ~Funct3E[0];
+  assign BsE = ForwardedSrcBE[`XLEN-1] & ~Funct3E[0];
+  assign A64 = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
+  assign B64 = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
 
-  assign CalcOTFCSwapE = (As ^ Bs) & MDUE;
+  assign CalcOTFCSwapE = (AsE ^ BsE) & MDUE;
   
-  assign PosA = As ? -A64 : A64;
-  assign PosB = Bs ? -B64 : B64;
+  assign PosA = AsE ? -A64 : A64;
+  assign PosB = BsE ? -B64 : B64;
   assign AZeroE = ~(|ForwardedSrcAE);
   assign BZeroE = ~(|ForwardedSrcBE);
 
@@ -128,6 +129,8 @@ module fdivsqrtpreproc (
   flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
   flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
+  flopen #(1)      asignreg(clk, IFDivStartE, AsE, AsM);
+  flopen #(1)        mdureg(clk, IFDivStartE, MDUE, MDUM);
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
   flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM);

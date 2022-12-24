@@ -37,7 +37,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb+1:0]  FirstC,
   input  logic              Firstun, SqrtM, SpecialCaseM, OTFCSwapEM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
-  input  logic              RemOpM, ALTBM, BZeroM, As,
+  input  logic              RemOpM, ALTBM, BZeroM, AsM, MDUM,
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroM,
@@ -45,7 +45,7 @@ module fdivsqrtpostproc(
   output logic [`XLEN-1:0]  FPIntDivResultM
 );
   
-  logic [`DIVb+3:0] W, Sum, RemDM;
+  logic [`DIVb+3:0] W, Sum, DM;
   logic [`DIVb:0] PreQmM;
   logic NegStickyM, PostIncM;
   logic weq0;
@@ -64,7 +64,7 @@ module fdivsqrtpostproc(
     logic [`DIVb+3:0] WCF, WSF;
 
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZero = SqrtM ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b001,D,1'b0};
+    assign FZero = (SqrtM & ~MDUM) ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b001,D,1'b0};
     csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
     assign WZeroM = weq0|(wfeq0 & Firstun);
@@ -77,14 +77,14 @@ module fdivsqrtpostproc(
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegStickyM = W[`DIVb+3];
-  assign RemDM = {4'b0000, D};
+  assign DM = {4'b0001, D};
 
   // Integer division: sign handling for div and rem
   always_comb 
-    if (~As)
+    if (~AsM)
       if (NegStickyM) begin
         NormQuotM = FirstUM;
-        NormRemM  = W + RemDM;
+        NormRemM  = W + DM;
         PostIncM  = 0;
       end else begin
         NormQuotM = FirstU;
@@ -98,8 +98,8 @@ module fdivsqrtpostproc(
         PostIncM  = 0;
       end else begin 
         NormQuotM = FirstU;
-        NormRemM  = W - RemDM;
-        PostIncM  = 1;
+        NormRemM  = W - DM;
+        PostIncM  = ~ALTBM;
       end
 
   // Integer division: Special cases
