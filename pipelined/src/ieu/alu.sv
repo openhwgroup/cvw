@@ -41,12 +41,11 @@ module alu #(parameter WIDTH=32) (
   logic        Carry, Neg;
   logic        LT, LTU;
   logic        W64, SubArith, ALUOp;
-  logic [2:0]  ALUFunct;
   logic        Asign, Bsign;
 
   // Extract control signals
   // W64 indicates RV64 W-suffix instructions acting on lower 32-bit word
-  // SubArith indicates subtraction
+  // SubArith indicates subtraction or arithmetic right shift
   // ALUOp = 0 for address generation addition or 1 for regular ALU
   assign {W64, SubArith, ALUOp} = ALUControl;
 
@@ -71,9 +70,9 @@ module alu #(parameter WIDTH=32) (
   assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
  
   // Select appropriate ALU Result
-  assign ALUFunct = Funct3 & {3{ALUOp}}; // Force ALUFunct to 0 to Add when ALUOp = 0
   always_comb
-    casez (ALUFunct)
+    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0
+    else casez (Funct3)               // Otherwise check Funct3
       3'b000: FullResult = Sum;       // add or sub
       3'b?01: FullResult = Shift;     // sll, sra, or srl
       3'b010: FullResult = SLT;       // slt
