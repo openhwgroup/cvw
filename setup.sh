@@ -36,3 +36,5 @@ export SNPSLMD_LICENSE_FILE=27020@134.173.38.184 # Change this to your license m
 # Imperas; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH # remove if no imperas
+
+echo "setup done"
