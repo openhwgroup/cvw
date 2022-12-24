@@ -185,6 +185,6 @@ module cachefsm
                   resetDelay;
 
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
-  assign CacheEn = (CurrState == STATE_READY  & (~Stall | FlushCache | AnyMiss)) | (CurrState != STATE_READY) | reset;
+  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset;
                        
 endmodule // cachefsm
