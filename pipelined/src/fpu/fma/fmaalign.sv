@@ -55,11 +55,10 @@ module fmaalign(
     // This could have been done using Pe, but ACnt is on the critical path so we replicate logic for speed
     assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF+3) - {2'b0, Ze};
 
-    // Defualt Addition without shifting
+    // Defualt Addition with only inital left shift
     //          |   54'b0    |  106'b(product)  | 2'b0 |
     //          | addnend |
 
-    // the 1'b0 before the added is because the product's mantissa has two bits before the binary point (xx.xxxxxxxxxx...)
     assign ZmPreshifted = {Zm,(3*`NF+5)'(0)};
     
     assign KillProd = (ACnt[`NE+1]&~ZZero)|XZero|YZero;
@@ -77,7 +76,7 @@ module fmaalign(
             ZmSticky = ~(XZero|YZero);
 
         // If the addend is too small to effect the addition        
-        //      - The addend has to shift two past the end of the addend to be considered too small
+        //      - The addend has to shift two past the end of the product to be considered too small
         //      - The 2 extra bits are needed for rounding
 
         //          |   54'b0    |  106'b(product)  | 2'b0 |
