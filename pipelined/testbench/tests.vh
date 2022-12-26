@@ -1094,10 +1094,10 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fle_b19-01.S",
     "rv64i_m/F/src/flt_b1-01.S",
     "rv64i_m/F/src/flt_b19-01.S",
-    // "rv64i_m/F/src/flw-align-01.S",
+    "rv64i_m/F/src/flw-align-01.S",
     "rv64i_m/F/src/fmadd_b1-01.S",
     "rv64i_m/F/src/fmadd_b14-01.S",
-    // "rv64i_m/F/src/fmadd_b15-01.S",
+    "rv64i_m/F/src/fmadd_b15-01.S",
     "rv64i_m/F/src/fmadd_b16-01.S",
     "rv64i_m/F/src/fmadd_b17-01.S",
     "rv64i_m/F/src/fmadd_b18-01.S",
@@ -1198,6 +1198,8 @@ string imperas32f[] = '{
 
   string arch64d[] = '{
     `RISCVARCHTEST,
+    "rv64i_m/D/src/fsqrt.d_b1-01.S",
+    "rv64i_m/D/src/fdiv.d_b20-01.S",
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
@@ -1277,8 +1279,8 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fle.d_b19-01.S",
     "rv64i_m/D/src/flt.d_b1-01.S",
     "rv64i_m/D/src/flt.d_b19-01.S",
-    // "rv64i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
-    // "rv64i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
+    "rv64i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
+    "rv64i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
     "rv64i_m/D/src/fmadd.d_b14-01.S",
     "rv64i_m/D/src/fmadd.d_b16-01.S",
     "rv64i_m/D/src/fmadd.d_b17-01.S",
@@ -1452,10 +1454,10 @@ string imperas32f[] = '{
     "rv32i_m/F/src/fle_b19-01.S",
     "rv32i_m/F/src/flt_b1-01.S",
     "rv32i_m/F/src/flt_b19-01.S",
-    // "rv32i_m/F/src/flw-align-01.S",
+    "rv32i_m/F/src/flw-align-01.S",
     "rv32i_m/F/src/fmadd_b1-01.S",
     "rv32i_m/F/src/fmadd_b14-01.S",
-    // "rv32i_m/F/src/fmadd_b15-01.S",
+    "rv32i_m/F/src/fmadd_b15-01.S",
     "rv32i_m/F/src/fmadd_b16-01.S",
     "rv32i_m/F/src/fmadd_b17-01.S",
     "rv32i_m/F/src/fmadd_b18-01.S",
@@ -1616,8 +1618,8 @@ string imperas32f[] = '{
     "rv32i_m/D/src/fle.d_b19-01.S",
     "rv32i_m/D/src/flt.d_b1-01.S",
     "rv32i_m/D/src/flt.d_b19-01.S",
-    // "rv32i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
-    // "rv32i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
+    "rv32i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
+    "rv32i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
     "rv32i_m/D/src/fmadd.d_b14-01.S",
     "rv32i_m/D/src/fmadd.d_b16-01.S",
     "rv32i_m/D/src/fmadd.d_b17-01.S",
