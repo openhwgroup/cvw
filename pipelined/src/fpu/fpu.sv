@@ -129,7 +129,7 @@ module fpu (
    //divide signals
    logic [`DIVb:0]      QmM;
    logic [`NE+1:0]      QeE, QeM; 
-   logic                DivSE, DivSM;
+   logic                DivSM;
 //   logic                DivDoneM;
    logic                FDivDoneE, IFDivStartE;
 
