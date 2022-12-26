@@ -330,7 +330,7 @@ module ifu (
   end else begin : bpred
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
     assign BPPredWrongE = PCSrcE;
-    assign {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
+    assign {InstrClassM, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
     assign PCNext0F = PCPlus2or4F;
     assign NextValidPCE = PCE;
   end      
