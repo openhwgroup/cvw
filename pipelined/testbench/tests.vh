@@ -1191,8 +1191,8 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsub_b4-01.S",
     "rv64i_m/F/src/fsub_b5-01.S",
     "rv64i_m/F/src/fsub_b7-01.S",
-    "rv64i_m/F/src/fsub_b8-01.S"
-    // "rv64i_m/F/src/fsw-align-01.S"
+    "rv64i_m/F/src/fsub_b8-01.S",
+    "rv64i_m/F/src/fsw-align-01.S"
     };
 
 
@@ -1279,8 +1279,8 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fle.d_b19-01.S",
     "rv64i_m/D/src/flt.d_b1-01.S",
     "rv64i_m/D/src/flt.d_b19-01.S",
-    "rv64i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
-    "rv64i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
+    "rv64i_m/D/src/fld-align-01.S", 
+    "rv64i_m/D/src/fsd-align-01.S", 
     "rv64i_m/D/src/fmadd.d_b14-01.S",
     "rv64i_m/D/src/fmadd.d_b16-01.S",
     "rv64i_m/D/src/fmadd.d_b17-01.S",
@@ -1551,8 +1551,8 @@ string imperas32f[] = '{
     "rv32i_m/F/src/fsub_b4-01.S",
     "rv32i_m/F/src/fsub_b5-01.S",
     "rv32i_m/F/src/fsub_b7-01.S",
-    "rv32i_m/F/src/fsub_b8-01.S"
-    // "rv32i_m/F/src/fsw-align-01.S"
+    "rv32i_m/F/src/fsub_b8-01.S",
+    "rv32i_m/F/src/fsw-align-01.S"
     };
 
   string arch32d[] = '{
@@ -1618,8 +1618,8 @@ string imperas32f[] = '{
     "rv32i_m/D/src/fle.d_b19-01.S",
     "rv32i_m/D/src/flt.d_b1-01.S",
     "rv32i_m/D/src/flt.d_b19-01.S",
-    "rv32i_m/D/src/fld-align-01.S", //missing right now from top of tree, should be returned when it comes back
-    "rv32i_m/D/src/fsd-align-01.S", //https://github.com/riscv-non-isa/riscv-arch-test/issues/266
+    "rv32i_m/D/src/fld-align-01.S", 
+    "rv32i_m/D/src/fsd-align-01.S", 
     "rv32i_m/D/src/fmadd.d_b14-01.S",
     "rv32i_m/D/src/fmadd.d_b16-01.S",
     "rv32i_m/D/src/fmadd.d_b17-01.S",

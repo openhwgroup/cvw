@@ -114,6 +114,8 @@ module fdivsqrtpreproc (
   else              assign PreShiftX = Sqrt ? {2'b11, SqrtX, 1'b0} : DivX;
   assign X = MDUE ? DivX >> RightShiftX : PreShiftX;
 
+  fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
+
   //           radix 2     radix 4
   // 1 copies  DIVLEN+2    DIVLEN+2/2
   // 2 copies  DIVLEN+2/2  DIVLEN+2/2*2
@@ -134,51 +136,7 @@ module fdivsqrtpreproc (
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
   flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM);
-  expcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
+
 
 endmodule
 
-module expcalc(
-  input  logic [`FMTBITS-1:0] Fmt,
-  input  logic [`NE-1:0] Xe, Ye,
-  input  logic Sqrt,
-  input  logic XZeroE, 
-  input  logic [`DIVBLEN:0] ell, m,
-  output logic [`NE+1:0] Qe
-  );
-  logic [`NE-2:0] Bias;
-  logic [`NE+1:0] SXExp;
-  logic [`NE+1:0] SExp;
-  logic [`NE+1:0] DExp;
-  
-  if (`FPSIZES == 1) begin
-      assign Bias = (`NE-1)'(`BIAS); 
-
-  end else if (`FPSIZES == 2) begin
-      assign Bias = Fmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
-
-  end else if (`FPSIZES == 3) begin
-      always_comb
-          case (Fmt)
-              `FMT: Bias  =  (`NE-1)'(`BIAS);
-              `FMT1: Bias = (`NE-1)'(`BIAS1);
-              `FMT2: Bias = (`NE-1)'(`BIAS2);
-              default: Bias = 'x;
-          endcase
-
-  end else if (`FPSIZES == 4) begin        
-    always_comb
-        case (Fmt)
-            2'h3: Bias =  (`NE-1)'(`Q_BIAS);
-            2'h1: Bias =  (`NE-1)'(`D_BIAS);
-            2'h0: Bias =  (`NE-1)'(`S_BIAS);
-            2'h2: Bias =  (`NE-1)'(`H_BIAS);
-        endcase
-  end
-  assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - (`NE+2)'(`BIAS);
-  assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
-  // correct exponent for denormalized input's normalization shifts
-  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZeroE}};
-  
-  assign Qe = Sqrt ? SExp : DExp;
-endmodule

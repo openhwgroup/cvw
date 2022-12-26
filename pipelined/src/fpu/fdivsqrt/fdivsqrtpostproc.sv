@@ -31,16 +31,19 @@
 `include "wally-config.vh"
 
 module fdivsqrtpostproc(
+  input  logic              clk, reset,
+  input  logic              StallM,
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb-1:0]  D, 
   input  logic [`DIVb:0]    FirstU, FirstUM, 
   input  logic [`DIVb+1:0]  FirstC,
+  input  logic              SqrtE, MDUE,
   input  logic              Firstun, SqrtM, SpecialCaseM, OTFCSwapEM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
-  input  logic              RemOpM, ALTBM, BZeroM, AsM, MDUM,
+  input  logic              RemOpM, ALTBM, BZeroM, AsM, 
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
-  output logic              WZeroM,
+  output logic              WZeroE,
   output logic              DivSM,
   output logic [`XLEN-1:0]  FPIntDivResultM
 );
@@ -48,36 +51,55 @@ module fdivsqrtpostproc(
   logic [`DIVb+3:0] W, Sum, DM;
   logic [`DIVb:0] PreQmM;
   logic NegStickyM, PostIncM;
-  logic weq0;
+  logic weq0E;
   logic [`DIVBLEN:0] NormShiftM;
   logic [`DIVb:0] IntQuotM, NormQuotM;
   logic [`DIVb+3:0] IntRemM, NormRemM;
   logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
+  logic WZeroM;
 
-  // check for early termination on an exact result.  If the result is not exact, the sticky should be set
-  aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0);
+  //////////////////////////
+  // Execute Stage: Detect early termination for an exact result
+  //////////////////////////
 
-  if (`RADIX == 2) begin
-    logic [`DIVb+3:0] FZero;
+  // check for early termination on an exact result. 
+  aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0E);
+
+  if (`RADIX == 2) begin: R2EarlyTerm
+    logic [`DIVb+3:0] FZeroE;
     logic [`DIVb+2:0] FirstK;
-    logic wfeq0;
+    logic wfeq0E;
     logic [`DIVb+3:0] WCF, WSF;
 
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZero = (SqrtM & ~MDUM) ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b001,D,1'b0};
-    csa #(`DIVb+4) fadd(WS, WC, FZero, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
-    aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0);
-    assign WZeroM = weq0|(wfeq0 & Firstun);
+    assign FZeroE = (SqrtE & ~MDUE) ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b001,D,1'b0};
+    csa #(`DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
+    aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
+    assign WZeroE = weq0E|(wfeq0E & Firstun);
   end else begin
-    assign WZeroM = weq0;
+    assign WZeroE = weq0E;
   end 
+
+  //////////////////////////
+  // E/M Pipeline register
+  //////////////////////////
+ 
+  flopenr #(1) WZeroMReg(clk, reset, ~StallM, WZeroE, WZeroM);
+
+  //////////////////////////
+  // Memory Stage: Postprocessing
+  //////////////////////////
+
+  //  If the result is not exact, the sticky should be set
   assign DivSM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
-  // Determine if sticky bit is negative
+  // Determine if sticky bit is negative  // *** look for ways to optimize this
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegStickyM = W[`DIVb+3];
   assign DM = {4'b0001, D};
+
+  // *** put conditionals on integer division hardware, move to its own module
 
   // Integer division: sign handling for div and rem
   always_comb 
@@ -92,7 +114,8 @@ module fdivsqrtpostproc(
         PostIncM  = 0;
       end
     else 
-      if (NegStickyM | weq0) begin
+//      if (NegStickyM | weq0) begin // *** old code, replaced by the one below in the right stage and more comprehensive
+      if (NegStickyM | WZeroM) begin
         NormQuotM = FirstU;
         NormRemM  = W;
         PostIncM  = 0;
@@ -111,13 +134,14 @@ module fdivsqrtpostproc(
       IntQuotM = '0;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
     end else if (WZeroM) begin
-      if (weq0) begin
+    // *** dh: 12/26: don't understand this logic and why weq0 inside WZero check.  Need a divide by 0 check here
+/*      if (weq0) begin */
         IntQuotM = FirstU;
         IntRemM  = '0;
-      end else begin
+/*      end else begin
         IntQuotM = FirstUM;
         IntRemM  = '0;
-      end
+      end */
     end else begin 
       IntQuotM = NormQuotM;
       IntRemM  = NormRemM;
