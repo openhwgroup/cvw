@@ -66,13 +66,16 @@ module fdivsqrtpostproc(
   aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0E);
 
   if (`RADIX == 2) begin: R2EarlyTerm
-    logic [`DIVb+3:0] FZeroE;
+    logic [`DIVb+3:0] FZeroE, FZeroSqrtE, FZeroDivE;
     logic [`DIVb+2:0] FirstK;
     logic wfeq0E;
     logic [`DIVb+3:0] WCF, WSF;
 
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZeroE = (SqrtE & ~MDUE) ? {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0} : {3'b001,D,1'b0};
+    assign FZeroSqrtE = {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
+    assign FZeroDivE =  {3'b001,D,1'b0};                                    // F for divide
+    assign FZeroE = SqrtE ? FZeroSqrtE : FZeroDivE;
+    // assign FZeroE = (SqrtE & ~MDUE) ? FZeroSqrtE : FZeroDivE;
     csa #(`DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
     assign WZeroE = weq0E|(wfeq0E & Firstun);
@@ -94,7 +97,7 @@ module fdivsqrtpostproc(
   //  If the result is not exact, the sticky should be set
   assign DivSM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
-  // Determine if sticky bit is negative  // *** look for ways to optimize this
+  // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
   assign W = $signed(Sum) >>> `LOGR;
   assign NegStickyM = W[`DIVb+3];
