@@ -69,6 +69,7 @@ module fdivsqrtpreproc (
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
 
+  // *** W64 muxes conditional on RV64
   assign AsE = ~Funct3E[0] & (W64E ? ForwardedSrcAE[31] : ForwardedSrcAE[`XLEN-1]);
   assign BsE = ~Funct3E[0] & (W64E ? ForwardedSrcBE[31] : ForwardedSrcBE[`XLEN-1]);
   assign A64 = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
