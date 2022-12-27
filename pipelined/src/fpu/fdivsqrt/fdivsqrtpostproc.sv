@@ -53,8 +53,8 @@ module fdivsqrtpostproc(
   logic NegStickyM;
   logic weq0E, weq0M;
   logic [`DIVBLEN:0] NormShiftM;
-  logic [`DIVb:0] IntQuotM, NormQuotM;
-  logic [`DIVb+3:0] IntRemM, NormRemM;
+  logic [`DIVb:0] NormQuotM;
+  logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM;
   logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
   logic WZeroM;
 
@@ -116,10 +116,10 @@ module fdivsqrtpostproc(
 //      if (NegStickyM | weq0) begin // *** old code, replaced by the one below in the right stage and more comprehensive
       if (NegStickyM | WZeroM) begin
         NormQuotM = FirstUM;
-        NormRemM  = W;
+        NormRemM  = -(W + DM);
       end else begin 
         NormQuotM = FirstU;
-        NormRemM  = W - DM;
+        NormRemM  = -W;
       end
 
   // Integer division: Special cases
@@ -128,17 +128,17 @@ module fdivsqrtpostproc(
       IntQuotM = '0;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
     end else begin
-      logic [`DIVb:0] PreIntQuotM;
+      logic [`DIVb+3:0] PreIntQuotM;
       if (WZeroM) begin
         if (weq0M) begin
-          PreIntQuotM = FirstU;
+          PreIntQuotM = {3'b000, FirstU};
           IntRemM  = '0;
         end else begin
-          PreIntQuotM = FirstUM;
+          PreIntQuotM = {3'b000, FirstUM};
           IntRemM  = '0;
         end 
       end else begin 
-        PreIntQuotM = NormQuotM;
+        PreIntQuotM = {3'b000, NormQuotM};
         IntRemM  = NormRemM;
       end 
       // flip sign if necessary
@@ -148,11 +148,11 @@ module fdivsqrtpostproc(
   
   always_comb
     if (RemOpM) begin
-      NormShiftM = (mM + (`DIVBLEN+1)'(`DIVa));
+      NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
       PreResultM = IntRemM;
     end else begin
       NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-      PreResultM = {{3{IntQuotM[`DIVb]}}, IntQuotM};
+      PreResultM = IntQuotM;
       /*
       if (~ALTBM & NegQuotM) begin
         PreResultM = {3'b111, -IntQuotM};
