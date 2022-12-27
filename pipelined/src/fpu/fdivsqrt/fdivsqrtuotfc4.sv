@@ -32,7 +32,6 @@
 
 module fdivsqrtuotfc4(
   input  logic [3:0]   udigit,
-  input  logic         Sqrt,
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb:0] C,
   output logic [`DIVb:0] UNext, UMNext

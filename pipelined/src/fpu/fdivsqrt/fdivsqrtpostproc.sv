@@ -37,7 +37,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb-1:0]  D, 
   input  logic [`DIVb:0]    FirstU, FirstUM, 
   input  logic [`DIVb+1:0]  FirstC,
-  input  logic              SqrtE, MDUE,
+  input  logic              SqrtE,
   input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
