@@ -76,7 +76,7 @@
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 `define IDIV_BITSPERCYCLE 4
-`define IDIV_ON_FPU 0
+`define IDIV_ON_FPU 1
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000

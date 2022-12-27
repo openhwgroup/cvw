@@ -73,7 +73,7 @@
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 `define IDIV_BITSPERCYCLE 1
-`define IDIV_ON_FPU 0
+`define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 0
