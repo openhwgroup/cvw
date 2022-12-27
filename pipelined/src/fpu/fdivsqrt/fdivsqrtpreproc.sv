@@ -42,7 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic CalcOTFCSwapE, OTFCSwapE, ALTBM, MDUM,
+  output logic NegQuotM, ALTBM, MDUM,
   output logic AsM, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
@@ -57,7 +57,7 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
-  logic  AsE, BsE, ALTBE;
+  logic  AsE, BsE, ALTBE, NegQuotE;
   logic  [`XLEN-1:0]  A64, B64;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
@@ -74,7 +74,7 @@ module fdivsqrtpreproc (
   assign A64 = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
 
-  assign CalcOTFCSwapE = (AsE ^ BsE) & MDUE;
+  assign NegQuotE = (AsE ^ BsE) & MDUE;
   
   assign PosA = AsE ? -A64 : A64;
   assign PosB = BsE ? -B64 : B64;
@@ -127,7 +127,7 @@ module fdivsqrtpreproc (
   // DIVRESLEN/(r*`DIVCOPIES)
 
   flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
-  flopen #(1)       swapreg(clk, IFDivStartE, CalcOTFCSwapE, OTFCSwapE); // Retain value for each iteration of divider in Execute stage
+  flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
   flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
   flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);

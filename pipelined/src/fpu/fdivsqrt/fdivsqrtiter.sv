@@ -36,7 +36,6 @@ module fdivsqrtiter(
   input  logic FDivBusyE, 
   input  logic SqrtE, MDUE,
 //  input  logic SqrtM,
-  input  logic CalcOTFCSwapE, OTFCSwapE,
   input  logic [`DIVb+3:0] X,
   input  logic [`DIVb-1:0] DPreproc,
   output logic [`DIVb-1:0] D,
@@ -79,8 +78,8 @@ module fdivsqrtiter(
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root or negative-result int division; U to 0 and UM to -1 otherwise
-  assign initU =  ((MDUE & CalcOTFCSwapE) | (SqrtE & ~(MDUE))) ? {1'b1, {(`DIVb){1'b0}}} : 0;
-  assign initUM = ((MDUE & CalcOTFCSwapE) | (SqrtE & ~(MDUE))) ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
+  assign initU =  ((SqrtE & ~(MDUE))) ? {1'b1, {(`DIVb){1'b0}}} : 0;
+  assign initUM = ((SqrtE & ~(MDUE))) ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
   mux2   #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
   mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
   flopen #(`DIVb+1) UReg(clk, IFDivStartE|FDivBusyE, UMux, U[0]);
@@ -111,13 +110,13 @@ module fdivsqrtiter(
   generate
     for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : iterations
       if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE, .OTFCSwapE, .MDUE,
+        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE, .MDUE,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
         assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .OTFCSwapE, .MDUE,
+        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1, .MDUE,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end

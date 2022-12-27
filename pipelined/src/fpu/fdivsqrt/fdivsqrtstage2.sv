@@ -38,7 +38,7 @@ module fdivsqrtstage2 (
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb+1:0] C,
   input  logic SqrtE,
-  input  logic OTFCSwapE, MDUE,
+  input  logic MDUE,
   output logic un,
   output logic [`DIVb+1:0] CNext,
   output logic [`DIVb:0] UNext, UMNext, 
@@ -82,7 +82,7 @@ module fdivsqrtstage2 (
   assign CNext = {1'b1, C[`DIVb+1:1]};
 
   // Unified On-The-Fly Converter to accumulate result
-  fdivsqrtuotfc2 uotfc2(.up, .un, .swap(OTFCSwapE), .C(CNext), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc2 uotfc2(.up, .un, .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

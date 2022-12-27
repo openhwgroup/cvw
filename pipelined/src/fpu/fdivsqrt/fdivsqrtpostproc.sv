@@ -38,7 +38,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb:0]    FirstU, FirstUM, 
   input  logic [`DIVb+1:0]  FirstC,
   input  logic              SqrtE, MDUE,
-  input  logic              Firstun, SqrtM, SpecialCaseM, OTFCSwapEM,
+  input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, 
   input  logic [`DIVBLEN:0] nM, mM,
@@ -50,8 +50,8 @@ module fdivsqrtpostproc(
   
   logic [`DIVb+3:0] W, Sum, DM;
   logic [`DIVb:0] PreQmM;
-  logic NegStickyM, PostIncM;
-  logic weq0E;
+  logic NegStickyM;
+  logic weq0E, weq0M;
   logic [`DIVBLEN:0] NormShiftM;
   logic [`DIVb:0] IntQuotM, NormQuotM;
   logic [`DIVb+3:0] IntRemM, NormRemM;
@@ -85,6 +85,7 @@ module fdivsqrtpostproc(
   //////////////////////////
  
   flopenr #(1) WZeroMReg(clk, reset, ~StallM, WZeroE, WZeroM);
+  flopenr #(1) WeqZeroMReg(clk, reset, ~StallM, weq0E, weq0M);
 
   //////////////////////////
   // Memory Stage: Postprocessing
@@ -107,45 +108,43 @@ module fdivsqrtpostproc(
       if (NegStickyM) begin
         NormQuotM = FirstUM;
         NormRemM  = W + DM;
-        PostIncM  = 0;
       end else begin
         NormQuotM = FirstU;
         NormRemM  = W;
-        PostIncM  = 0;
       end
     else 
 //      if (NegStickyM | weq0) begin // *** old code, replaced by the one below in the right stage and more comprehensive
       if (NegStickyM | WZeroM) begin
-        NormQuotM = FirstU;
+        NormQuotM = FirstUM;
         NormRemM  = W;
-        PostIncM  = 0;
       end else begin 
         NormQuotM = FirstU;
         NormRemM  = W - DM;
-        PostIncM  = ~ALTBM;
       end
 
   // Integer division: Special cases
   always_comb
-    if (BZeroM) begin
-      IntQuotM = '1;
-      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
-    end else if (ALTBM) begin
+    if (ALTBM) begin
       IntQuotM = '0;
       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
-    end else if (WZeroM) begin
-    // *** dh: 12/26: don't understand this logic and why weq0 inside WZero check.  Need a divide by 0 check here
-/*      if (weq0) begin */
-        IntQuotM = FirstU;
-        IntRemM  = '0;
-/*      end else begin
-        IntQuotM = FirstUM;
-        IntRemM  = '0;
-      end */
-    end else begin 
-      IntQuotM = NormQuotM;
-      IntRemM  = NormRemM;
-    end 
+    end else begin
+      logic [`DIVb:0] PreIntQuotM;
+      if (WZeroM) begin
+        if (weq0M) begin
+          PreIntQuotM = FirstU;
+          IntRemM  = '0;
+        end else begin
+          PreIntQuotM = FirstUM;
+          IntRemM  = '0;
+        end 
+      end else begin 
+        PreIntQuotM = NormQuotM;
+        IntRemM  = NormRemM;
+      end 
+      // flip sign if necessary
+      if (NegQuotM) IntQuotM = -PreIntQuotM;
+      else          IntQuotM =  PreIntQuotM;
+    end
   
   always_comb
     if (RemOpM) begin
@@ -153,19 +152,21 @@ module fdivsqrtpostproc(
       PreResultM = IntRemM;
     end else begin
       NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-      if (BZeroM | (~ALTBM & OTFCSwapEM)) begin
-        PreResultM = {3'b111, IntQuotM};
+      PreResultM = {{3{IntQuotM[`DIVb]}}, IntQuotM};
+      /*
+      if (~ALTBM & NegQuotM) begin
+        PreResultM = {3'b111, -IntQuotM};
       end else begin
         PreResultM = {3'b000, IntQuotM};
-      end
+      end*/
       //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
     end
   
 
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
-  assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM) + {{(`DIVb+3){1'b0}}, (PostIncM & ~RemOpM)};
-  assign FPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
+  assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+  assign FPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
  
   assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
