@@ -42,7 +42,7 @@ module fdivsqrtpreproc (
 	input  logic [2:0] 	Funct3E,
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic NegQuotM, ALTBM, MDUM,
+  output logic NegQuotM, ALTBM, MDUM, W64M,
   output logic AsM, AZeroM, BZeroM, AZeroE, BZeroE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
@@ -58,7 +58,7 @@ module fdivsqrtpreproc (
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`XLEN-1:0] PosA, PosB;
   logic  AsE, BsE, ALTBE, NegQuotE;
-  logic  [`XLEN-1:0]  A64, B64;
+  logic  [`XLEN-1:0]  A64, B64, A64Src;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
@@ -69,17 +69,18 @@ module fdivsqrtpreproc (
   // ***can probably merge X LZC with conversion
   // cout the number of leading zeros
 
-  assign AsE = ForwardedSrcAE[`XLEN-1] & ~Funct3E[0];
-  assign BsE = ForwardedSrcBE[`XLEN-1] & ~Funct3E[0];
+  assign AsE = ~Funct3E[0] & (W64E ? ForwardedSrcAE[31] : ForwardedSrcAE[`XLEN-1]);
+  assign BsE = ~Funct3E[0] & (W64E ? ForwardedSrcBE[31] : ForwardedSrcBE[`XLEN-1]);
   assign A64 = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
   assign B64 = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
+  assign A64Src = W64E ? {{(`XLEN-32){ForwardedSrcAE[31]}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
 
   assign NegQuotE = (AsE ^ BsE) & MDUE;
   
   assign PosA = AsE ? -A64 : A64;
   assign PosB = BsE ? -B64 : B64;
-  assign AZeroE = ~(|ForwardedSrcAE);
-  assign BZeroE = ~(|ForwardedSrcBE);
+  assign AZeroE = W64E ? ~(|ForwardedSrcAE[31:0]) : ~(|ForwardedSrcAE);
+  assign BZeroE = W64E ? ~(|ForwardedSrcBE[31:0]) : ~(|ForwardedSrcBE);
 
   assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
   assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};
@@ -126,16 +127,17 @@ module fdivsqrtpreproc (
   // r = 1 or 2
   // DIVRESLEN/(r*`DIVCOPIES)
 
-  flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
   flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
   flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
   flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
   flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
   flopen #(1)      asignreg(clk, IFDivStartE, AsE, AsM);
   flopen #(1)        mdureg(clk, IFDivStartE, MDUE, MDUM);
+  flopen #(1)        w64reg(clk, IFDivStartE, W64E, W64M);
   flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
   flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
-  flopen #(`XLEN)   srcareg(clk, IFDivStartE, ForwardedSrcAE, ForwardedSrcAM);
+  flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
+  flopen #(`XLEN)   srcareg(clk, IFDivStartE, A64Src, ForwardedSrcAM);
 
 
 endmodule
