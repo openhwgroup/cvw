@@ -32,7 +32,7 @@
 
 module fdivsqrtuotfc4(
   input  logic [3:0]   udigit,
-  input  logic         Sqrt, swap,
+  input  logic         Sqrt,
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb:0] C,
   output logic [`DIVb:0] UNext, UMNext
@@ -41,26 +41,22 @@ module fdivsqrtuotfc4(
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
 
-  logic [3:0] udigitswap, udigitsel;
   logic [`DIVb:0] K1, K2, K3;
   assign K1 = (C&~(C << 1));        // K
   assign K2 = ((C << 1)&~(C << 2)); // 2K
   assign K3 = (C & ~(C << 2));      // 3K
 
-  assign udigitswap = {udigit[0], udigit[1], udigit[2], udigit[3]};
-  assign udigitsel = swap ? udigitswap : udigit;
-
   always_comb begin
-    if (udigitsel[3]) begin           // +2
+    if (udigit[3]) begin           // +2
       UNext  = U | K2;
       UMNext = U | K1;
-    end else if (udigitsel[2]) begin  // +1
+    end else if (udigit[2]) begin  // +1
       UNext  = U | K1;
       UMNext = U;
-    end else if (udigitsel[1]) begin  // -1
+    end else if (udigit[1]) begin  // -1
       UNext  = UM | K3;
       UMNext = UM | K2;
-    end else if (udigitsel[0]) begin  // -2
+    end else if (udigit[0]) begin  // -2
       UNext  = UM | K2;
       UMNext = UM | K1;
     end else begin                    // 0

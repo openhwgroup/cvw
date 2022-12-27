@@ -36,7 +36,7 @@ module fdivsqrtstage4 (
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtE, j1, OTFCSwapE, MDUE,
+  input  logic SqrtE, j1, MDUE,
   output logic [`DIVb+1:0] CNext,
   output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
@@ -94,7 +94,7 @@ module fdivsqrtstage4 (
   assign CNext = {2'b11, C[`DIVb+1:2]};
  
   // On-the-fly converter to accumulate result
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .swap(OTFCSwapE), .Sqrt(SqrtE), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .Sqrt(SqrtE), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
 
 
