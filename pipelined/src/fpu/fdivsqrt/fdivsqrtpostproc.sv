@@ -56,7 +56,7 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] NormQuotM;
   logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM;
   logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
-  logic [`XLEN-1:0] W64FPIntDivResultM;
+  logic [`XLEN-1:0] SpecialFPIntDivResultM;
 
   //////////////////////////
   // Execute Stage: Detect early termination for an exact result
@@ -113,8 +113,7 @@ module fdivsqrtpostproc(
         NormRemM  = W;
       end
     else 
-//      if (NegStickyM | weq0) begin // *** old code, replaced by the one below in the right stage and more comprehensive
-      if (NegStickyM | WZeroM) begin
+      if (NegStickyM) begin
         NormQuotM = FirstUM;
         NormRemM  = -(W + DM);
       end else begin 
@@ -166,8 +165,9 @@ module fdivsqrtpostproc(
    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
   
   assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-  assign W64FPIntDivResultM = (W64M ? {{(`XLEN-32){PreFPIntDivResultM[31]}}, PreFPIntDivResultM[31:0]} : PreFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
-  assign FPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : W64FPIntDivResultM; // special cases
+  assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
+  // *** conditional on RV64
+  assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
  
   assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
