@@ -167,7 +167,7 @@ module fctrl (
                     7'b0100001: ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.s
                     default:    ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // non-implemented instruction
                   endcase
-      default:      ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // non-implemented instruction
+      default:      ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction
     endcase
 
   // unswizzle control bits
