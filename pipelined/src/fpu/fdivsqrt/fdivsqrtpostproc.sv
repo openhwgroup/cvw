@@ -37,7 +37,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb-1:0]  D, 
   input  logic [`DIVb:0]    FirstU, FirstUM, 
   input  logic [`DIVb+1:0]  FirstC,
-  input  logic              SqrtE, MDUE,
+  input  logic              SqrtE,
   input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
 	input  logic [`XLEN-1:0]  ForwardedSrcAM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
@@ -74,8 +74,7 @@ module fdivsqrtpostproc(
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
     assign FZeroSqrtE = {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
     assign FZeroDivE =  {3'b001,D,1'b0};                                    // F for divide
-    assign FZeroE = SqrtE ? FZeroSqrtE : FZeroDivE;
-    // assign FZeroE = (SqrtE & ~MDUE) ? FZeroSqrtE : FZeroDivE;
+    mux2 #(`DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
     csa #(`DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
     aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
     assign WZeroE = weq0E|(wfeq0E & Firstun);
