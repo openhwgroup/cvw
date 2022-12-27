@@ -82,12 +82,12 @@ module fdivsqrt(
     .XNaNE, .YNaNE, .MDUE,
     .XInfE, .YInfE, .WZeroE, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .MDUE, .SqrtE, // .SqrtM,
+    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, // .SqrtM,
     .X,.DPreproc, .FirstWS(WS), .FirstWC(WC),
     .IFDivStartE, .FDivBusyE);
   fdivsqrtpostproc fdivsqrtpostproc(
     .clk, .reset, .StallM,
-    .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .MDUE, .Firstun, 
+    .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .Firstun, 
     .SqrtM, .SpecialCaseM, .RemOpM(Funct3M[1]), .ForwardedSrcAM,
     .nM, .ALTBM, .mM, .BZeroM, .AsM, .NegQuotM, .W64M,
     .QmM, .WZeroE, .DivSM, .FPIntDivResultM);

@@ -36,7 +36,7 @@ module fdivsqrtstage4 (
   input  logic [`DIVb:0] U, UM,
   input  logic [`DIVb+3:0]  WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtE, j1, MDUE,
+  input  logic SqrtE, j1,
   output logic [`DIVb+1:0] CNext,
   output logic un,
   output logic [`DIVb:0] UNext, UMNext, 
@@ -65,7 +65,7 @@ module fdivsqrtstage4 (
   assign WCmsbs = WC[`DIVb+3:`DIVb-4];
   assign WSmsbs = WS[`DIVb+3:`DIVb-4];
 
-  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit, .MDUE);
+  fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
@@ -84,8 +84,8 @@ module fdivsqrtstage4 (
 
   // Residual Update
   //  {WS, WC}}Next = (WS + WC - qD or F) << 2
-  assign AddIn = (SqrtE & ~MDUE) ? F : Dsel;
-  assign CarryIn = ~(SqrtE & ~MDUE) & (udigit[3] | udigit[2]); // +1 for 2's complement of -D and -2D 
+  assign AddIn = SqrtE ? F : Dsel;
+  assign CarryIn = ~SqrtE & (udigit[3] | udigit[2]); // +1 for 2's complement of -D and -2D 
   csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
   assign WSNext = WSA << 2;
   assign WCNext = WCA << 2;
@@ -94,7 +94,7 @@ module fdivsqrtstage4 (
   assign CNext = {2'b11, C[`DIVb+1:2]};
  
   // On-the-fly converter to accumulate result
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .Sqrt(SqrtE), .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

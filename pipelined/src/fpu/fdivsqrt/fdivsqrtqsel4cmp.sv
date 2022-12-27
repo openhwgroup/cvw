@@ -34,7 +34,7 @@ module fdivsqrtqsel4cmp (
   input logic [2:0] Dmsbs,
   input logic [4:0] Smsbs,
   input logic [7:0] WSmsbs, WCmsbs,
-  input logic SqrtE, j1, MDUE,
+  input logic SqrtE, j1,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;
@@ -72,7 +72,7 @@ module fdivsqrtqsel4cmp (
 
   // Choose A for current operation
  always_comb
-    if (SqrtE & ~MDUE) begin 
+    if (SqrtE) begin 
       if (j1) A = 3'b101;
       else if (Smsbs == 5'b10000) A = 3'b111;
       else A = Smsbs[2:0];
