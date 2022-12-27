@@ -49,21 +49,21 @@ module ram2p1r1wb
    input logic              reset,
   
    // port 1 is read only
-   input logic [DEPTH-1:0]  RA1,
-   output logic [WIDTH-1:0] RD1,
-   input logic              REN1,
+   input logic [DEPTH-1:0]  ra1,
+   output logic [WIDTH-1:0] rd1,
+   input logic              ren1,
   
    // port 2 is write only
-   input logic [DEPTH-1:0]  WA1,
-   input logic [WIDTH-1:0]  WD1,
-   input logic              WEN1,
-   input logic [WIDTH-1:0]  BitWEN1
+   input logic [DEPTH-1:0]  wa2,
+   input logic [WIDTH-1:0]  wd2,
+   input logic              wen2,
+   input logic [WIDTH-1:0]  bwe2
 );
   
 
-  logic [DEPTH-1:0]         RA1Q, WA1Q;
-  logic                     WEN1Q;
-  logic [WIDTH-1:0]         WD1Q;
+  logic [DEPTH-1:0]         ra1q, wa2q;
+  logic                     wen2q;
+  logic [width-1:0]         wd2q;
 
   logic [WIDTH-1:0]         mem[2**DEPTH-1:0];
   logic [WIDTH-1:0]         bwe;
@@ -76,18 +76,18 @@ module ram2p1r1wb
   //  prefer not to have two-cycle write latency
   //  will require branch predictor changes
   
-  flopenr #(DEPTH) RA1Reg(clk, reset, REN1, RA1, RA1Q);
-  flopenr #(DEPTH) WA1Reg(clk, reset, REN1, WA1, WA1Q);
-  flopr   #(1)     WEN1Reg(clk, reset, WEN1, WEN1Q);
-  flopenr #(WIDTH) WD1Reg(clk, reset, REN1, WD1, WD1Q);
+  flopenr #(DEPTH) ra1Reg(clk, reset, ren1, ra1, ra1q);
+  flopenr #(DEPTH) wa2Reg(clk, reset, ren1, wa2, wa2q);
+  flopr   #(1)     wen2Reg(clk, reset, wen2, wen2q);
+  flopenr #(WIDTH) wd2Reg(clk, reset, ren1, wd2, wd2q);
 
   // read port
-  assign RD1 = mem[RA1Q];
+  assign rd1 = mem[ra1q];
   
   // write port
-  assign bwe = {WIDTH{WEN1Q}} & BitWEN1;
+  assign bwe = {WIDTH{wen2q}} & bwe2;
   always_ff @(posedge clk)
-    mem[WA1Q] <= WD1Q & bwe | mem[WA1Q] & ~bwe;
+    mem[wa2q] <= wd2q & bwe | mem[wa2q] & ~bwe;
  
 endmodule  
 
