@@ -109,14 +109,14 @@ module fpu (
    logic 		      XExpMaxE;                           // is the exponent all ones (max value)
 
    // Fma Signals
-   logic [3*`NF+5:0] SmE, SmM;                       
+   logic [3*`NF+4:0] SmE, SmM;//change             
    logic 			   ZmStickyE, ZmStickyM;
    logic [`NE+1:0]   SeE,SeM;
    logic 			   InvAE, InvAM;
    logic 			   AsE, AsM;
    logic 			   PsE, PsM;
    logic 			   SsE, SsM;
-   logic [$clog2(3*`NF+7)-1:0] SCntE, SCntM;
+   logic [$clog2(3*`NF+6)-1:0] SCntE, SCntM;//change
 
    // Cvt Signals
    logic [`NE:0]           CeE, CeM;    // the calculated expoent
@@ -352,8 +352,8 @@ module fpu (
             {XsE, YsE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
             {XsM, YsM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
-   flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM); 
-  flopenrc #($clog2(3*`NF+7)+7+`NE) EMRegFma4(clk, reset, FlushM, ~StallM, 
+   flopenrc #(3*`NF+5) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM);//change 
+  flopenrc #($clog2(3*`NF+6)+7+`NE) EMRegFma4(clk, reset, FlushM, ~StallM, //change
                            {ZmStickyE, InvAE, SCntE, AsE, PsE, SsE, SeE},
                            {ZmStickyM, InvAM, SCntM, AsM, PsM, SsM, SeM});
    flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 

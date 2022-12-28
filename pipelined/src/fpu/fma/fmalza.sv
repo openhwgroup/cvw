@@ -42,7 +42,7 @@ module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and d
    logic [WIDTH-1:0]  B, P, G, K;
     logic [WIDTH-1:0] Pp1, Gm1, Km1;
 
-    assign B = {{(`NF+2){1'b0}}, Pm}; // Zero extend product
+    assign B = {{(`NF+1){1'b0}}, Pm};//change // Zero extend product
 
     assign P = A^B;
     assign G = A&B;

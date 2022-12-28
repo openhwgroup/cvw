@@ -30,15 +30,15 @@
 `include "wally-config.vh"
 
 module fmashiftcalc(
-    input logic  [3*`NF+5:0]            FmaSm,       // the positive sum
-    input logic  [$clog2(3*`NF+7)-1:0]  FmaSCnt,   // normalization shift count
+    input logic  [3*`NF+4:0]            FmaSm,//change       // the positive sum
+    input logic  [$clog2(3*`NF+6)-1:0]  FmaSCnt,//change   // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,       // precision 1 = double 0 = single
     input logic [`NE+1:0] FmaSe,
     output logic [`NE+1:0]              NormSumExp,          // exponent of the normalized sum not taking into account denormal or zero results
     output logic                        FmaSZero,    // is the result denormalized - calculated before LZA corection
     output logic                        FmaPreResultDenorm,    // is the result denormalized - calculated before LZA corection
-    output logic [$clog2(3*`NF+7)-1:0]  FmaShiftAmt,   // normalization shift count
-    output logic [3*`NF+7:0]            FmaShiftIn        // is the sum zero
+    output logic [$clog2(3*`NF+6)-1:0]  FmaShiftAmt,//change   // normalization shift count
+    output logic [3*`NF+6:0]            FmaShiftIn//change        // is the sum zero
 );
     logic [`NE+1:0]             PreNormSumExp;       // the exponent of the normalized sum with the `FLEN bias
     logic [`NE+1:0] BiasCorr;
@@ -50,7 +50,7 @@ module fmashiftcalc(
     // Determine if the sum is zero
     assign FmaSZero = ~(|FmaSm);
     // calculate the sum's exponent
-    assign PreNormSumExp = FmaSe + {{`NE+2-$unsigned($clog2(3*`NF+7)){1'b1}}, ~FmaSCnt} + (`NE+2)'(`NF+4);
+    assign PreNormSumExp = FmaSe + {{`NE+2-$unsigned($clog2(3*`NF+6)){1'b1}}, ~FmaSCnt} + (`NE+2)'(`NF+3);//change
 
     //convert the sum's exponent into the proper percision
     if (`FPSIZES == 1) begin
@@ -150,7 +150,7 @@ module fmashiftcalc(
     //  - shift once if killing a product and the result is denormalized
     assign FmaShiftIn = {2'b0, FmaSm};
     if (`FPSIZES == 1)
-        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+7)-1:0]+($clog2(3*`NF+7))'(`NF+3): FmaSCnt+1;
+        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+6)-1:0]+($clog2(3*`NF+6))'(`NF+2): FmaSCnt+1;//change
     else
-        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+7)-1:0]+($clog2(3*`NF+7))'(`NF+3)+BiasCorr[$clog2(3*`NF+7)-1:0]: FmaSCnt+1;
+        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+6)-1:0]+($clog2(3*`NF+6))'(`NF+2)+BiasCorr[$clog2(3*`NF+6)-1:0]: FmaSCnt+1;//change
 endmodule

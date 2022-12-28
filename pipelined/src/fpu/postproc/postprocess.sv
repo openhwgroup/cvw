@@ -47,10 +47,10 @@ module postprocess (
     input logic                             FmaAs,   // the modified Z sign - depends on instruction
     input logic                             FmaPs,      // the product's sign
     input logic  [`NE+1:0]                  FmaSe,
-    input logic  [3*`NF+5:0]                FmaSm,       // the positive sum
+    input logic  [3*`NF+4:0]                FmaSm,//change      // the positive sum
     input logic                             FmaZmS,  // sticky bit that is calculated during alignment
     input logic                             FmaSs,
-    input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
+    input logic  [$clog2(3*`NF+6)-1:0]      FmaSCnt,//change   // the normalization shift count
     //divide signals
     input logic                             DivS,
 //    input logic                             DivDone,
@@ -89,10 +89,10 @@ module postprocess (
     // fma signals
     logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
-    logic [3*`NF+7:0] FmaShiftIn;        // shift input
+    logic [3*`NF+6:0] FmaShiftIn;//change        // shift input
     logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
-    logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
+    logic [$clog2(3*`NF+6)-1:0] FmaShiftAmt;//change   // normalization shift count
     // division singals
     logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0] DivShiftIn;
@@ -152,8 +152,8 @@ module postprocess (
     always_comb
         case(PostProcSel)
             2'b10: begin // fma
-                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+7){1'b0}}, FmaShiftAmt};
-                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+8){1'b0}}};
+                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+6){1'b0}}, FmaShiftAmt};//change
+                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+7){1'b0}}};//change
             end
             2'b00: begin // cvt
                 ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};

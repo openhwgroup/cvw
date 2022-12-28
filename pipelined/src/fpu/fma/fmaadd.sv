@@ -31,7 +31,7 @@
 `include "wally-config.vh"
 
 module fmaadd(
-    input logic  [3*`NF+5:0]    Am, // aligned addend's mantissa for addition in U(NF+5.2NF+1)
+    input logic  [3*`NF+4:0]    Am, //change // aligned addend's mantissa for addition in U(NF+5.2NF+1)
     input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
     input logic                 Ps, // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
     input logic                InvA,          // invert the aligned addend
@@ -39,13 +39,13 @@ module fmaadd(
     input logic                 ZmSticky,
     input logic  [`NE-1:0]      Ze,
     input logic  [`NE+1:0]      Pe,
-    output logic [3*`NF+5:0]    AmInv,  // aligned addend possibly inverted
+    output logic [3*`NF+4:0]    AmInv,//change // aligned addend possibly inverted
     output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
     output logic                Ss,          
     output logic [`NE+1:0]      Se,
-    output logic [3*`NF+5:0]    Sm           // the positive sum
+    output logic [3*`NF+4:0]    Sm//change           // the positive sum
 );
-    logic [3*`NF+5:0]    PreSum, NegPreSum; // possibly negitive sum
+    logic [3*`NF+4:0]    PreSum, NegPreSum;//change // possibly negitive sum
     logic [3*`NF+5:0]    PreSumdebug, NegPreSumdebug; // possibly negitive sum
     logic                NegSum;        // was the sum negitive
     logic                NegSumdebug;        // was the sum negitive
@@ -65,8 +65,8 @@ module fmaadd(
     //          ie ~(InvA&ZmSticky&~KillProd)&InvA = (~ZmSticky|KillProd)&InvA
     //      addend - prod where product is killed (and not exactly zero) then don't add +1 from negation 
     //          ie ~(InvA&ZmSticky&KillProd)&InvA = (~ZmSticky|~KillProd)&InvA
-    assign {NegSum, PreSum} = {{`NF+3{1'b0}}, PmKilled, 2'b0} + {InvA, AmInv} + {{3*`NF+6{1'b0}}, (~ZmSticky|KillProd)&InvA};
-    assign NegPreSum = Am + {{`NF+2{1'b1}}, ~PmKilled, 2'b0} + {(3*`NF+3)'(0), (~ZmSticky|~KillProd)&InvA, 2'b0};
+    assign {NegSum, PreSum} = {{`NF+2{1'b0}}, PmKilled, 2'b0} + {InvA, AmInv} + {{3*`NF+5{1'b0}}, (~ZmSticky|KillProd)&InvA};//change
+    assign NegPreSum = Am + {{`NF+1{1'b1}}, ~PmKilled, 2'b0} + {(3*`NF+2)'(0), (~ZmSticky|~KillProd)&InvA, 2'b0};//change
      
     // Choose the positive sum and accompanying LZA result.
     assign Sm = NegSum ? NegPreSum : PreSum;
