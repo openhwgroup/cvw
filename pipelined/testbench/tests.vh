@@ -1198,8 +1198,6 @@ string imperas32f[] = '{
 
   string arch64d[] = '{
     `RISCVARCHTEST,
-    "rv64i_m/D/src/fsqrt.d_b1-01.S",
-    "rv64i_m/D/src/fdiv.d_b20-01.S",
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
