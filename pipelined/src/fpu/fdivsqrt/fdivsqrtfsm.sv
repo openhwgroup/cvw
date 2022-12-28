@@ -65,8 +65,10 @@ module fdivsqrtfsm(
 
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
-  assign ISpecialCaseE = AZeroE | BZeroE; // *** why is AZeroE part of this.  Should other special cases be considered?
-  assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
+  if (`IDIV_ON_FPU) begin
+    assign ISpecialCaseE = AZeroE | BZeroE; // *** why is AZeroE part of this.  Should other special cases be considered?
+    assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
+  end else assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
 // DIVN = `NF+3
