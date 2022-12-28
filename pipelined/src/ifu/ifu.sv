@@ -343,7 +343,7 @@ module ifu (
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD);
+  decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); // *** move the config logic outside
   assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
 
   // Misaligned PC logic
