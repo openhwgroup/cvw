@@ -98,79 +98,80 @@ module fdivsqrtpostproc(
 
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
-  assign W = $signed(Sum) >>> `LOGR;
-  assign NegStickyM = W[`DIVb+3];
-  assign DM = {4'b0001, D};
-
-  // *** put conditionals on integer division hardware, move to its own module
-
-  // Integer division: sign handling for div and rem
-  always_comb 
-    if (~AsM)
-      if (NegStickyM) begin
-        NormQuotM = FirstUM;
-        NormRemM  = W + DM;
-      end else begin
-        NormQuotM = FirstU;
-        NormRemM  = W;
-      end
-    else 
-      if (NegStickyM) begin
-        NormQuotM = FirstUM;
-        NormRemM  = -(W + DM);
-      end else begin 
-        NormQuotM = FirstU;
-        NormRemM  = -W;
-      end
-
-  // Integer division: Special cases
-  always_comb
-    if (ALTBM) begin
-      IntQuotM = '0;
-      IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
-    end else begin
-      logic [`DIVb+3:0] PreIntQuotM;
-      if (WZeroM) begin
-        if (weq0M) begin
-          PreIntQuotM = {3'b000, FirstU};
-          IntRemM  = '0;
-        end else begin
-          PreIntQuotM = {3'b000, FirstUM};
-          IntRemM  = '0;
-        end 
-      end else begin 
-        PreIntQuotM = {3'b000, NormQuotM};
-        IntRemM  = NormRemM;
-      end 
-      // flip sign if necessary
-      if (NegQuotM) IntQuotM = -PreIntQuotM;
-      else          IntQuotM =  PreIntQuotM;
-    end
+  assign NegStickyM = Sum[`DIVb+3];
   
-  always_comb
-    if (RemOpM) begin
-      NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-      PreResultM = IntRemM;
-    end else begin
-      NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-      PreResultM = IntQuotM;
-      /*
-      if (~ALTBM & NegQuotM) begin
-        PreResultM = {3'b111, -IntQuotM};
-      end else begin
-        PreResultM = {3'b000, IntQuotM};
-      end*/
-      //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
-    end
-  
-
-   // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-  
-  assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-  assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
-  // *** conditional on RV64
-  assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
- 
   assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
+
+  if (`IDIV_ON_FPU) begin
+    assign W = $signed(Sum) >>> `LOGR;
+    assign DM = {4'b0001, D};
+
+    // Integer division: sign handling for div and rem
+    always_comb 
+      if (~AsM)
+        if (NegStickyM) begin
+          NormQuotM = FirstUM;
+          NormRemM  = W + DM;
+        end else begin
+          NormQuotM = FirstU;
+          NormRemM  = W;
+        end
+      else 
+        if (NegStickyM) begin
+          NormQuotM = FirstUM;
+          NormRemM  = -(W + DM);
+        end else begin 
+          NormQuotM = FirstU;
+          NormRemM  = -W;
+        end
+
+    // Integer division: Special cases
+    always_comb
+      if (ALTBM) begin
+        IntQuotM = '0;
+        IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
+      end else begin
+        logic [`DIVb+3:0] PreIntQuotM;
+        if (WZeroM) begin
+          if (weq0M) begin
+            PreIntQuotM = {3'b000, FirstU};
+            IntRemM  = '0;
+          end else begin
+            PreIntQuotM = {3'b000, FirstUM};
+            IntRemM  = '0;
+          end 
+        end else begin 
+          PreIntQuotM = {3'b000, NormQuotM};
+          IntRemM  = NormRemM;
+        end 
+        // flip sign if necessary
+        if (NegQuotM) IntQuotM = -PreIntQuotM;
+        else          IntQuotM =  PreIntQuotM;
+      end
+    
+    always_comb
+      if (RemOpM) begin
+        NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
+        PreResultM = IntRemM;
+      end else begin
+        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
+        PreResultM = IntQuotM;
+        /*
+        if (~ALTBM & NegQuotM) begin
+          PreResultM = {3'b111, -IntQuotM};
+        end else begin
+          PreResultM = {3'b000, IntQuotM};
+        end*/
+        //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
+      end
+    
+
+    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
+    
+    assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
+    // *** conditional on RV64
+    assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
+  end
 endmodule
