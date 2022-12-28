@@ -77,12 +77,12 @@ module fdivsqrt(
     .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .MDUE, .W64E);
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, .nE,
-    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallM, .FlushE, /*.DivDone, */ 
+    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallM, .FlushE, 
     .XZeroE, .YZeroE, .AZeroE, .BZeroE,
     .XNaNE, .YNaNE, .MDUE,
     .XInfE, .YInfE, .WZeroE, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, // .SqrtM,
+    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, 
     .X,.DPreproc, .FirstWS(WS), .FirstWC(WC),
     .IFDivStartE, .FDivBusyE);
   fdivsqrtpostproc fdivsqrtpostproc(
