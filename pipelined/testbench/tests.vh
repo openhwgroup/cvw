@@ -138,6 +138,7 @@ string tvpaths[] = '{
   
 string imperas32f[] = '{
     `IMPERASTEST,
+    "rv32i_m/F/FSQRT-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RMM-01",
     "rv32i_m/F/FADD-S-DYN-RNE-01",
