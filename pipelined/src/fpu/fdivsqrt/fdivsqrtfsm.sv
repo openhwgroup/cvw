@@ -103,7 +103,7 @@ module fdivsqrtfsm(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    cycles =  MDUE ? (nE + 1) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    cycles =  MDUE ? ((nE + 1)/`DIVCOPIES) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */
