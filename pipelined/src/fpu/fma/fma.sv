@@ -36,7 +36,7 @@ module fma(
     input logic  [`NF:0]        Xm, Ym, Zm,    // input's significands in U(0.NF) format
     input logic                 XZero, YZero, ZZero, // is the input zero
     input logic  [2:0]          OpCtrl,   // 000 = fmadd (X*Y)+Z,  001 = fmsub (X*Y)-Z,  010 = fnmsub -(X*Y)+Z,  011 = fnmadd -(X*Y)-Z,  100 = fmul (X*Y)
-    output logic                ZmSticky,  // sticky bit that is calculated during alignment
+    output logic                ASticky,  // sticky bit that is calculated during alignment
     output logic [3*`NF+4:0]    Sm,//change           // the positive sum's significand
     output logic                InvA,          // Was A inverted for effective subtraction (P-A or -P+A)
     output logic                As,       // the aligned addend's sign (modified Z sign for other opperations)
@@ -75,7 +75,7 @@ module fma(
     fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
 
     fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
-                .Am, .ZmSticky, .KillProd);
+                .Am, .ASticky, .KillProd);
                         
 
 
@@ -83,10 +83,10 @@ module fma(
     // // Addition/LZA
     // ///////////////////////////////////////////////////////////////////////////////
         
-    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ZmSticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
+    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
     //change
-    fmalza #(3*`NF+5) lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ZmSticky&KillProd}), .Cin(InvA & ~(ZmSticky & ~KillProd)), .sub(InvA), .SCnt);
+    fmalza #(3*`NF+5) lza(.A(AmInv), .Pm({PmKilled, 1'b0, InvA&Ps&ASticky&KillProd}), .Cin(InvA & ~(ASticky & ~KillProd)), .sub(InvA), .SCnt);
 endmodule
 
 

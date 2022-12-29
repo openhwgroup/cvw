@@ -92,7 +92,7 @@ module testbenchfp;
   logic                 Ss;
   logic [`NE+1:0]	      Pe;
   logic [`NE+1:0]	      Se;
-  logic 				        ZmSticky;
+  logic 				        ASticky;
   logic 					      KillProd; 
   logic [$clog2(3*`NF+6)-1:0]	SCnt;
   logic [3*`NF+4:0]	    Sm;       
@@ -690,7 +690,7 @@ module testbenchfp;
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
             .XZero, .YZero, .ZZero, .Ss, .Se,
             .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
-            .ZmSticky); 
+            .ASticky); 
   end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
@@ -700,7 +700,7 @@ module testbenchfp;
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaZmS(ZmSticky), .FmaSe(Se),
+              .FmaZmS(ASticky), .FmaSe(Se),
               .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
