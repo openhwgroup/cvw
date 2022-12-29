@@ -113,12 +113,12 @@ module gsharePredictor
   ram2p1r1wb #(`BPRED_SIZE, 2) PHT(.clk(clk),
     .reset(reset),
     //.RA1(GHR[`BPRED_SIZE-1:0]),
-    .RA1(GHRLookup ^ PCNextF[`BPRED_SIZE:1]),
-    .RD1(BPPredF),
-    .REN1(~StallF),
-    .WA1(PHTUpdateAdr ^ PCE[`BPRED_SIZE:1]),
-    .WD1(UpdateBPPredE),
-    .WEN1(PHTUpdateEN),
-    .BitWEN1(2'b11));
+    .ra1(GHRLookup ^ PCNextF[`BPRED_SIZE:1]),
+    .rd1(BPPredF),
+    .ren1(~StallF),
+    .wa2(PHTUpdateAdr ^ PCE[`BPRED_SIZE:1]),
+    .wd2(UpdateBPPredE),
+    .wen2(PHTUpdateEN),
+    .bwe2(2'b11));
 
 endmodule // gsharePredictor

@@ -62,13 +62,13 @@ module twoBitPredictor
 
   ram2p1r1wb #(Depth, 2) PHT(.clk(clk),
     .reset(reset),
-    .RA1(LookUpPCIndex),
-    .RD1(PredictionMemory),
-    .REN1(~StallF),
-    .WA1(UpdatePCIndex),
-    .WD1(UpdatePrediction),
-    .WEN1(UpdateEN),
-    .BitWEN1(2'b11));
+    .ra1(LookUpPCIndex),
+    .rd1(PredictionMemory),
+    .ren1(~StallF),
+    .wa2(UpdatePCIndex),
+    .wd2(UpdatePrediction),
+    .wen2(UpdateEN),
+    .bwe2(2'b11));
 
   // need to forward when updating to the same address as reading.
   // first we compare to see if the update and lookup addreses are the same

@@ -105,13 +105,13 @@ module BTBPredictor
   // *** optimize for byte write enables
   ram2p1r1wb #(Depth, `XLEN+5) memory(.clk(clk),
           .reset(reset),
-          .RA1(LookUpPCIndex),
-          .RD1({{InstrClass, TargetPC}}),
-          .REN1(~StallF),
-          .WA1(UpdatePCIndex),
-          .WD1({UpdateInstrClass, UpdateTarget}),
-          .WEN1(UpdateEN),
-          .BitWEN1({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
+          .ra1(LookUpPCIndex),
+          .rd1({{InstrClass, TargetPC}}),
+          .ren1(~StallF),
+          .wa2(UpdatePCIndex),
+          .wd2({UpdateInstrClass, UpdateTarget}),
+          .wen2(UpdateEN),
+          .bwe2({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule
