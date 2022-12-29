@@ -34,7 +34,7 @@ module fdivsqrtexpcalc(
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic [`NE-1:0] Xe, Ye,
   input  logic Sqrt,
-  input  logic XZeroE, 
+  input  logic XZero, 
   input  logic [`DIVBLEN:0] ell, m,
   output logic [`NE+1:0] Qe
   );
@@ -70,7 +70,7 @@ module fdivsqrtexpcalc(
   assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - (`NE+2)'(`BIAS);
   assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
   // correct exponent for denormalized input's normalization shifts
-  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZeroE}};
+  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZero}};
   
   assign Qe = Sqrt ? SExp : DExp;
 endmodule

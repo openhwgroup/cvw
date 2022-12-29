@@ -39,7 +39,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb+1:0]  FirstC,
   input  logic              SqrtE,
   input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
-	input  logic [`XLEN-1:0]  ForwardedSrcAM,
+	input  logic [`XLEN-1:0]  AM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
@@ -130,7 +130,7 @@ module fdivsqrtpostproc(
     always_comb
       if (ALTBM) begin
         IntQuotM = '0;
-        IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, ForwardedSrcAM};
+        IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
       end else begin
         logic [`DIVb+3:0] PreIntQuotM;
         if (WZeroM) begin
@@ -170,7 +170,7 @@ module fdivsqrtpostproc(
     // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
     
     assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? ForwardedSrcAM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
+    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
     // *** conditional on RV64
     assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
   end
