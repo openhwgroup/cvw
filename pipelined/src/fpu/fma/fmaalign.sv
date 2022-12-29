@@ -36,7 +36,7 @@ module fmaalign(
     input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
     input logic                 XZero, YZero, ZZero, // is the input zero
     output logic [3*`NF+4:0]    Am,//change // addend aligned for addition in U(NF+5.2NF+1)
-    output logic                ZmSticky,  // Sticky bit calculated from the aliged addend
+    output logic                ASticky,  // Sticky bit calculated from the aliged addend
     output logic                KillProd       // should the product be set to zero
 );
 
@@ -44,6 +44,7 @@ module fmaalign(
     logic [4*`NF+4:0]   ZmShifted;//change        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
     logic [4*`NF+4:0]   ZmPreshifted;//change     // input to the alignment shifter U(NF+5.3NF+1)
     logic KillZ;
+    logic PmSticky, tmpZmSticky;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -73,7 +74,7 @@ module fmaalign(
         //  | addnend |
         if (KillProd) begin
             ZmShifted = {(`NF+2)'(0), Zm, (2*`NF+2)'(0)};//change
-            ZmSticky = ~(XZero|YZero);
+            ASticky = ~(XZero|YZero);
 
         // If the addend is too small to effect the addition        
         //      - The addend has to shift two past the end of the product to be considered too small
@@ -83,14 +84,14 @@ module fmaalign(
         //                                                      | addnend |
         end else if (KillZ)  begin
             ZmShifted = 0;
-            ZmSticky = ~ZZero;
+            ASticky = ~ZZero;
 
         // If the Addend is shifted right
         //          |   54'b0    |  106'b(product)  | 2'b0 |
         //                                  | addnend |
         end else begin
             ZmShifted = ZmPreshifted >> ACnt;
-            ZmSticky = |(ZmShifted[`NF-1:0]); 
+            ASticky = |(ZmShifted[`NF-1:0]); 
 
         end
     end

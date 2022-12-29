@@ -258,7 +258,7 @@ module fpu (
             .As(AsE), .Ps(PsE), .Ss(SsE), .Se(SeE),
             .Sm(SmE), 
             .InvA(InvAE), .SCnt(SCntE), 
-            .ZmSticky(ZmStickyE)); 
+            .ASticky(ZmStickyE)); 
 
    // divide and squareroot
    //    - fdiv
