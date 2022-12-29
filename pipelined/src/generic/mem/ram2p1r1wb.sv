@@ -63,7 +63,7 @@ module ram2p1r1wb
 
   logic [DEPTH-1:0]         ra1q, wa2q;
   logic                     wen2q;
-  logic [width-1:0]         wd2q;
+  logic [WIDTH-1:0]         wd2q;
 
   logic [WIDTH-1:0]         mem[2**DEPTH-1:0];
   logic [WIDTH-1:0]         bwe;
