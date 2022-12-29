@@ -68,27 +68,27 @@ module fdivsqrt(
   logic [`DIVBLEN:0] nE, nM, mM;
   logic NegQuotM, ALTBM, AsM, W64M;
   logic DivStartE;
-  logic [`XLEN-1:0] ForwardedSrcAM;
+  logic [`XLEN-1:0] AM;
 
   fdivsqrtpreproc fdivsqrtpreproc(
     .clk, .IFDivStartE, .Xm(XmE), .QeM, .Xe(XeE), .Fmt(FmtE), .Ye(YeE), 
-    .Sqrt(SqrtE), .Ym(YmE), .XZeroE, .X, .DPreproc, .ForwardedSrcAM, .MDUM, .W64M,
+    .Sqrt(SqrtE), .Ym(YmE), .XZeroE, .X, .DPreproc, .AM, .MDUM, .W64M,
     .nE, .nM, .mM, .NegQuotM, .ALTBM, .AZeroM, .BZeroM, .AZeroE, .BZeroE, .AsM,
     .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .MDUE, .W64E);
   fdivsqrtfsm fdivsqrtfsm(
     .clk, .reset, .FmtE, .XsE, .SqrtE, .nE,
-    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallM, .FlushE, /*.DivDone, */ 
+    .FDivBusyE, .FDivStartE, .IDivStartE, .IFDivStartE, .FDivDoneE, .StallM, .FlushE, 
     .XZeroE, .YZeroE, .AZeroE, .BZeroE,
     .XNaNE, .YNaNE, .MDUE,
     .XInfE, .YInfE, .WZeroE, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(
-    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, // .SqrtM,
+    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, 
     .X,.DPreproc, .FirstWS(WS), .FirstWC(WC),
     .IFDivStartE, .FDivBusyE);
   fdivsqrtpostproc fdivsqrtpostproc(
     .clk, .reset, .StallM,
     .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .Firstun, 
-    .SqrtM, .SpecialCaseM, .RemOpM(Funct3M[1]), .ForwardedSrcAM,
+    .SqrtM, .SpecialCaseM, .RemOpM(Funct3M[1]), .AM,
     .nM, .ALTBM, .mM, .BZeroM, .AsM, .NegQuotM, .W64M,
     .QmM, .WZeroE, .DivSM, .FPIntDivResultM);
 endmodule

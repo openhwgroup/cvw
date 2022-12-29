@@ -370,7 +370,7 @@ module wallypipelinedcore (
       assign BigEndianM = 0;
    end
    if (`M_SUPPORTED) begin:mdu
-      muldiv mdu(
+      mdu mdu(
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
          .Funct3E, .Funct3M, .MDUE, .W64E,

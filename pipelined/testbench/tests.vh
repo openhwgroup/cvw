@@ -138,6 +138,7 @@ string tvpaths[] = '{
   
 string imperas32f[] = '{
     `IMPERASTEST,
+    "rv32i_m/F/FSQRT-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RDN-01",
     "rv32i_m/F/FADD-S-DYN-RMM-01",
     "rv32i_m/F/FADD-S-DYN-RNE-01",
@@ -1198,8 +1199,6 @@ string imperas32f[] = '{
 
   string arch64d[] = '{
     `RISCVARCHTEST,
-    "rv64i_m/D/src/fsqrt.d_b1-01.S",
-    "rv64i_m/D/src/fdiv.d_b20-01.S",
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",

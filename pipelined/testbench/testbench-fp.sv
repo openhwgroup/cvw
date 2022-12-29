@@ -82,7 +82,7 @@ module testbenchfp;
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
 	logic [`DIVb:0] Quot;
   logic CvtResDenormUfE;
-  logic DivStart, FDivBusyE;
+  logic DivStart, FDivBusyE, OldFDivBusyE;
   logic reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
   logic [`DURLEN-1:0] Dur;
@@ -689,12 +689,12 @@ module testbenchfp;
             .Xe(Xe), .Ye(Ye), .Ze(Ze), 
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
             .XZero, .YZero, .ZZero, .Ss, .Se,
-            .OpCtrl(OpCtrlVal), .Fmt(ModFmt), .Sm, .InvA, .SCnt, .As, .Ps,
+            .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
             .ZmSticky); 
   end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-              .Ze(Ze),  .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
               .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
               .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
@@ -719,8 +719,8 @@ module testbenchfp;
     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), 
                     .FDivStartE(DivStart), .IDivStartE(1'b0), .MDUE(1'b0), .W64E(1'b0),
-                    .StallE(1'b0), .StallM(1'b0), .DivSM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
-                    .QmM(Quot), .DivDone);
+                    .StallM(1'b0), .DivSM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
+                    .QmM(Quot));
   end
 
   assign CmpFlg[3:0] = 0;
@@ -811,6 +811,9 @@ end
 
   logic ResMatch, FlagMatch, CheckNow;
 
+always @(posedge clk) 
+  OldFDivBusyE = FDivBusyE;
+
 // check results on falling edge of clk
 always @(negedge clk) begin
 
@@ -883,6 +886,7 @@ always @(negedge clk) begin
     ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
     FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
     divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
+    assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
     //assign divsqrtop = OpCtrl[TestNum] == `SQRT_OPCTRL | OpCtrl[TestNum] == `DIV_OPCTRL;
     CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);

@@ -9,6 +9,7 @@ __pycache__/
 #External repos
 addins/riscv-arch-test/Makefile.include
 addins/riscv-tests/target
+addins/TestFloat-3e/build/Linux-x86_64-GCC/*
 benchmarks/embench/wally*.json
 
 #vsim work files to ignore

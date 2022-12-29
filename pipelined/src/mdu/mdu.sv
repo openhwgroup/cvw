@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// muldiv.sv
+// mdu.sv
 //
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module muldiv (
+module mdu (
 	       input logic 		clk, reset,
 	       // Execute Stage interface
 	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
@@ -94,6 +94,6 @@ module muldiv (
 
 	// Writeback stage pipeline register
 	flopenrc #(`XLEN) MDUResultWReg(clk, reset, FlushW, ~StallW, MDUResultM, MDUResultW);	 
-endmodule // muldiv
+endmodule // mdu
 
 
