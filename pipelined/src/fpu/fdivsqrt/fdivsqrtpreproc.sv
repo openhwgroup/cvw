@@ -47,7 +47,7 @@ module fdivsqrtpreproc (
   output logic [`NE+1:0] QeM,
   output logic [`DIVb+3:0] X,
   output logic [`DIVb-1:0] DPreproc,
-  output logic [`XLEN-1:0] ForwardedSrcAM
+  output logic [`XLEN-1:0] AM
 );
 
   logic  [`DIVb-1:0] XPreproc;
@@ -56,9 +56,6 @@ module fdivsqrtpreproc (
   logic  [`NE+1:0] QeE;
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
-  logic  [`XLEN-1:0] PosA, PosB;
-  logic  AsE, BsE, ALTBE, NegQuotE;
-  logic  [`XLEN-1:0]  A64, B64, A64Src;
   logic  [`DIVBLEN:0] mE;
   logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
@@ -70,62 +67,87 @@ module fdivsqrtpreproc (
   // cout the number of leading zeros
 
   if (`IDIV_ON_FPU) begin
-    // *** W64 muxes conditional on RV64
-    // *** why !FUnct3E
-    assign AsE = ~Funct3E[0] & (W64E ? ForwardedSrcAE[31] : ForwardedSrcAE[`XLEN-1]);
-    assign BsE = ~Funct3E[0] & (W64E ? ForwardedSrcBE[31] : ForwardedSrcBE[`XLEN-1]);
-    assign A64 = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
-    assign B64 = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
-    assign A64Src = W64E ? {{(`XLEN-32){ForwardedSrcAE[31]}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;
+    logic signedDiv;
+    logic  AsE, BsE, ALTBE, NegQuotE;
+    logic  [`XLEN-1:0]  AE, BE;
+    logic  [`XLEN-1:0] PosA, PosB;
 
+    // Extract inputs, signs, zero, depending on W64 mode if applicable
+    assign signedDiv = ~Funct3E[0];
+    if (`XLEN==64) begin // 64-bit, supports W64
+      assign AsE = signedDiv & (W64E ? ForwardedSrcAE[31] : ForwardedSrcAE[`XLEN-1]);
+      assign BsE = signedDiv & (W64E ? ForwardedSrcBE[31] : ForwardedSrcBE[`XLEN-1]);
+      assign AE = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;  
+      assign BE = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
+      assign AZeroE = W64E ? ~(|ForwardedSrcAE[31:0]) : ~(|ForwardedSrcAE);
+      assign BZeroE = W64E ? ~(|ForwardedSrcBE[31:0]) : ~(|ForwardedSrcBE);
+    end else begin // 32 bits only
+      assign AsE = signedDiv & ForwardedSrcAE[`XLEN-1];
+      assign BsE = signedDiv & ForwardedSrcBE[`XLEN-1];
+      assign AE = ForwardedSrcAE;
+      assign BE = ForwardedSrcBE;
+      assign AZeroE = ~(|ForwardedSrcAE);
+      assign BZeroE = ~(|ForwardedSrcBE);
+    end
+
+    // Quotient is negative
     assign NegQuotE = (AsE ^ BsE) & MDUE;
     
-    assign PosA = AsE ? -A64 : A64;
-    assign PosB = BsE ? -B64 : B64;
-    assign AZeroE = W64E ? ~(|ForwardedSrcAE[31:0]) : ~(|ForwardedSrcAE);
-    assign BZeroE = W64E ? ~(|ForwardedSrcBE[31:0]) : ~(|ForwardedSrcBE);
+    // Force inputs to be postiive
+    assign PosA = AsE ? -AE : AE;
+    assign PosB = BsE ? -BE : BE;
 
-/*
+    // Select integer or floating point inputs 
     assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
     assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};
-    lzc #(`DIVb) lzcX (IFNormLenX, ell);
-    lzc #(`DIVb) lzcY (IFNormLenD, mE);
 
-    assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // had issue with (`DIVBLEN+1)'(~MDUE) so using this instead
-    assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); // replaced ~MDUE with 1 bc we always want that extra left shift
-*/
+    // Difference in number of leading zeros
     assign ZeroDiff = mE - ell;
     assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
     assign p = ALTBE ? '0 : ZeroDiff;
 
   /* verilator lint_off WIDTH */
+    // right shift amount to complete in discrete number of steps
     assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
     assign pPrTrunc = pPlusr % `RK;
-  //assign pPrTrunc = (`LOGRK == 0) ? 0 : pPlusr[`LOGRK-1:0];
     assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
     assign nE = (pPrCeil * (`DIVBLEN+1)'(`DIVCOPIES)) - {{(`DIVBLEN){1'b0}}, 1'b1};
     assign IntBits = (`DIVBLEN)'(`LOGR) + p - {{(`DIVBLEN){1'b0}}, 1'b1};
     assign RightShiftX = ((`DIVBLEN)'(`RK) - 1) - (IntBits % `RK);
-  //assign RightShiftX = (`LOGRK == 0) ? 0 : ((`DIVBLEN)'(`RK) - 1) - {{(`DIVBLEN - `RK){1'b0}}, IntBits[`LOGRK-1:0]};
   /* verilator lint_on WIDTH */
 
+    // Selet integer or floating-point operands
     assign NumZeroE = MDUE ? AZeroE : XZeroE;
-
     assign X = MDUE ? DivX >> RightShiftX : PreShiftX;
+
+    // pipeline registers
+    flopen #(1)        mdureg(clk, IFDivStartE, MDUE, MDUM);
+    flopen #(1)        w64reg(clk, IFDivStartE, W64E, W64M);
+    flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
+    flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
+    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
+    flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
+    flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
+    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
+    flopen #(1)      asignreg(clk, IFDivStartE, AsE, AsM);
+    flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE, AM);
+
   end else begin
+    assign IFNormLenX = {Xm, {(`DIVb-`NF-1){1'b0}}};
+    assign IFNormLenD = {Ym, {(`DIVb-`NF-1){1'b0}}};
     assign NumZeroE = XZeroE;
     assign X = PreShiftX;
   end
 
-  assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
-  assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};
+  // count leading zeros for denorm FP and to normalize integer inputs
   lzc #(`DIVb) lzcX (IFNormLenX, ell);
   lzc #(`DIVb) lzcY (IFNormLenD, mE);
 
-  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // had issue with (`DIVBLEN+1)'(~MDUE) so using this instead
-  assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); // replaced ~MDUE with 1 bc we always want that extra left shift
+  // Normalization shift
+  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
+  assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
-
+  //  append leading 1 (for nonzero inputs) and zero-extend
   assign SqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
   assign DivX = {3'b000, ~NumZeroE, XPreproc};
 
@@ -133,30 +155,9 @@ module fdivsqrtpreproc (
   if (`RADIX == 2)  assign PreShiftX = Sqrt ? {3'b111, SqrtX} : DivX;
   else              assign PreShiftX = Sqrt ? {2'b11, SqrtX, 1'b0} : DivX;
 
-  fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZeroE, .ell, .m(mE), .Qe(QeE));
+  // Floating-point exponent
+  fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
 
-  //           radix 2     radix 4
-  // 1 copies  DIVLEN+2    DIVLEN+2/2
-  // 2 copies  DIVLEN+2/2  DIVLEN+2/2*2
-  // 4 copies  DIVLEN+2/4  DIVLEN+2/2*4
-  // 8 copies  DIVLEN+2/8  DIVLEN+2/2*8
-
-  // DIVRESLEN = DIVLEN or DIVLEN+2
-  // r = 1 or 2
-  // DIVRESLEN/(r*`DIVCOPIES)
-
-  flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
-  flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
-  flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
-  flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
-  flopen #(1)      asignreg(clk, IFDivStartE, AsE, AsM);
-  flopen #(1)        mdureg(clk, IFDivStartE, MDUE, MDUM);
-  flopen #(1)        w64reg(clk, IFDivStartE, W64E, W64M);
-  flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
-  flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
   flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
-  flopen #(`XLEN)   srcareg(clk, IFDivStartE, A64Src, ForwardedSrcAM);
-
-
 endmodule
 
