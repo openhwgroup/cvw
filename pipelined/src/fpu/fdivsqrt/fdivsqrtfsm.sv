@@ -65,8 +65,10 @@ module fdivsqrtfsm(
 
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
-  assign ISpecialCaseE = AZeroE | BZeroE; // *** why is AZeroE part of this.  Should other special cases be considered?
-  assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
+  if (`IDIV_ON_FPU) begin
+    assign ISpecialCaseE = AZeroE | BZeroE; // *** why is AZeroE part of this.  Should other special cases be considered?
+    assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
+  end else assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, ~StallM, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
 // DIVN = `NF+3
@@ -103,7 +105,8 @@ module fdivsqrtfsm(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    cycles =  MDUE ? (nE + 1) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    if (`IDIV_ON_FPU) cycles =  MDUE ? ((nE + 1)/`DIVCOPIES) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    else              cycles = (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */
