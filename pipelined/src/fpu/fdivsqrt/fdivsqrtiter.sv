@@ -77,12 +77,18 @@ module fdivsqrtiter(
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root or negative-result int division; U to 0 and UM to -1 otherwise
+  
   assign initU =  SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
   assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  mux2   #(`DIVb+1) Umux(UNext[`DIVCOPIES-1], initU, IFDivStartE, UMux);
-  mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
-  flopen #(`DIVb+1) UReg(clk, IFDivStartE|FDivBusyE, UMux, U[0]);
-  flopen #(`DIVb+1) UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
+  
+  /*
+  mux2 #(`DIVb+1)  initUmux(0, {1'b1, {(`DIVb){1'b0}}}, SqrtE, initU);
+  mux2 #(`DIVb+1) initUMmux({1'b1, {(`DIVb){1'b0}}}, 0, SqrtE, initUM);
+  */
+  mux2 #(`DIVb+1)      Umux(UNext[`DIVCOPIES-1],  initU,  IFDivStartE, UMux);
+  mux2 #(`DIVb+1)     UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
+  flopen #(`DIVb+1)    UReg(clk, IFDivStartE|FDivBusyE, UMux,  U[0]);
+  flopen #(`DIVb+1)   UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division

@@ -96,11 +96,10 @@ module fdivsqrtpostproc(
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
   assign NegStickyM = Sum[`DIVb+3];
-  
-  assign PreQmM = NegStickyM ? FirstUM : FirstU; // Select U or U-1 depending on negative sticky bit
-  assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
+  mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM);// Select U or U-1 depending on negative sticky bit
+  mux2 #(`DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
 
-  if (`IDIV_ON_FPU) begin
+  if (`IDIV_ON_FPU) begin // Int supported
     logic [`DIVBLEN:0] NormShiftM;
     logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM;
 
@@ -113,14 +112,12 @@ module fdivsqrtpostproc(
 
     // special case logic
     always_comb
-      if (BZeroM) begin 
+      if (BZeroM) begin         // Divide by zero
         if (RemOpM) SpecialFPIntDivResultM = AM;
         else        SpecialFPIntDivResultM = {(`XLEN){1'b1}};
-      end else if (ALTBM) begin
+      end else if (ALTBM) begin // Numerator is zero
         if (RemOpM) SpecialFPIntDivResultM = AM;
         else        SpecialFPIntDivResultM = '0;
- //       IntQuotM = '0;
- //       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
       end else begin
         logic [`DIVb+3:0] PreIntQuotM;
         if (WZeroM) begin
@@ -139,7 +136,7 @@ module fdivsqrtpostproc(
         if (NegQuotM) IntQuotM = -PreIntQuotM;
         else          IntQuotM =  PreIntQuotM;
         if (RemOpM) begin
-          NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
+          NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
           PreResultM = IntRemM;
         end else begin
           NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));

@@ -59,7 +59,7 @@ module fdivsqrtpreproc (
   logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
   logic  NumerZeroE;                          // Numerator is zero (X or A)
 
-  if (`IDIV_ON_FPU) begin
+  if (`IDIV_ON_FPU) begin // Int Supported
     logic signedDiv, NegQuotE;
     logic AsBit, BsBit, AsE, BsE, ALTBE;
     logic [`XLEN-1:0] AE, BE, PosA, PosB;
@@ -127,7 +127,7 @@ module fdivsqrtpreproc (
     flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
     flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
 
-  end else begin // Int div not supported
+  end else begin // Int not supported
     assign IFNormLenX = {Xm, {(`DIVb-`NF-1){1'b0}}};
     assign IFNormLenD = {Ym, {(`DIVb-`NF-1){1'b0}}};
     assign NumerZeroE = XZeroE;

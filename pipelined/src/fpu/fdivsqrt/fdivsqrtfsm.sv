@@ -56,7 +56,7 @@ module fdivsqrtfsm(
 
   logic [`DURLEN-1:0] step;
   logic [`DURLEN-1:0] cycles;
-  logic SpecialCaseE, FSpecialCaseE, ISpecialCaseE;
+  logic SpecialCaseE, FSpecialCaseE;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
   assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
@@ -65,10 +65,8 @@ module fdivsqrtfsm(
 
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
-  if (`IDIV_ON_FPU) begin
-    assign ISpecialCaseE = AZeroE | BZeroE; // *** why is AZeroE part of this.  Should other special cases be considered?
-    assign SpecialCaseE  = MDUE ? ISpecialCaseE : FSpecialCaseE;
-  end else assign SpecialCaseE = FSpecialCaseE;
+  if (`IDIV_ON_FPU) assign SpecialCaseE = MDUE ? BZeroE : FSpecialCaseE;
+  else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
 // DIVN = `NF+3
@@ -117,9 +115,9 @@ module fdivsqrtfsm(
       end else if (IFDivStartE) begin 
           step <= cycles; 
           if (SpecialCaseE) state <= #1 DONE;
-          else             state <= #1 BUSY;
+          else              state <= #1 BUSY;
       end else if (state == BUSY) begin 
-          if (step == 1 | WZeroE)  state <= #1 DONE; // finished steps or terminate early on zero residual
+          if (step == 1 | WZeroE) state <= #1 DONE; // finished steps or terminate early on zero residual
           step <= step - 1;
       end else if (state == DONE) begin
         if (StallM) state <= #1 DONE;
