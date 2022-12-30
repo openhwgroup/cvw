@@ -57,27 +57,29 @@ module fdivsqrtpreproc (
   logic  [`NE+1:0] QeE;                       // Quotient Exponent (FP only)
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
   logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
-  logic  NumZeroE;                            // Numerator is zero (X or A)
+  logic  NumerZeroE;                          // Numerator is zero (X or A)
 
   if (`IDIV_ON_FPU) begin
-    logic signedDiv;
-    logic  AsE, BsE, ALTBE, NegQuotE;
-    logic  [`XLEN-1:0] AE, BE, PosA, PosB;
-    logic  [`DIVBLEN:0] TotalIntBits, ZeroDiff, IntSteps, p;
-    logic  [`LOGRK-1:0] IntTrunc, RightShiftX;
+    logic signedDiv, NegQuotE;
+    logic AsBit, BsBit, AsE, BsE, ALTBE;
+    logic [`XLEN-1:0] AE, BE, PosA, PosB;
+    logic [`DIVBLEN:0] TotalIntBits, ZeroDiff, IntSteps, p;
+    logic [`LOGRK-1:0] IntTrunc, RightShiftX;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
     if (`XLEN==64) begin // 64-bit, supports W64
-      assign AsE = signedDiv & (W64E ? ForwardedSrcAE[31] : ForwardedSrcAE[`XLEN-1]);
-      assign BsE = signedDiv & (W64E ? ForwardedSrcBE[31] : ForwardedSrcBE[`XLEN-1]);
-      assign AE = W64E ? {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]} : ForwardedSrcAE;  
-      assign BE = W64E ? {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]} : ForwardedSrcBE;
-      assign AZeroE = W64E ? ~(|ForwardedSrcAE[31:0]) : ~(|ForwardedSrcAE);
-      assign BZeroE = W64E ? ~(|ForwardedSrcBE[31:0]) : ~(|ForwardedSrcBE);
+      mux2 #(1) azeromux(~(|ForwardedSrcAE), ~(|ForwardedSrcAE[31:0]), W64E, AZeroE);
+      mux2 #(1) bzeromux(~(|ForwardedSrcBE), ~(|ForwardedSrcBE[31:0]), W64E, BZeroE);
+      mux2 #(1)  abitmux(ForwardedSrcAE[63], ForwardedSrcAE[31], W64E, AsBit);
+      mux2 #(1)  bbitmux(ForwardedSrcBE[63], ForwardedSrcBE[31], W64E, BsBit);
+      mux2 #(64)    amux(ForwardedSrcAE, {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]}, W64E, AE);
+      mux2 #(64)    bmux(ForwardedSrcBE, {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]}, W64E, BE);
+      assign AsE = signedDiv & AsBit;
+      assign BsE = signedDiv & BsBit;
     end else begin // 32 bits only
-      assign AsE = signedDiv & ForwardedSrcAE[`XLEN-1];
-      assign BsE = signedDiv & ForwardedSrcBE[`XLEN-1];
+      assign AsE = signedDiv & ForwardedSrcAE[31];
+      assign BsE = signedDiv & ForwardedSrcBE[31];
       assign AE = ForwardedSrcAE;
       assign BE = ForwardedSrcBE;
       assign AZeroE = ~(|ForwardedSrcAE);
@@ -87,22 +89,22 @@ module fdivsqrtpreproc (
     // Quotient is negative
     assign NegQuotE = (AsE ^ BsE) & MDUE;
     
-    // Force inputs to be postiive
-    assign PosA = AsE ? -AE : AE;
-    assign PosB = BsE ? -BE : BE;
+    // Force integer inputs to be postiive
+    mux2 #(`XLEN) posamux(AE, -AE, AsE, PosA);
+    mux2 #(`XLEN) posbmux(BE, -BE, BsE, PosB);
 
-    // Select integer or floating point inputs 
-    assign IFNormLenX = MDUE ? {PosA, {(`DIVb-`XLEN){1'b0}}} : {Xm, {(`DIVb-`NF-1){1'b0}}};
-    assign IFNormLenD = MDUE ? {PosB, {(`DIVb-`XLEN){1'b0}}} : {Ym, {(`DIVb-`NF-1){1'b0}}};
+    // Select integer or floating point inputs
+    mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenX);
+    mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenD);
 
-    // Difference in number of leading zeros
-    assign ZeroDiff = mE - ell;
-    assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
-    assign p = ALTBE ? '0 : ZeroDiff;  // number of fractional result bits for int div
+    // calculate number of fractional bits p
+    assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
+    assign ALTBE = ZeroDiff[`DIVBLEN];  // A less than B?
+    mux2 #(`DIVBLEN+1) pmux(ZeroDiff, 0, ALTBE, p);                         
 
   /* verilator lint_off WIDTH */
     // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
-    assign TotalIntBits = `LOGR + p;                            // Total number of result bits
+    assign TotalIntBits = `LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
     assign IntTrunc = TotalIntBits % `RK;                       // Truncation check for ceiling operator
     assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
     assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
@@ -110,8 +112,8 @@ module fdivsqrtpreproc (
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
-    assign NumZeroE = MDUE ? AZeroE : XZeroE;
-    assign X = MDUE ? DivX >> RightShiftX : PreShiftX;
+    mux2 #(1)    numzmux(XZeroE, AZeroE, MDUE, NumerZeroE);
+    mux2 #(`DIVb+4) xmux(PreShiftX, DivX >> RightShiftX, MDUE, X);
 
     // pipeline registers
     flopen #(1)        mdureg(clk, IFDivStartE, MDUE,     MDUM);
@@ -128,7 +130,7 @@ module fdivsqrtpreproc (
   end else begin // Int div not supported
     assign IFNormLenX = {Xm, {(`DIVb-`NF-1){1'b0}}};
     assign IFNormLenD = {Ym, {(`DIVb-`NF-1){1'b0}}};
-    assign NumZeroE = XZeroE;
+    assign NumerZeroE = XZeroE;
     assign X = PreShiftX;
   end
 
@@ -140,14 +142,14 @@ module fdivsqrtpreproc (
   assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
-  //  append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
-  assign PreSqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc};
-  assign DivX = {3'b000, ~NumZeroE, XPreproc};
+  // append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
+  mux2 #(`DIVb+1) sqrtxmux({~NumerZeroE, XPreproc}, {1'b0, ~NumerZeroE, XPreproc[`DIVb-1:1]}, (Xe[0]^ell[0]), PreSqrtX);
+  assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
-  assign PreShiftX = Sqrt ? SqrtX : DivX;
+  mux2 #(`DIVb+4) prexmux(DivX, SqrtX, Sqrt, PreShiftX);
  
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
