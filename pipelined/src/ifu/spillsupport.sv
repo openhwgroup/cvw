@@ -42,7 +42,6 @@ module spillsupport #(parameter CACHE_ENABLED)
    input logic [31:0]       InstrRawF,
    input logic              IFUCacheBusStallD,
    input logic              ITLBMissF, 
-   input logic              InstrDAPageFaultF, 
    output logic [`XLEN-1:0] PCNextFSpill,
    output logic [`XLEN-1:0] PCFSpill,
    output logic             SelNextSpillF,
@@ -68,7 +67,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   
   assign PossibleSpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
   assign SpillF = PossibleSpillF & ~FirstHalfCompressedF & ~IFUCacheBusStallD;
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
+  assign TakeSpillF = SpillF & ~ITLBMissF;
   
   always_ff @(posedge clk)
     if (reset | Flush)    CurrState <= #1 STATE_READY;
