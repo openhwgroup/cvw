@@ -41,12 +41,19 @@ module irom(
   logic [`XLEN-1:0] ReadDataFull;
 
   rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataFull));
-  if (`XLEN == 32) assign ReadData = ReadDataFull;
+  if (`XLEN == 32) begin
+	logic AdrD;
+    flopen #(1) AdrReg(clk, ce, Adr[1], AdrD);
+	assign ReadData = AdrD ? {16'b0, ReadDataFull[31:16]} : ReadDataFull;
+  end
   // have to delay Ardr[OFFSET-1] by 1 cycle
   else             begin
-    logic AdrD;
-    flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
-    assign ReadData = AdrD ? ReadDataFull[63:32] : ReadDataFull[31:0];
+    logic [OFFSET-2:0] AdrD;
+    flopen #(OFFSET-1) AdrReg(clk, ce, Adr[OFFSET-1:1], AdrD);
+    assign ReadData = AdrD == 2'b11 ? {16'b0, ReadDataFull[63:48]} :
+					  AdrD == 2'b10 ? ReadDataFull[63:32] :
+					  AdrD == 2'b01 ? ReadDataFull[47:16] :
+					  ReadDataFull[31:0];
   end
 endmodule  
   
