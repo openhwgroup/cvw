@@ -52,7 +52,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   localparam integer   SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1;
   logic [`XLEN-1:0]    PCPlus2F;
   logic                TakeSpillF;
-  logic                SpillF, PossibleSpillF, FirstHalfCompressedF;
+  logic                FirstHalfCompressedF;
   logic                SelSpillF, SpillSaveF;
   logic [15:0]         InstrFirstHalfF;
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
@@ -65,9 +65,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   // select between PCF and PCF+2
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
-  assign PossibleSpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign SpillF = PossibleSpillF & ~FirstHalfCompressedF & ~IFUCacheBusStallD;
-  assign TakeSpillF = SpillF & ~ITLBMissF;
+  assign TakeSpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1] & ~FirstHalfCompressedF & ~IFUCacheBusStallD & ~ITLBMissF;
   
   always_ff @(posedge clk)
     if (reset | Flush)    CurrState <= #1 STATE_READY;
@@ -88,11 +86,7 @@ module spillsupport #(parameter CACHE_ENABLED)
                          (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
   
-  flopenr #(16) SpillInstrReg(.clk(clk),
-                              .en(SpillSaveF  & ~Flush),
-                              .reset(reset),
-                              .d(InstrRawF[15:0]),
-                              .q(InstrFirstHalfF));
+  flopenrc #(16) SpillInstrReg(clk, reset, Flush, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
 
   mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], InstrFirstHalfF}), .s(SelSpillF),
     .y(PostSpillInstrRawF));
