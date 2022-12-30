@@ -57,23 +57,25 @@ module fdivsqrt(
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
+  // Computes X/Y, sqrt(X), A/B, or A%B
 
-  logic [`DIVb+3:0] WS, WC;
-  logic [`DIVb+3:0] X;
-  logic [`DIVb-1:0] D;
-  logic [`DIVb-1:0] DPreproc;
-  logic [`DIVb:0]   FirstU, FirstUM;
-  logic [`DIVb+1:0] FirstC;
-  logic Firstun;
-  logic WZeroE;
-  logic SpecialCaseM;
-  logic DivStartE;
+  logic [`DIVb+3:0] WS, WC;           // Partial remainder components
+  logic [`DIVb+3:0] X;                // Iterator Initial Value (from dividend)
+  logic [`DIVb-1:0] DPreproc, D;      // Iterator Divisor
+  logic [`DIVb:0]   FirstU, FirstUM;  // Intermediate result values
+  logic [`DIVb+1:0] FirstC;           // Step tracker
+  logic Firstun;                      // Quotient selection
+  logic WZeroE;                       // Early termination flag
+  logic SpecialCaseM;                 // Divide by zero, square root of negative, etc.
+  logic DivStartE;                    // Enable signal for flops during stall
 
   // Integer div/rem signals
-  logic AZeroM, BZeroM, AZeroE, BZeroE, MDUM;
-  logic [`DIVBLEN:0] nE, nM, mM;
-  logic NegQuotM, ALTBM, AsM, W64M;
-  logic [`XLEN-1:0] AM;
+  logic AZeroE, BZeroE;               // Numerator/Denominator is zero (Execute) 
+  logic AZeroM, BZeroM;               // Numerator/Denominator is zero (Memory) 
+  logic MDUM;                         // Integer operation
+  logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
+  logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
+  logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
 
   fdivsqrtpreproc fdivsqrtpreproc(            // Preprocessor
     // Inputs
