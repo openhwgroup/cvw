@@ -38,36 +38,33 @@ module fdivsqrtpreproc (
   input  logic [`FMTBITS-1:0] Fmt,
   input  logic Sqrt,
   input  logic XZeroE,
-  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E,
+  output logic [`NE+1:0] QeM,
+  output logic [`DIVb+3:0] X,
+  output logic [`DIVb-1:0] DPreproc,
+  // Int-specific
+  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic MDUE, W64E,
   output logic [`DIVBLEN:0] nE, nM, mM,
   output logic NegQuotM, ALTBM, MDUM, W64M,
   output logic AsM, AZeroM, BZeroM, AZeroE, BZeroE,
-  output logic [`NE+1:0] QeM,
-  output logic [`DIVb+3:0] X,
-  output logic [`DIVb-1:0] DPreproc,
   output logic [`XLEN-1:0] AM
 );
 
   logic  [`DIVb-1:0] XPreproc;
   logic  [`DIVb:0] PreSqrtX;
-  logic  [`DIVb+3:0] DivX, SqrtX;
-  logic  [`NE+1:0] QeE;
-  logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
-  logic  [`DIVBLEN:0] mE, ell;
-  logic  [`DIVb+3:0]  PreShiftX;
-  logic  NumZeroE;
+  logic  [`DIVb+3:0] DivX, SqrtX, PreShiftX;  // Variations of dividend, to be muxed
+  logic  [`NE+1:0] QeE;                       // Quotient Exponent (FP only)
+  logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
+  logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
+  logic  NumZeroE;                            // Numerator is zero (X or A)
 
   if (`IDIV_ON_FPU) begin
     logic signedDiv;
     logic  AsE, BsE, ALTBE, NegQuotE;
-    logic  [`XLEN-1:0]  AE, BE;
-    logic  [`XLEN-1:0] PosA, PosB;
-    logic  [`DIVBLEN:0] ZeroDiff, IntBits;
-    logic  [`LOGRK-1:0] RightShiftX;
-    logic  [`DIVBLEN:0] pPlusr, pPrCeil, p;
-    logic  [`LOGRK-1:0] pPrTrunc;
+    logic  [`XLEN-1:0] AE, BE, PosA, PosB;
+    logic  [`DIVBLEN:0] TotalIntBits, ZeroDiff, IntSteps, p;
+    logic  [`LOGRK-1:0] IntTrunc, RightShiftX;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
@@ -101,16 +98,15 @@ module fdivsqrtpreproc (
     // Difference in number of leading zeros
     assign ZeroDiff = mE - ell;
     assign ALTBE = ZeroDiff[`DIVBLEN]; // A less than B
-    assign p = ALTBE ? '0 : ZeroDiff;
+    assign p = ALTBE ? '0 : ZeroDiff;  // number of fractional result bits for int div
 
   /* verilator lint_off WIDTH */
-    // calculate number of cycles nE right shift amount RightShiftX to complete in discrete number of steps
-    assign pPlusr = `LOGR + p;
-    assign pPrTrunc = pPlusr % `RK;
-    assign pPrCeil = (pPlusr >> `LOGRK) + |pPrTrunc;
-    assign nE = (pPrCeil * `DIVCOPIES) - 1;
-    assign IntBits = `LOGR + p - 1;
-    assign RightShiftX = `RK - 1 - IntBits % `RK;
+    // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
+    assign TotalIntBits = `LOGR + p;                            // Total number of result bits
+    assign IntTrunc = TotalIntBits % `RK;                       // Truncation check for ceiling operator
+    assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
+    assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
+    assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
@@ -118,18 +114,18 @@ module fdivsqrtpreproc (
     assign X = MDUE ? DivX >> RightShiftX : PreShiftX;
 
     // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, MDUE, MDUM);
-    flopen #(1)        w64reg(clk, IFDivStartE, W64E, W64M);
-    flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE, nM);
-    flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE, mM);
-    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE, ALTBM);
+    flopen #(1)        mdureg(clk, IFDivStartE, MDUE,     MDUM);
+    flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
+    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
-    flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE, AZeroM);
-    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE, BZeroM);
-    flopen #(1)      asignreg(clk, IFDivStartE, AsE, AsM);
-    flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE, AM);
+    flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE,   AZeroM);
+    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
+    flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
+    flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM);
+    flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
+    flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
 
-  end else begin
+  end else begin // Int div not supported
     assign IFNormLenX = {Xm, {(`DIVb-`NF-1){1'b0}}};
     assign IFNormLenD = {Ym, {(`DIVb-`NF-1){1'b0}}};
     assign NumZeroE = XZeroE;
@@ -144,11 +140,11 @@ module fdivsqrtpreproc (
   assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
-  //  append leading 1 (for nonzero inputs) and zero-extend
-  // *** explain this next line
-  assign PreSqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
+  //  append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
+  assign PreSqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc};
   assign DivX = {3'b000, ~NumZeroE, XPreproc};
-  // Sqrt is initialized after a first step of R(X-1), which depends on Radix
+
+  // Sqrt is initialized on step one as R(X-1), so depends on Radix
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   assign PreShiftX = Sqrt ? SqrtX : DivX;
