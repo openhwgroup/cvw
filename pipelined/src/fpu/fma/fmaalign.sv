@@ -35,16 +35,15 @@ module fmaalign(
     input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
     input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
     input logic                 XZero, YZero, ZZero, // is the input zero
-    output logic [3*`NF+4:0]    Am,//change // addend aligned for addition in U(NF+5.2NF+1)
+    output logic [3*`NF+3:0]    Am, // addend aligned for addition in U(NF+5.2NF+1)
     output logic                ASticky,  // Sticky bit calculated from the aliged addend
     output logic                KillProd       // should the product be set to zero
 );
 
     logic [`NE+1:0]     ACnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
-    logic [4*`NF+4:0]   ZmShifted;//change        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
-    logic [4*`NF+4:0]   ZmPreshifted;//change     // input to the alignment shifter U(NF+5.3NF+1)
+    logic [4*`NF+3:0]   ZmShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+    logic [4*`NF+3:0]   ZmPreshifted;     // input to the alignment shifter U(NF+5.3NF+1)
     logic KillZ;
-    logic PmSticky, tmpZmSticky;
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
@@ -57,38 +56,38 @@ module fmaalign(
     assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF+2) - {2'b0, Ze};
 
     // Defualt Addition with only inital left shift
-    //          |   53'b0    |  106'b(product)  | 2'b0 |
+    //          |   53'b0    |  106'b(product)  | 1'b0 |
     //          | addnend |
 
-    assign ZmPreshifted = {Zm,(3*`NF+4)'(0)}; //change
+    assign ZmPreshifted = {Zm,(3*`NF+3)'(0)};
     
     assign KillProd = (ACnt[`NE+1]&~ZZero)|XZero|YZero;
-    assign KillZ = $signed(ACnt)>$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(4));//change
+    assign KillZ = $signed(ACnt)>$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(3));
 
     always_comb
         begin
         
         // If the product is too small to effect the sum, kill the product
 
-        //          |   54'b0    |  106'b(product)  | 2'b0 |
+        //          |   53'b0    |  106'b(product)  | 1'b0 |
         //  | addnend |
         if (KillProd) begin
-            ZmShifted = {(`NF+2)'(0), Zm, (2*`NF+2)'(0)};//change
+            ZmShifted = {(`NF+2)'(0), Zm, (2*`NF+1)'(0)};
             ASticky = ~(XZero|YZero);
 
         // If the addend is too small to effect the addition        
         //      - The addend has to shift two past the end of the product to be considered too small
         //      - The 2 extra bits are needed for rounding
 
-        //          |   54'b0    |  106'b(product)  | 2'b0 |
+        //          |   53'b0    |  106'b(product)  | 1'b0 |
         //                                                      | addnend |
         end else if (KillZ)  begin
             ZmShifted = 0;
             ASticky = ~ZZero;
 
         // If the Addend is shifted right
-        //          |   54'b0    |  106'b(product)  | 2'b0 |
-        //                                  | addnend |
+        //          |   53'b0    |  106'b(product)  | 1'b0 |
+        //                                    | addnend |
         end else begin
             ZmShifted = ZmPreshifted >> ACnt;
             ASticky = |(ZmShifted[`NF-1:0]); 
@@ -96,7 +95,7 @@ module fmaalign(
         end
     end
 
-    assign Am = ZmShifted[4*`NF+4:`NF];//change
+    assign Am = ZmShifted[4*`NF+3:`NF];
 
 endmodule
 
