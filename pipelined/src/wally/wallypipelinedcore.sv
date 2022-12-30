@@ -69,7 +69,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
  logic [`XLEN-1:0]         CSRReadValW, MDUResultW;
-   logic [`XLEN-1:0]         UnalignedPCNextF, PCNext2F;
+   logic [`XLEN-1:0]         UnalignedPCNextF, PC2NextF;
   (* mark_debug = "true" *) logic [1:0]             MemRWM;
   (* mark_debug = "true" *) logic             InstrValidM;
   logic             InstrMisalignedFaultM;
@@ -173,7 +173,7 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, 
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
-    .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
+    .HRDATA, .PCF, .IFUHADDR, .PC2NextF,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
@@ -334,7 +334,7 @@ module wallypipelinedcore (
          .clk, .reset,
          .FlushD, .FlushE, .FlushM, .FlushW, 
          .StallD, .StallE, .StallM, .StallW,
-         .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCNext2F,
+         .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
          .InstrM, .CSRReadValW, .UnalignedPCNextF,
          .RetM, .TrapM, 
          .sfencevmaM,
@@ -362,7 +362,7 @@ module wallypipelinedcore (
       );
    end else begin
       assign CSRReadValW = 0;
-      assign UnalignedPCNextF = PCNext2F;
+      assign UnalignedPCNextF = PC2NextF;
       assign RetM = 0;
       assign TrapM = 0;
       assign WFIStallM = 0;

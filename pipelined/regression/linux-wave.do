@@ -129,8 +129,8 @@ add wave -noupdate -group PCS /testbench/PCW
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext0F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PC0NextF
+add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PC1NextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
@@ -344,7 +344,7 @@ add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HPROT
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HMASTLOCK
-add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PCNext2F
+add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PC2NextF
 add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group AHB -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate -group AMO_ALU /testbench/dut/core/lsu/atomic/atomic/amoalu/funct

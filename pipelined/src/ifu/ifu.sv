@@ -55,7 +55,7 @@ module ifu (
 	input logic 				RetM, TrapM, 
     output logic                CommittedF, 
 	input logic [`XLEN-1:0] 	UnalignedPCNextF,
-    output logic [`XLEN-1:0]    PCNext2F,
+    output logic [`XLEN-1:0]    PC2NextF,
 	input logic         	    CSRWriteFenceM,
     input logic                 InvalidateICacheM,
 	output logic [31:0] 		InstrD, InstrM, 
@@ -110,14 +110,14 @@ module ifu (
   logic 					   CacheableF;
   logic [`XLEN-1:0]			   PCNextFSpill;
   logic [`XLEN-1:0] 		   PCFSpill;
-  logic 					   SelNextSpillF;
+  logic 					   SellSpillNextF;
   logic 					   ICacheFetchLine;
   logic 					   BusStall;
   logic 					   ICacheStallF, IFUCacheBusStallD;
   logic 					   GatedStallD;
 (* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
   // branch predictor signal
-  logic [`XLEN-1:0]            PCNext1F, PCNext0F;
+  logic [`XLEN-1:0]            PC1NextF, PC0NextF;
   logic                        BusCommittedF, CacheCommittedF;
   logic                        SelIROM;
   
@@ -130,12 +130,12 @@ module ifu (
   if(`C_SUPPORTED) begin : SpillSupport
     spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallF, .Flush(FlushD), .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
       .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill,
-      .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
+      .SellSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpillSupport
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
     assign PostSpillInstrRawF = InstrRawF;
-    assign {SelNextSpillF, CompressedF} = 0;
+    assign {SellSpillNextF, CompressedF} = 0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,8 +274,8 @@ module ifu (
   end
   
   assign IFUCacheBusStallD = ICacheStallF | BusStall;
-  assign IFUStallF = IFUCacheBusStallD | SelNextSpillF;
-  assign GatedStallD = StallD & ~SelNextSpillF;
+  assign IFUStallF = IFUCacheBusStallD | SellSpillNextF;
+  assign GatedStallD = StallD & ~SellSpillNextF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
 
@@ -284,8 +284,8 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`ZICSR_SUPPORTED | `ZIFENCEI_SUPPORTED)
-    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
-  else assign PCNext2F = PCNext1F;
+    mux2 #(`XLEN) pcmux2(.d0(PC1NextF), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PC2NextF));
+  else assign PC2NextF = PC1NextF;
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
@@ -323,15 +323,15 @@ module ifu (
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, 
                 .FlushD, .FlushE, .FlushM,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
                 .BPPredDirWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
 
   end else begin : bpred
-    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
+    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
     assign BPPredWrongE = PCSrcE;
     assign {InstrClassM, BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
-    assign PCNext0F = PCPlus2or4F;
+    assign PC0NextF = PCPlus2or4F;
     assign NextValidPCE = PCE;
   end      
 

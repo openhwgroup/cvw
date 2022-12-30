@@ -40,7 +40,7 @@ module csr #(parameter
   input  logic             FlushE, FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PCNext2F,
+  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PC2NextF,
   input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, IntPendingM, InterruptM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
@@ -156,7 +156,7 @@ module csr #(parameter
   // A return sets the PC to MEPC or SEPC
   assign RetM = mretM | sretM;
   mux2 #(`XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
-  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+  mux3 #(`XLEN) pcmux3(PC2NextF, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
   ///////////////////////////////////////////
   // CSRWriteValM

@@ -133,7 +133,7 @@ add wave -noupdate -group PCS /testbench/PCW
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PC1NextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
@@ -416,7 +416,7 @@ add wave -noupdate -group {debug trace} -expand -group mem -color Yellow /testbe
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/core/PCM
 add wave -noupdate -group {debug trace} -expand -group mem -color Brown /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
-add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
+add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PC2NextF
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedNextPCM
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PrivilegedChangePCM
 add wave -noupdate -group ifu -color Gold /testbench/dut/core/lsu/bus/busdp/busfsm/BusCurrState
