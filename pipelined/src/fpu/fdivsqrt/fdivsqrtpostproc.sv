@@ -102,14 +102,12 @@ module fdivsqrtpostproc(
 
   if (`IDIV_ON_FPU) begin
     logic [`DIVBLEN:0] NormShiftM;
-    logic [`DIVb:0] NormQuotM;
     logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM;
 
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
 
-    // Integer division: sign handling for div and rem
-    mux2 #(`DIVb+1) normquotmux(FirstU, FirstUM, NegStickyM, NormQuotM);
+    // Integer remainder: sticky and sign correction muxes
     mux2 #(`DIVb+4) normremdmux(W, W+DM, NegStickyM, NormRemDM);
     mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
 
@@ -129,7 +127,7 @@ module fdivsqrtpostproc(
             IntRemM  = '0;
           end 
         end else begin 
-          PreIntQuotM = {3'b000, NormQuotM};
+          PreIntQuotM = {3'b000, PreQmM};
           IntRemM  = NormRemM;
         end 
         // flip sign if necessary
@@ -147,7 +145,7 @@ module fdivsqrtpostproc(
       end
     
 
-    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
+    // integer division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
     
     assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
     assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
