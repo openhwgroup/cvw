@@ -86,13 +86,13 @@ module localHistoryPredictor
   // LHRE refers to the address that the past k branches points to in the exectution stage
   ram2p1r1wb #(k, 2) PHT(.clk(clk), 
     .reset(reset),
-    .RA1(ForwardLHRNext),
-    .RD1(PredictionMemory),
-    .REN1(~StallF),
-    .WA1(LHRFNext),
-    .WD1(UpdatePrediction),
-    .WEN1(UpdateEN),
-    .BitWEN1(2'b11));
+    .ra1(ForwardLHRNext),
+    .rd1(PredictionMemory),
+    .ren1(~StallF),
+    .wa2(LHRFNext),
+    .wd2(UpdatePrediction),
+    .wen2(UpdateEN),
+    .bwe2(2'b11));
 
 
   

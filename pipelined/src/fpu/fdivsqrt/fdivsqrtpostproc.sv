@@ -52,9 +52,6 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] PreQmM;
   logic NegStickyM;
   logic weq0E, weq0M, WZeroM;
-  logic [`DIVBLEN:0] NormShiftM;
-  logic [`DIVb:0] NormQuotM;
-  logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM;
   logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
   logic [`XLEN-1:0] SpecialFPIntDivResultM;
 
@@ -104,33 +101,26 @@ module fdivsqrtpostproc(
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 
   if (`IDIV_ON_FPU) begin
+    logic [`DIVBLEN:0] NormShiftM;
+    logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM;
+
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
 
-    // Integer division: sign handling for div and rem
-    always_comb 
-      if (~AsM)
-        if (NegStickyM) begin
-          NormQuotM = FirstUM;
-          NormRemM  = W + DM;
-        end else begin
-          NormQuotM = FirstU;
-          NormRemM  = W;
-        end
-      else 
-        if (NegStickyM) begin
-          NormQuotM = FirstUM;
-          NormRemM  = -(W + DM);
-        end else begin 
-          NormQuotM = FirstU;
-          NormRemM  = -W;
-        end
+    // Integer remainder: sticky and sign correction muxes
+    mux2 #(`DIVb+4) normremdmux(W, W+DM, NegStickyM, NormRemDM);
+    mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
 
-    // Integer division: Special cases
+    // special case logic
     always_comb
-      if (ALTBM) begin
-        IntQuotM = '0;
-        IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
+      if (BZeroM) begin 
+        if (RemOpM) SpecialFPIntDivResultM = AM;
+        else        SpecialFPIntDivResultM = {(`XLEN){1'b1}};
+      end else if (ALTBM) begin
+        if (RemOpM) SpecialFPIntDivResultM = AM;
+        else        SpecialFPIntDivResultM = '0;
+ //       IntQuotM = '0;
+ //       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
       end else begin
         logic [`DIVb+3:0] PreIntQuotM;
         if (WZeroM) begin
@@ -142,36 +132,28 @@ module fdivsqrtpostproc(
             IntRemM  = '0;
           end 
         end else begin 
-          PreIntQuotM = {3'b000, NormQuotM};
+          PreIntQuotM = {3'b000, PreQmM};
           IntRemM  = NormRemM;
         end 
         // flip sign if necessary
         if (NegQuotM) IntQuotM = -PreIntQuotM;
         else          IntQuotM =  PreIntQuotM;
-      end
-    
-    always_comb
-      if (RemOpM) begin
-        NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-        PreResultM = IntRemM;
-      end else begin
-        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-        PreResultM = IntQuotM;
-        /*
-        if (~ALTBM & NegQuotM) begin
-          PreResultM = {3'b111, -IntQuotM};
+        if (RemOpM) begin
+          NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
+          PreResultM = IntRemM;
         end else begin
-          PreResultM = {3'b000, IntQuotM};
-        end*/
-        //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
+          NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
+          PreResultM = IntQuotM;
+        end
+        PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+        SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
       end
-    
 
-    // division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-    
-    assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
-    // *** conditional on RV64
-    assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
+    // sign extend result for W64
+    if (`XLEN==64)
+      assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : 
+                                       SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
+    else
+      assign FPIntDivResultM = SpecialFPIntDivResultM[`XLEN-1:0];
   end
 endmodule
