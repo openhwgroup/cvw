@@ -104,7 +104,7 @@ module fdivsqrtpreproc (
     assign p = ALTBE ? '0 : ZeroDiff;
 
   /* verilator lint_off WIDTH */
-    // right shift amount to complete in discrete number of steps
+    // calculate number of cycles nE right shift amount RightShiftX to complete in discrete number of steps
     assign pPlusr = `LOGR + p;
     assign pPrTrunc = pPlusr % `RK;
     assign pPrCeil = (pPlusr >> `LOGRK) + |pPrTrunc;
@@ -145,6 +145,7 @@ module fdivsqrtpreproc (
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
   //  append leading 1 (for nonzero inputs) and zero-extend
+  // *** explain this next line
   assign PreSqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
   assign DivX = {3'b000, ~NumZeroE, XPreproc};
   // Sqrt is initialized after a first step of R(X-1), which depends on Radix
