@@ -57,7 +57,6 @@ module fdivsqrtpreproc (
   // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
   logic  [`DIVBLEN:0] mE;
-  logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
   logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
   logic  [`LOGRK:0] pPrTrunc;
   logic  [`DIVb+3:0]  PreShiftX;
@@ -71,6 +70,7 @@ module fdivsqrtpreproc (
     logic  AsE, BsE, ALTBE, NegQuotE;
     logic  [`XLEN-1:0]  AE, BE;
     logic  [`XLEN-1:0] PosA, PosB;
+    logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
@@ -108,12 +108,12 @@ module fdivsqrtpreproc (
 
   /* verilator lint_off WIDTH */
     // right shift amount to complete in discrete number of steps
-    assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
+    assign pPlusr = `LOGR + p;
     assign pPrTrunc = pPlusr % `RK;
-    assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
-    assign nE = (pPrCeil * (`DIVBLEN+1)'(`DIVCOPIES)) - {{(`DIVBLEN){1'b0}}, 1'b1};
-    assign IntBits = (`DIVBLEN)'(`LOGR) + p - {{(`DIVBLEN){1'b0}}, 1'b1};
-    assign RightShiftX = ((`DIVBLEN)'(`RK) - 1) - (IntBits % `RK);
+    assign pPrCeil = (pPlusr >> `LOGRK) + |pPrTrunc;
+    assign nE = (pPrCeil * `DIVCOPIES) - 1;
+    assign IntBits = `LOGR + p - 1;
+    assign RightShiftX = `RK - 1 - IntBits % `RK;
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
