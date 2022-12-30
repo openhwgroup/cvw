@@ -157,13 +157,6 @@ module fdivsqrtpostproc(
       end else begin
         NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
         PreResultM = IntQuotM;
-        /*
-        if (~ALTBM & NegQuotM) begin
-          PreResultM = {3'b111, -IntQuotM};
-        end else begin
-          PreResultM = {3'b000, IntQuotM};
-        end*/
-        //PreResultM = {IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM[`DIVb], IntQuotM}; // Suspicious Sign Extender
       end
     
 
@@ -171,7 +164,12 @@ module fdivsqrtpostproc(
     
     assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
     assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
-    // *** conditional on RV64
-    assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
+
+    // sign extend result for W64
+    if (`XLEN==64)
+      assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : 
+                                       SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
+    else
+      assign FPIntDivResultM = SpecialFPIntDivResultM[`XLEN-1:0];
   end
 endmodule
