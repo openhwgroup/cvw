@@ -76,12 +76,10 @@ module fdivsqrtiter(
   flopen #(`DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
-  // Initialize U to 1.0 and UM to 0 for square root or negative-result int division; U to 0 and UM to -1 otherwise
-  
+  // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 otherwise
   assign initU =  SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
   assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  
-  /*
+  /* These muxes don't work for some reason.
   mux2 #(`DIVb+1)  initUmux(0, {1'b1, {(`DIVb){1'b0}}}, SqrtE, initU);
   mux2 #(`DIVb+1) initUMmux({1'b1, {(`DIVb){1'b0}}}, 0, SqrtE, initUM);
   */
