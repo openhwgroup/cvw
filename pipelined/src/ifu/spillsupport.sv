@@ -92,7 +92,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF  & ~Flush),
                               .reset(reset),
-                              .d(SavedInstr),
+                              .d(InstrRawF[15:0]),
                               .q(SpillDataLine0));
 
   mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
