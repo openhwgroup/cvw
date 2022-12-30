@@ -70,7 +70,8 @@ module fdivsqrtpreproc (
     logic  AsE, BsE, ALTBE, NegQuotE;
     logic  [`XLEN-1:0]  AE, BE;
     logic  [`XLEN-1:0] PosA, PosB;
-    logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
+    logic  [`DIVBLEN:0] ZeroDiff, IntBits;
+    logic  [`LOGRK-1:0] RightShiftX;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
