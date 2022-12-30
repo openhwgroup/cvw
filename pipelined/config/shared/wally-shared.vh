@@ -104,9 +104,9 @@
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`QLEN+`NF+1) > (3*`NF+7) ? (`QLEN+`NF+1) : (3*`NF+7))//change
+`define NORMSHIFTSZ ((`QLEN+`NF+1) > (3*`NF+6) ? (`QLEN+`NF+1) : (3*`NF+6))
 `define LOGNORMSHIFTSZ ($clog2(`NORMSHIFTSZ))
-`define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+7) ? (`DIVRESLEN+`NF) : (3*`NF+5))//change
+`define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+6) ? (`DIVRESLEN+`NF) : (3*`NF+4))
 
 // division constants
 `define RADIX 32'h4
