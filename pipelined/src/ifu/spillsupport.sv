@@ -44,7 +44,7 @@ module spillsupport #(parameter CACHE_ENABLED)
    input logic              ITLBMissF, 
    output logic [`XLEN-1:0] PCNextFSpill,
    output logic [`XLEN-1:0] PCFSpill,
-   output logic             SelNextSpillF,
+   output logic             SellSpillNextF,
    output logic [31:0]      PostSpillInstrRawF,
    output logic             CompressedF);
 
@@ -61,7 +61,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   // compute PCF+2
   mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
   // select between PCNextF and PCF+2
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~Flush), .y(PCNextFSpill));
+  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SellSpillNextF & ~Flush), .y(PCNextFSpill));
   // select between PCF and PCF+2
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
@@ -84,7 +84,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   end
 
   assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
+  assign SellSpillNextF = (CurrState == STATE_READY & TakeSpillF) |
                          (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
   

@@ -42,7 +42,7 @@ module bpred (
    input logic [31:0]       InstrD,        // Decompressed decode stage instruction 
    input logic [`XLEN-1:0]  PCNextF,       // Next Fetch Address
    input logic [`XLEN-1:0]  PCPlus2or4F,   // PCF+2/4
-   output logic [`XLEN-1:0] PCNext1F,      // Branch Predictor predicted or corrected fetch address on miss prediction
+   output logic [`XLEN-1:0] PC1NextF,      // Branch Predictor predicted or corrected fetch address on miss prediction
    output logic [`XLEN-1:0] NextValidPCE,  // Address of next valid instruction after the instruction in the Memory stage.
 
    // Update Predictor
@@ -80,7 +80,7 @@ module bpred (
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
   logic                     BPPredWrongM;
-  logic [`XLEN-1:0]         PCNext0F;
+  logic [`XLEN-1:0]         PC0NextF;
   logic [`XLEN-1:0] 		PCCorrectE;
 
   // Part 1 branch direction prediction
@@ -229,9 +229,9 @@ module bpred (
   satCounter2 BPDirUpdate(.BrDir(PCSrcE), .OldState(BPPredE), .NewState(UpdateBPPredE));
 
   // Selects the BP or PC+2/4.
-  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
+  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PC0NextF);
   // If the prediction is wrong select the correct address.
-  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
+  mux2 #(`XLEN) pcmux1(PC0NextF, PCCorrectE, BPPredWrongE, PC1NextF);  
   // Correct branch/jump target.
   mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
