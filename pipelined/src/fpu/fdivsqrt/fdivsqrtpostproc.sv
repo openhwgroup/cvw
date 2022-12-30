@@ -113,9 +113,12 @@ module fdivsqrtpostproc(
 
     // special case logic
     always_comb
-      if (ALTBM) begin
-        if (RemOpM) PreFPIntDivResultM = {{(`DIVb-`XLEN+4){1'b0}}, AM};
-        else        PreFPIntDivResultM = '0;
+      if (BZeroM) begin 
+        if (RemOpM) SpecialFPIntDivResultM = AM;
+        else        SpecialFPIntDivResultM = {(`XLEN){1'b1}};
+      end else if (ALTBM) begin
+        if (RemOpM) SpecialFPIntDivResultM = AM;
+        else        SpecialFPIntDivResultM = '0;
  //       IntQuotM = '0;
  //       IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
       end else begin
@@ -143,50 +146,8 @@ module fdivsqrtpostproc(
           PreResultM = IntQuotM;
         end
         PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+        SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
       end
-
-    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
-
-/*
-    // Integer division: Special cases
-    always_comb
-      if (ALTBM) begin
-        IntQuotM = '0;
-        IntRemM  = {{(`DIVb-`XLEN+4){1'b0}}, AM};
-      end else begin
-        logic [`DIVb+3:0] PreIntQuotM;
-        if (WZeroM) begin
-          if (weq0M) begin
-            PreIntQuotM = {3'b000, FirstU};
-            IntRemM  = '0;
-          end else begin
-            PreIntQuotM = {3'b000, FirstUM};
-            IntRemM  = '0;
-          end 
-        end else begin 
-          PreIntQuotM = {3'b000, PreQmM};
-          IntRemM  = NormRemM;
-        end 
-        // flip sign if necessary
-        if (NegQuotM) IntQuotM = -PreIntQuotM;
-        else          IntQuotM =  PreIntQuotM;
-      end
-    
-    always_comb
-      if (RemOpM) begin
-        NormShiftM = ALTBM ? '0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-        PreResultM = IntRemM;
-      end else begin
-        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-        PreResultM = IntQuotM;
-      end
-    
-
-    // integer division takes the result from the next cycle, which is shifted to the left one more time so the square root also needs to be shifted
-    
-    assign PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-    assign SpecialFPIntDivResultM = BZeroM ? (RemOpM ? AM : {(`XLEN){1'b1}}) : PreFPIntDivResultM[`XLEN-1:0]; // special cases
-*/
 
     // sign extend result for W64
     if (`XLEN==64)
