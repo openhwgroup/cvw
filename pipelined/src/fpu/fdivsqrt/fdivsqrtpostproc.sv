@@ -52,9 +52,6 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] PreQmM;
   logic NegStickyM;
   logic weq0E, weq0M, WZeroM;
-  logic [`DIVBLEN:0] NormShiftM;
-  logic [`DIVb:0] NormQuotM;
-  logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM;
   logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
   logic [`XLEN-1:0] SpecialFPIntDivResultM;
 
@@ -104,27 +101,17 @@ module fdivsqrtpostproc(
   assign QmM = SqrtM ? (PreQmM << 1) : PreQmM;
 
   if (`IDIV_ON_FPU) begin
+    logic [`DIVBLEN:0] NormShiftM;
+    logic [`DIVb:0] NormQuotM;
+    logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM;
+
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
 
     // Integer division: sign handling for div and rem
-    always_comb 
-      if (~AsM)
-        if (NegStickyM) begin
-          NormQuotM = FirstUM;
-          NormRemM  = W + DM;
-        end else begin
-          NormQuotM = FirstU;
-          NormRemM  = W;
-        end
-      else 
-        if (NegStickyM) begin
-          NormQuotM = FirstUM;
-          NormRemM  = -(W + DM);
-        end else begin 
-          NormQuotM = FirstU;
-          NormRemM  = -W;
-        end
+    mux2 #(`DIVb+1) normquotmux(FirstU, FirstUM, NegStickyM, NormQuotM);
+    mux2 #(`DIVb+4) normremdmux(W, W+DM, NegStickyM, NormRemDM);
+    mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
 
     // Integer division: Special cases
     always_comb
