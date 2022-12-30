@@ -43,7 +43,7 @@ module shiftcorrection(
     output logic [`NE+1:0]          Qe,
     output logic [`NE+1:0]          FmaMe         // exponent of the normalized sum
 );
-    logic [3*`NF+5:0]      CorrSumShifted;     // the shifted sum after LZA correction
+    logic [3*`NF+3:0]      CorrSumShifted;     // the shifted sum after LZA correction
     logic [`CORRSHIFTSZ-1:0] CorrQmShifted;
     logic                  ResDenorm;    // is the result denormalized
     logic                  LZAPlus1; // add one or two to the sum's exponent due to LZA correction
@@ -56,7 +56,7 @@ module shiftcorrection(
     assign CorrQmShifted = (LZAPlus1|(DivQe==1&~LZAPlus1)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
     // if the result of the divider was calculated to be denormalized, then the result was correctly normalized, so select the top shifted bits
     always_comb
-        if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+6){1'b0}}};
+        if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+4){1'b0}}};
         else if (DivOp&~DivResDenorm)   Mf = CorrQmShifted;
         else                            Mf = Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
