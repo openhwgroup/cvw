@@ -53,9 +53,9 @@ module spillsupport #(parameter CACHE_ENABLED)
   localparam integer   SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1;
   logic [`XLEN-1:0]    PCPlus2F;
   logic                TakeSpillF;
-  logic                SpillF;
+  logic                SpillF, PossibleSpillF, FirstHalfCompressedF;
   logic                SelSpillF, SpillSaveF;
-  logic [15:0]         SpillDataLine0, SavedInstr;
+  logic [15:0]         InstrFirstHalfF;
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
@@ -66,7 +66,8 @@ module spillsupport #(parameter CACHE_ENABLED)
   // select between PCF and PCF+2
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
   
-  assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
+  assign PossibleSpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
+  assign SpillF = PossibleSpillF & ~FirstHalfCompressedF & ~IFUCacheBusStallD;
   assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
   
   always_ff @(posedge clk)
@@ -87,16 +88,16 @@ module spillsupport #(parameter CACHE_ENABLED)
   assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
                          (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
-  assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];
   
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF  & ~Flush),
                               .reset(reset),
                               .d(InstrRawF[15:0]),
-                              .q(SpillDataLine0));
+                              .q(InstrFirstHalfF));
 
-  mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
+  mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], InstrFirstHalfF}), .s(SelSpillF),
     .y(PostSpillInstrRawF));
   assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
+  assign FirstHalfCompressedF = InstrRawF[1:0] != 2'b11;
 
 endmodule
