@@ -53,58 +53,58 @@ module testbenchfp;
   logic [`FLEN*4+7:0] TestVectors[8388609:0];     // list of test vectors
 
   logic [1:0]           FmtVal;          // value of the current Fmt
-  logic [2:0]           UnitVal, OpCtrlVal, FrmVal; // vlaue of the currnet Unit/OpCtrl/FrmVal
+  logic [2:0]           UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
   logic                 WriteIntVal;                // value of the current WriteInt
   logic [`FLEN-1:0]     X, Y, Z;                    // inputs read from TestFloat
   logic [`XLEN-1:0]     SrcA;                       // integer input
   logic [`FLEN-1:0]	    Ans;                        // correct answer from TestFloat
-  logic [`FLEN-1:0]	    Res;                                                // result from other units
-  logic [4:0]	 	        AnsFlg;                                             // correct flags read from testfloat
-  logic [4:0]	 	        ResFlg, Flg;                                                            // Result flags
-  logic	[`FMTBITS-1:0]  ModFmt;  // format - 10 = half, 00 = single, 01 = double, 11 = quad
-  logic [`FLEN-1:0]     FpRes, FpCmpRes;  // Results from each unit
-  logic [`XLEN-1:0]     IntRes, CmpRes;  // Results from each unit
+  logic [`FLEN-1:0]	    Res;                        // result from other units
+  logic [4:0]	 	        AnsFlg;                     // correct flags read from testfloat
+  logic [4:0]	 	        ResFlg, Flg;                // Result flags
+  logic	[`FMTBITS-1:0]  ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
+  logic [`FLEN-1:0]     FpRes, FpCmpRes;            // Results from each unit
+  logic [`XLEN-1:0]     IntRes, CmpRes;             // Results from each unit
   logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
   logic                 AnsNaN, ResNaN, NaNGood;
-  logic                 Xs, Ys, Zs;                     // sign of the inputs
-  logic [`NE-1:0]       Xe, Ye, Ze;                     // exponent of the inputs
-  logic [`NF:0]         Xm, Ym, Zm;                     // mantissas of the inputs
-  logic                 XNaN, YNaN, ZNaN;                     // is the input NaN
-  logic                 XSNaN, YSNaN, ZSNaN;                  // is the input a signaling NaN
-  logic                 XDenorm, ZDenorm;            // is the input denormalized
-  logic                 XInf, YInf, ZInf;                   // is the input infinity
-  logic                 XZero, YZero, ZZero;                // is the input zero
-  logic                 XExpMax, YExpMax, ZExpMax;         // is the input's exponent all ones  
-  logic  [`CVTLEN-1:0]      CvtLzcInE;      // input to the Leading Zero Counter (priority encoder)
-  logic        IntZero;
-  logic CvtResSgnE;
-  logic [`NE:0]           CvtCalcExpE;    // the calculated expoent
+  logic                 Xs, Ys, Zs;                 // sign of the inputs
+  logic [`NE-1:0]       Xe, Ye, Ze;                 // exponent of the inputs
+  logic [`NF:0]         Xm, Ym, Zm;                 // mantissas of the inputs
+  logic                 XNaN, YNaN, ZNaN;           // is the input NaN
+  logic                 XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
+  logic                 XDenorm, ZDenorm;           // is the input denormalized
+  logic                 XInf, YInf, ZInf;           // is the input infinity
+  logic                 XZero, YZero, ZZero;        // is the input zero
+  logic                 XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
+  logic  [`CVTLEN-1:0]  CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
+  logic                 IntZero;
+  logic                 CvtResSgnE;
+  logic [`NE:0]         CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVb:0] Quot;
-  logic CvtResDenormUfE;
-  logic DivStart, FDivBusyE, OldFDivBusyE;
-  logic reset = 1'b0;
+	logic [`DIVb:0]       Quot;
+  logic                 CvtResDenormUfE;
+  logic                 DivStart, FDivBusyE, OldFDivBusyE;
+  logic                 reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [`DURLEN-1:0] Dur;
+  logic [`DURLEN-1:0]   Dur;
 
   // in-between FMA signals
   logic                 Mult;
   logic                 Ss;
   logic [`NE+1:0]	      Pe;
   logic [`NE+1:0]	      Se;
-  logic 				        ZmSticky;
+  logic 				        ASticky;
   logic 					      KillProd; 
-  logic [$clog2(3*`NF+7)-1:0]	SCnt;
-  logic [3*`NF+5:0]	    Sm;       
+  logic [$clog2(3*`NF+5)-1:0]	SCnt;
+  logic [3*`NF+3:0]	    Sm;       
   logic 			          InvA;
   logic 			          NegSum;
   logic 			          As;
   logic 			          Ps;
-  logic       DivSticky;
-  logic       DivDone;
-  logic       DivNegSticky;
-  logic [`NE+1:0] DivCalcExp;
-  logic divsqrtop;
+  logic                 DivSticky;
+  logic                 DivDone;
+  logic                 DivNegSticky;
+  logic [`NE+1:0]       DivCalcExp;
+  logic                 divsqrtop;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -690,7 +690,7 @@ module testbenchfp;
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
             .XZero, .YZero, .ZZero, .Ss, .Se,
             .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
-            .ZmSticky); 
+            .ASticky); 
   end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
@@ -700,7 +700,7 @@ module testbenchfp;
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaZmS(ZmSticky), .FmaSe(Se),
+              .FmaZmS(ASticky), .FmaSe(Se),
               .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   

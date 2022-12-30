@@ -32,28 +32,27 @@
 
 module postprocess (
     // general signals
-    input logic                             Xs, Ys,  // input signs
+    input logic                             Xs, Ys,     // input signs
     input logic  [`NF:0]                    Xm, Ym, Zm, // input mantissas
-    input logic  [2:0]                      Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic  [`FMTBITS-1:0]             Fmt,       // precision 1 = double 0 = single
-    input logic  [2:0]                      OpCtrl,       // choose which opperation (look below for values)
+    input logic  [2:0]                      Frm,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
+    input logic  [`FMTBITS-1:0]             Fmt,        // precision 1 = double 0 = single
+    input logic  [2:0]                      OpCtrl,     // choose which opperation (look below for values)
     input logic                             XZero, YZero, ZZero, // inputs are zero
     input logic                             XInf, YInf, ZInf,    // inputs are infinity
     input logic                             XNaN, YNaN, ZNaN,    // inputs are NaN
     input logic                             XSNaN, YSNaN, ZSNaN, // inputs are signaling NaNs
-    input logic                             ZDenorm, // is the original precision denormalized
-    input logic  [1:0]                      PostProcSel, // select result to be written to fp register
+    input logic                             ZDenorm,        // is the original precision denormalized
+    input logic  [1:0]                      PostProcSel,    // select result to be written to fp register
     //fma signals
-    input logic                             FmaAs,   // the modified Z sign - depends on instruction
-    input logic                             FmaPs,      // the product's sign
-    input logic  [`NE+1:0]                  FmaSe,
-    input logic  [3*`NF+5:0]                FmaSm,       // the positive sum
-    input logic                             FmaZmS,  // sticky bit that is calculated during alignment
-    input logic                             FmaSs,
-    input logic  [$clog2(3*`NF+7)-1:0]      FmaSCnt,   // the normalization shift count
+    input logic                             FmaAs,  // the modified Z sign - depends on instruction
+    input logic                             FmaPs,  // the product's sign
+    input logic  [`NE+1:0]                  FmaSe,  // the sum's exponent
+    input logic  [3*`NF+3:0]                FmaSm,  // the positive sum
+    input logic                             FmaASticky, // sticky bit that is calculated during alignment
+    input logic                             FmaSs,  //
+    input logic  [$clog2(3*`NF+5)-1:0]      FmaSCnt,   // the normalization shift count
     //divide signals
     input logic                             DivS,
-//    input logic                             DivDone,
     input logic  [`NE+1:0]                  DivQe,
     input logic  [`DIVb:0]                  DivQm,
     // conversion signals
@@ -89,10 +88,10 @@ module postprocess (
     // fma signals
     logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
-    logic [3*`NF+7:0] FmaShiftIn;        // shift input
+    logic [3*`NF+5:0] FmaShiftIn;        // shift input
     logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
     logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
-    logic [$clog2(3*`NF+7)-1:0] FmaShiftAmt;   // normalization shift count
+    logic [$clog2(3*`NF+5)-1:0] FmaShiftAmt;   // normalization shift count
     // division singals
     logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0] DivShiftIn;
@@ -152,8 +151,8 @@ module postprocess (
     always_comb
         case(PostProcSel)
             2'b10: begin // fma
-                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+7){1'b0}}, FmaShiftAmt};
-                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+8){1'b0}}};
+                ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+5){1'b0}}, FmaShiftAmt};
+                ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+6){1'b0}}};
             end
             2'b00: begin // cvt
                 ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};
@@ -193,7 +192,7 @@ module postprocess (
                           
     roundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
-    round round(.OutFmt, .Frm, .FmaZmS, .Plus1, .PostProcSel, .CvtCe, .Qe,
+    round round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Qe,
                 .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
                 .DivS, //.DivDone,
                 .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .S, .R, .G, .Me);

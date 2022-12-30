@@ -109,14 +109,14 @@ module fpu (
    logic 		      XExpMaxE;                           // is the exponent all ones (max value)
 
    // Fma Signals
-   logic [3*`NF+5:0] SmE, SmM;                       
-   logic 			   ZmStickyE, ZmStickyM;
+   logic [3*`NF+3:0] SmE, SmM;            
+   logic 			   FmaAStickyE, FmaAStickyM;
    logic [`NE+1:0]   SeE,SeM;
    logic 			   InvAE, InvAM;
    logic 			   AsE, AsM;
    logic 			   PsE, PsM;
    logic 			   SsE, SsM;
-   logic [$clog2(3*`NF+7)-1:0] SCntE, SCntM;
+   logic [$clog2(3*`NF+5)-1:0] SCntE, SCntM;
 
    // Cvt Signals
    logic [`NE:0]           CeE, CeM;    // the calculated expoent
@@ -258,7 +258,7 @@ module fpu (
             .As(AsE), .Ps(PsE), .Ss(SsE), .Se(SeE),
             .Sm(SmE), 
             .InvA(InvAE), .SCnt(SCntE), 
-            .ZmSticky(ZmStickyE)); 
+            .ASticky(FmaAStickyE)); 
 
    // divide and squareroot
    //    - fdiv
@@ -352,10 +352,10 @@ module fpu (
             {XsE, YsE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZDenormE},
             {XsM, YsM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZDenormM});     
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
-   flopenrc #(3*`NF+6) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM); 
-  flopenrc #($clog2(3*`NF+7)+7+`NE) EMRegFma4(clk, reset, FlushM, ~StallM, 
-                           {ZmStickyE, InvAE, SCntE, AsE, PsE, SsE, SeE},
-                           {ZmStickyM, InvAM, SCntM, AsM, PsM, SsM, SeM});
+   flopenrc #(3*`NF+4) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM);
+  flopenrc #($clog2(3*`NF+5)+7+`NE) EMRegFma4(clk, reset, FlushM, ~StallM,
+                           {FmaAStickyE, InvAE, SCntE, AsE, PsE, SsE, SeE},
+                           {FmaAStickyM, InvAM, SCntM, AsM, PsM, SsM, SeM});
    flopenrc #(`NE+`LOGCVTLEN+`CVTLEN+4) EMRegCvt(clk, reset, FlushM, ~StallM, 
                            {CeE, CvtShiftAmtE, CvtResDenormUfE, CsE, IntZeroE, CvtLzcInE},
                            {CeM, CvtShiftAmtM, CvtResDenormUfM, CsM, IntZeroM, CvtLzcInM});
@@ -375,7 +375,7 @@ module fpu (
    assign FpLoadStoreM = FResSelM[1];
 
    postprocess postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
-                           .FmaZmS(ZmStickyM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
+                           .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
                            .ZDenorm(ZDenormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
                            .CvtCe(CeM), .CvtResDenormUf(CvtResDenormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), .ToInt(FWriteIntM), .DivS(DivSM),
