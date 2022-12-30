@@ -109,7 +109,7 @@
 `define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+7) ? (`DIVRESLEN+`NF) : (3*`NF+5))//change
 
 // division constants
-`define RADIX 32'h2
+`define RADIX 32'h4
 `define DIVCOPIES 32'h4
 `define DIVLEN ((`NF < `XLEN) ? (`XLEN) : `NF+3)
 // `define DIVN (`NF < `XLEN ? `XLEN : `NF+1) // length of input

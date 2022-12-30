@@ -116,12 +116,12 @@ module globalHistoryPredictor
   ram2p1r1wb #(k, 2) PHT(.clk(clk),
     .reset(reset),
     //.RA1(GHR[k-1:0]),
-    .RA1(GHRLookup),
-    .RD1(BPPredF),
-    .REN1(~StallF),
-    .WA1(PHTUpdateAdr),
-    .WD1(UpdateBPPredE),
-    .WEN1(PHTUpdateEN),
-    .BitWEN1(2'b11));
+    .ra1(GHRLookup),
+    .rd1(BPPredF),
+    .ren1(~StallF),
+    .wa2(PHTUpdateAdr),
+    .wd2(UpdateBPPredE),
+    .wen2(PHTUpdateEN),
+    .bwe2(2'b11));
 
 endmodule

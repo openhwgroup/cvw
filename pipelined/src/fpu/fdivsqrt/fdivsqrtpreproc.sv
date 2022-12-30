@@ -51,26 +51,23 @@ module fdivsqrtpreproc (
 );
 
   logic  [`DIVb-1:0] XPreproc;
-  logic  [`DIVb:0] SqrtX;
-  logic  [`DIVb+3:0] DivX;
+  logic  [`DIVb:0] PreSqrtX;
+  logic  [`DIVb+3:0] DivX, SqrtX;
   logic  [`NE+1:0] QeE;
-  // Intdiv signals
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;
-  logic  [`DIVBLEN:0] mE;
-  logic  [`DIVBLEN:0] ZeroDiff, IntBits, RightShiftX;
-  logic  [`DIVBLEN:0] pPlusr, pPrCeil, p, ell;
-  logic  [`LOGRK:0] pPrTrunc;
+  logic  [`DIVBLEN:0] mE, ell;
   logic  [`DIVb+3:0]  PreShiftX;
   logic  NumZeroE;
-
-  // ***can probably merge X LZC with conversion
-  // cout the number of leading zeros
 
   if (`IDIV_ON_FPU) begin
     logic signedDiv;
     logic  AsE, BsE, ALTBE, NegQuotE;
     logic  [`XLEN-1:0]  AE, BE;
     logic  [`XLEN-1:0] PosA, PosB;
+    logic  [`DIVBLEN:0] ZeroDiff, IntBits;
+    logic  [`LOGRK-1:0] RightShiftX;
+    logic  [`DIVBLEN:0] pPlusr, pPrCeil, p;
+    logic  [`LOGRK-1:0] pPrTrunc;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
@@ -107,13 +104,13 @@ module fdivsqrtpreproc (
     assign p = ALTBE ? '0 : ZeroDiff;
 
   /* verilator lint_off WIDTH */
-    // right shift amount to complete in discrete number of steps
-    assign pPlusr = (`DIVBLEN)'(`LOGR) + p;
+    // calculate number of cycles nE right shift amount RightShiftX to complete in discrete number of steps
+    assign pPlusr = `LOGR + p;
     assign pPrTrunc = pPlusr % `RK;
-    assign pPrCeil = (pPlusr >> `LOGRK) + {{`DIVBLEN{1'b0}}, |(pPrTrunc)};
-    assign nE = (pPrCeil * (`DIVBLEN+1)'(`DIVCOPIES)) - {{(`DIVBLEN){1'b0}}, 1'b1};
-    assign IntBits = (`DIVBLEN)'(`LOGR) + p - {{(`DIVBLEN){1'b0}}, 1'b1};
-    assign RightShiftX = ((`DIVBLEN)'(`RK) - 1) - (IntBits % `RK);
+    assign pPrCeil = (pPlusr >> `LOGRK) + |pPrTrunc;
+    assign nE = (pPrCeil * `DIVCOPIES) - 1;
+    assign IntBits = `LOGR + p - 1;
+    assign RightShiftX = `RK - 1 - IntBits % `RK;
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
@@ -148,16 +145,16 @@ module fdivsqrtpreproc (
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
   //  append leading 1 (for nonzero inputs) and zero-extend
-  assign SqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
+  // *** explain this next line
+  assign PreSqrtX = (Xe[0]^ell[0]) ? {1'b0, ~NumZeroE, XPreproc[`DIVb-1:1]} : {~NumZeroE, XPreproc}; // Bottom bit of XPreproc is always zero because DIVb is larger than XLEN and NF
   assign DivX = {3'b000, ~NumZeroE, XPreproc};
-
-  // *** explain why X is shifted between radices (initial assignment of WS=RX)
-  if (`RADIX == 2)  assign PreShiftX = Sqrt ? {3'b111, SqrtX} : DivX;
-  else              assign PreShiftX = Sqrt ? {2'b11, SqrtX, 1'b0} : DivX;
-
+  // Sqrt is initialized after a first step of R(X-1), which depends on Radix
+  if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
+  else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
+  assign PreShiftX = Sqrt ? SqrtX : DivX;
+ 
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
-
-  flopen #(`NE+2)    expreg(clk, IFDivStartE, QeE, QeM);
+  flopen #(`NE+2) expreg(clk, IFDivStartE, QeE, QeM);
 endmodule
 
