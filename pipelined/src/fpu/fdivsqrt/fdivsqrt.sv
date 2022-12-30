@@ -79,32 +79,34 @@ module fdivsqrt(
     // Inputs
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
     .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E,
-    // Int-specific Inputs
-    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E,
     // Outputs
     .QeM, .X, .DPreproc, 
+    // Int-specific Inputs
+    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E,
     // Int-specific Outputs
-    .AZeroE, .BZeroE, .nE, 
-    .AZeroM, .BZeroM, .nM, .mM, .AM, 
+    .AZeroE, .BZeroE, .nE, .AZeroM, .BZeroM, .nM, .mM, .AM, 
     .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
   fdivsqrtfsm fdivsqrtfsm(                    // FSM
     // Inputs
-    .clk, .reset, .FmtE, .XInfE, .YInfE,
-    .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
-    .FDivStartE, .XsE, .SqrtE, .WZeroE, 
-    .FlushE, .StallM, 
+    .clk, .reset, .FmtE, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
+    .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM,
     // Int-specific Inputs
     .IDivStartE, .AZeroE, .BZeroE, .nE, .MDUE,
     // Outputs
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM);
   fdivsqrtiter fdivsqrtiter(                  // CSA Iterator
-    .clk, .Firstun, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, 
-    .X,.DPreproc, .FirstWS(WS), .FirstWC(WC),
-    .IFDivStartE, .FDivBusyE);
+    // Inputs
+    .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc,
+    // Outputs
+    .D, .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
   fdivsqrtpostproc fdivsqrtpostproc(          // Postprocessor
-    .clk, .reset, .StallM,
-    .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, .SqrtE, .Firstun, 
-    .SqrtM, .SpecialCaseM, .RemOpM(Funct3M[1]), .AM,
-    .nM, .ALTBM, .mM, .BZeroM, .AsM, .NegQuotM, .W64M,
-    .QmM, .WZeroE, .DivSM, .FPIntDivResultM);
+    // Inputs
+    .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
+    .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
+    // Outputs
+    .QmM, .WZeroE, .DivSM, 
+    // Int-specific Inputs
+    .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM,
+    // Int-specific Output
+    .FPIntDivResultM);
 endmodule
