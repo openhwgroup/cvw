@@ -77,38 +77,31 @@ module fdivsqrt(
   logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
   logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
 
-  fdivsqrtpreproc fdivsqrtpreproc(            // Preprocessor
-    // Inputs
-    .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
-    .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E,
-    // Outputs
+  fdivsqrtpreproc fdivsqrtpreproc(                        // Preprocessor
+    .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE), 
+    .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, 
     .QeM, .X, .DPreproc, 
-    // Int-specific Inputs
-    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E,
-    // Int-specific Outputs
+    // Int-specific 
+    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, 
     .AZeroE, .BZeroE, .nE, .AZeroM, .BZeroM, .nM, .mM, .AM, 
     .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
-  fdivsqrtfsm fdivsqrtfsm(                    // FSM
-    // Inputs
+
+  fdivsqrtfsm fdivsqrtfsm(                                // FSM
     .clk, .reset, .FmtE, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
-    .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM,
-    // Int-specific Inputs
-    .IDivStartE, .AZeroE, .BZeroE, .nE, .MDUE,
-    // Outputs
-    .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM);
-  fdivsqrtiter fdivsqrtiter(                  // CSA Iterator
-    // Inputs
-    .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc,
-    // Outputs
+    .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
+    .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, 
+    // Int-specific 
+    .IDivStartE, .AZeroE, .BZeroE, .nE, .MDUE);
+
+  fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
+    .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 
     .D, .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
-  fdivsqrtpostproc fdivsqrtpostproc(          // Postprocessor
-    // Inputs
+
+  fdivsqrtpostproc fdivsqrtpostproc(                      // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
-    // Outputs
     .QmM, .WZeroE, .DivSM, 
-    // Int-specific Inputs
-    .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM,
-    // Int-specific Output
+    // Int-specific 
+    .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM, 
     .FPIntDivResultM);
 endmodule
