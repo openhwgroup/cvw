@@ -101,15 +101,16 @@ module fdivsqrtpostproc(
 
   if (`IDIV_ON_FPU) begin // Int supported
     logic [`DIVBLEN:0] NormShiftM;
-    logic [`DIVb+3:0] IntQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic [`DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
 
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
+    assign UnsignedQuotM = {3'b000, PreQmM};
 
     // Integer remainder: sticky and sign correction muxes
     mux2 #(`DIVb+4) normremdmux(W, W+DM, NegStickyM, NormRemDM);
     mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(`DIVb+4) quotresmux({3'b000, PreQmM}, {3'b111, -PreQmM}, NegQuotM, NormQuotM);
+    mux2 #(`DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // special case logic
     always_comb
@@ -120,17 +121,12 @@ module fdivsqrtpostproc(
         if (RemOpM) SpecialFPIntDivResultM = AM;
         else        SpecialFPIntDivResultM = '0;
       end else begin
-        logic [`DIVb+3:0] PreIntQuotM;
-        PreIntQuotM = {3'b000, PreQmM};
-        // flip sign if necessary
-        if (NegQuotM) IntQuotM = -PreIntQuotM;
-        else          IntQuotM =  PreIntQuotM;
         if (RemOpM) begin
           NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
           PreResultM = NormRemM;
         end else begin
           NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-          PreResultM = IntQuotM;
+          PreResultM = NormQuotM;
         end
         PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
         SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
