@@ -40,25 +40,25 @@ module fdivsqrtuotfc4(
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
 
-  logic [`DIVb:0] K1, K2, K3;
+  logic [`DIVb:0] K1, K2, K3;       
   assign K1 = (C&~(C << 1));        // K
   assign K2 = ((C << 1)&~(C << 2)); // 2K
   assign K3 = (C & ~(C << 2));      // 3K
 
   always_comb begin
-    if (udigit[3]) begin           // +2
+    if (udigit[3]) begin            // +2
       UNext  = U | K2;
       UMNext = U | K1;
-    end else if (udigit[2]) begin  // +1
+    end else if (udigit[2]) begin   // +1
       UNext  = U | K1;
       UMNext = U;
-    end else if (udigit[1]) begin  // -1
+    end else if (udigit[1]) begin   // -1
       UNext  = UM | K3;
       UMNext = UM | K2;
-    end else if (udigit[0]) begin  // -2
+    end else if (udigit[0]) begin   // -2
       UNext  = UM | K2;
       UMNext = UM | K1;
-    end else begin                    // 0
+    end else begin                  // 0
       UNext  = U;
       UMNext = UM | K3;
     end 

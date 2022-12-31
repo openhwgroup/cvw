@@ -39,9 +39,9 @@ module fdivsqrtfgen2 (
   logic [`DIVb+3:0] FP, FN, FZ;
   logic [`DIVb+3:0] SExt, SMExt, CExt;
 
-  assign SExt = {3'b0, U};
+  assign SExt  = {3'b0, U};
   assign SMExt = {3'b0, UM};
-  assign CExt = {2'b11, C}; // extend C from Q2.k to Q4.k
+  assign CExt  = {2'b11, C}; // extend C from Q2.k to Q4.k
 
   // Generate for both positive and negative bits
   assign FP = ~(SExt << 1) & CExt;

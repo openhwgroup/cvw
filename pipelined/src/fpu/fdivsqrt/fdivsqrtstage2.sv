@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // fdivsqrtstage2.sv
 //
-// Written: David_Harris@hmc.edu, me@KatherineParry.com, Cedar Turek
+// Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit stage
@@ -67,12 +67,13 @@ module fdivsqrtstage2 (
   // Divisor multiple
   always_comb
     if      (up) Dsel = DBar;
-    else if (uz) Dsel = '0; // qz
+    else if (uz) Dsel = '0;
     else         Dsel = {3'b000, 1'b1, D}; // un
 
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
-  assign AddIn = SqrtE ? F : Dsel;
+  mux2 #(`DIVb+4) addinmux(F, Dsel, SqrtE, AddIn);
+  //assign AddIn = SqrtE ? F : Dsel;
   csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);
   assign WSNext = WSA << 1;
   assign WCNext = WCA << 1;

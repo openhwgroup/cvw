@@ -56,6 +56,6 @@ module fdivsqrtqsel2 (
 
   // Produce digit = +1, 0, or -1
   assign up = magnitude & ~sign;
-  assign uz  = ~magnitude;
+  assign uz = ~magnitude;
   assign un = magnitude & sign;
 endmodule

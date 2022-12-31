@@ -43,7 +43,7 @@ module fdivsqrtuotfc2(
   //  bits to the quotient as they come.
   logic [`DIVb:0] K;
 
-  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1));
+  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1)); // Thermometer to one hot encoding
 
   always_comb begin
     if (up) begin
