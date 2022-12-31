@@ -115,7 +115,7 @@ module fdivsqrtpreproc (
       assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                   // shift X to complete in nE steps
     end else begin // radix 2 1 copy doesn't require shifting
-      assign nE = p + 1; 
+      assign nE = p; 
       assign DivXShifted = DivX;
     end
   /* verilator lint_on WIDTH */
