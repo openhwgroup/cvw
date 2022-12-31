@@ -44,16 +44,14 @@ module fdivsqrt(
   input  logic StallM,
   input  logic FlushE,
   input  logic SqrtE, SqrtM,
-	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic MDUE, W64E,
   output logic DivSM,
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
-//  output logic DivDone,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb:0] QmM,
   output logic [`XLEN-1:0] FPIntDivResultM
-//   output logic [`XLEN-1:0] RemM,
 );
 
   // Floating-point division and square root module, with optional integer division and remainder

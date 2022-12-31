@@ -37,15 +37,15 @@ module fdivsqrtfgen2 (
   output logic [`DIVb+3:0] F
 );
   logic [`DIVb+3:0] FP, FN, FZ;
-  logic [`DIVb+3:0] SExt, SMExt, CExt;
+  logic [`DIVb+3:0] UExt, UMExt, CExt;
 
-  assign SExt  = {3'b0, U};
-  assign SMExt = {3'b0, UM};
+  assign UExt  = {3'b0, U};
+  assign UMExt = {3'b0, UM};
   assign CExt  = {2'b11, C}; // extend C from Q2.k to Q4.k
 
   // Generate for both positive and negative bits
-  assign FP = ~(SExt << 1) & CExt;
-  assign FN = (SMExt << 1) | (CExt & ~(CExt << 2));
+  assign FP = ~(UExt << 1) & CExt;
+  assign FN = (UMExt << 1) | (CExt & ~(CExt << 2));
   assign FZ = '0;
 
   // Choose which adder input will be used
@@ -54,5 +54,4 @@ module fdivsqrtfgen2 (
     if (up)       F = FP;
     else if (uz)  F = FZ;
     else          F = FN;
-
 endmodule
