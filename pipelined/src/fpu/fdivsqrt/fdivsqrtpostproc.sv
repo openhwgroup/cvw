@@ -121,13 +121,14 @@ module fdivsqrtpostproc(
       end else begin
         logic [`DIVb+3:0] PreIntQuotM;
         if (WZeroM) begin
-          if (weq0M) begin
+          PreIntQuotM = weq0M ? {3'b000, FirstU} :  {3'b000, FirstUM};
+          IntRemM  = '0;
+   /*        if (weq0M) begin
             PreIntQuotM = {3'b000, FirstU};
-            IntRemM  = '0;
-          end else begin
+         end else begin
             PreIntQuotM = {3'b000, FirstUM};
             IntRemM  = '0;
-          end 
+          end  */
         end else begin 
           PreIntQuotM = {3'b000, PreQmM};
           IntRemM  = NormRemM;

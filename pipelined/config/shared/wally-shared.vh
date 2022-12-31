@@ -26,8 +26,6 @@
 `include "wally-constants.vh"
 
 // macros to define supported modes
-// NOTE: No hardware support for Q yet
-
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
@@ -38,11 +36,7 @@
 `define Q_SUPPORTED ((`MISA >> 16) % 2 == 1)
 `define S_SUPPORTED ((`MISA >> 18) % 2 == 1)
 `define U_SUPPORTED ((`MISA >> 20) % 2 == 1)
-
 // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
-//`define N_SUPPORTED ((MISA >> 13) % 2 == 1)
-`define N_SUPPORTED 0
-
 
 // logarithm of XLEN, used for number of index bits to select
 `define LOG_XLEN (`XLEN == 32 ? 5 : 6)
@@ -108,30 +102,6 @@
 `define LOGNORMSHIFTSZ ($clog2(`NORMSHIFTSZ))
 `define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+6) ? (`DIVRESLEN+`NF) : (3*`NF+4))
 
-/*
-// division constants
-`define RADIX 32'h4
-`define DIVCOPIES 32'h4
-`define DIVLEN ((`NF < `XLEN) ? (`XLEN) : `NF+3)
-// `define DIVN (`NF < `XLEN ? `XLEN : `NF+1) // length of input
-`define DIVN (`NF<`XLEN ? `XLEN : (`NF + 3)) // length of input
-`define EXTRAFRACBITS ((`NF < (`XLEN)) ? (`XLEN - `NF) : 3)
-`define EXTRAINTBITS ((`NF < `XLEN) ? 0 : (`NF - `XLEN + 3))
-`define DIVRESLEN ((`NF>`XLEN) ? (`NF + 4) : `XLEN)
-`define LOGR ((`RADIX==2) ? 32'h1 : 32'h2)
-`define RK (`DIVCOPIES*`LOGR) // r*k used for intdiv preproc
-`define LOGK ($clog2(`DIVCOPIES))
-`define LOGRK ($clog2(`RK)) // log2(r*k)
-// FPDUR = ceil(DIVRESLEN/(LOGR*DIVCOPIES)) 
-// one iteration is required for the integer bit for minimally redundent radix-4
-`define FPDUR ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
-`define DURLEN ($clog2(`FPDUR+1))
-`define QLEN (`FPDUR*`LOGR*`DIVCOPIES)
-`define DIVb (`QLEN-1)
-`define DIVa (`DIVb+1-`XLEN)
-`define DIVBLEN ($clog2(`DIVb+1)-1)
-*/
-
 // division constants
 `define RADIX       32'h4
 `define DIVCOPIES   32'h4
@@ -146,7 +116,6 @@
 `define DIVb        (`FPDUR*`LOGR*`DIVCOPIES-1) // canonical fdiv size
 `define DIVBLEN     ($clog2(`DIVb+1)-1)
 `define DIVa        (`DIVb+1-`XLEN)             // used for idiv on fpu
-
 
 `define USE_SRAM 0
 
