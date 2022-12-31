@@ -101,7 +101,7 @@ module fdivsqrtpostproc(
 
   if (`IDIV_ON_FPU) begin // Int supported
     logic [`DIVBLEN:0] NormShiftM;
-    logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM;
+    logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM, NormQuotM;
 
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
@@ -109,6 +109,7 @@ module fdivsqrtpostproc(
     // Integer remainder: sticky and sign correction muxes
     mux2 #(`DIVb+4) normremdmux(W, W+DM, NegStickyM, NormRemDM);
     mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
+    mux2 #(`DIVb+4) quotresmux({3'b000, PreQmM}, {3'b111, -PreQmM}, NegQuotM, NormQuotM);
 
     // special case logic
     always_comb
@@ -123,12 +124,6 @@ module fdivsqrtpostproc(
         if (WZeroM) begin
           PreIntQuotM = weq0M ? {3'b000, FirstU} :  {3'b000, FirstUM};
           IntRemM  = '0;
-   /*        if (weq0M) begin
-            PreIntQuotM = {3'b000, FirstU};
-         end else begin
-            PreIntQuotM = {3'b000, FirstUM};
-            IntRemM  = '0;
-          end  */
         end else begin 
           PreIntQuotM = {3'b000, PreQmM};
           IntRemM  = NormRemM;
