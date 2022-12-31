@@ -147,10 +147,11 @@ module fdivsqrtpostproc(
       end
 
     // sign extend result for W64
-    if (`XLEN==64)
-      assign FPIntDivResultM = (W64M ? {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]} : 
-                                       SpecialFPIntDivResultM[`XLEN-1:0]); // Sign extending in case of W64
-    else
+    if (`XLEN==64) begin
+      mux2 #(64) resmux(SpecialFPIntDivResultM[`XLEN-1:0], 
+        {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]}, // Sign extending in case of W64
+        W64M, FPIntDivResultM);
+    end else 
       assign FPIntDivResultM = SpecialFPIntDivResultM[`XLEN-1:0];
   end
 endmodule
