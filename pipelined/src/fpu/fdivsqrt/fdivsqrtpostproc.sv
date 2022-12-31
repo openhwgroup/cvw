@@ -112,6 +112,18 @@ module fdivsqrtpostproc(
     mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
     mux2 #(`DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
+    // Select quotient or remainder and do normalization shift
+    always_comb begin
+      if (RemOpM) begin
+        NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
+        PreResultM = NormRemM;
+      end else begin
+        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
+        PreResultM = NormQuotM;
+      end
+      PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+    end
+
     // special case logic
     always_comb
       if (BZeroM) begin         // Divide by zero
@@ -120,17 +132,7 @@ module fdivsqrtpostproc(
       end else if (ALTBM) begin // Numerator is zero
         if (RemOpM) SpecialFPIntDivResultM = AM;
         else        SpecialFPIntDivResultM = '0;
-      end else begin
-        if (RemOpM) begin
-          NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-          PreResultM = NormRemM;
-        end else begin
-          NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-          PreResultM = NormQuotM;
-        end
-        PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
-        SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
-      end
+      end else      SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
 
     // sign extend result for W64
     if (`XLEN==64) begin
