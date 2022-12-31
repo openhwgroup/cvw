@@ -71,29 +71,29 @@ module fdivsqrtiter(
  
   // Residual WS/SC registers/initializaiton mux
   mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, IFDivStartE, WSN);
-  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, IFDivStartE, WCN);
+  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], 0, IFDivStartE, WCN);
   flopen #(`DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
   flopen #(`DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 otherwise
-  assign initU =  SqrtE ? {1'b1, {(`DIVb){1'b0}}} : 0;
-  assign initUM = SqrtE ? 0 : {1'b1, {(`DIVb){1'b0}}}; 
-  /* These muxes don't work for some reason.
-  mux2 #(`DIVb+1)  initUmux(0, {1'b1, {(`DIVb){1'b0}}}, SqrtE, initU);
-  mux2 #(`DIVb+1) initUMmux({1'b1, {(`DIVb){1'b0}}}, 0, SqrtE, initUM);
-  */
-  mux2 #(`DIVb+1)      Umux(UNext[`DIVCOPIES-1],  initU,  IFDivStartE, UMux);
-  mux2 #(`DIVb+1)     UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
-  flopen #(`DIVb+1)    UReg(clk, IFDivStartE|FDivBusyE, UMux,  U[0]);
-  flopen #(`DIVb+1)   UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
+  assign initU  = {SqrtE, {(`DIVb){1'b0}}};
+  assign initUM = {~SqrtE, {(`DIVb){1'b0}}};
+  mux2   #(`DIVb+1)  Umux(UNext[`DIVCOPIES-1],  initU,  IFDivStartE, UMux);
+  mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
+  flopen #(`DIVb+1)  UReg(clk, IFDivStartE|FDivBusyE, UMux,  U[0]);
+  flopen #(`DIVb+1) UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
-  assign initCUpper = SqrtE ? 2'b11 : (`RADIX == 4) ? 2'b00 : 2'b10;
+  if(`RADIX == 4) begin
+    mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, InitCUpper);
+  end else begin
+    mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, InitCUpper);
+  end
   assign initC = {initCUpper, {`DIVb{1'b0}}};
-  mux2 #(`DIVb+2) Cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
+  mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, NextC, C[0]);
 
    // Divisior register
