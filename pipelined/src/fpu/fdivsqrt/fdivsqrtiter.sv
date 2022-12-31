@@ -71,7 +71,7 @@ module fdivsqrtiter(
  
   // Residual WS/SC registers/initializaiton mux
   mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, IFDivStartE, WSN);
-  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], 0, IFDivStartE, WCN);
+  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, IFDivStartE, WCN);
   flopen #(`DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
   flopen #(`DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
@@ -88,10 +88,11 @@ module fdivsqrtiter(
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
   if(`RADIX == 4) begin
-    mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, InitCUpper);
+    mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, initCUpper);
   end else begin
-    mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, InitCUpper);
+    mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, initCUpper);
   end
+  
   assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, NextC, C[0]);
