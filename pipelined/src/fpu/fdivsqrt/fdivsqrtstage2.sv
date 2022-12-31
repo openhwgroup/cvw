@@ -68,12 +68,11 @@ module fdivsqrtstage2 (
   always_comb
     if      (up) Dsel = DBar;
     else if (uz) Dsel = '0;
-    else         Dsel = {3'b000, 1'b1, D}; // un
+    else         Dsel = {4'b0001, D}; // un
 
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
-  mux2 #(`DIVb+4) addinmux(F, Dsel, SqrtE, AddIn);
-  //assign AddIn = SqrtE ? F : Dsel;
+  mux2 #(`DIVb+4) addinmux(Dsel, F, SqrtE, AddIn);
   csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);
   assign WSNext = WSA << 1;
   assign WCNext = WCA << 1;
