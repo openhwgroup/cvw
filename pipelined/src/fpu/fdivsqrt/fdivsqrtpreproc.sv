@@ -87,7 +87,7 @@ module fdivsqrtpreproc (
     end
 
     // Quotient is negative
-    assign NegQuotE = (AsE ^ BsE) & MDUE;
+    assign NegQuotE = AsE ^ BsE;
     
     // Force integer inputs to be postiive
     mux2 #(`XLEN) posamux(AE, -AE, AsE, PosA);
