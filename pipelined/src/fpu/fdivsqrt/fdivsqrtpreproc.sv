@@ -68,6 +68,9 @@ module fdivsqrtpreproc (
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
+    assign NegQuotE = AsE ^ BsE; // Quotient is negative
+
+    // Source handling
     if (`XLEN==64) begin // 64-bit, supports W64
       mux2 #(1) azeromux(~(|ForwardedSrcAE), ~(|ForwardedSrcAE[31:0]), W64E, AZeroE);
       mux2 #(1) bzeromux(~(|ForwardedSrcBE), ~(|ForwardedSrcBE[31:0]), W64E, BZeroE);
@@ -86,9 +89,6 @@ module fdivsqrtpreproc (
       assign BZeroE = ~(|ForwardedSrcBE);
     end
 
-    // Quotient is negative
-    assign NegQuotE = AsE ^ BsE;
-    
     // Force integer inputs to be postiive
     mux2 #(`XLEN) posamux(AE, -AE, AsE, PosA);
     mux2 #(`XLEN) posbmux(BE, -BE, BsE, PosB);

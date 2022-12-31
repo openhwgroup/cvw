@@ -31,10 +31,10 @@
 `include "wally-config.vh"
 
 module fdivsqrtqsel4cmp (
-  input logic [2:0] Dmsbs,
-  input logic [4:0] Smsbs,
-  input logic [7:0] WSmsbs, WCmsbs,
-  input logic SqrtE, j1,
+  input  logic [2:0] Dmsbs,
+  input  logic [4:0] Smsbs,
+  input  logic [7:0] WSmsbs, WCmsbs,
+  input  logic SqrtE, j1,
   output logic [3:0] udigit
 );
 	logic [6:0] Wmsbs;

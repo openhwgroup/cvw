@@ -42,14 +42,13 @@ module fdivsqrtfgen4 (
   assign F1  = ~(U << 1) & C;
   assign F0  = '0;
   assign FN1 = (UM << 1) | (C & ~(C << 3));
-  assign FN2 = (UM << 2) | ((C << 2)&~(C << 4));
+  assign FN2 = (UM << 2) | ((C << 2) & ~(C << 4));
 
   // Choose which adder input will be used
-
   always_comb
     if (udigit[3])       F = F2;
     else if (udigit[2])  F = F1;
     else if (udigit[1])  F = FN1;
     else if (udigit[0])  F = FN2;
-    else            F = F0;
+    else                 F = F0;
 endmodule

@@ -96,7 +96,7 @@ module fdivsqrtpostproc(
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
   assign NegStickyM = Sum[`DIVb+3];
-  mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM);// Select U or U-1 depending on negative sticky bit
+  mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
   mux2 #(`DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
 
   if (`IDIV_ON_FPU) begin // Int supported
