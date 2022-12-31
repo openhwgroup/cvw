@@ -53,7 +53,7 @@ module fdivsqrtpreproc (
 
   logic  [`DIVb-1:0] XPreproc;
   logic  [`DIVb:0] PreSqrtX;
-  logic  [`DIVb+3:0] DivX, SqrtX, PreShiftX;  // Variations of dividend, to be muxed
+  logic  [`DIVb+3:0] DivX, DivXShifted, SqrtX, PreShiftX;  // Variations of dividend, to be muxed
   logic  [`NE+1:0] QeE;                       // Quotient Exponent (FP only)
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
   logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
@@ -63,8 +63,7 @@ module fdivsqrtpreproc (
     logic signedDiv, NegQuotE;
     logic AsBit, BsBit, AsE, BsE, ALTBE;
     logic [`XLEN-1:0] AE, BE, PosA, PosB;
-    logic [`DIVBLEN:0] TotalIntBits, ZeroDiff, IntSteps, p;
-    logic [`LOGRK-1:0] IntTrunc, RightShiftX;
+    logic [`DIVBLEN:0] ZeroDiff, p;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
     assign signedDiv = ~Funct3E[0];
@@ -104,16 +103,26 @@ module fdivsqrtpreproc (
 
   /* verilator lint_off WIDTH */
     // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
-    assign TotalIntBits = `LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
-    assign IntTrunc = TotalIntBits % `RK;                       // Truncation check for ceiling operator
-    assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
-    assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
-    assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
+
+    if (`LOGRK > 0) begin // more than 1 bit per cycle
+      logic [`LOGRK-1:0] IntTrunc, RightShiftX;
+      logic [`DIVBLEN:0] TotalIntBits, IntSteps;
+
+      assign TotalIntBits = `LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
+      assign IntTrunc = TotalIntBits % `RK;                       // Truncation check for ceiling operator
+      assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
+      assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
+      assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
+      assign DivXShifted = DivX >> RightShiftX;                   // shift X to complete in nE steps
+    end else begin // radix 2 1 copy doesn't require shifting
+      assign nE = p + 1; 
+      assign DivXShifted = DivX;
+    end
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
     mux2 #(1)    numzmux(XZeroE, AZeroE, MDUE, NumerZeroE);
-    mux2 #(`DIVb+4) xmux(PreShiftX, DivX >> RightShiftX, MDUE, X);
+    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, MDUE, X);
 
     // pipeline registers
     flopen #(1)        mdureg(clk, IFDivStartE, MDUE,     MDUM);
