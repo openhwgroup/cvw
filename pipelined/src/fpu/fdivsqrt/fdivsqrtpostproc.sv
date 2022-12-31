@@ -101,7 +101,7 @@ module fdivsqrtpostproc(
 
   if (`IDIV_ON_FPU) begin // Int supported
     logic [`DIVBLEN:0] NormShiftM;
-    logic [`DIVb+3:0] IntQuotM, IntRemM, NormRemM, NormRemDM, NormQuotM;
+    logic [`DIVb+3:0] IntQuotM, NormRemM, NormRemDM, NormQuotM;
 
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
@@ -121,19 +121,13 @@ module fdivsqrtpostproc(
         else        SpecialFPIntDivResultM = '0;
       end else begin
         logic [`DIVb+3:0] PreIntQuotM;
-        if (WZeroM) begin
-          PreIntQuotM = weq0M ? {3'b000, FirstU} :  {3'b000, FirstUM};
-          IntRemM  = '0;
-        end else begin 
-          PreIntQuotM = {3'b000, PreQmM};
-          IntRemM  = NormRemM;
-        end 
+        PreIntQuotM = {3'b000, PreQmM};
         // flip sign if necessary
         if (NegQuotM) IntQuotM = -PreIntQuotM;
         else          IntQuotM =  PreIntQuotM;
         if (RemOpM) begin
           NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-          PreResultM = IntRemM;
+          PreResultM = NormRemM;
         end else begin
           NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
           PreResultM = IntQuotM;
