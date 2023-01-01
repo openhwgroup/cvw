@@ -68,20 +68,20 @@ module fdivsqrt(
   logic DivStartE;                    // Enable signal for flops during stall
 
   // Integer div/rem signals
-  logic AZeroE, BZeroE;               // Numerator/Denominator is zero (Execute) 
-  logic AZeroM, BZeroM;               // Numerator/Denominator is zero (Memory) 
+  logic BZeroE, BZeroM;               // Denominator is zero
   logic MDUM;                         // Integer operation
   logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
   logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
   logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
+  logic ISpecialCaseE;                // Integer div/remainder special cases
 
   fdivsqrtpreproc fdivsqrtpreproc(                        // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE), 
     .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, 
     .QeM, .X, .DPreproc, 
     // Int-specific 
-    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, 
-    .AZeroE, .BZeroE, .nE, .AZeroM, .BZeroM, .nM, .mM, .AM, 
+    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, .ISpecialCaseE,
+    .BZeroE, .nE, .BZeroM, .nM, .mM, .AM, 
     .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
 
   fdivsqrtfsm fdivsqrtfsm(                                // FSM
@@ -89,7 +89,7 @@ module fdivsqrt(
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, 
     // Int-specific 
-    .IDivStartE, .AZeroE, .BZeroE, .nE, .MDUE);
+    .IDivStartE, .BZeroE, .ISpecialCaseE, .nE, .MDUE);
 
   fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 

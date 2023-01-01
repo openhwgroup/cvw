@@ -36,7 +36,7 @@ module fdivsqrtfsm(
   input  logic [`FMTBITS-1:0] FmtE,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
-  input  logic AZeroE, BZeroE,
+  input  logic BZeroE,
   input  logic XNaNE, YNaNE, 
   input  logic FDivStartE, IDivStartE,
   input  logic XsE,
@@ -46,6 +46,7 @@ module fdivsqrtfsm(
   input  logic WZeroE,
   input  logic MDUE,
   input  logic [`DIVBLEN:0] nE,
+  input  logic ISpecialCaseE,
   output logic IFDivStartE,
   output logic FDivBusyE, FDivDoneE,
   output logic SpecialCaseM
@@ -65,7 +66,7 @@ module fdivsqrtfsm(
 
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | (YZeroE&~SqrtE) | XInfE | YInfE | XNaNE | YNaNE | (XsE&SqrtE);
-  if (`IDIV_ON_FPU) assign SpecialCaseE = MDUE ? BZeroE : FSpecialCaseE;
+  if (`IDIV_ON_FPU) assign SpecialCaseE = MDUE ? ISpecialCaseE : FSpecialCaseE;
   else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
