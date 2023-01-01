@@ -60,6 +60,6 @@ module forward(
   assign MatchDE = ((Rs1D == RdE) | (Rs2D == RdE)) & (RdE != 5'b0); // Decode-stage instruction source depends on result from execute stage instruction
   assign FCvtIntStallD = FCvtIntE & MatchDE; // FPU to Integer transfers have single-cycle latency except fcvt
   assign LoadStallD = (MemReadE|SCE) & MatchDE;  
-  assign MDUStallD = MDUE & MatchDE; 
+  assign MDUStallD = MDUE & MatchDE; // Int mult/div is at least two cycle latency, even when coming from the FDIV
   assign CSRRdStallD = CSRReadE & MatchDE;
 endmodule

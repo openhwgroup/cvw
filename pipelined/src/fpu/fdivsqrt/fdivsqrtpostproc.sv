@@ -99,7 +99,7 @@ module fdivsqrtpostproc(
   mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
   mux2 #(`DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
 
-  if (`IDIV_ON_FPU) begin // Int supported
+  if (`IDIV_ON_FPU) begin:intpostproc // Int supported
     logic [`DIVBLEN:0] NormShiftM;
     logic [`DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
 
@@ -121,18 +121,19 @@ module fdivsqrtpostproc(
         NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
         PreResultM = NormQuotM;
       end
-      PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);
+      PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);  // *** rename to PreIntResultM?
     end
 
     // special case logic
+    // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
     always_comb
       if (BZeroM) begin         // Divide by zero
-        if (RemOpM) SpecialFPIntDivResultM = AM;
+        if (RemOpM) SpecialFPIntDivResultM = AM;  // *** rename to IntDivResult?
         else        SpecialFPIntDivResultM = {(`XLEN){1'b1}};
-      end else if (ALTBM) begin // Numerator is zero
+     end else if (ALTBM) begin // Numerator is zero
         if (RemOpM) SpecialFPIntDivResultM = AM;
         else        SpecialFPIntDivResultM = '0;
-      end else      SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
+     end else      SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
 
     // sign extend result for W64
     if (`XLEN==64) begin

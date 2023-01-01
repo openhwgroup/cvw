@@ -45,9 +45,10 @@ module fdivsqrtpreproc (
   // Int-specific
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic MDUE, W64E,
+  output logic ISpecialCaseE,
   output logic [`DIVBLEN:0] nE, nM, mM,
   output logic NegQuotM, ALTBM, MDUM, W64M,
-  output logic AsM, AZeroM, BZeroM, AZeroE, BZeroE,
+  output logic AsM, BZeroM, BZeroE,
   output logic [`XLEN-1:0] AM
 );
 
@@ -58,8 +59,9 @@ module fdivsqrtpreproc (
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
   logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
   logic  NumerZeroE;                          // Numerator is zero (X or A)
+  logic  AZeroE;                              // A is Zero for integer division
 
-  if (`IDIV_ON_FPU) begin // Int Supported
+  if (`IDIV_ON_FPU) begin:intpreproc // Int Supported
     logic signedDiv, NegQuotE;
     logic AsBit, BsBit, AsE, BsE, ALTBE;
     logic [`XLEN-1:0] AE, BE, PosA, PosB;
@@ -98,8 +100,11 @@ module fdivsqrtpreproc (
 
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
-    assign ALTBE = ZeroDiff[`DIVBLEN];  // A less than B?
-    mux2 #(`DIVBLEN+1) pmux(ZeroDiff, 0, ALTBE, p);                         
+    assign ALTBE = ZeroDiff[`DIVBLEN];  // A less than B (A has more leading zeros)
+    mux2 #(`DIVBLEN+1) pmux(ZeroDiff, {(`DIVBLEN+1){1'b0}}, ALTBE, p);            // *** is there a more graceful way to write these constants    
+
+    // Integer special cases (terminate immediately)
+    assign ISpecialCaseE = BZeroE | ALTBE;
 
   /* verilator lint_off WIDTH */
     // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
@@ -113,7 +118,7 @@ module fdivsqrtpreproc (
       assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
       assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
       assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
-      assign DivXShifted = DivX >> RightShiftX;                   // shift X to complete in nE steps
+      assign DivXShifted = DivX >> RightShiftX;                   // shift X by up to R*K-1 to complete in nE steps
     end else begin // radix 2 1 copy doesn't require shifting
       assign nE = p; 
       assign DivXShifted = DivX;
@@ -129,7 +134,6 @@ module fdivsqrtpreproc (
     flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
-    flopen #(1)      azeroreg(clk, IFDivStartE, AZeroE,   AZeroM);
     flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
     flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
     flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM);
