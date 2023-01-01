@@ -32,25 +32,18 @@
 
 module fdivsqrtfgen2 (
   input  logic up, uz,
-  input  logic [`DIVb+1:0] C,
-  input  logic [`DIVb:0] U, UM,
+  input  logic [`DIVb+3:0] C, U, UM,
   output logic [`DIVb+3:0] F
 );
   logic [`DIVb+3:0] FP, FN, FZ;
-  logic [`DIVb+3:0] UExt, UMExt, CExt;
-
-  assign UExt  = {3'b0, U};
-  assign UMExt = {3'b0, UM};
-  assign CExt  = {2'b11, C}; // extend C from Q2.k to Q4.k
 
   // Generate for both positive and negative bits
-  assign FP = ~(UExt << 1) & CExt;
-  assign FN = (UMExt << 1) | (CExt & ~(CExt << 2));
+  assign FP = ~(U << 1) & C;
+  assign FN = (UM << 1) | (C & ~(C << 2));
   assign FZ = '0;
 
-  // Choose which adder input will be used
 
-  always_comb
+  always_comb     // Choose which adder input will be used
     if (up)       F = FP;
     else if (uz)  F = FZ;
     else          F = FN;
