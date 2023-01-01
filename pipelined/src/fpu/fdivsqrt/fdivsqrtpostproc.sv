@@ -52,8 +52,7 @@ module fdivsqrtpostproc(
   logic [`DIVb:0] PreQmM;
   logic NegStickyM;
   logic weq0E, weq0M, WZeroM;
-  logic signed [`DIVb+3:0] PreResultM, PreFPIntDivResultM;
-  logic [`XLEN-1:0] SpecialFPIntDivResultM;
+  logic [`XLEN-1:0] IntDivResultM;
 
   //////////////////////////
   // Execute Stage: Detect early termination for an exact result
@@ -99,9 +98,11 @@ module fdivsqrtpostproc(
   mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
   mux2 #(`DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
 
+  // Integer quotient or remainder correctoin, normalization, and special cases
   if (`IDIV_ON_FPU) begin:intpostproc // Int supported
     logic [`DIVBLEN:0] NormShiftM;
     logic [`DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic signed [`DIVb+3:0] PreResultM, PreIntResultM;
 
     assign W = $signed(Sum) >>> `LOGR;
     assign DM = {4'b0001, D};
@@ -113,34 +114,27 @@ module fdivsqrtpostproc(
     mux2 #(`DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    always_comb begin
-      if (RemOpM) begin
-        NormShiftM = ALTBM ? 0 : (mM + (`DIVBLEN+1)'(`DIVa)); // no postshift if forwarding input A to remainder
-        PreResultM = NormRemM;
-      end else begin
-        NormShiftM = ((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR)));
-        PreResultM = NormQuotM;
-      end
-      PreFPIntDivResultM = $signed(PreResultM >>> NormShiftM);  // *** rename to PreIntResultM?
-    end
+    mux2 #(`DIVBLEN+1) normshiftmux(((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR))), (mM + (`DIVBLEN+1)'(`DIVa)), RemOpM, NormShiftM);
+    mux2 #(`DIVb+4)   presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
 
     // special case logic
     // terminates immediately when B is Zero (div 0) or |A| has more leading 0s than |B|
     always_comb
       if (BZeroM) begin         // Divide by zero
-        if (RemOpM) SpecialFPIntDivResultM = AM;  // *** rename to IntDivResult?
-        else        SpecialFPIntDivResultM = {(`XLEN){1'b1}};
+        if (RemOpM) IntDivResultM = AM;  
+        else        IntDivResultM = {(`XLEN){1'b1}};
      end else if (ALTBM) begin // Numerator is zero
-        if (RemOpM) SpecialFPIntDivResultM = AM;
-        else        SpecialFPIntDivResultM = '0;
-     end else      SpecialFPIntDivResultM = PreFPIntDivResultM[`XLEN-1:0];
+        if (RemOpM) IntDivResultM = AM;
+        else        IntDivResultM = '0;
+     end else       IntDivResultM = PreIntResultM[`XLEN-1:0];
 
     // sign extend result for W64
     if (`XLEN==64) begin
-      mux2 #(64) resmux(SpecialFPIntDivResultM[`XLEN-1:0], 
-        {{(`XLEN-32){SpecialFPIntDivResultM[31]}}, SpecialFPIntDivResultM[31:0]}, // Sign extending in case of W64
+      mux2 #(64) resmux(IntDivResultM[`XLEN-1:0], 
+        {{(`XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
         W64M, FPIntDivResultM);
     end else 
-      assign FPIntDivResultM = SpecialFPIntDivResultM[`XLEN-1:0];
+      assign FPIntDivResultM = IntDivResultM[`XLEN-1:0];
   end
 endmodule
