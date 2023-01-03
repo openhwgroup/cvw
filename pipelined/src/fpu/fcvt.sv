@@ -32,21 +32,21 @@
 `include "wally-config.vh"
 
 module fcvt (
-    input logic             Xs,          // input's sign
-    input logic [`NE-1:0]   Xe,          // input's exponent
-    input logic [`NF:0]     Xm,          // input's fraction
-    input logic [`XLEN-1:0] Int, // integer input - from IEU
-    input logic [2:0]       OpCtrl,       // choose which opperation (look below for values)
-    input logic             ToInt,     // is fp->int (since it's writting to the integer register)
-    input logic             XZero,         // is the input zero
-    input logic             XDenorm,   // is the input denormalized
-    input logic [`FMTBITS-1:0] Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
-    output logic [`NE:0]           Ce,    // the calculated expoent
-	output logic [`LOGCVTLEN-1:0] ShiftAmt,  // how much to shift by
-    output logic                   ResDenormUf,// does the result underflow or is denormalized
-    output logic                   Cs,     // the result's sign
-    output logic                   IntZero,      // is the integer zero?
-    output logic [`CVTLEN-1:0]      LzcIn      // input to the Leading Zero Counter (priority encoder)
+    input logic                     Xs,         // input's sign
+    input logic [`NE-1:0]           Xe,         // input's exponent
+    input logic [`NF:0]             Xm,         // input's fraction
+    input logic [`XLEN-1:0]         Int,        // integer input - from IEU
+    input logic [2:0]               OpCtrl,     // choose which opperation (look below for values)
+    input logic                     ToInt,      // is fp->int (since it's writting to the integer register)
+    input logic                     XZero,      // is the input zero
+    input logic                     XDenorm,    // is the input denormalized
+    input logic [`FMTBITS-1:0]      Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
+    output logic [`NE:0]            Ce,         // the calculated expoent
+	output logic [`LOGCVTLEN-1:0]   ShiftAmt,   // how much to shift by
+    output logic                    ResDenormUf,// does the result underflow or is denormalized
+    output logic                    Cs,         // the result's sign
+    output logic                    IntZero,    // is the integer zero?
+    output logic [`CVTLEN-1:0]      LzcIn       // input to the Leading Zero Counter (priority encoder)
     );
 
     // OpCtrls:
@@ -68,15 +68,15 @@ module fcvt (
     logic [`NE-1:0]	        OldExp;     // the old exponent
     logic                   Signed;     // is the opperation with a signed integer?
     logic                   Int64;      // is the integer 64 bits?
-    logic                   IntToFp;       // is the opperation an int->fp conversion?
-    logic [`CVTLEN:0]       LzcInFull;      // input to the Leading Zero Counter (priority encoder)
+    logic                   IntToFp;    // is the opperation an int->fp conversion?
+    logic [`CVTLEN:0]       LzcInFull;  // input to the Leading Zero Counter (priority encoder)
     logic [`LOGCVTLEN-1:0]  LeadingZeros; // output from the LZC
 
 
     // seperate OpCtrl for code readability
-    assign Signed = OpCtrl[0];
-    assign Int64 =  OpCtrl[1];
-    assign IntToFp =   OpCtrl[2];
+    assign Signed =  OpCtrl[0];
+    assign Int64 =   OpCtrl[1];
+    assign IntToFp = OpCtrl[2];
 
     // choose the ouptut format depending on the opperation
     //      - fp -> fp: OpCtrl contains the percision of the output
@@ -109,27 +109,6 @@ module fcvt (
     assign LzcIn = LzcInFull[`CVTLEN-1:0];
     
     lzc #(`CVTLEN+1) lzc (.num(LzcInFull), .ZeroCnt(LeadingZeros));
-
-    ///////////////////////////////////////////////////////////////////////////
-    // shifter
-    ///////////////////////////////////////////////////////////////////////////
-
-    // kill the shift if it's negitive
-    // select the amount to shift by
-    //      fp -> int: 
-    //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0
-    //              - don't shift if supposed to shift right (underflowed or denorm input)
-    //      denormalized/undeflowed result fp -> fp:
-    //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
-    //      ??? -> fp: 
-    //          - shift left by LeadingZeros - to shift till the result is normalized
-    //              - only shift fp -> fp if the intital value is denormalized
-    //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
-    //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    always_comb
-        if(ToInt)                       ShiftAmt = Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}};
-        else if (ResDenormUf&~IntToFp)  ShiftAmt = (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0];
-        else                            ShiftAmt = LeadingZeros;
     
     ///////////////////////////////////////////////////////////////////////////
     // exp calculations
@@ -179,7 +158,7 @@ module fcvt (
         assign NewBias = ToInt ? (`NE-1)'(1) : NewBiasToFp; 
     end
     // select the old exponent
-    //      int -> fp : largest bias + XLEN
+    //      int -> fp : largest bias + XLEN-1
     //      fp -> ??? : XExp
     assign OldExp = IntToFp ? (`NE)'(`BIAS)+(`NE)'(`XLEN-1) : Xe;
     
@@ -189,6 +168,7 @@ module fcvt (
     //                                          only do ^ if the input was denormalized
     //              - convert the expoenent to the final preciaion (Exp - oldBias + newBias)
     //              - correct the expoent when there is a normalization shift ( + LeadingZeros+1) 
+    //              - the plus 1 is built into the leading zeros by counting the leading zeroes in the mantissa rather than the fraction
     //      fp -> int : XExp - Largest Bias + 1 - (LeadingZeros+1)
     //          |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
     //          process:
@@ -204,19 +184,45 @@ module fcvt (
     //                  |     keep        |
     //
     //              - if the input is denormalized then we dont shift... so the  "- LeadingZeros" is just leftovers from other options
-    //      int -> fp : largest bias +  XLEN - Largest bias + new bias - LeadingZeros = XLEN + NewBias - LeadingZeros
+    //      int -> fp : largest bias +  XLEN-1 - Largest bias + new bias - LeadingZeros = XLEN-1 + NewBias - LeadingZeros
     //              Process:
+    //                      |XLEN|.0000
     //                  - shifted right by XLEN (XLEN)
+    //                      000000.|XLEN|
     //                  - shift left to normilize (-LeadingZeros)
+    //                      000000.1...
+    //                  - shift left 1 to normalize
+    //                      000001.stuff
     //                  - newBias to make the biased exponent
-    //          oldexp - biasold +newbias - LeadingZeros&(XDenorm|IntToFp)
-    assign Ce = {1'b0, OldExp} - (`NE+1)'(`BIAS) + {2'b0, NewBias} - {{`NE-`LOGCVTLEN+1{1'b0}}, (LeadingZeros&{`LOGCVTLEN{XDenorm|IntToFp}})};
+    //
+    //          oldexp         - biasold         - LeadingZeros                               + newbias
+    assign Ce = {1'b0, OldExp} - (`NE+1)'(`BIAS) - {{`NE-`LOGCVTLEN+1{1'b0}}, (LeadingZeros)} + {2'b0, NewBias};
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
     assign ResDenormUf = (~|Ce | Ce[`NE])&~XZero&~IntToFp;
 
-    
+
+    ///////////////////////////////////////////////////////////////////////////
+    // shifter
+    ///////////////////////////////////////////////////////////////////////////
+
+    // kill the shift if it's negitive
+    // select the amount to shift by
+    //      fp -> int: 
+    //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0
+    //              - don't shift if supposed to shift right (underflowed or denorm input)
+    //      denormalized/undeflowed result fp -> fp:
+    //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
+    //      ??? -> fp: 
+    //          - shift left by LeadingZeros - to shift till the result is normalized
+    //              - only shift fp -> fp if the intital value is denormalized
+    //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
+    //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
+    always_comb//***change denorm to subnorm
+        if(ToInt)                       ShiftAmt = Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}};
+        else if (ResDenormUf)  ShiftAmt = (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0];
+        else                            ShiftAmt = LeadingZeros;
     ///////////////////////////////////////////////////////////////////////////
     // sign
     ///////////////////////////////////////////////////////////////////////////

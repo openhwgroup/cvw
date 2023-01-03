@@ -700,7 +700,7 @@ module testbenchfp;
               .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaZmS(ASticky), .FmaSe(Se),
+              .FmaASticky(ASticky), .FmaSe(Se),
               .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
