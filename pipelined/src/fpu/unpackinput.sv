@@ -241,6 +241,7 @@ module unpackinput (
         // also need to take into account possible zero/denorm/inf/NaN values
         
         // convert the double precsion exponent into quad precsion
+        // 1 is added to the exponent if the input is zero or subnormal
         always_comb
             case (Fmt)
                 2'b11: Exp = {In[`Q_LEN-2:`Q_NF+1], In[`Q_NF]|~ExpNonZero};
