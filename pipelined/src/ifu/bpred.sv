@@ -63,7 +63,7 @@ module bpred (
    output logic             DirPredictionWrongM, // Prediction direction is wrong.
    output logic             BTBPredPCWrongM, // Prediction target wrong.
    output logic             RASPredPCWrongM, // RAS prediction is wrong.
-   output logic             BPPredClassNonCFIWrongM // Class prediction is wrong.
+   output logic             PredictionInstrClassWrongM // Class prediction is wrong.
    );
 
   logic                     BTBValidF;
@@ -114,9 +114,15 @@ module bpred (
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPOLDGSHARE") begin:Predictor
-    oldgsharePredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    oldgsharepredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-                                    .BPInstrClassF, .BPInstrClassD, .BPInstrClassE,
+      .BPInstrClassF, .BPInstrClassD, .BPInstrClassE,
+      .InstrClassE, .PCSrcE);
+
+  end else if (`BPTYPE == "BPOLDGSHARE2") begin:Predictor
+    oldgsharepredictor2 DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BPInstrClassF, .BPInstrClassD, .BPInstrClassE,
       .InstrClassE, .PCSrcE);
   end else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -187,8 +193,8 @@ module bpred (
 
   // branch predictor
   flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE},
-    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM});
+    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, PredictionInstrClassWrongE},
+    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
 
   // pipeline the class
   flopenrc #(5) BPInstrClassRegD(clk, reset, FlushD, ~StallD, BPInstrClassF, BPInstrClassD);
@@ -223,6 +229,7 @@ module bpred (
   assign RASPredPCWrongE = InstrClassE[3] & PredictionPCWrongE;
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
+  
   
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);

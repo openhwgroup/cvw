@@ -65,7 +65,7 @@ module ifu (
 	output logic 				DirPredictionWrongM,
 	output logic 				BTBPredPCWrongM,
 	output logic 				RASPredPCWrongM,
-	output logic 				BPPredClassNonCFIWrongM,
+	output logic 				PredictionInstrClassWrongM,
 	// Faults
 	input logic 				IllegalBaseInstrFaultD,
 	output logic 				InstrPageFaultF,
@@ -325,12 +325,12 @@ module ifu (
                 .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
-                .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
+                .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
     assign BPPredWrongE = PCSrcE;
-    assign {InstrClassM, DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM} = '0;
+    assign {InstrClassM, DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM} = '0;
     assign PCNext0F = PCPlus2or4F;
     assign NextValidPCE = PCE;
   end      

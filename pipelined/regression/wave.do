@@ -594,8 +594,10 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/Ta
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewGHRF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PHT/mem
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPInstrClassE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassE
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {2156 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {2086 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -611,4 +613,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {1955 ns} {2357 ns}
+WaveRestoreZoom {1919 ns} {2207 ns}

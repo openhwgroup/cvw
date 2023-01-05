@@ -48,7 +48,7 @@ module csrc #(parameter
     input logic 	     DirPredictionWrongM,
     input logic 	     BTBPredPCWrongM,
     input logic 	     RASPredPCWrongM,
-    input logic 	     BPPredClassNonCFIWrongM,
+    input logic 	     PredictionInstrClassWrongM,
     input logic [4:0] 	     InstrClassM,
     input logic 	     DCacheMiss,
     input logic 	     DCacheAccess,
@@ -92,7 +92,7 @@ module csrc #(parameter
       assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & InstrValidNotFlushedM;
       assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
       assign CounterEvent[9] = InstrClassM[3] & InstrValidNotFlushedM;
-      assign CounterEvent[10] = BPPredClassNonCFIWrongM & InstrValidNotFlushedM;
+      assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;
       assign CounterEvent[11] = DCacheAccess;
       assign CounterEvent[12] = DCacheMiss;
       assign CounterEvent[13] = ICacheAccess;
