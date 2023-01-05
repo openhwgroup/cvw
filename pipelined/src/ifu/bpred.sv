@@ -113,6 +113,11 @@ module bpred (
       .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
 
+  end else if (`BPTYPE == "BPOLDGSHARE") begin:Predictor
+    oldgsharePredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+                                    .BPInstrClassF, .BPInstrClassD, .BPInstrClassE,
+      .InstrClassE, .PCSrcE);
   end else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
 /* -----\/----- EXCLUDED -----\/-----
