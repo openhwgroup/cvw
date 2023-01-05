@@ -170,7 +170,7 @@ module wallypipelinedcore (
   
   ifu ifu(
     .clk, .reset,
-    .StallF, .StallD, .StallE, .StallM, 
+    .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR, .PCNext2F,

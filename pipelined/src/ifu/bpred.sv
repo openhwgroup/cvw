@@ -35,8 +35,8 @@
 
 module bpred (
    input logic              clk, reset,
-   input logic              StallF, StallD, StallE, StallM,
-   input logic              FlushD, FlushE, FlushM,
+   input logic              StallF, StallD, StallE, StallM, StallW,
+   input logic              FlushD, FlushE, FlushM, FlushW,
    // Fetch stage
    // the prediction
    input logic [31:0]       InstrD,        // Decompressed decode stage instruction 
@@ -75,7 +75,7 @@ module bpred (
   logic                     FallThroughWrongE;
   logic                     PredictionPCWrongE;
   logic                     PredictionInstrClassWrongE;
-  logic [4:0]               InstrClassD, InstrClassE;
+  logic [4:0]               InstrClassD, InstrClassE, InstrClassW;
   logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
   logic                     SelBPPredF;
@@ -96,13 +96,20 @@ module bpred (
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
+  end else if (`BPTYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
+    speculativeglobalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrW(InstrClassW[0]), .PCSrcE);
+    
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
   end 
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
-
+    // *** Fix me
+/* -----\/----- EXCLUDED -----\/-----
     localHistoryPredictor DirPredictor(.clk,
       .reset, .StallF, .StallE,
       .LookUpPC(PCNextF),
@@ -111,7 +118,8 @@ module bpred (
       .UpdatePC(PCE),
       .UpdateEN(InstrClassE[0] & ~StallE),
       .PCSrcE,
-      .UpdatePrediction(UpdateBPPredE));
+      .UpdatePrediction(InstrClassE[0]));
+ -----/\----- EXCLUDED -----/\----- */
   end 
 
 
@@ -163,6 +171,7 @@ module bpred (
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
   flopenrc #(5) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
   flopenrc #(5) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
+  flopenrc #(5) InstrClassRegW(clk, reset,  FlushW, ~StallW, InstrClassM, InstrClassW);
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
