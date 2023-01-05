@@ -49,6 +49,7 @@ module bpred (
    input logic [`XLEN-1:0]  PCF,           // Fetch stage instruction address.
    input logic [`XLEN-1:0]  PCD,           // Decode stage instruction address. Also the address the branch predictor took.
    input logic [`XLEN-1:0]  PCE,           // Execution stage instruction address.
+   input logic [`XLEN-1:0]  PCM,           // Memory stage instruction address.
 
    // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
    // *** the specifics of how this is encode is subject to change.
@@ -95,10 +96,9 @@ module bpred (
       .UpdatePrediction(UpdateBPPredE));
 
   end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
-    globalHistoryPredictor DirPredictor(.clk, .reset, .StallF, .StallE,
-      .PCNextF, .BPPredF, 
-      .InstrClassE, .BPInstrClassF, .BPInstrClassD, .BPInstrClassE, .BPPredDirWrongE,
-      .PCE, .PCSrcE, .UpdateBPPredE);
+    globalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+      .PCNextF, .PCM, .DirPredictionF(BPPredF), .DirPredictionWrongE(BPPredDirWrongE),
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gsharePredictor DirPredictor(.clk, .reset, .StallF, .StallE,
@@ -207,7 +207,7 @@ module bpred (
   // The branch direction also need to checked.
   // However if the direction is wrong then the pc will be wrong.  This is only relavent to checking the
   // accuracy of the direciton prediction.
-  assign BPPredDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
+  //assign BPPredDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
   
   // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
   // Also we want to track this in a performance counter.
