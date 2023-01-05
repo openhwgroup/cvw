@@ -47,7 +47,7 @@ module decompress (
     assign InstrD = InstrRawD;
     assign IllegalCompInstrD = 0;
   end else begin : decompress // COMPRESSED mode supported
-    assign instr16 = InstrRawD[15:0]; // instruction is alreay aligned
+    assign instr16 = InstrRawD[15:0]; // instruction is already aligned
     assign op = instr16[1:0];
     assign rds1 = instr16[11:7];
     assign rs2 = instr16[6:2];
