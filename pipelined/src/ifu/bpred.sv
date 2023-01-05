@@ -101,10 +101,9 @@ module bpred (
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
-    gsharePredictor DirPredictor(.clk, .reset, .StallF, .StallE,
-      .PCNextF, .BPPredF,
-      .InstrClassE, .BPInstrClassF, .BPInstrClassD, .BPInstrClassE, .BPPredDirWrongE,
-      .PCE, .PCSrcE, .UpdateBPPredE);
+    gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+      .PCNextF, .PCM, .DirPredictionF(BPPredF), .DirPredictionWrongE(BPPredDirWrongE),
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
   end 
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
 
