@@ -31,22 +31,21 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
-module gsharePredictor
+module oldgsharePredictor
   (input logic             clk,
    input logic             reset,
-   input logic             StallF, StallE,
-   input logic [`XLEN-1:0] PCNextF,
-   output logic [1:0]      BPPredF,
+   input logic             StallF, StallD, StallE, StallM, StallW, 
+   input logic             FlushD, FlushE, FlushM, FlushW,
+   input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
+   output logic [1:0]      DirPredictionF,
    // update
    input logic [4:0]       InstrClassE,
    input logic [4:0]       BPInstrClassE,
    input logic [4:0]       BPInstrClassD,
    input logic [4:0]       BPInstrClassF, 
-   input logic             BPPredDirWrongE,
+   output logic            DirPredictionWrongE,
 
-   input logic [`XLEN-1:0] PCE,
-   input logic             PCSrcE,
-   input logic [1:0]       UpdateBPPredE
+   input logic             PCSrcE
   
    );
   logic [`BPRED_SIZE+1:0]  GHR, GHRNext;
@@ -57,6 +56,8 @@ module gsharePredictor
   logic                    BPClassRightNonCFI;
   logic                    BPClassRightBPWrong;
   logic                    BPClassRightBPRight;
+  logic [1:0]              DirPredictionD, DirPredictionE;
+  logic [1:0]              NewDirPredictionE;
 
   logic [6:0]              GHRMuxSel;
   logic                    GHRUpdateEN;
@@ -65,8 +66,8 @@ module gsharePredictor
   assign BPClassRightNonCFI = ~BPInstrClassE[0] & ~InstrClassE[0];
   assign BPClassWrongCFI = ~BPInstrClassE[0] & InstrClassE[0];
   assign BPClassWrongNonCFI = BPInstrClassE[0] & ~InstrClassE[0];
-  assign BPClassRightBPWrong = BPInstrClassE[0] & InstrClassE[0] & BPPredDirWrongE;
-  assign BPClassRightBPRight = BPInstrClassE[0] & InstrClassE[0] & ~BPPredDirWrongE;
+  assign BPClassRightBPWrong = BPInstrClassE[0] & InstrClassE[0] & DirPredictionWrongE;
+  assign BPClassRightBPRight = BPInstrClassE[0] & InstrClassE[0] & ~DirPredictionWrongE;
   
   
   // GHR update selection, 1 hot encoded.
@@ -88,7 +89,7 @@ module gsharePredictor
       7'b000_1000: GHRNext = {GHR[`BPRED_SIZE-1+2:1], PCSrcE}; // branch update with mis prediction correction
       7'b001_0000: GHRNext = {2'b00, GHR[`BPRED_SIZE+1:2]}; // repair 2
       7'b010_0000: GHRNext = {1'b0, GHR[`BPRED_SIZE+1:2], PCSrcE}; // branch update + repair 1
-      7'b100_0000: GHRNext = {GHR[`BPRED_SIZE-2+2:0], BPPredF[1]}; // speculative update
+      7'b100_0000: GHRNext = {GHR[`BPRED_SIZE-2+2:0], DirPredictionF[1]}; // speculative update
       default: GHRNext = GHR[`BPRED_SIZE-1+2:0];
     endcase
   end
@@ -114,11 +115,20 @@ module gsharePredictor
     .reset(reset),
     //.RA1(GHR[`BPRED_SIZE-1:0]),
     .ra1(GHRLookup ^ PCNextF[`BPRED_SIZE:1]),
-    .rd1(BPPredF),
+    .rd1(DirPredictionF),
     .ren1(~StallF),
     .wa2(PHTUpdateAdr ^ PCE[`BPRED_SIZE:1]),
-    .wd2(UpdateBPPredE),
+    .wd2(NewDirPredictionE),
     .wen2(PHTUpdateEN),
     .bwe2(2'b11));
+
+  // DirPrediction pipeline
+  flopenr #(2) PredictionRegD(clk, reset, ~StallD, DirPredictionF, DirPredictionD);
+  flopenr #(2) PredictionRegE(clk, reset, ~StallE, DirPredictionD, DirPredictionE);
+
+  // New prediction pipeline
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
+  
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & InstrClassE[0];
 
 endmodule // gsharePredictor
