@@ -33,58 +33,49 @@
 `include "wally-config.vh"
 
 module twoBitPredictor
-  #(parameter int Depth = 10
+  #(parameter int k = 10
     )
   (input logic             clk,
    input logic             reset,
-   input logic             StallF,
-   input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0]      Prediction,
-   // update
-   input logic [`XLEN-1:0] UpdatePC,
-   input logic             UpdateEN,
-   input logic [1:0]       UpdatePrediction
+   input logic             StallF, StallD, StallE, StallM,
+   input logic             FlushD, FlushE, FlushM,
+   input logic [`XLEN-1:0] PCNextF, PCM,
+   output logic [1:0]      DirPredictionF,
+   output logic            DirPredictionWrongE,
+   input logic             BranchInstrE, BranchInstrM,
+   input logic             PCSrcE
    );
 
-  logic [Depth-1:0]        LookUpPCIndex, UpdatePCIndex;
+  logic [k-1:0]            IndexNextF, IndexM;
   logic [1:0]              PredictionMemory;
   logic                    DoForwarding, DoForwardingF;
-  logic [1:0]              UpdatePredictionF;
-  
+  logic [1:0]              DirPredictionD, DirPredictionE;
+  logic [1:0]              NewDirPredictionE, NewDirPredictionM;
 
   // hashing function for indexing the PC
-  // We have Depth bits to index, but XLEN bits as the input.
+  // We have k bits to index, but XLEN bits as the input.
   // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
   // using compressed instructions.  XOR bit 1 with the MSB of index.
-  assign UpdatePCIndex = {UpdatePC[Depth+1] ^ UpdatePC[1], UpdatePC[Depth:2]};
-  assign LookUpPCIndex = {LookUpPC[Depth+1] ^ LookUpPC[1], LookUpPC[Depth:2]};  
+  assign IndexNextF = {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+  assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
 
 
-  ram2p1r1wb #(Depth, 2) PHT(.clk(clk),
-    .reset(reset),
-    .ra1(LookUpPCIndex),
-    .rd1(PredictionMemory),
-    .ren1(~StallF),
-    .wa2(UpdatePCIndex),
-    .wd2(UpdatePrediction),
-    .wen2(UpdateEN),
-    .bwe2(2'b11));
-
-  // need to forward when updating to the same address as reading.
-  // first we compare to see if the update and lookup addreses are the same
-  assign DoForwarding = UpdatePCIndex == LookUpPCIndex;
-
-  // register the update value and the forwarding signal into the Fetch stage
-  flopr #(1) DoForwardingReg(.clk(clk),
-        .reset(reset),
-        .d(DoForwarding),
-        .q(DoForwardingF));
+  ram2p1r1wbefix #(2**k, 2) PHT(.clk(clk),
+    .ce1(~StallF), .ce2(~StallM & ~FlushM),
+    .ra1(IndexNextF),
+    .rd1(DirPredictionF),
+    .wa2(IndexM),
+    .wd2(NewDirPredictionM),
+    .we2(BranchInstrM & ~StallM & ~FlushM),
+    .bwe2(1'b1));
   
-  flopr #(2) UpdatePredictionReg(.clk(clk),
-     .reset(reset),
-     .d(UpdatePrediction),
-     .q(UpdatePredictionF));
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, DirPredictionD, DirPredictionE);
 
-  assign Prediction = DoForwardingF ? UpdatePredictionF : PredictionMemory;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);
   
+
 endmodule
