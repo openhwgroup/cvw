@@ -148,7 +148,7 @@ module wallypipelinedcore (
   logic                LSUHREADY;
   
   logic             BPPredWrongE;
-  logic             BPPredDirWrongM;
+  logic             DirPredictionWrongM;
   logic             BTBPredPCWrongM;
   logic             RASPredPCWrongM;
   logic             BPPredClassNonCFIWrongM;
@@ -184,7 +184,7 @@ module wallypipelinedcore (
   
     // Mem
     .RetM, .TrapM, .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .BPPredDirWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
   
     // Writeback
@@ -340,7 +340,7 @@ module wallypipelinedcore (
          .sfencevmaM,
          .InstrValidM, .CommittedM, .CommittedF,
          .FRegWriteM, .LoadStallD,
-         .BPPredDirWrongM, .BTBPredPCWrongM,
+         .DirPredictionWrongM, .BTBPredPCWrongM,
          .RASPredPCWrongM, .BPPredClassNonCFIWrongM,
          .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
          .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,

@@ -45,7 +45,7 @@ module csrc #(parameter
     input logic 	     StallE, StallM, StallW,
     input logic        FlushM, 
     input logic 	     InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
-    input logic 	     BPPredDirWrongM,
+    input logic 	     DirPredictionWrongM,
     input logic 	     BTBPredPCWrongM,
     input logic 	     RASPredPCWrongM,
     input logic 	     BPPredClassNonCFIWrongM,
@@ -86,7 +86,7 @@ module csrc #(parameter
       assign CounterEvent[`COUNTERS-1:3] = 0;
     end else begin: cevent // User-defined counters
       assign CounterEvent[3] = LoadStallM;  // don't want to suppress on flush as this only happens if flushed.
-      assign CounterEvent[4] = BPPredDirWrongM & InstrValidNotFlushedM;
+      assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;
       assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
       assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
       assign CounterEvent[7] = (InstrClassM[4] | InstrClassM[2] | InstrClassM[1]) & InstrValidNotFlushedM;
