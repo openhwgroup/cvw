@@ -67,7 +67,7 @@ module bpred (
    );
 
   logic                     BTBValidF;
-  logic [1:0]               BPPredF, BPPredD, BPPredE, UpdateBPPredE;
+  logic [1:0]               DirPredictionF, DirPredictionD, DirPredictionE, UpdateBPPredE;
 
   logic [4:0]               BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
@@ -87,22 +87,18 @@ module bpred (
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
-    twoBitPredictor DirPredictor(.clk, .reset, .StallF,
-      .LookUpPC(PCNextF),
-      .Prediction(BPPredF),
-      // update
-      .UpdatePC(PCE),
-      .UpdateEN(InstrClassE[0] & ~StallE),
-      .UpdatePrediction(UpdateBPPredE));
+    twoBitPredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
     globalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF(BPPredF), .DirPredictionWrongE(BPPredDirWrongE),
+      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF(BPPredF), .DirPredictionWrongE(BPPredDirWrongE),
+      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
   end 
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
@@ -110,7 +106,7 @@ module bpred (
     localHistoryPredictor DirPredictor(.clk,
       .reset, .StallF, .StallE,
       .LookUpPC(PCNextF),
-      .Prediction(BPPredF),
+      .Prediction(DirPredictionF),
       // update
       .UpdatePC(PCE),
       .UpdateEN(InstrClassE[0] & ~StallE),
@@ -123,7 +119,7 @@ module bpred (
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-  assign SelBPPredF = ((BPInstrClassF[0] & BPPredF[1] & BTBValidF) | 
+  assign SelBPPredF = ((BPInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
          BPInstrClassF[3] |
          (BPInstrClassF[2] & BTBValidF) | 
          BPInstrClassF[1] & BTBValidF) ;
@@ -164,14 +160,14 @@ module bpred (
   flopenr #(2) BPPredRegD(.clk(clk),
       .reset(reset),
       .en(~StallD),
-      .d(BPPredF),
-      .q(BPPredD));
+      .d(DirPredictionF),
+      .q(DirPredictionD));
 
   flopenr #(2) BPPredRegE(.clk(clk),
       .reset(reset),
       .en(~StallE),
-      .d(BPPredD),
-      .q(BPPredE));
+      .d(DirPredictionD),
+      .q(DirPredictionE));
 
 
   // the branch predictor needs a compact decoding of the instruction class.
@@ -225,7 +221,7 @@ module bpred (
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
   
   // 2 bit saturating counter
-  satCounter2 BPDirUpdate(.BrDir(PCSrcE), .OldState(BPPredE), .NewState(UpdateBPPredE));
+  satCounter2 BPDirUpdate(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(UpdateBPPredE));
 
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
