@@ -9,4 +9,6 @@ void global_hist_0_space_test();
 void global_hist_1_space_test();
 void global_hist_2_space_test();
 void global_hist_3_space_test();
+void global_hist_4_space_test();
+void oneLoopTest();
 #endif

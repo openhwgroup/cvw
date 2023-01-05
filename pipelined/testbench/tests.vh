@@ -1927,8 +1927,8 @@ string imperas32f[] = '{
 
  string custom[] = '{
     `CUSTOM,
-    "cacheTest",   
-    "simple"
+    "simple",
+    "cacheTest"
  };
   string testsBP64[] = '{
     `IMPERASTEST,
