@@ -60,14 +60,14 @@ module bpred (
 
    // Report branch prediction status
    output logic             BPPredWrongE,  // Prediction is wrong.
-   output logic             BPPredDirWrongM, // Prediction direction is wrong.
+   output logic             DirPredictionWrongM, // Prediction direction is wrong.
    output logic             BTBPredPCWrongM, // Prediction target wrong.
    output logic             RASPredPCWrongM, // RAS prediction is wrong.
    output logic             BPPredClassNonCFIWrongM // Class prediction is wrong.
    );
 
   logic                     BTBValidF;
-  logic [1:0]               DirPredictionF, DirPredictionD, DirPredictionE, UpdateBPPredE;
+  logic [1:0]               DirPredictionF;
 
   logic [4:0]               BPInstrClassF, BPInstrClassD, BPInstrClassE;
   logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
@@ -76,7 +76,7 @@ module bpred (
   logic                     PredictionPCWrongE;
   logic                     PredictionInstrClassWrongE;
   logic [4:0]               InstrClassD, InstrClassE;
-  logic                     BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
+  logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
@@ -88,17 +88,17 @@ module bpred (
   // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
     twoBitPredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
     globalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF(DirPredictionF), .DirPredictionWrongE(BPPredDirWrongE),
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
   end 
   else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
@@ -154,22 +154,6 @@ module bpred (
 
   assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
 
-  // The prediction and its results need to be passed through the pipeline
-  // *** for other predictors will will be different.
-  // *** should these be flushed?
-  flopenr #(2) BPPredRegD(.clk(clk),
-      .reset(reset),
-      .en(~StallD),
-      .d(DirPredictionF),
-      .q(DirPredictionD));
-
-  flopenr #(2) BPPredRegE(.clk(clk),
-      .reset(reset),
-      .en(~StallE),
-      .d(DirPredictionD),
-      .q(DirPredictionE));
-
-
   // the branch predictor needs a compact decoding of the instruction class.
   // *** consider adding in the alternate return address x5 for returns.
   assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
@@ -183,8 +167,8 @@ module bpred (
 
   // branch predictor
   flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-    {BPPredDirWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE},
-    {BPPredDirWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM});
+    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE},
+    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, BPPredClassNonCFIWrongM});
 
   // pipeline the class
   flopenrc #(5) BPInstrClassRegD(clk, reset, FlushD, ~StallD, BPInstrClassF, BPInstrClassD);
@@ -202,7 +186,7 @@ module bpred (
   // The branch direction also need to checked.
   // However if the direction is wrong then the pc will be wrong.  This is only relavent to checking the
   // accuracy of the direciton prediction.
-  //assign BPPredDirWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
+  //assign DirPredictionWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
   
   // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
   // Also we want to track this in a performance counter.
@@ -220,9 +204,6 @@ module bpred (
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
   
-  // 2 bit saturating counter
-  satCounter2 BPDirUpdate(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(UpdateBPPredE));
-
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
   // If the prediction is wrong select the correct address.
