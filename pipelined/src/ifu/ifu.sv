@@ -33,7 +33,7 @@
 
 module ifu (
 	input logic 				clk, reset,
-	input logic 				StallF, StallD, StallE, StallM, 
+	input logic 				StallF, StallD, StallE, StallM, StallW,
 	input logic 				FlushD, FlushE, FlushM, FlushW, 
 	// Bus interface
 (* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
@@ -321,8 +321,8 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   if (`BPRED_ENABLED) begin : bpred
     bpred bpred(.clk, .reset,
-                .StallF, .StallD, .StallE, .StallM, 
-                .FlushD, .FlushE, .FlushM,
+                .StallF, .StallD, .StallE, .StallM, .StallW,
+                .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredClassNonCFIWrongM);
