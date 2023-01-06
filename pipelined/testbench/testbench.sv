@@ -32,6 +32,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
+`define PrintHPMCounters 0
+
 module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
@@ -400,6 +402,34 @@ logic [3:0] dummy;
       end // if (DCacheFlushDone)
       end
     end // always @ (negedge clk)
+
+
+  if(`PrintHPMCounters) begin
+    integer HPMCindex;
+    string  HPMCnames[] = '{"Mcycle",
+                            "------",
+                            "InstRet",
+                            "Load Stall",
+                            "Br Dir Wrong",
+                            "Br Count",
+                            "Br Target Wrong",
+                            "Jump, JR, ret",
+                            "RAS Wrong",
+                            "ret",
+                            "Instr Class Wrong",
+                            "D Cache Access",
+                            "D Cache Miss",
+                            "I Cache Access",
+                            "I Cache Miss"};
+    always @(negedge clk) begin
+      if(DCacheFlushStart & ~DCacheFlushDone) begin
+        for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
+          // unlikely to have more than 10M in any counter.
+          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex], HPMCnames[HPMCindex]);
+        end
+      end
+    end
+  end
 
   // track the current function or global label
   if (DEBUG == 1) begin : FunctionName
