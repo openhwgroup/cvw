@@ -44,10 +44,6 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 
-// Microarchitectural Features
-`define UARCH_PIPELINED 1
-`define UARCH_SUPERSCALR 0
-`define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
 `define BUS 1
 `define DCACHE 1
@@ -75,7 +71,7 @@
 `define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 16
 
 // Address space
 `define RESET_VECTOR 32'h80000000

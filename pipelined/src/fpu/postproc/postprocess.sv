@@ -41,7 +41,7 @@ module postprocess (
     input logic                             XInf, YInf, ZInf,    // inputs are infinity
     input logic                             XNaN, YNaN, ZNaN,    // inputs are NaN
     input logic                             XSNaN, YSNaN, ZSNaN, // inputs are signaling NaNs
-    input logic                             ZDenorm,        // is the original precision denormalized
+    input logic                             ZSubnorm,        // is the original precision Subnormalized
     input logic  [1:0]                      PostProcSel,    // select result to be written to fp register
     //fma signals
     input logic                             FmaAs,  // the modified Z sign - depends on instruction
@@ -58,7 +58,7 @@ module postprocess (
     // conversion signals
     input logic                             CvtCs,     // the result's sign
     input logic  [`NE:0]                    CvtCe,    // the calculated expoent
-    input logic                             CvtResDenormUf,
+    input logic                             CvtResSubnormUf,
 	input logic  [`LOGCVTLEN-1:0]           CvtShiftAmt,  // how much to shift by
     input logic                             ToInt,     // is fp->int (since it's writting to the integer register)
     input logic  [`CVTLEN-1:0]              CvtLzcIn,      // input to the Leading Zero Counter (priority encoder)
@@ -70,7 +70,7 @@ module postprocess (
     );
    
     // general signals
-    logic Ws;
+    logic Rs;
     logic [`NF-1:0] Rf; // Result fraction
     logic [`NE-1:0] Re;  // Result exponent
     logic Ms;
@@ -83,22 +83,22 @@ module postprocess (
     logic [`NORMSHIFTSZ-1:0] Shifted;    // the shifted result
     logic Plus1;      // add one to the final result?
     logic IntInvalid, Overflow, Invalid; // flags
-    logic G, R, S; // bits needed to determine rounding
+    logic Guard, Round, Sticky; // bits needed to determine rounding
     logic [`FMTBITS-1:0] OutFmt;
     // fma signals
     logic [`NE+1:0] FmaMe;     // exponent of the normalized sum
     logic FmaSZero;        // is the sum zero
     logic [3*`NF+5:0] FmaShiftIn;        // shift input
-    logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account denormal or zero results
-    logic FmaPreResultDenorm;    // is the result denormalized - calculated before LZA corection
+    logic [`NE+1:0] NormSumExp;          // exponent of the normalized sum not taking into account Subnormal or zero results
+    logic FmaPreResultSubnorm;    // is the result Subnormalized - calculated before LZA corection
     logic [$clog2(3*`NF+5)-1:0] FmaShiftAmt;   // normalization shift count
     // division singals
     logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;
     logic [`NORMSHIFTSZ-1:0] DivShiftIn;
     logic [`NE+1:0] Qe;
     logic DivByZero;
-    logic DivResDenorm;
-    logic DivDenormShiftPos;
+    logic DivResSubnorm;
+    logic DivSubnormShiftPos;
     // conversion signals
     logic [`CVTLEN+`NF:0] CvtShiftIn;    // number to be shifted
     logic [1:0] CvtNegResMsbs;
@@ -142,11 +142,11 @@ module postprocess (
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
 
-    cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResDenormUf, .Xm, .CvtLzcIn,  
+    cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
-                          .FmaSZero, .FmaPreResultDenorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Sqrt, .DivQe, .DivQm, .DivResDenorm, .DivDenormShiftPos, .DivShiftAmt, .DivShiftIn);
+                          .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt, .FmaShiftIn);
+    divshiftcalc divshiftcalc(.Sqrt, .DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)
@@ -175,8 +175,8 @@ module postprocess (
     
     normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
-    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultDenorm, .NormSumExp,
-                                .DivResDenorm, .DivDenormShiftPos, .DivOp, .DivQe,
+    shiftcorrection shiftcorrection(.FmaOp, .FmaPreResultSubnorm, .NormSumExp,
+                                .DivResSubnorm, .DivSubnormShiftPos, .DivOp, .DivQe,
                                 .Qe, .FmaSZero, .Shifted, .FmaMe, .Mf);
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -193,16 +193,16 @@ module postprocess (
     roundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
     round round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Qe,
-                .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResDenormUf, .Mf, .ToInt,  .CvtResUf,
+                .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResSubnormUf, .Mf, .ToInt,  .CvtResUf,
                 .DivS, //.DivDone,
-                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .S, .R, .G, .Me);
+                .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Sign calculation
     ///////////////////////////////////////////////////////////////////////////////
 
-    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .R, .S, .G,
-                          .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Ws);
+    resultsign resultsign(.Frm, .FmaPs, .FmaAs, .Round, .Sticky, .Guard,
+                          .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Rs);
 
     ///////////////////////////////////////////////////////////////////////////////
     // Flags
@@ -210,8 +210,8 @@ module postprocess (
 
     flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
                 .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
-                .NaNIn, .FmaAs, .FmaPs, .R, .IntInvalid, .DivByZero,
-                .G, .S, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
+                .NaNIn, .FmaAs, .FmaPs, .Round, .IntInvalid, .DivByZero,
+                .Guard, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
                 .Me, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -223,6 +223,6 @@ module postprocess (
         .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
         .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
         .XInf, .YInf, .DivOp,
-        .DivByZero, .FullRe, .CvtCe, .Ws, .Re, .Rf, .PostProcRes, .FCvtIntRes);
+        .DivByZero, .FullRe, .CvtCe, .Rs, .Re, .Rf, .PostProcRes, .FCvtIntRes);
 
 endmodule

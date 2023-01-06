@@ -38,7 +38,6 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-//`define MISA (32'h00000105)
 `define MISA (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
@@ -46,10 +45,6 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 
-// Microarchitectural Features
-`define UARCH_PIPELINED 1
-`define UARCH_SUPERSCALR 0
-`define UARCH_SINGLECYCLE 0
 // LSU microarchitectural Features
 `define BUS 1
 `define DCACHE 1

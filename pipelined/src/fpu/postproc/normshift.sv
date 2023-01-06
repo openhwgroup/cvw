@@ -45,7 +45,7 @@
     //                  |     keep          |
     //
     //      fp -> fp:
-    //          - if result is denormalized or underflowed:
+    //          - if result is Subnormalized or underflowed:
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | << NF+CalcExp-1
     //          process:
     //             - start
@@ -58,7 +58,7 @@
     //                 |   0's  |     mantissa      |     0's      |
     //                 |       keep      |
     //
-    //          - if the input is denormalized:
+    //          - if the input is Subnormalized:
     //              |     lzcIn      | 0's if nessisary | << ZeroCnt+1
     //              - plus 1 to shift out the first 1
     //

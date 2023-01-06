@@ -32,7 +32,7 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 1
+`define PrintHPMCounters 0
 
 module testbench;
   parameter DEBUG=0;
