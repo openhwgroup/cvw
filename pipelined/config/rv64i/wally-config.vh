@@ -45,11 +45,6 @@
 `define ZICOUNTERS_SUPPORTED 0
 `define ZFH_SUPPORTED 0
 
-// Microarchitectural Features
-`define UARCH_PIPELINED 1
-`define UARCH_SUPERSCALR 0
-`define UARCH_SINGLECYCLE 0
-
 // LSU microarchitectural Features
 `define BUS 0
 `define DCACHE 0
