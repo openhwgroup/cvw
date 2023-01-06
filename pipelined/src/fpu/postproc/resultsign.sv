@@ -37,11 +37,11 @@ module resultsign(
     input logic         FmaOp,
     input logic         FmaSZero,
     input logic         Mult,
-    input logic         R,
-    input logic         S,
-    input logic         G,
+    input logic         Round,
+    input logic         Sticky,
+    input logic         Guard,
     input logic         Ms,
-    output logic        Ws
+    output logic        Rs
 );
 
     logic Zeros;
@@ -59,9 +59,9 @@ module resultsign(
     //      - Z is killed and P is zero - impossible
     // Zero sign calculation:
     //      - if a multiply opperation is done, then use the products sign(Ps)
-    //      - if the zero sum is not exactly zero i.e. R|S use the sign of the exact result (which is the product's sign)
+    //      - if the zero sum is not exactly zero i.e. Round|Sticky use the sign of the exact result (which is the product's sign)
     //      - if an effective addition occurs (P+A or -P+-A or P--A) then use the product's sign
-    assign Zeros = (FmaPs^FmaAs)&~(R|G|S)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
+    assign Zeros = (FmaPs^FmaAs)&~(Round|Guard|Sticky)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
 
     // is the result negitive
@@ -70,8 +70,8 @@ module resultsign(
     //  if -p - z then the Sum is negitive
     assign Infs = ZInf ? FmaAs : FmaPs;
     always_comb
-        if(InfIn&FmaOp) Ws = Infs;
-        else if(FmaSZero&FmaOp) Ws = Zeros;
-        else Ws = Ms;
+        if(InfIn&FmaOp) Rs = Infs;
+        else if(FmaSZero&FmaOp) Rs = Zeros;
+        else Rs = Ms;
 
 endmodule

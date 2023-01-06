@@ -33,38 +33,38 @@ module fclassify (
     input logic         Xs,     // sign bit
     input logic         XNaN,   // is NaN
     input logic         XSNaN,  // is signaling NaN
-    input logic         XDenorm,// is denormal
+    input logic         XSubnorm,// is Subnormal
     input logic         XZero,  // is zero
     input logic         XInf,   // is infinity
     output logic [`XLEN-1:0] ClassRes// classify result
 );
 
-    logic PInf, PZero, PNorm, PDenorm;
-    logic NInf, NZero, NNorm, NDenorm;
+    logic PInf, PZero, PNorm, PSubnorm;
+    logic NInf, NZero, NNorm, NSubnorm;
     logic XNorm;
    
     // determine the sub categories
-    assign XNorm= ~(XNaN | XInf| XDenorm| XZero);
+    assign XNorm= ~(XNaN | XInf| XSubnorm| XZero);
     assign PInf = ~Xs&XInf;
     assign NInf = Xs&XInf;
     assign PNorm = ~Xs&XNorm;
     assign NNorm = Xs&XNorm;
-    assign PDenorm = ~Xs&XDenorm;
-    assign NDenorm = Xs&XDenorm;
+    assign PSubnorm = ~Xs&XSubnorm;
+    assign NSubnorm = Xs&XSubnorm;
     assign PZero = ~Xs&XZero;
     assign NZero = Xs&XZero;
 
     // determine sub category and combine into the result
     //  bit 0 - -Inf
     //  bit 1 - -Norm
-    //  bit 2 - -Denorm
+    //  bit 2 - -Subnorm
     //  bit 3 - -Zero
     //  bit 4 - +Zero
-    //  bit 5 - +Denorm
+    //  bit 5 - +Subnorm
     //  bit 6 - +Norm
     //  bit 7 - +Inf
     //  bit 8 - signaling NaN
     //  bit 9 - quiet NaN
-    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PDenorm, PZero, NZero, NDenorm, NNorm, NInf};
+    assign ClassRes = {{`XLEN-10{1'b0}}, XNaN&~XSNaN, XSNaN, PInf, PNorm, PSubnorm, PZero, NZero, NSubnorm, NNorm, NInf};
 
 endmodule

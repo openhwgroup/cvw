@@ -34,9 +34,9 @@ module fmashiftcalc(
     input logic  [$clog2(3*`NF+5)-1:0]  FmaSCnt,    // normalization shift count
     input logic  [`FMTBITS-1:0]         Fmt,        // precision 1 = double 0 = single
     input logic  [`NE+1:0]              FmaSe,      // sum's exponent
-    output logic [`NE+1:0]              NormSumExp, // exponent of the normalized sum not taking into account denormal or zero results
-    output logic                        FmaSZero,   // is the result denormalized - calculated before LZA corection
-    output logic                        FmaPreResultDenorm, // is the result denormalized - calculated before LZA corection
+    output logic [`NE+1:0]              NormSumExp, //*** add fma // exponent of the normalized sum not taking into account Subnormal or zero results
+    output logic                        FmaSZero,   // is the result Subnormalized - calculated before LZA corection
+    output logic                        FmaPreResultSubnorm, // is the result Subnormalized - calculated before LZA corection
     output logic [$clog2(3*`NF+5)-1:0]  FmaShiftAmt,    // normalization shift count
     output logic [3*`NF+5:0]            FmaShiftIn      // is the sum zero
 );
@@ -46,7 +46,6 @@ module fmashiftcalc(
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
-    //*** insert bias-bias simplification in fcvt.sv/phone pictures
     // Determine if the sum is zero
     assign FmaSZero = ~(|FmaSm);
     // calculate the sum's exponent
@@ -84,13 +83,13 @@ module fmashiftcalc(
 
     end
     
-    // determine if the result is denormalized
+    // determine if the result is Subnormalized
     
     if (`FPSIZES == 1) begin
         logic Sum0LEZ, Sum0GEFL;
         assign Sum0LEZ  = PreNormSumExp[`NE+1] | ~|PreNormSumExp;
         assign Sum0GEFL = $signed(PreNormSumExp) >= $signed((`NE+2)'(-`NF-2));
-        assign FmaPreResultDenorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
+        assign FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
 
     end else if (`FPSIZES == 2) begin
         logic Sum0LEZ, Sum0GEFL, Sum1LEZ, Sum1GEFL;
@@ -98,7 +97,7 @@ module fmashiftcalc(
         assign Sum0GEFL = $signed(PreNormSumExp) >= $signed((`NE+2)'(-`NF-2));
         assign Sum1LEZ  = $signed(PreNormSumExp) <= $signed((`NE+2)'(`BIAS-`BIAS1));
         assign Sum1GEFL = $signed(PreNormSumExp) >= $signed((`NE+2)'(-`NF1-2+`BIAS-`BIAS1)) | ~|PreNormSumExp;
-        assign FmaPreResultDenorm = (Fmt ? Sum0LEZ : Sum1LEZ) & (Fmt ? Sum0GEFL : Sum1GEFL) & ~FmaSZero;
+        assign FmaPreResultSubnorm = (Fmt ? Sum0LEZ : Sum1LEZ) & (Fmt ? Sum0GEFL : Sum1GEFL) & ~FmaSZero;
 
     end else if (`FPSIZES == 3) begin
         logic Sum0LEZ, Sum0GEFL, Sum1LEZ, Sum1GEFL, Sum2LEZ, Sum2GEFL;
@@ -110,10 +109,10 @@ module fmashiftcalc(
         assign Sum2GEFL = $signed(PreNormSumExp) >= $signed((`NE+2)'(-`NF2-2+`BIAS-`BIAS2)) | ~|PreNormSumExp;
         always_comb begin
             case (Fmt)
-                `FMT: FmaPreResultDenorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
-                `FMT1: FmaPreResultDenorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
-                `FMT2: FmaPreResultDenorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
-                default: FmaPreResultDenorm = 1'bx;
+                `FMT: FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
+                `FMT1: FmaPreResultSubnorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
+                `FMT2: FmaPreResultSubnorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
+                default: FmaPreResultSubnorm = 1'bx;
             endcase
         end
 
@@ -129,10 +128,10 @@ module fmashiftcalc(
         assign Sum3GEFL = $signed(PreNormSumExp) >= $signed((`NE+2)'(-`H_NF-2+`BIAS-`H_BIAS)) | ~|PreNormSumExp;
         always_comb begin
             case (Fmt)
-                2'h3: FmaPreResultDenorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
-                2'h1: FmaPreResultDenorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
-                2'h0: FmaPreResultDenorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
-                2'h2: FmaPreResultDenorm = Sum3LEZ & Sum3GEFL & ~FmaSZero;
+                2'h3: FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
+                2'h1: FmaPreResultSubnorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
+                2'h0: FmaPreResultSubnorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
+                2'h2: FmaPreResultSubnorm = Sum3LEZ & Sum3GEFL & ~FmaSZero;
             endcase
         end
 
@@ -143,14 +142,14 @@ module fmashiftcalc(
     //      - add one from exp
     //      - if kill prod dont add to exp
 
-    // Determine if the result is denormal
-    // assign FmaPreResultDenorm = $signed(NormSumExp)<=0 & ($signed(NormSumExp)>=$signed(-FracLen)) & ~FmaSZero;
+    // Determine if the result is Subnormal
+    // assign FmaPreResultSubnorm = $signed(NormSumExp)<=0 & ($signed(NormSumExp)>=$signed(-FracLen)) & ~FmaSZero;
 
     // set and calculate the shift input and amount
-    //  - shift once if killing a product and the result is denormalized
+    //  - shift once if killing a product and the result is Subnormalized
     assign FmaShiftIn = {2'b0, FmaSm};
     if (`FPSIZES == 1)
-        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+5)-1:0]+($clog2(3*`NF+5))'(`NF+2): FmaSCnt+1;
+        assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*`NF+5)-1:0]+($clog2(3*`NF+5))'(`NF+2): FmaSCnt+1;
     else
-        assign FmaShiftAmt = FmaPreResultDenorm ? FmaSe[$clog2(3*`NF+5)-1:0]+($clog2(3*`NF+5))'(`NF+2)+BiasCorr[$clog2(3*`NF+5)-1:0]: FmaSCnt+1;
+        assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*`NF+5)-1:0]+($clog2(3*`NF+5))'(`NF+2)+BiasCorr[$clog2(3*`NF+5)-1:0]: FmaSCnt+1;
 endmodule
