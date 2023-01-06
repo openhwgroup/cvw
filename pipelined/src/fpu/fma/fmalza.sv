@@ -39,23 +39,23 @@ module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and d
     ); 
 
    logic [WIDTH:0] 	       F;
-   logic [WIDTH-1:0]  B, P, G, K;
+   logic [WIDTH-1:0]  B, P, Guard, K;
     logic [WIDTH-1:0] Pp1, Gm1, Km1;
 
     assign B = {{(`NF+1){1'b0}}, Pm}; // Zero extend product
 
     assign P = A^B;
-    assign G = A&B;
+    assign Guard = A&B;
     assign K= ~A&~B;
 
    assign Pp1 = {sub, P[WIDTH-1:1]};
-   assign Gm1 = {G[WIDTH-2:0], Cin};
+   assign Gm1 = {Guard[WIDTH-2:0], Cin};
    assign Km1 = {K[WIDTH-2:0], ~Cin};
    
     // Apply function to determine Leading pattern
     //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
     assign F[WIDTH] = ~sub&P[WIDTH-1];
-    assign F[WIDTH-1:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
+    assign F[WIDTH-1:0] = (Pp1&(Guard&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | Guard&~Gm1));
 
     lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule

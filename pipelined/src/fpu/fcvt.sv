@@ -39,11 +39,11 @@ module fcvt (
     input logic [2:0]               OpCtrl,     // choose which opperation (look below for values)
     input logic                     ToInt,      // is fp->int (since it's writting to the integer register)
     input logic                     XZero,      // is the input zero
-    input logic                     XDenorm,    // is the input denormalized
+    input logic                     XSubnorm,   // is the input Subnormalized
     input logic [`FMTBITS-1:0]      Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
     output logic [`NE:0]            Ce,         // the calculated expoent
 	output logic [`LOGCVTLEN-1:0]   ShiftAmt,   // how much to shift by
-    output logic                    ResDenormUf,// does the result underflow or is denormalized
+    output logic                    ResSubnormUf, // does the result underflow or is Subnormalized
     output logic                    Cs,         // the result's sign
     output logic                    IntZero,    // is the integer zero?
     output logic [`CVTLEN-1:0]      LzcIn       // input to the Leading Zero Counter (priority encoder)
@@ -165,7 +165,7 @@ module fcvt (
     // calculate CalcExp
     //      fp -> fp : 
     //          - XExp - Largest bias + new bias - (LeadingZeros+1)
-    //                                          only do ^ if the input was denormalized
+    //                                          only do ^ if the input was Subnormalized
     //              - convert the expoenent to the final preciaion (Exp - oldBias + newBias)
     //              - correct the expoent when there is a normalization shift ( + LeadingZeros+1) 
     //              - the plus 1 is built into the leading zeros by counting the leading zeroes in the mantissa rather than the fraction
@@ -183,7 +183,7 @@ module fcvt (
     //                  |  0's |     Mantissa      |      0's if nessisary     |
     //                  |     keep        |
     //
-    //              - if the input is denormalized then we dont shift... so the  "- LeadingZeros" is just leftovers from other options
+    //              - if the input is Subnormalized then we dont shift... so the  "- LeadingZeros" is just leftovers from other options
     //      int -> fp : largest bias +  XLEN-1 - Largest bias + new bias - LeadingZeros = XLEN-1 + NewBias - LeadingZeros
     //              Process:
     //                      |XLEN|.0000
@@ -200,7 +200,7 @@ module fcvt (
     // find if the result is dnormal or underflows
     //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
     //      - can't underflow an integer to Fp conversion
-    assign ResDenormUf = (~|Ce | Ce[`NE])&~XZero&~IntToFp;
+    assign ResSubnormUf = (~|Ce | Ce[`NE])&~XZero&~IntToFp;
 
 
     ///////////////////////////////////////////////////////////////////////////
@@ -211,17 +211,17 @@ module fcvt (
     // select the amount to shift by
     //      fp -> int: 
     //          - shift left by CalcExp - essentially shifting until the unbiased exponent = 0
-    //              - don't shift if supposed to shift right (underflowed or denorm input)
-    //      denormalized/undeflowed result fp -> fp:
+    //              - don't shift if supposed to shift right (underflowed or Subnorm input)
+    //      Subnormalized/undeflowed result fp -> fp:
     //          - shift left by NF-1+CalcExp - to shift till the biased expoenent is 0
     //      ??? -> fp: 
     //          - shift left by LeadingZeros - to shift till the result is normalized
-    //              - only shift fp -> fp if the intital value is denormalized
+    //              - only shift fp -> fp if the intital value is Subnormalized
     //                  - this is a problem because the input to the lzc was the fraction rather than the mantissa
     //                  - rather have a few and-gates than an extra bit in the priority encoder??? *** is this true?
-    always_comb//***change denorm to subnorm
+    always_comb
         if(ToInt)                       ShiftAmt = Ce[`LOGCVTLEN-1:0]&{`LOGCVTLEN{~Ce[`NE]}};
-        else if (ResDenormUf)  ShiftAmt = (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0];
+        else if (ResSubnormUf)  ShiftAmt = (`LOGCVTLEN)'(`NF-1)+Ce[`LOGCVTLEN-1:0];
         else                            ShiftAmt = LeadingZeros;
     ///////////////////////////////////////////////////////////////////////////
     // sign
