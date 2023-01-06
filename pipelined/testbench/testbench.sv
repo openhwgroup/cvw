@@ -32,7 +32,7 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
+`define PrintHPMCounters 1
 
 module testbench;
   parameter DEBUG=0;
@@ -413,7 +413,7 @@ logic [3:0] dummy;
                             "Br Dir Wrong",
                             "Br Count",
                             "Br Target Wrong",
-                            "Jump, JR, ret",
+                            "Jump, JR, Jal",
                             "RAS Wrong",
                             "ret",
                             "Instr Class Wrong",
