@@ -23,8 +23,8 @@
 ///////////////////////////////////////////
 
 // division constants
-`define RADIX       32'h2
-`define DIVCOPIES   32'h1
+`define RADIX       32'h4
+`define DIVCOPIES   32'h2
 
 // Memory synthesis configuration
 `define USE_SRAM 0
