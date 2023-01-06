@@ -50,7 +50,7 @@ module specialcase(
     input logic                 Plus1,
     input logic                 DivByZero,
     input logic  [`NE:0]        CvtCe,    // the calculated expoent
-    input logic                 Ws,  // the res's sign
+    input logic                 Rs,  // the res's sign
     input logic                 IntInvalid, Invalid, Overflow,  // flags
     input logic                 CvtResUf,
     input logic  [`NE-1:0]      Re,          // Res exponent
@@ -69,7 +69,7 @@ module specialcase(
 
     // does the overflow result output the maximum normalized floating point number
     //                output infinity if the input is infinity
-    assign OfResMax = (~InfIn|(IntToFp&CvtOp))&~DivByZero&((Frm[1:0]==2'b01) | (Frm[1:0]==2'b10&~Ws) | (Frm[1:0]==2'b11&Ws));
+    assign OfResMax = (~InfIn|(IntToFp&CvtOp))&~DivByZero&((Frm[1:0]==2'b01) | (Frm[1:0]==2'b10&~Rs) | (Frm[1:0]==2'b11&Rs));
 
     if (`FPSIZES == 1) begin
 
@@ -83,9 +83,9 @@ module specialcase(
             assign InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
         end
 
-        assign OfRes =  OfResMax ? {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Ws, {`NE{1'b1}}, {`NF{1'b0}}};
-        assign UfRes = {Ws, {`FLEN-2{1'b0}}, Plus1&Frm[1]&~(DivOp&YInf)};
-        assign NormRes = {Ws, Re, Rf};
+        assign OfRes =  OfResMax ? {Rs, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Rs, {`NE{1'b1}}, {`NF{1'b0}}};
+        assign UfRes = {Rs, {`FLEN-2{1'b0}}, Plus1&Frm[1]&~(DivOp&YInf)};
+        assign NormRes = {Rs, Re, Rf};
 
     end else if (`FPSIZES == 2) begin //will the format conversion in killprod work in other conversions?
         if(`IEEE754) begin
@@ -99,13 +99,13 @@ module specialcase(
 
         always_comb
             if(OutFmt)
-                if(OfResMax)    OfRes = {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}};
-                else            OfRes = {Ws, {`NE{1'b1}}, {`NF{1'b0}}};
+                if(OfResMax)    OfRes = {Rs, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}};
+                else            OfRes = {Rs, {`NE{1'b1}}, {`NF{1'b0}}};
             else
-                if(OfResMax)    OfRes = {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}};
-                else            OfRes = {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1{1'b1}}, (`NF1)'(0)};
-        assign UfRes = OutFmt ? {Ws, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)} : {{`FLEN-`LEN1{1'b1}}, Ws, (`LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-        assign NormRes = OutFmt ? {Ws, Re, Rf} : {{`FLEN-`LEN1{1'b1}}, Ws, Re[`NE1-1:0], Rf[`NF-1:`NF-`NF1]};
+                if(OfResMax)    OfRes = {{`FLEN-`LEN1{1'b1}}, Rs, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}};
+                else            OfRes = {{`FLEN-`LEN1{1'b1}}, Rs, {`NE1{1'b1}}, (`NF1)'(0)};
+        assign UfRes = OutFmt ? {Rs, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)} : {{`FLEN-`LEN1{1'b1}}, Rs, (`LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+        assign NormRes = OutFmt ? {Rs, Re, Rf} : {{`FLEN-`LEN1{1'b1}}, Rs, Re[`NE1-1:0], Rf[`NF-1:`NF-`NF1]};
 
     end else if (`FPSIZES == 3) begin
         always_comb
@@ -120,9 +120,9 @@ module specialcase(
                         InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
                     
-                    OfRes = OfResMax ? {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Ws, {`NE{1'b1}}, {`NF{1'b0}}};
-                    UfRes = {Ws, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {Ws, Re, Rf};
+                    OfRes = OfResMax ? {Rs, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Rs, {`NE{1'b1}}, {`NF{1'b0}}};
+                    UfRes = {Rs, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {Rs, Re, Rf};
                 end
                 `FMT1: begin  
                     if(`IEEE754) begin
@@ -133,9 +133,9 @@ module specialcase(
                     end else begin 
                         InvalidRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                     end
-                    OfRes = OfResMax ? {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, Ws, {`NE1{1'b1}}, (`NF1)'(0)};
-                    UfRes = {{`FLEN-`LEN1{1'b1}}, Ws, (`LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {{`FLEN-`LEN1{1'b1}}, Ws, Re[`NE1-1:0], Rf[`NF-1:`NF-`NF1]};
+                    OfRes = OfResMax ? {{`FLEN-`LEN1{1'b1}}, Rs, {`NE1-1{1'b1}}, 1'b0, {`NF1{1'b1}}} : {{`FLEN-`LEN1{1'b1}}, Rs, {`NE1{1'b1}}, (`NF1)'(0)};
+                    UfRes = {{`FLEN-`LEN1{1'b1}}, Rs, (`LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {{`FLEN-`LEN1{1'b1}}, Rs, Re[`NE1-1:0], Rf[`NF-1:`NF-`NF1]};
                 end
                 `FMT2: begin  
                     if(`IEEE754) begin
@@ -147,9 +147,9 @@ module specialcase(
                         InvalidRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                     end
                     
-                    OfRes = OfResMax ? {{`FLEN-`LEN2{1'b1}}, Ws, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} : {{`FLEN-`LEN2{1'b1}}, Ws, {`NE2{1'b1}}, (`NF2)'(0)};
-                    UfRes = {{`FLEN-`LEN2{1'b1}}, Ws, (`LEN2-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {{`FLEN-`LEN2{1'b1}}, Ws, Re[`NE2-1:0], Rf[`NF-1:`NF-`NF2]};
+                    OfRes = OfResMax ? {{`FLEN-`LEN2{1'b1}}, Rs, {`NE2-1{1'b1}}, 1'b0, {`NF2{1'b1}}} : {{`FLEN-`LEN2{1'b1}}, Rs, {`NE2{1'b1}}, (`NF2)'(0)};
+                    UfRes = {{`FLEN-`LEN2{1'b1}}, Rs, (`LEN2-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {{`FLEN-`LEN2{1'b1}}, Rs, Re[`NE2-1:0], Rf[`NF-1:`NF-`NF2]};
                 end
                 default: begin
                     if(`IEEE754) begin
@@ -179,9 +179,9 @@ module specialcase(
                         InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                     end
                     
-                    OfRes = OfResMax ? {Ws, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Ws, {`NE{1'b1}}, {`NF{1'b0}}};
-                    UfRes = {Ws, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {Ws, Re, Rf};
+                    OfRes = OfResMax ? {Rs, {`NE-1{1'b1}}, 1'b0, {`NF{1'b1}}} : {Rs, {`NE{1'b1}}, {`NF{1'b0}}};
+                    UfRes = {Rs, (`FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {Rs, Re, Rf};
                 end
                 2'h1: begin  
                     if(`IEEE754) begin
@@ -192,9 +192,9 @@ module specialcase(
                     end else begin 
                         InvalidRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                     end
-                    OfRes = OfResMax ? {{`FLEN-`D_LEN{1'b1}}, Ws, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} : {{`FLEN-`D_LEN{1'b1}}, Ws, {`D_NE{1'b1}}, (`D_NF)'(0)};
-                    UfRes = {{`FLEN-`D_LEN{1'b1}}, Ws, (`D_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {{`FLEN-`D_LEN{1'b1}}, Ws, Re[`D_NE-1:0], Rf[`NF-1:`NF-`D_NF]};
+                    OfRes = OfResMax ? {{`FLEN-`D_LEN{1'b1}}, Rs, {`D_NE-1{1'b1}}, 1'b0, {`D_NF{1'b1}}} : {{`FLEN-`D_LEN{1'b1}}, Rs, {`D_NE{1'b1}}, (`D_NF)'(0)};
+                    UfRes = {{`FLEN-`D_LEN{1'b1}}, Rs, (`D_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {{`FLEN-`D_LEN{1'b1}}, Rs, Re[`D_NE-1:0], Rf[`NF-1:`NF-`D_NF]};
                 end
                 2'h0: begin  
                     if(`IEEE754) begin
@@ -206,9 +206,9 @@ module specialcase(
                         InvalidRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                     end
                     
-                    OfRes = OfResMax ? {{`FLEN-`S_LEN{1'b1}}, Ws, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} : {{`FLEN-`S_LEN{1'b1}}, Ws, {`S_NE{1'b1}}, (`S_NF)'(0)};
-                    UfRes = {{`FLEN-`S_LEN{1'b1}}, Ws, (`S_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {{`FLEN-`S_LEN{1'b1}}, Ws, Re[`S_NE-1:0], Rf[`NF-1:`NF-`S_NF]};
+                    OfRes = OfResMax ? {{`FLEN-`S_LEN{1'b1}}, Rs, {`S_NE-1{1'b1}}, 1'b0, {`S_NF{1'b1}}} : {{`FLEN-`S_LEN{1'b1}}, Rs, {`S_NE{1'b1}}, (`S_NF)'(0)};
+                    UfRes = {{`FLEN-`S_LEN{1'b1}}, Rs, (`S_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {{`FLEN-`S_LEN{1'b1}}, Rs, Re[`S_NE-1:0], Rf[`NF-1:`NF-`S_NF]};
                 end
                 2'h2: begin  
                     if(`IEEE754) begin
@@ -220,10 +220,10 @@ module specialcase(
                         InvalidRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
                     end
                     
-                    OfRes = OfResMax ? {{`FLEN-`H_LEN{1'b1}}, Ws, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`FLEN-`H_LEN{1'b1}}, Ws, {`H_NE{1'b1}}, (`H_NF)'(0)};      
+                    OfRes = OfResMax ? {{`FLEN-`H_LEN{1'b1}}, Rs, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`FLEN-`H_LEN{1'b1}}, Rs, {`H_NE{1'b1}}, (`H_NF)'(0)};      
 	            // zero is exact fi dividing by infinity so don't add 1
-                    UfRes = {{`FLEN-`H_LEN{1'b1}}, Ws, (`H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                    NormRes = {{`FLEN-`H_LEN{1'b1}}, Ws, Re[`H_NE-1:0], Rf[`NF-1:`NF-`H_NF]};
+                    UfRes = {{`FLEN-`H_LEN{1'b1}}, Rs, (`H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                    NormRes = {{`FLEN-`H_LEN{1'b1}}, Rs, Re[`H_NE-1:0], Rf[`NF-1:`NF-`H_NF]};
                 end
             endcase
 
@@ -237,7 +237,7 @@ module specialcase(
     //      - do so if the res underflows, is zero (the exp doesnt calculate correctly). or the integer input is 0
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
-    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResDenorm & (Re!=1);
+    assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResSubnorm & (Re!=1);
     assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInf&DivOp));
     // output infinity with result sign if divide by zero
     if(`IEEE754)

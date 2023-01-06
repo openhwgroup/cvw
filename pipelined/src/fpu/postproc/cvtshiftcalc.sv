@@ -37,7 +37,7 @@ module cvtshiftcalc(
     input logic  [`NF:0]            Xm,         // input mantissas
     input logic  [`FMTBITS-1:0]     OutFmt,     // output format
     input logic  [`CVTLEN-1:0]      CvtLzcIn,   // input to the Leading Zero Counter (priority encoder)
-    input logic                     CvtResDenormUf, // is the conversion result subnormal or underlows
+    input logic                     CvtResSubnormUf, // is the conversion result subnormal or underlows
     output logic                    CvtResUf,       // does the cvt result unerflow
     output logic [`CVTLEN+`NF:0]    CvtShiftIn      // number to be shifted
 );
@@ -57,7 +57,7 @@ module cvtshiftcalc(
     //              - we do however want to keep the one in the sticky bit so set one of bits in the sticky bit area to 1
     //                  - ex: for the case 0010000.... (double)
     //      ??? -> fp:
-    //          - if result is denormalized or underflowed then we want to shift right i.e. shift right then shift left:
+    //          - if result is Subnormalized or underflowed then we want to shift right i.e. shift right then shift left:
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | 
     //              .
     //          - otherwise:
@@ -68,7 +68,7 @@ module cvtshiftcalc(
     always_comb //                                            get rid of round bit if needed
     //                                                        |                    add sticky bit if needed
         if (ToInt)               CvtShiftIn = {{`XLEN{1'b0}}, Xm[`NF]&~CvtCe[`NE], Xm[`NF-1]|(CvtCe[`NE]&Xm[`NF]), Xm[`NF-2:0], {`CVTLEN-`XLEN{1'b0}}};
-        else if (CvtResDenormUf) CvtShiftIn = {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}};
+        else if (CvtResSubnormUf) CvtShiftIn = {{`NF-1{1'b0}}, Xm, {`CVTLEN-`NF+1{1'b0}}};
         else                     CvtShiftIn = {CvtLzcIn, {`NF+1{1'b0}}};
     
     // choose the negative of the fraction size

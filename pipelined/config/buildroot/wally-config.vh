@@ -43,11 +43,6 @@
 `define COUNTERS 32
 `define DESIGN_COMPILER 0
 
-// Microarchitectural Features
-`define UARCH_PIPELINED 1
-`define UARCH_SUPERSCALR 0
-`define UARCH_SINGLECYCLE 0
-
 // LSU microarchitectural Features
 `define BUS 1
 `define DCACHE 1
