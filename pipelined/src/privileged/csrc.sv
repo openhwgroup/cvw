@@ -42,7 +42,7 @@ module csrc #(parameter
   TIMEH = 12'hC81
 ) (
     input logic 	     clk, reset,
-    input logic 	     StallE, StallM, StallW,
+    input logic 	     StallE, StallM, 
     input logic        FlushM, 
     input logic 	     InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
     input logic 	     DirPredictionWrongM,

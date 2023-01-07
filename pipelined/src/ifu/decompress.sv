@@ -52,7 +52,7 @@ module decompress (
   assign rs2p = {2'b01, instr16[4:2]};
   assign rdp = {2'b01, instr16[4:2]};
   
-  // many compressed immediate formats
+  // extract compressed immediate formats
   assign immCILSP = {4'b0000, instr16[3:2], instr16[12], instr16[6:4], 2'b00};
   assign immCILSPD = {3'b000, instr16[4:2], instr16[12], instr16[6:5], 3'b000};
   assign immCSS = {4'b0000, instr16[8:7], instr16[12:9], 2'b00}; 

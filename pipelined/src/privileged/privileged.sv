@@ -113,7 +113,7 @@ module privileged (
 
    privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
               .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
-              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .STATUS_FS, .IllegalInstrFaultM, 
+              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
               .EcallFaultM, .BreakpointFaultM,
               .sretM, .mretM, .wfiM, .sfencevmaM);
 
@@ -121,7 +121,7 @@ module privileged (
   // Control and Status Registers
   ///////////////////////////////////////////
   csr csr(.clk, .reset,
-          .FlushE, .FlushM, .FlushW,
+          .FlushM, .FlushW,
           .StallE, .StallM, .StallW,
           .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
           .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,

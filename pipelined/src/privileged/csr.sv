@@ -37,7 +37,7 @@ module csr #(parameter
     SIP = 12'h144
   ) (
   input  logic             clk, reset,
-  input  logic             FlushE, FlushM, FlushW,
+  input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM, 
   input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PCNext2F,
@@ -203,7 +203,7 @@ module csr #(parameter
               .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
               .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
               .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
-  csrsr csrsr(.clk, .reset, .StallW,
+  csrsr csrsr(.clk, .reset, .StallW, 
               .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
               .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
               .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
@@ -212,7 +212,7 @@ module csr #(parameter
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
               .STATUS_FS, .BigEndianM);
   csrc  counters(.clk, .reset,
-              .StallE, .StallM, .StallW, .FlushM,
+              .StallE, .StallM, .FlushM,
               .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
               .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
               .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
