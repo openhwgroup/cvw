@@ -183,7 +183,7 @@ module wallypipelinedcore (
     .BPPredWrongE, 
   
     // Mem
-    .RetM, .TrapM, .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
+    .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
   

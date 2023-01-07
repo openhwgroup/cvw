@@ -63,7 +63,6 @@ module ieu (
   input logic [`XLEN-1:0]  FCvtIntResW,
   output logic [4:0]       RdW,
   input logic [`XLEN-1:0] ReadDataW,
-  // input  logic [`XLEN-1:0] PCLinkW,
   output logic 		   InstrValidM, 
   // hazards
   input logic 		   StallD, StallE, StallM, StallW,

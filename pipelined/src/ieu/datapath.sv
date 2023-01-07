@@ -62,7 +62,6 @@ module datapath (
   input  logic [2:0]       ResultSrcW,
   input logic [`XLEN-1:0]  FCvtIntResW,
   input logic [`XLEN-1:0] ReadDataW,
-  // input  logic [`XLEN-1:0] PCLinkW,
   input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
   input logic [`XLEN-1:0] FPIntDivResultW,
    // Hazard Unit signals 

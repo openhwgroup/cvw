@@ -103,7 +103,7 @@ module controller(
   logic        SubArithD;
   logic        subD, sraD, sltD, sltuD;
   logic        BranchTakenE;
-  logic        eqE, ltE, ltuE;
+  logic        eqE, ltE;
   logic        unused;
 	logic        BranchFlagE;
   logic        IEURegWriteE;
