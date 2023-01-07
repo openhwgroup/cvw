@@ -290,7 +290,7 @@ module fpu (
    // convert
    //    - fcvt.*.*
    fcvt fcvt (.Xs(XsE), .Xe(XeE), .Xm(XmE), .Int(ForwardedSrcAE), .OpCtrl(OpCtrlE), 
-              .ToInt(FWriteIntE), .XZero(XZeroE), .XSubnorm(XSubnormE), .Fmt(FmtE), .Ce(CeE), 
+              .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), 
               .ShiftAmt(CvtShiftAmtE), .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), 
               .LzcIn(CvtLzcInE));
 

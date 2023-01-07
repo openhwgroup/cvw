@@ -39,7 +39,6 @@ module fcvt (
     input logic [2:0]               OpCtrl,     // choose which opperation (look below for values)
     input logic                     ToInt,      // is fp->int (since it's writting to the integer register)
     input logic                     XZero,      // is the input zero
-    input logic                     XSubnorm,   // is the input Subnormalized
     input logic [`FMTBITS-1:0]      Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
     output logic [`NE:0]            Ce,         // the calculated expoent
 	output logic [`LOGCVTLEN-1:0]   ShiftAmt,   // how much to shift by
