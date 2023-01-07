@@ -112,30 +112,37 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     AdrSelMuxSel, CAdr);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
-    CacheWays[NUMWAYS-1:0](.clk, .reset, .CacheEn, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
+  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) CacheWays[NUMWAYS-1:0](
+    .clk, .reset, .CacheEn, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
+
+  // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
       .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
-  end else assign VictimWay = 1'b1; // one hot.
-  assign CacheHit = | HitWay;
-  assign LineDirty = | DirtyWay;
+  end else 
+    assign VictimWay = 1'b1; // one hot.
+
+  assign CacheHit = |HitWay;
+  assign LineDirty = |DirtyWay;
+
   // ReadDataLineWay is a 2d array of cache line len by number of ways.
   // Need to OR together each way in a bitwise manner.
   // Final part of the AO Mux.  First is the AND in the cacheway.
   or_rows #(NUMWAYS, LINELEN) ReadDataAOMux(.a(ReadDataLineWay), .y(ReadDataLineCache));
   or_rows #(NUMWAYS, TAGLEN) TagAOMux(.a(TagWay), .y(Tag));
 
-  // like to fix this.
+  // Data cache needs to choose word offset from PAdr or BeatCount to writeback dirty lines
   if(DCACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
       .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr)); 
-  else assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
+  else 
+    assign WordOffsetAddr = PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)];
   
+  // Bypass cache array to save a cycle when finishing a load miss
   mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelFetchBuffer, ReadDataLine);
 
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
