@@ -145,32 +145,34 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Bypass cache array to save a cycle when finishing a load miss
   mux2 #(LINELEN) EarlyReturnMux(ReadDataLineCache, FetchBuffer, SelFetchBuffer, ReadDataLine);
 
+  // Select word from cache line
   subcachelineread #(LINELEN, WORDLEN, MUXINTERVAL) subcachelineread(
-    .PAdr(WordOffsetAddr),
-    .ReadDataLine, .ReadDataWord);
+    .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
-  /////////////////////////////////////////////////////////////////////////////////////////////
-  // Write Path: Write data and address. Muxes between writes from bus and writes from CPU.
-  /////////////////////////////////////////////////////////////////////////////////////////////
-  onehotdecoder #(LOGCWPL) adrdec(
-    .bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
-  for(index = 0; index < 2**LOGCWPL; index++) begin
-    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
-  end
-
-  assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
-  assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
-
-  for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
-  end
-
+  // Bus address for fetch, writeback, or flush writeback
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
 		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
 		.s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
+  /////////////////////////////////////////////////////////////////////////////////////////////
+  // Write Path
+  /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Adjust byte mask from word to cache line
+  onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
+  for(index = 0; index < 2**LOGCWPL; index++) begin
+    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+  end
+  assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+  assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
+
+  // Merge write data into fetched cache line for store miss
+  for(index = 0; index < LINELEN/8; index++) begin
+    mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
+      .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+  end
+   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush address and way generation during flush
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -189,15 +191,13 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
+
   cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
 		.FlushStage, .CacheRW, .CacheAtomic, .Stall,
  		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 
-		.ClearValid, .ClearDirty, .SetDirty,
-		.SetValid, .SelWriteback, .SelFlush,
+		.ClearValid, .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
 		.FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
 		.FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-        .InvalidateCache,
-        .CacheEn,
-        .LRUWriteEn);
+    .InvalidateCache, .CacheEn, .LRUWriteEn);
 endmodule 
