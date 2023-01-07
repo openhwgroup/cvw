@@ -33,6 +33,7 @@
 `include "tests.vh"
 
 `define PrintHPMCounters 0
+`define BPRED_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -473,6 +474,19 @@ logic [3:0] dummy;
         #1;
         release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end
+      end
+
+      if (`BPRED_LOGGER) begin
+        string direction;
+        int    file;
+        initial
+          file = $fopen("branch.log", "w");
+        always @(posedge clk) begin
+           if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+             direction = dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcM ? "t" : "n";
+             $fwrite(file, "%h %s\n", dut.core.PCM, direction);
+           end
         end
       end
     end
