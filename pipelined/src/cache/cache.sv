@@ -184,11 +184,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   assign FlushAdrP1 = NextFlushAdr + 1'b1;
   assign FlushAdrFlag = (NextFlushAdr == FLUSHADRTHRESHOLD[SETLEN-1:0]);
 
-  flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushCntRst), .en(FlushWayCntEn), 
-    .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
-  assign FlushWayFlag = FlushWay[NUMWAYS-1];
+  // Flush way
+  flopenl #(NUMWAYS) FlushWayReg(clk, FlushWayCntEn, ResetOrFlushCntRst, {{NUMWAYS-1{1'b0}}, 1'b1}, NextFlushWay, FlushWay);
   if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
-  else assign NextFlushWay = FlushWay[NUMWAYS-1];
+  else            assign NextFlushWay = FlushWay[NUMWAYS-1];
+  assign FlushWayFlag = FlushWay[NUMWAYS-1];
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
