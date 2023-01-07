@@ -174,14 +174,16 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   end
    
   /////////////////////////////////////////////////////////////////////////////////////////////
-  // Flush address and way generation during flush
+  // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
+
+  // Flush address (line number)
   assign ResetOrFlushCntRst = reset | FlushCntRst;
-  flopenr #(SETLEN) FlushAdrReg(.clk, .reset(ResetOrFlushCntRst), .en(FlushAdrCntEn), 
-    .d(FlushAdrP1), .q(NextFlushAdr));
-  assign FlushAdr = FlushAdrCntEn ? FlushAdrP1 : NextFlushAdr;
+  flopenr #(SETLEN) FlushAdrReg(clk, ResetOrFlushCntRst, FlushAdrCntEn, FlushAdrP1, NextFlushAdr);
+  mux2    #(SETLEN) FlushAdrMux(NextFlushAdr, FlushAdrP1, FlushAdrCntEn, FlushAdr);
   assign FlushAdrP1 = NextFlushAdr + 1'b1;
   assign FlushAdrFlag = (NextFlushAdr == FLUSHADRTHRESHOLD[SETLEN-1:0]);
+
   flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushCntRst), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
