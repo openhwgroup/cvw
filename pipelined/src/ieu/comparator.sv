@@ -105,7 +105,6 @@ endmodule
 
 
 module comparator2 #(parameter WIDTH=64) (
-  input  logic             clk, reset,
   input  logic [WIDTH-1:0] a, b,
   output logic [2:0]       flags);
 
