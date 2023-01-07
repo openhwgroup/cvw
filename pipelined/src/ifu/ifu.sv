@@ -164,7 +164,7 @@ module ifu (
          .TLBFlush,
          .PhysicalAddress(PCPF),
          .TLBMiss(ITLBMissF),
-         .Cacheable(CacheableF), .Idempotent(), .AtomicAllowed(), .SelTIM(SelIROM),
+         .Cacheable(CacheableF), .Idempotent(), .SelTIM(SelIROM),
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
@@ -195,8 +195,7 @@ module ifu (
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (`IROM_SUPPORTED) begin : irom 
     assign IFURWF = 2'b10;
-    irom irom(.clk, .reset, .ce(~GatedStallD | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrF));
- 
+    irom irom(.clk, .ce(~GatedStallD | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrF));
   end else begin
     assign IFURWF = 2'b10;
   end

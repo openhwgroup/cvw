@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module irom(
-  input logic               clk, reset, ce,
+  input logic               clk, ce,
   input logic [`XLEN-1:0]   Adr,
   output logic [31:0]  ReadData
 );

@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic                clk, reset, ce,
+  input logic                clk, ce,
   input logic [1:0]          MemRWM,
   input logic [`PA_BITS-1:0] Adr,
   input logic                FlushW, 

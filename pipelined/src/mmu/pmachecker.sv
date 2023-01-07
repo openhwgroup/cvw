@@ -33,12 +33,10 @@
 `include "wally-config.vh"
 
 module pmachecker (
-//  input  logic        clk, reset, // *** unused in this module and all sub modules.
-
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
   input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
-  output logic        Cacheable, Idempotent, AtomicAllowed, SelTIM,
+  output logic        Cacheable, Idempotent, SelTIM,
   output logic        PMAInstrAccessFaultF,
   output logic        PMALoadAccessFaultM,
   output logic        PMAStoreAmoAccessFaultM
@@ -47,6 +45,7 @@ module pmachecker (
   logic PMAAccessFault;
   logic AccessRW, AccessRWX, AccessRX;
   logic [10:0]  SelRegions;
+  logic AtomicAllowed;
 
   // Determine what type of access is being made
   assign AccessRW = ReadAccessM | WriteAccessM;
@@ -63,7 +62,7 @@ module pmachecker (
   assign SelTIM = SelRegions[10] | SelRegions[9];
 
   // Detect access faults
-  assign PMAAccessFault = (SelRegions[0]) & AccessRWX;  
+  assign PMAAccessFault = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  
   assign PMAInstrAccessFaultF = ExecuteAccessF & PMAAccessFault;
   assign PMALoadAccessFaultM  = ReadAccessM    & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
