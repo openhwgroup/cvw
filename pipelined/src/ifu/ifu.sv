@@ -52,7 +52,6 @@ module ifu (
 	output logic [`XLEN-1:0] 	PCE,
 	output logic 				BPPredWrongE, 
 	// Mem
-	input logic 				RetM, TrapM, 
     output logic                CommittedF, 
 	input logic [`XLEN-1:0] 	UnalignedPCNextF,
     output logic [`XLEN-1:0]    PCNext2F,
@@ -248,11 +247,9 @@ module ifu (
                                  .s({SelIROM, ~CacheableF}), .y(InstrRawF[31:0]));
     end else begin : passthrough
       assign IFUHADDR = PCPF;
-      logic CaptureEn;
       logic [31:0]  FetchBuffer;
       logic [1:0] BusRW;
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
-//      assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{SelIROM, SelIROM};
       assign IFUHSIZE = 3'b010;
 
       ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
