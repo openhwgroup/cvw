@@ -164,7 +164,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   end
 
   assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
-  logic [LINELEN/8-1:0]       LineByteMask2;
   assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
 
   for(index = 0; index < LINELEN/8; index++) begin

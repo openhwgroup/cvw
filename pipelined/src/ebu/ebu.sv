@@ -90,12 +90,10 @@ module ebu
   logic                       LSUHWRITEOut;
 
   logic                       IFUReq, LSUReq;
-  logic                       IFUActive, LSUActive;
 
   logic                       BeatCntEn;
-  logic [4-1:0]               NextBeatCount, BeatCount, BeatCountDelayed;
+  logic [4-1:0]               NextBeatCount, BeatCount;
   logic                       FinalBeat, FinalBeatD;
-  logic [2:0]                 LocalBurstType;
   logic                       CntReset;
   logic [3:0]                 Threshold;
   logic                       IFUReqD;
@@ -164,8 +162,6 @@ module ebu
   assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
   assign BeatCntEn = (NextState == ARBITRATE & HREADY);
 
-  logic [2:0]                 HBURSTD;
-  
   // Used to store data from data phase of AHB.
   flopenr #(1) 
   FinalBeatReg(.clk(HCLK),
