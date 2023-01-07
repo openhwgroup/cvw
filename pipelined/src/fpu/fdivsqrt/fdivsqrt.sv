@@ -68,7 +68,7 @@ module fdivsqrt(
   logic DivStartE;                    // Enable signal for flops during stall
 
   // Integer div/rem signals
-  logic BZeroE, BZeroM;               // Denominator is zero
+  logic BZeroM;                       // Denominator is zero
   logic MDUM;                         // Integer operation
   logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
   logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
@@ -81,7 +81,7 @@ module fdivsqrt(
     .QeM, .X, .DPreproc, 
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, .ISpecialCaseE,
-    .BZeroE, .nE, .BZeroM, .nM, .mM, .AM, 
+    .nE, .BZeroM, .nM, .mM, .AM, 
     .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
 
   fdivsqrtfsm fdivsqrtfsm(                                // FSM
@@ -89,7 +89,7 @@ module fdivsqrt(
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, 
     // Int-specific 
-    .IDivStartE, .BZeroE, .ISpecialCaseE, .nE, .MDUE);
+    .IDivStartE, .ISpecialCaseE, .nE, .MDUE);
 
   fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 

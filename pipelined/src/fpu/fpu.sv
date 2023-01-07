@@ -99,9 +99,9 @@ module fpu (
    logic 		      XNaNM, YNaNM, ZNaNM;                // is the input a NaN - memory stage
    logic 		      XSNaNE, YSNaNE, ZSNaNE;             // is the input a signaling NaN - execute stage
    logic 		      XSNaNM, YSNaNM, ZSNaNM;             // is the input a signaling NaN - memory stage
-   logic 		      XSubnormE, ZSubnormE, ZSubnormM;       // is the input Subnormalized
+   logic 		      XSubnormE;       // is the input Subnormalized
    logic 		      XZeroE, YZeroE, ZZeroE;             // is the input zero - execute stage
-   logic 		      XZeroM, YZeroM, ZZeroM;             // is the input zero - memory stage
+   logic 		      XZeroM, YZeroM;             // is the input zero - memory stage
    logic 		      XInfE, YInfE, ZInfE;                // is the input infinity - execute stage
    logic 		      XInfM, YInfM, ZInfM;                // is the input infinity - memory stage
    logic 		      XExpMaxE;                           // is the exponent all ones (max value)
@@ -239,7 +239,7 @@ module fpu (
    unpack unpack (.X(XE), .Y(YE), .Z(ZE), .Fmt(FmtE), .Xs(XsE), .Ys(YsE), .Zs(ZsE), 
                   .Xe(XeE), .Ye(YeE), .Ze(ZeE), .Xm(XmE), .Ym(YmE), .Zm(ZmE), .YEn(YEnE),
                   .XNaN(XNaNE), .YNaN(YNaNE), .ZNaN(ZNaNE), .XSNaN(XSNaNE), .XEn(XEnE), 
-                  .YSNaN(YSNaNE), .ZSNaN(ZSNaNE), .XSubnorm(XSubnormE), .ZSubnorm(ZSubnormE), 
+                  .YSNaN(YSNaNE), .ZSNaN(ZSNaNE), .XSubnorm(XSubnormE), 
                   .XZero(XZeroE), .YZero(YZeroE), .ZZero(ZZeroE), .XInf(XInfE), .YInf(YInfE), 
                   .ZEn(ZEnE), .ZInf(ZInfE), .XExpMax(XExpMaxE));
    
@@ -345,9 +345,9 @@ module fpu (
    flopenrc #(`FLEN) EMFpReg4 (clk, reset, FlushM, ~StallM, {ZeE,ZmE}, {ZeM,ZmM});
    flopenrc #(`XLEN) EMFpReg6 (clk, reset, FlushM, ~StallM, FIntResE, FIntResM);
    flopenrc #(`FLEN) EMFpReg7 (clk, reset, FlushM, ~StallM, PreFpResE, PreFpResM);
-   flopenr #(15) EMFpReg5 (clk, reset, ~StallUnpackedM, 
-            {XsE, YsE, XZeroE, YZeroE, ZZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE, ZSubnormE},
-            {XsM, YsM, XZeroM, YZeroM, ZZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM, ZSubnormM});     
+   flopenr #(13) EMFpReg5 (clk, reset, ~StallUnpackedM, 
+            {XsE, YsE, XZeroE, YZeroE, XInfE, YInfE, ZInfE, XNaNE, YNaNE, ZNaNE, XSNaNE, YSNaNE, ZSNaNE},
+            {XsM, YsM, XZeroM, YZeroM, XInfM, YInfM, ZInfM, XNaNM, YNaNM, ZNaNM, XSNaNM, YSNaNM, ZSNaNM});     
    flopenrc #(1)  EMRegCmpFlg (clk, reset, FlushM, ~StallM, PreNVE, PreNVM);      
    flopenrc #(3*`NF+4) EMRegFma2(clk, reset, FlushM, ~StallM, SmE, SmM);
   flopenrc #($clog2(3*`NF+5)+7+`NE) EMRegFma4(clk, reset, FlushM, ~StallM,
@@ -372,9 +372,9 @@ module fpu (
    assign FpLoadStoreM = FResSelM[1];
 
    postprocess postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
-                           .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .ZZero(ZZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
+                           .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
                            .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), .FmaSm(SmM), .DivQe(QeM), /*.DivDone(DivDoneM), */
-                           .ZSubnorm(ZSubnormM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
+                           .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
                            .CvtCe(CeM), .CvtResSubnormUf(CvtResSubnormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), .ToInt(FWriteIntM), .DivS(DivSM),
                            .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 

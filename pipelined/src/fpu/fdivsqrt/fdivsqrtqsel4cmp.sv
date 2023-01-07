@@ -40,7 +40,6 @@ module fdivsqrtqsel4cmp (
 	logic [6:0] Wmsbs;
 	logic [7:0] PreWmsbs;
 	logic [2:0] A;
-  logic [3:0] udigitsel, udigitswap;
 
 	assign PreWmsbs = WCmsbs + WSmsbs;
 	assign Wmsbs = PreWmsbs[7:1];

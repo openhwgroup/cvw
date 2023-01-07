@@ -46,7 +46,6 @@ module fmaadd(
     output logic [3*`NF+3:0]    Sm          // the positive sum
 );
     logic [3*`NF+3:0]    PreSum, NegPreSum; // possibly negitive sum
-    logic [3*`NF+5:0]    PreSumdebug, NegPreSumdebug; // possibly negitive sum
     logic                NegSum;        // was the sum negitive
     logic                NegSumdebug;        // was the sum negitive
 

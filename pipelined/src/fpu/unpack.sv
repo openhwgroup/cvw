@@ -38,7 +38,7 @@ module unpack (
     output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
     output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
     output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-    output logic                    XSubnorm, ZSubnorm,   // is XYZ Subnormalized
+    output logic                    XSubnorm,   // is X Subnormalized
     output logic                    XZero, YZero, ZZero,         // is XYZ zero
     output logic                    XInf, YInf, ZInf,            // is XYZ infinity
     output logic                    XExpMax                        // does X have the maximum exponent (NaN or Inf)
@@ -61,5 +61,4 @@ module unpack (
                             .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero));
     // is the input Subnormalized
     assign XSubnorm = ~XExpNonZero & ~XFracZero;
-    assign ZSubnorm = ~ZExpNonZero & ~ZFracZero;
-endmodule
+ endmodule

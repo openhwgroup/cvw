@@ -178,7 +178,6 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   logic [1:0] 			   w_TX_SOURCE_SELECT;
   logic 			   w_CMD_TX_IS_CMD55_RST;
   logic 			   w_CMD_TX_IS_CMD55_EN;
-  //logic w_CMD_RX;
   logic 			   w_RX_SIPO48_RST, w_RX_SIPO48_EN;
   (* mark_debug = "true" *)logic [39:8] 			   r_RESPONSE_CONTENT;
   (* mark_debug = "true" *)logic [45:40] 		   r_RESPONSE_INDEX;
@@ -208,7 +207,6 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   logic 			   w_BUSY_RST, w_BUSY_EN;
   logic 			   w_NIBO_EN;
   logic 			   w_DATA_CRC16_GOOD;
-  logic 			   w_VALID_BLOCK_D, w_VALID_BLOCK_EN, w_VALID_WIDE_D, w_VALID_WIDE_EN;
   logic [22:0] 			   w_DAT_TIMER_IN;
   logic [22:0] 			   r_DAT_TIMER_OUT;
   logic [10:0] 			   r_DAT_COUNTER_OUT;
@@ -237,7 +235,6 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   logic [2:0] 			   r_command_index_is_55_history    ;  // [0] is live index, [1] is currently saved index, [2] is index of previous command
   logic 			   r_previous_command_index_was_55_q;  // is index of previous command 55, wired to r_command_index_is_55_history[2]
   logic 			   r_ACMD_Q;  // if the previous command sent to the SD card successfully had index 55, then the SD card thinks the current command is ACMD
-  logic [4095:0] 		   r_block_data                     ;  // data block from CMD17
 
   // TX
   logic [45:8] 			   w_command_content;                  // first 40 bits of command packet
@@ -245,8 +242,7 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
   logic 			   w_tx_tail_Q;            // transmission of last part of command packet
   logic [7:0] 			   r_command_tail;  // last 8 bits of command packet
   logic [6:0] 			   r_TX_CRC7;
-  //logic w_TX_Q:= '0';  // actual transmission when tx is enabled
-
+ 
   // RX
   logic [47:0] 			   r_RX_RESPONSE;
 
@@ -264,7 +260,6 @@ module sd_top #(parameter g_COUNT_WIDTH = 8)
 
   logic 			   w_G_CLK_SD_EN;
   logic 			   r_CLK_SD, r_G_CLK_SD;              // clocks
-  logic 			   r_G_CLK_SD_n;
   logic [15:0] 			   r_CLK_FSM_RST                 ;  // a_rst logic delayed by one 1.2 GHz period
   logic 			   w_SD_CLK_SELECTED;
 

@@ -35,7 +35,8 @@ sub clean {
     }
 #    print("Signals: @allsigs\n");
     foreach my $sig (@allsigs) {
-#        print("Searching for $sig\n");
+        if ($sig eq "") { last }; # skip empty signals
+#        print("Searching for '$sig'\n");
         my $hits = `grep -c $sig $fname`;
 #        print("  Signal $sig appears $hits times\n");
         if ($hits < 2) {

@@ -41,20 +41,9 @@ module SDCcounter #(parameter integer WIDTH=32)
    input logic 		    reset);
 
   logic [WIDTH-1:0] NextCount;
-  logic [WIDTH-1:0] count_q;
-  logic [WIDTH-1:0] CountP1;
-
-  flopenr #(WIDTH) reg1(.clk,
-			.reset,
-			.en(Enable | Load),
-			.d(NextCount),
-			.q(CountOut));
-
-  assign CountP1 = CountOut + 1'b1;
-
-  // mux between load and P1
-  assign NextCount = Load ? CountIn : CountP1;
-
+ 
+  assign NextCount = Load ? CountIn : (CountOut + 1'b1);
+  flopenr #(WIDTH) reg1(clk, reset, Enable | Load, NextCount, CountOut);
 endmodule
   
    

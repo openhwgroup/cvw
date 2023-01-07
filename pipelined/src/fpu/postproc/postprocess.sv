@@ -37,11 +37,10 @@ module postprocess (
     input logic  [2:0]                      Frm,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
     input logic  [`FMTBITS-1:0]             Fmt,        // precision 1 = double 0 = single
     input logic  [2:0]                      OpCtrl,     // choose which opperation (look below for values)
-    input logic                             XZero, YZero, ZZero, // inputs are zero
+    input logic                             XZero, YZero, // inputs are zero
     input logic                             XInf, YInf, ZInf,    // inputs are infinity
     input logic                             XNaN, YNaN, ZNaN,    // inputs are NaN
     input logic                             XSNaN, YSNaN, ZSNaN, // inputs are signaling NaNs
-    input logic                             ZSubnorm,        // is the original precision Subnormalized
     input logic  [1:0]                      PostProcSel,    // select result to be written to fp register
     //fma signals
     input logic                             FmaAs,  // the modified Z sign - depends on instruction
@@ -146,7 +145,7 @@ module postprocess (
                               .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);
     fmashiftcalc fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
                           .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt, .FmaShiftIn);
-    divshiftcalc divshiftcalc(.Sqrt, .DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
+    divshiftcalc divshiftcalc(.DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
     always_comb
         case(PostProcSel)

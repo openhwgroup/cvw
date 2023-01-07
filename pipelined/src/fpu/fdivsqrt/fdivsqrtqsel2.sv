@@ -37,8 +37,7 @@ module fdivsqrtqsel2 (
  
   logic [3:0]  p, g;
   logic        magnitude, sign;
-  logic        pos, neg;
-
+ 
   // The quotient selection logic is presented for simplicity, not
   // for efficiency.  You can probably optimize your logic to
   // select the proper divisor with less delay.
