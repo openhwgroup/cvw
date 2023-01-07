@@ -51,7 +51,6 @@ module wallypipelinedcore (
    output logic         HMASTLOCK
    );
 
-  //  logic [1:0]  ForwardAE, ForwardBE;
   logic             StallF, StallD, StallE, StallM, StallW;
   logic             FlushD, FlushE, FlushM, FlushW;
   logic             RetM;
@@ -66,7 +65,7 @@ module wallypipelinedcore (
   logic [2:0]             Funct3E;
   logic [31:0]             InstrD;
   (* mark_debug = "true" *) logic [31:0]             InstrM;
-  logic [`XLEN-1:0]         PCF, PCD, PCE, PCLinkE;
+  logic [`XLEN-1:0]         PCF, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
  logic [`XLEN-1:0]         CSRReadValW, MDUResultW;
    logic [`XLEN-1:0]         UnalignedPCNextF, PCNext2F;
@@ -97,7 +96,6 @@ module wallypipelinedcore (
   logic             FRegWriteM;
   logic             FCvtIntStallD;
   logic             FpLoadStoreM;
-  logic [1:0]       FResSelW;
   logic [4:0]             SetFflagsM;
   logic [`XLEN-1:0] FPIntDivResultW;
 

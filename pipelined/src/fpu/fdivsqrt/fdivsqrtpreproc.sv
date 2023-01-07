@@ -48,7 +48,7 @@ module fdivsqrtpreproc (
   output logic ISpecialCaseE,
   output logic [`DIVBLEN:0] nE, nM, mM,
   output logic NegQuotM, ALTBM, MDUM, W64M,
-  output logic AsM, BZeroM, BZeroE,
+  output logic AsM, BZeroM,
   output logic [`XLEN-1:0] AM
 );
 
@@ -59,7 +59,7 @@ module fdivsqrtpreproc (
   logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
   logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
   logic  NumerZeroE;                          // Numerator is zero (X or A)
-  logic  AZeroE;                              // A is Zero for integer division
+  logic  AZeroE, BZeroE;                      // A or B is Zero for integer division
 
   if (`IDIV_ON_FPU) begin:intpreproc // Int Supported
     logic signedDiv, NegQuotE;

@@ -36,7 +36,6 @@ module fdivsqrtfsm(
   input  logic [`FMTBITS-1:0] FmtE,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
-  input  logic BZeroE,
   input  logic XNaNE, YNaNE, 
   input  logic FDivStartE, IDivStartE,
   input  logic XsE,
