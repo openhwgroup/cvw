@@ -37,15 +37,14 @@
 `define XLENPOS ((`XLEN>`NF) ? 1 : (`XLEN>`NF1) ? 2 : 3)
 
 module round(
-    input logic  [`FMTBITS-1:0]     OutFmt,       // precision 1 = double 0 = single
-    input logic  [2:0]              Frm,       // rounding mode
-    input logic                     FmaOp,
-    input logic                     DivOp,
-    input logic                     CvtOp,
-    input logic                     ToInt,
-//    input logic                     DivDone,
-    input logic  [1:0]              PostProcSel,
-    input logic                     CvtResDenormUf,
+    input logic  [`FMTBITS-1:0]     OutFmt,     // precision 1 = double 0 = single
+    input logic  [2:0]              Frm,        // rounding mode
+    input logic                     FmaOp,      // is an fma opperation being done?
+    input logic                     DivOp,      // is a division opperation being done
+    input logic                     CvtOp,      // is a convert opperation being done
+    input logic                     ToInt,      // is the cvt op a cvt to integer
+    input logic  [1:0]              PostProcSel,    // select the postprocessor output
+    input logic                     CvtResSubnormUf, // is the cvt result subnormal or underflow
     input logic                     CvtResUf,
     input logic  [`CORRSHIFTSZ-1:0] Mf,
     input logic                     FmaASticky,  // addend's sticky bit
@@ -58,17 +57,17 @@ module round(
     output logic [`NE+1:0]          FullRe,      // Re with bits to determine sign and overflow
     output logic [`NF-1:0]          Rf,         // Result fraction
     output logic [`NE-1:0]          Re,          // Result exponent
-    output logic                    S,             // sticky bit
+    output logic                    Sticky,             // sticky bit
     output logic [`NE+1:0]          Me,
     output logic                    Plus1,
-    output logic                    R, G // bits needed to calculate rounding
+    output logic                    Round, Guard // bits needed to calculate rounding
 );
     logic           UfCalcPlus1; 
     logic           NormS;  // normalized sum's sticky bit
     logic [`NF-1:0] RoundFrac;
     logic           FpRes, IntRes;
-    logic           FpG, FpL, FpR;
-    logic           L; // lsb of result
+    logic           FpGuard, FpLsbRes, FpRound;
+    logic           LsbRes; // lsb of result
     logic           CalcPlus1, FpPlus1;
     logic [`FLEN:0] RoundAdd;           // how much to add to the result
 
@@ -77,7 +76,7 @@ module round(
     ///////////////////////////////////////////////////////////////////////////////
 
     // round to nearest even
-    //      {R, S}
+    //      {Round, Sticky}
     //      0x - do nothing
     //      10 - tie - Plus1 if result is odd  (LSBNormSum = 1)
     //          - don't add 1 if a small number was supposed to be subtracted
@@ -95,7 +94,7 @@ module round(
     //          - subtract 1 if a small number was supposed to be subtracted from a negative result with guard and round bits of 0
 
     //  round to nearest max magnitude
-    //      {Guard, R, S}
+    //      {Guard, Round, Sticky}
     //      0x - do nothing
     //      10 - tie - Plus1
     //          - don't add 1 if a small number was supposed to be subtracted
@@ -175,101 +174,101 @@ module round(
 
     // only add the Addend sticky if doing an FMA opperation
     //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-    assign S = FmaASticky&FmaOp | NormS | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivS&DivOp;
+    assign Sticky = FmaASticky&FmaOp | NormS | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivS&DivOp;
     
     // determine round and LSB of the rounded value
     //      - underflow round bit is used to determint the underflow flag
     if (`FPSIZES == 1) begin
-        assign FpG = Mf[`CORRSHIFTSZ-`NF-1];
-        assign FpL = Mf[`CORRSHIFTSZ-`NF];
-        assign FpR = Mf[`CORRSHIFTSZ-`NF-2];
+        assign FpGuard = Mf[`CORRSHIFTSZ-`NF-1];
+        assign FpLsbRes = Mf[`CORRSHIFTSZ-`NF];
+        assign FpRound = Mf[`CORRSHIFTSZ-`NF-2];
 
     end else if (`FPSIZES == 2) begin
-        assign FpG = OutFmt ? Mf[`CORRSHIFTSZ-`NF-1] : Mf[`CORRSHIFTSZ-`NF1-1];
-        assign FpL = OutFmt ? Mf[`CORRSHIFTSZ-`NF] : Mf[`CORRSHIFTSZ-`NF1];
-        assign FpR = OutFmt ? Mf[`CORRSHIFTSZ-`NF-2] : Mf[`CORRSHIFTSZ-`NF1-2];
+        assign FpGuard = OutFmt ? Mf[`CORRSHIFTSZ-`NF-1] : Mf[`CORRSHIFTSZ-`NF1-1];
+        assign FpLsbRes = OutFmt ? Mf[`CORRSHIFTSZ-`NF] : Mf[`CORRSHIFTSZ-`NF1];
+        assign FpRound = OutFmt ? Mf[`CORRSHIFTSZ-`NF-2] : Mf[`CORRSHIFTSZ-`NF1-2];
 
     end else if (`FPSIZES == 3) begin
         always_comb
             case (OutFmt)
                 `FMT: begin
-                    FpG = Mf[`CORRSHIFTSZ-`NF-1];
-                    FpL = Mf[`CORRSHIFTSZ-`NF];
-                    FpR = Mf[`CORRSHIFTSZ-`NF-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`NF-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`NF];
+                    FpRound = Mf[`CORRSHIFTSZ-`NF-2];
                 end
                 `FMT1: begin
-                    FpG = Mf[`CORRSHIFTSZ-`NF1-1];
-                    FpL = Mf[`CORRSHIFTSZ-`NF1];
-                    FpR = Mf[`CORRSHIFTSZ-`NF1-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`NF1-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`NF1];
+                    FpRound = Mf[`CORRSHIFTSZ-`NF1-2];
                 end
                 `FMT2: begin
-                    FpG = Mf[`CORRSHIFTSZ-`NF2-1];
-                    FpL = Mf[`CORRSHIFTSZ-`NF2];
-                    FpR = Mf[`CORRSHIFTSZ-`NF2-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`NF2-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`NF2];
+                    FpRound = Mf[`CORRSHIFTSZ-`NF2-2];
                 end
                 default: begin
-                    FpG = 1'bx;
-                    FpL = 1'bx;
-                    FpR = 1'bx;
+                    FpGuard = 1'bx;
+                    FpLsbRes = 1'bx;
+                    FpRound = 1'bx;
                 end
             endcase
     end else if (`FPSIZES == 4) begin
         always_comb
             case (OutFmt)
                 2'h3: begin
-                    FpG = Mf[`CORRSHIFTSZ-`Q_NF-1];
-                    FpL = Mf[`CORRSHIFTSZ-`Q_NF];
-                    FpR = Mf[`CORRSHIFTSZ-`Q_NF-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`Q_NF-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`Q_NF];
+                    FpRound = Mf[`CORRSHIFTSZ-`Q_NF-2];
                 end
                 2'h1: begin
-                    FpG = Mf[`CORRSHIFTSZ-`D_NF-1];
-                    FpL = Mf[`CORRSHIFTSZ-`D_NF];
-                    FpR = Mf[`CORRSHIFTSZ-`D_NF-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`D_NF-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`D_NF];
+                    FpRound = Mf[`CORRSHIFTSZ-`D_NF-2];
                 end
                 2'h0: begin
-                    FpG = Mf[`CORRSHIFTSZ-`S_NF-1];
-                    FpL = Mf[`CORRSHIFTSZ-`S_NF];
-                    FpR = Mf[`CORRSHIFTSZ-`S_NF-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`S_NF-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`S_NF];
+                    FpRound = Mf[`CORRSHIFTSZ-`S_NF-2];
                 end
                 2'h2: begin
-                    FpG = Mf[`CORRSHIFTSZ-`H_NF-1];
-                    FpL = Mf[`CORRSHIFTSZ-`H_NF];
-                    FpR = Mf[`CORRSHIFTSZ-`H_NF-2];
+                    FpGuard = Mf[`CORRSHIFTSZ-`H_NF-1];
+                    FpLsbRes = Mf[`CORRSHIFTSZ-`H_NF];
+                    FpRound = Mf[`CORRSHIFTSZ-`H_NF-2];
                 end
             endcase
     end
 
-    assign G = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-1] : FpG;
-    assign L = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN] : FpL;
-    assign R = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-2] : FpR;
+    assign Guard = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-1] : FpGuard;
+    assign LsbRes = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN] : FpLsbRes;
+    assign Round = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-2] : FpRound;
 
 
     always_comb begin
         // Determine if you add 1
         case (Frm)
-            3'b000: CalcPlus1 = G & (R|S|L);//round to nearest even
+            3'b000: CalcPlus1 = Guard & (Round|Sticky|LsbRes);//round to nearest even
             3'b001: CalcPlus1 = 0;//round to zero
             3'b010: CalcPlus1 = Ms;//round down
             3'b011: CalcPlus1 = ~Ms;//round up
-            3'b100: CalcPlus1 = G;//round to nearest max magnitude
+            3'b100: CalcPlus1 = Guard;//round to nearest max magnitude
             default: CalcPlus1 = 1'bx;
         endcase
         // Determine if you add 1 (for underflow flag)
         case (Frm)
-            3'b000: UfCalcPlus1 = R & (S|G);//round to nearest even
+            3'b000: UfCalcPlus1 = Round & (Sticky|Guard);//round to nearest even
             3'b001: UfCalcPlus1 = 0;//round to zero
             3'b010: UfCalcPlus1 = Ms;//round down
             3'b011: UfCalcPlus1 = ~Ms;//round up
-            3'b100: UfCalcPlus1 = R;//round to nearest max magnitude
+            3'b100: UfCalcPlus1 = Round;//round to nearest max magnitude
             default: UfCalcPlus1 = 1'bx;
         endcase
    
     end
 
     // If an answer is exact don't round
-    assign Plus1 = CalcPlus1 & (S|R|G);
+    assign Plus1 = CalcPlus1 & (Sticky|Round|Guard);
     assign FpPlus1 = Plus1&~(ToInt&CvtOp);
-    assign UfPlus1 = UfCalcPlus1 & (S|R);
+    assign UfPlus1 = UfCalcPlus1 & (Sticky|Round);
 
     // Compute rounded result
     if (`FPSIZES == 1) begin
@@ -294,7 +293,7 @@ module round(
     always_comb
         case(PostProcSel)
             2'b10: Me = FmaMe; // fma
-            2'b00: Me = {CvtCe[`NE], CvtCe}&{`NE+2{~CvtResDenormUf|CvtResUf}}; // cvt
+            2'b00: Me = {CvtCe[`NE], CvtCe}&{`NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
             // 2'b01: Me = DivDone ? Qe : '0; // divide
             2'b01: Me = Qe; // divide
             default: Me = '0; 
