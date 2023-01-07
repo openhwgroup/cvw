@@ -38,7 +38,6 @@ module fpu (
    input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
    input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
-   //input  logic              TrapM,
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
    input  logic  [4:0] 	     RdE, RdM, RdW,   // which FP register to write to (from IEU)
    input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
@@ -98,7 +97,6 @@ module fpu (
    logic [`NF:0] 	   XmM, YmM, ZmM;                // input's fraction - memory stage
    logic 		      XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
    logic 		      XNaNM, YNaNM, ZNaNM;                // is the input a NaN - memory stage
-   logic 		      XNaNQ, YNaNQ;                       // is the input a NaN - divide
    logic 		      XSNaNE, YSNaNE, ZSNaNE;             // is the input a signaling NaN - execute stage
    logic 		      XSNaNM, YSNaNM, ZSNaNM;             // is the input a signaling NaN - memory stage
    logic 		      XSubnormE, ZSubnormE, ZSubnormM;       // is the input Subnormalized
@@ -128,9 +126,8 @@ module fpu (
    
    //divide signals
    logic [`DIVb:0]      QmM;
-   logic [`NE+1:0]      QeE, QeM; 
+   logic [`NE+1:0]      QeM; 
    logic                DivSM;
-//   logic                DivDoneM;
    logic                FDivDoneE, IFDivStartE;
 
    // result and flag signals

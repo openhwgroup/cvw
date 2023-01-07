@@ -46,7 +46,6 @@ module unpackinput (
 );
  
     logic [`NF-1:0] Frac; //Fraction of XYZ
-    logic           ExpZero;
     logic           BadNaNBox;
     
     if (`FPSIZES == 1) begin        // if there is only one floating point format supported

@@ -219,9 +219,11 @@ module controller(
                            {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
 
   // Branch Logic
+  //  The comparator handles both signed and unsigned branches using BranchSignedE
+  //  Hence, only eq and lt flags are needed
   assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
   assign {eqE, ltE} = FlagsE;
-  mux3 #(1) branchflagmux(eqE, 1'b0, ltE, Funct3E[2:1], BranchFlagE);
+  mux2 #(1) branchflagmux(eqE, ltE, Funct3E[2], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];
   assign PCSrcE = JumpE | BranchE & BranchTakenE;
 
