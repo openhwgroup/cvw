@@ -171,7 +171,7 @@ module lsu (
       .TLBFlush(sfencevmaM),
       .PhysicalAddress(PAdrM),
       .TLBMiss(DTLBMissM),
-      .Cacheable(CacheableM), .Idempotent(), .AtomicAllowed(), .SelTIM(SelDTIM),
+      .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM),
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM),
       .InstrPageFaultF(),.LoadPageFaultM, .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
@@ -218,9 +218,8 @@ module lsu (
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
-    dtim dtim(.clk, .reset, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
-              .Adr(DTIMAdr),
-              .FlushW, .WriteDataM(LSUWriteDataM), 
+    dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
+              .Adr(DTIMAdr), .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
@@ -233,12 +232,9 @@ module lsu (
       localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] DCacheBusAdr;
-      logic                DCacheWriteLine;
-      logic                DCacheFetchLine;
       logic [AHBWLOGBWPL-1:0]  BeatCount;
       logic                DCacheBusAck;
       logic                SelBusBeat;
-      logic [`XLEN/8-1:0]  ByteMaskMDelay;
       logic [1:0]          CacheBusRW, BusRW;
       localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
       logic                CacheableOrFlushCacheM;
@@ -280,7 +276,6 @@ module lsu (
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
     end else begin : passthrough // just needs a register to hold the value from the bus
-      logic CaptureEn;
       logic [1:0] BusRW;
       logic [`XLEN-1:0] FetchBuffer;
       assign BusRW = ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
