@@ -38,7 +38,6 @@ module privdec (
   input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
   input  logic [1:0]   PrivilegeModeW, 
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
-  input  logic [1:0]   STATUS_FS,
   output logic         IllegalInstrFaultM,
   output logic         EcallFaultM, BreakpointFaultM,
   output logic         sretM, mretM, wfiM, sfencevmaM);

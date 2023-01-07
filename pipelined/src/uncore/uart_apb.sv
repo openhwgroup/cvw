@@ -42,14 +42,6 @@ module uart_apb (
   input  logic             PENABLE,
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
-/*
-  input  logic             HCLK, HRESETn, 
-  input  logic             HSELUART,
-  input  logic [2:0]       HADDR,
-  input  logic             HWRITE,
-  input  logic [`XLEN-1:0] PWDATA,
-  output logic [`XLEN-1:0] HREADUART,
-  output logic             HRESPUART, HREADYUART, */
   (* mark_debug = "true" *) input  logic             SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
   (* mark_debug = "true" *) output logic             SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
   (* mark_debug = "true" *) output logic             OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
