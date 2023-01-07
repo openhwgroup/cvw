@@ -1,114 +1,102 @@
 ///////////////////////////////////////////
-// cache (data cache)
+// cache 
 //
 // Written: ross1728@gmail.com July 07, 2021
-//          Implements the L1 data cache
+//          Implements the L1 instruction/data cache
 //
 // Purpose: Storage for data and meta data.
 //
 // A component of the Wally configurable RISC-V project.
 //
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
 module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, DCACHE) (
-  input logic                   clk,
-  input logic                   reset,
-   // cpu side
-  input logic                   FlushStage,
-  input logic                   Stall,
-  input logic [1:0]             CacheRW,
-  input logic [1:0]             CacheAtomic,
-  input logic                   FlushCache,
-  input logic                   InvalidateCache,
-  input logic [11:0]            NextAdr, // virtual address, but we only use the lower 12 bits.
-  input logic [`PA_BITS-1:0]    PAdr, // physical address
-  input logic [(WORDLEN-1)/8:0] ByteMask,
-  input logic [WORDLEN-1:0]     CacheWriteData,
-  output logic                  CacheCommitted,
-  output logic                  CacheStall,
-   // to performance counters to cpu
-  output logic                  CacheMiss,
-  output logic                  CacheAccess,
-   // lsu control
-  input logic                   SelHPTW,
-   // Bus fsm interface
-  output logic [1:0]            CacheBusRW,
-  input logic                   CacheBusAck,
-  input logic                   SelBusBeat, 
-  input logic [LOGBWPL-1:0]     BeatCount,
-  input logic [LINELEN-1:0]     FetchBuffer,
-  output logic [`PA_BITS-1:0]   CacheBusAdr,
-  output logic [WORDLEN-1:0]    ReadDataWord);
+  input  logic                   clk,
+  input  logic                   reset,
+  input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
+  input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
+  // cpu side
+  input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
+  input  logic [1:0]             CacheAtomic,       // Atomic operation
+  input  logic                   FlushCache,        // Flush all dirty lines back to memory
+  input  logic                   InvalidateCache,   // Clear all valid bits
+  input  logic [11:0]            NextAdr,           // Virtual address, but we only use the lower 12 bits.
+  input  logic [`PA_BITS-1:0]    PAdr,              // Physical address
+  input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
+  input  logic [WORDLEN-1:0]     CacheWriteData,    // Data to write to cache (D$ only)
+  output logic                   CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
+  output logic                   CacheStall,        // Cache stalls pipeline during multicycle operation
+  output logic [WORDLEN-1:0]     ReadDataWord,      // Word read from cache (goes to CPU and bus)
+  // to performance counters to cpu
+  output logic                   CacheMiss,         // Cache miss
+  output logic                   CacheAccess,       // Cache access
+  // lsu control
+  input  logic                   SelHPTW,           // Use PAdr from Hardware Page Table Walker rather than NextAdr
+  // Bus fsm interface
+  input  logic                   CacheBusAck,       // Bus operation completed
+  input  logic                   SelBusBeat,        // Word in cache line comes from BeatCount
+  input  logic [LOGBWPL-1:0]     BeatCount,         // Beat in burst
+  input  logic [LINELEN-1:0]     FetchBuffer,       // Buffer long enough to hold entire cache line arriving from bus
+  output logic [1:0]             CacheBusRW,        // [1] Read or [0] write bus
+  output logic [`PA_BITS-1:0]    CacheBusAdr        // Address for bus access
+);
 
   // Cache parameters
-  localparam                  LINEBYTELEN = LINELEN/8;
-  localparam                  OFFSETLEN = $clog2(LINEBYTELEN);
-  localparam                  SETLEN = $clog2(NUMLINES);
-  localparam                  SETTOP = SETLEN+OFFSETLEN;
-  localparam                  TAGLEN = `PA_BITS - SETTOP;
-  localparam                  WORDSPERLINE = LINELEN/WORDLEN;
-  localparam                  FlushAdrThreshold   = NUMLINES - 1;
+  localparam                     LINEBYTELEN = LINELEN/8;            // Line length in bytes
+  localparam                     OFFSETLEN = $clog2(LINEBYTELEN);    // Number of bits in offset field
+  localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
+  localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
+  localparam                     TAGLEN = `PA_BITS - SETTOP;         // Number of tag bits
+  localparam                     WORDSPERLINE = LINELEN/WORDLEN;     // Number of words in cache line
+  localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
+  localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
+  localparam                     CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN; // *** see if this is the same as WORDSPERLINE
+  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE); // ***
 
-  logic                       SelAdr;
-  logic [SETLEN-1:0]          CAdr;
-  logic [LINELEN-1:0]         LineWriteData;
-  logic                       ClearValid;
-  logic                       ClearDirty;
-  logic [LINELEN-1:0]         ReadDataLineWay [NUMWAYS-1:0];
-  logic [NUMWAYS-1:0]         HitWay, ValidWay;
-  logic                       CacheHit;
-  logic                       SetDirty;
-  logic                       SetValid;
-  logic [NUMWAYS-1:0]         VictimWay;
-  logic [NUMWAYS-1:0]         DirtyWay;
-  logic                       LineDirty;
-  logic [TAGLEN-1:0]          TagWay [NUMWAYS-1:0];
-  logic [TAGLEN-1:0]          Tag;
-  logic [SETLEN-1:0]          FlushAdr;
-  logic [SETLEN-1:0]          NextFlushAdr;
-  logic [SETLEN-1:0]          FlushAdrP1;
-  logic                       FlushAdrCntEn;
-  logic                       FlushCntRst;
-  logic                       FlushAdrFlag;
-  logic                       FlushWayFlag;
-  logic [NUMWAYS-1:0]         FlushWay;
-  logic [NUMWAYS-1:0]         NextFlushWay;
-  logic                       FlushWayCntEn;
-  logic                       SelWriteback;
-  logic                       LRUWriteEn;
-  logic                       SelFlush;
-  logic                       ResetOrFlushCntRst;
-  logic [LINELEN-1:0]         ReadDataLine, ReadDataLineCache;
+  logic                          SelAdr;
+  logic [1:0]                    AdrSelMuxSel;
+  logic [SETLEN-1:0]             CAdr;
+  logic [LINELEN-1:0]            LineWriteData;
+  logic                          ClearValid, ClearDirty, SetDirty, SetValid;
+  logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
+  logic [NUMWAYS-1:0]            HitWay, ValidWay;
+  logic                          CacheHit;
+  logic [NUMWAYS-1:0]            VictimWay, DirtyWay;
+  logic                          LineDirty;
+  logic [TAGLEN-1:0]             TagWay [NUMWAYS-1:0];
+  logic [TAGLEN-1:0]             Tag;
+  logic [SETLEN-1:0]             FlushAdr, NextFlushAdr, FlushAdrP1;
+  logic                          FlushAdrCntEn, FlushCntRst;
+  logic                          FlushAdrFlag, FlushWayFlag;
+  logic [NUMWAYS-1:0]            FlushWay, NextFlushWay;
+  logic                          FlushWayCntEn;
+  logic                          SelWriteback;
+  logic                          LRUWriteEn;
+  logic                          SelFlush;
+  logic                          ResetOrFlushCntRst;
+  logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
+  logic                          SelFetchBuffer;
+  logic                          CacheEn;
+  logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
+  logic [LINELEN/8-1:0]          LineByteMask, DemuxedByteMask, FetchBufferByteSel;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
-  logic                       SelFetchBuffer;
-  logic                       CacheEn;
-  
 
-  localparam                  LOGLLENBYTES = $clog2(WORDLEN/8);
-  localparam                  CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN;
-  localparam                  LOGCWPL = $clog2(CACHEWORDSPERLINE);
-  logic [CACHEWORDSPERLINE-1:0] MemPAdrDecoded;
-  logic [LINELEN/8-1:0]       LineByteMask, DemuxedByteMask, FetchBufferByteSel;
   genvar                      index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,9 +107,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  mux3 #(SETLEN) AdrSelMux(
-    .d0(NextAdr[SETTOP-1:OFFSETLEN]), .d1(PAdr[SETTOP-1:OFFSETLEN]), .d2(FlushAdr),
-    .s({SelFlush, ((SelAdr | SelHPTW) & ~((DCACHE == 0) & FlushStage))}), .y(CAdr));
+  assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((DCACHE == 0) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMux(NextAdr[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSel, CAdr);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) 
@@ -184,7 +172,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     .d(FlushAdrP1), .q(NextFlushAdr));
   assign FlushAdr = FlushAdrCntEn ? FlushAdrP1 : NextFlushAdr;
   assign FlushAdrP1 = NextFlushAdr + 1'b1;
-  assign FlushAdrFlag = (NextFlushAdr == FlushAdrThreshold[SETLEN-1:0]);
+  assign FlushAdrFlag = (NextFlushAdr == FLUSHADRTHRESHOLD[SETLEN-1:0]);
   flopenl #(NUMWAYS) FlushWayReg(.clk, .load(ResetOrFlushCntRst), .en(FlushWayCntEn), 
     .val({{NUMWAYS-1{1'b0}}, 1'b1}), .d(NextFlushWay), .q(FlushWay));
   assign FlushWayFlag = FlushWay[NUMWAYS-1];
