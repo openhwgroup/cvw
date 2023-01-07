@@ -87,7 +87,6 @@ module ifu (
 );
   (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;
   logic                        BranchMisalignedFaultE;
-  logic                        IllegalCompInstrD;
   logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
   logic [`XLEN-1:2]            PCPlus4F;
   logic                        CompressedF;
@@ -340,8 +339,14 @@ module ifu (
   flopenrc #(`XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
   // expand 16-bit compressed instructions to 32 bits
-  decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); // *** move the config logic outside
-  assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+  if (`C_SUPPORTED) begin
+    logic IllegalCompInstrD;
+    decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
+    assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+  end else begin  
+    assign InstrD = InstrRawD;
+    assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD;
+  end
 
   // Misaligned PC logic
   // Instruction address misalignement only from br/jal(r) instructions.
