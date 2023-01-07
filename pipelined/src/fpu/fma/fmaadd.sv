@@ -34,7 +34,7 @@ module fmaadd(
     input logic  [3*`NF+3:0]    Am, // aligned addend's mantissa for addition in U(NF+5.2NF+1)
     input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
     input logic                 Ps, // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
-    input logic                InvA,          // invert the aligned addend
+    input logic                 InvA,          // invert the aligned addend
     input logic                 KillProd,      // should the product be set to 0
     input logic                 ASticky,
     input logic  [`NE-1:0]      Ze,
@@ -55,9 +55,9 @@ module fmaadd(
     ///////////////////////////////////////////////////////////////////////////////
    
     // Choose an inverted or non-inverted addend.  Put carry into adder/LZA for addition
-    assign AmInv = InvA ? ~Am : Am;
+    assign AmInv = {3*`NF+4{InvA}}^Am;
     // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-    assign PmKilled = KillProd ? '0 : Pm;
+    assign PmKilled = {2*`NF+2{~KillProd}}&Pm;
     // Do the addition
     //      - calculate a positive and negitive sum in parallel
     // if there was a small negitive number killed in the alignment stage one needs to be subtracted from the sum

@@ -413,7 +413,7 @@ logic [3:0] dummy;
                             "Br Dir Wrong",
                             "Br Count",
                             "Br Target Wrong",
-                            "Jump, JR, ret",
+                            "Jump, JR, Jal",
                             "RAS Wrong",
                             "ret",
                             "Instr Class Wrong",

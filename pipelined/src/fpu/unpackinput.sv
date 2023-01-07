@@ -54,7 +54,7 @@ module unpackinput (
         assign Sgn = In[`FLEN-1];  // sign bit
         assign Frac = In[`NF-1:0];  // fraction (no assumed 1)
         assign ExpNonZero = |In[`FLEN-2:`NF];  // is the exponent non-zero
-        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  Denormalized numbers have effective biased exponent of 1
+        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  Subnormalized numbers have effective biased exponent of 1
         assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
         //***need better names for these constants
@@ -64,7 +64,7 @@ module unpackinput (
         //      `NE       |     `NE1        length of exponent
         //      `NF       |     `NF1        length of fraction
         //      `BIAS     |     `BIAS1      exponent's bias value
-        //      `FMT      |     `FMT1       precision's format value - Q=11 D=01 S=00 H=10
+        //      `FMT      |     `FMT1       precision's format value - Q=11 D=01 Sticky=00 H=10
 
         // Possible combinantions specified by spec:
         //      double and single
@@ -93,10 +93,10 @@ module unpackinput (
         // 896  = 0011 1000 0000
         // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
         // dexp = 0bdd dbbb bbbb 
-        // also need to take into account possible zero/denorm/inf/NaN values
+        // also need to take into account possible zero/Subnorm/inf/NaN values
 
         // extract the exponent, converting the smaller exponent into the larger precision if nessisary
-        //      - if the original precision had a denormal number convert the exponent value 1
+        //      - if the original precision had a Subnormal number convert the exponent value 1
         assign Exp = Fmt ? {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero} : {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
  
         // is the exponent all 1's
@@ -112,7 +112,7 @@ module unpackinput (
         //      `NE       |     `NE1       |    `NE2        length of exponent
         //      `NF       |     `NF1       |    `NF2        length of fraction
         //      `BIAS     |     `BIAS1     |    `BIAS2      exponent's bias value
-        //      `FMT      |     `FMT1      |    `FMT2       precision's format value - Q=11 D=01 S=00 H=10
+        //      `FMT      |     `FMT1      |    `FMT2       precision's format value - Q=11 D=01 Sticky=00 H=10
 
         // Possible combinantions specified by spec:
         //      quad   and double and single
@@ -164,7 +164,7 @@ module unpackinput (
         // 896  = 0011 1000 0000
         // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
         // dexp = 0bdd dbbb bbbb 
-        // also need to take into account possible zero/denorm/inf/NaN values
+        // also need to take into account possible zero/Subnorm/inf/NaN values
 
         // convert the larger precision's exponent to use the largest precision's bias
         always_comb 
@@ -192,7 +192,7 @@ module unpackinput (
         //   `Q_NE   |  `D_NE   |  `S_NE   |  `H_NE      length of exponent
         //   `Q_NF   |  `D_NF   |  `S_NF   |  `H_NF      length of fraction
         //   `Q_BIAS |  `D_BIAS |  `S_BIAS |  `H_BIAS    exponent's bias value
-        //   `Q_FMT  |  `D_FMT  |  `S_FMT  |  `H_FMT     precision's format value - Q=11 D=01 S=00 H=10
+        //   `Q_FMT  |  `D_FMT  |  `S_FMT  |  `H_FMT     precision's format value - Q=11 D=01 Sticky=00 H=10
 
         // Check NaN boxing
         always_comb
@@ -238,7 +238,7 @@ module unpackinput (
         // 896  = 0011 1000 0000
         // sexp = 0000 bbbb bbbb (add this) b = bit d = ~b 
         // dexp = 0bdd dbbb bbbb 
-        // also need to take into account possible zero/denorm/inf/NaN values
+        // also need to take into account possible zero/Subnorm/inf/NaN values
         
         // convert the double precsion exponent into quad precsion
         // 1 is added to the exponent if the input is zero or subnormal
@@ -264,7 +264,7 @@ module unpackinput (
 
     // Output logic
     assign FracZero = ~|Frac; // is the fraction zero?
-    assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if denormal or zero) to create the significand
+    assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if Subnormal or zero) to create the significand
     assign NaN = ((ExpMax & ~FracZero)|BadNaNBox)&En; // is the input a NaN?
     assign SNaN = NaN&~Frac[`NF-1]&~BadNaNBox; // is the input a singnaling NaN?
     assign Inf = ExpMax & FracZero &En; // is the input infinity?

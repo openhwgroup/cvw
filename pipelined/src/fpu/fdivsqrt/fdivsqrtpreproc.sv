@@ -147,7 +147,7 @@ module fdivsqrtpreproc (
     assign X = PreShiftX;
   end
 
-  // count leading zeros for denorm FP and to normalize integer inputs
+  // count leading zeros for Subnorm FP and to normalize integer inputs
   lzc #(`DIVb) lzcX (IFNormLenX, ell);
   lzc #(`DIVb) lzcY (IFNormLenD, mE);
 
