@@ -113,7 +113,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
   
 
-  buscachefsm #(BeatCountThreshold, LOGWPL, CACHE_ENABLED) AHBBuscachefsm(
+  buscachefsm #(BeatCountThreshold, LOGWPL) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
 	.HREADY, .HTRANS, .HWRITE, .HBURST);

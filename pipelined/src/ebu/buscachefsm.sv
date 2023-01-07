@@ -32,8 +32,7 @@
 `define BURST_EN 1
 
 // HCLK and clk must be the same clock!
-module buscachefsm #(parameter integer   BeatCountThreshold,
-   parameter integer LOGWPL, parameter logic CACHE_ENABLED )
+module buscachefsm #(parameter integer BeatCountThreshold, parameter integer LOGWPL)
   (input logic               HCLK,
    input logic               HRESETn,
 
