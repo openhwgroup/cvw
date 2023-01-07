@@ -134,27 +134,25 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
                         .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
                         .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
 
+  // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
   assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
   assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
   assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~(Translate & ~TLBHit);
 
-  always_comb
+  // Misaligned faults
+   always_comb
     case(Size[1:0]) 
       2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
-
-  // If the CPU's (not HPTW's) request is a page fault.
   assign LoadMisalignedFaultM = DataMisalignedM & ReadAccessM;
   assign StoreAmoMisalignedFaultM = DataMisalignedM & (WriteAccessM | AtomicAccessM);
+
   // Specify which type of page fault is occurring
   assign InstrPageFaultF = TLBPageFault & ExecuteAccessF;
-  
   assign LoadPageFaultM = TLBPageFault & ReadAccessM;
   assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | AtomicAccessM);
-  
-
 endmodule
