@@ -123,18 +123,26 @@
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
 `define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
-`define NORMSHIFTSZ ((`QLEN+`NF+1) > (3*`NF+6) ? (`QLEN+`NF+1) : (3*`NF+6))
+`define NORMSHIFTSZ ((`DIVb + 1 +`NF+1) > (3*`NF+6) ? (`DIVb + 1 +`NF+1) : (3*`NF+6))
 `define LOGNORMSHIFTSZ ($clog2(`NORMSHIFTSZ))
 `define CORRSHIFTSZ ((`DIVN+1+`NF) > (3*`NF+4) ? (`DIVN+1+`NF) : (3*`NF+4))
 
+// *** CORRSHIFTSZ & NORMSHIFTSZ needs to be longest from divider, convert, fma
+
 // division constants
-`define DIVN        (`NF<`XLEN ? `XLEN : `NF+3) // standard length of input
+
+`define DIVN        (((`NF<`XLEN) & `IDIV_ON_FPU) ? `XLEN : `NF+2) // standard length of input
 `define LOGR        (`RADIX==2 ? 32'h1 : 32'h2) // r = log(R)
 `define RK          (`LOGR*`DIVCOPIES)          // r*k used for intdiv preproc
 `define LOGRK       ($clog2(`RK))               // log2(r*k)
 `define FPDUR       ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN      ($clog2(`FPDUR+1))
-`define QLEN        (`FPDUR*`LOGR*`DIVCOPIES)
 `define DIVb        (`FPDUR*`LOGR*`DIVCOPIES-1) // canonical fdiv size (b)
 `define DIVBLEN     ($clog2(`DIVb+1)-1)
 `define DIVa        (`DIVb+1-`XLEN)             // used for idiv on fpu
+
+// Disable spurious Verilator warnings
+
+/* verilator lint_off STMTDLY */
+/* verilator lint_off ASSIGNDLY */
+/* verilator lint_off PINCONNECTEMPTY */
