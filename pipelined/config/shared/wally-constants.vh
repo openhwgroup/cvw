@@ -125,17 +125,16 @@
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
 `define NORMSHIFTSZ ((`QLEN+`NF+1) > (3*`NF+6) ? (`QLEN+`NF+1) : (3*`NF+6))
 `define LOGNORMSHIFTSZ ($clog2(`NORMSHIFTSZ))
-`define CORRSHIFTSZ ((`DIVRESLEN+`NF) > (3*`NF+6) ? (`DIVRESLEN+`NF) : (3*`NF+4))
+`define CORRSHIFTSZ ((`DIVN+1+`NF) > (3*`NF+4) ? (`DIVN+1+`NF) : (3*`NF+4))
 
 // division constants
 `define DIVN        (`NF<`XLEN ? `XLEN : `NF+3) // standard length of input
-`define DIVRESLEN   (`NF<`XLEN ? `XLEN : `NF+4) // result length for postprocessing
 `define LOGR        (`RADIX==2 ? 32'h1 : 32'h2) // r = log(R)
 `define RK          (`LOGR*`DIVCOPIES)          // r*k used for intdiv preproc
 `define LOGRK       ($clog2(`RK))               // log2(r*k)
 `define FPDUR       ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
 `define DURLEN      ($clog2(`FPDUR+1))
 `define QLEN        (`FPDUR*`LOGR*`DIVCOPIES)
-`define DIVb        (`FPDUR*`LOGR*`DIVCOPIES-1) // canonical fdiv size
+`define DIVb        (`FPDUR*`LOGR*`DIVCOPIES-1) // canonical fdiv size (b)
 `define DIVBLEN     ($clog2(`DIVb+1)-1)
 `define DIVa        (`DIVb+1-`XLEN)             // used for idiv on fpu
