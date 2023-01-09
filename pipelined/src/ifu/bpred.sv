@@ -107,6 +107,12 @@ module bpred (
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
+  end else if (`BPTYPE == "BPFOLDEDGSHARE") begin:Predictor
+    foldedgshare #(16, 10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrW(InstrClassW[0]), .PCSrcE);
+	
   end else if (`BPTYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
