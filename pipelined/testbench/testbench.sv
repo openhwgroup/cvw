@@ -33,7 +33,7 @@
 `include "tests.vh"
 
 `define PrintHPMCounters 0
-`define BPRED_LOGGER 1
+`define BPRED_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
