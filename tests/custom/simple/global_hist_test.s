@@ -83,6 +83,7 @@ one_6:
 	addi t3, t3, 1		
 	addi t3, t3, 1		
 	addi t3, t3, 1		
+	addi t3, t3, 1		
 	addi t2, t2, -1
 	bnez t2, loop_6
 

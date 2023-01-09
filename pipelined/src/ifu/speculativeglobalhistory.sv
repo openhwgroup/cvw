@@ -79,7 +79,7 @@ module speculativeglobalhistory
   assign MatchD = BranchInstrD & ~FlushE & (GHRNextF == GHRD[k-1:0]);
   assign MatchE = BranchInstrE & ~FlushM & (GHRNextF == GHRE[k-1:0]);
   assign MatchM = BranchInstrM & ~FlushW & (GHRNextF == GHRM[k-1:0]);
-  assign MatchW = BranchInstrW & (GHRNextF == GHRM[k-1:0]);
+  assign MatchW = BranchInstrW & (GHRNextF == GHRW[k-1:0]);
   assign MatchNextX = MatchF | MatchD | MatchE | MatchM | MatchW;
 
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
