@@ -152,7 +152,7 @@ module fdivsqrtpreproc (
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
   // append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
-  mux2 #(`DIVb+1) sqrtxmux({~NumerZeroE, XPreproc}, {1'b0, ~NumerZeroE, XPreproc[`DIVb-1:1]}, (Xe[0]^ell[0]), PreSqrtX);
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0]^ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
