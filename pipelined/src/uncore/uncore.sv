@@ -31,6 +31,8 @@
 
 `include "wally-config.vh"
 
+// *** need idiom to map onto cache RAM with byte writes
+// *** and use memread signal to reduce power when reads aren't needed
 module uncore (
   // AHB Bus Interface
   input  logic             HCLK, HRESETn,
