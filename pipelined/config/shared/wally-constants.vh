@@ -132,7 +132,7 @@
 // division constants
 
 `define DIVN        (((`NF<`XLEN) & `IDIV_ON_FPU) ? `XLEN : `NF+2) // standard length of input
-`define LOGR        (`RADIX==2 ? 32'h1 : 32'h2) // r = log(R)
+`define LOGR        ($clog2(`RADIX))            // r = log(R)
 `define RK          (`LOGR*`DIVCOPIES)          // r*k used for intdiv preproc
 `define LOGRK       ($clog2(`RK))               // log2(r*k)
 `define FPDUR       ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4))
