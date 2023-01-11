@@ -40,10 +40,10 @@ module fdivsqrtpreproc (
   output logic [`DIVb-1:0] DPreproc,
   // Int-specific
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	input  logic MDUE, W64E,
+	input  logic IntDivE, W64E,
   output logic ISpecialCaseE,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic NegQuotM, ALTBM, MDUM, W64M,
+  output logic NegQuotM, ALTBM, IntDivM, W64M,
   output logic AsM, BZeroM,
   output logic [`XLEN-1:0] AM
 );
@@ -91,8 +91,8 @@ module fdivsqrtpreproc (
     mux2 #(`XLEN) posbmux(BE, -BE, BsE, PosB);
 
     // Select integer or floating point inputs
-    mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenX);
-    mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenD);
+    mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFNormLenX);
+    mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFNormLenD);
 
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
@@ -122,11 +122,11 @@ module fdivsqrtpreproc (
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
-    mux2 #(1)    numzmux(XZeroE, AZeroE, MDUE, NumerZeroE);
-    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, MDUE, X);
+    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
+    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
 
     // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, MDUE,     MDUM);
+    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
     flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
@@ -151,8 +151,11 @@ module fdivsqrtpreproc (
   assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
-  // append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
-  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0]^ell[0]), PreSqrtX);
+  // append leading 1 (for normal inputs)
+  // shift square root to be in range [1/4, 1)
+  // Normalized numbers are shifted right by 1 if the exponent is odd
+  // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix

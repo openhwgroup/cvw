@@ -45,7 +45,7 @@ module controller(
   output logic       ALUResultSrcE,
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
-  output logic       MDUE, W64E,
+  output logic       IntDivE, MDUE, W64E,
   output logic       JumpE,	
   output logic       SCE,
   output logic       BranchSignedE,
@@ -61,7 +61,7 @@ module controller(
   output logic       FWriteIntM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
-  output logic 	     RegWriteW, DivW,    // for datapath and Hazard Unit
+  output logic 	     RegWriteW, IntDivW,    // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   // Stall during CSRs
   //output logic       CSRWriteFencePendingDEM,
@@ -107,7 +107,7 @@ module controller(
   logic [1:0]  AtomicE;
    logic       FenceD, FenceE, FenceM;
   logic        SFenceVmaD;
-   logic       DivE, DivM;
+   logic       IntDivM;
    
 
   // Extract fields
@@ -227,17 +227,17 @@ module controller(
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
-  assign DivE = MDUE & Funct3E[2]; // Division operation
+  assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
   flopenrc #(20) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, DivE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, DivM});
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM});
   
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM, DivM},
-                         {RegWriteW, ResultSrcW, DivW});  
+                         {RegWriteM, ResultSrcM, IntDivM},
+                         {RegWriteW, ResultSrcW, IntDivW});  
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;

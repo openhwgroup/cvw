@@ -37,7 +37,7 @@ module ieu (
   input logic [`XLEN-1:0]  PCLinkE,
   input logic 		   FWriteIntE, FCvtIntE, FCvtIntW,
   output logic [`XLEN-1:0] IEUAdrE,
-  output logic 		   MDUE, W64E,
+  output logic 		   IntDivE, W64E,
   output logic [2:0] 	   Funct3E,
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
@@ -78,7 +78,7 @@ module ieu (
   logic        ALUResultSrcE;
   logic        SCE;
   logic        FWriteIntM;
-  logic        DivW;
+  logic        IntDivW;
 
   // forwarding signals
   logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;
@@ -87,22 +87,23 @@ module ieu (
   logic             MemReadE, CSRReadE;
   logic             JumpE;
   logic             BranchSignedE;
+  logic             MDUE;
            
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
-    .Funct3E, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
+    .Funct3E, .IntDivE, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .DivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
-    .StallW, .FlushW, .RegWriteW, .DivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FPIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(

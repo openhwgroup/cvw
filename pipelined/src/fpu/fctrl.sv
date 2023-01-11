@@ -35,7 +35,7 @@ module fctrl (
   input  logic [6:0] OpD,       // bits 6:0 of instruction
   input  logic [4:0] Rs2D,      // bits 24:20 of instruction
   input  logic [2:0] Funct3D, Funct3E,   // bits 14:12 of instruction - may contain rounding mode
-  input  logic       MDUE,
+  input  logic       IntDivE,
   input  logic [2:0] FRM_REGW,  // rounding mode from CSR
   input  logic [1:0] STATUS_FS, // is FPU enabled?
   input  logic       FDivBusyE,  // is the divider busy
@@ -270,8 +270,10 @@ module fctrl (
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
-  if (`M_SUPPORTED) assign IDivStartE = MDUE & Funct3E[2];
-  else              assign IDivStartE = 0; 
+
+  // Integer division on FPU divider
+  if (`M_SUPPORTED & `IDIV_ON_FPU) assign IDivStartE = IntDivE;
+  else                             assign IDivStartE = 0; 
 
   //assign FCvtIntE = (FResSelE == 2'b01);
 

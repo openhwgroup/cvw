@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
 // fpu.sv
 //
-// Written: me@KatherineParry.com, James Stine, Brett Mathis
+// Written: me@KatherineParry.com, James Stine, Brett Mathis, David Harris
 // Modified: 6/23/2021
 //
-// Purpose: FPU
+// Purpose: Floating Point Unit Top-Level Interface
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -29,19 +29,19 @@
 module fpu (
    input  logic 		        clk,
    input  logic 		        reset,
-   input  logic  [2:0] 	     FRM_REGW,   // Rounding mode (from CSR)
-   input  logic  [31:0] 	  InstrD,     // instruction (from IFU)
-   input  logic  [`FLEN-1:0] ReadDataW,  // Read data (from LSU)
+   input  logic  [2:0] 	     FRM_REGW,      // Rounding mode (from CSR)
+   input  logic  [31:0] 	  InstrD,        // instruction (from IFU)
+   input  logic  [`FLEN-1:0] ReadDataW,     // Read data (from LSU)
    input  logic  [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input (from IEU)
    input  logic 		        StallE, StallM, StallW, // stall signals (from HZU)
    input  logic 		        FlushE, FlushM, FlushW, // flush signals (from HZU)
-   input  logic  [4:0] 	     RdE, RdM, RdW,   // which FP register to write to (from IEU)
-   input  logic  [1:0]       STATUS_FS,  // Is floating-point enabled? (From privileged unit)
-   input  logic  [2:0] 	     Funct3E, Funct3M,
-	input  logic 		        MDUE, W64E,
-   output logic 		        FRegWriteM, // FP register write enable (to privileged unit)
+   input  logic  [4:0] 	     RdE, RdM, RdW, // which FP register to write to (from IEU)
+   input  logic  [1:0]       STATUS_FS,     // Is floating-point enabled? (From privileged unit)
+   input  logic  [2:0] 	     Funct3E, Funct3M, // Funct fields of instruction specify type of operations
+	input  logic 		        IntDivE, W64E, // 
+   output logic 		        FRegWriteM,    // FP register write enable (to privileged unit)
    output logic 		        FpLoadStoreM,  // Fp load instruction? (to LSU)
-   output logic 		        FPUStallD,       // Stall the decode stage (To HZU)
+   output logic 		        FPUStallD,     // Stall the decode stage (To HZU)
    output logic 		        FWriteIntE,    // integer register write enable (to IEU)
    output logic              FCvtIntE,      // Convert to int (to IEU)
    output logic [`FLEN-1:0]  FWriteDataM,   // Data to be written to memory (to LSU) 
@@ -50,7 +50,7 @@ module fpu (
    output logic              FCvtIntW,      // select FCvtIntRes (to IEU)
    output logic 		        FDivBusyE,     // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
    output logic 		        IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
-   output logic [4:0] 	     SetFflagsM,        // FPU flags (to privileged unit)
+   output logic [4:0] 	     SetFflagsM,    // FPU flags (to privileged unit)
    output logic [`XLEN-1:0]  FPIntDivResultW
   );
 
@@ -161,7 +161,7 @@ module fpu (
 
    // calculate FP control signals
    fctrl fctrl (.Funct7D(InstrD[31:25]), .OpD(InstrD[6:0]), .Rs2D(InstrD[24:20]), .Funct3D(InstrD[14:12]), 
-               .Funct3E, .MDUE, .InstrD,
+               .Funct3E, .IntDivE, .InstrD,
                .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
                .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
                .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .IllegalFPUInstrM, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
@@ -259,7 +259,7 @@ module fpu (
    // *** add other opperations
    fdivsqrt fdivsqrt(.clk, .reset, .FmtE, .XmE, .YmE, .XeE, .YeE, .SqrtE(OpCtrlE[0]), .SqrtM(OpCtrlM[0]),
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
-                  .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .MDUE, .W64E,
+                  .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .IntDivE, .W64E,
                   .StallM, .FlushE, .DivSM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
                   .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
 

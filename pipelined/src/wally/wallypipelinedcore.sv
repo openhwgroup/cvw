@@ -53,7 +53,7 @@ module wallypipelinedcore (
   (* mark_debug = "true" *) logic TrapM;
 
   // new signals that must connect through DP
-  logic             MDUE, W64E;
+  logic             IntDivE, W64E;
   logic             CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
@@ -210,7 +210,7 @@ module wallypipelinedcore (
 
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE,
-     .IEUAdrE, .MDUE, .W64E,
+     .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
      // Memory stage interface
@@ -367,7 +367,7 @@ module wallypipelinedcore (
       mdu mdu(
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
-         .Funct3E, .Funct3M, .MDUE, .W64E,
+         .Funct3E, .Funct3M, .IntDivE, .W64E,
          .MDUResultW, .DivBusyE,  
          .StallM, .StallW, .FlushE, .FlushM, .FlushW
       ); 
@@ -391,7 +391,7 @@ module wallypipelinedcore (
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
          .ForwardedSrcBE, // Integer input for intdiv
-         .Funct3E, .Funct3M, .MDUE, .W64E, // Integer flags and functions
+         .Funct3E, .Funct3M, .IntDivE, .W64E, // Integer flags and functions
          .FPUStallD, // Stall the decode stage
          .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
