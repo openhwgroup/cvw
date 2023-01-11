@@ -4,7 +4,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: unpack all inputs
+// Purpose: unpack X, Y, Z floating-point inputs
 // 
 // A component of the Wally configurable RISC-V project.
 // 

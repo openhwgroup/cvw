@@ -35,16 +35,12 @@ module negateintres(
     output logic [`XLEN+1:0]    CvtNegRes
 );
 
+    logic [2:0] CvtNegResMsbs3;
     
     // round and negate the positive res if needed
     assign CvtNegRes = Xs ? -({2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1}) : {2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1};
     
-    always_comb
-        if(Signed)
-            if(Int64)   CvtNegResMsbs = CvtNegRes[`XLEN:`XLEN-1];
-            else        CvtNegResMsbs = CvtNegRes[32:31];
-        else
-            if(Int64)   CvtNegResMsbs = CvtNegRes[`XLEN+1:`XLEN];
-            else        CvtNegResMsbs = CvtNegRes[33:32];
-
+    // select 2 most significant bits
+    mux2 #(3) msb3mux(CvtNegRes[33:31], CvtNegRes[`XLEN+1:`XLEN-1], Int64, CvtNegResMsbs3);
+    mux2 #(2) msb2mux(CvtNegResMsbs3[2:1], CvtNegRes[1:0], Signed, CvtNegResMsbs);
 endmodule
