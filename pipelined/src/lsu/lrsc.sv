@@ -7,7 +7,7 @@
 // Purpose: Load Reserved / Store Conditional unit
 //          Track the reservation and squash the store if it fails
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

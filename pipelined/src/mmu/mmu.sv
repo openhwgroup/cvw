@@ -6,7 +6,7 @@
 //
 // Purpose: Memory management unit, including TLB, PMA, PMP
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
