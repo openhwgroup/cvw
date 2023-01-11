@@ -93,7 +93,7 @@ module wallypipelinedcore (
   logic             FCvtIntStallD;
   logic             FpLoadStoreM;
   logic [4:0]             SetFflagsM;
-  logic [`XLEN-1:0] FPIntDivResultW;
+  logic [`XLEN-1:0] FIntDivResultW;
 
   // memory management unit signals
   logic             ITLBWriteF;
@@ -223,7 +223,7 @@ module wallypipelinedcore (
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FPIntDivResultW,
+     .CSRReadValW, .MDUResultW, .FIntDivResultW,
      .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
@@ -401,7 +401,7 @@ module wallypipelinedcore (
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
          .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
          .SetFflagsM,        // FPU flags (to privileged unit)
-         .FPIntDivResultW
+         .FIntDivResultW
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FPUStallD = 0;

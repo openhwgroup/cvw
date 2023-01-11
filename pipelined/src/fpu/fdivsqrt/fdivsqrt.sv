@@ -47,7 +47,7 @@ module fdivsqrt(
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb:0] QmM,
-  output logic [`XLEN-1:0] FPIntDivResultM
+  output logic [`XLEN-1:0] FIntDivResultM
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
@@ -97,5 +97,5 @@ module fdivsqrt(
     .QmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FPIntDivResultM);
+    .FIntDivResultM);
 endmodule

@@ -60,7 +60,7 @@ module fpu (
    input  logic [`FLEN-1:0]  ReadDataW,     // Read data (from LSU)
    output logic [`XLEN-1:0]  FCvtIntResW,   // convert result to to be written to integer register (to IEU)
    output logic              FCvtIntW,      // select FCvtIntRes (to IEU)
-   output logic [`XLEN-1:0]  FPIntDivResultW // Result from integer division (to IEU)
+   output logic [`XLEN-1:0]  FIntDivResultW // Result from integer division (to IEU)
   );
 
    // RISC-V FPU specifics:
@@ -133,7 +133,7 @@ module fpu (
    logic [`NE+1:0]      QeM;                               // fdivsqrt exponent
    logic                DivStickyM;                        // fdivsqrt sticky bit
    logic                FDivDoneE, IFDivStartE;            // fdivsqrt control signals
-   logic [`XLEN-1:0]    FPIntDivResultM;                   // fdivsqrt integer division result (for IEU)
+   logic [`XLEN-1:0]    FIntDivResultM;                   // fdivsqrt integer division result (for IEU)
 
    // result and flag signals
    logic [`XLEN-1:0] ClassResE;                            // classify result
@@ -147,7 +147,7 @@ module fpu (
    logic [`FLEN-1:0] SgnResE;                   // sign injection result
    logic [`FLEN-1:0] PreFpResE, PreFpResM;                // selected result that is ready in the memory stage
    logic  	         PreNVE, PreNVM;                       // selected flag that is ready in the memory stage     
-   logic [`FLEN-1:0] FPUResultW;                         // final FP result being written to the FP register     
+   logic [`FLEN-1:0] FResultW;                         // final FP result being written to the FP register     
    // other signals
    logic [`FLEN-1:0] 	 AlignedSrcAE;                       // align SrcA to the floating point format
    logic [`FLEN-1:0]     BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
@@ -177,7 +177,7 @@ module fpu (
    // FP register file
    fregfile fregfile (.clk, .reset, .we4(FRegWriteW),
       .a1(InstrD[19:15]), .a2(InstrD[24:20]), .a3(InstrD[31:27]), 
-      .a4(RdW), .wd4(FPUResultW),
+      .a4(RdW), .wd4(FResultW),
       .rd1(FRD1D), .rd2(FRD2D), .rd3(FRD3D));	
 
    // D/E pipeline registers  
@@ -203,9 +203,9 @@ module fpu (
                    .XEnD, .YEnD, .ZEnD, .FPUStallD, .ForwardXE, .ForwardYE, .ForwardZE);
 
    // forwarding muxs
-   mux3  #(`FLEN)  fxemux (FRD1E, FPUResultW, PreFpResM, ForwardXE, XE);
-   mux3  #(`FLEN)  fyemux (FRD2E, FPUResultW, PreFpResM, ForwardYE, PreYE);
-   mux3  #(`FLEN)  fzemux (FRD3E, FPUResultW, PreFpResM, ForwardZE, PreZE);
+   mux3  #(`FLEN)  fxemux (FRD1E, FResultW, PreFpResM, ForwardXE, XE);
+   mux3  #(`FLEN)  fyemux (FRD2E, FResultW, PreFpResM, ForwardYE, PreYE);
+   mux3  #(`FLEN)  fzemux (FRD3E, FResultW, PreFpResM, ForwardZE, PreZE);
 
 
    generate
@@ -268,7 +268,7 @@ module fpu (
                   .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, .FDivStartE, .IDivStartE, .XsE,
                   .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .Funct3M, .IntDivE, .W64E,
                   .StallM, .FlushE, .DivStickyM, .FDivBusyE, .IFDivStartE, .FDivDoneE, .QeM, 
-                  .QmM, .FPIntDivResultM /*, .DivDone(DivDoneM) */);
+                  .QmM, .FIntDivResultM /*, .DivDone(DivDoneM) */);
 
                   //
    // compare
@@ -388,7 +388,7 @@ module fpu (
    // M/W pipe registers
    flopenrc #(`FLEN) MWRegFp(clk, reset, FlushW, ~StallW, FpResM, FpResW); 
    flopenrc #(`XLEN) MWRegIntCvtRes(clk, reset, FlushW, ~StallW, FCvtIntResM, FCvtIntResW); 
-   flopenrc #(`XLEN) MWRegIntDivRes(clk, reset, FlushW, ~StallW, FPIntDivResultM, FPIntDivResultW); 
+   flopenrc #(`XLEN) MWRegIntDivRes(clk, reset, FlushW, ~StallW, FIntDivResultM, FIntDivResultW); 
 
    // BEGIN WRITEBACK STAGE
 
@@ -403,6 +403,6 @@ module fpu (
    //////////////////////////////////////////////////////////////////////////////////////////
 
    // select the result to be written to the FP register
-   mux2  #(`FLEN)  FPUResultMux (FpResW, ReadDataW, FResSelW[1], FPUResultW);
+   mux2  #(`FLEN)  FResultMux (FpResW, ReadDataW, FResSelW[1], FResultW);
 
 endmodule // fpu
