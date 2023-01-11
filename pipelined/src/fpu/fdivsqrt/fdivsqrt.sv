@@ -43,7 +43,7 @@ module fdivsqrt(
 	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
 	input  logic IntDivE, W64E,
-  output logic DivSM,
+  output logic DivStickyM,
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb:0] QmM,
@@ -94,7 +94,7 @@ module fdivsqrt(
   fdivsqrtpostproc fdivsqrtpostproc(                      // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
-    .QmM, .WZeroE, .DivSM, 
+    .QmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM, 
     .FPIntDivResultM);
