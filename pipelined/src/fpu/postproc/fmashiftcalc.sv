@@ -4,7 +4,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Fma shift calculation
+// Purpose: FMA shift calculation
 // 
 // A component of the Wally configurable RISC-V project.
 // 

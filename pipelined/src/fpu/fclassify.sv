@@ -4,7 +4,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: classify unit
+// Purpose: Floating-point classify unit
 // 
 // A component of the Wally configurable RISC-V project.
 // 
