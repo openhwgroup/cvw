@@ -8,7 +8,7 @@
 // bus of the SD card.
 // 14 State Mealy FSM + Safe state = 15 State Mealy FSM
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

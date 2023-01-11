@@ -15,7 +15,7 @@
 // It must be synchronized with 50 MHz and held for a minimum period of a full
 // 400 KHz pulse width.
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

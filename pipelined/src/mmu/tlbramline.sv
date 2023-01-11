@@ -6,7 +6,7 @@
 //
 // Purpose: One line of the RAM, with enabled flip-flop and logic for reading into distributed OR
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

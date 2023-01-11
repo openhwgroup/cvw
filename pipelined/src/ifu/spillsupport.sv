@@ -8,7 +8,7 @@
 //          cache line boundaries or if instruction address without a cache crosses
 //          XLEN/8 boundary.
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

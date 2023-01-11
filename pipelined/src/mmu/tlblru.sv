@@ -7,7 +7,7 @@
 // Purpose: Implementation of bit pseudo least-recently-used algorithm for
 //          cache evictions. Outputs the index of the next entry to be written.
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

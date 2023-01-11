@@ -8,7 +8,7 @@
 //          Top level of the memory-stage core logic
 //          Contains data cache, DTLB, subword read/write datapath, interface to external bus
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
