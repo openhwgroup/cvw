@@ -53,7 +53,7 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM, 
   // Writeback stage signals
   input  logic             StallW, FlushW,
-(* mark_debug = "true" *)  input  logic             RegWriteW, DivW,
+(* mark_debug = "true" *)  input  logic             RegWriteW, IntDivW,
   input  logic             SquashSCW,
   input  logic [2:0]       ResultSrcW,
   input logic [`XLEN-1:0]  FCvtIntResW,
@@ -122,7 +122,7 @@ module datapath (
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
     if (`IDIV_ON_FPU) begin
-      mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, DivW, MulDivResultW);
+      mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, IntDivW, MulDivResultW);
     end else begin 
       assign MulDivResultW = MDUResultW;
     end

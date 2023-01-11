@@ -34,7 +34,7 @@ module intdivrestoring (
   input  logic StallM,
   input  logic FlushE,
   input  logic DivSignedE, W64E,
-  input  logic DivE,
+  input  logic IntDivE,
   //input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 	input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   output logic DivBusyE, 
@@ -58,7 +58,7 @@ module intdivrestoring (
   //////////////////////////////
 
   // Divider control signals
-  assign DivStartE = DivE & (state == IDLE) & ~StallM; 
+  assign DivStartE = IntDivE & (state == IDLE) & ~StallM; 
   assign DivBusyE = (state == BUSY) | DivStartE;
 
   // Handle sign extension for W-type instructions

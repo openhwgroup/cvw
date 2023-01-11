@@ -32,7 +32,7 @@ module mdu (
 	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	       input logic [2:0] 	Funct3E, Funct3M,
-	       input logic 		MDUE, W64E,
+	       input logic 		IntDivE, W64E, 
 	       // Writeback stage
 	       output logic [`XLEN-1:0] MDUResultW,
 	       // Divide Done
@@ -47,7 +47,6 @@ module mdu (
 	logic [`XLEN*2-1:0] ProdM; 
 
 	logic 		     DivSignedE;	
-	logic            DivE;
 	logic           W64M; 
 
 	// Multiplier
@@ -61,9 +60,8 @@ module mdu (
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
 	end else begin
-		assign DivE = MDUE & Funct3E[2];
 		assign DivSignedE = ~Funct3E[0];
-		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .DivE, 
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .IntDivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		

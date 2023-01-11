@@ -42,7 +42,7 @@ module fdivsqrt(
   input  logic SqrtE, SqrtM,
 	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
-	input  logic MDUE, W64E,
+	input  logic IntDivE, W64E,
   output logic DivSM,
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [`NE+1:0] QeM,
@@ -65,7 +65,7 @@ module fdivsqrt(
 
   // Integer div/rem signals
   logic BZeroM;                       // Denominator is zero
-  logic MDUM;                         // Integer operation
+  logic IntDivM;                         // Integer operation
   logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
   logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
   logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
@@ -76,16 +76,16 @@ module fdivsqrt(
     .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, 
     .QeM, .X, .DPreproc, 
     // Int-specific 
-    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, .ISpecialCaseE,
+    .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .nE, .BZeroM, .nM, .mM, .AM, 
-    .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
+    .IntDivM, .W64M, .NegQuotM, .ALTBM, .AsM);
 
   fdivsqrtfsm fdivsqrtfsm(                                // FSM
     .clk, .reset, .FmtE, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, 
     // Int-specific 
-    .IDivStartE, .ISpecialCaseE, .nE, .MDUE);
+    .IDivStartE, .ISpecialCaseE, .nE, .IntDivE);
 
   fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 
