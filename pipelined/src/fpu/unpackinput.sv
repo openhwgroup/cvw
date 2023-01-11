@@ -4,7 +4,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: unpack input
+// Purpose: unpack input: extract sign, exponent, significand, characteristics
 // 
 // A component of the Wally configurable RISC-V project.
 // 

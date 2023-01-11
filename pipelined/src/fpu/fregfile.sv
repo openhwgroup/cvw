@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: James Stine 
 //
-// Purpose: 3-port output register file
+// Purpose: 3R1W 4-port register file for FPU
 // 
 // A component of the Wally configurable RISC-V project.
 // 
