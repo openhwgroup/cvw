@@ -42,5 +42,5 @@ module negateintres(
     
     // select 2 most significant bits
     mux2 #(3) msb3mux(CvtNegRes[33:31], CvtNegRes[`XLEN+1:`XLEN-1], Int64, CvtNegResMsbs3);
-    mux2 #(2) msb2mux(CvtNegResMsbs3[2:1], CvtNegRes[1:0], Signed, CvtNegResMsbs);
+    mux2 #(2) msb2mux(CvtNegResMsbs3[2:1], CvtNegResMsbs3[1:0], Signed, CvtNegResMsbs);
 endmodule
