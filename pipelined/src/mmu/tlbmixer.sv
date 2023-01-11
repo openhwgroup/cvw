@@ -9,7 +9,7 @@
 //          number with segments from the second, based on the page type.
 //          NOTE: this DOES NOT include the 12 bit offset, which is the same no matter the translation mode or page type.
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

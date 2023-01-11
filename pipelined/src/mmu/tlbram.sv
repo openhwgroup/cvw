@@ -8,7 +8,7 @@
 //          Outputs the physical page number and access bits of the current
 //          virtual address on a TLB hit.
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
