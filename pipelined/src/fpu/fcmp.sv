@@ -5,7 +5,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Comparison unit
+// Purpose: Floating-point comparison unit
 // 
 // A component of the Wally configurable RISC-V project.
 // 
