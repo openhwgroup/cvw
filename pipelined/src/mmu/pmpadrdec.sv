@@ -10,7 +10,7 @@
 //          naturally aligned power-of-two region/NAPOT), then selects the
 //          output based on which mode is input.
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

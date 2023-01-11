@@ -9,7 +9,7 @@
 // Purpose: Translation lookaside buffer
 //          Cache of virtural-to-physical address translations
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

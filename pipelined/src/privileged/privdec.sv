@@ -7,7 +7,7 @@
 // Purpose: Decode Privileged & related instructions 
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

@@ -8,7 +8,7 @@
 //   See FE310-G002-Manual-v19p05 for specifications
 //   No interrupts, drive strength, or pull-ups supported
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
