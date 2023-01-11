@@ -9,7 +9,7 @@
 // Purpose: BTB model.  Outputs type of instruction (currently 1 hot encoded. Probably want 
 // to encode to reduce storage), valid, target PC.
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

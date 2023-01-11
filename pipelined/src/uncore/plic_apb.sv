@@ -13,7 +13,7 @@
 //  Do we detect requests as level-triggered or edge-trigged?
 //  If edge-triggered, do we want to allow 1 source to be able to make a number of repeated requests?
 //
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //

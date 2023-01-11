@@ -6,7 +6,7 @@
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit stage
 // 
-// A component of the CORE-V Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
