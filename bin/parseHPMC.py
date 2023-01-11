@@ -91,12 +91,23 @@ def ProcessFile(fileName):
             HPMClist = { }
         elif(len(lineToken) > 4 and lineToken[1][0:3] == 'Cnt'):
             countToken = line.split('=')[1].split()
-            value = countToken[0]
+            value = int(countToken[0])
             name = ' '.join(countToken[1:])
             HPMClist[name] = value
         elif ('is done' in line):
             benchmarks.append((testName, opt, HPMClist))
     return benchmarks
+
+def ComputeAverage(benchmarks):
+    average = {}
+    for (testName, opt, HPMClist) in benchmarks:
+        for field in HPMClist:
+            value = HPMClist[field]
+            if field not in average:
+                average[field] = value
+            else:
+                average[field] += value
+    benchmarks.append(('All', '', average))
 
 def FormatToPlot(currBenchmark):
     names = []
@@ -111,6 +122,7 @@ if(sys.argv[1] == '-b'):
     configList = []
     for config in sys.argv[2::]:
         benchmarks = ProcessFile(config)
+        ComputeAverage(benchmarks)
         ComputeAll(benchmarks)
         configList.append((config.split('.')[0], benchmarks))
 
@@ -152,6 +164,7 @@ if(sys.argv[1] == '-b'):
 else:
     # steps 1 and 2
     benchmarks = ProcessFile(sys.argv[1])
+    ComputeAverage(benchmarks)
     # 3 process into useful data
     # cache hit rates
     # cache fill time
