@@ -1,8 +1,9 @@
-///////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // lsu.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: David_Harris@hmc.edu, ross1728@gmail.com
+// Created: 9 January 2021
+// Modified: 11 January 2023 
 //
 // Purpose: Load/Store Unit 
 //          Top level of the memory-stage core logic
@@ -24,7 +25,7 @@
 // License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
-////////////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // committed means the memory operation in flight cannot be interrupted.
 // chap 5 handling faults to memory by delaying writes to memory stage.
