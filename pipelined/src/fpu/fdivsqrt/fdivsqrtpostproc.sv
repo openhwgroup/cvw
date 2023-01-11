@@ -40,7 +40,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroE,
-  output logic              DivSM,
+  output logic              DivStickyM,
   output logic [`XLEN-1:0]  FPIntDivResultM
 );
   
@@ -86,7 +86,7 @@ module fdivsqrtpostproc(
   //////////////////////////
 
   //  If the result is not exact, the sticky should be set
-  assign DivSM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+  assign DivStickyM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
