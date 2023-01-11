@@ -59,7 +59,7 @@ module datapath (
   input logic [`XLEN-1:0]  FCvtIntResW,
   input logic [`XLEN-1:0] ReadDataW,
   input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, 
-  input logic [`XLEN-1:0] FPIntDivResultW,
+  input logic [`XLEN-1:0] FIntDivResultW,
    // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,
   output logic [4:0]       RdE, RdM, RdW 
@@ -122,7 +122,7 @@ module datapath (
     mux2  #(`XLEN)  resultmuxM(IEUResultM, FIntResM, FWriteIntM, IFResultM);
     mux2  #(`XLEN)  cvtresultmuxW(IFResultW, FCvtIntResW, FCvtIntW, IFCvtResultW);
     if (`IDIV_ON_FPU) begin
-      mux2  #(`XLEN)  divresultmuxW(MDUResultW, FPIntDivResultW, IntDivW, MulDivResultW);
+      mux2  #(`XLEN)  divresultmuxW(MDUResultW, FIntDivResultW, IntDivW, MulDivResultW);
     end else begin 
       assign MulDivResultW = MDUResultW;
     end

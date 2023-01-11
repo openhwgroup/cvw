@@ -41,7 +41,7 @@ module fdivsqrtpostproc(
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroE,
   output logic              DivStickyM,
-  output logic [`XLEN-1:0]  FPIntDivResultM
+  output logic [`XLEN-1:0]  FIntDivResultM
 );
   
   logic [`DIVb+3:0] W, Sum, DM;
@@ -129,8 +129,8 @@ module fdivsqrtpostproc(
     if (`XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[`XLEN-1:0], 
         {{(`XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
-        W64M, FPIntDivResultM);
+        W64M, FIntDivResultM);
     end else 
-      assign FPIntDivResultM = IntDivResultM[`XLEN-1:0];
+      assign FIntDivResultM = IntDivResultM[`XLEN-1:0];
   end
 endmodule

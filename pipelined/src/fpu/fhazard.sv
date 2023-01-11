@@ -54,7 +54,7 @@ module fhazard(
       // if the result will be FResM (can be taken from the memory stage)
       if(FResSelM == 2'b00) ForwardXE = 2'b10; // choose FResM
       // if the needed value is in the writeback stage
-    end else if ((Adr1E == RdW) & FRegWriteW) ForwardXE = 2'b01; // choose FPUResult64W
+    end else if ((Adr1E == RdW) & FRegWriteW) ForwardXE = 2'b01; // choose FResult64W
   
 
     // if the needed value is in the memory stage - input 2
@@ -62,7 +62,7 @@ module fhazard(
       // if the result will be FResM (can be taken from the memory stage)
       if(FResSelM == 2'b00) ForwardYE = 2'b10; // choose FResM
       // if the needed value is in the writeback stage
-    end else if ((Adr2E == RdW) & FRegWriteW) ForwardYE = 2'b01; // choose FPUResult64W
+    end else if ((Adr2E == RdW) & FRegWriteW) ForwardYE = 2'b01; // choose FResult64W
 
 
     // if the needed value is in the memory stage - input 3
@@ -70,7 +70,7 @@ module fhazard(
       // if the result will be FResM (can be taken from the memory stage)
       if(FResSelM == 2'b00) ForwardZE = 2'b10; // choose FResM
       // if the needed value is in the writeback stage
-    end else if ((Adr3E == RdW) & FRegWriteW) ForwardZE = 2'b01; // choose FPUResult64W
+    end else if ((Adr3E == RdW) & FRegWriteW) ForwardZE = 2'b01; // choose FResult64W
 
   end 
 
