@@ -13,7 +13,7 @@
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
 //   Timeout not ye implemented***
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
