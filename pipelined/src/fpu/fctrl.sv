@@ -50,6 +50,7 @@ module fctrl (
   output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
   output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
+  output logic              FpLoadStoreM,               // FP load or store instruction
   output logic              FCvtIntW,
   output logic [4:0] 	      Adr1D, Adr2D, Adr3D,                // adresses of each input
   output logic [4:0] 	      Adr1E, Adr2E, Adr3E                // adresses of each input
@@ -275,12 +276,13 @@ module fctrl (
   if (`M_SUPPORTED & `IDIV_ON_FPU) assign IDivStartE = IntDivE;
   else                             assign IDivStartE = 0; 
 
-  //assign FCvtIntE = (FResSelE == 2'b01);
-
   // E/M pipleine register
   flopenrc #(14+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE},
               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, IllegalFPUInstrM, FCvtIntM});
+  
+  assign FpLoadStoreM = FResSelM[1];
+
   // M/W pipleine register
   flopenrc #(4)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM, FCvtIntM},
