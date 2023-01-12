@@ -6,69 +6,72 @@
 //
 // Purpose: calculating the result's sign
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
 module resultsign(
-    input logic [2:0]   Frm,
-    input logic         FmaPs, FmaAs,
-    input logic         ZInf,
-    input logic         InfIn,
-    input logic         FmaOp,
-    input logic         FmaSZero,
-    input logic         Mult,
-    input logic         Round,
-    input logic         Sticky,
-    input logic         Guard,
-    input logic         Ms,
-    output logic        Rs
+    input  logic [2:0]  Frm,        // rounding mode
+    input  logic        FmaOp,      // is the operation an Fma
+    input  logic        Mult,       // is the fma opperation multipy
+    input  logic        ZInf,       // is Z infinity
+    input  logic        InfIn,      // are any of the inputs infinity
+    input  logic        FmaSZero,   // is the fma sum zero
+    input  logic        Ms,         // normalized result sign
+    input  logic        FmaPs,      // product's sign
+    input  logic        FmaAs,      // aligned addend's sign
+    input  logic        Guard,      // guard bit for rounding
+    input  logic        Round,      // round bit for rounding
+    input  logic        Sticky,     // sticky bit for rounding
+    output logic        Rs          // result sign
 );
 
-    logic Zeros;
-    logic Infs;
+    logic Zeros;    // zero result sign
+    logic Infs;     // infinity result sign
 
-    // The IEEE754-2019 standard specifies: 
+    // determine the sign for a result of 0
+    //  The IEEE754-2019 standard specifies: 
     //      - the sign of an exact zero sum (with operands of diffrent signs) should be positive unless rounding toward negitive infinity
     //      - when the exact result of an FMA opperation is non-zero, but is zero due to rounding, use the sign of the exact result
     //      - if x = +0 or -0 then x+x=x and x-(-x)=x 
     //      - the sign of a product is the exclisive or or the opperand's signs
-    // Zero sign will only be selected if:
+    //  Zero sign will only be selected if:
     //      - P=Z and a cancelation occurs - exact zero
     //      - Z is zero and P is zero - exact zero
     //      - P is killed and Z is zero - Psgn
     //      - Z is killed and P is zero - impossible
-    // Zero sign calculation:
+    //  Zero sign calculation:
     //      - if a multiply opperation is done, then use the products sign(Ps)
     //      - if the zero sum is not exactly zero i.e. Round|Sticky use the sign of the exact result (which is the product's sign)
     //      - if an effective addition occurs (P+A or -P+-A or P--A) then use the product's sign
     assign Zeros = (FmaPs^FmaAs)&~(Round|Guard|Sticky)&~Mult ? Frm[1:0] == 2'b10 : FmaPs;
 
-
-    // is the result negitive
-    //  if p - z is the Sum negitive
-    //  if -p + z is the Sum positive
-    //  if -p - z then the Sum is negitive
+    // determine the sign of an infinity result
+    //  is the result negitive
+    //      if p - z is the Sum negitive
+    //      if -p + z is the Sum positive
+    //      if -p - z then the Sum is negitive
     assign Infs = ZInf ? FmaAs : FmaPs;
+
+    // select the result sign
     always_comb
         if(InfIn&FmaOp) Rs = Infs;
         else if(FmaSZero&FmaOp) Rs = Zeros;

@@ -6,26 +6,22 @@
 //
 // Purpose: Pipelined RISC-V Processor
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -57,7 +53,7 @@ module wallypipelinedcore (
   (* mark_debug = "true" *) logic TrapM;
 
   // new signals that must connect through DP
-  logic             MDUE, W64E;
+  logic             IntDivE, W64E;
   logic             CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]             AtomicM;
   logic [`XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE; //, SrcAE, SrcBE;
@@ -97,7 +93,7 @@ module wallypipelinedcore (
   logic             FCvtIntStallD;
   logic             FpLoadStoreM;
   logic [4:0]             SetFflagsM;
-  logic [`XLEN-1:0] FPIntDivResultW;
+  logic [`XLEN-1:0] FIntDivResultW;
 
   // memory management unit signals
   logic             ITLBWriteF;
@@ -214,7 +210,7 @@ module wallypipelinedcore (
 
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE,
-     .IEUAdrE, .MDUE, .W64E,
+     .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 
      // Memory stage interface
@@ -227,7 +223,7 @@ module wallypipelinedcore (
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
 
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FPIntDivResultW,
+     .CSRReadValW, .MDUResultW, .FIntDivResultW,
      .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, 
      .FCvtIntResW,
@@ -371,7 +367,7 @@ module wallypipelinedcore (
       mdu mdu(
          .clk, .reset,
          .ForwardedSrcAE, .ForwardedSrcBE, 
-         .Funct3E, .Funct3M, .MDUE, .W64E,
+         .Funct3E, .Funct3M, .IntDivE, .W64E,
          .MDUResultW, .DivBusyE,  
          .StallM, .StallW, .FlushE, .FlushM, .FlushW
       ); 
@@ -395,7 +391,7 @@ module wallypipelinedcore (
          .FRegWriteM, // FP register write enable
          .FpLoadStoreM,
          .ForwardedSrcBE, // Integer input for intdiv
-         .Funct3E, .Funct3M, .MDUE, .W64E, // Integer flags and functions
+         .Funct3E, .Funct3M, .IntDivE, .W64E, // Integer flags and functions
          .FPUStallD, // Stall the decode stage
          .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
          .FWriteDataM, // Data to be written to memory
@@ -405,7 +401,7 @@ module wallypipelinedcore (
          .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
          .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
          .SetFflagsM,        // FPU flags (to privileged unit)
-         .FPIntDivResultW
+         .FIntDivResultW
       ); // floating point unit
    end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
       assign FPUStallD = 0;

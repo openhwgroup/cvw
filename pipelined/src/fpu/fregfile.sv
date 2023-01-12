@@ -4,41 +4,40 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: James Stine 
 //
-// Purpose: 3-port output register file
+// Purpose: 3R1W 4-port register file for FPU
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
 module fregfile (
-  input logic 	      clk, reset,
-  input logic 	      we4, 
-  input logic [4:0]   a1, a2, a3, a4, 
-  input logic [`FLEN-1:0]  wd4,
-  output logic [`FLEN-1:0] rd1, rd2, rd3);
+  input logic 	           clk, reset,
+  input logic 	           we4,             // write enable
+  input logic [4:0]        a1, a2, a3, a4,  // adresses
+  input logic [`FLEN-1:0]  wd4,             // write data
+  output logic [`FLEN-1:0] rd1, rd2, rd3    // read data
+);
    
-   logic [`FLEN-1:0]       rf[31:0];
-   integer 	      i;
+   logic [`FLEN-1:0] rf[31:0];
+   integer i;
    
    // three ported register file
    // read three ports combinationally (A1/RD1, A2/RD2, A3/RD3)

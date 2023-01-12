@@ -7,7 +7,7 @@
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
@@ -30,7 +30,8 @@
 // *** remove signals not needed by PMA/PMP now that it is moved
 module privileged (
   input  logic             clk, reset,
-  input  logic             FlushD, FlushE, FlushM, FlushW, StallD, StallE, StallM, StallW,
+  input  logic             StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, FlushW, 
 (* mark_debug = "true" *)  input  logic             CSRReadM, CSRWriteM,
   input  logic [`XLEN-1:0] SrcAM,
   input  logic [`XLEN-1:0] PCM, PCNext2F,
@@ -41,20 +42,21 @@ module privileged (
   output logic             sfencevmaM,
   input  logic             InstrValidM, CommittedM, CommittedF, 
   input  logic             FRegWriteM, LoadStallD,
-  input  logic 		   DirPredictionWrongM,
-  input  logic 		   BTBPredPCWrongM,
-  input  logic 		   RASPredPCWrongM,
-  input  logic 		   PredictionInstrClassWrongM,
+  input  logic 		         DirPredictionWrongM,
+  input  logic 		         BTBPredPCWrongM,
+  input  logic 		         RASPredPCWrongM,
+  input  logic 		         PredictionInstrClassWrongM,
   input  logic [4:0]       InstrClassM,
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic             PrivilegedM,
-  input  logic             InstrPageFaultF, HPTWInstrAccessFaultM, LoadPageFaultM, StoreAmoPageFaultM,
-  input  logic             InstrMisalignedFaultM, IllegalIEUInstrFaultD, IllegalFPUInstrM,
-  input  logic             LoadMisalignedFaultM,
-  input  logic             StoreAmoMisalignedFaultM,
+  input  logic             HPTWInstrAccessFaultM, 
+  input  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
+  input  logic             InstrMisalignedFaultM, 
+  input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  input  logic             IllegalIEUInstrFaultD, IllegalFPUInstrM,
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
   input  logic [63:0]      MTIME_CLINT, 
   input  logic [`XLEN-1:0] IEUAdrM,
@@ -100,69 +102,47 @@ module privileged (
   logic       DelegateM;
   logic       wfiM, IntPendingM;
 
-  ///////////////////////////////////////////
   // track the current privilege level
-  ///////////////////////////////////////////
-
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
-                    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
+    .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
-  ///////////////////////////////////////////
   // decode privileged instructions
-  ///////////////////////////////////////////
+  privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
+    .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
+    .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
+    .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .sfencevmaM);
 
-   privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
-              .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
-              .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
-              .EcallFaultM, .BreakpointFaultM,
-              .sretM, .mretM, .wfiM, .sfencevmaM);
-
-  ///////////////////////////////////////////
   // Control and Status Registers
-  ///////////////////////////////////////////
-  csr csr(.clk, .reset,
-          .FlushM, .FlushW,
-          .StallE, .StallM, .StallW,
-          .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
-          .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
-          .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-          .MTIME_CLINT, 
-          .InstrValidM, .FRegWriteM, .LoadStallD,
-          .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
-          .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
-          .NextPrivilegeModeM, .PrivilegeModeW,
-          .CauseM, .SelHPTW,
-          .STATUS_MPP,
-          .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
-          .MEDELEG_REGW, 
-          .SATP_REGW,
-          .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
-          .STATUS_MIE, .STATUS_SIE,
-          .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
-          .PMPCFG_ARRAY_REGW,
-          .PMPADDR_ARRAY_REGW,
-          .SetFflagsM,
-          .FRM_REGW, 
-          .CSRReadValW,.UnalignedPCNextF,
-          .IllegalCSRAccessM, .BigEndianM);
+  csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
+    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
+    .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
+    .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
+    .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, 
+    .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+    .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
+    .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
+    .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
+    .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+    .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+    .SetFflagsM, .FRM_REGW, 
+    .CSRReadValW,.UnalignedPCNextF, .IllegalCSRAccessM, .BigEndianM);
 
+  // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-                  .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, 
-                  .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
+    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, 
+    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
 
+  // trap logic
   trap trap(.reset,
-            .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
-            .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
-            .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
-            .LoadPageFaultM, .StoreAmoPageFaultM,
-            .mretM, .sretM, 
-            .PrivilegeModeW, 
-            .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW,
-            .STATUS_MIE, .STATUS_SIE,
-            .InstrValidM, .CommittedM, .CommittedF,
-            .TrapM, .RetM, .wfiM,
-            .InterruptM, .IntPendingM, .DelegateM, .WFIStallM,
-            .CauseM);
+    .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
+    .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
+    .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
+    .LoadPageFaultM, .StoreAmoPageFaultM,
+    .mretM, .sretM, .PrivilegeModeW, 
+    .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
+    .InstrValidM, .CommittedM, .CommittedF,
+    .TrapM, .RetM, .wfiM, .InterruptM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
 endmodule
 
 

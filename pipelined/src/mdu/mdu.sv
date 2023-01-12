@@ -6,82 +6,71 @@
 //
 // Purpose: M extension multiply and divide
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.21)
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
-module mdu (
-	       input logic 		clk, reset,
-	       // Execute Stage interface
-	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
-		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	       input logic [2:0] 	Funct3E, Funct3M,
-	       input logic 		MDUE, W64E,
-	       // Writeback stage
-	       output logic [`XLEN-1:0] MDUResultW,
-	       // Divide Done
-	       output logic 		DivBusyE, 
-	       // hazards
-	       input logic 		StallM, StallW, FlushE, FlushM, FlushW 
-	       );
+module mdu(
+  input  logic 							clk, reset,
+  input  logic 							StallM, StallW, 
+  input  logic							FlushE, FlushM, FlushW,
+	input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
+	input  logic [2:0] 				Funct3E, Funct3M,									// type of MDU operation
+	input  logic 							IntDivE, W64E, 										// Integer division/remainder, and W-type instrutions
+	output logic [`XLEN-1:0] 	MDUResultW,												// multiply/divide result
+	output logic 							DivBusyE													// busy signal to stall pipeline in Execute stage
+);
 
-	logic [`XLEN-1:0] MDUResultM;
-	logic [`XLEN-1:0] PrelimResultM;
-	logic [`XLEN-1:0] QuotM, RemM;
-	logic [`XLEN*2-1:0] ProdM; 
-
-	logic 		     DivSignedE;	
-	logic            DivE;
-	logic           W64M; 
+	logic [`XLEN*2-1:0] 			ProdM; 														// double-width product from mul
+	logic [`XLEN-1:0] 				QuotM, RemM;											// quotient and remainder from intdivrestoring
+	logic [`XLEN-1:0] 				PrelimResultM;										// selected result before W truncation
+	logic [`XLEN-1:0] 				MDUResultM;												// result after W truncation
+	logic           					W64M; 														// W-type instruction
 
 	// Multiplier
 	mul mul(.clk, .reset, .StallM, .FlushM, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .ProdM);
 
-	// Divide
+	// Divider
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	// When F extensions are supported, use the FPU divider instead
+	// When IDIV_ON_FPU is set, use the FPU divider instead
 	if (`IDIV_ON_FPU) begin  
 	  assign QuotM = 0;
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
 	end else begin
-		assign DivE = MDUE & Funct3E[2];
-		assign DivSignedE = ~Funct3E[0];
-		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .DivE, 
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		
 	// Result multiplexer
 	always_comb
 		case (Funct3M)	   
-			3'b000: PrelimResultM = ProdM[`XLEN-1:0];
-			3'b001: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b010: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b011: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b100: PrelimResultM = QuotM;
-			3'b101: PrelimResultM = QuotM;
-			3'b110: PrelimResultM = RemM;
-			3'b111: PrelimResultM = RemM;
+			3'b000: PrelimResultM = ProdM[`XLEN-1:0];					// mul
+			3'b001: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulh
+			3'b010: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulhsu
+			3'b011: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulhu
+			3'b100: PrelimResultM = QuotM;										// div
+			3'b101: PrelimResultM = QuotM;										// divu
+			3'b110: PrelimResultM = RemM;											// rem
+			3'b111: PrelimResultM = RemM;											// remu
 		endcase 
 
 	// Handle sign extension for W-type instructions
