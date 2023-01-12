@@ -6,6 +6,8 @@
 //
 // Purpose: Leading Zero Anticipator
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.14)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

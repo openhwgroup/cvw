@@ -4,8 +4,10 @@
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
+// Purpose: Exponent caclulation for divide and square root
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
