@@ -33,7 +33,7 @@ vlib work
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
 vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench_imperas.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063 
-vopt +acc work.testbench -G TEST=$2 -G DEBUG=1 -o workopt 
+vopt +acc work.testbench -G DEBUG=1 -o workopt 
 vsim workopt +nowarn3829  -fatal 7
 view wave
 #-- display input and output signals as hexidecimal values
