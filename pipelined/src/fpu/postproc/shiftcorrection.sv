@@ -6,63 +6,78 @@
 //
 // Purpose: shift correction
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 module shiftcorrection(
-    input logic  [`NORMSHIFTSZ-1:0] Shifted,         // the shifted sum before LZA correction
-    input logic                     FmaOp,
-    input logic                     DivOp,
-    input logic                     DivResSubnorm,
-    input logic  [`NE+1:0]          DivQe,
-    input logic                     DivSubnormShiftPos,
-    input logic  [`NE+1:0]          NormSumExp,          // exponent of the normalized sum not taking into account Subnormal or zero results
-    input logic                     FmaPreResultSubnorm,    // is the result Subnormalized - calculated before LZA corection
+    input logic  [`NORMSHIFTSZ-1:0] Shifted,                // the shifted sum before LZA correction
+    // divsqrt
+    input logic                     DivOp,                  // is it a divsqrt opperation
+    input logic                     DivResSubnorm,          // is the divsqrt result subnormal
+    input logic  [`NE+1:0]          DivQe,                  // the divsqrt result's exponent
+    input logic                     DivSubnormShiftPos,     // is the subnorm divider shift amount positive (ie not underflowed)
+    //fma
+    input logic                     FmaOp,                  // is it an fma opperation
+    input logic  [`NE+1:0]          NormSumExp,             // exponent of the normalized sum not taking into account Subnormal or zero results
+    input logic                     FmaPreResultSubnorm,    // is the result subnormal - calculated before LZA corection
     input logic                     FmaSZero,
-    output logic [`CORRSHIFTSZ-1:0] Mf,         // the shifted sum before LZA correction
-    output logic [`NE+1:0]          Qe,
-    output logic [`NE+1:0]          FmaMe         // exponent of the normalized sum
+    // output
+    output logic [`NE+1:0]          FmaMe,                  // exponent of the normalized sum
+    output logic [`CORRSHIFTSZ-1:0] Mf,                     // the shifted sum before LZA correction
+    output logic [`NE+1:0]          Qe                      // corrected exponent for divider
 );
-    logic [3*`NF+3:0]      CorrSumShifted;     // the shifted sum after LZA correction
-    logic [`CORRSHIFTSZ-1:0] CorrQmShifted;
-    logic                  ResSubnorm;    // is the result Subnormalized
-    logic                  LZAPlus1; // add one or two to the sum's exponent due to LZA correction
+    logic [3*`NF+3:0]           CorrSumShifted; // the shifted sum after LZA correction
+    logic [`CORRSHIFTSZ-1:0]    CorrQmShifted;  // the shifted divsqrt result after one bit shift
+    logic                       ResSubnorm;     // is the result Subnormal
+    logic                       LZAPlus1;       // add one or two to the sum's exponent due to LZA correction
+    logic                       LeftShiftQm;    // should the divsqrt result be shifted one to the left
 
     // LZA correction
     assign LZAPlus1 = Shifted[`NORMSHIFTSZ-1];
-	// the only possible mantissa for a plus two is all zeroes - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
-    assign CorrSumShifted =  LZAPlus1 ? Shifted[`NORMSHIFTSZ-2:1] : Shifted[`NORMSHIFTSZ-3:0];
-    //                        if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
-    assign CorrQmShifted = (LZAPlus1|(DivQe==1&~LZAPlus1)) ? Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1] : Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
-    // if the result of the divider was calculated to be Subnormalized, then the result was correctly normalized, so select the top shifted bits
+
+    // correct the shifting error caused by the LZA
+	//  - the only possible mantissa for a plus two is all zeroes 
+    //      - a one has to propigate all the way through a sum. so we can leave the bottom statement alone
+    mux2 #(`NORMSHIFTSZ-2) lzacorrmux(Shifted[`NORMSHIFTSZ-3:0], Shifted[`NORMSHIFTSZ-2:1], LZAPlus1, CorrSumShifted);
+
+    // correct the shifting of the divsqrt caused by producing a result in (2, .5] range
+    //    condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
+    assign LeftShiftQm = (LZAPlus1|(DivQe==1&~LZAPlus1));
+    mux2 #(`CORRSHIFTSZ) divcorrmux(Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2], 
+        Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1], LeftShiftQm, CorrQmShifted);
+    
+    // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
     always_comb
         if(FmaOp)                       Mf = {CorrSumShifted, {`CORRSHIFTSZ-(3*`NF+4){1'b0}}};
-        else if (DivOp&~DivResSubnorm)   Mf = CorrQmShifted;
+        else if (DivOp&~DivResSubnorm)  Mf = CorrQmShifted;
         else                            Mf = Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`CORRSHIFTSZ];
     // Determine sum's exponent
-    //                          if plus1                     If plus2                                      if said Subnorm but norm plus 1           if said Subnorm but norm plus 2
-    assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1} +{{`NE+1{1'b0}}, ~ResSubnorm&FmaPreResultSubnorm}) & {`NE+2{~(FmaSZero|ResSubnorm)}};
-    // recalculate if the result is Subnormalized
+    //  main exponent issues: 
+    //      - LZA was one too large
+    //      - LZA was two too large
+    //      - if the result was calulated to be subnorm but it's norm and the LZA was off by 1
+    //      - if the result was calulated to be subnorm but it's norm and the LZA was off by 2
+    //                          if plus1                    If plus2                               kill if the result Zero or actually subnormal
+    //                          |                           |                                      |
+    assign FmaMe = (NormSumExp+{{`NE+1{1'b0}}, LZAPlus1} +{{`NE+1{1'b0}}, FmaPreResultSubnorm}) & {`NE+2{~(FmaSZero|ResSubnorm)}};
+    
+    // recalculate if the result is subnormal after LZA correction
     assign ResSubnorm = FmaPreResultSubnorm&~Shifted[`NORMSHIFTSZ-2]&~Shifted[`NORMSHIFTSZ-1];
 
     // the quotent is in the range [.5,2) if there is no early termination

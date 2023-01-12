@@ -6,26 +6,22 @@
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -44,8 +40,8 @@ module fdivsqrtpostproc(
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
   output logic              WZeroE,
-  output logic              DivSM,
-  output logic [`XLEN-1:0]  FPIntDivResultM
+  output logic              DivStickyM,
+  output logic [`XLEN-1:0]  FIntDivResultM
 );
   
   logic [`DIVb+3:0] W, Sum, DM;
@@ -90,7 +86,7 @@ module fdivsqrtpostproc(
   //////////////////////////
 
   //  If the result is not exact, the sticky should be set
-  assign DivSM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
+  assign DivStickyM = ~WZeroM & ~(SpecialCaseM & SqrtM); // ***unsure why SpecialCaseM has to be gated by SqrtM, but otherwise fails regression on divide
 
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
@@ -133,8 +129,8 @@ module fdivsqrtpostproc(
     if (`XLEN==64) begin
       mux2 #(64) resmux(IntDivResultM[`XLEN-1:0], 
         {{(`XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
-        W64M, FPIntDivResultM);
+        W64M, FIntDivResultM);
     end else 
-      assign FPIntDivResultM = IntDivResultM[`XLEN-1:0];
+      assign FIntDivResultM = IntDivResultM[`XLEN-1:0];
   end
 endmodule

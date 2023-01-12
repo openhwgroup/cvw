@@ -6,26 +6,22 @@
 //
 // Purpose: Top level controller module
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -49,7 +45,7 @@ module controller(
   output logic       ALUResultSrcE,
   output logic       MemReadE, CSRReadE, // for Hazard Unit
   output logic [2:0] Funct3E,
-  output logic       MDUE, W64E,
+  output logic       IntDivE, MDUE, W64E,
   output logic       JumpE,	
   output logic       SCE,
   output logic       BranchSignedE,
@@ -65,7 +61,7 @@ module controller(
   output logic       FWriteIntM,
   // Writeback stage control signals
   input  logic       StallW, FlushW,
-  output logic 	     RegWriteW, DivW,    // for datapath and Hazard Unit
+  output logic 	     RegWriteW, IntDivW,    // for datapath and Hazard Unit
   output logic [2:0] ResultSrcW,
   // Stall during CSRs
   //output logic       CSRWriteFencePendingDEM,
@@ -111,7 +107,7 @@ module controller(
   logic [1:0]  AtomicE;
    logic       FenceD, FenceE, FenceM;
   logic        SFenceVmaD;
-   logic       DivE, DivM;
+   logic       IntDivM;
    
 
   // Extract fields
@@ -231,17 +227,17 @@ module controller(
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
-  assign DivE = MDUE & Funct3E[2]; // Division operation
+  assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
   flopenrc #(20) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, DivE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, DivM});
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM});
   
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
-                         {RegWriteM, ResultSrcM, DivM},
-                         {RegWriteW, ResultSrcW, DivW});  
+                         {RegWriteM, ResultSrcM, IntDivM},
+                         {RegWriteW, ResultSrcW, IntDivW});  
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;

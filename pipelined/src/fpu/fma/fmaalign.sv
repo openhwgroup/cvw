@@ -7,43 +7,39 @@
 //
 // Purpose: FMA alginment shift
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
 module fmaalign(
-    input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
-    input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
-    input logic                 XZero, YZero, ZZero, // is the input zero
-    output logic [3*`NF+3:0]    Am, // addend aligned for addition in U(NF+5.2NF+1)
-    output logic                ASticky,  // Sticky bit calculated from the aliged addend
-    output logic                KillProd       // should the product be set to zero
+    input  logic [`NE-1:0]      Xe, Ye, Ze,         // biased exponents in B(NE.0) format
+    input  logic [`NF:0]        Zm,                 // significand in U(0.NF) format]
+    input  logic                XZero, YZero, ZZero,// is the input zero
+    output logic [3*`NF+3:0]    Am,                 // addend aligned for addition in U(NF+5.2NF+1)
+    output logic                ASticky,            // Sticky bit calculated from the aliged addend
+    output logic                KillProd            // should the product be set to zero
 );
 
     logic [`NE+1:0]     ACnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
-    logic [4*`NF+3:0]   ZmShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
-    logic [4*`NF+3:0]   ZmPreshifted;     // input to the alignment shifter U(NF+5.3NF+1)
-    logic KillZ;
+    logic [4*`NF+3:0]   ZmShifted;      // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+    logic [4*`NF+3:0]   ZmPreshifted;   // input to the alignment shifter U(NF+5.3NF+1)
+    logic               KillZ;          // should the addend be killed
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter

@@ -6,73 +6,81 @@
 //
 // Purpose: special case selection
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
 module specialcase(
-    input logic                 Xs,        // input signs
-    input logic  [`NF:0]        Xm, Ym, Zm, // input mantissas
-    input logic                 XNaN, YNaN, ZNaN,    // inputs are NaN
-    input logic  [2:0]          Frm,       // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-    input logic  [`FMTBITS-1:0] OutFmt,       // output format
-    input logic                 InfIn,
-    input logic                 NaNIn,
-    input logic                 XInf, YInf,
-    input logic                 XZero,
-    input logic                 IntZero,
-    input logic                 IntToFp,
-    input logic                 Int64,
-    input logic                 Signed,
-    input logic                 CvtOp,
-    input logic                 DivOp,
-    input logic                 FmaOp,
-    input logic                 Plus1,
-    input logic                 DivByZero,
-    input logic  [`NE:0]        CvtCe,    // the calculated expoent
-    input logic                 Rs,  // the res's sign
-    input logic                 IntInvalid, Invalid, Overflow,  // flags
-    input logic                 CvtResUf,
-    input logic  [`NE-1:0]      Re,          // Res exponent
-    input logic  [`NE+1:0]      FullRe,          // Res exponent
-    input logic  [`NF-1:0]      Rf,         // Res fraction
-    input logic  [`XLEN+1:0]    CvtNegRes,     // the negation of the result
-    output logic [`FLEN-1:0]    PostProcRes,     // final res
-    output logic [`XLEN-1:0]    FCvtIntRes     // final res
+    input  logic                Xs,         // X sign
+    input  logic [`NF:0]        Xm, Ym, Zm, // input significand's
+    input  logic                XNaN, YNaN, ZNaN, // are the inputs NaN
+    input  logic [2:0]          Frm,        // rounding mode
+    input  logic [`FMTBITS-1:0] OutFmt,     // output format
+    input  logic                InfIn,      // are any inputs infinity
+    input  logic                NaNIn,      // are any input NaNs
+    input  logic                XInf, YInf, // are X or Y inifnity
+    input  logic                XZero,      // is X zero
+    input  logic                Plus1,      // do you add one for rounding
+    input  logic                Rs,         // the result's sign
+    input  logic                Invalid, Overflow,  // flags to choose the result
+    input  logic [`NE-1:0]      Re,         // Result exponent
+    input  logic [`NE+1:0]      FullRe,     // Result full exponent
+    input  logic [`NF-1:0]      Rf,         // Result fraction
+    // fma
+    input  logic                FmaOp,      // is it a fma opperation
+    // divsqrt
+    input  logic                DivOp,      // is it a divsqrt opperation
+    input  logic                DivByZero,  // divide by zero flag
+    // cvt
+    input  logic                CvtOp,      // is it a conversion opperation
+    input  logic                IntZero,    // is the integer input zero
+    input  logic                IntToFp,    // is cvt int -> fp opperation
+    input  logic                Int64,      // is the integer 64 bits
+    input  logic                Signed,     // is the integer signed
+    input  logic [`NE:0]        CvtCe,      // the calculated expoent for cvt
+    input  logic                IntInvalid, // integer invalid flag to choose the result
+    input  logic                CvtResUf,   // does the convert result underflow
+    input  logic [`XLEN+1:0]    CvtNegRes,  // the possibly negated of the integer result
+    // outputs
+    output logic [`FLEN-1:0]    PostProcRes,// final result
+    output logic [`XLEN-1:0]    FCvtIntRes  // final integer result
 );
-    logic [`FLEN-1:0]   XNaNRes, YNaNRes, ZNaNRes, InvalidRes, OfRes, UfRes, NormRes; // possible results
-    logic OfResMax;
-    logic [`XLEN-1:0]       OfIntRes;   // the overflow result for integer output
-    logic KillRes;
-    logic SelOfRes;
+    logic [`FLEN-1:0]   XNaNRes;    // X is NaN result
+    logic [`FLEN-1:0]   YNaNRes;    // Y is NaN result
+    logic [`FLEN-1:0]   ZNaNRes;    // Z is NaN result
+    logic [`FLEN-1:0]   InvalidRes; // Invalid result result
+    logic [`FLEN-1:0]   UfRes;      // underflowed result result
+    logic [`FLEN-1:0]   OfRes;      // overflowed result result
+    logic [`FLEN-1:0]   NormRes;    // normal result
+    logic [`XLEN-1:0]   OfIntRes;   // the overflow result for integer output
+    logic               OfResMax;   // does the of result output maximum norm fp number
+    logic               KillRes;    // kill the result for underflow
+    logic               SelOfRes;   // should the overflow result be selected
 
 
     // does the overflow result output the maximum normalized floating point number
     //                output infinity if the input is infinity
     assign OfResMax = (~InfIn|(IntToFp&CvtOp))&~DivByZero&((Frm[1:0]==2'b01) | (Frm[1:0]==2'b10&~Rs) | (Frm[1:0]==2'b11&Rs));
 
-    if (`FPSIZES == 1) begin
 
+    // select correct outputs for special cases
+    if (`FPSIZES == 1) begin
         //NaN res selection depending on standard
         if(`IEEE754) begin
             assign XNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]};
@@ -87,7 +95,7 @@ module specialcase(
         assign UfRes = {Rs, {`FLEN-2{1'b0}}, Plus1&Frm[1]&~(DivOp&YInf)};
         assign NormRes = {Rs, Re, Rf};
 
-    end else if (`FPSIZES == 2) begin //will the format conversion in killprod work in other conversions?
+    end else if (`FPSIZES == 2) begin
         if(`IEEE754) begin
             assign XNaNRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Xm[`NF-2:`NF-`NF1]};
             assign YNaNRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, Ym[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Ym[`NF-2:`NF-`NF1]};
@@ -221,12 +229,11 @@ module specialcase(
                     end
                     
                     OfRes = OfResMax ? {{`FLEN-`H_LEN{1'b1}}, Rs, {`H_NE-1{1'b1}}, 1'b0, {`H_NF{1'b1}}} : {{`FLEN-`H_LEN{1'b1}}, Rs, {`H_NE{1'b1}}, (`H_NF)'(0)};      
-	            // zero is exact fi dividing by infinity so don't add 1
+	                // zero is exact if dividing by infinity so don't add 1
                     UfRes = {{`FLEN-`H_LEN{1'b1}}, Rs, (`H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                     NormRes = {{`FLEN-`H_LEN{1'b1}}, Rs, Re[`H_NE-1:0], Rf[`NF-1:`NF-`H_NF]};
                 end
             endcase
-
     end
 
     
@@ -238,7 +245,11 @@ module specialcase(
     //      - dont set to zero if fp input is zero but not using the fp input
     //      - dont set to zero if int input is zero but not using the int input
     assign KillRes = CvtOp ? (CvtResUf|(XZero&~IntToFp)|(IntZero&IntToFp)) : FullRe[`NE+1] | (((YInf&~XInf)|XZero)&DivOp);//Underflow & ~ResSubnorm & (Re!=1);
+    
+    // calculate if the overflow result should be selected
     assign SelOfRes = Overflow|DivByZero|(InfIn&~(YInf&DivOp));
+    
+    
     // output infinity with result sign if divide by zero
     if(`IEEE754)
         always_comb
@@ -256,17 +267,15 @@ module specialcase(
             else if(KillRes)            PostProcRes = UfRes;
             else                        PostProcRes = NormRes;
 
+
+
+
+
+
     ///////////////////////////////////////////////////////////////////////////////////////
-    //
-    //      |||||||||||   |||     |||   |||||||||||||
-    //          |||       ||||||  |||        |||
-    //          |||       ||| ||| |||        |||
-    //          |||       |||  ||||||        |||
-    //      |||||||||||   |||     |||        |||
-    //
+    // integer result selection        
     ///////////////////////////////////////////////////////////////////////////////////////        
 
-    // *** probably can optimize the negation
     // select the overflow integer res
     //      - negitive infinity and out of range negitive input
     //                 |  int  |  long  |

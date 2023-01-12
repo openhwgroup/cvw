@@ -23,8 +23,8 @@
 ///////////////////////////////////////////
 
 // division constants
-`define RADIX       32'h4
-`define DIVCOPIES   32'h2
+`define RADIX 32'h4
+`define DIVCOPIES 32'h4
 
 // Memory synthesis configuration
 `define USE_SRAM 0
@@ -32,8 +32,3 @@
 // shared constants
 `include "wally-constants.vh"
 
-// Disable spurious Verilator warnings
-
-/* verilator lint_off STMTDLY */
-/* verilator lint_off ASSIGNDLY */
-/* verilator lint_off PINCONNECTEMPTY */

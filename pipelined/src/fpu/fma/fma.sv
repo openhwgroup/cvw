@@ -6,44 +6,40 @@
 //
 // Purpose: Floating point multiply-accumulate of configurable size
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
 
 module fma(
-    input logic                         Xs, Ys, Zs, // input's signs
-    input logic  [`NE-1:0]              Xe, Ye, Ze, // input's biased exponents in B(NE.0) format
-    input logic  [`NF:0]                Xm, Ym, Zm, // input's significands in U(0.NF) format
-    input logic                         XZero, YZero, ZZero, // is the input zero
-    input logic  [2:0]                  OpCtrl,   // operation control
-    output logic                        ASticky,  // sticky bit that is calculated during alignment
-    output logic [3*`NF+3:0]            Sm,   // the positive sum's significand
-    output logic                        InvA, // Was A inverted for effective subtraction (P-A or -P+A)
-    output logic                        As,   // the aligned addend's sign (modified Z sign for other opperations)
-    output logic                        Ps,   // the product's sign
-    output logic                        Ss,   // the sum's sign
-    output logic [`NE+1:0]              Se,   // the sum's exponent
-    output logic [$clog2(3*`NF+5)-1:0]  SCnt  // normalization shift count
+    input  logic                        Xs, Ys, Zs,             // input's signs
+    input  logic [`NE-1:0]              Xe, Ye, Ze,             // input's biased exponents in B(NE.0) format
+    input  logic [`NF:0]                Xm, Ym, Zm,             // input's significands in U(0.NF) format
+    input  logic                        XZero, YZero, ZZero,    // is the input zero
+    input  logic [2:0]                  OpCtrl,                 // operation control
+    output logic                        ASticky,                // sticky bit that is calculated during alignment
+    output logic [3*`NF+3:0]            Sm,                     // the positive sum's significand
+    output logic                        InvA,                   // Was A inverted for effective subtraction (P-A or -P+A)
+    output logic                        As,                     // the aligned addend's sign (modified Z sign for other opperations)
+    output logic                        Ps,                     // the product's sign
+    output logic                        Ss,                     // the sum's sign
+    output logic [`NE+1:0]              Se,                     // the sum's exponent
+    output logic [$clog2(3*`NF+5)-1:0]  SCnt                    // normalization shift count
 );
 
     //  OpCtrl:
@@ -56,7 +52,7 @@ module fma(
     //        110 - add
     //        111 - sub
 
-    logic [2*`NF+1:0]   Pm;          // the product's significand in U(2.2Nf) format
+    logic [2*`NF+1:0]   Pm;         // the product's significand in U(2.2Nf) format
     logic [3*`NF+3:0]   Am;         // addend aligned's mantissa for addition in U(NF+4.2NF)
     logic [3*`NF+3:0]   AmInv;      // aligned addend's mantissa possibly inverted
     logic [2*`NF+1:0]   PmKilled;   // the product's mantissa possibly killed U(2.2Nf)
@@ -84,8 +80,7 @@ module fma(
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter
     ///////////////////////////////////////////////////////////////////////////////
-    fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye,
-                .Am, .ASticky, .KillProd);
+    fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye, .Am, .ASticky, .KillProd);
                         
     // ///////////////////////////////////////////////////////////////////////////////
     // // Addition/LZA
@@ -93,7 +88,7 @@ module fma(
         
     fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
-    fmalza #(3*`NF+4) lza(.A(AmInv), .Pm({PmKilled, InvA&Ps&ASticky&KillProd}), .Cin(InvA & ~(ASticky & ~KillProd)), .sub(InvA), .SCnt);
+    fmalza #(3*`NF+4) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
     
 endmodule
 
