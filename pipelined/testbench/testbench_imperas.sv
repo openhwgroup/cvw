@@ -34,7 +34,6 @@
 
 module testbench;
   parameter DEBUG=0;
-  parameter TEST="none";
  
   logic        clk;
   logic        reset_ext, reset;
