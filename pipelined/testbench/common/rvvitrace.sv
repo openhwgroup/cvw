@@ -37,7 +37,7 @@ module rvviTrace #(
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
-  logic [`XLEN-1:0] 			 CSRArray [logic[4095:0]];
+  logic [`XLEN-1:0] 			 CSRArray [logic[11:0]];
 
 
   // tracer signals
@@ -82,9 +82,9 @@ module rvviTrace #(
   assign STATUS_SXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
-  assign MSTATUS = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;              // 300
-  assign MSTATUSH = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;            // 310
-  assign MTVEC = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;                  // 305
+  assign MSTATUS = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;                   // 300
+  assign MSTATUSH = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;                 // 310
+  assign MTVEC = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;                       // 305
   assign MEPC_REGW = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;                    // 341
   assign MCOUNTEREN_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;        // 306
   assign MCOUNTINHIBIT_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;  // 320
@@ -103,6 +103,28 @@ module rvviTrace #(
   assign MCONFIGPTR = '0;                                                                // F15
   assign MTINST = '0;                                                                    // 34A
 
+  always_comb begin
+	CSRArray[12'h300] = MSTATUS;
+	CSRArray[12'h310] = MSTATUSH;
+	CSRArray[12'h305] = MTVEC;
+	CSRArray[12'h341] = MEPC_REGW;
+	CSRArray[12'h306] = MCOUNTEREN_REGW;
+	CSRArray[12'h320] = MCOUNTINHIBIT_REGW;
+	CSRArray[12'h302] = MEDELEG_REGW;
+	CSRArray[12'h303] = MIDELEG_REGW;
+	CSRArray[12'h344] = MIP_REGW;
+	CSRArray[12'h304] = MIE_REGW;
+	CSRArray[12'h301] = MISA_REGW;
+	CSRArray[12'hF14] = MHARTID_REGW;
+	CSRArray[12'h340] = MSCRATCH_REGW;
+	CSRArray[12'h342] = MCAUSE_REGW;
+	CSRArray[12'h343] = MTVAL_REGW;
+	CSRArray[12'hF11] = MVENDORID;
+	CSRArray[12'hF12] = MARCHID;
+	CSRArray[12'hF13] = MIMPID;
+	CSRArray[12'hF15] = MCONFIGPTR;
+	CSRArray[12'h34A] = MTINST;
+  end
 
   genvar 							index;
   assign rf[0] = '0;
@@ -113,9 +135,9 @@ module rvviTrace #(
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
   
   always_comb begin
-	rf_wb = '0;
+	rf_wb <= '0;
 	if(rf_we3)
-	  rf_wb[rf_a3] = 1'b1;
+	  rf_wb[rf_a3] <= 1'b1;
   end
 
   for(index = 0; index < NUMREGS; index += 1) 
@@ -125,9 +147,9 @@ module rvviTrace #(
   assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
   
   always_comb begin
-	frf_wb = '0;
+	frf_wb <= '0;
 	if(frf_we4)
-	  frf_wb[frf_a4] = 1'b1;
+	  frf_wb[frf_a4] <= 1'b1;
   end
 
   // pipeline to writeback stage
