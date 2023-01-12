@@ -6,6 +6,8 @@
 //
 // Purpose: Restoring integer division using a shift register and subtractor
 // 
+// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.19)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -26,32 +28,39 @@
 
 `include "wally-config.vh"
 
-  /* verilator lint_off UNOPTFLAT */
-
-module intdivrestoring (
-  input  logic clk,
-  input  logic reset,
-  input  logic StallM,
-  input  logic FlushE,
-  input  logic DivSignedE, W64E,
-  input  logic IntDivE,
-  //input logic [`XLEN-1:0] 	SrcAE, SrcBE,
-	input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-  output logic DivBusyE, 
-  output logic [`XLEN-1:0] QuotM, RemM
+module intdivrestoring(
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallM,
+  input  logic             FlushE,
+  input  logic             IntDivE,                       // integer division/remainder instruction of any type
+  input  logic             DivSignedE,                    // signed division 
+  input  logic             W64E,                          // W-type instructions (divw, divuw, remw, remuw)
+	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Forwarding mux outputs for Source A and B
+  output logic             DivBusyE,                      // Divide is busy - stall pipeline
+  output logic [`XLEN-1:0] QuotM, RemM                    // Quotient and remainder outputs
  );
 
-  typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
+  localparam STEPBITS = $clog2(`XLEN/`IDIV_BITSPERCYCLE); // Number of steps
+
+  typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;  // division FSM state
   statetype state;
 
-  logic [`XLEN-1:0] W[`IDIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] XQ[`IDIV_BITSPERCYCLE:0];
-  logic [`XLEN-1:0] DinE, XinE, DnE, DAbsBE, DAbsB, XnE, XInitE, WnM, XQnM;
-  localparam STEPBITS = $clog2(`XLEN/`IDIV_BITSPERCYCLE);
-  logic [STEPBITS:0] step;
-  logic Div0E, Div0M;
-  logic DivStartE, SignXE, SignDE, NegQE, NegWM, NegQM;
-  logic [`XLEN-1:0] WNext, XQNext;
+  logic [`XLEN-1:0]   W[`IDIV_BITSPERCYCLE:0];            // Residual for each of k steps
+  logic [`XLEN-1:0]   XQ[`IDIV_BITSPERCYCLE:0];           // dividend/quotient for each of k steps
+  logic [`XLEN-1:0]   WNext, XQNext;                      // initialized W and XQ going into registers
+  logic [`XLEN-1:0]   DinE, XinE;                         // divisor & dividend, possibly truncated to 32 bits
+  logic [`XLEN-1:0]   DnE;                                // DnE = ~DinE
+  logic [`XLEN-1:0]   DAbsBE;                             // absolute value of D
+  logic [`XLEN-1:0]   DAbsB;                              // registered absolute value of D, constant during division
+  logic [`XLEN-1:0]   XnE;                                // DXnE = ~XinE
+  logic [`XLEN-1:0]   XInitE;                             // |X|, or original X for divide by 0
+  logic [`XLEN-1:0]   WnM, XQnM;                          // negated residual W and quotient XQ for postprocessing sign correction
+  logic [STEPBITS:0]  step;                               // division step
+  logic               Div0E, Div0M;                       // divide by 0
+  logic               DivStartE;                          // start integer division
+  logic               SignXE, SignDE;                     // sign of dividend and divisor
+  logic               NegQE, NegWM, NegQM;                // negate quotient or residual during postprocessing
  
   //////////////////////////////
   // Execute Stage: prepare for division calculation with control logic, W logic and absolute values, initialize W and XQ
@@ -134,5 +143,3 @@ module intdivrestoring (
       else        state <= IDLE;
     end 
 endmodule 
-
-/* verilator lint_on UNOPTFLAT */
