@@ -4,57 +4,56 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: unpack input
+// Purpose: unpack input: extract sign, exponent, significand, characteristics
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 module unpackinput ( 
-    input logic  [`FLEN-1:0]        In,    // inputs from register file
-    input logic                     En,     // enable the input
-    input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
-    output logic                    Sgn,    // sign bits of XYZ
-    output logic [`NE-1:0]          Exp,    // exponents of XYZ (converted to largest supported precision)
-    output logic [`NF:0]            Man,    // mantissas of XYZ (converted to largest supported precision)
-    output logic                    NaN,    // is XYZ a NaN
-    output logic                    SNaN, // is XYZ a signaling NaN
-    output logic                    Zero,         // is XYZ zero
-    output logic                    Inf,            // is XYZ infinity
-    output logic                    ExpNonZero,            // is the exponent not zero
-    output logic                    FracZero,            // is the fraction zero
-    output logic                    ExpMax                       // does In have the maximum exponent (NaN or Inf)
+    input  logic [`FLEN-1:0]        In,         // inputs from register file
+    input  logic                    En,         // enable the input
+    input  logic [`FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
+    output logic                    Sgn,        // sign bits of XYZ
+    output logic [`NE-1:0]          Exp,        // exponents of XYZ (converted to largest supported precision)
+    output logic [`NF:0]            Man,        // mantissas of XYZ (converted to largest supported precision)
+    output logic                    NaN,        // is XYZ a NaN
+    output logic                    SNaN,       // is XYZ a signaling NaN
+    output logic                    Zero,       // is XYZ zero
+    output logic                    Inf,        // is XYZ infinity
+    output logic                    ExpNonZero, // is the exponent not zero
+    output logic                    FracZero,   // is the fraction zero
+    output logic                    ExpMax      // does In have the maximum exponent (NaN or Inf)
 );
  
-    logic [`NF-1:0] Frac; //Fraction of XYZ
-    logic           BadNaNBox;
+    logic [`NF-1:0] Frac;       // Fraction of XYZ
+    logic           BadNaNBox;  // is the NaN boxing bad
     
     if (`FPSIZES == 1) begin        // if there is only one floating point format supported
         assign BadNaNBox = 0;
         assign Sgn = In[`FLEN-1];  // sign bit
         assign Frac = In[`NF-1:0];  // fraction (no assumed 1)
         assign ExpNonZero = |In[`FLEN-2:`NF];  // is the exponent non-zero
-        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  Subnormalized numbers have effective biased exponent of 1
+        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
         assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
+    
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
         //***need better names for these constants
         // largest format | smaller format

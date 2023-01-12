@@ -71,7 +71,7 @@ module testbenchfp;
   logic [`NF:0]         Xm, Ym, Zm;                 // mantissas of the inputs
   logic                 XNaN, YNaN, ZNaN;           // is the input NaN
   logic                 XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
-  logic                 XDenorm, ZDenorm;           // is the input denormalized
+  logic                 XSubnorm, ZSubnorm;           // is the input denormalized
   logic                 XInf, YInf, ZInf;           // is the input infinity
   logic                 XZero, YZero, ZZero;        // is the input zero
   logic                 XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
@@ -81,7 +81,7 @@ module testbenchfp;
   logic [`NE:0]         CvtCalcExpE;    // the calculated expoent
 	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
 	logic [`DIVb:0]       Quot;
-  logic                 CvtResDenormUfE;
+  logic                 CvtResSubnormUfE;
   logic                 DivStart, FDivBusyE, OldFDivBusyE;
   logic                 reset = 1'b0;
   logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
@@ -666,7 +666,7 @@ module testbenchfp;
                                     .Xm, .Ym, .Zm, .DivStart,
                                     .XNaN, .YNaN, .ZNaN,
                                     .XSNaN, .YSNaN, .ZSNaN, 
-                                    .XDenorm, .ZDenorm, 
+                                    .XSubnorm, .ZSubnorm, 
                                     .XZero, .YZero, .ZZero,
                                     .XInf, .YInf, .ZInf, .XExpMax,
                                     .X, .Y, .Z);
@@ -694,10 +694,10 @@ module testbenchfp;
   end
               
   postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-              .ZDenorm(ZDenorm), .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
-              .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivS(DivSticky), .FmaSs(Ss),
-              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResDenormUf(CvtResDenormUfE),
-              .XZero(XZero), .YZero(YZero), .ZZero(ZZero), .CvtShiftAmt(CvtShiftAmtE),
+              .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+              .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+              .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
               .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaASticky(ASticky), .FmaSe(Se),
@@ -706,8 +706,8 @@ module testbenchfp;
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
     fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
-              .XZero(XZero), .XDenorm(XDenorm), .OpCtrl(OpCtrlVal), .IntZero,
-              .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResDenormUf(CvtResDenormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
+              .XZero(XZero), .XSubnorm(XSubnorm), .OpCtrl(OpCtrlVal), .IntZero,
+              .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   end
 
   if (TEST === "cmp" | TEST === "all") begin: fcmp
@@ -966,7 +966,7 @@ module readvectors (
   output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
   output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
   output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-  output logic                    XDenorm, ZDenorm,   // is XYZ denormalized
+  output logic                    XSubnorm, ZSubnorm,   // is XYZ denormalized
   output logic                    XZero, YZero, ZZero,         // is XYZ zero
   output logic                    XInf, YInf, ZInf,            // is XYZ infinity
   output logic                    XExpMax,
@@ -1333,6 +1333,6 @@ module readvectors (
   
   unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                 .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
-                .XDenorm, .ZDenorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
+                .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                 .XEn, .YEn, .ZEn, .XExpMax);
 endmodule

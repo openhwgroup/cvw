@@ -4,81 +4,90 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: control unit
+// Purpose: floating-point control unit
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 module fctrl (
-  input  logic       clk,
-  input  logic       reset,
-  input  logic       StallE, StallM, StallW, // stall signals
-  input  logic       FlushE, FlushM, FlushW, // flush signals
-  input  logic [31:0] InstrD,
-  input  logic [6:0] Funct7D,   // bits 31:25 of instruction - may contain percision
-  input  logic [6:0] OpD,       // bits 6:0 of instruction
-  input  logic [4:0] Rs2D,      // bits 24:20 of instruction
-  input  logic [2:0] Funct3D, Funct3E,   // bits 14:12 of instruction - may contain rounding mode
-  input  logic       MDUE,
-  input  logic [2:0] FRM_REGW,  // rounding mode from CSR
-  input  logic [1:0] STATUS_FS, // is FPU enabled?
-  input  logic       FDivBusyE,  // is the divider busy
-  output logic       IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
-  output logic 		         FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
-  output logic [2:0] 	      FrmM,                   // FP rounding mode
+  input  logic                clk,
+  input  logic                reset,
+  // input control signals
+  input  logic                StallE, StallM, StallW, // stall signals
+  input  logic                FlushE, FlushM, FlushW, // flush signals
+  input  logic                IntDivE,                // is inteteger division
+  input  logic [2:0]          FRM_REGW,               // rounding mode from CSR
+  input  logic [1:0]          STATUS_FS,              // is FPU enabled?
+  input  logic                FDivBusyE,              // is the divider busy
+  // intruction
+  input  logic [31:0]         InstrD,                 // the full instruction
+  input  logic [6:0]          Funct7D,                // bits 31:25 of instruction - may contain percision
+  input  logic [6:0]          OpD,                    // bits 6:0 of instruction
+  input  logic [4:0]          Rs2D,                   // bits 24:20 of instruction
+  input  logic [2:0]          Funct3D, Funct3E,       // bits 14:12 of instruction - may contain rounding mode
+  // input mux selections
+  output logic                XEnD, YEnD, ZEnD,       // enable inputs
+  output logic                XEnE, YEnE, ZEnE,       // enable inputs
+  // opperation mux selections
+  output logic 		            FCvtIntE, FCvtIntW,     // convert to integer opperation
+  output logic [2:0] 	        FrmM,                   // FP rounding mode
   output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
-  output logic 		         FDivStartE, IDivStartE,             // Start division or squareroot
-  output logic              XEnD, YEnD, ZEnD,
-  output logic              XEnE, YEnE, ZEnE,
-  output logic 		         FWriteIntE, FCvtIntE, FWriteIntM,                         // Write to integer register
-  output logic [2:0] 	      OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
-  output logic [1:0] 	      FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
-  output logic [1:0] 	      PostProcSelE, PostProcSelM, // select result in the post processing unit
-  output logic              FCvtIntW,
-  output logic [4:0] 	      Adr1D, Adr2D, Adr3D,                // adresses of each input
-  output logic [4:0] 	      Adr1E, Adr2E, Adr3E                // adresses of each input
+  output logic [2:0] 	        OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
+  output logic                FpLoadStoreM,           // FP load or store instruction
+  output logic [1:0] 	        PostProcSelE, PostProcSelM,         // select result in the post processing unit
+  output logic [1:0] 	        FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
+  // register control signals
+  output logic 		            FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
+  output logic 		            FWriteIntE, FWriteIntM,             // Write to integer register
+  output logic [4:0] 	        Adr1D, Adr2D, Adr3D,                // adresses of each input
+  output logic [4:0] 	        Adr1E, Adr2E, Adr3E,                // adresses of each input
+  // other control signals
+  output logic                IllegalFPUInstrM,                   // Is the instruction an illegal fpu instruction
+  output logic 		            FDivStartE, IDivStartE              // Start division or squareroot
   );
 
   `define FCTRLW 12
-  logic [`FCTRLW-1:0] ControlsD;
-  logic       IllegalFPUInstrD, IllegalFPUInstrE;
-  logic 		  FRegWriteD; // FP register write enable
-  logic 		  FDivStartD; // integer register write enable
-  logic 		  FWriteIntD; // integer register write enable
-  logic [2:0] 	      OpCtrlD;       // Select which opperation to do in each component
-  logic [1:0] 	      PostProcSelD; // select result in the post processing unit
-  logic [1:0] 	      FResSelD;       // Select one of the results that finish in the memory stage
-  logic [2:0] FrmD, FrmE;                   // FP rounding mode
-  logic [`FMTBITS-1:0] FmtD;             // FP format
-  logic [1:0] Fmt;
-  logic       SupportedFmt;
-  logic       FCvtIntD, FCvtIntM;
+
+  logic [`FCTRLW-1:0]   ControlsD;    // control signals
+  logic                 IllegalFPUInstrD, IllegalFPUInstrE; // is the intruction an illegal fpu instruction
+  logic 		            FRegWriteD;   // FP register write enable
+  logic 		            FDivStartD;   // start division/sqrt
+  logic 		            FWriteIntD;   // integer register write enable
+  logic [2:0] 	        OpCtrlD;      // Select which opperation to do in each component
+  logic [1:0] 	        PostProcSelD; // select result in the post processing unit
+  logic [1:0] 	        FResSelD;     // Select one of the results that finish in the memory stage
+  logic [2:0]           FrmD, FrmE;   // FP rounding mode
+  logic [`FMTBITS-1:0]  FmtD;         // FP format
+  logic [1:0]           Fmt;          // format - before possible reduction
+  logic                 SupportedFmt; // is the format supported
+  logic                 FCvtIntD, FCvtIntM; // convert to integer opperation
 
   // FPU Instruction Decoder
   assign Fmt = Funct7D[1:0];
+
   // Note: only Fmt is checked; fcvt does not check destination format
   assign SupportedFmt = (Fmt == 2'b00 | (Fmt == 2'b01 & `D_SUPPORTED) |
                          (Fmt == 2'b10 & `ZFH_SUPPORTED) | (Fmt == 2'b11 & `Q_SUPPORTED));
+
+  // decode the instruction                       
   always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0;
@@ -183,8 +192,10 @@ module fctrl (
   assign FrmD = &Funct3D ? FRM_REGW : Funct3D;
 
   // Precision
-  //    0-single
-  //    1-double
+  //    00 - single
+  //    01 - double
+  //    10 - half
+  //    11 - quad
   
     if (`FPSIZES == 1)
       assign FmtD = 0;
@@ -213,56 +224,57 @@ module fctrl (
   assign ZEnD = (PostProcSelD==2'b10)&(FResSelD==2'b01)&(~OpCtrlD[2]|OpCtrlD[1]);                  // fma, add, sub
   
 
-//  Final Res Sel:
-//        fp      int
-//  00  other     cmp
-//  01  postproc  cvt
-//  10  store     class
-//  11            mv
+  //  Final Res Sel:
+  //        fp      int
+  //  00  other     cmp
+  //  01  postproc  cvt
+  //  10  store     class
+  //  11            mv
 
-//  post processing Sel:
-//  00  cvt
-//  01  div
-//  10  fma
+  //  post processing Sel:
+  //  00  cvt
+  //  01  div
+  //  10  fma
 
-//  Other Sel:
-//    Ctrl signal = {OpCtrl[2], &FOpctrl[1:0]}
-//        000 - sign            00
-//        001 - negate sign     00
-//        010 - xor sign        00
-//        011 - mv to fp        01
-//        110 - min             10
-//        101 - max             10
+  //  Other Sel:
+  //    Ctrl signal = {OpCtrl[2], &FOpctrl[1:0]}
+  //        000 - sign            00
+  //        001 - negate sign     00
+  //        010 - xor sign        00
+  //        011 - mv to fp        01
+  //        110 - min             10
+  //        101 - max             10
 
-//  OpCtrl:
-//    Fma: {not multiply-add?, negate prod?, negate Z?}
-//        000 - fmadd
-//        001 - fmsub
-//        010 - fnmsub
-//        011 - fnmadd
-//        100 - mul
-//        110 - add
-//        111 - sub
-//    Div: 
-//        0 - div
-//        1 - sqrt
-//    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
-//    Cvt Fp: output format
-//        10 - to half
-//        00 - to single
-//        01 - to double
-//        11 - to quad
-//    Cmp: {equal?, less than?}
-//        010 - eq
-//        001 - lt
-//        011 - le
-//        110 - min
-//        101 - max
-//    Sgn:
-//        00 - sign
-//        01 - negate sign
-//        10 - xor sign
+  //  OpCtrl:
+  //    Fma: {not multiply-add?, negate prod?, negate Z?}
+  //        000 - fmadd
+  //        001 - fmsub
+  //        010 - fnmsub
+  //        011 - fnmadd
+  //        100 - mul
+  //        110 - add
+  //        111 - sub
+  //    Div: 
+  //        0 - div
+  //        1 - sqrt
+  //    Cvt Int: {Int to Fp?, 64 bit int?, signed int?}
+  //    Cvt Fp: output format
+  //        10 - to half
+  //        00 - to single
+  //        01 - to double
+  //        11 - to quad
+  //    Cmp: {equal?, less than?}
+  //        010 - eq
+  //        001 - lt
+  //        011 - le
+  //        110 - min
+  //        101 - max
+  //    Sgn:
+  //        00 - sign
+  //        01 - negate sign
+  //        10 - xor sign
 
+  // rename input adresses for readability
   assign Adr1D = InstrD[19:15];
   assign Adr2D = InstrD[24:20];
   assign Adr3D = InstrD[31:27];
@@ -274,15 +286,19 @@ module fctrl (
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
-  if (`M_SUPPORTED) assign IDivStartE = MDUE & Funct3E[2];
-  else              assign IDivStartE = 0; 
 
-  //assign FCvtIntE = (FResSelE == 2'b01);
+  // Integer division on FPU divider
+  if (`M_SUPPORTED & `IDIV_ON_FPU) assign IDivStartE = IntDivE;
+  else                             assign IDivStartE = 0; 
 
   // E/M pipleine register
   flopenrc #(14+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE},
               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, IllegalFPUInstrM, FCvtIntM});
+  
+  // renameing for readability
+  assign FpLoadStoreM = FResSelM[1];
+
   // M/W pipleine register
   flopenrc #(4)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM, FCvtIntM},

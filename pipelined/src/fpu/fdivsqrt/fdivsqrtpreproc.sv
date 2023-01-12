@@ -4,28 +4,26 @@
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
 //
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
+// Purpose: Divide/Square root preprocessing: integer absolute value and W64, normalization shift
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -44,10 +42,10 @@ module fdivsqrtpreproc (
   output logic [`DIVb-1:0] DPreproc,
   // Int-specific
   input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	input  logic MDUE, W64E,
+	input  logic IntDivE, W64E,
   output logic ISpecialCaseE,
   output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic NegQuotM, ALTBM, MDUM, W64M,
+  output logic NegQuotM, ALTBM, IntDivM, W64M,
   output logic AsM, BZeroM,
   output logic [`XLEN-1:0] AM
 );
@@ -95,8 +93,8 @@ module fdivsqrtpreproc (
     mux2 #(`XLEN) posbmux(BE, -BE, BsE, PosB);
 
     // Select integer or floating point inputs
-    mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenX);
-    mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, MDUE, IFNormLenD);
+    mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFNormLenX);
+    mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFNormLenD);
 
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
@@ -126,11 +124,11 @@ module fdivsqrtpreproc (
   /* verilator lint_on WIDTH */
 
     // Selet integer or floating-point operands
-    mux2 #(1)    numzmux(XZeroE, AZeroE, MDUE, NumerZeroE);
-    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, MDUE, X);
+    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
+    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
 
     // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, MDUE,     MDUM);
+    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
     flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
@@ -155,8 +153,11 @@ module fdivsqrtpreproc (
   assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
-  // append leading 1 (for nonzero inputs) and conditionally shift left by one to avoid sqrt(2)
-  mux2 #(`DIVb+1) sqrtxmux({~NumerZeroE, XPreproc}, {1'b0, ~NumerZeroE, XPreproc[`DIVb-1:1]}, (Xe[0]^ell[0]), PreSqrtX);
+  // append leading 1 (for normal inputs)
+  // shift square root to be in range [1/4, 1)
+  // Normalized numbers are shifted right by 1 if the exponent is odd
+  // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix

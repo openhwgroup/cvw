@@ -6,26 +6,24 @@
 //
 // Purpose: Combined Divide and Square Root Floating Point and Integer Unit
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -46,12 +44,12 @@ module fdivsqrt(
   input  logic SqrtE, SqrtM,
 	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	input  logic [2:0] 	Funct3E, Funct3M,
-	input  logic MDUE, W64E,
-  output logic DivSM,
+	input  logic IntDivE, W64E,
+  output logic DivStickyM,
   output logic FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [`NE+1:0] QeM,
   output logic [`DIVb:0] QmM,
-  output logic [`XLEN-1:0] FPIntDivResultM
+  output logic [`XLEN-1:0] FIntDivResultM
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
@@ -69,7 +67,7 @@ module fdivsqrt(
 
   // Integer div/rem signals
   logic BZeroM;                       // Denominator is zero
-  logic MDUM;                         // Integer operation
+  logic IntDivM;                         // Integer operation
   logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
   logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
   logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
@@ -80,16 +78,16 @@ module fdivsqrt(
     .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, 
     .QeM, .X, .DPreproc, 
     // Int-specific 
-    .ForwardedSrcAE, .ForwardedSrcBE, .MDUE, .W64E, .ISpecialCaseE,
+    .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .nE, .BZeroM, .nM, .mM, .AM, 
-    .MDUM, .W64M, .NegQuotM, .ALTBM, .AsM);
+    .IntDivM, .W64M, .NegQuotM, .ALTBM, .AsM);
 
   fdivsqrtfsm fdivsqrtfsm(                                // FSM
     .clk, .reset, .FmtE, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, 
     // Int-specific 
-    .IDivStartE, .ISpecialCaseE, .nE, .MDUE);
+    .IDivStartE, .ISpecialCaseE, .nE, .IntDivE);
 
   fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 
@@ -98,8 +96,8 @@ module fdivsqrt(
   fdivsqrtpostproc fdivsqrtpostproc(                      // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
-    .QmM, .WZeroE, .DivSM, 
+    .QmM, .WZeroE, .DivStickyM, 
     // Int-specific 
     .nM, .mM, .ALTBM, .AsM, .BZeroM, .NegQuotM, .W64M, .RemOpM(Funct3M[1]), .AM, 
-    .FPIntDivResultM);
+    .FIntDivResultM);
 endmodule

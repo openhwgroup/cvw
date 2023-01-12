@@ -5,28 +5,26 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Comparison unit
+// Purpose: Floating-point comparison unit
 // 
-// A component of the Wally configurable RISC-V project.
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -39,18 +37,18 @@
 //    011   less than or equal
 
 module fcmp (   
-   input logic  [`FMTBITS-1:0]   Fmt,      // format of fp number
-   input logic  [2:0]            OpCtrl,   // see above table
-   input logic                   Xs, Ys,   // input signs
-   input logic  [`NE-1:0]        Xe, Ye,   // input exponents
-   input logic  [`NF:0]          Xm, Ym,   // input mantissa
-   input logic                   XZero, YZero, // is zero
-   input logic                   XNaN, YNaN,   // is NaN
-   input logic                   XSNaN, YSNaN, // is signaling NaN
-   input logic  [`FLEN-1:0]      X, Y,       // original inputs (before unpacker)
-   output logic                  CmpNV,      // invalid flag
-   output logic [`FLEN-1:0]      CmpFpRes,   // compare floating-point result
-   output logic [`XLEN-1:0]      CmpIntRes   // compare integer result
+   input  logic [`FMTBITS-1:0]   Fmt,           // format of fp number
+   input  logic [2:0]            OpCtrl,        // see above table
+   input  logic                  Xs, Ys,        // input signs
+   input  logic [`NE-1:0]        Xe, Ye,        // input exponents
+   input  logic [`NF:0]          Xm, Ym,        // input mantissa
+   input  logic                  XZero, YZero,  // is zero
+   input  logic                  XNaN, YNaN,    // is NaN
+   input  logic                  XSNaN, YSNaN,  // is signaling NaN
+   input  logic [`FLEN-1:0]      X, Y,          // original inputs (before unpacker)
+   output logic                  CmpNV,         // invalid flag
+   output logic [`FLEN-1:0]      CmpFpRes,      // compare floating-point result
+   output logic [`XLEN-1:0]      CmpIntRes      // compare integer result
    );
 
    logic LTabs, LT, EQ;         // is X < or > or = Y
