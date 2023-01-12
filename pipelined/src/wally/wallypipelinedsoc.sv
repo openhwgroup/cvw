@@ -10,7 +10,6 @@
 // Note: the CSRs do not support the following features
 //- Disabling portions of the instruction set with bits of the MISA register
 //- Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
-// As of January 2020, virtual memory is not yet supported
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -35,8 +34,7 @@
 module wallypipelinedsoc (
   input  logic 		   clk, reset_ext, 
   output logic       reset,
-  // AHB Lite Interface
-  // inputs from external memory
+  // AHB Interface
   input  logic [`AHBW-1:0]  HRDATAEXT,
   input  logic 		   HREADYEXT, HRESPEXT,
   output logic 		   HSELEXT,
@@ -66,7 +64,6 @@ module wallypipelinedsoc (
 );
 
   // Uncore signals
-//  logic 		   reset;
   logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
   logic             HRESP;
   logic             MTimerInt, MSwInt; // from CLINT
@@ -76,14 +73,14 @@ module wallypipelinedsoc (
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
    
-  // instantiate processor and memories
+  // instantiate processor and internal memories
   wallypipelinedcore core(.clk, .reset,
-    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, 
-    .MTIME_CLINT,
+    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
     .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
     .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
    );
 
+  // instantiate uncore if a bus interface exists
   if (`BUS) begin : uncore
     uncore uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
