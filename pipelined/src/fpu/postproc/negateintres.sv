@@ -26,16 +26,16 @@
 `include "wally-config.vh"
 
 module negateintres(
-    input logic         Xs,
-    input logic [`NORMSHIFTSZ-1:0]  Shifted,
-    input logic         Signed,
-    input logic         Int64,
-    input logic         Plus1,
-    output logic [1:0]          CvtNegResMsbs,
-    output logic [`XLEN+1:0]    CvtNegRes
+    input  logic                    Signed,         // is the integer input signed
+    input  logic                    Int64,          // is the integer input 64-bits
+    input  logic                    Plus1,          // should one be added for rounding?
+    input  logic                    Xs,             // X sign
+    input  logic [`NORMSHIFTSZ-1:0] Shifted,        // output from normalization shifter
+    output logic [1:0]              CvtNegResMsbs,  // most signigficant bits of possibly negated result
+    output logic [`XLEN+1:0]        CvtNegRes       // possibly negated integer result
 );
 
-    logic [2:0] CvtNegResMsbs3;
+    logic [2:0] CvtNegResMsbs3; // first three msbs of possibly negated result
     
     // round and negate the positive res if needed
     assign CvtNegRes = Xs ? -({2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1}) : {2'b0, Shifted[`NORMSHIFTSZ-1:`NORMSHIFTSZ-`XLEN]}+{{`XLEN+1{1'b0}}, Plus1};

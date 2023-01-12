@@ -22,10 +22,11 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 //leading zero counter i.e. priority encoder
 module lzc #(parameter WIDTH = 1) (
-    input logic  [WIDTH-1:0]            num,
-    output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt
+    input logic  [WIDTH-1:0]            num,    // number to count the leading zeroes of
+    output logic [$clog2(WIDTH+1)-1:0]  ZeroCnt // the number of leading zeroes
 );
 /* verilator lint_off CMPCONST */
 /* verilator lint_off WIDTH */

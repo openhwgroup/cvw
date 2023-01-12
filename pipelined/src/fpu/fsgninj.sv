@@ -27,14 +27,14 @@
 `include "wally-config.vh"
 
 module fsgninj (  
-	input logic        			Xs, Ys,	// X and Y sign bits
-	input logic [`FLEN-1:0] 	X,		// X
-	input logic [`FMTBITS-1:0]	Fmt,	// format
+	input  logic        		Xs, Ys,	// X and Y sign bits
+	input  logic [`FLEN-1:0] 	X,		// X
+	input  logic [`FMTBITS-1:0]	Fmt,	// format
 	input  logic [1:0]  		OpCtrl,	// operation control
 	output logic [`FLEN-1:0] 	SgnRes	// result
 );
 
-	logic ResSgn;
+	logic ResSgn;	// result sign
 
 	// OpCtrl:
 	// 		00 - fsgnj  - directly copy over sign value of Y

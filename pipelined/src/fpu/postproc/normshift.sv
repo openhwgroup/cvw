@@ -26,7 +26,7 @@
 `include "wally-config.vh"
 
 
- // convert shift
+    // convert shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
     //          process:
     //              - start - CalcExp = 1 + XExp - Largest Bias
@@ -41,7 +41,7 @@
     //                  |     keep          |
     //
     //      fp -> fp:
-    //          - if result is Subnormalized or underflowed:
+    //          - if result is subnormal or underflowed:
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | << NF+CalcExp-1
     //          process:
     //             - start
@@ -54,17 +54,26 @@
     //                 |   0's  |     mantissa      |     0's      |
     //                 |       keep      |
     //
-    //          - if the input is Subnormalized:
+    //          - if the input is subnormal:
     //              |     lzcIn      | 0's if nessisary | << ZeroCnt+1
     //              - plus 1 to shift out the first 1
     //
     //      int -> fp: |     lzcIn      | 0's if nessisary | << ZeroCnt+1
     //              - plus 1 to shift out the first 1
 
+    // fma shift
+    //      | 00 |           Sm           | << LZA output
+    //             .
+    //      - two extra bits so we can correct for an LZA error of 1 or 2
+
+    // divsqrt shift
+    //      | Nf 0's |      Qm       | << calculated shift amount
+    //        .
+
 module normshift(
-    input logic  [`LOGNORMSHIFTSZ-1:0]      ShiftAmt,   // normalization shift count
-    input logic  [`NORMSHIFTSZ-1:0]              ShiftIn,        // is the sum zero
-    output logic [`NORMSHIFTSZ-1:0]             Shifted        // is the sum zero
+    input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
+    input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
+    output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
 );
     assign Shifted = ShiftIn << ShiftAmt;
 

@@ -27,21 +27,22 @@
 `include "wally-config.vh"
 
 module divshiftcalc(
-    input logic  [`DIVb:0] DivQm,
-   input logic [`NE+1:0] DivQe,
-    output logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt,
-    output logic [`NORMSHIFTSZ-1:0] DivShiftIn,
-    output logic DivResSubnorm,
-    output logic DivSubnormShiftPos
+    input  logic [`DIVb:0]              DivQm,              // divsqrt significand
+    input  logic [`NE+1:0]              DivQe,              // divsqrt exponent
+    output logic [`LOGNORMSHIFTSZ-1:0]  DivShiftAmt,        // divsqrt shift amount
+    output logic [`NORMSHIFTSZ-1:0]     DivShiftIn,         // divsqrt shift input
+    output logic                        DivResSubnorm,      // is the divsqrt result subnormal
+    output logic                        DivSubnormShiftPos  // is the subnormal shift amount positive
 );
-    logic [`LOGNORMSHIFTSZ-1:0] NormShift, DivSubnormShiftAmt;
-    logic [`NE+1:0] DivSubnormShift;
+    logic [`LOGNORMSHIFTSZ-1:0] NormShift;          // normalized result shift amount
+    logic [`LOGNORMSHIFTSZ-1:0] DivSubnormShiftAmt; // subnormal result shift amount (killed if negitive)
+    logic [`NE+1:0]             DivSubnormShift;    // subnormal result shift amount
  
-    // is the result Subnormalized
+    // is the result subnormal
     // if the exponent is 1 then the result needs to be normalized then the result is Subnormalizes
     assign DivResSubnorm = DivQe[`NE+1]|(~|DivQe[`NE+1:0]);
 
-    // if the result is Subnormalized
+    // if the result is subnormal
     //  00000000x.xxxxxx...                     Exp = DivQe
     //  .00000000xxxxxxx... >> NF+1             Exp = DivQe+NF+1
     //  .00xxxxxxxxxxxxx... << DivQe+NF+1  Exp = +1
@@ -65,5 +66,6 @@ module divshiftcalc(
     assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[`LOGNORMSHIFTSZ-1:0] : '0;
     assign DivShiftAmt = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
+    // pre-shift the divider result for normalization
     assign DivShiftIn = {{`NF{1'b0}}, DivQm, {`NORMSHIFTSZ-`DIVb-1-`NF{1'b0}}};
 endmodule

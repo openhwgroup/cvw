@@ -102,7 +102,7 @@ module fpu (
    logic 		      XNaNM, YNaNM, ZNaNM;                  // is the input a NaN - memory stage
    logic 		      XSNaNE, YSNaNE, ZSNaNE;               // is the input a signaling NaN - execute stage
    logic 		      XSNaNM, YSNaNM, ZSNaNM;               // is the input a signaling NaN - memory stage
-   logic 		      XSubnormE;                            // is the input Subnormalized
+   logic 		      XSubnormE;                            // is the input subnormal
    logic 		      XZeroE, YZeroE, ZZeroE;               // is the input zero - execute stage
    logic 		      XZeroM, YZeroM;                       // is the input zero - memory stage
    logic 		      XInfE, YInfE, ZInfE;                  // is the input infinity - execute stage
@@ -124,7 +124,7 @@ module fpu (
    // Cvt Signals
    logic [`NE:0]           CeE, CeM;                       // convert intermediate expoent
    logic [`LOGCVTLEN-1:0]  CvtShiftAmtE, CvtShiftAmtM;     // how much to shift by
-   logic                   CvtResSubnormUfE, CvtResSubnormUfM; // does the result underflow or is Subnormalized
+   logic                   CvtResSubnormUfE, CvtResSubnormUfM; // does the result underflow or is subnormal
    logic                   CsE, CsM;                       // convert result sign
    logic                   IntZeroE, IntZeroM;             // is the integer zero?
    logic [`CVTLEN-1:0]     CvtLzcInE, CvtLzcInM;           // input to the Leading Zero Counter (priority encoder)
@@ -140,7 +140,7 @@ module fpu (
    // result and flag signals
    logic [`XLEN-1:0] ClassResE;                            // classify result
    logic [`FLEN-1:0] CmpFpResE;                            // compare result to FPU (min/max)
-   logic [`XLEN-1:0] CmpIntResE;                           // compare result to IEU (eq/gt/geq)
+   logic [`XLEN-1:0] CmpIntResE;                           // compare result to IEU (eq/lt/le)
    logic 		      CmpNVE;                               // compare invalid flag (Not Valid)     
    logic [`FLEN-1:0] SgnResE;                              // sign injection result
    logic [`XLEN-1:0] FIntResE;                             // FPU to IEU E-stage result (classify, compare, move)
@@ -331,7 +331,7 @@ module fpu (
       .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), 
       .FmaSm(SmM), .DivQe(QeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
       .CvtCe(CeM), .CvtResSubnormUf(CvtResSubnormUfM),.CvtShiftAmt(CvtShiftAmtM), .CvtCs(CsM), 
-      .ToInt(FWriteIntM), .DivS(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
+      .ToInt(FWriteIntM), .DivSticky(DivStickyM), .CvtLzcIn(CvtLzcInM), .IntZero(IntZeroM), 
       .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
    // FPU flag selection - to privileged

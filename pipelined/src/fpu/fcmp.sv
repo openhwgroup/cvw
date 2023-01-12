@@ -35,18 +35,18 @@
 //    011   less than or equal
 
 module fcmp (   
-   input logic  [`FMTBITS-1:0]   Fmt,      // format of fp number
-   input logic  [2:0]            OpCtrl,   // see above table
-   input logic                   Xs, Ys,   // input signs
-   input logic  [`NE-1:0]        Xe, Ye,   // input exponents
-   input logic  [`NF:0]          Xm, Ym,   // input mantissa
-   input logic                   XZero, YZero, // is zero
-   input logic                   XNaN, YNaN,   // is NaN
-   input logic                   XSNaN, YSNaN, // is signaling NaN
-   input logic  [`FLEN-1:0]      X, Y,       // original inputs (before unpacker)
-   output logic                  CmpNV,      // invalid flag
-   output logic [`FLEN-1:0]      CmpFpRes,   // compare floating-point result
-   output logic [`XLEN-1:0]      CmpIntRes   // compare integer result
+   input  logic [`FMTBITS-1:0]   Fmt,           // format of fp number
+   input  logic [2:0]            OpCtrl,        // see above table
+   input  logic                  Xs, Ys,        // input signs
+   input  logic [`NE-1:0]        Xe, Ye,        // input exponents
+   input  logic [`NF:0]          Xm, Ym,        // input mantissa
+   input  logic                  XZero, YZero,  // is zero
+   input  logic                  XNaN, YNaN,    // is NaN
+   input  logic                  XSNaN, YSNaN,  // is signaling NaN
+   input  logic [`FLEN-1:0]      X, Y,          // original inputs (before unpacker)
+   output logic                  CmpNV,         // invalid flag
+   output logic [`FLEN-1:0]      CmpFpRes,      // compare floating-point result
+   output logic [`XLEN-1:0]      CmpIntRes      // compare integer result
    );
 
    logic LTabs, LT, EQ;         // is X < or > or = Y
