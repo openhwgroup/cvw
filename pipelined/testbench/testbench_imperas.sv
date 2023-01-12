@@ -181,10 +181,6 @@ module testbench;
           InReset = 0;
           ResetCount = 0;
         end
-      end else begin
-		if(DCacheFlushStart) begin
-		  $stop;
-		end
       end
     end // always @ (negedge clk)
 
