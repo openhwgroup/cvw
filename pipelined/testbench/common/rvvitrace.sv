@@ -82,48 +82,39 @@ module rvviTrace #(
   assign STATUS_SXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
-  assign MSTATUS = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;                   // 300
-  assign MSTATUSH = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;                 // 310
-  assign MTVEC = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;                       // 305
-  assign MEPC_REGW = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;                    // 341
-  assign MCOUNTEREN_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;        // 306
-  assign MCOUNTINHIBIT_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;  // 320
-  assign MEDELEG_REGW = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;              // 302
-  assign MIDELEG_REGW = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;              // 303
-  assign MIP_REGW = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;                      // 344
-  assign MIE_REGW = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;                      // 304
-  assign MISA_REGW = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;                    // 301
-  assign MHARTID_REGW = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;              // F14
-  assign MSCRATCH_REGW = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;            // 340
-  assign MCAUSE_REGW = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;                // 342
-  assign MTVAL_REGW = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;                  // 343
-  assign MVENDORID = '0;                                                                 // F11
-  assign MARCHID = '0;                                                                   // F12
-  assign MIMPID = `XLEN'h100;                                                            // F13
-  assign MCONFIGPTR = '0;                                                                // F15
-  assign MTINST = '0;                                                                    // 34A
-
   always_comb begin
-	CSRArray[12'h300] = MSTATUS;
-	CSRArray[12'h310] = MSTATUSH;
-	CSRArray[12'h305] = MTVEC;
-	CSRArray[12'h341] = MEPC_REGW;
-	CSRArray[12'h306] = MCOUNTEREN_REGW;
-	CSRArray[12'h320] = MCOUNTINHIBIT_REGW;
-	CSRArray[12'h302] = MEDELEG_REGW;
-	CSRArray[12'h303] = MIDELEG_REGW;
-	CSRArray[12'h344] = MIP_REGW;
-	CSRArray[12'h304] = MIE_REGW;
-	CSRArray[12'h301] = MISA_REGW;
-	CSRArray[12'hF14] = MHARTID_REGW;
-	CSRArray[12'h340] = MSCRATCH_REGW;
-	CSRArray[12'h342] = MCAUSE_REGW;
-	CSRArray[12'h343] = MTVAL_REGW;
-	CSRArray[12'hF11] = MVENDORID;
-	CSRArray[12'hF12] = MARCHID;
-	CSRArray[12'hF13] = MIMPID;
-	CSRArray[12'hF15] = MCONFIGPTR;
-	CSRArray[12'h34A] = MTINST;
+	// machine mode CSRs
+	CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
+	CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;
+	CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
+	CSRArray[12'h341] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;
+	CSRArray[12'h306] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;
+	CSRArray[12'h320] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;
+	CSRArray[12'h302] = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;
+	CSRArray[12'h303] = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
+	CSRArray[12'h344] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;
+	CSRArray[12'h304] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;
+	CSRArray[12'h301] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;
+	CSRArray[12'hF14] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;
+	CSRArray[12'h340] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;
+	CSRArray[12'h342] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;
+	CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
+	CSRArray[12'hF11] = 0;
+	CSRArray[12'hF12] = 0;
+	CSRArray[12'hF13] = `XLEN'h100;
+	CSRArray[12'hF15] = 0;
+	CSRArray[12'h34A] = 0;
+
+	CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.SSTATUS_REGW;
+	CSRArray[12'h104] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222;
+	CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.STVEC_REGW;
+	CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.SEPC_REGW;
+	CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.SCOUNTEREN_REGW;
+	CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.SATP_REGW;
+	CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
+	CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
+	CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
+	CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
   end
 
   genvar 							index;
