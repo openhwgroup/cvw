@@ -6,6 +6,8 @@
 // Modified: 
 //
 // Purpose: RISC-V Arithmetic/Logic Unit
+//
+// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.4)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
