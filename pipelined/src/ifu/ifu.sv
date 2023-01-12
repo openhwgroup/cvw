@@ -178,7 +178,7 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  // CommittedM tells the CPU's privilege unit the current instruction
+  // CommittedM tells the CPU's privileged unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
   // or is partially executed. Partially completed memory operations need to prevent an interrupts.
   // There is not a clean way to restore back to a partial executed instruction.  CommiteedM will
