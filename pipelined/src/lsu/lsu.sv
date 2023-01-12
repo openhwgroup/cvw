@@ -239,31 +239,31 @@ module lsu (
   if (`BUS) begin : bus              
     localparam integer   LLENWORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`LLEN : 1; // Number of LLEN words in cacheline
     localparam integer   LLENLOGBWPL = `DCACHE ? $clog2(LLENWORDSPERLINE) : 1;         // Log2 of ^
-    localparam integer   BEATSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`AHBW : 1;     // Number of ABHW words (beats) in cacheline
+    localparam integer   BEATSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`AHBW : 1;     // Number of AHBW words (beats) in cacheline
     localparam integer   AHBWLOGBWPL = `DCACHE ? $clog2(BEATSPERLINE) : 1;             // Log2 of ^
     if(`DCACHE) begin : dcache
       localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;          // Number of bytes in cacheline
-      logic [LINELEN-1:0]  FetchBuffer;                                                
-      logic [`PA_BITS-1:0] DCacheBusAdr;
-      logic [AHBWLOGBWPL-1:0]  BeatCount;
-      logic                DCacheBusAck;
-      logic                SelBusBeat;
-      logic [1:0]          CacheBusRW, BusRW;
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;
-      logic                CacheableOrFlushCacheM;
-      logic [1:0]          CacheRWM, CacheAtomicM;
-      logic                CacheFlushM;
+      logic [LINELEN-1:0]  FetchBuffer;                                                // Temporary buffer to hold partially fetched cacheline
+      logic [`PA_BITS-1:0] DCacheBusAdr;                                               // Cacheline address to fetch or writeback.
+      logic [AHBWLOGBWPL-1:0]  BeatCount;                                              // Position within a cacheline.  ahbcacheinterface to cache
+      logic                DCacheBusAck;                                               // ahbcacheinterface completed fetch or writeback
+      logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
+      logic [1:0] 		   CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
+	  logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+      logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
+      logic [1:0] 		   CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
+	  logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
       
       assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
-      assign CacheFlushM  = FlushDCacheM;
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
-        .FlushCache(CacheFlushM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallW), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
@@ -271,6 +271,7 @@ module lsu (
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+
       ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
@@ -281,15 +282,15 @@ module lsu (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
-      // FetchBuffer[`AHBW-1:0] needs to be duplicated LLENPOVERAHBW times.
-      // DTIMReadDataWordM should be increased to LLEN.
-      // *** DTIMReadDataWordM should be LLEN
-      // pma should generate expection for LLEN read to periph.
+	  // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
+	  // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
+      // *** DTIMReadDataWordM should be increased to LLEN.
+      // pma should generate exception for LLEN read to periph.
       mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
                                     .d2({{`LLEN-`XLEN{1'b0}}, DTIMReadDataWordM[`XLEN-1:0]}),
                                     .s({SelDTIM, ~(CacheableOrFlushCacheM)}), .y(ReadDataWordMuxM));
-    end else begin : passthrough // just needs a register to hold the value from the bus
-      logic [1:0] BusRW;
+    end else begin : passthrough // No Cache, use simple ahbinterface instad of ahbcacheinterface
+      logic [1:0] BusRW;                    // Non-DTIM memory access, ignore cacheableM
       logic [`XLEN-1:0] FetchBuffer;
       assign BusRW = ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       
@@ -301,12 +302,13 @@ module lsu (
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
 
+	  // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];
       assign LSUHBURST = 3'b0;
       assign {DCacheStallW, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
-  end else begin: nobus // block: bus
+  end else begin: nobus // block: bus, only DTIM
     assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = DTIMReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
