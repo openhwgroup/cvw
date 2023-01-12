@@ -32,10 +32,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
 
-module testbench_imperas;
+module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
  
@@ -694,7 +692,7 @@ module rvviTrace();
   flopenrc #(`XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
 
-  assign valid = InstrValidW;
+  assign valid = InstrValidW & ~StallW & ~FlushW;
   assign insn = InstrRawW;
   assign pc_rdata = PCW;
   
