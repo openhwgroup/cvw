@@ -26,7 +26,6 @@
 
 `include "wally-config.vh"
 
-// ordinary flip-flop
 module synchronizer ( 
   input  logic clk,
   input  logic d, 

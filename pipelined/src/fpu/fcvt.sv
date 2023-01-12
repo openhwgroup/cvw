@@ -7,6 +7,8 @@
 //
 // Purpose: Floating point conversions of configurable size
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
 // Int component of the Wally configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

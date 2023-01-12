@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: various flavors of flip-flops
+// Purpose: D flip-flop with enable and synchronous load
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,7 +26,6 @@
 
 `include "wally-config.vh"
 
-// flop with enable, synchronous load
 module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  logic clk, load, en,
   input  TYPE d,

@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: various flavors of flip-flops
+// Purpose: D flip-flop with synchronous reset
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,7 +26,6 @@
 
 `include "wally-config.vh"
 
-// flop with synchronous reset
 module flopr #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 

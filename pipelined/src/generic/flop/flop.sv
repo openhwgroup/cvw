@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: various flavors of flip-flops
+// Purpose: D flip-flop
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,7 +26,6 @@
 
 `include "wally-config.vh"
 
-// ordinary flip-flop
 module flop #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 
