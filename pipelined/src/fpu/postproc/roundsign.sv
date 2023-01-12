@@ -4,7 +4,7 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Sign calculation ofr rounding
+// Purpose: Sign calculation for rounding
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,22 +26,23 @@
 `include "wally-config.vh"
 
 module roundsign(
-    input logic         Xs,
-    input logic         Ys,
-    input logic         Sqrt,
-    input logic         FmaOp,
-    input logic         DivOp,
-    input logic         CvtOp,
-    input logic         CvtCs,
-    input logic         FmaSs,
-    output logic        Ms
+    input logic         Xs,     // x sign
+    input logic         Ys,     // y sign
+    input logic         CvtCs,  // convert result sign
+    input logic         FmaSs,  // fma sum sign
+    input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)
+    input logic         FmaOp,  // is fma opperation
+    input logic         DivOp,  // is divsqrt opperation
+    input logic         CvtOp,  // is cvt opperation
+    output logic        Ms      // normalized result sign
 );
 
-    logic Qs;
+    logic Qs;   // divsqrt result sign
 
+    // calculate divsqrt sign
     assign Qs = Xs^(Ys&~Sqrt);
 
-    // Sign for rounding calulation
+    // Select sign for rounding calulation
     assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
 
 endmodule

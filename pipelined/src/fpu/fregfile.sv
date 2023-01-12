@@ -27,14 +27,15 @@
 `include "wally-config.vh"
 
 module fregfile (
-  input logic 	      clk, reset,
-  input logic 	      we4, 
-  input logic [4:0]   a1, a2, a3, a4, 
-  input logic [`FLEN-1:0]  wd4,
-  output logic [`FLEN-1:0] rd1, rd2, rd3);
+  input logic 	           clk, reset,
+  input logic 	           we4,             // write enable
+  input logic [4:0]        a1, a2, a3, a4,  // adresses
+  input logic [`FLEN-1:0]  wd4,             // write data
+  output logic [`FLEN-1:0] rd1, rd2, rd3    // read data
+);
    
-   logic [`FLEN-1:0]       rf[31:0];
-   integer 	      i;
+   logic [`FLEN-1:0] rf[31:0];
+   integer i;
    
    // three ported register file
    // read three ports combinationally (A1/RD1, A2/RD2, A3/RD3)

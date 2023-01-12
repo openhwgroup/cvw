@@ -26,31 +26,32 @@
 `include "wally-config.vh"
 
 module unpackinput ( 
-    input logic  [`FLEN-1:0]        In,    // inputs from register file
-    input logic                     En,     // enable the input
-    input logic  [`FMTBITS-1:0]     Fmt,       // format signal 00 - single 01 - double 11 - quad 10 - half
-    output logic                    Sgn,    // sign bits of XYZ
-    output logic [`NE-1:0]          Exp,    // exponents of XYZ (converted to largest supported precision)
-    output logic [`NF:0]            Man,    // mantissas of XYZ (converted to largest supported precision)
-    output logic                    NaN,    // is XYZ a NaN
-    output logic                    SNaN, // is XYZ a signaling NaN
-    output logic                    Zero,         // is XYZ zero
-    output logic                    Inf,            // is XYZ infinity
-    output logic                    ExpNonZero,            // is the exponent not zero
-    output logic                    FracZero,            // is the fraction zero
-    output logic                    ExpMax                       // does In have the maximum exponent (NaN or Inf)
+    input  logic [`FLEN-1:0]        In,         // inputs from register file
+    input  logic                    En,         // enable the input
+    input  logic [`FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
+    output logic                    Sgn,        // sign bits of XYZ
+    output logic [`NE-1:0]          Exp,        // exponents of XYZ (converted to largest supported precision)
+    output logic [`NF:0]            Man,        // mantissas of XYZ (converted to largest supported precision)
+    output logic                    NaN,        // is XYZ a NaN
+    output logic                    SNaN,       // is XYZ a signaling NaN
+    output logic                    Zero,       // is XYZ zero
+    output logic                    Inf,        // is XYZ infinity
+    output logic                    ExpNonZero, // is the exponent not zero
+    output logic                    FracZero,   // is the fraction zero
+    output logic                    ExpMax      // does In have the maximum exponent (NaN or Inf)
 );
  
-    logic [`NF-1:0] Frac; //Fraction of XYZ
-    logic           BadNaNBox;
+    logic [`NF-1:0] Frac;       // Fraction of XYZ
+    logic           BadNaNBox;  // is the NaN boxing bad
     
     if (`FPSIZES == 1) begin        // if there is only one floating point format supported
         assign BadNaNBox = 0;
         assign Sgn = In[`FLEN-1];  // sign bit
         assign Frac = In[`NF-1:0];  // fraction (no assumed 1)
         assign ExpNonZero = |In[`FLEN-2:`NF];  // is the exponent non-zero
-        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  Subnormalized numbers have effective biased exponent of 1
+        assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
         assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
+    
     end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
         //***need better names for these constants
         // largest format | smaller format

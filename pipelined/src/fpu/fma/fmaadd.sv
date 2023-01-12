@@ -27,23 +27,22 @@
 `include "wally-config.vh"
 
 module fmaadd(
-    input logic  [3*`NF+3:0]    Am, // aligned addend's mantissa for addition in U(NF+5.2NF+1)
-    input logic  [2*`NF+1:0]    Pm,       // the product's mantissa
-    input logic                 Ps, // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
-    input logic                 InvA,          // invert the aligned addend
-    input logic                 KillProd,      // should the product be set to 0
-    input logic                 ASticky,
-    input logic  [`NE-1:0]      Ze,
-    input logic  [`NE+1:0]      Pe,
-    output logic [3*`NF+3:0]    AmInv, // aligned addend possibly inverted
-    output logic [2*`NF+1:0]    PmKilled,     // the product's mantissa possibly killed
-    output logic                Ss,          
-    output logic [`NE+1:0]      Se,
+    input  logic [3*`NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
+    input  logic [`NE-1:0]      Ze,         // exponent of Z
+    input  logic                Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
+    input  logic [`NE+1:0]      Pe,         // product's exponet
+    input  logic [2*`NF+1:0]    Pm,         // the product's mantissa
+    input  logic                InvA,       // invert the aligned addend
+    input  logic                KillProd,   // should the product be set to 0
+    input  logic                ASticky,    // Alighed addend's sticky bit
+    output logic [3*`NF+3:0]    AmInv,      // aligned addend possibly inverted
+    output logic [2*`NF+1:0]    PmKilled,   // the product's mantissa possibly killed
+    output logic                Ss,         // sum's sign    
+    output logic [`NE+1:0]      Se,         // sum's exponent
     output logic [3*`NF+3:0]    Sm          // the positive sum
 );
     logic [3*`NF+3:0]    PreSum, NegPreSum; // possibly negitive sum
-    logic                NegSum;        // was the sum negitive
-    logic                NegSumdebug;        // was the sum negitive
+    logic                NegSum;            // was the sum negitive
 
     ///////////////////////////////////////////////////////////////////////////////
     // Addition

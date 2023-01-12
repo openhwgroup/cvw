@@ -28,18 +28,18 @@
 `include "wally-config.vh"
 
 module fmaalign(
-    input logic  [`NE-1:0]      Xe, Ye, Ze,      // biased exponents in B(NE.0) format
-    input logic  [`NF:0]        Zm,      // significand in U(0.NF) format]
-    input logic                 XZero, YZero, ZZero, // is the input zero
-    output logic [3*`NF+3:0]    Am, // addend aligned for addition in U(NF+5.2NF+1)
-    output logic                ASticky,  // Sticky bit calculated from the aliged addend
-    output logic                KillProd       // should the product be set to zero
+    input  logic [`NE-1:0]      Xe, Ye, Ze,         // biased exponents in B(NE.0) format
+    input  logic [`NF:0]        Zm,                 // significand in U(0.NF) format]
+    input  logic                XZero, YZero, ZZero,// is the input zero
+    output logic [3*`NF+3:0]    Am,                 // addend aligned for addition in U(NF+5.2NF+1)
+    output logic                ASticky,            // Sticky bit calculated from the aliged addend
+    output logic                KillProd            // should the product be set to zero
 );
 
     logic [`NE+1:0]     ACnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
-    logic [4*`NF+3:0]   ZmShifted;        // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
-    logic [4*`NF+3:0]   ZmPreshifted;     // input to the alignment shifter U(NF+5.3NF+1)
-    logic KillZ;
+    logic [4*`NF+3:0]   ZmShifted;      // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+    logic [4*`NF+3:0]   ZmPreshifted;   // input to the alignment shifter U(NF+5.3NF+1)
+    logic               KillZ;          // should the addend be killed
 
     ///////////////////////////////////////////////////////////////////////////////
     // Alignment shifter

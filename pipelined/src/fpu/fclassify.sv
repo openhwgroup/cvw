@@ -26,18 +26,18 @@
 `include "wally-config.vh"
 
 module fclassify (
-    input logic         Xs,     // sign bit
-    input logic         XNaN,   // is NaN
-    input logic         XSNaN,  // is signaling NaN
-    input logic         XSubnorm,// is Subnormal
-    input logic         XZero,  // is zero
-    input logic         XInf,   // is infinity
-    output logic [`XLEN-1:0] ClassRes// classify result
+    input  logic                Xs,         // sign bit
+    input  logic                XNaN,       // is NaN
+    input  logic                XSNaN,      // is signaling NaN
+    input  logic                XSubnorm,   // is Subnormal
+    input  logic                XZero,      // is zero
+    input  logic                XInf,       // is infinity
+    output logic [`XLEN-1:0]    ClassRes    // classify result
 );
 
-    logic PInf, PZero, PNorm, PSubnorm;
-    logic NInf, NZero, NNorm, NSubnorm;
-    logic XNorm;
+    logic PInf, PZero, PNorm, PSubnorm; // is the input a positive infinity/zero/normal/subnormal
+    logic NInf, NZero, NNorm, NSubnorm; // is the input a negitive infinity/zero/normal/subnormal
+    logic XNorm;                        // is the input normal
    
     // determine the sub categories
     assign XNorm= ~(XNaN | XInf| XSubnorm| XZero);
