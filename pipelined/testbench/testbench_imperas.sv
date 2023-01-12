@@ -35,7 +35,7 @@
 `define PrintHPMCounters 0
 `define BPRED_LOGGER 0
 
-module testbench;
+module testbench_imperas;
   parameter DEBUG=0;
   parameter TEST="none";
  
@@ -405,32 +405,6 @@ logic [3:0] dummy;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters) begin
-    integer HPMCindex;
-    string  HPMCnames[] = '{"Mcycle",
-                            "------",
-                            "InstRet",
-                            "Load Stall",
-                            "Br Dir Wrong",
-                            "Br Count",
-                            "Br Target Wrong",
-                            "Jump, JR, Jal",
-                            "RAS Wrong",
-                            "ret",
-                            "Instr Class Wrong",
-                            "D Cache Access",
-                            "D Cache Miss",
-                            "I Cache Access",
-                            "I Cache Miss"};
-    always @(negedge clk) begin
-      if(DCacheFlushStart & ~DCacheFlushDone) begin
-        for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
-          // unlikely to have more than 10M in any counter.
-          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex], HPMCnames[HPMCindex]);
-        end
-      end
-    end
-  end
 
   // track the current function or global label
   if (DEBUG == 1) begin : FunctionName
@@ -476,19 +450,6 @@ logic [3:0] dummy;
         release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
         end
       end
-
-      if (`BPRED_LOGGER) begin
-        string direction;
-        int    file;
-        initial
-          file = $fopen("branch.log", "w");
-        always @(posedge clk) begin
-           if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-             direction = dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcM ? "t" : "n";
-             $fwrite(file, "%h %s\n", dut.core.PCM, direction);
-           end
-        end
-      end
     end
 
   // check for hange up.
@@ -509,51 +470,6 @@ logic [3:0] dummy;
 	  $stop;
 	end
   end
-/* -----\/----- EXCLUDED -----\/-----
-
-  // rvvi tracer
-  localparam int ILEN   = `XLEN;  // Instruction length in bits
-  localparam int XLEN   = `XLEN;  // GPR length in bits
-  localparam int FLEN   = `FLEN;  // FPR length in bits
-  localparam int VLEN   = 0; // Vector register size in bits
-  localparam int NHART  = 1;   // Number of harts reported
-  localparam int RETIRE = 1; // Number of instructions that can retire during valid event
-
-  logic 	  TraceClk;                                      // Interface clock
-
-  logic 	  valid      [(NHART-1):0][(RETIRE-1):0];   // Retired instruction
-  logic [63:0] order      [(NHART-1):0][(RETIRE-1):0];   // Unique instruction order count (no gaps or reuse)
-  logic [(ILEN-1):0] insn       [(NHART-1):0][(RETIRE-1):0];   // Instruction bit pattern
-  logic 				trap       [(NHART-1):0][(RETIRE-1):0];   // Trapped instruction
-  logic 				halt       [(NHART-1):0][(RETIRE-1):0];   // Halted  instruction
-  logic 				intr       [(NHART-1):0][(RETIRE-1):0];   // (RVFI Legacy) Flag first instruction of trap handler
-  logic [1:0] 		mode       [(NHART-1):0][(RETIRE-1):0];   // Privilege mode of operation
-  logic [1:0] 		ixl        [(NHART-1):0][(RETIRE-1):0];   // XLEN mode 32/64 bit
-
-  logic [(XLEN-1):0] pc_rdata   [(NHART-1):0][(RETIRE-1):0];   // PC of insn
-  logic [(XLEN-1):0] pc_wdata   [(NHART-1):0][(RETIRE-1):0];   // PC of next instruction
-
-  // X Registers
-  logic [31:0][(XLEN-1):0] x_wdata    [(NHART-1):0][(RETIRE-1):0];   // X data value
-  logic [31:0] 			  x_wb       [(NHART-1):0][(RETIRE-1):0];   // X data writeback (change) flag
-
-  // F Registers
-  logic [31:0][(FLEN-1):0] f_wdata    [(NHART-1):0][(RETIRE-1):0];   // F data value
-  logic [31:0] 			  f_wb       [(NHART-1):0][(RETIRE-1):0];   // F data writeback (change) flag
-
-  // V Registers
-  logic [31:0][(VLEN-1):0] v_wdata    [(NHART-1):0][(RETIRE-1):0];   // V data value
-  logic [31:0] 			  v_wb       [(NHART-1):0][(RETIRE-1):0];   // V data writeback (change) flag
-
-  // Control & State Registers
-  logic [4095:0][(XLEN-1):0] csr        [(NHART-1):0][(RETIRE-1):0];   // Full CSR Address range
-  logic [4095:0] 			csr_wb     [(NHART-1):0][(RETIRE-1):0];   // CSR writeback (change) flag
-
-  logic 					lrsc_cancel[(NHART-1):0][(RETIRE-1):0];   // Implementation defined 
-  rvviTrace #(`XLEN, `XLEN, `FLEN, 0, 1, 1) rvviTrace(.clk(TraceClk), .valid, .order, .insn, .trap, .halt, .intr,
-    .mode, .ixl, .pc_rdata, .pc_wdata, .x_wdata, .x_wb, .f_wdata, .f_wb, .v_wdata, .v_wb,
-    .csr, .csr_wb, .lrsc_cancel);
- -----/\----- EXCLUDED -----/\----- */
 
   rvviTrace rvviTrace();
   
@@ -791,97 +707,3 @@ module rvviTrace();
 
 endmodule
 
-/* -----\/----- EXCLUDED -----\/-----
-module rvviTrace #(
-    parameter int ILEN   = `XLEN,  // Instruction length in bits
-    parameter int XLEN   = `XLEN,  // GPR length in bits
-    parameter int FLEN   = `FLEN,  // FPR length in bits
-    parameter int VLEN   = 0, // Vector register size in bits
-    parameter int NHART  = 1,   // Number of harts reported
-    parameter int RETIRE = 1    // Number of instructions that can retire during valid event
-  )(  
-  //
-  // RISCV output signals
-  //
-  output logic 	  clk,                                      // Interface clock
-
-  output logic 	  valid      [(NHART-1):0][(RETIRE-1):0],   // Retired instruction
-  output logic [63:0] order      [(NHART-1):0][(RETIRE-1):0],   // Unique instruction order count (no gaps or reuse)
-  output logic [(ILEN-1):0] insn       [(NHART-1):0][(RETIRE-1):0],   // Instruction bit pattern
-  output logic 				trap       [(NHART-1):0][(RETIRE-1):0],   // Trapped instruction
-  output logic 				halt       [(NHART-1):0][(RETIRE-1):0],   // Halted  instruction
-  output logic 				intr       [(NHART-1):0][(RETIRE-1):0],   // (RVFI Legacy) Flag first instruction of trap handler
-  output logic [1:0] 		mode       [(NHART-1):0][(RETIRE-1):0],   // Privilege mode of operation
-  output logic [1:0] 		ixl        [(NHART-1):0][(RETIRE-1):0],   // XLEN mode 32/64 bit
-
-  output logic [(XLEN-1):0] pc_rdata   [(NHART-1):0][(RETIRE-1):0],   // PC of insn
-  output logic [(XLEN-1):0] pc_wdata   [(NHART-1):0][(RETIRE-1):0],   // PC of next instruction
-
-  // X Registers
-  output logic [31:0][(XLEN-1):0] x_wdata    [(NHART-1):0][(RETIRE-1):0],   // X data value
-  output logic [31:0] 			  x_wb       [(NHART-1):0][(RETIRE-1):0],   // X data writeback (change) flag
-
-  // F Registers
-  output logic [31:0][(FLEN-1):0] f_wdata    [(NHART-1):0][(RETIRE-1):0],   // F data value
-  output logic [31:0] 			  f_wb       [(NHART-1):0][(RETIRE-1):0],   // F data writeback (change) flag
-
-  // V Registers
-  output logic [31:0][(VLEN-1):0] v_wdata    [(NHART-1):0][(RETIRE-1):0],   // V data value
-  output logic [31:0] 			  v_wb       [(NHART-1):0][(RETIRE-1):0],   // V data writeback (change) flag
-
-  // Control & State Registers
-  output logic [4095:0][(XLEN-1):0] csr        [(NHART-1):0][(RETIRE-1):0],   // Full CSR Address range
-  output logic [4095:0] 			csr_wb     [(NHART-1):0][(RETIRE-1):0],   // CSR writeback (change) flag
-
-  output logic                      lrsc_cancel[(NHART-1):0][(RETIRE-1):0]   // Implementation defined cancel
-  );
-  
-
-  assign clk = dut.clk;
-  // *** need to pipeline to writeback stage.
-  assign valid = dut.core.ieu.InstrValidM;
-  assign insn = dut.core.ifu.InstrM;
-  assign pc_rdata = dut.core.ifu.PCM;
-
-  always_ff @(posedge clk) begin
-	if(valid) begin
-	  $display("PC = %d, insn = %d", pc_rdata, insn);
-	end
-  end
-  
-  
-  //
-  // Synchronization of NETs
-  //
-  wire 								clkD;
-  assign #1 clkD = clk;
-
-  string 							name[$];
-  int 								value[$];
-  longint 							tslot[$];
-  int 								nets[string];
-
-  function automatic void net_push(input string vname, input int vvalue);
-    longint 						vslot = $time;
-    name.push_front(vname);
-    value.push_front(vvalue);
-    tslot.push_front(vslot);
-  endfunction
-
-  function automatic int net_pop(output string vname, output int vvalue, output longint vslot);
-    int 							ok;
-    string 							msg;
-    if (name.size() > 0) begin
-      vname  = name.pop_back();
-      vvalue = value.pop_back();
-      vslot  = tslot.pop_back();
-      nets[vname] = vvalue;
-      ok = 1;
-    end else begin
-      ok = 0;
-    end
-    return ok;
-  endfunction
-
-endmodule
- -----/\----- EXCLUDED -----/\----- */
