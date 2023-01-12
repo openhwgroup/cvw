@@ -37,8 +37,8 @@ module rvviTrace #(
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
-  
-  
+  logic [`XLEN-1:0] 			 CSRArray [logic[4095:0]];
+
 
   // tracer signals
   logic 						 clk;
@@ -81,6 +81,28 @@ module rvviTrace #(
   assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
   assign STATUS_SXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
+
+  assign MSTATUS = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;              // 300
+  assign MSTATUSH = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;            // 310
+  assign MTVEC = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;                  // 305
+  assign MEPC_REGW = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;                    // 341
+  assign MCOUNTEREN_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;        // 306
+  assign MCOUNTINHIBIT_REGW = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;  // 320
+  assign MEDELEG_REGW = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;              // 302
+  assign MIDELEG_REGW = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;              // 303
+  assign MIP_REGW = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;                      // 344
+  assign MIE_REGW = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;                      // 304
+  assign MISA_REGW = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;                    // 301
+  assign MHARTID_REGW = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;              // F14
+  assign MSCRATCH_REGW = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;            // 340
+  assign MCAUSE_REGW = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;                // 342
+  assign MTVAL_REGW = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;                  // 343
+  assign MVENDORID = '0;                                                                 // F11
+  assign MARCHID = '0;                                                                   // F12
+  assign MIMPID = `XLEN'h100;                                                            // F13
+  assign MCONFIGPTR = '0;                                                                // F15
+  assign MTINST = '0;                                                                    // 34A
+
 
   genvar 							index;
   assign rf[0] = '0;
@@ -148,7 +170,7 @@ module rvviTrace #(
 	  if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
 		$display("PC = %08x, insn = %08x", pc_rdata[0][0], insn[0][0]);
 	  else if(`PRINT_MOST & !`PRINT_ALL)
-		$display("PC = %08x, insn = %08x, trap = %1d, halt = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x, x%02d = %08x", pc_rdata[0][0], insn[0][0], trap[0][0], halt[0][0], mode[0][0], ixl[0][0], pc_wdata[0][0], rf_a3, x_wdata[0][0][rf_a3]);
+		$display("PC = %08x, insn = %08x, trap = %1d, halt = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x, x%02d = %016x, f%02d = %016x", pc_rdata[0][0], insn[0][0], trap[0][0], halt[0][0], mode[0][0], ixl[0][0], pc_wdata[0][0], rf_a3, x_wdata[0][0][rf_a3], frf_a4, f_wdata[0][0][frf_a4]);
 	  else if(`PRINT_ALL) begin
 		$display("PC = %08x, insn = %08x, trap = %1d, halt = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", pc_rdata[0][0], insn[0][0], trap[0][0], halt[0][0], mode[0][0], ixl[0][0], pc_wdata[0][0]);
 	  	for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
