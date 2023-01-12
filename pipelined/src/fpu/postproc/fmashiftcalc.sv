@@ -4,39 +4,36 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Fma shift calculation
+// Purpose: FMA shift calculation
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
+
 `include "wally-config.vh"
 
 module fmashiftcalc(
-    input logic  [3*`NF+3:0]            FmaSm,      // the positive sum
-    input logic  [$clog2(3*`NF+5)-1:0]  FmaSCnt,    // normalization shift count
-    input logic  [`FMTBITS-1:0]         Fmt,        // precision 1 = double 0 = single
-    input logic  [`NE+1:0]              FmaSe,      // sum's exponent
-    output logic [`NE+1:0]              NormSumExp, //*** add fma // exponent of the normalized sum not taking into account Subnormal or zero results
-    output logic                        FmaSZero,   // is the result Subnormalized - calculated before LZA corection
-    output logic                        FmaPreResultSubnorm, // is the result Subnormalized - calculated before LZA corection
+    input  logic [`FMTBITS-1:0]         Fmt,            // precision 1 = double 0 = single
+    input  logic [`NE+1:0]              FmaSe,          // sum's exponent
+    input  logic [3*`NF+3:0]            FmaSm,          // the positive sum
+    input  logic [$clog2(3*`NF+5)-1:0]  FmaSCnt,        // normalization shift count
+    output logic [`NE+1:0]              NormSumExp,     // exponent of the normalized sum not taking into account Subnormal or zero results
+    output logic                        FmaSZero,       // is the result subnormal - calculated before LZA corection
+    output logic                        FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
     output logic [$clog2(3*`NF+5)-1:0]  FmaShiftAmt,    // normalization shift count
     output logic [3*`NF+5:0]            FmaShiftIn      // is the sum zero
 );
@@ -46,8 +43,10 @@ module fmashiftcalc(
     ///////////////////////////////////////////////////////////////////////////////
     // Normalization
     ///////////////////////////////////////////////////////////////////////////////
+
     // Determine if the sum is zero
     assign FmaSZero = ~(|FmaSm);
+
     // calculate the sum's exponent
     assign PreNormSumExp = FmaSe + {{`NE+2-$unsigned($clog2(3*`NF+5)){1'b1}}, ~FmaSCnt} + (`NE+2)'(`NF+3);
 
@@ -83,8 +82,7 @@ module fmashiftcalc(
 
     end
     
-    // determine if the result is Subnormalized
-    
+    // determine if the result is subnormal: (NormSumExp <= 0) & (NormSumExp >= -FracLen) & ~FmaSZero
     if (`FPSIZES == 1) begin
         logic Sum0LEZ, Sum0GEFL;
         assign Sum0LEZ  = PreNormSumExp[`NE+1] | ~|PreNormSumExp;
@@ -137,16 +135,8 @@ module fmashiftcalc(
 
     end
 
-    // 010. when should be 001.
-    //      - shift left one
-    //      - add one from exp
-    //      - if kill prod dont add to exp
-
-    // Determine if the result is Subnormal
-    // assign FmaPreResultSubnorm = $signed(NormSumExp)<=0 & ($signed(NormSumExp)>=$signed(-FracLen)) & ~FmaSZero;
-
     // set and calculate the shift input and amount
-    //  - shift once if killing a product and the result is Subnormalized
+    //  - shift once if killing a product and the result is subnormal
     assign FmaShiftIn = {2'b0, FmaSm};
     if (`FPSIZES == 1)
         assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*`NF+5)-1:0]+($clog2(3*`NF+5))'(`NF+2): FmaSCnt+1;

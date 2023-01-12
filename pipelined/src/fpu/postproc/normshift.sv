@@ -6,31 +6,27 @@
 //
 // Purpose: normalization shifter
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
 
- // convert shift
+    // convert shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
     //          process:
     //              - start - CalcExp = 1 + XExp - Largest Bias
@@ -45,7 +41,7 @@
     //                  |     keep          |
     //
     //      fp -> fp:
-    //          - if result is Subnormalized or underflowed:
+    //          - if result is subnormal or underflowed:
     //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | << NF+CalcExp-1
     //          process:
     //             - start
@@ -58,17 +54,26 @@
     //                 |   0's  |     mantissa      |     0's      |
     //                 |       keep      |
     //
-    //          - if the input is Subnormalized:
+    //          - if the input is subnormal:
     //              |     lzcIn      | 0's if nessisary | << ZeroCnt+1
     //              - plus 1 to shift out the first 1
     //
     //      int -> fp: |     lzcIn      | 0's if nessisary | << ZeroCnt+1
     //              - plus 1 to shift out the first 1
 
+    // fma shift
+    //      | 00 |           Sm           | << LZA output
+    //             .
+    //      - two extra bits so we can correct for an LZA error of 1 or 2
+
+    // divsqrt shift
+    //      | Nf 0's |      Qm       | << calculated shift amount
+    //        .
+
 module normshift(
-    input logic  [`LOGNORMSHIFTSZ-1:0]      ShiftAmt,   // normalization shift count
-    input logic  [`NORMSHIFTSZ-1:0]              ShiftIn,        // is the sum zero
-    output logic [`NORMSHIFTSZ-1:0]             Shifted        // is the sum zero
+    input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
+    input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
+    output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
 );
     assign Shifted = ShiftIn << ShiftAmt;
 

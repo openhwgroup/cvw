@@ -6,26 +6,22 @@
 //
 // Purpose: M extension multiply and divide
 // 
-// A component of the Wally configurable RISC-V project.
+// A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
@@ -36,7 +32,7 @@ module mdu (
 	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
 		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
 	       input logic [2:0] 	Funct3E, Funct3M,
-	       input logic 		MDUE, W64E,
+	       input logic 		IntDivE, W64E, 
 	       // Writeback stage
 	       output logic [`XLEN-1:0] MDUResultW,
 	       // Divide Done
@@ -51,7 +47,6 @@ module mdu (
 	logic [`XLEN*2-1:0] ProdM; 
 
 	logic 		     DivSignedE;	
-	logic            DivE;
 	logic           W64M; 
 
 	// Multiplier
@@ -65,9 +60,8 @@ module mdu (
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
 	end else begin
-		assign DivE = MDUE & Funct3E[2];
 		assign DivSignedE = ~Funct3E[0];
-		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .DivE, 
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .IntDivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		
