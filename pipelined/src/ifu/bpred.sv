@@ -156,11 +156,11 @@ module bpred (
   // *** needs to include flushX
   RASPredictor RASPredictor(.clk(clk),
        .reset(reset),
-       .pop(PredInstrClassF[2] & ~StallF),
-       .popPC(RASPCF),
-       .push(InstrClassE[3] & ~StallE),
+       .PopF(PredInstrClassF[2] & ~StallF),
+       .RASPCF,
+       .PushE(InstrClassE[3] & ~StallE),
        .incr(1'b0),
-       .pushPC(PCLinkE));
+       .PCLinkE);
 
   assign BPPredPCF = PredInstrClassF[2] ? RASPCF : BTBPredPCF;
 
