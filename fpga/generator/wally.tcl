@@ -14,6 +14,9 @@ read_ip IP/xlnx_ahblite_axi_bridge.srcs/sources_1/ip/xlnx_ahblite_axi_bridge/xln
 read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter.xci
 read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 
+# Added crossbar - Jacob Pease <2023-01-12 Thu>
+read_ip IP/xlnx_axi_crossbar.srcs/sources_1/ip/xlnx_axi_crossbar/xlnx_axi_crossbar.xci
+
 
 read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
 read_verilog  {../src/fpgaTop.v}
