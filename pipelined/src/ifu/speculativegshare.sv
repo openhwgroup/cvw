@@ -104,7 +104,8 @@ module speculativegshare
   flopenr #(2) PredictionRegE(clk, reset, ~StallE, DirPredictionD, DirPredictionE);
 
   // New prediction pipeline
-  satCounter2 BPDirUpdateF(.BrDir(DirPredictionF[1]), .OldState(DirPredictionF), .NewState(NewDirPredictionF));
+  assign NewDirPredictionF = {DirPredictionF[1], DirPredictionF[1]};
+  
   flopenr #(2) NewPredDReg(clk, reset, ~StallD, NewDirPredictionF, NewDirPredictionD);
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
   flopenr #(2) NewPredMReg(clk, reset, ~StallM, NewDirPredictionE, NewDirPredictionM);
