@@ -92,9 +92,13 @@ module testbench;
       testadr = 0;
       testadrNoBase = 0;
 
-	  testName =     "rv64i_m/I/src/add-01.S";
+	  //testName =     "rv64i_m/I/src/add-01.S";
+	  testName =     "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S";
+	  
 
-	  pathname =     "../../tests/riscof/work/riscv-arch-test/";
+	  //pathname =     "../../tests/riscof/work/riscv-arch-test/";
+	  pathname = "../../tests/riscof/work/wally-riscv-arch-test/";
+	  
 	  memfilename = {pathname, testName, "/ref/ref.elf.memfile"};
       if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
 	  else $error("Imperas test bench requires BUS.");
