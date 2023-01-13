@@ -65,7 +65,7 @@ module bpred (
   logic                     BTBValidF;
   logic [1:0]               DirPredictionF;
 
-  logic [4:0]               BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [4:0]               PredInstrClassF, PredInstrClassD, PredInstrClassE;
   logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
   logic                     TargetWrongE;
   logic                     FallThroughWrongE;
@@ -95,7 +95,7 @@ module bpred (
   end else if (`BPTYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
     
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -106,7 +106,7 @@ module bpred (
   end else if (`BPTYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
@@ -129,10 +129,10 @@ module bpred (
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-  assign SelBPPredF = ((BPInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
-         BPInstrClassF[3] |
-         (BPInstrClassF[2] & BTBValidF) | 
-         BPInstrClassF[1] & BTBValidF) ;
+  assign SelBPPredF = ((PredInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
+         PredInstrClassF[3] |
+         (PredInstrClassF[2] & BTBValidF) | 
+         PredInstrClassF[1] & BTBValidF) ;
 
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
@@ -143,7 +143,7 @@ module bpred (
           .*, // Stalls and flushes
           .LookUpPC(PCNextF),
           .TargetPC(BTBPredPCF),
-          .InstrClass(BPInstrClassF),
+          .InstrClass(PredInstrClassF),
           .Valid(BTBValidF),
           // update
           .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
@@ -156,13 +156,13 @@ module bpred (
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   RASPredictor RASPredictor(.clk(clk),
        .reset(reset),
-       .pop(BPInstrClassF[3] & ~StallF),
+       .pop(PredInstrClassF[3] & ~StallF),
        .popPC(RASPCF),
        .push(InstrClassE[4] & ~StallE),
        .incr(1'b0),
        .pushPC(PCLinkE));
 
-  assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
+  assign BPPredPCF = PredInstrClassF[3] ? RASPCF : BTBPredPCF;
 
   // the branch predictor needs a compact decoding of the instruction class.
   // *** consider adding in the alternate return address x5 for returns.
@@ -182,8 +182,8 @@ module bpred (
     {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
 
   // pipeline the class
-  flopenrc #(5) BPInstrClassRegD(clk, reset, FlushD, ~StallD, BPInstrClassF, BPInstrClassD);
-  flopenrc #(5) BPInstrClassRegE(clk, reset, FlushE, ~StallE, BPInstrClassD, BPInstrClassE);
+  flopenrc #(5) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
+  flopenrc #(5) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
 
   // Check the prediction
   // first check if the target or fallthrough address matches what was predicted.
@@ -201,7 +201,7 @@ module bpred (
   
   // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
   // Also we want to track this in a performance counter.
-  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;
+  assign PredictionInstrClassWrongE = InstrClassE != PredInstrClassE;
 
   // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
   // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
