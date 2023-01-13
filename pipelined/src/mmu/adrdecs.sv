@@ -31,7 +31,7 @@ module adrdecs (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic                AccessRW, AccessRX, AccessRWX,
   input  logic [1:0]          Size,
-  output logic [10:0]          SelRegions
+  output logic [11:0]          SelRegions
 );
 
   localparam logic [3:0]          SUPPORTED_SIZE = (`LLEN == 32 ? 4'b0111 : 4'b1111);
@@ -46,8 +46,9 @@ module adrdecs (
   adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[3]);
   adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[2]);
   adrdec sdcdec(PhysicalAddress, `SDC_BASE, `SDC_RANGE, `SDC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE & 4'b1100, SelRegions[1]); 
-
-  assign SelRegions[0] = ~|(SelRegions[10:1]); // none of the regions are selected
+  adrdec newsdc(PhysicalAddressm `SDC2_BASE, `SDC2RANGE, 1'b1, AccessRW, Size, SUPPORTED_SIZE, SelRegions[11]);
+ 
+  assign SelRegions[0] = ~|(SelRegions[11:1]); // none of the regions are selected
 
 endmodule
 
