@@ -368,3 +368,11 @@ static int ini_sd(void) {
     drv_status &= ~STA_NOINIT;
     return 0;
 }
+
+int main() {
+  ini_sd();
+
+  
+  
+  return 0;
+}

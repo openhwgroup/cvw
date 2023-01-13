@@ -123,8 +123,9 @@
 `define SDC_RANGE  56'h0000001F
 
 // Temporary Boot Process Stuff
+`define SDC2_SUPPORTED 1'b1
 `define SDC2_BASE  56'h00013000
-`defube SDC2_RANGE 56'h0000007F
+`define SDC2_RANGE 56'h0000007F
 
 // Bus Interface width
 `define AHBW 64
