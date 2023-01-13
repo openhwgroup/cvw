@@ -6,6 +6,8 @@
 //
 // Purpose: FMA Sign Logic
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13 (Table 13.8)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

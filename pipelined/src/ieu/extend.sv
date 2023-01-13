@@ -4,8 +4,10 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: 
+// Purpose: Produce sign-extended immediates from various formats
 // 
+// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.3)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

@@ -6,6 +6,8 @@
 //
 // Purpose: Radix 2 Quotient Digit Selection
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
