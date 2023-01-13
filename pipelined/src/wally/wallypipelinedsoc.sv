@@ -4,12 +4,7 @@
 // Written: David_Harris@hmc.edu 6 November 2020
 // Modified: 
 //
-// Purpose: System on chip including pipelined processor and memories
-// Full RV32/64IC instruction set
-//
-// Note: the CSRs do not support the following features
-//- Disabling portions of the instruction set with bits of the MISA register
-//- Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
+// Purpose: System on chip including pipelined processor and uncore memories/peripherals
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -32,35 +27,36 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic 		   clk, reset_ext, 
-  output logic       reset,
+  input  logic 		            clk, 
+  input  logic                reset_ext, 
+  output logic                reset,
   // AHB Interface
-  input  logic [`AHBW-1:0]  HRDATAEXT,
-  input  logic 		   HREADYEXT, HRESPEXT,
-  output logic 		   HSELEXT,
+  input  logic [`AHBW-1:0]    HRDATAEXT,
+  input  logic 		            HREADYEXT, HRESPEXT,
+  output logic 		            HSELEXT,
   // outputs to external memory, shared with uncore memory
-  output logic 		   HCLK, HRESETn,
+  output logic 		            HCLK, HRESETn,
   output logic [`PA_BITS-1:0] HADDR,
-  output logic [`AHBW-1:0] HWDATA,
-  output logic [`XLEN/8-1:0] HWSTRB,
-  output logic 		   HWRITE,
-  output logic [2:0] 	   HSIZE,
-  output logic [2:0] 	   HBURST,
-  output logic [3:0] 	   HPROT,
-  output logic [1:0] 	   HTRANS,
-  output logic 		   HMASTLOCK,
-  output logic 		   HREADY,
+  output logic [`AHBW-1:0]    HWDATA,
+  output logic [`XLEN/8-1:0]  HWSTRB,
+  output logic 		            HWRITE,
+  output logic [2:0] 	        HSIZE,
+  output logic [2:0] 	        HBURST,
+  output logic [3:0] 	        HPROT,
+  output logic [1:0] 	        HTRANS,
+  output logic 		            HMASTLOCK,
+  output logic 		            HREADY,
   // I/O Interface
-  input  logic       TIMECLK,
-  input logic [31:0] 	   GPIOPinsIn,
-  output logic [31:0] 	   GPIOPinsOut, GPIOPinsEn,
-  input logic 		   UARTSin,
-  output logic 		   UARTSout,
-  input logic 		   SDCCmdIn,
-  output logic 		   SDCCmdOut,
-  output logic 		   SDCCmdOE,			  
-  input logic [3:0] 	   SDCDatIn,
-  output logic 		   SDCCLK			  
+  input  logic                TIMECLK,
+  input  logic [31:0] 	        GPIOPinsIn,
+  output logic [31:0] 	      GPIOPinsOut, GPIOPinsEn,
+  input  logic 		            UARTSin,
+  output logic 		            UARTSout,
+  input  logic 		            SDCCmdIn,
+  output logic 		            SDCCmdOut,
+  output logic 		            SDCCmdOE,			  
+  input  logic [3:0] 	        SDCDatIn,
+  output logic 		            SDCCLK			  
 );
 
   // Uncore signals

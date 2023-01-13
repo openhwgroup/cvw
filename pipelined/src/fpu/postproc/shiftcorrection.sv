@@ -6,6 +6,8 @@
 //
 // Purpose: shift correction
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -42,11 +44,13 @@ module shiftcorrection(
     output logic [`CORRSHIFTSZ-1:0] Mf,                     // the shifted sum before LZA correction
     output logic [`NE+1:0]          Qe                      // corrected exponent for divider
 );
-    logic [3*`NF+3:0]           CorrSumShifted; // the shifted sum after LZA correction
-    logic [`CORRSHIFTSZ-1:0]    CorrQmShifted;  // the shifted divsqrt result after one bit shift
-    logic                       ResSubnorm;     // is the result Subnormal
-    logic                       LZAPlus1;       // add one or two to the sum's exponent due to LZA correction
-    logic                       LeftShiftQm;    // should the divsqrt result be shifted one to the left
+
+    logic [3*`NF+3:0]           CorrSumShifted;             // the shifted sum after LZA correction
+    logic [`CORRSHIFTSZ-1:0]    CorrQm0, CorrQm1;           // portions of Shifted to select for CorrQmShifted
+    logic [`CORRSHIFTSZ-1:0]    CorrQmShifted;              // the shifted divsqrt result after one bit shift
+    logic                       ResSubnorm;                 // is the result Subnormal
+    logic                       LZAPlus1;                   // add one or two to the sum's exponent due to LZA correction
+    logic                       LeftShiftQm;                // should the divsqrt result be shifted one to the left
 
     // LZA correction
     assign LZAPlus1 = Shifted[`NORMSHIFTSZ-1];
@@ -59,8 +63,9 @@ module shiftcorrection(
     // correct the shifting of the divsqrt caused by producing a result in (2, .5] range
     //    condition: if the msb is 1 or the exponent was one, but the shifted quotent was < 1 (Subnorm)
     assign LeftShiftQm = (LZAPlus1|(DivQe==1&~LZAPlus1));
-    mux2 #(`CORRSHIFTSZ) divcorrmux(Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2], 
-        Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1], LeftShiftQm, CorrQmShifted);
+    assign CorrQm0 = Shifted[`NORMSHIFTSZ-3:`NORMSHIFTSZ-`CORRSHIFTSZ-2];
+    assign CorrQm1 = Shifted[`NORMSHIFTSZ-2:`NORMSHIFTSZ-`CORRSHIFTSZ-1];
+    mux2 #(`CORRSHIFTSZ) divcorrmux(CorrQm0, CorrQm1, LeftShiftQm, CorrQmShifted);
     
     // if the result of the divider was calculated to be subnormal, then the result was correctly normalized, so select the top shifted bits
     always_comb

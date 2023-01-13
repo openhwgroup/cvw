@@ -4,8 +4,10 @@
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
 //
-// Purpose: Post-Processing
+// Purpose: Post-Processing: normalization, rounding, sign, flags, special cases
 // 
+// Documentation: RISC-V System on Chip Design Chapter 13
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

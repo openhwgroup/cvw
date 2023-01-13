@@ -6,6 +6,8 @@
 //
 // Purpose: M extension multiply and divide
 // 
+// Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.21)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -26,56 +28,49 @@
 
 `include "wally-config.vh"
 
-module mdu (
-	       input logic 		clk, reset,
-	       // Execute Stage interface
-	       //    input logic [`XLEN-1:0] 	SrcAE, SrcBE,
-		   input logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	       input logic [2:0] 	Funct3E, Funct3M,
-	       input logic 		IntDivE, W64E, 
-	       // Writeback stage
-	       output logic [`XLEN-1:0] MDUResultW,
-	       // Divide Done
-	       output logic 		DivBusyE, 
-	       // hazards
-	       input logic 		StallM, StallW, FlushE, FlushM, FlushW 
-	       );
+module mdu(
+  input  logic 							clk, reset,
+  input  logic 							StallM, StallW, 
+  input  logic							FlushE, FlushM, FlushW,
+	input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
+	input  logic [2:0] 				Funct3E, Funct3M,									// type of MDU operation
+	input  logic 							IntDivE, W64E, 										// Integer division/remainder, and W-type instrutions
+	output logic [`XLEN-1:0] 	MDUResultW,												// multiply/divide result
+	output logic 							DivBusyE													// busy signal to stall pipeline in Execute stage
+);
 
-	logic [`XLEN-1:0] MDUResultM;
-	logic [`XLEN-1:0] PrelimResultM;
-	logic [`XLEN-1:0] QuotM, RemM;
-	logic [`XLEN*2-1:0] ProdM; 
-
-	logic 		     DivSignedE;	
-	logic           W64M; 
+	logic [`XLEN*2-1:0] 			ProdM; 														// double-width product from mul
+	logic [`XLEN-1:0] 				QuotM, RemM;											// quotient and remainder from intdivrestoring
+	logic [`XLEN-1:0] 				PrelimResultM;										// selected result before W truncation
+	logic [`XLEN-1:0] 				MDUResultM;												// result after W truncation
+	logic           					W64M; 														// W-type instruction
 
 	// Multiplier
 	mul mul(.clk, .reset, .StallM, .FlushM, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .ProdM);
 
-	// Divide
+	// Divider
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
-	// When F extensions are supported, use the FPU divider instead
+	// When IDIV_ON_FPU is set, use the FPU divider instead
 	if (`IDIV_ON_FPU) begin  
 	  assign QuotM = 0;
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
 	end else begin
-		assign DivSignedE = ~Funct3E[0];
-		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE, .W64E, .IntDivE, 
+		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		
 	// Result multiplexer
 	always_comb
 		case (Funct3M)	   
-			3'b000: PrelimResultM = ProdM[`XLEN-1:0];
-			3'b001: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b010: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b011: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];
-			3'b100: PrelimResultM = QuotM;
-			3'b101: PrelimResultM = QuotM;
-			3'b110: PrelimResultM = RemM;
-			3'b111: PrelimResultM = RemM;
+			3'b000: PrelimResultM = ProdM[`XLEN-1:0];					// mul
+			3'b001: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulh
+			3'b010: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulhsu
+			3'b011: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];		// mulhu
+			3'b100: PrelimResultM = QuotM;										// div
+			3'b101: PrelimResultM = QuotM;										// divu
+			3'b110: PrelimResultM = RemM;											// rem
+			3'b111: PrelimResultM = RemM;											// remu
 		endcase 
 
 	// Handle sign extension for W-type instructions

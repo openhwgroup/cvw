@@ -7,7 +7,10 @@
 //
 // Purpose: Machine-Mode Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
-// 
+// Note: the CSRs do not support the following optional features
+//   - Disabling portions of the instruction set with bits of the MISA register
+//   - Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
