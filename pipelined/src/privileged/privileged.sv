@@ -27,59 +27,63 @@
 
 `include "wally-config.vh"
 
-// *** remove signals not needed by PMA/PMP now that it is moved
 module privileged (
   input  logic             clk, reset,
   input  logic             StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW, 
-(* mark_debug = "true" *)  input  logic             CSRReadM, CSRWriteM,
-  input  logic [`XLEN-1:0] SrcAM,
-  input  logic [`XLEN-1:0] PCM, PCNext2F,
-  input  logic [31:0]      InstrM,
-  output logic [`XLEN-1:0] CSRReadValW,
-  output logic [`XLEN-1:0] UnalignedPCNextF,
-  output logic             RetM, TrapM, 
-  output logic             sfencevmaM,
-  input  logic             InstrValidM, CommittedM, CommittedF, 
-  input  logic             FRegWriteM, LoadStallD,
-  input  logic 		         DirPredictionWrongM,
-  input  logic 		         BTBPredPCWrongM,
-  input  logic 		         RASPredPCWrongM,
-  input  logic 		         PredictionInstrClassWrongM,
-  input  logic [4:0]       InstrClassM,
-  input  logic             DCacheMiss,
-  input  logic             DCacheAccess,
-  input  logic             ICacheMiss,
-  input  logic             ICacheAccess,
-  input  logic             PrivilegedM,
-  input  logic             HPTWInstrAccessFaultM, 
-  input  logic             InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
-  input  logic             InstrMisalignedFaultM, 
-  input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
-  input  logic             IllegalIEUInstrFaultD, IllegalFPUInstrM,
-  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
-  input  logic [63:0]      MTIME_CLINT, 
-  input  logic [`XLEN-1:0] IEUAdrM,
-  input  logic [4:0]       SetFflagsM,
-
-  // Trap signals from pmp/pma in mmu
-  // *** do these need to be split up into one for dmem and one for ifu?
-  // instead, could we only care about the instr and F pins that come from ifu and only care about the load/store and m pins that come from dmem?
-  
-  input logic InstrAccessFaultF,
-  input logic LoadAccessFaultM,
-  input logic StoreAmoAccessFaultM,
-  input logic SelHPTW,
-
-  output logic [1:0]       PrivilegeModeW,
-  output logic [`XLEN-1:0] SATP_REGW,
-  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  output logic  [1:0]      STATUS_MPP,
-  output logic [1:0]       STATUS_FS,
-  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], 
-  output logic [2:0]       FRM_REGW,
-  output logic             BreakpointFaultM, EcallFaultM, WFIStallM, BigEndianM
+  // CSR Reads and Writes, and values needed for traps
+(* mark_debug = "true" *)  input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
+  input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
+  input  logic [31:0]      InstrM,                                    // Instruction
+  input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
+  input  logic [`XLEN-1:0] PCM, PCNext2F,                             // program counter, next PC going to trap/return PC logic
+  // control signals
+  input  logic             InstrValidM,                               // Current instruction is valid (not flushed)
+  input  logic             CommittedM, CommittedF,                    // current instruction is using bus; don't interrupt
+  input  logic             PrivilegedM,                               // privileged instruction
+  // processor events for performance counter logging
+  input  logic             FRegWriteM,                                // instruction will write floating-point registers
+  input  logic             LoadStallD,                                // load instruction is stalling
+  input  logic 		         DirPredictionWrongM,                       // branch predictor guessed wrong directoin
+  input  logic 		         BTBPredPCWrongM,                           // branch predictor guessed wrong target
+  input  logic 		         RASPredPCWrongM,                           // return adddress stack guessed wrong target
+  input  logic 		         PredictionInstrClassWrongM,                // branch predictor guessed wrong instruction class
+  input  logic [4:0]       InstrClassM,                               // actual instruction class
+  input  logic             DCacheMiss,                                // data cache miss
+  input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
+  input  logic             ICacheMiss,                                // instruction cache miss
+  input  logic             ICacheAccess,                              // instruction cache access
+  // fault sources
+  input  logic             InstrAccessFaultF,                         // instruction access fault
+  input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,    // load or store access fault
+  input  logic             HPTWInstrAccessFaultM,                     // hardware page table access fault while fetching instruction PTE
+  input  logic             InstrPageFaultF,                           // page faults
+  input  logic             LoadPageFaultM, StoreAmoPageFaultM,        // page faults
+  input  logic             InstrMisalignedFaultM,                     // misaligned instruction fault
+  input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,  // misaligned data fault
+  input  logic             IllegalIEUInstrFaultD, IllegalFPUInstrM,   // illegal instruction faults
+  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,       // interrupt sources
+  input  logic [63:0]      MTIME_CLINT,                               // timer value from CLINT
+  input  logic [4:0]       SetFflagsM,                                // set FCSR flags from FPU
+  input  logic             SelHPTW,                                   // HPTW in use.  Causes system to use S-mode endianness for accesses
+  // CSR outputs
+  output logic [`XLEN-1:0] CSRReadValW,                               // Value read from CSR
+  output logic [1:0]       PrivilegeModeW,                            // current privilege mode
+  output logic [`XLEN-1:0] SATP_REGW,                                 // supervisor address translation register
+  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,       // status register bits
+  output logic [1:0]       STATUS_MPP, STATUS_FS,                     // status register bits
+  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],       // PMP configuration entries to MMU
+  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
+  output logic [2:0]       FRM_REGW,                                  // FPU rounding mode
+  // PC logic output in privileged unit
+  output logic [`XLEN-1:0] UnalignedPCNextF,                          // Next PC from trap/return PC logic
+  // control outputs  
+  output logic             RetM, TrapM,                               // return instruction, or trap
+  output logic             sfencevmaM,                                // sfence.vma instruction
+  output logic             BigEndianM,                                // Use big endian in current privilege mode
+  // Fault outputs
+  output logic             BreakpointFaultM, EcallFaultM,             // breakpoint and Ecall traps should retire
+  output logic             WFIStallM                                  // Stall in Memory stage for WFI until interrupt or timeout
 );
 
   logic [`LOG_XLEN-1:0] CauseM;

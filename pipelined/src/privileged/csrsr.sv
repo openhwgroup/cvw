@@ -115,7 +115,7 @@ module csrsr (
   ///////////////////////////////////////////
 
   if (`BIGENDIAN_SUPPORTED) begin: endianmux
-    // determine whether bit endian accesses should be made
+    // determine whether big endian accesses should be made
     logic [1:0] EndiannessPrivMode;
     always_comb begin
       if      (SelHPTW)                                  EndiannessPrivMode = `S_MODE;
