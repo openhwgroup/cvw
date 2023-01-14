@@ -72,32 +72,30 @@ module csrm #(parameter
   MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
   MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
 ) (
-  input logic 	     clk, reset, 
-  input logic 	     InstrValidNotFlushedM, 
-  input logic 	     CSRMWriteM, MTrapM,
-  input logic [11:0] 	     CSRAdrM,
-  input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
-  input logic [`XLEN-1:0]  CSRWriteValM,
-  output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
+  input  logic 	            clk, reset, 
+  input  logic 	            InstrValidNotFlushedM, 
+  input  logic 	            CSRMWriteM, MTrapM,
+  input  logic [11:0] 	    CSRAdrM,
+  input  logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
+  input  logic [`XLEN-1:0]  CSRWriteValM,
+  (* mark_debug = "true" *)   input logic [11:0] 	     MIP_REGW, MIE_REGW,
+  output logic [`XLEN-1:0]  CSRMReadValM, MTVEC_REGW,
   (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
-  output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-(* mark_debug = "true" *)      output logic [`XLEN-1:0] MEDELEG_REGW,
-(* mark_debug = "true" *)      output logic [11:0]      MIDELEG_REGW,
-  // 64-bit registers in RV64, or two 32-bit registers in RV32
-  //output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-  output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  output 		     var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
-  (* mark_debug = "true" *)  input logic [11:0] 	     MIP_REGW, MIE_REGW,
-  output logic 	     WriteMSTATUSM, WriteMSTATUSHM,
-  output logic 	     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
+  output logic [31:0]       MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
+(* mark_debug = "true" *)  output logic [`XLEN-1:0] MEDELEG_REGW,
+(* mark_debug = "true" *)  output logic [11:0]      MIDELEG_REGW,
+  output var logic [7:0]    PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
+  output logic 	            WriteMSTATUSM, WriteMSTATUSHM,
+  output logic 	            IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
 );
 
-  logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
-(* mark_debug = "true" *)  logic [`XLEN-1:0] MSCRATCH_REGW;
+  logic [`XLEN-1:0]         MISA_REGW, MHARTID_REGW;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0] MSCRATCH_REGW;
   (* mark_debug = "true" *)   logic [`XLEN-1:0] MCAUSE_REGW, MTVAL_REGW;
-  logic            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
-  logic            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
-  logic            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  logic                     WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
+  logic                     WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
+  logic                     WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
