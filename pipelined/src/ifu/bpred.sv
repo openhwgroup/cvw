@@ -79,7 +79,8 @@ module bpred (
   logic                     BPPredWrongM;
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
-
+  logic [3:0] 				WrongPredInstrClassD;
+  
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
@@ -157,6 +158,8 @@ module bpred (
   RASPredictor RASPredictor(.clk(clk),
        .reset(reset),
        .PopF(PredInstrClassF[2] & ~StallF),
+							.WrongPredInstrClassD,
+							.InstrClassD,
        .RASPCF,
        .PushE(InstrClassE[3] & ~StallE),
        .incr(1'b0),
@@ -213,6 +216,9 @@ module bpred (
   assign RASPredPCWrongE = InstrClassE[2] & PredictionPCWrongE;
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
+
+  // branch class prediction wrong.
+  assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD;
   
   
   // Selects the BP or PC+2/4.

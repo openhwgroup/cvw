@@ -32,12 +32,14 @@ module RASPredictor
   #(parameter int StackSize = 16
     )
   (input logic              clk,
-   input logic              reset,
-   input logic              PopF,
+   input logic 				reset,
+   input logic 				PopF,
    output logic [`XLEN-1:0] RASPCF,
-   input logic              PushE,
-   input logic              incr,
-   input logic [`XLEN-1:0]  PCLinkE
+   input logic [3:0] 		WrongPredInstrClassD,
+   input logic [3:0] 		InstrClassD,
+   input logic 				PushE,
+   input logic 				incr,
+   input logic [`XLEN-1:0] 	PCLinkE
    );
 
   // *** need to update so it either doesn't push until the memory stage
@@ -50,9 +52,9 @@ module RASPredictor
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
   
-  assign CounterEn = PopF | PushE | incr;
+  assign CounterEn = PopF | PushE | incr | WrongPredInstrClassD[2];
 
-  assign PtrD = PopF ? PtrM1 : PtrP1;
+  assign PtrD = PopF | InstrClassD[2] ? PtrM1 : PtrP1;
 
   assign PtrM1 = PtrQ - 1'b1;
   assign PtrP1 = PtrQ + 1'b1;
