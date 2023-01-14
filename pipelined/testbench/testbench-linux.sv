@@ -155,7 +155,7 @@ module testbench;
   `define MCOUNTEREN  `CSR_BASE.csrm.mcounteren.MCOUNTERENreg.q
   `define SCOUNTEREN  `CSR_BASE.csrs.csrs.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
-  `define SSCRATCH    `CSR_BASE.csrs.csrs.SSCRATCHreg.q
+  `define SSCRATCH    `CSR_BASE.csrs.csrs.csrs.SSCRATCHreg.q
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
   `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
   `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q
@@ -700,16 +700,16 @@ module testbench;
           case(ExpectedCSRArrayW[NumCSRPostWIndex])
             "mhartid": `checkCSR(`CSR_BASE.csrm.MHARTID_REGW)
             "mstatus": `checkCSR(`CSR_BASE.csrm.MSTATUS_REGW)
-            "sstatus": `checkCSR(`CSR_BASE.csrs.SSTATUS_REGW)
+            "sstatus": `checkCSR(`CSR_BASE.csrs.csrs.SSTATUS_REGW)
             "mtvec":   `checkCSR(`CSR_BASE.csrm.MTVEC_REGW)
             "mie":     `checkCSR(`CSR_BASE.csrm.MIE_REGW)
             "mideleg": `checkCSR(`CSR_BASE.csrm.MIDELEG_REGW)
             "medeleg": `checkCSR(`CSR_BASE.csrm.MEDELEG_REGW)
             "mepc":    `checkCSR(`CSR_BASE.csrm.MEPC_REGW)
             "mtval":   `checkCSR(`CSR_BASE.csrm.MTVAL_REGW)
-            "sepc":    `checkCSR(`CSR_BASE.csrs.SEPC_REGW)
+            "sepc":    `checkCSR(`CSR_BASE.csrs.csrs.SEPC_REGW)
             "scause":  `checkCSR(`CSR_BASE.csrs.csrs.SCAUSE_REGW)
-            "stvec":   `checkCSR(`CSR_BASE.csrs.STVEC_REGW)
+            "stvec":   `checkCSR(`CSR_BASE.csrs.csrs.STVEC_REGW)
             "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
             "mip": begin
                        `checkCSR(`CSR_BASE.csrm.MIP_REGW)
@@ -738,7 +738,7 @@ module testbench;
 
   // New IP spoofing
   logic globalIntsBecomeEnabled;
-  assign globalIntsBecomeEnabled = (`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.WriteSSTATUSM) && (|(`CSR_BASE.CSRWriteValM & (~`CSR_BASE.csrm.MSTATUS_REGW) & 32'h22));
+  assign globalIntsBecomeEnabled = (`CSR_BASE.csrm.WriteMSTATUSM || `CSR_BASE.csrs.csrs.WriteSSTATUSM) && (|(`CSR_BASE.CSRWriteValM & (~`CSR_BASE.csrm.MSTATUS_REGW) & 32'h22));
   logic checkInterruptM;
   assign checkInterruptM = dut.core.ieu.InstrValidM & ~dut.core.priv.priv.trap.InstrPageFaultM & ~dut.core.priv.priv.trap.InterruptM;
   
