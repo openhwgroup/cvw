@@ -29,18 +29,19 @@
 `include "wally-config.vh"
 
 module privpiperegs (
-  input  logic         clk, reset,
+  input  logic         clk, reset,  
   input  logic         StallD, StallE, StallM,
   input  logic         FlushD, FlushE, FlushM,
-  input  logic         InstrPageFaultF, InstrAccessFaultF,
-  input  logic         IllegalIEUInstrFaultD,
-  output logic         InstrPageFaultM, InstrAccessFaultM,
-  output logic         IllegalIEUInstrFaultM
+  input  logic         InstrPageFaultF, InstrAccessFaultF,  // instruction faults
+  input  logic         IllegalIEUInstrFaultD,               // illegal IEU instruction decoded
+  output logic         InstrPageFaultM, InstrAccessFaultM,  // delayed instruction faults
+  output logic         IllegalIEUInstrFaultM                // delayed illegal IEU instruction
 );
 
-  logic InstrPageFaultD, InstrAccessFaultD;
-  logic InstrPageFaultE, InstrAccessFaultE;
-  logic IllegalIEUInstrFaultE; 
+  // Delayed fault signals
+  logic                InstrPageFaultD, InstrAccessFaultD;
+  logic                InstrPageFaultE, InstrAccessFaultE;
+  logic                IllegalIEUInstrFaultE; 
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
