@@ -146,7 +146,7 @@ module wallypipelinedcore (
   logic             BTBPredPCWrongM;
   logic             RASPredPCWrongM;
   logic             PredictionInstrClassWrongM;
-  logic [4:0]             InstrClassM;
+  logic [3:0]             InstrClassM;
   logic             InstrAccessFaultF, HPTWInstrAccessFaultM;
   logic [2:0]             LSUHSIZE;
   logic [2:0]             LSUHBURST;
