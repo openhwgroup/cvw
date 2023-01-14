@@ -27,14 +27,14 @@
 
 `include "wally-config.vh"
 
-module SDCcounter #(parameter integer WIDTH=32)
-  (
-   input logic [WIDTH-1:0]  CountIn,
-   output logic [WIDTH-1:0] CountOut,
-   input logic 		    Load,
-   input logic 		    Enable,
-   input logic 		    clk,
-   input logic 		    reset);
+module SDCcounter #(parameter integer WIDTH=32) (
+  input  logic [WIDTH-1:0]   CountIn,
+  output logic [WIDTH-1:0]   CountOut,
+  input  logic 		          Load,
+  input  logic 		          Enable,
+  input  logic 		          clk,
+  input  logic 		          reset
+);
 
   logic [WIDTH-1:0] NextCount;
  

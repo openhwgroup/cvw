@@ -26,13 +26,13 @@
 
 `include "wally-config.vh"
 
-module simple_timer #(parameter BUS_WIDTH = 4)
-  (
-   input logic [BUS_WIDTH-1:0] VALUE,
-   input logic 		       START,
-   output logic 	       FLAG,
-   input logic 		       RST,
-   input logic 		       CLK);
+module simple_timer #(parameter BUS_WIDTH = 4) (
+  input  logic [BUS_WIDTH-1:0] VALUE,
+  input  logic 		            START,
+  output logic 	              FLAG,
+  input  logic 		            RST,
+  input  logic 		            CLK
+);
 
 
   logic [BUS_WIDTH-1:0]     count;

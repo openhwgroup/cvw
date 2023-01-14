@@ -27,8 +27,7 @@
 
 `include "wally-config.vh"
 
-module clkdivider #(parameter integer g_COUNT_WIDTH)
-  (
+module clkdivider #(parameter integer g_COUNT_WIDTH) (
    input logic [g_COUNT_WIDTH-1:0] i_COUNT_IN_MAX, //((Divide by value)/2) - 1
    input logic 			   i_EN, //Enable frequency division of i_clk
    input logic 			   i_CLK, // 1.2 GHz Base clock
@@ -36,7 +35,7 @@ module clkdivider #(parameter integer g_COUNT_WIDTH)
    // i_RST must NOT be a_RST, it needs to be synchronized with the 50 MHz Clock to load the
    // counter's initial value
    output logic 		   o_CLK                                 // frequency divided clock
-   ); 
+); 
 
 
   logic [g_COUNT_WIDTH-1:0] 	   r_count_out;  // wider for sign

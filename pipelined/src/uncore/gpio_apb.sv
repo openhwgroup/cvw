@@ -8,6 +8,8 @@
 //   See FE310-G002-Manual-v19p05 for specifications
 //   No interrupts, drive strength, or pull-ups supported
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

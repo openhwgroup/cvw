@@ -13,6 +13,8 @@
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
 //   Timeout not ye implemented***
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

@@ -25,17 +25,16 @@
 
 `include "wally-config.vh"
 
-module piso_generic_ce #(parameter integer g_BUS_WIDTH)
-  (
-   input logic 			 clk, 
-   input logic 			 i_load, 
-   input logic [g_BUS_WIDTH-1:0] i_data, 
-   input logic 			 i_en,
-   output 			 o_data);
+module piso_generic_ce #(parameter integer g_BUS_WIDTH) (
+   input  logic 			            clk, 
+   input  logic 			            i_load, 
+   input  logic [g_BUS_WIDTH-1:0] i_data, 
+   input  logic 			            i_en,
+   output 			                  o_data);
 
   
-  logic [g_BUS_WIDTH-1:0] 	 w_reg_d;
-  logic [g_BUS_WIDTH-1:0] 	 r_reg_q;
+  logic [g_BUS_WIDTH-1:0] 	      w_reg_d;
+  logic [g_BUS_WIDTH-1:0] 	      r_reg_q;
 
   flopenr #(g_BUS_WIDTH)
   shiftReg(.clk(clk),

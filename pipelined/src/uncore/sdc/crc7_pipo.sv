@@ -29,12 +29,13 @@
 
 `include "wally-config.vh"
 
-module crc7_pipo
-  (input logic [39:0] i_DATA,
-   input logic 	      i_CRC_ENABLE,
-   input logic 	      RST,
-   input logic 	      CLK,
-   output logic [6:0] o_CRC);
+module crc7_pipo (
+  input logic [39:0] i_DATA,
+  input logic 	      i_CRC_ENABLE,
+  input logic 	      RST,
+  input logic 	      CLK,
+  output logic [6:0] o_CRC
+);
   
   logic [6:0] 	      r_lfsr_q;
   logic [6:0] 	      w_lfsr_d;

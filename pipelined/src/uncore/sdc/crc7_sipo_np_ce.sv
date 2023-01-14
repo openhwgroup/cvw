@@ -27,13 +27,13 @@
 
 `include "wally-config.vh"
 
-module crc7_sipo_np_ce
-  (
-   input logic 	      clk,
-   input logic 	      rst,//      initial CRC value must be b"000_0000"
-   input logic 	      i_enable,
-   input logic 	      i_message_bit,
-   output logic [6:0] o_crc7);
+module crc7_sipo_np_ce(
+  input  logic 	      clk,
+  input  logic 	      rst,//      initial CRC value must be b"000_0000"
+  input  logic 	      i_enable,
+  input  logic 	      i_message_bit,
+  output logic [6:0] o_crc7
+);
 
 
   logic [6:0] 	      w_crc7_d;

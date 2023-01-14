@@ -9,6 +9,8 @@
 //   With clarifications from ROA's existing implementation (https://roalogic.github.io/plic/docs/AHB-Lite_PLIC_Datasheet.pdf)
 //   Supports only 1 target core and only a global threshold.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // *** Big questions:
 //  Do we detect requests as level-triggered or edge-trigged?
 //  If edge-triggered, do we want to allow 1 source to be able to make a number of repeated requests?

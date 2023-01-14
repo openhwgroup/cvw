@@ -35,16 +35,16 @@
 
 `include "wally-config.vh"
 
-module sd_clk_fsm
-  (
-   input logic 	CLK,
-   input logic 	i_RST,
-   (* mark_debug = "true" *)output logic o_DONE,
-   (* mark_debug = "true" *)input logic i_START,
-   (* mark_debug = "true" *)input logic i_FATAL_ERROR,
-   (* mark_debug = "true" *)output logic o_HS_TO_INIT_CLK_DIVIDER_RST, // resets clock divider that is going from 50 MHz to 400 KHz
-   (* mark_debug = "true" *)output logic o_SD_CLK_SELECTED, // which clock is selected ('0'=HS or '1'=init)
-   (* mark_debug = "true" *)output logic o_G_CLK_SD_EN);  // Turns gated clock (G_CLK_SD) off and on
+module sd_clk_fsm (
+  input  logic 	CLK,
+  input  logic 	i_RST,
+  (* mark_debug = "true" *)output logic o_DONE,
+  (* mark_debug = "true" *)input  logic i_START,
+  (* mark_debug = "true" *)input  logic i_FATAL_ERROR,
+  (* mark_debug = "true" *)output logic o_HS_TO_INIT_CLK_DIVIDER_RST, // resets clock divider that is going from 50 MHz to 400 KHz
+  (* mark_debug = "true" *)output logic o_SD_CLK_SELECTED, // which clock is selected ('0'=HS or '1'=init)
+  (* mark_debug = "true" *)output logic o_G_CLK_SD_EN // Turns gated clock (G_CLK_SD) off and on
+);  
 
 
   logic [3:0] 	w_next_state;
