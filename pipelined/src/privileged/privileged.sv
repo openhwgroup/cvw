@@ -7,6 +7,8 @@
 // Purpose: Implements the CSRs, Exceptions, and Privileged operations
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.8)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
@@ -86,25 +88,24 @@ module privileged (
   output logic             WFIStallM                                  // Stall in Memory stage for WFI until interrupt or timeout
 );
 
-  logic [`LOG_XLEN-1:0] CauseM;
-  logic [`XLEN-1:0] MEDELEG_REGW;
-  logic [11:0]      MIDELEG_REGW;
+  logic [`LOG_XLEN-1:0]    CauseM;                                    // trap cause
+  logic [`XLEN-1:0]        MEDELEG_REGW;                              // exception delegation CSR
+  logic [11:0]             MIDELEG_REGW;                              // interrupt delegation CSR
+  logic                    sretM, mretM;                              // supervisor / machine return instruction
+  logic                    IllegalCSRAccessM;                         // Illegal access to CSR
+  logic                    IllegalIEUInstrFaultM;                     // Illegal IEU instruction, delayed to Mem stage
+  logic                    InstrPageFaultM;                           // Instruction page fault, delayed to Mem stage
+  logic                    InstrAccessFaultM;                         // Instruction access fault, delayed to Mem stages
+  logic                    IllegalInstrFaultM;                        // Illegal instruction fault
+  logic                    STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM; // Status bits needed within privileged unit
+  logic                    STATUS_MIE, STATUS_SIE;                    // status bits: interrupt enables
+  logic [11:0]             MIP_REGW, MIE_REGW;                        // interrupt pending and enable bits
+  logic [1:0]              NextPrivilegeModeM;                        // next privilege mode based on trap or return
+  logic                    DelegateM;                                 // trap should be delegated
+  logic                    wfiM;                                      // wait for interrupt instruction
+  logic                    IntPendingM;                               // interrupt is pending, even if not enabled.  ends wfi
+  (* mark_debug = "true" *) logic InterruptM;                         // interrupt occuring
 
-  logic sretM, mretM;
-  logic IllegalCSRAccessM;
-  logic IllegalIEUInstrFaultM;
-  logic InstrPageFaultM;
-  logic InstrAccessFaultM;
-  logic IllegalInstrFaultM;
-
-  (* mark_debug = "true" *)  logic InterruptM; 
-
-  logic       STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;
-  logic       STATUS_MIE, STATUS_SIE;
-  logic [11:0] MIP_REGW, MIE_REGW;
-  logic [1:0] NextPrivilegeModeM;
-  logic       DelegateM;
-  logic       wfiM, IntPendingM;
 
   // track the current privilege level
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
