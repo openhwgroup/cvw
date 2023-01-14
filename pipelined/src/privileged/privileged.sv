@@ -50,7 +50,7 @@ module privileged (
   input  logic 		         BTBPredPCWrongM,                           // branch predictor guessed wrong target
   input  logic 		         RASPredPCWrongM,                           // return adddress stack guessed wrong target
   input  logic 		         PredictionInstrClassWrongM,                // branch predictor guessed wrong instruction class
-  input  logic [4:0]       InstrClassM,                               // actual instruction class
+  input  logic [3:0]       InstrClassM,                               // actual instruction class
   input  logic             DCacheMiss,                                // data cache miss
   input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
   input  logic             ICacheMiss,                                // instruction cache miss

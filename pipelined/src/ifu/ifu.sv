@@ -56,7 +56,7 @@ module ifu (
 	output logic [31:0] 		InstrD, InstrM, 
 	output logic [`XLEN-1:0] 	PCM, 
 	// branch predictor
-	output logic [4:0] 			InstrClassM,
+	output logic [3:0] 			InstrClassM,
 	output logic 				DirPredictionWrongM,
 	output logic 				BTBPredPCWrongM,
 	output logic 				RASPredPCWrongM,

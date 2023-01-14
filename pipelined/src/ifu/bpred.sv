@@ -52,7 +52,7 @@ module bpred (
    input logic              PCSrcE,        // Executation stage branch is taken
    input logic [`XLEN-1:0]  IEUAdrE,       // The branch/jump target address
    input logic [`XLEN-1:0]  PCLinkE,       // The address following the branch instruction. (AKA Fall through address)
-   output logic [4:0]       InstrClassM,   // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+   output logic [3:0]       InstrClassM,   // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
    // Report branch prediction status
    output logic             BPPredWrongE,  // Prediction is wrong.
@@ -65,13 +65,13 @@ module bpred (
   logic                     BTBValidF;
   logic [1:0]               DirPredictionF;
 
-  logic [4:0]               BPInstrClassF, BPInstrClassD, BPInstrClassE;
+  logic [3:0]               PredInstrClassF, PredInstrClassD, PredInstrClassE;
   logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
   logic                     TargetWrongE;
   logic                     FallThroughWrongE;
   logic                     PredictionPCWrongE;
   logic                     PredictionInstrClassWrongE;
-  logic [4:0]               InstrClassD, InstrClassE, InstrClassW;
+  logic [3:0]               InstrClassD, InstrClassE, InstrClassW;
   logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, BPPredClassNonCFIWrongE;
   
   logic                     SelBPPredF;
@@ -79,7 +79,8 @@ module bpred (
   logic                     BPPredWrongM;
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
-
+  logic [3:0] 				WrongPredInstrClassD;
+  
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
@@ -95,7 +96,7 @@ module bpred (
   end else if (`BPTYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
     
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
@@ -106,8 +107,8 @@ module bpred (
   end else if (`BPTYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPInstrClassF[0]), .BranchInstrD(BPInstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
-      .BranchInstrW(InstrClassW[0]), .PCSrcE);
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
 
   end else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -129,10 +130,9 @@ module bpred (
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-  assign SelBPPredF = ((BPInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
-         BPInstrClassF[3] |
-         (BPInstrClassF[2] & BTBValidF) | 
-         BPInstrClassF[1] & BTBValidF) ;
+  assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
+         PredInstrClassF[2] |
+         (PredInstrClassF[1] & BTBValidF) ;
 
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
@@ -143,7 +143,7 @@ module bpred (
           .*, // Stalls and flushes
           .LookUpPC(PCNextF),
           .TargetPC(BTBPredPCF),
-          .InstrClass(BPInstrClassF),
+          .InstrClass(PredInstrClassF),
           .Valid(BTBValidF),
           // update
           .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
@@ -154,26 +154,28 @@ module bpred (
 
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
+  // *** needs to include flushX
   RASPredictor RASPredictor(.clk(clk),
        .reset(reset),
-       .pop(BPInstrClassF[3] & ~StallF),
-       .popPC(RASPCF),
-       .push(InstrClassE[4] & ~StallE),
+       .PopF(PredInstrClassF[2] & ~StallF),
+							.WrongPredInstrClassD,
+							.InstrClassD,
+       .RASPCF,
+       .PushE(InstrClassE[3] & ~StallE),
        .incr(1'b0),
-       .pushPC(PCLinkE));
+       .PCLinkE);
 
-  assign BPPredPCF = BPInstrClassF[3] ? RASPCF : BTBPredPCF;
+  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : BTBPredPCF;
 
   // the branch predictor needs a compact decoding of the instruction class.
-  // *** consider adding in the alternate return address x5 for returns.
-  assign InstrClassD[4] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or r5
-  assign InstrClassD[3] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01; // jump register, but not return
-  assign InstrClassD[1] = InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01; // jump, RD != x1 or x5
+  assign InstrClassD[3] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
+  assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
+  assign InstrClassD[1] = (InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
+						  (InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01); // jump, RD != x1 or x5
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
-  flopenrc #(5) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
-  flopenrc #(5) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
-  flopenrc #(5) InstrClassRegW(clk, reset,  FlushW, ~StallW, InstrClassM, InstrClassW);
+  flopenrc #(4) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
+  flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
+  flopenrc #(4) InstrClassRegW(clk, reset,  FlushW, ~StallW, InstrClassM, InstrClassW);
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
@@ -182,8 +184,8 @@ module bpred (
     {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
 
   // pipeline the class
-  flopenrc #(5) BPInstrClassRegD(clk, reset, FlushD, ~StallD, BPInstrClassF, BPInstrClassD);
-  flopenrc #(5) BPInstrClassRegE(clk, reset, FlushE, ~StallE, BPInstrClassD, BPInstrClassE);
+  flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
+  flopenrc #(4) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
 
   // Check the prediction
   // first check if the target or fallthrough address matches what was predicted.
@@ -201,7 +203,7 @@ module bpred (
   
   // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
   // Also we want to track this in a performance counter.
-  assign PredictionInstrClassWrongE = InstrClassE != BPInstrClassE;
+  assign PredictionInstrClassWrongE = InstrClassE != PredInstrClassE;
 
   // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
   // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
@@ -209,11 +211,14 @@ module bpred (
   assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
 
   // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
-  assign BTBPredPCWrongE = (InstrClassE[4] | InstrClassE[2] | InstrClassE[1]) & PredictionPCWrongE;
+  assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1]) & PredictionPCWrongE;
   // similar with RAS
-  assign RASPredPCWrongE = InstrClassE[3] & PredictionPCWrongE;
+  assign RASPredPCWrongE = InstrClassE[2] & PredictionPCWrongE;
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
+
+  // branch class prediction wrong.
+  assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD;
   
   
   // Selects the BP or PC+2/4.
