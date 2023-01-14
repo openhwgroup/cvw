@@ -85,32 +85,32 @@ module csr #(parameter
   output logic             BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
-  logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
+  logic [`XLEN-1:0]        CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRReadValM;  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRSrcM;
   logic [`XLEN-1:0] CSRRWM, CSRRSM, CSRRCM;  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
-  logic [`XLEN-1:0] STVEC_REGW, MTVEC_REGW;
-  logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW;
-  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
-  logic             WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
-  logic             CSRMWriteM, CSRSWriteM, CSRUWriteM;
-  logic             WriteFRMM, WriteFFLAGSM;
-  logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
-  logic [11:0]      CSRAdrM;
-  logic             IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
-  logic             InsufficientCSRPrivilegeM;
-  logic             IllegalCSRMWriteReadonlyM;
-  logic [`XLEN-1:0] CSRReadVal2M;
-  logic [11:0]      MIP_REGW_writeable;
-  logic [`XLEN-1:0] TVecM, TrapVectorM, NextFaultMtvalM;
-  logic             MTrapM, STrapM;
-  logic [`XLEN-1:0] EPC;
-  logic 			      RetM;
-  logic             SelMtvecM;
-  logic [`XLEN-1:0] TVecAlignedM;
-  logic             InstrValidNotFlushedM;
+  logic [`XLEN-1:0]        STVEC_REGW, MTVEC_REGW;
+  logic [`XLEN-1:0]        MEPC_REGW, SEPC_REGW;
+  logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
+  logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
+  logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
+  logic                    WriteFRMM, WriteFFLAGSM;
+  logic [`XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
+  logic [11:0]             CSRAdrM;
+  logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
+  logic                    InsufficientCSRPrivilegeM;
+  logic                    IllegalCSRMWriteReadonlyM;
+  logic [`XLEN-1:0]        CSRReadVal2M;
+  logic [11:0]             MIP_REGW_writeable;
+  logic [`XLEN-1:0]        TVecM, TrapVectorM, NextFaultMtvalM;
+  logic                    MTrapM, STrapM;
+  logic [`XLEN-1:0]        EPC;
+  logic 			             RetM;
+  logic                    SelMtvecM;
+  logic [`XLEN-1:0]        TVecAlignedM;
+  logic                    InstrValidNotFlushedM;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -129,16 +129,8 @@ module csr #(parameter
     endcase
 
   ///////////////////////////////////////////
-  // Trap Vectoring & Returns
+  // Trap Vectoring & Returns; vectored traps must be aligned to 64-byte address boundaries
   ///////////////////////////////////////////
-  //
-  // POSSIBLE OPTIMIZATION: 
-  // From 20190608 privielegd spec page 27 (3.1.7)
-  // > Allowing coarser alignments in Vectored mode enables vectoring to be
-  // > implemented without a hardware adder circuit.
-  // For example, we could require m/stvec be aligned on 7 bits to let us replace the adder directly below with
-  // [untested] TrapVectorM = {TVec[`XLEN-1:7], CauseM[3:0], 4'b0000}
-  // However, this is program dependent, so not implemented at this time.
 
   // Select trap vector from STVEC or MTVEC and word-align
   assign SelMtvecM = (NextPrivilegeModeM == `M_MODE);
@@ -150,10 +142,7 @@ module csr #(parameter
     logic VectoredM;
     logic [`XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-	// *** Would like you use concat version, but breaks uart test wally64priv when
-	// mtvec is aligned to 64 bytes.
-    assign TVecPlusCauseM = TVecAlignedM + {{(`XLEN-2-`LOG_XLEN){1'b0}}, CauseM, 2'b00};
-	//assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00};
+	  assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else 
     assign TrapVectorM = TVecAlignedM;
@@ -168,6 +157,7 @@ module csr #(parameter
   ///////////////////////////////////////////
   // CSRWriteValM
   ///////////////////////////////////////////
+
   always_comb begin
     // Choose either rs1 or uimm[4:0] as source
     CSRSrcM = InstrM[14] ? {{(`XLEN-5){1'b0}}, InstrM[19:15]} : SrcAM;
@@ -191,6 +181,7 @@ module csr #(parameter
   ///////////////////////////////////////////
   // CSR Write values
   ///////////////////////////////////////////
+
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? ((wfiM & IntPendingM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
@@ -218,8 +209,7 @@ module csr #(parameter
               .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
               .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
               .STATUS_FS, .BigEndianM);
-  csrc  counters(.clk, .reset,
-              .StallE, .StallM, .FlushM,
+  csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
               .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
               .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
               .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
