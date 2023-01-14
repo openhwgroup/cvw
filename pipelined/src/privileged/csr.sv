@@ -61,7 +61,7 @@ module csr #(parameter
   input  logic             BTBPredPCWrongM,
   input  logic             RASPredPCWrongM,
   input  logic             PredictionInstrClassWrongM,
-  input  logic [4:0]       InstrClassM,
+  input  logic [3:0]       InstrClassM,
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
