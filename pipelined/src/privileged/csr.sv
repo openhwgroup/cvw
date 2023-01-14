@@ -198,44 +198,49 @@ module csr #(parameter
   ///////////////////////////////////////////
 
   csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
-              .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
-              .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
-              .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+    .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
+    .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
+    .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
   csrsr csrsr(.clk, .reset, .StallW, 
-              .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
-              .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
-              .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
-              .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
-              .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
-              .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
-              .STATUS_FS, .BigEndianM);
-  csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
-              .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
-              .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
-              .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
-              .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
-              .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
-              .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+    .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
+    .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
+    .mretM, .sretM, .WriteFRMM, .WriteFFLAGSM, .CSRWriteValM, .SelHPTW,
+    .MSTATUS_REGW, .SSTATUS_REGW, .MSTATUSH_REGW,
+    .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
+    .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
+    .STATUS_FS, .BigEndianM);
   csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, 
-              .CSRMWriteM, .MTrapM, .CSRAdrM,
-              .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
-              .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
-              .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
-              .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-              .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
-              .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
+    .CSRMWriteM, .MTrapM, .CSRAdrM,
+    .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
+    .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
+    .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
+    .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+    .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
+    .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
   csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
-              .CSRSWriteM, .STrapM, .CSRAdrM,
-              .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
-              .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
-              .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
-              .SCOUNTEREN_REGW,
-              .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
-              .WriteSSTATUSM, .IllegalCSRSAccessM);
+    .CSRSWriteM, .STrapM, .CSRAdrM,
+    .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
+    .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
+    .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
+    .SCOUNTEREN_REGW,
+    .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+    .WriteSSTATUSM, .IllegalCSRSAccessM);
   csru  csru(.clk, .reset, .InstrValidNotFlushedM, 
-              .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
-              .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
-              .IllegalCSRUAccessM);
+    .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
+    .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
+    .IllegalCSRUAccessM);
+  if (`ZICOUNTERS_SUPPORTED) begin:counters
+    csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
+      .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
+      .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+      .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
+      .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
+      .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
+  end else begin
+    assign CSRCReadValM = 0;
+    assign IllegalCSRCAccessM = 1; // counters aren't enabled
+  end
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM; 
