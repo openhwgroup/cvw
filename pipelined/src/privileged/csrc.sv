@@ -10,6 +10,7 @@
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
 // Documentation: RISC-V System on Chip Design Chapter 5
+//    MHPMEVENT is not supported
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -61,14 +62,14 @@ module csrc #(parameter
   output logic 	            IllegalCSRCAccessM
 );
 
-  logic [4:0]  CounterNumM;
-  (* mark_debug = "true" *)     logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
-  logic [`XLEN-1:0] HPMCOUNTERH_REGW[`COUNTERS-1:0];
-  logic LoadStallE, LoadStallM;
-  logic [`COUNTERS-1:0] WriteHPMCOUNTERM;
-  logic [`COUNTERS-1:0] CounterEvent;
-  logic [63:0]      HPMCOUNTERPlusM[`COUNTERS-1:0];
-  logic [`XLEN-1:0] NextHPMCOUNTERM[`COUNTERS-1:0];
+  logic [4:0]               CounterNumM;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
+  logic [`XLEN-1:0]         HPMCOUNTERH_REGW[`COUNTERS-1:0];
+  logic                     LoadStallE, LoadStallM;
+  logic [`COUNTERS-1:0]     WriteHPMCOUNTERM;
+  logic [`COUNTERS-1:0]     CounterEvent;
+  logic [63:0]              HPMCOUNTERPlusM[`COUNTERS-1:0];
+  logic [`XLEN-1:0]         NextHPMCOUNTERM[`COUNTERS-1:0];
   genvar i;
 
   // Interface signals
@@ -76,24 +77,24 @@ module csrc #(parameter
   flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
   
   // Determine when to increment each counter
-  assign CounterEvent[0] = 1'b1;  // MCYCLE always increments
-  assign CounterEvent[1] = 1'b0;  // Counter 1 doesn't exist
-  assign CounterEvent[2] = InstrValidNotFlushedM;
+  assign CounterEvent[0] = 1'b1;                                                        // MCYCLE always increments
+  assign CounterEvent[1] = 1'b0;                                                        // Counter 1 doesn't exist
+  assign CounterEvent[2] = InstrValidNotFlushedM;                                       // MINSTRET instructions retired
   if(`QEMU) begin: cevent // No other performance counters in QEMU
     assign CounterEvent[`COUNTERS-1:3] = 0;
-  end else begin: cevent // User-defined counters
-    assign CounterEvent[3] = LoadStallM;  // don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;
-    assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;
-    assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;
-    assign CounterEvent[7] = (InstrClassM[3] | InstrClassM[1]) & InstrValidNotFlushedM;
-    assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;
-    assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;
-    assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;
-    assign CounterEvent[11] = DCacheAccess;
-    assign CounterEvent[12] = DCacheMiss;
-    assign CounterEvent[13] = ICacheAccess;
-    assign CounterEvent[14] = ICacheMiss;
+  end else begin: cevent                                                                // User-defined counters
+    assign CounterEvent[3] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
+    assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
+    assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
+    assign CounterEvent[7] = (InstrClassM[3] | InstrClassM[1]) & InstrValidNotFlushedM; // jump instructions
+    assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
+    assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+    assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
+    assign CounterEvent[11] = DCacheAccess;                                             // data cache access
+    assign CounterEvent[12] = DCacheMiss;                                               // data cache miss
+    assign CounterEvent[13] = ICacheAccess;                                             // instruction cache access
+    assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss
     assign CounterEvent[`COUNTERS-1:15] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
@@ -157,8 +158,4 @@ module csrc #(parameter
     end
 endmodule
 
-// To Do:
-//  review couunter spec
-//  upper unimplemented counters should read as 0 rather than illegal access
 //  mounteren should only exist if u-mode exists
-//  Implement MHPMEVENT
