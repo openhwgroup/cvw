@@ -40,7 +40,8 @@ module speculativegshare
    output logic            DirPredictionWrongE,
    // update
    input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-   input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW, 
+   input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW,
+   input logic [3:0]       WrongPredInstrClassD, 
    input logic             PCSrcE
    );
 
@@ -53,7 +54,8 @@ module speculativegshare
   logic [k-1:0]            GHRF;
   logic [k:0]              GHRD, OldGHRE, GHRE, GHRM, GHRW;
   logic [k-1:0]            GHRNextF;
-  logic [k:0]              GHRNextD, GHRNextE, GHRNextM, GHRNextW;
+  logic [k:-1] 			   GHRNextD, OldGHRD;
+  logic [k:0]              GHRNextE, GHRNextM, GHRNextW;
   logic [k-1:0]            IndexNextF, IndexF;
   logic [k-1:0]            IndexD, IndexE, IndexM;
   
@@ -118,8 +120,11 @@ module speculativegshare
 
   flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, GHRF);
   
-  assign GHRNextD = FlushD ? GHRNextE : {DirPredictionF[1], GHRF};
-  flopenr  #(k+1) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
+  assign GHRNextD = FlushD ? {GHRNextE, GHRNextE[0]} : {DirPredictionF[1], GHRF, GHRF[0]};
+  flopenr  #(k+2) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, OldGHRD);
+  assign GHRD = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRD[k:1]} : // shift right
+				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-2:-1] : // shift left
+				OldGHRD;
 
   assign GHRNextE = FlushE ? GHRNextM : GHRD;
   flopenr  #(k+1) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, OldGHRE);
