@@ -6,6 +6,8 @@
 //
 // Purpose: Pipelined RISC-V Processor
 // 
+// Documentation: RISC-V System on Chip Design (Figure 4.1)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -65,7 +67,7 @@ module wallypipelinedcore (
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
  logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
    logic [`XLEN-1:0]             UnalignedPCNextF, PCNext2F;
-  (* mark_debug = "true" *) logic [1:0]             MemRWM;
+  (* mark_debug = "true" *) logic [1:0]       MemRWM;
   (* mark_debug = "true" *) logic             InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
@@ -162,56 +164,33 @@ module wallypipelinedcore (
   logic                          CommittedF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
-  ifu ifu(
-    .clk, .reset,
-    .StallF, .StallD, .StallE, .StallM, .StallW,
-    .FlushD, .FlushE, .FlushM, .FlushW,
+  ifu ifu(.clk, .reset,
+    .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
     .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
-    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
-          .IFUHREADY, .IFUHWRITE,
+    .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
-
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .PCE,
-    .BPPredWrongE, 
-  
+    .PCLinkE, .PCSrcE, .IEUAdrE, .PCE, .BPPredWrongE, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
-  
-    // Writeback
-
-    // output logic
-    // Faults
-    .IllegalBaseInstrFaultD, .InstrPageFaultF,
-    .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
-
+    // Faults out
+    .IllegalBaseInstrFaultD, .InstrPageFaultF, .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
     // mmu management
-    .PrivilegeModeW, .PTE, .PageType, .SATP_REGW,
-    .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
-    .STATUS_MPP, .ITLBWriteF, .sfencevmaM,
-    .ITLBMissF,
-
-    // pmp/pma (inside mmu) signals.  *** temporarily from AHB bus but eventually replace with internal versions pre H
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW,
-    .InstrAccessFaultF,
-    .InstrDAPageFaultF); 
+    .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
+    .STATUS_MPP, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
+    // pmp/pma (inside mmu) signals. 
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrDAPageFaultF); 
     
   // integer execution unit: integer register file, datapath and controller
-  ieu ieu(
-     .clk, .reset,
-
+  ieu ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .IllegalIEUInstrFaultD, 
-     .IllegalBaseInstrFaultD,
-
+     .InstrD, .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
      // Execute Stage interface
-     .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE,
-     .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-
+     .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE,
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
@@ -220,40 +199,24 @@ module wallypipelinedcore (
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
-
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FIntDivResultW,
-     .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
-     .InstrValidM, 
-     .FCvtIntResW,
-     .FCvtIntW,
-
+     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
+     .InstrValidM, .FCvtIntResW, .FCvtIntW,
      // hazards
-     .StallD, .StallE, .StallM, .StallW,
-     .FlushD, .FlushE, .FlushM, .FlushW,
-     .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD,
-     .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM,
-     .CSRWriteFenceM, .StoreStallD); 
+     .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+     .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .StoreStallD); 
 
   lsu lsu(
-    .clk, .reset, .StallM, .FlushM, .StallW,
-    .FlushW,
+    .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
-    .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]),
-    .AtomicM,
-    .CommittedM, .DCacheMiss, .DCacheAccess,
-    .SquashSCW,            
-    .FpLoadStoreM,
-    .FWriteDataM, 
-    //.DataMisalignedM(DataMisalignedM),
-    .IEUAdrE, .IEUAdrM, .WriteDataM,
+    .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
+    .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,            
+    .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
     .ReadDataW, .FlushDCacheM,
     // connected to ahb (all stay the same)
-    .LSUHADDR, 
-    .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, .LSUHBURST, .LSUHTRANS,
-    .LSUHWRITE, .LSUHREADY,
-
+    .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, 
+    .LSUHBURST, .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
     // connect to csr or privilege and stay the same.
     .PrivilegeModeW, .BigEndianM,          // connects to csr
     .PMPCFG_ARRAY_REGW,     // connects to csr
@@ -264,7 +227,6 @@ module wallypipelinedcore (
     .STATUS_SUM,  // from csr
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
-
     .sfencevmaM,                   // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
@@ -274,7 +236,6 @@ module wallypipelinedcore (
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
-    
     .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
@@ -319,12 +280,10 @@ module wallypipelinedcore (
   if (`ZICSR_SUPPORTED) begin:priv
     privileged priv(
       .clk, .reset,
-      .FlushD, .FlushE, .FlushM, .FlushW, 
-      .StallD, .StallE, .StallM, .StallW,
+      .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCNext2F,
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, 
-      .sfencevmaM,
+      .RetM, .TrapM, .sfencevmaM,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD,
       .DirPredictionWrongM, .BTBPredPCWrongM,
@@ -334,12 +293,9 @@ module wallypipelinedcore (
       .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-      .MTIME_CLINT, 
-      .IEUAdrM,
-      .SetFflagsM,
+      .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-      .IllegalFPUInstrM,
-      .PrivilegeModeW, .SATP_REGW,
+      .IllegalFPUInstrM, .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM);
@@ -355,11 +311,10 @@ module wallypipelinedcore (
 
   // multiply/divide unit
   if (`M_SUPPORTED) begin:mdu
-    mdu mdu(.clk, .reset,
+    mdu mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE, 
       .Funct3E, .Funct3M, .IntDivE, .W64E,
-      .MDUResultW, .DivBusyE,  
-      .StallM, .StallW, .FlushE, .FlushM, .FlushW); 
+      .MDUResultW, .DivBusyE); 
   end else begin // no M instructions supported
     assign MDUResultW = 0; 
     assign DivBusyE = 0;
@@ -374,7 +329,6 @@ module wallypipelinedcore (
       .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
       .ForwardedSrcAE, // Integer input being processed (from IEU)
       .StallE, .StallM, .StallW, // stall signals from HZU
-      //.TrapM,
       .FlushE, .FlushM, .FlushW, // flush signals from HZU
       .RdE, .RdM, .RdW, // which FP register to write to (from IEU)
       .STATUS_FS, // is floating-point enabled?
