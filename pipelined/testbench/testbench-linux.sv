@@ -152,7 +152,7 @@ module testbench;
   `define SCAUSE      `CSR_BASE.csrs.csrs.SCAUSEreg.q
   `define MEPC        `CSR_BASE.csrm.MEPCreg.q
   `define SEPC        `CSR_BASE.csrs.csrs.SEPCreg.q
-  `define MCOUNTEREN  `CSR_BASE.csrm.MCOUNTERENreg.q
+  `define MCOUNTEREN  `CSR_BASE.csrm.mcounteren.MCOUNTERENreg.q
   `define SCOUNTEREN  `CSR_BASE.csrs.csrs.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
   `define SSCRATCH    `CSR_BASE.csrs.csrs.SSCRATCHreg.q
