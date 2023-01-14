@@ -28,44 +28,44 @@
 
 `define SDCCLKDIV -8'd3
 
-module SDC 
-  (input  logic             HCLK, 
-   input logic 		    HRESETn,
-   input logic 		    HSELSDC,
-   input logic [4:0] 	    HADDR,
-   input logic 		    HWRITE,
-   input logic 		    HREADY,
-   input logic [1:0] 	    HTRANS,
-   input logic [`XLEN-1:0]  HWDATA,
-   output logic [`XLEN-1:0] HREADSDC,
-   output logic 	    HRESPSDC, 
-   output logic 	    HREADYSDC,
+module SDC (
+  input  logic             HCLK, 
+  input  logic 		         HRESETn,
+  input  logic 		         HSELSDC,
+  input  logic [4:0] 	     HADDR,
+  input  logic 		         HWRITE,
+  input  logic 		         HREADY,
+  input  logic [1:0] 	     HTRANS,
+  input  logic [`XLEN-1:0] HWDATA,
+  output logic [`XLEN-1:0] HREADSDC,
+  output logic 	           HRESPSDC, 
+  output logic 	           HREADYSDC,
 
-   //sd card interface
-   // place the tristate drivers at the top.  this level
-   // will use dedicated 1 direction ports.
-   output logic 	    SDCCmdOut,
-   input logic 		    SDCCmdIn,
-   output logic 	    SDCCmdOE,
-   input logic [3:0] 	    SDCDatIn,
-   output logic 	    SDCCLK,
+  //sd card interface
+  // place the tristate drivers at the top.  this level
+  // will use dedicated 1 direction ports.
+  output logic 	           SDCCmdOut,
+  input  logic 		         SDCCmdIn,
+  output logic 	           SDCCmdOE,
+  input  logic [3:0] 	     SDCDatIn,
+  output logic 	           SDCCLK,
+  // interrupt to PLIC
+  output logic 	           SDCIntM
+);
 
-   // interrupt to PLIC
-   output logic 	    SDCIntM);
-
-  logic 		    InitTrans;
-  logic 		    RegRead;
-  logic 		    RegWrite;
-  logic [4:0] 		    HADDRDelay;
+  logic 		               InitTrans;
+  logic 		               RegRead;
+  logic 		               RegWrite;
+  logic [4:0] 		         HADDRDelay;
 
 
   // Register outputs
-  logic signed [7:0] 		    CLKDiv;
-  logic [2:0] 		    Command;
-  logic [63:9] 		    Address;
+  logic signed [7:0] 		   CLKDiv;
+  logic [2:0] 		         Command;
+  logic [63:9] 		         Address;
   
 
-  logic 		    SDCDone;
+  logic 		               SDCDone;
   
   logic [2:0] 		    ErrorCode;
   logic 		    InvalidCommand;

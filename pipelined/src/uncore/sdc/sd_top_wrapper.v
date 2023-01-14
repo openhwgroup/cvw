@@ -1,27 +1,26 @@
 
 
-module sd_top_wrapper #(parameter g_COUNT_WIDTH = 8)
-  (
-   input 		     clk_in1_p,
-   input 		     clk_in1_n,   
-   input 		     a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
-   // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
-   // io_SD_CMD_z    : inout std_logic;   // SD CMD Bus
-   inout 		     SD_CMD, // CMD Response from card
-   input [3:0] 		     i_SD_DAT, // SD DAT Bus
-   output 		     o_SD_CLK, // SD CLK Bus
-   // For communication with core cpu
-   output 		     o_READY_FOR_READ, // tells core that initialization sequence is completed and
-   // sd card is ready to read a 512 byte block to the core.
-   // Held high during idle until i_READ_REQUEST is received
-   output 		     o_SD_RESTARTING, // inform core the need to restart
-  
-   input 		     i_READ_REQUEST, // After Ready for read is sent to the core, the core will
-   // pulse this bit high to indicate it wants the block at this address
-   output [3:0] 	     o_DATA_TO_CORE, // nibble being sent to core when DATA block is
-   // being published
-   output 		     o_DATA_VALID // held high while data being read to core to indicate that it is valid
-   );
+module sd_top_wrapper #(parameter g_COUNT_WIDTH = 8) (
+  input 		     clk_in1_p,
+  input 		     clk_in1_n,   
+  input 		     a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
+  // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
+  // io_SD_CMD_z    : inout std_logic;   // SD CMD Bus
+  inout 		     SD_CMD, // CMD Response from card
+  input [3:0] 		     i_SD_DAT, // SD DAT Bus
+  output 		     o_SD_CLK, // SD CLK Bus
+  // For communication with core cpu
+  output 		     o_READY_FOR_READ, // tells core that initialization sequence is completed and
+  // sd card is ready to read a 512 byte block to the core.
+  // Held high during idle until i_READ_REQUEST is received
+  output 		     o_SD_RESTARTING, // inform core the need to restart
+
+  input 		     i_READ_REQUEST, // After Ready for read is sent to the core, the core will
+  // pulse this bit high to indicate it wants the block at this address
+  output [3:0] 	     o_DATA_TO_CORE, // nibble being sent to core when DATA block is
+  // being published
+  output 		     o_DATA_VALID // held high while data being read to core to indicate that it is valid
+);
 
   wire 		     CLK;
   wire 		     LIMIT_SD_TIMERS;
