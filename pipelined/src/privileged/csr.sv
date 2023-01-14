@@ -8,6 +8,8 @@
 // Purpose: Counter Control and Status Registers
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

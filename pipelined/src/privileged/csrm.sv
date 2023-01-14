@@ -11,6 +11,8 @@
 //   - Disabling portions of the instruction set with bits of the MISA register
 //   - Changing from RV64 to RV32 by writing the SXL/UXL bits of the STATUS register
 //
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

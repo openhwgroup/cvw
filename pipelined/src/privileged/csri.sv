@@ -7,6 +7,8 @@
 // Purpose: Interrupt Control & Status Registers (IP, EI)
 //          See RISC-V Privileged Mode Specification 20190608 & 20210108 draft
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
