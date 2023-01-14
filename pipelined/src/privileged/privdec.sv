@@ -32,13 +32,18 @@
 module privdec (
   input  logic         clk, reset,
   input  logic         StallM,
-  input  logic [31:20] InstrM,
-  input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
-  input  logic [1:0]   PrivilegeModeW, 
-  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
-  output logic         IllegalInstrFaultM,
-  output logic         EcallFaultM, BreakpointFaultM,
-  output logic         sretM, mretM, wfiM, sfencevmaM);
+  input  logic [31:20] InstrM,                              // privileged instruction function field
+  input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
+  input  logic         IllegalIEUInstrFaultM,               // Not a legal IEU instruction
+  input  logic         IllegalFPUInstrM,                    // Not a legal FPU instruction
+  input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
+  input  logic [1:0]   PrivilegeModeW,                      // current privilege level
+  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
+  output logic         IllegalInstrFaultM,                  // Illegal instruction
+  output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
+  output logic         sretM, mretM, 
+  output logic         wfiM, sfencevmaM
+);
 
   logic IllegalPrivilegedInstrM;
   logic WFITimeoutM;

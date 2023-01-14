@@ -32,17 +32,31 @@
 
 module csr #(parameter
     MIP = 12'h344,
-    SIP = 12'h144
-  ) (
+    SIP = 12'h144) (
   input  logic             clk, reset,
   input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
-  input  logic [31:0]      InstrM, 
-  input  logic [`XLEN-1:0] PCM, SrcAM, IEUAdrM, PCNext2F,
-  input  logic             CSRReadM, CSRWriteM, TrapM, mretM, sretM, wfiM, IntPendingM, InterruptM,
-  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,
-  input  logic [63:0]      MTIME_CLINT, 
-  input  logic             InstrValidM, FRegWriteM, LoadStallD,
+  input  logic [31:0]      InstrM,                    // current instruction
+  input  logic [`XLEN-1:0] PCM, PCNext2F,             // program counter, next PC going to trap/return logic
+  input  logic [`XLEN-1:0] SrcAM, IEUAdrM,            // SrcA and memory address from IEU
+  input  logic             CSRReadM, CSRWriteM,       // read or write CSR
+  input  logic             TrapM,                     // trap is occurring
+  input  logic             mretM, sretM, wfiM,        // return or WFI instruction
+  input  logic             IntPendingM,               // at least one interrupt is pending and could occur if enabled
+  input  logic             InterruptM,                // interrupt is occurring
+  input  logic             MTimerInt,                 // timer interrupt
+  input  logic             MExtInt, SExtInt,          // external interrupt (from PLIC) 
+  input  logic             MSwInt,                    // software interrupt
+  input  logic [63:0]      MTIME_CLINT,               // TIME value from CLINT
+  input  logic             InstrValidM,               // current instruction is valid
+  input  logic             FRegWriteM,                // writes to floating point registers change STATUS.FS
+  input  logic [4:0]       SetFflagsM,                // Set floating point flag bits in FCSR
+  input  logic [1:0]       NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
+  input  logic [1:0]       PrivilegeModeW,            // current privilege mode
+  input  logic [`LOG_XLEN-1:0] CauseM,                // Trap cause
+  input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
+  // inputs for performance counters
+  input  logic             LoadStallD,
   input  logic             DirPredictionWrongM,
   input  logic             BTBPredPCWrongM,
   input  logic             RASPredPCWrongM,
@@ -52,66 +66,61 @@ module csr #(parameter
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
-  input  logic [1:0]       NextPrivilegeModeM, PrivilegeModeW,
-  input  logic [`LOG_XLEN-1:0] CauseM, 
-  input  logic             SelHPTW,
+  // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
-  output logic [`XLEN-1:0]      MEDELEG_REGW, 
+  output logic [`XLEN-1:0] MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]       STATUS_FS,
-  output var logic [7:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  
-  input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW, 
-  output logic [`XLEN-1:0] CSRReadValW, UnalignedPCNextF,
-  output logic             IllegalCSRAccessM, BigEndianM
+  //
+  output logic [`XLEN-1:0] CSRReadValW,               // value read from CSR
+  output logic [`XLEN-1:0] UnalignedPCNextF,          // Next PC, accounting for traps and returns
+  output logic             IllegalCSRAccessM,         // Illegal CSR access: CSR doesn't exist or is inaccessible at this privilege level
+  output logic             BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
-  localparam NOP = 32'h13;
   logic [`XLEN-1:0] CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRReadValM;  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRSrcM;
   logic [`XLEN-1:0] CSRRWM, CSRRSM, CSRRCM;  
 (* mark_debug = "true" *)  logic [`XLEN-1:0] CSRWriteValM;
- 
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
   logic [`XLEN-1:0] STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0] MEPC_REGW, SEPC_REGW;
-
-  logic [31:0]     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
-  logic            WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
-  logic            CSRMWriteM, CSRSWriteM, CSRUWriteM;
-  logic            WriteFRMM, WriteFFLAGSM;
-
+  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
+  logic             WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
+  logic             CSRMWriteM, CSRSWriteM, CSRUWriteM;
+  logic             WriteFRMM, WriteFFLAGSM;
   logic [`XLEN-1:0] UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
-
-  logic [11:0] CSRAdrM;
-  logic        IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM, InsufficientCSRPrivilegeM;
-  logic IllegalCSRMWriteReadonlyM;
+  logic [11:0]      CSRAdrM;
+  logic             IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
+  logic             InsufficientCSRPrivilegeM;
+  logic             IllegalCSRMWriteReadonlyM;
   logic [`XLEN-1:0] CSRReadVal2M;
-  logic [11:0] MIP_REGW_writeable;
+  logic [11:0]      MIP_REGW_writeable;
   logic [`XLEN-1:0] TVecM, TrapVectorM, NextFaultMtvalM;
-  logic MTrapM, STrapM;
-
+  logic             MTrapM, STrapM;
   logic [`XLEN-1:0] EPC;
-  logic 			RetM;
-  logic       SelMtvecM;
+  logic 			      RetM;
+  logic             SelMtvecM;
   logic [`XLEN-1:0] TVecAlignedM;
-  
-  logic InstrValidNotFlushedM;
+  logic             InstrValidNotFlushedM;
+
+  // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
 
   ///////////////////////////////////////////
-  // MTVAL
+  // MTVAL: gets value from PC, Instruction, or load/store address
   ///////////////////////////////////////////
 
   always_comb
-    if (InterruptM) NextFaultMtvalM = 0;
+    if (InterruptM)           NextFaultMtvalM = 0;
     else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
       2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
