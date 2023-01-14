@@ -34,63 +34,63 @@
 `include "wally-config.vh"
 
 module csrm #(parameter 
-    // Machine CSRs
-    MVENDORID = 12'hF11,
-    MARCHID = 12'hF12,
-    MIMPID = 12'hF13,
-    MHARTID = 12'hF14,
-    MCONFIGPTR = 12'hF15,
-    MSTATUS = 12'h300,
-    MISA_ADR = 12'h301,
-    MEDELEG = 12'h302,
-    MIDELEG = 12'h303,
-    MIE = 12'h304,
-    MTVEC = 12'h305,
-    MCOUNTEREN = 12'h306,
-    MSTATUSH = 12'h310,
-    MCOUNTINHIBIT = 12'h320,
-    MSCRATCH = 12'h340,
-    MEPC = 12'h341,
-    MCAUSE = 12'h342,
-    MTVAL = 12'h343,
-    MIP = 12'h344,
-    MTINST = 12'h34A,
-    PMPCFG0 = 12'h3A0,
-    // .. up to 15 more at consecutive addresses
-    PMPADDR0 = 12'h3B0,
-    // ... up to 63 more at consecutive addresses
-    TSELECT = 12'h7A0,
-    TDATA1 = 12'h7A1,
-    TDATA2 = 12'h7A2,
-    TDATA3 = 12'h7A3,
-    DCSR = 12'h7B0,
-    DPC = 12'h7B1,
-    DSCRATCH0 = 12'h7B2,
-    DSCRATCH1 = 12'h7B3,
-    // Constants
-    ZERO = {(`XLEN){1'b0}},
-    MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
-    MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
-  ) (
-    input logic 	     clk, reset, 
-    input logic 	     InstrValidNotFlushedM, 
-    input logic 	     CSRMWriteM, MTrapM,
-    input logic [11:0] 	     CSRAdrM,
-    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
-    input logic [`XLEN-1:0]  CSRWriteValM,
-    output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
-    (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
-    output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
+  // Machine CSRs
+  MVENDORID = 12'hF11,
+  MARCHID = 12'hF12,
+  MIMPID = 12'hF13,
+  MHARTID = 12'hF14,
+  MCONFIGPTR = 12'hF15,
+  MSTATUS = 12'h300,
+  MISA_ADR = 12'h301,
+  MEDELEG = 12'h302,
+  MIDELEG = 12'h303,
+  MIE = 12'h304,
+  MTVEC = 12'h305,
+  MCOUNTEREN = 12'h306,
+  MSTATUSH = 12'h310,
+  MCOUNTINHIBIT = 12'h320,
+  MSCRATCH = 12'h340,
+  MEPC = 12'h341,
+  MCAUSE = 12'h342,
+  MTVAL = 12'h343,
+  MIP = 12'h344,
+  MTINST = 12'h34A,
+  PMPCFG0 = 12'h3A0,
+  // .. up to 15 more at consecutive addresses
+  PMPADDR0 = 12'h3B0,
+  // ... up to 63 more at consecutive addresses
+  TSELECT = 12'h7A0,
+  TDATA1 = 12'h7A1,
+  TDATA2 = 12'h7A2,
+  TDATA3 = 12'h7A3,
+  DCSR = 12'h7B0,
+  DPC = 12'h7B1,
+  DSCRATCH0 = 12'h7B2,
+  DSCRATCH1 = 12'h7B3,
+  // Constants
+  ZERO = {(`XLEN){1'b0}},
+  MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
+  MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
+) (
+  input logic 	     clk, reset, 
+  input logic 	     InstrValidNotFlushedM, 
+  input logic 	     CSRMWriteM, MTrapM,
+  input logic [11:0] 	     CSRAdrM,
+  input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
+  input logic [`XLEN-1:0]  CSRWriteValM,
+  output logic [`XLEN-1:0] CSRMReadValM, MTVEC_REGW,
+  (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
+  output logic [31:0]      MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
 (* mark_debug = "true" *)      output logic [`XLEN-1:0] MEDELEG_REGW,
 (* mark_debug = "true" *)      output logic [11:0]      MIDELEG_REGW,
-    // 64-bit registers in RV64, or two 32-bit registers in RV32
-    //output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
-    output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-    output 		     var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
-    (* mark_debug = "true" *)  input logic [11:0] 	     MIP_REGW, MIE_REGW,
-    output logic 	     WriteMSTATUSM, WriteMSTATUSHM,
-    output logic 	     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
-  );
+  // 64-bit registers in RV64, or two 32-bit registers in RV32
+  //output var logic [63:0]      PMPCFG_ARRAY_REGW[`PMP_ENTRIES/8-1:0],
+  output 		     var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  output 		     var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
+  (* mark_debug = "true" *)  input logic [11:0] 	     MIP_REGW, MIE_REGW,
+  output logic 	     WriteMSTATUSM, WriteMSTATUSHM,
+  output logic 	     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
+);
 
   logic [`XLEN-1:0] MISA_REGW, MHARTID_REGW;
 (* mark_debug = "true" *)  logic [`XLEN-1:0] MSCRATCH_REGW;

@@ -39,27 +39,27 @@ module csrc #(parameter
   TIME  = 12'hC01,
   TIMEH = 12'hC81
 ) (
-    input logic 	     clk, reset,
-    input logic 	     StallE, StallM, 
-    input logic        FlushM, 
-    input logic 	     InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
-    input logic 	     DirPredictionWrongM,
-    input logic 	     BTBPredPCWrongM,
-    input logic 	     RASPredPCWrongM,
-    input logic 	     PredictionInstrClassWrongM,
-    input logic [4:0] 	     InstrClassM,
-    input logic 	     DCacheMiss,
-    input logic 	     DCacheAccess,
-    input logic 	     ICacheMiss,
-    input logic 	     ICacheAccess,
-    input logic [11:0] 	     CSRAdrM,
-    input logic [1:0] 	     PrivilegeModeW,
-    input logic [`XLEN-1:0]  CSRWriteValM,
-    input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-    input logic [63:0] 	     MTIME_CLINT, 
-    output logic [`XLEN-1:0] CSRCReadValM,
-    output logic 	     IllegalCSRCAccessM
-  );
+  input logic 	     clk, reset,
+  input logic 	     StallE, StallM, 
+  input logic        FlushM, 
+  input logic 	     InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
+  input logic 	     DirPredictionWrongM,
+  input logic 	     BTBPredPCWrongM,
+  input logic 	     RASPredPCWrongM,
+  input logic 	     PredictionInstrClassWrongM,
+  input logic [4:0] 	     InstrClassM,
+  input logic 	     DCacheMiss,
+  input logic 	     DCacheAccess,
+  input logic 	     ICacheMiss,
+  input logic 	     ICacheAccess,
+  input logic [11:0] 	     CSRAdrM,
+  input logic [1:0] 	     PrivilegeModeW,
+  input logic [`XLEN-1:0]  CSRWriteValM,
+  input logic [31:0] 	     MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+  input logic [63:0] 	     MTIME_CLINT, 
+  output logic [`XLEN-1:0] CSRCReadValM,
+  output logic 	     IllegalCSRCAccessM
+);
 
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     logic [4:0]  CounterNumM;

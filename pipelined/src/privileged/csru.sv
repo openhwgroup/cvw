@@ -43,7 +43,7 @@ module csru #(parameter
     output logic [2:0]       FRM_REGW,
     output logic             WriteFRMM, WriteFFLAGSM,
     output logic             IllegalCSRUAccessM
-  );
+);
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
   if (`F_SUPPORTED | `D_SUPPORTED) begin:csru

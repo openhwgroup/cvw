@@ -45,7 +45,6 @@ module csrs #(parameter
     // Constants
    ZERO = {(`XLEN){1'b0}},
    SEDELEG_MASK = ~(ZERO | `XLEN'b111 << 9)
-
   ) (
     input logic 	     clk, reset, 
     input logic 	     InstrValidNotFlushedM, 
@@ -62,7 +61,7 @@ module csrs #(parameter
     (* mark_debug = "true" *) input logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,
     output logic 	     WriteSSTATUSM,
     output logic 	     IllegalCSRSAccessM
-  );
+);
 
 
   // Supervisor mode CSRs sometimes supported
@@ -70,7 +69,7 @@ module csrs #(parameter
     logic WriteSTVECM;
     logic WriteSSCRATCHM, WriteSEPCM;
     logic WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
-(* mark_debug = "true" *)    logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
+    (* mark_debug = "true" *)    logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
     (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
     
     assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & InstrValidNotFlushedM;

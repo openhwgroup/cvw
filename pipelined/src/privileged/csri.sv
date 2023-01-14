@@ -30,20 +30,20 @@
 `include "wally-config.vh"
 
 module csri #(parameter 
-    MIE = 12'h304,
-    MIP = 12'h344,
-    SIE = 12'h104,
-    SIP = 12'h144
-  ) (
-    input logic 			clk, reset, 
-    input logic 			InstrValidNotFlushedM,
-    input logic 			CSRMWriteM, CSRSWriteM,
-    input logic [`XLEN-1:0] CSRWriteValM,
-    input logic [11:0] 		CSRAdrM,
-    (* mark_debug = "true" *)    input logic MExtInt, SExtInt, MTimerInt, MSwInt,
-    output logic [11:0] 	MIP_REGW, MIE_REGW,
-    (* mark_debug = "true" *) output logic [11:0]   MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
-  );
+  MIE = 12'h304,
+  MIP = 12'h344,
+  SIE = 12'h104,
+  SIP = 12'h144
+) (
+  input logic 			clk, reset, 
+  input logic 			InstrValidNotFlushedM,
+  input logic 			CSRMWriteM, CSRSWriteM,
+  input logic [`XLEN-1:0] CSRWriteValM,
+  input logic [11:0] 		CSRAdrM,
+  (* mark_debug = "true" *)    input logic MExtInt, SExtInt, MTimerInt, MSwInt,
+  output logic [11:0] 	MIP_REGW, MIE_REGW,
+  (* mark_debug = "true" *) output logic [11:0]   MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
+);
 
   logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
