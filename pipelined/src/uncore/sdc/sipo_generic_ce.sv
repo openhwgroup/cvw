@@ -7,12 +7,9 @@
 // Purpose:  serial to n-bit parallel shift register using register_ce.
 // When given a n-bit word as input transmit the message serially MSB (leftmost)
 // bit first.
-
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
