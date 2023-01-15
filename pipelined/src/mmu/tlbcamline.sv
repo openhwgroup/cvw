@@ -31,8 +31,7 @@
 
 `include "wally-config.vh"
 
-module tlbcamline #(parameter KEY_BITS = 20,
-                    parameter SEGMENT_BITS = 10) (
+module tlbcamline #(parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
   input  logic [`VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
   input  logic [`ASID_BITS-1:0] SATP_ASID,

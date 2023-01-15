@@ -52,72 +52,46 @@
 `include "wally-config.vh"
 
 // The TLB will have 2**ENTRY_BITS total entries
-module tlb #(parameter TLB_ENTRIES = 8,
-             parameter ITLB = 0) (
-  input logic                    clk, reset,
-
-  // Current value of satp CSR (from privileged unit)
-  input logic [`SVMODE_BITS-1:0] SATP_MODE,
-  input logic [`ASID_BITS-1:0]   SATP_ASID,
-  input logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic [1:0]              STATUS_MPP,
-
-  // Current privilege level of the processeor
-  input logic [1:0]              PrivilegeModeW,
-
-  // 00 - TLB is not being accessed
-  // 1x - TLB is accessed for a read (or an instruction)
-  // x1 - TLB is accessed for a write
-  // 11 - TLB is accessed for both read and write
-  input logic                    ReadAccess, WriteAccess,
-  input logic                    DisableTranslation,
-
-  // address input before translation (could be physical or virtual)
-  input logic [`XLEN-1:0]        VAdr,
-
-  // Controls for writing a new entry to the TLB
-  input logic [`XLEN-1:0]        PTE,
-  input logic [1:0]              PageTypeWriteVal,
-  input logic                    TLBWrite,
-
-  // Invalidate all TLB entries
-  input logic                    TLBFlush,
-
-  // Physical address outputs
-  output logic [`PA_BITS-1:0]    TLBPAdr,
-  output logic                   TLBMiss,
-  output logic                   TLBHit,
-  output logic                   Translate,
-
-  // Faults
-  output logic                   TLBPageFault,
-  output logic                   DAPageFault
+module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
+  input logic                     clk, reset,
+  input  logic [`SVMODE_BITS-1:0] SATP_MODE,        // Current address translation mode
+  input  logic [`ASID_BITS-1:0]   SATP_ASID,
+  input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input  logic [1:0]              STATUS_MPP,
+  input  logic [1:0]              PrivilegeModeW,   // Current privilege level of the processeor
+  input  logic                    ReadAccess, 
+  input  logic                    WriteAccess,
+  input  logic                    DisableTranslation,
+  input  logic [`XLEN-1:0]        VAdr,             // address input before translation (could be physical or virtual)
+  input  logic [`XLEN-1:0]        PTE,
+  input  logic [1:0]              PageTypeWriteVal,
+  input  logic                    TLBWrite,
+  input  logic                    TLBFlush,
+  output logic [`PA_BITS-1:0]     TLBPAdr,
+  output logic                    TLBMiss,
+  output logic                    TLBHit,
+  output logic                    Translate,
+  output logic                    TLBPageFault,
+  output logic                    DAPageFault
 );
 
-  logic [TLB_ENTRIES-1:0] Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
-
+  logic [TLB_ENTRIES-1:0]         Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
   // Sections of the virtual and physical addresses
-  logic [`VPN_BITS-1:0] VPN;
-  logic [`PPN_BITS-1:0] PPN;
-
+  logic [`VPN_BITS-1:0]           VPN;
+  logic [`PPN_BITS-1:0]           PPN;
   // Sections of the page table entry
-  logic [7:0]           PTEAccessBits;
+  logic [7:0]                     PTEAccessBits;
+  logic [1:0]                     HitPageType;
+  logic                           CAMHit;
+  logic                           SV39Mode;
+  logic 				                  Misaligned;
+  logic 				                  MegapageMisaligned;
 
-  logic [1:0]            HitPageType;
-  logic                  CAMHit;
-  logic                  SV39Mode;
-
-  logic 				 Misaligned;
-  logic 				 MegapageMisaligned;
-
-  // Ross Thompson.  If we are going to write invalid PTEs into the TLB should
-  // we cache Misaligned along with the PTE?  This only has to be computed once
-  // in the hptw as it is always the same regardless of the VPN.
   if(`XLEN == 32) begin
     assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
     assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
-  end else begin
-    logic 				 GigapageMisaligned, TerapageMisaligned;
+  end else begin // 64-bit
+    logic  GigapageMisaligned, TerapageMisaligned;
     assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
     assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
     assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0		  
@@ -129,9 +103,9 @@ module tlb #(parameter TLB_ENTRIES = 8,
   assign VPN = VAdr[`VPN_BITS+11:12];
 
   tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
-                        .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
-                        .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
-                        .DAPageFault, .SV39Mode, .Translate);
+    .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
+    .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
+    .DAPageFault, .SV39Mode, .Translate);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
