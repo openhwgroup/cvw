@@ -94,10 +94,11 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
     logic [`AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
     genvar                     index;
     for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
-	  assign AHBWordSets[index] = CacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
+	    assign AHBWordSets[index] = CacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
     end
     assign CacheReadDataWordAHB = AHBWordSets[BeatCount[$clog2(LLENPOVERAHBW)-1:0]];
   end else assign CacheReadDataWordAHB = CacheReadDataWordM[`AHBW-1:0];      
+  
   mux2 #(`AHBW) HWDATAMux(.d0(CacheReadDataWordAHB), .d1(WriteDataM[`AHBW-1:0]),
      .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
   flopen #(`AHBW) wdreg(HCLK, HREADY, PreHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec
@@ -109,9 +110,8 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
   
-
   buscachefsm #(BeatCountThreshold, LOGWPL) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
-	.HREADY, .HTRANS, .HWRITE, .HBURST);
+	  .HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

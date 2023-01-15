@@ -28,39 +28,34 @@
 `define BURST_EN 1
 
 // HCLK and clk must be the same clock!
-module buscachefsm #(parameter integer BeatCountThreshold, parameter integer LOGWPL)
-  (input logic               HCLK,
-   input logic               HRESETn,
+module buscachefsm #(parameter integer BeatCountThreshold, LOGWPL) (
+  input  logic              HCLK,
+  input  logic              HRESETn,
 
-   // IEU interface
-   input logic               Flush,
-   input logic [1:0]         BusRW,
-   input logic               Stall,
-   output logic              BusCommitted,
-   output logic              BusStall,
-   output logic              CaptureEn,
+  // IEU interface
+  input  logic              Flush,
+  input  logic [1:0]        BusRW,
+  input  logic              Stall,
+  output logic              BusCommitted,
+  output logic              BusStall,
+  output logic              CaptureEn,
 
-   // cache interface
-   input logic [1:0]         CacheBusRW,
-   output logic              CacheBusAck,
-   
-   // lsu interface
-   output logic [LOGWPL-1:0] BeatCount, BeatCountDelayed,
-   output logic              SelBusBeat,
+  // cache interface
+  input  logic [1:0]        CacheBusRW,
+  output logic              CacheBusAck,
+  
+  // lsu interface
+  output logic [LOGWPL-1:0] BeatCount, BeatCountDelayed,
+  output logic              SelBusBeat,
 
-   // BUS interface
-   input logic               HREADY,
-   output logic [1:0]        HTRANS,
-   output logic              HWRITE,
-   output logic [2:0]        HBURST
+  // BUS interface
+  input  logic              HREADY,
+  output logic [1:0]        HTRANS,
+  output logic              HWRITE,
+  output logic [2:0]        HBURST
 );
   
-  typedef enum logic [2:0] {ADR_PHASE,
-				            DATA_PHASE,
-				            MEM3,
-                            CACHE_FETCH,
-                            CACHE_WRITEBACK} busstatetype;
-
+  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, CACHE_FETCH, CACHE_WRITEBACK}               busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   (* mark_debug = "true" *) busstatetype CurrState, NextState;
@@ -77,42 +72,31 @@ module buscachefsm #(parameter integer BeatCountThreshold, parameter integer LOG
     else CurrState <= #1 NextState;  
   
   always_comb begin
-	case(CurrState)
-	  ADR_PHASE: if(HREADY & |BusRW)              NextState = DATA_PHASE;
-                   else if (HREADY & CacheBusRW[0]) NextState = CACHE_WRITEBACK;
-                   else if (HREADY & CacheBusRW[1]) NextState = CACHE_FETCH;
-                   else                          NextState = ADR_PHASE;
-      DATA_PHASE: if(HREADY)                  NextState = MEM3;
-		           else                          NextState = DATA_PHASE;
-      MEM3: if(Stall)                   NextState = MEM3;
-		           else                          NextState = ADR_PHASE;
-      CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0]) NextState = CACHE_WRITEBACK;
+	  case(CurrState)
+	    ADR_PHASE:  if (HREADY & |BusRW)                              NextState = DATA_PHASE;
+                  else if (HREADY & CacheBusRW[0])                  NextState = CACHE_WRITEBACK;
+                  else if (HREADY & CacheBusRW[1])                  NextState = CACHE_FETCH;
+                  else                                              NextState = ADR_PHASE;
+      DATA_PHASE: if(HREADY)                                        NextState = MEM3;
+		              else                                              NextState = DATA_PHASE;
+      MEM3: if(Stall)                                               NextState = MEM3;
+		           else                                                 NextState = ADR_PHASE;
+      CACHE_FETCH: if(HREADY & FinalBeatCount & CacheBusRW[0])      NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalBeatCount & ~|CacheBusRW) NextState = ADR_PHASE;
-                   else                       NextState = CACHE_FETCH;
-      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0]) NextState = CACHE_WRITEBACK;
+                   else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
+                   else                                             NextState = CACHE_FETCH;
+      CACHE_WRITEBACK: if(HREADY & FinalBeatCount & CacheBusRW[0])  NextState = CACHE_WRITEBACK;
                    else if(HREADY & FinalBeatCount & CacheBusRW[1]) NextState = CACHE_FETCH;
-                   else if(HREADY & FinalBeatCount & ~|CacheBusRW) NextState = ADR_PHASE;
-                   else                       NextState = CACHE_WRITEBACK;
-	  default:                                      NextState = ADR_PHASE;
-	endcase
+                   else if(HREADY & FinalBeatCount & ~|CacheBusRW)  NextState = ADR_PHASE;
+                   else                                             NextState = CACHE_WRITEBACK;
+	    default:                                                      NextState = ADR_PHASE;
+	  endcase
   end
 
   // IEU, LSU, and IFU controls
-  flopenr #(LOGWPL) 
-  BeatCountReg(.clk(HCLK),
-		.reset(~HRESETn | BeatCntReset),
-		.en(BeatCntEn),
-		.d(NextBeatCount),
-		.q(BeatCount));  
-  
   // Used to store data from data phase of AHB.
-  flopenr #(LOGWPL) 
-  BeatCountDelayedReg(.clk(HCLK),
-		.reset(~HRESETn | BeatCntReset),
-		.en(BeatCntEn),
-		.d(BeatCount),
-		.q(BeatCountDelayed));
+  flopenr #(LOGWPL) BeatCountReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, NextBeatCount, BeatCount);  
+  flopenr #(LOGWPL) BeatCountDelayedReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, BeatCount, BeatCountDelayed);
   assign NextBeatCount = BeatCount + 1'b1;
 
   assign FinalBeatCount = BeatCountDelayed == BeatCountThreshold[LOGWPL-1:0];
@@ -124,10 +108,10 @@ module buscachefsm #(parameter integer BeatCountThreshold, parameter integer LOG
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_WRITEBACK;
 
   assign BusStall = (CurrState == ADR_PHASE & (|BusRW | |CacheBusRW)) |
-					//(CurrState == DATA_PHASE & ~BusRW[0]) |  // replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
+					//(CurrState == DATA_PHASE & ~BusRW[0]) |  // *** replace the next line with this.  Fails uart test but i think it's a test problem not a hardware problem.
 					(CurrState == DATA_PHASE) | 
-                    (CurrState == CACHE_FETCH & ~HREADY) |
-                    (CurrState == CACHE_WRITEBACK & ~HREADY);
+          (CurrState == CACHE_FETCH & ~HREADY) |
+          (CurrState == CACHE_WRITEBACK & ~HREADY);
   assign BusCommitted = CurrState != ADR_PHASE;
 
   // AHB bus interface
@@ -151,7 +135,7 @@ module buscachefsm #(parameter integer BeatCountThreshold, parameter integer LOG
   // communication to cache
   assign CacheBusAck = (CacheAccess & HREADY & FinalBeatCount);
   assign SelBusBeat = (CurrState == ADR_PHASE & (BusRW[0] | CacheBusRW[0])) |
-					  (CurrState == DATA_PHASE & BusRW[0]) |
+					            (CurrState == DATA_PHASE & BusRW[0]) |
                       (CurrState == CACHE_WRITEBACK) |
                       (CurrState == CACHE_FETCH);
 
