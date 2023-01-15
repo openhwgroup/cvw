@@ -4,9 +4,9 @@
 // Written: David_Harris@hmc.edu 21 January 2021
 // Modified: 
 //
-// Purpose: Interface to Universial Asynchronous Receiver/ Transmitter with FIFOs
+// Purpose: APB Interface to Universial Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC165550D
-//          Compatible with UART in Imperas Virtio model ***
+//          Compatible with UART in Imperas Virtio model
 // 
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
