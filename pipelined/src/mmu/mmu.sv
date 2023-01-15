@@ -24,76 +24,56 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 `include "wally-config.vh"
 
-module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
-             parameter IMMU = 0) (
-
+module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   input logic                 clk, reset,
-  // Current value of satp CSR (from privileged unit)
-  input logic [`XLEN-1:0]     SATP_REGW,
-  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic [1:0]           STATUS_MPP,
-
-  // Current privilege level of the processeor
-  input logic [1:0]           PrivilegeModeW,
-
-  // 00 - TLB is not being accessed
-  // 1x - TLB is accessed for a read (or an instruction)
-  // x1 - TLB is accessed for a write
-  // 11 - TLB is accessed for both read and write
-  input logic                 DisableTranslation,
-
-  // VAdr is the virtual/physical address from IEU or physical address from HPTW.
-  // PhysicalAddress is selected to be PAdr when no translation or the translated VAdr (TLBPAdr)
-  // when there is translation.
-  input logic [`XLEN+1:0]     VAdr,
-  input logic [1:0]           Size, // 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
-
-  // Controls for writing a new entry to the TLB
-  input logic [`XLEN-1:0]     PTE,
-  input logic [1:0]           PageTypeWriteVal,
-  input logic                 TLBWrite,
-
-  // Invalidate all TLB entries
-  input logic                 TLBFlush,
-
-  // Physical address outputs
-  output logic [`PA_BITS-1:0] PhysicalAddress,
-  output logic                TLBMiss,
-  output logic                Cacheable, Idempotent, SelTIM,
-
+  input logic [`XLEN-1:0]     SATP_REGW,          // Current value of satp CSR (from privileged unit)
+  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV, // Status bits affecting translation
+  input logic [1:0]           STATUS_MPP,         // previous machine privilege level
+  input logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
+  input logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
+  input logic [`XLEN+1:0]     VAdr,               // virtual/physical address from IEU or physical address from HPTW
+  input logic [1:0]           Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
+  input logic [`XLEN-1:0]     PTE,                // page table entry
+  input logic [1:0]           PageTypeWriteVal,   // page type
+  input logic                 TLBWrite,           // write TLB entry
+  input logic                 TLBFlush,           // Invalidate all TLB entries
+  output logic [`PA_BITS-1:0] PhysicalAddress,    // PAdr when no translation, or translated VAdr (TLBPAdr) when there is translation
+  output logic                TLBMiss,            // Miss TLB
+  output logic                Cacheable,          // PMA indicates memory address is cachable
+  output logic                Idempotent,         // PMA indicates memory address is idempotent
+  output logic                SelTIM,             // Select a tightly integrated memory
   // Faults
-  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,
-  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,
-  output logic                DAPageFault,
-  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
-
+  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,  // access fault sources
+  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,        // page fault sources
+  output logic                DAPageFault,                                                // page fault due to setting dirty or access bit
+  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,             // misaligned fault sources
   // PMA checker signals
-  input logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,
-  input var                   logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input var                   logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0]
+  input logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,   // access type
+  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],                        // PMP configuration
+  input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                        // PMP addresses
 );
 
-  logic [`PA_BITS-1:0] TLBPAdr;
-  // Translation lookaside buffer
-
-  logic PMAInstrAccessFaultF, PMPInstrAccessFaultF;
-  logic PMALoadAccessFaultM, PMPLoadAccessFaultM;
-  logic PMAStoreAmoAccessFaultM, PMPStoreAmoAccessFaultM;
-  logic DataMisalignedM;
-  logic Translate;
-  logic TLBHit;
-  logic TLBPageFault;
+  logic [`PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB                   
+  logic                       PMAInstrAccessFaultF;     // Instruction access fault from PMA
+  logic                       PMPInstrAccessFaultF;     // Instruction access fault from PMP
+  logic                       PMALoadAccessFaultM;      // Load access fault from PMA
+  logic                       PMPLoadAccessFaultM;      // Load access fault from PMP
+  logic                       PMAStoreAmoAccessFaultM;  // Store or AMO access fault from PMA
+  logic                       PMPStoreAmoAccessFaultM;  // Store or AMO access fault from PMP
+  logic                       DataMisalignedM;          // load or store misaligned
+  logic                       Translate;                // Translation occurs when virtual memory is active and DisableTranslation is off
+  logic                       TLBHit;                   // Hit in TLB
+  logic                       TLBPageFault;             // Page fault from TLB
   
   // only instantiate TLB if Virtual Memory is supported
   if (`VIRTMEM_SUPPORTED) begin:tlb
     logic ReadAccess, WriteAccess;
     assign ReadAccess = ExecuteAccessF | ReadAccessM; // execute also acts as a TLB read.  Execute and Read are never active for the same MMU, so safe to mix pipestages
     assign WriteAccess = WriteAccessM;
-    tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) 
-      tlb(.clk, .reset,
+    tlb #(.TLB_ENTRIES(TLB_ENTRIES), .ITLB(IMMU)) tlb(
+          .clk, .reset,
           .SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]),
           .SATP_ASID(SATP_REGW[`ASID_BASE+`ASID_BITS-1:`ASID_BASE]),
           .VAdr(VAdr[`XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
@@ -111,29 +91,27 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
   // If translation is occuring, select translated physical address from TLB
   // the lower 12 bits are the page offset. These are never changed from the orginal
   // non translated address.
-  //mux2 #(`PA_BITS) addressmux(PAdr, TLBPAdr, Translate, PhysicalAddress);
   mux2 #(`PA_BITS-12) addressmux(VAdr[`PA_BITS-1:12], TLBPAdr[`PA_BITS-1:12], Translate, PhysicalAddress[`PA_BITS-1:12]);
   assign PhysicalAddress[11:0] = VAdr[11:0];
-  
   
   ///////////////////////////////////////////
   // Check physical memory accesses
   ///////////////////////////////////////////
 
   pmachecker pmachecker(.PhysicalAddress, .Size,
-                        .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-                        .Cacheable, .Idempotent, .SelTIM,
-                        .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
+    .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+    .Cacheable, .Idempotent, .SelTIM,
+    .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
   pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
-                        .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-                        .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-                        .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
+    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+    .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+    .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
-  assign InstrAccessFaultF = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
-  assign LoadAccessFaultM = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
+  assign InstrAccessFaultF    = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
+  assign LoadAccessFaultM     = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
   assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~(Translate & ~TLBHit);
 
   // Misaligned faults
@@ -144,11 +122,11 @@ module mmu #(parameter TLB_ENTRIES = 8, // number of TLB Entries
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
-  assign LoadMisalignedFaultM = DataMisalignedM & ReadAccessM;
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadAccessM;
   assign StoreAmoMisalignedFaultM = DataMisalignedM & (WriteAccessM | AtomicAccessM);
 
   // Specify which type of page fault is occurring
-  assign InstrPageFaultF = TLBPageFault & ExecuteAccessF;
-  assign LoadPageFaultM = TLBPageFault & ReadAccessM;
+  assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
+  assign LoadPageFaultM     = TLBPageFault & ReadAccessM;
   assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | AtomicAccessM);
 endmodule
