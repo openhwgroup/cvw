@@ -27,22 +27,27 @@
 `include "wally-config.vh"
 
 module cacheLRU
-  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128)(
-   input logic                clk, reset, CacheEn, FlushStage,
-   input logic [NUMWAYS-1:0]  HitWay,
-   input logic [NUMWAYS-1:0]  ValidWay,
-   output logic [NUMWAYS-1:0] VictimWay,
-   input logic [SETLEN-1:0]   CAdr,
-   input logic [SETLEN-1:0]   PAdr,
-   input logic                LRUWriteEn, SetValid, InvalidateCache, FlushCache);
+  #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
+  input  logic                clk, reset, 
+  input  logic                CacheEn, 
+  input  logic                FlushStage,
+  input  logic [NUMWAYS-1:0]  HitWay,
+  input  logic [NUMWAYS-1:0]  ValidWay,
+  input  logic [SETLEN-1:0]   CAdr,
+  input  logic [SETLEN-1:0]   PAdr,
+  input  logic                LRUWriteEn, 
+  input  logic                SetValid, 
+  input  logic                InvalidateCache, 
+  input  logic                FlushCache,
+  output logic [NUMWAYS-1:0]  VictimWay
+);
+
+  localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
 
   logic [NUMWAYS-2:0]                  LRUMemory [NUMLINES-1:0];
   logic [NUMWAYS-2:0]                  CurrLRU;
   logic [NUMWAYS-2:0]                  NextLRU;
   logic [NUMWAYS-1:0]                  Way;
-
-  localparam                           LOGNUMWAYS = $clog2(NUMWAYS);
-
   logic [LOGNUMWAYS-1:0]               WayEncoded;
   logic [NUMWAYS-2:0]                  WayExpanded;
   logic                                AllValid;
