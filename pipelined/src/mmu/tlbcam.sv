@@ -9,6 +9,8 @@
 // Purpose: Stores virtual page numbers with cached translations.
 //          Determines whether a given virtual page number is in the TLB.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
