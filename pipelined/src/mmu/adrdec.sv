@@ -27,17 +27,17 @@
 `include "wally-config.vh"
 
 module adrdec (
-  input  logic [`PA_BITS-1:0] PhysicalAddress,
-  input  logic [`PA_BITS-1:0] Base, Range,
-  input  logic                Supported,
-  input  logic                AccessValid,
-  input  logic [1:0]          Size,
-  input  logic [3:0]          SizeMask,
-  output logic                Sel
+  input  logic [`PA_BITS-1:0] PhysicalAddress,  // Physical address to decode
+  input  logic [`PA_BITS-1:0] Base, Range,      // Base and range of peripheral addresses
+  input  logic                Supported,        // Is this peripheral supported?
+  input  logic                AccessValid,      // Is the access type valid?
+  input  logic [1:0]          Size,             // Size of access
+  input  logic [3:0]          SizeMask,         // List of supported sizes: 0 = 8, 1 = 16, 2 = 32, 3 = 64-bit
+  output logic                Sel               // Decoder selects this peripheral
 );
 
-  logic Match;
-  logic SizeValid;
+  logic                       Match;            // Address matches in range
+  logic                       SizeValid;        // Size of access is valid
 
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
@@ -47,7 +47,7 @@ module adrdec (
   // determine if legal size of access is being made (byte, halfword, word, doubleword)
   assign SizeValid = SizeMask[Size]; 
   
+  // Select this peripheral if the address matches, the peripheral is supported, and the type and size of access is ok
   assign Sel = Match & Supported & AccessValid & SizeValid;
-
 endmodule
 
