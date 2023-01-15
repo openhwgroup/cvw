@@ -31,28 +31,28 @@
 `include "wally-config.vh"
 
 module gpio_apb (
-  input  logic             PCLK, PRESETn,
-  input  logic             PSEL,
-  input  logic [7:0]       PADDR, 
-  input  logic [`XLEN-1:0] PWDATA,
+  input  logic              PCLK, PRESETn,
+  input  logic              PSEL,
+  input  logic [7:0]        PADDR, 
+  input  logic [`XLEN-1:0]  PWDATA,
   input  logic [`XLEN/8-1:0] PSTRB,
-  input  logic             PWRITE,
-  input  logic             PENABLE,
-  output logic [`XLEN-1:0] PRDATA,
-  output logic             PREADY,
-  input  logic [31:0]      iof0, iof1,
-  input  logic [31:0]      GPIOPinsIn,
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,
-  output logic             GPIOIntr);
+  input  logic              PWRITE,
+  input  logic              PENABLE,
+  output logic [`XLEN-1:0]  PRDATA,
+  output logic              PREADY,
+  input  logic [31:0]       iof0, iof1,
+  input  logic [31:0]       GPIOPinsIn,
+  output logic [31:0]       GPIOPinsOut, GPIOPinsEn,
+  output logic              GPIOIntr
+);
 
-  logic [31:0] input0d, input1d, input2d, input3d;
-  logic [31:0] input_val, input_en, output_en, output_val;
-  logic [31:0] rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
-  logic [31:0] out_xor, iof_en, iof_sel, iof_out, gpio_out;
-
-  logic [7:0] entry;
-  logic [31:0] Din, Dout;
-  logic memwrite;
+  logic [31:0]              input0d, input1d, input2d, input3d;
+  logic [31:0]              input_val, input_en, output_en, output_val;
+  logic [31:0]              rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
+  logic [31:0]              out_xor, iof_en, iof_sel, iof_out, gpio_out;
+  logic [7:0]               entry;
+  logic [31:0]              Din, Dout;
+  logic                     memwrite;
   
   // APB I/O
   assign entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses

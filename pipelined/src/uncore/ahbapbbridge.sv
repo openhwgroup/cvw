@@ -28,34 +28,33 @@
 `include "wally-config.vh"
 
 module ahbapbbridge #(PERIPHS = 2) (
-  input  logic             HCLK, HRESETn,
-  input  logic [PERIPHS-1:0] HSEL,  
-  input  logic [`PA_BITS-1:0]  HADDR, 
-  input  logic [`XLEN-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  input  logic             HWRITE,
-  input  logic [1:0]       HTRANS,
-  input  logic             HREADY,
-//  input  logic [3:0]       HPROT, // not used
-  output logic [`XLEN-1:0] HRDATA,
-  output logic             HRESP, HREADYOUT,
-  output logic             PCLK, PRESETn,
-  output logic [PERIPHS-1:0] PSEL,
-  output logic             PWRITE,
-  output logic             PENABLE,
-  output logic [31:0]      PADDR,
-  output logic [`XLEN-1:0] PWDATA,
-//  output logic [2:0]       PPROT, // not used
-  output logic [`XLEN/8-1:0] PSTRB,
-//  output logic             PWAKEUP // not used
-  input  logic [PERIPHS-1:0] PREADY,
+  input  logic                HCLK, HRESETn,
+  input  logic [PERIPHS-1:0]  HSEL,  
+  input  logic [`PA_BITS-1:0] HADDR, 
+  input  logic [`XLEN-1:0]    HWDATA,
+  input  logic [`XLEN/8-1:0]  HWSTRB,
+  input  logic                HWRITE,
+  input  logic [1:0]          HTRANS,
+  input  logic                HREADY,
+//  input  logic [3:0]        HPROT, // not used
+  output logic [`XLEN-1:0]    HRDATA,
+  output logic                HRESP, HREADYOUT,
+  output logic                PCLK, PRESETn,
+  output logic [PERIPHS-1:0]  PSEL,
+  output logic                PWRITE,
+  output logic                PENABLE,
+  output logic [31:0]         PADDR,
+  output logic [`XLEN-1:0]    PWDATA,
+//  output logic [2:0]        PPROT, // not used
+  output logic [`XLEN/8-1:0]  PSTRB,
+//  output logic              PWAKEUP // not used
+  input  logic [PERIPHS-1:0]  PREADY,
   input  var   [PERIPHS-1:0][`XLEN-1:0] PRDATA
 );
 
-
-  logic initTrans, initTransSel, initTransSelD;
-  logic nextPENABLE;
-  logic PREADYOUT;
+  logic                       initTrans, initTransSel, initTransSelD;
+  logic                       nextPENABLE;
+  logic                       PREADYOUT;
 
   // convert AHB to APB signals
   assign PCLK = HCLK;
