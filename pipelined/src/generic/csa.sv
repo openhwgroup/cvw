@@ -36,6 +36,5 @@ module csa #(parameter N=16) (
   // s + c = x + y + z + cin
  
   assign s = x ^ y ^ z;
-  assign c = {x[N-2:0] & (y[N-2:0] | z[N-2:0]) | 
-		    (y[N-2:0] & z[N-2:0]), cin};
+  assign c = {x[N-2:0] & (y[N-2:0] | z[N-2:0]) | (y[N-2:0] & z[N-2:0]), cin};
 endmodule

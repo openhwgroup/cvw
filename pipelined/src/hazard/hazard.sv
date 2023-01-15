@@ -4,8 +4,10 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Determine forwarding, stalls and flushes
+// Purpose: Determine stalls and flushes
 // 
+// Documentation: RISC-V System on Chip Design Chapter 4, Figure 13.54
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -28,21 +30,21 @@
 
 module hazard(
   // Detect hazards
-(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,
+(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,   
 (* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
 (* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
-(* mark_debug = "true" *)         input logic  FCvtIntStallD, FPUStallD,
-(* mark_debug = "true" *)	      input logic  DivBusyE,FDivBusyE,
+(* mark_debug = "true" *)       input logic  FCvtIntStallD, FPUStallD,
+(* mark_debug = "true" *)	      input logic  DivBusyE, FDivBusyE,
 (* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)         input logic  WFIStallM,
+(* mark_debug = "true" *)       input logic  WFIStallM,
   // Stall & flush outputs
 (* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
 (* mark_debug = "true" *)	      output logic FlushD, FlushE, FlushM, FlushW
 );
 
-  logic StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
-  logic FlushDCause, FlushECause, FlushMCause, FlushWCause;
+  logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
+  logic                                       FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
+  logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
   
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -92,6 +94,7 @@ module hazard(
   assign #1 StallM = StallMCause | StallW;
   assign #1 StallW = StallWCause;
 
+  // detect the first stage that is not stalled
   assign FirstUnstalledD = ~StallD & StallF;
   assign FirstUnstalledE = ~StallE & StallD;
   assign FirstUnstalledM = ~StallM & StallE;
