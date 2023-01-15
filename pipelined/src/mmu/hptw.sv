@@ -8,8 +8,9 @@
 //            adding support for terapage encoding, and for setting the HPTWAdr using the new level,
 //            adding the internal SvMode signal
 //
-// Purpose: Page Table Walker
-//          Part of the Memory Management Unit (MMU)
+// Purpose: Hardware Page Table Walker
+//
+// Documentation: RISC-V System on Chip Design Chapter 8
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -31,39 +32,39 @@
 `include "wally-config.vh"
 
 module hptw (
-	input logic                 clk, reset,
-   	input logic [`XLEN-1:0]     SATP_REGW, // includes SATP.MODE to determine number of levels in page table
-	input logic [`XLEN-1:0]     PCF,  // addresses to translate
- 	input logic [`XLEN+1:0]     IEUAdrExtM, // addresses to translate
-   	input logic [1:0]           MemRWM, AtomicM,
-   	// system status
-   	input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  	input logic [1:0]           STATUS_MPP,
-  	input logic [1:0]           PrivilegeModeW,
-   	input logic [`XLEN-1:0]     ReadDataM, // page table entry from LSU 
-  	input logic [`XLEN-1:0]     WriteDataM,
-   	input logic                 DCacheStallW, // stall from LSU
-  	input logic [2:0]           Funct3M,
-   	input logic [6:0]           Funct7M,
-   	input logic                 ITLBMissF,
-   	input logic                 DTLBMissM,
-	input logic                 FlushW,
-   	input logic                 InstrDAPageFaultF,
-   	input logic                 DataDAPageFaultM,
-   	output logic [`XLEN-1:0]    PTE, // page table entry to TLBs
-   	output logic [1:0]          PageType, // page type to TLBs
-   	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
-   	output logic [1:0]          PreLSURWM,
-   	output logic [`XLEN+1:0]    IHAdrM,
-   	output logic [`XLEN-1:0]    IHWriteDataM,
-   	output logic [1:0]          LSUAtomicM,
-   	output logic [2:0]          LSUFunct3M,
-   	output logic [6:0]          LSUFunct7M,
-   	output logic IgnoreRequestTLB,
-   	output logic SelHPTW,
-   	output logic HPTWStall,
-    input logic  LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
-    output logic LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
+	input  logic                clk, reset,
+	input  logic [`XLEN-1:0]    SATP_REGW, 					// includes SATP.MODE to determine number of levels in page table
+	input  logic [`XLEN-1:0]    PCF,  							// addresses to translate
+	input  logic [`XLEN+1:0]    IEUAdrExtM, 				// addresses to translate
+	input  logic [1:0]          MemRWM, AtomicM,
+	// system status
+	input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+	input  logic [1:0]          STATUS_MPP,
+	input  logic [1:0]          PrivilegeModeW,
+	input  logic [`XLEN-1:0]    ReadDataM, 					// page table entry from LSU 
+	input  logic [`XLEN-1:0]    WriteDataM,
+	input  logic                DCacheStallW, 			// stall from LSU
+	input  logic [2:0]          Funct3M,
+	input  logic [6:0]          Funct7M,
+	input  logic                ITLBMissF,
+	input  logic                DTLBMissM,
+	input  logic                FlushW,
+	input  logic                InstrDAPageFaultF,
+	input  logic                DataDAPageFaultM,
+	output logic [`XLEN-1:0]    PTE, 								// page table entry to TLBs
+	output logic [1:0]          PageType, 					// page type to TLBs
+	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
+	output logic [1:0]          PreLSURWM,
+	output logic [`XLEN+1:0]    IHAdrM,
+	output logic [`XLEN-1:0]    IHWriteDataM,
+	output logic [1:0]          LSUAtomicM,
+	output logic [2:0]          LSUFunct3M,
+	output logic [6:0]          LSUFunct7M,
+	output logic 								IgnoreRequestTLB,
+	output logic 								SelHPTW,
+	output logic 								HPTWStall,
+	input  logic  							LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
+	output logic 								LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
 );
 
 	typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -72,37 +73,35 @@ module hptw (
 					L3_ADR, L3_RD, 
 					LEAF, IDLE, UPDATE_PTE} statetype;
 
-	logic			    DTLBWalk; // register TLBs translation miss requests
-	logic [`PPN_BITS-1:0]	    BasePageTablePPN;
-	logic [`PPN_BITS-1:0]	    CurrentPPN;
-	logic			    Executable, Writable, Readable, Valid, PTE_U;
-	logic 			Misaligned, MegapageMisaligned;
-	logic			    ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
-	logic			    StartWalk;
-	logic     		TLBMiss;
-	logic			    PRegEn;
-	logic [1:0]       NextPageType;
-	logic [`SVMODE_BITS-1:0]	    SvMode;
-	logic [`XLEN-1:0] 	    TranslationVAdr;
-  logic [`XLEN-1:0]         NextPTE;
-  logic                     UpdatePTE;
-  logic                     DAPageFault;
-  logic [`PA_BITS-1:0]      HPTWReadAdr;
-    logic                       SelHPTWAdr;
+	logic			    							DTLBWalk; // register TLBs translation miss requests
+	logic [`PPN_BITS-1:0]	    	BasePageTablePPN;
+	logic [`PPN_BITS-1:0]	    	CurrentPPN;
+	logic			    							Executable, Writable, Readable, Valid, PTE_U;
+	logic 											Misaligned, MegapageMisaligned;
+	logic			    							ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
+	logic			    							StartWalk;
+	logic     									TLBMiss;
+	logic			    							PRegEn;
+	logic [1:0]       					NextPageType;
+	logic [`SVMODE_BITS-1:0]	  SvMode;
+	logic [`XLEN-1:0] 	    		TranslationVAdr;
+  logic [`XLEN-1:0]         	NextPTE;
+  logic                     	UpdatePTE;
+  logic                     	DAPageFault;
+  logic [`PA_BITS-1:0]      	HPTWReadAdr;
+	logic                     	SelHPTWAdr;
   logic [`XLEN+1:0]           HPTWAdrExt;
   logic                       ITLBMissOrDAFaultF;
   logic                       DTLBMissOrDAFaultM;
   logic [`PA_BITS-1:0]        HPTWAdr;
   logic [1:0]                 HPTWRW;
-  logic [2:0]                 HPTWSize; // 32 or 64 bit access.
-                       
-
-	(* mark_debug = "true" *)      statetype WalkerState, NextWalkerState, InitialWalkerState;
+  logic [2:0]                 HPTWSize; // 32 or 64 bit access
+	(* mark_debug = "true" *) statetype WalkerState, NextWalkerState, InitialWalkerState;
 
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
-  assign LoadAccessFaultM = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign StoreAmoAccessFaultM = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
+  assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
   assign HPTWInstrAccessFaultM = WalkerState == IDLE ? 1'b0: (LSUStoreAmoAccessFaultM | LSULoadAccessFaultM) & ~DTLBWalk;
 
 	// Extract bits from CSRs and inputs
@@ -112,7 +111,6 @@ module hptw (
 
 	// Determine which address to translate
 	mux2 #(`XLEN) vadrmux(PCF, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
-	//assign TranslationVAdr = DTLBWalk ? IEUAdrExtM[`XLEN-1:0] : PCF;
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
@@ -120,7 +118,6 @@ module hptw (
 	assign PRegEn = HPTWRW[1] & ~DCacheStallW | UpdatePTE;
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
-    
 	// Assign PTE descriptors common across all XLEN values
 	// For non-leaf PTEs, D, A, U bits are reserved and ignored.  They do not cause faults while walking the page table
 	assign {PTE_U, Executable, Writable, Readable, Valid} = PTE[4:0];
@@ -130,7 +127,6 @@ module hptw (
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
 
   if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
-
     logic                     ReadAccess, WriteAccess;
     logic                     InvalidRead, InvalidWrite;
     logic                     UpperBitsUnequalPageFault; 
@@ -141,10 +137,10 @@ module hptw (
     logic [`PA_BITS-1:0]      HPTWWriteAdr;  
     logic                     SetDirty;
     logic                     Dirty, Accessed;
-	logic [`XLEN-1:0]		  AccessedPTE;
+		logic [`XLEN-1:0]		  AccessedPTE;
 
-	assign AccessedPTE = {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
-	mux2 #(`XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE);
+		assign AccessedPTE = {PTE[`XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
+		mux2 #(`XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE);
     flopenr #(`PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
 	
     assign SaveHPTWAdr = WalkerState == L0_ADR;
@@ -161,8 +157,8 @@ module hptw (
                                ((EffectivePrivilegeMode == `S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
     // Check for page faults
-	vm64check vm64check(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]), .VAdr(TranslationVAdr), 
-	                               .SV39Mode(), .UpperBitsUnequalPageFault);
+		vm64check vm64check(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]), .VAdr(TranslationVAdr), 
+	  	.SV39Mode(), .UpperBitsUnequalPageFault);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
     assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
@@ -190,7 +186,6 @@ module hptw (
 	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
 	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
   
-
 	// FSM to track PageType based on the levels of the page table traversed
 	flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
 	always_comb 
@@ -251,35 +246,34 @@ module hptw (
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 		case (WalkerState)
-			IDLE: if (TLBMiss)	 										NextWalkerState = InitialWalkerState;
-				  else 													NextWalkerState = IDLE;
-			L3_ADR:                     								NextWalkerState = L3_RD; // first access in SV48
-			L3_RD: if (DCacheStallW)    								NextWalkerState = L3_RD;
-				   else     											NextWalkerState = L2_ADR;
+			IDLE: if (TLBMiss)	 																				NextWalkerState = InitialWalkerState;
+				  	else 																									NextWalkerState = IDLE;
+			L3_ADR:                     																NextWalkerState = L3_RD; // first access in SV48
+			L3_RD: if (DCacheStallW)    																NextWalkerState = L3_RD;
+				   else     																							NextWalkerState = L2_ADR;
 			L2_ADR: if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
-					else 				                 				NextWalkerState = LEAF;
-			L2_RD: if (DCacheStallW)                     				NextWalkerState = L2_RD;
-				else                                     				NextWalkerState = L1_ADR;
+					else 				                 														NextWalkerState = LEAF;
+			L2_RD: if (DCacheStallW)                     								NextWalkerState = L2_RD;
+				else                                     									NextWalkerState = L1_ADR;
 			L1_ADR: if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
-					else if (ValidNonLeafPTE)            				NextWalkerState = L1_RD;
-					else 				                				NextWalkerState = LEAF;	
-			L1_RD: if (DCacheStallW)                     				NextWalkerState = L1_RD;
-				else                                     				NextWalkerState = L0_ADR;
-			L0_ADR: if (ValidNonLeafPTE)                 				NextWalkerState = L0_RD;
-					else                                 				NextWalkerState = LEAF;
-			L0_RD: if (DCacheStallW)                     				NextWalkerState = L0_RD;
-				   else                                     			NextWalkerState = LEAF;
+					else if (ValidNonLeafPTE)            										NextWalkerState = L1_RD;
+					else 				                														NextWalkerState = LEAF;	
+			L1_RD: if (DCacheStallW)                     								NextWalkerState = L1_RD;
+				else                                     									NextWalkerState = L0_ADR;
+			L0_ADR: if (ValidNonLeafPTE)                 								NextWalkerState = L0_RD;
+					else                                 										NextWalkerState = LEAF;
+			L0_RD: if (DCacheStallW)                     								NextWalkerState = L0_RD;
+				   else                                     							NextWalkerState = LEAF;
 			LEAF: if (`HPTW_WRITES_SUPPORTED & DAPageFault)             NextWalkerState = UPDATE_PTE;
-				  else 													NextWalkerState = IDLE;
-			UPDATE_PTE: if(DCacheStallW) 		                        NextWalkerState = UPDATE_PTE;
-						else 											NextWalkerState = LEAF;
-			default: 													NextWalkerState = IDLE; // should never be reached
+				  else 																										NextWalkerState = IDLE;
+			UPDATE_PTE: if(DCacheStallW) 		                        		NextWalkerState = UPDATE_PTE;
+						else 																									NextWalkerState = LEAF;
+			default: 																										NextWalkerState = IDLE; // should never be reached
 		endcase // case (WalkerState)
 
   assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
-
 
   assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
   assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  

@@ -6,6 +6,8 @@
 //
 // Purpose: Memory management unit, including TLB, PMA, PMP
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -27,18 +29,20 @@
 `include "wally-config.vh"
 
 module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
-  input logic                 clk, reset,
-  input logic [`XLEN-1:0]     SATP_REGW,          // Current value of satp CSR (from privileged unit)
-  input logic                 STATUS_MXR, STATUS_SUM, STATUS_MPRV, // Status bits affecting translation
-  input logic [1:0]           STATUS_MPP,         // previous machine privilege level
-  input logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
-  input logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
-  input logic [`XLEN+1:0]     VAdr,               // virtual/physical address from IEU or physical address from HPTW
-  input logic [1:0]           Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
-  input logic [`XLEN-1:0]     PTE,                // page table entry
-  input logic [1:0]           PageTypeWriteVal,   // page type
-  input logic                 TLBWrite,           // write TLB entry
-  input logic                 TLBFlush,           // Invalidate all TLB entries
+  input  logic                clk, reset,
+  input  logic [`XLEN-1:0]    SATP_REGW,          // Current value of satp CSR (from privileged unit)
+  input  logic                STATUS_MXR,         // Status CSR: make executable page readable
+  input  logic                STATUS_SUM,         // Status CSR: Supervisor access to user memory
+  input  logic                STATUS_MPRV,        // Status CSR: modify machine privilege
+  input  logic [1:0]          STATUS_MPP,         // Status CSR: previous machine privilege level
+  input  logic [1:0]          PrivilegeModeW,     // Current privilege level of the processeor
+  input  logic                DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
+  input  logic [`XLEN+1:0]    VAdr,               // virtual/physical address from IEU or physical address from HPTW
+  input  logic [1:0]          Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
+  input  logic [`XLEN-1:0]    PTE,                // page table entry
+  input  logic [1:0]          PageTypeWriteVal,   // page type
+  input  logic                TLBWrite,           // write TLB entry
+  input  logic                TLBFlush,           // Invalidate all TLB entries
   output logic [`PA_BITS-1:0] PhysicalAddress,    // PAdr when no translation, or translated VAdr (TLBPAdr) when there is translation
   output logic                TLBMiss,            // Miss TLB
   output logic                Cacheable,          // PMA indicates memory address is cachable
@@ -50,7 +54,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   output logic                DAPageFault,                                                // page fault due to setting dirty or access bit
   output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,             // misaligned fault sources
   // PMA checker signals
-  input logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,   // access type
+  input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
   input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],                        // PMP configuration
   input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                        // PMP addresses
 );
@@ -103,10 +107,16 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
     .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
-  pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
-    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-    .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-    .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
+  if (`PMP_ENTRIES > 0) // instantiate PMP
+    pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
+      .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+      .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
+  else begin
+    assign PMPInstrAccessFaultF = 0;
+    assign PMPLoadAccessFaultM = 0;
+    assign PMPStoreAmoAccessFaultM = 0;
+  end
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
