@@ -3,13 +3,13 @@
 //
 // Written: Richard Davis
 // Modified: Ross Thompson
-// Converted to system verilog.
+// Converted to SystemVerilog.
 //
 // Purpose: basic up counter
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-/ SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
 // except in compliance with the License, or, at your option, the Apache License version 2.0. You 
