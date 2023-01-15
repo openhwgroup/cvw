@@ -38,7 +38,7 @@
 
 module uartPC16550D(
 	// Processor Interface
-	input  logic 	      CLK, PRESETn,                   // UART clock and active low reset
+	input  logic 	      PCLK, PRESETn,                  // UART clock and active low reset
 	input  logic [2:0]  A,                              // address input (8 registers)
 	input  logic [7:0]  Din,                            // 8-bit WriteData
 	output logic [7:0]  Dout,                           // 8-bit ReadData
