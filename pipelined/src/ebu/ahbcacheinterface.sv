@@ -30,51 +30,52 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED)
-  (
-  input logic                 HCLK, HRESETn,
-  
+module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) (
+  input  logic                 HCLK, HRESETn,
   // bus interface
-  input logic                 HREADY,
-  input logic [`AHBW-1:0]     HRDATA,
-  output logic [2:0]          HSIZE,
-  output logic [2:0]          HBURST,
-  output logic [1:0]          HTRANS,
-  output logic                HWRITE,
-  output logic [`PA_BITS-1:0] HADDR,
-  output logic [`AHBW-1:0]    HWDATA,
-  output logic [`AHBW/8-1:0]  HWSTRB,
-  output logic [LOGWPL-1:0]   BeatCount,
+  input  logic                 HREADY,
+  input  logic [`AHBW-1:0]     HRDATA,
+  output logic [2:0]           HSIZE,
+  output logic [2:0]           HBURST,
+  output logic [1:0]           HTRANS,
+  output logic                 HWRITE,
+  output logic [`PA_BITS-1:0]  HADDR,
+  output logic [`AHBW-1:0]     HWDATA,
+  output logic [`AHBW/8-1:0]   HWSTRB,
+  output logic [LOGWPL-1:0]    BeatCount,
   
   // cache interface
-  input logic [`PA_BITS-1:0]  CacheBusAdr,
-  input logic [`LLEN-1:0]     CacheReadDataWordM,
-  input logic [`LLEN-1:0]     WriteDataM,
-  input logic                 CacheableOrFlushCacheM,
-  input logic [1:0]           CacheBusRW,
-  output logic                CacheBusAck,
-  output logic [LINELEN-1:0]  FetchBuffer, 
-  input logic                 Cacheable,
+  input  logic [`PA_BITS-1:0]  CacheBusAdr,
+  input  logic [`LLEN-1:0]     CacheReadDataWordM,
+  input  logic [`LLEN-1:0]     WriteDataM,
+  input  logic                 CacheableOrFlushCacheM,
+  input  logic [1:0]           CacheBusRW,
+  output logic                 CacheBusAck,
+  output logic [LINELEN-1:0]   FetchBuffer, 
+  input  logic                 Cacheable,
  
   // lsu/ifu interface
-  input logic                 Flush,
-  input logic [`PA_BITS-1:0]  PAdr,
-  input logic [1:0]           BusRW,
-  input logic                 Stall,
-  input logic [2:0]           Funct3,
-  output logic                SelBusBeat,
-  output logic                BusStall,
-  output logic                BusCommitted);
+  input  logic                 Flush,
+  input  logic [`PA_BITS-1:0]  PAdr,
+  input  logic [1:0]           BusRW,
+  input  logic                 Stall,
+  input  logic [2:0]           Funct3,
+  output logic                 SelBusBeat,
+  output logic                 BusStall,
+  output logic                 BusCommitted
+);
   
-  localparam integer          LLENPOVERAHBW = `LLEN / `AHBW; // *** fix me duplciated in lsu.
+  localparam integer           LLENPOVERAHBW = `LLEN / `AHBW; // *** fix me duplciated in lsu.
 
-  localparam integer   BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
-  logic [`PA_BITS-1:0] LocalHADDR;
-  logic [LOGWPL-1:0]   BeatCountDelayed;
-  logic                CaptureEn;
-  logic [`AHBW-1:0]    PreHWDATA;
+  localparam integer           BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
+  logic [`PA_BITS-1:0]         LocalHADDR;
+  logic [LOGWPL-1:0]           BeatCountDelayed;
+  logic                        CaptureEn;
+  logic [`AHBW-1:0]            PreHWDATA;
 
-  genvar                      index;
+  genvar                       index;
+
+  // fetch buffer is made of BEATSPERLINE flip-flops
   for (index = 0; index < BEATSPERLINE; index++) begin:fetchbuffer
     logic [BEATSPERLINE-1:0] CaptureBeat;
     assign CaptureBeat[index] = CaptureEn & (index == BeatCountDelayed);
