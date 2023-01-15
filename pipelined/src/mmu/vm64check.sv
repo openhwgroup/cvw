@@ -29,20 +29,18 @@
 `include "wally-config.vh"
 
 module vm64check (
-   input  logic [`SVMODE_BITS-1:0] SATP_MODE,
-   input  logic [`XLEN-1:0]        VAdr,
-   output logic                    SV39Mode, UpperBitsUnequalPageFault
+  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
+  input  logic [`XLEN-1:0]        VAdr,
+  output logic                    SV39Mode, 
+  output logic                    UpperBitsUnequalPageFault
 );
 
-  if (`XLEN==64) begin:rv64
-      assign SV39Mode = (SATP_MODE == `SV39);
-      // page fault if upper bits aren't all the same
-      logic UpperEqual39, UpperEqual48;
-      assign UpperEqual39 = &(VAdr[63:38]) | ~|(VAdr[63:38]);
-      assign UpperEqual48 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
-      assign UpperBitsUnequalPageFault = SV39Mode ? ~UpperEqual39 : ~UpperEqual48;
-  end else begin
-      assign SV39Mode = 0;
-      assign UpperBitsUnequalPageFault = 0;
-  end           
+  logic                           eq_63_47, eq_46_38;
+
+  assign SV39Mode = (SATP_MODE == `SV39);
+
+  // page fault if upper bits aren't all the same
+  assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
+  assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
+  assign UpperBitsUnequalPageFault = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
 endmodule
