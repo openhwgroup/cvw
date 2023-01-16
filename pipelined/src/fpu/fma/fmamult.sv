@@ -29,9 +29,10 @@
 `include "wally-config.vh"
 
 module fmamult(
-    input  logic [`NF:0]     Xm, Ym, // x and y significand
-    output logic [2*`NF+1:0] Pm      // product's significand
+  input  logic [`NF:0]     Xm, Ym, // x and y significand
+  output logic [2*`NF+1:0] Pm      // product's significand
 );
-    assign Pm = Xm * Ym;
+
+  assign Pm = Xm * Ym;
 endmodule
 

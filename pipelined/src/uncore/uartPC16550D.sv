@@ -11,8 +11,10 @@
 //
 //  Compatible with most of PC16550D with the following known exceptions:
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
-//   Timeout not ye implemented***
+//   Timeout not yet implemented***
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -36,29 +38,21 @@
 
 module uartPC16550D(
 	// Processor Interface
-	input logic 	   PCLK, PRESETn,
-	input logic [2:0]  A,
-	input logic [7:0]  Din,
-	output logic [7:0] Dout,
-	input logic 	   MEMRb, MEMWb, 
-	output logic 	   INTR, TXRDYb, RXRDYb,
+	input  logic 	      PCLK, PRESETn,                  // UART clock and active low reset
+	input  logic [2:0]  A,                              // address input (8 registers)
+	input  logic [7:0]  Din,                            // 8-bit WriteData
+	output logic [7:0]  Dout,                           // 8-bit ReadData
+	input  logic 	      MEMRb, MEMWb,                   // Active low memory read/write
+	output logic 	      INTR, TXRDYb, RXRDYb,           // interrupt and ready lines
 	// Clocks
-	output logic 	   BAUDOUTb,
-	input logic 	   RCLK,
+	output logic 	      BAUDOUTb,                       // active low baud clock
+	input logic 	      RCLK,                           // usually BAUDOUTb tied to RCLK externally
 	// E1A Driver
-	input logic 	   SIN, DSRb, DCDb, CTSb, RIb,
-	output logic 	   SOUT, RTSb, DTRb, OUT1b, OUT2b
-	);
+	input  logic 	      SIN, DSRb, DCDb, CTSb, RIb,     // UART external serial and flow-control inputs
+	output logic 	      SOUT, RTSb, DTRb, OUT1b, OUT2b  // UART external serial and flow-control outputs
+);
 
-  // signal to watch
-  // rxparityerr, RXBR[upper 3 bits]
-  // LSR bits 1 to 4 are based on parity, overrun, and framing errors
-  // txstate, rxstate
-  // loop, fifoenabled
-  // IER, RCR, MCR, LSR, MSR, DLL, DLM, RBR
-  
-
-  // transmit and receive states // *** neeed to work on synth warning -- it wants to make enums 32 bits by default
+  // transmit and receive states 
   typedef enum logic [1:0] {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers
@@ -147,15 +141,15 @@ module uartPC16550D(
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
-	  DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
-	  DLM <= #1 8'b0;
+	    DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+	    DLM <= #1 8'b0;
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         /* verilator lint_off CASEINCOMPLETE */
         case (A)
-           3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
-           3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
+          3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+          3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
           3'b100: MCR <= #1 Din[4:0];
@@ -412,13 +406,13 @@ module uartPC16550D(
     endcase
     case({LCR[3], LCR[1:0]}) // parity, data bits
       // load up start bit (0), 5-8 data bits, 0-1 parity bits, 2 stop bits (only one sometimes used), padding
-      3'b000: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], 6'b111111};          // 5 data, no parity
-      3'b001: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], 5'b11111};           // 6 data, no parity
-      3'b010: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], 4'b1111};            // 7 data, no parity
+      3'b000: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], 6'b111111};                                                       // 5 data, no parity
+      3'b001: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], 5'b11111};                                         // 6 data, no parity
+      3'b010: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], 4'b1111};                           // 7 data, no parity
       3'b011: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], nexttxdata[7], 3'b111};             // 8 data, no parity
-      3'b100: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], txparity, 5'b11111}; // 5 data, parity
-      3'b101: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], txparity, 4'b1111};  // 6 data, parity
-      3'b110: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], txparity, 3'b111};   // 7 data, parity
+      3'b100: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], txparity, 5'b11111};                                              // 5 data, parity
+      3'b101: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], txparity, 4'b1111};                                // 6 data, parity
+      3'b110: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], txparity, 3'b111};                  // 7 data, parity
       3'b111: txdata = {1'b0, nexttxdata[0], nexttxdata[1], nexttxdata[2], nexttxdata[3], nexttxdata[4], nexttxdata[5], nexttxdata[6], nexttxdata[7], txparity, 2'b11};    // 8 data, parity
     endcase
   end

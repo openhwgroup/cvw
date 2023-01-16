@@ -10,6 +10,8 @@
 //          naturally aligned power-of-two region/NAPOT), then selects the
 //          output based on which mode is input.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -31,24 +33,24 @@
 `include "wally-config.vh"
 
 module pmpadrdec (
-  input  logic [`PA_BITS-1:0]      PhysicalAddress,
-  input  logic [7:0]       PMPCfg,
-  input  logic [`XLEN-1:0] PMPAdr,
-  input  logic             PAgePMPAdrIn,
-  output logic             PAgePMPAdrOut,
-  output logic             Match, Active, 
-  output logic             L, X, W, R
+  input  logic [`PA_BITS-1:0]   PhysicalAddress,
+  input  logic [7:0]            PMPCfg,
+  input  logic [`XLEN-1:0]      PMPAdr,
+  input  logic                  PAgePMPAdrIn,
+  output logic                  PAgePMPAdrOut,
+  output logic                  Match, Active, 
+  output logic                  L, X, W, R
 );
-      
-  localparam TOR   = 2'b01;
-  localparam NA4   = 2'b10;
-  localparam NAPOT = 2'b11;
+  
+  // define PMP addressing mode codes
+  localparam                    TOR   = 2'b01;
+  localparam                    NA4   = 2'b10;
+  localparam                    NAPOT = 2'b11;
 
-  logic TORMatch, NAMatch;
-  logic PAltPMPAdr;
-  logic [`PA_BITS-1:0] CurrentAdrFull;
-  logic [1:0] AdrMode;
-
+  logic                         TORMatch, NAMatch;
+  logic                         PAltPMPAdr;
+  logic [`PA_BITS-1:0]          CurrentAdrFull;
+  logic [1:0]                   AdrMode;
 
   assign AdrMode = PMPCfg[4:3];
 

@@ -6,6 +6,8 @@
 //
 // Purpose: All the address decoders for peripherals
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -31,7 +33,7 @@ module adrdecs (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic                AccessRW, AccessRX, AccessRWX,
   input  logic [1:0]          Size,
-  output logic [10:0]          SelRegions
+  output logic [10:0]         SelRegions
 );
 
   localparam logic [3:0]          SUPPORTED_SIZE = (`LLEN == 32 ? 4'b0111 : 4'b1111);

@@ -26,48 +26,49 @@
 
 `include "wally-config.vh"
 
-module cachefsm
-  (input logic clk,
-   input logic        reset,
-   // inputs from IEU
-   input logic        FlushStage,
-   input logic [1:0]  CacheRW,
-   input logic [1:0]  CacheAtomic,
-   input logic        FlushCache,
-   input logic        InvalidateCache,
-   // hazard inputs
-   input logic        Stall,
-   // Bus inputs
-   input logic        CacheBusAck,
-   // dcache internals
-   input logic        CacheHit,
-   input logic        LineDirty,
-   input logic        FlushAdrFlag,
-   input logic        FlushWayFlag, 
-  
-   // hazard outputs
-   output logic       CacheStall,
-   // counter outputs
-   output logic       CacheMiss,
-   output logic       CacheAccess,
-   // Bus outputs
-   output logic       CacheCommitted,
-   output logic [1:0] CacheBusRW,
+module cachefsm (
+  input  logic       clk,
+  input  logic       reset,
+  // inputs from IEU
+  input  logic       FlushStage,
+  input  logic [1:0] CacheRW,
+  input  logic [1:0] CacheAtomic,
+  input  logic       FlushCache,
+  input  logic       InvalidateCache,
+  // hazard inputs
+  input  logic       Stall,
+  // Bus inputs
+  input  logic       CacheBusAck,
+  // dcache internals
+  input  logic       CacheHit,
+  input  logic       LineDirty,
+  input  logic       FlushAdrFlag,
+  input  logic       FlushWayFlag, 
 
-   // dcache internals
-   output logic       SelAdr,
-   output logic       ClearValid,
-   output logic       ClearDirty,
-   output logic       SetDirty,
-   output logic       SetValid,
-   output logic       SelWriteback,
-   output logic       LRUWriteEn,
-   output logic       SelFlush,
-   output logic       FlushAdrCntEn,
-   output logic       FlushWayCntEn, 
-   output logic       FlushCntRst,
-   output logic       SelFetchBuffer, 
-   output logic       CacheEn);
+  // hazard outputs
+  output logic       CacheStall,
+  // counter outputs
+  output logic       CacheMiss,
+  output logic       CacheAccess,
+  // Bus outputs
+  output logic       CacheCommitted,
+  output logic [1:0] CacheBusRW,
+
+  // dcache internals
+  output logic       SelAdr,
+  output logic       ClearValid,
+  output logic       ClearDirty,
+  output logic       SetDirty,
+  output logic       SetValid,
+  output logic       SelWriteback,
+  output logic       LRUWriteEn,
+  output logic       SelFlush,
+  output logic       FlushAdrCntEn,
+  output logic       FlushWayCntEn, 
+  output logic       FlushCntRst,
+  output logic       SelFetchBuffer, 
+  output logic       CacheEn
+);
   
   logic               resetDelay;
   logic               AMO, StoreAMO;
@@ -75,7 +76,7 @@ module cachefsm
   logic               AnyMiss;
   logic               FlushFlag;
     
-  typedef enum logic [3:0]		  {STATE_READY, // hit states
+  typedef enum logic [3:0]{STATE_READY, // hit states
                                    // miss states
 					               STATE_FETCH,
 					               STATE_WRITEBACK,
@@ -111,28 +112,28 @@ module cachefsm
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(InvalidateCache)                     NextState = STATE_READY;
-                   else if(FlushCache)                     NextState = STATE_FLUSH;
+      STATE_READY: if(InvalidateCache)                      NextState = STATE_READY;
+                   else if(FlushCache)                      NextState = STATE_FLUSH;
       // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
       // To optimize do the fetch first, then eviction if necessary.
-                   else if(AnyMiss & ~LineDirty)           NextState = STATE_FETCH;
-                   else if(AnyMiss & LineDirty)            NextState = STATE_WRITEBACK;
-                   else                                    NextState = STATE_READY;
-      STATE_FETCH: if(CacheBusAck)                NextState = STATE_WRITE_LINE;
-                            else                           NextState = STATE_FETCH;
-      STATE_WRITE_LINE:                         NextState = STATE_READ_HOLD;
-      STATE_READ_HOLD: if(Stall)                     NextState = STATE_READ_HOLD;
-                             else                          NextState = STATE_READY;
-      STATE_WRITEBACK: if(CacheBusAck)              NextState = STATE_FETCH;
-                              else                         NextState = STATE_WRITEBACK;
+                   else if(AnyMiss & ~LineDirty)            NextState = STATE_FETCH;
+                   else if(AnyMiss & LineDirty)             NextState = STATE_WRITEBACK;
+                   else                                     NextState = STATE_READY;
+      STATE_FETCH: if(CacheBusAck)                          NextState = STATE_WRITE_LINE;
+                            else                            NextState = STATE_FETCH;
+      STATE_WRITE_LINE:                                     NextState = STATE_READ_HOLD;
+      STATE_READ_HOLD: if(Stall)                            NextState = STATE_READ_HOLD;
+                             else                           NextState = STATE_READY;
+      STATE_WRITEBACK: if(CacheBusAck)                      NextState = STATE_FETCH;
+                              else                          NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
-      STATE_FLUSH: if(LineDirty)                           NextState = STATE_FLUSH_WRITEBACK;
-	               else if (FlushFlag)                     NextState = STATE_READ_HOLD;
-	               else                                    NextState = STATE_FLUSH;
-	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag) NextState = STATE_FLUSH;
-	                          else if(CacheBusAck)         NextState = STATE_READ_HOLD;
-	                          else                         NextState = STATE_FLUSH_WRITEBACK;
-      default:                                             NextState = STATE_READY;
+      STATE_FLUSH: if(LineDirty)                            NextState = STATE_FLUSH_WRITEBACK;
+	               else if (FlushFlag)                        NextState = STATE_READ_HOLD;
+	               else                                       NextState = STATE_FLUSH;
+	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)     NextState = STATE_FLUSH;
+	                          else if(CacheBusAck)            NextState = STATE_READ_HOLD;
+	                          else                            NextState = STATE_FLUSH_WRITEBACK;
+      default:                                              NextState = STATE_READY;
     endcase
   end
 

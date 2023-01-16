@@ -7,6 +7,8 @@
 // Purpose: Core-Local Interruptor
 //   See FE310-G002-Manual-v19p05 for specifications
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -28,24 +30,24 @@
 `include "wally-config.vh"
 
 module clint_apb (
-  input  logic             PCLK, PRESETn,
-  input  logic             PSEL,
-  input  logic [15:0]      PADDR, 
-  input  logic [`XLEN-1:0] PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
-  input  logic             PWRITE,
-  input  logic             PENABLE,
-  output logic [`XLEN-1:0] PRDATA,
-  output logic             PREADY,
+  input  logic                PCLK, PRESETn,
+  input  logic                PSEL,
+  input  logic [15:0]         PADDR, 
+  input  logic [`XLEN-1:0]    PWDATA,
+  input  logic [`XLEN/8-1:0]  PSTRB,
+  input  logic                PWRITE,
+  input  logic                PENABLE,
+  output logic [`XLEN-1:0]    PRDATA,
+  output logic                PREADY,
   (* mark_debug = "true" *) output logic [63:0] MTIME, 
-  output logic 			   MTimerInt, MSwInt);
+  output logic 			          MTimerInt, MSwInt
+);
 
-  logic        MSIP;
-
-  logic [15:0] entry;
-  logic memwrite;
+  logic                       MSIP;
+  logic [15:0]                entry;
+  logic                       memwrite;
    (* mark_debug = "true" *)    logic [63:0] MTIMECMP;
-  integer             i, j;
+  integer                     i, j;
   
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
   assign PREADY = 1'b1; // CLINT never takes >1 cycle to respond

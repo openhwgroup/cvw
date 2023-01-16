@@ -35,10 +35,10 @@ module dtim(
   output logic [`LLEN-1:0]   ReadDataWordM
 );
 
-  logic we;
+  logic                      we;
  
   localparam ADDR_WDITH = $clog2(`DTIM_RANGE/8);
-  localparam OFFSET = $clog2(`LLEN/8);
+  localparam OFFSET     = $clog2(`LLEN/8);
 
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
