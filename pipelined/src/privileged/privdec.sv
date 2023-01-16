@@ -7,6 +7,8 @@
 // Purpose: Decode Privileged & related instructions 
 //          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -30,22 +32,27 @@
 module privdec (
   input  logic         clk, reset,
   input  logic         StallM,
-  input  logic [31:20] InstrM,
-  input  logic         PrivilegedM, IllegalIEUInstrFaultM, IllegalCSRAccessM, IllegalFPUInstrM, 
-  input  logic [1:0]   PrivilegeModeW, 
-  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,
-  output logic         IllegalInstrFaultM,
-  output logic         EcallFaultM, BreakpointFaultM,
-  output logic         sretM, mretM, wfiM, sfencevmaM);
+  input  logic [31:20] InstrM,                              // privileged instruction function field
+  input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
+  input  logic         IllegalIEUInstrFaultM,               // Not a legal IEU instruction
+  input  logic         IllegalFPUInstrM,                    // Not a legal FPU instruction
+  input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
+  input  logic [1:0]   PrivilegeModeW,                      // current privilege level
+  input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
+  output logic         IllegalInstrFaultM,                  // Illegal instruction
+  output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
+  output logic         sretM, mretM,                        // return instructions
+  output logic         wfiM, sfencevmaM                     // wfi / sfence.fma instructions
+);
 
-  logic IllegalPrivilegedInstrM;
-  logic WFITimeoutM;
-  logic       StallMQ;
-  logic       ebreakM, ecallM;
+  logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
+  logic                WFITimeoutM;                         // WFI reaches timeout threshold
+  logic                ebreakM, ecallM;                     // ebreak / ecall instructions
 
   ///////////////////////////////////////////
   // Decode privileged instructions
   ///////////////////////////////////////////
+
   assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
                       (PrivilegeModeW == `M_MODE | PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
   assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
@@ -58,6 +65,7 @@ module privdec (
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
+
   if (`U_SUPPORTED) begin:wfi
     logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
@@ -68,24 +76,14 @@ module privdec (
   ///////////////////////////////////////////
   // Extract exceptions by name and handle them 
   ///////////////////////////////////////////
+
   assign BreakpointFaultM = ebreakM; // could have other causes from a debugger
   assign EcallFaultM = ecallM;
 
   ///////////////////////////////////////////
-  // sfence.vma causes TLB flushes
-  ///////////////////////////////////////////
-  // sets ITLBFlush to pulse for one cycle of the sfence.vma instruction
-  // In this instr we want to flush the tlb and then do a pagetable walk to update the itlb and continue the program.
-  // But we're still in the stalled sfence instruction, so if itlbflushf == sfencevmaM, tlbflush would never drop and 
-  // the tlbwrite would never take place after the pagetable walk. by adding in ~StallMQ, we are able to drop itlbflush 
-  // after a cycle AND pulse it for another cycle on any further back-to-back sfences. 
-//  flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
-//  assign ITLBFlushF = sfencevmaM & ~StallMQ;
-//  assign DTLBFlushM = sfencevmaM;
-
-  ///////////////////////////////////////////
   // Fault on illegal instructions
   ///////////////////////////////////////////
+  
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
   assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
                                WFITimeoutM; 

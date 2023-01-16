@@ -73,10 +73,10 @@
     //        .
 
 module normshift(
-    input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
-    input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
-    output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
+  input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
+  input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
+  output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
 );
-    assign Shifted = ShiftIn << ShiftAmt;
-
+   
+  assign Shifted = ShiftIn << ShiftAmt;
 endmodule

@@ -8,9 +8,7 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
-// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+/// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
 // except in compliance with the License, or, at your option, the Apache License version 2.0. You 
@@ -26,37 +24,36 @@
 
 `include "wally-config.vh"
 
-module sd_top #(parameter g_COUNT_WIDTH = 8)
-  (
-   input logic 			   CLK, // 1.2 GHz (1.0 GHz typical)
-   input logic a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
-   // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
-   // io_SD_CMD_z    : inout std_logic;   // SD CMD Bus
-   (* mark_debug = "true" *)input logic i_SD_CMD, // CMD Response from card
-   (* mark_debug = "true" *)output logic o_SD_CMD, // CMD Command from host
-   (* mark_debug = "true" *)output logic o_SD_CMD_OE, // Direction of SD_CMD
-   (* mark_debug = "true" *)input logic [3:0] i_SD_DAT, // SD DAT Bus
-   (* mark_debug = "true" *)output logic o_SD_CLK, // SD CLK Bus
-   // For communication with core cpu
-   input logic [32:9] 		   i_BLOCK_ADDR, // see "Addressing" in parts.fods (only 8GB total capacity is used)
-   output logic 		   o_READY_FOR_READ, // tells core that initialization sequence is completed and
-   // sd card is ready to read a 512 byte block to the core.
-   // Held high during idle until i_READ_REQUEST is received
-   output logic 		   o_SD_RESTARTING, // inform core the need to restart
-  
-   input logic 			   i_READ_REQUEST, // After Ready for read is sent to the core, the core will
-   // pulse this bit high to indicate it wants the block at this address
-   output logic [3:0] 		   o_DATA_TO_CORE, // nibble being sent to core when DATA block is
-   output logic [4095:0] 	   ReadData, // full 512 bytes to Bus
-   // being published
-   output logic 		   o_DATA_VALID, // held high while data being read to core to indicate that it is valid
-   output logic 		   o_LAST_NIBBLE, // pulse when last nibble is sent
-   output logic [2:0] 		   o_ERROR_CODE_Q, // indicates which error occured
-   output logic 		   o_FATAL_ERROR, // indicates that the FATAL ERROR register has updated
-   // For tuning
-   input logic [g_COUNT_WIDTH-1:0] i_COUNT_IN_MAX,
-   input logic 			   LIMIT_SD_TIMERS
-   );
+module sd_top #(parameter g_COUNT_WIDTH = 8) (
+  input  logic 			   CLK, // 1.2 GHz (1.0 GHz typical)
+  input  logic a_RST, // Reset signal (Must be held for minimum of 24 clock cycles)
+  // a_RST MUST COME OUT OF RESET SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
+  // io_SD_CMD_z    : inout  std_logic;   // SD CMD Bus
+  (* mark_debug = "true" *)input  logic i_SD_CMD, // CMD Response from card
+  (* mark_debug = "true" *)output logic o_SD_CMD, // CMD Command from host
+  (* mark_debug = "true" *)output logic o_SD_CMD_OE, // Direction of SD_CMD
+  (* mark_debug = "true" *)input  logic [3:0] i_SD_DAT, // SD DAT Bus
+  (* mark_debug = "true" *)output logic o_SD_CLK, // SD CLK Bus
+  // For communication with core cpu
+  input  logic [32:9] 		   i_BLOCK_ADDR, // see "Addressing" in parts.fods (only 8GB total capacity is used)
+  output logic 		   o_READY_FOR_READ, // tells core that initialization sequence is completed and
+  // sd card is ready to read a 512 byte block to the core.
+  // Held high during idle until i_READ_REQUEST is received
+  output logic 		   o_SD_RESTARTING, // inform core the need to restart
+
+  input  logic 			   i_READ_REQUEST, // After Ready for read is sent to the core, the core will
+  // pulse this bit high to indicate it wants the block at this address
+  output logic [3:0] 		   o_DATA_TO_CORE, // nibble being sent to core when DATA block is
+  output logic [4095:0] 	   ReadData, // full 512 bytes to Bus
+  // being published
+  output logic 		   o_DATA_VALID, // held high while data being read to core to indicate that it is valid
+  output logic 		   o_LAST_NIBBLE, // pulse when last nibble is sent
+  output logic [2:0] 		   o_ERROR_CODE_Q, // indicates which error occured
+  output logic 		   o_FATAL_ERROR, // indicates that the FATAL ERROR register has updated
+  // For tuning
+  input  logic [g_COUNT_WIDTH-1:0] i_COUNT_IN_MAX,
+  input  logic 			   LIMIT_SD_TIMERS
+);
 
   localparam logic 		   c_CMD = 1'b0;
   localparam logic 		   c_ACMD = 1'b1;

@@ -8,8 +8,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -26,15 +24,15 @@
 
 `include "wally-config.vh"
 
-module up_down_counter #(parameter integer WIDTH=32)
-  (
-   input logic [WIDTH-1:0]  CountIn,
-   output logic [WIDTH-1:0] CountOut,
-   input logic 		    Load,
-   input logic 		    Enable,
-   input logic 		    UpDown,   
-   input logic 		    clk,
-   input logic 		    reset);
+module up_down_counter #(parameter integer WIDTH=32) (
+  input  logic [WIDTH-1:0]  CountIn,
+  output logic [WIDTH-1:0]  CountOut,
+  input  logic 		          Load,
+  input  logic 		          Enable,
+  input  logic 		          UpDown,   
+  input  logic 		          clk,
+  input  logic 		          reset
+);
 
   logic [WIDTH-1:0] NextCount;
   logic [WIDTH-1:0] CountP1;

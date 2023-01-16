@@ -4,10 +4,12 @@
 // Written: David_Harris@hmc.edu 21 January 2021
 // Modified: 
 //
-// Purpose: Interface to Universial Asynchronous Receiver/ Transmitter with FIFOs
+// Purpose: APB Interface to Universial Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC165550D
-//          Compatible with UART in Imperas Virtio model ***
+//          Compatible with UART in Imperas Virtio model
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -31,7 +33,7 @@
 module uart_apb (
   input  logic             PCLK, PRESETn,
   input  logic             PSEL,
-  input  logic [2:0]      PADDR, 
+  input  logic [2:0]       PADDR, 
   input  logic [`XLEN-1:0] PWDATA,
   input  logic [`XLEN/8-1:0] PSTRB,
   input  logic             PWRITE,
@@ -54,17 +56,6 @@ module uart_apb (
   assign MEMRb = ~memread;
   assign MEMWb = ~memwrite;
 
-/*
-  // rename processor interface signals to match PC16550D and provide one-byte interface
-  flopr #(1)  memreadreg(HCLK, ~HRESETn, (HSELUART & ~HWRITE), memread);
-  flopr #(1) memwritereg(HCLK, ~HRESETn, (HSELUART &  HWRITE), memwrite);
-  flopr #(3)   haddrreg(HCLK, ~HRESETn, HADDR[2:0], A);
-  assign MEMRb = ~memread;
-  assign MEMWb = ~memwrite;
-
-  assign HRESPUART = 0; // OK
-  assign HREADYUART = 1; // should idle high during address phase and respond high when done; will need to be modified if UART ever needs more than 1 cycle to do something
-*/
   if (`XLEN == 64) begin:uart
     always_comb begin
       PRDATA = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};

@@ -29,69 +29,69 @@
 `include "wally-config.vh"
 
 module fma(
-    input  logic                        Xs, Ys, Zs,             // input's signs
-    input  logic [`NE-1:0]              Xe, Ye, Ze,             // input's biased exponents in B(NE.0) format
-    input  logic [`NF:0]                Xm, Ym, Zm,             // input's significands in U(0.NF) format
-    input  logic                        XZero, YZero, ZZero,    // is the input zero
-    input  logic [2:0]                  OpCtrl,                 // operation control
-    output logic                        ASticky,                // sticky bit that is calculated during alignment
-    output logic [3*`NF+3:0]            Sm,                     // the positive sum's significand
-    output logic                        InvA,                   // Was A inverted for effective subtraction (P-A or -P+A)
-    output logic                        As,                     // the aligned addend's sign (modified Z sign for other opperations)
-    output logic                        Ps,                     // the product's sign
-    output logic                        Ss,                     // the sum's sign
-    output logic [`NE+1:0]              Se,                     // the sum's exponent
-    output logic [$clog2(3*`NF+5)-1:0]  SCnt                    // normalization shift count
+  input  logic                        Xs, Ys, Zs,             // input's signs
+  input  logic [`NE-1:0]              Xe, Ye, Ze,             // input's biased exponents in B(NE.0) format
+  input  logic [`NF:0]                Xm, Ym, Zm,             // input's significands in U(0.NF) format
+  input  logic                        XZero, YZero, ZZero,    // is the input zero
+  input  logic [2:0]                  OpCtrl,                 // operation control
+  output logic                        ASticky,                // sticky bit that is calculated during alignment
+  output logic [3*`NF+3:0]            Sm,                     // the positive sum's significand
+  output logic                        InvA,                   // Was A inverted for effective subtraction (P-A or -P+A)
+  output logic                        As,                     // the aligned addend's sign (modified Z sign for other opperations)
+  output logic                        Ps,                     // the product's sign
+  output logic                        Ss,                     // the sum's sign
+  output logic [`NE+1:0]              Se,                     // the sum's exponent
+  output logic [$clog2(3*`NF+5)-1:0]  SCnt                    // normalization shift count
 );
 
-    //  OpCtrl:
-    //    Fma: {not multiply-add?, negate prod?, negate Z?}
-    //        000 - fmadd
-    //        001 - fmsub
-    //        010 - fnmsub
-    //        011 - fnmadd
-    //        100 - mul
-    //        110 - add
-    //        111 - sub
+  //  OpCtrl:
+  //    Fma: {not multiply-add?, negate prod?, negate Z?}
+  //        000 - fmadd
+  //        001 - fmsub
+  //        010 - fnmsub
+  //        011 - fnmadd
+  //        100 - mul
+  //        110 - add
+  //        111 - sub
 
-    logic [2*`NF+1:0]   Pm;         // the product's significand in U(2.2Nf) format
-    logic [3*`NF+3:0]   Am;         // addend aligned's mantissa for addition in U(NF+4.2NF)
-    logic [3*`NF+3:0]   AmInv;      // aligned addend's mantissa possibly inverted
-    logic [2*`NF+1:0]   PmKilled;   // the product's mantissa possibly killed U(2.2Nf)
-    logic               KillProd;   // set the product to zero before addition if the product is too small to matter
-    logic [`NE+1:0]     Pe;         // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
+  logic [2*`NF+1:0]   Pm;         // the product's significand in U(2.2Nf) format
+  logic [3*`NF+3:0]   Am;         // addend aligned's mantissa for addition in U(NF+4.2NF)
+  logic [3*`NF+3:0]   AmInv;      // aligned addend's mantissa possibly inverted
+  logic [2*`NF+1:0]   PmKilled;   // the product's mantissa possibly killed U(2.2Nf)
+  logic               KillProd;   // set the product to zero before addition if the product is too small to matter
+  logic [`NE+1:0]     Pe;         // the product's exponent B(NE+2.0) format; adds 2 bits to allow for size of number and negative sign
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Calculate the product
-    //      - When multipliying two fp numbers, add the exponents
-    //      - Subtract the bias (XExp + YExp has two biases, one from each exponent)
-    //      - If the product is zero then kill the exponent
-    //      - Multiply the mantissas
-    ///////////////////////////////////////////////////////////////////////////////
-   
+  ///////////////////////////////////////////////////////////////////////////////
+  // Calculate the product
+  //      - When multipliying two fp numbers, add the exponents
+  //      - Subtract the bias (XExp + YExp has two biases, one from each exponent)
+  //      - If the product is zero then kill the exponent
+  //      - Multiply the mantissas
+  ///////////////////////////////////////////////////////////////////////////////
+  
 
-   // calculate the product's exponent 
-    fmaexpadd expadd(.Xe, .Ye, .XZero, .YZero, .Pe);
+  // calculate the product's exponent 
+  fmaexpadd expadd(.Xe, .Ye, .XZero, .YZero, .Pe);
 
-    // multiplication of the mantissa's
-    fmamult mult(.Xm, .Ym, .Pm);
-   
-    // calculate the signs and take the opperation into account
-    fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
+  // multiplication of the mantissa's
+  fmamult mult(.Xm, .Ym, .Pm);
+  
+  // calculate the signs and take the opperation into account
+  fmasign sign(.OpCtrl, .Xs, .Ys, .Zs, .Ps, .As, .InvA);
 
-    ///////////////////////////////////////////////////////////////////////////////
-    // Alignment shifter
-    ///////////////////////////////////////////////////////////////////////////////
-    fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye, .Am, .ASticky, .KillProd);
-                        
-    // ///////////////////////////////////////////////////////////////////////////////
-    // // Addition/LZA
-    // ///////////////////////////////////////////////////////////////////////////////
-        
-    fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
+  ///////////////////////////////////////////////////////////////////////////////
+  // Alignment shifter
+  ///////////////////////////////////////////////////////////////////////////////
+  fmaalign align(.Ze, .Zm, .XZero, .YZero, .ZZero, .Xe, .Ye, .Am, .ASticky, .KillProd);
+                      
+  // ///////////////////////////////////////////////////////////////////////////////
+  // // Addition/LZA
+  // ///////////////////////////////////////////////////////////////////////////////
+      
+  fmaadd add(.Am, .Pm, .Ze, .Pe, .Ps, .KillProd, .ASticky, .AmInv, .PmKilled, .InvA, .Sm, .Se, .Ss);
 
-    fmalza #(3*`NF+4) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
-    
+  fmalza #(3*`NF+4) lza(.A(AmInv), .Pm(PmKilled), .Cin(InvA & (~ASticky | KillProd)), .sub(InvA), .SCnt);
+  
 endmodule
 
 

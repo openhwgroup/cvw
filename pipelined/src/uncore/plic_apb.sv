@@ -9,6 +9,8 @@
 //   With clarifications from ROA's existing implementation (https://roalogic.github.io/plic/docs/AHB-Lite_PLIC_Datasheet.pdf)
 //   Supports only 1 target core and only a global threshold.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15
+//
 // *** Big questions:
 //  Do we detect requests as level-triggered or edge-trigged?
 //  If edge-triggered, do we want to allow 1 source to be able to make a number of repeated requests?
@@ -36,11 +38,11 @@
 `define N `PLIC_NUM_SRC
 // number of interrupt sources
 // does not include source 0, which does not connect to anything according to spec
-// up to 63 sources supported; *** in the future, allow up to 1023 sources
+// up to 63 sources supported; in the future, allow up to 1023 sources
 
 `define C 2
 // number of conexts
-// hardcoded to 2 contexts for now; *** later upgrade to arbitrary (up to 15872) contexts
+// hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
 module plic_apb (
   input  logic             PCLK, PRESETn,
@@ -53,7 +55,8 @@ module plic_apb (
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
   input  logic             UARTIntr,GPIOIntr,
-    (* mark_debug = "true" *)  output logic             MExtInt, SExtInt);
+    (* mark_debug = "true" *)  output logic             MExtInt, SExtInt
+);
 
   logic memwrite, memread;
   logic [23:0] entry;

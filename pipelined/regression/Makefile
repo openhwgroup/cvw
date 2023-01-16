@@ -11,8 +11,7 @@ all: riscoftests memfiles
 	#make -C ../../addins/imperas-riscv-tests XLEN=64
 	#cd ../../addins/imperas-riscv-tests; elf2hex.sh
 	#cd ../../addins/imperas-riscv-tests; extractFunctionRadix.sh work/*/*/*.elf.objdump
-
-	# Link Linux test vectors (fix this later***)
+	# Link Linux test vectors 
 	#cd ../../tests/linux-testgen/linux-testvectors/;./tvLinker.sh
 
 allclean: clean all
@@ -25,9 +24,5 @@ clean:
 riscoftests: 
 # 	Builds riscv-arch-test 64 and 32-bit versions and builds wally-riscv-arch-test 64 and 32-bit versions
 	make -C ../../tests/riscof/ 
-#	make -C ../../tests/riscof/ XLEN=32
-#	make -C ../../tests/riscof/ XLEN=32 build_rv32e
-#	make -C ../../tests/riscof/ XLEN=64
-
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs

@@ -8,6 +8,8 @@
 //          the memory region accessed.
 //          Can report illegal accesses to the trap unit and cause a fault.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -31,17 +33,20 @@
 module pmachecker (
   input  logic [`PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
-  input  logic        AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM, // *** atomicaccessM is unused but might want to stay in for future use.
-  output logic        Cacheable, Idempotent, SelTIM,
-  output logic        PMAInstrAccessFaultF,
-  output logic        PMALoadAccessFaultM,
-  output logic        PMAStoreAmoAccessFaultM
+  input  logic                AtomicAccessM,  // Atomic access
+  input  logic                ExecuteAccessF, // Execute access 
+  input  logic                WriteAccessM,   // Write access 
+  input  logic                ReadAccessM,    // Read access
+  output logic                Cacheable, Idempotent, SelTIM,
+  output logic                PMAInstrAccessFaultF,
+  output logic                PMALoadAccessFaultM,
+  output logic                PMAStoreAmoAccessFaultM
 );
 
-  logic PMAAccessFault;
-  logic AccessRW, AccessRWX, AccessRX;
-  logic [10:0]  SelRegions;
-  logic AtomicAllowed;
+  logic                       PMAAccessFault;
+  logic                       AccessRW, AccessRWX, AccessRX;
+  logic [10:0]                SelRegions;
+  logic                       AtomicAllowed;
 
   // Determine what type of access is being made
   assign AccessRW = ReadAccessM | WriteAccessM;

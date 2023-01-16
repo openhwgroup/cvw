@@ -32,42 +32,41 @@
 
 `include "wally-config.vh"
 
-module ebu
-  (
-   input logic                clk, reset,
-   // Signals from IFU
-   input logic [`PA_BITS-1:0] IFUHADDR, 
-   input logic [2:0]          IFUHSIZE,
-   input logic [2:0]          IFUHBURST,
-   input logic [1:0]          IFUHTRANS,
-   output logic               IFUHREADY, 
-   // Signals from LSU
-   input logic [`PA_BITS-1:0] LSUHADDR,
-   input logic [`XLEN-1:0]    LSUHWDATA, // initially support AHBW = XLEN
-   input logic [`XLEN/8-1:0]  LSUHWSTRB,
-   input logic [2:0]          LSUHSIZE,
-   input logic [2:0]          LSUHBURST,
-   input logic [1:0]          LSUHTRANS,
-   input logic                LSUHWRITE,
-   output logic               LSUHREADY,
-   // add LSUHWSTRB ***
-  
-   // AHB-Lite external signals
-   (* mark_debug = "true" *) input logic HREADY, HRESP,
-   (* mark_debug = "true" *) output logic HCLK, HRESETn,
-   (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, // *** one day switch to a different bus that supports the full physical address
-   (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
-   (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB,
-   (* mark_debug = "true" *) output logic HWRITE, 
-   (* mark_debug = "true" *) output logic [2:0] HSIZE,
-   (* mark_debug = "true" *) output logic [2:0] HBURST,
-   (* mark_debug = "true" *) output logic [3:0] HPROT,
-   (* mark_debug = "true" *) output logic [1:0] HTRANS,
-   (* mark_debug = "true" *) output logic HMASTLOCK
-   );
+module ebu (
+  input  logic                clk, reset,
+  // Signals from IFU
+  input  logic [`PA_BITS-1:0] IFUHADDR, 
+  input  logic [2:0]          IFUHSIZE,
+  input  logic [2:0]          IFUHBURST,
+  input  logic [1:0]          IFUHTRANS,
+  output logic                IFUHREADY, 
+  // Signals from LSU
+  input  logic [`PA_BITS-1:0] LSUHADDR,
+  input  logic [`XLEN-1:0]    LSUHWDATA, // initially support AHBW = XLEN
+  input  logic [`XLEN/8-1:0]  LSUHWSTRB,
+  input  logic [2:0]          LSUHSIZE,
+  input  logic [2:0]          LSUHBURST,
+  input  logic [1:0]          LSUHTRANS,
+  input  logic                LSUHWRITE,
+  output logic                LSUHREADY,
+  // add LSUHWSTRB ***
+
+  // AHB-Lite external signals
+  (* mark_debug = "true" *) input  logic HREADY, HRESP,
+  (* mark_debug = "true" *) output logic HCLK, HRESETn,
+  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, 
+  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
+  (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB,
+  (* mark_debug = "true" *) output logic HWRITE, 
+  (* mark_debug = "true" *) output logic [2:0] HSIZE,
+  (* mark_debug = "true" *) output logic [2:0] HBURST,
+  (* mark_debug = "true" *) output logic [3:0] HPROT,
+  (* mark_debug = "true" *) output logic [1:0] HTRANS,
+  (* mark_debug = "true" *) output logic HMASTLOCK
+);
 
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
-  statetype CurrState, NextState;
+  statetype                   CurrState, NextState;
 
   logic                       LSUDisable, LSUSelect;
   logic                       IFUSave, IFURestore, IFUDisable, IFUSelect;
@@ -97,7 +96,6 @@ module ebu
   
   assign HCLK = clk;
   assign HRESETn = ~reset;
-
 
   // if two requests come in at once pick one to select and save the others Address phase
   // inputs.  Abritration scheme is LSU always goes first.
@@ -137,21 +135,16 @@ module ebu
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
-      IDLE: if (both)                    NextState = ARBITRATE; 
-      else                               NextState = IDLE;
-      ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq)) NextState = IDLE;
-      else                               NextState = ARBITRATE;
-      default:                           NextState = IDLE;
+      IDLE: if (both)                                           NextState = ARBITRATE; 
+            else                                                NextState = IDLE;
+      ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq))  NextState = IDLE;
+                 else                                           NextState = ARBITRATE;
+      default:                                                  NextState = IDLE;
     endcase
 
   // This part is only used when burst mode is supported.
   // Controller needs to count beats.
-  flopenr #(4) 
-  BeatCountReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset | FinalBeat),
-		.en(BeatCntEn),
-		.d(NextBeatCount),
-		.q(BeatCount));  
+  flopenr #(4) BeatCountReg(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, NextBeatCount, BeatCount);  
   assign NextBeatCount = BeatCount + 1'b1;
 
   assign CntReset = NextState == IDLE;
@@ -159,12 +152,7 @@ module ebu
   assign BeatCntEn = (NextState == ARBITRATE & HREADY);
 
   // Used to store data from data phase of AHB.
-  flopenr #(1) 
-  FinalBeatReg(.clk(HCLK),
-		.reset(~HRESETn | CntReset),
-		.en(BeatCntEn),
-		.d(FinalBeat),
-		.q(FinalBeatD));
+  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | CntReset, BeatCntEn, FinalBeat, FinalBeatD);
 
   // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
   always_comb begin
@@ -176,7 +164,6 @@ module ebu
       default:  Threshold = 4'b0000; // INCR without end.
     endcase
   end
-  // end of burst mode.
   
   // basic arb always selects LSU when both
   // replace this block for more sophisticated arbitration as needed.
@@ -191,5 +178,4 @@ module ebu
 
   flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
   
-
 endmodule

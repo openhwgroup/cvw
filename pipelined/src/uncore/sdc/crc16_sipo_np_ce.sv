@@ -10,8 +10,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -28,12 +26,13 @@
 
 `include "wally-config.vh"
 
-module crc16_sipo_np_ce
-  (input logic CLK, // sequential device
-   input logic 	       RST, // initial calue of CRC register must be "0000_0000_0000_0000"
-   input logic 	       i_enable, // input is valid
-   input logic 	       i_message_bit,
-   output logic [15:0] o_crc16);
+module crc16_sipo_np_ce(
+  input  logic         CLK, // sequential device
+  input  logic 	       RST, // initial calue of CRC register must be "0000_0000_0000_0000"
+  input  logic 	       i_enable, // input is valid
+  input  logic 	       i_message_bit,
+  output logic [15:0]  o_crc16
+);
 
   logic [15:0] 	       w_crc16_d;
 

@@ -37,13 +37,13 @@ module BTBPredictor
    input logic              StallF, StallE,
    input logic [`XLEN-1:0]  LookUpPC,
    output logic [`XLEN-1:0] TargetPC,
-   output logic [4:0]       InstrClass,
+   output logic [3:0]       InstrClass,
    output logic             Valid,
    // update
    input logic              UpdateEN,
    input logic [`XLEN-1:0]  UpdatePC,
    input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [4:0]        UpdateInstrClass,
+   input logic [3:0]        UpdateInstrClass,
    input logic              UpdateInvalid
    );
 
@@ -99,7 +99,7 @@ module BTBPredictor
   // *** need to add forwarding.
 
   // *** optimize for byte write enables
-  ram2p1r1wb #(Depth, `XLEN+5) memory(.clk(clk),
+  ram2p1r1wb #(Depth, `XLEN+4) memory(.clk(clk),
           .reset(reset),
           .ra1(LookUpPCIndex),
           .rd1({{InstrClass, TargetPC}}),
@@ -107,7 +107,7 @@ module BTBPredictor
           .wa2(UpdatePCIndex),
           .wd2({UpdateInstrClass, UpdateTarget}),
           .wen2(UpdateEN),
-          .bwe2({5'h1F, {`XLEN{1'b1}}})); // *** definitely not right.
+          .bwe2({4'hF, {`XLEN{1'b1}}})); // *** definitely not right.
 
 
 endmodule

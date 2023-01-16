@@ -32,41 +32,41 @@
 
 `include "wally-config.vh"
 
-module controllerinputstage #(parameter SAVE_ENABLED = 1)
-  (input logic HCLK,
-   input logic                 HRESETn,
-   input logic                 Save, Restore, Disable,
-   output logic                Request,
-   // controller input
-   input logic                 HWRITEIn,
-   input logic [2:0]           HSIZEIn,
-   input logic [2:0]           HBURSTIn,
-   input logic [1:0]           HTRANSIn,
-   input logic [`PA_BITS-1:0]  HADDRIn,
-   output logic                HREADYOut,
-   // controller output
-   output logic                HWRITEOut,
-   output logic [2:0]          HSIZEOut,
-   output logic [2:0]          HBURSTOut,
-   output logic [1:0]          HTRANSOut,
-   output logic [`PA_BITS-1:0] HADDROut,
-   input logic                 HREADYIn
-   );
+module controllerinputstage #(parameter SAVE_ENABLED = 1) (
+  input  logic                HCLK,
+  input  logic                HRESETn,
+  input  logic                Save, Restore, Disable,
+  output logic                Request,
+  // controller input
+  input  logic                HWRITEIn,
+  input  logic [2:0]          HSIZEIn,
+  input  logic [2:0]          HBURSTIn,
+  input  logic [1:0]          HTRANSIn,
+  input  logic [`PA_BITS-1:0] HADDRIn,
+  output logic                HREADYOut,
+  // controller output
+  output logic                HWRITEOut,
+  output logic [2:0]          HSIZEOut,
+  output logic [2:0]          HBURSTOut,
+  output logic [1:0]          HTRANSOut,
+  output logic [`PA_BITS-1:0] HADDROut,
+  input  logic                HREADYIn
+);
 
-  logic                        HWRITESave;
-  logic [2:0]                  HSIZESave;
-  logic [2:0]                  HBURSTSave;
-  logic [1:0]                  HTRANSSave;
-  logic [`PA_BITS-1:0]         HADDRSave;
+  logic                       HWRITESave;
+  logic [2:0]                 HSIZESave;
+  logic [2:0]                 HBURSTSave;
+  logic [1:0]                 HTRANSSave;
+  logic [`PA_BITS-1:0]        HADDRSave;
 
   if (SAVE_ENABLED) begin
-  flopenr #(1+3+3+2+`PA_BITS) SaveReg(HCLK, ~HRESETn, Save,
-                                      {HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
-                                      {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave});
-  mux2 #(1+3+3+2+`PA_BITS) RestorMux({HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
-                                     {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave},
-                                     Restore,
-                                     {HWRITEOut, HSIZEOut, HBURSTOut, HTRANSOut, HADDROut});
+    flopenr #(1+3+3+2+`PA_BITS) SaveReg(HCLK, ~HRESETn, Save,
+      {HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
+      {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave});
+    mux2 #(1+3+3+2+`PA_BITS) RestorMux({HWRITEIn, HSIZEIn, HBURSTIn, HTRANSIn, HADDRIn}, 
+      {HWRITESave, HSIZESave, HBURSTSave, HTRANSSave, HADDRSave},
+      Restore,
+      {HWRITEOut, HSIZEOut, HBURSTOut, HTRANSOut, HADDROut});
   end else begin
     assign HWRITEOut = HWRITEIn;
     assign HSIZEOut = HSIZEIn;

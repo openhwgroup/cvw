@@ -8,8 +8,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -26,13 +24,13 @@
 
 `include "wally-config.vh"
 
-module simple_timer #(parameter BUS_WIDTH = 4)
-  (
-   input logic [BUS_WIDTH-1:0] VALUE,
-   input logic 		       START,
-   output logic 	       FLAG,
-   input logic 		       RST,
-   input logic 		       CLK);
+module simple_timer #(parameter BUS_WIDTH = 4) (
+  input  logic [BUS_WIDTH-1:0] VALUE,
+  input  logic 		            START,
+  output logic 	              FLAG,
+  input  logic 		            RST,
+  input  logic 		            CLK
+);
 
 
   logic [BUS_WIDTH-1:0]     count;

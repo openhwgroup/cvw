@@ -7,6 +7,8 @@
 // Purpose: Interrupt Control & Status Registers (IP, EI)
 //          See RISC-V Privileged Mode Specification 20190608 & 20210108 draft
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -28,23 +30,22 @@
 `include "wally-config.vh"
 
 module csri #(parameter 
-    MIE = 12'h304,
-    MIP = 12'h344,
-    SIE = 12'h104,
-    SIP = 12'h144
-  ) (
-    input logic 			clk, reset, 
-    input logic 			InstrValidNotFlushedM,
-    input logic 			CSRMWriteM, CSRSWriteM,
-    input logic [`XLEN-1:0] CSRWriteValM,
-    input logic [11:0] 		CSRAdrM,
-    (* mark_debug = "true" *)    input logic MExtInt, SExtInt, MTimerInt, MSwInt,
-    output logic [11:0] 	MIP_REGW, MIE_REGW,
-    (* mark_debug = "true" *) output logic [11:0]   MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
-  );
+  MIE = 12'h304,
+  MIP = 12'h344,
+  SIE = 12'h104,
+  SIP = 12'h144) (
+  input  logic 			        clk, reset, 
+  input  logic 			        InstrValidNotFlushedM,
+  input  logic 			        CSRMWriteM, CSRSWriteM,
+  input  logic [`XLEN-1:0]  CSRWriteValM,
+  input  logic [11:0] 		  CSRAdrM,
+  (* mark_debug = "true" *)  input  logic MExtInt, SExtInt, MTimerInt, MSwInt,
+  output logic [11:0] 	    MIP_REGW, MIE_REGW,
+  (* mark_debug = "true" *) output logic [11:0]   MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
+);
 
-  logic [11:0]     MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
-  logic            WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
+  logic [11:0]              MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
+  logic                     WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
 
   // Interrupt Write Enables
   assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP) & InstrValidNotFlushedM;

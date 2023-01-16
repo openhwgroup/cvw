@@ -26,56 +26,54 @@
 
 `include "wally-config.vh"
 
-module cacheway #(parameter NUMLINES=512, parameter LINELEN = 256, TAGLEN = 26,
-				  parameter OFFSETLEN = 5, parameter INDEXLEN = 9, parameter DIRTY_BITS = 1) (
-  input logic                        clk,
-  input logic                        CacheEn,
-  input logic                        reset,
-  input logic [$clog2(NUMLINES)-1:0] CAdr,
-  input logic [`PA_BITS-1:0]         PAdr,
-  input logic [LINELEN-1:0]          LineWriteData,
-  input logic                        SetValid,
-  input logic                        ClearValid,
-  input logic                        SetDirty,
-  input logic                        ClearDirty,
-  input logic                        SelWriteback,
-  input logic                        SelFlush,
-  input logic                        VictimWay,
-  input logic                        FlushWay,
-  input logic                        InvalidateCache,
-  input logic                        FlushStage,
-//  input logic [(`XLEN-1)/8:0]        ByteMask,
-  input logic [LINELEN/8-1:0]        LineByteMask,
+module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
+				          OFFSETLEN = 5, INDEXLEN = 9, DIRTY_BITS = 1) (
+  input  logic                        clk,
+  input  logic                        CacheEn,
+  input  logic                        reset,
+  input  logic [$clog2(NUMLINES)-1:0] CAdr,
+  input  logic [`PA_BITS-1:0]         PAdr,
+  input  logic [LINELEN-1:0]          LineWriteData,
+  input  logic                        SetValid,
+  input  logic                        ClearValid,
+  input  logic                        SetDirty,
+  input  logic                        ClearDirty,
+  input  logic                        SelWriteback,
+  input  logic                        SelFlush,
+  input  logic                        VictimWay,
+  input  logic                        FlushWay,
+  input  logic                        InvalidateCache,
+  input  logic                        FlushStage,
+  input  logic [LINELEN/8-1:0]        LineByteMask,
 
-  output logic [LINELEN-1:0]         ReadDataLineWay,
-  output logic                       HitWay,
-  output logic                       ValidWay,
-  output logic                       DirtyWay,
-  output logic [TAGLEN-1:0]          TagWay);
+  output logic [LINELEN-1:0]          ReadDataLineWay,
+  output logic                        HitWay,
+  output logic                        ValidWay,
+  output logic                        DirtyWay,
+  output logic [TAGLEN-1:0]           TagWay);
 
-  localparam integer                 WORDSPERLINE = LINELEN/`XLEN;
-  localparam integer                 BYTESPERLINE = LINELEN/8;
-  localparam                         LOGWPL = $clog2(WORDSPERLINE);
-  localparam                         LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam integer                 BYTESPERWORD = `XLEN/8;
+  localparam integer                  WORDSPERLINE = LINELEN/`XLEN;
+  localparam integer                  BYTESPERLINE = LINELEN/8;
+  localparam                          LOGWPL = $clog2(WORDSPERLINE);
+  localparam                          LOGXLENBYTES = $clog2(`XLEN/8);
+  localparam integer                  BYTESPERWORD = `XLEN/8;
 
-  logic [NUMLINES-1:0]               ValidBits;
-  logic [NUMLINES-1:0]               DirtyBits;
-  logic [LINELEN-1:0]                ReadDataLine;
-  logic [TAGLEN-1:0]                 ReadTag;
-  logic                              Dirty;
-  logic                              SelTag;
-  logic                              SelectedWriteWordEn;
-  logic [LINELEN/8-1:0]              FinalByteMask;
-  logic                              SetValidEN;
-  logic                              SetValidWay;
-  logic                              ClearValidWay;
-  logic                              SetDirtyWay;
-  logic                              ClearDirtyWay;
-  logic                              SelNonHit;
-  logic                              SelData;
-  logic                              FlushWayEn, VictimWayEn;
-  
+  logic [NUMLINES-1:0]                ValidBits;
+  logic [NUMLINES-1:0]                DirtyBits;
+  logic [LINELEN-1:0]                 ReadDataLine;
+  logic [TAGLEN-1:0]                  ReadTag;
+  logic                               Dirty;
+  logic                               SelTag;
+  logic                               SelectedWriteWordEn;
+  logic [LINELEN/8-1:0]               FinalByteMask;
+  logic                               SetValidEN;
+  logic                               SetValidWay;
+  logic                               ClearValidWay;
+  logic                               SetDirtyWay;
+  logic                               ClearDirtyWay;
+  logic                               SelNonHit;
+  logic                               SelData;
+  logic                               FlushWayEn, VictimWayEn;
 
   // FlushWay and VictimWay are part of a one hot way selection.  Must clear them if FlushWay not selected
   // or VictimWay not selected.
