@@ -7,6 +7,7 @@
 // Purpose: Leading Zero Anticipator
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13 (Figure 13.14)
+//    See also [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -28,32 +29,33 @@
 
 `include "wally-config.vh"
 
-module fmalza #(WIDTH) ( // [Schmookler & Nowka, Leading zero anticipation and detection, IEEE Sym. Computer Arithmetic, 2001]
-    input logic [WIDTH-1:0]             A,      // addend
-    input logic [2*`NF+1:0]             Pm,     // product
-    input logic 		                Cin,    // carry in
-    input logic                         sub,    // subtraction
-    output logic [$clog2(WIDTH+1)-1:0]  SCnt    // normalization shift count for the positive result
-    ); 
+module fmalza #(WIDTH) ( 
+  input logic [WIDTH-1:0]             A,      // addend
+  input logic [2*`NF+1:0]             Pm,     // product
+  input logic 		                    Cin,    // carry in
+  input logic                         sub,    // subtraction
+  output logic [$clog2(WIDTH+1)-1:0]  SCnt    // normalization shift count for the positive result
+); 
 
-   logic [WIDTH:0] 	  F;
-   logic [WIDTH-1:0]  B, P, Guard, K;
-    logic [WIDTH-1:0] Pp1, Gm1, Km1;
+  logic [WIDTH:0] 	                  F;              // most significant bit of F indicates leading digit
+  logic [WIDTH-1:0]                   B;              // zero-extended product with same size as aligned A
+  logic [WIDTH-1:0]                   P, G, K;        // propagate, generate, kill for each column
+  logic [WIDTH-1:0]                   Pp1, Gm1, Km1;  // propagate shifted right by 1, generate/kill shifted left 1
 
-    assign B = {{(`NF+1){1'b0}}, Pm, 1'b0}; // Zero extend product
+  assign B = {{(`NF+1){1'b0}}, Pm, 1'b0}; // Zero extend product
 
-    assign P = A^B;
-    assign Guard = A&B;
-    assign K= ~A&~B;
+  assign P = A^B;
+  assign G = A&B;
+  assign K= ~A&~B;
 
-   assign Pp1 = {sub, P[WIDTH-1:1]};
-   assign Gm1 = {Guard[WIDTH-2:0], Cin};
-   assign Km1 = {K[WIDTH-2:0], ~Cin};
-   
-    // Apply function to determine Leading pattern
-    //      - note: the paper linked above uses the numbering system where 0 is the most significant bit
-    assign F[WIDTH] = ~sub&P[WIDTH-1];
-    assign F[WIDTH-1:0] = (Pp1&(Guard&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | Guard&~Gm1));
+  assign Pp1 = {sub, P[WIDTH-1:1]};   // shift P right by 1 (for P_i+1) , use subtract flag in most significant bit
+  assign Gm1 = {G[WIDTH-2:0], Cin};   // shift G left by 1 (for G_i-1) and bring in Cin
+  assign Km1 = {K[WIDTH-2:0], ~Cin};  // shift K left by 1 (for K_i-1) and bring in Cin
+  
+  // Apply function to determine Leading pattern
+  //      - note: Schmookler01 uses the numbering system where 0 is the most significant bit
+  assign F[WIDTH] = ~sub&P[WIDTH-1];
+  assign F[WIDTH-1:0] = (Pp1&(G&~Km1 | K&~Gm1)) | (~Pp1&(K&~Km1 | G&~Gm1));
 
-    lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
+  lzc #(WIDTH+1) lzc (.num(F), .ZeroCnt(SCnt));
 endmodule

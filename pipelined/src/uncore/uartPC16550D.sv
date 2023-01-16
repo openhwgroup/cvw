@@ -11,7 +11,7 @@
 //
 //  Compatible with most of PC16550D with the following known exceptions:
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
-//   Timeout not ye implemented***
+//   Timeout not yet implemented***
 // 
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
@@ -141,15 +141,15 @@ module uartPC16550D(
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
-	  DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
-	  DLM <= #1 8'b0;
+	    DLL <= #1 8'd1; // this cannot be zero with DLM also zer0.
+	    DLM <= #1 8'b0;
       SCR <= #1 8'b0; // not strictly necessary to reset
     end else begin
       if (~MEMWb) begin
         /* verilator lint_off CASEINCOMPLETE */
         case (A)
-           3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
-           3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
+          3'b000: if (DLAB) DLL <= #1 Din; // else TXHR <= #1 Din; // TX handled in TX register/FIFO section
+          3'b001: if (DLAB) DLM <= #1 Din; else IER <= #1 Din[3:0];
           3'b010: FCR <= #1 {Din[7:6], 2'b0, Din[3], 2'b0, Din[0]}; // Write only FIFO Control Register; 4:5 reserved and 2:1 self-clearing
           3'b011: LCR <= #1 Din;
           3'b100: MCR <= #1 Din[4:0];

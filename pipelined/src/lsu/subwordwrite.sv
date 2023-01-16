@@ -29,7 +29,8 @@
 module subwordwrite (
   input logic [2:0]          LSUFunct3M,
   input logic [`LLEN-1:0]    IMAFWriteDataM,
-  output logic [`LLEN-1:0]   LittleEndianWriteDataM);
+  output logic [`LLEN-1:0]   LittleEndianWriteDataM
+);
 
   // Replicate data for subword writes
   if (`LLEN == 128) begin:sww

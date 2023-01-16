@@ -32,63 +32,63 @@
 `include "wally-config.vh"
 
 module lsu (
-   input  logic             clk, reset,
-   input  logic             StallM, FlushM, StallW, FlushW,
-   output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation.
-   // connected to cpu (controls)
-   input  logic [1:0]       MemRWM,                                  // Read/Write control
-   input  logic [2:0]       Funct3M,                                 // Size of memory operation
-   input  logic [6:0]       Funct7M,                                 // Atomic memory operation function
-   input  logic [1:0]       AtomicM,                                 // Atomic memory operation
-   input  logic             FlushDCacheM,                            // Flush D cache to next level of memory
-   output logic             CommittedM,                              // Delay interrupts while memory operation in flight
-   output logic             SquashSCW,                               // Store conditional failed disable write to GPR
-   output logic             DCacheMiss,                              // D cache miss for performance counters
-   output logic             DCacheAccess,                            // D cache memory access for performance counters
-   // address and write data
-   input  logic [`XLEN-1:0] IEUAdrE,                                 // Execution stage memory address
-   (* mark_debug = "true" *) output logic [`XLEN-1:0] IEUAdrM,       // Memory stage memory address
-   (* mark_debug = "true" *) input logic [`XLEN-1:0] WriteDataM,     // Write data from IEU
-   output logic [`LLEN-1:0] ReadDataW,                               // Read data to IEU or FPU
-   // cpu privilege
-   input  logic [1:0]       PrivilegeModeW,                          // Current privilege mode
-   input  logic             BigEndianM,                              // Swap byte order to big endian
-   input  logic             sfencevmaM,                              // Virtual memory address fence
-   // fpu
-   input  logic [`FLEN-1:0] FWriteDataM,                             // Write data from FPU
-   input  logic             FpLoadStoreM,                            // Selects FPU as store for write data
-   // faults
-   output logic             LoadPageFaultM, StoreAmoPageFaultM,      // Page fault exceptions
-   output logic             LoadMisalignedFaultM,                    // Load address misaligned fault
-   output logic             LoadAccessFaultM,                        // Load access fault (PMA)
-   output logic             HPTWInstrAccessFaultM,                   // HPTW generated access fault during instruction fetch
-   // cpu hazard unit (trap)
-   output logic             StoreAmoMisalignedFaultM,                // Store or AMO address misaligned fault
-   output logic             StoreAmoAccessFaultM,                    // Store or AMO access fault
-            // connect to ahb
-   (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR, // Bus address from LSU to EBU
-   (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,       // Bus read data from LSU to EBU
-   (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,   // Bus write data from LSU to EBU
-   (* mark_debug = "true" *)   input logic LSUHREADY,                // Bus ready from LSU to EBU
-   (* mark_debug = "true" *)   output logic LSUHWRITE,               // Bus write operation from LSU to EBU
-   (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE,          // Bus operation size from LSU to EBU
-   (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,         // Bus burst from LSU to EBU
-   (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,         // Bus transaction type from LSU to EBU
-   (* mark_debug = "true" *)   output logic [`XLEN/8-1:0] LSUHWSTRB, // Bus byte write enables from LSU to EBU
-            // page table walker
-   input  logic [`XLEN-1:0] SATP_REGW,                               // SATP (supervisor address translation and protection) CSR
-   input  logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
-   input  logic [1:0]       STATUS_MPP,                              // Machine previous privilege mode
-   input  logic [`XLEN-1:0] PCF,                                     // Fetch PC 
-   input  logic             ITLBMissF,                               // ITLB miss causes HPTW (hardware pagetable walker) walk
-   input  logic             InstrDAPageFaultF,                       // ITLB hit needs to update dirty or access bits
-   output logic [`XLEN-1:0] PTE,                                     // Page table entry write to ITLB
-   output logic [1:0]       PageType,                                // Type of page table entry to write to ITLB
-   output logic             ITLBWriteF,                              // Write PTE to ITLB
-   output logic             SelHPTW,                                 // During a HPTW walk the effective privilege mode becomes S_MODE
-   input var logic [7:0]    PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
-   input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
-  );
+  input  logic             clk, reset,
+  input  logic             StallM, FlushM, StallW, FlushW,
+  output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation.
+  // connected to cpu (controls)
+  input  logic [1:0]       MemRWM,                                  // Read/Write control
+  input  logic [2:0]       Funct3M,                                 // Size of memory operation
+  input  logic [6:0]       Funct7M,                                 // Atomic memory operation function
+  input  logic [1:0]       AtomicM,                                 // Atomic memory operation
+  input  logic             FlushDCacheM,                            // Flush D cache to next level of memory
+  output logic             CommittedM,                              // Delay interrupts while memory operation in flight
+  output logic             SquashSCW,                               // Store conditional failed disable write to GPR
+  output logic             DCacheMiss,                              // D cache miss for performance counters
+  output logic             DCacheAccess,                            // D cache memory access for performance counters
+  // address and write data
+  input  logic [`XLEN-1:0] IEUAdrE,                                 // Execution stage memory address
+  (* mark_debug = "true" *) output logic [`XLEN-1:0] IEUAdrM,       // Memory stage memory address
+  (* mark_debug = "true" *) input logic [`XLEN-1:0] WriteDataM,     // Write data from IEU
+  output logic [`LLEN-1:0] ReadDataW,                               // Read data to IEU or FPU
+  // cpu privilege
+  input  logic [1:0]       PrivilegeModeW,                          // Current privilege mode
+  input  logic             BigEndianM,                              // Swap byte order to big endian
+  input  logic             sfencevmaM,                              // Virtual memory address fence
+  // fpu
+  input  logic [`FLEN-1:0] FWriteDataM,                             // Write data from FPU
+  input  logic             FpLoadStoreM,                            // Selects FPU as store for write data
+  // faults
+  output logic             LoadPageFaultM, StoreAmoPageFaultM,      // Page fault exceptions
+  output logic             LoadMisalignedFaultM,                    // Load address misaligned fault
+  output logic             LoadAccessFaultM,                        // Load access fault (PMA)
+  output logic             HPTWInstrAccessFaultM,                   // HPTW generated access fault during instruction fetch
+  // cpu hazard unit (trap)
+  output logic             StoreAmoMisalignedFaultM,                // Store or AMO address misaligned fault
+  output logic             StoreAmoAccessFaultM,                    // Store or AMO access fault
+          // connect to ahb
+  (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR, // Bus address from LSU to EBU
+  (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,       // Bus read data from LSU to EBU
+  (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,   // Bus write data from LSU to EBU
+  (* mark_debug = "true" *)   input logic LSUHREADY,                // Bus ready from LSU to EBU
+  (* mark_debug = "true" *)   output logic LSUHWRITE,               // Bus write operation from LSU to EBU
+  (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE,          // Bus operation size from LSU to EBU
+  (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,         // Bus burst from LSU to EBU
+  (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,         // Bus transaction type from LSU to EBU
+  (* mark_debug = "true" *)   output logic [`XLEN/8-1:0] LSUHWSTRB, // Bus byte write enables from LSU to EBU
+          // page table walker
+  input  logic [`XLEN-1:0] SATP_REGW,                               // SATP (supervisor address translation and protection) CSR
+  input  logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
+  input  logic [1:0]       STATUS_MPP,                              // Machine previous privilege mode
+  input  logic [`XLEN-1:0] PCF,                                     // Fetch PC 
+  input  logic             ITLBMissF,                               // ITLB miss causes HPTW (hardware pagetable walker) walk
+  input  logic             InstrDAPageFaultF,                       // ITLB hit needs to update dirty or access bits
+  output logic [`XLEN-1:0] PTE,                                     // Page table entry write to ITLB
+  output logic [1:0]       PageType,                                // Type of page table entry to write to ITLB
+  output logic             ITLBWriteF,                              // Write PTE to ITLB
+  output logic             SelHPTW,                                 // During a HPTW walk the effective privilege mode becomes S_MODE
+  input var logic [7:0]    PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
+  input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
+);
 
   logic [`XLEN+1:0]         IEUAdrExtM;                              // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [`XLEN+1:0]         IEUAdrExtE;                              // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
