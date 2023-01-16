@@ -7,8 +7,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -25,28 +23,22 @@
 
 `include "wally-config.vh"
 
-module regfile_p2r1w1bwen #(parameter integer DEPTH = 10, parameter integer WIDTH = 4)
-  (input logic 		clk,
-   input logic 		    we1,
-   input logic [WIDTH-1:0]  we1bit,
-   input logic [DEPTH-1:0]  ra1,
-   output logic [WIDTH-1:0] rd1,
-   input logic [DEPTH-1:0]  wa1,
-   input logic [WIDTH-1:0]  wd1);
+module regfile_p2r1w1bwen #(parameter integer DEPTH = 10, parameter integer WIDTH = 4)(
+  input  logic 		          clk,
+  input  logic 		          we1,
+  input  logic [WIDTH-1:0]  we1bit,
+  input  logic [DEPTH-1:0]  ra1,
+  output logic [WIDTH-1:0]  rd1,
+  input  logic [DEPTH-1:0]  wa1,
+  input  logic [WIDTH-1:0]  wd1
+);
   
   logic [WIDTH-1:0] 	    regs [2**DEPTH-1:0];
-  integer 		    i;
+  integer 		            i;
   
-  always_ff @(posedge clk) begin
-    if(we1) begin
-      for (i=0; i < WIDTH; i++) begin
-	if(we1bit[i]) begin
-	  regs[wa1][i] <= wd1[i];
-	end
-      end
-    end
-  end
+  always_ff @(posedge clk)
+    if (we1) // global write enable
+      regs[wa1] = wd1 & we1bit | regs[wa1] & ~we1bit; // bit write enable
 
   assign rd1 = regs[ra1];
-
 endmodule

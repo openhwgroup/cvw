@@ -28,7 +28,8 @@
 
 module counter #(parameter WIDTH=8) (
   input  logic             clk, reset, en,
-  output logic [WIDTH-1:0] q);
+  output logic [WIDTH-1:0] q
+);
 
   logic [WIDTH-1:0] qnext;
 

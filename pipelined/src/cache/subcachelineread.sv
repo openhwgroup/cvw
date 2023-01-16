@@ -27,26 +27,27 @@
 `include "wally-config.vh"
 
 module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
-  input logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0]   PAdr,
-  input logic [LINELEN-1:0]  ReadDataLine,
-  output logic [WORDLEN-1:0] ReadDataWord);
+  input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0]   PAdr,
+  input  logic [LINELEN-1:0]                                         ReadDataLine,
+  output logic [WORDLEN-1:0]                                         ReadDataWord
+);
 
   localparam WORDSPERLINE = LINELEN/MUXINTERVAL;
-  // pad is for icache. Muxing extends over the cacheline boundary.
   localparam PADLEN = WORDLEN-MUXINTERVAL;
-  logic [LINELEN+(WORDLEN-MUXINTERVAL)-1:0] ReadDataLinePad;
-  logic [WORDLEN-1:0]          ReadDataLineSets [(LINELEN/MUXINTERVAL)-1:0];
+
+  // pad is for icache. Muxing extends over the cacheline boundary.
+  logic [LINELEN+(WORDLEN-MUXINTERVAL)-1:0]   ReadDataLinePad;
+  logic [WORDLEN-1:0]                         ReadDataLineSets [(LINELEN/MUXINTERVAL)-1:0];
 
   if (PADLEN > 0) begin
-    logic [PADLEN-1:0]  Pad;
-    assign Pad = '0;
-    assign ReadDataLinePad = {Pad, ReadDataLine};    
+    assign ReadDataLinePad = {{PADLEN{1'b0}}, ReadDataLine};    
   end else assign ReadDataLinePad = ReadDataLine;
 
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-	  assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1: (index*MUXINTERVAL)];
+	  assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1 : (index*MUXINTERVAL)];
   end
+  
   // variable input mux
   assign ReadDataWord = ReadDataLineSets[PAdr];
 endmodule

@@ -9,8 +9,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -27,13 +25,13 @@
 
 `include "wally-config.vh"
 
-module crc7_sipo_np_ce
-  (
-   input logic 	      clk,
-   input logic 	      rst,//      initial CRC value must be b"000_0000"
-   input logic 	      i_enable,
-   input logic 	      i_message_bit,
-   output logic [6:0] o_crc7);
+module crc7_sipo_np_ce(
+  input  logic 	      clk,
+  input  logic 	      rst,//      initial CRC value must be b"000_0000"
+  input  logic 	      i_enable,
+  input  logic 	      i_message_bit,
+  output logic [6:0] o_crc7
+);
 
 
   logic [6:0] 	      w_crc7_d;

@@ -34,7 +34,7 @@ module subwordread
    input logic              FpLoadStoreM, 
    input logic              BigEndianM, 
    output logic [`LLEN-1:0] ReadDataM
-   );
+);
 
   logic [7:0] 				ByteM; 
   logic [15:0] 				HalfwordM;

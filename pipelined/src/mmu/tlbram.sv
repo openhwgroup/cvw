@@ -8,6 +8,8 @@
 //          Outputs the physical page number and access bits of the current
 //          virtual address on a TLB hit.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

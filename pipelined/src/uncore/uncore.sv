@@ -7,6 +7,8 @@
 // Purpose: System-on-Chip components outside the core
 //          Memories, peripherals, external bus control
 // 
+// Documentation: RISC-V System on Chip Design Chapter 15 (and Figure 6.20)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -46,40 +48,41 @@ module uncore (
   output logic             HREADY, HRESP,
   output logic             HSELEXT,
   // peripheral pins
-  output logic             MTimerInt, MSwInt, MExtInt, SExtInt,
-  input  logic [31:0]      GPIOPinsIn,
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn, 
-  input  logic             UARTSin,
-  output logic             UARTSout,
-  output logic             SDCCmdOut,
-  output logic             SDCCmdOE,
-  input  logic             SDCCmdIn,
-  input  logic [3:0]       SDCDatIn,
-  output logic             SDCCLK,
-  output logic [63:0]      MTIME_CLINT
+  output logic             MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
+  output logic             MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [63:0]      MTIME_CLINT,               // MTIME, from CLINT
+  input  logic [31:0]      GPIOPinsIn,                // GPIO pin input value
+  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
+  input  logic             UARTSin,                   // UART serial input
+  output logic             UARTSout,                  // UART serial output
+  output logic             SDCCmdOut,                 // SD Card command output
+  output logic             SDCCmdOE,                  // SD Card command output enable
+  input  logic             SDCCmdIn,                  // SD Card command input
+  input  logic [3:0]       SDCDatIn,                  // SD Card data input
+  output logic             SDCCLK                     // SD Card clock
 );
   
   logic [`XLEN-1:0] HREADRam, HREADSDC;
 
-  logic [10:0]     HSELRegions;
-  logic            HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic            HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
-  logic            HRESPRam,  HRESPSDC;
-  logic            HREADYRam, HRESPSDCD;
+  logic [10:0]      HSELRegions;
+  logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
+  logic             HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic             HRESPRam,  HRESPSDC;
+  logic             HREADYRam, HRESPSDCD;
   logic [`XLEN-1:0] HREADBootRom; 
-  logic            HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
-  logic            HSELNoneD;
-  logic            UARTIntr,GPIOIntr;
-  logic 	   SDCIntM;
+  logic             HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
+  logic             HSELNoneD;
+  logic             UARTIntr,GPIOIntr;
+  logic 	          SDCIntM;
   
-  logic PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0] PSEL, PREADY;
-  logic [31:0] PADDR;
+  logic             PCLK, PRESETn, PWRITE, PENABLE;
+  logic [3:0]       PSEL, PREADY;
+  logic [31:0]      PADDR;
   logic [`XLEN-1:0] PWDATA;
   logic [`XLEN/8-1:0] PSTRB;
   logic [3:0][`XLEN-1:0] PRDATA;
   logic [`XLEN-1:0] HREADBRIDGE;
-  logic HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+  logic             HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -90,54 +93,42 @@ module uncore (
   assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[10:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(4) ahbapbbridge
-    (.HCLK, .HRESETn, .HSEL({HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
-     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
-     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
+  ahbapbbridge #(4) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+    .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
+    .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
   assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (`UNCORE_RAM_SUPPORTED) begin : ram
-    ram_ahb #(
-      .BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
-      .HCLK, .HRESETn, 
-      .HSELRam, .HADDR,
-      .HWRITE, .HREADY, 
-      .HTRANS, .HWDATA, .HWSTRB, .HREADRam,
-      .HRESPRam, .HREADYRam);
+    ram_ahb #(.BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
+      .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
+      .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
   end
 
  if (`BOOTROM_SUPPORTED) begin : bootrom
     rom_ahb #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
-    bootrom(
-      .HCLK, .HRESETn, 
-      .HSELRom(HSELBootRom), .HADDR,
-      .HREADY, .HTRANS, 
+    bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
   end
 
   // memory-mapped I/O peripherals
   if (`CLINT_SUPPORTED == 1) begin : clint
-    clint_apb clint(
-      .PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), 
-      .MTIME(MTIME_CLINT), 
-      .MTimerInt, .MSwInt);
-
+    clint_apb clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
     assign MTIME_CLINT = 0;
     assign MTimerInt = 0; assign MSwInt = 0;
   end
+
   if (`PLIC_SUPPORTED == 1) begin : plic
-    plic_apb plic(
-      .PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), 
-      .UARTIntr, .GPIOIntr,
-      .MExtInt, .SExtInt);
+    plic_apb plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;
   end
+
   if (`GPIO_SUPPORTED == 1) begin : gpio
     gpio_apb gpio(
       .PCLK, .PRESETn, .PSEL(PSEL[0]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
@@ -195,7 +186,9 @@ module uncore (
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
+  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, 
+    {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
+    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
 

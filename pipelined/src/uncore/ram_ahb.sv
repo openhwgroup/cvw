@@ -6,6 +6,8 @@
 //
 // Purpose: On-chip RAM, external to core, with AHB interface
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -40,15 +42,15 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   output logic             HRESPRam, HREADYRam
 );
 
-  localparam ADDR_WIDTH = $clog2(RANGE/8);
-  localparam OFFSET = $clog2(`XLEN/8);   
+  localparam               ADDR_WIDTH = $clog2(RANGE/8);
+  localparam               OFFSET = $clog2(`XLEN/8);   
 
-  logic [`XLEN/8-1:0] 		  ByteMask;
-  logic [`PA_BITS-1:0]        HADDRD, RamAddr;
-  logic				  initTrans;
-  logic				  memwrite, memwriteD, memread;
-  logic         nextHREADYRam;
-  logic             DelayReady;
+  logic [`XLEN/8-1:0] 	   ByteMask;
+  logic [`PA_BITS-1:0]     HADDRD, RamAddr;
+  logic				             initTrans;
+  logic				             memwrite, memwriteD, memread;
+  logic                    nextHREADYRam;
+  logic                    DelayReady;
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing

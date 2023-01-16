@@ -201,6 +201,7 @@ module csr #(parameter
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
     .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+
   csrsr csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
     .TrapM, .FRegWriteM, .NextPrivilegeModeM, .PrivilegeModeW,
@@ -209,6 +210,7 @@ module csr #(parameter
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TW,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
     .STATUS_FS, .BigEndianM);
+
   csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, 
     .CSRMWriteM, .MTrapM, .CSRAdrM,
     .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
@@ -217,18 +219,39 @@ module csr #(parameter
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
-  csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
-    .CSRSWriteM, .STrapM, .CSRAdrM,
-    .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
-    .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
-    .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
-    .SCOUNTEREN_REGW,
-    .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
-    .WriteSSTATUSM, .IllegalCSRSAccessM);
-  csru  csru(.clk, .reset, .InstrValidNotFlushedM, 
-    .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
-    .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
-    .IllegalCSRUAccessM);
+
+
+  if (`S_SUPPORTED) begin:csrs
+    csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
+      .CSRSWriteM, .STrapM, .CSRAdrM,
+      .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
+      .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
+      .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
+      .SCOUNTEREN_REGW,
+      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
+      .WriteSSTATUSM, .IllegalCSRSAccessM);
+  end else begin
+    assign WriteSSTATUSM = 0;
+    assign CSRSReadValM = 0;
+    assign SEPC_REGW = 0;
+    assign STVEC_REGW = 0;
+    assign SCOUNTEREN_REGW = 0;
+    assign SATP_REGW = 0;
+    assign IllegalCSRSAccessM = 1;
+  end
+
+  // Floating Point CSRs in User Mode only needed if Floating Point is supported
+  if (`F_SUPPORTED | `D_SUPPORTED) begin:csru
+    csru  csru(.clk, .reset, .InstrValidNotFlushedM, 
+      .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
+      .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
+      .IllegalCSRUAccessM);
+  end else begin
+    assign FRM_REGW = 0;
+    assign CSRUReadValM = 0;
+    assign IllegalCSRUAccessM = 1;
+  end
+  
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,

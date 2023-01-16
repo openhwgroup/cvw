@@ -7,8 +7,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -25,14 +23,15 @@
 
 `include "wally-config.vh"
 
-module regfile_p2r1w1_nibo #(parameter integer DEPTH = 10, parameter integer WIDTH = 4)
-  (input logic 		clk,
-   input logic 		    we1,
-   input logic [DEPTH-1:0]  ra1,
-   output logic [WIDTH-1:0] rd1,
-   output logic [(2**DEPTH)*WIDTH-1:0] Rd1All,   
-   input logic [DEPTH-1:0]  wa1,
-   input logic [WIDTH-1:0]  wd1);
+module regfile_p2r1w1_nibo #(parameter integer DEPTH = 10, parameter integer WIDTH = 4) (
+  input  logic 		                    clk,
+  input  logic 		                    we1,
+  input  logic [DEPTH-1:0]            ra1,
+  output logic [WIDTH-1:0]            rd1,
+  output logic [(2**DEPTH)*WIDTH-1:0] Rd1All,   
+  input  logic [DEPTH-1:0]            wa1,
+  input  logic [WIDTH-1:0]            wd1
+);
   
   logic [WIDTH-1:0] 	    regs [2**DEPTH-1:0];
   genvar 		    index;
