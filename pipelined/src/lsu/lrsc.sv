@@ -27,22 +27,22 @@
 
 `include "wally-config.vh"
 
-module lrsc
-  (
-    input  logic                clk, reset,
-    input  logic                StallW,
-    input  logic                MemReadM,
-    input  logic [1:0]          PreLSURWM,
-    output logic [1:0]          LSURWM,
-    input  logic [1:0] 	        LSUAtomicM,
-    input  logic [`PA_BITS-1:0] PAdrM,  // from mmu to dcache
-    output logic                SquashSCW
+module lrsc(
+  input  logic                clk, reset,
+  input  logic                StallW,
+  input  logic                MemReadM,
+  input  logic [1:0]          PreLSURWM,
+  output logic [1:0]          LSURWM,
+  input  logic [1:0] 	        LSUAtomicM,
+  input  logic [`PA_BITS-1:0] PAdrM,  // from mmu to dcache
+  output logic                SquashSCW
 );
+
   // Handle atomic load reserved / store conditional
-  logic [`PA_BITS-1:2] 			ReservationPAdrW;
-  logic 						ReservationValidM, ReservationValidW; 
-  logic 						lrM, scM, WriteAdrMatchM;
-  logic 						SquashSCM;
+  logic [`PA_BITS-1:2] 			  ReservationPAdrW;
+  logic 						          ReservationValidM, ReservationValidW; 
+  logic 						          lrM, scM, WriteAdrMatchM;
+  logic 						          SquashSCM;
 
   assign lrM = MemReadM & LSUAtomicM[0];
   assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
@@ -55,6 +55,7 @@ module lrsc
     else if (scM) ReservationValidM = 0; // clear valid on store to same address or any sc
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
+  
   flopenr #(`PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, PAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
   flopenr #(1) resvldreg(clk, reset, ~StallW, ReservationValidM, ReservationValidW);
   flopenr #(1) squashreg(clk, reset, ~StallW, SquashSCM, SquashSCW);
