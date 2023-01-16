@@ -27,26 +27,23 @@
 `include "wally-config.vh"
 
 // HCLK and clk must be the same clock!
-module busfsm 
-  (input logic        HCLK,
-   input logic        HRESETn,
+module busfsm (
+  input  logic       HCLK,
+  input  logic       HRESETn,
 
-   // IEU interface
-   input logic        Flush,
-   input logic [1:0]  BusRW,
-   input logic        Stall,
-   output logic       BusCommitted,
-   output logic       BusStall,
-   output logic       CaptureEn,
-   input logic        HREADY,
-   output logic [1:0] HTRANS,
-   output logic       HWRITE
+  // IEU interface
+  input  logic       Flush,
+  input  logic [1:0] BusRW,
+  input  logic       Stall,
+  output logic       BusCommitted,
+  output logic       BusStall,
+  output logic       CaptureEn,
+  input  logic       HREADY,
+  output logic [1:0] HTRANS,
+  output logic       HWRITE
 );
   
-  typedef enum logic [2:0] {ADR_PHASE,
-				            DATA_PHASE,
-				            MEM3} busstatetype;
-
+  typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3}                                             busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
   (* mark_debug = "true" *) busstatetype CurrState, NextState;
@@ -56,15 +53,15 @@ module busfsm
     else                  CurrState <= #1 NextState;  
   
   always_comb begin
-	case(CurrState)
-	  ADR_PHASE: if(HREADY & |BusRW) NextState = DATA_PHASE;
-                 else             NextState = ADR_PHASE;
-      DATA_PHASE: if(HREADY)      NextState = MEM3;
-		          else            NextState = DATA_PHASE;
-      MEM3: if(Stall)             NextState = MEM3;
-		    else                  NextState = ADR_PHASE;
-	  default:                    NextState = ADR_PHASE;
-	endcase
+	  case(CurrState)
+	    ADR_PHASE: if(HREADY & |BusRW)  NextState = DATA_PHASE;
+                 else                 NextState = ADR_PHASE;
+      DATA_PHASE: if(HREADY)          NextState = MEM3;
+		          else                    NextState = DATA_PHASE;
+      MEM3: if(Stall)                 NextState = MEM3;
+		    else                          NextState = ADR_PHASE;
+	    default:                        NextState = ADR_PHASE;
+	  endcase
   end
 
   assign BusStall = (CurrState == ADR_PHASE & |BusRW) |

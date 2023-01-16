@@ -31,24 +31,23 @@
 
 `include "wally-config.vh"
 
-/* verilator lint_off UNOPTFLAT */
-
 module prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y
 );
 
-// Carefully crafted so design compiler will synthesize into a fast tree structure
-//  Rather than linear.
+  // Carefully crafted so design compiler will synthesize into a fast tree structure
+  //  Rather than linear.
 
   // create thermometer code mask
+  /* verilator lint_off UNOPTFLAT */
   genvar i;
   assign y[0] = ~a[0];
   for (i=1; i<N; i++) begin:therm
     assign y[i] = y[i-1] & ~a[i];
   end
+  /* verilator lint_on UNOPTFLAT */
 endmodule
 
 
-/* verilator lint_on UNOPTFLAT */
 

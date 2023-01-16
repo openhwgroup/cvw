@@ -28,23 +28,23 @@
 `include "wally-config.vh"
 
 module roundsign(
-    input logic         Xs,     // x sign
-    input logic         Ys,     // y sign
-    input logic         CvtCs,  // convert result sign
-    input logic         FmaSs,  // fma sum sign
-    input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)
-    input logic         FmaOp,  // is fma opperation
-    input logic         DivOp,  // is divsqrt opperation
-    input logic         CvtOp,  // is cvt opperation
-    output logic        Ms      // normalized result sign
+  input logic         Xs,     // x sign
+  input logic         Ys,     // y sign
+  input logic         CvtCs,  // convert result sign
+  input logic         FmaSs,  // fma sum sign
+  input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)
+  input logic         FmaOp,  // is fma opperation
+  input logic         DivOp,  // is divsqrt opperation
+  input logic         CvtOp,  // is cvt opperation
+  output logic        Ms      // normalized result sign
 );
 
-    logic Qs;   // divsqrt result sign
+  logic               Qs;     // divsqrt result sign
 
-    // calculate divsqrt sign
-    assign Qs = Xs^(Ys&~Sqrt);
+  // calculate divsqrt sign
+  assign Qs = Xs^(Ys&~Sqrt);
 
-    // Select sign for rounding calulation
-    assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
+  // Select sign for rounding calulation
+  assign Ms = (FmaSs&FmaOp) | (CvtCs&CvtOp) | (Qs&DivOp);
 
 endmodule

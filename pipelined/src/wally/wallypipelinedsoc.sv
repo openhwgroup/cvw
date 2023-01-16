@@ -6,6 +6,8 @@
 //
 // Purpose: System on chip including pipelined processor and uncore memories/peripherals
 //
+// Documentation: RISC-V System on Chip Design (Figure 6.20)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -28,8 +30,8 @@
 
 module wallypipelinedsoc (
   input  logic 		            clk, 
-  input  logic                reset_ext, 
-  output logic                reset,
+  input  logic                reset_ext,        // external asynchronous reset pin
+  output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
   input  logic [`AHBW-1:0]    HRDATAEXT,
   input  logic 		            HREADYEXT, HRESPEXT,
@@ -47,24 +49,25 @@ module wallypipelinedsoc (
   output logic 		            HMASTLOCK,
   output logic 		            HREADY,
   // I/O Interface
-  input  logic                TIMECLK,
-  input  logic [31:0] 	        GPIOPinsIn,
-  output logic [31:0] 	      GPIOPinsOut, GPIOPinsEn,
-  input  logic 		            UARTSin,
-  output logic 		            UARTSout,
-  input  logic 		            SDCCmdIn,
-  output logic 		            SDCCmdOut,
-  output logic 		            SDCCmdOE,			  
-  input  logic [3:0] 	        SDCDatIn,
-  output logic 		            SDCCLK			  
+  input  logic                TIMECLK,          // optional for CLINT MTIME counter
+  input  logic [31:0] 	      GPIOPinsIn,       // inputs from GPIO
+  output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
+  output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
+  input  logic 		            UARTSin,          // UART serial data input
+  output logic 		            UARTSout,         // UART serial data output
+  input  logic 		            SDCCmdIn,         // SDC Command input
+  output logic 		            SDCCmdOut,        // SDC Command output
+  output logic 		            SDCCmdOE,			    // SDC Command output enable
+  input  logic [3:0] 	        SDCDatIn,         // SDC data input
+  output logic 		            SDCCLK			      // SDC clock
 );
 
   // Uncore signals
-  logic [`AHBW-1:0] HRDATA;   // from AHB mux in uncore
-  logic             HRESP;
-  logic             MTimerInt, MSwInt; // from CLINT
-  logic [63:0]      MTIME_CLINT; // from CLINT to CSRs
-  logic             MExtInt,SExtInt; // from PLIC
+  logic [`AHBW-1:0]           HRDATA;           // from AHB mux in uncore
+  logic                       HRESP;            // response from AHB
+  logic                       MTimerInt, MSwInt; // timer and software interrupts from CLINT
+  logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
+  logic                       MExtInt,SExtInt;  // from PLIC
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 

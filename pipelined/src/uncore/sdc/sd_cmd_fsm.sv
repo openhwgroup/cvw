@@ -8,8 +8,6 @@
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
-//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -26,71 +24,66 @@
 
 `include "wally-config.vh"
 
-module sd_cmd_fsm
-  (
-
-   input logic CLK, // HS
-   //i_SLOWER_CLK                          : in  std_logic;
-   input logic i_RST, // reset FSM,
-   // MUST COME OUT OF RESET
-   // SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
-   output logic o_TIMER_LOAD, o_TIMER_EN, // Timer
-   output logic [18:0] o_TIMER_IN,
-   input logic [18:0] i_TIMER_OUT,
-   output logic o_COUNTER_LOAD, o_COUNTER_EN, // Counter
-   output logic [7:0] o_COUNTER_IN,
-   input logic [7:0] i_COUNTER_OUT,
-   output logic o_SD_CLK_EN, // Clock Gaters
-   input logic i_CLOCK_CHANGE_DONE, // Communication with CLK_FSM
-   output logic o_START_CLOCK_CHANGE, // Communication with CLK_FSM
-   output logic o_IC_RST, o_IC_EN, o_IC_UP_DOWN, // Instruction counter
-   input logic [3:0] i_IC_OUT, // stop when you get to 10 because that is CMD17
-   input logic [1:0] i_USES_DAT,
-   input logic [6:0] i_OPCODE,
-   input logic [2:0] i_R_TYPE,
-   // bit masks
-   input logic [31:0] i_NO_REDO_MASK,
-   input logic [31:0] i_NO_REDO_ANS,
-   input logic [31:0] i_NO_ERROR_MASK,
-   input logic [31:0] i_NO_ERROR_ANS,
-   (* mark_debug = "true" *) output logic o_SD_CMD_OE, // Enable ouptut on tri-state SD_CMD line
-   // TX Components
-    output logic o_TX_PISO40_LOAD, o_TX_PISO40_EN, // Shift register for TX command head
-    output logic o_TX_PISO8_LOAD, o_TX_PISO8_EN, // Shift register for TX command tail
-    output logic o_TX_CRC7_PIPO_RST, o_TX_CRC7_PIPO_EN, // Parallel-to-Parallel CRC7 Generator
-    output logic [1:0] o_TX_SOURCE_SELECT, // What gets sent to CMD_TX
-   // TX Memory
-    output logic o_CMD_TX_IS_CMD55_RST,
-    output logic o_CMD_TX_IS_CMD55_EN, // '1' means that the command that was just sent has index
-   // 55, so the subsequent command is to be
-   // viewed as ACMD by the SD card.
-   // RX Components
-    input logic i_SD_CMD_RX, // serial response input on SD_CMD
-    output logic o_RX_SIPO48_RST, o_RX_SIPO48_EN, // Shift Register for all 48 bits of Response
-
-    input logic [39:8] i_RESPONSE_CONTENT, // last 32 bits of RX_SIPO_40_OUT
-    input logic [45:40] i_RESPONSE_INDEX, // 6 bits from RX_SIPO_40_OUT
-    output logic o_RX_CRC7_SIPO_RST, o_RX_CRC7_SIPO_EN, // Serial-to-parallel CRC7 Generator
-    input logic [6:0] i_RX_CRC7,
-   // RX Memory
-    output logic o_RCA_REGISTER_RST, o_RCA_REGISTER_EN, // Relative Card Address
-   // Communication to sd_dat_fsm
-    output logic o_CMD_TX_DONE, // begin waiting for DAT_RX to complete
-    input logic i_DAT_RX_DONE, // now go to next state since data block rx was completed
-   (* mark_debug = "true" *) input logic i_ERROR_CRC16, // repeat last command
-   (* mark_debug = "true" *) input logic i_ERROR_DAT_TIMES_OUT,
-   // Commnuication to core
-    output logic o_READY_FOR_READ, // tell core that I have completed initialization
-    output logic o_SD_RESTARTING, // inform core the need to restart
-    input logic i_READ_REQUEST, // core tells me to execute CMD17
-   // Communication to Host
-    output logic o_DAT_ERROR_FD_RST,
-    output logic [2:0] o_ERROR_CODE_Q, // Indicates what caused the fatal error
-    output logic o_FATAL_ERROR, // SD Card is damaged beyond recovery, restart entire initialization procedure of card
-    input logic LIMIT_SD_TIMERS
-   );
-
-
+module sd_cmd_fsm (
+  input  logic CLK, // HS
+  //i_SLOWER_CLK                          : in  std_logic;
+  input  logic i_RST, // reset FSM,
+  // MUST COME OUT OF RESET
+  // SYNCHRONIZED TO THE 1.2 GHZ CLOCK!
+  output logic o_TIMER_LOAD, o_TIMER_EN, // Timer
+  output logic [18:0] o_TIMER_IN,
+  input  logic [18:0] i_TIMER_OUT,
+  output logic o_COUNTER_LOAD, o_COUNTER_EN, // Counter
+  output logic [7:0] o_COUNTER_IN,
+  input  logic [7:0] i_COUNTER_OUT,
+  output logic o_SD_CLK_EN, // Clock Gaters
+  input  logic i_CLOCK_CHANGE_DONE, // Communication with CLK_FSM
+  output logic o_START_CLOCK_CHANGE, // Communication with CLK_FSM
+  output logic o_IC_RST, o_IC_EN, o_IC_UP_DOWN, // Instruction counter
+  input  logic [3:0] i_IC_OUT, // stop when you get to 10 because that is CMD17
+  input  logic [1:0] i_USES_DAT,
+  input  logic [6:0] i_OPCODE,
+  input  logic [2:0] i_R_TYPE,
+  // bit masks
+  input  logic [31:0] i_NO_REDO_MASK,
+  input  logic [31:0] i_NO_REDO_ANS,
+  input  logic [31:0] i_NO_ERROR_MASK,
+  input  logic [31:0] i_NO_ERROR_ANS,
+  (* mark_debug = "true" *) output logic o_SD_CMD_OE, // Enable ouptut on tri-state SD_CMD line
+  // TX Components
+  output logic o_TX_PISO40_LOAD, o_TX_PISO40_EN, // Shift register for TX command head
+  output logic o_TX_PISO8_LOAD, o_TX_PISO8_EN, // Shift register for TX command tail
+  output logic o_TX_CRC7_PIPO_RST, o_TX_CRC7_PIPO_EN, // Parallel-to-Parallel CRC7 Generator
+  output logic [1:0] o_TX_SOURCE_SELECT, // What gets sent to CMD_TX
+  // TX Memory
+  output logic o_CMD_TX_IS_CMD55_RST,
+  output logic o_CMD_TX_IS_CMD55_EN, // '1' means that the command that was just sent has index
+  // 55, so the subsequent command is to be
+  // viewed as ACMD by the SD card.
+  // RX Components
+  input  logic i_SD_CMD_RX, // serial response input on SD_CMD
+  output logic o_RX_SIPO48_RST, o_RX_SIPO48_EN, // Shift Register for all 48 bits of Response
+  input  logic [39:8] i_RESPONSE_CONTENT, // last 32 bits of RX_SIPO_40_OUT
+  input  logic [45:40] i_RESPONSE_INDEX, // 6 bits from RX_SIPO_40_OUT
+  output logic o_RX_CRC7_SIPO_RST, o_RX_CRC7_SIPO_EN, // Serial-to-parallel CRC7 Generator
+  input logic [6:0] i_RX_CRC7,
+  // RX Memory
+  output logic o_RCA_REGISTER_RST, o_RCA_REGISTER_EN, // Relative Card Address
+  // Communication to sd_dat_fsm
+  output logic o_CMD_TX_DONE, // begin waiting for DAT_RX to complete
+  input  logic i_DAT_RX_DONE, // now go to next state since data block rx was completed
+  (* mark_debug = "true" *) input logic i_ERROR_CRC16, // repeat last command
+  (* mark_debug = "true" *) input logic i_ERROR_DAT_TIMES_OUT,
+  // Commnuication to core
+  output logic o_READY_FOR_READ, // tell core that I have completed initialization
+  output logic o_SD_RESTARTING, // inform core the need to restart
+  input  logic i_READ_REQUEST, // core tells me to execute CMD17
+  // Communication to Host
+  output logic o_DAT_ERROR_FD_RST,
+  output logic [2:0] o_ERROR_CODE_Q, // Indicates what caused the fatal error
+  output logic o_FATAL_ERROR, // SD Card is damaged beyond recovery, restart entire initialization procedure of card
+  input  logic LIMIT_SD_TIMERS
+);
 
   logic  [4:0]  w_next_state;
   (* mark_debug = "true" *) logic  [4:0]  r_curr_state;

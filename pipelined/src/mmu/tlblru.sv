@@ -7,6 +7,8 @@
 // Purpose: Implementation of bit pseudo least-recently-used algorithm for
 //          cache evictions. Outputs the index of the next entry to be written.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -26,18 +28,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tlblru #(parameter TLB_ENTRIES = 8) (
-  input  logic                clk, reset,
-  input  logic                TLBWrite,
-  input  logic                TLBFlush,
-  input  logic [TLB_ENTRIES-1:0] Matches,
-  input  logic                CAMHit,
-  output logic [TLB_ENTRIES-1:0] WriteEnables
+  input  logic                    clk, reset,
+  input  logic                    TLBWrite,
+  input  logic                    TLBFlush,
+  input  logic [TLB_ENTRIES-1:0]  Matches,
+  input  logic                    CAMHit,
+  output logic [TLB_ENTRIES-1:0]  WriteEnables
 );
 
-  logic [TLB_ENTRIES-1:0] RUBits, RUBitsNext, RUBitsAccessed;
-  logic [TLB_ENTRIES-1:0] WriteLines;
-  logic [TLB_ENTRIES-1:0] AccessLines; // One-hot encodings of which line is being accessed
-  logic                AllUsed;  // High if the next access causes all RU bits to be 1
+  logic [TLB_ENTRIES-1:0]         RUBits, RUBitsNext, RUBitsAccessed;
+  logic [TLB_ENTRIES-1:0]         WriteLines;
+  logic [TLB_ENTRIES-1:0]         AccessLines; // One-hot encodings of which line is being accessed
+  logic                           AllUsed;  // High if the next access causes all RU bits to be 1
 
   // Find the first line not recently used
   priorityonehot #(TLB_ENTRIES) nru(.a(~RUBits), .y(WriteLines));

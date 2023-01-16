@@ -29,16 +29,17 @@
 
 `include "wally-config.vh"
 
-module arrs
-  (input logic 	clk,
-   input logic 	areset,
-   output logic reset);
+module arrs(
+  input  logic 	clk,
+  input  logic 	areset,
+  output logic  reset
+);
 
-  logic 	metaStable;
-  logic 	resetB;
+  logic 	      metaStable;
+  logic 	      resetB;
   
   always_ff @(posedge clk , posedge areset) begin
-    if(areset) begin
+    if (areset) begin
       metaStable <= 1'b0;
       resetB <= 1'b0;
     end else begin
@@ -48,5 +49,4 @@ module arrs
   end
 
   assign reset = ~resetB;
-  
 endmodule

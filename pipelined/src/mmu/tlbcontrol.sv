@@ -6,6 +6,8 @@
 //
 // Purpose: Control signals for TLB
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -27,39 +29,32 @@
 `include "wally-config.vh"
 
 module tlbcontrol #(parameter ITLB = 0) (
-
-  // Current value of satp CSR (from privileged unit)
-  input logic [`SVMODE_BITS-1:0] SATP_MODE,
-  input logic [`XLEN-1:0]        VAdr,
-  input logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input logic [1:0]              STATUS_MPP,
-  input logic [1:0]              PrivilegeModeW, // Current privilege level of the processeor
-
-  // 00 - TLB is not being accessed
-  // 1x - TLB is accessed for a read (or an instruction)
-  // x1 - TLB is accessed for a write
-  // 11 - TLB is accessed for both read and write
-  input logic                    ReadAccess, WriteAccess,
-  input logic                    DisableTranslation,
-  input logic                    TLBFlush, // Invalidate all TLB entries
-  input logic [7:0]              PTEAccessBits,
-  input logic                    CAMHit,
-  input logic                    Misaligned,
-  output logic                   TLBMiss,
-  output logic                   TLBHit,
-  output logic                   TLBPageFault,
-  output logic                   DAPageFault,
-  output logic                   SV39Mode,
-  output logic                   Translate
+  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
+  input  logic [`XLEN-1:0]        VAdr,
+  input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input  logic [1:0]              STATUS_MPP,
+  input  logic [1:0]              PrivilegeModeW, // Current privilege level of the processeor
+  input  logic                    ReadAccess, WriteAccess,
+  input  logic                    DisableTranslation,
+  input  logic                    TLBFlush, // Invalidate all TLB entries
+  input  logic [7:0]              PTEAccessBits,
+  input  logic                    CAMHit,
+  input  logic                    Misaligned,
+  output logic                    TLBMiss,
+  output logic                    TLBHit,
+  output logic                    TLBPageFault,
+  output logic                    DAPageFault,
+  output logic                    SV39Mode,
+  output logic                    Translate
 );
 
   // Sections of the page table entry
-  logic [1:0]              EffectivePrivilegeMode;
+  logic [1:0]                     EffectivePrivilegeMode;
 
-  logic PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
-  logic                  UpperBitsUnequalPageFault;
-  logic                  TLBAccess;
-  logic ImproperPrivilege;
+  logic                           PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
+  logic                           UpperBitsUnequalPageFault;
+  logic                           TLBAccess;
+  logic                           ImproperPrivilege;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
@@ -68,8 +63,12 @@ module tlbcontrol #(parameter ITLB = 0) (
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;
 
-  // Check whether upper bits of virtual addresss are all equal
-  vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequalPageFault);
+  if (`XLEN==64) // Check whether upper bits of 64-bit virtual addressses are all equal
+    vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequalPageFault);
+  else begin
+    assign SV39Mode = 0;
+    assign UpperBitsUnequalPageFault = 0;
+  end           
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];

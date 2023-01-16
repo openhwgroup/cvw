@@ -5,8 +5,9 @@
 // Modified: dottolia@hmc.edu 14 April 2021: Add support for vectored interrupts
 //
 // Purpose: Handle Traps: Exceptions and Interrupts
-//          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5 (Figure 5.9)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -28,28 +29,33 @@
 `include "wally-config.vh"
 
 module trap (
-   input logic 		   reset, 
-  (* mark_debug = "true" *) input logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
-  (* mark_debug = "true" *) input logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
-  (* mark_debug = "true" *) input logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
-  (* mark_debug = "true" *) input logic 		   LoadPageFaultM, StoreAmoPageFaultM,
-  (* mark_debug = "true" *) input logic 		   mretM, sretM, 
-  input logic [1:0] 	   PrivilegeModeW, 
-  (* mark_debug = "true" *) input logic [11:0] 	   MIP_REGW, MIE_REGW, MIDELEG_REGW, 
-  input logic [`XLEN-1:0] MEDELEG_REGW,
-  input logic 		   STATUS_MIE, STATUS_SIE,
-  input logic 		   InstrValidM, wfiM, CommittedM, CommittedF,
-  output logic 		   TrapM, RetM,
-  output logic 		   InterruptM, IntPendingM, DelegateM, WFIStallM,
-  output logic [`LOG_XLEN-1:0] CauseM 
+  input  logic 		                             reset, 
+  (* mark_debug = "true" *) input  logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
+  (* mark_debug = "true" *) input  logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  (* mark_debug = "true" *) input  logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
+  (* mark_debug = "true" *) input  logic 		   LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
+  (* mark_debug = "true" *) input  logic 		   mretM, sretM,                                    // return instructions
+  input  logic                                 wfiM,                                            // wait for interrupt instruction
+  input  logic [1:0] 	                         PrivilegeModeW,                                  // current privilege mode
+  (* mark_debug = "true" *) input logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
+  input  logic [`XLEN-1:0]                     MEDELEG_REGW,                                    // exception delegation SR
+  input  logic 		                             STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
+  input  logic 		                             InstrValidM,                                     // current instruction is valid, not flushed
+  input  logic                                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
+  output logic 		                             TrapM,                                           // Trap is occurring
+  output logic 		                             RetM,                                            // Return instruction being executed
+  output logic 		                             InterruptM,                                      // Interrupt is occurring
+  output logic 		                             IntPendingM,                                     // Interrupt is pending, might occur if enabled
+  output logic 		                             DelegateM,                                       // Delegate trap to supervisor handler
+  output logic 		                             WFIStallM,                                       // Stall due to WFI instruction
+  output logic [`LOG_XLEN-1:0]                 CauseM                                           // trap cause
 );
 
-  logic MIntGlobalEnM, SIntGlobalEnM;
-  logic ExceptionM;
-  logic Committed;
-  logic BothInstrAccessFaultM;
-  
-  (* mark_debug = "true" *) logic [11:0] PendingIntsM, ValidIntsM, EnabledIntsM; 
+  logic                                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
+  logic                                        ExceptionM;                                      // exception is occurring
+  logic                                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
+  logic                                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
+  (* mark_debug = "true" *) logic [11:0]       PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -57,6 +63,7 @@ module trap (
   // & with a M stage valid bit to avoid interrupts from interrupt a nonexistent flushed instruction (in the M stage)
   // & with ~CommittedM to make sure MEPC isn't chosen so as to rerun the same instr twice
   ///////////////////////////////////////////
+
   assign MIntGlobalEnM = (PrivilegeModeW != `M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == `U_MODE) | ((PrivilegeModeW == `S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
   assign PendingIntsM = MIP_REGW & MIE_REGW;
@@ -74,6 +81,7 @@ module trap (
   // According to RISC-V Spec Section 1.6, exceptions are caused by instructions.  Interrupts are external asynchronous.
   // Traps are the union of exceptions and interrupts.
   ///////////////////////////////////////////
+  
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
@@ -87,6 +95,7 @@ module trap (
   // Cause priority defined in table 3.7 of 20190608 privileged spec
   // Exceptions are of lower priority than all interrupts (3.1.9)
   ///////////////////////////////////////////
+
   always_comb
     if      (reset)                    CauseM = 0; // hard reset 3.3
     else if (ValidIntsM[11])           CauseM = 11; // Machine External Int

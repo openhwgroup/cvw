@@ -32,14 +32,19 @@ module RASPredictor
   #(parameter int StackSize = 16
     )
   (input logic              clk,
-   input logic              reset,
-   input logic              pop,
-   output logic [`XLEN-1:0] popPC,
-   input logic              push,
-   input logic              incr,
-   input logic [`XLEN-1:0]  pushPC
+   input logic 				reset,
+   input logic 				PopF,
+   output logic [`XLEN-1:0] RASPCF,
+   input logic [3:0] 		WrongPredInstrClassD,
+   input logic [3:0] 		InstrClassD,
+   input logic 				PushE,
+   input logic 				incr,
+   input logic [`XLEN-1:0] 	PCLinkE
    );
 
+  // *** need to update so it either doesn't push until the memory stage
+  // or need to repair flushed push.
+  // *** need to repair popped and then flushed returns.
   logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
@@ -47,13 +52,13 @@ module RASPredictor
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
   
-  assign CounterEn = pop | push | incr;
+  assign CounterEn = PopF | PushE | incr | WrongPredInstrClassD[2];
 
-  assign PtrD = pop ? PtrM1 : PtrP1;
+  assign PtrD = PopF | InstrClassD[2] ? PtrM1 : PtrP1;
 
   assign PtrM1 = PtrQ - 1'b1;
   assign PtrP1 = PtrQ + 1'b1;
-  // may have to handle a push and an incr at the same time.
+  // may have to handle a PushE and an incr at the same time.
   // *** what happens if jal is executing and there is a return being flushed in Decode?
 
   flopenr #(Depth) PTR(.clk(clk),
@@ -67,12 +72,12 @@ module RASPredictor
     if(reset) begin
       for(index=0; index<StackSize; index++)
  memory[index] <= {`XLEN{1'b0}};
-    end else if(push) begin
-      memory[PtrP1] <= #1 pushPC;
+    end else if(PushE) begin
+      memory[PtrP1] <= #1 PCLinkE;
     end
   end
 
-  assign popPC = memory[PtrQ];
+  assign RASPCF = memory[PtrQ];
   
   
 endmodule

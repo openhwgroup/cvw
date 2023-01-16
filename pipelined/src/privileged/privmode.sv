@@ -4,9 +4,10 @@
 // Written: David_Harris@hmc.edu 12 May 2022
 // Modified: 
 //
-// Purpose: Track privilege mode
-//          See RISC-V Privileged Mode Specification 20190608 3.1.10-11
+// Purpose: Track privilege mode.  Change on traps and returns.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -29,11 +30,14 @@
 
 module privmode (
   input  logic             clk, reset,
-  input  logic             StallW, TrapM, mretM, sretM,
-  input  logic             DelegateM,
-  input  logic [1:0]       STATUS_MPP,
-  input  logic             STATUS_SPP,
-  output logic [1:0]       NextPrivilegeModeM, PrivilegeModeW
+  input  logic             StallW, 
+  input  logic             TrapM,               // Trap 
+  input  logic             mretM, sretM,        // return instruction
+  input  logic             DelegateM,           // trap delegated to supervisor mode
+  input  logic [1:0]       STATUS_MPP,          // machine trap previous privilege mode
+  input  logic             STATUS_SPP,          // supervisor trap previous privilege mode
+  output logic [1:0]       NextPrivilegeModeM,  // next privilege mode, used when updating STATUS CSR on a trap
+  output logic [1:0]       PrivilegeModeW       // current privilege mode
 ); 
   
   if (`U_SUPPORTED) begin:privmode
@@ -43,7 +47,7 @@ module privmode (
         if (`S_SUPPORTED & DelegateM) NextPrivilegeModeM = `S_MODE;
         else                          NextPrivilegeModeM = `M_MODE;
       end else if (mretM)             NextPrivilegeModeM = STATUS_MPP;
-      else if (sretM)                 NextPrivilegeModeM = {1'b0, STATUS_SPP};
+      else     if (sretM)             NextPrivilegeModeM = {1'b0, STATUS_SPP};
       else                            NextPrivilegeModeM = PrivilegeModeW;
     end
 

@@ -28,7 +28,8 @@
 
 module aplusbeq0 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] a, b,
-  output logic             zero);
+  output logic             zero
+);
 
   logic [WIDTH-1:0] x;
   logic [WIDTH-1:0] orshift;

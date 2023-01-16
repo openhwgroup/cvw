@@ -39,16 +39,18 @@ module atomic (
   input logic                IgnoreRequest,
   output logic [`XLEN-1:0]   IMAWriteDataM,
   output logic               SquashSCW,
-  output logic [1:0]         LSURWM);
+  output logic [1:0]         LSURWM
+);
 
-  logic [`XLEN-1:0] AMOResult;
-  logic               MemReadM;
+  logic [`XLEN-1:0]          AMOResult;
+  logic                      MemReadM;
 
   amoalu amoalu(.srca(ReadDataM), .srcb(IHWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
                 .result(AMOResult));
+
   mux2 #(`XLEN) wdmux(IHWriteDataM, AMOResult, LSUAtomicM[1], IMAWriteDataM);
   assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
-  lrsc lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM,
-    .SquashSCW, .LSURWM);
+
+  lrsc lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM, .SquashSCW, .LSURWM);
 
 endmodule  

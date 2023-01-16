@@ -7,6 +7,8 @@
 // Purpose: Status register
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
+// Documentation: RISC-V System on Chip Design Chapter 5
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -115,7 +117,7 @@ module csrsr (
   ///////////////////////////////////////////
 
   if (`BIGENDIAN_SUPPORTED) begin: endianmux
-    // determine whether bit endian accesses should be made
+    // determine whether big endian accesses should be made
     logic [1:0] EndiannessPrivMode;
     always_comb begin
       if      (SelHPTW)                                  EndiannessPrivMode = `S_MODE;
