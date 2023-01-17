@@ -71,11 +71,11 @@ module datapath (
   // Fetch stage signals
   // Decode stage signals
   logic [`XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
-  logic [`XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage *** According to Figure 4.12, should be ImmExtD
+  logic [`XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
   logic [4:0]       RdD;                            // Destination register in Decode stage
   // Execute stage signals
   logic [`XLEN-1:0] R1E, R2E;                       // Source operands read from register file
-  logic [`XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage ***According to Figure 4.12, should be ImmExtE
+  logic [`XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage 
   logic [`XLEN-1:0] SrcAE, SrcBE;                   // ALU operands
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), computed address *** According to Figure 4.12, IEUResultE should be called IEUAdrE
   // Memory stage signals
