@@ -34,14 +34,7 @@ vlib work
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
 vlog +incdir+../config/$1 \
      +incdir+../config/shared \
-     +define+USE_IMPERAS_DV \
-     +incdir+$env(IMPERAS_HOME)/ImpPublic/include/host \
-     +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
-     $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvvi-api-pkg.sv    \
-     $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvvi-trace.sv      \
-     $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/rvvi-pkg.sv   \
-     $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2api.sv  \
-     $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2log.sv  \
+     ../../external/Imperas/ImpPublic/source/host/rvvi/rvvi-trace.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \
@@ -50,7 +43,6 @@ vlog +incdir+../config/$1 \
      -suppress 7063 
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
 vsim workopt +nowarn3829  -fatal 7 \
-     -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS)
 view wave
 #-- display input and output signals as hexidecimal values
