@@ -1,7 +1,8 @@
 ///////////////////////////////////////////
 // extend.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Created: 9 January 2021
 // Modified: 
 //
 // Purpose: Produce sign-extended immediates from various formats
@@ -29,9 +30,9 @@
 `include "wally-config.vh"
 
 module extend (
-  input  logic [31:7]       InstrD,
-  input  logic [2:0]        ImmSrcD,
-  output logic [`XLEN-1:0 ] ExtImmD);
+  input  logic [31:7]       InstrD,      // All instruction bits except opcode (lower 7 bits)
+  input  logic [2:0]        ImmSrcD,     // Select what kind of extension to perform
+  output logic [`XLEN-1:0 ] ExtImmD);    // Extended immediate ***According to Figure 4.12, should be ImmExtD
 
   localparam [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  

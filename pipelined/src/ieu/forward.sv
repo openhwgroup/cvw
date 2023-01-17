@@ -1,7 +1,8 @@
 ///////////////////////////////////////////
 // forward.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Created: 9 January 2021
 // Modified: 
 //
 // Purpose: Determine datapath forwarding
@@ -30,17 +31,17 @@
 
 module forward(
   // Detect hazards
-  input logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW,
-  input logic        MemReadE, MDUE, CSRReadE,
-  input logic        RegWriteM, RegWriteW,
-  input logic	       FCvtIntE, 
-  input logic        SCE,
+  input  logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW, // Source and destination registers
+  input  logic        MemReadE, MDUE, CSRReadE,              // Execute stage instruction is a load (MemReadE), divide (MDUE), or CSR read (CSRReadE)
+  input  logic        RegWriteM, RegWriteW,                  // Instruction in Memory or Writeback stage writes register file
+  input  logic	      FCvtIntE,                              // *** FPU (Floating-point unit) converting float to int
+  input  logic        SCE,                                   // *** Store Conditional instruction
   // Forwarding controls
-  output logic [1:0] ForwardAE, ForwardBE,
-  output logic       FCvtIntStallD, LoadStallD, MDUStallD, CSRRdStallD
+  output logic [1:0]  ForwardAE, ForwardBE,                  // Select signals for forwarding multiplexers
+  output logic        FCvtIntStallD, LoadStallD, MDUStallD, CSRRdStallD // Stall due to conversion, load, multiply/divide, CSR read
 );
 
-  logic MatchDE;
+  logic MatchDE;                                             // Match between a source register in Decode stage and destination register in Execute stage
   
   always_comb begin
     ForwardAE = 2'b00;
