@@ -102,17 +102,6 @@ module testbench;
       InReset = 1;
       testadr = 0;
       testadrNoBase = 0;
-      
-`ifdef USE_IMPERAS_DV
-      // Enable the trace2log module
-      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
-        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
-      end
-
-      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
-        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
-      end
-`endif
 
       if ($value$plusargs("testDir=%s", testDir)) begin
           memfilename = {testDir, "/ref/ref.elf.memfile"};
@@ -149,6 +138,56 @@ module testbench;
                 .CMP_VR      (0),
                 .CMP_CSR     (1)
                ) idv_trace2api(rvvi);
+
+    initial begin 
+      MAX_ERRS = 3;
+
+      // Initialize REF (do this before initializing the DUT)
+      if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+        msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+      end
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
+      if (!rvviRefInit(elffilename)) begin
+        msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+      end
+
+      // Volatile CSRs
+      void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+
+      if(`XLEN==32) begin
+          void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+          void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+      end
+
+  //    // Temporary fix for inexact difference
+  //    void'(rvviRefCsrSetVolatileMask(0, 32'h001, 'h1)); // fflags
+  //    void'(rvviRefCsrSetVolatileMask(0, 32'h003, 'h1)); // fcsr
+      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
+      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
+      
+      
+      // Enable the trace2log module
+      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
+      end
+      
+      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
+      end
+    end
+
+    final begin
+      void'(rvviRefShutdown());
+    end
+
 `endif
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
@@ -289,48 +328,6 @@ module testbench;
 	  $stop;
 	end
   end
-
-`ifdef USE_IMPERAS_DV
-  initial begin 
-
-    MAX_ERRS = 3;
-
-    // Initialize REF (do this before initializing the DUT)
-    if (!rvviVersionCheck(RVVI_API_VERSION)) begin
-      msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
-    end
-    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
-    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
-    void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
-    if (!rvviRefInit(elffilename)) begin
-      msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
-    end
-
-    // Volatile CSRs
-    void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
-    void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
-    void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
-    void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
-    void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
-
-    if(`XLEN==32) begin
-        void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
-        void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
-        void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
-        void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
-    end
-
-//    // Temporary fix for inexact difference
-//    void'(rvviRefCsrSetVolatileMask(0, 32'h001, 'h1)); // fflags
-//    void'(rvviRefCsrSetVolatileMask(0, 32'h003, 'h1)); // fcsr
-    void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
-    void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
-  end
-
-  final begin
-    void'(rvviRefShutdown());
-  end
-`endif
 
 endmodule
 
