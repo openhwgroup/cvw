@@ -48,9 +48,11 @@ module controller(
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
   output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
-  output logic        IntDivE, MDUE, W64E,     // Integer divide, MDU (multiply/divide) operation***, or RV64 W-type operation
-  output logic        JumpE,	                 // Is a jump (j) instruction
-  output logic        SCE,                     // Is a Store Conditional instruction ***
+  output logic        IntDivE,                 // Integer divide
+  output logic        MDUE,                    // MDU (multiply/divide) operatio
+  output logic        W64E,                    // RV64 W-type operation
+  output logic        JumpE,	                 // jump instruction
+  output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
@@ -67,8 +69,7 @@ module controller(
   output logic 	      RegWriteW, IntDivW,      // Instruction writes a register, is an integer divide
   output logic [2:0]  ResultSrcW,              // Select source of result to write back to register file
   // Stall during CSRs
-  //output logic      CSRWriteFencePendingDEM, // *** delete line?
-  output logic        CSRWriteFenceM,          // ***
+  output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic        StoreStallD              // Store (memory write) causes stall
 );
 
@@ -88,11 +89,11 @@ module controller(
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
-  logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction***
-  logic        CSRZeroSrcD;                    // ***
+  logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
+  logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
   logic        CSRReadD;                       // CSR read instruction
-  logic [1:0]  AtomicD;                        // ***Atomic (AMO) instruction
-  logic        FenceXD;                        // ***Fence instruction
+  logic [1:0]  AtomicD;                        // Atomic (AMO) instruction
+  logic        FenceXD;                        // Fence instruction
   logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
   logic        CSRWriteD, CSRWriteE;           // CSR write
   logic        InstrValidD, InstrValidE;       // Instruction is valid
