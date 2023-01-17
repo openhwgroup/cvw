@@ -39,6 +39,7 @@ module rvviTrace #(
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
   logic [`XLEN-1:0] 			 CSRArray [logic[11:0]];
+  logic [`XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
 
@@ -202,10 +203,24 @@ module rvviTrace #(
 	assign f_wb[0][0][index] = frf_wb[index];
   end
 
+  // record previous csr value.
+  integer index4;
+  always_ff @(posedge clk) begin
+	for (index4 = 0; index4 < `NUM_CSRS; index4 += 1) begin
+	  if(CSRArray.exists(index4)) begin
+		CSRArrayOld[index4] = CSRArray[index4];
+	  end
+	end
+  end
+
+  // check for csr value change.
+  integer index5;
   always_comb begin
-	csr_wb[0][0] <= '0;
-	if(CSRWriteW)
-	  csr_wb[0][0][CSRAdrW] <= 1'b1;
+	for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
+	  if(CSRArray.exists(index5)) begin
+		csr_wb[0][0][index5] = CSRArrayOld[index5] != CSRArray[index5] ? 1'b1 : 1'b0;
+	  end else  csr_wb[0][0][index5] = '0;
+	end
   end
 
   integer index3;
