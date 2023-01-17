@@ -71,13 +71,13 @@ module datapath (
   // Fetch stage signals
   // Decode stage signals
   logic [`XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
-  logic [`XLEN-1:0] ExtImmD;                        // Extended immediate in Decode stage *** According to Figure 4.12, should be ImmExtD
+  logic [`XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage *** According to Figure 4.12, should be ImmExtD
   logic [4:0]       RdD;                            // Destination register in Decode stage
   // Execute stage signals
   logic [`XLEN-1:0] R1E, R2E;                       // Source operands read from register file
-  logic [`XLEN-1:0] ExtImmE;                        // Extended immediate in Execute stage ***According to Figure 4.12, should be ImmExtE
+  logic [`XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage ***According to Figure 4.12, should be ImmExtE
   logic [`XLEN-1:0] SrcAE, SrcBE;                   // ALU operands
-  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ExtImmE or PC+4), computed address *** According to Figure 4.12, IEUResultE should be called IEUAdrE
+  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), computed address *** According to Figure 4.12, IEUResultE should be called IEUAdrE
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;                     // Address computed by ALU *** According to Figure 4.12, IEUResultM should be called IEUAdrM
   logic [`XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
@@ -93,12 +93,12 @@ module datapath (
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
   regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
-  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ExtImmD);
+  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
  
   // Execute stage pipeline register and logic
   flopenrc #(`XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
   flopenrc #(`XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
-  flopenrc #(`XLEN) ExtImmEReg(clk, reset, FlushE, ~StallE, ExtImmD, ExtImmE);
+  flopenrc #(`XLEN) ImmExtEReg(clk, reset, FlushE, ~StallE, ImmExtD, ImmExtE);
   flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
@@ -107,9 +107,9 @@ module datapath (
   mux3  #(`XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
   comparator_dc_flip #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
-  mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ExtImmE, ALUSrcBE, SrcBE);
+  mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
   alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
-  mux2 #(`XLEN)   altresultmux(ExtImmE, PCLinkE, JumpE, AltResultE);
+  mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
   // Memory stage pipeline register

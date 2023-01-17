@@ -32,25 +32,25 @@
 module extend (
   input  logic [31:7]       InstrD,      // All instruction bits except opcode (lower 7 bits)
   input  logic [2:0]        ImmSrcD,     // Select what kind of extension to perform
-  output logic [`XLEN-1:0 ] ExtImmD);    // Extended immediate ***According to Figure 4.12, should be ImmExtD
+  output logic [`XLEN-1:0 ] ImmExtD);    // Extended immediate ***According to Figure 4.12, should be ImmExtD
 
   localparam [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  
   always_comb
     case(ImmSrcD) 
       // I-type 
-      3'b000:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:20]};  
+      3'b000:   ImmExtD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:20]};  
       // S-type (stores)
-      3'b001:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:25], InstrD[11:7]}; 
+      3'b001:   ImmExtD = {{(`XLEN-12){InstrD[31]}}, InstrD[31:25], InstrD[11:7]}; 
       // B-type (branches)
-      3'b010:   ExtImmD = {{(`XLEN-12){InstrD[31]}}, InstrD[7], InstrD[30:25], InstrD[11:8], 1'b0}; 
+      3'b010:   ImmExtD = {{(`XLEN-12){InstrD[31]}}, InstrD[7], InstrD[30:25], InstrD[11:8], 1'b0}; 
       // J-type (jal)
-      3'b011:   ExtImmD = {{(`XLEN-20){InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0}; 
+      3'b011:   ImmExtD = {{(`XLEN-20){InstrD[31]}}, InstrD[19:12], InstrD[20], InstrD[30:21], 1'b0}; 
       // U-type (lui, auipc)
-      3'b100:  ExtImmD = {{(`XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
+      3'b100:  ImmExtD = {{(`XLEN-31){InstrD[31]}}, InstrD[30:12], 12'b0}; 
       // Store Conditional: zero offset
-      3'b101:  if (`A_SUPPORTED) ExtImmD = 0;
-               else              ExtImmD = undefined;
-      default: ExtImmD = undefined; // undefined
+      3'b101:  if (`A_SUPPORTED) ImmExtD = 0;
+               else              ImmExtD = undefined;
+      default: ImmExtD = undefined; // undefined
     endcase  
 endmodule
