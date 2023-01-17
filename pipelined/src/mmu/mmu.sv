@@ -107,16 +107,10 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
     .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
-  if (`PMP_ENTRIES > 0) // instantiate PMP
-    pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
-      .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-      .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-      .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
-  else begin
-    assign PMPInstrAccessFaultF = 0;
-    assign PMPLoadAccessFaultM = 0;
-    assign PMPStoreAmoAccessFaultM = 0;
-  end
+  pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
+    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+    .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+    .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
