@@ -20,6 +20,7 @@ read_ip IP/xlnx_axi_dwidth_conv_32to64.srcs/sources_1/ip/xlnx_axi_dwidth_conv_32
 read_ip IP/xlnx_axi_dwidth_conv_64to32.srcs/sources_1/ip/xlnx_axi_dwidth_conv_64to32/xlnx_axi_dwidth_conv_64to32.xci
 
 read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
+read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v] 
 read_verilog  {../src/fpgaTop.v}
 
 set_property include_dirs {../../pipelined/config/fpga ../../pipelined/config/shared} [current_fileset]
