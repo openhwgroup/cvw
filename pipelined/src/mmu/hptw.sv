@@ -98,7 +98,6 @@ module hptw (
   logic [2:0]                 HPTWSize; // 32 or 64 bit access
 	(* mark_debug = "true" *) statetype WalkerState, NextWalkerState, InitialWalkerState;
 
-
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
   assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
@@ -189,13 +188,13 @@ module hptw (
 	// FSM to track PageType based on the levels of the page table traversed
 	flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
 	always_comb 
-	case (WalkerState)
-		L3_RD:  NextPageType = 2'b11; // terapage
-		L2_RD:  NextPageType = 2'b10; // gigapage
-		L1_RD:  NextPageType = 2'b01; // megapage
-		L0_RD:  NextPageType = 2'b00; // kilopage
-		default: NextPageType = PageType;
-	endcase
+		case (WalkerState)
+			L3_RD:  NextPageType = 2'b11; // terapage
+			L2_RD:  NextPageType = 2'b10; // gigapage
+			L1_RD:  NextPageType = 2'b01; // megapage
+			L0_RD:  NextPageType = 2'b00; // kilopage
+			default: NextPageType = PageType;
+		endcase
 
 	// HPTWAdr muxing
 	if (`XLEN==32) begin // RV32
