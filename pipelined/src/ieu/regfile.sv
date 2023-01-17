@@ -1,7 +1,8 @@
 ///////////////////////////////////////////
 // regfile.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Created: 9 January 2021
 // Modified: 
 //
 // Purpose: 3-port register file
@@ -30,21 +31,21 @@
 
 module regfile (
   input  logic             clk, reset,
-  input  logic             we3, 
-  input  logic [ 4:0]      a1, a2, a3, 
-  input  logic [`XLEN-1:0] wd3, 
-  output logic [`XLEN-1:0] rd1, rd2);
+  input  logic             we3,                 // Write enable
+  input  logic [ 4:0]      a1, a2, a3,          // Source registers to read (a1, a2), destination register to write (a3)
+  input  logic [`XLEN-1:0] wd3,                 // Write data for port 3
+  output logic [`XLEN-1:0] rd1, rd2);           // Read data for ports 1, 2
 
   localparam NUMREGS = `E_SUPPORTED ? 16 : 32;  // only 16 registers in E mode
 
 (* mark_debug = "true" *)  logic [`XLEN-1:0] rf[NUMREGS-1:1];
   integer i;
 
-  // three ported register file
-  // read two ports combinationally (A1/RD1, A2/RD2)
-  // write third port on rising edge of clock (A3/WD3/WE3)
-  // write occurs on falling edge of clock
-  // register 0 hardwired to 0
+  // Three ported register file
+  // Read two ports combinationally (a1/rd1, a2/rd2)
+  // Write third port on rising edge of clock (a3/wd3/we3)
+  // Write occurs on falling edge of clock
+  // Register 0 hardwired to 0
   
   // reset is intended for simulation only, not synthesis
   // can logic be adjusted to not need resettable registers?
