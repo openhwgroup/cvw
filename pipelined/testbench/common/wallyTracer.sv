@@ -3,18 +3,11 @@
 `define NUM_REGS 32
 `define NUM_CSRS 4096
 
-`define PRINT_PC_INSTR 1
-`define PRINT_MOST 1
+`define PRINT_PC_INSTR 0
+`define PRINT_MOST 0
 `define PRINT_ALL 0
 
-module rvviTrace #(
-				   parameter int ILEN = `XLEN, // Instruction length in bits
-				   parameter int XLEN = `XLEN, // GPR length in bits
-				   parameter int FLEN = `FLEN, // FPR length in bits
-				   parameter int VLEN = 0, // Vector register size in bits
-				   parameter int NHART = 1, // Number of harts reported
-				   parameter int RETIRE = 1)    // Number of instructions that can retire during valid event
-  ();
+module wallyTracer(rvviTrace rvvi);
 
   localparam NUMREGS = `E_SUPPORTED ? 16 : 32;
   
@@ -38,55 +31,36 @@ module rvviTrace #(
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
-  logic [`XLEN-1:0] 			 CSRArray [logic[11:0]];
+  logic [`XLEN-1:0]              CSRArray [logic[11:0]];
   logic [`XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
+  logic [`XLEN-1:0]              CSR_W [logic[11:0]];
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
-
-  // tracer signals
-  logic 						 clk;
-  logic 						 valid;
-  logic [63:0] 					 order      [(NHART-1):0][(RETIRE-1):0];
-  logic [ILEN-1:0] 				 insn [(NHART-1):0][(RETIRE-1):0];
-  logic 						 intr       [(NHART-1):0][(RETIRE-1):0];
-  logic [(XLEN-1):0] 			 pc_rdata   [(NHART-1):0][(RETIRE-1):0];
-  logic [(XLEN-1):0] 			 pc_wdata   [(NHART-1):0][(RETIRE-1):0];
-  logic 						 trap       [(NHART-1):0][(RETIRE-1):0];
-  logic 						 halt       [(NHART-1):0][(RETIRE-1):0];
-  logic [1:0] 					 mode       [(NHART-1):0][(RETIRE-1):0];
-  logic [1:0] 					 ixl        [(NHART-1):0][(RETIRE-1):0];
-  logic [`NUM_REGS-1:0][(XLEN-1):0] x_wdata    [(NHART-1):0][(RETIRE-1):0];
-  logic [`NUM_REGS-1:0] 			x_wb       [(NHART-1):0][(RETIRE-1):0];
-  logic [`NUM_REGS-1:0][(XLEN-1):0] f_wdata    [(NHART-1):0][(RETIRE-1):0];
-  logic [`NUM_REGS-1:0] 			f_wb       [(NHART-1):0][(RETIRE-1):0];
-  logic [4095:0][(XLEN-1):0] 		csr        [(NHART-1):0][(RETIRE-1):0];
-  logic [4095:0] 					csr_wb     [(NHART-1):0][(RETIRE-1):0];
-  logic 							lrsc_cancel[(NHART-1):0][(RETIRE-1):0];
   
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
-  assign InstrValidD = testbench.dut.core.ieu.c.InstrValidD;
-  assign InstrValidE = testbench.dut.core.ieu.c.InstrValidE;
-  assign InstrValidM = testbench.dut.core.ieu.InstrValidM;
-  assign InstrRawD = testbench.dut.core.ifu.InstrRawD;
-  assign PCNextF = testbench.dut.core.ifu.PCNextF;
-  assign PCF = testbench.dut.core.ifu.PCF;
-  assign PCD = testbench.dut.core.ifu.PCD;
-  assign PCE = testbench.dut.core.ifu.PCE;
-  assign PCM = testbench.dut.core.ifu.PCM;
-  assign reset = testbench.reset;
-  assign StallE = testbench.dut.core.StallE;
-  assign StallM = testbench.dut.core.StallM;
-  assign StallW = testbench.dut.core.StallW;
-  assign FlushD = testbench.dut.core.FlushD;
-  assign FlushE = testbench.dut.core.FlushE;
-  assign FlushM = testbench.dut.core.FlushM;
-  assign FlushW = testbench.dut.core.FlushW;
-  assign TrapM = testbench.dut.core.TrapM;
-  assign HaltM = testbench.DCacheFlushStart;
+  assign InstrValidD    = testbench.dut.core.ieu.c.InstrValidD;
+  assign InstrValidE    = testbench.dut.core.ieu.c.InstrValidE;
+  assign InstrValidM    = testbench.dut.core.ieu.InstrValidM;
+  assign InstrRawD      = testbench.dut.core.ifu.InstrRawD;
+  assign PCNextF        = testbench.dut.core.ifu.PCNextF;
+  assign PCF            = testbench.dut.core.ifu.PCF;
+  assign PCD            = testbench.dut.core.ifu.PCD;
+  assign PCE            = testbench.dut.core.ifu.PCE;
+  assign PCM            = testbench.dut.core.ifu.PCM;
+  assign reset          = testbench.reset;
+  assign StallE         = testbench.dut.core.StallE;
+  assign StallM         = testbench.dut.core.StallM;
+  assign StallW         = testbench.dut.core.StallW;
+  assign FlushD         = testbench.dut.core.FlushD;
+  assign FlushE         = testbench.dut.core.FlushE;
+  assign FlushM         = testbench.dut.core.FlushM;
+  assign FlushW         = testbench.dut.core.FlushW;
+  assign TrapM          = testbench.dut.core.TrapM;
+  assign HaltM          = testbench.DCacheFlushStart;
   assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
-  assign STATUS_SXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
-  assign STATUS_UXL = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
+  assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
+  assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
   always_comb begin
 	// machine CSRs
@@ -136,7 +110,7 @@ module rvviTrace #(
   for(index = 1; index < NUMREGS; index += 1) 
 	assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
 
-  assign rf_a3 = testbench.dut.core.ieu.dp.regf.a3;
+  assign rf_a3  = testbench.dut.core.ieu.dp.regf.a3;
   assign rf_we3 = testbench.dut.core.ieu.dp.regf.we3;
   
   always_comb begin
@@ -148,7 +122,7 @@ module rvviTrace #(
   for(index = 0; index < NUMREGS; index += 1) 
 	assign frf[index] = testbench.dut.core.fpu.fpu.fregfile.rf[index];
   
-  assign frf_a4 = testbench.dut.core.fpu.fpu.fregfile.a4;
+  assign frf_a4  = testbench.dut.core.fpu.fpu.fregfile.a4;
   assign frf_we4 = testbench.dut.core.fpu.fpu.fregfile.we4;
   
   always_comb begin
@@ -157,7 +131,7 @@ module rvviTrace #(
 	  frf_wb[frf_a4] <= 1'b1;
   end
 
-  assign CSRAdrM = testbench.dut.core.priv.priv.csr.CSRAdrM;
+  assign CSRAdrM  = testbench.dut.core.priv.priv.csr.CSRAdrM;
   assign CSRWriteM = testbench.dut.core.priv.priv.csr.CSRWriteM;
   
   // pipeline to writeback stage
@@ -175,89 +149,77 @@ module rvviTrace #(
   flopenrc #(1)     IntrMReg (clk, reset, FlushM, ~StallM, IntrE, IntrM);
   flopenrc #(1)     IntrWReg (clk, reset, FlushW, ~StallW, IntrM, IntrW);
 
-  flopenrc #(12) CSRAdrWReg (clk, reset, FlushW, ~StallW, CSRAdrM, CSRAdrW);
-  flopenrc #(1) CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
+  flopenrc #(12)    CSRAdrWReg (clk, reset, FlushW, ~StallW, CSRAdrM, CSRAdrW);
+  flopenrc #(1)     CSRWriteWReg (clk, reset, FlushW, ~StallW, CSRWriteM, CSRWriteW);
 
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
-  assign valid = InstrValidW & ~StallW & ~FlushW;
-  assign order[0][0] = CSRArray[12'hB02];
-  assign insn[0][0] = InstrRawW;
-  assign pc_rdata[0][0] = PCW;
-  assign trap[0][0] = TrapW;
-  assign halt[0][0] = HaltW;
-  assign intr[0][0] = IntrW;
-  assign mode[0][0] = PrivilegeModeW;
-  assign ixl[0][0] = PrivilegeModeW == 2'b11 ? 2'b10 :
-					 PrivilegeModeW == 2'b01 ? STATUS_SXL : STATUS_UXL;
-  assign pc_wdata[0][0] = ~FlushW ? PCM :
-						  ~FlushM ? PCE :
-						  ~FlushE ? PCD :
-						  ~FlushD ? PCF : PCNextF;
+  assign rvvi.clk = clk;
+  assign rvvi.valid[0][0]    = InstrValidW & ~StallW & ~FlushW;
+  assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
+  assign rvvi.insn[0][0]     = InstrRawW;
+  assign rvvi.pc_rdata[0][0] = PCW;
+  assign rvvi.trap[0][0]     = 0; // TODO: IMPERAS TrapW;
+  assign rvvi.halt[0][0]     = HaltW;
+  assign rvvi.intr[0][0]     = IntrW;
+  assign rvvi.mode[0][0]     = PrivilegeModeW;
+  assign rvvi.ixl[0][0]      = PrivilegeModeW == 2'b11 ? 2'b10 :
+					           PrivilegeModeW == 2'b01 ? STATUS_SXL : STATUS_UXL;
+  assign rvvi.pc_wdata[0][0] = ~FlushW ? PCM :
+						       ~FlushM ? PCE :
+						       ~FlushE ? PCD :
+						       ~FlushD ? PCF : PCNextF;
 
   for(index = 0; index < `NUM_REGS; index += 1) begin
-	assign x_wdata[0][0][index] = rf[index];
-	assign x_wb[0][0][index] = rf_wb[index];
-	assign f_wdata[0][0][index] = frf[index];
-	assign f_wb[0][0][index] = frf_wb[index];
+	assign rvvi.x_wdata[0][0][index] = rf[index];
+	assign rvvi.x_wb[0][0][index]    = rf_wb[index];
+	assign rvvi.f_wdata[0][0][index] = frf[index];
+	assign rvvi.f_wb[0][0][index]    = frf_wb[index];
   end
 
   // record previous csr value.
   integer index4;
   always_ff @(posedge clk) begin
 	for (index4 = 0; index4 < `NUM_CSRS; index4 += 1) begin
-	  if(CSRArray.exists(index4)) begin
+        CSR_W[index4]       = (CSRArrayOld[index4] != CSRArray[index4]) ? 1 : 0;
 		CSRArrayOld[index4] = CSRArray[index4];
-	  end
 	end
   end
-
+  
   // check for csr value change.
-  integer index5;
-  always_comb begin
-	for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
-	  if(CSRArray.exists(index5)) begin
-		csr_wb[0][0][index5] = CSRArrayOld[index5] != CSRArray[index5] ? 1'b1 : 1'b0;
-	  end else  csr_wb[0][0][index5] = '0;
-	end
-  end
-
-  integer index3;
-
-  always_comb begin
-	for(index3 = 0; index3 < `NUM_CSRS; index3 += 1) begin
-	  if(CSRArray.exists(index3)) 
-		csr[0][0][index3] = CSRArray[index3];
-	  else 
-		csr[0][0][index3] = '0;
-	end
+  genvar index5;
+  for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
+    assign rvvi.csr_wb[0][0][index5] = CSR_W[index5];
+    assign rvvi.csr[0][0][index5]    = CSRArray[index5];
   end
 
   // *** implementation only cancel? so sc does not clear?
-  assign lrsc_cancel[0][0] = '0;
+  assign rvvi.lrsc_cancel[0][0] = '0;
 
   integer index2;
 
   always_ff @(posedge clk) begin
-	if(valid) begin
+	if(rvvi.valid[0][0]) begin
 	  if(`PRINT_PC_INSTR & !(`PRINT_ALL | `PRINT_MOST))
-		$display("order = %08d, PC = %08x, insn = %08x", order[0][0], pc_rdata[0][0], insn[0][0]);
+		$display("order = %08d, PC = %08x, insn = %08x", rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0]);
 	  else if(`PRINT_MOST & !`PRINT_ALL)
 		$display("order = %08d, PC = %010x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %010x, x%02d = %016x, f%02d = %016x, csr%03x = %016x", 
-				 order[0][0], pc_rdata[0][0], insn[0][0], trap[0][0], halt[0][0], intr[0][0], mode[0][0], ixl[0][0], pc_wdata[0][0], rf_a3, x_wdata[0][0][rf_a3], frf_a4, f_wdata[0][0][frf_a4], CSRAdrW, csr[0][0][CSRAdrW]);
+		        rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0], rf_a3, rvvi.x_wdata[0][0][rf_a3], frf_a4, rvvi.f_wdata[0][0][frf_a4], CSRAdrW, rvvi.csr[0][0][CSRAdrW]);
 	  else if(`PRINT_ALL) begin
 		$display("order = %08d, PC = %08x, insn = %08x, trap = %1d, halt = %1d, intr = %1d, mode = %1x, ixl = %1x, pc_wdata = %08x", 
-				 order[0][0], pc_rdata[0][0], insn[0][0], trap[0][0], halt[0][0], intr[0][0], mode[0][0], ixl[0][0], pc_wdata[0][0]);
+				 rvvi.order[0][0], rvvi.pc_rdata[0][0], rvvi.insn[0][0], rvvi.trap[0][0], rvvi.halt[0][0], rvvi.intr[0][0], rvvi.mode[0][0], rvvi.ixl[0][0], rvvi.pc_wdata[0][0]);
 	  	for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
-		  $display("x%02d = %08x", index2, x_wdata[0][0][index2]);
+		  $display("x%02d = %08x", index2, rvvi.x_wdata[0][0][index2]);
 		end
 		for(index2 = 0; index2 < `NUM_REGS; index2 += 1) begin
-		  $display("f%02d = %08x", index2, f_wdata[0][0][index2]);
+		  $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
 		end
 	  end
 	end
-	if(HaltW) $stop();
+    if(HaltW) $finish;
+//    if(HaltW) $stop;
+
   end
 
 

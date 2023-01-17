@@ -31,10 +31,21 @@
 
 `include "wally-config.vh"
 
+// This is set from the commsnd line script
+// `define USE_IMPERAS_DV
+
+`ifdef USE_IMPERAS_DV
+  `include "rvvi/imperasDV.svh"
+`endif
 
 module testbench;
   parameter DEBUG=0;
- 
+
+`ifdef USE_IMPERAS_DV
+  import rvviPkg::*;
+  import rvviApiPkg::*;
+`endif
+
   logic        clk;
   logic        reset_ext, reset;
 
@@ -63,7 +74,7 @@ module testbench;
   integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
   logic 	    DCacheFlushDone, DCacheFlushStart;
   string 		testName;
-  string memfilename, pathname, adrstr;
+  string memfilename, testDir, adrstr, elffilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic        UARTSin, UARTSout;
@@ -92,28 +103,92 @@ module testbench;
       testadr = 0;
       testadrNoBase = 0;
 
-	  //testName =     "rv64i_m/I/src/add-01.S";
-	  testName =     "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S";
-	  
+      if ($value$plusargs("testDir=%s", testDir)) begin
+          memfilename = {testDir, "/ref/ref.elf.memfile"};
+          elffilename = {testDir, "/ref/ref.elf"};
+          $display($sformatf("%m @ t=%0t: loading testDir %0s", $time, testDir));
+      end else begin
+          $error("Must specify test directory using plusarg testDir");
+      end
 
-	  //pathname =     "../../tests/riscof/work/riscv-arch-test/";
-	  pathname = "../../tests/riscof/work/wally-riscv-arch-test/";
-	  
-	  memfilename = {pathname, testName, "/ref/ref.elf.memfile"};
       if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
 	  else $error("Imperas test bench requires BUS.");
 
-      ProgramAddrMapFile = {pathname, testName, "/ref/ref.elf.objdump.addr"};
-      ProgramLabelMapFile = {pathname, testName, "/ref/ref.elf.objdump.lab"};
-
+      ProgramAddrMapFile = {testDir, "/ref/ref.elf.objdump.addr"};
+      ProgramLabelMapFile = {testDir, "/ref/ref.elf.objdump.lab"};
+      
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
+      
     end
 
-  rvviTrace rvviTrace();
+    rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+    wallyTracer wallyTracer(rvvi);
 
+`ifdef USE_IMPERAS_DV
+    trace2log idv_trace2log(rvvi);
+
+    // enabling of comparison types
+    trace2api #(.CMP_PC      (1),
+                .CMP_INS     (1),
+                .CMP_GPR     (1),
+                .CMP_FPR     (1),
+                .CMP_VR      (0),
+                .CMP_CSR     (1)
+               ) idv_trace2api(rvvi);
+
+    initial begin 
+      MAX_ERRS = 3;
+
+      // Initialize REF (do this before initializing the DUT)
+      if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+        msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+      end
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
+      if (!rvviRefInit(elffilename)) begin
+        msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+      end
+
+      // Volatile CSRs
+      void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+
+      if(`XLEN==32) begin
+          void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+          void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+      end
+
+  //    // Temporary fix for inexact difference
+  //    void'(rvviRefCsrSetVolatileMask(0, 32'h001, 'h1)); // fflags
+  //    void'(rvviRefCsrSetVolatileMask(0, 32'h003, 'h1)); // fcsr
+      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
+      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
+      
+      
+      // Enable the trace2log module
+      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
+      end
+      
+      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
+      end
+    end
+
+    final begin
+      void'(rvviRefShutdown());
+    end
+
+`endif
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
@@ -254,7 +329,6 @@ module testbench;
 	end
   end
 
-  
 endmodule
 
 module riscvassertions;
@@ -412,6 +486,7 @@ module copyShadow
       CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
     end
   end
+  
   
 endmodule
 
