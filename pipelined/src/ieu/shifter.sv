@@ -1,7 +1,8 @@
 ///////////////////////////////////////////
 // shifter.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Created: 9 January 2021
 // Modified: 
 //
 // Purpose: RISC-V 32/64 bit shifter
@@ -29,19 +30,19 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0]     A,
-  input  logic [`LOG_XLEN-1:0] Amt,
-  input  logic                 Right, Arith, W64,
-  output logic [`XLEN-1:0]     Y);
+  input  logic [`XLEN-1:0]     A,                     // Source
+  input  logic [`LOG_XLEN-1:0] Amt,                   // Shift amount
+  input  logic                 Right, Arith, W64,     // Shift right, arithmetic, RV64 W-type shift
+  output logic [`XLEN-1:0]     Y);                    // Shifted result
 
-  logic [2*`XLEN-2:0]      z, zshift;
-  logic [`LOG_XLEN-1:0]    amttrunc, offset;
+  logic [2*`XLEN-2:0]      z, zshift;                 // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
+  logic [`LOG_XLEN-1:0]    amttrunc, offset;          // Shift amount adjusted for RV64, right-shift amount
 
   // Handle left and right shifts with a funnel shifter.
   // For RV32, only 32-bit shifts are needed.   
-  // For RV64, 32 and 64-bit shifts are needed, with sign extension.
+  // For RV64, 32- and 64-bit shifts are needed, with sign extension.
 
-  // funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
+  // Funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
   if (`XLEN==32) begin:shifter // RV32
     always_comb  // funnel mux
       if (Right) 
@@ -62,13 +63,13 @@ module shifter (
           else       z = {63'b0, A};
         else         z = {A, 63'b0};         
       end
-    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32 or 64-bit shift
+    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
   end
 
-  // opposite offset for right shfits
+  // Opposite offset for right shifts
   assign offset = Right ? amttrunc : ~amttrunc;
   
-  // funnel operation
+  // Funnel operation
   assign zshift = z >> offset;
   assign Y = zshift[`XLEN-1:0];    
 endmodule
