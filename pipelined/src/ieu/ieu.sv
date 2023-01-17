@@ -65,7 +65,7 @@ module ieu (
   input  logic 		          StallD, StallE, StallM, StallW,  // Final stall signals ***
   input  logic 		          FlushD, FlushE, FlushM, FlushW,  // Flush signals
   output logic 		          FCvtIntStallD, LoadStallD,       // Intermediate stall signals ***
-  output logic              MDUStallD, CSRRdStallD, StoreStallD 
+  output logic              MDUStallD, CSRRdStallD, StoreStallD,
   output logic 		          PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
   output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction ***
   output logic 		          CSRWriteFenceM                   // CSR write is a fence instruction ***
