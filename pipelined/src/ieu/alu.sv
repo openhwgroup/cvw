@@ -30,38 +30,40 @@
 `include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,
-  input  logic [2:0]       ALUControl,
-  input  logic [2:0]       Funct3,
-  output logic [WIDTH-1:0] Result,
-  output logic [WIDTH-1:0] Sum);
+  input  logic [WIDTH-1:0] A, B,       // Operands
+  input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
+  input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform
+  output logic [WIDTH-1:0] Result,     // ALU result
+  output logic [WIDTH-1:0] Sum);       // Sum of operands
 
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;
-  logic        Carry, Neg;
-  logic        LT, LTU;
-  logic        W64, SubArith, ALUOp;
-  logic        Asign, Bsign;
+  // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
+  // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;  // Intermediate results
+  logic             Carry, Neg;                              // Flags: carry out, negative
+  logic             LT, LTU;                                 // Less than, Less than unsigned
+  logic             W64;                                     // RV64 W-type instruction
+  logic             SubArith;                                // Performing subtraction or arithmetic right shift
+  logic             ALUOp;                                   // 0 for address generation addition or 1 for regular ALU ops
+  logic             Asign, Bsign;                            // Sign bits of A, B
 
-  // Extract control signals
-  // W64 indicates RV64 W-suffix instructions acting on lower 32-bit word
-  // SubArith indicates subtraction or arithmetic right shift
-  // ALUOp = 0 for address generation addition or 1 for regular ALU
+  // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
-  // addition
+  // Addition
   assign CondInvB = SubArith ? ~B : B;
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
   shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
 
-  // condition code flags based on subtract output Sum = A-B
+  // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
-  // and the result has the opposite sign of A
+  // and the result has the opposite sign of A.
+  // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
   assign Neg  = Sum[WIDTH-1];
   assign Asign = A[WIDTH-1];
   assign Bsign = B[WIDTH-1];
-  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; // simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
+  assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
  
   // SLT
@@ -70,7 +72,7 @@ module alu #(parameter WIDTH=32) (
  
   // Select appropriate ALU Result
   always_comb
-    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0
+    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
     else casez (Funct3)               // Otherwise check Funct3
       3'b000: FullResult = Sum;       // add or sub
       3'b?01: FullResult = Shift;     // sll, sra, or srl
@@ -81,8 +83,8 @@ module alu #(parameter WIDTH=32) (
       3'b111: FullResult = A & B;     // and
     endcase
 
-  // support W-type RV64I ADDW/SUBW/ADDIW/Shifts that sign-extend 32-bit result to 64 bits
-  if (WIDTH==64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else            assign Result = FullResult;
+  // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
+  if (WIDTH == 64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign Result = FullResult;
 endmodule
 
