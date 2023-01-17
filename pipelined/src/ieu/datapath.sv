@@ -50,19 +50,19 @@ module datapath (
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
   // Memory stage signals
   input  logic             StallM, FlushM,          // Stall, flush Memory stage
-  input  logic             FWriteIntM, FCvtIntW,    // FPU writes register file, FPU converts float to int ***
-  input  logic [`XLEN-1:0] FIntResM,                // FPU integer result ***
-  output logic [`XLEN-1:0] SrcAM,                   // ALU's Source A in Memory stage *** say why needed?***
+  input  logic             FWriteIntM, FCvtIntW,    // FPU writes integer register file, FPU converts float to int
+  input  logic [`XLEN-1:0] FIntResM,                // FPU integer result
+  output logic [`XLEN-1:0] SrcAM,                   // ALU's Source A in Memory stage to privilege unit for CSR writes
   output logic [`XLEN-1:0] WriteDataM,              // Write data in Memory stage
   // Writeback stage signals
   input  logic             StallW, FlushW,          // Stall, flush Writeback stage
 (* mark_debug = "true" *)  input  logic             RegWriteW, IntDivW,  // Write register file, integer divide instruction
-  input  logic             SquashSCW,               // ***
+  input  logic             SquashSCW,               // Squash a store conditional when a conflict arose
   input  logic [2:0]       ResultSrcW,              // Select source of result to write back to register file
-  input  logic [`XLEN-1:0] FCvtIntResW,             // FPU integer result ***
+  input  logic [`XLEN-1:0] FCvtIntResW,             // FPU convert fp to integer result
   input  logic [`XLEN-1:0] ReadDataW,               // Read data from LSU
-  input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, // CSR read result, MDU (Multiply/divide unit) result *** 
-  input  logic [`XLEN-1:0] FIntDivResultW,          // FPU's integer divide result ***
+  input  logic [`XLEN-1:0] CSRReadValW, MDUResultW, // CSR read result, MDU (Multiply/divide unit) result
+  input  logic [`XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
    // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,  // Register sources to read in Decode or Execute stage
   output logic [4:0]       RdE, RdM, RdW            // Register destinations in Execute, Memory, or Writeback stage
@@ -80,11 +80,13 @@ module datapath (
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ExtImmE or PC+4), computed address *** According to Figure 4.12, IEUResultE should be called IEUAdrE
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;                     // Address computed by ALU *** According to Figure 4.12, IEUResultM should be called IEUAdrM
-  logic [`XLEN-1:0] IFResultM;                      // ***
+  logic [`XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;                      // Store Conditional result
   logic [`XLEN-1:0] ResultW;                        // Result to write to register file
-  logic [`XLEN-1:0] IFResultW, IFCvtResultW, MulDivResultW; // *** 
+  logic [`XLEN-1:0] IFResultW;                      // Result from either IEU or single-cycle FPU op writing an integer register
+  logic [`XLEN-1:0] IFCvtResultW;                   // Result from IEU, signle-cycle FPU op, or 2-cycle FCVT float to int 
+  logic [`XLEN-1:0] MulDivResultW;                  // Multiply always comes from MDU.  Divide could come from MDU or FPU (when using fdivsqrt for integer division)
 
   // Decode stage
   assign Rs1D      = InstrD[19:15];
