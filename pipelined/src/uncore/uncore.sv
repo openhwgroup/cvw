@@ -70,6 +70,7 @@ module uncore (
   logic            HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
   logic            HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic            HRESPRam,  HRESPSDC;
+  logic            HREADYRam, HRESPSDCD;
 
   logic [`XLEN-1:0] HREADBootRom; 
   logic             HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
