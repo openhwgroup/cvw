@@ -87,7 +87,7 @@ module comparator_sub #(parameter WIDTH=64) (
   assign flags = {eq, lt, ltu};
 endmodule
 
-// *** eventually substitute comparator_flip, which gives slightly better synthesis
+// comparator_flip, gives slightly better synthesis
 module comparator #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,
   output logic [2:0]       flags);

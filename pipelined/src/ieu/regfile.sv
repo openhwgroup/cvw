@@ -50,7 +50,7 @@ module regfile (
   // reset is intended for simulation only, not synthesis
   // can logic be adjusted to not need resettable registers?
     
-  always_ff @(negedge clk) // or posedge reset) // *** make this a preload in testbench rather than reset
+  always_ff @(negedge clk)
     if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= 0;
     else       if (we3)            rf[a3] <= wd3;	
 

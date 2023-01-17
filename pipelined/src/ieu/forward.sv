@@ -34,8 +34,8 @@ module forward(
   input  logic [4:0]  Rs1D, Rs2D, Rs1E, Rs2E, RdE, RdM, RdW, // Source and destination registers
   input  logic        MemReadE, MDUE, CSRReadE,              // Execute stage instruction is a load (MemReadE), divide (MDUE), or CSR read (CSRReadE)
   input  logic        RegWriteM, RegWriteW,                  // Instruction in Memory or Writeback stage writes register file
-  input  logic	      FCvtIntE,                              // *** FPU (Floating-point unit) converting float to int
-  input  logic        SCE,                                   // *** Store Conditional instruction
+  input  logic	      FCvtIntE,                              // FPU convert float to int
+  input  logic        SCE,                                   // Store Conditional instruction
   // Forwarding controls
   output logic [1:0]  ForwardAE, ForwardBE,                  // Select signals for forwarding multiplexers
   output logic        FCvtIntStallD, LoadStallD, MDUStallD, CSRRdStallD // Stall due to conversion, load, multiply/divide, CSR read

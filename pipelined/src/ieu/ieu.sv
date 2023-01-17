@@ -33,7 +33,7 @@ module ieu (
   // Decode stage signals
   input  logic [31:0] 	    InstrD,                          // Instruction
   input  logic 		          IllegalIEUInstrFaultD,           // Illegal instruction
-  output logic 		          IllegalBaseInstrFaultD,          // ***
+  output logic 		          IllegalBaseInstrFaultD,          // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
   input  logic [`XLEN-1:0]  PCE,                             // PC
   input  logic [`XLEN-1:0]  PCLinkE,                         // PC + 4
@@ -44,31 +44,31 @@ module ieu (
   output logic [`XLEN-1:0]  ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
   // Memory stage signals
-  input  logic 		          SquashSCW,                       // From LSU ***
+  input  logic 		          SquashSCW,                       // Squash store conditional, from LSU
   output logic [1:0] 	      MemRWM,                          // Read/write control goes to LSU
   output logic [1:0] 	      AtomicM,                         // Atomic control goes to LSU
   output logic [`XLEN-1:0]  WriteDataM,                      // Write data to LSU
   output logic [2:0] 	      Funct3M,                         // Funct3 (size and signedness) to LSU
   output logic [`XLEN-1:0]  SrcAM,                           // ALU SrcA to Privileged unit and FPU
   output logic [4:0]        RdM,                             // Destination register
-  input  logic [`XLEN-1:0]  FIntResM,                        // ***
+  input  logic [`XLEN-1:0]  FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
   output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic 		          InstrValidM,                     // Instruction is valid
   // Writeback stage signals
-  input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result *** why F?
+  input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt
   input  logic [`XLEN-1:0]  CSRReadValW, MDUResultW,         // CSR read value, MDU (multiply/divide unit) result
-  input  logic [`XLEN-1:0]  FCvtIntResW,                     // FPU's float to int conversion result ***
+  input  logic [`XLEN-1:0]  FCvtIntResW,                     // FPU's float to int conversion result
   input  logic              FCvtIntW,                        // FPU converts float to int
   output logic [4:0]        RdW,                             // Destination register
   input  logic [`XLEN-1:0]  ReadDataW,                       // LSU's read data
   // Hazard unit signals
-  input  logic 		          StallD, StallE, StallM, StallW,  // Final stall signals ***
+  input  logic 		          StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
   input  logic 		          FlushD, FlushE, FlushM, FlushW,  // Flush signals
-  output logic 		          FCvtIntStallD, LoadStallD,       // Intermediate stall signals ***
+  output logic 		          FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
   output logic              MDUStallD, CSRRdStallD, StoreStallD,
   output logic 		          PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
-  output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction ***
-  output logic 		          CSRWriteFenceM                   // CSR write is a fence instruction ***
+  output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
+  output logic 		          CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
 
   logic [2:0]  ImmSrcD;                                      // Select type of immediate extension 
@@ -77,8 +77,8 @@ module ieu (
   logic        ALUSrcAE, ALUSrcBE;                           // ALU source operands
   logic [2:0]  ResultSrcW;                                   // Source of result in Writeback stage
   logic        ALUResultSrcE;                                // ALU result
-  logic        SCE;                                          // Store Conditional instruction ***
-  logic        FWriteIntM;                                   // FPU writing to integer register file ***
+  logic        SCE;                                          // Store Conditional instruction
+  logic        FWriteIntM;                                   // FPU writing to integer register file
   logic        IntDivW;                                      // Integer divide instruction
 
   // forwarding signals
@@ -88,7 +88,7 @@ module ieu (
   logic             MemReadE, CSRReadE;                      // Load, CSRRead instruction
   logic             JumpE;                                   // Jump instruction
   logic             BranchSignedE;                           // Branch does signed comparison on operands
-  logic             MDUE;                                    // Multiply/divide instruction ***
+  logic             MDUE;                                    // Multiply/divide instruction
            
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,

@@ -36,8 +36,8 @@ module controller(
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
   output logic [2:0]  ImmSrcD,                 // Type of immediate extension
-  input  logic        IllegalIEUInstrFaultD,   // Illegal instruction  ***
-  output logic        IllegalBaseInstrFaultD,  // ***
+  input  logic        IllegalIEUInstrFaultD,   // Illegal IEU instruction
+  output logic        IllegalBaseInstrFaultD,  // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
@@ -107,10 +107,10 @@ module controller(
   logic        unused; 
 	logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
   logic        IEURegWriteE;                   // Register write 
-  logic        IllegalERegAdrD;                // ***
-  logic [1:0]  AtomicE;                        // *** Atomic instruction 
+  logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
+  logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE, FenceM;         // Fence instruction
-  logic        SFenceVmaD;                     // *** Fence virtual memory address ***?
+  logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
    
 

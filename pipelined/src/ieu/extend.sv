@@ -32,7 +32,7 @@
 module extend (
   input  logic [31:7]       InstrD,      // All instruction bits except opcode (lower 7 bits)
   input  logic [2:0]        ImmSrcD,     // Select what kind of extension to perform
-  output logic [`XLEN-1:0 ] ImmExtD);    // Extended immediate ***According to Figure 4.12, should be ImmExtD
+  output logic [`XLEN-1:0 ] ImmExtD);    // Extended immediate
 
   localparam [`XLEN-1:0] undefined = {(`XLEN){1'bx}}; // could change to 0 after debug
  
