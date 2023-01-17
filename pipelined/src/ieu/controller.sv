@@ -1,7 +1,8 @@
 ///////////////////////////////////////////
 // controller.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu 
+// Created: 9 January 2021
 // Modified: 
 //
 // Purpose: Top level controller module
@@ -30,86 +31,87 @@
 
 
 module controller(
-  input  logic		 clk, reset,
+  input  logic		    clk, reset,
   // Decode stage control signals
-  input  logic       StallD, FlushD,
-  input  logic [31:0] InstrD,
-  output logic [2:0] ImmSrcD,
-  input  logic       IllegalIEUInstrFaultD, 
-  output logic       IllegalBaseInstrFaultD,
-  // Execute stage control signals
-  input logic 	     StallE, FlushE,  
-  input logic  [1:0] FlagsE, 
-  input  logic       FWriteIntE,
-  output logic       PCSrcE,        // for datapath and Hazard Unit
-  output logic [2:0] ALUControlE, 
-  output logic 	     ALUSrcAE, ALUSrcBE,
-  output logic       ALUResultSrcE,
-  output logic       MemReadE, CSRReadE, // for Hazard Unit
-  output logic [2:0] Funct3E,
-  output logic       IntDivE, MDUE, W64E,
-  output logic       JumpE,	
-  output logic       SCE,
-  output logic       BranchSignedE,
+  input  logic        StallD, FlushD,          // Stall, flush Decode stage
+  input  logic [31:0] InstrD,                  // Instruction in Decode stage
+  output logic [2:0]  ImmSrcD,                 // Type of immediate extension
+  input  logic        IllegalIEUInstrFaultD,   // Illegal IEU instruction
+  output logic        IllegalBaseInstrFaultD,  // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
+  // Execute stage control signals             
+  input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
+  input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
+  input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
+  output logic        PCSrcE,                  // Select signal to choose next PC (for datapath and Hazard unit)
+  output logic [2:0]  ALUControlE,             // ALU operation to perform
+  output logic 	      ALUSrcAE, ALUSrcBE,      // ALU operands
+  output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
+  output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
+  output logic [2:0]  Funct3E,                 // Instruction's funct3 field
+  output logic        IntDivE,                 // Integer divide
+  output logic        MDUE,                    // MDU (multiply/divide) operatio
+  output logic        W64E,                    // RV64 W-type operation
+  output logic        JumpE,	                 // jump instruction
+  output logic        SCE,                     // Store Conditional instruction
+  output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   // Memory stage control signals
-  input  logic       StallM, FlushM,
-  output logic [1:0] MemRWM,
-  output logic       CSRReadM, CSRWriteM, PrivilegedM,
-  output logic [1:0] AtomicM,
-  output logic [2:0] Funct3M,
-  output logic       RegWriteM,     // for Hazard Unit
-  output logic       InvalidateICacheM, FlushDCacheM,
-  output logic       InstrValidM, 
-  output logic       FWriteIntM,
+  input  logic        StallM, FlushM,          // Stall, flush Memory stage
+  output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
+  output logic        CSRReadM, CSRWriteM, PrivilegedM, // CSR read, write, or privileged instruction
+  output logic [1:0]  AtomicM,                 // Atomic (AMO) instruction
+  output logic [2:0]  Funct3M,                 // Instruction's funct3 field
+  output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
+  output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
+  output logic        InstrValidM,             // Instruction is valid
+  output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
-  input  logic       StallW, FlushW,
-  output logic 	     RegWriteW, IntDivW,    // for datapath and Hazard Unit
-  output logic [2:0] ResultSrcW,
+  input  logic        StallW, FlushW,          // Stall, flush Writeback stage
+  output logic 	      RegWriteW, IntDivW,      // Instruction writes a register, is an integer divide
+  output logic [2:0]  ResultSrcW,              // Select source of result to write back to register file
   // Stall during CSRs
-  //output logic       CSRWriteFencePendingDEM,
-  output logic       CSRWriteFenceM,
-  output logic       StoreStallD
+  output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
+  output logic        StoreStallD              // Store (memory write) causes stall
 );
 
-  logic [6:0] OpD;
-  logic [2:0] Funct3D;
-  logic [6:0] Funct7D;
-  logic [4:0] Rs1D;
+  logic [6:0] OpD;                             // Opcode in Decode stage
+  logic [2:0] Funct3D;                         // Funct3 field in Decode stage
+  logic [6:0] Funct7D;                         // Funct7 field in Decode stage
+  logic [4:0] Rs1D;                            // Rs1 source register in Decode stage
 
   `define CTRLW 23
 
   // pipelined control signals
-  logic 	    RegWriteD, RegWriteE;
-  logic [2:0] ResultSrcD, ResultSrcE, ResultSrcM;
-  logic [1:0] MemRWD, MemRWE;
-  logic		    JumpD;
-  logic		    BranchD, BranchE;
-  logic	      ALUOpD;
-  logic [2:0] ALUControlD;
-  logic 	    ALUSrcAD, ALUSrcBD;
-  logic       ALUResultSrcD, W64D, MDUD;
-  logic       CSRZeroSrcD;
-  logic       CSRReadD;
-  logic [1:0] AtomicD;
-  logic       FenceXD;
-  logic       InvalidateICacheD, FlushDCacheD;
-  logic       CSRWriteD, CSRWriteE;
-  logic       InstrValidD, InstrValidE;
-  logic       PrivilegedD, PrivilegedE;
-  logic       InvalidateICacheE, FlushDCacheE;
-  logic [`CTRLW-1:0] ControlsD;
-  logic        SubArithD;
-  logic        subD, sraD, sltD, sltuD;
-  logic        BranchTakenE;
-  logic        eqE, ltE;
-  logic        unused;
-	logic        BranchFlagE;
-  logic        IEURegWriteE;
-  logic        IllegalERegAdrD;
-  logic [1:0]  AtomicE;
-   logic       FenceD, FenceE, FenceM;
-  logic        SFenceVmaD;
-   logic       IntDivM;
+  logic 	     RegWriteD, RegWriteE;           // RegWrite (register will be written)
+  logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
+  logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
+  logic		     JumpD;                          // Jump instruction
+  logic		     BranchD, BranchE;               // Branch instruction
+  logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
+  logic [2:0]  ALUControlD;                    // Determines ALU operation
+  logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
+  logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
+  logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
+  logic        CSRReadD;                       // CSR read instruction
+  logic [1:0]  AtomicD;                        // Atomic (AMO) instruction
+  logic        FenceXD;                        // Fence instruction
+  logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
+  logic        CSRWriteD, CSRWriteE;           // CSR write
+  logic        InstrValidD, InstrValidE;       // Instruction is valid
+  logic        PrivilegedD, PrivilegedE;       // Privileged instruction
+  logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
+  logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
+  logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
+  logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
+  logic        BranchTakenE;                   // Branch is taken
+  logic        eqE, ltE;                       // Comparator outputs
+  logic        unused; 
+	logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
+  logic        IEURegWriteE;                   // Register write 
+  logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
+  logic [1:0]  AtomicE;                        // Atomic instruction 
+  logic        FenceD, FenceE, FenceM;         // Fence instruction
+  logic        SFenceVmaD;                     // sfence.vma instruction
+  logic        IntDivM;                        // Integer divide instruction
    
 
   // Extract fields
@@ -122,58 +124,58 @@ module controller(
   always_comb
     case(OpD)
     // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
-      7'b0000000:   ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // illegal instruction
-      7'b0000011:   ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
-      7'b0000111:   ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // flw - only legal if FP supported
-      7'b0001111: if(`ZIFENCEI_SUPPORTED)
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
+      7'b0000000:     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Illegal instruction
+      7'b0000011:     ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
+      7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // flw - only legal if FP supported
+      7'b0001111: if (`ZIFENCEI_SUPPORTED)
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
               	  else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
-      7'b0010011:   ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
-      7'b0010111:   ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
+      7'b0010011:     ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
+      7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
       7'b0011011: if (`XLEN == 64)
-                    ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
                   else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
-      7'b0100011:   ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // sw
-      7'b0100111:   ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // fsw - only legal if FP supported
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
+      7'b0100011:     ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // sw
+      7'b0100111:     ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // fsw - only legal if FP supported
       7'b0101111: if (`A_SUPPORTED) begin
                     if (InstrD[31:27] == 5'b00010)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0; // lr
                     else if (InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0; // sc
                     else 
-                      ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0;; // amo
+                      ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
-                    ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
-                    ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
                   else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
-      7'b0110111:   ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
+      7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
       7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000) & `XLEN == 64)
-                    ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
-                    ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                   else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
-      7'b1100011:   ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
-      7'b1100111:   ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
-      7'b1101111:   ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
+      7'b1100011:     ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
+      7'b1100111:     ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
+      7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
       7'b1110011: if (`ZICSR_SUPPORTED) begin
                    if (Funct3D == 3'b000)
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in priveleged modules
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in priveleged modules
                    else
-                    ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0; // csrs
+                      ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0; // csrs
                   end else
-                    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
-      default:      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
+      default:        ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // non-implemented instruction
     endcase
 
-  // unswizzle control bits
-  // squash control signals if coming from an illegal compressed instruction
+  // Unswizzle control bits
+  // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
   assign IllegalBaseInstrFaultD = ControlsD[0] | IllegalERegAdrD;
@@ -183,7 +185,7 @@ module controller(
   
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
-  assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]); // Don't write if setting or clearing zeros
+  assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
@@ -197,7 +199,7 @@ module controller(
 
   // Fences
   // Ordinary fence is presently a nop
-  // FENCE.I flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
+  // fence.i flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
   if (`ZIFENCEI_SUPPORTED & `ICACHE) begin:fencei
     logic FenceID;
     assign FenceID = FenceXD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
@@ -243,7 +245,7 @@ module controller(
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;
-//  assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FenceD | FenceE | FenceM;
+  //  assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FenceD | FenceE | FenceM;
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write
