@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // amoalu.sv
 //
-// Written: David_Harris@hmc.edu 10 March 2021
-// Modified: 
+// Written: David_Harris@hmc.edu
+// Created: 10 March 2021
+// Modified: 18 January 2023 
 //
 // Purpose: Performs AMO operations
+// 
+// Documentation: RISC-V System on Chip Design Chapter 14 (Figure ***)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,13 +29,12 @@
 
 `include "wally-config.vh"
 
-// *** this should probably be moved into the LSU because it is instantiated in the D$
-
 module amoalu (
-  input  logic [`XLEN-1:0] srca, srcb,
-  input  logic [6:0]       funct,
-  input  logic [1:0]       width,
-  output logic [`XLEN-1:0] result
+  input  logic [`XLEN-1:0] srca,  // LSU's ReadData *** may want to change signal names.
+  input  logic [`XLEN-1:0] srcb,  // LSU's WriteData
+  input  logic [6:0]       funct, // ALU Operation
+  input  logic [1:0]       width, // Memoy access width
+  output logic [`XLEN-1:0] result // ALU output
 );
 
   logic [`XLEN-1:0] a, b, y;
