@@ -123,8 +123,8 @@ module speculativegshare
   assign GHRNextD = FlushD ? {GHRNextE, GHRNextE[0]} : {DirPredictionF[1], GHRF, GHRF[0]};
   flopenr  #(k+2) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, OldGHRD);
   assign GHRD = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRD[k:1]} : // shift right
-				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-2:-1] : // shift left
-				OldGHRD;
+				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-1:-1] : // shift left
+				OldGHRD[k:0];
 
   assign GHRNextE = FlushE ? GHRNextM : GHRD;
   flopenr  #(k+1) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, OldGHRE);

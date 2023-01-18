@@ -32,15 +32,16 @@ module busfsm (
   input  logic       HRESETn,
 
   // IEU interface
-  input  logic       Flush,
-  input  logic [1:0] BusRW,
-  input  logic       Stall,
-  output logic       BusCommitted,
-  output logic       BusStall,
-  output logic       CaptureEn,
-  input  logic       HREADY,
-  output logic [1:0] HTRANS,
-  output logic       HWRITE
+  input  logic       Stall,        // Core pipeline is stalled
+  input  logic       Flush,        // Pipeline stage flush. Prevents bus transaction from starting
+  input  logic [1:0] BusRW,        // Memory operation read/write control: 10: read, 01: write
+  output logic       CaptureEn,    // Enable updating the Fetch buffer with valid data from HRDATA
+  output logic       BusStall,     // Bus is busy with an in flight memory operation
+  output logic       BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
+  // AHB control signals
+  input  logic       HREADY,       // AHB peripheral ready
+  output logic [1:0] HTRANS,       // AHB transaction type, 00: IDLE, 10 NON_SEQ
+  output logic       HWRITE        // AHB 0: Read operation 1: Write operation 
 );
   
   typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3}                                             busstatetype;
