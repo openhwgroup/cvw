@@ -1,15 +1,14 @@
 ///////////////////////////////////////////
 // ahbinterface.sv
 //
-// Written: Ross Thompson ross1728@gmail.com August 29, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: August 29, 2022
+// Modified: 18 January 2023
 //
-// Purpose: Cache/Bus data path.
-// Bus Side logic
-// register the fetch data from the next level of memory.
-// This register should be necessary for timing.  There is no register in the uncore or
-// ahblite controller between the memories and this cache.
+// Purpose: Translates LSU simple memory requests into AHB transactions (NON_SEQ).
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figure 6.21)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -30,7 +29,9 @@
 
 `include "wally-config.vh"
 
-module ahbinterface #(parameter LSU = 0) ( // **** modify to use LSU/ifu parameter to control widths of buses
+module ahbinterface #(
+  parameter LSU = 0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
+)( 
   input logic 							HCLK, HRESETn,
   // bus interface
   input logic 							HREADY,       // AHB peripheral ready
