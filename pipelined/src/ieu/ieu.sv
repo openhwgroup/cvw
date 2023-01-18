@@ -37,6 +37,7 @@ module ieu (
   // Execute stage signals
   input  logic [`XLEN-1:0]  PCE,                             // PC
   input  logic [`XLEN-1:0]  PCLinkE,                         // PC + 4
+  output logic 		          PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
   input  logic 		          FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
   output logic [`XLEN-1:0]  IEUAdrE,                         // Memory address
   output logic 		          IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
@@ -66,29 +67,28 @@ module ieu (
   input  logic 		          FlushD, FlushE, FlushM, FlushW,  // Flush signals
   output logic 		          FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
   output logic              MDUStallD, CSRRdStallD, StoreStallD,
-  output logic 		          PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
   output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
   output logic 		          CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
 
-  logic [2:0]  ImmSrcD;                                      // Select type of immediate extension 
-  logic [1:0]  FlagsE;                                       // Comparison flags ({eq, lt})
-  logic [2:0]  ALUControlE;                                  // ALU Control
-  logic        ALUSrcAE, ALUSrcBE;                           // ALU source operands
-  logic [2:0]  ResultSrcW;                                   // Source of result in Writeback stage
-  logic        ALUResultSrcE;                                // ALU result
-  logic        SCE;                                          // Store Conditional instruction
-  logic        FWriteIntM;                                   // FPU writing to integer register file
-  logic        IntDivW;                                      // Integer divide instruction
+  logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
+  logic [1:0] FlagsE;                                        // Comparison flags ({eq, lt})
+  logic [2:0] ALUControlE;                                   // ALU control indicates function to perform
+  logic       ALUSrcAE, ALUSrcBE;                            // ALU source operands
+  logic [2:0] ResultSrcW;                                    // Selects result in Writeback stage
+  logic       ALUResultSrcE;                                 // Selects ALU result to pass on to Memory stage
+  logic       SCE;                                           // Store Conditional instruction
+  logic       FWriteIntM;                                    // FPU writing to integer register file
+  logic       IntDivW;                                       // Integer divide instruction
 
-  // forwarding signals
-  logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E;                  // Source and destination registers
-  logic [1:0]       ForwardAE, ForwardBE;                    // Select signals for forwarding multiplexers
-  logic             RegWriteM, RegWriteW;                    // Register will be written in Memory, Writeback stages
-  logic             MemReadE, CSRReadE;                      // Load, CSRRead instruction
-  logic             JumpE;                                   // Jump instruction
-  logic             BranchSignedE;                           // Branch does signed comparison on operands
-  logic             MDUE;                                    // Multiply/divide instruction
+  // Forwarding signals
+  logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E;                        // Source and destination registers
+  logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
+  logic       RegWriteM, RegWriteW;                          // Register will be written in Memory, Writeback stages
+  logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
+  logic       JumpE;                                         // Jump instruction
+  logic       BranchSignedE;                                 // Branch does signed comparison on operands
+  logic       MDUE;                                          // Multiply/divide instruction
            
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,

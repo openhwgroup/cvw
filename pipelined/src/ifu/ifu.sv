@@ -201,6 +201,7 @@ module ifu (
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
     if(`ICACHE) begin : icache
       localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                     // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
@@ -226,7 +227,7 @@ module ifu (
              .NextAdr(PCNextFSpill[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
-      ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, `ICACHE) 
+      ahbcacheinterface #(WORDSPERLINE, LINELEN, LOGBWPL, LLENPOVERAHBW) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),

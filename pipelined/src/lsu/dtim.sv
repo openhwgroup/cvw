@@ -26,14 +26,15 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic                clk, ce,
-  input logic [1:0]          MemRWM,
-  input logic [`PA_BITS-1:0] Adr,
-  input logic                FlushW, 
-  input logic [`LLEN-1:0]    WriteDataM,
-  input logic [`LLEN/8-1:0]  ByteMaskM,
-  output logic [`LLEN-1:0]   ReadDataWordM
-);
+  input logic 				 clk, 
+  input logic 				 ce,            // Chip Enable
+  input logic [1:0] 		 MemRWM,        // Read/Write control
+  input logic [`PA_BITS-1:0] AdrM,          // Execution stage memory address
+  input logic 				 FlushW, 
+  input logic [`LLEN-1:0] 	 WriteDataM,    // Write data from IEU
+  input logic [`LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
+  output logic [`LLEN-1:0] 	 ReadDataWordM  // Read data before subword selection
+  );
 
   logic                      we;
  
@@ -43,6 +44,6 @@ module dtim(
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
   ram1p1rwbe #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
-    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
+    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(AdrM[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   
