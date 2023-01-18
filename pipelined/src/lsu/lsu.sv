@@ -232,7 +232,7 @@ module lsu (
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
-              .Adr(DTIMAdr), .FlushW, .WriteDataM(LSUWriteDataM), 
+              .AdrM(DTIMAdr), .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
