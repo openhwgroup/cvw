@@ -204,7 +204,7 @@ module wallyTracer(rvviTrace rvvi);
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
-  assign valid  = InstrValidW & ~StallW & ~FlushW;
+  assign valid  = InstrValidW & ~StallW;
   assign rvvi.clk = clk;
   assign #1 rvvi.valid[0][0]    = valid;
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
