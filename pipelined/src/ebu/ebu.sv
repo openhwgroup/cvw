@@ -10,8 +10,9 @@
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
-//          Anticipate replacing this with an AXI bus interface to communicate with FPGA DRAM/Flash controllers
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figures 6.25 and 6.26)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -35,42 +36,46 @@
 module ebu (
   input  logic                clk, reset,
   // Signals from IFU
-  input  logic [`PA_BITS-1:0] IFUHADDR, 
-  input  logic [2:0]          IFUHSIZE,
-  input  logic [2:0]          IFUHBURST,
-  input  logic [1:0]          IFUHTRANS,
-  output logic                IFUHREADY, 
+  input  logic [1:0]          IFUHTRANS, // IFU AHB transaction request
+  input  logic [2:0]          IFUHSIZE,  // IFU AHB transaction size
+  input  logic [2:0]          IFUHBURST, // IFU AHB burst length
+  input  logic [`PA_BITS-1:0] IFUHADDR,  // IFU AHB address
+  output logic                IFUHREADY, // AHB peripheral ready gated by possible non-grant
   // Signals from LSU
-  input  logic [`PA_BITS-1:0] LSUHADDR,
+  input  logic [1:0]          LSUHTRANS, // LSU AHB transaction request
+  input  logic                LSUHWRITE, // LSU AHB transaction direction. 1: write, 0: read
+  input  logic [2:0]          LSUHSIZE,  // LSU AHB size
+  input  logic [2:0]          LSUHBURST, // LSU AHB burst length
+  input  logic [`PA_BITS-1:0] LSUHADDR,  // LSU AHB address
   input  logic [`XLEN-1:0]    LSUHWDATA, // initially support AHBW = XLEN
-  input  logic [`XLEN/8-1:0]  LSUHWSTRB,
-  input  logic [2:0]          LSUHSIZE,
-  input  logic [2:0]          LSUHBURST,
-  input  logic [1:0]          LSUHTRANS,
-  input  logic                LSUHWRITE,
-  output logic                LSUHREADY,
-  // add LSUHWSTRB ***
+  input  logic [`XLEN/8-1:0]  LSUHWSTRB, // AHB byte mask
+  output logic                LSUHREADY, // AHB peripheral. Never gated as LSU always has priority
 
   // AHB-Lite external signals
-  (* mark_debug = "true" *) input  logic HREADY, HRESP,
-  (* mark_debug = "true" *) output logic HCLK, HRESETn,
-  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, 
-  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
-  (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB,
-  (* mark_debug = "true" *) output logic HWRITE, 
-  (* mark_debug = "true" *) output logic [2:0] HSIZE,
-  (* mark_debug = "true" *) output logic [2:0] HBURST,
-  (* mark_debug = "true" *) output logic [3:0] HPROT,
-  (* mark_debug = "true" *) output logic [1:0] HTRANS,
-  (* mark_debug = "true" *) output logic HMASTLOCK
+  (* mark_debug = "true" *) output logic HCLK, HRESETn, 
+  (* mark_debug = "true" *) input  logic HREADY,               // AHB peripheral ready
+  (* mark_debug = "true" *) input  logic HRESP,                // AHB peripheral response. 0: OK 1: Error
+  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, // AHB address to peripheral after arbitration
+  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,   // AHB Write data after arbitration
+  (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB, // AHB byte write enables after arbitration
+  (* mark_debug = "true" *) output logic HWRITE,               // AHB transaction direction after arbitration
+  (* mark_debug = "true" *) output logic [2:0] HSIZE,          // AHB transaction size after arbitration
+  (* mark_debug = "true" *) output logic [2:0] HBURST,         // AHB burst length after arbitration
+  (* mark_debug = "true" *) output logic [3:0] HPROT,          // AHB protection.  Wally does not use
+  (* mark_debug = "true" *) output logic [1:0] HTRANS,         // AHB transaction request after arbitration
+  (* mark_debug = "true" *) output logic HMASTLOCK             // AHB master lock.  Wally does not use
 );
 
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype                   CurrState, NextState;
 
-  logic                       LSUDisable, LSUSelect;
-  logic                       IFUSave, IFURestore, IFUDisable, IFUSelect;
-  logic                       both;
+  logic                       LSUDisable;
+  logic 					  LSUSelect;
+  logic                       IFUSave;
+  logic 					  IFURestore;
+  logic 					  IFUDisable;
+  logic 					  IFUSelect;
+  logic                       both;                       // Both the LSU and IFU request at the same time
 
   logic [`PA_BITS-1:0]        IFUHADDROut;
   logic [1:0]                 IFUHTRANSOut;
@@ -84,7 +89,8 @@ module ebu (
   logic [2:0]                 LSUHSIZEOut;
   logic                       LSUHWRITEOut;
 
-  logic                       IFUReq, LSUReq;
+  logic                       IFUReq;
+  logic 					  LSUReq;
 
   logic                       BeatCntEn;
   logic [4-1:0]               NextBeatCount, BeatCount;
