@@ -242,7 +242,7 @@ module lsu (
       localparam integer   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^
       localparam integer   BEATSPERLINE = `DCACHE_LINELENINBITS/`AHBW;                 // Number of AHBW words (beats) in cacheline
       localparam integer   AHBWLOGBWPL = $clog2(BEATSPERLINE);                         // Log2 of ^
-      localparam integer   LINELEN = `DCACHE_LINELENINBITS;                            // Number of bytes in cacheline
+      localparam integer   LINELEN = `DCACHE_LINELENINBITS;                            // Number of bits in cacheline
       localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
 
       logic [LINELEN-1:0]  FetchBuffer;                                                // Temporary buffer to hold partially fetched cacheline
@@ -273,7 +273,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
-      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .AHBWLOGBWPL(AHBWLOGBWPL), .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
