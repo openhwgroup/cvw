@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) (
+module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHBW, CACHE_ENABLED) (
   input  logic                 HCLK, HRESETn,
   // bus interface
   input logic                 HREADY,                  // AHB peripheral ready
@@ -47,26 +47,25 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   input logic [`PA_BITS-1:0]  CacheBusAdr,             // Address of cache line
   input logic [`LLEN-1:0]     CacheReadDataWordM,      // one word of cache line during a writeback
   input logic                 CacheableOrFlushCacheM,  // Memory operation is cacheable or flushing D$
+  input logic                 Cacheable,               // Memory operation is cachable
   input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
   output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
   output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
   output logic [LOGWPL-1:0]   BeatCount,               // Beat position within the cache line
-  input logic                 Cacheable,               // Memory operation is cachable
+  output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
+  input logic [`PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
   input logic [`LLEN-1:0]     WriteDataM,              // IEU write data for uncached store
+  input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
+  input logic [2:0]           Funct3,                  // Size of uncached memory operation
 
   // lsu/ifu interface
+  input logic                 Stall,                   // Core pipeline is stalled
   input logic                 Flush,                   // Pipeline stage flush. Prevents bus transaction from starting
-  input logic [`PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
-  input logic [1:0]           BusRW,                   // 
-  input logic                 Stall,
-  input logic [2:0]           Funct3,
-  output logic                SelBusBeat,
-  output logic                BusStall,
-  output logic                BusCommitted);
+  output logic                BusStall,                // Bus is busy with an in flight memory operation
+  output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   
-  localparam integer           LLENPOVERAHBW = `LLEN / `AHBW; // *** fix me duplciated in lsu.
 
   localparam integer           BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
   logic [`PA_BITS-1:0]         LocalHADDR;
