@@ -34,7 +34,7 @@ vlib work
         # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
 vlog +incdir+../config/$1 \
      +incdir+../config/shared \
-     ../../external/Imperas/ImpPublic/source/host/rvvi/rvvi-trace.sv \
+     ../../external/ImperasDV-HMC/Imperas/ImpPublic/source/host/rvvi/rvvi-trace.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \
