@@ -1,17 +1,18 @@
 ///////////////////////////////////////////
 // controller input stage
 //
-// Written: Ross Thompson August 31, 2022
-// ross1728@gmail.com
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created:  August 31, 2022
+// Modified: 18 January 2023
 //
 // Purpose: AHB multi controller interface to merge LSU and IFU controls.
 //          See ARM_HIH0033A_AMBA_AHB-Lite_SPEC 1.0
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
-//          Anticipate replacing this with an AXI bus interface to communicate with FPGA DRAM/Flash controllers
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figure 6.25)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -32,25 +33,29 @@
 
 `include "wally-config.vh"
 
-module controllerinputstage #(parameter SAVE_ENABLED = 1) (
-  input  logic                HCLK,
-  input  logic                HRESETn,
-  input  logic                Save, Restore, Disable,
-  output logic                Request,
+module controllerinputstage #(
+  parameter SAVE_ENABLED = 1           // 1: Save manager inputs if Save = 1, 0: Don't save inputs
+)(
+  input logic 				  HCLK, 
+  input logic 				  HRESETn,
+  input logic 				  Save,     // Two or more managers requesting (HTRANS != 00) at the same time.  Save the non-granted manager inputs
+  input logic 				  Restore,  // Restore a saved manager inputs when it is finally granted
+  input logic 				  Disable,  // Supress HREADY to the non-granted manager
+  output logic 				  Request,  // This manager is making a request
   // controller input
-  input  logic                HWRITEIn,
-  input  logic [2:0]          HSIZEIn,
-  input  logic [2:0]          HBURSTIn,
-  input  logic [1:0]          HTRANSIn,
-  input  logic [`PA_BITS-1:0] HADDRIn,
-  output logic                HREADYOut,
+  input logic [1:0] 		  HTRANSIn,  // Manager input. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  input logic 				  HWRITEIn,  // Manager input. AHB 0: Read operation 1: Write operation 
+  input logic [2:0] 		  HSIZEIn,   // Manager input. AHB transaction width
+  input logic [2:0] 		  HBURSTIn,  // Manager input. AHB burst length
+  input logic [`PA_BITS-1:0]  HADDRIn,   // Manager input. AHB address
+  output logic 				  HREADYOut, // Indicate to manager the peripherial is not busy and another manager does not have priority
   // controller output
-  output logic                HWRITEOut,
-  output logic [2:0]          HSIZEOut,
-  output logic [2:0]          HBURSTOut,
-  output logic [1:0]          HTRANSOut,
-  output logic [`PA_BITS-1:0] HADDROut,
-  input  logic                HREADYIn
+  output logic [1:0] 		  HTRANSOut, // Aribrated manager transaction. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic 				  HWRITEOut, // Aribrated manager transaction. AHB 0: Read operation 1: Write operation 
+  output logic [2:0] 		  HSIZEOut,  // Aribrated manager transaction. AHB transaction width
+  output logic [2:0] 		  HBURSTOut, // Aribrated manager transaction. AHB burst length 
+  output logic [`PA_BITS-1:0] HADDROut,  // Aribrated manager transaction. AHB address
+  input logic 				  HREADYIn   // Peripherial ready
 );
 
   logic                       HWRITESave;
