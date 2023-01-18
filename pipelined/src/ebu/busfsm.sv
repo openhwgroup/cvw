@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // busfsm.sv
 //
-// Written: Ross Thompson ross1728@gmail.com December 29, 2021
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: December 29, 2021
+// Modified: 18 January 2023
 //
-// Purpose: Load/Store Unit's interface to BUS for cacheless system
+// Purpose: Simple NON_SEQ (no burst) AHB controller.
+//
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figure 6.23)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -55,13 +58,13 @@ module busfsm (
   
   always_comb begin
 	  case(CurrState)
-	    ADR_PHASE: if(HREADY & |BusRW)  NextState = DATA_PHASE;
-                 else                 NextState = ADR_PHASE;
-      DATA_PHASE: if(HREADY)          NextState = MEM3;
-		          else                    NextState = DATA_PHASE;
-      MEM3: if(Stall)                 NextState = MEM3;
-		    else                          NextState = ADR_PHASE;
-	    default:                        NextState = ADR_PHASE;
+	    ADR_PHASE: if(HREADY & |BusRW) NextState = DATA_PHASE;
+                 else                  NextState = ADR_PHASE;
+      DATA_PHASE: if(HREADY)           NextState = MEM3;
+		          else                 NextState = DATA_PHASE;
+      MEM3: if(Stall)                  NextState = MEM3;
+		    else                       NextState = ADR_PHASE;
+	    default:                       NextState = ADR_PHASE;
 	  endcase
   end
 
