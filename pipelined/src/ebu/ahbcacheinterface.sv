@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // ahbcacheinterface.sv
 //
-// Written: Ross Thompson ross1728@gmail.com August 29, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: August 29, 2022
+// Modified: 18 January 2023
 //
 // Purpose: Translates cache bus requests and uncached ieu memory requests into AHB transactions.
 //
@@ -28,7 +29,12 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, AHBWLOGBWPL, LLENPOVERAHBW) (
+module ahbcacheinterface #(
+  parameter integer BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
+  parameter integer AHBWLOGBWPL,   // Log2 of ^
+  parameter integer LINELEN,       // Number of bits in cacheline
+  parameter integer LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+)(
   input  logic                 HCLK, HRESETn,
   // bus interface controls
   input logic                 HREADY,                  // AHB peripheral ready
