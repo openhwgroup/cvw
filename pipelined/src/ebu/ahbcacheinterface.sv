@@ -4,11 +4,9 @@
 // Written: Ross Thompson ross1728@gmail.com August 29, 2022
 // Modified: 
 //
-// Purpose: Cache/Bus data path.
-// Bus Side logic
-// register the fetch data from the next level of memory.
-// This register should be necessary for timing.  There is no register in the uncore or
-// ahblite controller between the memories and this cache.
+// Purpose: Translates cache bus requests and uncached ieu memory requests into AHB transactions.
+//
+// Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.8)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
