@@ -34,8 +34,10 @@ module datapath (
   // Decode stage signals
   input  logic [2:0]       ImmSrcD,                 // Selects type of immediate extension
   input  logic [31:0]      InstrD,                  // Instruction in Decode stage
-  input  logic [2:0]       Funct3E,                 // Funct3 field of instruction in Execute stage
   // Execute stage signals
+  input  logic [`XLEN-1:0] PCE,                     // PC in Execute stage  
+  input  logic [`XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
+  input  logic [2:0]       Funct3E,                 // Funct3 field of instruction in Execute stage
   input  logic             StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]       ForwardAE, ForwardBE,    // Forward ALU operands from later stages
   input  logic [2:0]       ALUControlE,             // Indicate operation ALU performs
@@ -43,8 +45,6 @@ module datapath (
   input  logic             ALUResultSrcE,           // Selects result to pass on to Memory stage
   input  logic             JumpE,                   // Is a jump (j) instruction
   input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  input  logic [`XLEN-1:0] PCE,                     // PC in Execute stage  
-  input  logic [`XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
   output logic [`XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
@@ -77,9 +77,9 @@ module datapath (
   logic [`XLEN-1:0] R1E, R2E;                       // Source operands read from register file
   logic [`XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage 
   logic [`XLEN-1:0] SrcAE, SrcBE;                   // ALU operands
-  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), computed address *** According to Figure 4.12, IEUResultE should be called IEUAdrE
+  logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), result of execution stage
   // Memory stage signals
-  logic [`XLEN-1:0] IEUResultM;                     // Address computed by ALU *** According to Figure 4.12, IEUResultM should be called IEUAdrM
+  logic [`XLEN-1:0] IEUResultM;                     // Result from execution stage
   logic [`XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
   // Writeback stage signals
   logic [`XLEN-1:0] SCResultW;                      // Store Conditional result
