@@ -272,7 +272,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
-      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .LLENPOVERAHBW(LLENPOVERAHBW), .CACHE_ENABLED(`DCACHE)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),

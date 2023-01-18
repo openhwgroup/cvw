@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHBW, CACHE_ENABLED) (
+module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHBW) (
   input  logic                 HCLK, HRESETn,
   // bus interface
   input logic                 HREADY,                  // AHB peripheral ready
@@ -67,7 +67,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   
 
-  localparam integer           BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
+  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // 
   logic [`PA_BITS-1:0]         LocalHADDR;
   logic [LOGWPL-1:0]           BeatCountDelayed;
   logic                        CaptureEn;
