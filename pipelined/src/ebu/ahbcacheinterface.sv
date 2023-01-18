@@ -72,6 +72,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [LOGWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
+  logic [`AHBW/8-1:0] 		   BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
   logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
 
   genvar                       index;
@@ -106,7 +107,6 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
 
   // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
   // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-  logic [`AHBW/8-1:0]  BusByteMaskM;
   swbytemask #(`AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(`AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
   
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
