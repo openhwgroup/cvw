@@ -32,13 +32,14 @@
 
 module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHBW) (
   input  logic                 HCLK, HRESETn,
-  // bus interface
+  // bus interface controls
   input logic                 HREADY,                  // AHB peripheral ready
-  input logic [`AHBW-1:0]     HRDATA,                  // AHB read data
-  output logic [2:0]          HSIZE,                   // AHB transaction width
-  output logic [2:0]          HBURST,                  // AHB burst length
   output logic [1:0]          HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
   output logic                HWRITE,                  // AHB 0: Read operation 1: Write operation 
+  output logic [2:0]          HSIZE,                   // AHB transaction width
+  output logic [2:0]          HBURST,                  // AHB burst length
+  // bus interface buses
+  input logic [`AHBW-1:0]     HRDATA,                  // AHB read data
   output logic [`PA_BITS-1:0] HADDR,                   // AHB address
   output logic [`AHBW-1:0]    HWDATA,                  // AHB write data
   output logic [`AHBW/8-1:0]  HWSTRB,                  // AHB byte mask
@@ -51,7 +52,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
   output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
   output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
-  output logic [LOGWPL-1:0]   BeatCount,               // Beat position within the cache line
+  output logic [LOGWPL-1:0]   BeatCount,               // Beat position within the cache line in the Address Phase
   output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
@@ -67,11 +68,11 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   
 
-  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // 
-  logic [`PA_BITS-1:0]         LocalHADDR;
-  logic [LOGWPL-1:0]           BeatCountDelayed;
-  logic                        CaptureEn;
-  logic [`AHBW-1:0]            PreHWDATA;
+  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
+  logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [LOGWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
+  logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
+  logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
 
   genvar                       index;
 
