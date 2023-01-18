@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHBW) (
+module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, AHBWLOGBWPL, LLENPOVERAHBW) (
   input  logic                 HCLK, HRESETn,
   // bus interface controls
   input logic                 HREADY,                  // AHB peripheral ready
@@ -52,7 +52,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
   output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
   output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
-  output logic [LOGWPL-1:0]   BeatCount,               // Beat position within the cache line in the Address Phase
+  output logic [AHBWLOGBWPL-1:0]   BeatCount,               // Beat position within the cache line in the Address Phase
   output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
@@ -70,7 +70,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
 
   localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
   logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
-  logic [LOGWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
+  logic [AHBWLOGBWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
   logic [`AHBW/8-1:0] 		   BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
   logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
@@ -86,7 +86,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   end
 
   mux2 #(`PA_BITS) localadrmux(PAdr, CacheBusAdr, Cacheable, LocalHADDR);
-  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, BeatCount} << $clog2(`AHBW/8)) + LocalHADDR;
+  assign HADDR = ({{`PA_BITS-AHBWLOGBWPL{1'b0}}, BeatCount} << $clog2(`AHBW/8)) + LocalHADDR;
 
   mux2 #(3) sizemux(.d0(Funct3), .d1(`AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
 
@@ -111,7 +111,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, LLENPOVERAHB
   
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
   
-  buscachefsm #(BeatCountThreshold, LOGWPL) AHBBuscachefsm(
+  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
 	  .HREADY, .HTRANS, .HWRITE, .HBURST);

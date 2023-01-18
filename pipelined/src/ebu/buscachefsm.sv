@@ -28,7 +28,7 @@
 `define BURST_EN 1
 
 // HCLK and clk must be the same clock!
-module buscachefsm #(parameter integer BeatCountThreshold, LOGWPL) (
+module buscachefsm #(parameter integer BeatCountThreshold, AHBWLOGBWPL) (
   input  logic              HCLK,
   input  logic              HRESETn,
 
@@ -47,8 +47,8 @@ module buscachefsm #(parameter integer BeatCountThreshold, LOGWPL) (
   output logic              CacheBusAck,        // Handshack to $ indicating bus transaction completed
   
   // lsu interface
-  output logic [LOGWPL-1:0] BeatCount,          // Beat position within the cache line in the Address Phase
-  output logic [LOGWPL-1:0] BeatCountDelayed,   // Beat within the cache line in the second (Data) cache stage
+  output logic [AHBWLOGBWPL-1:0] BeatCount,          // Beat position within the cache line in the Address Phase
+  output logic [AHBWLOGBWPL-1:0] BeatCountDelayed,   // Beat within the cache line in the second (Data) cache stage
   output logic              SelBusBeat,         // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // BUS interface
@@ -63,7 +63,7 @@ module buscachefsm #(parameter integer BeatCountThreshold, LOGWPL) (
 
   (* mark_debug = "true" *) busstatetype CurrState, NextState;
 
-  logic [LOGWPL-1:0] NextBeatCount;
+  logic [AHBWLOGBWPL-1:0] NextBeatCount;
   logic              FinalBeatCount;
   logic [2:0]        LocalBurstType;
   logic              BeatCntEn;
@@ -98,11 +98,11 @@ module buscachefsm #(parameter integer BeatCountThreshold, LOGWPL) (
 
   // IEU, LSU, and IFU controls
   // Used to store data from data phase of AHB.
-  flopenr #(LOGWPL) BeatCountReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, NextBeatCount, BeatCount);  
-  flopenr #(LOGWPL) BeatCountDelayedReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, BeatCount, BeatCountDelayed);
+  flopenr #(AHBWLOGBWPL) BeatCountReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, NextBeatCount, BeatCount);  
+  flopenr #(AHBWLOGBWPL) BeatCountDelayedReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, BeatCount, BeatCountDelayed);
   assign NextBeatCount = BeatCount + 1'b1;
 
-  assign FinalBeatCount = BeatCountDelayed == BeatCountThreshold[LOGWPL-1:0];
+  assign FinalBeatCount = BeatCountDelayed == BeatCountThreshold[AHBWLOGBWPL-1:0];
   assign BeatCntEn = ((NextState == CACHE_WRITEBACK | NextState == CACHE_FETCH) & HREADY & ~Flush) |
                      (NextState == ADR_PHASE & |CacheBusRW & HREADY);
   assign BeatCntReset = NextState == ADR_PHASE;
