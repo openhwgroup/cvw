@@ -7,7 +7,20 @@ WALLY=$(dirname ${BASH_SOURCE[0]:-$0})
 export WALLY=$(cd "$WALLY" && pwd)
 echo \$WALLY set to ${WALLY}
 
-isetup -dv
+# clone the Imperas repo
+if [ ! -d external ]; then
+    mkdir -p external
+fi
+pushd external
+    if [ ! -f ImperasDV-HMC ]; then
+        git clone https://github.com/Imperas/ImperasDV-HMC
+    fi
+    pushd ImperasDV-HMC
+        git checkout 0c2f365
+    popd
+popd
+
+isetup -dv ${WALLY}/external/ImperasDV-HMC/Imperas
 svsetup -questa
 
 pushd pipelined/regression
