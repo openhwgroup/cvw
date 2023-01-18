@@ -8,12 +8,10 @@
 //   Based on RISC-V spec (https://github.com/riscv/riscv-plic-spec/blob/master/riscv-plic.adoc)
 //   With clarifications from ROA's existing implementation (https://roalogic.github.io/plic/docs/AHB-Lite_PLIC_Datasheet.pdf)
 //   Supports only 1 target core and only a global threshold.
-// 
-// Documentation: RISC-V System on Chip Design Chapter 15
+//   This PLIC implementation serves as both the PLIC Gateways and PLIC Core.
+//   It assumes interrupt sources are level-triggered wires.
 //
-// *** Big questions:
-//  Do we detect requests as level-triggered or edge-trigged?
-//  If edge-triggered, do we want to allow 1 source to be able to make a number of repeated requests?
+// Documentation: RISC-V System on Chip Design Chapter 15
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -111,7 +109,7 @@ module plic_apb (
       if (memwrite)
         casez(entry)
           24'h0000??: intPriority[entry[7:2]] <= #1 Din[2:0];
-          `ifdef PLIC_NUM_SRC_LT_32 // *** switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
+          `ifdef PLIC_NUM_SRC_LT_32 // eventually switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
           24'h002000: intEn[0][`N:1] <= #1 Din[`N:1];
           24'h002080: intEn[1][`N:1] <= #1 Din[`N:1];
           `endif
@@ -172,8 +170,7 @@ module plic_apb (
   end
 
   // pending interrupt requests
-  assign nextIntPending = (intPending | requests) & ~intInProgress; // dh changed back 7/9/22 see if Buildroot still boots.  Confirmed to boot successfully.
-  //assign nextIntPending = requests; // DH: RT made this change May 2022, but it seems to be a bug to not consider intInProgress; see May 23, 2022 slack discussion
+  assign nextIntPending = (intPending | requests) & ~intInProgress; 
   flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 
   // context-dependent signals
@@ -248,7 +245,7 @@ module plic_apb (
     end
   end
   // is the max priority > threshold?
-  // *** would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
+  // would it be any better to first priority encode maxPriority into binary and then ">" with threshold?
   assign MExtInt = |(threshMask[0] & priorities_with_irqs[0]);
   assign SExtInt = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
