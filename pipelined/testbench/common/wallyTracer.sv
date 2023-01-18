@@ -65,11 +65,13 @@ module wallyTracer(rvviTrace rvvi);
   assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
+  logic valid;
+
   always_comb begin
 	// Since we are detected the CSR change by comparing the old value we need to
 	// ensure the CSR is detected when the pipeline's Writeback stage is not
 	// stalled.  If it is stalled we want CSRArray to hold the old value.
-	if(~StallW) begin 
+	if(valid) begin 
 	  // machine CSRs
 	  // *** missing PMP and performance counters.
 	  CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
@@ -202,10 +204,9 @@ module wallyTracer(rvviTrace rvvi);
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
-  logic valid;
   assign valid  = InstrValidW & ~StallW & ~FlushW;
   assign rvvi.clk = clk;
-  assign rvvi.valid[0][0]    = valid;
+  assign #1 rvvi.valid[0][0]    = valid;
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
@@ -231,6 +232,8 @@ module wallyTracer(rvviTrace rvvi);
   integer index4;
   always_ff @(posedge clk) begin
 	for (index4 = 0; index4 < `NUM_CSRS; index4 += 1) begin
+// IMPERAS
+	  //CSR_W[index4] = (CSRArrayOld[index4] != CSRArray[index4]) ? 1 : 0;
 	  CSRArrayOld[index4] = CSRArray[index4];
 	end
   end
@@ -239,11 +242,16 @@ module wallyTracer(rvviTrace rvvi);
   genvar index5;
   for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
 	// CSR_W should only indicate the change when the Writeback stage is not stalled and valid.
-    assign CSR_W[index5] = (CSRArrayOld[index5] != CSRArray[index5]) ? 1 : 0;
+    assign #2 CSR_W[index5] = (CSRArrayOld[index5] != CSRArray[index5]) ? 1 : 0;
     assign rvvi.csr_wb[0][0][index5] = CSR_W[index5];
     assign rvvi.csr[0][0][index5]    = CSRArray[index5];
   end
-
+  
+//  always @rvvi.clk $display("%t @rvvi.clk=%X", $time, rvvi.clk);
+//  always @rvvi.csr[0][0]['h300] $display("%t rvvi.csr[0][0]['h300]=%X", $time, rvvi.csr[0][0]['h300]);
+//  always @rvvi.csr_wb[0][0]['h300] $display("%t rvvi.csr_wb[0][0]['h300]=%X", $time, rvvi.csr_wb[0][0]['h300]);
+//  always @rvvi.valid[0][0] $display("%t rvvi.valid[0][0]=%X", $time, rvvi.valid[0][0]);
+  
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = '0;
 
