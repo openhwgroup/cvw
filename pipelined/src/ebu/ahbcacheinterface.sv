@@ -33,37 +33,38 @@
 module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) (
   input  logic                 HCLK, HRESETn,
   // bus interface
-  input  logic                 HREADY,
-  input  logic [`AHBW-1:0]     HRDATA,
-  output logic [2:0]           HSIZE,
-  output logic [2:0]           HBURST,
-  output logic [1:0]           HTRANS,
-  output logic                 HWRITE,
-  output logic [`PA_BITS-1:0]  HADDR,
-  output logic [`AHBW-1:0]     HWDATA,
-  output logic [`AHBW/8-1:0]   HWSTRB,
-  output logic [LOGWPL-1:0]    BeatCount,
+  input logic                 HREADY,                  // AHB peripheral ready
+  input logic [`AHBW-1:0]     HRDATA,                  // AHB read data
+  output logic [2:0]          HSIZE,                   // AHB transaction width
+  output logic [2:0]          HBURST,                  // AHB burst length
+  output logic [1:0]          HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic                HWRITE,                  // AHB 0: Read operation 1: Write operation 
+  output logic [`PA_BITS-1:0] HADDR,                   // AHB address
+  output logic [`AHBW-1:0]    HWDATA,                  // AHB write data
+  output logic [`AHBW/8-1:0]  HWSTRB,                  // AHB byte mask
   
   // cache interface
-  input  logic [`PA_BITS-1:0]  CacheBusAdr,
-  input  logic [`LLEN-1:0]     CacheReadDataWordM,
-  input  logic [`LLEN-1:0]     WriteDataM,
-  input  logic                 CacheableOrFlushCacheM,
-  input  logic [1:0]           CacheBusRW,
-  output logic                 CacheBusAck,
-  output logic [LINELEN-1:0]   FetchBuffer, 
-  input  logic                 Cacheable,
- 
+  input logic [`PA_BITS-1:0]  CacheBusAdr,             // Address of cache line
+  input logic [`LLEN-1:0]     CacheReadDataWordM,      // one word of cache line during a writeback
+  input logic                 CacheableOrFlushCacheM,  // Memory operation is cacheable or flushing D$
+  input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
+  output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
+  output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
+  output logic [LOGWPL-1:0]   BeatCount,               // Beat position within the cache line
+  input logic                 Cacheable,               // Memory operation is cachable
+
+  // uncached interface 
+  input logic [`LLEN-1:0]     WriteDataM,              // IEU write data for uncached store
+
   // lsu/ifu interface
-  input  logic                 Flush,
-  input  logic [`PA_BITS-1:0]  PAdr,
-  input  logic [1:0]           BusRW,
-  input  logic                 Stall,
-  input  logic [2:0]           Funct3,
-  output logic                 SelBusBeat,
-  output logic                 BusStall,
-  output logic                 BusCommitted
-);
+  input logic                 Flush,                   // Pipeline stage flush. Prevents bus transaction from starting
+  input logic [`PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
+  input logic [1:0]           BusRW,                   // 
+  input logic                 Stall,
+  input logic [2:0]           Funct3,
+  output logic                SelBusBeat,
+  output logic                BusStall,
+  output logic                BusCommitted);
   
   localparam integer           LLENPOVERAHBW = `LLEN / `AHBW; // *** fix me duplciated in lsu.
 
