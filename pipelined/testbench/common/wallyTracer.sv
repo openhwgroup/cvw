@@ -6,6 +6,7 @@
 `define PRINT_PC_INSTR 0
 `define PRINT_MOST 0
 `define PRINT_ALL 0
+`define PRINT_CSRS 0
 
 module wallyTracer(rvviTrace rvvi);
 
@@ -33,7 +34,7 @@ module wallyTracer(rvviTrace rvvi);
   logic 						 frf_we4;
   logic [`XLEN-1:0]              CSRArray [logic[11:0]];
   logic [`XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
-  logic [`XLEN-1:0]              CSR_W [logic[11:0]];
+  logic [`NUM_CSRS-1:0] 		 CSR_W;
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
   
@@ -49,6 +50,8 @@ module wallyTracer(rvviTrace rvvi);
   assign PCE            = testbench.dut.core.ifu.PCE;
   assign PCM            = testbench.dut.core.ifu.PCM;
   assign reset          = testbench.reset;
+  assign StallF         = testbench.dut.core.StallF;
+  assign StallD         = testbench.dut.core.StallD;
   assign StallE         = testbench.dut.core.StallE;
   assign StallM         = testbench.dut.core.StallM;
   assign StallW         = testbench.dut.core.StallW;
@@ -63,46 +66,90 @@ module wallyTracer(rvviTrace rvvi);
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
   always_comb begin
-	// machine CSRs
-	// *** missing PMP and performance counters.
-	CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
-	CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;
-	CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
-	CSRArray[12'h341] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;
-	CSRArray[12'h306] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;
-	CSRArray[12'h320] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;
-	CSRArray[12'h302] = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;
-	CSRArray[12'h303] = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
-	CSRArray[12'h344] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;
-	CSRArray[12'h304] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;
-	CSRArray[12'h301] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;
-	CSRArray[12'hF14] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;
-	CSRArray[12'h340] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;
-	CSRArray[12'h342] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;
-	CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
-	CSRArray[12'hF11] = 0;
-	CSRArray[12'hF12] = 0;
-	CSRArray[12'hF13] = `XLEN'h100;
-	CSRArray[12'hF15] = 0;
-	CSRArray[12'h34A] = 0;
-	// MCYCLE and MINSTRET
-	CSRArray[12'hB00] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
-	CSRArray[12'hB02] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
-	// supervisor CSRs
-	CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.SSTATUS_REGW;
-	CSRArray[12'h104] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222;
-	CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.STVEC_REGW;
-	CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.SEPC_REGW;
-	CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.SCOUNTEREN_REGW;
-	CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.SATP_REGW;
-	CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
-	CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
-	CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
-	CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
-	// user CSRs
-	CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
-	CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.FRM_REGW;
-	CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
+	// Since we are detected the CSR change by comparing the old value we need to
+	// ensure the CSR is detected when the pipeline's Writeback stage is not
+	// stalled.  If it is stalled we want CSRArray to hold the old value.
+	if(~StallW) begin 
+	  // machine CSRs
+	  // *** missing PMP and performance counters.
+	  CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
+	  CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;
+	  CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
+	  CSRArray[12'h341] = testbench.dut.core.priv.priv.csr.csrm.MEPC_REGW;
+	  CSRArray[12'h306] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTEREN_REGW;
+	  CSRArray[12'h320] = testbench.dut.core.priv.priv.csr.csrm.MCOUNTINHIBIT_REGW;
+	  CSRArray[12'h302] = testbench.dut.core.priv.priv.csr.csrm.MEDELEG_REGW;
+	  CSRArray[12'h303] = testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
+	  CSRArray[12'h344] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;
+	  CSRArray[12'h304] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;
+	  CSRArray[12'h301] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;
+	  CSRArray[12'hF14] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;
+	  CSRArray[12'h340] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;
+	  CSRArray[12'h342] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;
+	  CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
+	  CSRArray[12'hF11] = 0;
+	  CSRArray[12'hF12] = 0;
+	  CSRArray[12'hF13] = `XLEN'h100;
+	  CSRArray[12'hF15] = 0;
+	  CSRArray[12'h34A] = 0;
+	  // MCYCLE and MINSTRET
+	  CSRArray[12'hB00] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
+	  CSRArray[12'hB02] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
+	  // supervisor CSRs
+	  CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.SSTATUS_REGW;
+	  CSRArray[12'h104] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222;
+	  CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.STVEC_REGW;
+	  CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.SEPC_REGW;
+	  CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.SCOUNTEREN_REGW;
+	  CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.SATP_REGW;
+	  CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
+	  CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
+	  CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
+	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
+	  // user CSRs
+	  CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
+	  CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.FRM_REGW;
+	  CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
+	end else begin // hold the old value if the pipeline is stalled.
+	  CSRArray[12'h300] = CSRArrayOld[12'h300];
+	  CSRArray[12'h310] = CSRArrayOld[12'h310];
+	  CSRArray[12'h305] = CSRArrayOld[12'h305];
+	  CSRArray[12'h341] = CSRArrayOld[12'h341];
+	  CSRArray[12'h306] = CSRArrayOld[12'h306];
+	  CSRArray[12'h320] = CSRArrayOld[12'h320];
+	  CSRArray[12'h302] = CSRArrayOld[12'h302];
+	  CSRArray[12'h303] = CSRArrayOld[12'h303];
+	  CSRArray[12'h344] = CSRArrayOld[12'h344];
+	  CSRArray[12'h304] = CSRArrayOld[12'h304];
+	  CSRArray[12'h301] = CSRArrayOld[12'h301];
+	  CSRArray[12'hF14] = CSRArrayOld[12'hF14];
+	  CSRArray[12'h340] = CSRArrayOld[12'h340];
+	  CSRArray[12'h342] = CSRArrayOld[12'h342];
+	  CSRArray[12'h343] = CSRArrayOld[12'h343];
+	  CSRArray[12'hF11] = CSRArrayOld[12'hF11];
+	  CSRArray[12'hF12] = CSRArrayOld[12'hF12];
+	  CSRArray[12'hF13] = CSRArrayOld[12'hF13];
+	  CSRArray[12'hF15] = CSRArrayOld[12'hF15];
+	  CSRArray[12'h34A] = CSRArrayOld[12'h34A];
+	  // MCYCLE and MINSTRET
+	  CSRArray[12'hB00] = CSRArrayOld[12'hB00];
+	  CSRArray[12'hB02] = CSRArrayOld[12'hB02];
+	  // supervisor CSRs
+	  CSRArray[12'h100] = CSRArrayOld[12'h100];
+	  CSRArray[12'h104] = CSRArrayOld[12'h104];
+	  CSRArray[12'h105] = CSRArrayOld[12'h105];
+	  CSRArray[12'h141] = CSRArrayOld[12'h141];
+	  CSRArray[12'h106] = CSRArrayOld[12'h106];
+	  CSRArray[12'h180] = CSRArrayOld[12'h180];
+	  CSRArray[12'h140] = CSRArrayOld[12'h140];
+	  CSRArray[12'h143] = CSRArrayOld[12'h143];
+	  CSRArray[12'h142] = CSRArrayOld[12'h142];
+	  CSRArray[12'h144] = CSRArrayOld[12'h144];
+	  // user CSRs
+	  CSRArray[12'h001] = CSRArrayOld[12'h001];
+	  CSRArray[12'h002] = CSRArrayOld[12'h002];
+	  CSRArray[12'h003] = CSRArrayOld[12'h003];
+	end	  
   end
 
   genvar 							index;
@@ -155,8 +202,10 @@ module wallyTracer(rvviTrace rvvi);
   // Initially connecting the writeback stage signals, but may need to use M stage
   // and gate on ~FlushW.
 
+  logic valid;
+  assign valid  = InstrValidW & ~StallW & ~FlushW;
   assign rvvi.clk = clk;
-  assign rvvi.valid[0][0]    = InstrValidW & ~StallW & ~FlushW;
+  assign rvvi.valid[0][0]    = valid;
   assign rvvi.order[0][0]    = CSRArray[12'hB02];  // TODO: IMPERAS Should be event order
   assign rvvi.insn[0][0]     = InstrRawW;
   assign rvvi.pc_rdata[0][0] = PCW;
@@ -182,14 +231,15 @@ module wallyTracer(rvviTrace rvvi);
   integer index4;
   always_ff @(posedge clk) begin
 	for (index4 = 0; index4 < `NUM_CSRS; index4 += 1) begin
-        CSR_W[index4]       = (CSRArrayOld[index4] != CSRArray[index4]) ? 1 : 0;
-		CSRArrayOld[index4] = CSRArray[index4];
+	  CSRArrayOld[index4] = CSRArray[index4];
 	end
   end
   
   // check for csr value change.
   genvar index5;
   for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
+	// CSR_W should only indicate the change when the Writeback stage is not stalled and valid.
+    assign CSR_W[index5] = (CSRArrayOld[index5] != CSRArray[index5]) ? 1 : 0;
     assign rvvi.csr_wb[0][0][index5] = CSR_W[index5];
     assign rvvi.csr[0][0][index5]    = CSRArray[index5];
   end
@@ -216,10 +266,15 @@ module wallyTracer(rvviTrace rvvi);
 		  $display("f%02d = %08x", index2, rvvi.f_wdata[0][0][index2]);
 		end
 	  end
+	  if (`PRINT_CSRS) begin
+		for(index2 = 0; index2 < `NUM_CSRS; index2 += 1) begin
+		  if(CSR_W[index2]) begin
+			$display("%t: CSR %03x = %x", $time(), index2, CSRArray[index2]);
+		  end
+		end
+	  end
 	end
     if(HaltW) $finish;
-//    if(HaltW) $stop;
-
   end
 
 

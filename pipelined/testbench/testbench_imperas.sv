@@ -124,8 +124,8 @@ module testbench;
       
     end
 
-    rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
-    wallyTracer wallyTracer(rvvi);
+  rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+  wallyTracer wallyTracer(rvvi);
 
 `ifdef USE_IMPERAS_DV
     trace2log idv_trace2log(rvvi);
