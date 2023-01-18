@@ -168,10 +168,8 @@ module testbench;
       end
 
   //    // Temporary fix for inexact difference
-  //    void'(rvviRefCsrSetVolatileMask(0, 32'h001, 'h1)); // fflags
-  //    void'(rvviRefCsrSetVolatileMask(0, 32'h003, 'h1)); // fcsr
-      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
-      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
+//      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
+//      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
       
       
       // Enable the trace2log module
