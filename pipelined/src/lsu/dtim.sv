@@ -34,7 +34,7 @@ module dtim(
   input logic 				 FlushW,        
   input logic 				 ce,            // Chip Enable.  0: Holds ReadDataWordM
   input logic [1:0] 		 MemRWM,        // Read/Write control
-  input logic [`PA_BITS-1:0] AdrM,          // Execution stage memory address
+  input logic [`PA_BITS-1:0] DTIMAdr,       // No stall: Execution stage memory address. Stall: Memory stage memory address
   input logic [`LLEN-1:0] 	 WriteDataM,    // Write data from IEU
   input logic [`LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
   output logic [`LLEN-1:0] 	 ReadDataWordM  // Read data before subword selection
@@ -48,6 +48,6 @@ module dtim(
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
   ram1p1rwbe #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
-    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(AdrM[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
+    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(DTIMAdr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   

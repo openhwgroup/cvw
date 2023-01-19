@@ -189,9 +189,11 @@ module ifu (
   assign IgnoreRequest = ITLBMissF | FlushD;
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
-  if (`IROM_SUPPORTED) begin : irom 
+  if (`IROM_SUPPORTED) begin : irom
+	logic IROMce;
+	assign IROMce = ~GatedStallD | reset;
     assign IFURWF = 2'b10;
-    irom irom(.clk, .ce(~GatedStallD | reset), .Adr(PCNextFSpill[`XLEN-1:0]), .ReadData(IROMInstrF));
+    irom irom(.clk, .ce(IROMce), .Adr(PCNextFSpill[`XLEN-1:0]), .IROMInstrF);
   end else begin
     assign IFURWF = 2'b10;
   end
