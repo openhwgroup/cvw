@@ -39,8 +39,9 @@ module irom(
 
   rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
   if (`XLEN == 32) assign IROMInstrF = IROMInstrFFull;
-  // have to delay Ardr[OFFSET-1] by 1 cycle
   else             begin
+	// IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
+	// haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
     logic AdrD;
     flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
     assign IROMInstrF = AdrD ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
