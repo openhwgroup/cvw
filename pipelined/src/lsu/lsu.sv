@@ -131,7 +131,7 @@ module lsu (
   logic                     LSULoadAccessFaultM;                     // Load acces fault
   logic 					LSUStoreAmoAccessFaultM;                 // Store access fault
   logic                     IgnoreRequestTLB;                        // On either ITLB or DTLB miss, ignore miss so HPTW can handle
-  logic 					IgnoreRequest;                           // On FlushM, ignore TLB miss
+  logic 					IgnoreRequest;                           // On FlushM or TLB miss ignore memory operation
   logic                     SelDTIM;                                 // Select DTIM rather than bus or D$
 
   
@@ -232,17 +232,19 @@ module lsu (
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
-              .AdrM(DTIMAdr), .FlushW, .WriteDataM(LSUWriteDataM), 
+              .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
   if (`BUS) begin : bus              
-    localparam integer   LLENWORDSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`LLEN : 1; // Number of LLEN words in cacheline
-    localparam integer   LLENLOGBWPL = `DCACHE ? $clog2(LLENWORDSPERLINE) : 1;         // Log2 of ^
-    localparam integer   BEATSPERLINE = `DCACHE ? `DCACHE_LINELENINBITS/`AHBW : 1;     // Number of AHBW words (beats) in cacheline
-    localparam integer   AHBWLOGBWPL = `DCACHE ? $clog2(BEATSPERLINE) : 1;             // Log2 of ^
     if(`DCACHE) begin : dcache
-      localparam integer   LINELEN = `DCACHE ? `DCACHE_LINELENINBITS : `XLEN;          // Number of bytes in cacheline
+      localparam integer   LLENWORDSPERLINE = `DCACHE_LINELENINBITS/`LLEN;             // Number of LLEN words in cacheline
+      localparam integer   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^
+      localparam integer   BEATSPERLINE = `DCACHE_LINELENINBITS/`AHBW;                 // Number of AHBW words (beats) in cacheline
+      localparam integer   AHBWLOGBWPL = $clog2(BEATSPERLINE);                         // Log2 of ^
+      localparam integer   LINELEN = `DCACHE_LINELENINBITS;                            // Number of bits in cacheline
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+
       logic [LINELEN-1:0]  FetchBuffer;                                                // Temporary buffer to hold partially fetched cacheline
       logic [`PA_BITS-1:0] DCacheBusAdr;                                               // Cacheline address to fetch or writeback.
       logic [AHBWLOGBWPL-1:0]  BeatCount;                                              // Position within a cacheline.  ahbcacheinterface to cache
@@ -250,7 +252,6 @@ module lsu (
       logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
       logic [1:0] 		   CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
 	  logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
       logic [1:0] 		   CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
 	  logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
@@ -272,7 +273,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
-      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .LINELEN(LINELEN), .LOGWPL(AHBWLOGBWPL), .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),

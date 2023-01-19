@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // endianswap.sv
 //
-// Written: David_Harris@hmc.edu 7 May 2022
-// Modified: 
+// Written: David_Harris@hmc.edu
+// Created: 7 May 2022
+// Modified: 18 January 2023
 //
 // Purpose: Swap byte order for Big-Endian accesses
 // 

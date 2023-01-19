@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // atomic.sv
 //
-// Written: Ross Thompson ross1728@gmail.com January 31, 2022
-// Modified:
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 31 January 2022
+// Modified: 18 January 2023
 //
-// Purpose: atomic data path.
+// Purpose: Wrapper for amoalu and lrsc
+//
+// Documentation: RISC-V System on Chip Design Chapter 14 (Figure ***)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -28,25 +31,25 @@
 
 module atomic (
   input logic                clk,
-  input logic                reset, StallW,
-  input logic [`XLEN-1:0]    ReadDataM,
-  input logic [`XLEN-1:0]    IHWriteDataM, 
-  input logic [`PA_BITS-1:0] PAdrM,
-  input logic [6:0]          LSUFunct7M,
-  input logic [2:0]          LSUFunct3M,
-  input logic [1:0]          LSUAtomicM,
-  input logic [1:0]          PreLSURWM,
-  input logic                IgnoreRequest,
-  output logic [`XLEN-1:0]   IMAWriteDataM,
-  output logic               SquashSCW,
-  output logic [1:0]         LSURWM
+  input logic                reset, 
+  input logic                StallW,
+  input logic [`XLEN-1:0]    ReadDataM,      // LSU ReadData XLEN because FPU does not issue atomic memory operation from FPU registers
+  input logic [`XLEN-1:0]    IHWriteDataM,   // LSU WriteData XLEN because FPU does not issue atomic memory operation from FPU registers
+  input logic [`PA_BITS-1:0] PAdrM,          // Physical memory address
+  input logic [6:0]          LSUFunct7M,     // AMO alu operation gated by HPTW
+  input logic [2:0]          LSUFunct3M,     // IEU or HPTW memory operation size
+  input logic [1:0]          LSUAtomicM,     // 10: AMO operation, select AMOResult as the writedata output, 01: LR/SC operation
+  input logic [1:0]          PreLSURWM,      // IEU or HPTW Read/Write signal
+  input logic                IgnoreRequest,  // On FlushM or TLB miss ignore memory operation
+  output logic [`XLEN-1:0]   IMAWriteDataM,  // IEU, HPTW, or AMO write data
+  output logic               SquashSCW,      // Store conditional failed disable write to GPR
+  output logic [1:0]         LSURWM          // IEU or HPTW Read/Write signal gated by LR/SC
 );
 
   logic [`XLEN-1:0]          AMOResult;
   logic                      MemReadM;
 
-  amoalu amoalu(.srca(ReadDataM), .srcb(IHWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                .result(AMOResult));
+  amoalu amoalu(.ReadDataM, .IHWriteDataM, .LSUFunct7M, .LSUFunct3M, .AMOResult);
 
   mux2 #(`XLEN) wdmux(IHWriteDataM, AMOResult, LSUAtomicM[1], IMAWriteDataM);
   assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;

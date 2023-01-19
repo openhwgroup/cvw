@@ -1,11 +1,14 @@
 ///////////////////////////////////////////
 // subwordread.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: David_Harris@hmc.edu 
+// Created: 9 January 2021
+// Modified: 18 January 2023 
 //
 // Purpose: Extract subwords and sign extend for reads
 // 
+// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.9)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University

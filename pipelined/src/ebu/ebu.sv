@@ -1,17 +1,18 @@
 ///////////////////////////////////////////
 // abhmulticontroller
 //
-// Written: Ross Thompson August 29, 2022
-// ross1728@gmail.com
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: August 29, 2022
+// Modified: 18 January 2023
 //
 // Purpose: AHB multi controller interface to merge LSU and IFU controls.
 //          See ARM_HIH0033A_AMBA_AHB-Lite_SPEC 1.0
 //          Arbitrates requests from instruction and data streams
 //          Connects core to peripherals and I/O pins on SOC
 //          Bus width presently matches XLEN
-//          Anticipate replacing this with an AXI bus interface to communicate with FPGA DRAM/Flash controllers
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figures 6.25 and 6.26)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -35,42 +36,46 @@
 module ebu (
   input  logic                clk, reset,
   // Signals from IFU
-  input  logic [`PA_BITS-1:0] IFUHADDR, 
-  input  logic [2:0]          IFUHSIZE,
-  input  logic [2:0]          IFUHBURST,
-  input  logic [1:0]          IFUHTRANS,
-  output logic                IFUHREADY, 
+  input  logic [1:0]          IFUHTRANS, // IFU AHB transaction request
+  input  logic [2:0]          IFUHSIZE,  // IFU AHB transaction size
+  input  logic [2:0]          IFUHBURST, // IFU AHB burst length
+  input  logic [`PA_BITS-1:0] IFUHADDR,  // IFU AHB address
+  output logic                IFUHREADY, // AHB peripheral ready gated by possible non-grant
   // Signals from LSU
-  input  logic [`PA_BITS-1:0] LSUHADDR,
+  input  logic [1:0]          LSUHTRANS, // LSU AHB transaction request
+  input  logic                LSUHWRITE, // LSU AHB transaction direction. 1: write, 0: read
+  input  logic [2:0]          LSUHSIZE,  // LSU AHB size
+  input  logic [2:0]          LSUHBURST, // LSU AHB burst length
+  input  logic [`PA_BITS-1:0] LSUHADDR,  // LSU AHB address
   input  logic [`XLEN-1:0]    LSUHWDATA, // initially support AHBW = XLEN
-  input  logic [`XLEN/8-1:0]  LSUHWSTRB,
-  input  logic [2:0]          LSUHSIZE,
-  input  logic [2:0]          LSUHBURST,
-  input  logic [1:0]          LSUHTRANS,
-  input  logic                LSUHWRITE,
-  output logic                LSUHREADY,
-  // add LSUHWSTRB ***
+  input  logic [`XLEN/8-1:0]  LSUHWSTRB, // AHB byte mask
+  output logic                LSUHREADY, // AHB peripheral. Never gated as LSU always has priority
 
   // AHB-Lite external signals
-  (* mark_debug = "true" *) input  logic HREADY, HRESP,
-  (* mark_debug = "true" *) output logic HCLK, HRESETn,
-  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, 
-  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,
-  (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB,
-  (* mark_debug = "true" *) output logic HWRITE, 
-  (* mark_debug = "true" *) output logic [2:0] HSIZE,
-  (* mark_debug = "true" *) output logic [2:0] HBURST,
-  (* mark_debug = "true" *) output logic [3:0] HPROT,
-  (* mark_debug = "true" *) output logic [1:0] HTRANS,
-  (* mark_debug = "true" *) output logic HMASTLOCK
+  (* mark_debug = "true" *) output logic HCLK, HRESETn, 
+  (* mark_debug = "true" *) input  logic HREADY,               // AHB peripheral ready
+  (* mark_debug = "true" *) input  logic HRESP,                // AHB peripheral response. 0: OK 1: Error
+  (* mark_debug = "true" *) output logic [`PA_BITS-1:0] HADDR, // AHB address to peripheral after arbitration
+  (* mark_debug = "true" *) output logic [`AHBW-1:0] HWDATA,   // AHB Write data after arbitration
+  (* mark_debug = "true" *) output logic [`XLEN/8-1:0] HWSTRB, // AHB byte write enables after arbitration
+  (* mark_debug = "true" *) output logic HWRITE,               // AHB transaction direction after arbitration
+  (* mark_debug = "true" *) output logic [2:0] HSIZE,          // AHB transaction size after arbitration
+  (* mark_debug = "true" *) output logic [2:0] HBURST,         // AHB burst length after arbitration
+  (* mark_debug = "true" *) output logic [3:0] HPROT,          // AHB protection.  Wally does not use
+  (* mark_debug = "true" *) output logic [1:0] HTRANS,         // AHB transaction request after arbitration
+  (* mark_debug = "true" *) output logic HMASTLOCK             // AHB master lock.  Wally does not use
 );
 
   typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype                   CurrState, NextState;
 
-  logic                       LSUDisable, LSUSelect;
-  logic                       IFUSave, IFURestore, IFUDisable, IFUSelect;
-  logic                       both;
+  logic                       LSUDisable;
+  logic 					  LSUSelect;
+  logic                       IFUSave;
+  logic 					  IFURestore;
+  logic 					  IFUDisable;
+  logic 					  IFUSelect;
+  logic                       both;                       // Both the LSU and IFU request at the same time
 
   logic [`PA_BITS-1:0]        IFUHADDROut;
   logic [1:0]                 IFUHTRANSOut;
@@ -84,14 +89,15 @@ module ebu (
   logic [2:0]                 LSUHSIZEOut;
   logic                       LSUHWRITEOut;
 
-  logic                       IFUReq, LSUReq;
+  logic                       IFUReq;
+  logic 					  LSUReq;
 
   logic                       BeatCntEn;
-  logic [4-1:0]               NextBeatCount, BeatCount;
-  logic                       FinalBeat, FinalBeatD;
+  logic [4-1:0]               NextBeatCount, BeatCount;   // Position within a burst transfer
+  logic                       FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
   logic                       CntReset;
-  logic [3:0]                 Threshold;
-  logic                       IFUReqD;
+  logic [3:0]                 Threshold;                  // Number of beats derived from HBURST
+  logic                       IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
   
   
   assign HCLK = clk;
@@ -100,14 +106,16 @@ module ebu (
   // if two requests come in at once pick one to select and save the others Address phase
   // inputs.  Abritration scheme is LSU always goes first.
 
-  // input stage IFU
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // input stages and muxing for IFU and LSU
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(IFUSave), .Restore(IFURestore), .Disable(IFUDisable),
     .Request(IFUReq),
     .HWRITEIn(1'b0), .HSIZEIn(IFUHSIZE), .HBURSTIn(IFUHBURST), .HTRANSIn(IFUHTRANS), .HADDRIn(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYIn(HREADY));
 
-  // input stage LSU
   // LSU always has priority so there should never be a need to save and restore the address phase inputs.
   controllerinputstage #(0) LSUInput(.HCLK, .HRESETn, .Save(1'b0), .Restore(1'b0), .Disable(LSUDisable),
     .Request(LSUReq),
@@ -115,7 +123,7 @@ module ebu (
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
     .HTRANSOut(LSUHTRANSOut), .HADDROut(LSUHADDROut), .HREADYIn(HREADY));
 
-  // output mux //*** rewrite for general number of controllers.
+  // output mux //*** switch to structural implementation
   assign HADDR = LSUSelect ? LSUHADDROut : IFUSelect ? IFUHADDROut : '0;
   assign HSIZE = LSUSelect ? LSUHSIZEOut : IFUSelect ? IFUHSIZEOut: '0; 
   assign HBURST = LSUSelect ? LSUHBURSTOut : IFUSelect ? IFUHBURSTOut : '0; // If doing memory accesses, use LSUburst, else use Instruction burst.
@@ -129,8 +137,13 @@ module ebu (
   assign HWSTRB = LSUHWSTRB;
   // HRDATA is sent to all controllers at the core level.
 
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Aribtration scheme
   // FSM decides if arbitration needed.  Arbitration is held until the last beat of
   // a burst is completed.
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   assign both = LSUReq & IFUReq;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
@@ -142,8 +155,27 @@ module ebu (
       default:                                                  NextState = IDLE;
     endcase
 
-  // This part is only used when burst mode is supported.
-  // Controller needs to count beats.
+  // basic arb always selects LSU when both
+  // replace this block for more sophisticated arbitration as needed.
+  // Controller 0 (IFU)
+  assign IFUSave = CurrState == IDLE & both;
+  assign IFURestore = CurrState == ARBITRATE;
+  assign IFUDisable = CurrState == ARBITRATE;
+  assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
+  // Controller 1 (LSU)
+  // When both the IFU and LSU request at the same time, the FSM will go into the arbitrate state.
+  // Once the LSU request is done the fsm returns to IDLE.  To prevent the LSU from regaining
+  // priority and re issuing the same memroy operation, the delayed IFUReqD squashes the LSU request.
+  // This is necessary because the pipeline is stalled for the entire duration of both transactions,
+  // and the LSU memory request will stil be active.
+  flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
+  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
+  assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
+
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Burst mode logic
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   flopenr #(4) BeatCountReg(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, NextBeatCount, BeatCount);  
   assign NextBeatCount = BeatCount + 1'b1;
 
@@ -165,17 +197,6 @@ module ebu (
     endcase
   end
   
-  // basic arb always selects LSU when both
-  // replace this block for more sophisticated arbitration as needed.
-  // Controller 0 (IFU)
-  assign IFUSave = CurrState == IDLE & both;
-  assign IFURestore = CurrState == ARBITRATE;
-  assign IFUDisable = CurrState == ARBITRATE;
-  assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
-  // Controller 1 (LSU)
-  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
-  assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
 
-  flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
   
 endmodule
