@@ -51,7 +51,7 @@ module spillsupport #(parameter CACHE_ENABLED)
   logic                TakeSpillF;
   logic                SpillF;
   logic                SelSpillF, SpillSaveF;
-  logic [15:0]         SpillDataLine0, SavedInstr;
+  logic [15:0]         SpillDataLine0;
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
@@ -83,12 +83,11 @@ module spillsupport #(parameter CACHE_ENABLED)
   assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
                          (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
-  assign SavedInstr = CACHE_ENABLED ? InstrRawF[15:0] : InstrRawF[31:16];
   
   flopenr #(16) SpillInstrReg(.clk(clk),
                               .en(SpillSaveF  & ~Flush),
                               .reset(reset),
-                              .d(SavedInstr),
+                              .d(InstrRawF[15:0]),
                               .q(SpillDataLine0));
 
   mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], SpillDataLine0}), .s(SpillF),
