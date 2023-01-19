@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// spillsupport.sv *** rename to spill.sv
+// spill.sv
 //
 // Written: Ross Thompson ross1728@gmail.com January 28, 2022
 // Modified:
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module spillsupport #(
+module spill #(
   parameter CACHE_ENABLED                     // Changes spill threshold to 1 if there is no cache
 )(input logic              clk,               
   input logic 			   reset,
@@ -57,13 +57,22 @@ module spillsupport #(
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
   (* mark_debug = "true" *)  statetype CurrState, NextState;
 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // PC logic 
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  
   // compute PCF+2 from the raw PC+4
   mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
   // select between PCNextF and PCF+2
   mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~FlushD), .y(PCNextFSpill));
   // select between PCF and PCF+2
   mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
+
   
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Detect spill
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
   assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
   
@@ -82,18 +91,19 @@ module spillsupport #(
   end
 
   assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) |
-                         (CurrState == STATE_SPILL & IFUCacheBusStallD);
-  assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF;
-  
-  flopenr #(16) SpillInstrReg(.clk(clk),
-                              .en(SpillSaveF  & ~FlushD),
-                              .reset(reset),
-                              .d(InstrRawF[15:0]),
-                              .q(InstrFirstHalf));
+  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallD);
+  assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF & ~FlushD;
 
-  mux2 #(32) postspillmux(.d0(InstrRawF), .d1({InstrRawF[15:0], InstrFirstHalf}), .s(SpillF),
-    .y(PostSpillInstrRawF));
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Merge spilled instruction
+  ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // save the first 2 bytes
+  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalf);
+
+  // merge together
+  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalf}, SpillF, PostSpillInstrRawF);
+
   assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
 
 endmodule
