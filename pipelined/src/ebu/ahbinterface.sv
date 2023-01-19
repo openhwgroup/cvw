@@ -1,15 +1,14 @@
 ///////////////////////////////////////////
 // ahbinterface.sv
 //
-// Written: Ross Thompson ross1728@gmail.com August 29, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: August 29, 2022
+// Modified: 18 January 2023
 //
-// Purpose: Cache/Bus data path.
-// Bus Side logic
-// register the fetch data from the next level of memory.
-// This register should be necessary for timing.  There is no register in the uncore or
-// ahblite controller between the memories and this cache.
+// Purpose: Translates LSU simple memory requests into AHB transactions (NON_SEQ).
 // 
+// Documentation: RISC-V System on Chip Design Chapter 6 (Figure 6.21)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -30,25 +29,27 @@
 
 `include "wally-config.vh"
 
-module ahbinterface #(parameter LSU = 0) ( // **** modify to use LSU/ifu parameter to control widths of buses
-  input logic                HCLK, HRESETn,
+module ahbinterface #(
+  parameter LSU = 0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
+)( 
+  input logic 							HCLK, HRESETn,
   // bus interface
-  input logic                HREADY,
-  input logic [`XLEN-1:0]    HRDATA,
-  output logic [1:0]         HTRANS,
-  output logic               HWRITE,
-  output logic [`XLEN-1:0]   HWDATA,
-  output logic [`XLEN/8-1:0] HWSTRB,
+  input logic 							HREADY,       // AHB peripheral ready
+  output logic [1:0] 					HTRANS,       // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic 							HWRITE,       // AHB 0: Read operation 1: Write operation 
+  input logic [`XLEN-1:0] 				HRDATA,       // AHB read data
+  output logic [`XLEN-1:0] 				HWDATA,       // AHB write data
+  output logic [`XLEN/8-1:0] 			HWSTRB,       // AHB byte mask
   
   // lsu/ifu interface
-  input logic                Flush,
-  input logic [1:0]          BusRW,
-  input logic [`XLEN/8-1:0]  ByteMask,
-  input logic [`XLEN-1:0]    WriteData,
-  input logic                Stall,
-  output logic               BusStall,
-  output logic               BusCommitted,
-  output logic [(LSU ? `XLEN : 32)-1:0]   FetchBuffer
+  input logic 							Stall,        // Core pipeline is stalled
+  input logic 							Flush,        // Pipeline stage flush. Prevents bus transaction from starting
+  input logic [1:0] 					BusRW,        // Memory operation read/write control: 10: read, 01: write
+  input logic [`XLEN/8-1:0] 			ByteMask,     // Bytes enables within a word
+  input logic [`XLEN-1:0] 				WriteData,    // IEU write data for a store
+  output logic 							BusStall,     // Bus is busy with an in flight memory operation
+  output logic 							BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
+  output logic [(LSU ? `XLEN : 32)-1:0] FetchBuffer   // Register to hold HRDATA after arriving from the bus
 );
   
   logic                       CaptureEn;

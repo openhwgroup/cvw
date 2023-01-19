@@ -5,7 +5,8 @@ WALLYDIR:= $(ROOT)/tests/wally-riscv-arch-test
 # IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
 # ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) $(IMPERASDIR)/$(SUFFIX)
 IMPERASDIR	:= $(ROOT)/tests/imperas-riscv-tests
-ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) 
+#ALLDIRS := $(ARCHDIR)/$(SUFFIX) $(WALLYDIR)/$(SUFFIX) 
+ALLDIRS := $(ARCHDIR)/$(SUFFIX)
 
 ELFFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf")
 OBJDUMPFILES	?= $(shell find $(ALLDIRS) -type f -regex ".*\.elf.objdump")

@@ -35,12 +35,16 @@ module vm64check (
   output logic                    UpperBitsUnequalPageFault
 );
 
-  logic                           eq_63_47, eq_46_38;
+  if (`XLEN == 64) begin
+    assign SV39Mode = (SATP_MODE == `SV39);
 
-  assign SV39Mode = (SATP_MODE == `SV39);
-
-  // page fault if upper bits aren't all the same
-  assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
-  assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
-  assign UpperBitsUnequalPageFault = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
+    // page fault if upper bits aren't all the same
+    logic                           eq_63_47, eq_46_38;
+    assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
+    assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
+    assign UpperBitsUnequalPageFault = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
+  end else begin
+    assign SV39Mode = 0;
+    assign UpperBitsUnequalPageFault = 0;
+  end
 endmodule

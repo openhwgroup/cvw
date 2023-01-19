@@ -63,12 +63,8 @@ module tlbcontrol #(parameter ITLB = 0) (
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;
 
-  if (`XLEN==64) // Check whether upper bits of 64-bit virtual addressses are all equal
-    vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequalPageFault);
-  else begin
-    assign SV39Mode = 0;
-    assign UpperBitsUnequalPageFault = 0;
-  end           
+  // Check that upper bits are legal (all 0s or all 1s)
+  vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequalPageFault);
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];

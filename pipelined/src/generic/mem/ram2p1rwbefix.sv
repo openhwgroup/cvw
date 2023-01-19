@@ -32,16 +32,17 @@
 `include "wally-config.vh"
 
 module ram2p1r1wbefix #(parameter DEPTH=128, WIDTH=256) (
-  input logic                     clk,
-  input logic                     ce1, ce2,
-  input logic [$clog2(DEPTH)-1:0] ra1,
-  input logic [WIDTH-1:0]         wd2,
-  input logic [$clog2(DEPTH)-1:0] wa2,
-  input logic                     we2,
-  input logic [(WIDTH-1)/8:0]     bwe2,
-  output logic [WIDTH-1:0]        rd1);
+  input  logic                     clk,
+  input  logic                     ce1, ce2,
+  input  logic [$clog2(DEPTH)-1:0] ra1,
+  input  logic [WIDTH-1:0]         wd2,
+  input  logic [$clog2(DEPTH)-1:0] wa2,
+  input  logic                     we2,
+  input  logic [(WIDTH-1)/8:0]     bwe2,
+  output logic [WIDTH-1:0]         rd1
+);
 
-    logic [WIDTH-1:0]               mem[DEPTH-1:0];
+  logic [WIDTH-1:0]               mem[DEPTH-1:0];
 
   // ***************************************************************************
   // TRUE Smem macro
@@ -53,18 +54,18 @@ module ram2p1r1wbefix #(parameter DEPTH=128, WIDTH=256) (
     integer i;
 
   // Read
-  always @(posedge clk) 
+  always_ff @(posedge clk) 
     if(ce1) rd1 <= #1 mem[ra1];
   
   // Write divided into part for bytes and part for extra msbs
   if(WIDTH >= 8) 
-    always @(posedge clk) 
+    always_ff @(posedge clk) 
       if (ce2 & we2) 
         for(i = 0; i < WIDTH/8; i++) 
           if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
   
   if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-    always @(posedge clk) 
+    always_ff @(posedge clk) 
       if (ce2 & we2 & bwe2[WIDTH/8])
         mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= #1 wd2[WIDTH-1:WIDTH-WIDTH%8];
 

@@ -1,10 +1,14 @@
 ///////////////////////////////////////////
 // dtim.sv
 //
-// Written: Ross Thompson ross1728@gmail.com January 30, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com 
+// Created: 30 January 2022
+// Modified: 18 January 2023
 //
-// Purpose: simple memory with bus or cache.
+// Purpose: tightly integrated memory into the LSU.
+//
+// Documentation: RISC-V System on Chip Design Chapter 4 (Figure 4.12)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -26,14 +30,15 @@
 `include "wally-config.vh"
 
 module dtim(
-  input logic                clk, ce,
-  input logic [1:0]          MemRWM,
-  input logic [`PA_BITS-1:0] Adr,
-  input logic                FlushW, 
-  input logic [`LLEN-1:0]    WriteDataM,
-  input logic [`LLEN/8-1:0]  ByteMaskM,
-  output logic [`LLEN-1:0]   ReadDataWordM
-);
+  input logic 				 clk, 
+  input logic 				 FlushW,        
+  input logic 				 ce,            // Chip Enable.  0: Holds ReadDataWordM
+  input logic [1:0] 		 MemRWM,        // Read/Write control
+  input logic [`PA_BITS-1:0] DTIMAdr,       // No stall: Execution stage memory address. Stall: Memory stage memory address
+  input logic [`LLEN-1:0] 	 WriteDataM,    // Write data from IEU
+  input logic [`LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
+  output logic [`LLEN-1:0] 	 ReadDataWordM  // Read data before subword selection
+  );
 
   logic                      we;
  
@@ -43,6 +48,6 @@ module dtim(
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
   ram1p1rwbe #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
-    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
+    ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(DTIMAdr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   
