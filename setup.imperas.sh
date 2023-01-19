@@ -1,5 +1,7 @@
 #!/bin/bash
 
+IMP_HASH=56b1479
+
 REPO=davidharrishmc
 REPO=eroom1966
 git clone https://github.com/${REPO}/riscv-wally -b imperas
@@ -17,7 +19,7 @@ pushd external
         git clone https://github.com/Imperas/ImperasDV-HMC
     fi
     pushd ImperasDV-HMC
-        git checkout fac563d
+        git checkout $IMP_HASH
     popd
 popd
 
