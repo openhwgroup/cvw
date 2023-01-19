@@ -49,8 +49,7 @@ module atomic (
   logic [`XLEN-1:0]          AMOResult;
   logic                      MemReadM;
 
-  amoalu amoalu(.srca(ReadDataM), .srcb(IHWriteDataM), .funct(LSUFunct7M), .width(LSUFunct3M[1:0]), 
-                .result(AMOResult));
+  amoalu amoalu(.ReadDataM, .IHWriteDataM, .LSUFunct7M, .LSUFunct3M, .AMOResult);
 
   mux2 #(`XLEN) wdmux(IHWriteDataM, AMOResult, LSUAtomicM[1], IMAWriteDataM);
   assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
