@@ -36,15 +36,20 @@ module irom(
   localparam OFFSET = $clog2(`XLEN/8);
 
   logic [`XLEN-1:0] IROMInstrFFull;
+  logic [31:0] 		RawIROMInstrF;
+
+  logic [1:0] 			AdrD;
+  flopen #(2) AdrReg(clk, ce, Adr[2:1], AdrD);
 
   rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
-  if (`XLEN == 32) assign IROMInstrF = IROMInstrFFull;
+  if (`XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
   else             begin
 	// IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
 	// haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
-    logic AdrD;
-    flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
-    assign IROMInstrF = AdrD ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
+    assign RawIROMInstrF = AdrD[1] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
+  // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
+  // The spill logic will handle merging the two together.
+  assign IROMInstrF = AdrD[0] ? {16'b0, RawIROMInstrF[31:16]} : RawIROMInstrF;
 endmodule  
   
