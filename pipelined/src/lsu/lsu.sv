@@ -131,7 +131,7 @@ module lsu (
   logic                     LSULoadAccessFaultM;                     // Load acces fault
   logic 					LSUStoreAmoAccessFaultM;                 // Store access fault
   logic                     IgnoreRequestTLB;                        // On either ITLB or DTLB miss, ignore miss so HPTW can handle
-  logic 					IgnoreRequest;                           // On FlushM, ignore TLB miss
+  logic 					IgnoreRequest;                           // On FlushM or TLB miss ignore memory operation
   logic                     SelDTIM;                                 // Select DTIM rather than bus or D$
 
   
