@@ -121,10 +121,10 @@ module ifu (
   // Spill Support
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`C_SUPPORTED) begin : SpillSupport
-    spillsupport #(`ICACHE) spillsupport(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
+  if(`C_SUPPORTED) begin : Spill
+    spill #(`ICACHE) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
       .InstrDAPageFaultF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
-  end else begin : NoSpillSupport
+  end else begin : NoSpill
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
     assign PostSpillInstrRawF = InstrRawF;
