@@ -64,19 +64,21 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
   end else begin: ram
     integer i;
 
+	// Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
+	// Therefore these always blocks use the older always @(posedge clk) 
     // Read
-    always_ff @(posedge clk) 
+    always @(posedge clk) 
       if(ce) dout <= #1 RAM[addr];
  
     // Write divided into part for bytes and part for extra msbs
     if(WIDTH >= 8) 
-      always_ff @(posedge clk) 
+      always @(posedge clk) 
         if (ce & we) 
           for(i = 0; i < WIDTH/8; i++) 
             if(bwe[i]) RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
           
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-      always_ff @(posedge clk) 
+      always @(posedge clk) 
         if (ce & we & bwe[WIDTH/8])
           RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
   end
