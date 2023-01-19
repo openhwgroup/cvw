@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // irom.sv
 //
-// Written: Ross Thompson ross1728@gmail.com January 30, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 30 January 2022
+// Modified: 18 January 2023
 //
 // Purpose: simple instruction ROM
 // A component of the CORE-V-WALLY configurable RISC-V project.
