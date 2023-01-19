@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // amoalu.sv
 //
-// Written: David_Harris@hmc.edu 10 March 2021
-// Modified: 
+// Written: David_Harris@hmc.edu
+// Created: 10 March 2021
+// Modified: 18 January 2023 
 //
 // Purpose: Performs AMO operations
+// 
+// Documentation: RISC-V System on Chip Design Chapter 14 (Figure ***)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -26,13 +29,12 @@
 
 `include "wally-config.vh"
 
-// *** this should probably be moved into the LSU because it is instantiated in the D$
-
 module amoalu (
-  input  logic [`XLEN-1:0] srca, srcb,
-  input  logic [6:0]       funct,
-  input  logic [1:0]       width,
-  output logic [`XLEN-1:0] result
+  input  logic [`XLEN-1:0] ReadDataM,    // LSU's ReadData
+  input  logic [`XLEN-1:0] IHWriteDataM, // LSU's WriteData
+  input  logic [6:0]       LSUFunct7M,   // ALU Operation
+  input  logic [2:0]       LSUFunct3M,   // Memoy access width
+  output logic [`XLEN-1:0] AMOResult     // ALU output
 );
 
   logic [`XLEN-1:0] a, b, y;
@@ -41,7 +43,7 @@ module amoalu (
   // a single carry chain should be shared for + and the four min/max
   // and the same mux can be used to select b for swap.
   always_comb 
-    case (funct[6:2])
+    case (LSUFunct7M[6:2])
       5'b00001: y = b;                                      // amoswap
       5'b00000: y = a + b;                                  // amoadd
       5'b00100: y = a ^ b;                                  // amoxor
@@ -56,19 +58,19 @@ module amoalu (
 
   // sign extend if necessary
   if (`XLEN == 32) begin:sext
-    assign a = srca;
-    assign b = srcb;
-    assign result = y;
+    assign a = ReadDataM;
+    assign b = IHWriteDataM;
+    assign AMOResult = y;
   end else begin:sext // `XLEN = 64
     always_comb 
-      if (width == 2'b10) begin // sign-extend word-length operations
-        a = {{32{srca[31]}}, srca[31:0]};
-        b = {{32{srcb[31]}}, srcb[31:0]};
-        result = {{32{y[31]}}, y[31:0]};
+      if (LSUFunct3M[1:0] == 2'b10) begin // sign-extend word-length operations
+        a = {{32{ReadDataM[31]}}, ReadDataM[31:0]};
+        b = {{32{IHWriteDataM[31]}}, IHWriteDataM[31:0]};
+        AMOResult = {{32{y[31]}}, y[31:0]};
       end else begin
-        a = srca;
-        b = srcb;
-        result = y;
+        a = ReadDataM;
+        b = IHWriteDataM;
+        AMOResult = y;
       end
   end
 endmodule
