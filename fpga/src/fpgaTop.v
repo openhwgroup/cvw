@@ -374,6 +374,8 @@ module fpgaTop
   wire m01_axi_rvalid;
   wire m01_axi_rready;
 
+  wire [3:0] SDCDatIn;
+   
   assign GPIOPinsIn = {28'b0, GPI};
   assign GPO = GPIOPinsOut[4:0];
   assign ahblite_resetn = peripheral_aresetn;
@@ -386,6 +388,17 @@ module fpgaTop
 				   .I(SDCCmdOut),
 				   .O(SDCCmdIn),
 				   .IO(SDCCmd));
+
+
+  genvar i;
+  generate
+	 for (i = 0; i < 4; i = i + 1) begin
+		 IOBUF iobufSDCDat(.T(1'b1),
+						   .I(1'b0),
+						   .O(SDCDatIn[i]),
+						   .IO(SDCDat[i]));
+	 end
+  endgenerate
 
   // reset controller XILINX IP
   xlnx_proc_sys_reset xlnx_proc_sys_reset_0
@@ -429,7 +442,7 @@ module fpgaTop
      .UARTSin(UARTSin),
      .UARTSout(UARTSout),  
      // SD Card   
-     .SDCDatIn(SDCDat),
+     .SDCDatIn(SDCDatIn),
      .SDCCmdIn(SDCCmdIn),     
      .SDCCmdOut(SDCCmdOut),
      .SDCCmdOE(SDCCmdOE),
