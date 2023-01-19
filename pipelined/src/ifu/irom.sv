@@ -26,23 +26,24 @@
 `include "wally-config.vh"
 
 module irom(
-  input logic               clk, ce,
-  input logic [`XLEN-1:0]   Adr,
-  output logic [31:0]  ReadData
+  input logic 			  clk, 
+  input logic 			  ce,        // Chip Enable.  0: Holds IROMInstrF constant
+  input logic [`XLEN-1:0] Adr,       // PCNextFSpill
+  output logic [31:0] 	  IROMInstrF // Instruction read data
 );
 
   localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
   localparam OFFSET = $clog2(`XLEN/8);
 
-  logic [`XLEN-1:0] ReadDataFull;
+  logic [`XLEN-1:0] IROMInstrFFull;
 
-  rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataFull));
-  if (`XLEN == 32) assign ReadData = ReadDataFull;
+  rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
+  if (`XLEN == 32) assign IROMInstrF = IROMInstrFFull;
   // have to delay Ardr[OFFSET-1] by 1 cycle
   else             begin
     logic AdrD;
     flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
-    assign ReadData = AdrD ? ReadDataFull[63:32] : ReadDataFull[31:0];
+    assign IROMInstrF = AdrD ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
 endmodule  
   
