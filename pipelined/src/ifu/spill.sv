@@ -7,6 +7,8 @@
 // Purpose: allows the IFU to make extra memory request if instruction address crosses
 //          cache line boundaries or if instruction address without a cache crosses
 //          XLEN/8 boundary.
+//
+// Documentation: RISC-V System on Chip Design Chapter 11 (Figure 11.5)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
