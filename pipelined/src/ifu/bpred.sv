@@ -1,13 +1,12 @@
 ///////////////////////////////////////////
 // bpred.sv
 //
-// Written: Ross Thomposn
-// Email: ross1728@gmail.com
-// Created: February 12, 2021
-// Modified: 
+// Written: Ross Thomposn ross1728@gmail.com
+// Created: 12 February 2021
+// Modified: 19 January 2023
 //
-// Purpose: Branch prediction unit
-//          Produces a branch prediction based on branch history.
+// Purpose: Branch direction prediction and jump/branch target prediction.
+//          Prediction made during the fetch stage and corrected in the execution stage.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -35,30 +34,29 @@ module bpred (
    input logic              FlushD, FlushE, FlushM, FlushW,
    // Fetch stage
    // the prediction
-   input logic [31:0]       InstrD,        // Decompressed decode stage instruction 
-   input logic [`XLEN-1:0]  PCNextF,       // Next Fetch Address
-   input logic [`XLEN-1:0]  PCPlus2or4F,   // PCF+2/4
-   output logic [`XLEN-1:0] PCNext1F,      // Branch Predictor predicted or corrected fetch address on miss prediction
-   output logic [`XLEN-1:0] NextValidPCE,  // Address of next valid instruction after the instruction in the Memory stage.
+   input logic [31:0]       InstrD,                    // Decompressed decode stage instruction. Used to decode instruction class
+   input logic [`XLEN-1:0]  PCNextF,                   // Next Fetch Address
+   input logic [`XLEN-1:0]  PCPlus2or4F,               // PCF+2/4
+   output logic [`XLEN-1:0] PCNext1F,                  // Branch Predictor predicted or corrected fetch address on miss prediction
+   output logic [`XLEN-1:0] NextValidPCE,              // Address of next valid instruction after the instruction in the Memory stage.
 
    // Update Predictor
-   input logic [`XLEN-1:0]  PCF,           // Fetch stage instruction address.
-   input logic [`XLEN-1:0]  PCD,           // Decode stage instruction address. Also the address the branch predictor took.
-   input logic [`XLEN-1:0]  PCE,           // Execution stage instruction address.
-   input logic [`XLEN-1:0]  PCM,           // Memory stage instruction address.
+   input logic [`XLEN-1:0]  PCF,                       // Fetch stage instruction address.
+   input logic [`XLEN-1:0]  PCD,                       // Decode stage instruction address. Also the address the branch predictor took.
+   input logic [`XLEN-1:0]  PCE,                       // Execution stage instruction address.
+   input logic [`XLEN-1:0]  PCM,                       // Memory stage instruction address.
 
-   // *** after reviewing the compressed instruction set I am leaning towards having the btb predict the instruction class.
-   // *** the specifics of how this is encode is subject to change.
-   input logic              PCSrcE,        // Executation stage branch is taken
-   input logic [`XLEN-1:0]  IEUAdrE,       // The branch/jump target address
-   input logic [`XLEN-1:0]  PCLinkE,       // The address following the branch instruction. (AKA Fall through address)
-   output logic [3:0]       InstrClassM,   // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+   // Branch and jump outcome
+   input logic              PCSrcE,                    // Executation stage branch is taken
+   input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
+   input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
+   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
    // Report branch prediction status
-   output logic             BPPredWrongE,  // Prediction is wrong.
-   output logic             DirPredictionWrongM, // Prediction direction is wrong.
-   output logic             BTBPredPCWrongM, // Prediction target wrong.
-   output logic             RASPredPCWrongM, // RAS prediction is wrong.
+   output logic             BPPredWrongE,              // Prediction is wrong.
+   output logic             DirPredictionWrongM,       // Prediction direction is wrong.
+   output logic             BTBPredPCWrongM,           // Prediction target wrong.
+   output logic             RASPredPCWrongM,           // RAS prediction is wrong.
    output logic             PredictionInstrClassWrongM // Class prediction is wrong.
    );
 
