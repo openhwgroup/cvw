@@ -1,11 +1,14 @@
 ///////////////////////////////////////////
 // lrsc.sv
 //
-// Written: David_Harris@hmc.edu 17 July 2021
-// Modified: 
+// Written: David_Harris@hmc.edu
+// Created: 17 July 2021
+// Modified: 18 January 2023
 //
 // Purpose: Load Reserved / Store Conditional unit
 //          Track the reservation and squash the store if it fails
+//
+// Documentation: RISC-V System on Chip Design Chapter 14 (Figure ***)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 

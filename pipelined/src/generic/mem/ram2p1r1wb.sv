@@ -36,24 +36,20 @@
 
 `include "wally-config.vh"
 
-module ram2p1r1wb
-  #(parameter int DEPTH = 10,
-    parameter int WIDTH = 2
-    )
+module ram2p1r1wb #(parameter DEPTH = 10, WIDTH = 2) (
+  input  logic              clk,
+  input  logic              reset,
 
-  (input logic              clk,
-   input logic              reset,
-  
-   // port 1 is read only
-   input logic [DEPTH-1:0]  ra1,
-   output logic [WIDTH-1:0] rd1,
-   input logic              ren1,
-  
-   // port 2 is write only
-   input logic [DEPTH-1:0]  wa2,
-   input logic [WIDTH-1:0]  wd2,
-   input logic              wen2,
-   input logic [WIDTH-1:0]  bwe2
+  // port 1 is read only
+  input  logic [DEPTH-1:0]  ra1,
+  output logic [WIDTH-1:0]  rd1,
+  input  logic              ren1,
+
+  // port 2 is write only
+  input  logic [DEPTH-1:0]  wa2,
+  input  logic [WIDTH-1:0]  wd2,
+  input  logic              wen2,
+  input  logic [WIDTH-1:0]  bwe2
 );
   
 

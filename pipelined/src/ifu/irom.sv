@@ -1,8 +1,9 @@
 ///////////////////////////////////////////
 // irom.sv
 //
-// Written: Ross Thompson ross1728@gmail.com January 30, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 30 January 2022
+// Modified: 18 January 2023
 //
 // Purpose: simple instruction ROM
 // A component of the CORE-V-WALLY configurable RISC-V project.
@@ -26,23 +27,30 @@
 `include "wally-config.vh"
 
 module irom(
-  input logic               clk, ce,
-  input logic [`XLEN-1:0]   Adr,
-  output logic [31:0]  ReadData
+  input logic 			  clk, 
+  input logic 			  ce,        // Chip Enable.  0: Holds IROMInstrF constant
+  input logic [`XLEN-1:0] Adr,       // PCNextFSpill
+  output logic [31:0] 	  IROMInstrF // Instruction read data
 );
 
   localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
   localparam OFFSET = $clog2(`XLEN/8);
 
-  logic [`XLEN-1:0] ReadDataFull;
+  logic [`XLEN-1:0] IROMInstrFFull;
+  logic [31:0] 		RawIROMInstrF;
 
-  rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataFull));
-  if (`XLEN == 32) assign ReadData = ReadDataFull;
-  // have to delay Ardr[OFFSET-1] by 1 cycle
+  logic [1:0] 			AdrD;
+  flopen #(2) AdrReg(clk, ce, Adr[2:1], AdrD);
+
+  rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
+  if (`XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
   else             begin
-    logic AdrD;
-    flopen #(1) AdrReg(clk, ce, Adr[OFFSET-1], AdrD);
-    assign ReadData = AdrD ? ReadDataFull[63:32] : ReadDataFull[31:0];
+	// IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
+	// haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
+    assign RawIROMInstrF = AdrD[1] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
+  // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
+  // The spill logic will handle merging the two together.
+  assign IROMInstrF = AdrD[0] ? {16'b0, RawIROMInstrF[31:16]} : RawIROMInstrF;
 endmodule  
   

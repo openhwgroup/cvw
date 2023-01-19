@@ -155,7 +155,7 @@ module testbench;
   `define MCOUNTEREN  `CSR_BASE.csrm.mcounteren.MCOUNTERENreg.q
   `define SCOUNTEREN  `CSR_BASE.csrs.csrs.SCOUNTERENreg.q
   `define MSCRATCH    `CSR_BASE.csrm.MSCRATCHreg.q
-  `define SSCRATCH    `CSR_BASE.csrs.csrs.csrs.SSCRATCHreg.q
+  `define SSCRATCH    `CSR_BASE.csrs.csrs.SSCRATCHreg.q
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
   `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
   `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q

@@ -1,14 +1,13 @@
 ///////////////////////////////////////////
 // ahbcacheinterface.sv
 //
-// Written: Ross Thompson ross1728@gmail.com August 29, 2022
-// Modified: 
+// Written: Ross Thompson ross1728@gmail.com
+// Created: August 29, 2022
+// Modified: 18 January 2023
 //
-// Purpose: Cache/Bus data path.
-// Bus Side logic
-// register the fetch data from the next level of memory.
-// This register should be necessary for timing.  There is no register in the uncore or
-// ahblite controller between the memories and this cache.
+// Purpose: Translates cache bus requests and uncached ieu memory requests into AHB transactions.
+//
+// Documentation: RISC-V System on Chip Design Chapter 9 (Figure 9.8)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -30,48 +29,55 @@
 
 `include "wally-config.vh"
 
-module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLED) (
+module ahbcacheinterface #(
+  parameter integer BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
+  parameter integer AHBWLOGBWPL,   // Log2 of ^
+  parameter integer LINELEN,       // Number of bits in cacheline
+  parameter integer LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+)(
   input  logic                 HCLK, HRESETn,
-  // bus interface
-  input  logic                 HREADY,
-  input  logic [`AHBW-1:0]     HRDATA,
-  output logic [2:0]           HSIZE,
-  output logic [2:0]           HBURST,
-  output logic [1:0]           HTRANS,
-  output logic                 HWRITE,
-  output logic [`PA_BITS-1:0]  HADDR,
-  output logic [`AHBW-1:0]     HWDATA,
-  output logic [`AHBW/8-1:0]   HWSTRB,
-  output logic [LOGWPL-1:0]    BeatCount,
+  // bus interface controls
+  input logic                 HREADY,                  // AHB peripheral ready
+  output logic [1:0]          HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic                HWRITE,                  // AHB 0: Read operation 1: Write operation 
+  output logic [2:0]          HSIZE,                   // AHB transaction width
+  output logic [2:0]          HBURST,                  // AHB burst length
+  // bus interface buses
+  input logic [`AHBW-1:0]     HRDATA,                  // AHB read data
+  output logic [`PA_BITS-1:0] HADDR,                   // AHB address
+  output logic [`AHBW-1:0]    HWDATA,                  // AHB write data
+  output logic [`AHBW/8-1:0]  HWSTRB,                  // AHB byte mask
   
   // cache interface
-  input  logic [`PA_BITS-1:0]  CacheBusAdr,
-  input  logic [`LLEN-1:0]     CacheReadDataWordM,
-  input  logic [`LLEN-1:0]     WriteDataM,
-  input  logic                 CacheableOrFlushCacheM,
-  input  logic [1:0]           CacheBusRW,
-  output logic                 CacheBusAck,
-  output logic [LINELEN-1:0]   FetchBuffer, 
-  input  logic                 Cacheable,
- 
-  // lsu/ifu interface
-  input  logic                 Flush,
-  input  logic [`PA_BITS-1:0]  PAdr,
-  input  logic [1:0]           BusRW,
-  input  logic                 Stall,
-  input  logic [2:0]           Funct3,
-  output logic                 SelBusBeat,
-  output logic                 BusStall,
-  output logic                 BusCommitted
-);
-  
-  localparam integer           LLENPOVERAHBW = `LLEN / `AHBW; // *** fix me duplciated in lsu.
+  input logic [`PA_BITS-1:0]  CacheBusAdr,             // Address of cache line
+  input logic [`LLEN-1:0]     CacheReadDataWordM,      // one word of cache line during a writeback
+  input logic                 CacheableOrFlushCacheM,  // Memory operation is cacheable or flushing D$
+  input logic                 Cacheable,               // Memory operation is cachable
+  input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
+  output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
+  output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
+  output logic [AHBWLOGBWPL-1:0]   BeatCount,               // Beat position within the cache line in the Address Phase
+  output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
-  localparam integer           BeatCountThreshold = CACHE_ENABLED ? BEATSPERLINE - 1 : 0;
-  logic [`PA_BITS-1:0]         LocalHADDR;
-  logic [LOGWPL-1:0]           BeatCountDelayed;
-  logic                        CaptureEn;
-  logic [`AHBW-1:0]            PreHWDATA;
+  // uncached interface 
+  input logic [`PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
+  input logic [`LLEN-1:0]     WriteDataM,              // IEU write data for uncached store
+  input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
+  input logic [2:0]           Funct3,                  // Size of uncached memory operation
+
+  // lsu/ifu interface
+  input logic                 Stall,                   // Core pipeline is stalled
+  input logic                 Flush,                   // Pipeline stage flush. Prevents bus transaction from starting
+  output logic                BusStall,                // Bus is busy with an in flight memory operation
+  output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
+  
+
+  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
+  logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [AHBWLOGBWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
+  logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
+  logic [`AHBW/8-1:0] 		   BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
+  logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
 
   genvar                       index;
 
@@ -84,7 +90,7 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
   end
 
   mux2 #(`PA_BITS) localadrmux(PAdr, CacheBusAdr, Cacheable, LocalHADDR);
-  assign HADDR = ({{`PA_BITS-LOGWPL{1'b0}}, BeatCount} << $clog2(`AHBW/8)) + LocalHADDR;
+  assign HADDR = ({{`PA_BITS-AHBWLOGBWPL{1'b0}}, BeatCount} << $clog2(`AHBW/8)) + LocalHADDR;
 
   mux2 #(3) sizemux(.d0(Funct3), .d1(`AHBW == 32 ? 3'b010 : 3'b011), .s(Cacheable), .y(HSIZE));
 
@@ -105,12 +111,11 @@ module ahbcacheinterface #(parameter BEATSPERLINE, LINELEN, LOGWPL, CACHE_ENABLE
 
   // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
   // probably can merge by muxing PAdrM's LLEN/8-1 index bit based on HTRANS being != 0.
-  logic [`AHBW/8-1:0]  BusByteMaskM;
   swbytemask #(`AHBW) busswbytemask(.Size(HSIZE), .Adr(HADDR[$clog2(`AHBW/8)-1:0]), .ByteMask(BusByteMaskM));
   
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
   
-  buscachefsm #(BeatCountThreshold, LOGWPL) AHBBuscachefsm(
+  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
 	  .HREADY, .HTRANS, .HWRITE, .HBURST);
