@@ -1,10 +1,15 @@
 ///////////////////////////////////////////
 // decompress.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: David_Harris@hmc.edu
+// Created: 9 January 2021
+// Modified: 18 January 2023
 //
 // Purpose: Expand 16-bit compressed instructions to 32 bits
+//
+// Documentation: RISC-V System on Chip Design Chapter 11 (Section 11.3.1)
+//                RISC-V Specification 13 Dec 2019 Chapter 16 pg. 97
+// *** probably need more documentation in this file since the book is very light on decompression.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -27,9 +32,10 @@
 `include "wally-config.vh"
 
 module decompress (
-  input  logic [31:0] InstrRawD,
-  output logic [31:0] InstrD,
-  output logic        IllegalCompInstrD);
+  input  logic [31:0] InstrRawD,         // 32-bit instruction or raw un decompress instruction
+  output logic [31:0] InstrD,            // Decompressed instruction
+  output logic        IllegalCompInstrD  // Invalid decompressed instruction
+);
                         
   logic [15:0]        instr16;
   logic [4:0]         rds1, rs2, rs1p, rs2p, rds1p, rdp;
