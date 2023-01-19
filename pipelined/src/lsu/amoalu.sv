@@ -30,11 +30,11 @@
 `include "wally-config.vh"
 
 module amoalu (
-  input  logic [`XLEN-1:0] srca,  // LSU's ReadData *** may want to change signal names.
-  input  logic [`XLEN-1:0] srcb,  // LSU's WriteData
-  input  logic [6:0]       funct, // ALU Operation
-  input  logic [1:0]       width, // Memoy access width
-  output logic [`XLEN-1:0] result // ALU output
+  input  logic [`XLEN-1:0] ReadDataM,    // LSU's ReadData
+  input  logic [`XLEN-1:0] IHWriteDataM, // LSU's WriteData
+  input  logic [6:0]       LSUFunct7M,   // ALU Operation
+  input  logic [2:0]       LSUFunct3M,   // Memoy access width
+  output logic [`XLEN-1:0] AMOResult     // ALU output
 );
 
   logic [`XLEN-1:0] a, b, y;
@@ -43,7 +43,7 @@ module amoalu (
   // a single carry chain should be shared for + and the four min/max
   // and the same mux can be used to select b for swap.
   always_comb 
-    case (funct[6:2])
+    case (LSUFunct7M[6:2])
       5'b00001: y = b;                                      // amoswap
       5'b00000: y = a + b;                                  // amoadd
       5'b00100: y = a ^ b;                                  // amoxor
@@ -58,19 +58,19 @@ module amoalu (
 
   // sign extend if necessary
   if (`XLEN == 32) begin:sext
-    assign a = srca;
-    assign b = srcb;
-    assign result = y;
+    assign a = ReadDataM;
+    assign b = IHWriteDataM;
+    assign AMOResult = y;
   end else begin:sext // `XLEN = 64
     always_comb 
-      if (width == 2'b10) begin // sign-extend word-length operations
-        a = {{32{srca[31]}}, srca[31:0]};
-        b = {{32{srcb[31]}}, srcb[31:0]};
-        result = {{32{y[31]}}, y[31:0]};
+      if (LSUFunct3M[1:0] == 2'b10) begin // sign-extend word-length operations
+        a = {{32{ReadDataM[31]}}, ReadDataM[31:0]};
+        b = {{32{IHWriteDataM[31]}}, IHWriteDataM[31:0]};
+        AMOResult = {{32{y[31]}}, y[31:0]};
       end else begin
-        a = srca;
-        b = srcb;
-        result = y;
+        a = ReadDataM;
+        b = IHWriteDataM;
+        AMOResult = y;
       end
   end
 endmodule
