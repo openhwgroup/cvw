@@ -47,3 +47,4 @@ module comparator_dc_flip #(parameter WIDTH=64) (
   assign lt = (af < bf);           // lt = 1 when a less than b (taking signed operands into account)
   assign flags = {eq, lt};
 endmodule
+
