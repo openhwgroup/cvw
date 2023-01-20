@@ -142,7 +142,7 @@ module cachefsm (
   assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
-                      (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
+                      (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
@@ -182,6 +182,6 @@ module cachefsm (
                   resetDelay;
 
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
-  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset;
+  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache;
                        
 endmodule // cachefsm

@@ -150,7 +150,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
 	  ValidWay <= #1 ValidBits[CAdr];
-	  if(InvalidateCache & ~FlushStage)                    ValidBits <= #1 '0;
+	  if(InvalidateCache)                    ValidBits <= #1 '0;
       else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CAdr] <= #1 SetValidWay;
     end
   end
