@@ -17,6 +17,7 @@ read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 
 read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
 read_verilog  {../src/fpgaTop.v}
+read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
 set_property include_dirs {../../pipelined/config/fpga ../../pipelined/config/shared} [current_fileset]
 
