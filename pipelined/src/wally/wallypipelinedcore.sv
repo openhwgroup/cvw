@@ -163,6 +163,10 @@ module wallypipelinedcore (
   logic                          FCvtIntE;
   logic                          CommittedF;
   
+  // Bit manipulation unit
+  logic [`XLEN-1:0]              BMUResultE;    // Bit manipuation result BMU -> IEU
+  logic                          BMUE;          // is this a BMU instruction
+ 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -190,7 +194,7 @@ module wallypipelinedcore (
      .InstrD, .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .BMUE,
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
@@ -200,7 +204,7 @@ module wallypipelinedcore (
      .SrcAM, // to privilege and fpu
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
+     .CSRReadValW, .MDUResultW, .BMUResultE, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -357,4 +361,15 @@ module wallypipelinedcore (
     assign SetFflagsM = 0;
     assign FpLoadStoreM = 0;
   end
+
+  // bit manipulation unit
+  if (`B_SUPPORTED) begin:bmu
+    bmu bmu(.ForwardedSrcAE, .ForwardedSrcBE, .InstrD, .BMUE, .BMUResultE); 
+  end else begin // no B instructions supported
+    assign BMUResultE = 0; 
+    assign BMUE = 0;
+  end
+
+
+  
 endmodule

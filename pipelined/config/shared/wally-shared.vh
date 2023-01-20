@@ -26,6 +26,12 @@
 `define RADIX 32'h4
 `define DIVCOPIES 32'h4
 
+// eventually move to each config
+`define ZBA_SUPPORTED 0
+`define ZBB_SUPPORTED 0
+`define ZBC_SUPPORTED 0
+`define ZBS_SUPPORTED 0
+
 // Memory synthesis configuration
 `define USE_SRAM 0
 

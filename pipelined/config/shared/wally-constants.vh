@@ -52,6 +52,7 @@
 
 // macros to define supported modes
 `define A_SUPPORTED ((`MISA >> 0) % 2 == 1)
+`define B_SUPPORTED ((`ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED)) // not based on MISA
 `define C_SUPPORTED ((`MISA >> 2) % 2 == 1)
 `define D_SUPPORTED ((`MISA >> 3) % 2 == 1)
 `define E_SUPPORTED ((`MISA >> 4) % 2 == 1)
