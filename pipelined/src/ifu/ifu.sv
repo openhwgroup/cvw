@@ -94,6 +94,8 @@ module ifu (
   (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;    // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
+  logic [`XLEN-1:0]			   PCNextFSpill;                          // Next PCF after possible + 2 to handle spill
+  logic [`XLEN-1:0] 		   PCFSpill;                              // PCF with possible + 2 to handle spill
   logic [`XLEN-1:0]            PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
   logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
@@ -105,6 +107,7 @@ module ifu (
   logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
   logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
   logic                        CompressedF;                           // The fetched instruction is compressed
+(* mark_debug = "true" *)  logic [31:0]  PostSpillInstrRawF;          // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
   logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10
@@ -112,19 +115,17 @@ module ifu (
   logic [31:0] NextInstrD, NextInstrE;                                // Instruction into the next stage after possible stage flush
 
 
-  logic 					   CacheableF;
-  logic [`XLEN-1:0]			   PCNextFSpill;
-  logic [`XLEN-1:0] 		   PCFSpill;
-  logic 					   SelNextSpillF;
-  logic 					   ICacheFetchLine;
-  logic 					   BusStall;
-  logic 					   ICacheStallF, IFUCacheBusStallD;
-  logic 					   GatedStallD;
-(* mark_debug = "true" *)  logic [31:0] 				   PostSpillInstrRawF;
+  logic 					   CacheableF;                            // PMA indicates isntruction address is cacheable
+  logic 					   SelNextSpillF;                         // In a spill, stall pipeline and gate local stallF
+  logic 					   BusStall;                              // Bus interface busy with multicycle operation
+  logic 					   ICacheStallF;                          // I$ busy with multicycle operation
+  logic 					   IFUCacheBusStallD;                     // EIther I$ or bus busy with multicycle operation
+  logic 					   GatedStallD;                           // StallD gated by selected next spill
   // branch predictor signal
-  logic [`XLEN-1:0]            PCNext1F, PCNext0F;
-  logic                        BusCommittedF, CacheCommittedF;
-  logic                        SelIROM;
+  logic [`XLEN-1:0] 		   PCNext1F;                              // Branch predictor next PCF
+  logic                        BusCommittedF;                         // Bus memory operation in flight, delay interrupts
+  logic 					   CacheCommittedF;                       // I$ memory operation started, delay interrupts
+  logic                        SelIROM;                               // PMA indicates instruction address is in the IROM
   
   assign PCFExt = {2'b00, PCFSpill};
 
@@ -213,13 +214,12 @@ module ifu (
     localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
     if(`ICACHE) begin : icache
       localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                     // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
       logic [1:0]          CacheBusRW, BusRW, CacheRWF;
       
-      //assign BusRW = IFURWF & ~{IgnoreRequest, IgnoreRequest} & ~{CacheableF, CacheableF} & ~{SelIROM, SelIROM};
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
@@ -268,8 +268,7 @@ module ifu (
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = FetchBuffer;
       assign IFUHBURST = 3'b0;
-      assign {ICacheFetchLine, ICacheStallF} = '0;
-      assign {ICacheMiss, ICacheAccess} = '0;
+      assign {ICacheMiss, ICacheAccess, ICacheStallF} = '0;
     end
   end else begin : nobus // block: bus
     assign {BusStall, CacheCommittedF} = '0;   
@@ -335,7 +334,6 @@ module ifu (
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
     assign BPPredWrongE = PCSrcE;
     assign {InstrClassM, DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM} = '0;
-    assign PCNext0F = PCPlus2or4F;
     assign NextValidPCE = PCE;
   end      
 
