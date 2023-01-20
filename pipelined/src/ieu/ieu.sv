@@ -43,6 +43,7 @@ module ieu (
   output logic 		          IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
   output logic [2:0] 	      Funct3E,                         // Funct3 instruction field
   output logic [`XLEN-1:0]  ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic              BMUE,                            // This is a bit manipulation instruction
   output logic [4:0]        RdE,                             // Destination register
   // Memory stage signals
   input  logic 		          SquashSCW,                       // Squash store conditional, from LSU
@@ -56,8 +57,10 @@ module ieu (
   output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic 		          InstrValidM,                     // Instruction is valid
   // Writeback stage signals
-  input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt
-  input  logic [`XLEN-1:0]  CSRReadValW, MDUResultW,         // CSR read value, MDU (multiply/divide unit) result
+  input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
+  input  logic [`XLEN-1:0]  CSRReadValW,                     // CSR read value, 
+  input  logic [`XLEN-1:0]  MDUResultW,                      // multiply/divide unit result
+  input  logic [`XLEN-1:0]  BMUResultE,                      // bit manipulation unit result
   input  logic [`XLEN-1:0]  FCvtIntResW,                     // FPU's float to int conversion result
   input  logic              FCvtIntW,                        // FPU converts float to int
   output logic [4:0]        RdW,                             // Destination register
@@ -102,10 +105,10 @@ module ieu (
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .JumpE, .BranchSignedE, 
-    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, 
+    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BMUE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
-    .CSRReadValW, .MDUResultW, .FIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
+    .CSRReadValW, .MDUResultW, .BMUResultE, .FIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
   
   forward    fw(
     .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW,
