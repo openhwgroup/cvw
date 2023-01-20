@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 // This comparator is best
-module comparator_dc_flip #(parameter WIDTH=64) (
+module comparator #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,    // Operands
   input  logic             sgnd,    // Signed operands
   output logic [1:0]       flags);  // Output flags: {eq, lt}
