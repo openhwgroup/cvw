@@ -99,6 +99,7 @@ module BTBPredictor
   // *** need to add forwarding.
 
   // *** optimize for byte write enables
+  // *** switch to ram2p1r1wbefix
   ram2p1r1wb #(Depth, `XLEN+4) memory(.clk(clk),
           .reset(reset),
           .ra1(LookUpPCIndex),
