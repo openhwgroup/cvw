@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // dcache (data cache) fsm
 //
-// Written: ross1728@gmail.com August 25, 2021
-//          Implements the L1 data cache fsm
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 25 August 2021
+// Modified: 20 January 2023
 //
 // Purpose: Controller for the dcache fsm
+//
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.15 and Table 7.1)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -39,33 +42,31 @@ module cachefsm (
   input  logic [1:0] CacheAtomic,       // Atomic operation
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
-  // cache internals
-  input  logic       CacheHit,          // Exactly 1 way hits
-  input  logic       LineDirty,         // The selected line and way is dirty
-  input  logic       FlushAdrFlag,      // On last set of a cache flush
-  input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   // Bus controls
   input  logic       CacheBusAck,       // Bus operation completed
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
   // performance counter outputs
   output logic       CacheMiss,         // Cache miss  
   output logic       CacheAccess,		// Cache access
-  // Bus outputs
 
-  // dcache internals
-  output logic       SelAdr,
-  output logic       ClearValid,
-  output logic       ClearDirty,
-  output logic       SetDirty,
-  output logic       SetValid,
-  output logic       SelWriteback,
-  output logic       LRUWriteEn,
-  output logic       SelFlush,
-  output logic       FlushAdrCntEn,
-  output logic       FlushWayCntEn, 
-  output logic       FlushCntRst,
-  output logic       SelFetchBuffer, 
-  output logic       CacheEn
+  // cache internals
+  input  logic       CacheHit,          // Exactly 1 way hits
+  input  logic       LineDirty,         // The selected line and way is dirty
+  input  logic       FlushAdrFlag,      // On last set of a cache flush
+  input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
+  output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
+  output logic       ClearValid,        // Clear the valid bit in the selected way and set
+  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
+  output logic       SetValid,          // Set the dirty bit in the selected way and set
+  output logic       SetDirty,          // Set the dirty bit in the selected way and set
+  output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
+  output logic       LRUWriteEn,        // Update the LRU state
+  output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
+  output logic       FlushAdrCntEn,     // Enable the counter for Flush Adr
+  output logic       FlushWayCntEn,     // Enable the way counter during a flush
+  output logic       FlushCntRst,       // Reset both flush counters
+  output logic       SelFetchBuffer,    // Bypass the SRAM for a load hit by directly using the read data from the ahbcacheinterface's FetchBuffer
+  output logic       CacheEn            // Enable the cache memory arrays.  Disable hold read data constant
 );
   
   logic               resetDelay;

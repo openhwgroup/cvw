@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
 // cache 
 //
-// Written: ross1728@gmail.com July 07, 2021
-//          Implements the L1 instruction/data cache
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 7 July 2021
+// Modified: 20 January 2023
 //
-// Purpose: Storage for data and meta data.
+// Purpose: Implements the I$ and D$. Interfaces with requests from IEU and HPTW and ahbcacheinterface
 //
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.9, 7.11, and 7.20)
 //
