@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // dcache (data cache) fsm
 //
-// Written: ross1728@gmail.com August 25, 2021
-//          Implements the L1 data cache fsm
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 25 August 2021
+// Modified: 20 January 2023
 //
 // Purpose: Controller for the dcache fsm
+//
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -29,45 +32,41 @@
 module cachefsm (
   input  logic       clk,
   input  logic       reset,
+  // hazard and privilege unit
+  input  logic       Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
+  input  logic       FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
+  output logic       CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
+  output logic       CacheStall,        // Cache stalls pipeline during multicycle operation
   // inputs from IEU
-  input  logic       FlushStage,
-  input  logic [1:0] CacheRW,
-  input  logic [1:0] CacheAtomic,
-  input  logic       FlushCache,
-  input  logic       InvalidateCache,
-  // hazard inputs
-  input  logic       Stall,
-  // Bus inputs
-  input  logic       CacheBusAck,
-  // dcache internals
-  input  logic       CacheHit,
-  input  logic       LineDirty,
-  input  logic       FlushAdrFlag,
-  input  logic       FlushWayFlag, 
+  input  logic [1:0] CacheRW,           // [1] Read, [0] Write 
+  input  logic [1:0] CacheAtomic,       // Atomic operation
+  input  logic       FlushCache,        // Flush all dirty lines back to memory
+  input  logic       InvalidateCache,   // Clear all valid bits
+  // Bus controls
+  input  logic       CacheBusAck,       // Bus operation completed
+  output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
+  // performance counter outputs
+  output logic       CacheMiss,         // Cache miss  
+  output logic       CacheAccess,		// Cache access
 
-  // hazard outputs
-  output logic       CacheStall,
-  // counter outputs
-  output logic       CacheMiss,
-  output logic       CacheAccess,
-  // Bus outputs
-  output logic       CacheCommitted,
-  output logic [1:0] CacheBusRW,
-
-  // dcache internals
-  output logic       SelAdr,
-  output logic       ClearValid,
-  output logic       ClearDirty,
-  output logic       SetDirty,
-  output logic       SetValid,
-  output logic       SelWriteback,
-  output logic       LRUWriteEn,
-  output logic       SelFlush,
-  output logic       FlushAdrCntEn,
-  output logic       FlushWayCntEn, 
-  output logic       FlushCntRst,
-  output logic       SelFetchBuffer, 
-  output logic       CacheEn
+  // cache internals
+  input  logic       CacheHit,          // Exactly 1 way hits
+  input  logic       LineDirty,         // The selected line and way is dirty
+  input  logic       FlushAdrFlag,      // On last set of a cache flush
+  input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
+  output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
+  output logic       ClearValid,        // Clear the valid bit in the selected way and set
+  output logic       SetValid,          // Set the dirty bit in the selected way and set
+  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
+  output logic       SetDirty,          // Set the dirty bit in the selected way and set
+  output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
+  output logic       LRUWriteEn,        // Update the LRU state
+  output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
+  output logic       FlushAdrCntEn,     // Enable the counter for Flush Adr
+  output logic       FlushWayCntEn,     // Enable the way counter during a flush
+  output logic       FlushCntRst,       // Reset both flush counters
+  output logic       SelFetchBuffer,    // Bypass the SRAM for a load hit by directly using the read data from the ahbcacheinterface's FetchBuffer
+  output logic       CacheEn            // Enable the cache memory arrays.  Disable hold read data constant
 );
   
   logic               resetDelay;
@@ -114,8 +113,6 @@ module cachefsm (
     case (CurrState)
       STATE_READY: if(InvalidateCache)                      NextState = STATE_READY;
                    else if(FlushCache)                      NextState = STATE_FLUSH;
-      // Delayed LRU update.  Cannot check if victim line is dirty on this cycle.
-      // To optimize do the fetch first, then eviction if necessary.
                    else if(AnyMiss & ~LineDirty)            NextState = STATE_FETCH;
                    else if(AnyMiss & LineDirty)             NextState = STATE_WRITEBACK;
                    else                                     NextState = STATE_READY;
@@ -128,11 +125,11 @@ module cachefsm (
                               else                          NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
       STATE_FLUSH: if(LineDirty)                            NextState = STATE_FLUSH_WRITEBACK;
-	               else if (FlushFlag)                        NextState = STATE_READ_HOLD;
-	               else                                       NextState = STATE_FLUSH;
-	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)     NextState = STATE_FLUSH;
-	                          else if(CacheBusAck)            NextState = STATE_READ_HOLD;
-	                          else                            NextState = STATE_FLUSH_WRITEBACK;
+	               else if (FlushFlag)                      NextState = STATE_READ_HOLD;
+	               else                                     NextState = STATE_FLUSH;
+	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)   NextState = STATE_FLUSH;
+	                          else if(CacheBusAck)          NextState = STATE_READ_HOLD;
+	                          else                          NextState = STATE_FLUSH_WRITEBACK;
       default:                                              NextState = STATE_READY;
     endcase
   end
@@ -174,7 +171,7 @@ module cachefsm (
   assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) |
                           (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                      (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck);
-  // **** can this be simplified?
+
   assign SelAdr = (CurrState == STATE_READY & (StoreAMO | AnyMiss)) | // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |

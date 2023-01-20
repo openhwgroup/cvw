@@ -1,14 +1,17 @@
 ///////////////////////////////////////////
 // 1 port sram.
 //
-// Written: ross1728@gmail.com May 3, 2021
+// Written: ross1728@gmail.com
+// Created: 3 May 2021
+// Modified: 20 January 2023
+//
+// Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 //          Basic sram with 1 read write port.
 //          When clk rises Addr and LineWriteData are sampled.
 //          Following the clk edge read data is output from the sampled Addr.
-//          Write 
-//
-// Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 // 
+// Documentation: 
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
