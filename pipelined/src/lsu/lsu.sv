@@ -34,7 +34,7 @@
 module lsu (
   input  logic             clk, reset,
   input  logic             StallM, FlushM, StallW, FlushW,
-  output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation.
+  output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation
   // connected to cpu (controls)
   input  logic [1:0]       MemRWM,                                  // Read/Write control
   input  logic [2:0]       Funct3M,                                 // Size of memory operation
@@ -53,7 +53,7 @@ module lsu (
   // cpu privilege
   input  logic [1:0]       PrivilegeModeW,                          // Current privilege mode
   input  logic             BigEndianM,                              // Swap byte order to big endian
-  input  logic             sfencevmaM,                              // Virtual memory address fence
+  input  logic             sfencevmaM,                              // Virtual memory address fence, invalidate TLB entries
   // fpu
   input  logic [`FLEN-1:0] FWriteDataM,                             // Write data from FPU
   input  logic             FpLoadStoreM,                            // Selects FPU as store for write data
@@ -103,7 +103,7 @@ module lsu (
 
   logic                     GatedStallW;                             // Hazard unit StallW gated when SelHPTW = 1
  
-  logic                     DCacheStallW;                            // D$ busy with multicycle operation
+  logic                     DCacheStallM;                            // D$ busy with multicycle operation
   logic                     BusStall;                                // Bus interface busy with multicycle operation
   logic                     HPTWStall;                               // HPTW busy with multicycle operation
 
@@ -126,7 +126,7 @@ module lsu (
   logic [(`LLEN-1)/8:0]     ByteMaskM;                               // Selects which bytes within a word to write
 
   logic                     DTLBMissM;                               // DTLB miss causes HPTW walk
-  logic                     DTLBWriteM;                              // Writes PTE to DTLB
+  logic                     DTLBWriteM;                              // Writes PTE and PageType to DTLB
   logic                     DataDAPageFaultM;                        // DTLB hit needs to update dirty or access bits
   logic                     LSULoadAccessFaultM;                     // Load acces fault
   logic 					LSUStoreAmoAccessFaultM;                 // Store access fault
@@ -152,7 +152,7 @@ module lsu (
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
-      .FlushW, .DCacheStallW, .SATP_REGW, .PCF,
+      .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
@@ -179,7 +179,7 @@ module lsu (
   // the trap module.
   assign CommittedM = SelHPTW | DCacheCommittedM | BusCommittedM;
   assign GatedStallW = StallW & ~SelHPTW;
-  assign LSUStallM = DCacheStallW | HPTWStall | BusStall;
+  assign LSUStallM = DCacheStallM | HPTWStall | BusStall;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // MMU and misalignment fault logic required if privileged unit exists
@@ -267,7 +267,7 @@ module lsu (
         .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
-        .CacheStall(DCacheStallW), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+        .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW, 
@@ -307,14 +307,14 @@ module lsu (
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];
       assign LSUHBURST = 3'b0;
-      assign {DCacheStallW, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
+      assign {DCacheStallM, DCacheCommittedM, DCacheMiss, DCacheAccess} = '0;
  end
   end else begin: nobus // block: bus, only DTIM
     assign LSUHWDATA = '0; 
     assign ReadDataWordMuxM = DTIMReadDataWordM;
     assign {BusStall, BusCommittedM} = '0;   
     assign {DCacheMiss, DCacheAccess} = '0;
-    assign {DCacheStallW, DCacheCommittedM} = '0;
+    assign {DCacheStallM, DCacheCommittedM} = '0;
   end
 
   /////////////////////////////////////////////////////////////////////////////////////////////

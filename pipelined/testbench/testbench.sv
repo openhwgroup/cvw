@@ -94,6 +94,7 @@ logic [3:0] dummy;
         "arch64m":      if (`M_SUPPORTED) tests = arch64m;
         "arch64f":      if (`F_SUPPORTED) tests = arch64f;
         "arch64d":      if (`D_SUPPORTED) tests = arch64d;  
+        "arch64zi":     if (`ZIFENCEI_SUPPORTED) tests = arch64zi;
         "imperas64i":                     tests = imperas64i;
         "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
         "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
@@ -119,6 +120,7 @@ logic [3:0] dummy;
         "arch32m":      if (`M_SUPPORTED) tests = arch32m;
         "arch32f":      if (`F_SUPPORTED) tests = arch32f;
         "arch32d":      if (`D_SUPPORTED) tests = arch32d;
+        "arch32zi":     if (`ZIFENCEI_SUPPORTED) tests = arch32zi;
         "imperas32i":                     tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
         "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
@@ -196,7 +198,7 @@ logic [3:0] dummy;
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.FinalInstrRawF[31:0],
+                dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
