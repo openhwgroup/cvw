@@ -6,6 +6,8 @@
 //
 // Purpose: Storage for data and meta data.
 //
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.9, 7.11, and 7.20)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -63,11 +65,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
   localparam                     TAGLEN = `PA_BITS - SETTOP;         // Number of tag bits
-  localparam                     WORDSPERLINE = LINELEN/WORDLEN;     // Number of words in cache line
+  localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
+  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
   localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
   localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
-  localparam                     CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN; // *** see if this is the same as WORDSPERLINE
-  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE); // ***
+
 
   logic                          SelAdr;
   logic [1:0]                    AdrSelMuxSel;
