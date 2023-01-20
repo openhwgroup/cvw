@@ -127,3 +127,4 @@ tests/custom/*/*/*.memfile
 tests/custom/crt0/*.a
 /pipelined/regression/sd_model.log
 external
+pipelined/regression/results
