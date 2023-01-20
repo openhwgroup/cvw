@@ -34,7 +34,7 @@
 module lsu (
   input  logic             clk, reset,
   input  logic             StallM, FlushM, StallW, FlushW,
-  output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation.
+  output logic             LSUStallM,                               // LSU stalls pipeline during a multicycle operation
   // connected to cpu (controls)
   input  logic [1:0]       MemRWM,                                  // Read/Write control
   input  logic [2:0]       Funct3M,                                 // Size of memory operation
@@ -53,7 +53,7 @@ module lsu (
   // cpu privilege
   input  logic [1:0]       PrivilegeModeW,                          // Current privilege mode
   input  logic             BigEndianM,                              // Swap byte order to big endian
-  input  logic             sfencevmaM,                              // Virtual memory address fence
+  input  logic             sfencevmaM,                              // Virtual memory address fence, invalidate TLB entries
   // fpu
   input  logic [`FLEN-1:0] FWriteDataM,                             // Write data from FPU
   input  logic             FpLoadStoreM,                            // Selects FPU as store for write data
@@ -126,7 +126,7 @@ module lsu (
   logic [(`LLEN-1)/8:0]     ByteMaskM;                               // Selects which bytes within a word to write
 
   logic                     DTLBMissM;                               // DTLB miss causes HPTW walk
-  logic                     DTLBWriteM;                              // Writes PTE to DTLB
+  logic                     DTLBWriteM;                              // Writes PTE and PageType to DTLB
   logic                     DataDAPageFaultM;                        // DTLB hit needs to update dirty or access bits
   logic                     LSULoadAccessFaultM;                     // Load acces fault
   logic 					LSUStoreAmoAccessFaultM;                 // Store access fault

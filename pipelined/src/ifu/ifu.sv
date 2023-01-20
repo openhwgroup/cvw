@@ -28,58 +28,65 @@
 `include "wally-config.vh"
 
 module ifu (
-	input logic 				clk, reset,
-	input logic 				StallF, StallD, StallE, StallM, StallW,
-	input logic 				FlushD, FlushE, FlushM, FlushW, 
+  input logic 				clk, reset,
+  input logic 				StallF, StallD, StallE, StallM, StallW,
+  input logic 				FlushD, FlushE, FlushM, FlushW, 
+(* mark_debug = "true" *)  output logic 				IFUStallF,    // IFU stalsl pipeline during a multicycle operation
+  // Command from CPU
+  input logic               InvalidateICacheM,                        // Clears all instruction cache valid bits
+  input logic         	    CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
 	// Bus interface
-(* mark_debug = "true" *)	input logic [`XLEN-1:0] 	HRDATA,
-(* mark_debug = "true" *)	output logic [`PA_BITS-1:0] IFUHADDR,
-(* mark_debug = "true" *)	output logic 				IFUStallF,
-(* mark_debug = "true" *) output logic [2:0]  IFUHBURST,
-(* mark_debug = "true" *) output logic [1:0]  IFUHTRANS,
-(* mark_debug = "true" *) output logic [2:0]  IFUHSIZE,
-(* mark_debug = "true" *) output logic  IFUHWRITE,
-(* mark_debug = "true" *) input logic   IFUHREADY,
-	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
+(* mark_debug = "true" *)  output logic [`PA_BITS-1:0] IFUHADDR,      // Bus address from IFU to EBU
+(* mark_debug = "true" *)  input logic [`XLEN-1:0] 	HRDATA,           // Bus read data from IFU to EBU
+(* mark_debug = "true" *)  input logic   IFUHREADY,                   // Bus ready from IFU to EBU
+(* mark_debug = "true" *)  output logic  IFUHWRITE,                   // Bus write operation from IFU to EBU
+(* mark_debug = "true" *)  output logic [2:0]  IFUHSIZE,              // Bus operation size from IFU to EBU
+(* mark_debug = "true" *)  output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
+(* mark_debug = "true" *)  output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
+
+(* mark_debug = "true" *)  output logic [`XLEN-1:0] PCF,              // Fetch stage instruction address
 	// Execute
-	output logic [`XLEN-1:0] 	PCLinkE,
-	input logic 				PCSrcE, 
-	input logic [`XLEN-1:0] 	IEUAdrE,
-	output logic [`XLEN-1:0] 	PCE,
-	output logic 				BPPredWrongE, 
+  output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
+  input logic 				PCSrcE,                                   // Executation stage branch is taken
+  input logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
+  output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
+  output logic 				BPPredWrongE,                             // Prediction is wrong
 	// Mem
-    output logic                CommittedF, 
-	input logic [`XLEN-1:0] 	UnalignedPCNextF,
-    output logic [`XLEN-1:0]    PCNext2F,
-	input logic         	    CSRWriteFenceM,
-    input logic                 InvalidateICacheM,
-	output logic [31:0] 		InstrD, InstrM, 
-	output logic [`XLEN-1:0] 	PCM, 
-	// branch predictor
-	output logic [3:0] 			InstrClassM,
-	output logic 				DirPredictionWrongM,
-	output logic 				BTBPredPCWrongM,
-	output logic 				RASPredPCWrongM,
-	output logic 				PredictionInstrClassWrongM,
-	// Faults
-	input logic 				IllegalBaseInstrFaultD,
-	output logic 				InstrPageFaultF,
-	output logic 				IllegalIEUInstrFaultD,
-	output logic 				InstrMisalignedFaultM,
-	// mmu management
-	input logic [1:0] 			PrivilegeModeW,
-	input logic [`XLEN-1:0] 	PTE,
-	input logic [1:0] 			PageType,
-	input logic [`XLEN-1:0] 	SATP_REGW,
-	input logic 				STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-	input logic [1:0] 			STATUS_MPP,
-	input logic 				ITLBWriteF, sfencevmaM,
-	output logic 				ITLBMissF, InstrDAPageFaultF,
-	input 						var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-	input 						var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
-	output logic 				InstrAccessFaultF,
-    output logic                ICacheAccess,
-    output logic                ICacheMiss
+  output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
+  input logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
+  output logic [`XLEN-1:0]  PCNext2F,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
+  output logic [31:0] 		InstrD,                                   // The decoded instruction in Decode stage
+  output logic [31:0]       InstrM,                                   // The decoded instruction in Memory stage
+  output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
+  // branch predictor
+  output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic 				DirPredictionWrongM,                      // Prediction direction is wrong
+  output logic 				BTBPredPCWrongM,                          // Prediction target wrong
+  output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
+  output logic 				PredictionInstrClassWrongM,               // Class prediction is wrong
+  // Faults
+  input logic 				IllegalBaseInstrFaultD,                   // Illegal non-compressed instruction
+  output logic 				InstrPageFaultF,                          // Instruction page fault 
+  output logic 				IllegalIEUInstrFaultD,                    // Illegal instruction including compressed
+  output logic 				InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
+  // mmu management
+  input logic [1:0] 		PrivilegeModeW,                           // Priviledge mode in Writeback stage
+  input logic [`XLEN-1:0] 	PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
+  input logic [1:0] 		PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
+  input logic 				ITLBWriteF,                               // Writes PTE and PageType to ITLB
+  input logic [`XLEN-1:0] 	SATP_REGW,                                // Location of the root page table and page table configuration
+  input logic 				STATUS_MXR,                               // Status CSR: make executable page readable 
+  input logic               STATUS_SUM,                               // Status CSR: Supervisor access to user memory
+  input logic               STATUS_MPRV,                              // Status CSR: modify machine privilege
+  input logic [1:0] 		STATUS_MPP,                               // Status CSR: previous machine privilege level
+  input logic               sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
+  output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
+  output logic              InstrDAPageFaultF,                        // ITLB hit needs to update dirty or access bits
+  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
+  output logic 				InstrAccessFaultF,
+  output logic                ICacheAccess,
+  output logic                ICacheMiss
 );
   (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;
   logic                        BranchMisalignedFaultE;
