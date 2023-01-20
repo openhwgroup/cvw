@@ -934,6 +934,16 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/misalign-sw-01.S"
     };
 
+  string arch64zi[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/Zifencei/src/Fencei.S"
+    };
+
+  string arch32zi[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/Zifencei/src/Fencei.S"
+    };
+
   string arch64m[] = '{
     `RISCVARCHTEST,
     "rv64i_m/M/src/div-01.S",
