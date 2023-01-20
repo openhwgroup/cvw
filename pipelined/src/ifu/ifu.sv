@@ -82,31 +82,35 @@ module ifu (
   input logic               sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
   output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
   output logic              InstrDAPageFaultF,                        // ITLB hit needs to update dirty or access bits
-  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0], 
-  output logic 				InstrAccessFaultF,
-  output logic                ICacheAccess,
-  output logic                ICacheMiss
+  input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],         // PMP configuration from privileged unit
+  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
+  output logic 				InstrAccessFaultF,                        // Instruction access fault 
+  output logic              ICacheAccess,                             // Report I$ read to performance counters
+  output logic              ICacheMiss                                // Report I$ miss to performance counters
 );
-  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;
-  logic                        BranchMisalignedFaultE;
-  logic [`XLEN-1:0]            PCPlus2or4F, PCLinkD;
-  logic [`XLEN-1:2]            PCPlus4F;
-  logic                        CompressedF;
-  logic [31:0]                 InstrRawD, InstrRawF, IROMInstrF, ICacheInstrF;
-  logic [31:0]                 FinalInstrRawF;
-  logic [1:0]                  IFURWF;
-  
-  logic [31:0]                 InstrE;
-  logic [`XLEN-1:0]            PCD;
 
-  localparam [31:0]            nop = 32'h00000013; // instruction for NOP
-  logic [31:0] NextInstrD, NextInstrE;
+  localparam [31:0]            nop = 32'h00000013;                    // instruction for NOP
 
-  logic [`XLEN-1:0] 		   NextValidPCE;
+  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;    // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
+  logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
+  logic [`XLEN-1:0]            PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
+  logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
+  logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
+  logic [`XLEN-1:0] 		   NextValidPCE;                          // The PC of the next valid instruction in the pipeline after  csr write or fence
+(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF;         // Physical address after address translation
+  logic [`XLEN+1:0]            PCFExt;                                //
+
+  logic [31:0] 				   IROMInstrF;                            // Instruction from the IROM
+  logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
+  logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
+  logic                        CompressedF;                           // The fetched instruction is compressed
+  logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
-(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF; // used to either truncate or expand PCPF and PCNextF into `PA_BITS width.
-  logic [`XLEN+1:0]            PCFExt;
+  logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10
+  logic [31:0]                 InstrE;                                // Instruction in the Execution stage
+  logic [31:0] NextInstrD, NextInstrE;                                // Instruction into the next stage after possible stage flush
+
 
   logic 					   CacheableF;
   logic [`XLEN-1:0]			   PCNextFSpill;
@@ -264,7 +268,7 @@ module ifu (
       if(`IROM_SUPPORTED) mux2 #(32) UnCachedDataMux2(FetchBuffer, IROMInstrF, SelIROM, InstrRawF);
       else assign InstrRawF = FetchBuffer;
       assign IFUHBURST = 3'b0;
-      assign {ICacheFetchLine, ICacheStallF, FinalInstrRawF} = '0;
+      assign {ICacheFetchLine, ICacheStallF} = '0;
       assign {ICacheMiss, ICacheAccess} = '0;
     end
   end else begin : nobus // block: bus
@@ -366,6 +370,7 @@ module ifu (
   flopenr #(1) InstrMisalginedReg(clk, reset, ~StallM, BranchMisalignedFaultE, InstrMisalignedFaultM);
 
   // Instruction and PC/PCLink pipeline registers
+  // Cannot use flopenrc for Instr(E/M) as it resets to NOP not 0.
   mux2    #(32)    FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
   mux2    #(32)    FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
   flopenr #(32)    InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
