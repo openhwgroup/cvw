@@ -1,11 +1,14 @@
 ///////////////////////////////////////////
 // subcachelineread
 //
-// Written: Ross Thompson ross1728@gmail.com February 04, 2022
-//          Muxes the cache line downto the word size.  Also include possilbe save/restore registers/muxes.
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 4 February 2022
+// Modified: 20 January 2023
 //
-// Purpose: Controller for the dcache fsm
+// Purpose: Muxes the cache line downto the word size.  Also include possilbe save/restore registers/muxes.
 //
+// Documentation: RISC-V System on Chip Design Chapter 7
+
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -26,10 +29,12 @@
 
 `include "wally-config.vh"
 
-module subcachelineread #(parameter LINELEN, WORDLEN, MUXINTERVAL)(
-  input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0]   PAdr,
-  input  logic [LINELEN-1:0]                                         ReadDataLine,
-  output logic [WORDLEN-1:0]                                         ReadDataWord
+module subcachelineread #(parameter LINELEN, WORDLEN, 
+  parameter MUXINTERVAL                                                        // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to `LLEN for D$
+)(
+  input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0] PAdr,       // Physical address 
+  input  logic [LINELEN-1:0] 									  ReadDataLine,// Read data of the whole cacheline
+  output logic [WORDLEN-1:0] 									  ReadDataWord // read data of selected word.
 );
 
   localparam WORDSPERLINE = LINELEN/MUXINTERVAL;
