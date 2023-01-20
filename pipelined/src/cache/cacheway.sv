@@ -1,11 +1,14 @@
 ///////////////////////////////////////////
 // cacheway
 //
-// Written: ross1728@gmail.com July 07, 2021
-//          Implements the data, tag, valid, dirty, and replacement bits.
+// Written: Ross Thompson ross1728@gmail.com 
+// Created: 7 July 2021
+// Modified: 20 January 2023
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 // 
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.12)
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
