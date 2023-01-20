@@ -29,28 +29,28 @@
 module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
 				          OFFSETLEN = 5, INDEXLEN = 9, DIRTY_BITS = 1) (
   input  logic                        clk,
-  input  logic                        CacheEn,
   input  logic                        reset,
-  input  logic [$clog2(NUMLINES)-1:0] CAdr,
-  input  logic [`PA_BITS-1:0]         PAdr,
-  input  logic [LINELEN-1:0]          LineWriteData,
-  input  logic                        SetValid,
-  input  logic                        ClearValid,
-  input  logic                        SetDirty,
-  input  logic                        ClearDirty,
-  input  logic                        SelWriteback,
-  input  logic                        SelFlush,
-  input  logic                        VictimWay,
-  input  logic                        FlushWay,
-  input  logic                        InvalidateCache,
-  input  logic                        FlushStage,
-  input  logic [LINELEN/8-1:0]        LineByteMask,
+  input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
+  input  logic [$clog2(NUMLINES)-1:0] CAdr,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
+  input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
+  input  logic                        SetValid,       // Set the dirty bit in the selected way and set
+  input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
+  input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
+  input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
+  input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
+  input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
+  input  logic                        VictimWay,      // LRU selected this way as victim to evict
+  input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
+  input  logic                        InvalidateCache,//Clear all valid bits
+  input  logic [LINELEN/8-1:0]        LineByteMask,   // Final byte enables to cache (D$ only)
 
-  output logic [LINELEN-1:0]          ReadDataLineWay,
-  output logic                        HitWay,
-  output logic                        ValidWay,
-  output logic                        DirtyWay,
-  output logic [TAGLEN-1:0]           TagWay);
+  output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
+  output logic                        HitWay,         // This way hits
+  output logic                        ValidWay,       // This way is valid
+  output logic                        DirtyWay,       // This way is dirty
+  output logic [TAGLEN-1:0]           TagWay);        // THis way's tag if valid
 
   localparam integer                  WORDSPERLINE = LINELEN/`XLEN;
   localparam integer                  BYTESPERLINE = LINELEN/8;

@@ -56,8 +56,8 @@ module cachefsm (
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
   output logic       ClearValid,        // Clear the valid bit in the selected way and set
-  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SetValid,          // Set the dirty bit in the selected way and set
+  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
