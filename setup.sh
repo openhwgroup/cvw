@@ -14,7 +14,7 @@ echo \$WALLY set to ${WALLY}
 # License servers and commercial CAD tool paths
 # Must edit these based on your local environment.  Ask your sysadmin.
 export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
-export SNPSLMD_LICENSE_FILE=27020@134.173.38.184                    # Change this to your Synopsys license server
+export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
 export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH     # Change this for your path to Questa
 export PATH=/cad/synopsys/SYN/bin:$PATH                             # Change this for your path to Design Compiler
 
