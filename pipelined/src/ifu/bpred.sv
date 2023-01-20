@@ -38,13 +38,13 @@ module bpred (
    input logic [`XLEN-1:0]  PCNextF,                   // Next Fetch Address
    input logic [`XLEN-1:0]  PCPlus2or4F,               // PCF+2/4
    output logic [`XLEN-1:0] PCNext1F,                  // Branch Predictor predicted or corrected fetch address on miss prediction
-   output logic [`XLEN-1:0] NextValidPCE,              // Address of next valid instruction after the instruction in the Memory stage.
+   output logic [`XLEN-1:0] NextValidPCE,              // Address of next valid instruction after the instruction in the Memory stage
 
    // Update Predictor
-   input logic [`XLEN-1:0]  PCF,                       // Fetch stage instruction address.
-   input logic [`XLEN-1:0]  PCD,                       // Decode stage instruction address. Also the address the branch predictor took.
-   input logic [`XLEN-1:0]  PCE,                       // Execution stage instruction address.
-   input logic [`XLEN-1:0]  PCM,                       // Memory stage instruction address.
+   input logic [`XLEN-1:0]  PCF,                       // Fetch stage instruction address
+   input logic [`XLEN-1:0]  PCD,                       // Decode stage instruction address. Also the address the branch predictor took
+   input logic [`XLEN-1:0]  PCE,                       // Execution stage instruction address
+   input logic [`XLEN-1:0]  PCM,                       // Memory stage instruction address
 
    // Branch and jump outcome
    input logic              PCSrcE,                    // Executation stage branch is taken
@@ -53,11 +53,11 @@ module bpred (
    output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
    // Report branch prediction status
-   output logic             BPPredWrongE,              // Prediction is wrong.
-   output logic             DirPredictionWrongM,       // Prediction direction is wrong.
-   output logic             BTBPredPCWrongM,           // Prediction target wrong.
-   output logic             RASPredPCWrongM,           // RAS prediction is wrong.
-   output logic             PredictionInstrClassWrongM // Class prediction is wrong.
+   output logic             BPPredWrongE,              // Prediction is wrong
+   output logic             DirPredictionWrongM,       // Prediction direction is wrong
+   output logic             BTBPredPCWrongM,           // Prediction target wrong
+   output logic             RASPredPCWrongM,           // RAS prediction is wrong
+   output logic             PredictionInstrClassWrongM // Class prediction is wrong
    );
 
   logic                     BTBValidF;

@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // dcache (data cache)
 //
-// Written: ross1728@gmail.com July 20, 2021
-//          Implements Pseudo LRU
-//          Tested for Powers of 2.
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 20 July 2021
+// Modified: 20 January 2023
 //
+// Purpose: Implements Pseudo LRU. Tested for Powers of 2.
+//
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.8 and 7.15 to 7.18)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -28,18 +31,19 @@
 
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
-  input  logic                clk, reset, 
-  input  logic                CacheEn, 
-  input  logic                FlushStage,
-  input  logic [NUMWAYS-1:0]  HitWay,
-  input  logic [NUMWAYS-1:0]  ValidWay,
-  input  logic [SETLEN-1:0]   CAdr,
-  input  logic [SETLEN-1:0]   PAdr,
-  input  logic                LRUWriteEn, 
-  input  logic                SetValid, 
-  input  logic                InvalidateCache, 
-  input  logic                FlushCache,
-  output logic [NUMWAYS-1:0]  VictimWay
+  input  logic                clk, 
+  input  logic                reset, 
+  input  logic                FlushStage,      // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
+  input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
+  input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
+  input  logic [SETLEN-1:0]   CAdr,            // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   PAdr,            // Physical address 
+  input  logic                LRUWriteEn,      // Update the LRU state
+  input  logic                SetValid,        // Set the dirty bit in the selected way and set
+  input  logic                InvalidateCache, // Clear all valid bits
+  input  logic                FlushCache,      // Flush all dirty lines back to memory
+  output logic [NUMWAYS-1:0]  VictimWay        // LRU selects a victim to evict
 );
 
   localparam                           LOGNUMWAYS = $clog2(NUMWAYS);

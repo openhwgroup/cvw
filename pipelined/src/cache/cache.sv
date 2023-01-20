@@ -1,10 +1,13 @@
 ///////////////////////////////////////////
 // cache 
 //
-// Written: ross1728@gmail.com July 07, 2021
-//          Implements the L1 instruction/data cache
+// Written: Ross Thompson ross1728@gmail.com
+// Created: 7 July 2021
+// Modified: 20 January 2023
 //
-// Purpose: Storage for data and meta data.
+// Purpose: Implements the I$ and D$. Interfaces with requests from IEU and HPTW and ahbcacheinterface
+//
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figures 7.9, 7.10, and 7.19)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -53,7 +56,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic                   SelBusBeat,        // Word in cache line comes from BeatCount
   input  logic [LOGBWPL-1:0]     BeatCount,         // Beat in burst
   input  logic [LINELEN-1:0]     FetchBuffer,       // Buffer long enough to hold entire cache line arriving from bus
-  output logic [1:0]             CacheBusRW,        // [1] Read or [0] write bus
+  output logic [1:0]             CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
   output logic [`PA_BITS-1:0]    CacheBusAdr        // Address for bus access
 );
 
@@ -63,11 +66,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
   localparam                     TAGLEN = `PA_BITS - SETTOP;         // Number of tag bits
-  localparam                     WORDSPERLINE = LINELEN/WORDLEN;     // Number of words in cache line
+  localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
+  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
   localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
   localparam                     LOGLLENBYTES = $clog2(WORDLEN/8);   // Number of bits to address a word
-  localparam                     CACHEWORDSPERLINE = `DCACHE_LINELENINBITS/WORDLEN; // *** see if this is the same as WORDSPERLINE
-  localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE); // ***
+
 
   logic                          SelAdr;
   logic [1:0]                    AdrSelMuxSel;
