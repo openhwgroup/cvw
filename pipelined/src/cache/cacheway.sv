@@ -7,7 +7,7 @@
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 // 
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.12)
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.11)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
