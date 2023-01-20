@@ -55,7 +55,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic                   SelBusBeat,        // Word in cache line comes from BeatCount
   input  logic [LOGBWPL-1:0]     BeatCount,         // Beat in burst
   input  logic [LINELEN-1:0]     FetchBuffer,       // Buffer long enough to hold entire cache line arriving from bus
-  output logic [1:0]             CacheBusRW,        // [1] Read or [0] write bus
+  output logic [1:0]             CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
   output logic [`PA_BITS-1:0]    CacheBusAdr        // Address for bus access
 );
 
