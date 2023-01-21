@@ -26,7 +26,7 @@ SDC:
 	tar xzf ../src/sdc.tar.gz -C ../src
 
 PreProcessFiles:
-	cp -r ../../pipelined/src/ ../src/pipelined
+	cp -r ../../pipelined/src/ ../src/CopiedFiles_do_not_add_to_repo/
 	./insert_debug_comment.sh
 
 $(dst)/%.log: %.tcl
