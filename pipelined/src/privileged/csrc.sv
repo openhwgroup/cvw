@@ -63,7 +63,7 @@ module csrc #(parameter
 );
 
   logic [4:0]               CounterNumM;
-  (* mark_debug = "true" *)  logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
+  logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
   logic [`XLEN-1:0]         HPMCOUNTERH_REGW[`COUNTERS-1:0];
   logic                     LoadStallE, LoadStallM;
   logic [`COUNTERS-1:0]     WriteHPMCOUNTERM;

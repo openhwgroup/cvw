@@ -53,27 +53,27 @@ module plic_apb (
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
   input  logic             UARTIntr,GPIOIntr,
-    (* mark_debug = "true" *)  output logic             MExtInt, SExtInt
+  output logic             MExtInt, SExtInt
 );
 
   logic memwrite, memread;
   logic [23:0] entry;
-  (* mark_debug = "true" *) logic [31:0] Din, Dout;
+  logic [31:0] Din, Dout;
 
   // context-independent signals
-    (* mark_debug = "true" *)  logic [`N:1]      requests;
-    (* mark_debug = "true" *)  logic [`N:1][2:0] intPriority;
-    (* mark_debug = "true" *)  logic [`N:1]      intInProgress, intPending, nextIntPending;
+  logic [`N:1]      requests;
+  logic [`N:1][2:0] intPriority;
+  logic [`N:1]      intInProgress, intPending, nextIntPending;
   
   // context-dependent signals
-  (* mark_debug = "true" *) logic [`C-1:0][2:0]       intThreshold;
-    (* mark_debug = "true" *)  logic [`C-1:0][`N:1]      intEn;
-  (* mark_debug = "true" *) logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
-    (* mark_debug = "true" *)  logic [`C-1:0][7:1][`N:1] irqMatrix;
-  (* mark_debug = "true" *) logic [`C-1:0][7:1]       priorities_with_irqs;
-  (* mark_debug = "true" *) logic [`C-1:0][7:1]       max_priority_with_irqs;
-  (* mark_debug = "true" *) logic [`C-1:0][`N:1]      irqs_at_max_priority;
-  (* mark_debug = "true" *) logic [`C-1:0][7:1]       threshMask;
+  logic [`C-1:0][2:0]       intThreshold;
+  logic [`C-1:0][`N:1]      intEn;
+  logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
+  logic [`C-1:0][7:1][`N:1] irqMatrix;
+  logic [`C-1:0][7:1]       priorities_with_irqs;
+  logic [`C-1:0][7:1]       max_priority_with_irqs;
+  logic [`C-1:0][`N:1]      irqs_at_max_priority;
+  logic [`C-1:0][7:1]       threshMask;
 
   // =======
   // AHB I/O

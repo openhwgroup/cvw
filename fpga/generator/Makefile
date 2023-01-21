@@ -13,7 +13,7 @@ export board := vcu108
 
 all: FPGA
 
-FPGA: IP SDC
+FPGA: PreProcessFiles IP SDC
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
 IP: $(dst)/xlnx_proc_sys_reset.log \
@@ -24,6 +24,11 @@ IP: $(dst)/xlnx_proc_sys_reset.log \
 SDC:
 	cp $(sdc_src) ../src/
 	tar xzf ../src/sdc.tar.gz -C ../src
+
+PreProcessFiles:
+	rm -rf ../src/CopiedFiles_do_not_add_to_repo/
+	cp -r ../../pipelined/src/ ../src/CopiedFiles_do_not_add_to_repo/
+	./insert_debug_comment.sh
 
 $(dst)/%.log: %.tcl
 	mkdir -p IP

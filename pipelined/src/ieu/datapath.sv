@@ -57,7 +57,7 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM,              // Write data in Memory stage
   // Writeback stage signals
   input  logic             StallW, FlushW,          // Stall, flush Writeback stage
-(* mark_debug = "true" *)  input  logic             RegWriteW, IntDivW,  // Write register file, integer divide instruction
+ input  logic             RegWriteW, IntDivW,  // Write register file, integer divide instruction
   input  logic             SquashSCW,               // Squash a store conditional when a conflict arose
   input  logic [2:0]       ResultSrcW,              // Select source of result to write back to register file
   input  logic [`XLEN-1:0] FCvtIntResW,             // FPU convert fp to integer result
