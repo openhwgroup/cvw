@@ -53,7 +53,7 @@ module hptw (
 	input  logic                DataDAPageFaultM,
 	output logic [`XLEN-1:0]    PTE, 								// page table entry to TLBs
 	output logic [1:0]          PageType, 					// page type to TLBs
-	(* mark_debug = "true" *) output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
+	output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
 	output logic [1:0]          PreLSURWM,
 	output logic [`XLEN+1:0]    IHAdrM,
 	output logic [`XLEN-1:0]    IHWriteDataM,
@@ -67,36 +67,36 @@ module hptw (
 	output logic 								LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
 );
 
-	typedef enum logic [3:0] {L0_ADR, L0_RD, 
+  typedef enum logic [3:0] {L0_ADR, L0_RD, 
 					L1_ADR, L1_RD, 
 					L2_ADR, L2_RD, 
 					L3_ADR, L3_RD, 
 					LEAF, IDLE, UPDATE_PTE} statetype;
 
-	logic			    							DTLBWalk; // register TLBs translation miss requests
-	logic [`PPN_BITS-1:0]	    	BasePageTablePPN;
-	logic [`PPN_BITS-1:0]	    	CurrentPPN;
-	logic			    							Executable, Writable, Readable, Valid, PTE_U;
-	logic 											Misaligned, MegapageMisaligned;
-	logic			    							ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
-	logic			    							StartWalk;
-	logic     									TLBMiss;
-	logic			    							PRegEn;
-	logic [1:0]       					NextPageType;
-	logic [`SVMODE_BITS-1:0]	  SvMode;
-	logic [`XLEN-1:0] 	    		TranslationVAdr;
-  logic [`XLEN-1:0]         	NextPTE;
-  logic                     	UpdatePTE;
-  logic                     	DAPageFault;
-  logic [`PA_BITS-1:0]      	HPTWReadAdr;
-	logic                     	SelHPTWAdr;
-  logic [`XLEN+1:0]           HPTWAdrExt;
-  logic                       ITLBMissOrDAFaultF;
-  logic                       DTLBMissOrDAFaultM;
-  logic [`PA_BITS-1:0]        HPTWAdr;
-  logic [1:0]                 HPTWRW;
-  logic [2:0]                 HPTWSize; // 32 or 64 bit access
-	(* mark_debug = "true" *) statetype WalkerState, NextWalkerState, InitialWalkerState;
+  logic 		 DTLBWalk; // register TLBs translation miss requests
+  logic [`PPN_BITS-1:0] BasePageTablePPN;
+  logic [`PPN_BITS-1:0] CurrentPPN;
+  logic 				Executable, Writable, Readable, Valid, PTE_U;
+  logic 				Misaligned, MegapageMisaligned;
+  logic 				ValidPTE, LeafPTE, ValidLeafPTE, ValidNonLeafPTE;
+  logic 				StartWalk;
+  logic 				TLBMiss;
+  logic 				PRegEn;
+  logic [1:0] 			NextPageType;
+  logic [`SVMODE_BITS-1:0] SvMode;
+  logic [`XLEN-1:0] 	   TranslationVAdr;
+  logic [`XLEN-1:0] 	   NextPTE;
+  logic 				   UpdatePTE;
+  logic 				   DAPageFault;
+  logic [`PA_BITS-1:0] 	   HPTWReadAdr;
+  logic 				   SelHPTWAdr;
+  logic [`XLEN+1:0] 	   HPTWAdrExt;
+  logic 				   ITLBMissOrDAFaultF;
+  logic 				   DTLBMissOrDAFaultM;
+  logic [`PA_BITS-1:0] 	   HPTWAdr;
+  logic [1:0] 			   HPTWRW;
+  logic [2:0] 			   HPTWSize; // 32 or 64 bit access
+  statetype WalkerState, NextWalkerState, InitialWalkerState;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];

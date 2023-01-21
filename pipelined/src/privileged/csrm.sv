@@ -78,12 +78,12 @@ module csrm #(parameter
   input  logic [11:0] 	    CSRAdrM,
   input  logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
   input  logic [`XLEN-1:0]  CSRWriteValM,
-  (* mark_debug = "true" *)   input logic [11:0] 	     MIP_REGW, MIE_REGW,
+  input  logic [11:0] 	     MIP_REGW, MIE_REGW,
   output logic [`XLEN-1:0]  CSRMReadValM, MTVEC_REGW,
-  (* mark_debug = "true" *)  output logic [`XLEN-1:0] MEPC_REGW,    
+  output logic [`XLEN-1:0] MEPC_REGW,    
   output logic [31:0]       MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-(* mark_debug = "true" *)  output logic [`XLEN-1:0] MEDELEG_REGW,
-(* mark_debug = "true" *)  output logic [11:0]      MIDELEG_REGW,
+  output logic [`XLEN-1:0] MEDELEG_REGW,
+  output logic [11:0]      MIDELEG_REGW,
   output var logic [7:0]    PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
   output logic 	            WriteMSTATUSM, WriteMSTATUSHM,
@@ -91,8 +91,8 @@ module csrm #(parameter
 );
 
   logic [`XLEN-1:0]         MISA_REGW, MHARTID_REGW;
-  (* mark_debug = "true" *)  logic [`XLEN-1:0] MSCRATCH_REGW;
-  (* mark_debug = "true" *)   logic [`XLEN-1:0] MCAUSE_REGW, MTVAL_REGW;
+  logic [`XLEN-1:0] MSCRATCH_REGW;
+  logic [`XLEN-1:0] MCAUSE_REGW, MTVAL_REGW;
   logic                     WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                     WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                     WriteMCOUNTERENM, WriteMCOUNTINHIBITM;

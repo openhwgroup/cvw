@@ -85,7 +85,7 @@ module cachefsm (
 					               STATE_FLUSH,
 					               STATE_FLUSH_WRITEBACK} statetype;
 
-  (* mark_debug = "true" *) statetype CurrState, NextState;
+  statetype CurrState, NextState;
 
   assign AMO = CacheAtomic[1] & (&CacheRW);
   assign StoreAMO = AMO | CacheRW[0];
