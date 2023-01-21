@@ -58,7 +58,7 @@ module spill #(
   logic 			   SpillSaveF;
   logic [15:0]         InstrFirstHalf;
   typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
-  (* mark_debug = "true" *)  statetype CurrState, NextState;
+   statetype CurrState, NextState;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 

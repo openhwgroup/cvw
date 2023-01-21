@@ -34,7 +34,7 @@ module privileged (
   input  logic             StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW, 
   // CSR Reads and Writes, and values needed for traps
-(* mark_debug = "true" *)  input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
+  input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
@@ -104,7 +104,7 @@ module privileged (
   logic                    DelegateM;                                 // trap should be delegated
   logic                    wfiM;                                      // wait for interrupt instruction
   logic                    IntPendingM;                               // interrupt is pending, even if not enabled.  ends wfi
-  (* mark_debug = "true" *) logic InterruptM;                         // interrupt occuring
+  logic InterruptM;                         // interrupt occuring
 
 
   // track the current privilege level

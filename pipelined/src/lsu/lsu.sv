@@ -47,8 +47,8 @@ module lsu (
   output logic             DCacheAccess,                            // D cache memory access for performance counters
   // address and write data
   input  logic [`XLEN-1:0] IEUAdrE,                                 // Execution stage memory address
-  (* mark_debug = "true" *) output logic [`XLEN-1:0] IEUAdrM,       // Memory stage memory address
-  (* mark_debug = "true" *) input logic [`XLEN-1:0] WriteDataM,     // Write data from IEU
+  output logic [`XLEN-1:0] IEUAdrM,       // Memory stage memory address
+  input logic [`XLEN-1:0] WriteDataM,     // Write data from IEU
   output logic [`LLEN-1:0] ReadDataW,                               // Read data to IEU or FPU
   // cpu privilege
   input  logic [1:0]       PrivilegeModeW,                          // Current privilege mode
@@ -66,15 +66,15 @@ module lsu (
   output logic             StoreAmoMisalignedFaultM,                // Store or AMO address misaligned fault
   output logic             StoreAmoAccessFaultM,                    // Store or AMO access fault
           // connect to ahb
-  (* mark_debug = "true" *)   output logic [`PA_BITS-1:0] LSUHADDR, // Bus address from LSU to EBU
-  (* mark_debug = "true" *)   input logic [`XLEN-1:0] HRDATA,       // Bus read data from LSU to EBU
-  (* mark_debug = "true" *)   output logic [`XLEN-1:0] LSUHWDATA,   // Bus write data from LSU to EBU
-  (* mark_debug = "true" *)   input logic LSUHREADY,                // Bus ready from LSU to EBU
-  (* mark_debug = "true" *)   output logic LSUHWRITE,               // Bus write operation from LSU to EBU
-  (* mark_debug = "true" *)   output logic [2:0] LSUHSIZE,          // Bus operation size from LSU to EBU
-  (* mark_debug = "true" *)   output logic [2:0] LSUHBURST,         // Bus burst from LSU to EBU
-  (* mark_debug = "true" *)   output logic [1:0] LSUHTRANS,         // Bus transaction type from LSU to EBU
-  (* mark_debug = "true" *)   output logic [`XLEN/8-1:0] LSUHWSTRB, // Bus byte write enables from LSU to EBU
+  output logic [`PA_BITS-1:0] LSUHADDR, // Bus address from LSU to EBU
+  input logic [`XLEN-1:0] HRDATA,       // Bus read data from LSU to EBU
+  output logic [`XLEN-1:0] LSUHWDATA,   // Bus write data from LSU to EBU
+  input logic LSUHREADY,                // Bus ready from LSU to EBU
+  output logic LSUHWRITE,               // Bus write operation from LSU to EBU
+  output logic [2:0] LSUHSIZE,          // Bus operation size from LSU to EBU
+  output logic [2:0] LSUHBURST,         // Bus burst from LSU to EBU
+  output logic [1:0] LSUHTRANS,         // Bus transaction type from LSU to EBU
+  output logic [`XLEN/8-1:0] LSUHWSTRB, // Bus byte write enables from LSU to EBU
           // page table walker
   input  logic [`XLEN-1:0] SATP_REGW,                               // SATP (supervisor address translation and protection) CSR
   input  logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
@@ -93,7 +93,7 @@ module lsu (
   logic [`XLEN+1:0]         IEUAdrExtM;                              // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [`XLEN+1:0]         IEUAdrExtE;                              // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
   logic [`PA_BITS-1:0]      PAdrM;                                   // Physical memory address
-  (* mark_debug = "true" *)  logic [`XLEN+1:0] IHAdrM;               // Either IEU or HPTW memory address
+   logic [`XLEN+1:0] IHAdrM;               // Either IEU or HPTW memory address
 
   logic [1:0] 				PreLSURWM;                               // IEU or HPTW Read/Write signal
   logic [1:0] 				LSURWM;                                  // IEU or HPTW Read/Write signal gated by LR/SC
