@@ -52,23 +52,23 @@ module wallypipelinedcore (
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          RetM;
-  (* mark_debug = "true" *) logic TrapM;
+  logic TrapM;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
   logic [`XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
-(* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
+  logic [`XLEN-1:0] 			 SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  (* mark_debug = "true" *) logic [31:0]             InstrM;
+  logic [31:0] 					 InstrM;
   logic [`XLEN-1:0]              PCF, PCE, PCLinkE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
- logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-   logic [`XLEN-1:0]             UnalignedPCNextF, PCNext2F;
-  (* mark_debug = "true" *) logic [1:0]       MemRWM;
-  (* mark_debug = "true" *) logic             InstrValidM;
+  logic [`XLEN-1:0] 			 PCM;
+  logic [`XLEN-1:0]              CSRReadValW, MDUResultW;
+  logic [`XLEN-1:0]              UnalignedPCNextF, PCNext2F;
+  logic [1:0] 					 MemRWM;
+  logic 						 InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -110,7 +110,6 @@ module wallypipelinedcore (
   logic                          sfencevmaM, WFIStallM;
   logic                          SelHPTW;
 
-
   // PMA checker signals
   var logic [`XLEN-1:0]          PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
@@ -122,8 +121,8 @@ module wallypipelinedcore (
   // cpu lsu interface
   logic [2:0]                    Funct3M;
   logic [`XLEN-1:0]              IEUAdrE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
+  logic [`XLEN-1:0] WriteDataM;
+  logic [`XLEN-1:0] IEUAdrM;  
   logic [`LLEN-1:0]              ReadDataW;  
   logic                          CommittedM;
 

@@ -42,21 +42,21 @@ module csrs #(parameter
   STVAL = 12'h143,
   SIP= 12'h144,
   SATP = 12'h180) (
-    input logic 	     clk, reset, 
-    input logic 	     InstrValidNotFlushedM, 
-    input logic 	     CSRSWriteM, STrapM,
-    input logic [11:0] 	     CSRAdrM,
-    input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
-    input logic 	     STATUS_TVM,
-    input logic [`XLEN-1:0]  CSRWriteValM,
-    input logic [1:0] 	     PrivilegeModeW,
-    (* mark_debug = "true" *) output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
-    (* mark_debug = "true" *) output logic [`XLEN-1:0] SEPC_REGW,      
-    output logic [31:0]      SCOUNTEREN_REGW, 
-    output logic [`XLEN-1:0] SATP_REGW,
-    (* mark_debug = "true" *) input logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,
-    output logic 	     WriteSSTATUSM,
-    output logic 	     IllegalCSRSAccessM
+  input logic 	     clk, reset, 
+  input logic 	     InstrValidNotFlushedM, 
+  input logic 	     CSRSWriteM, STrapM,
+  input logic [11:0] 	     CSRAdrM,
+  input logic [`XLEN-1:0]  NextEPCM, NextCauseM, NextMtvalM, SSTATUS_REGW, 
+  input logic 	     STATUS_TVM,
+  input logic [`XLEN-1:0]  CSRWriteValM,
+  input logic [1:0] 	     PrivilegeModeW,
+  output logic [`XLEN-1:0] CSRSReadValM, STVEC_REGW,
+  output logic [`XLEN-1:0] SEPC_REGW,      
+  output logic [31:0]      SCOUNTEREN_REGW, 
+  output logic [`XLEN-1:0] SATP_REGW,
+  input logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,
+  output logic 	     WriteSSTATUSM,
+  output logic 	     IllegalCSRSAccessM
 );
 
   // Constants
@@ -66,8 +66,8 @@ module csrs #(parameter
   logic               WriteSTVECM;
   logic               WriteSSCRATCHM, WriteSEPCM;
   logic               WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
-  (* mark_debug = "true" *)  logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] SCAUSE_REGW;      
+  logic [`XLEN-1:0] SSCRATCH_REGW, STVAL_REGW;
+  logic [`XLEN-1:0] SCAUSE_REGW;      
   
   // write enables
   assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & InstrValidNotFlushedM;

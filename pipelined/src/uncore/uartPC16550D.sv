@@ -56,10 +56,10 @@ module uartPC16550D(
   typedef enum logic [1:0] {UART_IDLE, UART_ACTIVE, UART_DONE, UART_BREAK} statetype;
 
   // Registers
-   (* mark_debug = "true" *)  logic [10:0] RBR;
-   (* mark_debug = "true" *)  logic [7:0]  FCR, LCR, LSR, SCR, DLL, DLM;
-   (* mark_debug = "true" *)  logic [3:0]  IER, MSR;
-   (* mark_debug = "true" *)  logic [4:0]  MCR;
+  logic [10:0] RBR;
+  logic [7:0]  FCR, LCR, LSR, SCR, DLL, DLM;
+  logic [3:0]  IER, MSR;
+  logic [4:0]  MCR;
 
   // Syncrhonized and delayed UART signals
   logic 	   SINd, DSRbd, DCDbd, CTSbd, RIbd;
@@ -72,50 +72,50 @@ module uartPC16550D(
   logic 	   DLAB; // Divisor Latch Access Bit (LCR bit 7)
 
   // Baud and rx/tx timing
-  (* mark_debug = "true" *) logic 	   baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
+  logic 	   baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
   logic [16+`UART_PRESCALE-1:0] baudcount;
   logic [3:0] 					rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
   logic [3:0] 					rxbitsreceived, txbitssent;
-   (* mark_debug = "true" *)  statetype rxstate, txstate;
+    statetype rxstate, txstate;
 
   // shift registrs and FIFOs
   logic [9:0] 					rxshiftreg;
-  (* mark_debug = "true" *) logic [10:0] 					rxfifo[15:0];
-  (* mark_debug = "true" *) logic [7:0] 					txfifo[15:0];
+  logic [10:0] 					rxfifo[15:0];
+  logic [7:0] 					txfifo[15:0];
   logic [4:0] 					rxfifotailunwrapped;
-(* mark_debug = "true" *)  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
-(* mark_debug = "true" *)  logic [3:0] 					rxfifoentries, txfifoentries;
+  logic [3:0] 					rxfifohead, rxfifotail, txfifohead, txfifotail, rxfifotriggerlevel;
+  logic [3:0] 					rxfifoentries, txfifoentries;
   logic [3:0] 					rxbitsexpected, txbitsexpected;
 
   // receive data
-   (* mark_debug = "true" *)  logic [10:0] 					RXBR;
-  (* mark_debug = "true" *) logic [9:0] 					rxtimeoutcnt;
+    logic [10:0] 					RXBR;
+  logic [9:0] 					rxtimeoutcnt;
   logic 						rxcentered;
   logic 						rxparity, rxparitybit, rxstopbit;
-   (* mark_debug = "true" *)  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
-(* mark_debug = "true" *)  logic 						rxdataready;
-(* mark_debug = "true" *)  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
+  logic 						rxparityerr, rxoverrunerr, rxframingerr, rxbreak, rxfifohaserr;
+  logic 						rxdataready;
+  logic 						rxfifoempty, rxfifotriggered, rxfifotimeout;
   logic 						rxfifodmaready;
   logic [8:0] 					rxdata9;
-  (* mark_debug = "true" *) logic [7:0] 					rxdata;
-  (* mark_debug = "true" *) logic [15:0] 					RXerrbit, rxfullbit;
-  (* mark_debug = "true" *) logic [31:0] 					rxfullbitunwrapped;
+  logic [7:0] 					rxdata;
+  logic [15:0] 					RXerrbit, rxfullbit;
+  logic [31:0] 					rxfullbitunwrapped;
 
   // transmit data
   logic [7:0] 					TXHR, nexttxdata;
-  (* mark_debug = "true" *) logic [11:0] 					txdata, txsr;
-  (* mark_debug = "true" *) logic 						txnextbit, txhrfull, txsrfull;
+  logic [11:0] 					txdata, txsr;
+  logic 						txnextbit, txhrfull, txsrfull;
   logic 						txparity;
-  (* mark_debug = "true" *) logic 						txfifoempty, txfifofull, txfifodmaready;
+  logic 						txfifoempty, txfifofull, txfifodmaready;
 
   // control signals
-(* mark_debug = "true" *)  logic 						fifoenabled, fifodmamodesel, evenparitysel;
+  logic 						fifoenabled, fifodmamodesel, evenparitysel;
 
   // interrupts
-(* mark_debug = "true" *)  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
-(* mark_debug = "true" *)  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
-(* mark_debug = "true" *)  logic 						rxdataavailintr, modemstatusintr, intrpending;
-(* mark_debug = "true" *)  logic [2:0] 					intrID;
+  logic 						RXerr, RXerrIP, squashRXerrIP, prevSquashRXerrIP, setSquashRXerrIP, resetSquashRXerrIP;
+  logic 						THRE, THRE_IP, squashTHRE_IP, prevSquashTHRE_IP, setSquashTHRE_IP, resetSquashTHRE_IP;
+  logic 						rxdataavailintr, modemstatusintr, intrpending;
+  logic [2:0] 					intrID;
 
   logic 						baudpulseComb;
   logic 						HeadPointerLastMove;
