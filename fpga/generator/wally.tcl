@@ -15,7 +15,7 @@ read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/x
 read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 
 
-read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
+read_verilog -sv [glob -type f ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
 read_verilog  {../src/fpgaTop.v}
 read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
