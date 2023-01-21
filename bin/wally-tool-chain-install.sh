@@ -3,6 +3,8 @@ export PATH=$PATH:$RISCV/bin
 
 NUM_THREADS=4
 
+sudo mkdir -p $RISCV
+
 # UPDATE / UPGRADE
 apt update
 
@@ -10,6 +12,7 @@ apt update
 apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev 
 
 # gcc cross-compiler
+cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=${RISCV} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
@@ -17,6 +20,7 @@ make -j $(NUM_THREADS)
 make install
 
 # elf2hex
+cd $RISCV
 export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
 cd elf2hex
@@ -32,6 +36,7 @@ apt-get -y install pkg-config
 apt-get -y install libglib2.0-dev
 
 # QEMU
+cd $RISCV
 git clone --recurse-submodules https://github.com/qemu/qemu
 cd qemu
 ./configure --target-list=riscv64-softmmu --prefix=$RISCV 
@@ -39,6 +44,7 @@ make -j $(NUM_THREADS)
 make install
 
 # Spike
+cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir riscv-isa-sim/build
 cd riscv-isa-sim/build
@@ -50,6 +56,7 @@ sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
 # SAIL
+cd $RISCV
 apt-get install -y opam  build-essential libgmp-dev z3 pkg-config zlib1g-dev
 git clone https://github.com/Z3Prover/z3.git
 cd z3
