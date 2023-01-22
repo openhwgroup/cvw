@@ -1,6 +1,6 @@
 #!/bin/bash
 ###########################################
-## cache 
+## Tool chain install script.
 ##
 ## Written: Ross Thompson ross1728@gmail.com
 ## Created: 18 January 2023
