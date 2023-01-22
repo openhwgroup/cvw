@@ -1,15 +1,19 @@
 export RISCV=/opt/riscv
 export PATH=$PATH:$RISCV/bin
 
-NUM_THREADS=4
+set -e # break on error
+
+NUM_THREADS=1
 
 sudo mkdir -p $RISCV
 
 # UPDATE / UPGRADE
-apt update
+#apt update
 
 # INSTALL 
-apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev 
+#apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev
+
+ln -sf /usr/bin/python3 /usr/bin/python  # this is unforunate.  gcc needs python but it looks specifically for python and not python3 or python2.
 
 # gcc cross-compiler
 cd $RISCV
