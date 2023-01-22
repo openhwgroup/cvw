@@ -3,6 +3,8 @@ Configurable RISC-V Processor
 
 Wally is a 5-stage pipelined processor configurable to support all the standard RISC-V options, incluidng RV32/64, A, C, F, D, and M extensions, FENCE.I, and the various privileged modes and CSRs.  It is written in SystemVerilog.  It passes the RISC-V Arch Tests and boots Linux on an FPGA.
 
+![Wally block diagram](wallyriscvTopAll.png)
+
 Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  See Appendix D for directions installing the RISC-V tool chain needed to use Wally.
 
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
