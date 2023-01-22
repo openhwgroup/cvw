@@ -1,9 +1,11 @@
-export RISCV=/opt/riscv
+export RISCV=/mnt/500gbs/riscv
 export PATH=$PATH:$RISCV/bin
 
 set -e # break on error
 
-NUM_THREADS=1
+#NUM_THREADS=1 # for low memory machines > 8GiB
+NUM_THREADS=8  # for >= 32GiB
+#NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
 
@@ -13,14 +15,15 @@ apt update
 # INSTALL 
 apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev
 
-ln -sf /usr/bin/python3 /usr/bin/python  # this is unforunate.  gcc needs python but it looks specifically for python and not python3 or python2.
+# needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
+ln -sf /usr/bin/python3 /usr/bin/python  
 
 # gcc cross-compiler
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
 ./configure --prefix=${RISCV} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-make
+make -j ${NUM_THREADS}
 make install
 
 # elf2hex
@@ -44,7 +47,7 @@ cd $RISCV
 git clone --recurse-submodules https://github.com/qemu/qemu
 cd qemu
 ./configure --target-list=riscv64-softmmu --prefix=$RISCV 
-make 
+make -j ${NUM_THREADS}
 make install
 
 # Spike
@@ -53,7 +56,7 @@ git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
 cd riscv-isa-sim/build
 ../configure --prefix=$RISCV --enable-commitlog
-make 
+make -j ${NUM_THREADS}
 make install 
 cd ../arch_test_target/spike/device
 sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
@@ -66,7 +69,7 @@ git clone https://github.com/Z3Prover/z3.git
 cd z3
 python scripts/mk_make.py
 cd build
-make 
+make  -j ${NUM_THREADS}
 make install
 cd ../..
 pip3 install chardet==3.0.4
@@ -78,7 +81,7 @@ opam install sail -y
 eval $(opam config env)
 git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
-make 
+make -j ${NUM_THREADS}
 ARCH=RV32 make
 ARCH=RV64 make
 ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
