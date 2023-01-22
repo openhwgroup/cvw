@@ -90,8 +90,8 @@ cd sail-riscv
 make -j ${NUM_THREADS}
 ARCH=RV32 make
 ARCH=RV64 make
-ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
-ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
+ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
+ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
 pip3 install testresources
 pip3 install riscof --ignore-installed PyYAML
