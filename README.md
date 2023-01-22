@@ -39,7 +39,7 @@ This section describes the open source toolchain installation.  These steps shou
 The full instalation details are involved can be be skipped using the following script, wally-tool-chain-install.sh.
 The script installs the open source tools to /opt/riscv by default.  This can be changed by supply the path as the first argument.  This script does not install buildroot (see the Detailed Tool-chain Install Guide in the following section) and does not install commercial EDA tools; Siemens Questa, Synopsys Design Compiler, or Cadence Innovus (see section Installing IDA Tools). It must be run as root or with sudo. This script is tested for Ubuntu, 20.04 and 22.04. Fedora and Red Hat can be installed in the Detailed Tool-chain Install Guide.
 
-	wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
+	$ wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
 
 ## Detailed Tool-chain Install Guide
 
@@ -49,11 +49,11 @@ The script installs the open source tools to /opt/riscv by default.  This can be
 
 Compiling, assembling, and simulating RISC-V programs requires downloading and installing the following free tools:
 
-	1. The GCC cross-compiler
-	2. A RISC-V simulator such as Spike, Sail, and/or QEMU
-	3. Spike is easy to use but doesn’t support peripherals to boot Linux
-	4. QEMU is faster and can boot Linux
-	5. Sail is presently the official golden reference for RISC-V and is used by the riscof verification suite, but runs slowly and is painful to instal
+1. The GCC cross-compiler
+2. A RISC-V simulator such as Spike, Sail, and/or QEMU
+3. Spike is easy to use but doesn’t support peripherals to boot Linux
+4. QEMU is faster and can boot Linux
+5. Sail is presently the official golden reference for RISC-V and is used by the riscof verification suite, but runs slowly and is painful to instal
 
 This setup needs to be done once by the administrator
 
