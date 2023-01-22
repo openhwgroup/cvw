@@ -1,4 +1,6 @@
-export RISCV=/mnt/500gbs/riscv
+#!/bin/bash
+
+export RISCV="${1:-/opt/riscv}"
 export PATH=$PATH:$RISCV/bin
 
 set -e # break on error
