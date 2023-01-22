@@ -16,7 +16,11 @@ apt update
 apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
-ln -sf /usr/bin/python3 /usr/bin/python  
+if ! command -v python &> /dev/null
+then
+    echo "WARNING: python3 was installed as python3 rather than python. Creating symlink."
+    ln -sf /usr/bin/python3 /usr/bin/python
+fi
 
 # gcc cross-compiler
 cd $RISCV
