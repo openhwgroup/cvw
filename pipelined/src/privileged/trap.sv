@@ -30,14 +30,14 @@
 
 module trap (
   input  logic 		                             reset, 
-  (* mark_debug = "true" *) input  logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
-  (* mark_debug = "true" *) input  logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
-  (* mark_debug = "true" *) input  logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
-  (* mark_debug = "true" *) input  logic 		   LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
-  (* mark_debug = "true" *) input  logic 		   mretM, sretM,                                    // return instructions
+  input  logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
+  input  logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  input  logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
+  input  logic 		   LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
+  input  logic 		   mretM, sretM,                                    // return instructions
   input  logic                                 wfiM,                                            // wait for interrupt instruction
   input  logic [1:0] 	                         PrivilegeModeW,                                  // current privilege mode
-  (* mark_debug = "true" *) input logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
+  input  logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
   input  logic [`XLEN-1:0]                     MEDELEG_REGW,                                    // exception delegation SR
   input  logic 		                             STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
   input  logic 		                             InstrValidM,                                     // current instruction is valid, not flushed
@@ -55,7 +55,7 @@ module trap (
   logic                                        ExceptionM;                                      // exception is occurring
   logic                                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
   logic                                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
-  (* mark_debug = "true" *) logic [11:0]       PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
+  logic [11:0]       PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts

@@ -7,7 +7,7 @@
 //
 // Purpose: Controller for the dcache fsm
 //
-// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.15 and Table 7.1)
+// Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 //
@@ -85,7 +85,7 @@ module cachefsm (
 					               STATE_FLUSH,
 					               STATE_FLUSH_WRITEBACK} statetype;
 
-  (* mark_debug = "true" *) statetype CurrState, NextState;
+  statetype CurrState, NextState;
 
   assign AMO = CacheAtomic[1] & (&CacheRW);
   assign StoreAMO = AMO | CacheRW[0];

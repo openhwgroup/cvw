@@ -28,18 +28,18 @@
 
 `include "wally-config.vh"
 
-module hazard(
+module hazard (
   // Detect hazards
-(* mark_debug = "true" *)	      input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,   
-(* mark_debug = "true" *)	      input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
-(* mark_debug = "true" *)	      input logic  LSUStallM, IFUStallF,
-(* mark_debug = "true" *)       input logic  FCvtIntStallD, FPUStallD,
-(* mark_debug = "true" *)	      input logic  DivBusyE, FDivBusyE,
-(* mark_debug = "true" *)	      input logic  EcallFaultM, BreakpointFaultM,
-(* mark_debug = "true" *)       input logic  WFIStallM,
+  input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
+  input logic  LSUStallM, IFUStallF,
+  input logic  FCvtIntStallD, FPUStallD,
+  input logic  DivBusyE, FDivBusyE,
+  input logic  EcallFaultM, BreakpointFaultM,
+  input logic  WFIStallM,
   // Stall & flush outputs
-(* mark_debug = "true" *)	      output logic StallF, StallD, StallE, StallM, StallW,
-(* mark_debug = "true" *)	      output logic FlushD, FlushE, FlushM, FlushW
+  output logic StallF, StallD, StallE, StallM, StallW,
+  output logic FlushD, FlushE, FlushM, FlushW
 );
 
   logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;

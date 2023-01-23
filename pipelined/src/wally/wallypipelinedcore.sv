@@ -52,23 +52,23 @@ module wallypipelinedcore (
   logic                          StallF, StallD, StallE, StallM, StallW;
   logic                          FlushD, FlushE, FlushM, FlushW;
   logic                          RetM;
-  (* mark_debug = "true" *) logic TrapM;
+  logic TrapM;
 
   //  signals that must connect through DP
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
   logic [`XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
-(* mark_debug = "true" *)  logic [`XLEN-1:0]         SrcAM;
+  logic [`XLEN-1:0] 			 SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  (* mark_debug = "true" *) logic [31:0]             InstrM;
+  logic [31:0] 					 InstrM;
   logic [`XLEN-1:0]              PCF, PCE, PCLinkE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
- logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-   logic [`XLEN-1:0]             UnalignedPCNextF, PCNext2F;
-  (* mark_debug = "true" *) logic [1:0]       MemRWM;
-  (* mark_debug = "true" *) logic             InstrValidM;
+  logic [`XLEN-1:0] 			 PCM;
+  logic [`XLEN-1:0]              CSRReadValW, MDUResultW;
+  logic [`XLEN-1:0]              UnalignedPCNextF, PCNext2F;
+  logic [1:0] 					 MemRWM;
+  logic 						 InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -110,7 +110,6 @@ module wallypipelinedcore (
   logic                          sfencevmaM, WFIStallM;
   logic                          SelHPTW;
 
-
   // PMA checker signals
   var logic [`XLEN-1:0]          PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
@@ -122,8 +121,8 @@ module wallypipelinedcore (
   // cpu lsu interface
   logic [2:0]                    Funct3M;
   logic [`XLEN-1:0]              IEUAdrE;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] WriteDataM;
-  (* mark_debug = "true" *) logic [`XLEN-1:0] IEUAdrM;  
+  logic [`XLEN-1:0] WriteDataM;
+  logic [`XLEN-1:0] IEUAdrM;  
   logic [`LLEN-1:0]              ReadDataW;  
   logic                          CommittedM;
 
@@ -163,6 +162,10 @@ module wallypipelinedcore (
   logic                          FCvtIntE;
   logic                          CommittedF;
   
+  // Bit manipulation unit
+  logic [`XLEN-1:0]              BMUResultE;    // Bit manipuation result BMU -> IEU
+  logic                          BMUE;          // is this a BMU instruction
+ 
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -190,7 +193,7 @@ module wallypipelinedcore (
      .InstrD, .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .BMUE,
      // Memory stage interface
      .SquashSCW, // from LSU
      .MemRWM, // read/write control goes to LSU
@@ -200,7 +203,7 @@ module wallypipelinedcore (
      .SrcAM, // to privilege and fpu
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
+     .CSRReadValW, .MDUResultW, .BMUResultE, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -357,4 +360,15 @@ module wallypipelinedcore (
     assign SetFflagsM = 0;
     assign FpLoadStoreM = 0;
   end
+
+  // bit manipulation unit
+  if (`B_SUPPORTED) begin:bmu
+    bmu bmu(.ForwardedSrcAE, .ForwardedSrcBE, .InstrD, .BMUE, .BMUResultE); 
+  end else begin // no B instructions supported
+    assign BMUResultE = 0; 
+    assign BMUE = 0;
+  end
+
+
+  
 endmodule

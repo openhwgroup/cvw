@@ -133,6 +133,7 @@ logic [3:0] dummy;
         "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
         "coremark":                       tests = coremark;
+        "arch32ba":     if (`ZBA_SUPPORTED) tests = arch32ba;
       endcase
     end
     if (tests.size() == 0) begin
