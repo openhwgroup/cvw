@@ -18,9 +18,17 @@ New users may wish to do the following setup to access the server via a GUI and 
 
 Then follow Section 2.2 to clone the repo, source setup,  make the tests and run regression
 
+	If you don't already have a Github account, create one
+	In a web browser, visit https://github.com/openhwgroup/cvw
+	In the upper right part of the screen, click on Fork
+	Create a fork, choosing the owner as your github account and the repository as cvw.
+	
+	On the Linux computer where you will be working, log in, clone your fork of the repo,
+	run the setup script, and build the tests:
+
 	$ cd
-	$ git clone --recurse-submodules https://github.com/davidharrishmc/riscv-wally
-	$ cd riscv-wally
+	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+	$ cd cvw
 	$ source ./setup.sh
 	$ make
 	$ cd pipelined/regression
@@ -28,8 +36,8 @@ Then follow Section 2.2 to clone the repo, source setup,  make the tests and run
 
 Add the following lines to your .bashrc or .bash_profile
 
-	if [ -f ~/riscv-wally/setup.sh ]; then
-		source ~/riscv-wally/setup.sh
+	if [ -f ~/cvw/setup.sh ]; then
+		source ~/cvw/setup.sh
 	fi
 
 # Tool-chain Installation (Sys Admin)
