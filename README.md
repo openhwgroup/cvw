@@ -15,6 +15,9 @@ New users may wish to do the following setup to access the server via a GUI and 
 		Terminal on Mac, cmd on Windows, xterm on Linux
 		See A.1 about ssh -Y login from a terminal
 	Git started with Git configuration and authentication: B.1
+		$ git config --global user.name ″Ben Bitdiddle″
+		$ git config --global user.email ″ben_bitdiddle@wally.edu″
+		$ git config --global pull.rebase false
 
 Then follow Section 2.2 to clone the repo, source setup,  make the tests and run regression
 
