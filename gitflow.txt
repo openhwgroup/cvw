@@ -1,0 +1,38 @@
+###########################################
+## A component of the CORE-V-WALLY configurable RISC-V project.
+##
+## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+##
+## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+##
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## may obtain a copy of the License at
+##
+## https:##solderpad.org/licenses/SHL-2.1/
+##
+## Unless required by applicable law or agreed to in writing, any work distributed under the 
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+## either express or implied. See the License for the specific language governing permissions 
+## and limitations under the License.
+################################################################################################
+
+Setup
+1. goto github and fork openhwgroup/cvw.git
+2. clone: git clone --recurse-submodules git@ross144/cvw.git
+3. git remote add upstream https://github.com/openhwgroup/cvw.git
+
+Once per sessiosn
+1. gh auth login
+2. Use ssh and point to your public key
+3. Copy one-time code from terminal to browser
+
+Fetch upstream and sync fork
+1. git fetch upstream
+2. git push
+
+Create pull request
+1. gh pr create
+2. Must include a title and strongly encourage a body message explaining your changes.
+3. Wait for pull request to be approved, rejected, or needs changes.
+4. Finish by fetching the upstream and pushing back to your fork.
