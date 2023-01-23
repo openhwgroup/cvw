@@ -32,8 +32,8 @@
 `include "wally-config.vh"
 
 module lsu (
-  input  logic                clk,set,
-  input  logic                StallM,ushM, StallW, FlushW,
+  input  logic                clk, reset,
+  input  logic                StallM, FlushM, StallW, FlushW,
   output logic                LSUStallM,                            // LSU stalls pipeline during a multicycle operation
   // connected to cpu (controls)
   input  logic [1:0]          MemRWM,                               // Read/Write control
@@ -58,7 +58,7 @@ module lsu (
   input  logic [`FLEN-1:0]    FWriteDataM,                          // Write data from FPU
   input  logic                FpLoadStoreM,                         // Selects FPU as store for write data
   // faults
-  output logic                LoadPageFaultM,oreAmoPageFaultM,      // Page fault exceptions
+  output logic                LoadPageFaultM, StoreAmoPageFaultM,   // Page fault exceptions
   output logic                LoadMisalignedFaultM,                 // Load address misaligned fault
   output logic                LoadAccessFaultM,                     // Load access fault (PMA)
   output logic                HPTWInstrAccessFaultM,                // HPTW generated access fault during instruction fetch
@@ -77,7 +77,7 @@ module lsu (
   output logic [`XLEN/8-1:0]  LSUHWSTRB,                            // Bus byte write enables from LSU to EBU
   // page table walker
   input  logic [`XLEN-1:0]    SATP_REGW,                            // SATP (supervisor address translation and protection) CSR
-  input  logic                STATUS_MXR,ATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
+  input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
   input  logic [1:0]          STATUS_MPP,                           // Machine previous privilege mode
   input  logic [`XLEN-1:0]    PCF,                                  // Fetch PC 
   input  logic                ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
@@ -86,7 +86,7 @@ module lsu (
   output logic [1:0]          PageType,                             // Type of page table entry to write to ITLB
   output logic                ITLBWriteF,                           // Write PTE to ITLB
   output logic                SelHPTW,                              // During a HPTW walk the effective privilege mode becomes S_MODE
-  input var logic [7:0]       PMPCFG_ARRAY_REGW[P_ENTRIES-1:0],     // PMP configuration from privileged unit
+  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
   input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
 );
 

@@ -31,13 +31,14 @@
 `include "wally-config.vh"
 
 module lrsc(
-  input  logic                clk, reset,
+  input  logic                clk, 
+  input  logic                reset,
   input  logic                StallW,
-  input  logic                MemReadM,
+  input  logic                MemReadM,   // Memory read
   input  logic [1:0]          PreLSURWM,
   output logic [1:0]          LSURWM,
-  input  logic [1:0] 	        LSUAtomicM,
-  input  logic [`PA_BITS-1:0] PAdrM,  // from mmu to dcache
+  input  logic [1:0] 	      LSUAtomicM,
+  input  logic [`PA_BITS-1:0] PAdrM,      // from mmu to dcache
   output logic                SquashSCW
 );
 
