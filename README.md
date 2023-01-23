@@ -26,6 +26,12 @@ Then follow Section 2.2 to clone the repo, source setup,  make the tests and run
 	On the Linux computer where you will be working, log in, clone your fork of the repo,
 	run the setup script, and build the tests:
 
+Add the following lines to your .bashrc or .bash_profile
+
+	if [ -f ~/cvw/setup.sh ]; then
+		source ~/cvw/setup.sh
+	fi
+
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
@@ -33,12 +39,6 @@ Then follow Section 2.2 to clone the repo, source setup,  make the tests and run
 	$ make
 	$ cd pipelined/regression
 	$ ./regression-wally       (depends on having Questa installed)
-
-Add the following lines to your .bashrc or .bash_profile
-
-	if [ -f ~/cvw/setup.sh ]; then
-		source ~/cvw/setup.sh
-	fi
 
 # Tool-chain Installation (Sys Admin)
 
