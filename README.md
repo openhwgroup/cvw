@@ -67,9 +67,9 @@ The script installs the open source tools to /opt/riscv by default.  This can be
 
 	$ sudo wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
 
-## Detailed Tool-chain Install Guide
+## Detailed Toolchain Install Guide
 
-   Section 2.1 described Wally platform requirements and Section 2.2 describes how a user gets started using Wally on a Linux server.  This appendix describes how the system administrator installs RISC-V tools.  Superuser privileges are necessary for many of the tools. Setting up all of the tools can be time-consuming and fussy, so this appendix also describes a fallback flow with Docker and Podman.  
+This section describes how to install the tools needed for CORE-V-Wally. Superuser privileges are necessary for many of the tools. Setting up all of the tools can be time-consuming and fussy, so Appendix D also describes an option with a Docker container.  
 
 ### Open Source Software Installation
 
