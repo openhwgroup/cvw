@@ -7,38 +7,54 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 
 Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  Users should follow the setup instructions below.  A system administrator must install CAD tools using the directions further down.
 
+# New User Setup
+
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
-	Download and install x2go - A.1.1
-	Download and install VSCode - A.4.2
-	Make sure you can log into Tera acceptly via x2go and via a terminal
+	Optional: Download and install x2go - A.1.1
+	Optional: Download and install VSCode - A.4.2
+	Optional: Make sure you can log into your server via x2go and via a terminal
 		Terminal on Mac, cmd on Windows, xterm on Linux
 		See A.1 about ssh -Y login from a terminal
 	Git started with Git configuration and authentication: B.1
+		$ git config --global user.name ″Ben Bitdiddle″
+		$ git config --global user.email ″ben_bitdiddle@wally.edu″
+		$ git config --global pull.rebase false
 
-Then follow Section 2.2 to clone the repo, source setup,  make the tests and run regression
+Then clone the repo, source setup,  make the tests and run regression
 
 	If you don't already have a Github account, create one
 	In a web browser, visit https://github.com/openhwgroup/cvw
 	In the upper right part of the screen, click on Fork
 	Create a fork, choosing the owner as your github account and the repository as cvw.
 	
-	On the Linux computer where you will be working, log in, clone your fork of the repo,
-	run the setup script, and build the tests:
+	On the Linux computer where you will be working, log in
+
+Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.
+
+	if [ -f ~/cvw/setup.sh ]; then
+		source ~/cvw/setup.sh
+	fi
+
+Clone your fork of the repo, run the setup script, and build the tests:
 
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
 	$ source ./setup.sh
 	$ make
+	
+Edit setup.sh and change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.
+
+	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
+	export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
+	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     # Change this for your path to Questa
+	export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
+
+Run a regression simulation with Questa to prove everything is installed.
+
 	$ cd pipelined/regression
 	$ ./regression-wally       (depends on having Questa installed)
-
-Add the following lines to your .bashrc or .bash_profile
-
-	if [ -f ~/cvw/setup.sh ]; then
-		source ~/cvw/setup.sh
-	fi
 
 # Tool-chain Installation (Sys Admin)
 
@@ -49,7 +65,7 @@ This section describes the open source toolchain installation.  These steps shou
 The full instalation details are involved can be be skipped using the following script, wally-tool-chain-install.sh.
 The script installs the open source tools to /opt/riscv by default.  This can be changed by supply the path as the first argument.  This script does not install buildroot (see the Detailed Tool-chain Install Guide in the following section) and does not install commercial EDA tools; Siemens Questa, Synopsys Design Compiler, or Cadence Innovus (see section Installing IDA Tools). It must be run as root or with sudo. This script is tested for Ubuntu, 20.04 and 22.04. Fedora and Red Hat can be installed in the Detailed Tool-chain Install Guide.
 
-	$ wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
+	$ sudo wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
 
 ## Detailed Tool-chain Install Guide
 
