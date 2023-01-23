@@ -5,7 +5,7 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 
 ![Wally block diagram](wallyriscvTopAll.png)
 
-Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  See Appendix D for directions installing the RISC-V tool chain needed to use Wally.
+Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  Users should follow the setup instructions below.  A system administrator must install CAD tools using the directions further down.
 
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
