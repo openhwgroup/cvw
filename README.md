@@ -5,7 +5,7 @@ Wally is a 5-stage pipelined processor configurable to support all the standard 
 
 ![Wally block diagram](wallyriscvTopAll.png)
 
-Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  See Appendix D for directions installing the RISC-V tool chain needed to use Wally.
+Wally is described in a textbook, RISC-V System-on-Chip Design, by Harris, Stine, Thompson, and Harris.  Users should follow the setup instructions below.  A system administrator must install CAD tools using the directions further down.
 
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
@@ -18,9 +18,17 @@ New users may wish to do the following setup to access the server via a GUI and 
 
 Then follow Section 2.2 to clone the repo, source setup,  make the tests and run regression
 
+	If you don't already have a Github account, create one
+	In a web browser, visit https://github.com/openhwgroup/cvw
+	In the upper right part of the screen, click on Fork
+	Create a fork, choosing the owner as your github account and the repository as cvw.
+	
+	On the Linux computer where you will be working, log in, clone your fork of the repo,
+	run the setup script, and build the tests:
+
 	$ cd
-	$ git clone --recurse-submodules https://github.com/davidharrishmc/riscv-wally
-	$ cd riscv-wally
+	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+	$ cd cvw
 	$ source ./setup.sh
 	$ make
 	$ cd pipelined/regression
@@ -28,8 +36,8 @@ Then follow Section 2.2 to clone the repo, source setup,  make the tests and run
 
 Add the following lines to your .bashrc or .bash_profile
 
-	if [ -f ~/riscv-wally/setup.sh ]; then
-		source ~/riscv-wally/setup.sh
+	if [ -f ~/cvw/setup.sh ]; then
+		source ~/cvw/setup.sh
 	fi
 
 # Tool-chain Installation (Sys Admin)
