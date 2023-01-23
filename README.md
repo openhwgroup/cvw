@@ -23,15 +23,15 @@ Then follow Section 2.2 to clone the repo, source setup,  make the tests and run
 	In the upper right part of the screen, click on Fork
 	Create a fork, choosing the owner as your github account and the repository as cvw.
 	
-	On the Linux computer where you will be working, log in, clone your fork of the repo,
-	run the setup script, and build the tests:
+	On the Linux computer where you will be working, log in
 
-Add the following lines to your .bashrc or .bash_profile
+Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.
 
 	if [ -f ~/cvw/setup.sh ]; then
 		source ~/cvw/setup.sh
 	fi
 
+Clone your fork of the repo, run the setup script, and build the tests:
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
