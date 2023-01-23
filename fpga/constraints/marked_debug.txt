@@ -30,6 +30,7 @@ wally/wallypipelinedcore.sv: logic           MemRWM
 wally/wallypipelinedcore.sv: logic                InstrValidM
 wally/wallypipelinedcore.sv: logic     WriteDataM
 wally/wallypipelinedcore.sv: logic     IEUAdrM
+wally/wallypipelinedcore.sv: logic   HRDATA
 ifu/spill.sv:    statetype CurrState
 ifu/ifu.sv: logic    				IFUStallF
 ifu/ifu.sv: logic     IFUHADDR
