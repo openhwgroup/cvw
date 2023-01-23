@@ -32,6 +32,7 @@ Add the following lines to your .bashrc or .bash_profile to run the setup script
 	fi
 
 Clone your fork of the repo, run the setup script, and build the tests:
+
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
 	$ cd cvw
