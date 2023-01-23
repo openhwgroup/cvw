@@ -1,12 +1,10 @@
 #!/bin/bash
-
 ###########################################
-## Written: james.stine@okstate.edu
-## Created: 4 Jan 2022
-## Modified: 
+## insert_debug_comment.sh
 ##
-## Purpose: Script to run elf2hex for memfile for
-##          Imperas and riscv-arch-test benchmarks
+## Written: Ross Thompson ross1728@gmail.com
+## Created: 20 January 2023
+## Modified: 20 January 2023
 ##
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ##
@@ -18,7 +16,7 @@
 ## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
 ## may obtain a copy of the License at
 ##
-## https:##solderpad.org/licenses/SHL-2.1/
+## https:##solderpad.org#licenses#SHL-2.1#
 ##
 ## Unless required by applicable law or agreed to in writing, any work distributed under the 
 ## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
@@ -26,14 +24,15 @@
 ## and limitations under the License.
 ################################################################################################
 
-for file in work/rv64i_m/*/*.elf ; do
-    memfile=${file%.elf}.elf.memfile
-    echo riscv64-unknown-elf-elf2hex --bit-width 64 --input "$file" 
-    riscv64-unknown-elf-elf2hex --bit-width 64 --input "$file" --output "$memfile"
-done
-
-for file in work/rv32i_m/*/*.elf ; do
-    memfile=${file%.elf}.elf.memfile
-    echo riscv64-unknown-elf-elf2hex --bit-width 32 --input "$file"
-    riscv64-unknown-elf-elf2hex --bit-width 32 --input "$file" --output "$memfile"
-done
+# This script copies wally's pipelined#src to fpga#src#CopiedFiles_do_not_add_to_repo
+# Then it processes them to add mark_debug on signals needed by the FPGA's ILA.
+copiedDir="../src/CopiedFiles_do_not_add_to_repo"
+while read line; do
+    readarray -d ":" -t StrArray <<< "$line"
+    file="${copiedDir}/${StrArray[0]}"
+    signal=`echo "${StrArray[1]}" | awk '{$1=$1};1'`
+    readarray -d " " -t SigArray <<< $signal
+    sigType=`echo "${SigArray[0]}" | awk '{$1=$1};1'`
+    sigName=`echo "${SigArray[1]}" | awk '{$1=$1};1'`
+    find $copiedDir -wholename $file | xargs sed -i "s/\(.*${sigType}.*${sigName}\)/(\* mark_debug = \"true\" \*)\1/g" 
+done < ../constraints/marked_debug.txt

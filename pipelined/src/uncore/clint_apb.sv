@@ -39,14 +39,14 @@ module clint_apb (
   input  logic                PENABLE,
   output logic [`XLEN-1:0]    PRDATA,
   output logic                PREADY,
-  (* mark_debug = "true" *) output logic [63:0] MTIME, 
+  output logic [63:0] MTIME, 
   output logic 			          MTimerInt, MSwInt
 );
 
   logic                       MSIP;
   logic [15:0]                entry;
   logic                       memwrite;
-   (* mark_debug = "true" *)    logic [63:0] MTIMECMP;
+  logic [63:0] MTIMECMP;
   integer                     i, j;
   
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase

@@ -50,7 +50,7 @@ module busfsm (
   typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3}                                             busstatetype;
   typedef enum logic [1:0] {AHB_IDLE = 2'b00, AHB_BUSY = 2'b01, AHB_NONSEQ = 2'b10, AHB_SEQ = 2'b11} ahbtranstype;
 
-  (* mark_debug = "true" *) busstatetype CurrState, NextState;
+  busstatetype CurrState, NextState;
 
   always_ff @(posedge HCLK)
     if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;

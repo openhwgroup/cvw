@@ -28,32 +28,32 @@
 `include "wally-config.vh"
 
 module ifu (
-  input logic 				clk, reset,
-  input logic 				StallF, StallD, StallE, StallM, StallW,
-  input logic 				FlushD, FlushE, FlushM, FlushW, 
-(* mark_debug = "true" *)  output logic 				IFUStallF,    // IFU stalsl pipeline during a multicycle operation
+  input  logic 				clk, reset,
+  input  logic 				StallF, StallD, StallE, StallM, StallW,
+  input  logic 				FlushD, FlushE, FlushM, FlushW, 
+  output logic 				IFUStallF,    // IFU stalsl pipeline during a multicycle operation
   // Command from CPU
-  input logic               InvalidateICacheM,                        // Clears all instruction cache valid bits
-  input logic         	    CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
+  input  logic              InvalidateICacheM,                        // Clears all instruction cache valid bits
+  input  logic         	    CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
 	// Bus interface
-(* mark_debug = "true" *)  output logic [`PA_BITS-1:0] IFUHADDR,      // Bus address from IFU to EBU
-(* mark_debug = "true" *)  input logic [`XLEN-1:0] 	HRDATA,           // Bus read data from IFU to EBU
-(* mark_debug = "true" *)  input logic   IFUHREADY,                   // Bus ready from IFU to EBU
-(* mark_debug = "true" *)  output logic  IFUHWRITE,                   // Bus write operation from IFU to EBU
-(* mark_debug = "true" *)  output logic [2:0]  IFUHSIZE,              // Bus operation size from IFU to EBU
-(* mark_debug = "true" *)  output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
-(* mark_debug = "true" *)  output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
+  output logic [`PA_BITS-1:0] IFUHADDR,      // Bus address from IFU to EBU
+  input  logic [`XLEN-1:0] 	HRDATA,           // Bus read data from IFU to EBU
+  input  logic   IFUHREADY,                   // Bus ready from IFU to EBU
+  output logic  IFUHWRITE,                   // Bus write operation from IFU to EBU
+  output logic [2:0]  IFUHSIZE,              // Bus operation size from IFU to EBU
+  output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
+  output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
 
-(* mark_debug = "true" *)  output logic [`XLEN-1:0] PCF,              // Fetch stage instruction address
-	// Execute
+  output logic [`XLEN-1:0] PCF,              // Fetch stage instruction address
+  // Execute
   output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
-  input logic 				PCSrcE,                                   // Executation stage branch is taken
-  input logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
+  input  logic 				PCSrcE,                                   // Executation stage branch is taken
+  input  logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
   output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
   output logic 				BPPredWrongE,                             // Prediction is wrong
-	// Mem
+  // Mem
   output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
-  input logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
+  input  logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
   output logic [`XLEN-1:0]  PCNext2F,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   output logic [31:0] 		InstrD,                                   // The decoded instruction in Decode stage
   output logic [31:0]       InstrM,                                   // The decoded instruction in Memory stage
@@ -91,7 +91,7 @@ module ifu (
 
   localparam [31:0]            nop = 32'h00000013;                    // instruction for NOP
 
-  (* mark_debug = "true" *)  logic [`XLEN-1:0]            PCNextF;    // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  logic [`XLEN-1:0]            PCNextF;    // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [`XLEN-1:0]			   PCNextFSpill;                          // Next PCF after possible + 2 to handle spill
@@ -100,14 +100,14 @@ module ifu (
   logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
   logic [`XLEN-1:0] 		   NextValidPCE;                          // The PC of the next valid instruction in the pipeline after  csr write or fence
-(* mark_debug = "true" *)  logic [`PA_BITS-1:0]         PCPF;         // Physical address after address translation
+  logic [`PA_BITS-1:0]         PCPF;         // Physical address after address translation
   logic [`XLEN+1:0]            PCFExt;                                //
 
   logic [31:0] 				   IROMInstrF;                            // Instruction from the IROM
   logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
   logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
   logic                        CompressedF;                           // The fetched instruction is compressed
-(* mark_debug = "true" *)  logic [31:0]  PostSpillInstrRawF;          // Fetch instruction after merge two halves of spill
+  logic [31:0]  PostSpillInstrRawF;          // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
   logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10

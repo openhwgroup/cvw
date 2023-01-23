@@ -1,13 +1,20 @@
 ///////////////////////////////////////////
-// simple_timer.sv
+// bmu.sv
 //
-// Written: Ross Thompson September 20, 2021
+// Written: kekim@g.hmc.edu, David_Harris@hmc.edu 20 January 2023
 // Modified: 
 //
-// Purpose: SD card controller
+// Purpose: Bit manipulation extensions Zba, Zbb, Zbc, Zbs
+//          Single-cycle operation in Execute stage
 // 
+// Documentation: n/a
+// See RISC-V Bit-Manipulation ISA-extensions
+//     Version 1.0.0-38-g865e7a7, 2021-06-28: Release candidate
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+//
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
 // Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
@@ -24,31 +31,15 @@
 
 `include "wally-config.vh"
 
-module simple_timer #(parameter BUS_WIDTH = 4) (
-  input  logic [BUS_WIDTH-1:0] VALUE,
-  input  logic 		            START,
-  output logic 	              FLAG,
-  input  logic 		            RST,
-  input  logic 		            CLK
+module bmu(
+	input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
+  input  logic [31:0] 			InstrD,                           // instruction        
+  output logic              BMUE,                             // bit manipulation instruction  								
+	output logic [`XLEN-1:0] 	BMUResultE												// bit manipulation result
 );
 
 
-  logic [BUS_WIDTH-1:0]     count;
-  logic timer_en;
 
-  assign timer_en = count != 0;
+endmodule // mdu
 
-  always_ff @(posedge CLK, posedge RST) begin
-    if (RST) begin
-      count <= '0;
-    end else if (START) begin
-      count <= VALUE - 1'b1;
-    end else if(timer_en) begin
-      count <= count - 1'b1;
-    end
-  end
 
-  assign FLAG = count != 0;
-  
-endmodule
-   

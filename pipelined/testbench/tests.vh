@@ -944,6 +944,14 @@ string imperas32f[] = '{
     "rv32i_m/Zifencei/src/Fencei.S"
     };
 
+  string arch32ba[] = '{
+    `RISCVARCHTEST,
+    // *** unclear why add.uw isn't in the list
+    "rv64i_m/B/src/sh1add-01.S",
+    "rv64i_m/B/src/sh1add-02.S",
+    "rv64i_m/B/src/sh1add-013.S"
+  };
+
   string arch64m[] = '{
     `RISCVARCHTEST,
     "rv64i_m/M/src/div-01.S",

@@ -40,9 +40,9 @@ module uart_apb (
   input  logic             PENABLE,
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
-  (* mark_debug = "true" *) input  logic             SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
-  (* mark_debug = "true" *) output logic             SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
-  (* mark_debug = "true" *) output logic             OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
+  input  logic             SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
+  output logic             SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
+  output logic             OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
 
   // UART interface signals
   logic [2:0]      entry;

@@ -126,3 +126,6 @@ tests/custom/*/*/*.map
 tests/custom/*/*/*.memfile
 tests/custom/crt0/*.a
 /pipelined/regression/sd_model.log
+fpga/src/sdc/*
+fpga/src/sdc.tar.gz
+fpga/src/CopiedFiles_do_not_add_to_repo/*
