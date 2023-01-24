@@ -144,6 +144,8 @@ module ebu (
   // a burst is completed.
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+  // *** move into a separate module to match the figures 9.8 and 9.8
+
   assign both = LSUReq & IFUReq;
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
