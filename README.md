@@ -56,7 +56,7 @@ Run a regression simulation with Questa to prove everything is installed.
 	$ cd pipelined/regression
 	$ ./regression-wally       (depends on having Questa installed)
 
-# Tool-chain Installation (Sys Admin)
+# Toolchain Installation (Sys Admin)
 
 This section describes the open source toolchain installation.  These steps should only be done once by the system admin.
 
@@ -67,9 +67,9 @@ The script installs the open source tools to /opt/riscv by default.  This can be
 
 	$ sudo wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
 
-## Detailed Tool-chain Install Guide
+## Detailed Toolchain Install Guide
 
-   Section 2.1 described Wally platform requirements and Section 2.2 describes how a user gets started using Wally on a Linux server.  This appendix describes how the system administrator installs RISC-V tools.  Superuser privileges are necessary for many of the tools. Setting up all of the tools can be time-consuming and fussy, so this appendix also describes a fallback flow with Docker and Podman.  
+This section describes how to install the tools needed for CORE-V-Wally. Superuser privileges are necessary for many of the tools. Setting up all of the tools can be time-consuming and fussy, so Appendix D also describes an option with a Docker container.  
 
 ### Open Source Software Installation
 
@@ -102,11 +102,11 @@ First, set up a directory for riscv software in some place such as /opt/riscv.  
 
 ### Update Tools
 
-Ubuntu users may need to install and update various tools.
+Ubuntu users may need to install and update various tools.  Beware when cutting and pasting that some lines are long!
 
 	$ sudo apt update
 	$ sudo apt upgrade
-	$ sudo apt install git gawk make texinfo bison flex build-essential python libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libglib2.56-dev libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog 
+	$ sudo apt install git gawk make texinfo bison flex build-essential python3 zlib1g-dev libexpat-dev autoconf device-tree-compiler ninja-build libglib2.0-dev libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog 
 
 ### Install RISC-V GCC Cross-Compiler
 
@@ -264,6 +264,17 @@ For logic synthesis, we need a synthesis tool (see Section 3.XREF) and a cell li
 	$ mkdir cad/lib
 	$ cd cad/lib
 	$ git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12
+
+### Install github cli
+
+The github cli allows users to directly issue pull requests from their fork back to openhwgroup/cvw using the command line.
+
+	$ type -p curl >/dev/null || sudo apt install curl -y
+	$ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \ && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+	&& sudo apt update \
+	&& sudo apt install gh -y
+
 
 ## Installing EDA Tools
 
