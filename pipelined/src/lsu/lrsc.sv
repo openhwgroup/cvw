@@ -31,21 +31,23 @@
 `include "wally-config.vh"
 
 module lrsc(
-  input  logic                clk, reset,
+  input  logic                clk, 
+  input  logic                reset,
   input  logic                StallW,
-  input  logic                MemReadM,
-  input  logic [1:0]          PreLSURWM,
-  output logic [1:0]          LSURWM,
-  input  logic [1:0] 	        LSUAtomicM,
-  input  logic [`PA_BITS-1:0] PAdrM,  // from mmu to dcache
-  output logic                SquashSCW
+  input  logic                MemReadM,   // Memory read
+  input  logic [1:0]          PreLSURWM,  // Memory operation from the HPTW or IEU [1]: read, [0]: write
+  output logic [1:0]          LSURWM,     // Memory operation after potential squash of SC
+  input  logic [1:0] 	      LSUAtomicM, // Atomic memory operaiton
+  input  logic [`PA_BITS-1:0] PAdrM,      // Physical memory address 
+  output logic                SquashSCW   // Squash the store conditional by not allowing rf write
 );
 
+  // possible bug: *** double check if PreLSURWM needs to be flushed by ignorerequest.
   // Handle atomic load reserved / store conditional
-  logic [`PA_BITS-1:2] 			  ReservationPAdrW;
-  logic 						          ReservationValidM, ReservationValidW; 
-  logic 						          lrM, scM, WriteAdrMatchM;
-  logic 						          SquashSCM;
+  logic [`PA_BITS-1:2] 		  ReservationPAdrW;
+  logic 					  ReservationValidM, ReservationValidW; 
+  logic 					  lrM, scM, WriteAdrMatchM;
+  logic 					  SquashSCM;
 
   assign lrM = MemReadM & LSUAtomicM[0];
   assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
