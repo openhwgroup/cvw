@@ -66,8 +66,6 @@ module ebu (
   output logic HMASTLOCK             // AHB master lock.  Wally does not use
 );
 
-  typedef enum                logic [1:0] {IDLE, ARBITRATE} statetype;
-  statetype                   CurrState, NextState;
 
   logic                       LSUDisable;
   logic 					  LSUSelect;
@@ -75,7 +73,6 @@ module ebu (
   logic 					  IFURestore;
   logic 					  IFUDisable;
   logic 					  IFUSelect;
-  logic                       both;                       // Both the LSU and IFU request at the same time
 
   logic [`PA_BITS-1:0]        IFUHADDROut;
   logic [1:0]                 IFUHTRANSOut;
@@ -92,12 +89,6 @@ module ebu (
   logic                       IFUReq;
   logic 					  LSUReq;
 
-  logic                       BeatCntEn;
-  logic [4-1:0]               NextBeatCount, BeatCount;   // Position within a burst transfer
-  logic                       FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
-  logic                       CntReset;
-  logic [3:0]                 Threshold;                  // Number of beats derived from HBURST
-  logic                       IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
   
   
   assign HCLK = clk;
@@ -137,66 +128,9 @@ module ebu (
   assign HWSTRB = LSUHWSTRB;
   // HRDATA is sent to all controllers at the core level.
 
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Aribtration scheme
-  // FSM decides if arbitration needed.  Arbitration is held until the last beat of
-  // a burst is completed.
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  assign both = LSUReq & IFUReq;
-  flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
-  always_comb 
-    case (CurrState) 
-      IDLE: if (both)                                           NextState = ARBITRATE; 
-            else                                                NextState = IDLE;
-      ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq))  NextState = IDLE;
-                 else                                           NextState = ARBITRATE;
-      default:                                                  NextState = IDLE;
-    endcase
-
-  // basic arb always selects LSU when both
-  // replace this block for more sophisticated arbitration as needed.
-  // Controller 0 (IFU)
-  assign IFUSave = CurrState == IDLE & both;
-  assign IFURestore = CurrState == ARBITRATE;
-  assign IFUDisable = CurrState == ARBITRATE;
-  assign IFUSelect = (NextState == ARBITRATE) ? 1'b0 : IFUReq;
-  // Controller 1 (LSU)
-  // When both the IFU and LSU request at the same time, the FSM will go into the arbitrate state.
-  // Once the LSU request is done the fsm returns to IDLE.  To prevent the LSU from regaining
-  // priority and re issuing the same memroy operation, the delayed IFUReqD squashes the LSU request.
-  // This is necessary because the pipeline is stalled for the entire duration of both transactions,
-  // and the LSU memory request will stil be active.
-  flopr #(1) ifureqreg(clk, ~HRESETn, IFUReq, IFUReqD);
-  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
-  assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
-
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Burst mode logic
-  ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-  flopenr #(4) BeatCountReg(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, NextBeatCount, BeatCount);  
-  assign NextBeatCount = BeatCount + 1'b1;
-
-  assign CntReset = NextState == IDLE;
-  assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
-  assign BeatCntEn = (NextState == ARBITRATE & HREADY);
-
-  // Used to store data from data phase of AHB.
-  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | CntReset, BeatCntEn, FinalBeat, FinalBeatD);
-
-  // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
-  always_comb begin
-    case(HBURST)
-      0:        Threshold = 4'b0000;
-      3:        Threshold = 4'b0011; // INCR4
-      5:        Threshold = 4'b0111; // INCR8
-      7:        Threshold = 4'b1111; // INCR16
-      default:  Threshold = 4'b0000; // INCR without end.
-    endcase
-  end
-  
-
+  ebufsmarb ebufsmarb(.HCLK, .HRESETn, .HBURST, .HREADY, .LSUReq, .IFUReq, .IFUSave,
+		      .IFURestore, .IFUDisable, .IFUSelect, .LSUDisable, .LSUSelect);
   
 endmodule
+
+
