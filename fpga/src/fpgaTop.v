@@ -226,6 +226,7 @@ module fpgaTop
   // 64to32 dwidth converter input interface-------------------------
   wire s01_axi_aclk;
   wire s01_axi_aresetn;
+  wire [3:0]s01_axi_awid;
   wire [31:0]s01_axi_awaddr;
   wire [7:0]s01_axi_awlen;
   wire [2:0]s01_axi_awsize;
@@ -242,9 +243,11 @@ module fpgaTop
   wire s01_axi_wlast;
   wire s01_axi_wvalid;
   wire s01_axi_wready;
+  wire [3:0]m01_axi_bid;
   wire [1:0]s01_axi_bresp;
   wire s01_axi_bvalid;
   wire s01_axi_bready;
+  wire [3:0]m01_axi_bid;
   wire [31:0]s01_axi_araddr;
   wire [7:0]s01_axi_arlen;
   wire [2:0]s01_axi_arsize;
@@ -256,6 +259,7 @@ module fpgaTop
   wire [3:0]s01_axi_arqos; //
   wire s01_axi_arvalid;
   wire s01_axi_arready;
+  wire [3:0]m01_axi_rid;
   wire [63:0]s01_axi_rdata;
   wire [1:0]s01_axi_rresp;
   wire s01_axi_rlast;
@@ -338,6 +342,7 @@ module fpgaTop
   wire SDCout_axi_rready;
 
   // Output Interface
+  wire [3:0]m01_axi_awid;
   wire [31:0]m01_axi_awaddr;
   wire [7:0]m01_axi_awlen;
   wire [2:0]m01_axi_awsize;
@@ -354,9 +359,11 @@ module fpgaTop
   wire m01_axi_wlast;
   wire m01_axi_wvalid;
   wire m01_axi_wready;
+  wire [3:0] m01_axi_bid;
   wire [1:0]m01_axi_bresp;
   wire m01_axi_bvalid;
   wire m01_axi_bready;
+  wire [3:0] m01_axi_arid;
   wire [31:0]m01_axi_araddr;
   wire [7:0]m01_axi_arlen;
   wire [2:0]m01_axi_arsize;
@@ -368,6 +375,7 @@ module fpgaTop
   wire [3:0]m01_axi_arqos;
   wire m01_axi_arvalid;
   wire m01_axi_arready;
+  wire [3:0] m01_axi_rid;
   wire [31:0]m01_axi_rdata;
   wire [1:0]m01_axi_rresp;
   wire m01_axi_rlast;
