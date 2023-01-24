@@ -74,12 +74,14 @@ module ram2p1r1wb #(parameter DEPTH = 10, WIDTH = 2) (
   flopenr #(WIDTH) wd2Reg(clk, reset, ren1, wd2, wd2q);
 
   // read port
-  assign rd1 = mem[ra1q];
+  //assign rd1 = mem[ra1q];
+  always_ff @(posedge clk)
+	if(ren1) rd1 <= mem[ra1];
   
   // write port
-  assign bwe = {WIDTH{wen2q}} & bwe2;
+  assign bwe = {WIDTH{wen2}} & bwe2;
   always_ff @(posedge clk)
-    mem[wa2q] <= wd2q & bwe | mem[wa2q] & ~bwe;
+    mem[wa2] <= wd2 & bwe | mem[wa2] & ~bwe;
  
 endmodule  
 

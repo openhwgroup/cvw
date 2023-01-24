@@ -59,13 +59,13 @@ module ram2p1r1wbefix #(parameter DEPTH=128, WIDTH=256) (
   
   // Write divided into part for bytes and part for extra msbs
   if(WIDTH >= 8) 
-    always_ff @(posedge clk) 
+    always @(posedge clk) 
       if (ce2 & we2) 
         for(i = 0; i < WIDTH/8; i++) 
           if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
   
   if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-    always_ff @(posedge clk) 
+    always @(posedge clk) 
       if (ce2 & we2 & bwe2[WIDTH/8])
         mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= #1 wd2[WIDTH-1:WIDTH-WIDTH%8];
 
