@@ -29,27 +29,27 @@
 `include "wally-config.vh"
 
 module bpred (
-  input logic              clk, reset,
-  input logic              StallF, StallD, StallE, StallM, StallW,
-  input logic              FlushD, FlushE, FlushM, FlushW,
+  input  logic             clk, reset,
+  input  logic             StallF, StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, FlushW,
   // Fetch stage
   // the prediction
-  input logic [31:0]       InstrD,                    // Decompressed decode stage instruction. Used to decode instruction class
-  input logic [`XLEN-1:0]  PCNextF,                   // Next Fetch Address
-  input logic [`XLEN-1:0]  PCPlus2or4F,               // PCF+2/4
+  input  logic [31:0]      InstrD,                    // Decompressed decode stage instruction. Used to decode instruction class
+  input  logic [`XLEN-1:0] PCNextF,                   // Next Fetch Address
+  input  logic [`XLEN-1:0] PCPlus2or4F,               // PCF+2/4
   output logic [`XLEN-1:0] PCNext1F,                  // Branch Predictor predicted or corrected fetch address on miss prediction
   output logic [`XLEN-1:0] NextValidPCE,              // Address of next valid instruction after the instruction in the Memory stage
 
   // Update Predictor
-  input logic [`XLEN-1:0]  PCF,                       // Fetch stage instruction address
-  input logic [`XLEN-1:0]  PCD,                       // Decode stage instruction address. Also the address the branch predictor took
-  input logic [`XLEN-1:0]  PCE,                       // Execution stage instruction address
-  input logic [`XLEN-1:0]  PCM,                       // Memory stage instruction address
+  input  logic [`XLEN-1:0] PCF,                       // Fetch stage instruction address
+  input  logic [`XLEN-1:0] PCD,                       // Decode stage instruction address. Also the address the branch predictor took
+  input  logic [`XLEN-1:0] PCE,                       // Execution stage instruction address
+  input  logic [`XLEN-1:0] PCM,                       // Memory stage instruction address
 
   // Branch and jump outcome
-  input logic              PCSrcE,                    // Executation stage branch is taken
-  input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
-  input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
+  input  logic             PCSrcE,                    // Executation stage branch is taken
+  input  logic [`XLEN-1:0] IEUAdrE,                   // The branch/jump target address
+  input  logic [`XLEN-1:0]  dPCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
   // Report branch prediction status
