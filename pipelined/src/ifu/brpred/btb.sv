@@ -103,7 +103,7 @@ module btb
 
   // *** optimize for byte write enables
 
-  ram2p1r1wbefix #(2**Depth, `XLEN+4) memory(
+  ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({InstrClass, BTBPredPCF}),
      .ce2(~StallE), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
 

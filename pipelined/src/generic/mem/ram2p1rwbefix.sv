@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
-// 1 port sram.
+// 2 port sram.
 //
 // Written: ross1728@gmail.com May 3, 2021
-//          Basic sram with 1 read write port.
+//          Two port SRAM 1 read port and 1 write port.
 //          When clk rises Addr and LineWriteData are sampled.
 //          Following the clk edge read data is output from the sampled Addr.
 //          Write 
@@ -31,7 +31,7 @@
 
 `include "wally-config.vh"
 
-module ram2p1r1wbefix #(parameter DEPTH=128, WIDTH=256) (
+module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
   input  logic                     clk,
   input  logic                     ce1, ce2,
   input  logic [$clog2(DEPTH)-1:0] ra1,

@@ -77,7 +77,7 @@ module foldedgshare
   assign FinalIndexNextF = IndexNextF[depth-1:0] ^ {{delta{1'b0}} , IndexNextF[k-1:depth]};
   assign FinalIndexW = IndexW[depth-1:0] ^ {{delta{1'b0}} , IndexW[k-1:depth]};
         
-  ram2p1r1wbefix #(2**depth, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**depth, 2) PHT(.clk(clk),
     .ce1(~StallF | reset), .ce2(~StallW & ~FlushW),
     .ra1(FinalIndexNextF),
     .rd1(TableDirPredictionF),

@@ -153,7 +153,7 @@ module optgshare
   assign IndexM = GHRM[k-1:0] ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   assign IndexW = GHRW[k-1:0] ^ {PCW[k+1] ^ PCW[1], PCW[k:2]};
       
-  ram2p1r1wbefix #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF | reset), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(TableDirPredictionF),
