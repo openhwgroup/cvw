@@ -56,7 +56,7 @@ Run a regression simulation with Questa to prove everything is installed.
 	$ cd pipelined/regression
 	$ ./regression-wally       (depends on having Questa installed)
 
-# Tool-chain Installation (Sys Admin)
+# Toolchain Installation (Sys Admin)
 
 This section describes the open source toolchain installation.  These steps should only be done once by the system admin.
 
@@ -102,11 +102,11 @@ First, set up a directory for riscv software in some place such as /opt/riscv.  
 
 ### Update Tools
 
-Ubuntu users may need to install and update various tools.
+Ubuntu users may need to install and update various tools.  Beware when cutting and pasting that some lines are long!
 
 	$ sudo apt update
 	$ sudo apt upgrade
-	$ sudo apt install git gawk make texinfo bison flex build-essential python libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libglib2.56-dev libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog 
+	$ sudo apt install git gawk make texinfo bison flex build-essential python3 zlib1g-dev libexpat-dev autoconf device-tree-compiler ninja-build libglib2.0-dev libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog 
 
 ### Install RISC-V GCC Cross-Compiler
 
