@@ -56,7 +56,7 @@ module twoBitPredictor
   assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
 
 
-  ram2p1r1wbefix #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
     .ra1(IndexNextF),
     .rd1(DirPredictionF),

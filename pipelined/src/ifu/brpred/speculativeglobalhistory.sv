@@ -60,7 +60,7 @@ module speculativeglobalhistory
   logic [1:0]              ForwardNewDirPrediction, ForwardDirPredictionF;
   
       
-  ram2p1r1wbefix #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF | reset), .ce2(~StallW & ~FlushW),
     .ra1(GHRNextF),
     .rd1(TableDirPredictionF),
