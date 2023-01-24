@@ -1,5 +1,5 @@
 dst := IP
-sdc_src := ~/repos/sdc.tar.gz
+sdc_src := ../../../sdc.tar.gz
 # vcu118
 #export XILINX_PART := xcvu9p-flga2104-2L-e
 #export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
@@ -22,7 +22,8 @@ IP: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ahblite_axi_bridge.log \
 	$(dst)/xlnx_axi_crossbar.log \
 	$(dst)/xlnx_axi_dwidth_conv_32to64.log \
-	$(dst)/xlnx_axi_dwidth_conv_64to32.log
+	$(dst)/xlnx_axi_dwidth_conv_64to32.log \
+	$(dst)/xlnx_axi_prtcl_conv.log
 
 SDC:
 	cp $(sdc_src) ../src/

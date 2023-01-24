@@ -18,6 +18,7 @@ read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 read_ip IP/xlnx_axi_crossbar.srcs/sources_1/ip/xlnx_axi_crossbar/xlnx_axi_crossbar.xci
 read_ip IP/xlnx_axi_dwidth_conv_32to64.srcs/sources_1/ip/xlnx_axi_dwidth_conv_32to64/xlnx_axi_dwidth_conv_32to64.xci
 read_ip IP/xlnx_axi_dwidth_conv_64to32.srcs/sources_1/ip/xlnx_axi_dwidth_conv_64to32/xlnx_axi_dwidth_conv_64to32.xci
+read_ip IP/xlnx_axi_prtcl_conv.srcs/sources_1/ip/xlnx_axi_prtcl_conv/xlnx_axi_prtcl_conv.xci
 
 # read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
 read_verilog -sv [glob -type f ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
