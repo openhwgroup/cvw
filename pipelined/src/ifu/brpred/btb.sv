@@ -41,7 +41,7 @@ module btb
    output logic [3:0]       PredInstrClassF,
    output logic             PredValidF,
    // update
-   input  logic             UpdateEN,
+   input  logic             PredictionInstrClassWrongE,
    input  logic [`XLEN-1:0] PCE,
    input  logic [`XLEN-1:0] IEUAdrE,
    input  logic [3:0]       InstrClassE
@@ -50,7 +50,6 @@ module btb
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex;
-  logic                     UpdateENQ;
   logic [`XLEN-1:0] 		ResetPC;
   logic 					MatchF, MatchD, MatchE, MatchNextX, MatchXF;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
@@ -67,8 +66,10 @@ module btb
   assign PCDIndex = {PCD[Depth+1] ^ PCD[1], PCD[Depth:2]};
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
 
-  // must output a valid PC and valid bit during reset.  Because the PCNextF logic of the IFU and trap units
-  // does not mux in RESET_VECTOR we have to do it here.  This is a performance optimization.
+  // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
+  // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
+  // While thie mux could be included in IFU it is not necessary for the IROM/I$/bus.
+  // For now it is optimal to leave it here.
   assign ResetPC = `RESET_VECTOR;
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
@@ -90,7 +91,7 @@ module btb
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
-    end else if (UpdateEN & ~StallM & ~FlushM) begin
+    end else if ((|InstrClassE | PredictionInstrClassWrongE) & ~StallM & ~FlushM) begin
       ValidBits[PCEIndex] <= #1 |InstrClassE;
     end
 	PredValidF = ValidBits[PCNextFIndex];
@@ -102,8 +103,5 @@ module btb
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
 
   flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {PredInstrClassF, BTBPredPCF}, {PredInstrClassD, BTBPredPCD});
-
-
-  
 
 endmodule
