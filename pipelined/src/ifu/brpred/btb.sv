@@ -35,7 +35,7 @@ module btb
     )
   (input  logic             clk,
    input  logic             reset,
-   input  logic             StallF, StallE,
+   input  logic             StallF, StallE, StallM, FlushM,
    input  logic [`XLEN-1:0] PCNextF,
    output logic [`XLEN-1:0] BTBPredPCF,
    output logic [3:0]       InstrClass,
@@ -50,7 +50,7 @@ module btb
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
-  logic [Depth-1:0]         PCNextFIndex, PCEIndex, PCNextFIndexQ, PCEIndexQ;
+  logic [Depth-1:0]         PCNextFIndex, PCEIndex;
   logic                     UpdateENQ;
   logic [`XLEN-1:0] 		ResetPC;
 
@@ -60,51 +60,25 @@ module btb
   // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
   // using compressed instructions.  XOR bit 1 with the MSB of index.
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
+
+  // must output a valid PC and valid bit during reset.  Because the PCNextF logic of the IFU and trap units
+  // does not mux in RESET_VECTOR we have to do it here.  This is a performance optimization.
   assign ResetPC = `RESET_VECTOR;
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]};  
-  //assign PCNextFIndex = {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]};  
-
-  flopenr #(Depth) PCEIndexReg(.clk(clk),
-        .reset(reset),
-        .en(~StallE),
-        .d(PCEIndex),
-        .q(PCEIndexQ));
   
-  // The valid bit must be resetable.
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
-    end else 
-    if (UpdateENQ) begin
-      ValidBits[PCEIndexQ] <= #1 ~ UpdateInvalid;
+    end else if (UpdateEN & ~StallM & ~FlushM) begin
+      ValidBits[PCEIndex] <= #1 ~ UpdateInvalid;
     end
+	Valid = ValidBits[PCNextFIndex];
   end
-  assign Valid = ValidBits[PCNextFIndexQ];
 
-
-  flopenr #(1) UpdateENReg(.clk(clk),
-     .reset(reset),
-     .en(~StallF),
-     .d(UpdateEN),
-     .q(UpdateENQ));
-
-
-  flopenr #(Depth) LookupPCIndexReg(.clk(clk),
-        .reset(reset),
-        .en(~StallF),
-        .d(PCNextFIndex),
-        .q(PCNextFIndexQ));
-
-
-
-  // the BTB contains the target address.
-  // Another optimization may be using a PC relative address.
+  // An optimization may be using a PC relative address.
   // *** need to add forwarding.
-
-  // *** optimize for byte write enables
-
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({InstrClass, BTBPredPCF}),
-     .ce2(~StallE), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
+     .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
 
 endmodule
