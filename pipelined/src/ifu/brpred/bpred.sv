@@ -146,7 +146,6 @@ module bpred (
           .UpdateEN(|InstrClassE | PredictionInstrClassWrongE),
           .PCE,
           .IEUAdrE,
-          .UpdateInvalid(PredictionInstrClassWrongE),
           .InstrClassE);
 
   // Part 3 RAS
