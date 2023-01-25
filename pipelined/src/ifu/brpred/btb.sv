@@ -1,13 +1,14 @@
 ///////////////////////////////////////////
-// ram2p1r1wb
+// btb.sv
 //
-// Written: Ross Thomposn
-// Email: ross1728@gmail.com
+// Written: Ross Thomposn ross1728@gmail.com
 // Created: February 15, 2021
-// Modified: 
+// Modified: 24 January 2023 
 //
-// Purpose: BTB model.  Outputs type of instruction (currently 1 hot encoded. Probably want 
-// to encode to reduce storage), valid, target PC.
+// Purpose: Branch Target Buffer (BTB). The BTB predicts the target address of all control flow instructions.
+//          It also guesses the type of instrution; jalr(r), return, jump (jr), or branch.
+//
+// Documentation: RISC-V System on Chip Design Chapter 10 (Figure ***)
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -29,43 +30,45 @@
 
 `include "wally-config.vh"
 
-module BTBPredictor
+module btb
   #(parameter int Depth = 10
     )
   (input  logic             clk,
-   input logic              reset,
-   input logic              StallF, StallE,
-   input logic [`XLEN-1:0]  LookUpPC,
-   output logic [`XLEN-1:0] TargetPC,
+   input  logic             reset,
+   input  logic             StallF, StallE,
+   input  logic [`XLEN-1:0] PCNextF,
+   output logic [`XLEN-1:0] BTBPredPCF,
    output logic [3:0]       InstrClass,
    output logic             Valid,
    // update
-   input logic              UpdateEN,
-   input logic [`XLEN-1:0]  UpdatePC,
-   input logic [`XLEN-1:0]  UpdateTarget,
-   input logic [3:0]        UpdateInstrClass,
-   input logic              UpdateInvalid
+   input  logic             UpdateEN,
+   input  logic [`XLEN-1:0] PCE,
+   input  logic [`XLEN-1:0] IEUAdrE,
+   input  logic [3:0]       InstrClassE,
+   input  logic             UpdateInvalid
    );
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
-  logic [Depth-1:0]         LookUpPCIndex, UpdatePCIndex, LookUpPCIndexQ, UpdatePCIndexQ;
+  logic [Depth-1:0]         PCNextFIndex, PCEIndex, PCNextFIndexQ, PCEIndexQ;
   logic                     UpdateENQ;
-  
+  logic [`XLEN-1:0] 		ResetPC;
+
 
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
   // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
   // using compressed instructions.  XOR bit 1 with the MSB of index.
-  assign UpdatePCIndex = {UpdatePC[Depth+1] ^ UpdatePC[1], UpdatePC[Depth:2]};
-  assign LookUpPCIndex = {LookUpPC[Depth+1] ^ LookUpPC[1], LookUpPC[Depth:2]};  
-  
+  assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
+  assign ResetPC = `RESET_VECTOR;
+  assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]};  
+  //assign PCNextFIndex = {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]};  
 
-  flopenr #(Depth) UpdatePCIndexReg(.clk(clk),
+  flopenr #(Depth) PCEIndexReg(.clk(clk),
         .reset(reset),
         .en(~StallE),
-        .d(UpdatePCIndex),
-        .q(UpdatePCIndexQ));
+        .d(PCEIndex),
+        .q(PCEIndexQ));
   
   // The valid bit must be resetable.
   always_ff @ (posedge clk) begin
@@ -73,10 +76,10 @@ module BTBPredictor
       ValidBits <= #1 {TotalDepth{1'b0}};
     end else 
     if (UpdateENQ) begin
-      ValidBits[UpdatePCIndexQ] <= #1 ~ UpdateInvalid;
+      ValidBits[PCEIndexQ] <= #1 ~ UpdateInvalid;
     end
   end
-  assign Valid = ValidBits[LookUpPCIndexQ];
+  assign Valid = ValidBits[PCNextFIndexQ];
 
 
   flopenr #(1) UpdateENReg(.clk(clk),
@@ -89,8 +92,8 @@ module BTBPredictor
   flopenr #(Depth) LookupPCIndexReg(.clk(clk),
         .reset(reset),
         .en(~StallF),
-        .d(LookUpPCIndex),
-        .q(LookUpPCIndexQ));
+        .d(PCNextFIndex),
+        .q(PCNextFIndexQ));
 
 
 
@@ -99,16 +102,9 @@ module BTBPredictor
   // *** need to add forwarding.
 
   // *** optimize for byte write enables
-  // *** switch to ram2p1r1wbefix
-  ram2p1r1wb #(Depth, `XLEN+4) memory(.clk(clk),
-          .reset(reset),
-          .ra1(LookUpPCIndex),
-          .rd1({{InstrClass, TargetPC}}),
-          .ren1(~StallF),
-          .wa2(UpdatePCIndex),
-          .wd2({UpdateInstrClass, UpdateTarget}),
-          .wen2(UpdateEN),
-          .bwe2({4'hF, {`XLEN{1'b1}}})); // *** definitely not right.
 
+  ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
+    .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({InstrClass, BTBPredPCF}),
+     .ce2(~StallE), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
 
 endmodule
