@@ -143,7 +143,7 @@ module bpred (
           .InstrClass(PredInstrClassF),
           .Valid(BTBValidF),
           // update
-          .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
+          .UpdateEN(|InstrClassE | PredictionInstrClassWrongE),
           .PCE,
           .IEUAdrE,
           .UpdateInvalid(PredictionInstrClassWrongE),
