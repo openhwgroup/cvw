@@ -147,7 +147,7 @@ module bpred (
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   // *** needs to include flushX
-  RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, 
+  RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
 							.PredInstrClassF, .InstrClassD, .InstrClassE,
 							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
 
