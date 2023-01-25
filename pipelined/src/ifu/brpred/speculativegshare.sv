@@ -70,7 +70,7 @@ module speculativegshare
   assign IndexE = GHRE[k-1:0] ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
       
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF | reset), .ce2(~StallW & ~FlushW),
+    .ce1(~StallF | reset), .ce2(~StallM & ~FlushM),
     .ra1(IndexNextF),
     .rd1(TableDirPredictionF),
     .wa2(IndexE),
