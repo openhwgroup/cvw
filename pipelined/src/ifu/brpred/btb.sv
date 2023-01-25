@@ -35,8 +35,8 @@ module btb
     )
   (input  logic             clk,
    input  logic             reset,
-   input  logic             StallF, StallE, StallM, FlushM,
-   input  logic [`XLEN-1:0] PCNextF,
+   input  logic             StallF, StallD, StallE, StallM, FlushD, FlushM,
+   input  logic [`XLEN-1:0] PCNextF, PCF, PCD,
    output logic [`XLEN-1:0] BTBPredPCF,
    output logic [3:0]       PredInstrClassF,
    output logic             PredValidF,
@@ -50,22 +50,44 @@ module btb
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
-  logic [Depth-1:0]         PCNextFIndex, PCEIndex;
+  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex;
   logic                     UpdateENQ;
   logic [`XLEN-1:0] 		ResetPC;
-
-
+  logic 					MatchF, MatchD, MatchE, MatchNextX, MatchXF;
+  logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
+  logic [`XLEN+3:0] 		TableBTBPredictionF;
+  logic [`XLEN-1:0] 		BTBPredPCD;  
+  logic [3:0] 				PredInstrClassD;  // copy of reg outside module
+  
+  
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
   // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
   // using compressed instructions.  XOR bit 1 with the MSB of index.
+  assign PCFIndex = {PCF[Depth+1] ^ PCF[1], PCF[Depth:2]};
+  assign PCDIndex = {PCD[Depth+1] ^ PCD[1], PCD[Depth:2]};
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
 
   // must output a valid PC and valid bit during reset.  Because the PCNextF logic of the IFU and trap units
   // does not mux in RESET_VECTOR we have to do it here.  This is a performance optimization.
   assign ResetPC = `RESET_VECTOR;
-  assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]};  
+  assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
+
+  assign MatchF = PCNextFIndex == PCFIndex;
+  assign MatchD = PCNextFIndex == PCDIndex;
+  assign MatchE = PCNextFIndex == PCEIndex;
+  assign MatchNextX = MatchF | MatchD | MatchE;
   
+  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
+
+  assign ForwardBTBPrediction = MatchF ? {PredInstrClassF, BTBPredPCF} :
+                                MatchD ? {PredInstrClassD, BTBPredPCD} :
+                                {InstrClassE, IEUAdrE} ;
+
+  flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
+
+  assign {PredInstrClassF, BTBPredPCF} = MatchXF ? ForwardBTBPredictionF : TableBTBPredictionF;
+
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
@@ -76,9 +98,13 @@ module btb
   end
 
   // An optimization may be using a PC relative address.
-  // *** need to add forwarding.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
-    .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({PredInstrClassF, BTBPredPCF}),
+    .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
+
+  flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {PredInstrClassF, BTBPredPCF}, {PredInstrClassD, BTBPredPCD});
+
+
+  
 
 endmodule
