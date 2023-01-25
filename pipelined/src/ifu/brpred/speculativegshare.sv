@@ -49,7 +49,7 @@ module speculativegshare
   logic                    MatchNextX, MatchXF;
 
   logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE;
-  logic [1:0]              NewDirPredictionF, NewDirPredictionD, NewDirPredictionE, NewDirPredictionM;
+  logic [1:0]              NewDirPredictionF, NewDirPredictionD, NewDirPredictionE;
 
   logic [k-1:0]            GHRF;
   logic [k:0]              GHRD, OldGHRE, GHRE, GHRM, GHRW;
@@ -59,7 +59,6 @@ module speculativegshare
   logic [k-1:0]            IndexNextF, IndexF;
   logic [k-1:0]            IndexD, IndexE;
   
-  logic                    PCSrcM, PCSrcW;
   logic [`XLEN-1:0]        PCW;
 
   logic [1:0]              ForwardNewDirPrediction, ForwardDirPredictionF;
@@ -104,12 +103,7 @@ module speculativegshare
   
   flopenr #(2) NewPredDReg(clk, reset, ~StallD, NewDirPredictionF, NewDirPredictionD);
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
-  flopenr #(2) NewPredMReg(clk, reset, ~StallM, NewDirPredictionE, NewDirPredictionM);
 
-  // PCSrc pipeline
-  flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
-  flopenrc #(1) PCSrcWReg(clk, reset, FlushW, ~StallW, PCSrcM, PCSrcW);
-  
   // GHR pipeline
   assign GHRNextF = FlushD ?  GHRNextD[k:1] :
                     BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
