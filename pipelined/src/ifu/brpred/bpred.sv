@@ -64,7 +64,7 @@ module bpred (
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               PredInstrClassF, PredInstrClassD, PredInstrClassE;
-  logic [`XLEN-1:0]         BTBPredPCF, RASPCF;
+  logic [`XLEN-1:0]         PredPCF, RASPCF;
   logic                     TargetWrongE;
   logic                     FallThroughWrongE;
   logic                     PredictionPCWrongE;
@@ -95,8 +95,8 @@ module bpred (
     speculativeglobalhistory #(10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
-      .BranchInstrW(InstrClassW[0]), .PCSrcE);
-    
+      .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
+	    
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
@@ -135,15 +135,12 @@ module bpred (
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
-  btb TargetPredictor(.clk(clk),
-          .reset(reset),
-          .*, // Stalls and flushes
-          .PCNextF,
-          .BTBPredPCF,
+  btb TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
+          .PCNextF, .PCF, .PCD, .PCE,
+          .PredPCF,
           .PredInstrClassF,
           .PredValidF,
           .PredictionInstrClassWrongE,
-          .PCE,
           .IEUAdrE,
           .InstrClassE);
 
@@ -160,7 +157,7 @@ module bpred (
        .incr(1'b0),
        .PCLinkE);
 
-  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : BTBPredPCF;
+  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
 
   // the branch predictor needs a compact decoding of the instruction class.
   assign InstrClassD[3] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5

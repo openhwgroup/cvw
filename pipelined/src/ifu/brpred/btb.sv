@@ -35,16 +35,15 @@ module btb
     )
   (input  logic             clk,
    input  logic             reset,
-   input  logic             StallF, StallD, StallE, StallM, FlushD, FlushM,
-   input  logic [`XLEN-1:0] PCNextF, PCF, PCD,
-   output logic [`XLEN-1:0] BTBPredPCF,
-   output logic [3:0]       PredInstrClassF,
-   output logic             PredValidF,
+   input  logic             StallF, StallD, StallM, FlushD, FlushM,
+   input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE,                 // PC at various stages
+   output logic [`XLEN-1:0] PredPCF,                                // BTB's guess at PC
+   output logic [3:0]       PredInstrClassF,                        // BTB's guess at instruction class
+   output logic             PredValidF,                             // BTB's guess is valid
    // update
-   input  logic             PredictionInstrClassWrongE,
-   input  logic [`XLEN-1:0] PCE,
-   input  logic [`XLEN-1:0] IEUAdrE,
-   input  logic [3:0]       InstrClassE
+   input  logic             PredictionInstrClassWrongE,             // BTB's instruction class guess was wrong
+   input  logic [`XLEN-1:0] IEUAdrE,                                // Branch/jump target address to insert into btb
+   input  logic [3:0]       InstrClassE                             // Instruction class to insert into btb
    );
 
   localparam TotalDepth = 2 ** Depth;
@@ -54,10 +53,10 @@ module btb
   logic 					MatchF, MatchD, MatchE, MatchNextX, MatchXF;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
-  logic [`XLEN-1:0] 		BTBPredPCD;  
-  logic [3:0] 				PredInstrClassD;  // copy of reg outside module
-  
-  
+  logic [`XLEN-1:0] 		PredPCD;  
+  logic [3:0] 				PredInstrClassD;  // *** copy of reg outside module
+  logic 					UpdateEn;
+    
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
   // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
@@ -80,28 +79,30 @@ module btb
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardBTBPrediction = MatchF ? {PredInstrClassF, BTBPredPCF} :
-                                MatchD ? {PredInstrClassD, BTBPredPCD} :
+  assign ForwardBTBPrediction = MatchF ? {PredInstrClassF, PredPCF} :
+                                MatchD ? {PredInstrClassD, PredPCD} :
                                 {InstrClassE, IEUAdrE} ;
 
   flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
 
-  assign {PredInstrClassF, BTBPredPCF} = MatchXF ? ForwardBTBPredictionF : TableBTBPredictionF;
+  assign {PredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : TableBTBPredictionF;
 
   always_ff @ (posedge clk) begin
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
-    end else if ((|InstrClassE | PredictionInstrClassWrongE) & ~StallM & ~FlushM) begin
+    end else if ((UpdateEn) & ~StallM & ~FlushM) begin
       ValidBits[PCEIndex] <= #1 |InstrClassE;
     end
 	PredValidF = ValidBits[PCNextFIndex];
   end
 
+  assign UpdateEn = |InstrClassE | PredictionInstrClassWrongE;
+
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
-     .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
+     .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEn), .bwe2('1));
 
-  flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {PredInstrClassF, BTBPredPCF}, {PredInstrClassD, BTBPredPCD});
+  flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {PredInstrClassF, PredPCF}, {PredInstrClassD, PredPCD});
 
 endmodule
