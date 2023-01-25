@@ -44,8 +44,7 @@ module btb
    input  logic             UpdateEN,
    input  logic [`XLEN-1:0] PCE,
    input  logic [`XLEN-1:0] IEUAdrE,
-   input  logic [3:0]       InstrClassE,
-   input  logic             UpdateInvalid
+   input  logic [3:0]       InstrClassE
    );
 
   localparam TotalDepth = 2 ** Depth;
@@ -92,7 +91,7 @@ module btb
     if (reset) begin
       ValidBits <= #1 {TotalDepth{1'b0}};
     end else if (UpdateEN & ~StallM & ~FlushM) begin
-      ValidBits[PCEIndex] <= #1 ~ UpdateInvalid;
+      ValidBits[PCEIndex] <= #1 |InstrClassE;
     end
 	PredValidF = ValidBits[PCNextFIndex];
   end
