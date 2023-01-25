@@ -99,7 +99,7 @@ module bpred (
 	    
   end else if (`BPTYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPTYPE == "BPSPECULATIVEGSHARE") begin:Predictor
@@ -147,15 +147,9 @@ module bpred (
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
   // *** needs to include flushX
-  RASPredictor RASPredictor(.clk(clk),
-       .reset(reset),
-       .PopF(PredInstrClassF[2] & ~StallF),
-							.WrongPredInstrClassD,
-							.InstrClassD,
-       .RASPCF,
-       .PushE(InstrClassE[3] & ~StallE),
-       .incr(1'b0),
-       .PCLinkE);
+  RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, 
+							.PredInstrClassF, .InstrClassD, .InstrClassE,
+							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
 
   assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
 
@@ -227,5 +221,12 @@ module bpred (
   //  end else begin
   //	assign NextValidPCE = PCE;
   //  end
+
+  // performance counters
+  // 1. class         (class wrong / minstret)
+  // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
+  // 3. target ras    (ras target wrong / class[2])
+  // 4. direction     (br dir wrong / class[0])
+
   
 endmodule
