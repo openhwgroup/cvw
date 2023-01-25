@@ -60,7 +60,7 @@ module bpred (
    output logic             PredictionInstrClassWrongM // Class prediction is wrong
    );
 
-  logic                     BTBValidF;
+  logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               PredInstrClassF, PredInstrClassD, PredInstrClassE;
@@ -128,9 +128,9 @@ module bpred (
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-  assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & BTBValidF) | 
+  assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
          PredInstrClassF[2] |
-         (PredInstrClassF[1] & BTBValidF) ;
+         (PredInstrClassF[1] & PredValidF) ;
 
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
@@ -140,8 +140,8 @@ module bpred (
           .*, // Stalls and flushes
           .PCNextF,
           .BTBPredPCF,
-          .InstrClass(PredInstrClassF),
-          .Valid(BTBValidF),
+          .PredInstrClassF,
+          .PredValidF,
           // update
           .UpdateEN(|InstrClassE | PredictionInstrClassWrongE),
           .PCE,

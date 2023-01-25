@@ -38,8 +38,8 @@ module btb
    input  logic             StallF, StallE, StallM, FlushM,
    input  logic [`XLEN-1:0] PCNextF,
    output logic [`XLEN-1:0] BTBPredPCF,
-   output logic [3:0]       InstrClass,
-   output logic             Valid,
+   output logic [3:0]       PredInstrClassF,
+   output logic             PredValidF,
    // update
    input  logic             UpdateEN,
    input  logic [`XLEN-1:0] PCE,
@@ -72,13 +72,13 @@ module btb
     end else if (UpdateEN & ~StallM & ~FlushM) begin
       ValidBits[PCEIndex] <= #1 ~ UpdateInvalid;
     end
-	Valid = ValidBits[PCNextFIndex];
+	PredValidF = ValidBits[PCNextFIndex];
   end
 
   // An optimization may be using a PC relative address.
   // *** need to add forwarding.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
-    .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({InstrClass, BTBPredPCF}),
+    .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1({PredInstrClassF, BTBPredPCF}),
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEN), .bwe2('1));
 
 endmodule
