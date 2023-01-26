@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 0
+`define INSTR_CLASS_PRED 1
 
 module bpred (
    input logic              clk, reset,
@@ -178,7 +178,7 @@ module bpred (
 							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
 	assign InstrClassF[3] = ((PostSpillInstrRawF[6:0] & 7'h77) == 7'h67 & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
-							(`C_SUPPORTED & (cjal | cjalr) & ((PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01));
+							(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 	assign PredInstrClassF = InstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
 						PredInstrClassF[2] |
