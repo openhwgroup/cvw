@@ -76,7 +76,7 @@ synthDC/runs/
 synthDC/newRuns
 synthDC/ppa/PPAruns
 synthDC/ppa/plots
-synthDC/plots/
+synthDC/wallyplots/
 synthDC/runArchive
 synthDC/hdl
 /pipelined/regression/power.saif

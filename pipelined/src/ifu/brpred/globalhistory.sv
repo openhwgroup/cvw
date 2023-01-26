@@ -51,7 +51,7 @@ module globalhistory
   logic                    PCSrcM;
   
       
-  ram2p1r1wbefix #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
     .ra1(GHR),
     .rd1(DirPredictionF),
