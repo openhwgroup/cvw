@@ -45,8 +45,8 @@ default:
 	@echo "Use wallySynth.py to run a concurrent sweep "
 
 
-DIRS32 = rv32e rv32gc rv32ic rv32i # added 32i
-DIRS64 = rv64i rv64gc # use just 64i, lose ic
+DIRS32 = rv32e rv32gc rv32ic rv32i
+DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
 
 # bpred:
