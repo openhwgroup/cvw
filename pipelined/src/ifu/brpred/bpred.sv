@@ -197,8 +197,8 @@ module bpred (
   assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
 
   // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
-  assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1]) & PredictionPCWrongE;
-  // similar with RAS
+  assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1] | InstrClassE[0]) & PredictionPCWrongE;
+  // similar with RAS. Over counts ras if the class prediction was wrong.
   assign RASPredPCWrongE = InstrClassE[2] & PredictionPCWrongE;
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
@@ -223,7 +223,7 @@ module bpred (
   //  end
 
   // performance counters
-  // 1. class         (class wrong / minstret)
+  // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)
   // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
   // 3. target ras    (ras target wrong / class[2])
   // 4. direction     (br dir wrong / class[0])
