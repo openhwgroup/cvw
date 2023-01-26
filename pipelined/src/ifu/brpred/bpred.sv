@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
+`define INSTR_CLASS_PRED 0
 
 module bpred (
    input logic              clk, reset,
@@ -168,7 +168,7 @@ module bpred (
 	assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
 	
 	assign InstrClassF[0] = PostSpillInstrRawF[6:0] == 7'h63 | 
-							(`C_SUPPORTED & CompressedOpcF == 5'h0e);
+							(`C_SUPPORTED & CompressedOpcF[4:1] == 4'h7);
 	
 	assign InstrClassF[1] = (PostSpillInstrRawF[6:0] == 7'h67 & (PostSpillInstrRawF[19:15] & 5'h1B) != 5'h01 & (PostSpillInstrRawF[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
 							(PostSpillInstrRawF[6:0] == 7'h6F & (PostSpillInstrRawF[11:7] & 5'h1B) != 5'h01) | // jump, RD != x1 or x5
