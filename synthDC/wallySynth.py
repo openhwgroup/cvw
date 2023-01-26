@@ -5,19 +5,13 @@ import subprocess
 from multiprocessing import Pool
 import argparse
 
-def runSynth(config, tech, freq, maxopt):
+def runSynth(config, mod, tech, freq, maxopt):
     global pool
-    command = "make synth DESIGN=wallypipelinedcore CONFIG={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} MAXCORES=1".format(config, tech, freq, maxopt)
+    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} MAXCORES=1".format(config, mod, tech, freq, maxopt)
     pool.map(mask, [command])
 
 def mask(command):
     subprocess.Popen(command, shell=True)
-
-def freshStart():
-    out = subprocess.check_output(['bash','-c', 'make fresh'])
-    for x in out.decode("utf-8").split('\n')[:-1]:
-        print(x)
-    return
 
 
 if __name__ == '__main__':
@@ -41,24 +35,21 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    freq = args.targetfreq if args.targetfreq else 3000
     tech = args.tech if args.tech else 'sky90'
+    defaultfreq = 3000 if tech == 'sky90' else 10000
+    freq = args.targetfreq if args.targetfreq else defaultfreq
     maxopt = int(args.maxopt)
+    mod = 'orig' # until memory integrated
 
     if args.freqsweep:
         sc = args.freqsweep
         config = args.version if args.version else 'rv32e'
-        freshStart()
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
-            runSynth(config, tech, freq, maxopt)
+            runSynth(config, mod, tech, freq, maxopt)
     if args.configsweep:
-        freshStart()
-        for config in ['rv32gc', 'rv32ic', 'rv64gc', 'rv64ic', 'rv32e']: # configs
-            config = config + '_orig' # until memory integrated
-            runSynth(config, tech, freq, maxopt)
+        for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32ic', 'rv32e']: #configs
+            runSynth(config, mod, tech, freq, maxopt)
     if args.featuresweep:
-        freshStart()
-        v = args.version if args.version else 'rv64gc'
-        for mod in ['FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations
-            config = v + '_' + mod
-            runSynth(config, tech, freq, maxopt)
+        config = args.version if args.version else 'rv64gc'
+        for mod in ['FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations 'orig', 
+            runSynth(config, mod, tech, freq, maxopt)
