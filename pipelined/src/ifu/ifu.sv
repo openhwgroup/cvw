@@ -327,7 +327,7 @@ module ifu (
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred

@@ -54,7 +54,8 @@ module RASPredictor #(parameter int StackSize = 16
   logic 		 DecrementPtr;
   
   assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
-  assign PossibleRepairD = InstrClassD[2] & ~StallE & ~FlushE;
+  // **********this part is wrong.
+  assign PossibleRepairD = (InstrClassD[2] & ~StallE & FlushE) | (PredInstrClassF[2] & ~StallD & FlushD);
   assign RepairD = WrongPredInstrClassD[2] & ~StallE & ~FlushE;
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
     
