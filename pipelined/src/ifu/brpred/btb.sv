@@ -38,7 +38,7 @@ module btb
    input  logic             StallF, StallD, StallM, FlushD, FlushM,
    input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE,                 // PC at various stages
    output logic [`XLEN-1:0] PredPCF,                                // BTB's guess at PC
-   output logic [3:0]       PredInstrClassF,                        // BTB's guess at instruction class
+   output logic [3:0]       BTBPredInstrClassF,                        // BTB's guess at instruction class
    output logic             PredValidF,                             // BTB's guess is valid
    // update
    input  logic             PredictionInstrClassWrongE,             // BTB's instruction class guess was wrong
@@ -79,13 +79,13 @@ module btb
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardBTBPrediction = MatchF ? {PredInstrClassF, PredPCF} :
+  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, PredPCF} :
                                 MatchD ? {PredInstrClassD, PredPCD} :
                                 {InstrClassE, IEUAdrE} ;
 
   flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
 
-  assign {PredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : TableBTBPredictionF;
+  assign {BTBPredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : TableBTBPredictionF;
 
   always_ff @ (posedge clk) begin
     if (reset) begin
@@ -103,6 +103,6 @@ module btb
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEn), .bwe2('1));
 
-  flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {PredInstrClassF, PredPCF}, {PredInstrClassD, PredPCD});
+  flopenrc #(`XLEN+4) BTBD(clk, reset, FlushD, ~StallD, {BTBPredInstrClassF, PredPCF}, {PredInstrClassD, PredPCD});
 
 endmodule

@@ -55,11 +55,11 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/RegWriteD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/RdD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs1D
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs2D
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -group {Execution Stage} /testbench/InstrEName
-add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
-add wave -noupdate -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/PCE
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
+add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
+add wave -noupdate -expand -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -group {Memory Stage} /testbench/InstrMName
@@ -85,11 +85,8 @@ add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SEPC_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SSTATUS_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/STVEC_REGW
 add wave -noupdate -group Bpred -group {branch update selection inputs} -divider {class check}
-add wave -noupdate -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/BTBValidF
-add wave -noupdate -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/BTBPredPCF
 add wave -noupdate -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/RASPCF
 add wave -noupdate -group Bpred -group prediction -expand -group ex /testbench/dut/core/ifu/bpred/bpred/PCSrcE
-add wave -noupdate -group Bpred -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdateEN
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/TargetWrongE
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
@@ -566,34 +563,12 @@ add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELRegions
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELNoneD
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELPLICD
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HRDATA
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchNextX
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/memory/ra1
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/memory/rd1
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/PCE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/IEUAdrE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdateEN
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredictionInstrClassWrongE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PtrQ
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PopF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PushE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/RASPCF
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {125611 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {117097 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -609,4 +584,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {79760 ns} {171462 ns}
+WaveRestoreZoom {117047 ns} {117181 ns}
