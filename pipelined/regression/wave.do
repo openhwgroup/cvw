@@ -1,4 +1,5 @@
 onerror {resume}
+quietly virtual signal -install /testbench/dut/core/ifu/bpred/bpred { /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF[11:7]} rd
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
@@ -36,11 +37,11 @@ add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallE
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallM
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallW
-add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
+add wave -noupdate -expand -group {instruction pipeline} /testbench/InstrFName
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
 add wave -noupdate -group PCS /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group PCS /testbench/dut/core/PCF
 add wave -noupdate -group PCS /testbench/dut/core/ifu/PCD
@@ -567,8 +568,28 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PtrQ
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PopF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PushE
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/RASPCF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/RepairD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredictionInstrClassWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/CompressedOpcF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/InstrClassF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/cjal
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/cj
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/cjr
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/DirectClassDecode/cjalr
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/rd
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BTBPredPCWrongM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassD
+add wave -noupdate -color Firebrick /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {117097 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {48955828 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -584,4 +605,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {117047 ns} {117181 ns}
+WaveRestoreZoom {48955732 ns} {48955990 ns}
