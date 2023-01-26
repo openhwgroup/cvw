@@ -28,16 +28,16 @@ def synthsintocsv():
 
     file = open("Summary.csv", "w")
     writer = csv.writer(file)
-    writer.writerow(['Width', 'Config', 'Special', 'Tech', 'Target Freq', 'Delay', 'Area'])
+    writer.writerow(['Width', 'Config', 'Mod', 'Tech', 'Target Freq', 'Delay', 'Area'])
 
     for oneSynth in allSynths:
         descrip = specReg.findall(oneSynth)
         width = descrip[2][:4]
         config = descrip[2][4:]
         if descrip[3][-2:] == 'nm':
-            special = ''
+            mod = ''
         else:
-            special = descrip[3]
+            mod = descrip[3]
             descrip = descrip[1:]
         tech = descrip[3][:-2]
         freq = descrip[4]
@@ -57,12 +57,12 @@ def synthsintocsv():
         else:
             delay = 1000/int(freq) - metrics[0]
             area = metrics[1]
-            writer.writerow([width, config, special, tech, freq, delay, area])
+            writer.writerow([width, config, mod, tech, freq, delay, area])
     file.close()
 
 	
 def synthsfromcsv(filename):
-    Synth = namedtuple("Synth", "width config special tech freq delay area")
+    Synth = namedtuple("Synth", "width config mod tech freq delay area")
     with open(filename, newline='') as csvfile:
         csvreader = csv.reader(csvfile)
         global allSynths
@@ -81,14 +81,9 @@ def freqPlot(tech, width, config):
     ''' plots delay, area for syntheses with specified tech, module, width
     '''
 
-    current_directory = os.getcwd()
-    final_directory = os.path.join(current_directory, 'plots/wally')
-    if not os.path.exists(final_directory):
-        os.makedirs(final_directory)
-
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
-        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('' == oneSynth.special):
+        if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('orig' == oneSynth.mod):
             ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
@@ -130,7 +125,7 @@ def freqPlot(tech, width, config):
     ax2.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:,.0f}'))
     addFO4axis(fig, ax1, tech)
 
-    plt.savefig('./plots/wally/freqSweep_' + tech + '_' + width + config + '.png')
+    plt.savefig(final_directory + '/freqSweep_' + tech + '_' + width + config + '.png')
 
 
 def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
@@ -168,7 +163,7 @@ def plotFeatures(tech, width, config):
             if (oneSynth.config == config) & (width == oneSynth.width):
                 delays += [oneSynth.delay]
                 areas += [oneSynth.area]
-                labels += [oneSynth.special]
+                labels += [oneSynth.mod]
 
     fig, (ax) = plt.subplots(1, 1)
 
@@ -176,28 +171,28 @@ def plotFeatures(tech, width, config):
 
     titlestr = tech+'_'+width+config
     plt.title(titlestr)
-    plt.savefig('./plots/wally/features_'+titlestr+'.png')
+    plt.savefig(final_directory + '/features_'+titlestr+'.png')
 
 	
-def plotConfigs(tech, special=''):
+def plotConfigs(tech, mod=''):
     delays, areas, labels = ([] for i in range(3))
     freq = techdict[tech].targfreq
     for oneSynth in allSynths:
-        if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.special == special):
-                delays += [oneSynth.delay]
-                areas += [oneSynth.area]
-                labels += [oneSynth.width + oneSynth.config]
+        if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.mod == mod):
+            delays += [oneSynth.delay]
+            areas += [oneSynth.area]
+            labels += [oneSynth.width + oneSynth.config]
 
     fig, (ax) = plt.subplots(1, 1)
 
     fig = areaDelay(tech, delays, areas, labels, fig, ax)
 
-    titleStr = tech+'_'+special
+    titleStr = tech+'_'+mod
     plt.title(titleStr)
-    plt.savefig('./plots/wally/configs_' + titleStr + '.png')
+    plt.savefig(final_directory + '/configs_' + titleStr + '.png')
 
 
-def normAreaDelay(special=''):
+def normAreaDelay(mod=''):
     fig, (ax) = plt.subplots(1, 1)
     fullLeg = []
     for tech in list(techdict.keys()):
@@ -205,7 +200,7 @@ def normAreaDelay(special=''):
         spec = techdict[tech]
         freq = spec.targfreq
         for oneSynth in allSynths:
-            if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.special == special):
+            if (tech == oneSynth.tech) & (freq == oneSynth.freq) & (oneSynth.mod == mod):
                     delays += [oneSynth.delay]
                     areas += [oneSynth.area]
                     labels += [oneSynth.width + oneSynth.config]
@@ -216,7 +211,7 @@ def normAreaDelay(special=''):
     ax.set_xlabel('Cycle Time (FO4)')
     ax.set_ylabel('Area (add32)')        
     ax.legend(handles = fullLeg, loc='upper left')
-    plt.savefig('./plots/wally/normAreaDelay.png')
+    plt.savefig(final_directory + '/normAreaDelay.png')
 
 	
 def addFO4axis(fig, ax, tech):
@@ -254,12 +249,17 @@ if __name__ == '__main__':
     techdict['sky90'] = TechSpec('green', 'o', args.skyfreq, 43.2e-3, 1440.600027, 714.057, 0.658023)
     techdict['tsmc28'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
 
+    current_directory = os.getcwd()
+    final_directory = os.path.join(current_directory, 'wallyplots')
+    if not os.path.exists(final_directory):
+        os.makedirs(final_directory)
+
     synthsintocsv()
     synthsfromcsv('Summary.csv')
     freqPlot('tsmc28', 'rv32', 'e')
     freqPlot('sky90', 'rv32', 'e')
     plotFeatures('sky90', 'rv64', 'gc')
     plotFeatures('tsmc28', 'rv64', 'gc')
-    plotConfigs('sky90', special='orig')
-    plotConfigs('tsmc28', special='orig')
-    normAreaDelay(special='orig')
+    plotConfigs('sky90', mod='orig')
+    plotConfigs('tsmc28', mod='orig')
+    normAreaDelay(mod='orig')
