@@ -132,9 +132,6 @@ module bpred (
   // 1) A direction (1 = Taken, 0 = Not Taken)
   // 2) Any information which is necessary for the predictor to build its next state.
   // For a 2 bit table this is the prediction count.
-  assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-         PredInstrClassF[2] |
-         (PredInstrClassF[1] & PredValidF) ;
 
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
@@ -183,8 +180,14 @@ module bpred (
 	assign InstrClassF[3] = ((PostSpillInstrRawF[6:0] & 7'h77) == 7'h67 & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
 							(`C_SUPPORTED & (cjal | cjalr) & ((PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01));
 	assign PredInstrClassF = InstrClassF;
+	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
+						PredInstrClassF[2] |
+						(PredInstrClassF[1]) ;
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
+	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
+						PredInstrClassF[2] |
+						(PredInstrClassF[1] & PredValidF) ;
   end
   
 
