@@ -115,7 +115,7 @@ module ifu (
   logic [31:0] NextInstrD, NextInstrE;                                // Instruction into the next stage after possible stage flush
 
 
-  logic 					   CacheableF;                            // PMA indicates isntruction address is cacheable
+  logic 					   CacheableF;                            // PMA indicates instruction address is cacheable
   logic 					   SelNextSpillF;                         // In a spill, stall pipeline and gate local stallF
   logic 					   BusStall;                              // Bus interface busy with multicycle operation
   logic 					   ICacheStallF;                          // I$ busy with multicycle operation
