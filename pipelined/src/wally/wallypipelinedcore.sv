@@ -161,6 +161,7 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
+  logic 						 JumpOrTakenBranchM;
   
   // Bit manipulation unit
   logic [`XLEN-1:0]              BMUResultE;    // Bit manipuation result BMU -> IEU
@@ -177,7 +178,7 @@ module wallypipelinedcore (
     .PCLinkE, .PCSrcE, .IEUAdrE, .PCE, .BPPredWrongE, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
     // Faults out
     .IllegalBaseInstrFaultD, .InstrPageFaultF, .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
@@ -291,7 +292,7 @@ module wallypipelinedcore (
       .FRegWriteM, .LoadStallD,
       .DirPredictionWrongM, .BTBPredPCWrongM,
       .RASPredPCWrongM, .PredictionInstrClassWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,

@@ -60,6 +60,7 @@ module ifu (
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic              JumpOrTakenBranchM,
   output logic 				DirPredictionWrongM,                      // Prediction direction is wrong
   output logic 				BTBPredPCWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
@@ -327,7 +328,7 @@ module ifu (
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred

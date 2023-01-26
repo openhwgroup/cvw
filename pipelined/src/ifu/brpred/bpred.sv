@@ -55,6 +55,7 @@ module bpred (
    input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
    input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
    output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+   output logic             JumpOrTakenBranchM,        // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
    // Report branch prediction status
    output logic             BPPredWrongE,              // Prediction is wrong
@@ -82,7 +83,18 @@ module bpred (
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
   logic [3:0] 				WrongPredInstrClassD;
+
+
+//************ new resolve issues  
+  logic BTBTargetWrongE;
+  logic RASTargetWrongE;
+  logic JumpOrTakenBranchE;
   
+  
+
+  logic [`XLEN-1:0] PredPCD, PredPCE, RASPCD, RASPCE;
+
+
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPTYPE == "BPTWOBIT") begin:Predictor
@@ -200,6 +212,7 @@ module bpred (
   flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
   flopenrc #(4) InstrClassRegW(clk, reset,  FlushW, ~StallW, InstrClassM, InstrClassW);
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
+  flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
 
   // branch predictor
   flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
@@ -234,9 +247,13 @@ module bpred (
   assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
 
   // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
-  assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1] | InstrClassE[0]) & PredictionPCWrongE;
+  //assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1] | InstrClassE[0]) & PredictionPCWrongE;
+  //assign BTBPredPCWrongE = TargetWrongE & (InstrClassE[3] | InstrClassE[1] | InstrClassE[0]) & PCSrcE;
+  assign BTBPredPCWrongE = BTBTargetWrongE;
+  
   // similar with RAS. Over counts ras if the class prediction was wrong.
-  assign RASPredPCWrongE = InstrClassE[2] & PredictionPCWrongE;
+  //assign RASPredPCWrongE = TargetWrongE & InstrClassE[2] & PCSrcE;
+  assign RASPredPCWrongE = RASTargetWrongE;
   // Finally if the real instruction class is non CFI but the predictor said it was we need to count.
   assign BPPredClassNonCFIWrongE = PredictionInstrClassWrongE & ~|InstrClassE;
 
@@ -260,10 +277,23 @@ module bpred (
   //  end
 
   // performance counters
-  // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)
+  // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
   // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
   // 3. target ras    (ras target wrong / class[2])
   // 4. direction     (br dir wrong / class[0])
 
+  assign BTBTargetWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] | InstrClassE[3]) & PCSrcE;
+  assign RASTargetWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
+
+  assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1] | InstrClassE[3];
+  
+  flopenrc #(`XLEN) BTBTargetDReg(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
+  flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, PredPCD, PredPCE);
+
+  flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
+  flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+
+  
+  
   
 endmodule

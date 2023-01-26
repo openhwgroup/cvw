@@ -49,6 +49,7 @@ module csrc #(parameter
   input  logic 	            RASPredPCWrongM,
   input  logic 	            PredictionInstrClassWrongM,
   input  logic [3:0]        InstrClassM,
+  input  logic              JumpOrTakenBranchM,                               // actual instruction class
   input  logic 	            DCacheMiss,
   input  logic 	            DCacheAccess,
   input  logic 	            ICacheMiss,
@@ -87,7 +88,7 @@ module csrc #(parameter
     assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
     assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
-    assign CounterEvent[7] = (InstrClassM[3] | InstrClassM[1]) & InstrValidNotFlushedM; // jump instructions
+    assign CounterEvent[7] = JumpOrTakenBranchM & InstrValidNotFlushedM;                // jump or taken branch instructions
     assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
