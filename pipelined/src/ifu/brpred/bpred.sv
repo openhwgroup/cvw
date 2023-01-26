@@ -135,20 +135,19 @@ module bpred (
   // Part 2 Branch target address prediction
   // *** For now the BTB will house the direct and indirect targets
 
-  // *** getting to many false positivies from the BTB, we need a partial TAG to reduce this.
-  BTBPredictor TargetPredictor(.clk(clk),
+  btb TargetPredictor(.clk(clk),
           .reset(reset),
           .*, // Stalls and flushes
-          .LookUpPC(PCNextF),
-          .TargetPC(BTBPredPCF),
+          .PCNextF,
+          .BTBPredPCF,
           .InstrClass(PredInstrClassF),
           .Valid(BTBValidF),
           // update
           .UpdateEN((|InstrClassE | (PredictionInstrClassWrongE)) & ~StallE),
-          .UpdatePC(PCE),
-          .UpdateTarget(IEUAdrE),
+          .PCE,
+          .IEUAdrE,
           .UpdateInvalid(PredictionInstrClassWrongE),
-          .UpdateInstrClass(InstrClassE));
+          .InstrClassE);
 
   // Part 3 RAS
   // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
