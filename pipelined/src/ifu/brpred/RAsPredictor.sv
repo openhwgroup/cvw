@@ -49,29 +49,33 @@ module RASPredictor #(parameter int StackSize = 16
   logic 		 PopF;
   logic 		 PushE;
   logic 		 RepairD;
-  logic 		 PossibleRepairD;
+  logic 		 IncrRepairD, DecRepairD;
   
   logic 		 DecrementPtr;
   
   assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
-  // **********this part is wrong.
-  assign PossibleRepairD = (InstrClassD[2] & ~StallE & FlushE) | (PredInstrClassF[2] & ~StallD & FlushD);
-  assign RepairD = WrongPredInstrClassD[2] & ~StallE & ~FlushE;
+
+  assign RepairD = ((WrongPredInstrClassD[2]) & ~StallE & ~FlushE) |  // Wrong class undo increment or decrement.
+				   (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
+				   (~StallM & FlushM & InstrClassE[2]) ; // ret in execution flushed
+  
+  assign IncrRepairD = (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
+					   (~StallM & FlushM & InstrClassE[2]) | // ret in execution flushed
+					   (WrongPredInstrClassD[2] & ~InstrClassD[2] & ~StallE & ~FlushE); // Guessed it was a ret, but its not
+
+  assign DecRepairD =  (WrongPredInstrClassD[2] & InstrClassD[2] & ~StallE & ~FlushE); // Guessed non ret but is a ret.
+  
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
     
   assign CounterEn = PopF | PushE | RepairD;
 
-  assign DecrementPtr = PopF | PossibleRepairD;
+  assign DecrementPtr = (PopF | DecRepairD) & ~IncrRepairD;
   mux2 #(Depth) PtrMux(PtrP1, PtrM1, DecrementPtr, PtrD);
 
   assign PtrM1 = PtrQ - 1'b1;
   assign PtrP1 = PtrQ + 1'b1;
 
-  flopenr #(Depth) PTR(.clk(clk),
-      .reset(reset),
-      .en(CounterEn),
-      .d(PtrD),
-      .q(PtrQ));
+  flopenr #(Depth) PTR(clk, reset, CounterEn, PtrD, PtrQ);
 
   // RAS must be reset. 
   always_ff @ (posedge clk) begin
