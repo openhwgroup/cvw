@@ -113,8 +113,8 @@ module speculativegshare
   flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
   flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
   assign GHRF = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRF[k-1:1]} : // shift right
-  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-1:0], OldGHRExtraF} : // shift left **** missing bit 
-  				OldGHRF[k:0];
+  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], OldGHRExtraF} : // shift left **** missing bit 
+  				OldGHRF[k-1:0];
   
   assign GHRNextD = FlushD ? {GHRNextE, GHRNextE[0]} : {DirPredictionF[1], GHRF, GHRF[0]};
 
