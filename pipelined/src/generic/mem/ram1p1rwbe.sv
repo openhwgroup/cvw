@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 // 1 port sram.
 //
-// Written: ross1728@gmail.com
+// Written: ross1728@gmail.com, james.stine@okstate.edu
 // Created: 3 May 2021
-// Modified: 20 January 2023
+// Modified: 20 January 2023, 26 January 2023
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 //          Basic sram with 1 read write port.
@@ -49,18 +49,26 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
   // ***************************************************************************
   // TRUE SRAM macro
   // ***************************************************************************
-  if (`USE_SRAM == 1) begin
-    genvar index;
-    // 64 x 128-bit SRAM
-    // check if the size is ok, complain if not***
-    logic [WIDTH-1:0] BitWriteMask;
-    for (index=0; index < WIDTH; index++) 
-      assign BitWriteMask[index] = bwe[index/8];
-    TS1N28HPCPSVTB64X128M4SW sram(
-      .CLK(clk), .CEB(~ce), .WEB(~we),
-      .A(addr), .D(din), 
-      .BWEB(~BitWriteMask), .Q(dout));
-    
+   if (`USE_SRAM == 1 && WIDTH == 128 && `XLEN == 64) begin
+      genvar index;
+      // 64 x 128-bit SRAM
+      logic [WIDTH-1:0] BitWriteMask;
+      for (index=0; index < WIDTH; index++) 
+	assign BitWriteMask[index] = bwe[index/8];
+      TS1N28HPCPSVTB64X128M4SW sram(.CLK(clk), .CEB(~ce), .WEB(~we),
+				    .A(addr), .D(din), 
+				    .BWEB(~BitWriteMask), .Q(dout));
+      
+   end else if (`USE_SRAM == 1 && WIDTH == 44  && `XLEN == 64) begin
+      genvar index;
+      // 64 x 44-bit SRAM
+      logic [WIDTH-1:0] BitWriteMask;
+      for (index=0; index < WIDTH; index++) 
+	assign BitWriteMask[index] = bwe[index/8];
+      TS1N28HPCPSVTB64X44M4SW sram(.CLK(clk), .CEB(~ce), .WEB(~we),
+				   .A(addr), .D(din), 
+				   .BWEB(~BitWriteMask), .Q(dout));     
+      
   // ***************************************************************************
   // READ first SRAM model
   // ***************************************************************************
