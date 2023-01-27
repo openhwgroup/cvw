@@ -49,7 +49,7 @@ module bpred (
   // Branch and jump outcome
   input  logic             PCSrcE,                    // Executation stage branch is taken
   input  logic [`XLEN-1:0] IEUAdrE,                   // The branch/jump target address
-  input  logic [`XLEN-1:0]  dPCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
+  input  logic [`XLEN-1:0] PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
 
   // Report branch prediction status
