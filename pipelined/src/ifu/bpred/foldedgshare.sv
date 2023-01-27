@@ -54,13 +54,13 @@ module foldedgshare #(parameter k = 16, depth = 10) (
   logic [k:0]              GHRNextD, GHRNextE, GHRNextM, GHRNextW;
   logic [k-1:0]            IndexNextF, IndexF;
   logic [k-1:0]            IndexD, IndexE, IndexM, IndexW;
-  logic [depth-1:0] 	   FinalIndexNextF, FinalIndexW;
+  logic [depth-1:0] 	     FinalIndexNextF, FinalIndexW;
   
   logic                    PCSrcM, PCSrcW;
   logic [`XLEN-1:0]        PCW;
 
   logic [1:0]              ForwardNewDirPrediction, ForwardDirPredictionF;
-  localparam int 		   delta = 2 * depth - k;
+  localparam        		   delta = 2 * depth - k;
   
   assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
   assign IndexF = GHRF        ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};

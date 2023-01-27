@@ -72,12 +72,12 @@ module ahbcacheinterface #(
   output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   
 
-  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
-  logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
-  logic [AHBWLOGBWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
-  logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [`AHBW/8-1:0] 		   BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
-  logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+  localparam                  BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
+  logic [`PA_BITS-1:0]        LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
+  logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
+  logic [`AHBW/8-1:0] 		    BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
+  logic [`AHBW-1:0]           PreHWDATA;                              // AHB Address phase write data
 
   genvar                       index;
 
