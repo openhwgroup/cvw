@@ -106,9 +106,21 @@ module speculativegshare
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
 
   // GHR pipeline
+  // this version fails the regression test do to pessimistic x propagation.
+/* -----\/----- EXCLUDED -----\/-----
   assign GHRNextF = FlushD ?  (BranchInstrE ? GHRNextD[k:1] : GHRNextD[k-1:0]) :
                     BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
                     GHRF;
+ -----/\----- EXCLUDED -----/\----- */
+
+  always_comb begin
+	if(FlushD) begin
+	  if(BranchInstrE) GHRNextF =  GHRNextD[k:1];
+	  else             GHRNextF = GHRNextD[k-1:0];
+	end else if(BranchInstrF) GHRNextF = {DirPredictionF[1], GHRF[k-1:1]};
+	else GHRNextF = GHRF;
+  end
+	
 
   flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
   flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
