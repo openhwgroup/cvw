@@ -30,23 +30,21 @@
 
 `include "wally-config.vh"
 
-module btb
-  #(parameter int Depth = 10
-    )
-  (input  logic             clk,
-   input  logic             reset,
-   input  logic             StallF, StallE,
-   input  logic [`XLEN-1:0] PCNextF,
-   output logic [`XLEN-1:0] BTBPredPCF,
-   output logic [3:0]       InstrClass,
-   output logic             Valid,
-   // update
-   input  logic             UpdateEN,
-   input  logic [`XLEN-1:0] PCE,
-   input  logic [`XLEN-1:0] IEUAdrE,
-   input  logic [3:0]       InstrClassE,
-   input  logic             UpdateInvalid
-   );
+module btb #(parameter Depth = 10) (
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallF, StallE,
+  input  logic [`XLEN-1:0] PCNextF,
+  output logic [`XLEN-1:0] BTBPredPCF,
+  output logic [3:0]       InstrClass,
+  output logic             Valid,
+  // update
+  input  logic             UpdateEN,
+  input  logic [`XLEN-1:0] PCE,
+  input  logic [`XLEN-1:0] IEUAdrE,
+  input  logic [3:0]       InstrClassE,
+  input  logic             UpdateInvalid
+);
 
   localparam TotalDepth = 2 ** Depth;
   logic [TotalDepth-1:0]    ValidBits;
