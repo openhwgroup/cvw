@@ -55,7 +55,7 @@ module speculativegshare
   logic 				   OldGHRExtraF;
   logic [k:0]              GHRD, OldGHRE, GHRE, GHRM, GHRW;
   logic [k-1:0]            GHRNextF;
-  logic [k:-1] 			   GHRNextD, OldGHRD;
+  logic [k:0] 			   GHRNextD;
   logic [k:0]              GHRNextE, GHRNextM, GHRNextW;
   logic [k-1:0]            IndexNextF, IndexF;
   logic [k-1:0]            IndexD, IndexE;
@@ -107,11 +107,9 @@ module speculativegshare
 
   // GHR pipeline
   // this version fails the regression test do to pessimistic x propagation.
-/* -----\/----- EXCLUDED -----\/-----
-  assign GHRNextF = FlushD ?  (BranchInstrE ? GHRNextD[k:1] : GHRNextD[k-1:0]) :
-                    BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
-                    GHRF;
- -----/\----- EXCLUDED -----/\----- */
+  // assign GHRNextF = FlushD ?  (BranchInstrE ? GHRNextD[k:1] : GHRNextD[k-1:0]) :
+  //                  BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
+  //                  GHRF;
 
   always_comb begin
 	if(FlushD) begin
@@ -121,20 +119,15 @@ module speculativegshare
 	else GHRNextF = GHRF;
   end
 	
-
   flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
   flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
   assign GHRF = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRF[k-1:1]} : // shift right
-  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], OldGHRExtraF} : // shift left **** missing bit 
+  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], OldGHRExtraF}:       // shift left
   				OldGHRF[k-1:0];
   
-  assign GHRNextD = FlushD ? {GHRNextE, GHRNextE[0]} : {DirPredictionF[1], GHRF, GHRF[0]};
+  assign GHRNextD = FlushD ? {GHRNextE} : {DirPredictionF[1], GHRF};
 
-  flopenr  #(k+2) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, OldGHRD);
-  //assign GHRD = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRD[k:1]} : // shift right
-  //				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-1:-1] : // shift left
-  //				OldGHRD[k:0];
-  assign GHRD = OldGHRD[k:0];
+  flopenr  #(k+1) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
 
   assign GHRNextE = FlushE ? GHRNextM : GHRD;
   flopenr  #(k+1) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, OldGHRE);
