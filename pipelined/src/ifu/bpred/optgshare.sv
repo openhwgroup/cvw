@@ -28,21 +28,19 @@
 
 `include "wally-config.vh"
 
-module optgshare
-  #(parameter int k = 10
-    )
-  (input logic             clk,
-   input logic             reset,
-   input logic             StallF, StallD, StallE, StallM, StallW, 
-   input logic             FlushD, FlushE, FlushM, FlushW,
+module optgshare #(parameter k = 10) (
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallF, StallD, StallE, StallM, StallW, 
+  input  logic             FlushD, FlushE, FlushM, FlushW,
 //   input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0]      DirPredictionF, 
-   output logic            DirPredictionWrongE,
-   // update
-   input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-   input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW, 
-   input logic             PCSrcE
-   );
+  output logic [1:0]       DirPredictionF, 
+  output logic             DirPredictionWrongE,
+  // update
+  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
+  input  logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW, 
+  input  logic             PCSrcE
+);
 
   logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
   logic                    MatchNextX, MatchXF;

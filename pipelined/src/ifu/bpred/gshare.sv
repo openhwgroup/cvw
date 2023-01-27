@@ -28,20 +28,18 @@
 
 `include "wally-config.vh"
 
-module gshare
-  #(parameter int k = 10
-    )
-  (input logic             clk,
-   input logic             reset,
-   input logic             StallF, StallD, StallE, StallM, 
-   input logic             FlushD, FlushE, FlushM,
+module gshare #(parameter k = 10) (
+  input logic             clk,
+  input logic             reset,
+  input logic             StallF, StallD, StallE, StallM, 
+  input logic             FlushD, FlushE, FlushM,
 //   input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0]      DirPredictionF, 
-   output logic            DirPredictionWrongE,
-   // update
-   input logic [`XLEN-1:0] PCNextF, PCM,
-   input logic             BranchInstrE, BranchInstrM, PCSrcE
-   );
+  output logic [1:0]      DirPredictionF, 
+  output logic            DirPredictionWrongE,
+  // update
+  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic             BranchInstrE, BranchInstrM, PCSrcE
+);
 
   logic [k-1:0]            IndexNextF, IndexM;
   logic [1:0]              DirPredictionD, DirPredictionE;

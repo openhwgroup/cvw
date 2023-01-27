@@ -30,10 +30,10 @@
 `include "wally-config.vh"
 
 module ahbcacheinterface #(
-  parameter integer BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
-  parameter integer AHBWLOGBWPL,   // Log2 of ^
-  parameter integer LINELEN,       // Number of bits in cacheline
-  parameter integer LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+  parameter BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
+  parameter AHBWLOGBWPL,   // Log2 of ^
+  parameter LINELEN,       // Number of bits in cacheline
+  parameter LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
 )(
   input  logic                 HCLK, HRESETn,
   // bus interface controls
