@@ -267,39 +267,60 @@ module fpgaTop
   wire s01_axi_rready;
 
   // Output Interface
+  wire [31:0]axi4in_axi_awaddr;
+  wire [7:0]axi4in_axi_awlen;
+  wire [2:0]axi4in_axi_awsize;
+  wire [1:0]axi4in_axi_awburst;
+  wire [0:0]axi4in_axi_awlock;
+  wire [3:0]axi4in_axi_awcache;
+  wire [2:0]axi4in_axi_awprot;
+  wire [3:0]axi4in_axi_awregion;
+  wire [3:0]axi4in_axi_awqos;
+  wire axi4in_axi_awvalid;
+  wire axi4in_axi_awready;
+  wire [31:0]axi4in_axi_wdata;
+  wire [3:0]axi4in_axi_wstrb;
+  wire axi4in_axi_wlast;
+  wire axi4in_axi_wvalid;
+  wire axi4in_axi_wready;
+  wire [1:0]axi4in_axi_bresp;
+  wire axi4in_axi_bvalid;
+  wire axi4in_axi_bready;
+  wire [31:0]axi4in_axi_araddr;
+  wire [7:0]axi4in_axi_arlen;
+  wire [2:0]axi4in_axi_arsize;
+  wire [1:0]axi4in_axi_arburst;
+  wire [0:0]axi4in_axi_arlock;
+  wire [3:0]axi4in_axi_arcache;
+  wire [2:0]axi4in_axi_arprot;
+  wire [3:0]axi4in_axi_arregion;
+  wire [3:0]axi4in_axi_arqos;
+  wire axi4in_axi_arvalid;
+  wire axi4in_axi_arready;
+  wire [31:0]axi4in_axi_rdata;
+  wire [1:0]axi4in_axi_rresp;
+  wire axi4in_axi_rlast;
+  wire axi4in_axi_rvalid;
+  wire axi4in_axi_rready;
+
+  // AXI4 to AXI4-Lite Protocol converter output
   wire [31:0]SDCin_axi_awaddr;
-  wire [7:0]SDCin_axi_awlen;
-  wire [2:0]SDCin_axi_awsize;
-  wire [1:0]SDCin_axi_awburst;
-  wire [0:0]SDCin_axi_awlock;
-  wire [3:0]SDCin_axi_awcache;
   wire [2:0]SDCin_axi_awprot;
-  wire [3:0]SDCin_axi_awregion;
-  wire [3:0]SDCin_axi_awqos;
   wire SDCin_axi_awvalid;
   wire SDCin_axi_awready;
   wire [31:0]SDCin_axi_wdata;
   wire [3:0]SDCin_axi_wstrb;
-  wire SDCin_axi_wlast;
   wire SDCin_axi_wvalid;
   wire SDCin_axi_wready;
   wire [1:0]SDCin_axi_bresp;
   wire SDCin_axi_bvalid;
   wire SDCin_axi_bready;
   wire [31:0]SDCin_axi_araddr;
-  wire [7:0]SDCin_axi_arlen;
-  wire [2:0]SDCin_axi_arsize;
-  wire [1:0]SDCin_axi_arburst;
-  wire [0:0]SDCin_axi_arlock;
-  wire [3:0]SDCin_axi_arcache;
   wire [2:0]SDCin_axi_arprot;
-  wire [3:0]SDCin_axi_arregion;
-  wire [3:0]SDCin_axi_arqos;
   wire SDCin_axi_arvalid;
   wire SDCin_axi_arready;
   wire [31:0]SDCin_axi_rdata;
   wire [1:0]SDCin_axi_rresp;
-  wire SDCin_axi_rlast;
   wire SDCin_axi_rvalid;
   wire SDCin_axi_rready;
   // ----------------------------------------------------------------
@@ -408,6 +429,14 @@ module fpgaTop
 	 end
   endgenerate
 
+  // IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(sdio_cmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
+  // IOBUF IOBUF_dat0 (.O(sd_dat_i[0]), .IO(sdio_dat[0]), .I(sd_dat_reg_o[0]), .T(sd_dat_reg_t));
+  // IOBUF IOBUF_dat1 (.O(sd_dat_i[1]), .IO(sdio_dat[1]), .I(sd_dat_reg_o[1]), .T(sd_dat_reg_t));
+  // IOBUF IOBUF_dat2 (.O(sd_dat_i[2]), .IO(sdio_dat[2]), .I(sd_dat_reg_o[2]), .T(sd_dat_reg_t));
+  // IOBUF IOBUF_dat3 (.O(sd_dat_i[3]), .IO(sdio_dat[3]), .I(sd_dat_reg_o[3]), .T(sd_dat_reg_t));
+
+  
+   
   // reset controller XILINX IP
   xlnx_proc_sys_reset xlnx_proc_sys_reset_0
     (.slowest_sync_clk(CPUCLK),
@@ -514,7 +543,7 @@ module fpgaTop
 	 .aresetn(peripheral_aresetn),
 
 	 // Connect Masters
-	 .s_axi_awid({m_axi_awid, m01_axi_awid}),
+	 .s_axi_awid({m_axi_awid, 8'b0}),
 	 .s_axi_awaddr({m_axi_awaddr, m01_axi_awaddr}),
 	 .s_axi_awlen({m_axi_awlen, m01_axi_awlen}),
 	 .s_axi_awsize({m_axi_awsize, m01_axi_awsize}),
@@ -534,7 +563,7 @@ module fpgaTop
 	 .s_axi_bresp({m_axi_bresp, m01_axi_bresp}),
 	 .s_axi_bvalid({m_axi_bvalid, m01_axi_bvalid}),
 	 .s_axi_bready({m_axi_bready, m01_axi_bready}),
-	 .s_axi_arid({m_axi_arid, m01_axi_arid}),
+	 .s_axi_arid({m_axi_arid, 8'b0}),
 	 .s_axi_araddr({m_axi_araddr, m01_axi_araddr}),
 	 .s_axi_arlen({m_axi_arlen, m01_axi_arlen}),
 	 .s_axi_arsize({m_axi_arsize, m01_axi_arsize}),
@@ -570,7 +599,7 @@ module fpgaTop
      .m_axi_wlast({s00_axi_wlast, s01_axi_wlast}),
      .m_axi_wvalid({s00_axi_wvalid, s01_axi_wvalid}),
      .m_axi_wready({s00_axi_wready, s01_axi_wready}),
-     .m_axi_bid({s00_axi_bid, s01_axi_bid}),
+     .m_axi_bid({s00_axi_bid, 8'b0}),
      .m_axi_bresp({s00_axi_bresp, s01_axi_bresp}),
      .m_axi_bvalid({s00_axi_bvalid, s01_axi_bvalid}),
      .m_axi_bready({s00_axi_bready, s01_axi_bready}),
@@ -586,7 +615,7 @@ module fpgaTop
      .m_axi_araddr({s00_axi_araddr, s01_axi_araddr}),
      .m_axi_arlock({s00_axi_arlock, s01_axi_arlock}),
      .m_axi_arready({s00_axi_arready, s01_axi_arready}),
-     .m_axi_rid({s00_axi_rid, s01_axi_rid}),
+     .m_axi_rid({s00_axi_rid, 8'b0}),
      .m_axi_rdata({s00_axi_rdata, s01_axi_rdata}),
      .m_axi_rresp({s00_axi_rresp, s01_axi_rresp}),
      .m_axi_rvalid({s00_axi_rvalid, s01_axi_rvalid}),
@@ -645,42 +674,107 @@ module fpgaTop
 	 .s_axi_rready(s01_axi_rready),
 
 	 // Master interface
-	 .m_axi_awaddr(SDCin_axi_awaddr),
-	 .m_axi_awlen(SDCin_axi_awlen),
-	 .m_axi_awsize(SDCin_axi_awsize),
-	 .m_axi_awburst(SDCin_axi_awburst),
-	 .m_axi_awlock(SDCin_axi_awlock),
-	 .m_axi_awcache(SDCin_axi_awcache),
-	 .m_axi_awprot(SDCin_axi_awprot),
-	 .m_axi_awregion(SDCin_axi_awregion),
-	 .m_axi_awqos(SDCin_axi_awqos),
-	 .m_axi_awvalid(SDCin_axi_awvalid),
-	 .m_axi_awready(SDCin_axi_awready),
-	 .m_axi_wdata(SDCin_axi_wdata),
-	 .m_axi_wstrb(SDCin_axi_wstrb),
-	 .m_axi_wlast(SDCin_axi_wlast),
-	 .m_axi_wvalid(SDCin_axi_wvalid),
-	 .m_axi_wready(SDCin_axi_wready),
-	 .m_axi_bresp(SDCin_axi_bresp),
-	 .m_axi_bvalid(SDCin_axi_bvalid),
-	 .m_axi_bready(SDCin_axi_bready),
-	 .m_axi_araddr(SDCin_axi_araddr),
-	 .m_axi_arlen(SDCin_axi_arlen),
-	 .m_axi_arsize(SDCin_axi_arsize),
-	 .m_axi_arburst(SDCin_axi_arburst),
-	 .m_axi_arlock(SDCin_axi_arlock),
-	 .m_axi_arcache(SDCin_axi_arcache),
-	 .m_axi_arprot(SDCin_axi_arprot),
-	 .m_axi_arregion(SDCin_axi_arregion),
-	 .m_axi_arqos(SDCin_axi_arqos),
-	 .m_axi_arvalid(SDCin_axi_arvalid),
-	 .m_axi_arready(SDCin_axi_arready),
-	 .m_axi_rdata(SDCin_axi_rdata),
-	 .m_axi_rresp(SDCin_axi_rresp),
-	 .m_axi_rlast(SDCin_axi_rlast),
-	 .m_axi_rvalid(SDCin_axi_rvalid),
-	 .m_axi_rready(SDCin_axi_rready)
+	 .m_axi_awaddr(axi4in_axi_awaddr),
+	 .m_axi_awlen(axi4in_axi_awlen),
+	 .m_axi_awsize(axi4in_axi_awsize),
+	 .m_axi_awburst(axi4in_axi_awburst),
+	 .m_axi_awlock(axi4in_axi_awlock),
+	 .m_axi_awcache(axi4in_axi_awcache),
+	 .m_axi_awprot(axi4in_axi_awprot),
+	 .m_axi_awregion(axi4in_axi_awregion),
+	 .m_axi_awqos(axi4in_axi_awqos),
+	 .m_axi_awvalid(axi4in_axi_awvalid),
+	 .m_axi_awready(axi4in_axi_awready),
+	 .m_axi_wdata(axi4in_axi_wdata),
+	 .m_axi_wstrb(axi4in_axi_wstrb),
+	 .m_axi_wlast(axi4in_axi_wlast),
+	 .m_axi_wvalid(axi4in_axi_wvalid),
+	 .m_axi_wready(axi4in_axi_wready),
+	 .m_axi_bresp(axi4in_axi_bresp),
+	 .m_axi_bvalid(axi4in_axi_bvalid),
+	 .m_axi_bready(axi4in_axi_bready),
+	 .m_axi_araddr(axi4in_axi_araddr),
+	 .m_axi_arlen(axi4in_axi_arlen),
+	 .m_axi_arsize(axi4in_axi_arsize),
+	 .m_axi_arburst(axi4in_axi_arburst),
+	 .m_axi_arlock(axi4in_axi_arlock),
+	 .m_axi_arcache(axi4in_axi_arcache),
+	 .m_axi_arprot(axi4in_axi_arprot),
+	 .m_axi_arregion(axi4in_axi_arregion),
+	 .m_axi_arqos(axi4in_axi_arqos),
+	 .m_axi_arvalid(axi4in_axi_arvalid),
+	 .m_axi_arready(axi4in_axi_arready),
+	 .m_axi_rdata(axi4in_axi_rdata),
+	 .m_axi_rresp(axi4in_axi_rresp),
+	 .m_axi_rlast(axi4in_axi_rlast),
+	 .m_axi_rvalid(axi4in_axi_rvalid),
+	 .m_axi_rready(axi4in_axi_rready)
 	 );
+   
+  xlnx_axi_prtcl_conv axi4tolite
+    (.aclk(CPUCLK),
+     .aresetn(peripheral_aresetn),
+
+     // AXI4 In
+     .s_axi_awaddr(axi4in_axi_awaddr),
+     .s_axi_awlen(axi4in_axi_awlen),
+     .s_axi_awsize(axi4in_axi_awsize),
+     .s_axi_awburst(axi4in_axi_awburst),
+     .s_axi_awlock(axi4in_axi_awlock),
+     .s_axi_awcache(axi4in_axi_awcache),
+     .s_axi_awprot(axi4in_axi_awprot),
+     .s_axi_awregion(axi4in_axi_awregion),
+     .s_axi_awqos(axi4in_axi_awqos),
+     .s_axi_awvalid(axi4in_axi_awvalid),
+     .s_axi_awready(axi4in_axi_awready),
+     .s_axi_wdata(axi4in_axi_wdata),
+     .s_axi_wstrb(axi4in_axi_wstrb),
+     .s_axi_wlast(axi4in_axi_wlast),
+     .s_axi_wvalid(axi4in_axi_wvalid),
+     .s_axi_wready(axi4in_axi_wready),
+     .s_axi_bresp(axi4in_axi_bresp),
+     .s_axi_bvalid(axi4in_axi_bvalid),
+     .s_axi_bready(axi4in_axi_bready),
+     .s_axi_araddr(axi4in_axi_araddr),
+     .s_axi_arlen(axi4in_axi_arlen),
+     .s_axi_arsize(axi4in_axi_arsize),
+     .s_axi_arburst(axi4in_axi_arburst),
+     .s_axi_arlock(axi4in_axi_arlock),
+     .s_axi_arcache(axi4in_axi_arcache),
+     .s_axi_arprot(axi4in_axi_arprot),
+     .s_axi_arregion(axi4in_axi_arregion),
+     .s_axi_arqos(axi4in_axi_arqos),
+     .s_axi_arvalid(axi4in_axi_arvalid),
+     .s_axi_arready(axi4in_axi_arready),
+     .s_axi_rdata(axi4in_axi_rdata),
+     .s_axi_rresp(axi4in_axi_rresp),
+     .s_axi_rlast(axi4in_axi_rlast),
+     .s_axi_rvalid(axi4in_axi_rvalid),
+     .s_axi_rready(axi4in_axi_rready),
+
+     // AXI4Lite Out
+     .m_axi_awaddr(SDCin_axi_awaddr),
+     .m_axi_awprot(SDCin_axi_awprot),
+     .m_axi_awvalid(SDCin_axi_awvalid),
+     .m_axi_awready(SDCin_axi_awready),
+     .m_axi_wdata(SDCin_axi_wdata),
+     .m_axi_wstrb(SDCin_axi_wstrb),
+     .m_axi_wvalid(SDCin_axi_wvalid),
+     .m_axi_wready(SDCin_axi_wready),
+     .m_axi_bresp(SDCin_axi_bresp),
+     .m_axi_bvalid(SDCin_axi_bvalid),
+     .m_axi_bready(SDCin_axi_bready),
+     .m_axi_araddr(SDCin_axi_araddr),
+     .m_axi_arprot(SDCin_axi_arprot),
+     .m_axi_arvalid(SDCin_axi_arvalid),
+     .m_axi_arready(SDCin_axi_arready),
+     .m_axi_rdata(SDCin_axi_rdata),
+     .m_axi_rresp(SDCin_axi_rresp),
+     .m_axi_rvalid(SDCin_axi_rvalid),
+     .m_axi_rready(SDCin_axi_rready)
+     
+     );
+   
 
   sdc_controller axiSDC
 	(.clock(CPUCLK),
@@ -724,13 +818,15 @@ module fpgaTop
 	 .m_axi_rlast(SDCout_axi_rlast),
 	 .m_axi_rresp(SDCout_axi_rresp),
 	 .m_axi_rvalid(SDCout_axi_rvalid),
-	 .m_axi_rready(SDCout_axi_rready)
+	 .m_axi_rready(SDCout_axi_rready),
 
 	 // SDC interface
-	 //.sdio_cmd(SDCcmd),
-	 //.sdio_dat(SDCdat),
-	 //.sdio_cd()
+	 //.sdio_cmd(1'b0),
+	 //.sdio_dat(4'b0),
+	 //.sdio_cd(1'b0)
 
+     .sd_dat_i(4'b0),
+     .sd_cmd_i(1'b0)
 	 
 	 
 	 );
@@ -771,7 +867,7 @@ module fpgaTop
 	 .s_axi_arvalid(SDCout_axi_arvalid),
 	 .s_axi_arready(SDCout_axi_arready),
 	 .s_axi_rdata(SDCout_axi_rdata),
-	 //.s_axi_rresp(),
+	 .s_axi_rresp(SDCout_axi_rresp),
 	 .s_axi_rlast(SDCout_axi_rlast),
 	 .s_axi_rvalid(SDCout_axi_rvalid),
 	 .s_axi_rready(SDCout_axi_rready),

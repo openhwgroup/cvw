@@ -369,6 +369,46 @@ static int ini_sd(void) {
     return 0;
 }
 
+DRESULT disk_read(BYTE drv, BYTE * buf, LBA_t sector, UINT count) {
+
+    if (!count) return RES_PARERR;
+    if (drv_status & STA_NOINIT) return RES_NOTRDY;
+
+    /* Convert LBA to byte address if needed */
+    if (!(card_type & CT_BLOCK)) sector *= 512;
+    while (count > 0) {
+        UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
+        unsigned bytes = bcnt * 512;
+        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return RES_ERROR;
+        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return RES_ERROR;
+        sector += (card_type & CT_BLOCK) ? bcnt : bytes;
+        count -= bcnt;
+        buf += bytes;
+    }
+
+    return RES_OK;
+}
+
+void disk_read(BYTE drv, BYTE * buf, LBA_t sector, UINT count) {
+
+    if (!count) return RES_PARERR;
+    if (drv_status & STA_NOINIT) return RES_NOTRDY;
+
+    /* Convert LBA to byte address if needed */
+    if (!(card_type & CT_BLOCK)) sector *= 512;
+    while (count > 0) {
+        UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
+        unsigned bytes = bcnt * 512;
+        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return RES_ERROR;
+        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return RES_ERROR;
+        sector += (card_type & CT_BLOCK) ? bcnt : bytes;
+        count -= bcnt;
+        buf += bytes;
+    }
+
+    return RES_OK;
+}
+
 int main() {
   ini_sd();
 
