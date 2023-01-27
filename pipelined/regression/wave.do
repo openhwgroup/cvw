@@ -588,8 +588,34 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassD
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassD
 add wave -noupdate -color Firebrick /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PCSrcE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/TableDirPredictionF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
+add wave -noupdate -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
+add wave -noupdate -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRD
+add wave -noupdate -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRE
+add wave -noupdate -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRM
+add wave -noupdate -expand -group ghr -color Orange /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRW
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
+add wave -noupdate -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextD
+add wave -noupdate -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextE
+add wave -noupdate -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/StallM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushM
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {48955828 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {5919 ns} 1} {{Cursor 5} {2337 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -605,4 +631,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {48955732 ns} {48955990 ns}
+WaveRestoreZoom {2195 ns} {2479 ns}

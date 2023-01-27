@@ -51,7 +51,8 @@ module speculativegshare
   logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE;
   logic [1:0]              NewDirPredictionF, NewDirPredictionD, NewDirPredictionE;
 
-  logic [k-1:0]            GHRF;
+  logic [k-1:0]            GHRF, OldGHRF;
+  logic 				   OldGHRExtraF;
   logic [k:0]              GHRD, OldGHRE, GHRE, GHRM, GHRW;
   logic [k-1:0]            GHRNextF;
   logic [k:-1] 			   GHRNextD, OldGHRD;
@@ -105,17 +106,23 @@ module speculativegshare
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
 
   // GHR pipeline
-  assign GHRNextF = FlushD ?  GHRNextD[k:1] :
+  assign GHRNextF = FlushD ?  (BranchInstrE ? GHRNextD[k:1] : GHRNextD[k-1:0]) :
                     BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
                     GHRF;
 
-  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, GHRF);
+  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
+  flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
+  assign GHRF = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRF[k-1:1]} : // shift right
+  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-1:0], OldGHRExtraF} : // shift left **** missing bit 
+  				OldGHRF[k:0];
   
   assign GHRNextD = FlushD ? {GHRNextE, GHRNextE[0]} : {DirPredictionF[1], GHRF, GHRF[0]};
+
   flopenr  #(k+2) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, OldGHRD);
-  assign GHRD = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRD[k:1]} : // shift right
-				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-1:-1] : // shift left
-				OldGHRD[k:0];
+  //assign GHRD = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRD[k:1]} : // shift right
+  //				WrongPredInstrClassD[0] & ~BranchInstrD ? OldGHRD[k-1:-1] : // shift left
+  //				OldGHRD[k:0];
+  assign GHRD = OldGHRD[k:0];
 
   assign GHRNextE = FlushE ? GHRNextM : GHRD;
   flopenr  #(k+1) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, OldGHRE);
