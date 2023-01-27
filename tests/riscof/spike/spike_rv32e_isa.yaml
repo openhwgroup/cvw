@@ -1,11 +1,11 @@
 hart_ids: [0]
 hart0:
-  ISA: RV32EMFCZicsr_Zifencei
+  ISA: RV32EMCZicsr_Zifencei
   physical_addr_sz: 32
   User_Spec_Version: '2.3'
   supported_xlen: [32]
   misa:
-   reset-val: 0x40001034
+   reset-val: 0x40001014
    rv32:
      accessible: true
      mxl:
