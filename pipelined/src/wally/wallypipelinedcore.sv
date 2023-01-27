@@ -28,8 +28,6 @@
 
 import cvw::*;  // global CORE-V-Wally parameters
 
-/* verilator lint_on UNUSED */
-
 module wallypipelinedcore (
    input  logic                  clk, reset,
    // Privileged
