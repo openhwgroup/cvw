@@ -55,11 +55,11 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   output logic                        DirtyWay,       // This way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // THis way's tag if valid
 
-  localparam integer                  WORDSPERLINE = LINELEN/`XLEN;
-  localparam integer                  BYTESPERLINE = LINELEN/8;
+  localparam                          WORDSPERLINE = LINELEN/`XLEN;
+  localparam                          BYTESPERLINE = LINELEN/8;
   localparam                          LOGWPL = $clog2(WORDSPERLINE);
   localparam                          LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam integer                  BYTESPERWORD = `XLEN/8;
+  localparam                          BYTESPERWORD = `XLEN/8;
 
   logic [NUMLINES-1:0]                ValidBits;
   logic [NUMLINES-1:0]                DirtyBits;
@@ -128,12 +128,12 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   // Data Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  genvar                             words;
+  genvar               words;
 
-  localparam integer           SRAMLEN = 128;
-  localparam integer           NUMSRAM = LINELEN/SRAMLEN;
-  localparam integer           SRAMLENINBYTES = SRAMLEN/8;
-  localparam integer           LOGNUMSRAM = $clog2(NUMSRAM);
+  localparam           SRAMLEN = 128;
+  localparam           NUMSRAM = LINELEN/SRAMLEN;
+  localparam           SRAMLENINBYTES = SRAMLEN/8;
+  localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CAdr),

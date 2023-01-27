@@ -205,8 +205,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = 0;
-  localparam integer 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
+  localparam 	   MemStartAddr = 0;
+  localparam 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -570,25 +570,23 @@ module DCacheFlushFSM
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
 	if(`DCACHE) begin
-	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-	  localparam integer sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-	  localparam integer cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-      
-//testbench.dut.core.lsu.bus.dcache.dcache.CacheWays.NUMSRAM;
-	  localparam integer numwords = sramlen/`XLEN;
-      localparam integer lognumlines = $clog2(numlines);
-	  localparam integer loglinebytelen = $clog2(linebytelen);
-	  localparam integer lognumways = $clog2(numways);
-	  localparam integer tagstart = lognumlines + loglinebytelen;
+	  localparam numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+	  localparam sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+	  localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+	  localparam numwords = sramlen/`XLEN;
+    localparam lognumlines = $clog2(numlines);
+	  localparam loglinebytelen = $clog2(linebytelen);
+	  localparam lognumways = $clog2(numways);
+	  localparam tagstart = lognumlines + loglinebytelen;
 
 
 
 	  genvar 			 index, way, cacheWord;
 	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-      logic [sramlen-1:0] cacheline;
+    logic [sramlen-1:0] cacheline;
 	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
 	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
 	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];

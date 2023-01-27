@@ -81,8 +81,8 @@ module cacheLRU
   // expand HitWay as HitWay[3], {{2}{HitWay[2]}}, {{4}{HitWay[1]}, {{8{HitWay[0]}}, ...
   for(row = 0; row < LOGNUMWAYS; row++) begin
     localparam integer DuplicationFactor = 2**(LOGNUMWAYS-row-1);
-    localparam integer StartIndex = NUMWAYS-2 - DuplicationFactor + 1;
-    localparam integer EndIndex = NUMWAYS-2 - 2 * DuplicationFactor + 2;
+    localparam StartIndex = NUMWAYS-2 - DuplicationFactor + 1;
+    localparam EndIndex = NUMWAYS-2 - 2 * DuplicationFactor + 2;
     assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{WayEncoded[row]}};
   end
 
@@ -109,8 +109,6 @@ module cacheLRU
   for(s = NUMWAYS/2-1; s >= 0; s--) begin
     localparam int0 = (NUMWAYS/2-1-s)*2;
     localparam int1 = int0 + 1;
-	//localparam int0 = s*2;
-	//localparam int1 = int0 + 1;	
     assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
