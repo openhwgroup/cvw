@@ -127,6 +127,7 @@
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 10
+`define PLIC_GPIO_ID 3
 
 `define BPRED_ENABLED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
