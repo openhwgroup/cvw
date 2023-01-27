@@ -204,9 +204,6 @@ def main():
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
-        # Remind the user to try `make allclean`, since it may be needed if test
-        # cases have changed
-        print("Reminder: have you run `make allclean`?")
     else:
         print(f"{bcolors.OKGREEN}SUCCESS! All tests ran without failures{bcolors.ENDC}")
     return num_fail
