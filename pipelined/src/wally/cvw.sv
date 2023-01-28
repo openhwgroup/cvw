@@ -36,7 +36,6 @@ package cvw;
   parameter XLEN = `XLEN;
   parameter FPGA = `FPGA;
   parameter QEMU = `QEMU;
-  parameter DESIGN_COMPILER = `DESIGN_COMPILER;
   parameter IEEE754 = `IEEE754;
   parameter MISA = `MISA;
   parameter ZICSR_SUPPORTED = `ZICSR_SUPPORTED;
@@ -215,4 +214,4 @@ package cvw;
   parameter DIVBLEN     = ($clog2(`DIVb+1)-1);
   parameter DIVa        = (`DIVb+1-`XLEN);             // used for idiv on fpu
 
-endpackage;
+endpackage
