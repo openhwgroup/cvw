@@ -107,7 +107,7 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-synth: mkdirecs configs rundc #clean TODO
+synth: mkdirecs configs rundc clean
 
 rundc:
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
