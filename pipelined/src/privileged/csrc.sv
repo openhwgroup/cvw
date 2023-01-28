@@ -97,7 +97,7 @@ module csrc #(parameter
     assign CounterEvent[12] = DCacheMiss;                                               // data cache miss
     assign CounterEvent[13] = ICacheAccess;                                             // instruction cache access
     assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss
-	assign CounterEvent[15] = BPPredWrongM;                                             // branch predictor wrong
+	assign CounterEvent[15] = BPPredWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
     assign CounterEvent[`COUNTERS-1:16] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
