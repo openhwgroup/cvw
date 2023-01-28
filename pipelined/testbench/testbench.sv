@@ -424,7 +424,8 @@ logic [3:0] dummy;
                             "D Cache Access",
                             "D Cache Miss",
                             "I Cache Access",
-                            "I Cache Miss"};
+                            "I Cache Miss",
+							"Br Pred Wrong"};
     always @(negedge clk) begin
       if(DCacheFlushStart & ~DCacheFlushDone) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin

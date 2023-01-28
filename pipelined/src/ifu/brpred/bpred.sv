@@ -59,6 +59,7 @@ module bpred (
 
    // Report branch prediction status
    output logic             BPPredWrongE,              // Prediction is wrong
+   output logic             BPPredWrongM,              // Prediction is wrong
    output logic             DirPredictionWrongM,       // Prediction direction is wrong
    output logic             BTBPredPCWrongM,           // Prediction target wrong
    output logic             RASPredPCWrongM,           // RAS prediction is wrong
@@ -79,7 +80,6 @@ module bpred (
   
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
-  logic                     BPPredWrongM;
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
   logic [3:0] 				WrongPredInstrClassD;
