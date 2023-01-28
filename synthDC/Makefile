@@ -1,19 +1,18 @@
 #  
 # Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
-# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 7/8/2022
+# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
 NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 1000
-export CONFIG ?= rv64gc
+export FREQ ?= 3000
+export CONFIG ?= rv32e
 export MOD ?= orig
-export CONFIGMOD ?= $(CONFIG)_$(MOD)
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= tsmc28
+export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -27,17 +26,14 @@ hash := $(shell git rev-parse --short HEAD)
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
-configAsList := $(subst _, ,$(CONFIG))
-BASECONFIG := $(word 1, $(configAsList))
 OLDCONFIGDIR ?= ${WALLY}/pipelined/config
 export CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
-# k = 3 6 
 
 print:
 	@echo $(FREQS)
-	@echo $(BASECONFIG)
+	@echo $(CONFIG)
 	@echo $(CONFIGFILESTRIM)
 
 
@@ -51,26 +47,27 @@ DIRS32 = rv32e rv32gc rv32ic rv32i
 DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
 
+# k = 3 6 
 # bpred:
 # 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
 # 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
 
-configs: $(BASECONFIG)
-$(BASECONFIG):
-	@echo $(BASECONFIG)
-	cp -r $(OLDCONFIGDIR)/$(BASECONFIG) $(CONFIGDIR)/$(BASECONFIG)_orig
-	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
+configs: $(CONFIG)
+$(CONFIG):
+	@echo $(CONFIG)
+	cp -r $(OLDCONFIGDIR)/$(CONFIG) $(CONFIGDIR)/$(CONFIG)_orig
+	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
 
-ifneq ($(filter $ $(BASECONFIG), $(DIRS32)),)
-	sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-else ifneq ($(filter $ $(BASECONFIG), $(DIRS64)),)
-	sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
+ifneq ($(filter $ $(CONFIG), $(DIRS32)),)
+	sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+else ifneq ($(filter $ $(CONFIG), $(DIRS64)),)
+	sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
 else 
-	$(info $(BASECONFIG) does not exist in $(DIRS32) or $(DIRS64))
+	$(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
 	@echo "Config not in list, RAM_RANGE will be unmodified"
 endif
 	
