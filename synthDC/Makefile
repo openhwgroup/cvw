@@ -6,13 +6,14 @@ NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 3000
-export CONFIG ?= rv32e
+export FREQ ?= 1000
+export CONFIG ?= rv64gc
 export MOD ?= orig
+export CONFIGMOD ?= $(CONFIG)_$(MOD)
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= sky90
+export TECH ?= tsmc28
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -29,13 +30,14 @@ export SAIFPOWER ?= 0
 configAsList := $(subst _, ,$(CONFIG))
 BASECONFIG := $(word 1, $(configAsList))
 OLDCONFIGDIR ?= ${WALLY}/pipelined/config
-CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
+export CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
 # k = 3 6 
 
 print:
 	@echo $(FREQS)
+	@echo $(BASECONFIG)
 	@echo $(CONFIGFILESTRIM)
 
 
@@ -108,7 +110,7 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-synth: mkdirecs configs rundc clean
+synth: mkdirecs configs rundc #clean TODO
 
 rundc:
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
