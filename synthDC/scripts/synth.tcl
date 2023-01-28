@@ -16,15 +16,13 @@ suppress_message {VER-173}
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
 
-# get outputDir from environment (Makefile)
+# get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
-set cfgName $::env(CONFIGMOD)
-# Config
+set cfg $::env(CONFIGDIR)/$::env(CONFIG)_$::env(MOD)/wally-config.vh
 set hdl_src "../pipelined/src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
-set cfg $::env(CONFIGDIR)/${cfgName}/wally-config.vh
 
 eval file copy -force $cfg {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
