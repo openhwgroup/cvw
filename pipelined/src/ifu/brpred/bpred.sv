@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
+`define INSTR_CLASS_PRED 0
 
 module bpred (
    input logic              clk, reset,

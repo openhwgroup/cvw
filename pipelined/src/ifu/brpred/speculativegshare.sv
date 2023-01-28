@@ -53,10 +53,10 @@ module speculativegshare
 
   logic [k-1:0]            GHRF, OldGHRF;
   logic 				   OldGHRExtraF;
-  logic [k:0]              GHRD, OldGHRE, GHRE, GHRM, GHRW;
-  logic [k-1:0]            GHRNextF;
-  logic [k:0] 			   GHRNextD;
-  logic [k:0]              GHRNextE, GHRNextM, GHRNextW;
+  logic [k-1:0] 		   GHRD, OldGHRE, GHRE, GHRM, GHRW;
+  logic [k-1:0] 		   GHRNextF;
+  logic [k-1:0] 		   GHRNextD;
+  logic [k-1:0] 		   GHRNextE, GHRNextM, GHRNextW;
   logic [k-1:0]            IndexNextF, IndexF;
   logic [k-1:0]            IndexD, IndexE;
   
@@ -113,31 +113,36 @@ module speculativegshare
 
   always_comb begin
 	if(FlushD) begin
-	  if(BranchInstrE) GHRNextF =  GHRNextD[k:1];
-	  else             GHRNextF = GHRNextD[k-1:0];
+	  //if(BranchInstrE) GHRNextF =  {PCSrcE, GHRNextD[k-1:1]};
+	  //else             GHRNextF = GHRNextD[k-1:0];
+	  GHRNextF = GHRNextD[k-1:0];
 	end else if(BranchInstrF) GHRNextF = {DirPredictionF[1], GHRF[k-1:1]};
 	else GHRNextF = GHRF;
   end
-	
-  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
-  flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
-  assign GHRF = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRF[k-1:1]} : // shift right
-  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], OldGHRExtraF}:       // shift left
-  				OldGHRF[k-1:0];
+
+  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, GHRF);	
+  //flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, OldGHRF);
+  //flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRNextF[0], OldGHRExtraF);
+//  assign GHRF = WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], OldGHRF[k-1:1]} : // shift right
+//  				WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], OldGHRExtraF}:       // shift left
+//  				OldGHRF[k-1:0];
   
-  assign GHRNextD = FlushD ? {GHRNextE} : {DirPredictionF[1], GHRF};
+  //assign GHRNextD = FlushD ? {GHRNextE} : {DirPredictionF[1], GHRF[k-1:1]};
+  assign GHRNextD = FlushD ? GHRNextE[k-1:0] : GHRF[k-1:0];
 
-  flopenr  #(k+1) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
+  flopenr  #(k) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
 
-  assign GHRNextE = FlushE ? GHRNextM : GHRD;
-  flopenr  #(k+1) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, OldGHRE);
-  assign GHRE = BranchInstrE ? {PCSrcE, OldGHRE[k-1:0]} : OldGHRE;
+  assign GHRNextE = DirPredictionWrongE & BranchInstrE & ~FlushM ? {PCSrcE, GHRD[k-2:0]} :   // if the branch is not flushed and was mispredicted
+					FlushE ? GHRNextM :                                // branch is flushed
+					GHRD;
+  flopenr  #(k) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, GHRE);
+  //assign GHRE = BranchInstrE ? {PCSrcE, OldGHRE[k-1:0]} : OldGHRE;
 
   assign GHRNextM = FlushM ? GHRNextW : GHRE;
-  flopenr  #(k+1) GHRMReg(clk, reset, (~StallM) | FlushM, GHRNextM, GHRM);
+  flopenr  #(k) GHRMReg(clk, reset, (~StallM) | FlushM, GHRNextM, GHRM);
 
   assign GHRNextW = FlushW ? GHRW : GHRM;
-  flopenr  #(k+1) GHRWReg(clk, reset, (BranchInstrM & ~StallW) | FlushW, GHRNextW, GHRW);
+  flopenr  #(k) GHRWReg(clk, reset, (BranchInstrW & ~StallW) | FlushW, GHRNextW, GHRW);
   
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
 
