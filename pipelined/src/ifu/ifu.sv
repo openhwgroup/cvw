@@ -51,6 +51,7 @@ module ifu (
   input  logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
   output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
   output logic 				BPPredWrongE,                             // Prediction is wrong
+  output logic 				BPPredWrongM,                             // Prediction is wrong
   // Mem
   output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
   input  logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
@@ -328,7 +329,7 @@ module ifu (
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred
