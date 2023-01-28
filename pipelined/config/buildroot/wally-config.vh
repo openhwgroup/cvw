@@ -42,7 +42,6 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 `define COUNTERS 32
-`define DESIGN_COMPILER 0
 
 // LSU microarchitectural Features
 `define BUS 1

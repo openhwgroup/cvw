@@ -30,7 +30,6 @@
 
 `define FPGA 1
 `define QEMU 0
-`define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
@@ -44,7 +43,6 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 `define COUNTERS 32
-`define DESIGN_COMPILER 0
 
 // LSU microarchitectural Features
 `define BUS 1
