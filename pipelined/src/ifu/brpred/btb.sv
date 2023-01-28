@@ -56,6 +56,7 @@ module btb
   logic [`XLEN-1:0] 		PredPCD;  
   logic [3:0] 				PredInstrClassD;  // *** copy of reg outside module
   logic 					UpdateEn;
+  logic 					TablePredValidF;
     
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -93,9 +94,11 @@ module btb
     end else if ((UpdateEn) & ~StallM & ~FlushM) begin
       ValidBits[PCEIndex] <= #1 |InstrClassE;
     end
-	PredValidF = ValidBits[PCNextFIndex];
+	TablePredValidF = ValidBits[PCNextFIndex];
   end
 
+  assign PredValidF = MatchXF ? 1'b1 : TablePredValidF;
+  
   assign UpdateEn = |InstrClassE | PredictionInstrClassWrongE;
 
   // An optimization may be using a PC relative address.
