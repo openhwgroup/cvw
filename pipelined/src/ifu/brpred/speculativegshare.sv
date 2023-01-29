@@ -112,7 +112,7 @@ module speculativegshare
   //                  GHRF;
 
   always_comb begin
-	if(FlushD) begin
+	if(FlushD | DirPredictionWrongE) begin
 	  GHRNextF = GHRNextD[k-1:0];
 	end else if(BranchInstrF) GHRNextF = {DirPredictionF[1], GHRF[k-1:1]};
 	else GHRNextF = GHRF;
@@ -124,7 +124,7 @@ module speculativegshare
   // use with out instruction class prediction
   //assign GHRNextD = FlushD ? GHRNextE[k-1:0] : GHRF[k-1:0];
   // with instruction class prediction
-  assign GHRNextD = FlushD ? GHRNextE[k-1:0] :
+  assign GHRNextD = (FlushD | DirPredictionWrongE) ? GHRNextE[k-1:0] :
 					WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], GHRF[k-1:1]} : // shift right
   					WrongPredInstrClassD[0] & ~BranchInstrD ? {OldGHRF[k-2:0], GHRExtraF}:       // shift left
 					GHRF[k-1:0];
