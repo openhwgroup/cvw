@@ -208,7 +208,7 @@ module ifu (
   end else begin
     assign IFURWF = 2'b10;
   end
-  if (`BUS) begin : bus
+  if (`BUS_SUPPORTED) begin : bus
     // **** must fix words per line vs beats per line as in lsu.
     localparam   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
     localparam   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;

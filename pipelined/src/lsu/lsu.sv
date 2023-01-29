@@ -206,7 +206,7 @@ module lsu (
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[`PA_BITS-1:0];
     assign CacheableM = 1'b1;
-    assign SelDTIM = `DTIM_SUPPORTED & ~`BUS; // if no PMA then select dtim if there is a DTIM.  If there is 
+    assign SelDTIM = `DTIM_SUPPORTED & ~`BUS_SUPPORTED; // if no PMA then select dtim if there is a DTIM.  If there is 
     // a bus then this is always 0. Cannot have both without PMA.
   end
   
@@ -236,7 +236,7 @@ module lsu (
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
-  if (`BUS) begin : bus              
+  if (`BUS_SUPPORTED) begin : bus              
     if(`DCACHE) begin : dcache
       localparam   LLENWORDSPERLINE = `DCACHE_LINELENINBITS/`LLEN;             // Number of LLEN words in cacheline
       localparam   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^

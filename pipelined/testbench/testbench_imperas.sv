@@ -100,8 +100,8 @@ module testbench;
 	  pathname = "../../tests/riscof/work/wally-riscv-arch-test/";
 	  
 	  memfilename = {pathname, testName, "/ref/ref.elf.memfile"};
-      if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-	  else $error("Imperas test bench requires BUS.");
+      if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+	  else $error("Imperas test bench requires BUS_SUPPORTED.");
 
       ProgramAddrMapFile = {pathname, testName, "/ref/ref.elf.objdump.addr"};
       ProgramLabelMapFile = {pathname, testName, "/ref/ref.elf.objdump.lab"};
@@ -287,7 +287,7 @@ module riscvassertions;
     assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM_SUPPORTED == 0 & `IROM_SUPPORTED == 0)) else $error("Can't simultaneously have virtual memory and DTIM_SUPPORTED/IROM_SUPPORTED because local memories don't translate addresses");
     assert (`DCACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`ICACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
-    assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS) else $error("Dcache and Icache requires DBUS.");
+    assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS_SUPPORTED) else $error("Dcache and Icache requires DBUS.");
     assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
     assert (`DCACHE | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
