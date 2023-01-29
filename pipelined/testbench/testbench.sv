@@ -32,8 +32,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
+`define PrintHPMCounters 1
+`define BPRED_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -484,11 +484,13 @@ logic [3:0] dummy;
       if (`BPRED_LOGGER) begin
         string direction;
         int    file;
+		logic  PCScrM;
+		flopenrc #(1) PCSrcMReg(clk, reset, FlushM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
         initial
           file = $fopen("branch.log", "w");
         always @(posedge clk) begin
            if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-             direction = dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcM ? "t" : "n";
+             direction = PCSrcM ? "t" : "n";
              $fwrite(file, "%h %s\n", dut.core.PCM, direction);
            end
         end
