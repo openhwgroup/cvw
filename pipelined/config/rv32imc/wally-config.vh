@@ -37,7 +37,7 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-`define MISA (32'h00000104 | 1 << 20 | 1 << 18 )
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
