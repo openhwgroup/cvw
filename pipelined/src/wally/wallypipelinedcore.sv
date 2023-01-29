@@ -237,7 +237,7 @@ module wallypipelinedcore (
     .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
-  if(BUS) begin : ebu
+  if(BUS_SUPPORTED) begin : ebu
     ebu ebu(// IFU connections
       .clk, .reset,
       // IFU interface

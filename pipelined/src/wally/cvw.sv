@@ -43,7 +43,7 @@ package cvw;
   parameter COUNTERS = `COUNTERS;
   parameter ZICOUNTERS_SUPPORTED = `ZICOUNTERS_SUPPORTED;
   parameter ZFH_SUPPORTED = `ZFH_SUPPORTED;
-  parameter BUS = `BUS;
+  parameter BUS_SUPPORTED = `BUS_SUPPORTED;
   parameter DCACHE = `DCACHE;
   parameter ICACHE = `ICACHE;
   parameter VIRTMEM_SUPPORTED = `VIRTMEM_SUPPORTED;

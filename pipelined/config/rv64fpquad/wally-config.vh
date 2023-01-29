@@ -46,7 +46,7 @@
 `define ZFH_SUPPORTED 1
 
 // LSU microarchitectural Features
-`define BUS 1
+`define BUS_SUPPORTED 1
 `define DCACHE 1
 `define ICACHE 1
 `define VIRTMEM_SUPPORTED 1
