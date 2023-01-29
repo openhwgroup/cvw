@@ -134,7 +134,7 @@ module ifu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : Spill
-    spill #(`ICACHE) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
+    spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
       .InstrDAPageFaultF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCNextFSpill = PCNextF;
@@ -210,10 +210,10 @@ module ifu (
   end
   if (`BUS_SUPPORTED) begin : bus
     // **** must fix words per line vs beats per line as in lsu.
-    localparam   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
-    localparam   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
-    if(`ICACHE) begin : icache
-      localparam           LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
+    localparam   WORDSPERLINE = `ICACHE_SUPPORTED ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam   LOGBWPL = `ICACHE_SUPPORTED ? $clog2(WORDSPERLINE) : 1;
+    if(`ICACHE_SUPPORTED) begin : icache
+      localparam           LINELEN = `ICACHE_SUPPORTED ? `ICACHE_LINELENINBITS : `XLEN;
       localparam           LLENPOVERAHBW = `LLEN / `AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;

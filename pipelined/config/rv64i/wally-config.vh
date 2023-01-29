@@ -47,8 +47,8 @@
 
 // LSU microarchitectural Features
 `define BUS_SUPPORTED 0
-`define DCACHE 0
-`define ICACHE 0
+`define DCACHE_SUPPORTED 0
+`define ICACHE_SUPPORTED 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 0
