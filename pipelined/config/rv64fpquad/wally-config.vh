@@ -72,7 +72,7 @@
 `define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 16
 
 // Address space
 `define RESET_VECTOR 64'h0000000080000000
@@ -134,7 +134,7 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define BPRED_ENABLED 1
+`define BPRED_SUPPORTED 1
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 `define BPRED_SIZE 10

@@ -71,7 +71,7 @@
 `define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 16
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000
@@ -139,7 +139,7 @@
 
 `define TWO_BIT_PRELOAD "../config/fpga/twoBitPredictor.txt"
 `define BTB_PRELOAD "../config/fpga/BTBPredictor.txt"
-`define BPRED_ENABLED 1
+`define BPRED_SUPPORTED 1
 `define BPTYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE or BPSPECULATIVEGLOBAL or BPSPECULATIVEGSHARE or BPOLDGSHARE or BPOLDGSHARE2
 `define TESTSBP 1
 `define BPRED_SIZE 10

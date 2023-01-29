@@ -322,7 +322,7 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  if (`BPRED_ENABLED) begin : bpred
+  if (`BPRED_SUPPORTED) begin : bpred
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW,
