@@ -484,7 +484,7 @@ logic [3:0] dummy;
       if (`BPRED_LOGGER) begin
         string direction;
         int    file;
-		logic  PCScrM;
+		logic  PCSrcM;
 		flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
         initial
           file = $fopen("branch.log", "w");
