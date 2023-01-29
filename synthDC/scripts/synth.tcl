@@ -30,6 +30,7 @@ eval file copy -force ${cfg} {$outputDir/hdl/}
 #eval file copy -force ${cfg} $outputDir
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
