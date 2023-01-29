@@ -140,7 +140,7 @@ module wallypipelinedcore (
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
-  logic                          BPPredWrongE;
+  logic                          BPPredWrongE, BPPredWrongM;
   logic                          DirPredictionWrongM;
   logic                          BTBPredPCWrongM;
   logic                          RASPredPCWrongM;
@@ -160,7 +160,8 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-   
+  logic 						 JumpOrTakenBranchM;
+  
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -169,10 +170,10 @@ module wallypipelinedcore (
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .PCE, .BPPredWrongE, 
+    .PCLinkE, .PCSrcE, .IEUAdrE, .PCE, .BPPredWrongE,  .BPPredWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
     // Faults out
     .IllegalBaseInstrFaultD, .InstrPageFaultF, .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
@@ -284,9 +285,9 @@ module wallypipelinedcore (
       .RetM, .TrapM, .sfencevmaM,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD,
-      .DirPredictionWrongM, .BTBPredPCWrongM,
+      .DirPredictionWrongM, .BTBPredPCWrongM, .BPPredWrongM,
       .RASPredPCWrongM, .PredictionInstrClassWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,

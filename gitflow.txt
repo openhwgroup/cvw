@@ -48,3 +48,6 @@ Create pull request
    1. git pull upstream main          # fetch and merge the upstream openhwgroup/cvw into your local clone
    3. git push                        # sync your fork with the upstream and clone
         
+
+If the pull request need changes, modify accordingly, commit, and push changes back to the fork.
+The pull request will automatically update.

@@ -1,4 +1,5 @@
 onerror {resume}
+quietly virtual signal -install /testbench/dut/core/ifu/bpred/bpred { /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF[11:7]} rd
 quietly WaveActivateNextPane {} 0
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/reset
@@ -36,17 +37,17 @@ add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallE
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallM
 add wave -noupdate -group HDU -expand -group Stall -color Orange /testbench/dut/core/StallW
-add wave -noupdate -group {instruction pipeline} /testbench/InstrFName
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -expand -group PCS /testbench/dut/core/PCF
-add wave -noupdate -expand -group PCS /testbench/dut/core/ifu/PCD
-add wave -noupdate -expand -group PCS /testbench/dut/core/PCE
-add wave -noupdate -expand -group PCS /testbench/dut/core/PCM
-add wave -noupdate -expand -group PCS /testbench/PCW
+add wave -noupdate -expand -group {instruction pipeline} /testbench/InstrFName
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/PostSpillInstrRawF
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrD
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -expand -group {instruction pipeline} /testbench/dut/core/ifu/InstrM
+add wave -noupdate -group PCS /testbench/dut/core/ifu/PCNextF
+add wave -noupdate -group PCS /testbench/dut/core/PCF
+add wave -noupdate -group PCS /testbench/dut/core/ifu/PCD
+add wave -noupdate -group PCS /testbench/dut/core/PCE
+add wave -noupdate -group PCS /testbench/dut/core/PCM
+add wave -noupdate -group PCS /testbench/PCW
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/PCD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ifu/InstrD
 add wave -noupdate -group {Decode Stage} /testbench/InstrDName
@@ -85,29 +86,20 @@ add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SEPC_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/SSTATUS_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/STVEC_REGW
 add wave -noupdate -group Bpred -group {branch update selection inputs} -divider {class check}
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/BTBValidF
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/BPInstrClassF
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/BTBPredPCF
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/RASPCF
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/LookUpPCIndex
-add wave -noupdate -group Bpred -expand -group prediction /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/TargetPC
-add wave -noupdate -group Bpred -expand -group prediction -expand -group ex /testbench/dut/core/ifu/bpred/bpred/PCSrcE
-add wave -noupdate -group Bpred -expand -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdatePCIndex
-add wave -noupdate -group Bpred -expand -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdateTarget
-add wave -noupdate -group Bpred -expand -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdateEN
-add wave -noupdate -group Bpred -expand -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdatePC
-add wave -noupdate -group Bpred -expand -group update -expand -group BTB /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/UpdateTarget
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/TargetWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/InstrClassE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionInstrClassWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredClassNonCFIWrongE
-add wave -noupdate -group Bpred -expand -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
+add wave -noupdate -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/RASPCF
+add wave -noupdate -group Bpred -group prediction -expand -group ex /testbench/dut/core/ifu/bpred/bpred/PCSrcE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/TargetWrongE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/InstrClassE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionInstrClassWrongE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredClassNonCFIWrongE
+add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
+add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/PCNext0F
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
 add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
@@ -148,20 +140,15 @@ add wave -noupdate -group Forward /testbench/dut/core/ieu/fw/RdW
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcAE
 add wave -noupdate -group {alu execution stage} /testbench/dut/core/ieu/dp/SrcBE
-add wave -noupdate -group AHB -expand -group multicontroller -color Gold /testbench/dut/core/ebu/ebu/CurrState
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFUReq
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/LSUReq
-add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/both
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFUSave
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFURestore
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFUDisable
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/LSUDisable
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/IFUSelect
 add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/LSUSelect
-add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/BeatCount
-add wave -noupdate -group AHB -expand -group multicontroller /testbench/dut/core/ebu/ebu/FinalBeat
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HTRANS
-add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/Threshold
 add wave -noupdate -group AHB /testbench/dut/core/ebu/ebu/HBURST
 add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHTRANS
 add wave -noupdate -group AHB -expand -group IFU /testbench/dut/core/ebu/ebu/IFUHADDR
@@ -463,10 +450,6 @@ add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/core/P
 add wave -noupdate -group {debug trace} -expand -group mem -color Brown /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
 add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
-add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillF
-add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/CurrState
-add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SpillDataLine0
-add wave -noupdate -group ifu -expand -group spill /testbench/dut/core/ifu/SpillSupport/spillsupport/SelSpillF
 add wave -noupdate -group ifu /testbench/dut/core/ifu/InstrRawF
 add wave -noupdate -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -group ifu -expand -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HSIZE
@@ -484,7 +467,6 @@ add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/PCPF
 add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/cachefsm/AnyMiss
 add wave -noupdate -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/bus/icache/icache/HitWay
 add wave -noupdate -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/ICacheStallF
-add wave -noupdate -group ifu -expand -group icache -expand -group {fsm out and control} /testbench/dut/core/ifu/FinalInstrRawF
 add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/CacheBusAdr
 add wave -noupdate -group ifu -expand -group icache -expand -group memory /testbench/dut/core/ifu/bus/icache/icache/cachefsm/CacheBusAck
 add wave -noupdate -group ifu -expand -group icache /testbench/dut/core/ifu/bus/icache/icache/VictimWay
@@ -549,6 +531,7 @@ add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -lab
 add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {RAS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {RETURN INSTRUCTION} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {BP CLASS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {Branch Predictor Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -label {ICACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -label {ICACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
 add wave -noupdate -expand -group {Performance Counters} -expand -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
@@ -571,7 +554,6 @@ add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/FRD3E
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcAE
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/ForwardedSrcBE
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/Funct3E
-add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/MDUE
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/W64E
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/X
 add wave -noupdate -group FPU /testbench/dut/core/fpu/fpu/unpack/Y
@@ -584,27 +566,68 @@ add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELRegions
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELNoneD
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HSELPLICD
 add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HRDATA
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchNextX
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRD
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRE
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrW
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionW
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PtrQ
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PopF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/PushE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/RASPCF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/RASPredictor/RepairD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredictionInstrClassWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/rd
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PostSpillInstrRawF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BTBPredPCWrongM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassD
+add wave -noupdate -color Firebrick /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPPredWrongM
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
+add wave -noupdate -expand -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PCSrcE
+add wave -noupdate -expand -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/TableDirPredictionF
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
+add wave -noupdate -expand -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionWrongE
+add wave -noupdate -expand -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate -expand -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushM
+add wave -noupdate -expand -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushE
+add wave -noupdate -expand -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
+add wave -noupdate -expand -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRD
+add wave -noupdate -expand -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRE
+add wave -noupdate -expand -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRM
+add wave -noupdate -expand -group {branch direction} -expand -group ghr -color Orange /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRW
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrF
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushD
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextM
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate -expand -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
+add wave -noupdate -expand -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextD
+add wave -noupdate -expand -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextE
+add wave -noupdate -expand -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextM
+add wave -noupdate -expand -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextW
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexE
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/StallM
+add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushM
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/PCNextF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/TargetPredictor/TableBTBPredictionF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPPredPCF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/SelBPPredF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredValidF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrF
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRF
+add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {341201 ns} 1} {{Cursor 5} {116741 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {5919 ns} 1} {{Cursor 5} {296884 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -620,4 +643,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {118528 ns} {128752 ns}
+WaveRestoreZoom {18545889 ns} {18546113 ns}
