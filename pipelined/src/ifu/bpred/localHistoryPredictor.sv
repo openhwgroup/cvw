@@ -28,23 +28,20 @@
 
 `include "wally-config.vh"
 
-module localHistoryPredictor
-  #(  parameter int m = 6, // 2^m = number of local history branches
-      parameter int k = 10 // number of past branches stored
-      )
-  (input logic             clk,
-   input logic             reset,
-   input logic             StallF,  StallE,
-   input logic [`XLEN-1:0] LookUpPC,
-   output logic [1:0]      Prediction,
-   // update
-   input logic [`XLEN-1:0] UpdatePC,
-   input logic             UpdateEN, PCSrcE, 
-   input logic [1:0]       UpdatePrediction
-  
-   );
+module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local history branches
+                                         k = 10) ( // number of past branches stored
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallF,  StallE,
+  input  logic [`XLEN-1:0] LookUpPC,
+  output logic [1:0]       Prediction,
+  // update
+  input logic [`XLEN-1:0]  UpdatePC,
+  input logic              UpdateEN, PCSrcE, 
+  input logic [1:0]        UpdatePrediction
+);
 
-  logic [2**m-1:0]         [k-1:0]  LHRNextF;
+  logic [2**m-1:0][k-1:0]  LHRNextF;
   logic [k-1:0]            LHRF, ForwardLHRNext, LHRFNext;
   logic [m-1:0]            LookUpPCIndex, UpdatePCIndex;
   logic [1:0]              PredictionMemory;

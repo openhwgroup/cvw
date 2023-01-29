@@ -28,19 +28,17 @@
 
 `include "wally-config.vh"
 
-module RASPredictor
-  #(parameter int StackSize = 16
-    )
-  (input logic              clk,
-   input logic 				reset,
-   input logic 				PopF,
-   output logic [`XLEN-1:0] RASPCF,
-   input logic [3:0] 		WrongPredInstrClassD,
-   input logic [3:0] 		InstrClassD,
-   input logic 				PushE,
-   input logic 				incr,
-   input logic [`XLEN-1:0] 	PCLinkE
-   );
+module RASPredictor #(parameter StackSize = 16) (
+  input  logic             clk,
+  input  logic 				     reset,
+  input  logic 				     PopF,
+  output logic [`XLEN-1:0] RASPCF,
+  input  logic [3:0] 		   WrongPredInstrClassD,
+  input  logic [3:0] 		   InstrClassD,
+  input  logic 				     PushE,
+  input  logic 				     incr,
+  input  logic [`XLEN-1:0] PCLinkE
+);
 
   // *** need to update so it either doesn't push until the memory stage
   // or need to repair flushed push.
