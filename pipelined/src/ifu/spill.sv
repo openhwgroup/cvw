@@ -50,15 +50,15 @@ module spill #(
   output logic 			   CompressedF);      // The fetched instruction is compressed
 
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
-  localparam integer   SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1; 
+  typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
+  statetype            CurrState, NextState;
+  localparam           SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1; 
   logic [`XLEN-1:0]    PCPlus2F;         
   logic                TakeSpillF;
   logic                SpillF;
   logic                SelSpillF;
-  logic 			   SpillSaveF;
+  logic 			         SpillSaveF;
   logic [15:0]         InstrFirstHalf;
-  typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
-   statetype CurrState, NextState;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 

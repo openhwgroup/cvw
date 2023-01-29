@@ -206,7 +206,7 @@ module lsu (
     assign {LoadPageFaultM, StoreAmoPageFaultM} = '0;
     assign PAdrM = IHAdrM[`PA_BITS-1:0];
     assign CacheableM = 1'b1;
-    assign SelDTIM = `DTIM_SUPPORTED & ~`BUS; // if no PMA then select dtim if there is a DTIM.  If there is 
+    assign SelDTIM = `DTIM_SUPPORTED & ~`BUS_SUPPORTED; // if no PMA then select dtim if there is a DTIM.  If there is 
     // a bus then this is always 0. Cannot have both without PMA.
   end
   
@@ -236,14 +236,14 @@ module lsu (
               .ReadDataWordM(DTIMReadDataWordM[`XLEN-1:0]), .ByteMaskM(ByteMaskM[`XLEN/8-1:0]));
   end else begin
   end
-  if (`BUS) begin : bus              
-    if(`DCACHE) begin : dcache
-      localparam integer   LLENWORDSPERLINE = `DCACHE_LINELENINBITS/`LLEN;             // Number of LLEN words in cacheline
-      localparam integer   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^
-      localparam integer   BEATSPERLINE = `DCACHE_LINELENINBITS/`AHBW;                 // Number of AHBW words (beats) in cacheline
-      localparam integer   AHBWLOGBWPL = $clog2(BEATSPERLINE);                         // Log2 of ^
-      localparam integer   LINELEN = `DCACHE_LINELENINBITS;                            // Number of bits in cacheline
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+  if (`BUS_SUPPORTED) begin : bus              
+    if(`DCACHE_SUPPORTED) begin : dcache
+      localparam   LLENWORDSPERLINE = `DCACHE_LINELENINBITS/`LLEN;             // Number of LLEN words in cacheline
+      localparam   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^
+      localparam   BEATSPERLINE = `DCACHE_LINELENINBITS/`AHBW;                 // Number of AHBW words (beats) in cacheline
+      localparam   AHBWLOGBWPL = $clog2(BEATSPERLINE);                         // Log2 of ^
+      localparam   LINELEN = `DCACHE_LINELENINBITS;                            // Number of bits in cacheline
+      localparam   LLENPOVERAHBW = `LLEN / `AHBW;                              // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
 
       logic [LINELEN-1:0]  FetchBuffer;                                                // Temporary buffer to hold partially fetched cacheline
       logic [`PA_BITS-1:0] DCacheBusAdr;                                               // Cacheline address to fetch or writeback.
@@ -251,10 +251,10 @@ module lsu (
       logic                DCacheBusAck;                                               // ahbcacheinterface completed fetch or writeback
       logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
       logic [1:0] 		   CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
-	  logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
+	    logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
       logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
       logic [1:0] 		   CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
-	  logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
+	    logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
       
       assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
