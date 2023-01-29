@@ -485,7 +485,7 @@ logic [3:0] dummy;
         string direction;
         int    file;
 		logic  PCScrM;
-		flopenrc #(1) PCSrcMReg(clk, reset, FlushM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+		flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
         initial
           file = $fopen("branch.log", "w");
         always @(posedge clk) begin
