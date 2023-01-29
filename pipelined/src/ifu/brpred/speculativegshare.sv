@@ -35,7 +35,6 @@ module speculativegshare
    input logic             reset,
    input logic             StallF, StallD, StallE, StallM, StallW, 
    input logic             FlushD, FlushE, FlushM, FlushW,
-//   input logic [`XLEN-1:0] LookUpPC,
    output logic [1:0]      DirPredictionF, 
    output logic            DirPredictionWrongE,
    // update
