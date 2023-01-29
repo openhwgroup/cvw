@@ -76,11 +76,6 @@ def writeVector(a, b, storecmd, xlen):
   lines = lines + storecmd + " x" + str(reg3) + ", " + str(wordsize*testnum) + "(x6)\n"
 #  lines = lines + "RVTEST_IO_ASSERT_GPR_EQ(x7, " + str(reg3) +", "+formatstr.format(expected)+")\n"
   f.write(lines)
-  if (xlen == 32):
-    line = formatrefstr.format(expected)+"\n"
-  else:
-    line = formatrefstr.format(expected % 2**32)+"\n" + formatrefstr.format(expected >> 32) + "\n"
-  r.write(line)
   testnum = testnum+1
 
 ##################################
@@ -114,12 +109,10 @@ for xlen in xlens:
     pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
     basename = "WALLY-" + test 
     fname = pathname + "src/" + basename + ".S"
-    refname = pathname + "references/" + basename + ".reference_output"
     testnum = 0
 
     # print custom header part
     f = open(fname, "w")
-    r = open(refname, "w")
     line = "///////////////////////////////////////////\n"
     f.write(line)
     lines="// "+fname+ "\n// " + author + "\n"
@@ -154,7 +147,6 @@ for xlen in xlens:
 #    lines = lines + "\nRV_COMPLIANCE_DATA_END\n" 
     f.write(lines)
     f.close()
-    r.close()
 
 
 

@@ -48,7 +48,6 @@ module datapath (
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
   output logic [`XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
-  input  logic             BMUE,                    // Bit manipulation instruction
   // Memory stage signals
   input  logic             StallM, FlushM,          // Stall, flush Memory stage
   input  logic             FWriteIntM, FCvtIntW,    // FPU writes integer register file, FPU converts float to int
@@ -64,7 +63,6 @@ module datapath (
   input  logic [`XLEN-1:0] ReadDataW,               // Read data from LSU
   input  logic [`XLEN-1:0] CSRReadValW,             // CSR read result
   input  logic [`XLEN-1:0] MDUResultW,              // MDU (Multiply/divide unit) result
-  input  logic [`XLEN-1:0] BMUResultE,              // bit manipulation unit result
   input  logic [`XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
    // Hazard Unit signals 
   output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,  // Register sources to read in Decode or Execute stage
@@ -81,7 +79,6 @@ module datapath (
   logic [`XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage 
   logic [`XLEN-1:0] SrcAE, SrcBE;                   // ALU operands
   logic [`XLEN-1:0] ALUResultE, AltResultE, IEUResultE; // ALU result, Alternative result (ImmExtE or PC+4), result of execution stage
-  logic [`XLEN-1:0] IEUBResultE;                    // IEUResultE before optional bit manipulation mux
   // Memory stage signals
   logic [`XLEN-1:0] IEUResultM;                     // Result from execution stage
   logic [`XLEN-1:0] IFResultM;                      // Result from either IEU or single-cycle FPU op writing an integer register
@@ -114,10 +111,7 @@ module datapath (
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
   alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
-  mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUBResultE);
-  if (`B_SUPPORTED)
-    mux2 #(`XLEN)   bmuresultmux(IEUResultE, BMUResultE, BMUE, IEUResultE);
-  else assign IEUResultE = IEUBResultE;
+  mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);

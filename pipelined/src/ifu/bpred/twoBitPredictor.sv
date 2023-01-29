@@ -28,19 +28,17 @@
 
 `include "wally-config.vh"
 
-module twoBitPredictor
-  #(parameter int k = 10
-    )
-  (input logic             clk,
-   input logic             reset,
-   input logic             StallF, StallD, StallE, StallM,
-   input logic             FlushD, FlushE, FlushM,
-   input logic [`XLEN-1:0] PCNextF, PCM,
-   output logic [1:0]      DirPredictionF,
-   output logic            DirPredictionWrongE,
-   input logic             BranchInstrE, BranchInstrM,
-   input logic             PCSrcE
-   );
+module twoBitPredictor #(parameter k = 10) (
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallF, StallD, StallE, StallM,
+  input  logic             FlushD, FlushE, FlushM,
+  input  logic [`XLEN-1:0] PCNextF, PCM,
+  output logic [1:0]       DirPredictionF,
+  output logic             DirPredictionWrongE,
+  input  logic             BranchInstrE, BranchInstrM,
+  input  logic             PCSrcE
+);
 
   logic [k-1:0]            IndexNextF, IndexM;
   logic [1:0]              PredictionMemory;
