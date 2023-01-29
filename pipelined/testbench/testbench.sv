@@ -408,7 +408,7 @@ logic [3:0] dummy;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters) begin
+  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin
     integer HPMCindex;
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -424,7 +424,8 @@ logic [3:0] dummy;
                             "D Cache Access",
                             "D Cache Miss",
                             "I Cache Access",
-                            "I Cache Miss"};
+                            "I Cache Miss",
+							"Br Pred Wrong"};
     always @(negedge clk) begin
       if(DCacheFlushStart & ~DCacheFlushDone) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
@@ -483,11 +484,13 @@ logic [3:0] dummy;
       if (`BPRED_LOGGER) begin
         string direction;
         int    file;
+		logic  PCSrcM;
+		flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
         initial
           file = $fopen("branch.log", "w");
         always @(posedge clk) begin
            if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-             direction = dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcM ? "t" : "n";
+             direction = PCSrcM ? "t" : "n";
              $fwrite(file, "%h %s\n", dut.core.PCM, direction);
            end
         end
