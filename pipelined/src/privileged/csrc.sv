@@ -48,7 +48,9 @@ module csrc #(parameter
   input  logic 	            BTBPredPCWrongM,
   input  logic 	            RASPredPCWrongM,
   input  logic 	            PredictionInstrClassWrongM,
+  input  logic              BPPredWrongM,                              // branch predictor is wrong
   input  logic [3:0]        InstrClassM,
+  input  logic              JumpOrTakenBranchM,                               // actual instruction class
   input  logic 	            DCacheMiss,
   input  logic 	            DCacheAccess,
   input  logic 	            ICacheMiss,
@@ -87,7 +89,7 @@ module csrc #(parameter
     assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
     assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
-    assign CounterEvent[7] = (InstrClassM[3] | InstrClassM[1]) & InstrValidNotFlushedM; // jump instructions
+    assign CounterEvent[7] = JumpOrTakenBranchM & InstrValidNotFlushedM;                // jump or taken branch instructions
     assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
@@ -95,7 +97,8 @@ module csrc #(parameter
     assign CounterEvent[12] = DCacheMiss;                                               // data cache miss
     assign CounterEvent[13] = ICacheAccess;                                             // instruction cache access
     assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss
-    assign CounterEvent[`COUNTERS-1:15] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+	assign CounterEvent[15] = BPPredWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
+    assign CounterEvent[`COUNTERS-1:16] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
   // Counter update and write logic
