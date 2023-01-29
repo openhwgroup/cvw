@@ -32,8 +32,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 1
-`define BPRED_LOGGER 1
+`define PrintHPMCounters 0
+`define BPRED_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
@@ -408,7 +408,7 @@ logic [3:0] dummy;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters) begin
+  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin
     integer HPMCindex;
     string  HPMCnames[] = '{"Mcycle",
                             "------",
