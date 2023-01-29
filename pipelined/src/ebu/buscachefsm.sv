@@ -32,8 +32,8 @@
 
 // HCLK and clk must be the same clock!
 module buscachefsm #(
-  parameter integer BeatCountThreshold,              // Largest beat index
-  parameter integer AHBWLOGBWPL                      // Log2 of BEATSPERLINE
+  parameter BeatCountThreshold,                      // Largest beat index
+  parameter AHBWLOGBWPL                              // Log2 of BEATSPERLINE
 )(
   input  logic              HCLK,
   input  logic              HRESETn,
