@@ -584,6 +584,8 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/FallThroughWrongE
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassD
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/InstrClassD
 add wave -noupdate -color Firebrick /testbench/dut/core/ifu/bpred/bpred/WrongPredInstrClassD
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
+add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/BPPredWrongM
 add wave -noupdate -expand -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
 add wave -noupdate -expand -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PCSrcE
 add wave -noupdate -expand -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionE
@@ -625,7 +627,7 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/Fl
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/OldGHRF
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {5919 ns} 1} {{Cursor 5} {217131 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {219681 ns} 1} {{Cursor 4} {5919 ns} 1} {{Cursor 5} {296884 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -641,4 +643,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {135840 ns} {362253 ns}
+WaveRestoreZoom {18545889 ns} {18546113 ns}
