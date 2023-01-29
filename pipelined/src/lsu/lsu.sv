@@ -237,7 +237,7 @@ module lsu (
   end else begin
   end
   if (`BUS_SUPPORTED) begin : bus              
-    if(`DCACHE) begin : dcache
+    if(`DCACHE_SUPPORTED) begin : dcache
       localparam   LLENWORDSPERLINE = `DCACHE_LINELENINBITS/`LLEN;             // Number of LLEN words in cacheline
       localparam   LLENLOGBWPL = $clog2(LLENWORDSPERLINE);                     // Log2 of ^
       localparam   BEATSPERLINE = `DCACHE_LINELENINBITS/`AHBW;                 // Number of AHBW words (beats) in cacheline
