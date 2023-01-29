@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram2p1rwbe_1024x69( 
+module ram2p1r1wbe_1024x69( 
   input  logic          CLKA, 
   input  logic          CLKB, 
   input  logic 	        CEBA, 
@@ -38,7 +38,7 @@ module ram2p1rwbe_1024x69(
   input  logic [68:0]   BWEBA, 
   input  logic [68:0]   BWEBB, 
   output logic [68:0]   QA,
-  output logic [68:0]   QB,
+  output logic [68:0]   QB
 );
 
    // replace "generic1024x69RAM" with "TSDN..1024X69.." module from your memory vendor
