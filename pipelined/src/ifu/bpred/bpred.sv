@@ -81,34 +81,34 @@ module bpred (
   
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
-  if (`BPTYPE == "BPTWOBIT") begin:Predictor
+  if (`BPRED_TYPE == "BPTWOBIT") begin:Predictor
     twoBitPredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
-  end else if (`BPTYPE == "BPGLOBAL") begin:Predictor
+  end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
     globalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
-  end else if (`BPTYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
+  end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .PCSrcE);
     
-  end else if (`BPTYPE == "BPGSHARE") begin:Predictor
+  end else if (`BPRED_TYPE == "BPGSHARE") begin:Predictor
     gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
-  end else if (`BPTYPE == "BPSPECULATIVEGSHARE") begin:Predictor
+  end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
 
-  end else if (`BPTYPE == "BPLOCALPAg") begin:Predictor
+  end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
 /* -----\/----- EXCLUDED -----\/-----
     localHistoryPredictor DirPredictor(.clk,
