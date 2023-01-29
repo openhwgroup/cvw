@@ -68,7 +68,7 @@
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 `define IDIV_BITSPERCYCLE 4
-`define IDIV_ON_FPU 1
+`define IDIV_ON_FPU 0
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 0
@@ -131,7 +131,7 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define BPRED_ENABLED 1
+`define BPRED_SUPPORTED 0
 `define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 `define BPRED_SIZE 10

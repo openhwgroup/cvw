@@ -219,7 +219,7 @@ module testbench;
 		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_ENABLED == 1)
+  if (`BPRED_SUPPORTED == 1)
     begin
       genvar adrindex;
       

@@ -99,7 +99,7 @@ package cvw;
 //  parameter PLIC_NUM_SRC_LT_32 = `PLIC_NUM_SRC_LT_32;
   parameter PLIC_GPIO_ID = `PLIC_GPIO_ID;
   parameter PLIC_UART_ID = `PLIC_UART_ID;
-  parameter BPRED_ENABLED = `BPRED_ENABLED;
+  parameter BPRED_SUPPORTED = `BPRED_SUPPORTED;
   parameter BPTYPE = `BPTYPE;
   parameter TESTSBP = `TESTSBP;
   parameter BPRED_SIZE = `BPRED_SIZE;
