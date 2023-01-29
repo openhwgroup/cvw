@@ -94,7 +94,7 @@ module btb
     end else if ((UpdateEn) & ~StallM & ~FlushM) begin
       ValidBits[PCEIndex] <= #1 |InstrClassE;
     end
-	TablePredValidF = ValidBits[PCNextFIndex];
+	if(~StallF | reset) TablePredValidF = ValidBits[PCNextFIndex];
   end
 
   assign PredValidF = MatchXF ? 1'b1 : TablePredValidF;
