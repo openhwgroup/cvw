@@ -62,7 +62,7 @@ module wallypipelinedcore (
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
   logic [31:0] 					 InstrM;
-  logic [XLEN-1:0]               PCF, PCE, PCLinkE;
+  logic [XLEN-1:0]               PCFSpill, PCE, PCLinkE;
   logic [XLEN-1:0] 			  PCM;
   logic [XLEN-1:0]               CSRReadValW, MDUResultW;
   logic [XLEN-1:0]               UnalignedPCNextF, PCNext2F;
@@ -166,7 +166,7 @@ module wallypipelinedcore (
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
-    .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
+    .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
@@ -235,7 +235,7 @@ module wallypipelinedcore (
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
-    .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCFSpill, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
   if(BUS_SUPPORTED) begin : ebu
