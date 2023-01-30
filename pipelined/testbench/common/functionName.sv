@@ -48,7 +48,7 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   logic 	    StallD, StallE, FlushD, FlushE;
   integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
 
-  assign PCF = testbench.dut.core.PCF;
+  assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
   assign StallE = testbench.dut.core.StallE;  
   assign FlushD = testbench.dut.core.FlushD;
