@@ -200,7 +200,7 @@ module controller(
   // Fences
   // Ordinary fence is presently a nop
   // fence.i flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
-  if (`ZIFENCEI_SUPPORTED & `ICACHE) begin:fencei
+  if (`ZIFENCEI_SUPPORTED & `ICACHE_SUPPORTED) begin:fencei
     logic FenceID;
     assign FenceID = FenceXD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
     assign InvalidateICacheD = FenceID;
@@ -249,5 +249,5 @@ module controller(
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write
-  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & `DCACHE)) | (|AtomicD));
+  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & `DCACHE_SUPPORTED)) | (|AtomicD));
 endmodule

@@ -24,6 +24,7 @@ export DRIVE ?= FLOP
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/pipelined/config
@@ -43,6 +44,8 @@ default:
 	@echo "Use wallySynth.py to run a concurrent sweep "
 
 
+DIRS32 = rv32e rv32gc rv32ic rv32i
+DIRS64 = rv64i rv64gc
 DIRS32 = rv32e rv32gc rv32ic rv32i
 DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
@@ -96,12 +99,18 @@ ifeq ($(SAIFPOWER), 1)
 	cp -f ../pipelined/regression/power.saif .
 endif
 
+ifeq ($(SAIFPOWER), 1)
+	cp -f ../pipelined/regression/power.saif .
+endif
+
 freqs: 
 	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e FREQ=$(freq) MAXCORES=1;)
 
 mkdirecs:
+mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
+	@mkdir -p $(OUTPUTDIR)/hdl/config
 	@mkdir -p $(OUTPUTDIR)/hdl/config
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
@@ -110,7 +119,14 @@ mkdirecs:
 synth: mkdirecs configs rundc clean
 
 rundc:
+
+synth: mkdirecs configs rundc clean
+
+rundc:
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+	
+clean:
+	rm -rf $(OUTPUTDIR)/hdl
 	
 clean:
 	rm -rf $(OUTPUTDIR)/hdl

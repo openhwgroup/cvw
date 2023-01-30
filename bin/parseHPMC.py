@@ -45,7 +45,7 @@ def ComputeBranchTargetMissRate(benchmark):
     'Computes and inserts branch target miss prediction rate.'
     # *** this is wrong in the verilog test bench
     (nameString, opt, dataDict) = benchmark
-    branchTargetMissRate = 100.0 * int(dataDict['Br Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump, JR, ret']) + int(dataDict['ret']))
+    branchTargetMissRate = 100.0 * int(dataDict['Br Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump, JR, Jal']) + int(dataDict['ret']))
     dataDict['BTMR'] = branchTargetMissRate
 
 def ComputeRASMissRate(benchmark):

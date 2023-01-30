@@ -34,7 +34,7 @@
 module hptw (
 	input  logic                clk, reset,
 	input  logic [`XLEN-1:0]    SATP_REGW, 					// includes SATP.MODE to determine number of levels in page table
-	input  logic [`XLEN-1:0]    PCF,  							// addresses to translate
+	input  logic [`XLEN-1:0]    PCFSpill,  							// addresses to translate
 	input  logic [`XLEN+1:0]    IEUAdrExtM, 				// addresses to translate
 	input  logic [1:0]          MemRWM, AtomicM,
 	// system status
@@ -109,7 +109,7 @@ module hptw (
 	assign TLBMiss = (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF);
 
 	// Determine which address to translate
-	mux2 #(`XLEN) vadrmux(PCF, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
+	mux2 #(`XLEN) vadrmux(PCFSpill, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops

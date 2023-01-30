@@ -129,3 +129,8 @@ tests/custom/crt0/*.a
 fpga/src/sdc/*
 fpga/src/sdc.tar.gz
 fpga/src/CopiedFiles_do_not_add_to_repo/*
+/pipelined/regression/branch.log
+/fpga/generator/sim/imp-funcsim.v
+/fpga/generator/sim/imp-timesim.sdf
+/fpga/generator/sim/imp-timesim.v
+/fpga/generator/sim/syn-funcsim.v

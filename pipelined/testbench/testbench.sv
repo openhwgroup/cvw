@@ -205,8 +205,8 @@ logic [3:0] dummy;
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
-  localparam integer 	   MemStartAddr = 0;
-  localparam integer 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
+  localparam 	   MemStartAddr = 0;
+  localparam 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
 
   initial
     begin
@@ -246,7 +246,7 @@ logic [3:0] dummy;
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
         if (`IROM_SUPPORTED) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-        else if (`BUS) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
         if (`DTIM_SUPPORTED) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
@@ -408,7 +408,7 @@ logic [3:0] dummy;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters) begin
+  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin
     integer HPMCindex;
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -424,7 +424,8 @@ logic [3:0] dummy;
                             "D Cache Access",
                             "D Cache Miss",
                             "I Cache Access",
-                            "I Cache Miss"};
+                            "I Cache Miss",
+							"Br Pred Wrong"};
     always @(negedge clk) begin
       if(DCacheFlushStart & ~DCacheFlushDone) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
@@ -465,7 +466,7 @@ logic [3:0] dummy;
 		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_ENABLED == 1)
+  if (`BPRED_SUPPORTED == 1)
     begin
       genvar adrindex;
       
@@ -483,11 +484,13 @@ logic [3:0] dummy;
       if (`BPRED_LOGGER) begin
         string direction;
         int    file;
+		logic  PCSrcM;
+		flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
         initial
           file = $fopen("branch.log", "w");
         always @(posedge clk) begin
            if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-             direction = dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcM ? "t" : "n";
+             direction = PCSrcM ? "t" : "n";
              $fwrite(file, "%h %s\n", dut.core.PCM, direction);
            end
         end
@@ -523,19 +526,19 @@ module riscvassertions;
     assert (`F_SUPPORTED | ~`D_SUPPORTED) else $error("Can't support double fp (D) without supporting float (F)");
     assert (`D_SUPPORTED | ~`Q_SUPPORTED) else $error("Can't support quad fp (Q) without supporting double (D)");
     assert (`F_SUPPORTED | ~`ZFH_SUPPORTED) else $error("Can't support half-precision fp (ZFH) without supporting float (F)");
-    assert (`DCACHE | ~`F_SUPPORTED | `FLEN <= `XLEN) else $error("Data cache required to support FLEN > XLEN because AHB bus width is XLEN");
+    assert (`DCACHE_SUPPORTED | ~`F_SUPPORTED | `FLEN <= `XLEN) else $error("Data cache required to support FLEN > XLEN because AHB bus width is XLEN");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    assert (`FLEN<=`XLEN | `DCACHE | `DTIM_SUPPORTED) else $error("Wally does not support FLEN > XLEN unleses data cache or DTIM is supported");
-    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (!`DCACHE) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_LINELENINBITS >= 128 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
+    assert (`FLEN<=`XLEN | `DCACHE_SUPPORTED | `DTIM_SUPPORTED) else $error("Wally does not support FLEN > XLEN unleses data cache or DTIM is supported");
+    assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (!`DCACHE_SUPPORTED) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`DCACHE_LINELENINBITS >= 128 | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
-    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (!`ICACHE) | `VIRTMEM_SUPPORTED == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`ICACHE_LINELENINBITS >= 32 | (!`ICACHE)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
+    assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (!`ICACHE_SUPPORTED) | `VIRTMEM_SUPPORTED == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
+    assert (`ICACHE_LINELENINBITS >= 32 | (!`ICACHE_SUPPORTED)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (!`DCACHE)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (!`ICACHE)) else $error("ICACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (!`ICACHE)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (!`DCACHE_SUPPORTED)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (!`ICACHE_SUPPORTED)) else $error("ICACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (!`ICACHE_SUPPORTED)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`UNCORE_RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 56'h07FFFFFF");
@@ -543,12 +546,12 @@ module riscvassertions;
     assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
     assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM_SUPPORTED == 0 & `IROM_SUPPORTED == 0)) else $error("Can't simultaneously have virtual memory and DTIM_SUPPORTED/IROM_SUPPORTED because local memories don't translate addresses");
-    assert (`DCACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
-    assert (`ICACHE | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
-    assert ((`DCACHE == 0 & `ICACHE == 0) | `BUS) else $error("Dcache and Icache requires DBUS.");
-    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
+    assert (`DCACHE_SUPPORTED | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
+    assert (`ICACHE_SUPPORTED | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
+    assert ((`DCACHE_SUPPORTED == 0 & `ICACHE_SUPPORTED == 0) | `BUS_SUPPORTED) else $error("Dcache and Icache requires DBUS_SUPPORTED.");
+    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
-    assert (`DCACHE | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
+    assert (`DCACHE_SUPPORTED | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
     assert (`IDIV_ON_FPU == 0 | `F_SUPPORTED) else $error("IDIV on FPU needs F_SUPPORTED");
   end
 
@@ -569,26 +572,24 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
-	if(`DCACHE) begin
-	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-	  localparam integer sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-	  localparam integer cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-      
-//testbench.dut.core.lsu.bus.dcache.dcache.CacheWays.NUMSRAM;
-	  localparam integer numwords = sramlen/`XLEN;
-      localparam integer lognumlines = $clog2(numlines);
-	  localparam integer loglinebytelen = $clog2(linebytelen);
-	  localparam integer lognumways = $clog2(numways);
-	  localparam integer tagstart = lognumlines + loglinebytelen;
+	if(`DCACHE_SUPPORTED) begin
+	  localparam numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+	  localparam sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+	  localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+	  localparam numwords = sramlen/`XLEN;
+    localparam lognumlines = $clog2(numlines);
+	  localparam loglinebytelen = $clog2(linebytelen);
+	  localparam lognumways = $clog2(numways);
+	  localparam tagstart = lognumlines + loglinebytelen;
 
 
 
 	  genvar 			 index, way, cacheWord;
 	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-      logic [sramlen-1:0] cacheline;
+    logic [sramlen-1:0] cacheline;
 	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
 	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
 	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
