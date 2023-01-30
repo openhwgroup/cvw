@@ -44,7 +44,7 @@ module ifu (
   output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
   output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
 
-  output logic [`XLEN-1:0] PCF,              // Fetch stage instruction address
+  output logic [`XLEN-1:0]  PCFSpill,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
   input  logic 				PCSrcE,                                   // Executation stage branch is taken
@@ -97,19 +97,19 @@ module ifu (
   logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [`XLEN-1:0]			   PCNextFSpill;                          // Next PCF after possible + 2 to handle spill
-  logic [`XLEN-1:0] 		   PCFSpill;                              // PCF with possible + 2 to handle spill
   logic [`XLEN-1:0]            PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
   logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
   logic [`XLEN-1:0] 		   NextValidPCE;                          // The PC of the next valid instruction in the pipeline after  csr write or fence
-  logic [`PA_BITS-1:0]         PCPF;         // Physical address after address translation
+  logic [`XLEN-1:0] 		   PCF;                                   // Fetch stage instruction address
+  logic [`PA_BITS-1:0]         PCPF;                                  // Physical address after address translation
   logic [`XLEN+1:0]            PCFExt;                                //
 
   logic [31:0] 				   IROMInstrF;                            // Instruction from the IROM
   logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
   logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
   logic                        CompressedF;                           // The fetched instruction is compressed
-  logic [31:0]  PostSpillInstrRawF;          // Fetch instruction after merge two halves of spill
+  logic [31:0] 				   PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
   logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10

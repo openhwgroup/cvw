@@ -79,7 +79,7 @@ module lsu (
   input  logic [`XLEN-1:0]    SATP_REGW,                            // SATP (supervisor address translation and protection) CSR
   input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
   input  logic [1:0]          STATUS_MPP,                           // Machine previous privilege mode
-  input  logic [`XLEN-1:0]    PCF,                                  // Fetch PC 
+  input  logic [`XLEN-1:0]    PCFSpill,                                  // Fetch PC 
   input  logic                ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
   input  logic                InstrDAPageFaultF,                    // ITLB hit needs to update dirty or access bits
   output logic [`XLEN-1:0]    PTE,                                  // Page table entry write to ITLB
@@ -152,7 +152,7 @@ module lsu (
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
-      .FlushW, .DCacheStallM, .SATP_REGW, .PCF,
+      .FlushW, .DCacheStallM, .SATP_REGW, .PCFSpill,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
