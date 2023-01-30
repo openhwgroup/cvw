@@ -32,7 +32,7 @@
 module sd_top_tb();
 
 
-  localparam integer g_COUNT_WIDTH = 8;
+  localparam g_COUNT_WIDTH = 8;
 
   logic a_RST;
   logic i_SD_CMD;

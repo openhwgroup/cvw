@@ -1,13 +1,14 @@
-//////////////////////////////////////////
-// wally-shared.vh
+///////////////////////////////////////////
+// ram1p1rwbe_64x44.sv
 //
-// Written: david_harris@hmc.edu 7 June 2021
+// Written: james.stine@okstate.edu 28 January 2023
+// Modified: 
 //
-// Purpose: Shared and default configuration values common to all designs
-//
-// A component of the Wally configurable RISC-V project.
-//
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Purpose: RAM wrapper for instantiating RAM IP
+// 
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// 
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -23,19 +24,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// division constants
-`define RADIX 32'h4
-`define DIVCOPIES 32'h4
+module ram1p1rwbe_64x44( 
+  input  logic          CLK, 
+  input  logic 	        CEB, 
+  input  logic          WEB,
+  input  logic [5:0]    A, 
+  input  logic [127:0]  D,
+  input  logic [127:0]  BWEB, 
+  output logic [127:0]  Q
+);
 
-// eventually move to each config
-`define ZBA_SUPPORTED 0
-`define ZBB_SUPPORTED 0
-`define ZBC_SUPPORTED 0
-`define ZBS_SUPPORTED 0
+   // replace "generic64x44RAM" with "TS1N..64X44.." module from your memory vendor
+   generic64x44RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
 
-// Memory synthesis configuration
-`define USE_SRAM 0
-
-// shared constants
-`include "wally-constants.vh"
-
+endmodule

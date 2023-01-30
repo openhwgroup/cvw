@@ -11,25 +11,25 @@
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
-// is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
-// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-///////////////////////////////////////////
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 // include shared configuration
 `include "wally-shared.vh"
 
 `define FPGA 1
 `define QEMU 0
-`define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 64
@@ -43,12 +43,11 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
 `define COUNTERS 32
-`define DESIGN_COMPILER 0
 
 // LSU microarchitectural Features
-`define BUS 1
-`define DCACHE 1
-`define ICACHE 1
+`define BUS_SUPPORTED 1
+`define DCACHE_SUPPORTED 1
+`define ICACHE_SUPPORTED 1
 `define VIRTMEM_SUPPORTED 1
 `define VECTORED_INTERRUPTS_SUPPORTED 1 
 `define BIGENDIAN_SUPPORTED 1
@@ -72,7 +71,7 @@
 `define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 64
+`define PMP_ENTRIES 16
 
 // Address space
 `define RESET_VECTOR 64'h0000000000001000
@@ -136,11 +135,10 @@
 // Interrupt configuration
 `define PLIC_NUM_SRC 53
 `define PLIC_UART_ID 10
+`define PLIC_GPIO_ID 3
 
-`define TWO_BIT_PRELOAD "../config/fpga/twoBitPredictor.txt"
-`define BTB_PRELOAD "../config/fpga/BTBPredictor.txt"
-`define BPRED_ENABLED 1
-`define BPTYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE or BPSPECULATIVEGLOBAL or BPSPECULATIVEGSHARE or BPOLDGSHARE or BPOLDGSHARE2
+`define BPRED_SUPPORTED 1
+`define BPRED_TYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE or BPSPECULATIVEGLOBAL or BPSPECULATIVEGSHARE or BPOLDGSHARE or BPOLDGSHARE2
 `define TESTSBP 1
 `define BPRED_SIZE 10
 
