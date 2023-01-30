@@ -128,15 +128,15 @@ module speculativegshare #(parameter int k = 10 ) (
   flopenr  #(k) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
 
   assign GHRNextE = BranchInstrE & ~FlushM ? {PCSrcE, GHRD[k-2:0]} :   // if the branch is not flushed
-					FlushE ? GHRNextM :                                // branch is flushed
+					FlushE ? GHRE :                                // branch is flushed
 					GHRD;
-  flopenr  #(k) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, GHRE);
+  flopenr  #(k) GHREReg(clk, reset, (BranchInstrE & ~StallE) | FlushE, GHRNextE, GHRE);
 
-  assign GHRNextM = FlushM ? GHRNextW : GHRE;
-  flopenr  #(k) GHRMReg(clk, reset, (~StallM) | FlushM, GHRNextM, GHRM);
+  //assign GHRNextM = FlushM ? GHRM : GHRE;
+  //flopenr  #(k) GHRMReg(clk, reset, (BranchInstrM & ~StallM) | FlushM, GHRNextM, GHRM);
 
-  assign GHRNextW = FlushW ? GHRW : GHRM;
-  flopenr  #(k) GHRWReg(clk, reset, (BranchInstrW & ~StallW) | FlushW, GHRNextW, GHRW);
+  //assign GHRNextW = FlushW ? GHRW : GHRM;
+  //flopenr  #(k) GHRWReg(clk, reset, (BranchInstrW & ~StallW) | FlushW, GHRNextW, GHRW);
   
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
 
