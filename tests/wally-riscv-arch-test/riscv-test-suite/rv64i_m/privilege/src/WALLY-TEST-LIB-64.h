@@ -1107,33 +1107,36 @@ uart_save_iir_status:
     j test_loop
 
 uart_data_wait:
-    li t2, 0x10000005 // LSR
-    li t3, 0x10000002 // IIR
-    li a4, 0x61
-uart_read_LSR_IIR:
-    lbu t4, 0(t3) // save IIR before reading LSR might clear it
-    //  check if IIR is the rxfifotimeout interrupt. if it is, then read the fifo then go back and repeat this.
-    li t5, 0xCC // Value in IIR for Fifo Enabled, with timeout interrupt pending
-    beq t4, t5, uart_rxfifo_timout
-    lb t5, 0(t2) // read LSR
-    andi t6, t5, 0x61  // wait until all transmissions are done and data is ready
-    bne a4, t6, uart_read_LSR_IIR
+    li t2, 0x10000002
+    lbu t3, 0(t2) // save IIR before reading LSR might clear it
+    // Check IIR to see if theres an rxfifio or txempty interrupt and handle it before continuing.
+    li t2, 0xCC // Value in IIR for Fifo Enabled, with timeout interrupt pending
+    beq t3, t2, uart_rxfifo_timout
+    li t2, 0xC2 // Value in IIR for Fifo Enabled, with txempty interrupt pending.
+    beq t3, t2, uart_txempty_intr
+    li t2, 0x10000005 // There needs to be an instruction here between the beq and the lb or the tests will hang
+    lb t4, 0(t2) // read LSR
+    li t2, 0x61
+    bne t4, t2, uart_data_wait // wait until all transmissions are done and data is ready
     j uart_data_ready
 uart_rxfifo_timout:
-    li t4, 0x10000000 // read from the fifo to clear the rx timeout error
-    lb t5, 0(t4)
-    sb t5, 0(t4) // write back to the fifo to make sure we have the same data so expected future overrun errors still occur.
-    //read the fifo until empty
-    j uart_read_LSR_IIR
-
+    li t2, 0x10000000 // read from the fifo to clear the rx timeout error
+    lb t5, 0(t2)
+    sb t5, 0(t2) // write back to the fifo to make sure we have the same data so expected future overrun errors still occur.
+    j uart_data_wait
+uart_txempty_intr:
+    li t2, 0x10000002
+    lb t5, 0(t2) // Read IIR to clear this bit in LSR
+    j uart_data_wait
 
 uart_data_ready:
+    li t2, 0x10000002
+    lbu t3, 0(t2) // re read IIR
+    andi t4, t4, 0x9F // mask THRE and TEMT from IIR signature
     li t2, 0
     sd t2, 0(t1) // clear entry deadbeef from memory
-    lbu t4, 0(t3) // re read IIR
-    andi t5, t5, 0x9F // mask THRE and TEMT from signature
-    sb t4, 1(t1) // IIR
-    sb t5, 0(t1) // LSR
+    sb t3, 1(t1) // IIR
+    sb t4, 0(t1) // LSR
     addi t1, t1, 8
     addi a6, a6, 8
     j test_loop

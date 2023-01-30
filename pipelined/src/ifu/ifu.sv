@@ -44,13 +44,14 @@ module ifu (
   output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
   output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
 
-  output logic [`XLEN-1:0] PCF,              // Fetch stage instruction address
+  output logic [`XLEN-1:0]  PCFSpill,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
   input  logic 				PCSrcE,                                   // Executation stage branch is taken
   input  logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
   output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
   output logic 				BPPredWrongE,                             // Prediction is wrong
+  output logic 				BPPredWrongM,                             // Prediction is wrong
   // Mem
   output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
   input  logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
@@ -60,6 +61,7 @@ module ifu (
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic              JumpOrTakenBranchM,
   output logic 				DirPredictionWrongM,                      // Prediction direction is wrong
   output logic 				BTBPredPCWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
@@ -95,19 +97,19 @@ module ifu (
   logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
   logic [`XLEN-1:0]			   PCNextFSpill;                          // Next PCF after possible + 2 to handle spill
-  logic [`XLEN-1:0] 		   PCFSpill;                              // PCF with possible + 2 to handle spill
   logic [`XLEN-1:0]            PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
   logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
   logic [`XLEN-1:0] 		   NextValidPCE;                          // The PC of the next valid instruction in the pipeline after  csr write or fence
-  logic [`PA_BITS-1:0]         PCPF;         // Physical address after address translation
+  logic [`XLEN-1:0] 		   PCF;                                   // Fetch stage instruction address
+  logic [`PA_BITS-1:0]         PCPF;                                  // Physical address after address translation
   logic [`XLEN+1:0]            PCFExt;                                //
 
   logic [31:0] 				   IROMInstrF;                            // Instruction from the IROM
   logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
   logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
   logic                        CompressedF;                           // The fetched instruction is compressed
-  logic [31:0]  PostSpillInstrRawF;          // Fetch instruction after merge two halves of spill
+  logic [31:0] 				   PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
   logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10
@@ -115,7 +117,7 @@ module ifu (
   logic [31:0] NextInstrD, NextInstrE;                                // Instruction into the next stage after possible stage flush
 
 
-  logic 					   CacheableF;                            // PMA indicates isntruction address is cacheable
+  logic 					   CacheableF;                            // PMA indicates instruction address is cacheable
   logic 					   SelNextSpillF;                         // In a spill, stall pipeline and gate local stallF
   logic 					   BusStall;                              // Bus interface busy with multicycle operation
   logic 					   ICacheStallF;                          // I$ busy with multicycle operation
@@ -134,7 +136,7 @@ module ifu (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`C_SUPPORTED) begin : Spill
-    spill #(`ICACHE) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
+    spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
       .InstrDAPageFaultF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCNextFSpill = PCNextF;
@@ -208,13 +210,13 @@ module ifu (
   end else begin
     assign IFURWF = 2'b10;
   end
-  if (`BUS) begin : bus
+  if (`BUS_SUPPORTED) begin : bus
     // **** must fix words per line vs beats per line as in lsu.
-    localparam integer   WORDSPERLINE = `ICACHE ? `ICACHE_LINELENINBITS/`XLEN : 1;
-    localparam integer   LOGBWPL = `ICACHE ? $clog2(WORDSPERLINE) : 1;
-    if(`ICACHE) begin : icache
-      localparam integer   LINELEN = `ICACHE ? `ICACHE_LINELENINBITS : `XLEN;
-      localparam integer   LLENPOVERAHBW = `LLEN / `AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+    localparam   WORDSPERLINE = `ICACHE_SUPPORTED ? `ICACHE_LINELENINBITS/`XLEN : 1;
+    localparam   LOGBWPL = `ICACHE_SUPPORTED ? $clog2(WORDSPERLINE) : 1;
+    if(`ICACHE_SUPPORTED) begin : icache
+      localparam           LINELEN = `ICACHE_SUPPORTED ? `ICACHE_LINELENINBITS : `XLEN;
+      localparam           LLENPOVERAHBW = `LLEN / `AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
       logic [LINELEN-1:0]  FetchBuffer;
       logic [`PA_BITS-1:0] ICacheBusAdr;
       logic                ICacheBusAck;
@@ -322,12 +324,12 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
-  if (`BPRED_ENABLED) begin : bpred
+  if (`BPRED_SUPPORTED) begin : bpred
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE,
+                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred

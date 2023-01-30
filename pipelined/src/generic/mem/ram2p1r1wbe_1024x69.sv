@@ -1,16 +1,11 @@
 ///////////////////////////////////////////
-// bmu.sv
+// ram2p1rwbe_1024x69.sv
 //
-// Written: kekim@g.hmc.edu, David_Harris@hmc.edu 20 January 2023
+// Written: james.stine@okstate.edu 28 January 2023
 // Modified: 
 //
-// Purpose: Bit manipulation extensions Zba, Zbb, Zbc, Zbs
-//          Single-cycle operation in Execute stage
+// Purpose: RAM wrapper for instantiating RAM IP
 // 
-// Documentation: n/a
-// See RISC-V Bit-Manipulation ISA-extensions
-//     Version 1.0.0-38-g865e7a7, 2021-06-28: Release candidate
-//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -29,17 +24,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module bmu(
-	input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
-  input  logic [31:0] 			InstrD,                           // instruction        
-  output logic              BMUE,                             // bit manipulation instruction  								
-	output logic [`XLEN-1:0] 	BMUResultE												// bit manipulation result
+module ram2p1r1wbe_1024x69( 
+  input  logic          CLKA, 
+  input  logic          CLKB, 
+  input  logic 	        CEBA, 
+  input  logic 	        CEBB, 
+  input  logic          WEBA,
+  input  logic          WEBB,
+  input  logic [9:0]    AA, 
+  input  logic [9:0]    AB, 
+  input  logic [68:0]   DA,
+  input  logic [68:0]   DB,
+  input  logic [68:0]   BWEBA, 
+  input  logic [68:0]   BWEBB, 
+  output logic [68:0]   QA,
+  output logic [68:0]   QB
 );
 
+   // replace "generic1024x69RAM" with "TSDN..1024X69.." module from your memory vendor
+   generic1024x69RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+			     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
-
-endmodule // mdu
-
-
+endmodule

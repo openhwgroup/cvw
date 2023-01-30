@@ -1,13 +1,14 @@
-//////////////////////////////////////////
-// wally-shared.vh
+///////////////////////////////////////////
+// rom1p1r_128x32.sv
 //
-// Written: david_harris@hmc.edu 7 June 2021
+// Written: james.stine@okstate.edu 28 January 2023
+// Modified: 
 //
-// Purpose: Shared and default configuration values common to all designs
-//
-// A component of the Wally configurable RISC-V project.
-//
-// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
+// Purpose: RAM wrapper for instantiating RAM IP
+// 
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// 
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -23,19 +24,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// division constants
-`define RADIX 32'h4
-`define DIVCOPIES 32'h4
+module rom1p1r_128x32( 
+  input  logic          CLK, 
+  input  logic 	        CEB, 
+  input  logic [6:0]    A, 
+  output logic [31:0]   Q
+);
 
-// eventually move to each config
-`define ZBA_SUPPORTED 0
-`define ZBB_SUPPORTED 0
-`define ZBC_SUPPORTED 0
-`define ZBS_SUPPORTED 0
+   // replace "generic128x32ROM" with "TS3N..128X32.." module from your memory vendor
+   generic64x128ROM sramIP (.CLK, .CEB, .A, .Q);
 
-// Memory synthesis configuration
-`define USE_SRAM 0
-
-// shared constants
-`include "wally-constants.vh"
+endmodule 
 
