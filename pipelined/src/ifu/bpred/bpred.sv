@@ -85,41 +85,37 @@ module bpred (
   logic [3:0] 				WrongPredInstrClassD;
 
 
-//************ new resolve issues  
   logic BTBTargetWrongE;
   logic RASTargetWrongE;
   logic JumpOrTakenBranchE;
-  
-  
 
   logic [`XLEN-1:0] PredPCD, PredPCE, RASPCD, RASPCE;
-
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPRED_TYPE == "BPTWOBIT") begin:Predictor
-    twoBitPredictor DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+    twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
-    globalhistory DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+    globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
-    speculativeglobalhistory #(10) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+    speculativeglobalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
 	    
   end else if (`BPRED_TYPE == "BPGSHARE") begin:Predictor
-    gshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+    gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
-    speculativegshare DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
@@ -138,7 +134,6 @@ module bpred (
       .UpdatePrediction(InstrClassE[0]));
  -----/\----- EXCLUDED -----/\----- */
   end 
-
 
   // this predictor will have two pieces of data,
   // 1) A direction (1 = Taken, 0 = Not Taken)
@@ -260,7 +255,6 @@ module bpred (
   // branch class prediction wrong.
   assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD;
   
-  
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
   // If the prediction is wrong select the correct address.
@@ -292,8 +286,5 @@ module bpred (
 
   flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
   flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
-
-  
-  
   
 endmodule
