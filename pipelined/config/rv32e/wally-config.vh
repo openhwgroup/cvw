@@ -11,25 +11,25 @@
 // 
 // Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
-// files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, 
-// modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software 
-// is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-// The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-// OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-// BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT 
-// OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-///////////////////////////////////////////
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 // include shared configuration
 `include "wally-shared.vh"
 
 `define FPGA 0
 `define QEMU 0
-`define DESIGN_COMPILER 0
 
 // RV32 or RV64: XLEN = 32 or 64
 `define XLEN 32
@@ -46,9 +46,9 @@
 `define ZFH_SUPPORTED 0
 
 // LSU microarchitectural Features
-`define BUS 1
-`define DCACHE 0
-`define ICACHE 0
+`define BUS_SUPPORTED 1
+`define DCACHE_SUPPORTED 0
+`define ICACHE_SUPPORTED 0
 `define VIRTMEM_SUPPORTED 0
 `define VECTORED_INTERRUPTS_SUPPORTED 0 
 `define BIGENDIAN_SUPPORTED 0
@@ -69,7 +69,7 @@
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 `define IDIV_BITSPERCYCLE 1
-`define IDIV_ON_FPU 1
+`define IDIV_ON_FPU 0
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 0
@@ -132,8 +132,8 @@
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
 
-`define BPRED_ENABLED 0
-`define BPTYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
+`define BPRED_SUPPORTED 0
+`define BPRED_TYPE "BPGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define TESTSBP 0
 `define BPRED_SIZE 10
 

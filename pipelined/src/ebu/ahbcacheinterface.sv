@@ -30,10 +30,10 @@
 `include "wally-config.vh"
 
 module ahbcacheinterface #(
-  parameter integer BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
-  parameter integer AHBWLOGBWPL,   // Log2 of ^
-  parameter integer LINELEN,       // Number of bits in cacheline
-  parameter integer LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+  parameter BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
+  parameter AHBWLOGBWPL,   // Log2 of ^
+  parameter LINELEN,       // Number of bits in cacheline
+  parameter LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
 )(
   input  logic                 HCLK, HRESETn,
   // bus interface controls
@@ -72,12 +72,12 @@ module ahbcacheinterface #(
   output logic                BusCommitted);           // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   
 
-  localparam integer           BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
-  logic [`PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
-  logic [AHBWLOGBWPL-1:0]           BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
-  logic                        CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [`AHBW/8-1:0] 		   BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
-  logic [`AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
+  localparam                  BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
+  logic [`PA_BITS-1:0]        LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
+  logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
+  logic [`AHBW/8-1:0] 		    BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
+  logic [`AHBW-1:0]           PreHWDATA;                              // AHB Address phase write data
 
   genvar                       index;
 
