@@ -40,7 +40,7 @@ module ifu (
 (* mark_debug = "true" *) output logic [2:0]  IFUHSIZE,
 (* mark_debug = "true" *) output logic  IFUHWRITE,
 (* mark_debug = "true" *) input logic   IFUHREADY,
-	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCF, 
+	(* mark_debug = "true" *) output logic [`XLEN-1:0] PCFSpill, 
 	// Execute
 	output logic [`XLEN-1:0] 	PCLinkE,
 	input logic 				PCSrcE, 
@@ -103,7 +103,7 @@ module ifu (
 
   logic 					   CacheableF;
   logic [`XLEN-1:0]			   PCNextFSpill;
-  logic [`XLEN-1:0] 		   PCFSpill;
+  logic [`XLEN-1:0] 		   PCF;
   logic 					   SelNextSpillF;
   logic 					   ICacheFetchLine;
   logic 					   BusStall;

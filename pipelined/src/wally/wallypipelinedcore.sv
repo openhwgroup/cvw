@@ -61,7 +61,7 @@ module wallypipelinedcore (
   logic [2:0]             Funct3E;
   logic [31:0]             InstrD;
   (* mark_debug = "true" *) logic [31:0]             InstrM;
-  logic [`XLEN-1:0]         PCF, PCE, PCLinkE;
+  logic [`XLEN-1:0]         PCFSpill, PCE, PCLinkE;
   (* mark_debug = "true" *) logic [`XLEN-1:0]         PCM;
  logic [`XLEN-1:0]         CSRReadValW, MDUResultW;
    logic [`XLEN-1:0]         UnalignedPCNextF, PCNext2F;
@@ -167,7 +167,7 @@ module wallypipelinedcore (
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW,
     // Fetch
-    .HRDATA, .PCF, .IFUHADDR, .PCNext2F,
+    .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE,
           .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
@@ -278,7 +278,7 @@ module wallypipelinedcore (
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrDAPageFaultF,
     
-    .PCF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCFSpill, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                     // change to LSUStallM
 
 
