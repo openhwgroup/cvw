@@ -98,20 +98,20 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'hB00] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[0];
 	  CSRArray[12'hB02] = testbench.dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[2];
 	  // supervisor CSRs
-	  CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.SSTATUS_REGW;
+	  CSRArray[12'h100] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSTATUS_REGW;
 	  CSRArray[12'h104] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW & 12'h222;
-	  CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.STVEC_REGW;
-	  CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.SEPC_REGW;
-	  CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.SCOUNTEREN_REGW;
-	  CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.SATP_REGW;
+	  CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW;
+	  CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW;
+	  CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW;
+	  CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW;
 	  CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
 	  CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
 	  CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
 	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
 	  // user CSRs
 	  CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
-	  CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.FRM_REGW;
-	  CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
+	  CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW;
+	  CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
 	end else begin // hold the old value if the pipeline is stalled.
 	  CSRArray[12'h300] = CSRArrayOld[12'h300];
 	  CSRArray[12'h310] = CSRArrayOld[12'h310];
