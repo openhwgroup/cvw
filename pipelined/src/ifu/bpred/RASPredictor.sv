@@ -60,7 +60,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
 
   assign WrongPredRetD = (WrongPredInstrClassD[2]) & ~StallE & ~FlushE;
-  assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]);
+  assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]); // flushed ret
 
   assign RepairD = WrongPredRetD | FlushedRetDE ;
 
