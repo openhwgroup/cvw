@@ -37,7 +37,7 @@ module speculativegshare #(parameter int k = 10 ) (
   output logic 			  DirPredictionWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-  input logic [3:0] 	  InstrClassF, InstrClassD, InstrClassE,
+  input logic [3:0] 	  PredInstrClassF, InstrClassD, InstrClassE,
   input logic [3:0] 	  WrongPredInstrClassD, 
   input logic 			  PCSrcE
 );
@@ -72,7 +72,7 @@ module speculativegshare #(parameter int k = 10 ) (
 
   // if there are non-flushed branches in the pipeline we need to forward the prediction from that stage to the NextF demi stage
   // and then register for use in the Fetch stage.
-  assign MatchF = InstrClassF[0] & ~FlushD & (IndexNextF == IndexF);
+  assign MatchF = PredInstrClassF[0] & ~FlushD & (IndexNextF == IndexF);
   assign MatchD = InstrClassD[0] & ~FlushE & (IndexNextF == IndexD);
   assign MatchE = InstrClassE[0] & ~FlushM & (IndexNextF == IndexE);
   assign MatchNextX = MatchF | MatchD | MatchE;
@@ -105,7 +105,7 @@ module speculativegshare #(parameter int k = 10 ) (
   // For FlushE this is GHRE.  GHRNextE is both.
   assign FlushDOrDirWrong = FlushD | DirPredictionWrongE;
   mux3 #(k) GHRFMux(GHRF, {DirPredictionF[1], GHRF[k-1:1]}, GHRNextE[k-1:0], 
-					{FlushDOrDirWrong, InstrClassF[0]}, GHRNextF);
+					{FlushDOrDirWrong, PredInstrClassF[0]}, GHRNextF);
 
   // Need 1 extra bit to store the shifted out GHRF if repair needs to back shift.
   flopenr  #(k) GHRFReg(clk, reset, ~StallF | FlushD, GHRNextF, GHRF);	
