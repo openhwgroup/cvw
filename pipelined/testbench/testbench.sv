@@ -471,7 +471,7 @@ logic [3:0] dummy;
       genvar adrindex;
       
       // Initializing all zeroes into the branch predictor memory.
-      for(adrindex = 0; adrindex < 1024; adrindex++) begin
+      for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
         initial begin 
         force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;

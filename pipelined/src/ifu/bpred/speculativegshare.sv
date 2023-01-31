@@ -46,7 +46,7 @@ module speculativegshare #(parameter int k = 10 ) (
   logic                    MatchNextX, MatchXF;
 
   logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE;
-  logic [1:0]              NewDirPredictionF, NewDirPredictionD, NewDirPredictionE;
+  logic [1:0]              NewDirPredictionE;
 
   logic [k-1:0] 		   GHRF, GHRD, GHRE;
   logic 				   GHRLastF;
@@ -79,8 +79,8 @@ module speculativegshare #(parameter int k = 10 ) (
 
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardNewDirPrediction = MatchF ? NewDirPredictionF :
-                                   MatchD ? NewDirPredictionD :
+  assign ForwardNewDirPrediction = MatchF ? {2{DirPredictionF[1]}} :
+                                   MatchD ? {2{DirPredictionD[1]}} :
                                    NewDirPredictionE ;
   
   flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
@@ -91,10 +91,7 @@ module speculativegshare #(parameter int k = 10 ) (
   flopenr #(2) PredictionRegD(clk, reset, ~StallD, DirPredictionF, DirPredictionD);
   flopenr #(2) PredictionRegE(clk, reset, ~StallE, DirPredictionD, DirPredictionE);
 
-  // New prediction pipeline
-  assign NewDirPredictionF = {DirPredictionF[1], DirPredictionF[1]};
   
-  flopenr #(2) NewPredDReg(clk, reset, ~StallD, NewDirPredictionF, NewDirPredictionD);
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
 
   // GHR pipeline
