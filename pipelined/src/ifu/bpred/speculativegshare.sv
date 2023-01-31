@@ -105,8 +105,8 @@ module speculativegshare #(parameter int k = 10 ) (
 					{FlushDOrDirWrong, PredInstrClassF[0]}, GHRNextF);
 
   // Need 1 extra bit to store the shifted out GHRF if repair needs to back shift.
-  flopenr  #(k) GHRFReg(clk, reset, ~StallF | FlushD, GHRNextF, GHRF);	
-  flopenr  #(1) GHRFLastReg(clk, reset, ~StallF | FlushD, GHRF[0], GHRLastF);
+  flopenr  #(k) GHRFReg(clk, reset, ~StallF | FlushDOrDirWrong, GHRNextF, GHRF);	
+  flopenr  #(1) GHRFLastReg(clk, reset, ~StallF | FlushDOrDirWrong, GHRF[0], GHRLastF);
 
   // With instruction class prediction, the class could be wrong and is checked in Decode.
   // If it is wrong and branch does exist then shift right and insert the prediction.
@@ -116,7 +116,7 @@ module speculativegshare #(parameter int k = 10 ) (
   // As with GHRF FlushD and wrong direction prediction flushes the pipeline and restores to GHRNextE.
   mux3 #(k) GHRDMux(GHRF, GHRClassWrong, GHRNextE, {FlushDOrDirWrong, WrongPredInstrClassD[0]}, GHRNextD);
 
-  flopenr  #(k) GHRDReg(clk, reset, ~StallD | FlushD, GHRNextD, GHRD);
+  flopenr  #(k) GHRDReg(clk, reset, ~StallD | FlushDOrDirWrong, GHRNextD, GHRD);
 
   mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
 
