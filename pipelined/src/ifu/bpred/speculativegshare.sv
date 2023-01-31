@@ -109,7 +109,7 @@ module speculativegshare #(parameter int k = 10 ) (
 
   always_comb begin
 	if(FlushD | DirPredictionWrongE) begin
-	  GHRNextF = GHRNextD[k-1:0];
+	  GHRNextF = GHRNextE[k-1:0];
 	end else if(BranchInstrF) GHRNextF = {DirPredictionF[1], GHRF[k-1:1]};
 	else GHRNextF = GHRF;
   end
