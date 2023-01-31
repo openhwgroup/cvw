@@ -16,22 +16,19 @@ suppress_message {VER-173}
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
 
-# get outputDir from environment (Makefile)
+# get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
-set cfgName $::env(CONFIG)
-# Config
+set cfg $::env(CONFIGDIR)/$::env(CONFIG)_$::env(MOD)/wally-config.vh
 set hdl_src "../pipelined/src"
-set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
-eval file copy -force ${cfg} {$outputDir/hdl/}
-#eval file copy -force ${cfg} $outputDir
+eval file copy -force $cfg {$outputDir/hdl/}
+eval file copy -force $cfg {$outputDir/}
 eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
