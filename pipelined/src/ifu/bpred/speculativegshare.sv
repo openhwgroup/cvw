@@ -29,17 +29,17 @@
 `include "wally-config.vh"
 
 module speculativegshare #(parameter int k = 10 ) (
-  input logic             clk,
-  input logic             reset,
-  input logic             StallF, StallD, StallE, StallM, StallW, 
-  input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      DirPredictionF, 
-  output logic            DirPredictionWrongE,
+  input logic 			  clk,
+  input logic 			  reset,
+  input logic 			  StallF, StallD, StallE, StallM, StallW, 
+  input logic 			  FlushD, FlushE, FlushM, FlushW,
+  output logic [1:0] 	  DirPredictionF, 
+  output logic 			  DirPredictionWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-  input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW,
-  input logic [3:0]       WrongPredInstrClassD, 
-  input logic             PCSrcE
+  input logic [3:0] 	  InstrClassF, InstrClassD, InstrClassE,
+  input logic [3:0] 	  WrongPredInstrClassD, 
+  input logic 			  PCSrcE
 );
 
   logic                    MatchF, MatchD, MatchE;
@@ -67,14 +67,14 @@ module speculativegshare #(parameter int k = 10 ) (
     .rd1(TableDirPredictionF),
     .wa2(IndexE),
     .wd2(NewDirPredictionE),
-    .we2(BranchInstrE & ~StallM & ~FlushM),
+    .we2(InstrClassE[0]),
     .bwe2(1'b1));
 
   // if there are non-flushed branches in the pipeline we need to forward the prediction from that stage to the NextF demi stage
   // and then register for use in the Fetch stage.
-  assign MatchF = BranchInstrF & ~FlushD & (IndexNextF == IndexF);
-  assign MatchD = BranchInstrD & ~FlushE & (IndexNextF == IndexD);
-  assign MatchE = BranchInstrE & ~FlushM & (IndexNextF == IndexE);
+  assign MatchF = InstrClassF[0] & ~FlushD & (IndexNextF == IndexF);
+  assign MatchD = InstrClassD[0] & ~FlushE & (IndexNextF == IndexD);
+  assign MatchE = InstrClassE[0] & ~FlushM & (IndexNextF == IndexE);
   assign MatchNextX = MatchF | MatchD | MatchE;
 
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
@@ -105,26 +105,26 @@ module speculativegshare #(parameter int k = 10 ) (
   // For FlushE this is GHRE.  GHRNextE is both.
   assign FlushDOrDirWrong = FlushD | DirPredictionWrongE;
   mux3 #(k) GHRFMux(GHRF, {DirPredictionF[1], GHRF[k-1:1]}, GHRNextE[k-1:0], 
-					{FlushDOrDirWrong, BranchInstrF}, GHRNextF);
+					{FlushDOrDirWrong, InstrClassF[0]}, GHRNextF);
 
   // Need 1 extra bit to store the shifted out GHRF if repair needs to back shift.
-  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, GHRF);	
-  flopenr  #(1) GHRFLastReg(clk, reset, (~StallF) | FlushD, GHRF[0], GHRLastF);
+  flopenr  #(k) GHRFReg(clk, reset, ~StallF | FlushD, GHRNextF, GHRF);	
+  flopenr  #(1) GHRFLastReg(clk, reset, ~StallF | FlushD, GHRF[0], GHRLastF);
 
   // With instruction class prediction, the class could be wrong and is checked in Decode.
   // If it is wrong and branch does exist then shift right and insert the prediction.
   // If the branch does not exist then shift left and use GHRLastF to restore the LSB.
   logic [k-1:0] 		   GHRClassWrong;
-  mux2 #(k) GHRClassWrongMux({DirPredictionD[1], GHRF[k-1:1]}, {GHRF[k-2:0], GHRLastF}, BranchInstrD, GHRClassWrong);
+  mux2 #(k) GHRClassWrongMux({DirPredictionD[1], GHRF[k-1:1]}, {GHRF[k-2:0], GHRLastF}, InstrClassD[0], GHRClassWrong);
   // As with GHRF FlushD and wrong direction prediction flushes the pipeline and restores to GHRNextE.
   mux3 #(k) GHRDMux(GHRF, GHRClassWrong, GHRNextE, {FlushDOrDirWrong, WrongPredInstrClassD[0]}, GHRNextD);
 
   flopenr  #(k) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
 
-  mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {BranchInstrE & ~FlushM, FlushE}, GHRNextE);
+  mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
 
-  flopenr  #(k) GHREReg(clk, reset, (BranchInstrE & ~StallE) | FlushE, GHRNextE, GHRE);
+  flopenr  #(k) GHREReg(clk, reset, (InstrClassE[0] & ~StallE) | FlushE, GHRNextE, GHRE);
   
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & InstrClassE[0];
 
 endmodule
