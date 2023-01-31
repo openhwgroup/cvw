@@ -134,3 +134,5 @@ fpga/src/CopiedFiles_do_not_add_to_repo/*
 /fpga/generator/sim/imp-timesim.sdf
 /fpga/generator/sim/imp-timesim.v
 /fpga/generator/sim/syn-funcsim.v
+external
+pipelined/regression/results
