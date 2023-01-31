@@ -31,10 +31,21 @@
 
 `include "wally-config.vh"
 
+// This is set from the commsnd line script
+// `define USE_IMPERAS_DV
+
+`ifdef USE_IMPERAS_DV
+  `include "rvvi/imperasDV.svh"
+`endif
 
 module testbench;
   parameter DEBUG=0;
- 
+
+`ifdef USE_IMPERAS_DV
+  import rvviPkg::*;
+  import rvviApiPkg::*;
+`endif
+
   logic        clk;
   logic        reset_ext, reset;
 
@@ -63,7 +74,7 @@ module testbench;
   integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
   logic 	    DCacheFlushDone, DCacheFlushStart;
   string 		testName;
-  string memfilename, pathname, adrstr;
+  string memfilename, testDir, adrstr, elffilename;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic        UARTSin, UARTSout;
@@ -92,28 +103,90 @@ module testbench;
       testadr = 0;
       testadrNoBase = 0;
 
-	  //testName =     "rv64i_m/I/src/add-01.S";
-	  testName =     "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S";
-	  
+      if ($value$plusargs("testDir=%s", testDir)) begin
+          memfilename = {testDir, "/ref/ref.elf.memfile"};
+          elffilename = {testDir, "/ref/ref.elf"};
+          $display($sformatf("%m @ t=%0t: loading testDir %0s", $time, testDir));
+      end else begin
+          $error("Must specify test directory using plusarg testDir");
+      end
 
-	  //pathname =     "../../tests/riscof/work/riscv-arch-test/";
-	  pathname = "../../tests/riscof/work/wally-riscv-arch-test/";
-	  
-	  memfilename = {pathname, testName, "/ref/ref.elf.memfile"};
       if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-	  else $error("Imperas test bench requires BUS_SUPPORTED.");
+	  else $error("Imperas test bench requires BUS.");
 
-      ProgramAddrMapFile = {pathname, testName, "/ref/ref.elf.objdump.addr"};
-      ProgramLabelMapFile = {pathname, testName, "/ref/ref.elf.objdump.lab"};
-
+      ProgramAddrMapFile = {testDir, "/ref/ref.elf.objdump.addr"};
+      ProgramLabelMapFile = {testDir, "/ref/ref.elf.objdump.lab"};
+      
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
       // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
       updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
       $display("Read memfile %s", memfilename);
+      
     end
 
-  rvviTrace rvviTrace();
+  rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+  wallyTracer wallyTracer(rvvi);
 
+`ifdef USE_IMPERAS_DV
+    trace2log idv_trace2log(rvvi);
+
+    // enabling of comparison types
+    trace2api #(.CMP_PC      (1),
+                .CMP_INS     (1),
+                .CMP_GPR     (1),
+                .CMP_FPR     (1),
+                .CMP_VR      (0),
+                .CMP_CSR     (1)
+               ) idv_trace2api(rvvi);
+
+    initial begin 
+      MAX_ERRS = 3;
+
+      // Initialize REF (do this before initializing the DUT)
+      if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+        msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+      end
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
+      if (!rvviRefInit(elffilename)) begin
+        msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+      end
+
+      // Volatile CSRs
+      void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+      void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+      void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+
+      if(`XLEN==32) begin
+          void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+          void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+          void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+      end
+
+  //    // Temporary fix for inexact difference
+//      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
+//      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
+      
+      
+      // Enable the trace2log module
+      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
+      end
+      
+      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
+        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
+      end
+    end
+
+    final begin
+      void'(rvviRefShutdown());
+    end
+
+`endif
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
@@ -158,7 +231,7 @@ module testbench;
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.FinalInstrRawF[31:0],
+                dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
@@ -254,7 +327,6 @@ module testbench;
 	end
   end
 
-  
 endmodule
 
 module riscvassertions;
@@ -267,17 +339,17 @@ module riscvassertions;
     assert (`F_SUPPORTED | ~`ZFH_SUPPORTED) else $error("Can't support half-precision fp (ZFH) without supporting float (F)");
     assert (`DCACHE_SUPPORTED | ~`F_SUPPORTED | `FLEN <= `XLEN) else $error("Data cache required to support FLEN > XLEN because AHB bus width is XLEN");
     assert (`I_SUPPORTED ^ `E_SUPPORTED) else $error("Exactly one of I and E must be supported");
-    assert (`FLEN<=`XLEN | `DCACHE | `DTIM_SUPPORTED) else $error("Wally does not support FLEN > XLEN unleses data cache or DTIM is supported");
+    assert (`FLEN<=`XLEN | `DCACHE_SUPPORTED | `DTIM_SUPPORTED) else $error("Wally does not support FLEN > XLEN unleses data cache or DTIM is supported");
     assert (`DCACHE_WAYSIZEINBYTES <= 4096 | (!`DCACHE_SUPPORTED) | `VIRTMEM_SUPPORTED == 0) else $error("DCACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
-    assert (`DCACHE_LINELENINBITS >= 128 | (!`DCACH_SUPPORTED)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
+    assert (`DCACHE_LINELENINBITS >= 128 | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must be at least 128 when caches are enabled");
     assert (`DCACHE_LINELENINBITS < `DCACHE_WAYSIZEINBYTES*8) else $error("DCACHE_LINELENINBITS must be smaller than way size");
     assert (`ICACHE_WAYSIZEINBYTES <= 4096 | (!`ICACHE_SUPPORTED) | `VIRTMEM_SUPPORTED == 0) else $error("ICACHE_WAYSIZEINBYTES cannot exceed 4 KiB when caches and vitual memory is enabled (to prevent aliasing)");
     assert (`ICACHE_LINELENINBITS >= 32 | (!`ICACHE_SUPPORTED)) else $error("ICACHE_LINELENINBITS must be at least 32 when caches are enabled");
     assert (`ICACHE_LINELENINBITS < `ICACHE_WAYSIZEINBYTES*8) else $error("ICACHE_LINELENINBITS must be smaller than way size");
-    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (!`DCACHE)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
-    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (!`ICACHE)) else $error("ICACHE_LINELENINBITS must be a power of 2");
-    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (!`ICACHE)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`DCACHE_LINELENINBITS) == `DCACHE_LINELENINBITS | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`DCACHE_WAYSIZEINBYTES) == `DCACHE_WAYSIZEINBYTES | (!`DCACHE_SUPPORTED)) else $error("DCACHE_WAYSIZEINBYTES must be a power of 2");
+    assert (2**$clog2(`ICACHE_LINELENINBITS) == `ICACHE_LINELENINBITS | (!`ICACHE_SUPPORTED)) else $error("ICACHE_LINELENINBITS must be a power of 2");
+    assert (2**$clog2(`ICACHE_WAYSIZEINBYTES) == `ICACHE_WAYSIZEINBYTES | (!`ICACHE_SUPPORTED)) else $error("ICACHE_WAYSIZEINBYTES must be a power of 2");
     assert (2**$clog2(`ITLB_ENTRIES) == `ITLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("ITLB_ENTRIES must be a power of 2");
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`UNCORE_RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 56'h07FFFFFF");
@@ -288,7 +360,7 @@ module riscvassertions;
     assert (`DCACHE_SUPPORTED | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
     assert (`ICACHE_SUPPORTED | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs icache");
     assert ((`DCACHE_SUPPORTED == 0 & `ICACHE_SUPPORTED == 0) | `BUS_SUPPORTED) else $error("Dcache and Icache requires DBUS.");
-    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
+    assert (`DCACHE_LINELENINBITS <= `XLEN*16 | (!`DCACHE_SUPPORTED)) else $error("DCACHE_LINELENINBITS must not exceed 16 words because max AHB burst size is 1");
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
     assert (`DCACHE_SUPPORTED | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
     assert (`IDIV_ON_FPU == 0 | `F_SUPPORTED) else $error("IDIV on FPU needs F_SUPPORTED");
@@ -311,7 +383,7 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
-	if(`DCACHE) begin
+	if(`DCACHE_SUPPORTED) begin
 	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
 	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
 	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
@@ -412,6 +484,7 @@ module copyShadow
       CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
     end
   end
+  
   
 endmodule
 
