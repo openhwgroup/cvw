@@ -103,7 +103,7 @@ module speculativegshare #(parameter int k = 10 ) (
 
   // GHR pipeline
   // this version fails the regression test do to pessimistic x propagation.
-  // assign GHRNextF = FlushD | DirPredictionWrongE ?  GHRNextD[k-1:0] :
+  // assign GHRNextF = FlushD | DirPredictionWrongE ?  GHRNextE[k-1:0] :
   //                  BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
   //                  GHRF;
 
