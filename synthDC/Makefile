@@ -1,7 +1,7 @@
 #  
 # Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
-# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 7/8/2022
+# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
 NAME := synth
 
 # defaults
@@ -24,18 +24,17 @@ export DRIVE ?= FLOP
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
-configAsList := $(subst _, ,$(CONFIG))
-BASECONFIG := $(word 1, $(configAsList))
 OLDCONFIGDIR ?= ${WALLY}/pipelined/config
-CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
+export CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
-# k = 3 6 
 
 print:
 	@echo $(FREQS)
+	@echo $(CONFIG)
 	@echo $(CONFIGFILESTRIM)
 
 
@@ -47,28 +46,31 @@ default:
 
 DIRS32 = rv32e rv32gc rv32ic rv32i
 DIRS64 = rv64i rv64gc
+DIRS32 = rv32e rv32gc rv32ic rv32i
+DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
 
+# k = 3 6 
 # bpred:
 # 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
 # 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
 
-configs: $(BASECONFIG)
-$(BASECONFIG):
-	@echo $(BASECONFIG)
-	cp -r $(OLDCONFIGDIR)/$(BASECONFIG) $(CONFIGDIR)/$(BASECONFIG)_orig
-	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
+configs: $(CONFIG)
+$(CONFIG):
+	@echo $(CONFIG)
+	cp -r $(OLDCONFIGDIR)/$(CONFIG) $(CONFIGDIR)/$(CONFIG)_orig
+	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
 
-ifneq ($(filter $ $(BASECONFIG), $(DIRS32)),)
-	sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
-else ifneq ($(filter $ $(BASECONFIG), $(DIRS64)),)
-	sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(BASECONFIG)_orig/wally-config.vh
+ifneq ($(filter $ $(CONFIG), $(DIRS32)),)
+	sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
+else ifneq ($(filter $ $(CONFIG), $(DIRS64)),)
+	sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(CONFIG)_orig/wally-config.vh
 else 
-	$(info $(BASECONFIG) does not exist in $(DIRS32) or $(DIRS64))
+	$(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
 	@echo "Config not in list, RAM_RANGE will be unmodified"
 endif
 	
@@ -97,12 +99,18 @@ ifeq ($(SAIFPOWER), 1)
 	cp -f ../pipelined/regression/power.saif .
 endif
 
+ifeq ($(SAIFPOWER), 1)
+	cp -f ../pipelined/regression/power.saif .
+endif
+
 freqs: 
 	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e FREQ=$(freq) MAXCORES=1;)
 
 mkdirecs:
+mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
+	@mkdir -p $(OUTPUTDIR)/hdl/config
 	@mkdir -p $(OUTPUTDIR)/hdl/config
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
@@ -111,7 +119,14 @@ mkdirecs:
 synth: mkdirecs configs rundc clean
 
 rundc:
+
+synth: mkdirecs configs rundc clean
+
+rundc:
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+	
+clean:
+	rm -rf $(OUTPUTDIR)/hdl
 	
 clean:
 	rm -rf $(OUTPUTDIR)/hdl
