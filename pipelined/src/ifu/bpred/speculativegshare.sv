@@ -116,11 +116,11 @@ module speculativegshare #(parameter int k = 10 ) (
   // As with GHRF FlushD and wrong direction prediction flushes the pipeline and restores to GHRNextE.
   mux3 #(k) GHRDMux(GHRF, GHRClassWrong, GHRNextE, {FlushDOrDirWrong, WrongPredInstrClassD[0]}, GHRNextD);
 
-  flopenr  #(k) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
+  flopenr  #(k) GHRDReg(clk, reset, ~StallD | FlushD, GHRNextD, GHRD);
 
   mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
 
-  flopenr  #(k) GHREReg(clk, reset, (InstrClassE[0] & ~StallE) | FlushE, GHRNextE, GHRE);
+  flopenr  #(k) GHREReg(clk, reset, ((InstrClassE[0] & ~FlushM) & ~StallE) | FlushE, GHRNextE, GHRE);
   
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & InstrClassE[0];
 
