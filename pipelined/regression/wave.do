@@ -6,28 +6,28 @@ add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
-add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/ifu/IFUStallF
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LSUStallM
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/MDUStallD
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/DivBusyE
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/FDivBusyE
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
-add wave -noupdate -group HDU -expand -group traps /testbench/dut/core/priv/priv/trap/InterruptM
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/BPPredWrongE
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/RetM
+add wave -noupdate -group HDU -group hazards -color Pink /testbench/dut/core/hzu/TrapM
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/LoadStallD
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/ifu/IFUStallF
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/LSUStallM
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/MDUStallD
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/DivBusyE
+add wave -noupdate -group HDU -group hazards /testbench/dut/core/hzu/FDivBusyE
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/IllegalInstrFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/BreakpointFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoMisalignedFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoAccessFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/EcallFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InstrPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/LoadPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/StoreAmoPageFaultM
+add wave -noupdate -group HDU -group traps /testbench/dut/core/priv/priv/trap/InterruptM
 add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushD
 add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushE
 add wave -noupdate -group HDU -expand -group Flush -color Yellow /testbench/dut/core/FlushM
