@@ -52,20 +52,21 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic 		 IncrRepairD, DecRepairD;
   
   logic 		 DecrementPtr;
+  logic 		 FlushedRetDE;
+  logic 		 WrongPredRetD;
+  
   
   assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
-
-  assign RepairD = ((WrongPredInstrClassD[2]) & ~StallE & ~FlushE) |  // Wrong class undo increment or decrement.
-				   (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
-				   (~StallM & FlushM & InstrClassE[2]) ; // ret in execution flushed
-  
-  assign IncrRepairD = (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
-					   (~StallM & FlushM & InstrClassE[2]) | // ret in execution flushed
-					   (WrongPredInstrClassD[2] & ~InstrClassD[2] & ~StallE & ~FlushE); // Guessed it was a ret, but its not
-
-  assign DecRepairD =  (WrongPredInstrClassD[2] & InstrClassD[2] & ~StallE & ~FlushE); // Guessed non ret but is a ret.
-  
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
+
+  assign WrongPredRetD = (WrongPredInstrClassD[2]) & ~StallE & ~FlushE;
+  assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]);
+
+  assign RepairD = WrongPredRetD | FlushedRetDE ;
+
+  assign IncrRepairD = FlushedRetDE | (WrongPredRetD & ~InstrClassD[2]); // Guessed it was a ret, but its not
+
+  assign DecRepairD =  WrongPredRetD & InstrClassD[2]; // Guessed non ret but is a ret.
     
   assign CounterEn = PopF | PushE | RepairD;
 
