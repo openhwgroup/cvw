@@ -180,12 +180,14 @@ module bpred (
 	assign PredInstrClassF = InstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
 						PredInstrClassF[2] |
-						(PredInstrClassF[1]) ;
+						PredInstrClassF[1] |
+						PredInstrClassF[3];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
 						PredInstrClassF[2] |
-						(PredInstrClassF[1] & PredValidF) ;
+						(PredInstrClassF[1] & PredValidF) |
+						(PredInstrClassF[3] & PredValidF);
   end
   
   // Part 3 RAS
