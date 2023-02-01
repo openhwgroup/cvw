@@ -149,6 +149,7 @@ module bpred (
           .PredValidF,
           .PredictionInstrClassWrongE,
           .IEUAdrE,
+          .InstrClassD,
           .InstrClassE);
 
   // the branch predictor needs a compact decoding of the instruction class.
