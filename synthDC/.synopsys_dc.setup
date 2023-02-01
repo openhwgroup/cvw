@@ -48,6 +48,10 @@ set cache_read   $cache_write
 lappend search_path ./scripts
 lappend search_path ./hdl
 lappend search_path ./mapped
+set memory /home/jstine/WallyMem/rv64gc/
+lappend target_library $memory/ts3n28hpcpa128x64m8m_130a/NLDM/ts3n28hpcpa128x64m8m_tt0p9v25c.db
+lappend target_library $memory/ts1n28hpcpsvtb64x128m4sw_180a/NLDM/ts1n28hpcpsvtb64x128m4sw_tt0p9v25c.db
+lappend target_library $memory/ts1n28hpcpsvtb64x44m4sw_180a/NLDM/ts1n28hpcpsvtb64x44m4sw_tt0p9v25c.db
 
 # Set up User Information
 set company "Oklahoma State University"

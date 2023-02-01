@@ -55,7 +55,7 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
      logic [WIDTH-1:0] BitWriteMask;
      for (index=0; index < WIDTH; index++) 
        assign BitWriteMask[index] = bwe[index/8];
-    ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
+    TS1N28HPCPSVTB64X128M4SW sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
 			      .A(addr), .D(din), 
 			      .BWEB(~BitWriteMask), .Q(dout));
      
