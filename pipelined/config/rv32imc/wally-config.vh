@@ -37,7 +37,7 @@
 // IEEE 754 compliance
 `define IEEE754 0
 
-`define MISA (32'h00000104 | 1 << 20 | 1 << 18 )
+`define MISA (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12)
 `define ZICSR_SUPPORTED 1
 `define ZIFENCEI_SUPPORTED 1
 `define COUNTERS 32
@@ -133,7 +133,19 @@
 
 `define BPRED_SUPPORTED 0
 `define BPRED_TYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
-`define TESTSBP 0
 `define BPRED_SIZE 10
 
 `define HPTW_WRITES_SUPPORTED 0
+
+// FPU division architecture
+`define RADIX 32'h4
+`define DIVCOPIES 32'h4
+
+// bit manipulation
+`define ZBA_SUPPORTED 0
+`define ZBB_SUPPORTED 0
+`define ZBC_SUPPORTED 0
+`define ZBS_SUPPORTED 0
+
+// Memory synthesis configuration
+`define USE_SRAM 0

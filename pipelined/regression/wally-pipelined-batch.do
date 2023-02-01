@@ -8,7 +8,7 @@
 # Takes 1:10 to run RV64IC tests using gui
 
 # Usage: do wally-pipelined-batch.do <config> <testcases>
-# Example: do wally-pipelined-batch.do rv32ic imperas-32i
+# Example: do wally-pipelined-batch.do rv32imc imperas-32i
 
 # Use this wally-pipelined-batch.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
@@ -37,7 +37,7 @@ if {$2 eq "ahb"} {
 # because vsim will run vopt
 
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined-batch.do ../config/rv32ic rv32ic
+# do wally-pipelined-batch.do ../config/rv32imc rv32imc
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
