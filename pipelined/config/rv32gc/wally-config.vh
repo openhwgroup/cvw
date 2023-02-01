@@ -68,7 +68,7 @@
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
 `define IDIV_BITSPERCYCLE 4
-`define IDIV_ON_FPU 0
+`define IDIV_ON_FPU 1
 
 // Legal number of PMP entries are 0, 16, or 64
 `define PMP_ENTRIES 16
@@ -133,7 +133,19 @@
 
 `define BPRED_SUPPORTED 1
 `define BPRED_TYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
-`define TESTSBP 0
 `define BPRED_SIZE 10
 
 `define HPTW_WRITES_SUPPORTED 0
+
+// FPU division architecture
+`define RADIX 32'h4
+`define DIVCOPIES 32'h4
+
+// bit manipulation
+`define ZBA_SUPPORTED 0
+`define ZBB_SUPPORTED 0
+`define ZBC_SUPPORTED 0
+`define ZBS_SUPPORTED 0
+
+// Memory synthesis configuration
+`define USE_SRAM 0
