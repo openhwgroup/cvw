@@ -29,36 +29,32 @@
 `include "wally-config.vh"
 
 module speculativegshare #(parameter int k = 10 ) (
-  input logic             clk,
-  input logic             reset,
-  input logic             StallF, StallD, StallE, StallM, StallW, 
-  input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      DirPredictionF, 
-  output logic            DirPredictionWrongE,
+  input logic 			  clk,
+  input logic 			  reset,
+  input logic 			  StallF, StallD, StallE, StallM, StallW, 
+  input logic 			  FlushD, FlushE, FlushM, FlushW,
+  output logic [1:0] 	  DirPredictionF, 
+  output logic 			  DirPredictionWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-  input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, BranchInstrW,
-  input logic [3:0]       WrongPredInstrClassD, 
-  input logic             PCSrcE
+  input logic [3:0] 	  PredInstrClassF, InstrClassD, InstrClassE,
+  input logic [3:0] 	  WrongPredInstrClassD, 
+  input logic 			  PCSrcE
 );
 
   logic                    MatchF, MatchD, MatchE;
   logic                    MatchNextX, MatchXF;
 
   logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE;
-  logic [1:0]              NewDirPredictionF, NewDirPredictionD, NewDirPredictionE;
+  logic [1:0]              NewDirPredictionE;
 
-  logic [k-1:0]            GHRF;
-  logic 				   GHRExtraF;
-  logic [k-1:0] 		   GHRD, GHRE, GHRM, GHRW;
-  logic [k-1:0] 		   GHRNextF;
-  logic [k-1:0] 		   GHRNextD;
-  logic [k-1:0] 		   GHRNextE, GHRNextM, GHRNextW;
-  logic [k-1:0]            IndexNextF, IndexF;
-  logic [k-1:0]            IndexD, IndexE;
-  
-
+  logic [k-1:0] 		   GHRF, GHRD, GHRE;
+  logic 				   GHRLastF;
+  logic [k-1:0] 		   GHRNextF, GHRNextD, GHRNextE;
+  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE;
   logic [1:0]              ForwardNewDirPrediction, ForwardDirPredictionF;
+
+  logic 				   FlushDOrDirWrong;
   
   assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
   assign IndexF = GHRF        ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
@@ -71,20 +67,20 @@ module speculativegshare #(parameter int k = 10 ) (
     .rd1(TableDirPredictionF),
     .wa2(IndexE),
     .wd2(NewDirPredictionE),
-    .we2(BranchInstrE & ~StallM & ~FlushM),
+    .we2(InstrClassE[0]),
     .bwe2(1'b1));
 
   // if there are non-flushed branches in the pipeline we need to forward the prediction from that stage to the NextF demi stage
   // and then register for use in the Fetch stage.
-  assign MatchF = BranchInstrF & ~FlushD & (IndexNextF == IndexF);
-  assign MatchD = BranchInstrD & ~FlushE & (IndexNextF == IndexD);
-  assign MatchE = BranchInstrE & ~FlushM & (IndexNextF == IndexE);
+  assign MatchF = PredInstrClassF[0] & ~FlushD & (IndexNextF == IndexF);
+  assign MatchD = InstrClassD[0] & ~FlushE & (IndexNextF == IndexD);
+  assign MatchE = InstrClassE[0] & ~FlushM & (IndexNextF == IndexE);
   assign MatchNextX = MatchF | MatchD | MatchE;
 
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardNewDirPrediction = MatchF ? NewDirPredictionF :
-                                   MatchD ? NewDirPredictionD :
+  assign ForwardNewDirPrediction = MatchF ? {2{DirPredictionF[1]}} :
+                                   MatchD ? {2{DirPredictionD[1]}} :
                                    NewDirPredictionE ;
   
   flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
@@ -95,49 +91,37 @@ module speculativegshare #(parameter int k = 10 ) (
   flopenr #(2) PredictionRegD(clk, reset, ~StallD, DirPredictionF, DirPredictionD);
   flopenr #(2) PredictionRegE(clk, reset, ~StallE, DirPredictionD, DirPredictionE);
 
-  // New prediction pipeline
-  assign NewDirPredictionF = {DirPredictionF[1], DirPredictionF[1]};
   
-  flopenr #(2) NewPredDReg(clk, reset, ~StallD, NewDirPredictionF, NewDirPredictionD);
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
 
   // GHR pipeline
-  // this version fails the regression test do to pessimistic x propagation.
-  // assign GHRNextF = FlushD | DirPredictionWrongE ?  GHRNextD[k-1:0] :
-  //                  BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} :
-  //                  GHRF;
 
-  always_comb begin
-	if(FlushD | DirPredictionWrongE) begin
-	  GHRNextF = GHRNextD[k-1:0];
-	end else if(BranchInstrF) GHRNextF = {DirPredictionF[1], GHRF[k-1:1]};
-	else GHRNextF = GHRF;
-  end
+  // If Fetch has a branch, speculatively insert prediction into the GHR
+  // If the front end is flushed or the direction prediction is wrong, reset to
+  // most recent valid GHR.  For a BP wrong this is GHRD with the correct prediction shifted in.
+  // For FlushE this is GHRE.  GHRNextE is both.
+  assign FlushDOrDirWrong = FlushD | DirPredictionWrongE;
+  mux3 #(k) GHRFMux(GHRF, {DirPredictionF[1], GHRF[k-1:1]}, GHRNextE[k-1:0], 
+					{FlushDOrDirWrong, PredInstrClassF[0]}, GHRNextF);
 
-  flopenr  #(k) GHRFReg(clk, reset, (~StallF) | FlushD, GHRNextF, GHRF);	
-  flopenr  #(1) GHRFExtraReg(clk, reset, (~StallF) | FlushD, GHRF[0], GHRExtraF);
+  // Need 1 extra bit to store the shifted out GHRF if repair needs to back shift.
+  flopenr  #(k) GHRFReg(clk, reset, ~StallF | FlushDOrDirWrong, GHRNextF, GHRF);	
+  flopenr  #(1) GHRFLastReg(clk, reset, ~StallF | FlushDOrDirWrong, GHRF[0], GHRLastF);
 
-  // use with out instruction class prediction
-  //assign GHRNextD = FlushD ? GHRNextE[k-1:0] : GHRF[k-1:0];
-  // with instruction class prediction
-  assign GHRNextD = (FlushD | DirPredictionWrongE) ? GHRNextE[k-1:0] :
-					WrongPredInstrClassD[0] & BranchInstrD  ? {DirPredictionD[1], GHRF[k-1:1]} : // shift right
-  					WrongPredInstrClassD[0] & ~BranchInstrD ? {GHRF[k-2:0], GHRExtraF}:       // shift left
-					GHRF[k-1:0];
+  // With instruction class prediction, the class could be wrong and is checked in Decode.
+  // If it is wrong and branch does exist then shift right and insert the prediction.
+  // If the branch does not exist then shift left and use GHRLastF to restore the LSB.
+  logic [k-1:0] 		   GHRClassWrong;
+  mux2 #(k) GHRClassWrongMux({DirPredictionD[1], GHRF[k-1:1]}, {GHRF[k-2:0], GHRLastF}, InstrClassD[0], GHRClassWrong);
+  // As with GHRF FlushD and wrong direction prediction flushes the pipeline and restores to GHRNextE.
+  mux3 #(k) GHRDMux(GHRF, GHRClassWrong, GHRNextE, {FlushDOrDirWrong, WrongPredInstrClassD[0]}, GHRNextD);
 
-  flopenr  #(k) GHRDReg(clk, reset, (~StallD) | FlushD, GHRNextD, GHRD);
+  flopenr  #(k) GHRDReg(clk, reset, ~StallD | FlushDOrDirWrong, GHRNextD, GHRD);
 
-  assign GHRNextE = BranchInstrE & ~FlushM ? {PCSrcE, GHRD[k-2:0]} :   // if the branch is not flushed
-					FlushE ? GHRE :                                // branch is flushed
-					GHRD;
-  flopenr  #(k) GHREReg(clk, reset, (BranchInstrE & ~StallE) | FlushE, GHRNextE, GHRE);
+  mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
 
-  //assign GHRNextM = FlushM ? GHRM : GHRE;
-  //flopenr  #(k) GHRMReg(clk, reset, (BranchInstrM & ~StallM) | FlushM, GHRNextM, GHRM);
-
-  //assign GHRNextW = FlushW ? GHRW : GHRM;
-  //flopenr  #(k) GHRWReg(clk, reset, (BranchInstrW & ~StallW) | FlushW, GHRNextW, GHRW);
+  flopenr  #(k) GHREReg(clk, reset, ((InstrClassE[0] & ~FlushM) & ~StallE) | FlushE, GHRNextE, GHRE);
   
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & InstrClassE[0];
 
 endmodule

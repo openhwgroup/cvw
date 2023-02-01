@@ -117,8 +117,7 @@ module bpred (
   end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
-      .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
+      .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -151,15 +150,6 @@ module bpred (
           .PredictionInstrClassWrongE,
           .IEUAdrE,
           .InstrClassE);
-
-  // Part 3 RAS
-  // *** need to add the logic to restore RAS on flushes.  We will use incr for this.
-  // *** needs to include flushX
-  RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-							.PredInstrClassF, .InstrClassD, .InstrClassE,
-							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
-
-  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
@@ -197,12 +187,19 @@ module bpred (
 						(PredInstrClassF[1] & PredValidF) ;
   end
   
+  // Part 3 RAS
+  RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+							.PredInstrClassF, .InstrClassD, .InstrClassE,
+							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
+
+  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
 
   assign InstrClassD[3] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
   assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
   assign InstrClassD[1] = (InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
 						  (InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01); // jump, RD != x1 or x5
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
+
   flopenrc #(4) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
   flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
   flopenrc #(4) InstrClassRegW(clk, reset,  FlushW, ~StallW, InstrClassM, InstrClassW);
