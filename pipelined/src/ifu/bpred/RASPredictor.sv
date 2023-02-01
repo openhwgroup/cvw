@@ -42,7 +42,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [Depth-1:0]         PtrD, PtrQ, PtrP1, PtrM1;
+  logic [Depth-1:0]         NextPtr, CurrPtr, PtrP1, PtrM1;
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
 
@@ -52,30 +52,31 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic 		 IncrRepairD, DecRepairD;
   
   logic 		 DecrementPtr;
+  logic 		 FlushedRetDE;
+  logic 		 WrongPredRetD;
+  
   
   assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
-
-  assign RepairD = ((WrongPredInstrClassD[2]) & ~StallE & ~FlushE) |  // Wrong class undo increment or decrement.
-				   (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
-				   (~StallM & FlushM & InstrClassE[2]) ; // ret in execution flushed
-  
-  assign IncrRepairD = (~StallE & FlushE & InstrClassD[2]) | // ret in decode flushed
-					   (~StallM & FlushM & InstrClassE[2]) | // ret in execution flushed
-					   (WrongPredInstrClassD[2] & ~InstrClassD[2] & ~StallE & ~FlushE); // Guessed it was a ret, but its not
-
-  assign DecRepairD =  (WrongPredInstrClassD[2] & InstrClassD[2] & ~StallE & ~FlushE); // Guessed non ret but is a ret.
-  
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
+
+  assign WrongPredRetD = (WrongPredInstrClassD[2]) & ~StallE & ~FlushE;
+  assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]); // flushed ret
+
+  assign RepairD = WrongPredRetD | FlushedRetDE ;
+
+  assign IncrRepairD = FlushedRetDE | (WrongPredRetD & ~InstrClassD[2]); // Guessed it was a ret, but its not
+
+  assign DecRepairD =  WrongPredRetD & InstrClassD[2]; // Guessed non ret but is a ret.
     
   assign CounterEn = PopF | PushE | RepairD;
 
   assign DecrementPtr = (PopF | DecRepairD) & ~IncrRepairD;
-  mux2 #(Depth) PtrMux(PtrP1, PtrM1, DecrementPtr, PtrD);
+  mux2 #(Depth) PtrMux(PtrP1, PtrM1, DecrementPtr, NextPtr);
 
-  assign PtrM1 = PtrQ - 1'b1;
-  assign PtrP1 = PtrQ + 1'b1;
+  assign PtrM1 = CurrPtr - 1'b1;
+  assign PtrP1 = CurrPtr + 1'b1;
 
-  flopenr #(Depth) PTR(clk, reset, CounterEn, PtrD, PtrQ);
+  flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, CurrPtr);
 
   // RAS must be reset. 
   always_ff @ (posedge clk) begin
@@ -87,7 +88,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
     end
   end
 
-  assign RASPCF = memory[PtrQ];
+  assign RASPCF = memory[CurrPtr];
   
   
 endmodule
