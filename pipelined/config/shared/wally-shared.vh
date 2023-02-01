@@ -34,7 +34,7 @@
 `define ZBS_SUPPORTED 0
 
 // Memory synthesis configuration
-`define USE_SRAM 0
+`define USE_SRAM 1
 
 // shared constants
 `include "wally-constants.vh"
