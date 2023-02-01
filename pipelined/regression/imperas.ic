@@ -1,4 +1,3 @@
-#--showoverrides
 --override cpu/show_c_prefix=T
 --override cpu/unaligned=F
 --override cpu/mstatus_FS=1
@@ -13,7 +12,11 @@
 --tracechange
 --traceshowicount
 --tracemode
+--tracemem ASX
 --monitornetschange
+
+# Exceptions and pagetables debug
+--override cpu/debugflags=6
 
 # Turn on verbose output for Imperas simulator
 --verbose
@@ -23,4 +26,11 @@
 
 # Store simulator output to logfile
 --output imperas.log
+
+--override cpu/PMP_registers=0
+#--showoverrides
+#--mpdconsole
+
+# ignore settings of bits DAU for non leaf page table walks
+--override cpu/ignore_non_leaf_DAU=1
 
