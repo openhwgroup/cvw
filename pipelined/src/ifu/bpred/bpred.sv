@@ -116,7 +116,7 @@ module bpred (
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
@@ -149,6 +149,7 @@ module bpred (
           .PredValidF,
           .PredictionInstrClassWrongE,
           .IEUAdrE,
+          .InstrClassD,
           .InstrClassE);
 
   // the branch predictor needs a compact decoding of the instruction class.
@@ -179,12 +180,14 @@ module bpred (
 	assign PredInstrClassF = InstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
 						PredInstrClassF[2] |
-						(PredInstrClassF[1]) ;
+						PredInstrClassF[1] |
+						PredInstrClassF[3];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
 						PredInstrClassF[2] |
-						(PredInstrClassF[1] & PredValidF) ;
+						(PredInstrClassF[1] & PredValidF) |
+						(PredInstrClassF[3] & PredValidF);
   end
   
   // Part 3 RAS
