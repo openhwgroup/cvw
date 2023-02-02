@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// ram2p1rwbe_1024x69.sv
+// ram2p1rwbe_1024x68.sv
 //
 // Written: james.stine@okstate.edu 28 January 2023
 // Modified: 
@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram2p1r1wbe_1024x69( 
+module ram2p1r1wbe_1024x68( 
   input  logic          CLKA, 
   input  logic          CLKB, 
   input  logic 	        CEBA, 
@@ -33,16 +33,16 @@ module ram2p1r1wbe_1024x69(
   input  logic          WEBB,
   input  logic [9:0]    AA, 
   input  logic [9:0]    AB, 
-  input  logic [68:0]   DA,
-  input  logic [68:0]   DB,
-  input  logic [68:0]   BWEBA, 
-  input  logic [68:0]   BWEBB, 
-  output logic [68:0]   QA,
-  output logic [68:0]   QB
+  input  logic [67:0]   DA,
+  input  logic [67:0]   DB,
+  input  logic [67:0]   BWEBA, 
+  input  logic [67:0]   BWEBB, 
+  output logic [67:0]   QA,
+  output logic [67:0]   QB
 );
 
    // replace "generic1024x69RAM" with "TSDN..1024X69.." module from your memory vendor
-   generic1024x69RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+   generic1024x68RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
 			     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
 endmodule
