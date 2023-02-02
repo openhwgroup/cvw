@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// rom1p1r_128x32.sv
+// rom1p1r_128x64.sv
 //
 // Written: james.stine@okstate.edu 28 January 2023
 // Modified: 
@@ -24,15 +24,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rom1p1r_128x32( 
-  input  logic          CLK, 
-  input  logic 	        CEB, 
-  input  logic [6:0]    A, 
-  output logic [31:0]   Q
+module rom1p1r_128x64( 
+  input  logic 	      CLK, 
+  input  logic 	      CEB, 
+  input  logic [6:0]  A, 
+  output logic [63:0] Q
 );
 
-   // replace "generic128x32ROM" with "TS3N..128X32.." module from your memory vendor
-   generic64x128ROM sramIP (.CLK, .CEB, .A, .Q);
+   // replace "generic64x128RAM" with "TS3N..64X128.." module from your memory vendor
+   generic64x128ROM romIP (.CLK, .CEB, .A, .Q);
 
-endmodule 
-
+endmodule
