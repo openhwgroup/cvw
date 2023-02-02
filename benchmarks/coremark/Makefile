@@ -21,8 +21,8 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
-	(cd ../../regression && (time vsim -c -do "do wally-pipelined-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
-	cd ../../benchmarks/coremark/
+	(cd ../../sim && (time vsim -c -do "do wally-pipelined-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
+	cd ../benchmarks/coremark/
 #	KMG: added post processing script to give out branch miss proportion along with other stats to the coremark test
 	python3 coremark-postprocess.py
 

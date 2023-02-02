@@ -15,8 +15,8 @@ install:
 	##ln -s ${RISCV}/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64/riscvOVPsimPlus.exe tests/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64/riscvOVPsimPlus.exe
 
 regression:
-	make -C regression
+	make -C sim
 
 clean:
-	make clean -C regression
+	make clean -C sim
 
