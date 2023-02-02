@@ -32,6 +32,7 @@
 module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
+  input  logic [6:0]       Funct7,
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform
   output logic [WIDTH-1:0] Result,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
@@ -82,6 +83,10 @@ module alu #(parameter WIDTH=32) (
       3'b110: FullResult = A | B;     // or 
       3'b111: FullResult = A & B;     // and
     endcase
+
+  if (`ZBS_SUPPORTED) 
+    zbs zbs(.A, .B, .Funct7, .Funct3, .ZBSResult);
+  else assign ZBSResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
