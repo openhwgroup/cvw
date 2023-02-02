@@ -48,7 +48,7 @@ fi
 if [[ "$2" == "-sim" || "$2" == "-simonly" ]]
 then
 	printf "\n\n\n#####\nSimulating!\n#####\n\n"
-	cd $WALLY/regression
+	cd $WALLY/sim
 	vsim -do wally-privileged.do -c
 fi
 

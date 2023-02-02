@@ -102,11 +102,11 @@ endif
 	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/$@_noPriv/wally-config.vh
 
 ifeq ($(SAIFPOWER), 1)
-	cp -f ../regression/power.saif .
+	cp -f ../sim/power.saif .
 endif
 
 ifeq ($(SAIFPOWER), 1)
-	cp -f ../regression/power.saif .
+	cp -f ../sim/power.saif .
 endif
 
 freqs: 
