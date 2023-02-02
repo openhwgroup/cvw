@@ -94,13 +94,13 @@ for test in tests32gc:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-tests32icimperas = ["imperas32i", "imperas32c"] # unused
-tests32ic = ["arch32i", "arch32c", "wally32periph"] 
-for test in tests32ic:
+tests32imcimperas = ["imperas32i", "imperas32c"] # unused
+tests32imc = ["arch32i", "arch32c", "arch32m", "wally32periph"] 
+for test in tests32imc:
   tc = TestCase(
         name=test,
-        variant="rv32ic",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32ic "+test+"\n!",
+        variant="rv32imc",
+        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32imc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
