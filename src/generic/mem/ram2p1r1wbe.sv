@@ -64,6 +64,18 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
 				  .QA(rd1),
 				  .QB());
 
+   end if (`USE_SRAM == 1 && WIDTH == 36 && DEPTH == 1024) begin
+   
+      ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
+				  .CEBA(~ce1), .CEBB(~ce2),
+				  .WEBA('0), .WEBB(~we2),			      
+				  .AA(ra1), .AB(wa2),
+				  .DA('0),
+				  .DB(wd2),
+				  .BWEBA('0), .BWEBB('1),
+				  .QA(rd1),
+				  .QB());      
+
    end else if (`USE_SRAM == 1 && WIDTH == 2 && DEPTH == 1024) begin
 
       logic [SRAMWIDTH-1:0]     SRAMReadData;      
