@@ -32,20 +32,22 @@
 module clmul #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   output logic [WIDTH-1:0] Result);     // ZBS result
-  //output logic [WIDTH-1:0] Sum);       // Sum of operands
 
-  logic [WIDTH-1] pp [WIDTH-1]; //partial AND products
-  logic [WIDTH-1] sop; //sum of partial products
-  genvar i;
-  for (i=0; i<WIDTH;i+=WIDTH) begin:forloop //loop fills partial product array
-    for
-    //fill partials products here
+  logic [WIDTH-1:0] pp [WIDTH-1:0]; //partial AND products
+  logic [WIDTH-1:0] sop; //sum of partial products
+
+  genvar i,j;
+  for (i=1; i<WIDTH;i+=WIDTH) begin:outer //loop fills partial product array
+    for (j=0;j<i;j++) begin: inner
+      assign pp[i][j] = A[i]&B[j];
+    end
   end
 
-  genvar i;
-  for (i=1;x<WIDTH;i++) begin:outer 
-    assign result[x] = ^pp[i][i:0]
+  for (i=1;i<WIDTH;i++) begin:xortree
+    assign result[i] = ^pp[i][i:0];
   end
+
+  assign result[0] = A[0]&B[0];
 
 
 endmodule
