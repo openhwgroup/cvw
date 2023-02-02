@@ -134,8 +134,8 @@ if {$tech == "sky130"} {
 
 # Set input/output delay
 if {$drive == "FLOP"} {
-    set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
-    set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+    set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 } else {
     set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
     set_output_delay 0.0 -max -clock $my_clk [all_outputs]

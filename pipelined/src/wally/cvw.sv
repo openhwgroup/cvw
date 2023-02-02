@@ -100,7 +100,6 @@ package cvw;
   parameter PLIC_UART_ID = `PLIC_UART_ID;
   parameter BPRED_SUPPORTED = `BPRED_SUPPORTED;
   parameter BPRED_TYPE = `BPRED_TYPE;
-  parameter TESTSBP = `TESTSBP;
   parameter BPRED_SIZE = `BPRED_SIZE;
   parameter HPTW_WRITES_SUPPORTED = `HPTW_WRITES_SUPPORTED;
 //  parameter  = `;
