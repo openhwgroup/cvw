@@ -139,8 +139,20 @@
 
 `define BPRED_SUPPORTED 1
 `define BPRED_TYPE "BPSPECULATIVEGSHARE" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE or BPSPECULATIVEGLOBAL or BPSPECULATIVEGSHARE or BPOLDGSHARE or BPOLDGSHARE2
-`define TESTSBP 1
 `define BPRED_SIZE 10
 
 
 `define HPTW_WRITES_SUPPORTED 1
+
+// FPU division architecture
+`define RADIX 32'h4
+`define DIVCOPIES 32'h4
+
+// bit manipulation
+`define ZBA_SUPPORTED 0
+`define ZBB_SUPPORTED 0
+`define ZBC_SUPPORTED 0
+`define ZBS_SUPPORTED 0
+
+// Memory synthesis configuration
+`define USE_SRAM 0
