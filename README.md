@@ -53,7 +53,7 @@ Edit setup.sh and change the following lines to point to the path and license se
 
 Run a regression simulation with Questa to prove everything is installed.
 
-	$ cd pipelined/regression
+	$ cd regression
 	$ ./regression-wally       (depends on having Questa installed)
 
 # Toolchain Installation (Sys Admin)

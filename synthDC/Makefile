@@ -27,7 +27,7 @@ export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
-OLDCONFIGDIR ?= ${WALLY}/pipelined/config
+OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
 CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
 CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
@@ -102,11 +102,11 @@ endif
 	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/$@_noPriv/wally-config.vh
 
 ifeq ($(SAIFPOWER), 1)
-	cp -f ../pipelined/regression/power.saif .
+	cp -f ../regression/power.saif .
 endif
 
 ifeq ($(SAIFPOWER), 1)
-	cp -f ../pipelined/regression/power.saif .
+	cp -f ../regression/power.saif .
 endif
 
 freqs: 
