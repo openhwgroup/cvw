@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// clmul.sv
+// zbc.sv
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
-// Created: 1 February 2023
+// Created: 2 February 2023
 // Modified: 
 //
-// Purpose: Carry-Less multiplication top-level unit
+// Purpose: RISC-V single bit manipulation unit (ZBC instructions)
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 
@@ -29,27 +29,13 @@
 
 `include "wally-config.vh"
 
-module clmul #(parameter WIDTH=32) (
+module zbs #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
-  output logic [WIDTH-1:0] Result);     // ZBS result
+  //input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
+  input  logic [6:0]       Funct7,
+  input  logic [2:0]       Funct3,     // With ***Control, indicates operation to perform
+  output logic [WIDTH-1:0] ZBCResult);     // ZBC result
 
-  logic [WIDTH-1:0] pp [WIDTH-1:0]; //partial AND products
-  logic [WIDTH-1:0] sop; //sum of partial products
-
-  genvar i,j;
-  for (i=1; i<WIDTH;i+=WIDTH) begin:outer //loop fills partial product array
-    for (j=0;j<i;j++) begin: inner
-      assign pp[i][j] = A[i]&B[j];
-    end
-  end
-
-  for (i=1;i<WIDTH;i++) begin:xortree
-    assign result[i] = ^pp[i][i:0];
-  end
-
-  assign result[0] = A[0]&B[0];
 
 
 endmodule
-
-
