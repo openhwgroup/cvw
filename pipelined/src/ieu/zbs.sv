@@ -35,7 +35,6 @@ module zbs #(parameter WIDTH=32) (
   input  logic [6:0]       Funct7,
   input  logic [2:0]       Funct3,     // With ***Control, indicates operation to perform
   output logic [WIDTH-1:0] ZBSResult);     // ZBS result
-  //output logic [WIDTH-1:0] Sum);       // Sum of operands
 
   logic [WIDTH-1:0] BMask, ClrResult, InvResult, ExtResult, SetResult;
 
@@ -46,13 +45,15 @@ module zbs #(parameter WIDTH=32) (
   assign SetResult = A | BMask;
   assign ExtResult = |(A & BMask);
 
-  casez ({Funct7, Funct3})
-    10'b010010?_001: ZBSResult = ClrResult;
-    10'b010010?_101: ZBSResult = ExtResult;
-    10'b011010?_001: ZBSResult = ClrResult;
-    10'b001010?_001: ZBSResult = ClrResult;
-    default: ZBSResult = 0; // *** should never be reached or selected
-  endcase
+  always_comb begin
+    casez ({Funct7, Funct3})
+      10'b010010?_001: ZBSResult = ClrResult;
+      10'b010010?_101: ZBSResult = ExtResult;
+      10'b011010?_001: ZBSResult = InvResult;
+      10'b001010?_001: ZBSResult = SetResult;
+      default: ZBSResult = 0; // *** should never be reached or selected
+    endcase
+  end
 
 endmodule
 
