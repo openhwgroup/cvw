@@ -19,7 +19,7 @@ set_host_options -max_cores $::env(MAXCORES)
 # get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfg $::env(CONFIGDIR)/$::env(CONFIG)_$::env(MOD)/wally-config.vh
-set hdl_src "../pipelined/src"
+set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)

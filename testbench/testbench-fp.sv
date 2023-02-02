@@ -31,7 +31,7 @@
 
 // steps to run FMA Tests
 //    1) create test vectors in riscv-wally/Tests/fp with: ./run-all.sh
-//    2) go to riscv-wally/pipelined/testbench/fp/Tests
+//    2) go to cvw/testbench/fp/Tests
 //    3) run ./sim-fma-batch
 module testbenchfp;
   parameter TEST="none";
