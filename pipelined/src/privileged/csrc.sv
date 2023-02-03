@@ -85,7 +85,7 @@ module csrc #(parameter
   if(`QEMU) begin: cevent // No other performance counters in QEMU
     assign CounterEvent[`COUNTERS-1:3] = 0;
   end else begin: cevent                                                                // User-defined counters
-    assign CounterEvent[3] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
     assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
     assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
@@ -93,10 +93,10 @@ module csrc #(parameter
     assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
-    assign CounterEvent[11] = DCacheAccess;                                             // data cache access
-    assign CounterEvent[12] = DCacheMiss;                                               // data cache miss
-    assign CounterEvent[13] = ICacheAccess;                                             // instruction cache access
-    assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss
+    assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
+    assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;                       // data cache miss
+    assign CounterEvent[13] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
+    assign CounterEvent[14] = ICacheMiss & InstrValidNotFlushedM;                       // instruction cache miss
 	assign CounterEvent[15] = BPPredWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
     assign CounterEvent[`COUNTERS-1:16] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
