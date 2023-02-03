@@ -38,7 +38,7 @@ module zbs #(parameter WIDTH=32) (
 
   logic [WIDTH-1:0] BMask, ClrResult, InvResult, ExtResult, SetResult;
 
-  decoder #(clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], BMask);
+  decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], BMask);
 
   assign InvResult = A ^ BMask;
   assign ClrResult = A & ~BMask;
