@@ -1,5 +1,2 @@
-1. [X] Cache is suppressing d cache flush if there is a dtlb miss.
-   1. Fixed by disabling mmu's address translation on flush.
+1. [ ] AMO should always generate store faults never load faults.  We are generating both.
 
-
-2. Test commit.
