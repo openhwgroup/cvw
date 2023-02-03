@@ -68,6 +68,26 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
      ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
 			      .A(addr), .D(din), 
 			      .BWEB(~BitWriteMask), .Q(dout));
+
+  end if (`USE_SRAM == 1 && WIDTH == 128 && DEPTH == 32) begin
+     genvar index;
+     // 64 x 128-bit SRAM
+     logic [WIDTH-1:0] BitWriteMask;
+     for (index=0; index < WIDTH; index++) 
+       assign BitWriteMask[index] = bwe[index/8];
+    TS1N28HPCPSVTB64X128M4SW sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
+			      .A(addr), .D(din), 
+			      .BWEB(~BitWriteMask), .Q(dout));
+     
+  end else if (`USE_SRAM == 1 && WIDTH == 22  && DEPTH == 32) begin
+     genvar index;
+     // 64 x 22-bit SRAM
+     logic [WIDTH-1:0] BitWriteMask;
+     for (index=0; index < WIDTH; index++) 
+       assign BitWriteMask[index] = bwe[index/8];
+     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
+			      .A(addr), .D(din), 
+			      .BWEB(~BitWriteMask), .Q(dout));     
     
   // ***************************************************************************
   // READ first SRAM model

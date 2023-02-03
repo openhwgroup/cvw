@@ -68,7 +68,7 @@ module hazard (
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPPredWrongE;
   assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPPredWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
-  assign FlushWCause = TrapM & ~(BreakpointFaultM | EcallFaultM);
+  assign FlushWCause = TrapM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
