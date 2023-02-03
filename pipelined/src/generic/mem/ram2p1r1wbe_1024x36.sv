@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
-// ram2p1rwbe_1024x69.sv
+// ram2p1rwbe_1024x36.sv
 //
-// Written: james.stine@okstate.edu 28 January 2023
+// Written: james.stine@okstate.edu 2 February 2023
 // Modified: 
 //
 // Purpose: RAM wrapper for instantiating RAM IP
@@ -24,7 +24,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram2p1r1wbe_1024x69( 
+module ram2p1r1wbe_1024x36( 
   input  logic          CLKA, 
   input  logic          CLKB, 
   input  logic 	        CEBA, 
@@ -33,16 +33,16 @@ module ram2p1r1wbe_1024x69(
   input  logic          WEBB,
   input  logic [9:0]    AA, 
   input  logic [9:0]    AB, 
-  input  logic [68:0]   DA,
-  input  logic [68:0]   DB,
-  input  logic [68:0]   BWEBA, 
-  input  logic [68:0]   BWEBB, 
-  output logic [68:0]   QA,
-  output logic [68:0]   QB
+  input  logic [35:0]   DA,
+  input  logic [35:0]   DB,
+  input  logic [35:0]   BWEBA, 
+  input  logic [35:0]   BWEBB, 
+  output logic [35:0]   QA,
+  output logic [35:0]   QB
 );
 
-   // replace "generic1024x69RAM" with "TSDN..1024X69.." module from your memory vendor
-   generic1024x69RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-			     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+   // replace "generic1024x36RAM" with "TSDN..1024X36.." module from your memory vendor
+   generic1024x36RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+   			     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
 endmodule

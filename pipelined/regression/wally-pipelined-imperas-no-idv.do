@@ -29,28 +29,27 @@ vlib work
 # "Extra checking for conflicts with always_comb done at vopt time"
 # because vsim will run vopt
 
-# default to config/rv64ic, but allow this to be overridden at the command line.  For example:
-# do wally-pipelined.do ../config/rv32ic
-#switch $argc {
-#    0 {vlog +incdir+../config/rv64ic +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
-#    1 {vlog +incdir+$1  +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv ../src/*/*.sv -suppress 2583}
-#}
 # start and run simulation
 # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-harvard.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
-vopt +acc work.testbench -G TEST=$2 -o workopt 
-vsim workopt
-
+        # *** modelsim won't take `PA_BITS, but will take other defines for the lengths of DTIM_RANGE and IROM_LEN.  For now just live with the warnings.
+vlog +incdir+../config/$1 \
+     +incdir+../config/shared \
+     ../../external/ImperasDV-HMC/Imperas/ImpPublic/source/host/rvvi/rvvi-trace.sv \
+     ../testbench/testbench_imperas.sv \
+     ../testbench/common/*.sv   \
+     ../src/*/*.sv \
+     ../src/*/*/*.sv \
+     -suppress 2583 \
+     -suppress 7063 
+vopt +acc work.testbench -G DEBUG=1 -o workopt 
+vsim workopt +nowarn3829  -fatal 7 \
+     +testDir=$env(TESTDIR) $env(OTHERFLAGS)
 view wave
--- display input and output signals as hexidecimal values
-#do ./wave-dos/peripheral-waves.do
+#-- display input and output signals as hexidecimal values
 add log -recursive /*
 do wave.do
 
--- Run the Simulation 
-#run 3600 
 run -all
-#quit
-#noview ../testbench/testbench-imperas.sv
-noview ../testbench/testbench.sv
+
+noview ../testbench/testbench_imperas.sv
 view wave

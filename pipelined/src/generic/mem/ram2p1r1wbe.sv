@@ -5,7 +5,9 @@
 //          Two port SRAM 1 read port and 1 write port.
 //          When clk rises Addr and LineWriteData are sampled.
 //          Following the clk edge read data is output from the sampled Addr.
-//          Write 
+//          Write
+// Modified: james.stine@okstate.edu Feb 1, 2023
+//           Integration of memories 
 //
 // Purpose: Storage and read/write access to data cache data, tag valid, dirty, and replacement.
 // 
@@ -42,31 +44,91 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
   output logic [WIDTH-1:0]         rd1
 );
 
-  logic [WIDTH-1:0]               mem[DEPTH-1:0];
+   logic [WIDTH-1:0] 		   mem[DEPTH-1:0];
+   localparam                      SRAMWIDTH = 32;
+   localparam                      SRAMNUMSETS = SRAMWIDTH/WIDTH;      
 
   // ***************************************************************************
   // TRUE Smem macro
   // ***************************************************************************
 
-  // ***************************************************************************
-  // READ first SRAM model
-  // ***************************************************************************
-    integer i;
+   if (`USE_SRAM == 1 && WIDTH == 68 && DEPTH == 1024) begin
+   
+      ram2p1r1wbe_1024x68 memory1(.CLKA(clk), .CLKB(clk), 
+				  .CEBA(~ce1), .CEBB(~ce2),
+				  .WEBA('0), .WEBB(~we2),			      
+				  .AA(ra1), .AB(wa2),
+				  .DA('0),
+				  .DB(wd2),
+				  .BWEBA('0), .BWEBB('1),
+				  .QA(rd1),
+				  .QB());
 
-  // Read
-  always_ff @(posedge clk) 
-    if(ce1) rd1 <= #1 mem[ra1];
-  
-  // Write divided into part for bytes and part for extra msbs
-  if(WIDTH >= 8) 
-    always @(posedge clk) 
-      if (ce2 & we2) 
-        for(i = 0; i < WIDTH/8; i++) 
-          if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
-  
-  if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-    always @(posedge clk) 
-      if (ce2 & we2 & bwe2[WIDTH/8])
-        mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= #1 wd2[WIDTH-1:WIDTH-WIDTH%8];
+   end if (`USE_SRAM == 1 && WIDTH == 36 && DEPTH == 1024) begin
+   
+      ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
+				  .CEBA(~ce1), .CEBB(~ce2),
+				  .WEBA('0), .WEBB(~we2),			      
+				  .AA(ra1), .AB(wa2),
+				  .DA('0),
+				  .DB(wd2),
+				  .BWEBA('0), .BWEBB('1),
+				  .QA(rd1),
+				  .QB());      
 
+   end else if (`USE_SRAM == 1 && WIDTH == 2 && DEPTH == 1024) begin
+
+      logic [SRAMWIDTH-1:0]     SRAMReadData;      
+      logic [SRAMWIDTH-1:0]     SRAMWriteData;      
+      logic [SRAMWIDTH-1:0]     RD1Sets[SRAMNUMSETS-1:0];
+      logic [SRAMNUMSETS-1:0] 	SRAMBitMaskPre;      
+      logic [SRAMWIDTH-1:0] 	SRAMBitMask;      
+      logic [$clog2(DEPTH)-1:0] RA1Q;
+      
+      
+      onehotdecoder #($clog2(SRAMNUMSETS)) oh1(wa2[$clog2(SRAMNUMSETS)-1:0], SRAMBitMaskPre);      
+      genvar 		    index;
+      for (index = 0; index < SRAMNUMSETS; index++) begin:readdatalinesetsmux
+	 assign RD1Sets[index] = SRAMReadData[(index*WIDTH)+WIDTH-1 : (index*WIDTH)];	 
+	 assign SRAMWriteData[index*2+1:index*2] = wd2;
+	 assign SRAMBitMask[index*2+1:index*2] = {2{SRAMBitMaskPre[index]}};      
+      end
+      flopen #($clog2(DEPTH)) mem_reg1 (clk, ce1, ra1, RA1Q);      
+      assign rd1 = RD1Sets[RA1Q[$clog2(SRAMWIDTH)-1:0]];      
+      ram2p1r1wbe_64x32 memory2(.CLKA(clk), .CLKB(clk), 
+				.CEBA(~ce1), .CEBB(~ce2),
+				.WEBA('0), .WEBB(~we2),			      
+				.AA(ra1[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]), 
+				.AB(wa2[$clog2(DEPTH)-1:$clog2(SRAMNUMSETS)]),
+				.DA('0),
+				.DB(SRAMWriteData),
+				.BWEBA('0), .BWEBB(SRAMBitMask),
+				.QA(SRAMReadData),
+				.QB());
+
+   end else begin
+      
+      // ***************************************************************************
+      // READ first SRAM model
+      // ***************************************************************************
+      integer i;
+      
+      // Read
+      always_ff @(posedge clk) 
+	if(ce1) rd1 <= #1 mem[ra1];
+   
+   // Write divided into part for bytes and part for extra msbs
+   if(WIDTH >= 8) 
+     always @(posedge clk) 
+       if (ce2 & we2) 
+         for(i = 0; i < WIDTH/8; i++) 
+           if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
+   
+   if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
+     always @(posedge clk) 
+       if (ce2 & we2 & bwe2[WIDTH/8])
+         mem[wa2][WIDTH-1:WIDTH-WIDTH%8] <= #1 wd2[WIDTH-1:WIDTH-WIDTH%8];
+
+  end
+   
 endmodule

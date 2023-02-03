@@ -48,19 +48,21 @@ module csru #(parameter
   logic [4:0]              FFLAGS_REGW;
   logic [2:0]              NextFRMM;
   logic [4:0]              NextFFLAGSM;
-    
+  logic 				   SetOrWriteFFLAGSM;
+  
   // Write enables
   //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & InstrValidNotFlushedM;
   assign WriteFRMM = (CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR))  & InstrValidNotFlushedM;
-  assign WriteFFLAGSM = (CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR))  & InstrValidNotFlushedM;
+  assign WriteFFLAGSM = (CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR)) & InstrValidNotFlushedM;
 
   // Write Values
   assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
   assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
+  assign SetOrWriteFFLAGSM = WriteFFLAGSM | (|SetFflagsM & InstrValidNotFlushedM);
 
   // CSRs
   flopenr #(3) FRMreg(clk, reset, WriteFRMM, NextFRMM, FRM_REGW);
-  flopr   #(5) FFLAGSreg(clk, reset, NextFFLAGSM, FFLAGS_REGW); 
+  flopenr   #(5) FFLAGSreg(clk, reset, SetOrWriteFFLAGSM, NextFFLAGSM, FFLAGS_REGW); 
 
   // CSR Reads
   always_comb begin

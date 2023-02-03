@@ -68,6 +68,7 @@ module csrsr (
                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
                           STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
+	assign MSTATUSH_REGW = '0; // *** does not exist when XLEN=64, but don't want it to have an undefined value.  Spec is not clear what it should be.
   end else begin: csrsr32 // RV32
     assign MSTATUS_REGW = {STATUS_SD, 8'b0,
                           STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
