@@ -37,22 +37,52 @@ module alu #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] Result,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
 
-  // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
+  // CondInvB = ~B when subtracting or inverted operand instruction in ZBB, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;  // Intermediate results
+  logic [WIDTH-1:0] ZBBResult, ZBSResult;
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult, CondShiftA;  // Intermediate results
   logic             Carry, Neg;                              // Flags: carry out, negative
   logic             LT, LTU;                                 // Less than, Less than unsigned
   logic             W64;                                     // RV64 W-type instruction
   logic             SubArith;                                // Performing subtraction or arithmetic right shift
   logic             ALUOp;                                   // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                            // Sign bits of A, B
+  logic             InvB;                                    // Is Inverted Operand Instruction (ZBB)
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
+
   // Addition
-  assign CondInvB = SubArith ? ~B : B;
-  assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
+  if (`ZBB_SUPPORTED) 
+    always_comb begin
+      case({Funct7, Funct3})
+        10'b0010000_010: CondShiftA = {A[WIDTH-1:1], {1'b0}};      //sh1add
+        10'b0010000_100: CondShiftA = {A[WIDTH-1:2], {2'b00}};     //sh2add
+        10'b0010000_110: CondShiftA = {A[WIDTH-1:3], {3'b000}};    //sh3add
+        10'b0000100_000: CondShiftA = {{32{1'b0}}, A[31:0]};       //add.uw
+        10'b0010000_010: CondShiftA = {{31{1'b0}},A[31:0], {1'b0}}; //sh1add.uw
+        10'b0010000_100: CondShiftA = {{30{1'b0}},A[31:0], {2'b0}}; //sh2add.uw
+        10'b0010000_110: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
+        default: CondShiftA = A;
+      endcase
+
+      case ({Funct7,Funct3})
+        10'b0100000_111: InvB = 1'b1;                                   //andn
+        10'b0100000_110: InvB = 1'b1;                                   //orn
+        10'b0100000_100: InvB = 1'b1;                                   //xnor
+        default: InvB = 1'b0;
+      endcase
+
+    end
+  else begin
+    assign CondShiftA = A;
+    assign InvB = 1'b0;
+  end
+
+  assign CondInvB = (SubArith | InvB) ? ~B : B;
+
+  assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
   shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
@@ -73,20 +103,25 @@ module alu #(parameter WIDTH=32) (
  
   // Select appropriate ALU Result
   always_comb
-    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
-    else casez (Funct3)               // Otherwise check Funct3
-      3'b000: FullResult = Sum;       // add or sub
-      3'b?01: FullResult = Shift;     // sll, sra, or srl
-      3'b010: FullResult = SLT;       // slt
-      3'b011: FullResult = SLTU;      // sltu
-      3'b100: FullResult = A ^ B;     // xor
-      3'b110: FullResult = A | B;     // or 
-      3'b111: FullResult = A & B;     // and
+    if (~ALUOp) FullResult = Sum;            // Always add for ALUOp = 0 (address generation)
+    else casez (Funct3)                      // Otherwise check Funct3
+      3'b000: FullResult = Sum;              // add or sub
+      3'b?01: FullResult = Shift;            // sll, sra, or srl
+      3'b010: FullResult = SLT;              // slt
+      3'b011: FullResult = SLTU;             // sltu
+      3'b100: FullResult = A ^ CondInvB;     // xor
+      3'b110: FullResult = A | CondInvB;     // or 
+      3'b111: FullResult = A & CondInvB;     // and
     endcase
 
   if (`ZBS_SUPPORTED) 
     zbs zbs(.A, .B, .Funct7, .Funct3, .ZBSResult);
   else assign ZBSResult = 0; 
+  
+
+  if (`ZBB_SUPPORTED) 
+    zbb zbb(.A, .B, .Funct7, .Funct3, .ZBBResult);
+  else assign ZBBResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
