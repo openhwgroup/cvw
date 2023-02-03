@@ -17,7 +17,7 @@ def mask(command):
 if __name__ == '__main__':
     
     techs = ['sky90', 'tsmc28']
-    allConfigs = ['rv32gc', 'rv32ic', 'rv64gc', 'rv64ic', 'rv32e', 'rv32i', 'rv64i']
+    allConfigs = ['rv32gc', 'rv32imc', 'rv64gc', 'rv64imc', 'rv32e', 'rv32i', 'rv64i']
     freqVaryPct = [-20, -12, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20]
 
     pool = Pool()
@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-s", "--freqsweep", type=int, help = "Synthesize wally with target frequencies at given MHz and +/- 2, 4, 6, 8 %%")
-    parser.add_argument("-c", "--configsweep", action='store_true', help = "Synthesize wally with configurations 32e, 32ic, 64ic, 32gc, and 64gc")
+    parser.add_argument("-c", "--configsweep", action='store_true', help = "Synthesize wally with configurations 32e, 32imc, 64ic, 32gc, and 64gc")
     parser.add_argument("-f", "--featuresweep", action='store_true', help = "Synthesize wally with features turned off progressively to visualize critical path")
 
     parser.add_argument("-v", "--version", choices=allConfigs, help = "Configuration of wally")
@@ -47,7 +47,7 @@ if __name__ == '__main__':
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
             runSynth(config, mod, tech, freq, maxopt)
     if args.configsweep:
-        for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32ic', 'rv32e']: #configs
+        for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32imc', 'rv32e']: #configs
             runSynth(config, mod, tech, freq, maxopt)
     if args.featuresweep:
         config = args.version if args.version else 'rv64gc'

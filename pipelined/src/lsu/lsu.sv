@@ -251,20 +251,22 @@ module lsu (
       logic                DCacheBusAck;                                               // ahbcacheinterface completed fetch or writeback
       logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
       logic [1:0] 		   CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
-	    logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
+	  logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
       logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
       logic [1:0] 		   CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
-	    logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
+	  logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
+	  logic 			   FlushDCache;                                                // Suppress d cache flush if there is an ITLB miss.
       
       assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
+	  assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
-        .FlushCache(FlushDCacheM), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .FlushCache(FlushDCache), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),

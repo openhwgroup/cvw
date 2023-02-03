@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// rom1p1r_128x32.sv
+// ram1p1rwbe_64x22.sv
 //
-// Written: james.stine@okstate.edu 28 January 2023
+// Written: james.stine@okstate.edu 2 Feburary 2023
 // Modified: 
 //
-// Purpose: ROM wrapper for instantiating ROM IP
+// Purpose: RAM wrapper for instantiating RAM IP
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -24,15 +24,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rom1p1r_128x32( 
+module ram1p1rwbe_64x22( 
   input  logic          CLK, 
   input  logic 	        CEB, 
-  input  logic [6:0]    A, 
-  output logic [31:0]   Q
+  input  logic          WEB,
+  input  logic [5:0]    A, 
+  input  logic [127:0]  D,
+  input  logic [127:0]  BWEB, 
+  output logic [127:0]  Q
 );
 
-   // replace "generic128x32ROM" with "TS3N..128X32.." module from your memory vendor
-   generic64x128ROM sramIP (.CLK, .CEB, .A, .Q);
+   // replace "generic64x22RAM" with "TS1N..64X22.." module from your memory vendor
+   generic64x22RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
 
-endmodule 
-
+endmodule

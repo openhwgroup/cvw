@@ -471,13 +471,18 @@ logic [3:0] dummy;
       genvar adrindex;
       
       // Initializing all zeroes into the branch predictor memory.
-      for(adrindex = 0; adrindex < 1024; adrindex++) begin
+      for(adrindex = 0; adrindex < 2**10; adrindex++) begin
         initial begin 
-        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         #1;
-        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end
+      end
+      for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+        initial begin 
+        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        #1;
+        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         end
       end
 
@@ -543,7 +548,7 @@ module riscvassertions;
     assert (2**$clog2(`DTLB_ENTRIES) == `DTLB_ENTRIES | `VIRTMEM_SUPPORTED==0) else $error("DTLB_ENTRIES must be a power of 2");
     assert (`UNCORE_RAM_RANGE >= 56'h07FFFFFF) else $warning("Some regression tests will fail if UNCORE_RAM_RANGE is less than 56'h07FFFFFF");
 	  assert (`ZICSR_SUPPORTED == 1 | (`PMP_ENTRIES == 0 & `VIRTMEM_SUPPORTED == 0)) else $error("PMP_ENTRIES and VIRTMEM_SUPPORTED must be zero if ZICSR not supported.");
-    assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZISR not supported");
+    assert (`ZICSR_SUPPORTED == 1 | (`S_SUPPORTED == 0 & `U_SUPPORTED == 0)) else $error("S and U modes not supported if ZICSR not supported");
     assert (`U_SUPPORTED | (`S_SUPPORTED == 0)) else $error ("S mode only supported if U also is supported");
     assert (`VIRTMEM_SUPPORTED == 0 | (`DTIM_SUPPORTED == 0 & `IROM_SUPPORTED == 0)) else $error("Can't simultaneously have virtual memory and DTIM_SUPPORTED/IROM_SUPPORTED because local memories don't translate addresses");
     assert (`DCACHE_SUPPORTED | `VIRTMEM_SUPPORTED ==0) else $error("Virtual memory needs dcache");
