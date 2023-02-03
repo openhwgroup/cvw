@@ -36,7 +36,7 @@ module speculativegshare #(parameter int k = 10 ) (
   output logic [1:0] 	  DirPredictionF, 
   output logic 			  DirPredictionWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
+  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE,
   input logic [3:0] 	  PredInstrClassF, InstrClassD, InstrClassE,
   input logic [3:0] 	  WrongPredInstrClassD, 
   input logic 			  PCSrcE
