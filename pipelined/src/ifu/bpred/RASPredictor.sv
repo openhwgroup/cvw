@@ -42,7 +42,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [Depth-1:0]         NextPtr, CurrPtr, PtrP1, PtrM1;
+  logic [Depth-1:0]         NextPtr, Ptr, PtrP1, PtrM1;
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
 
@@ -73,10 +73,10 @@ module RASPredictor #(parameter int StackSize = 16 )(
   assign DecrementPtr = (PopF | DecRepairD) & ~IncrRepairD;
   mux2 #(Depth) PtrMux(PtrP1, PtrM1, DecrementPtr, NextPtr);
 
-  assign PtrM1 = CurrPtr - 1'b1;
-  assign PtrP1 = CurrPtr + 1'b1;
+  assign PtrM1 = Ptr - 1'b1;
+  assign PtrP1 = Ptr + 1'b1;
 
-  flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, CurrPtr);
+  flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, Ptr);
 
   // RAS must be reset. 
   always_ff @ (posedge clk) begin
@@ -88,7 +88,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
     end
   end
 
-  assign RASPCF = memory[CurrPtr];
+  assign RASPCF = memory[Ptr];
   
   
 endmodule
