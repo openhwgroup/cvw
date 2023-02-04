@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-# Madeleine Masser-Frye mmasserfrye@hmc.edu 6/22
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 1/2023
 
 import subprocess
 from multiprocessing import Pool
@@ -32,7 +32,7 @@ if __name__ == '__main__':
     parser.add_argument("-t", "--targetfreq", type=int, help = "Target frequncy")
     parser.add_argument("-e", "--tech", choices=techs, help = "Technology")
     parser.add_argument("-o", "--maxopt", action='store_true', help = "Turn on MAXOPT")
-    parser.add_argument("-r", "--usesram", action='store_true', help = "Use SRAM (not flops)")
+    parser.add_argument("-r", "--usesram", action='store_true', help = "Use SRAM modules")
 
     args = parser.parse_args()
 

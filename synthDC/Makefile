@@ -29,7 +29,7 @@ export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time
 export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/pipelined/config
-export CONFIGDIR ?= $(OUTPUTDIR)/hdl/config
+export CONFIGDIR ?= $(OUTPUTDIR)/config
 
 
 
@@ -106,8 +106,8 @@ endif
 mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
-	@mkdir -p $(OUTPUTDIR)/hdl/config
-	@mkdir -p $(OUTPUTDIR)/hdl/config
+	@mkdir -p $(OUTPUTDIR)/hdl
+	@mkdir -p $(OUTPUTDIR)/config
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
@@ -120,7 +120,7 @@ rundc:
 	
 	
 clean:
-	rm -rf $(OUTPUTDIR)/hdl/*.sv
+	rm -rf $(OUTPUTDIR)/hdl
 	rm -rf $(OUTPUTDIR)/WORK
 	rm -rf $(OUTPUTDIR)/alib-52
 	rm -f default.svf
