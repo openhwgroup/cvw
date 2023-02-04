@@ -1,3 +1,7 @@
+# David_Harris@hmc.edu 2023
+# Top-level Makefile for CORE-V-Wally
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 all:
 	make install
 	make regression

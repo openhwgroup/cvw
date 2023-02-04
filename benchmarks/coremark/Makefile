@@ -1,5 +1,6 @@
 # Wally Coremark Makefile
 # Daniel Torres & David Harris 28 July 2022
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 PORT_DIR = $(CURDIR)/riscv64-baremetal
 cmbase=../../addins/coremark
