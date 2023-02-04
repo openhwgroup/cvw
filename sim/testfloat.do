@@ -1,4 +1,4 @@
-# wally-pipelined.do 
+# testfloat.do 
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench 
@@ -7,14 +7,7 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# run with vsim -do "do wally-pipelined.do rv64ic riscvarchtest-64m"
-
-# Use this wally-pipelined.do file to run this example.
-# Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-pipelined.do
-# or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-pipelined.do -c
-# (omit the "-c" to see the GUI while running from the shell)
+# run with vsim -do "do wally.do rv64ic riscvarchtest-64m"
 
 onbreak {resume}
 

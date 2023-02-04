@@ -1,4 +1,5 @@
-# wally-pipelined-batch.do 
+# wally-batch.do 
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench 
@@ -7,14 +8,14 @@
 #
 # Takes 1:10 to run RV64IC tests using gui
 
-# Usage: do wally-pipelined-batch.do <config> <testcases>
-# Example: do wally-pipelined-batch.do rv32imc imperas-32i
+# Usage: do wally-batch.do <config> <testcases>
+# Example: do wally-batch.do rv32imc imperas-32i
 
-# Use this wally-pipelined-batch.do file to run this example.
+# Use this wally-batch.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-pipelined-batch.do
+#     do wally-batch.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-pipelined-batch.do -c
+#     vsim -do wally-batch.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
@@ -91,9 +92,9 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # power off -r /dut/core/*
 } 
 
-#coverage report -file wally-pipelined-coverage.txt
+#coverage report -file wally-coverage.txt
 # These aren't doing anything helpful
 #coverage report -memory 
-#profile report -calltree -file wally-pipelined-calltree.rpt -cutoff 2
+#profile report -calltree -file wally-calltree.rpt -cutoff 2
 #power report -all -bsaif power.saif
 quit
