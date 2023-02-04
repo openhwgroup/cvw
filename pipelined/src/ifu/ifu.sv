@@ -109,6 +109,8 @@ module ifu (
   logic [31:0] 				   ICacheInstrF;                          // Instruction from the I$
   logic [31:0] 				   InstrRawF;                             // Instruction from the IROM, I$, or bus
   logic                        CompressedF;                           // The fetched instruction is compressed
+  logic                        CompressedD;                           // The decoded instruction is compressed
+  logic                        CompressedE;                           // The execution instruction is compressed
   logic [31:0] 				   PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   
@@ -297,18 +299,11 @@ module ifu (
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32
+  // *** consider using PCPlus2or4F = PCF + CompressedF ? 2 : 4;
   assign PCPlus4F = PCF[`XLEN-1:2] + 1; // add 4 to PC
   // choose PC+2 or PC+4 based on CompressedF, which arrives later. 
   // Speeds up critical path as compared to selecting adder input based on CompressedF
   // *** consider gating PCPlus4F to provide the reset.
-/* -----\/----- EXCLUDED -----\/-----
-  assign PCPlus2or4F[0] = '0;
-  assign PCPlus2or4F[1] = ~reset & (CompressedF ^ PCF[1]);
-  assign PCPlus2or4F[`XLEN-1:2] = reset ? '0 : CompressedF & ~PCF[1] ? PCF[`XLEN-1:2] : PCPlus4F;
- -----/\----- EXCLUDED -----/\----- */
-/* -----\/----- EXCLUDED -----\/-----
-  assign PCPlus2or4F[1:0] = reset ? 2'b00 : CompressedF ? PCF[1] ? 2'b00 : 2'b10 : PCF[1:0];
- -----/\----- EXCLUDED -----/\----- */
 
   // *** There is actually a bug in the regression test.  We fetched an address which returns data with
   // an X.  This version of the code does not die because if CompressedF is an X it just defaults to the last
@@ -377,6 +372,11 @@ module ifu (
   flopenr #(32)    InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
-  flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
-  flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
+  //flopenr #(`XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);
+  //flopenr #(`XLEN) PCPEReg(clk, reset, ~StallE, PCLinkD, PCLinkE);
+
+  flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
+  flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
+  assign PCLinkE = PCE + (CompressedE ? 2 : 4);
+  
 endmodule
