@@ -3,6 +3,7 @@
 # setup.sh
 # David_Harris@hmc.edu and kekim@hmc.edu 1 December 2021
 # Set up tools for rvw
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 echo "Executing Wally setup.sh"
 
