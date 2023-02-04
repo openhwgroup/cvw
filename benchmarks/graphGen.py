@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# Daniel Torres 2022
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 import subprocess
 import sys
 import json

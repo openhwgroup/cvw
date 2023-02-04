@@ -328,6 +328,6 @@ source ./setup.sh        # may require some modification for your system. Always
 
   cd <to location of repo clone>
   make
-  cd pipelined/regression
+  cd sim
   ./regression-wally       #(depends on having Questa installed)
 
