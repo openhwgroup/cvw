@@ -13,4 +13,4 @@ make
 # exe2memfile.pl work/*/*/*.elf
 # cd ../linux-testgen/linux-testvectors
 # ./tvLinker.sh
-# cd ../../../pipelined/regression
+# cd ../../../regression

@@ -1,4 +1,4 @@
-ROOT	:= ../..
+ROOT	:= ..
 SUFFIX	:= work
 ARCHDIR	:= $(ROOT)/tests/riscof
 WALLYDIR:= $(ROOT)/tests/wally-riscv-arch-test

@@ -31,7 +31,7 @@ export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
 # setup QUESTA (Imperas only command, YMMV)
 svsetup -questa
 
-pushd pipelined/regression
+pushd sim
     # With IDV
     IMPERAS_TOOLS=$(pwd)/imperas.ic \
         OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \

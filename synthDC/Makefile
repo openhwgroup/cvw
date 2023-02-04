@@ -25,10 +25,9 @@ export USESRAM ?= 0
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
 export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
-export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
-OLDCONFIGDIR ?= ${WALLY}/pipelined/config
+OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
 
 
@@ -64,20 +63,25 @@ else
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
 
-ifneq ($(filter $(CONFIG), $(DIRS32)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-else 
-	$(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
-	@echo "Config not in list, RAM_RANGE will be unmodified"
-endif
+  @echo "match32"
+  @echo $(filter $(CONFIG), $(DIRS32))
+  @echo "match64"
+  @echo $(filter $(CONFIG), $(DIRS64))
+
+  ifneq ($(filter $(CONFIG), $(DIRS32)),)
+    sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+  else ifneq ($(filter $(CONFIG), $(DIRS64)),)
+    sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+    sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+  else 
+    $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
+    @echo "Config not in list, RAM_RANGE will be unmodified"
+  endif
 endif
 	
 ifeq ($(MOD), FPUoff)
@@ -99,7 +103,7 @@ else ifeq ($(MOD), noPriv)
 endif
 
 ifeq ($(SAIFPOWER), 1)
-	cp -f ../pipelined/regression/power.saif .
+	cp -f ../sim/power.saif .
 endif
 
 
