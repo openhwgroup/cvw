@@ -238,7 +238,7 @@ logic [3:0] dummy;
       else memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`FPGA) begin
         string romfilename, sdcfilename;
-        romfilename = {"../../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+        romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
         $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);

@@ -48,15 +48,14 @@ module unpack (
   
   unpackinput unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn),
                           .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
-                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero));
+                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), .Subnorm(XSubnorm));
 
   unpackinput unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn),
                           .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
-                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero));
+                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero), .Subnorm());
 
   unpackinput unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn),
                           .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
-                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero));
-  // is the input subnormal
-  assign XSubnorm = ~XExpNonZero & ~XFracZero;
-endmodule
+                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), .Subnorm());
+ 
+ endmodule
