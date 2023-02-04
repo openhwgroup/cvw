@@ -34,8 +34,55 @@ module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       Funct3,     // Indicates operation to perform
   input  logic [6:0]       Funct7,     // Indicates operation to perform
+  input  logic [6:0]       W64,        // Indicates word operation
   output logic [WIDTH-1:0] ZBBResult); // ZBC result
 
+
+  //count instructions
+  logic [WIDTH-1:0] czResult;
+  logic [WIDTH-1:0] clzResult; //leading zeros result
+  logic [WIDTH-1:0] ctzResult; //trailing zeros result
+  logic [WIDTH-1:0] clzA, clzB;
+  logic [WIDTH-1:0] clzwA, clzwB;
+  logic [WIDTH-1:0] ctzA, ctzB;
+  logic [WIDTH-1:0] ctzwA, ctzwB;
+  logic [WIDTH-1:0] clzResult, ctzResult;
+
+  //in both rv64, rv32
+  assign clzA = A;
+  bitreverse #(WIDTH) brtz(.a(A), .b(ctzA));
+  
+  //only in rv64
+  assign clzwA = {A[31:0],{32{1'b1}}};
+  bitreverse #(WIDTH) brtzw(.a({{32{1'b1}},A[31:0]}), .b(ctzwA));
+
+  //NOTE: Can be simplified to a single lzc with a 4-select mux.
+  lzc #(WIDTH) lzc(.num(clzA), .ZeroCnt(clzB));
+  lzc #(WIDTH) lzwc(.num(clzwA), .ZeroCnt(clzwB));
+  lzc #(WIDTH) tzc(.num(ctzA), .ZeroCnt(ctzB));
+  lzc #(WIDTH) tzwc(.num(ctzwA), .ZeroCnt(ctzwB));
+
+  if (WIDTH==64) begin
+    assign clzResult = W64 ? clzwB : clzB;
+    assign ctzResult = W64 ? ctzwB : ctzB;
+  end
+  else begin
+    assign clzResult = clzB;
+    assign ctzResult = ctzB;
+  end
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  //byte instructions
   logic [WIDTH-1:0] OrcBResult;
   logic [WIDTH-1:0] Rev8Result;
 
@@ -51,6 +98,11 @@ module zbb #(parameter WIDTH=32) (
       case ({Funct7, Funct3, B})
       15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
+      15'b0110101_101_11000: ZBBResult = Rev8Result;
+      15'b0110000_001_00000: ZBBResult = clzResult;
+      15'b0110000_001_00010: //cpopResult goes here
+      15'b0110000_001_00001: ZBBResult = ctzResult;
+      15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       endcase
   end
