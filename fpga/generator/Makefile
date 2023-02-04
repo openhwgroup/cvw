@@ -27,7 +27,7 @@ SDC:
 
 PreProcessFiles:
 	rm -rf ../src/CopiedFiles_do_not_add_to_repo/
-	cp -r ../../pipelined/src/ ../src/CopiedFiles_do_not_add_to_repo/
+	cp -r ../../src/ ../src/CopiedFiles_do_not_add_to_repo/
 	./insert_debug_comment.sh
 
 $(dst)/%.log: %.tcl

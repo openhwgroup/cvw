@@ -1,3 +1,7 @@
+# David_Harris@hmc.edu 2023
+# Top-level Makefile for CORE-V-Wally
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+
 all:
 	make install
 	make regression
@@ -15,8 +19,8 @@ install:
 	##ln -s ${RISCV}/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64/riscvOVPsimPlus.exe tests/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64/riscvOVPsimPlus.exe
 
 regression:
-	make -C pipelined/regression
+	make -C sim
 
 clean:
-	make clean -C pipelined/regression
+	make clean -C sim
 
