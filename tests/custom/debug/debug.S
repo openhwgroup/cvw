@@ -6,7 +6,7 @@
 # openhwgroup/cvw Issue #55
 li x1, 0x7ff0000000000001
 fmv.w.x f4, x1
-li x1, 7ff8000000000000
+li x1, 0x7ff8000000000000
 fmv.w.x f9, x1
 fsgnjx.s f12,f9,f4  # expected f 0xffffffff7fc00000
 

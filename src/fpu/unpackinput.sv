@@ -56,7 +56,6 @@ module unpackinput (
       assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
   
   end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
-      //***need better names for these constants
       // largest format | smaller format
       //----------------------------------
       //      `FLEN     |     `LEN1       length of floating point number
@@ -104,7 +103,6 @@ module unpackinput (
 
   end else if (`FPSIZES == 3) begin       // three floating point precsions supported
 
-      //***need better names for these constants
       // largest format | larger format  | smallest format
       //---------------------------------------------------
       //      `FLEN     |     `LEN1      |    `LEN2       length of floating point number
@@ -196,7 +194,7 @@ module unpackinput (
       // Check NaN boxing
       always_comb
           case (Fmt)
-              2'b11:  BadNaNBox = 0;
+              2'b11: BadNaNBox = 0;
               2'b01: BadNaNBox = ~&In[`Q_LEN-1:`D_LEN];
               2'b00: BadNaNBox = ~&In[`Q_LEN-1:`S_LEN];
               2'b10: BadNaNBox = ~&In[`Q_LEN-1:`H_LEN];

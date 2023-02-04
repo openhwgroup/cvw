@@ -11,7 +11,7 @@ TARGET = debug
 $(TARGET).objdump: $(TARGET).elf
 	riscv64-unknown-elf-objdump -D $(TARGET).elf > $(TARGET).objdump
     
-$(TARGET): $(TARGET).S Makefile
+$(TARGET).elf: $(TARGET).S Makefile
 	riscv64-unknown-elf-gcc -g -o $(TARGET).elf -march=rv64gc -mabi=lp64 -mcmodel=medany \
 	    -nostartfiles -T../../link/link.ld $(TARGET).S 
 
