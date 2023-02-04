@@ -1,4 +1,6 @@
 #!/bin/bash
+# Alessandro Maiuolo 2022
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 configFile=config/shared/wally-shared.vh
 

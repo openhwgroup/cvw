@@ -57,27 +57,17 @@ $(CONFIG):
 
 ifeq ($(USESRAM), 1)
 	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-shared.vh
-
 else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
 
-  @echo "match32"
-  @echo $(filter $(CONFIG), $(DIRS32))
-  @echo "match64"
-  @echo $(filter $(CONFIG), $(DIRS64))
-
   ifneq ($(filter $(CONFIG), $(DIRS32)),)
     sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
     sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
   else ifneq ($(filter $(CONFIG), $(DIRS64)),)
     sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
     sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
   else 
     $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
     @echo "Config not in list, RAM_RANGE will be unmodified"
