@@ -107,6 +107,9 @@ module spill #(
   // merge together
   mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalf}, SpillF, PostSpillInstrRawF);
 
-  assign CompressedF = PostSpillInstrRawF[1:0] != 2'b11;
+  // Need to use always comb to avoid pessimistic x propagation if PostSpillInstrRawF is x
+  always_comb
+	if (PostSpillInstrRawF[1:0] != 2'b11) CompressedF = 1'b1;
+	else CompressedF = 1'b0;
 
 endmodule
