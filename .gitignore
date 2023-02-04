@@ -89,6 +89,7 @@ tests/custom/*/*/*.elf
 tests/custom/*/*/*.map
 tests/custom/*/*/*.memfile
 tests/custom/crt0/*.a
+tests/custom/*/*.elf*
 sim/sd_model.log
 fpga/src/sdc/*
 fpga/src/sdc.tar.gz
