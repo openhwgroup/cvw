@@ -29,11 +29,11 @@
 `include "wally-config.vh"
 
 module fsgninj (  
-	input  logic        		Xs, Ys,	// X and Y sign bits
-	input  logic [`FLEN-1:0] 	X,		// X
-	input  logic [`FMTBITS-1:0]	Fmt,	// format
-	input  logic [1:0]  		OpCtrl,	// operation control
-	output logic [`FLEN-1:0] 	SgnRes	// result
+	input  logic        		    Xs, Ys,	// X and Y sign bits
+	input  logic [`FLEN-1:0] 	  X,		  // X
+	input  logic [`FMTBITS-1:0]	Fmt,	  // format
+	input  logic [1:0]  		    OpCtrl,	// operation control
+	output logic [`FLEN-1:0] 	  SgnRes	// result
 );
 
 	logic ResSgn;	// result sign
@@ -54,13 +54,13 @@ module fsgninj (
 		assign SgnRes = {ResSgn, X[`FLEN-2:0]};
   else if (`FPSIZES == 2)
 		assign SgnRes = {~Fmt|ResSgn, X[`FLEN-2:`LEN1], Fmt ? X[`LEN1-1] : ResSgn, X[`LEN1-2:0]};
-  else if (`FPSIZES == 3) begin
+  else if (`FPSIZES ==  3) begin
 		logic [2:0] SgnBits;
     always_comb
       case (Fmt)
-        `FMT: SgnBits = {ResSgn, X[`LEN1-1], X[`LEN2-1]};
-        `FMT1: SgnBits = {1'b1, ResSgn, X[`LEN2-1]};
-        `FMT2: SgnBits = {2'b11, ResSgn};
+        `FMT:    SgnBits = {ResSgn, X[`LEN1-1], X[`LEN2-1]};
+  	    `FMT1:   SgnBits = {1'b1, ResSgn, X[`LEN2-1]};
+        `FMT2:   SgnBits = {2'b11, ResSgn};
         default: SgnBits = {3{1'bx}};
       endcase
 		assign SgnRes = {SgnBits[2], X[`FLEN-2:`LEN1], SgnBits[1], X[`LEN1-2:`LEN2], SgnBits[0], X[`LEN2-2:0]};
