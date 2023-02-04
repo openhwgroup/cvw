@@ -31,16 +31,17 @@ module unpackinput (
   input  logic [`FLEN-1:0]        In,         // inputs from register file
   input  logic                    En,         // enable the input
   input  logic [`FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
-  output logic                    Sgn,        // sign bits of XYZ
-  output logic [`NE-1:0]          Exp,        // exponents of XYZ (converted to largest supported precision)
-  output logic [`NF:0]            Man,        // mantissas of XYZ (converted to largest supported precision)
-  output logic                    NaN,        // is XYZ a NaN
-  output logic                    SNaN,       // is XYZ a signaling NaN
-  output logic                    Zero,       // is XYZ zero
-  output logic                    Inf,        // is XYZ infinity
+  output logic                    Sgn,        // sign bits of the number 
+  output logic [`NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
+  output logic [`NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
+  output logic                    NaN,        // is the number a NaN
+  output logic                    SNaN,       // is the number a signaling NaN
+  output logic                    Zero,       // is the number zero
+  output logic                    Inf,        // is the number infinity
   output logic                    ExpNonZero, // is the exponent not zero
   output logic                    FracZero,   // is the fraction zero
-  output logic                    ExpMax      // does In have the maximum exponent (NaN or Inf)
+  output logic                    ExpMax,      // does In have the maximum exponent (NaN or Inf)
+  output logic                    Subnorm     // is the number subnormal
 );
 
   logic [`NF-1:0] Frac;       // Fraction of XYZ
@@ -261,10 +262,12 @@ module unpackinput (
   end
 
   // Output logic
-  assign FracZero = ~|Frac; // is the fraction zero?
+  assign FracZero = ~|Frac & ~BadNaNBox; // is the fraction zero?
   assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if Subnormal or zero) to create the significand
   assign NaN = ((ExpMax & ~FracZero)|BadNaNBox)&En; // is the input a NaN?
   assign SNaN = NaN&~Frac[`NF-1]&~BadNaNBox; // is the input a singnaling NaN?
-  assign Inf = ExpMax & FracZero &En; // is the input infinity?
-  assign Zero = ~ExpNonZero & FracZero; // is the input zero?
+  assign Inf = ExpMax & FracZero &En & ~BadNaNBox; // is the input infinity?
+  assign Zero = ~ExpNonZero & FracZero & ~BadNaNBox; // is the input zero?
+  assign Subnorm = ~ExpNonZero & ~FracZero & ~BadNaNBox; // is the input subnormal
+
 endmodule
