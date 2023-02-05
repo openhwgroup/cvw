@@ -31,26 +31,31 @@
 `include "wally-config.vh"
 
 module zbb #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
-  input  logic [2:0]       Funct3,     // Indicates operation to perform
-  input  logic [6:0]       Funct7,     // Indicates operation to perform
-  input  logic             W64,        // Indicates word operation
-  output logic [WIDTH-1:0] ZBBResult); // ZBB result
+  input  logic [WIDTH-1:0] A, B,         // Operands
+  input  logic [2:0]       Funct3,       // Indicates operation to perform
+  input  logic [6:0]       Funct7,       // Indicates operation to perform
+  input  logic             W64,          // Indicates word operation
+  output logic [WIDTH-1:0] ZBBResult);   // ZBB result
 
 
   
-  //count results
-  logic [WIDTH-1:0] clzResult;         // leading zeros result
-  logic [WIDTH-1:0] ctzResult;         // trailing zeros result
-  logic [WIDTH-1:0] cpopResult;        // population count result
+  // count results
+  logic [WIDTH-1:0] clzResult;           // leading zeros result
+  logic [WIDTH-1:0] ctzResult;           // trailing zeros result
+  logic [WIDTH-1:0] cpopResult;          // population count result
 
-  //byte results
+  // byte results
   logic [WIDTH-1:0] OrcBResult;
   logic [WIDTH-1:0] Rev8Result;
 
-  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
+  // sign/zero extend results
+  logic [WIDTH-1:0] sexthResult;         // sign extend halfword result
+  logic [WIDTH-1:0] sextbResult;         // sign extend byte result
+  logic [WIDTH-1:0] zexthResult;         // zero extend halfword result 
 
+  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
   byteUnit bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
+  ext ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
@@ -63,6 +68,9 @@ module zbb #(parameter WIDTH=32) (
       15'b0110000_001_00001: ZBBResult = ctzResult;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
+      15'b0000100_100_00000: ZBBResult = zexthResult; 
+      15'b0110000_001_00100: ZBBResult = sextbResult;
+      15'b0110000_001_00101: ZBBResult = sexthResult;
       endcase
   end
 
