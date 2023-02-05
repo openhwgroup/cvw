@@ -44,18 +44,13 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] ctzResult;         // trailing zeros result
   logic [WIDTH-1:0] cpopResult;        // population count result
 
-  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
-
-  //byte instructions
+  //byte results
   logic [WIDTH-1:0] OrcBResult;
   logic [WIDTH-1:0] Rev8Result;
 
-  genvar i;
+  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
 
-  for (i=0;i<WIDTH;i+=8) begin:loop
-    assign OrcBResult[i+7:i] = {8{|A[i+7:i]}};
-    assign Rev8Result[WIDTH-i:WIDTH-i-7] = A[i+7:i];
-  end
+  byteUnit bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
