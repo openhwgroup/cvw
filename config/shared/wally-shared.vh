@@ -135,9 +135,6 @@
 `define DIVBLEN     ($clog2(`DIVb+1)-1)
 `define DIVa        (`DIVb+1-`XLEN)             // used for idiv on fpu
 
-// Memory synthesis configuration
-`define USE_SRAM 0
-
 // Disable spurious Verilator warnings
 
 /* verilator lint_off STMTDLY */
