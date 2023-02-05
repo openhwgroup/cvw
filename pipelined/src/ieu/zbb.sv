@@ -40,35 +40,52 @@ module zbb #(parameter WIDTH=32) (
 
   //count instructions
   logic [WIDTH-1:0] czResult;
-  logic [WIDTH-1:0] clzResult; //leading zeros result
-  logic [WIDTH-1:0] ctzResult; //trailing zeros result
+  logic [WIDTH-1:0] clzResult;         //leading zeros result
+  logic [WIDTH-1:0] ctzResult;         //trailing zeros result
+  logic [WIDTH-1:0] cpopResult;        //population count result
   logic [WIDTH-1:0] clzA, clzB;
   logic [WIDTH-1:0] clzwA, clzwB;
   logic [WIDTH-1:0] ctzA, ctzB;
   logic [WIDTH-1:0] ctzwA, ctzwB;
-  logic [WIDTH-1:0] clzResult, ctzResult;
+  logic [WIDTH-1:0] cpopwA, cpopA;
+  logic [WIDTH-1:0] cpopwB, cpopB;
 
   //in both rv64, rv32
   assign clzA = A;
   bitreverse #(WIDTH) brtz(.a(A), .b(ctzA));
   
   //only in rv64
-  assign clzwA = {A[31:0],{32{1'b1}}};
-  bitreverse #(WIDTH) brtzw(.a({{32{1'b1}},A[31:0]}), .b(ctzwA));
+  if (WIDTH==64) begin
+    assign clzwA = {A[31:0],{32{1'b1}}};
+    bitreverse #(WIDTH) brtzw(.a({{32{1'b1}},A[31:0]}), .b(ctzwA));
+    assign cpopwA = {{32{1'b0}},A};
 
-  //NOTE: Can be simplified to a single lzc with a 4-select mux.
+  end
+  else begin
+    assign clzwA = 32'b0;
+    assign ctzwA = 32'b0;
+    assign cpopwA = 32'b0;
+  end
+
+  //NOTE: Can be simplified to a single lzc with a 4-select mux. We are currently producing all cz results and selecting from those later.
+  //NOTE: Signal width mistmatch from log2(WIDTH) to WIDTH but deal with that later.
   lzc #(WIDTH) lzc(.num(clzA), .ZeroCnt(clzB));
   lzc #(WIDTH) lzwc(.num(clzwA), .ZeroCnt(clzwB));
   lzc #(WIDTH) tzc(.num(ctzA), .ZeroCnt(ctzB));
   lzc #(WIDTH) tzwc(.num(ctzwA), .ZeroCnt(ctzwB));
 
+  popcnt #(WIDTH) popcntw(.num(cpopwA), .PopCnt(cpopwB));
+  popcnt #(WIDTH) popcnt(.num(cpopA), .PopCnt(cpopB));
+
   if (WIDTH==64) begin
     assign clzResult = W64 ? clzwB : clzB;
     assign ctzResult = W64 ? ctzwB : ctzB;
+    assign cpopResult = W64 ? cpopwB : cpopB;
   end
   else begin
     assign clzResult = clzB;
     assign ctzResult = ctzB;
+    assign cpopResult = cpopB;
   end
 
   
@@ -100,7 +117,7 @@ module zbb #(parameter WIDTH=32) (
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110000_001_00000: ZBBResult = clzResult;
-      15'b0110000_001_00010: //cpopResult goes here
+      15'b0110000_001_00010: ZBBResult = cpopResult;
       15'b0110000_001_00001: ZBBResult = ctzResult;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
