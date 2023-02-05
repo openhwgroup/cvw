@@ -69,7 +69,7 @@ endif
 
 # if USESRAM = 1, set that in the config file, otherwise reduce sizes
 ifeq ($(USESRAM), 1)
-	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-shared.vh
+	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-config.vh
 else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh

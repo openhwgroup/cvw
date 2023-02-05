@@ -50,18 +50,18 @@ def getBuildrootTC(boot):
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
     if boot:
         name="buildrootboot"
-        BRcmd="vsim > {} -c <<!\ndo wally-pipelined.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally.do buildroot buildroot-no-trace $RISCV 0 1 0\n!"
         BRgrepstr="WallyHostname login:"
     else:
         name="buildroot"
-        BRcmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
+        BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
 tc = TestCase(
       name="buildroot-checkpoint",
       variant="rv64gc",
-      cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do buildroot buildroot-checkpoint $RISCV 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
+      cmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot-checkpoint $RISCV 400100000 400000001 400000000\n!", # *** will this work with rv64gc rather than buildroot config?
       grepstr="400100000 instructions")
 configs.append(tc)
 
@@ -71,7 +71,7 @@ for test in tests64gc:
   tc = TestCase(
         name=test,
         variant="rv64gc",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -80,7 +80,7 @@ for test in tests64i:
   tc = TestCase(
         name=test,
         variant="rv64i",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64i "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -90,7 +90,7 @@ for test in tests32gc:
   tc = TestCase(
         name=test,
         variant="rv32gc",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32gc "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -100,7 +100,7 @@ for test in tests32imc:
   tc = TestCase(
         name=test,
         variant="rv32imc",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32imc "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32imc "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -109,7 +109,7 @@ for test in tests32i:
   tc = TestCase(
         name=test,
         variant="rv32i",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32i "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32i "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -119,7 +119,7 @@ for test in tests32e:
   tc = TestCase(
         name=test,
         variant="rv32e",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv32e "+test+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv32e "+test+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
 
@@ -128,7 +128,7 @@ for test in ahbTests:
   tc = TestCase(
         name="ram_latency_" + test[0] + "_burst_en_" + test[1],
         variant="ahb",
-        cmd="vsim > {} -c <<!\ndo wally-pipelined-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
   

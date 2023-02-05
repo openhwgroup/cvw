@@ -22,7 +22,7 @@ def main():
             break
         checkpoint = checkpointList[0]
         logFile = logDir+"checkpoint"+str(checkpoint)+".log"
-        runCommand="{\nvsim -c <<!\ndo wally-pipelined-batch.do buildroot buildroot /opt/riscv 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
+        runCommand="{\nvsim -c <<!\ndo wally-batch.do buildroot buildroot /opt/riscv 0 "+str(checkpoint+1)+" "+str(checkpoint)+"\n!\n} | tee "+logFile 
         print(runCommand)
         os.system(runCommand)
         try:

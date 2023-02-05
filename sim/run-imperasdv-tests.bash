@@ -17,6 +17,6 @@ for t in $ALL; do
     echo "Running test ${TESTDIR} -> ${OUTDIR} :: ${OUTLOG}"
 
     mkdir -p ${OUTDIR}
-    vsim -c -do "do wally-pipelined-imperas.do rv64gc"
+    vsim -c -do "do wally-imperas.do rv64gc"
     mv transcript ${OUTLOG}
 done
