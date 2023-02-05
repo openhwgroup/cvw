@@ -34,70 +34,17 @@ module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       Funct3,     // Indicates operation to perform
   input  logic [6:0]       Funct7,     // Indicates operation to perform
-  input  logic [6:0]       W64,        // Indicates word operation
-  output logic [WIDTH-1:0] ZBBResult); // ZBC result
-
-
-  //count instructions
-  logic [WIDTH-1:0] czResult;
-  logic [WIDTH-1:0] clzResult;         //leading zeros result
-  logic [WIDTH-1:0] ctzResult;         //trailing zeros result
-  logic [WIDTH-1:0] cpopResult;        //population count result
-  logic [WIDTH-1:0] clzA, clzB;
-  logic [WIDTH-1:0] clzwA, clzwB;
-  logic [WIDTH-1:0] ctzA, ctzB;
-  logic [WIDTH-1:0] ctzwA, ctzwB;
-  logic [WIDTH-1:0] cpopwA, cpopA;
-  logic [WIDTH-1:0] cpopwB, cpopB;
-
-  //in both rv64, rv32
-  assign clzA = A;
-  bitreverse #(WIDTH) brtz(.a(A), .b(ctzA));
-  
-  //only in rv64
-  if (WIDTH==64) begin
-    assign clzwA = {A[31:0],{32{1'b1}}};
-    bitreverse #(WIDTH) brtzw(.a({{32{1'b1}},A[31:0]}), .b(ctzwA));
-    assign cpopwA = {{32{1'b0}},A};
-
-  end
-  else begin
-    assign clzwA = 32'b0;
-    assign ctzwA = 32'b0;
-    assign cpopwA = 32'b0;
-  end
-
-  //NOTE: Can be simplified to a single lzc with a 4-select mux. We are currently producing all cz results and selecting from those later.
-  //NOTE: Signal width mistmatch from log2(WIDTH) to WIDTH but deal with that later.
-  lzc #(WIDTH) lzc(.num(clzA), .ZeroCnt(clzB));
-  lzc #(WIDTH) lzwc(.num(clzwA), .ZeroCnt(clzwB));
-  lzc #(WIDTH) tzc(.num(ctzA), .ZeroCnt(ctzB));
-  lzc #(WIDTH) tzwc(.num(ctzwA), .ZeroCnt(ctzwB));
-
-  popcnt #(WIDTH) popcntw(.num(cpopwA), .PopCnt(cpopwB));
-  popcnt #(WIDTH) popcnt(.num(cpopA), .PopCnt(cpopB));
-
-  if (WIDTH==64) begin
-    assign clzResult = W64 ? clzwB : clzB;
-    assign ctzResult = W64 ? ctzwB : ctzB;
-    assign cpopResult = W64 ? cpopwB : cpopB;
-  end
-  else begin
-    assign clzResult = clzB;
-    assign ctzResult = ctzB;
-    assign cpopResult = cpopB;
-  end
-
-  
-
+  input  logic             W64,        // Indicates word operation
+  output logic [WIDTH-1:0] ZBBResult); // ZBB result
 
 
   
+  //count results
+  logic [WIDTH-1:0] clzResult;         // leading zeros result
+  logic [WIDTH-1:0] ctzResult;         // trailing zeros result
+  logic [WIDTH-1:0] cpopResult;        // population count result
 
-
-
-  
-
+  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
 
   //byte instructions
   logic [WIDTH-1:0] OrcBResult;
