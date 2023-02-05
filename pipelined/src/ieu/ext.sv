@@ -32,13 +32,12 @@
 
 module ext #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] A,            // Operand
-  input  logic W64,                      // Indicates word operation
   output logic [WIDTH-1:0] sexthResult,  // sign extend halfword result
   output logic [WIDTH-1:0] sextbResult,  // sign extend byte result
   output logic [WIDTH-1:0] zexthResult); // zero extend halfword result 
 
-  assign sexthResult = {{(XLEN-16){A[15]}},A[15:0]};
-  assign zexthResult = {{(XLEN-16){1'b0}},A[15:0]};
-  assign sextbResult = {{(XLEN-8){A[7]}},A[7:0]};
+  assign sexthResult = {{(WIDTH-16){A[15]}},A[15:0]};
+  assign zexthResult = {{(WIDTH-16){1'b0}},A[15:0]};
+  assign sextbResult = {{(WIDTH-8){A[7]}},A[7:0]};
  
 endmodule
