@@ -6,8 +6,8 @@ NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 3000
-export CONFIG ?= rv32e
+export FREQ ?= 10000
+export CONFIG ?= rv64gc
 export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
@@ -20,7 +20,7 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
-export USESRAM ?= 0
+export USESRAM ?= 1
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -55,25 +55,35 @@ $(CONFIG):
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
 	cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
 
+# adjust DTIM and IROM to reasonable values depending on config	
+ifneq ($(filter $(CONFIG), $(DIRS32)),)
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else ifneq ($(filter $(CONFIG), $(DIRS64)),)
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else 
+    $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
+    @echo "Config not in list, RAM_RANGE will be unmodified"
+endif
+
+# if USESRAM = 1, set that in the config file, otherwise reduce sizes
 ifeq ($(USESRAM), 1)
 	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-shared.vh
 else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
-
-  ifneq ($(filter $(CONFIG), $(DIRS32)),)
-    sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-  else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-    sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-    sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-  else 
-    $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
-    @echo "Config not in list, RAM_RANGE will be unmodified"
-  endif
+ifneq ($(filter $(CONFIG), $(DIRS32)),)
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else ifneq ($(filter $(CONFIG), $(DIRS64)),)
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+endif
 endif
 	
+# adjust config if synthesizing with any modifications
 ifeq ($(MOD), FPUoff)
 	# turn off FPU 
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/wally-config.vh
