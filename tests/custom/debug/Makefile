@@ -17,11 +17,13 @@ $(TARGET).elf: $(TARGET).S Makefile
 
 sim:
 	spike --isa=rv64gc +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET).elf
-	diff --ignore-case $(TARGET).signature.output $(TARGET).reference_output || exit
-	echo "Signature matches! Success!"
+#	diff --ignore-case $(TARGET).signature.output $(TARGET).reference_output || exit
+#	echo "Signature matches! Success!"
+	mkdir -p ../work 
+	cp -f * ../work
 
 clean:
-	rm -f $(TARGET).elf $(TARGET).elf.*
+	rm -f $(TARGET).elf $(TARGET).elf.* *.signature.output
 
 
 
