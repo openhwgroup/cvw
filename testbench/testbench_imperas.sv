@@ -142,9 +142,10 @@ module testbench;
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
         msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
       end
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,         "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,           "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,        "RV64GC"));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 39));
       if (!rvviRefInit(elffilename)) begin
         msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
       end
