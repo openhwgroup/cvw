@@ -1,0 +1,36 @@
+--override cpu/show_c_prefix=T
+--override cpu/unaligned=F
+--override cpu/mstatus_FS=1
+--override cpu/ignore_non_leaf_DAU=1
+
+# Enable the Imperas instruction coverage
+#-extlib    refRoot/cpu/cv=imperas.com/intercept/riscvInstructionCoverage/1.0
+#-override  refRoot/cpu/cv/cover=basic
+#-override  refRoot/cpu/cv/extensions=RV32I
+
+# Add Imperas simulator application instruction tracing
+--trace
+--tracechange
+--traceshowicount
+--tracemode
+--tracemem ASX
+--monitornetschange
+
+# Exceptions and pagetables debug
+--override cpu/debugflags=6
+
+# Turn on verbose output for Imperas simulator
+--verbose
+
+# Turn on verbose output for RISCV model
+--override  cpu/verbose=1
+
+# Store simulator output to logfile
+--output imperas.log
+
+--override cpu/PMP_registers=0
+#--showoverrides
+#--mpdconsole
+
+# ignore settings of bits DAU for non leaf page table walks
+--override cpu/ignore_non_leaf_DAU=1
