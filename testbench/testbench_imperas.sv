@@ -164,11 +164,6 @@ module testbench;
           void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
       end
 
-  //    // Temporary fix for inexact difference
-//      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
-//      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
-      
-      
       // Enable the trace2log module
       if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
         msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
