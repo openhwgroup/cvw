@@ -1,4 +1,5 @@
-# wally-pipelined.do 
+# wally.do 
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 #
 # Modification by Oklahoma State University & Harvey Mudd College
 # Use with Testbench 
@@ -11,9 +12,9 @@
 
 # Use this wally-pipelined.do file to run this example.
 # Either bring up ModelSim and type the following at the "ModelSim>" prompt:
-#     do wally-pipelined.do
+#     do wally.do
 # or, to run from a shell, type the following at the shell prompt:
-#     vsim -do wally-pipelined.do -c
+#     vsim -do wally.do -c
 # (omit the "-c" to see the GUI while running from the shell)
 
 onbreak {resume}
