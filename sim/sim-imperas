@@ -30,5 +30,3 @@ IMPERAS_TOOLS=$(pwd)/imperas.ic \
 OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \
 TESTDIR=${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/Lee.S/  \
 vsim  -do "do wally-pipelined-imperas.do rv64gc"
-
-#TESTDIR=${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/FCVT-S-L-RTZ-01.S/  \
