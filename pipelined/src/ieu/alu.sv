@@ -48,6 +48,7 @@ module alu #(parameter WIDTH=32) (
   logic             ALUOp;                                   // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                            // Sign bits of A, B
   logic             InvB;                                    // Is Inverted Operand Instruction (ZBB)
+  logic             Rotate;                                  // Is rotate operation
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
@@ -74,6 +75,16 @@ module alu #(parameter WIDTH=32) (
         default: InvB = 1'b0;
       endcase
 
+      casez ({Funct7, Funct3})
+        10'b0110000_101: Rotate = 1'b1;
+        10'b011000?_101: Rotate = 1'b1;
+        10'b000010?_001: Rotate = 1'b0;
+        10'b0110000_001: Rotate = 1'b1;
+        10'b0110000_101: Rotate = 1'b1;
+        10'b0110000_001: Rotate = 1'b1;
+        10'b0110000_101: Rotate = 1'b1;
+        default:         Rotate = 1'b0;
+      endcase
     end
   else begin
     assign CondShiftA = A;
@@ -85,7 +96,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Rotate(Rotate), .Y(Shift));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
