@@ -255,7 +255,6 @@ module hptw (
 			L2_RD: if (DCacheStallM)                     								NextWalkerState = L2_RD;
 				else                                     									NextWalkerState = L1_ADR;
 			L1_ADR: if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
-					else if (ValidNonLeafPTE)            										NextWalkerState = L1_RD;
 					else 				                														NextWalkerState = LEAF;	
 			L1_RD: if (DCacheStallM)                     								NextWalkerState = L1_RD;
 				else                                     									NextWalkerState = L0_ADR;
