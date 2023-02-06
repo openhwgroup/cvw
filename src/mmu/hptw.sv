@@ -245,7 +245,7 @@ module hptw (
 	flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
 	always_comb 
 		case (WalkerState)
-			IDLE: if (TLBMiss)	 																				NextWalkerState = InitialWalkerState;
+			IDLE: if (TLBMiss & ~DCacheStallM)	    																		NextWalkerState = InitialWalkerState;
 				  	else 																									NextWalkerState = IDLE;
 			L3_ADR:                     																NextWalkerState = L3_RD; // first access in SV48
 			L3_RD: if (DCacheStallM)    																NextWalkerState = L3_RD;
@@ -255,7 +255,6 @@ module hptw (
 			L2_RD: if (DCacheStallM)                     								NextWalkerState = L2_RD;
 				else                                     									NextWalkerState = L1_ADR;
 			L1_ADR: if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
-					else if (ValidNonLeafPTE)            										NextWalkerState = L1_RD;
 					else 				                														NextWalkerState = LEAF;	
 			L1_RD: if (DCacheStallM)                     								NextWalkerState = L1_RD;
 				else                                     									NextWalkerState = L0_ADR;
