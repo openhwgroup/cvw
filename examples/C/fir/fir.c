@@ -6,6 +6,8 @@
 #include <math.h>   // supports fabs
 #include "util.h"   // supports verify
 
+extern void fir(int N, int M, double X[], double c[], double Y[]);
+/*
 void fir(int N, int M, double X[], double c[], double Y[]) {
   int i, n;
   double sum; 
@@ -18,6 +20,8 @@ void fir(int N, int M, double X[], double c[], double Y[]) {
       Y[n] = sum;
   }
 }
+*/
+
 
 int main(void) {
     double X[20] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20};
