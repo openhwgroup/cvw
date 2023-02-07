@@ -31,12 +31,12 @@ export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
 # setup QUESTA (Imperas only command, YMMV)
 svsetup -questa
 
-pushd pipelined/regression
+pushd sim
     # With IDV
     IMPERAS_TOOLS=$(pwd)/imperas.ic \
         OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \
         TESTDIR=${WALLY}/external/ImperasDV-HMC/tests/riscof/work/riscv-arch-test/rv64i_m/F/src/fadd_b1-01.S  \
-        vsim -c -do "do wally-pipelined-imperas.do rv64gc"
+        vsim -c -do "do wally-imperas.do rv64gc"
 popd
 
 # notes
@@ -50,7 +50,7 @@ popd
 IMPERAS_TOOLS=$(pwd)/imperas.ic \
 OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \
 TESTDIR=../../tests/riscof_lee/work/riscv-arch-test/rv64i_m/F/src/fadd_b1-01.S  \
-vsim -c -do "do wally-pipelined-imperas.do rv64gc"
+vsim -c -do "do wally-imperas.do rv64gc"
 
 
 # getting library issue.
