@@ -156,8 +156,6 @@ module csrsr (
       STATUS_SBE <= #1 0;
       STATUS_UBE <= #1 0;
     end else if (~StallW) begin
-      if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #1 2'b11; // mark Float State dirty  *** this should happen in M stage, be part of if/else;
- 
       if (TrapM) begin
         // Update interrupt enables per Privileged Spec p. 21
         // y = PrivilegeModeW
@@ -211,6 +209,6 @@ module csrsr (
         STATUS_SPIE <= #1 `S_SUPPORTED & CSRWriteValM[5];
         STATUS_SIE <= #1 `S_SUPPORTED & CSRWriteValM[1];
         STATUS_UBE <= #1 CSRWriteValM[6] & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
-     end 
+      end else if (FRegWriteM | WriteFRMM | WriteFFLAGSM) STATUS_FS_INT <= #1 2'b11; 
     end
 endmodule
