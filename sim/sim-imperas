@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ###########################################
 ## imperas-one-time.sh
 ##
@@ -6,7 +7,7 @@
 ## Created: 31 January 2023
 ## Modified: 31 January 2023
 ##
-## Purpose: One time setup script for running imperas.
+## Purpose: Run wally with imperas
 ## 
 ## A component of the CORE-V-WALLY configurable RISC-V project.
 ## 
@@ -25,30 +26,7 @@
 ## either express or implied. See the License for the specific language governing permissions 
 ## and limitations under the License.
 ################################################################################################
-
-
-IMP_HASH=355a055ff7e36bc897e942e41f06e1baf96e34d5
-
-# clone the Imperas repo
-cd $WALY
-if [ ! -d external ]; then
-    mkdir -p external
-fi
-pushd external
-    if [ ! -d ImperasDV-HMC ]; then
-	git clone git@github.com:Imperas/ImperasDV-HMC.git
-    fi
-    pushd ImperasDV-HMC
-    git checkout $IMP_HASH
-    popd
-popd
-
-# Setup Imperas
-source ${WALLY}/external/ImperasDV-HMC/Imperas/bin/setup.sh
-setupImperas ${WALLY}/external/ImperasDV-HMC/Imperas
-export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
-
-# setup QUESTA (Imperas only command, YMMV)
-#svsetup -questa
-
-
+IMPERAS_TOOLS=$(pwd)/imperas.ic \
+OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \
+TESTDIR=${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/Lee.S/  \
+vsim  -do "do wally-pipelined-imperas.do rv64gc"

@@ -11,7 +11,7 @@ printf "\n\n#####\nStarting tests for $1\n#####\n\n"
 
 if [[ "$2" != "-simonly" ]]
 then
-	cd $WALLY/pipelined/testgen/privileged
+	cd $WALLY/testgen/privileged
 	python3 "testgen-$1.py"
 	printf "\n\n#####\nRan testgen-$1.py Making...\n#####\n\n\n"
 
@@ -48,7 +48,7 @@ fi
 if [[ "$2" == "-sim" || "$2" == "-simonly" ]]
 then
 	printf "\n\n\n#####\nSimulating!\n#####\n\n"
-	cd $WALLY/pipelined/regression
+	cd $WALLY/sim
 	vsim -do wally-privileged.do -c
 fi
 
