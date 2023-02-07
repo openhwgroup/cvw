@@ -281,7 +281,7 @@ connect_debug_port u_ila_0/probe53 [get_nets [list wallypipelinedsoc/core/hzu/Re
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe54]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe54]
-connect_debug_port u_ila_0/probe54 [get_nets [list wallypipelinedsoc/core/hzu/TrapM ]]
+connect_debug_port u_ila_0/probe54 [get_nets [list wallypipelinedsoc/core/TrapM ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe55]
