@@ -145,7 +145,7 @@ module csrsr (
       STATUS_MXR_INT <= #1 0;
       STATUS_SUM_INT <= #1 0;
       STATUS_MPRV_INT <= #1 0; // Per Priv 3.3
-      STATUS_FS_INT <= #1 `F_SUPPORTED ? 2'b01 : 2'b00;
+      STATUS_FS_INT <= #1 `F_SUPPORTED ? 2'b00 : 2'b00; // leave floating-point off until activated, even if F_SUPPORTED
       STATUS_MPP <= #1 0; 
       STATUS_SPP <= #1 0; 
       STATUS_MPIE <= #1 0; 
