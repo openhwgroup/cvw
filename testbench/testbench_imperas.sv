@@ -142,9 +142,10 @@ module testbench;
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
         msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
       end
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,  "riscv.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,    "riscv"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT, "RV64GC"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,         "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,           "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,        "RV64GC"));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 39));
       if (!rvviRefInit(elffilename)) begin
         msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
       end
@@ -163,11 +164,6 @@ module testbench;
           void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
       end
 
-  //    // Temporary fix for inexact difference
-//      void'(rvviRefCsrSetVolatile(0, 32'h001));   // fflags
-//      void'(rvviRefCsrSetVolatile(0, 32'h003));   // fcsr
-      
-      
       // Enable the trace2log module
       if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
         msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
