@@ -115,7 +115,7 @@ To install GCC from source can take hours to compile. This configuration enables
 	$ git clone https://github.com/riscv/riscv-gnu-toolchain 
 	$ cd riscv-gnu-toolchain 
 	$ git checkout 2023.01.31 
-	$ ./configure --prefix=$RISCV --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+	$ ./configure --prefix=$RISCV --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 	$ make --jobs
 
 Note: make --jobs will reduce compile time by compiling in parallel.  However, adding this option could dramatically increase the memory utilization of your local machine.
