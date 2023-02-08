@@ -37,8 +37,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     tech = args.tech if args.tech else 'sky90'
-    defaultfreq = 3000 if tech == 'sky90' else 10000
-    freq = args.targetfreq if args.targetfreq else defaultfreq
     maxopt = int(args.maxopt)
     usesram = int(args.usesram)
     mod = 'orig'
@@ -49,12 +47,18 @@ if __name__ == '__main__':
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
             runSynth(config, mod, tech, freq, maxopt, usesram)
     if args.configsweep:
+        defaultfreq = 1500 if tech == 'sky90' else 5000
+        freq = args.targetfreq if args.targetfreq else defaultfreq
         for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32imc', 'rv32e']: #configs
             runSynth(config, mod, tech, freq, maxopt, usesram)
     if args.featuresweep:
+        defaultfreq = 500 if tech == 'sky90' else 1500
+        freq = args.targetfreq if args.targetfreq else defaultfreq
         config = args.version if args.version else 'rv64gc'
-        for mod in ['FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations 'orig', 
+        for mod in ['noFPU', 'noMulDiv', 'noPriv', 'PMP0', 'orig']: 
             runSynth(config, mod, tech, freq, maxopt, usesram)
     else:
+        defaultfreq = 500 if tech == 'sky90' else 1500
+        freq = args.targetfreq if args.targetfreq else defaultfreq
         config = args.version if args.version else 'rv64gc'
         runSynth(config, mod, tech, freq, maxopt, usesram)
