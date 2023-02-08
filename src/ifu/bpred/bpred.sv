@@ -71,8 +71,6 @@ module bpred (
 
   logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD, PredInstrClassE;
   logic [`XLEN-1:0]         PredPCF, RASPCF;
-  logic                     TargetWrongE;
-  logic                     FallThroughWrongE;
   logic                     PredictionPCWrongE;
   logic                     PredictionInstrClassWrongE;
   logic [3:0]               InstrClassF, InstrClassD, InstrClassE, InstrClassW;
@@ -219,27 +217,37 @@ module bpred (
   flopenrc #(4) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
 
   // Check the prediction
-  // first check if the target or fallthrough address matches what was predicted.
-  assign TargetWrongE = IEUAdrE != PCD;
-  assign FallThroughWrongE = PCLinkE != PCD;
-  // If the target is taken check the target rather than fallthrough.  The instruction needs to be a branch if PCSrcE is selected
-  // Remember the bpred can incorrectly predict a non cfi instruction as a branch taken.  If the real instruction is non cfi
-  // it must have selected the fall through.
-  assign PredictionPCWrongE = (PCSrcE  & (|InstrClassE) ? TargetWrongE : FallThroughWrongE);
+  // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
+  // if the class prediction is wrong a regular instruction may have been predicted as a taken branch
+  // this will result in PCD not being equal to the fall through address PCLinkE (PCE+4).
+  // The next instruction is always valid as no other flush would occur at the same time as the branch and not
+  // also flush the branch.  This will change in a superscaler cpu. 
+  assign PredictionPCWrongE = PCCorrectE != PCD;
+  assign BPPredWrongE = PredictionPCWrongE & (|InstrClassE | BPPredClassNonCFIWrongE);
 
-  // The branch direction also need to checked.
-  // However if the direction is wrong then the pc will be wrong.  This is only relavent to checking the
-  // accuracy of the direciton prediction.
-  //assign DirPredictionWrongE = (BPPredE[1] ^ PCSrcE) & InstrClassE[0];
+  // The branch direction is checked inside each branch predictor, but does not actually matter for
+  // branch miss prediction recovery.  If the class or direction is wrong, but the target is correct
+  // we an ignore the branch miss-prediction.
+
+  // Output the predicted PC or corrected PC on miss-predict.
+  // Selects the BP or PC+2/4.
+  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
+  // If the prediction is wrong select the correct address.
+  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
+  // Correct branch/jump target.
+  mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
+  // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
+  // Effectively this is PCM+4 or the non-existant PCLinkM
+  if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
+  else	assign NextValidPCE = PCE;
+
   // Finally we need to check if the class is wrong.  When the class is wrong the BTB needs to be updated.
   // Also we want to track this in a performance counter.
   assign PredictionInstrClassWrongE = InstrClassE != PredInstrClassE;
+  // The remaining checks are used for performance counters.
 
-  // We want to output to the instruction fetch if the PC fetched was wrong.  If by chance the predictor was wrong about
-  // the direction or class, but correct about the target we don't have the flush the pipeline.  However we still
-  // need this information to verify the accuracy of the predictors.
-  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | BPPredClassNonCFIWrongE;
+
 
   // If we have a jump, jump register or jal or jalr and the PC is wrong we need to increment the performance counter.
   //assign BTBPredPCWrongE = (InstrClassE[3] | InstrClassE[1] | InstrClassE[0]) & PredictionPCWrongE;
@@ -255,20 +263,6 @@ module bpred (
   // branch class prediction wrong.
   assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD;
   
-  // Selects the BP or PC+2/4.
-  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
-  // If the prediction is wrong select the correct address.
-  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
-  // Correct branch/jump target.
-  mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
-  
-  // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
-  // Effectively this is PCM+4 or the non-existant PCLinkM
-  //  if(`BPCLASS) begin
-  mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
-  //  end else begin
-  //	assign NextValidPCE = PCE;
-  //  end
 
   // performance counters
   // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now

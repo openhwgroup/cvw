@@ -125,7 +125,7 @@ Note: make --jobs will reduce compile time by compiling in parallel.  However, a
 We also need the elf2hex utility to convert executable files into hexadecimal files for Verilog simulation. Install with:
 
 	$ cd $RISCV
-	$ export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
+	$ export PATH=$RISCV/bin:$PATH
 	$ git clone https://github.com/sifive/elf2hex.git
 	$ cd elf2hex
 	$ autoreconf -i
