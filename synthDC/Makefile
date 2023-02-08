@@ -84,22 +84,22 @@ endif
 endif
 	
 # adjust config if synthesizing with any modifications
-ifeq ($(MOD), FPUoff)
+ifneq ($(MOD), orig)
+	# PMP 0
+	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), PMP0)
+	# no priv
+	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noPriv)
 	# turn off FPU 
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/wally-config.vh
-else ifeq ($(MOD), PMP16)
-	# PMP 16 
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 16/' $(CONFIGDIR)/wally-config.vh
-else ifeq ($(MOD), PMP0)
-	# PMP 0
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
-else ifeq ($(MOD), noMulDiv)
+ifneq ($(MOD), noFPU)
 	# no muldiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
-else ifeq ($(MOD), noPriv)
-	# no priv
-	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/wally-config.vh
+endif
+endif
+endif
 endif
 
 ifeq ($(SAIFPOWER), 1)
