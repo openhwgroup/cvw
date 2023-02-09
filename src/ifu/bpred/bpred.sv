@@ -103,8 +103,7 @@ module bpred (
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
-      .BranchInstrW(InstrClassW[0]), .WrongPredInstrClassD, .PCSrcE);
+      .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
 	    
   end else if (`BPRED_TYPE == "BPGSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
