@@ -131,7 +131,7 @@ module alu #(parameter WIDTH=32) (
   
 
   if (`ZBB_SUPPORTED) 
-    zbb zbb(.A, .B, .Funct7, .Funct3, .ZBBResult);
+    zbb zbb(.A, .B, .Funct3, .Funct7, .W64, .ZBBResult);
   else assign ZBBResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
