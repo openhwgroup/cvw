@@ -39,7 +39,7 @@ module btb #(parameter int Depth = 10 ) (
   output logic [3:0]       BTBPredInstrClassF,                        // BTB's guess at instruction class
   output logic             PredValidF,                             // BTB's guess is valid
   // update
-  input  logic             PredictionInstrClassWrongE,             // BTB's instruction class guess was wrong
+  input  logic             AnyWrongPredInstrClassE,             // BTB's instruction class guess was wrong
   input  logic [`XLEN-1:0] IEUAdrE,                                // Branch/jump target address to insert into btb
   input  logic [3:0]       InstrClassD,                            // Instruction class to insert into btb
   input  logic [3:0]       InstrClassE                             // Instruction class to insert into btb
@@ -98,7 +98,7 @@ module btb #(parameter int Depth = 10 ) (
 
   //assign PredValidF = MatchXF ? 1'b1 : TablePredValidF;
   
-  assign UpdateEn = |InstrClassE | PredictionInstrClassWrongE;
+  assign UpdateEn = |InstrClassE | AnyWrongPredInstrClassE;
 
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
