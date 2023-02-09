@@ -40,8 +40,7 @@ module zbb #(parameter WIDTH=32) (
 
   
   // count results
-  logic [WIDTH-1:0] clzResult;           // leading zeros result
-  logic [WIDTH-1:0] ctzResult;           // trailing zeros result
+  logic [WIDTH-1:0] czResult;            // count zeros result (lzc or tzc)
   logic [WIDTH-1:0] cpopResult;          // population count result
 
   // byte results
@@ -53,7 +52,7 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] sextbResult;         // sign extend byte result
   logic [WIDTH-1:0] zexthResult;         // zero extend halfword result 
 
-  cnt cnt(.A(A), .W64(W64), .clzResult(clzResult), .ctzResult(ctzResult), .cpopResult(cpopResult));
+  cnt cnt(.A(A), .B(B), .W64(W64), .czResult(czResult), .cpopResult(cpopResult));
   byteUnit bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
   ext ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
 
@@ -63,9 +62,9 @@ module zbb #(parameter WIDTH=32) (
       15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
-      15'b0110000_001_00000: ZBBResult = clzResult;
+      15'b0110000_001_00000: ZBBResult = czResult;
       15'b0110000_001_00010: ZBBResult = cpopResult;
-      15'b0110000_001_00001: ZBBResult = ctzResult;
+      15'b0110000_001_00001: ZBBResult = czResult;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0000100_100_00000: ZBBResult = zexthResult; 
