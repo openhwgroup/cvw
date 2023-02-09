@@ -9,6 +9,7 @@ module datapath (
   input  logic [`XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [`XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
   input  logic [2:0]       Funct3E,                 // Funct3 field of instruction in Execute stage
+  input  logic [6:0]       Funct7E,                 // Funct7 field of instruction in Execute stage
   input  logic             StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]       ForwardAE, ForwardBE,    // Forward ALU operands from later stages
   input  logic [2:0]       ALUControlE,             // Indicate operation ALU performs
@@ -80,7 +81,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct7E, Funct3E, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
