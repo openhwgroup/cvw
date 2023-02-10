@@ -68,7 +68,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
   logic [`XLEN-1:0]               UnalignedPCNextF, PCNext2F;
   logic [1:0] 					 MemRWM;
-  logic 						 InstrValidM;
+  logic 						 InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -166,6 +166,7 @@ module wallypipelinedcore (
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    .InstrValidM, .InstrValidE, .InstrValidD,
     // Fetch
     .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
@@ -201,7 +202,7 @@ module wallypipelinedcore (
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
-     .InstrValidM, .FCvtIntResW, .FCvtIntW,
+     .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,

@@ -62,7 +62,8 @@ module controller(
   output logic [2:0]  Funct3M,                 // Instruction's funct3 field
   output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
-  output logic        InstrValidM,             // Instruction is valid
+  output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
+
   output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
   input  logic        StallW, FlushW,          // Stall, flush Writeback stage
@@ -96,7 +97,6 @@ module controller(
   logic        FenceXD;                        // Fence instruction
   logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
   logic        CSRWriteD, CSRWriteE;           // CSR write
-  logic        InstrValidD, InstrValidE;       // Instruction is valid
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
