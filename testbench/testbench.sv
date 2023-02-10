@@ -105,6 +105,7 @@ logic [3:0] dummy;
         "coremark":                       tests = coremark;
         "fpga":                           tests = fpga;
         "ahb" :                           tests = ahb;
+        "arch64b":    if (`ZBB_SUPPORTED & `ZBA_SUPPORTED & `ZBS_SUPPORTED & `ZBC_SUPPORTED) tests = arch64b;
       endcase 
     end else begin // RV32
       case (TEST)
