@@ -28,6 +28,7 @@
 import os
 import sys
 import matplotlib.pyplot as plt
+import re
 
 def ComputeCPI(benchmark):
     'Computes and inserts CPI into benchmark stats.'
@@ -145,6 +146,11 @@ def FormatToPlot(currBenchmark):
 
 if(sys.argv[1] == '-b'):
     configList = []
+    summery = 0
+    if(sys.argv[2] == '-s'):
+        summery = 1
+        sys.argv = sys.argv[1::]
+    print('summery = %d' % summery)
     for config in sys.argv[2::]:
         benchmarks = ProcessFile(config)
         ComputeAverage(benchmarks)
@@ -171,18 +177,50 @@ if(sys.argv[1] == '-b'):
 
     size = len(benchmarkDict)
     index = 1
-    print('Number of plots', size)
-    for benchmarkName in benchmarkDict:
-        currBenchmark = benchmarkDict[benchmarkName]
-        (names, values) = FormatToPlot(currBenchmark)
-        print(names, values)
-        plt.subplot(6, 7, index)
-        plt.bar(names, values)
-        plt.title(benchmarkName)
-        plt.ylabel('BR Dir Miss Rate (%)')
-        #plt.xlabel('Predictor')
-        index += 1
-    #plt.tight_layout()
+    print('summery = %d' % summery)
+    if(summery == 0):
+        print('Number of plots', size)
+        for benchmarkName in benchmarkDict:
+            currBenchmark = benchmarkDict[benchmarkName]
+            (names, values) = FormatToPlot(currBenchmark)
+            print(names, values)
+            plt.subplot(6, 7, index)
+            plt.bar(names, values)
+            plt.title(benchmarkName)
+            plt.ylabel('BR Dir Miss Rate (%)')
+            #plt.xlabel('Predictor')
+            index += 1
+    else:
+        combined = benchmarkDict['All_']
+        (name, value) = FormatToPlot(combined)
+        lst = []
+        dct = {}
+        category = []
+        length = []
+        accuracy = []
+        for index in range(0, len(name)):
+            match = re.match(r"([a-z]+)([0-9]+)", name[index], re.I)
+            percent = 100 -value[index]
+            if match:
+                (PredType, size) = match.groups()
+                category.append(PredType)
+                length.append(size)
+                accuracy.append(percent)
+                if(PredType not in dct):
+                    dct[PredType] = ([size], [percent])
+                else:
+                    (currSize, currPercent) = dct[PredType]
+                    currSize.append(size)
+                    currPercent.append(percent)
+                    dct[PredType] = (currSize, currPercent)
+        print(dct)
+        for cat in dct:
+            (x, y) = dct[cat]
+            plt.scatter(x, y, label=cat)
+            plt.plot(x, y)
+            plt.ylabel('Prediction Accuracy')
+            plt.xlabel('Size (b or k)')
+            plt.legend(loc='upper left')
     plt.show()
     
             

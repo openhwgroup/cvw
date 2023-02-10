@@ -54,7 +54,7 @@ module ieu (
   output logic [4:0]        RdM,                             // Destination register
   input  logic [`XLEN-1:0]  FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
   output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
-  output logic 		          InstrValidM,                     // Instruction is valid
+  output logic              InstrValidD, InstrValidE, InstrValidM,// Instruction is valid
   // Writeback stage signals
   input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
   input  logic [`XLEN-1:0]  CSRReadValW,                     // CSR read value, 
@@ -97,7 +97,7 @@ module ieu (
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
-    .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .FWriteIntM,
+    .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
 
   datapath   dp(
