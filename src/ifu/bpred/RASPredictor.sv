@@ -42,7 +42,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
-  logic [Depth-1:0]         NextPtr, Ptr, PtrP1, PtrM1;
+  logic [Depth-1:0]         NextPtr, Ptr, P1, M1, IncDecPtr;
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
 
@@ -71,10 +71,11 @@ module RASPredictor #(parameter int StackSize = 16 )(
   assign CounterEn = PopF | PushE | RepairD;
 
   assign DecrementPtr = (PopF | DecRepairD) & ~IncrRepairD;
-  mux2 #(Depth) PtrMux(PtrP1, PtrM1, DecrementPtr, NextPtr);
 
-  assign PtrM1 = Ptr - 1'b1;
-  assign PtrP1 = Ptr + 1'b1;
+  assign P1 = 1;
+  assign M1 = '1; // -1
+  mux2 #(Depth) PtrMux(P1, M1, DecrementPtr, IncDecPtr);
+  assign NextPtr = Ptr + IncDecPtr;
 
   flopenr #(Depth) PTR(clk, reset, CounterEn, NextPtr, Ptr);
 
@@ -84,7 +85,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
       for(index=0; index<StackSize; index++)
 		memory[index] <= {`XLEN{1'b0}};
     end else if(PushE) begin
-      memory[PtrP1] <= #1 PCLinkE;
+      memory[NextPtr] <= #1 PCLinkE;
     end
   end
 
