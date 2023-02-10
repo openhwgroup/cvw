@@ -51,7 +51,7 @@ module zbs #(parameter WIDTH=32) (
       10'b010010?_101: ZBSResult = ExtResult;
       10'b011010?_001: ZBSResult = InvResult;
       10'b001010?_001: ZBSResult = SetResult;
-      default: ZBSResult = 0; // *** should never be reached or selected
+      default: ZBSResult = 0; // *** expand to include faults
     endcase
   end
 
