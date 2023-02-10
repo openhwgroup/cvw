@@ -5,6 +5,8 @@
 
 .global rvtest_entry_point
 rvtest_entry_point:
+    lui t0, 0x1e            # turn on Floating point and XS
+    csrs mstatus, t0                 
 
     # openhwgroup/cvw Issue #55
     la a6, begin_signature
