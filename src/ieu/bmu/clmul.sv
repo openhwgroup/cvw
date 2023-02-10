@@ -34,20 +34,17 @@ module clmul #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] ClmulResult);     // ZBS result
 
   logic [WIDTH-1:0] pp [WIDTH-1:0]; //partial AND products
+  // Note: only generates the bottom WIDTH bits of the carryless multiply.
+  //    To get the high bits or the reversed bits, the inputs can be shifted and reversed
+  //    as they are in zbc where this is instantiated
 
-  genvar i,j;
-  for (i=1; i<WIDTH;i++) begin:outer //loop fills partial product array
-    for (j=0;j<=i;j++) begin: inner
-      assign pp[i][j] = A[i]&B[j];
-    end
+  genvar i;
+  for (i=0; i<WIDTH; i++) begin
+    assign pp[i] = ((A & {(WIDTH){B[i]}}) << i); // Fill partial product array
+    // ClmulResult ^= pp[i];
   end
 
-  for (i=1;i<WIDTH;i++) begin:xortree
-    assign result[i] = ^pp[i:0][i];
-  end
-
-  assign ClmulResult[0] = A[0]&B[0];
-
+  assign ClmulResult = pp.xor();
 
 endmodule
 
