@@ -51,6 +51,7 @@ module bpred (
   input logic [31:0]       PostSpillInstrRawF,        // Instruction
 
   // Branch and jump outcome
+  input logic              InstrValidD, InstrValidE,
   input logic              PCSrcE,                    // Executation stage branch is taken
   input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
   input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
@@ -220,8 +221,8 @@ module bpred (
   assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD;
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
-  // Finally indicate if the branch predictor was wrong
-  assign BPPredWrongE = PredictionPCWrongE & (|InstrClassE | AnyWrongPredInstrClassE);
+  // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
+  assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.
@@ -235,7 +236,6 @@ module bpred (
   // Effectively this is PCM+4 or the non-existant PCLinkM
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
   else	assign NextValidPCE = PCE;
-
 
   // performance counters
   // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
