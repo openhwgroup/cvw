@@ -47,14 +47,16 @@ module clmul #(parameter WIDTH=32) (
   */
   genvar i,j;
   for (i=1; i<WIDTH;i++) begin:outer //loop fills partial product array
-    for (j=0;j<=i;j++) begin: inner
+    for (j=0;j<=i;j++) begin:inner
       assign pp[i][j] = A[i]&B[j];
     end
   end
-
+ /*
   for (i=1;i<WIDTH;i++) begin:xortree
     assign ClmulResult[i] = ^pp[i:0][i];
+    
   end
+*/
 
   assign ClmulResult[0] = A[0]&B[0];
 
