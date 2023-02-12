@@ -43,7 +43,7 @@ module zbs #(parameter WIDTH=32) (
   assign InvResult = A ^ BMask;
   assign ClrResult = A & ~BMask;
   assign SetResult = A | BMask;
-  assign ExtResult = |(A & BMask);
+  assign ExtResult = {{(WIDTH-1){1'b0}},{|(A & BMask)}};
 
   always_comb begin
     casez ({Funct7, Funct3})

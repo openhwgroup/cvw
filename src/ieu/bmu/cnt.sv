@@ -53,12 +53,14 @@ module cnt #(parameter WIDTH = 32) (
         6'b00000_1: lzcA = {A[31:0],{32{1'b1}}};    //clzw
         6'b00001_0: lzcA = revA;                    //ctz
         6'b00001_1: lzcA = {revA[31:0],{32{1'b1}}}; //ctzw
+        default: lzcA = A;
       endcase 
 
       //cpop select mux
       case ({B[4:0],W64})
         6'b00010_0: popcntA = A;
         6'b00010_1: popcntA = {{32{1'b0}}, A[31:0]};
+        default: popcntA = A;
       endcase
     end
   end
@@ -70,6 +72,7 @@ module cnt #(parameter WIDTH = 32) (
       case(B[4:0])
         5'b00000: lzcA = A;
         5'b00001: lzcA = revA;
+        default: lzcA = A;
       endcase
     end
   end
