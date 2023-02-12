@@ -58,15 +58,13 @@ module zbb #(parameter WIDTH=32) (
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
-      case ({Funct7, Funct3, B})
+      case ({Funct7, Funct3, B[4:0]})
       15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110000_001_00000: ZBBResult = czResult;
       15'b0110000_001_00010: ZBBResult = cpopResult;
       15'b0110000_001_00001: ZBBResult = czResult;
-      15'b0110101_101_11000: ZBBResult = Rev8Result;
-      15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0000100_100_00000: ZBBResult = zexthResult; 
       15'b0110000_001_00100: ZBBResult = sextbResult;
       15'b0110000_001_00101: ZBBResult = sexthResult;
