@@ -52,9 +52,9 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] sextbResult;         // sign extend byte result
   logic [WIDTH-1:0] zexthResult;         // zero extend halfword result 
 
-  cnt cnt(.A(A), .B(B), .W64(W64), .czResult(czResult), .cpopResult(cpopResult));
-  byteUnit bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
-  ext ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
+  cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .czResult(czResult), .cpopResult(cpopResult));
+  byteUnit #(WIDTH) bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
+  ext #(WIDTH) ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
@@ -68,6 +68,7 @@ module zbb #(parameter WIDTH=32) (
       15'b0000100_100_00000: ZBBResult = zexthResult; 
       15'b0110000_001_00100: ZBBResult = sextbResult;
       15'b0110000_001_00101: ZBBResult = sexthResult;
+      default: ZBBResult = {(WIDTH){1'b0}};
       endcase
   end
 
