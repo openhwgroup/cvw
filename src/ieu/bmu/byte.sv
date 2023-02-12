@@ -38,7 +38,7 @@ module byteUnit #(parameter WIDTH=32) (
 
   for (i=0;i<WIDTH;i+=8) begin:loop
     assign OrcBResult[i+7:i] = {8{|A[i+7:i]}};
-    assign Rev8Result[WIDTH-i:WIDTH-i-7] = A[i+7:i];
+    assign Rev8Result[WIDTH-i-1:WIDTH-i-8] = A[i+7:i];
   end
 
 endmodule
