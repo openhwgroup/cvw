@@ -57,14 +57,14 @@ module alu #(parameter WIDTH=32) (
   // Addition
   if (`ZBB_SUPPORTED) 
     always_comb begin
-      case({Funct7, Funct3})
-        10'b0010000_010: CondShiftA = {A[WIDTH-1:1], {1'b0}};      //sh1add
-        10'b0010000_100: CondShiftA = {A[WIDTH-1:2], {2'b00}};     //sh2add
-        10'b0010000_110: CondShiftA = {A[WIDTH-1:3], {3'b000}};    //sh3add
-        10'b0000100_000: CondShiftA = {{32{1'b0}}, A[31:0]};       //add.uw
-        10'b0010000_010: CondShiftA = {{31{1'b0}},A[31:0], {1'b0}}; //sh1add.uw
-        10'b0010000_100: CondShiftA = {{30{1'b0}},A[31:0], {2'b0}}; //sh2add.uw
-        10'b0010000_110: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
+      case({Funct7, Funct3, W64})
+        11'b0010000_010_0: CondShiftA = {A[WIDTH-1:1], {1'b0}};      //sh1add
+        11'b0010000_100_0: CondShiftA = {A[WIDTH-1:2], {2'b00}};     //sh2add
+        11'b0010000_110_0: CondShiftA = {A[WIDTH-1:3], {3'b000}};    //sh3add
+        11'b0000100_000_1: CondShiftA = {{32{1'b0}}, A[31:0]};       //add.uw
+        11'b0010000_010_1: CondShiftA = {{31{1'b0}},A[31:0], {1'b0}}; //sh1add.uw
+        11'b0010000_100_1: CondShiftA = {{30{1'b0}},A[31:0], {2'b0}}; //sh2add.uw
+        11'b0010000_110_1: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
         default: CondShiftA = A;
       endcase
 
@@ -76,13 +76,9 @@ module alu #(parameter WIDTH=32) (
       endcase
 
       casez ({Funct7, Funct3})
-        10'b0110000_101: Rotate = 1'b1;
         10'b011000?_101: Rotate = 1'b1;
         10'b000010?_001: Rotate = 1'b0;
         10'b0110000_001: Rotate = 1'b1;
-        10'b0110000_101: Rotate = 1'b1;
-        10'b0110000_001: Rotate = 1'b1;
-        10'b0110000_101: Rotate = 1'b1;
         default:         Rotate = 1'b0;
       endcase
     end
@@ -126,12 +122,12 @@ module alu #(parameter WIDTH=32) (
     endcase
 
   if (`ZBS_SUPPORTED) 
-    zbs zbs(.A, .B, .Funct7, .Funct3, .ZBSResult);
+    zbs #(WIDTH) zbs(.A, .B, .Funct7, .Funct3, .ZBSResult);
   else assign ZBSResult = 0; 
   
 
   if (`ZBB_SUPPORTED) 
-    zbb zbb(.A, .B, .Funct3, .Funct7, .W64, .ZBBResult);
+    zbb #(WIDTH) zbb(.A, .B, .Funct3, .Funct7, .W64, .ZBBResult);
   else assign ZBBResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
