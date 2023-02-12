@@ -149,7 +149,7 @@ module controller(
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
-      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (Funct7D == 7'b0010000 & `ZBA_SUPPORTED) | (Funct7D == 7'b0100100 & `ZBS_SUPPORTED))
+      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
@@ -161,10 +161,7 @@ module controller(
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                   else
-                      if ((Funct7D == 7'b0000100 | Funct7D == 7'b0010000) & `ZBA_SUPPORTED)
-                        ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // adduw, sh1adduw, sh2adduw, sh3adduw
-                      else
-                        ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b1100011:     ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
       7'b1100111:     ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
@@ -193,23 +190,13 @@ module controller(
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
-  if (`ZBA_SUPPORTED) begin
-    // ALU Decoding is more comprehensive when ZBA is supported
-    assign sltD = (Funct3D == 3'b010 & OpD == 7'b0010011);
-    assign sltuD = (Funct3D == 3'b011 & OpD == 7'b0010011);
-    assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
-    assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-    assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
-    assign ALUControlD = {W64D, SubArithD, ALUOpD};
-  end else begin
-    // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
-    assign sltD = (Funct3D == 3'b010);
-    assign sltuD = (Funct3D == 3'b011);
-    assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
-    assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-    assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
-    assign ALUControlD = {W64D, SubArithD, ALUOpD};
-  end
+  // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
+  assign sltD = (Funct3D == 3'b010);
+  assign sltuD = (Funct3D == 3'b011);
+  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
+  assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
+  assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   // Fences
   // Ordinary fence is presently a nop
@@ -228,9 +215,9 @@ module controller(
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(35) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, Funct7D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
-                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, Funct7E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
+  flopenrc #(28) controlregE(clk, reset, FlushE, ~StallE,
+                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
+                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
