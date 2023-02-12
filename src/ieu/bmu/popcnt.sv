@@ -31,11 +31,17 @@ module popcnt #(parameter WIDTH = 32) (
 
   logic [$clog2(WIDTH):0] sum; 
   
-  always_comb begin
+  /*always_comb begin
     sum = 0;
     for (int i=0;i<WIDTH;i++) begin:loop
       sum = sum + num[i];
     end
+  end
+  */
+
+  genvar i;
+  for (i=0;i<WIDTH;i++) begin:loop
+    assign sum = sum + {{5'b0},num[i]};
   end
 
   assign PopCnt = sum;
