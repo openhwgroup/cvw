@@ -48,25 +48,26 @@ module cnt #(parameter WIDTH = 32) (
     //NOTE: signal widths can be decreased
     always_comb begin
       //clz input select mux
-      case({B,W64})
-        5'b00000_0: lzcA = A;                       //clz
-        5'b00000_1: lzcA = {A[31:0],{32{1'b1}}};    //clzw
-        5'b00001_0: lzcA = revA;                    //ctz
-        5'b00001_1: lzcA = {revA[31:0],{32{1'b1}}}; //ctzw
+      case({B[4:0],W64})
+        6'b00000_0: lzcA = A;                       //clz
+        6'b00000_1: lzcA = {A[31:0],{32{1'b1}}};    //clzw
+        6'b00001_0: lzcA = revA;                    //ctz
+        6'b00001_1: lzcA = {revA[31:0],{32{1'b1}}}; //ctzw
       endcase 
 
       //cpop select mux
-      case ({B,W64})
-        5'b00010_0: popcntA = A;
-        5'b00010_1: popcntA = {{32{1'b0}}, A[31:0]};
+      case ({B[4:0],W64})
+        6'b00010_0: popcntA = A;
+        6'b00010_1: popcntA = {{32{1'b0}}, A[31:0]};
       endcase
     end
   end
   else begin
+    //rv32
     assign popcntA = A;
     always_comb begin
       //clz input slect mux
-      case(B)
+      case(B[4:0])
         5'b00000: lzcA = A;
         5'b00001: lzcA = revA;
       endcase
