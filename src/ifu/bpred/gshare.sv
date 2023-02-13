@@ -48,8 +48,8 @@ module gshare #(parameter k = 10) (
   logic [k-1:0]            GHRNext;
   logic                    PCSrcM;
 
-  assign IndexNextF = GHR & {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-  assign IndexE = GHRE & {PCE[k+1] ^ PCE[1], PCE[k:2]};
+  assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+  assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
