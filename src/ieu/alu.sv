@@ -67,6 +67,7 @@ module alu #(parameter WIDTH=32) (
         11'b0010000_110_1: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
         default: CondShiftA = A;
       endcase
+    end
   else begin
     assign CondShiftA = A;
   end
@@ -88,8 +89,8 @@ module alu #(parameter WIDTH=32) (
       endcase
     end
   else begin
-    InvB = 1'b0;
-    Rotate = 1'b0;
+    assign InvB = 1'b0;
+    assign Rotate = 1'b0;
   end
 
   assign CondInvB = (SubArith | InvB) ? ~B : B;
