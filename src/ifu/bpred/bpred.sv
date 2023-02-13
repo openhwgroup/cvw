@@ -149,11 +149,9 @@ module bpred (
           .InstrClassE);
 
   // the branch predictor needs a compact decoding of the instruction class.
-  ///// ********* THIS IS NOT THE ISSUE.
-/* -----\/----- EXCLUDED -----\/-----
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
 	logic [4:0] CompressedOpcF;
-	logic [2:0] InstrClassF;
+	logic [3:0] InstrClassF;
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
 	logic 		JumpF, BranchF;
 	
@@ -174,49 +172,12 @@ module bpred (
 	assign InstrClassF[2] = (JumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
 							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
-	//assign InstrClassF[3] = (JumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
-	//						(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
-	
-
-	assign PredInstrClassF = InstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
-						PredInstrClassF[1];
-  end else begin
-	assign PredInstrClassF = BTBPredInstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-						PredInstrClassF[1] & PredValidF;
-  end
- -----/\----- EXCLUDED -----/\----- */
-  // the branch predictor needs a compact decoding of the instruction class.
-  if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
-	logic [4:0] CompressedOpcF;
-	logic [3:0] InstrClassF;
-	logic 		cjal, cj, cjr, cjalr;
-	
-	assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
-
-	assign cjal = CompressedOpcF == 5'h09 & `XLEN == 32;
-	assign cj = CompressedOpcF == 5'h0d;
-	assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	
-	assign InstrClassF[0] = PostSpillInstrRawF[6:0] == 7'h63 | 
-							(`C_SUPPORTED & CompressedOpcF[4:1] == 4'h7);
-	
-	assign InstrClassF[1] = (PostSpillInstrRawF[6:0] == 7'h67 & (PostSpillInstrRawF[19:15] & 5'h1B) != 5'h01 & (PostSpillInstrRawF[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
-							(PostSpillInstrRawF[6:0] == 7'h6F & (PostSpillInstrRawF[11:7] & 5'h1B) != 5'h01) | // jump, RD != x1 or x5
-							(`C_SUPPORTED & (cj | (cjr & ((PostSpillInstrRawF[11:7] & 5'h1B) != 5'h01)) ));
-	
-	assign InstrClassF[2] = PostSpillInstrRawF[6:0] == 7'h67 & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01 | // return must return to ra or r5
-							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
-	
-	assign InstrClassF[3] = ((PostSpillInstrRawF[6:0] & 7'h77) == 7'h67 & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
+	assign InstrClassF[3] = (JumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
 							(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
+
 	assign PredInstrClassF = InstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
-						PredInstrClassF[2] |
 						PredInstrClassF[1] |
-						PredInstrClassF[3];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
@@ -235,16 +196,6 @@ module bpred (
   assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
   assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
 
-/* -----\/----- EXCLUDED -----\/-----
-  assign InstrClassD[3] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
-  assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
-  assign InstrClassD[1] = (InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
-						  (InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01); // jump, RD != x1 or x5
-  assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
- -----/\----- EXCLUDED -----/\----- */
-  
-  
-
   flopenrc #(4) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
   flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
@@ -256,9 +207,8 @@ module bpred (
 
   // pipeline the class
   flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
-  //flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
+  flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
   flopenrc #(4) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
-  assign AnyWrongPredInstrClassE = InstrClassE != PredInstrClassE;
 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
@@ -299,7 +249,6 @@ module bpred (
   // could be wrong or the fall through address selected for branch predict not taken.
   // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
   // both without the above inaccuracies.
-  //assign BTBPredPCWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] | InstrClassE[3]) & PCSrcE;
   assign BTBPredPCWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
   assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
 
