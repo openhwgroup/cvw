@@ -55,7 +55,7 @@ module alu #(parameter WIDTH=32) (
 
 
   // Addition
-  if (`ZBB_SUPPORTED) 
+  if (`ZBA_SUPPORTED) 
     always_comb begin
       case({Funct7, Funct3, W64})
         11'b0010000_010_0: CondShiftA = {A[WIDTH-1:1], {1'b0}};      //sh1add
@@ -67,7 +67,12 @@ module alu #(parameter WIDTH=32) (
         11'b0010000_110_1: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
         default: CondShiftA = A;
       endcase
+  else begin
+    assign CondShiftA = A;
+  end
 
+  if (`ZBB_SUPPORTED)
+    always_comb begin
       case ({Funct7,Funct3})
         10'b0100000_111: InvB = 1'b1;                                   //andn
         10'b0100000_110: InvB = 1'b1;                                   //orn
@@ -83,8 +88,8 @@ module alu #(parameter WIDTH=32) (
       endcase
     end
   else begin
-    assign CondShiftA = A;
-    assign InvB = 1'b0;
+    InvB = 1'b0;
+    Rotate = 1'b0;
   end
 
   assign CondInvB = (SubArith | InvB) ? ~B : B;
