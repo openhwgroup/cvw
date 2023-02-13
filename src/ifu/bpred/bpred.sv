@@ -118,7 +118,7 @@ module bpred (
   end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
-      .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
+      .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
