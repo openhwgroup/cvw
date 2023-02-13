@@ -220,9 +220,7 @@ module bpred (
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-						PredInstrClassF[2] |
-						(PredInstrClassF[1] & PredValidF) |
-						(PredInstrClassF[3] & PredValidF);
+						PredInstrClassF[1] & PredValidF;
   end
   
   // Part 3 RAS
@@ -232,17 +230,18 @@ module bpred (
 
   assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
 
-/* -----\/----- EXCLUDED -----\/-----
   assign InstrClassD[0] = BranchD;
   assign InstrClassD[1] = JumpD ;
   assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
   assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
- -----/\----- EXCLUDED -----/\----- */
+
+/* -----\/----- EXCLUDED -----\/-----
   assign InstrClassD[3] = (InstrD[6:0] & 7'h77) == 7'h67 & (InstrD[11:07] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
   assign InstrClassD[2] = InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or r5
   assign InstrClassD[1] = (InstrD[6:0] == 7'h67 & (InstrD[19:15] & 5'h1B) != 5'h01 & (InstrD[11:7] & 5'h1B) != 5'h01) | // jump register, but not return
 						  (InstrD[6:0] == 7'h6F & (InstrD[11:7] & 5'h1B) != 5'h01); // jump, RD != x1 or x5
   assign InstrClassD[0] = InstrD[6:0] == 7'h63; // branch
+ -----/\----- EXCLUDED -----/\----- */
   
   
 
@@ -274,7 +273,7 @@ module bpred (
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE) | (AnyWrongPredInstrClassE & ~|InstrClassE);
+  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
   //assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
 
   // Output the predicted PC or corrected PC on miss-predict.
