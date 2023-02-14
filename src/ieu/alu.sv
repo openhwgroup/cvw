@@ -40,7 +40,7 @@ module alu #(parameter WIDTH=32) (
   // CondInvB = ~B when subtracting or inverted operand instruction in ZBB, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
   logic [WIDTH-1:0] ZBBResult, ZBSResult;
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult, CondShiftA;  // Intermediate results
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult, CondShiftA, ALUResult;  // Intermediate results
   logic             Carry, Neg;                              // Flags: carry out, negative
   logic             LT, LTU;                                 // Less than, Less than unsigned
   logic             W64;                                     // RV64 W-type instruction
@@ -142,7 +142,21 @@ module alu #(parameter WIDTH=32) (
   else assign ZBBResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign Result = (W64 & ~ZbaAdd) ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign Result = FullResult;
+  if (WIDTH == 64)  assign ALUResult = (W64 & ~ZbaAdd) ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign ALUResult = FullResult;
+  
+  if (`ZBB_SUPPORTED | `ZBA_SUPPORTED | `ZBS_SUPPORTED | `ZBC_SUPPORTED) begin
+    always_comb
+      casez({Funct7})
+        7'b010010?: Result = ZBSResult;
+        7'b001010?: Result = ZBSResult;
+        default: Result = ALUResult;
+      endcase
+  end else begin
+    assign Result = ALUResult;
+  end
+    
+
+  
 endmodule
 
