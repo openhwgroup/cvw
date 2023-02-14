@@ -69,9 +69,9 @@ module alu #(parameter WIDTH=32) (
       endcase
 
       case ({Funct7,Funct3})
-        10'b0100000_111: InvB = 1'b1;                                   //andn
-        10'b0100000_110: InvB = 1'b1;                                   //orn
-        10'b0100000_100: InvB = 1'b1;                                   //xnor
+        10'b0100000_111: InvB = 1'b0;                                   //andn
+        10'b0100000_110: InvB = 1'b0;                                   //orn
+        10'b0100000_100: InvB = 1'b0;                                   //xnor
         default: InvB = 1'b0;
       endcase
 
