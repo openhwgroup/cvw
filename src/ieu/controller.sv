@@ -149,7 +149,7 @@ module controller(
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
-      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
+      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (Funct7D == 7'b0010000 & `ZBA_SUPPORTED))
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
@@ -161,8 +161,8 @@ module controller(
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                   else
-                      if (Funct7D == 7'b0000100 & `ZBA_SUPPORTED)
-                        ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // adduw
+                      if ((Funct7D == 7'b0000100 | Funct7D == 7'b0010000) & `ZBA_SUPPORTED)
+                        ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // adduw, sh1adduw, sh2adduw, sh3adduw
                       else
                         ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b1100011:     ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
@@ -193,13 +193,23 @@ module controller(
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
-  // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
-  assign sltD = (Funct3D == 3'b010);
-  assign sltuD = (Funct3D == 3'b011);
-  assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
-  assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
-  assign ALUControlD = {W64D, SubArithD, ALUOpD};
+  if (`ZBA_SUPPORTED) begin
+    // ALU Decoding is more comprehensive when ZBA is supported
+    assign sltD = (Funct3D == 3'b010 & OpD == 7'b0010011);
+    assign sltuD = (Funct3D == 3'b011 & OpD == 7'b0010011);
+    assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
+    assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
+    assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
+    assign ALUControlD = {W64D, SubArithD, ALUOpD};
+  end else begin
+    // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
+    assign sltD = (Funct3D == 3'b010);
+    assign sltuD = (Funct3D == 3'b011);
+    assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
+    assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
+    assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
+    assign ALUControlD = {W64D, SubArithD, ALUOpD};
+  end
 
   // Fences
   // Ordinary fence is presently a nop
