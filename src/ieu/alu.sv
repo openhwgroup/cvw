@@ -49,27 +49,32 @@ module alu #(parameter WIDTH=32) (
   logic             Asign, Bsign;                            // Sign bits of A, B
   logic             InvB;                                    // Is Inverted Operand Instruction (ZBB)
   logic             Rotate;                                  // Is rotate operation
+  logic             ZbaAdd;                                  // Is ZBA Add Operation
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
+
+  
 
 
   // Addition
   if (`ZBA_SUPPORTED) 
     always_comb begin
+      ZbaAdd = (Funct7 == 7'b0010000 | Funct7 == 7'b0000100);
       case({Funct7, Funct3, W64})
-        11'b0010000_010_0: CondShiftA = {A[WIDTH-1:1], {1'b0}};      //sh1add
-        11'b0010000_100_0: CondShiftA = {A[WIDTH-1:2], {2'b00}};     //sh2add
-        11'b0010000_110_0: CondShiftA = {A[WIDTH-1:3], {3'b000}};    //sh3add
-        11'b0000100_000_0: CondShiftA = {{32{1'b0}}, A[31:0]};       //add.uw 
+        11'b0010000_010_0: CondShiftA = {A[WIDTH-2:0], {1'b0}};      //sh1add
+        11'b0010000_100_0: CondShiftA = {A[WIDTH-3:0], {2'b00}};     //sh2add
+        11'b0010000_110_0: CondShiftA = {A[WIDTH-4:0], {3'b000}};    //sh3add
+        11'b0000100_000_1: CondShiftA = {{32{1'b0}}, A[31:0]};       //add.uw 
         11'b0010000_010_1: CondShiftA = {{31{1'b0}},A[31:0], {1'b0}}; //sh1add.uw
-        11'b0010000_100_1: CondShiftA = {{30{1'b0}},A[31:0], {2'b0}}; //sh2add.uw
-        11'b0010000_110_1: CondShiftA = {{29{1'b0}},A[31:0], {3'b0}}; //sh3add.uw
+        11'b0010000_100_1: CondShiftA = {{30{1'b0}},A[31:0], {2'b00}}; //sh2add.uw
+        11'b0010000_110_1: CondShiftA = {{29{1'b0}},A[31:0], {3'b000}}; //sh3add.uw
         default: CondShiftA = A;
       endcase
     end
   else begin
     assign CondShiftA = A;
+    assign ZbaAdd = 0;
   end
 
   if (`ZBB_SUPPORTED)
@@ -116,7 +121,7 @@ module alu #(parameter WIDTH=32) (
  
   // Select appropriate ALU Result
   always_comb
-    if (~ALUOp) FullResult = Sum;            // Always add for ALUOp = 0 (address generation)
+    if (~ALUOp | ZbaAdd) FullResult = Sum;      // Always add for ALUOp = 0 (address generation) and ZBA
     else casez (Funct3)                      // Otherwise check Funct3
       3'b000: FullResult = Sum;              // add or sub
       3'b?01: FullResult = Shift;            // sll, sra, or srl
@@ -137,7 +142,7 @@ module alu #(parameter WIDTH=32) (
   else assign ZBBResult = 0; 
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  if (WIDTH == 64)  assign Result = (W64 & ~ZbaAdd) ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign Result = FullResult;
 endmodule
 
