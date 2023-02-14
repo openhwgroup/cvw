@@ -54,13 +54,15 @@ fi
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-./configure --prefix=${RISCV} --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+git checkout 2023.01.31 
+./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 make -j ${NUM_THREADS}
 make install
 
 # elf2hex
 cd $RISCV
-export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
+#export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
+gexport PATH=$RISCV/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
 cd elf2hex
 autoreconf -i
@@ -87,7 +89,7 @@ cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
 cd riscv-isa-sim/build
-../configure --prefix=$RISCV --enable-commitlog
+../configure --prefix=$RISCV 
 make -j ${NUM_THREADS}
 make install 
 cd ../arch_test_target/spike/device
