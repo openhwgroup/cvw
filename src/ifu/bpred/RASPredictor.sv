@@ -34,7 +34,9 @@ module RASPredictor #(parameter int StackSize = 16 )(
   input  logic 			   reset, 
   input  logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
   input  logic [3:0] 	   WrongPredInstrClassD,                      // Prediction class is wrong
-  input  logic [3:0] 	   InstrClassD, InstrClassE, PredInstrClassF, // Instr class
+  input  logic [3:0] 	   InstrClassD,
+  input  logic [3:0]       InstrClassE,                  // Instr class
+  input  logic [3:0]       PredInstrClassF,
   input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a jal
   output logic [`XLEN-1:0] RASPCF                                     // Top of the stack
    );
@@ -93,6 +95,3 @@ module RASPredictor #(parameter int StackSize = 16 )(
   
   
 endmodule
-
-
-
