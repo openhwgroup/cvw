@@ -1741,7 +1741,12 @@ string imperas32f[] = '{
     "rv64i_m/I/src/WALLY-SLT.S",
     "rv64i_m/I/src/WALLY-SLTU.S",
     "rv64i_m/I/src/WALLY-SUB.S",
-    "rv64i_m/I/src/WALLY-XOR.S"
+    "rv64i_m/I/src/WALLY-XOR.S",
+    "rv64i_m/I/src/WALLY-AND.S",
+    "rv64i_m/I/src/WALLY-OR.S",
+    "rv64i_m/I/src/WALLY-SLL.S",
+    "rv64i_m/I/src/WALLY-SRL.S",
+    "rv64i_m/I/src/WALLY-SRA.S"
  };
 
  
