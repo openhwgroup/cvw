@@ -72,11 +72,10 @@ module bpred (
   logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
-  logic [2:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
+  logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD, PredInstrClassE;
   logic [`XLEN-1:0]         PredPCF, RASPCF;
   logic                     PredictionPCWrongE;
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
-  logic [2:0] 				InstrClassF;
   logic [3:0]               InstrClassD;
   logic [3:0] 				InstrClassE;
   logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE;
@@ -85,7 +84,7 @@ module bpred (
   logic [`XLEN-1:0]         BPPredPCF;
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
-  logic [2:0] 				WrongPredInstrClassD;
+  logic [3:0] 				WrongPredInstrClassD;
 
   logic 					BTBTargetWrongE;
   logic 					RASTargetWrongE;
@@ -108,17 +107,17 @@ module bpred (
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .DirPredictionF, .DirPredictionWrongE,
-      .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
+      .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
 	    
   end else if (`BPRED_TYPE == "BPGSHARE") begin:Predictor
-    gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCE, .DirPredictionF, .DirPredictionWrongE,
+    gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
     speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
-      .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
+      .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -151,7 +150,7 @@ module bpred (
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
 	logic [4:0] CompressedOpcF;
-	logic [2:0] InstrClassF;
+	logic [3:0] InstrClassF;
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
 	logic 		JumpF, BranchF;
 	
@@ -172,9 +171,8 @@ module bpred (
 	assign InstrClassF[2] = (JumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
 							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
-	//assign InstrClassF[3] = (JumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
-	//						(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
-	
+	assign InstrClassF[3] = (JumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
+							(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
 	assign PredInstrClassF = InstrClassF;
 	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
@@ -196,8 +194,6 @@ module bpred (
   assign InstrClassD[1] = JumpD ;
   assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
   assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
-  
-  
 
   flopenrc #(4) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
   flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
@@ -209,8 +205,9 @@ module bpred (
     {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
 
   // pipeline the class
-  flopenrc #(3) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
+  flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
   flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
+  flopenrc #(4) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
@@ -221,11 +218,12 @@ module bpred (
   assign PredictionPCWrongE = PCCorrectE != PCD;
 
   // branch class prediction wrong.
-  assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD[2:0];
+  assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD[3:0];
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
+  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
+  //assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD; // this does not work for cubic benchmark
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.
@@ -250,7 +248,6 @@ module bpred (
   // could be wrong or the fall through address selected for branch predict not taken.
   // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
   // both without the above inaccuracies.
-  //assign BTBPredPCWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] | InstrClassE[3]) & PCSrcE;
   assign BTBPredPCWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
   assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
 
