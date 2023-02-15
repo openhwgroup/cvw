@@ -34,17 +34,27 @@ vlog +incdir+../config/$1 \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/rvvi-pkg.sv   \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2api.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2log.sv  \
+     \
+     +define+INCLUDE_TRACE2COV +define+COVER_BASE_RV64I +define+COVER_LEVEL_DV_PR_EXT \
+       +define+COVER_RV64I \
+       +define+COVER_RV64C \
+       +define+COVER_RV64M \
+     +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2cov.sv  \
+     \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \
      ../src/*/*/*.sv \
      -suppress 2583 \
-     -suppress 7063 
+     -suppress 7063  \
+     +acc
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
 vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
-     +testDir=$env(TESTDIR) $env(OTHERFLAGS)
+     +testDir=$env(TESTDIR) $env(OTHERFLAGS) +TRACE2COV_ENABLE=1 \
+     -do "coverage save -onexit ./riscv.ucdb"
+
 view wave
 #-- display input and output signals as hexidecimal values
 # add log -recursive /*
