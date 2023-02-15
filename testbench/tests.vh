@@ -50,9 +50,9 @@ string tvpaths[] = '{
 
   string embench[] = '{
     `EMBENCH,
+    "bd_speedopt_speed/src/cubic/cubic", // cubic is likely going to removed when embench 2.0 launches
     "bd_speedopt_speed/src/aha-mont64/aha-mont64",
     "bd_speedopt_speed/src/crc32/crc32",
-    "bd_speedopt_speed/src/cubic/cubic", // cubic is likely going to removed when embench 2.0 launches
     "bd_speedopt_speed/src/edn/edn",
     "bd_speedopt_speed/src/huffbench/huffbench",
     "bd_speedopt_speed/src/matmult-int/matmult-int",
