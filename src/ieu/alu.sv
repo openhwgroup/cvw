@@ -39,7 +39,7 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult;  // Intermediate results
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult;  // Intermediate results
   logic             Carry, Neg;                                        // Flags: carry out, negative
   logic             LT, LTU;                                           // Less than, Less than unsigned
   logic             W64;                                               // RV64 W-type instruction
@@ -90,6 +90,16 @@ module alu #(parameter WIDTH=32) (
   else              assign ALUResult = FullResult;
 
   if (`ZBC_SUPPORTED) begin
-    
+    zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
+  end
+
+  if (`ZBC_SUPPORTED) begin
+    always_comb
+      case ({Funct7, Funct3})
+        10'b0000101_001: Result = ZBCResult;
+        10'b0000101_011: Result = ZBCResult;
+        10'b0000101_010: Result = ZBCResult;
+        default:         Result = ALUResult;
+      endcase
   end else assign Result = ALUResult;
 endmodule
