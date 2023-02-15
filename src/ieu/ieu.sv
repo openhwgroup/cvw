@@ -55,6 +55,8 @@ module ieu (
   input  logic [`XLEN-1:0]  FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
   output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic              InstrValidD, InstrValidE, InstrValidM,// Instruction is valid
+  output logic              BranchD, BranchE,
+  output logic              JumpD, JumpE,
   // Writeback stage signals
   input  logic [`XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
   input  logic [`XLEN-1:0]  CSRReadValW,                     // CSR read value, 
@@ -87,7 +89,6 @@ module ieu (
   logic [1:0] ForwardAE, ForwardBE;                          // Select signals for forwarding multiplexers
   logic       RegWriteM, RegWriteW;                          // Register will be written in Memory, Writeback stages
   logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
-  logic       JumpE;                                         // Jump instruction
   logic       BranchSignedE;                                 // Branch does signed comparison on operands
   logic       MDUE;                                          // Multiply/divide instruction
            
@@ -95,7 +96,7 @@ module ieu (
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
-    .Funct3E, .IntDivE, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
+    .Funct3E, .IntDivE, .MDUE, .W64E, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
