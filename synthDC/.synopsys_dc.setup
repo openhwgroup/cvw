@@ -21,8 +21,7 @@ if {$tech == "sky130"} {
     set pdk /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
     set s10lib $pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
     lappend search_path $s10lib
-}
-elseif {$tech == "tsmc28psyn"} {
+} elseif {$tech == "tsmc28psyn"} {
     set TLU /home/jstine/TLU+
     set pdk /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
     set s10lib $pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
