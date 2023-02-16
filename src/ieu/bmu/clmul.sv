@@ -33,8 +33,7 @@ module clmul #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,             // Operands
   output logic [WIDTH-1:0] ClmulResult);     // ZBS result
 
-  logic [(WIDTH*WIDTH)-1:0] s;
-  logic [WIDTH-1:0] intial;
+  logic [(WIDTH*WIDTH)-1:0] s;               // intermediary signals for carry-less multiply
   
   integer i;
   integer j;

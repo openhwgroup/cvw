@@ -89,11 +89,13 @@ module alu #(parameter WIDTH=32) (
   if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign ALUResult = FullResult;
 
+  //NOTE: This looks good and can be merged.
   if (`ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
   
 
+  //NOTE: Unoptimized, eventually want to look at ZBCop/ZBSop/ZBAop/ZBBop from decoder to select from a B instruction or the ALU
   if (`ZBC_SUPPORTED) begin : zbcdecoder
     always_comb
       case ({Funct7, Funct3})
