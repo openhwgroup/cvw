@@ -53,7 +53,6 @@ module btb #(parameter int Depth = 10 ) (
   logic [`XLEN+4:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic [`XLEN-1:0] 		PredPCD;  
-  logic [3:0] 				PredInstrClassD;  // *** copy of reg outside module
   logic 					UpdateEn;
   logic 					TablePredValidF, PredValidD;
     
@@ -96,8 +95,6 @@ module btb #(parameter int Depth = 10 ) (
 	if(~StallF | reset) TablePredValidF = ValidBits[PCNextFIndex];
   end
 
-  //assign PredValidF = MatchXF ? 1'b1 : TablePredValidF;
-  
   assign UpdateEn = |InstrClassE | AnyWrongPredInstrClassE;
 
   // An optimization may be using a PC relative address.

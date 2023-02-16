@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// speculativeglobalhistory.sv
+// gsharePredictor.sv
 //
 // Written: Shreya Sanghai
 // Email: ssanghai@hmc.edu
@@ -36,7 +36,8 @@ module speculativeglobalhistory #(parameter int k = 10 ) (
   output logic [1:0] 	  DirPredictionF, 
   output logic 			  DirPredictionWrongE,
   // update
-  input logic [3:0] 	  PredInstrClassF, InstrClassD, InstrClassE,
+  input logic [3:0] 	  PredInstrClassF,
+  input logic [3:0]       InstrClassD, InstrClassE, InstrClassM,
   input logic [3:0] 	  WrongPredInstrClassD, 
   input logic 			  PCSrcE
 );
@@ -47,9 +48,9 @@ module speculativeglobalhistory #(parameter int k = 10 ) (
   logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE;
   logic [1:0]              NewDirPredictionE;
 
-  logic [k-1:0] 		   GHRF, GHRD, GHRE;
+  logic [k-1:0] 		   GHRF, GHRD, GHRE, GHRM;
   logic 				   GHRLastF;
-  logic [k-1:0] 		   GHRNextF, GHRNextD, GHRNextE;
+  logic [k-1:0] 		   GHRNextF, GHRNextD, GHRNextE, GHRNextM;
   logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE;
   logic [1:0]              ForwardNewDirPrediction, ForwardDirPredictionF;
 
@@ -57,8 +58,8 @@ module speculativeglobalhistory #(parameter int k = 10 ) (
   
   assign IndexNextF = GHRNextF;
   assign IndexF = GHRF;
-  assign IndexD = GHRD[k-1:0];
-  assign IndexE = GHRE[k-1:0];
+  assign IndexD = GHRD;
+  assign IndexE = GHRE;
       
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF | reset), .ce2(~StallM & ~FlushM),
@@ -111,15 +112,18 @@ module speculativeglobalhistory #(parameter int k = 10 ) (
   // If it is wrong and branch does exist then shift right and insert the prediction.
   // If the branch does not exist then shift left and use GHRLastF to restore the LSB.
   logic [k-1:0] 		   GHRClassWrong;
-  mux2 #(k) GHRClassWrongMux({DirPredictionD[1], GHRF[k-1:1]}, {GHRF[k-2:0], GHRLastF}, InstrClassD[0], GHRClassWrong);
+  mux2 #(k) GHRClassWrongMux({DirPredictionD[1], GHRF[k-1:1]}, {GHRF[k-2:0], GHRLastF}, ~InstrClassD[0], GHRClassWrong);
   // As with GHRF FlushD and wrong direction prediction flushes the pipeline and restores to GHRNextE.
   mux3 #(k) GHRDMux(GHRF, GHRClassWrong, GHRNextE, {FlushDOrDirWrong, WrongPredInstrClassD[0]}, GHRNextD);
 
   flopenr  #(k) GHRDReg(clk, reset, ~StallD | FlushDOrDirWrong, GHRNextD, GHRD);
 
-  mux3 #(k) GHREMux(GHRD, GHRE, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
+  mux3 #(k) GHREMux(GHRD, GHRNextM, {PCSrcE, GHRD[k-2:0]}, {InstrClassE[0] & ~FlushM, FlushE}, GHRNextE);
 
-  flopenr  #(k) GHREReg(clk, reset, ((InstrClassE[0] & ~FlushM) & ~StallE) | FlushE, GHRNextE, GHRE);
+  flopenr  #(k) GHREReg(clk, reset, (~StallE) | FlushE, GHRNextE, GHRE);
+
+  assign GHRNextM = FlushM ? GHRM : GHRE;
+  flopenr  #(k) GHRMReg(clk, reset, (InstrClassM[0] & ~StallM) | FlushM, GHRNextM, GHRM);
   
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & InstrClassE[0];
 

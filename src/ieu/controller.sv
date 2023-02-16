@@ -63,6 +63,8 @@ module controller(
   output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
+  output logic        BranchD, BranchE,
+  output logic        JumpD,
 
   output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
@@ -85,8 +87,6 @@ module controller(
   logic 	     RegWriteD, RegWriteE;           // RegWrite (register will be written)
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
   logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
-  logic		     JumpD;                          // Jump instruction
-  logic		     BranchD, BranchE;               // Branch instruction
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs

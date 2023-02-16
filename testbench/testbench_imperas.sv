@@ -125,6 +125,7 @@ module testbench;
 
 `ifdef USE_IMPERAS_DV
     trace2log idv_trace2log(rvvi);
+    trace2cov idv_trace2cov(rvvi);
 
     // enabling of comparison types
     trace2api #(.CMP_PC      (1),
