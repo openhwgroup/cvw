@@ -29,7 +29,6 @@ if {$tech == "sky130"} {
     set TLUPLUS true
     set mw_logic1_net VDD
     set mw_logic0_net VSS
-    set TLU_PDK /home/jstine/TLU+/
     set CAPTABLE $TLU/1p8m/
     set MW_REFERENCE_LIBRARY /home/jstine/MW
     set MW_TECH_FILE tcbn28hpcplusbwp30p140
