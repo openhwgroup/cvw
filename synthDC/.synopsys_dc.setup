@@ -52,7 +52,7 @@ if {$tech == "sky130"} {
 } elseif {$tech == "tsmc28psyn"} {
     set mw_reference_library [list ]    
     lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
-    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp7t30p140    
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp30p140    
 }
 
 # Set Link Library
