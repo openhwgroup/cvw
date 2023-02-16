@@ -36,6 +36,8 @@ module ifu (
   input  logic              InvalidateICacheM,                        // Clears all instruction cache valid bits
   input  logic         	    CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
   input  logic              InstrValidD, InstrValidE, InstrValidM,
+  input  logic              BranchD, BranchE,
+  input  logic              JumpD, JumpE,
 	// Bus interface
   output logic [`PA_BITS-1:0] IFUHADDR,      // Bus address from IFU to EBU
   input  logic [`XLEN-1:0] 	HRDATA,           // Bus read data from IFU to EBU
@@ -323,7 +325,8 @@ module ifu (
   if (`BPRED_SUPPORTED) begin : bpred
     bpred bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, .StallW,
-                .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE,
+                .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
+                .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
                 .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);

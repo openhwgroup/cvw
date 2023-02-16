@@ -1,6 +1,5 @@
 --override cpu/show_c_prefix=T
 --override cpu/unaligned=F
---override cpu/mstatus_FS=1
 --override cpu/ignore_non_leaf_DAU=1
 
 # Enable the Imperas instruction coverage
