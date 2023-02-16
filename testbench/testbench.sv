@@ -554,9 +554,9 @@ module riscvassertions;
     assert (`DCACHE_LINELENINBITS % 4 == 0) else $error("DCACHE_LINELENINBITS must hold 4, 8, or 16 words");
     assert (`DCACHE_SUPPORTED | `A_SUPPORTED == 0) else $error("Atomic extension (A) requires cache on Wally.");
     assert (`IDIV_ON_FPU == 0 | `F_SUPPORTED) else $error("IDIV on FPU needs F_SUPPORTED");
+    assert (`SSTC_SUPPORTED == 0 | (`S_SUPPORTED)) else $error("SSTC requires S_SUPPORTED");
   end
 
-  // *** DH 8/23/
 endmodule
 
 
