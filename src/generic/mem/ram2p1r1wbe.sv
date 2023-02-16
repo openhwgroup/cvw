@@ -64,7 +64,7 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
 				  .QA(rd1),
 				  .QB());
 
-   end if (`USE_SRAM == 1 && WIDTH == 36 && DEPTH == 1024) begin
+   end else if (`USE_SRAM == 1 && WIDTH == 36 && DEPTH == 1024) begin
    
       ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
 				  .CEBA(~ce1), .CEBB(~ce2),
