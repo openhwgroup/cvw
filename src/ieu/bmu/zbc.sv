@@ -36,43 +36,37 @@ module zbc #(parameter WIDTH=32) (
 
   logic [WIDTH-1:0] ClmulResult, RevClmulResult;
   logic [WIDTH-1:0] RevA, RevB;
-  logic [WIDTH-1:0] X,Y;
+  logic [WIDTH-1:0] x,y;
 
 
-  genvar i;
-  
-
-  bitreverse brA(.a(A), .b(RevA));
-  bitreverse brB(.a(B), .b(RevB));
+  bitreverse #(WIDTH) brA(.a(A), .b(RevA));
+  bitreverse #(WIDTH) brB(.a(B), .b(RevB));
    
-  //NOTE: Is it better to mux in input to a SINGLE clmul or to instantiate 3 clmul and MUX the result?
-  //current implementation CP goes MUX -> CLMUL -> MUX -> RESULT
-  //alternate could have CLMUL * 3 -> MUX -> MUX
   always_comb begin
     casez (Funct3)
       3'b001: begin //clmul
-        X = A;
-        Y = B;
+        x = A;
+        y = B;
       end
       3'b011: begin //clmulh
-        X = {RevA[WIDTH-2:0], {1'b0}};
-        Y = {{1'b0}, RevB[WIDTH-2:0]};
+        x = {RevA[WIDTH-2:0], {1'b0}};
+        y = {{1'b0}, RevB[WIDTH-2:0]};
       end
       3'b010: begin //clmulr
-        X = {A[WIDTH-2:0], {1'b0}};
-        Y = B;
+        x = RevA;
+        y = RevB;
       end
       default: begin
-        X = 0;
-        Y = 0;
+        x = 0;
+        y = 0;
       end
     endcase
     
   end
-  clmul clm(.A(X), .B(Y), .ClmulResult(ClmulResult));
-  bitreverse brClmulResult(.a(ClmulResult), .b(RevClmulResult));
+  clmul #(WIDTH) clm(.A(x), .B(y), .ClmulResult(ClmulResult));
+  bitreverse  #(WIDTH) brClmulResult(.a(ClmulResult), .b(RevClmulResult));
 
-  assign ZBCResult = (Funct3 == 3'b011) ? RevClmulResult : ClmulResult;
+  assign ZBCResult = (Funct3 == 3'b011  || Funct3 == 3'b010) ? RevClmulResult : ClmulResult;
 
 
 endmodule

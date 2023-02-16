@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// clmul.sv
+// clmul.sv (carry-less multiplier)
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
 // Created: 1 February 2023
@@ -30,35 +30,24 @@
 `include "wally-config.vh"
 
 module clmul #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
+  input  logic [WIDTH-1:0] A, B,             // Operands
   output logic [WIDTH-1:0] ClmulResult);     // ZBS result
 
-  logic [WIDTH-1:0] pp [WIDTH-1:0]; //partial AND products
-  // Note: only generates the bottom WIDTH bits of the carryless multiply.
-  //    To get the high bits or the reversed bits, the inputs can be shifted and reversed
-  //    as they are in zbc where this is instantiated
-  /*
-  genvar i;
-  for (i=0; i<WIDTH; i++) begin
-    assign pp[i] = ((A & {(WIDTH){B[i]}}) << i); // Fill partial product array
-    // ClmulResult ^= pp[i];
-  end
-  assign ClmulResult = pp.xor();
-  */
-  genvar i,j;
-  for (i=1; i<WIDTH;i++) begin:outer //loop fills partial product array
-    for (j=0;j<=i;j++) begin:inner
-      assign pp[i][j] = A[i]&B[j];
+  logic [(WIDTH*WIDTH)-1:0] s;
+  logic [WIDTH-1:0] intial;
+  
+  integer i;
+  integer j;
+
+  always_comb begin
+    for (i=0;i<WIDTH;i++) begin: outer
+      s[WIDTH*i]=A[0]&B[i];
+      for (j=1;j<=i;j++) begin: inner
+        s[WIDTH*i+j] = (A[j]&B[i-j])^s[WIDTH*i+j-1];
+      end
+      ClmulResult[i] = s[WIDTH*i+j-1];
     end
   end
- /*
-  for (i=1;i<WIDTH;i++) begin:xortree
-    assign ClmulResult[i] = ^pp[i:0][i];
-    
-  end
-*/
-
-  assign ClmulResult[0] = A[0]&B[0];
 
 endmodule
 
