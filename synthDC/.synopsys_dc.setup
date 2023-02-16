@@ -18,8 +18,23 @@ if {$tech == "sky130"} {
     set s9lib $timing_lib/sky90/sky90_sc/V1.7.4/lib
     lappend search_path $s9lib
 } elseif {$tech == "tsmc28"} {
-    set s10lib /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
+    set pdk /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
+    set s10lib $pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
     lappend search_path $s10lib
+} elseif {$tech == "tsmc28psyn"} {
+    set TLU /home/jstine/TLU+
+    set pdk /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
+    set s10lib $pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
+    lappend search_path $s10lib
+    set TLUPLUS true
+    set mw_logic1_net VDD
+    set mw_logic0_net VSS
+    set CAPTABLE $TLU/1p8m/
+    set MW_REFERENCE_LIBRARY /home/jstine/MW
+    set MW_TECH_FILE tcbn28hpcplusbwp30p140
+    set MAX_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_typical.tluplus
+    set MIN_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.tluplus
+    set PRS_MAP_FILE $MW_REFERENCE_LIBRARY/astro_layername.map
 }
 
 # Synthetic libraries
@@ -35,6 +50,10 @@ if {$tech == "sky130"} {
     lappend target_library $s9lib/scc9gena_tt_1.2v_25C.db
 } elseif {$tech == "tsmc28"} {
     lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
+} elseif {$tech == "tsmc28psyn"} {
+    set mw_reference_library [list ]    
+    lappend target_library $s10lib/tcbn28hpcplusbwp30p140tt0p9v25c.db
+    lappend mw_reference_library $MW_REFERENCE_LIBRARY/tcbn28hpcplusbwp30p140    
 }
 
 # Set Link Library
@@ -48,10 +67,12 @@ set cache_read   $cache_write
 lappend search_path ./scripts
 lappend search_path ./hdl
 lappend search_path ./mapped
-set memory /home/jstine/WallyMem/rv64gc/
-lappend target_library $memory/ts3n28hpcpa128x64m8m_130a/NLDM/ts3n28hpcpa128x64m8m_tt0p9v25c.db
-lappend target_library $memory/ts1n28hpcpsvtb64x128m4sw_180a/NLDM/ts1n28hpcpsvtb64x128m4sw_tt0p9v25c.db
-lappend target_library $memory/ts1n28hpcpsvtb64x44m4sw_180a/NLDM/ts1n28hpcpsvtb64x44m4sw_tt0p9v25c.db
+if {$tech == "tsmc28"} {
+    set memory /home/jstine/WallyMem/rv64gc/
+    lappend target_library $memory/ts3n28hpcpa128x64m8m_130a/NLDM/ts3n28hpcpa128x64m8m_tt0p9v25c.db
+    lappend target_library $memory/ts1n28hpcpsvtb64x128m4sw_180a/NLDM/ts1n28hpcpsvtb64x128m4sw_tt0p9v25c.db
+    lappend target_library $memory/ts1n28hpcpsvtb64x44m4sw_180a/NLDM/ts1n28hpcpsvtb64x44m4sw_tt0p9v25c.db
+}
 
 # Set up User Information
 set company "Oklahoma State University"

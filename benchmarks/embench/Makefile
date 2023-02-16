@@ -34,7 +34,7 @@ sim: modelsim_build_memfile modelsim_run speed
 
 # launches modelsim to simulate tests on wally
 modelsim_run:
-	(cd ../../pipelined/regression/ && vsim -c -do "do wally-pipelined-batch.do rv32gc embench")
+	(cd ../../sim/ && vsim -c -do "do wally-batch.do rv32gc embench")
 	cd ../../benchmarks/embench/
 
 # builds the objdump based on the compiled c elf files

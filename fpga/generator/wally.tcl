@@ -26,7 +26,7 @@ read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v]
 read_verilog  {../src/fpgaTop.v}
 read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
-set_property include_dirs {../../pipelined/config/fpga ../../pipelined/config/shared} [current_fileset]
+set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
 
 
 add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
