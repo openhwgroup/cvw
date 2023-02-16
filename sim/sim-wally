@@ -1,0 +1,2 @@
+vsim -do "do wally.do rv64gc arch64d"
+

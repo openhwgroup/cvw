@@ -8,6 +8,7 @@ from matplotlib.cbook import flatten
 import matplotlib.pyplot as plt
 import matplotlib.lines as lines
 import numpy as np
+from adjustText import adjust_text
 from ppa.ppaAnalyze import noOutliers
 from matplotlib import ticker
 import argparse
@@ -149,9 +150,8 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
     
     ax.yaxis.set_major_formatter(ticker.StrMethodFormatter('{x:,.0f}'))
 
-    for i in range(len(labels)):
-        plt.annotate(labels[i], (delays[i], areas[i]), textcoords="offset points", xytext=(0,10), ha='center')
-
+    texts = [plt.text(delays[i], areas[i], labels[i], ha='center', va='center') for i in range(len(labels))]
+    adjust_text(texts)
     return fig
 
 
@@ -169,7 +169,7 @@ def plotFeatures(tech, width, config):
 
     fig = areaDelay(tech, delays, areas, labels, fig, ax)
 
-    titlestr = tech+'_'+width+config
+    titlestr = tech+'_'+width+config+'_'+str(freq)+'MHz'
     plt.title(titlestr)
     plt.savefig(final_directory + '/features_'+titlestr+'.png')
 
@@ -240,8 +240,8 @@ def addFO4axis(fig, ax, tech):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-s", "--skyfreq", type=int, default=3000, help = "Target frequency used for sky90 syntheses")
-    parser.add_argument("-t", "--tsmcfreq", type=int, default=10000, help = "Target frequency used for tsmc28 syntheses")
+    parser.add_argument("-s", "--skyfreq", type=int, default=1500, help = "Target frequency used for sky90 syntheses")
+    parser.add_argument("-t", "--tsmcfreq", type=int, default=5000, help = "Target frequency used for tsmc28 syntheses")
     args = parser.parse_args()
 
     TechSpec = namedtuple("TechSpec", "color shape targfreq fo4 add32area add32lpower add32denergy")

@@ -53,7 +53,7 @@ Edit setup.sh and change the following lines to point to the path and license se
 
 Run a regression simulation with Questa to prove everything is installed.
 
-	$ cd pipelined/regression
+	$ cd sim
 	$ ./regression-wally       (depends on having Questa installed)
 
 # Toolchain Installation (Sys Admin)
@@ -110,12 +110,12 @@ Ubuntu users may need to install and update various tools.  Beware when cutting 
 
 ### Install RISC-V GCC Cross-Compiler
 
-To install GCC from source can take hours to compile. This configuration enables multilib to target many flavors of RISC-V.   This book is tested with GCC 12.2 (tagged 2022.09.21), but will likely work with newer versions as well. 
+To install GCC from source can take hours to compile. This configuration enables multilib to target many flavors of RISC-V.   This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
 
 	$ git clone https://github.com/riscv/riscv-gnu-toolchain 
 	$ cd riscv-gnu-toolchain 
-	$ git checkout 2022.09.21 
-	$ ./configure --prefix=$RISCV --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+	$ git checkout 2023.01.31 
+	$ ./configure --prefix=$RISCV --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 	$ make --jobs
 
 Note: make --jobs will reduce compile time by compiling in parallel.  However, adding this option could dramatically increase the memory utilization of your local machine.
@@ -125,7 +125,7 @@ Note: make --jobs will reduce compile time by compiling in parallel.  However, a
 We also need the elf2hex utility to convert executable files into hexadecimal files for Verilog simulation. Install with:
 
 	$ cd $RISCV
-	$ export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
+	$ export PATH=$RISCV/bin:$PATH
 	$ git clone https://github.com/sifive/elf2hex.git
 	$ cd elf2hex
 	$ autoreconf -i
@@ -143,7 +143,7 @@ Spike also takes a while to install and compile, but this can be done concurrent
 	$ git clone https://github.com/riscv-software-src/riscv-isa-sim
 	$ mkdir riscv-isa-sim/build
 	$ cd riscv-isa-sim/build
-	$ ../configure --prefix=$RISCV --enable-commitlog 
+	$ ../configure --prefix=$RISCV 
 	$ make --jobs
 	$ make install 
 	$ cd ../arch_test_target/spike/device
