@@ -122,6 +122,8 @@ synth: mkdirecs configs rundc clean
 rundc:
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 	
+rundctopo:
+	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
 	
 clean:
 	rm -rf $(OUTPUTDIR)/hdl
