@@ -31,7 +31,7 @@ export PATH=$PATH:$RISCV/bin
 
 set -e # break on error
 
-NUM_THREADS=1 # for low memory machines > 16GiB
+NUM_THREADS=32 # for low memory machines > 16GiB
 #NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 

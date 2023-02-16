@@ -14,7 +14,6 @@ ieu/regfile.sv: logic    rf
 ieu/datapath.sv: logic                 RegWriteW
 hazard/hazard.sv: logic	         BPPredWrongE
 hazard/hazard.sv: logic	         LoadStallD
-hazard/hazard.sv: logic	         LSUStallM
 hazard/hazard.sv: logic          FCvtIntStallD
 hazard/hazard.sv: logic	         DivBusyE
 hazard/hazard.sv: logic	         EcallFaultM
