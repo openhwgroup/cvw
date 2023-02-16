@@ -113,6 +113,7 @@ module csr #(parameter
   logic                    SelMtvecM;
   logic [`XLEN-1:0]        TVecAlignedM;
   logic                    InstrValidNotFlushedM;
+  logic                    STimerInt;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -201,7 +202,7 @@ module csr #(parameter
 
   csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
-    .MExtInt, .SExtInt, .MTimerInt, .MSwInt,
+    .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
     .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr csrsr(.clk, .reset, .StallW, 
@@ -227,11 +228,12 @@ module csr #(parameter
     csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
       .CSRSWriteM, .STrapM, .CSRAdrM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
-      .STATUS_TVM, .CSRWriteValM, .PrivilegeModeW,
+      .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
+      .CSRWriteValM, .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
       .SCOUNTEREN_REGW,
-      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
-      .WriteSSTATUSM, .IllegalCSRSAccessM);
+      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT,
+      .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt);
   end else begin
     assign WriteSSTATUSM = 0;
     assign CSRSReadValM = 0;
