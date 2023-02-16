@@ -40,7 +40,7 @@ if __name__ == '__main__':
     tech = args.tech if args.tech else 'sky90'
     maxopt = int(args.maxopt)
     usesram = int(args.usesram)
-    usetopo = int(args.usetopop)	
+    usetopo = int(args.usetopo)	
     mod = 'orig'
 
     if args.freqsweep:
