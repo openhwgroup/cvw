@@ -38,10 +38,10 @@ module zbc #(parameter WIDTH=32) (
   logic [WIDTH-1:0] RevA, RevB;
   logic [WIDTH-1:0] x,y;
 
-
   bitreverse #(WIDTH) brA(.a(A), .b(RevA));
   bitreverse #(WIDTH) brB(.a(B), .b(RevB));
    
+  //NOTE: Optimize this when doing decoder stuff.
   always_comb begin
     casez (Funct3)
       3'b001: begin //clmul
