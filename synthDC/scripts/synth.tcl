@@ -49,6 +49,36 @@ set report_default_significant_digits 6
 set verilogout_show_unconnected_pins "true"
 set vhdlout_show_unconnected_pins "true"
 
+#  Set up MW List
+set MY_LIB_NAME $my_toplevel
+# Create MW
+if { [shell_is_in_topographical_mode] } {
+    echo "In Topographical Mode...processing\n"
+    if {[file isdirectory $MY_LIB_NAME]} {
+	echo "MW directory already here, deleting/readdding."
+	[exec rm -rf $my_toplevel]
+	create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
+	    -mw_reference_library $mw_reference_library $MY_LIB_NAME
+    } else {
+	create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
+	    -mw_reference_library $mw_reference_library $MY_LIB_NAME
+    }
+
+    # Open MW
+    open_mw_lib $MY_LIB_NAME
+    
+    # TLU+
+    set_tlu_plus_files -max_tluplus $MAX_TLU_FILE -min_tluplus $MIN_TLU_FILE \
+	-tech2itf_map $PRS_MAP_FILE
+
+} else {
+    if {[file isdirectory $MY_LIB_NAME]} {
+	[exec rm -rf $my_toplevel]
+	echo "MW directory already here, deleting."
+    }
+    echo "In normal DC mode...processing\n"
+}
+
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
