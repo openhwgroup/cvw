@@ -89,11 +89,12 @@ module alu #(parameter WIDTH=32) (
   if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign ALUResult = FullResult;
 
-  if (`ZBC_SUPPORTED) begin
+  if (`ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
-  end
+  end else assign ZBCResult = 0;
+  
 
-  if (`ZBC_SUPPORTED) begin
+  if (`ZBC_SUPPORTED) begin : zbcdecoder
     always_comb
       case ({Funct7, Funct3})
         10'b0000101_001: Result = ZBCResult;
