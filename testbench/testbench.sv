@@ -281,7 +281,7 @@ logic [3:0] dummy;
         // once the test inidicates it's done we need to immediately hold reset for a number of cycles.
         if(ResetCount < ResetThreshold) ResetCount = ResetCount + 1;
         else begin // hit reset threshold so we remove reset.
-          InReset = 0;
+          //InReset = 0;
           ResetCount = 0;
         end
       end else begin
