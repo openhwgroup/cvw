@@ -1,8 +1,8 @@
 ///////////////////////////////////////////
 // controller.sv
 //
-// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu 
-// Created: 9 January 2021
+// Written: Kevin Kim <kekim@hmc.edu>
+// Created: 16 February 2023
 // Modified: 
 //
 // Purpose: Top level controller module
