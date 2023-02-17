@@ -72,7 +72,7 @@ module bmuctrl(
       17'b0110011_010010?_101: BMUControlsD = `BMUCTRLW'b101_0001;    // bext
       17'b0110011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0001;    // binv
       17'b0110011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0001;    // bset
-      17'b0110011_0?00000_?01: BMUControlsD = `BMUCTRLW'b001_0001;    // sra, srl, sll
+      17'b0?1?011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_0000;    // sra, srai, srl, srli, sll, slli
       17'b0110011_0000101_???: BMUControlsD = `BMUCTRLW'b001_0010;    // ZBC instruction
       default:                 BMUControlsD = {Funct3D, {4'b0}};      // not B instruction or shift
     endcase
