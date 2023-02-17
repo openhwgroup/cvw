@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// gsharePredictor.sv
+// speculativeglobalhistory.sv
 //
 // Written: Shreya Sanghai
 // Email: ssanghai@hmc.edu
@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module speculativegshare #(parameter int k = 10 ) (
+module speculativeglobalhistory #(parameter int k = 10 ) (
   input logic 			  clk,
   input logic 			  reset,
   input logic 			  StallF, StallD, StallE, StallM, StallW, 
