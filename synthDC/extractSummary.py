@@ -85,7 +85,7 @@ def freqPlot(tech, width, config):
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
         if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('orig' == oneSynth.mod):
-            ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
+            ind = (1000/oneSynth.delay < (0.95*oneSynth.freq)) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
