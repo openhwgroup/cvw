@@ -42,6 +42,7 @@ module alu #(parameter WIDTH=32) (
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
   logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult, CondMaskB;  // Intermediate results
+  logic [WIDTH-1:0] MaskB;
   logic             Carry, Neg;                                                             // Flags: carry out, negative
   logic             LT, LTU;                                                                // Less than, Less than unsigned
   logic             W64;                                                                    // RV64 W-type instruction
@@ -51,13 +52,16 @@ module alu #(parameter WIDTH=32) (
   logic             Rotate;
 
 
-  decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], CondMaskB);
+  if (`ZBS_SUPPORTED) begin: zbsdec
+    decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
+    assign CondMaskB = (BSelect[0]) ? MaskB : B;
+  end else assign CondMaskB = B;
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
   // Addition
-  assign CondInvB = SubArith ? ~B : B;
+  assign CondInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
@@ -78,17 +82,35 @@ module alu #(parameter WIDTH=32) (
   assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
  
   // Select appropriate ALU Result
-  always_comb
-    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
-    else casez (ALUSelect)               // Otherwise check Funct3 NOTE: change signal name to ALUSelect
-      3'b000: FullResult = Sum;       // add or sub
-      3'b?01: FullResult = Shift;     // sll, sra, or srl
-      3'b010: FullResult = SLT;       // slt
-      3'b011: FullResult = SLTU;      // sltu
-      3'b100: FullResult = A ^ B;     // xor
-      3'b110: FullResult = A | B;     // or 
-      3'b111: FullResult = A & B;     // and
-    endcase
+  if (`ZBS_SUPPORTED) begin
+    always_comb
+      if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
+      else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
+        3'b000: FullResult = Sum;                           // add or sub
+        3'b001: FullResult = Shift;                         // sll, sra, or srl
+        3'b010: FullResult = SLT;                           // slt
+        3'b011: FullResult = SLTU;                          // sltu
+        3'b100: FullResult = A ^ B;                         // xor, binv
+        3'b110: FullResult = A | B;                         // or, bset
+        3'b111: FullResult = A & B;                         // and, bclr
+        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & B)}};// bext
+      endcase
+  end
+  else begin
+    always_comb
+      if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
+      else casez (ALUSelect)            // Otherwise check Funct3 NOTE: change signal name to ALUSelect
+        3'b000: FullResult = Sum;       // add or sub
+        3'b?01: FullResult = Shift;     // sll, sra, or srl
+        3'b010: FullResult = SLT;       // slt
+        3'b011: FullResult = SLTU;      // sltu
+        3'b100: FullResult = A ^ B;     // xor
+        3'b110: FullResult = A | B;     // or 
+        3'b111: FullResult = A & B;     // and
+      endcase
+    
+  end
+  
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
@@ -99,15 +121,14 @@ module alu #(parameter WIDTH=32) (
     zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
   
-
   //NOTE: Unoptimized, eventually want to look at ZBCop/ZBSop/ZBAop/ZBBop from decoder to select from a B instruction or the ALU
-  if (`ZBC_SUPPORTED) begin : zbcdecoder
+  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED) begin : zbdecoder
     always_comb
-      case ({Funct7, Funct3})
-        10'b0000101_001: Result = ZBCResult;
-        10'b0000101_011: Result = ZBCResult;
-        10'b0000101_010: Result = ZBCResult;
-        default:         Result = ALUResult;
+      case (BSelect)
+      //ZBA_ZBB_ZBC_ZBS
+        4'b0001: Result = FullResult;
+        4'b0010: Result = ZBCResult;
+        default: Result = ALUResult;
       endcase
   end else assign Result = ALUResult;
 endmodule
