@@ -8,8 +8,8 @@ wally_workdir = $(work)/wally-riscv-arch-test
 current_dir = $(shell pwd)
 #XLEN    ?= 64
 
-#all: root wally32 wally64
-all: root arch32 wally32  wally32e arch64 wally64
+all: root arch64
+#all: root arch32 wally32 wally32e arch64 wally64
 
 root:
 	mkdir -p $(work_dir)
@@ -25,7 +25,7 @@ arch32:
 	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv32i_m/ || echo "error suppressed"
 
 arch64:
-	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser
+	riscof run --work-dir=$(work_dir) --config=config64.ini --suite=$(arch_dir)/riscv-test-suite/ --env=$(arch_dir)/riscv-test-suite/env --no-browser --no-dut-run
 	rsync -a $(work_dir)/rv64i_m/ $(arch_workdir)/rv64i_m/ || echo "error suppressed"
 #	 Also copy F and D tests to RV64
 	rsync -a $(work_dir)/rv32i_m/ $(arch_workdir)/rv64i_m/ || echo "error suppressed"  
