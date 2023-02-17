@@ -5,7 +5,7 @@
 // Created: 16 February 2023
 // Modified: 
 //
-// Purpose: Top level controller module
+// Purpose: Top level B instrution controller module
 // 
 // Documentation: RISC-V System on Chip Design Chapter 4 (Section 4.1.4, Figure 4.8, Table 4.5)
 //
