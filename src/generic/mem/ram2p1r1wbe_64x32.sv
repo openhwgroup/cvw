@@ -42,7 +42,8 @@ module ram2p1r1wbe_64x32(
 );
 
    // replace "generic64x32RAM" with "TSDN..64X32.." module from your memory vendor
-   generic64x32RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+   //generic64x32RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+	 //		   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+  TSDN28HPCPA64X32M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
 			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
-
 endmodule
