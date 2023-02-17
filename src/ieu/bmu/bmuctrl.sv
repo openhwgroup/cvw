@@ -36,19 +36,20 @@ module bmuctrl(
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
   output logic [2:0]  ALUSelectD,              // ALU Mux select signal
-  output logic        bextD,                   // Indicates if bit extract instruction
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field (note: eventually want to get rid of this)
-  output logic [2:0]  ALUSelectE
+  output logic [2:0]  ALUSelectE,
+  output logic [3:0]  BSelectE                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
 );
 
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs1D;                            // Rs1 source register in Decode stage
+  logic [3:0] BSelectD;                        // Indicates if ZBA_ZBB_ZBC_ZBS instruction decode stage
 
-  `define BMUCTRLW 4
+  `define BMUCTRLW 7
 
   logic [`BMUCTRLW-1:0] BMUControlsD;                 // Main B Instructions Decoder control signals
 
@@ -62,25 +63,25 @@ module bmuctrl(
   // Main Instruction Decoder
   always_comb
     casez({OpD, Funct7D, Funct3D})
-    // ALUSelect_bextD
-      17'b0010011_010010?_001: BMUControlsD = `BMUCTRLW'b111_0;    // bclri
-      17'b0010011_010010?_101: BMUControlsD = `BMUCTRLW'b101_1;    // bexti
-      17'b0010011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0;    // binvi
-      17'b0010011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0;    // bseti
-      17'b0110011_010010?_001: BMUControlsD = `BMUCTRLW'b111_0;    // bclr
-      17'b0110011_010010?_101: BMUControlsD = `BMUCTRLW'b101_1;    // bext
-      17'b0110011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0;    // binv
-      17'b0110011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0;    // bset
-      17'b0110011_0?00000_?01: BMUControlsD = `BMUCTRLW'b001_0;    // sra, srl, sll
-      default:                 BMUControlsD = {Funct3D, {1'b0}};// not B instruction or shift
+    // ALUSelect_zbsD
+      17'b0010011_010010?_001: BMUControlsD = `BMUCTRLW'b111_0001;    // bclri
+      17'b0010011_010010?_101: BMUControlsD = `BMUCTRLW'b101_0001;    // bexti
+      17'b0010011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0001;    // binvi
+      17'b0010011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0001;    // bseti
+      17'b0110011_010010?_001: BMUControlsD = `BMUCTRLW'b111_0001;    // bclr
+      17'b0110011_010010?_101: BMUControlsD = `BMUCTRLW'b101_0001;    // bext
+      17'b0110011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0001;    // binv
+      17'b0110011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0001;    // bset
+      17'b0110011_0?00000_?01: BMUControlsD = `BMUCTRLW'b001_0001;    // sra, srl, sll
+      default:                 BMUControlsD = {Funct3D, {4'b0}};      // not B instruction or shift
     endcase
 
   // Unpack Control Signals
 
-  assign {ALUSelectD,bextD} = BMUControlsD;
+  assign {ALUSelectD,BSelectD} = BMUControlsD;
 
    
 
   // BMU Execute stage pipieline control register
-  flopenrc#(10) controlregBMU(clk, reset, FlushE, ~StallE, {Funct7D, ALUSelectD}, {Funct7E, ALUSelectE});
+  flopenrc#(14) controlregBMU(clk, reset, FlushE, ~StallE, {Funct7D, ALUSelectD, BSelectD}, {Funct7E, ALUSelectE, BSelectE});
 endmodule

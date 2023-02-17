@@ -33,6 +33,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,  // ALU mux select signal
+  input  logic [3:0]       BSelect,    // One-Hot encoding of ZBA_ZBB_ZBC_ZBS instruction
   input  logic [6:0]       Funct7,     // Funct7 from execute stage (we only need this for b instructions and should be optimized out later)
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   output logic [WIDTH-1:0] Result,     // ALU result
@@ -40,14 +41,17 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult;  // Intermediate results
-  logic             Carry, Neg;                                        // Flags: carry out, negative
-  logic             LT, LTU;                                           // Less than, Less than unsigned
-  logic             W64;                                               // RV64 W-type instruction
-  logic             SubArith;                                          // Performing subtraction or arithmetic right shift
-  logic             ALUOp;                                             // 0 for address generation addition or 1 for regular ALU ops
-  logic             Asign, Bsign;                                      // Sign bits of A, B
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult, CondMaskB;  // Intermediate results
+  logic             Carry, Neg;                                                             // Flags: carry out, negative
+  logic             LT, LTU;                                                                // Less than, Less than unsigned
+  logic             W64;                                                                    // RV64 W-type instruction
+  logic             SubArith;                                                               // Performing subtraction or arithmetic right shift
+  logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
+  logic             Asign, Bsign;                                                           // Sign bits of A, B
   logic             Rotate;
+
+
+  decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], CondMaskB);
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;

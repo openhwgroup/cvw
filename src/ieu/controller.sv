@@ -56,6 +56,7 @@ module controller(
   output logic        JumpE,	                 // jump instruction
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
+  output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
   output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
@@ -104,7 +105,7 @@ module controller(
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
-  logic        subD, sraD, sltD, sltuD, bextD; // Indicates if is one of these instructions
+  logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -197,15 +198,15 @@ module controller(
   assign sltuD = (Funct3D == 3'b011);
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & bextD)); // TRUE for R-type subtracts and sra, slt, sltu
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & BSelectE[0] & ALUSelectD == 3'b101)); // TRUE for R-type subtracts and sra, slt, sltu, bext
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .bextD, .StallE, .FlushE, .Funct7E, .ALUSelectE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .StallE, .FlushE, .Funct7E, .ALUSelectE, BSelectE);
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
-    assign bextD = 1'b0;
+    assign BSelectE = 4'b000;
     assign Funct7E = 7'b0;
   end
 
