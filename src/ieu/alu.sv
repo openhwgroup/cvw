@@ -32,8 +32,9 @@
 module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
-  input  logic [6:0]       Funct7,     // Funct7 from execute stage
-  input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform
+  input  logic [2:0]       ALUSelect,  // ALU mux select signal
+  input  logic [6:0]       Funct7,     // Funct7 from execute stage (we only need this for b instructions and should be optimized out later)
+  input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   output logic [WIDTH-1:0] Result,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
 
@@ -46,7 +47,7 @@ module alu #(parameter WIDTH=32) (
   logic             SubArith;                                          // Performing subtraction or arithmetic right shift
   logic             ALUOp;                                             // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                      // Sign bits of A, B
-  logic             rotate;
+  logic             Rotate;
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
@@ -56,7 +57,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(rotate));
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(1'b0));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -75,7 +76,7 @@ module alu #(parameter WIDTH=32) (
   // Select appropriate ALU Result
   always_comb
     if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
-    else casez (Funct3)               // Otherwise check Funct3
+    else casez (ALUSelect)               // Otherwise check Funct3 NOTE: change signal name to ALUSelect
       3'b000: FullResult = Sum;       // add or sub
       3'b?01: FullResult = Shift;     // sll, sra, or srl
       3'b010: FullResult = SLT;       // slt
