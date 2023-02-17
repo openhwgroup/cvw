@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
+module ram1p1rwbe #(parameter DEPTH=64, WIDTH=128) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
