@@ -36,6 +36,7 @@ module bmuctrl(
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
   output logic [2:0]  ALUSelectD,              // ALU Mux select signal
+  output logic [3:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field (note: eventually want to get rid of this)
@@ -47,7 +48,6 @@ module bmuctrl(
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs1D;                            // Rs1 source register in Decode stage
-  logic [3:0] BSelectD;                        // Indicates if ZBA_ZBB_ZBC_ZBS instruction decode stage
 
   `define BMUCTRLW 7
 
@@ -73,6 +73,7 @@ module bmuctrl(
       17'b0110011_011010?_001: BMUControlsD = `BMUCTRLW'b100_0001;    // binv
       17'b0110011_001010?_001: BMUControlsD = `BMUCTRLW'b110_0001;    // bset
       17'b0110011_0?00000_?01: BMUControlsD = `BMUCTRLW'b001_0001;    // sra, srl, sll
+      17'b0110011_0000101_???: BMUControlsD = `BMUCTRLW'b001_0010;    // ZBC instruction
       default:                 BMUControlsD = {Funct3D, {4'b0}};      // not B instruction or shift
     endcase
 
