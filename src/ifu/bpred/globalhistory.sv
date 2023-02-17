@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module global #(parameter k = 10) (
+module globalhistory #(parameter k = 10) (
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
