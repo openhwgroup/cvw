@@ -101,3 +101,6 @@ sim/branch.log
 /fpga/generator/sim/syn-funcsim.v
 external
 sim/results
+tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/src/*.S
+tests/wally-riscv-arch-test/riscv-test-suite/rv*i_m/I/Makefrag
+
