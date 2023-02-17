@@ -69,7 +69,7 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
 			      .A(addr), .D(din), 
 			      .BWEB(~BitWriteMask), .Q(dout));
 
-  end if (`USE_SRAM == 1 && WIDTH == 128 && DEPTH == 32) begin
+  end else if (`USE_SRAM == 1 && WIDTH == 128 && DEPTH == 32) begin
      genvar index;
      // 64 x 128-bit SRAM
      logic [WIDTH-1:0] BitWriteMask;
