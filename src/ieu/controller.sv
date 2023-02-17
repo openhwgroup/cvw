@@ -46,6 +46,7 @@ module controller(
   output logic [2:0]  ALUControlE,             // ALU operation to perform
   output logic 	      ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
+  output logic [2:0]  ALUSelectE,              // ALU mux select signal
   output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
   output logic [6:0]  Funct7E,                 // Instruction's funct7 field
@@ -90,6 +91,7 @@ module controller(
   logic		     BranchD, BranchE;               // Branch instruction
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic [2:0]  ALUControlD;                    // Determines ALU operation
+  logic [2:0]  ALUSelectD;                     // ALU mux select signal
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
   logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
   logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
@@ -102,7 +104,7 @@ module controller(
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
-  logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
+  logic        subD, sraD, sltD, sltuD, bextD; // Indicates if is one of these instructions
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -195,8 +197,17 @@ module controller(
   assign sltuD = (Funct3D == 3'b011);
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD); // TRUE for R-type subtracts and sra, slt, sltu
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & bextD)); // TRUE for R-type subtracts and sra, slt, sltu
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
+
+  if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .bextD, .StallE, .FlushE, .Funct7E, .ALUSelectE);
+  end else begin: bitmanipi
+    assign ALUSelectD = Funct3D;
+    assign ALUSelectE = Funct3E;
+    assign bextD = 1'b0;
+    assign Funct7E = 7'b0;
+  end
 
   // Fences
   // Ordinary fence is presently a nop
@@ -239,9 +250,6 @@ module controller(
                          {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE},
                          {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM});
   
-  // BMU control register
-  flopenrc#(7) controlregBMU(clk, reset, FlushM, ~StallM, {Funct7D}, {Funct7E});
-
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
                          {RegWriteM, ResultSrcM, IntDivM},
