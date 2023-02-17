@@ -72,6 +72,8 @@ if {$tech == "tsmc28"} {
     lappend target_library $memory/ts3n28hpcpa128x64m8m_130a/NLDM/ts3n28hpcpa128x64m8m_tt0p9v25c.db
     lappend target_library $memory/ts1n28hpcpsvtb64x128m4sw_180a/NLDM/ts1n28hpcpsvtb64x128m4sw_tt0p9v25c.db
     lappend target_library $memory/ts1n28hpcpsvtb64x44m4sw_180a/NLDM/ts1n28hpcpsvtb64x44m4sw_tt0p9v25c.db
+    lappend target_library $memory/tsdn28hpcpa1024x68m4mw_130a/NLDM/tsdn28hpcpa1024x68m4mw_tt0p9v25c.db
+    lappend target_library $memory/tsdn28hpcpa64x32m4mw_130a/NLDM/tsdn28hpcpa64x32m4mw_tt0p9v25c.db
 }
 
 # Set up User Information

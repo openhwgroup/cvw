@@ -38,10 +38,10 @@ module rom1p1r #(parameter ADDR_WIDTH = 8,
 
    // Core Memory
    logic [DATA_WIDTH-1:0] 	 ROM [(2**ADDR_WIDTH)-1:0];
-   if (`USE_SRAM == 1 && DATA_WIDTH == 64) begin
+   if ((`USE_SRAM == 1) & (DATA_WIDTH == 64)) begin
       rom1p1r_128x64 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));
 
-   end if (`USE_SRAM == 1 && DATA_WIDTH == 32) begin
+   end if ((`USE_SRAM == 1) & (DATA_WIDTH == 32)) begin
       rom1p1r_128x32 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));      
 
    end else begin
