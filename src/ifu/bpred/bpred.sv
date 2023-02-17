@@ -101,7 +101,7 @@ module bpred (
 
   end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
     globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
