@@ -222,7 +222,13 @@ module bpred (
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
+  //assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
   assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
+
+  logic BPPredWrongEAlt;
+  logic NotMatch;
+  assign BPPredWrongEAlt = PredictionPCWrongE & InstrValidE & InstrValidD; // this does not work for cubic benchmark
+  assign NotMatch = BPPredWrongE != BPPredWrongEAlt;
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.
