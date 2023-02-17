@@ -32,7 +32,7 @@
 module shifter (
   input  logic [`XLEN-1:0]     A,                           // Source
   input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
-  input  logic                 Right, Arith, W64, Rotate,    // Shift right, arithmetic, RV64 W-type shift
+  input  logic                 Right, Arith, W64, Rotate,   // Shift right, arithmetic, RV64 W-type shift
   output logic [`XLEN-1:0]     Y);                          // Shifted result
 
   logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
