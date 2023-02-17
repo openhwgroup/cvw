@@ -33,7 +33,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,  // ALU mux select signal
-  input  logic [3:0]       BSelect,    // One-Hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [3:0]       BSelect,    // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [6:0]       Funct7,     // Funct7 from execute stage (we only need this for b instructions and should be optimized out later)
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   output logic [WIDTH-1:0] Result,     // ALU result
