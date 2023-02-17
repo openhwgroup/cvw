@@ -56,16 +56,6 @@ if { [shell_is_in_topographical_mode] } {
     echo "In Topographical Mode...processing\n"
     create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
         -mw_reference_library $mw_reference_library $outputDir/$MY_LIB_NAME
-#    if {[file isdirectory $MY_LIB_NAME]} {
-        #echo "MW directory already here, deleting/reading."
-        #[exec rm -rf $my_toplevel]
-#        create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
-#            -mw_reference_library $mw_reference_library $MY_LIB_NAME
-#    } else {
-#        create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
-#            -mw_reference_library $mw_reference_library $MY_LIB_NAME
-#    }
-
     # Open MW
     open_mw_lib $outputDir/$MY_LIB_NAME
     
@@ -74,10 +64,6 @@ if { [shell_is_in_topographical_mode] } {
 	-tech2itf_map $PRS_MAP_FILE
 
 } else {
-    if {[file isdirectory $MY_LIB_NAME]} {
-	    [exec rm -rf $my_toplevel]
-	echo "MW directory already here, deleting."
-    }
     echo "In normal DC mode...processing\n"
 }
 
@@ -154,7 +140,7 @@ if {$tech == "sky130"} {
     } elseif {$drive == "FLOP"} {
 	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
-} elseif {$tech == "tsmc28" || $tech="tsmc28psyn"} {
+} elseif {$tech == "tsmc28" || $tech=="tsmc28psyn"} {
     if {$drive == "INV"} {
 	set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
@@ -180,7 +166,7 @@ if {$tech == "sky130"} {
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
     }
-} elseif {$tech == "tsmc28" || $tech = "tsmc28psyn"} {
+} elseif {$tech == "tsmc28" || $tech == "tsmc28psyn"} {
     if {$drive == "INV"} {
 	set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
@@ -188,7 +174,7 @@ if {$tech == "sky130"} {
     }
 }
 
-if ($tech != "tsmc28psyn") {
+if {$tech != "tsmc28psyn"} {
     # Set the wire load model 
     set_wire_load_mode "top"
 }
