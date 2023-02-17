@@ -5,11 +5,13 @@ $(TARGET).objdump: $(TARGET) $(TARGET).S
 
 
 $(TARGET): $(TARGET).c Makefile $(TARGET).S
-	riscv64-unknown-elf-gcc -o $(TARGET) -g -O\
+	riscv64-unknown-elf-gcc -o $(TARGET) -g -O2\
 	  -march=rv64gc -mabi=lp64d -mcmodel=medany \
 	  -nostdlib -static -lm -fno-tree-loop-distribute-patterns \
 	  -T../common/test.ld -I../common \
 	  $(TARGET).c ../common/crt.S ../common/syscalls.c ./fir.S
+	  
+#  
 # Compiler flags:
 #  -o $(TARGET) defines the name of the output file
 #  -g generates debugging symbols for gdb

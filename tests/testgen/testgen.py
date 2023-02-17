@@ -3,6 +3,7 @@
 # testgen.py
 #
 # David_Harris@hmc.edu 19 January 2021
+# kbox@hmc.edu 15 Feb 2023
 #
 # Generate directed and random test vectors for RISC-V Design Validation.
 ##################################
@@ -47,6 +48,12 @@ def computeExpected(a, b, test, xlen):
     return a | b
   elif (test == "AND"):
     return a & b
+  elif (test == "SLL"):
+    return a << b%31
+  elif (test == "SRL"): 
+    return a >> b%31 
+  elif (test == "SRA"): 
+    return int(a/(2**(b%31)))
   else:
     die("bad test name ", test)
   #  exit(1)
@@ -83,7 +90,7 @@ def writeVector(a, b, storecmd, xlen):
 ##################################
 
 # change these to suite your tests
-tests = ["ADD", "SUB", "SLT", "SLTU", "XOR"]
+tests = ["ADD", "SUB", "SLT", "SLTU", "XOR", "AND", "OR", "SLL", "SRL", "SRA"] #"SLL", "SRL", "SRA"
 author = "David_Harris@hmc.edu & Katherine Parry"
 xlens = [32, 64]
 numrand = 3
@@ -103,9 +110,9 @@ for xlen in xlens:
     storecmd = "sd"
     wordsize = 8
   for test in tests:
-#    corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
-#            2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
-    corners = [0, 1, 2**(xlen)-1]
+    corners = [0, 1, 2, 0xFF, 0x624B3E976C52DD14 % 2**xlen, 2**(xlen-1)-2, 2**(xlen-1)-1, 
+            2**(xlen-1), 2**(xlen-1)+1, 0xC365DDEB9173AB42 % 2**xlen, 2**(xlen)-2, 2**(xlen)-1]
+#   corners = [0, 1, 2**(xlen)-1]
     pathname = "../wally-riscv-arch-test/riscv-test-suite/rv" + str(xlen) + "i_m/I/"
     basename = "WALLY-" + test 
     fname = pathname + "src/" + basename + ".S"

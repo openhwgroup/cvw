@@ -29,10 +29,15 @@
 
 rv64i_sc_tests = \
 	WALLY-ADD \
-    WALLY-SUB \
-    WALLY-SLT \
+    	WALLY-SUB \
+    	WALLY-SLT \
 	WALLY-SLTU \
-	WALLY-XOR 
+	WALLY-XOR \
+	WALLY-AND \
+	WALLY-OR \
+	WALLY-SLL \
+	WALLY-SRL \
+	WALLY-SRA
 
 
 rv64i_tests = $(addsuffix .elf, $(rv64i_sc_tests))

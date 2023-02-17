@@ -28,7 +28,7 @@ void matrixMult(int N, double *A, double *B, double *Y) {
 
 int main(void) {
    
-    int n = 10;
+    int n = 2;
     int N = n*n;
     double X[N];
     double Y[N];
@@ -92,10 +92,10 @@ int main(void) {
     }
 
     // verifyDouble doesn't work exaclty because of rounding, so check for almost equal
-    // Checking works for all given matrix SIZE N<=3 just change t
+    // Checking works for all given matrix SIZE N<=3 just change the name of 
     for (int i=0; i<N; i++) {
         if (n <= 3) {
-            if (fabs(Z[i] - expectedZ[n][i]) > 1e-10) {
+            if (fabs(Z[i] - Zexp2[i]) > 1e-10) {
                 return 1;
             }
         }
