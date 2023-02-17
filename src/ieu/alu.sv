@@ -68,7 +68,7 @@ module alu #(parameter WIDTH=32) (
  
   // SLT
   assign SLT = {{(WIDTH-1){1'b0}}, LT};
-  assign SLTU = {{(WIDTH-1){1'b0}}, LT};
+  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
  
   // Select appropriate ALU Result
   always_comb
