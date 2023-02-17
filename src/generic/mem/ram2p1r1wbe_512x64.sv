@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// ram1p1rwbe_64x128.sv
+// ram2p1rwbe_2048x64.sv
 //
 // Written: james.stine@okstate.edu 28 January 2023
 // Modified: 
@@ -24,18 +24,27 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram1p1rwbe_64x128( 
-  input  logic          CLK, 
-  input  logic 	        CEB, 
-  input  logic          WEB,
-  input  logic [5:0]    A, 
-  input  logic [127:0]  D,
-  input  logic [127:0]  BWEB, 
-  output logic [127:0]  Q
+module ram2p1r1wbe_2048x64( 
+  input  logic          CLKA, 
+  input  logic          CLKB, 
+  input  logic 	        CEBA, 
+  input  logic 	        CEBB, 
+  input  logic          WEBA,
+  input  logic          WEBB,
+  input  logic [8:0]    AA, 
+  input  logic [8:0]    AB, 
+  input  logic [63:0]   DA,
+  input  logic [63:0]   DB,
+  input  logic [63:0]   BWEBA, 
+  input  logic [63:0]   BWEBB, 
+  output logic [63:0]   QA,
+  output logic [63:0]   QB
 );
 
-   // replace "generic64x128RAM" with "TS1N..64X128.." module from your memory vendor
-  ts1n28hpcpsvtb64x128m4sw sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
-//  generic64x128RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
+   // replace "generic2048x64RAM" with "TSDN..2048X64.." module from your memory vendor
+  TSDN28HPCPA2048X64MMFW sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+  // generic2048x64RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+//			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
 endmodule
