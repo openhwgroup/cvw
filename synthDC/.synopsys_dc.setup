@@ -32,8 +32,8 @@ if {$tech == "sky130"} {
     set CAPTABLE $TLU/1p8m/
     set MW_REFERENCE_LIBRARY /home/jstine/MW
     set MW_TECH_FILE tcbn28hpcplusbwp30p140
-    set MAX_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_typical.tluplus
-    set MIN_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.tluplus
+    set MIN_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.tluplus
+    set MAX_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.tluplus
     set PRS_MAP_FILE $MW_REFERENCE_LIBRARY/astro_layername.map
 }
 
