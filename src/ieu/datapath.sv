@@ -15,6 +15,7 @@ module datapath (
   input  logic [2:0]       ALUControlE,             // Indicate operation ALU performs
   input  logic             ALUSrcAE, ALUSrcBE,      // ALU operands
   input  logic             ALUResultSrcE,           // Selects result to pass on to Memory stage
+  input  logic [2:0]       ALUSelectE,              // ALU mux select signal
   input  logic             JumpE,                   // Is a jump (j) instruction
   input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
@@ -81,7 +82,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct7E, Funct3E, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUSelectE, Funct7E, Funct3E, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
