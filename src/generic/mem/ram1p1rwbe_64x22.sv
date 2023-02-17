@@ -37,6 +37,6 @@ module ram1p1rwbe_64x22(
    // replace "generic64x22RAM" with "TS1N..64X22.." module from your memory vendor
    // use part of a larger RAM to avoid generating more flavors of RAM
   TS1N28HPCPSVTB64X44M4SW sramIP(.CLK, .CEB, .WEB, .A, .D(D[21:0]), .BWEB(BWEB[21:0]), .Q(Q[21:0]));
-   //generic64x22RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
+   // genericRAM #(64, 22) sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
 
 endmodule
