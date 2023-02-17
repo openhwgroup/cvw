@@ -28,34 +28,35 @@
 
 `include "wally-config.vh"
 
-module globalhistory #(parameter k = 10) (
+module global #(parameter k = 10) (
   input logic             clk,
   input logic             reset,
-  input logic             StallF, StallD, StallE, StallM,
-  input logic             FlushD, FlushE, FlushM,
-  //   input logic [`XLEN-1:0] LookUpPC,
+  input logic             StallF, StallD, StallE, StallM, StallW,
+  input logic             FlushD, FlushE, FlushM, FlushW,
   output logic [1:0]      DirPredictionF, 
   output logic            DirPredictionWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCM,
   input logic             BranchInstrE, BranchInstrM, PCSrcE
 );
 
+  logic [k-1:0]            IndexNextF, IndexE;
   logic [1:0]              DirPredictionD, DirPredictionE;
   logic [1:0]              NewDirPredictionE, NewDirPredictionM;
 
-  logic [k-1:0]            GHRF, GHRD, GHRE, GHR;
+  logic [k-1:0]            GHRF, GHRD, GHRE, GHRM, GHR;
   logic [k-1:0]            GHRNext;
   logic                    PCSrcM;
+
+  assign IndexNextF = GHR;
+  assign IndexE = GHRM;
   
-      
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
-    .ra1(GHR),
+    .ra1(IndexNextF),
     .rd1(DirPredictionF),
-    .wa2(GHRE),
-    .wd2(NewDirPredictionE),
-    .we2(BranchInstrE & ~StallM & ~FlushM),
+    .wa2(IndexE),
+    .wd2(NewDirPredictionM),
+    .we2(BranchInstrM & ~StallW & ~FlushW),
     .bwe2(1'b1));
 
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
@@ -66,7 +67,6 @@ module globalhistory #(parameter k = 10) (
 
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
 
-
   assign GHRNext = BranchInstrM ? {PCSrcM, GHR[k-1:1]} : GHR;
   flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchInstrM, GHRNext, GHR);
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
@@ -74,6 +74,7 @@ module globalhistory #(parameter k = 10) (
   flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
   flopenrc #(k) GHRDReg(clk, reset, FlushD, ~StallD, GHRF, GHRD);
   flopenrc #(k) GHREReg(clk, reset, FlushE, ~StallE, GHRD, GHRE);
+  flopenrc #(k) GHRMReg(clk, reset, FlushM, ~StallM, GHRE, GHRM);
 
 
 endmodule
