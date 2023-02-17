@@ -83,6 +83,7 @@ module ieu (
   logic       SCE;                                           // Store Conditional instruction
   logic       FWriteIntM;                                    // FPU writing to integer register file
   logic       IntDivW;                                       // Integer divide instruction
+  logic [3:0] BSelectE;                                         // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
 
   // Forwarding signals
   logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E;                        // Source and destination registers
@@ -96,7 +97,7 @@ module ieu (
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
-    .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
+    .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .BSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .Funct7E, .IntDivE, .MDUE, .W64E, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
@@ -105,7 +106,7 @@ module ieu (
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
     .ALUControlE, .Funct3E, .Funct7E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
-    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE,
+    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             
