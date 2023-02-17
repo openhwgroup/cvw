@@ -46,6 +46,6 @@ module ram2p1r1wbe_64x32(
 	 //		   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
    //generic64x32RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
 	//		   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
-  tsdn28hpcpa64x32m4mw_130a sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+  TSDN28HPCPA64X32M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
 			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 endmodule
