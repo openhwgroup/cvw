@@ -90,10 +90,10 @@ module alu #(parameter WIDTH=32) (
         3'b001: FullResult = Shift;                         // sll, sra, or srl
         3'b010: FullResult = SLT;                           // slt
         3'b011: FullResult = SLTU;                          // sltu
-        3'b100: FullResult = A ^ B;                         // xor, binv
-        3'b110: FullResult = A | B;                         // or, bset
-        3'b111: FullResult = A & B;                         // and, bclr
-        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & B)}};// bext
+        3'b100: FullResult = A ^ CondMaskB;                 // xor, binv
+        3'b110: FullResult = A | CondMaskB;                 // or, bset
+        3'b111: FullResult = A & CondInvB;                  // and, bclr
+        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
       endcase
   end
   else begin
