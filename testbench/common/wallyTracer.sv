@@ -35,12 +35,10 @@ module wallyTracer(rvviTrace rvvi);
   
   // wally specific signals
   logic 						 reset;
-
   logic 						 clk;
   logic                          InstrValidD, InstrValidE;
   logic                          StallF, StallD;
   logic                          STATUS_SXL, STATUS_UXL;
-
   logic [`XLEN-1:0] 			 PCNextF, PCF, PCD, PCE, PCM, PCW;
   logic [`XLEN-1:0] 			 InstrRawD, InstrRawE, InstrRawM, InstrRawW;
   logic 						 InstrValidM, InstrValidW;
