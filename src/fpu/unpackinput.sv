@@ -40,13 +40,14 @@ module unpackinput (
   output logic                    Inf,        // is the number infinity
   output logic                    ExpNonZero, // is the exponent not zero
   output logic                    FracZero,   // is the fraction zero
-  output logic                    ExpMax,      // does In have the maximum exponent (NaN or Inf)
-  output logic                    Subnorm     // is the number subnormal
+  output logic                    ExpMax,     // does In have the maximum exponent (NaN or Inf)
+  output logic                    Subnorm,    // is the number subnormal
+  output logic [`FLEN-1:0]        PostBox     // Number reboxed correctly as a NaN
 );
 
   logic [`NF-1:0] Frac;       // Fraction of XYZ
-  logic           BadNaNBox;  // is the NaN boxing bad
-  
+  logic           BadNaNBox;  // incorrectly NaN Boxed
+
   if (`FPSIZES == 1) begin        // if there is only one floating point format supported
       assign BadNaNBox = 0;
       assign Sgn = In[`FLEN-1];  // sign bit
@@ -54,6 +55,7 @@ module unpackinput (
       assign ExpNonZero = |In[`FLEN-2:`NF];  // is the exponent non-zero
       assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
       assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
+      assign PostBox = In;
   
   end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
       // largest format | smaller format
@@ -75,6 +77,11 @@ module unpackinput (
       //      double and half
 
       assign BadNaNBox = ~(Fmt|(&In[`FLEN-1:`LEN1])); // Check NaN boxing
+      always_comb
+        if (BadNaNBox) begin
+          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
+        end else 
+          PostBox = In;
 
       // choose sign bit depending on format - 1=larger precsion 0=smaller precision
       assign Sgn = Fmt ? In[`FLEN-1] : In[`LEN1-1];
@@ -127,6 +134,17 @@ module unpackinput (
               `FMT2: BadNaNBox = ~&In[`FLEN-1:`LEN2];
               default: BadNaNBox = 1'bx;
           endcase
+
+      always_comb
+        if (BadNaNBox) begin
+          case (Fmt)
+            `FMT: PostBox = In;
+            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
+            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, In[`LEN2-`NE2-3:0]};
+            default: PostBox = 'x;
+          endcase
+        end else 
+          PostBox = In;
 
       // extract the sign bit
       always_comb
@@ -199,6 +217,17 @@ module unpackinput (
               2'b00: BadNaNBox = ~&In[`Q_LEN-1:`S_LEN];
               2'b10: BadNaNBox = ~&In[`Q_LEN-1:`H_LEN];
           endcase
+
+      always_comb
+        if (BadNaNBox) begin
+          case (Fmt)
+            2'b11: PostBox = In;
+            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, In[`D_LEN-`D_NE-3:0]};
+            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, In[`S_LEN-`S_NE-3:0]};
+            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, In[`H_LEN-`H_NE-3:0]};
+          endcase
+        end else 
+          PostBox = In;
 
       // extract sign bit
       always_comb
