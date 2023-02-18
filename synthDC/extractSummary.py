@@ -85,7 +85,7 @@ def freqPlot(tech, width, config):
     freqsL, delaysL, areasL = ([[], []] for i in range(3))
     for oneSynth in allSynths:
         if (width == oneSynth.width) & (config == oneSynth.config) & (tech == oneSynth.tech) & ('orig' == oneSynth.mod):
-            ind = (1000/oneSynth.delay < oneSynth.freq) # when delay is within target clock period
+            ind = (1000/oneSynth.delay < (0.95*oneSynth.freq)) # when delay is within target clock period
             freqsL[ind] += [oneSynth.freq]
             delaysL[ind] += [oneSynth.delay]
             areasL[ind] += [oneSynth.area]
@@ -103,7 +103,7 @@ def freqPlot(tech, width, config):
         freqs = freqsL[ind]
         freqs, delays, areas = noOutliers(median, freqs, delays, areas)
 
-        c = 'blue' if ind else 'green'
+        c = 'blue' if ind else 'gray'
         targs = [1000/f for f in freqs]
 
         ax1.scatter(targs, delays, color=c)
@@ -113,7 +113,7 @@ def freqPlot(tech, width, config):
     delays = list(flatten(delaysL))
     areas = list(flatten(areasL))
 
-    legend_elements = [lines.Line2D([0], [0], color='green', ls='', marker='o', label='timing achieved'),
+    legend_elements = [lines.Line2D([0], [0], color='gray', ls='', marker='o', label='timing achieved'),
                        lines.Line2D([0], [0], color='blue', ls='', marker='o', label='slack violated')]
 
     ax1.legend(handles=legend_elements)
@@ -246,8 +246,8 @@ if __name__ == '__main__':
 
     TechSpec = namedtuple("TechSpec", "color shape targfreq fo4 add32area add32lpower add32denergy")
     techdict = {}
-    techdict['sky90'] = TechSpec('green', 'o', args.skyfreq, 43.2e-3, 1440.600027, 714.057, 0.658023)
-    techdict['tsmc28'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
+    techdict['sky90'] = TechSpec('gray', 'o', args.skyfreq, 43.2e-3, 1440.600027, 714.057, 0.658023)
+    techdict['tsmc28psyn'] = TechSpec('blue', 's', args.tsmcfreq, 12.2e-3, 209.286002, 1060.0, .081533)
 
     current_directory = os.getcwd()
     final_directory = os.path.join(current_directory, 'wallyplots')
@@ -256,10 +256,10 @@ if __name__ == '__main__':
 
     synthsintocsv()
     synthsfromcsv('Summary.csv')
-    freqPlot('tsmc28', 'rv32', 'e')
+    freqPlot('tsmc28psyn', 'rv32', 'e')
     freqPlot('sky90', 'rv32', 'e')
     plotFeatures('sky90', 'rv64', 'gc')
-    plotFeatures('tsmc28', 'rv64', 'gc')
+    plotFeatures('tsmc28psyn', 'rv64', 'gc')
     plotConfigs('sky90', mod='orig')
-    plotConfigs('tsmc28', mod='orig')
+    plotConfigs('tsmc28psyn', mod='orig')
     normAreaDelay(mod='orig')

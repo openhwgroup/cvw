@@ -20,7 +20,8 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
-export USESRAM ?= 1
+export USESRAM ?= 0
+export USETOPO ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -84,6 +85,14 @@ endif
 endif
 	
 # adjust config if synthesizing with any modifications
+# This code is subtle with ifneq.  It successively turns off a larger
+# set of features in order of cycle time limiting.
+# When mod = orig, all features are ON
+# When mod = PMP0, the number of PMP entries is set to 0
+# when mod = noPriv, the privileged unit and PMP are disabled
+# when mod = noFPU, the FPU, privileged unit, and PMP are disabled
+# when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
+
 ifneq ($(MOD), orig)
 	# PMP 0
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
