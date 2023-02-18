@@ -93,7 +93,11 @@ module bmuctrl(
       17'b0110011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh1add
       17'b0110011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh2add
       17'b0110011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh3add
-      17'b0110011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh3add
+      17'b0111011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh1add.uw
+      17'b0111011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh2add.uw
+      17'b0111011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh3add.uw
+      17'b0111011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000;  // add.uw
+      17'b0011011_000010?_001:   BMUControlsD = `BMUCTRLW'b001_1000;  // slli.uw
       default:                   BMUControlsD = {Funct3D, {4'b0}};    // not B instruction or shift
     endcase
 
