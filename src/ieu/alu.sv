@@ -75,6 +75,10 @@ module alu #(parameter WIDTH=32) (
       endcase
   end else assign CondShiftA = A;
 
+  if (`ZBB_SUPPORTED) begin: rotatelogic
+    assign Rotate = BSelect[2] & (ALUSelect == 3'b001); //NOTE: Do we want to move this logic into the Decode Stage?
+  end else assign Rotate = 1'b0;
+
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
@@ -83,7 +87,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(1'b0));
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(Rotate));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
