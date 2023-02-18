@@ -40,8 +40,11 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult, CondMaskB;  // Intermediate results
-  logic [WIDTH-1:0] MaskB;
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult; // Intermediate results
+  logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
+  logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
+  logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
+  logic [WIDTH-1:0] CondZextA;                                                              // Result of Zero Extend A select mux
   logic             Carry, Neg;                                                             // Flags: carry out, negative
   logic             LT, LTU;                                                                // Less than, Less than unsigned
   logic             W64;                                                                    // RV64 W-type instruction
@@ -56,12 +59,28 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (BSelect[0]) ? MaskB : B;
   end else assign CondMaskB = B;
 
+  if (`ZBA_SUPPORTED) begin: zbamuxes
+    // Zero Extend Mux
+    if (WIDTH == 64) begin
+      assign CondZextA = (BSelect[3] & (W64 | Funct3[0])) ? {{(32){1'b0}}, A[31:0]} : A; //NOTE: do we move this mux select logic into the Decode Stage?
+    end else assign CondZextA = A;
+
+    // Pre-Shift Mux
+    always_comb
+      case (Funct3[2:1] & {2{BSelect[3]}})
+        2'b00: CondShiftA = CondZextA;
+        2'b01: CondShiftA = {CondZextA[WIDTH-2:0],{1'b0}};   // sh1add
+        2'b10: CondShiftA = {CondZextA[WIDTH-3:0],{2'b00}};  // sh2add
+        2'b11: CondShiftA = {CondZextA[WIDTH-4:0],{3'b000}}; // sh3add
+      endcase
+  end else assign CondShiftA = A;
+
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
   // Addition
   assign CondInvB = SubArith ? ~CondMaskB : CondMaskB;
-  assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
+  assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
   shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(1'b0));
@@ -120,13 +139,14 @@ module alu #(parameter WIDTH=32) (
     zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
   
-  //NOTE: Unoptimized, eventually want to look at ZBCop/ZBSop/ZBAop/ZBBop from decoder to select from a B instruction or the ALU
+  // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED) begin : zbdecoder
     always_comb
       case (BSelect)
       //ZBA_ZBB_ZBC_ZBS
         4'b0001: Result = FullResult;
         4'b0010: Result = ZBCResult;
+        4'b1000: Result = FullResult; // NOTE: We don't use ALUResult because ZBA instructions don't sign extend the MSB of the right-hand word.
         default: Result = ALUResult;
       endcase
   end else assign Result = ALUResult;
