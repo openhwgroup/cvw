@@ -39,7 +39,8 @@ module unpack (
   output logic                    XSubnorm,             // is X subnormal
   output logic                    XZero, YZero, ZZero,  // is XYZ zero
   output logic                    XInf, YInf, ZInf,     // is XYZ infinity
-  output logic                    XExpMax               // does X have the maximum exponent (NaN or Inf)
+  output logic                    XExpMax,              // does X have the maximum exponent (NaN or Inf)
+  output logic [`FLEN-1:0]        XPostBox              // X after being properly NaN-boxed
 );
 
   logic XExpNonZero, YExpNonZero, ZExpNonZero;          // is the exponent of XYZ non-zero
@@ -48,14 +49,17 @@ module unpack (
   
   unpackinput unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn),
                           .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
-                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), .Subnorm(XSubnorm));
+                          .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), 
+                          .Subnorm(XSubnorm), .PostBox(XPostBox));
 
   unpackinput unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn),
                           .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
-                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero), .Subnorm());
+                          .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero), 
+                          .Subnorm(), .PostBox());
 
   unpackinput unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn),
                           .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
-                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), .Subnorm());
+                          .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), 
+                          .Subnorm(), .PostBox());
  
  endmodule
