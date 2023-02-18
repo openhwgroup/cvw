@@ -152,7 +152,7 @@ module controller(
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
-      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (BSelectD[1] | BSelectD[0]))
+      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | ((`ZBC_SUPPORTED & BSelectD[1]) | (`ZBS_SUPPORTED & BSelectD[0]) | (`ZBA_SUPPORTED & BSelectD[3])))
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
