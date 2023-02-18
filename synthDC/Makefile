@@ -20,7 +20,7 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
-export USESRAM ?= 1
+export USESRAM ?= 0
 export USETOPO ?= 0
 
 time := $(shell date +%F-%H-%M)
