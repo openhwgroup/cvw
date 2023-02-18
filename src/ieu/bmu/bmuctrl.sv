@@ -98,6 +98,15 @@ module bmuctrl(
       17'b0111011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000;  // sh3add.uw
       17'b0111011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000;  // add.uw
       17'b0011011_000010?_001:   BMUControlsD = `BMUCTRLW'b001_1000;  // slli.uw
+      17'b0110011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100;  // rol
+      17'b0111011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100;  // rolw
+      17'b0110011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100;  // ror
+      17'b0111011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100;  // rorw
+      17'b0010011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100;  // rori (rv32)
+      17'b0010011_0110001_101: if (`XLEN == 64) 
+                                 BMUControlsD = `BMUCTRLW'b001_0100;  // rori (rv64)
+                               else
+                                 BMUControlsD = `BMUCTRLW'b000_0000; //illegal instruction
       default:                   BMUControlsD = {Funct3D, {4'b0}};    // not B instruction or shift
     endcase
 
