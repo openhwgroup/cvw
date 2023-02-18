@@ -32,7 +32,8 @@ module rom1p1r_128x32(
 );
 
    // replace "generic128x32ROM" with "TS3N..128X32.." module from your memory vendor
-   generic64x128ROM sramIP (.CLK, .CEB, .A, .Q);
+   // generic128x32ROM sramIP (.CLK, .CEB, .A, .Q);
+   TS3N28HPCPA128X32M8M sramIP (.CLK, .CEB, .A, .Q, .RTSEL(2'b01), .PTSEL(2'b01), .TRB(2'b01));
 
 endmodule 
 
