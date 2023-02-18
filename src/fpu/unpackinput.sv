@@ -85,7 +85,7 @@ module unpackinput (
           PostBox = In;
 
       // choose sign bit depending on format - 1=larger precsion 0=smaller precision
-      assign Sgn = Fmt ? In[`FLEN-1] : In[`LEN1-1];
+      assign Sgn = Fmt ? In[`FLEN-1] : (BadNaNBox ? 0 : In[`LEN1-1]); // improperly boxed NaNs are treated as positive
 
       // extract the fraction, add trailing zeroes to the mantissa if nessisary
       assign Frac = Fmt ? In[`NF-1:0] : {In[`NF1-1:0], (`NF-`NF1)'(0)};
@@ -151,6 +151,8 @@ module unpackinput (
 
       // extract the sign bit
       always_comb
+        if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
+        else
           case (Fmt)
               `FMT:  Sgn = In[`FLEN-1];
               `FMT1: Sgn = In[`LEN1-1];
@@ -158,7 +160,7 @@ module unpackinput (
               default: Sgn = 1'bx;
           endcase
 
-      // extract the fraction
+       // extract the fraction
       always_comb
           case (Fmt)
               `FMT: Frac = In[`NF-1:0];
@@ -237,6 +239,8 @@ module unpackinput (
 
       // extract sign bit
       always_comb
+        if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
+        else
           case (Fmt)
               2'b11: Sgn = In[`Q_LEN-1];
               2'b01: Sgn = In[`D_LEN-1];
