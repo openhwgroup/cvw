@@ -105,6 +105,7 @@ module controller(
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
+  logic        bclrD, bextD;                   // Indicates if is one of these instructions
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -159,7 +160,7 @@ module controller(
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-      7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000) & `XLEN == 64)
+      7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (`ZBA_SUPPORTED & BSelectD[3])) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
                   else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
@@ -193,12 +194,25 @@ module controller(
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
 
+  if (`ZBA_SUPPORTED) begin
+    // ALU Decoding is more comprehensive when ZBA is supported. Only conflict with Funct3 is with slt instructionsb
+    assign sltD = (Funct3D == 3'b010 & (~BSelectD[3]));
+  end else begin
+    assign sltD = (Funct3D == 3'b010);
+  end
+
+  if (`ZBS_SUPPORTED) begin
+    assign bclrD = (ALUSelectD == 3'b111 & BSelectD[0]);
+    assign bextD = (ALUSelectD == 3'b101 & BSelectD[0]);
+  end else begin 
+    assign bclrD = 1'b0;
+    assign bextD = 1'b0;
+  end
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
-  assign sltD = (Funct3D == 3'b010);
-  assign sltuD = (Funct3D == 3'b011);
+  assign sltuD = (Funct3D == 3'b011); 
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & BSelectD[0] && (ALUSelectD == 3'b101 | ALUSelectD == 3'b111))); // TRUE for R-type subtracts and sra, slt, sltu, bext
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD))); // TRUE for R-type subtracts and sra, slt, sltu
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
@@ -206,7 +220,7 @@ module controller(
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
-    assign BSelectE = 4'b000;
+    assign BSelectE = 4'b0000;
   end
 
   // Fences
