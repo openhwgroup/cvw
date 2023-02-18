@@ -33,7 +33,7 @@
 
 `include "wally-config.vh"
 
-module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
+module ram2p1r1wbe #(parameter DEPTH=1024, WIDTH=68) (
   input  logic                     clk,
   input  logic                     ce1, ce2,
   input  logic [$clog2(DEPTH)-1:0] ra1,
@@ -52,7 +52,7 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
   // TRUE Smem macro
   // ***************************************************************************
 
-   if (`USE_SRAM == 1 & WIDTH == 68 & DEPTH == 1024) begin
+   if ((`USE_SRAM == 1) & (WIDTH == 68) & (DEPTH == 1024)) begin
    
       ram2p1r1wbe_1024x68 memory1(.CLKA(clk), .CLKB(clk), 
 				  .CEBA(~ce1), .CEBB(~ce2),
@@ -64,7 +64,7 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
 				  .QA(rd1),
 				  .QB());
 
-   end else if (`USE_SRAM == 1 & WIDTH == 36 & DEPTH == 1024) begin
+   end else if ((`USE_SRAM == 1) & (WIDTH == 36) & (DEPTH == 1024)) begin
    
       ram2p1r1wbe_1024x36 memory1(.CLKA(clk), .CLKB(clk), 
 				  .CEBA(~ce1), .CEBB(~ce2),
@@ -76,7 +76,7 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
 				  .QA(rd1),
 				  .QB());      
 
-   end else if (`USE_SRAM == 1 & WIDTH == 2 & DEPTH == 1024) begin
+   end else if ((`USE_SRAM == 1) & (WIDTH == 2) & (DEPTH == 1024)) begin
 
       logic [SRAMWIDTH-1:0]     SRAMReadData;      
       logic [SRAMWIDTH-1:0]     SRAMWriteData;      
@@ -113,9 +113,14 @@ module ram2p1r1wbe #(parameter DEPTH=128, WIDTH=256) (
       // ***************************************************************************
       integer i;
       
-      // Read
+    // Read
+    logic [$clog2(DEPTH)-1:0] ra1d;
+    flopen #($clog2(DEPTH)) adrreg(clk, ce1, ra1, ra1d);
+    assign rd1 = mem[ra1d];
+
+/*      // Read
       always_ff @(posedge clk) 
-	if(ce1) rd1 <= #1 mem[ra1];
+	if(ce1) rd1 <= #1 mem[ra1]; */
    
    // Write divided into part for bytes and part for extra msbs
    if(WIDTH >= 8) 
