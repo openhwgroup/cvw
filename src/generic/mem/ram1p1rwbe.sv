@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ram1p1rwbe #(parameter DEPTH=64, WIDTH=128) (
+module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -69,7 +69,7 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=128) (
 			      .A(addr), .D(din), 
 			      .BWEB(~BitWriteMask), .Q(dout));
 
-  end else if (`USE_SRAM == 1 & WIDTH == 22  & DEPTH == 32) begin // RV32 cache tag
+  end else if ((`USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
      genvar index;
      // 64 x 22-bit SRAM
      logic [WIDTH-1:0] BitWriteMask;
@@ -86,9 +86,15 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=128) (
     integer i;
 
     // Read
-    always_ff @(posedge clk) 
-      if(ce) dout <= #1 RAM[addr];
- 
+    logic [$clog2(DEPTH)-1:0] addrd;
+    flopen #($clog2(DEPTH)) adrreg(clk, ce, addr, addrd);
+    assign dout = RAM[addrd];
+
+    /*      // Read
+      always_ff @(posedge clk) 
+	if(ce) dout <= #1 mem[addr]; */
+
+
     // Write divided into part for bytes and part for extra msbs
 	// Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
 	// Therefore these always blocks use the older always @(posedge clk) 
