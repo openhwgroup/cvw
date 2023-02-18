@@ -79,7 +79,8 @@ module unpackinput (
       assign BadNaNBox = ~(Fmt|(&In[`FLEN-1:`LEN1])); // Check NaN boxing
       always_comb
         if (BadNaNBox) begin
-          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
+//          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
+          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, {(`LEN1-`NE1-2){1'b0}}};
         end else 
           PostBox = In;
 
@@ -139,8 +140,10 @@ module unpackinput (
         if (BadNaNBox) begin
           case (Fmt)
             `FMT: PostBox = In;
-            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
-            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, In[`LEN2-`NE2-3:0]};
+//            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
+//            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, In[`LEN2-`NE2-3:0]};
+            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, {(`LEN1-`NE1-2){1'b0}}};
+            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, {(`LEN2-`NE2-2){1'b0}}};
             default: PostBox = 'x;
           endcase
         end else 
@@ -222,9 +225,12 @@ module unpackinput (
         if (BadNaNBox) begin
           case (Fmt)
             2'b11: PostBox = In;
-            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, In[`D_LEN-`D_NE-3:0]};
-            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, In[`S_LEN-`S_NE-3:0]};
-            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, In[`H_LEN-`H_NE-3:0]};
+//            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, In[`D_LEN-`D_NE-3:0]};
+//            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, In[`S_LEN-`S_NE-3:0]};
+//            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, In[`H_LEN-`H_NE-3:0]};
+            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, {(`D_LEN-`D_NE-2){1'b0}}};
+            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, {(`S_LEN-`S_NE-2){1'b0}}};
+            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, {(`H_LEN-`H_NE-2){1'b0}}};
           endcase
         end else 
           PostBox = In;
