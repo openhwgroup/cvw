@@ -49,6 +49,24 @@ set report_default_significant_digits 6
 set verilogout_show_unconnected_pins "true"
 set vhdlout_show_unconnected_pins "true"
 
+#  Set up MW List
+set MY_LIB_NAME $my_toplevel
+# Create MW
+if { [shell_is_in_topographical_mode] } {
+    echo "In Topographical Mode...processing\n"
+    create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
+        -mw_reference_library $mw_reference_library $outputDir/$MY_LIB_NAME
+    # Open MW
+    open_mw_lib $outputDir/$MY_LIB_NAME
+    
+    # TLU+
+    set_tlu_plus_files -max_tluplus $MAX_TLU_FILE -min_tluplus $MIN_TLU_FILE \
+	-tech2itf_map $PRS_MAP_FILE
+
+} else {
+    echo "In normal DC mode...processing\n"
+}
+
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
 #
@@ -122,7 +140,7 @@ if {$tech == "sky130"} {
     } elseif {$drive == "FLOP"} {
 	set_driving_cell  -lib_cell scc9gena_dfxbp_1 -pin Q $all_in_ex_clk
     }
-} elseif {$tech == "tsmc28"} {
+} elseif {$tech == "tsmc28" || $tech=="tsmc28psyn"} {
     if {$drive == "INV"} {
 	set_driving_cell -lib_cell INVD1BWP30P140 -pin ZN $all_in_ex_clk
     } elseif {$drive == "FLOP"} {
@@ -148,7 +166,7 @@ if {$tech == "sky130"} {
     } elseif {$drive == "FLOP"} {
         set_load [expr [load_of scc9gena_tt_1.2v_25C/scc9gena_dfxbp_1/D] * 1] [all_outputs]
     }
-} elseif {$tech == "tsmc28"} {
+} elseif {$tech == "tsmc28" || $tech == "tsmc28psyn"} {
     if {$drive == "INV"} {
 	set_load [expr [load_of tcbn28hpcplusbwp30p140tt0p9v25c/INVD4BWP30P140/I] * 1] [all_outputs]
     } elseif {$drive == "FLOP"} {
@@ -156,8 +174,10 @@ if {$tech == "sky130"} {
     }
 }
 
-# Set the wire load model 
-set_wire_load_mode "top"
+if {$tech != "tsmc28psyn"} {
+    # Set the wire load model 
+    set_wire_load_mode "top"
+}
 
 # Set switching activities
 # default activity factors are 1 for clocks, 0.1 for others
