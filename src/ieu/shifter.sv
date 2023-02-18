@@ -36,7 +36,7 @@ module shifter (
   output logic [`XLEN-1:0]     Y);                          // Shifted result
 
   logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
-  logic [`LOG_XLEN-1:0]    amttrunc, offset;                // Shift amount adjusted for RV64, right-shift amount
+  logic [`LOG_XLEN-1:0]    amttrunc, offset, CondOffsetTrunc;                // Shift amount adjusted for RV64, right-shift amount
 
   // Handle left and right shifts with a funnel shifter.
   // For RV32, only 32-bit shifts are needed.   
@@ -129,9 +129,11 @@ module shifter (
 
   // Opposite offset for right shifts
   assign offset = Right ? amttrunc : ~amttrunc;
+  if (`XLEN == 64) assign CondOffsetTrunc = (W64 & Rotate) ? {{1'b0}, offset[4:0]} : offset;
+  else assign CondOffsetTrunc = offset;
   
   // Funnel operation
-  assign zshift = z >> offset;
+  assign zshift = z >> CondOffsetTrunc;
   assign Y = zshift[`XLEN-1:0];    
 endmodule
 
