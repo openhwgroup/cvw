@@ -39,7 +39,6 @@ module bmuctrl(
   output logic [3:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
-  output logic [6:0]  Funct7E,                 // Instruction's funct7 field (note: eventually want to get rid of this)
   output logic [2:0]  ALUSelectE,
   output logic [3:0]  BSelectE                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
 );
@@ -105,5 +104,5 @@ module bmuctrl(
    
 
   // BMU Execute stage pipieline control register
-  flopenrc#(14) controlregBMU(clk, reset, FlushE, ~StallE, {Funct7D, ALUSelectD, BSelectD}, {Funct7E, ALUSelectE, BSelectE});
+  flopenrc#(7) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD}, {ALUSelectE, BSelectE});
 endmodule

@@ -49,7 +49,6 @@ module controller(
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
   output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
   output logic [2:0]  Funct3E,                 // Instruction's funct3 field
-  output logic [6:0]  Funct7E,                 // Instruction's funct7 field
   output logic        IntDivE,                 // Integer divide
   output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
@@ -203,12 +202,11 @@ module controller(
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .StallE, .FlushE, .Funct7E, .ALUSelectE, .BSelectE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .StallE, .FlushE, .ALUSelectE, .BSelectE);
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
     assign BSelectE = 4'b000;
-    assign Funct7E = 7'b0;
   end
 
   // Fences
