@@ -32,6 +32,7 @@
 
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,         // Operands
+  input  logic [WIDTH-1:0] ALUResult,    // ALU Result
   input  logic             W64,          // Indicates word operation
   input  logic [2:0]       ZBBSelect,    // Indicates word operation
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
@@ -57,6 +58,7 @@ module zbb #(parameter WIDTH=32) (
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
       case (ZBBSelect)
+      3'b111: ZBBResult = ALUResult;
       /*15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;

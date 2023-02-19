@@ -145,7 +145,7 @@ module alu #(parameter WIDTH=32) (
   end else assign ZBCResult = 0;
 
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(A), .B(B), .W64(W64), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+    zbb #(WIDTH) ZBB(.A(A), .B(B), .ALUResult(ALUResult), .W64(W64), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
   end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
@@ -156,6 +156,7 @@ module alu #(parameter WIDTH=32) (
         4'b0001: Result = FullResult;
         4'b0010: Result = ZBCResult;
         4'b1000: Result = FullResult; // NOTE: We don't use ALUResult because ZBA instructions don't sign extend the MSB of the right-hand word.
+        4'b0100: Result = ZBBResult;
         default: Result = ALUResult;
       endcase
   end else assign Result = ALUResult;
