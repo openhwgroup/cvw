@@ -64,7 +64,8 @@ module bmuctrl(
   // Main Instruction Decoder
   always_comb
     casez({OpD, Funct7D, Funct3D})
-    // ALUSelect_BSelect
+    // ALUSelect_BSelect_ZBBSelect
+      // ZBS
       17'b0010011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclri
       17'b0010011_0100101_001: if (`XLEN == 64)
                                  BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclri (rv64)
@@ -90,7 +91,9 @@ module bmuctrl(
       17'b0110011_0110100_001:   BMUControlsD = `BMUCTRLW'b100_0001_000;  // binv
       17'b0110011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000;  // bset
       17'b0?1?011_0?0000?_?01:   BMUControlsD = `BMUCTRLW'b001_0000_000;  // sra, srai, srl, srli, sll, slli
+      // ZBC
       17'b0110011_0000101_0??:   BMUControlsD = `BMUCTRLW'b000_0010_000;  // ZBC instruction
+      // ZBA
       17'b0110011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh1add
       17'b0110011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh2add
       17'b0110011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh3add
