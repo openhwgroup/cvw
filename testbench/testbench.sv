@@ -28,8 +28,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
+`define PrintHPMCounters 1
+`define BPRED_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
