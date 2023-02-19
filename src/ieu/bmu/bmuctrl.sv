@@ -107,6 +107,11 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b001_0100;  // rori (rv64)
                                else
                                  BMUControlsD = `BMUCTRLW'b000_0000; //illegal instruction
+      17'b0011011_0110000_101: if (`XLEN == 64) 
+                                 BMUControlsD = `BMUCTRLW'b001_0100;  // roriw 
+                               else
+                                 BMUControlsD = `BMUCTRLW'b000_0000; //illegal instruction
+                                 
       default:                   BMUControlsD = {Funct3D, {4'b0}};    // not B instruction or shift
     endcase
 
