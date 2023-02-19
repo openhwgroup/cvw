@@ -113,8 +113,8 @@ module alu #(parameter WIDTH=32) (
         3'b001: FullResult = Shift;                         // sll, sra, or srl
         3'b010: FullResult = SLT;                           // slt
         3'b011: FullResult = SLTU;                          // sltu
-        3'b100: FullResult = A ^ CondMaskB;                 // xor, binv
-        3'b110: FullResult = A | CondMaskB;                 // or, bset
+        3'b100: FullResult = A ^ CondInvB;                  // xor, xnor, binv
+        3'b110: FullResult = A | CondInvB;                  // or, orn, bset
         3'b111: FullResult = A & CondInvB;                  // and, bclr
         3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
       endcase
