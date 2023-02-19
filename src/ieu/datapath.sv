@@ -18,6 +18,7 @@ module datapath (
   input  logic             JumpE,                   // Is a jump (j) instruction
   input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   input  logic [3:0]       BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelectE,              // ZBB mux select signal
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
   output logic [`XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
@@ -82,7 +83,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUSelectE, BSelectE, Funct3E, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 

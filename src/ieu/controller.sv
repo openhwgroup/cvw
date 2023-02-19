@@ -56,6 +56,7 @@ module controller(
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
+  output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
   output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
@@ -117,6 +118,7 @@ module controller(
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
   logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
+  logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
    
 
   // Extract fields
@@ -216,11 +218,13 @@ module controller(
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .StallE, .FlushE, .ALUSelectE, .BSelectE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE);
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
     assign BSelectE = 4'b0000;
+    assign BSelectD = 4'b0000;
+    assign ZBBSelectE = 3'b000;
   end
 
   // Fences

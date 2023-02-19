@@ -31,12 +31,14 @@
 `include "wally-config.vh"
 
 module cnt #(parameter WIDTH = 32) (
-  input  logic [WIDTH-1:0] A, B,        // Operands
+  input  logic [WIDTH-1:0] A, B,       // Operands
   input  logic W64,                    // Indicates word operation
-  output logic [WIDTH-1:0] czResult,   // count zeros result
-  output logic [WIDTH-1:0] cpopResult);// population count result
+  output logic [WIDTH-1:0] CntResult   // count result
+);
 
   //count instructions
+  logic [WIDTH-1:0] czResult;        // count zeros result
+  logic [WIDTH-1:0] cpopResult;      // population count result
   logic [WIDTH-1:0] lzcA, popcntA;
   logic [WIDTH-1:0] revA;
 
@@ -80,5 +82,7 @@ module cnt #(parameter WIDTH = 32) (
   //NOTE: Signal width mistmatch from log2(WIDTH) to WIDTH but deal with that later.
   lzc #(WIDTH) lzc(.num(lzcA), .ZeroCnt(czResult));
   popcnt #(WIDTH) popcntw(.num(popcntA), .PopCnt(cpopResult));
+
+  assign CntResult = (B[1]) ? cpopResult : czResult;
 
 endmodule

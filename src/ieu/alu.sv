@@ -34,13 +34,14 @@ module alu #(parameter WIDTH=32) (
   input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,  // ALU mux select signal
   input  logic [3:0]       BSelect,    // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelect,  // ZBB mux select signal
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   output logic [WIDTH-1:0] Result,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult; // Intermediate results
+  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,ALUResult, ZBCResult, ZBBResult; // Intermediate results
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
@@ -142,6 +143,10 @@ module alu #(parameter WIDTH=32) (
   if (`ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
+
+  if (`ZBB_SUPPORTED) begin: zbb
+    zbb #(WIDTH) ZBB(.A(A), .B(B), .W64(W64), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+  end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED) begin : zbdecoder
