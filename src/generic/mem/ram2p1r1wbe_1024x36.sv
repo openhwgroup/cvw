@@ -45,8 +45,11 @@ module ram2p1r1wbe_1024x36(
    //generic1024x36RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
    //			     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
    // use part of a larger RAM to avoid generating more flavors of RAM
+  logic [67:0] QAfull, QBfull;
   TSDN28HPCPA1024X68M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-			   .AA, .AB, .DA(DA[35:0]), .DB(DB[35:0]), 
-         .BWEBA(BWEBA[35:0]), .BWEBB(BWEBB[35:0]), .QA(QA[35:0]), .QB(QB[35:0]));
+			   .AA, .AB, .DA({32'b0, DA[35:0]}), .DB({32'b0, DB[35:0]}), 
+         .BWEBA({32'b0, BWEBA[35:0]}), .BWEBB({32'b0, BWEBB[35:0]}), .QA(QAfull), .QB(QBfull));
+  assign QA = QAfull[35:0];
+  assign QB = QBfull[35:0];
 
 endmodule
