@@ -56,7 +56,7 @@ module zbb #(parameter WIDTH=32) (
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
       case (ZBBSelect)
-      3'b111: ZBBResult = ALUResult;  // rotate
+      3'b111: ZBBResult = ALUResult;  // rotates, andn, xnor, orn
       3'b000: ZBBResult = CntResult;  // count
       3'b100: ZBBResult = ExtResult;  // sign/zero extend
       /*15'b0010100_101_00111: ZBBResult = OrcBResult;

@@ -107,6 +107,7 @@ module controller(
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
   logic        bclrD, bextD;                   // Indicates if is one of these instructions
+  logic        andnD, ornD, xnorD;             // Indicates if is one of these instructions
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -210,11 +211,22 @@ module controller(
     assign bclrD = 1'b0;
     assign bextD = 1'b0;
   end
+
+  if (`ZBB_SUPPORTED) begin
+    assign andnD = (ALUSelectD == 3'b111 & BSelectD[2]);
+    assign ornD = (ALUSelectD == 3'b110 & BSelectD[2]);
+    assign xnorD = (ALUSelectD == 3'b100 & BSelectD[2]);
+  end else begin
+    assign andnD = 0;
+    assign ornD = 0;
+    assign xnorD = 0;
+  end
+
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
   assign sltuD = (Funct3D == 3'b011); 
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD))); // TRUE for R-type subtracts and sra, slt, sltu
+  assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags

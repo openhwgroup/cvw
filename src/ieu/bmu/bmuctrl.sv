@@ -129,6 +129,9 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b000_0100_100;  // zexth (rv32)
                                else 
                                  BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+      17'b0110011_0100000_111:   BMUControlsD = `BMUCTRLW'b111_0100_111;  // andn
+      17'b0110011_0100000_110:   BMUControlsD = `BMUCTRLW'b110_0100_111;  // orn
+      17'b0110011_0100000_100:   BMUControlsD = `BMUCTRLW'b100_0100_111;  // xnor
                                  
       default:                   BMUControlsD = {Funct3D, {7'b0}};        // not B instruction or shift
     endcase
