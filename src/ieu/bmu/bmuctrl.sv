@@ -91,7 +91,6 @@ module bmuctrl(
       17'b0110011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000;  // bset
       17'b0?1?011_0?0000?_?01:   BMUControlsD = `BMUCTRLW'b001_0000_000;  // sra, srai, srl, srli, sll, slli
       17'b0110011_0000101_0??:   BMUControlsD = `BMUCTRLW'b000_0010_000;  // ZBC instruction
-      17'b0110011_0010000_?01:   BMUControlsD = `BMUCTRLW'b001_1000_000;  // slli.uw 
       17'b0110011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh1add
       17'b0110011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh2add
       17'b0110011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh3add
@@ -100,6 +99,7 @@ module bmuctrl(
       17'b0111011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh3add.uw
       17'b0111011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // add.uw
       17'b0011011_000010?_001:   BMUControlsD = `BMUCTRLW'b001_1000_000;  // slli.uw
+      // ZBB
       17'b0110011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rol
       17'b0111011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rolw
       17'b0110011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // ror
