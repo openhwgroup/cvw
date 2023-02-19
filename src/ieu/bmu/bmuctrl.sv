@@ -121,8 +121,16 @@ module bmuctrl(
                                else 
                                  BMUControlsD = `BMUCTRLW'b000_0100_000;  // count instruction
       17'b0011011_0110000_001:   BMUControlsD = `BMUCTRLW'b000_0100_000;  // count word instruction
+      17'b0111011_0000100_100: if (`XLEN == 64)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // zexth (rv64)
+                               else 
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+      17'b0110011_0000100_100: if (`XLEN == 32)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // zexth (rv32)
+                               else 
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
                                  
-      default:                   BMUControlsD = {Funct3D, {7'b0}};    // not B instruction or shift
+      default:                   BMUControlsD = {Funct3D, {7'b0}};        // not B instruction or shift
     endcase
 
   // Unpack Control Signals
