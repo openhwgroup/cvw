@@ -141,6 +141,10 @@ module bmuctrl(
                                else 
                                  BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
       17'b0010011_0010100_101:   BMUControlsD = `BMUCTRLW'b000_0100_011;  // orc.b
+      17'b0110011_0000101_110:   BMUControlsD = `BMUCTRLW'b000_0100_101;  // max
+      17'b0110011_0000101_111:   BMUControlsD = `BMUCTRLW'b000_0100_101;  // maxu
+      17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // min
+      17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // minu
                                  
       default:                   BMUControlsD = {Funct3D, {7'b0}};        // not B instruction or shift
     endcase

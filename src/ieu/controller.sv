@@ -108,6 +108,7 @@ module controller(
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
   logic        bclrD, bextD;                   // Indicates if is one of these instructions
   logic        andnD, ornD, xnorD;             // Indicates if is one of these instructions
+  logic        maxE, maxuE, minE, minuE;       // Indicates if is one of these instructions in Execute Stage
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -216,10 +217,19 @@ module controller(
     assign andnD = (ALUSelectD == 3'b111 & BSelectD[2]);
     assign ornD = (ALUSelectD == 3'b110 & BSelectD[2]);
     assign xnorD = (ALUSelectD == 3'b100 & BSelectD[2]);
+    // we only need these signals if we want to calculate a signedD flag in decode stage to pass to the comparator.
+    assign maxE = (Funct3E[1:0] == 2'b10 & BSelectE[2]);
+    assign maxuE = (Funct3E[1:0] == 2'b11 & BSelectE[2]);
+    assign minE = (Funct3E[1:0] == 2'b00 & BSelectE[2]);
+    assign minuE = (Funct3E[1:0] == 2'b01 & BSelectE[2]);
   end else begin
     assign andnD = 0;
     assign ornD = 0;
     assign xnorD = 0;
+    assign maxE = 0;
+    assign maxuE = 0;
+    assign minE = 0;
+    assign minuE = 0;
   end
 
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
@@ -263,7 +273,8 @@ module controller(
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
   //  Hence, only eq and lt flags are needed
-  assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
+  assign BranchSignedE = (~(Funct3E[2:1] == 2'b11) & ~BSelectE[2]) | (`ZBB_SUPPORTED & (maxE | minE)) ;
+  //assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
   assign {eqE, ltE} = FlagsE;
   mux2 #(1) branchflagmux(eqE, ltE, Funct3E[2], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];

@@ -36,6 +36,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [3:0]       BSelect,    // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,  // ZBB mux select signal
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
+  input  logic [1:0]       CompFlags,  // Comparator flags
   output logic [WIDTH-1:0] Result,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
 
@@ -145,7 +146,7 @@ module alu #(parameter WIDTH=32) (
   end else assign ZBCResult = 0;
 
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(A), .B(B), .ALUResult(ALUResult), .W64(W64), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+    zbb #(WIDTH) ZBB(.A(A), .B(B), .ALUResult(ALUResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
   end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
