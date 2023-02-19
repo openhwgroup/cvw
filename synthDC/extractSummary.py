@@ -263,3 +263,4 @@ if __name__ == '__main__':
     plotConfigs('sky90', mod='orig')
     plotConfigs('tsmc28psyn', mod='orig')
     normAreaDelay(mod='orig')
+    os.system("./extractArea.pl");
