@@ -54,7 +54,7 @@ module cnt #(parameter WIDTH = 32) (
         6'b00000_0: lzcA = A;                       //clz
         6'b00000_1: lzcA = {A[31:0],{32{1'b1}}};    //clzw
         6'b00001_0: lzcA = revA;                    //ctz
-        6'b00001_1: lzcA = {revA[31:0],{32{1'b1}}}; //ctzw
+        6'b00001_1: lzcA = {revA[63:32],{32{1'b1}}}; //ctzw
         default: lzcA = A;
       endcase 
 
