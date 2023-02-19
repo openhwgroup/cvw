@@ -32,16 +32,14 @@
 
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,         // Operands
-  input  logic [2:0]       Funct3,       // Indicates operation to perform
-  input  logic [6:0]       Funct7,       // Indicates operation to perform
   input  logic             W64,          // Indicates word operation
+  input  logic [2:0]       ZBBSelect,    // Indicates word operation
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
 
 
   
-  // count results
-  logic [WIDTH-1:0] czResult;            // count zeros result (lzc or tzc)
-  logic [WIDTH-1:0] cpopResult;          // population count result
+  // count result
+  logic [WIDTH-1:0] CntResult;           
 
   // byte results
   logic [WIDTH-1:0] OrcBResult;
@@ -52,14 +50,14 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] sextbResult;         // sign extend byte result
   logic [WIDTH-1:0] zexthResult;         // zero extend halfword result 
 
-  cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .czResult(czResult), .cpopResult(cpopResult));
+  cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .CntResult(CntResult));
   byteUnit #(WIDTH) bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
   ext #(WIDTH) ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
-      case ({Funct7, Funct3, B[4:0]})
-      15'b0010100_101_00111: ZBBResult = OrcBResult;
+      case (ZBBSelect)
+      /*15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
       15'b0110000_001_00000: ZBBResult = czResult;
@@ -67,7 +65,7 @@ module zbb #(parameter WIDTH=32) (
       15'b0110000_001_00001: ZBBResult = czResult;
       15'b0000100_100_00000: ZBBResult = zexthResult; 
       15'b0110000_001_00100: ZBBResult = sextbResult;
-      15'b0110000_001_00101: ZBBResult = sexthResult;
+      15'b0110000_001_00101: ZBBResult = sexthResult;*/
       default: ZBBResult = {(WIDTH){1'b0}};
       endcase
   end
