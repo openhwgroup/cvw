@@ -43,14 +43,13 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] CntResult;           
 
   // byte results
-  logic [WIDTH-1:0] OrcBResult;
-  logic [WIDTH-1:0] Rev8Result;
+  logic [WIDTH-1:0] ByteResult;
 
   // sign/zero extend results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend result
 
   cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .CntResult(CntResult));
-  byteUnit #(WIDTH) bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
+  byteUnit #(WIDTH) bu(.A(A), .B(B), .ByteResult(ByteResult));
   ext #(WIDTH) ext(.A(A), .B(B), .ExtResult(ExtResult));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
@@ -59,6 +58,7 @@ module zbb #(parameter WIDTH=32) (
       3'b111: ZBBResult = ALUResult;  // rotates, andn, xnor, orn
       3'b000: ZBBResult = CntResult;  // count
       3'b100: ZBBResult = ExtResult;  // sign/zero extend
+      3'b011: ZBBResult = ByteResult; // byte instructions
       /*15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;
