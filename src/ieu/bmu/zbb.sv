@@ -47,19 +47,18 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] Rev8Result;
 
   // sign/zero extend results
-  logic [WIDTH-1:0] sexthResult;         // sign extend halfword result
-  logic [WIDTH-1:0] sextbResult;         // sign extend byte result
-  logic [WIDTH-1:0] zexthResult;         // zero extend halfword result 
+  logic [WIDTH-1:0] ExtResult;           // sign/zero extend result
 
   cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .CntResult(CntResult));
   byteUnit #(WIDTH) bu(.A(A), .OrcBResult(OrcBResult), .Rev8Result(Rev8Result));
-  ext #(WIDTH) ext(.A(A), .sexthResult(sexthResult), .sextbResult(sextbResult), .zexthResult(zexthResult));
+  ext #(WIDTH) ext(.A(A), .B(B), .ExtResult(ExtResult));
 
   //can replace with structural mux by looking at bit 4 in rs2 field
   always_comb begin 
       case (ZBBSelect)
       3'b111: ZBBResult = ALUResult;  // rotate
       3'b000: ZBBResult = CntResult;  // count
+      3'b100: ZBBResult = ExtResult;  // sign/zero extend
       /*15'b0010100_101_00111: ZBBResult = OrcBResult;
       15'b0110100_101_11000: ZBBResult = Rev8Result;
       15'b0110101_101_11000: ZBBResult = Rev8Result;

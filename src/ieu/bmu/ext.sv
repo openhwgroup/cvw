@@ -31,13 +31,21 @@
 `include "wally-config.vh"
 
 module ext #(parameter WIDTH = 32) (
-  input  logic [WIDTH-1:0] A,            // Operand
-  output logic [WIDTH-1:0] sexthResult,  // sign extend halfword result
-  output logic [WIDTH-1:0] sextbResult,  // sign extend byte result
-  output logic [WIDTH-1:0] zexthResult); // zero extend halfword result 
+  input  logic [WIDTH-1:0] A, B,         // Operands
+  output logic [WIDTH-1:0] ExtResult);   // Extend Result
 
+  logic [WIDTH-1:0] sexthResult, zexthResult, sextbResult;
   assign sexthResult = {{(WIDTH-16){A[15]}},A[15:0]};
   assign zexthResult = {{(WIDTH-16){1'b0}},A[15:0]};
   assign sextbResult = {{(WIDTH-8){A[7]}},A[7:0]};
+
+  always_comb 
+    case({B[2],B[0]})
+      2'b00: ExtResult = zexthResult;
+      2'b10: ExtResult = sextbResult;
+      2'b11: ExtResult = sexthResult;
+      default: ExtResult = 0;
+    endcase
+
  
 endmodule
