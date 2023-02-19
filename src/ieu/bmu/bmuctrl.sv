@@ -117,9 +117,10 @@ module bmuctrl(
                                else
                                  BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
       17'b0010011_0110000_001: if (Rs2D[2])
-                                 BMUControlsD = `BMUCTRLW'b000_0100_000;  // count instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // sign extend instruction
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // sign ext instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0100_000;  // count instruction
+      17'b0011011_0110000_001:   BMUControlsD = `BMUCTRLW'b000_0100_000;  // count word instruction
                                  
       default:                   BMUControlsD = {Funct3D, {7'b0}};    // not B instruction or shift
     endcase
