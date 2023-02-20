@@ -42,7 +42,7 @@
 `define ZICOUNTERS_SUPPORTED 1
 `define COUNTERS 32
 `define ZFH_SUPPORTED 0
-`define SSTC_SUPPORTED 1
+`define SSTC_SUPPORTED 0
 
 // LSU microarchitectural Features
 `define BUS_SUPPORTED 1

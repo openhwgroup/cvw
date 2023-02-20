@@ -50,14 +50,14 @@ my @configs = ("rv32e", "rv32i", "rv32imc", "rv32gc", "rv64i", "rv64gc");
 opendir(DIR, $dir) or die "Could not open $dir";
 
 while (my $filename = readdir(DIR)) {
-    if ($filename =~ /orig_tsmc28psyn/) {
-#        print "$filename\n";
+    if ($filename =~ /orig_tsmc28psyn/) { 
+#    if ($filename =~ /orig_sky90/) {
         &processRun("$dir/$filename");
     }
 }
 closedir(DIR);
 
-# print table of results
+# print table of results 
 printf("%20s\t", "");
 foreach my $config (@configs) {
     printf("%s\t", $config);
@@ -82,7 +82,7 @@ foreach my $kw (@keywordsp) {
 
 sub processRun {
     my $fname = shift;
-    my $ffname = "$fname/reports/wallypipelinedcore_area.rep";
+    my $ffname = "$fname/reports/area.rep";
     open(FILE, "$ffname") or die ("Could not read $ffname");
 
     # Extract configuration from fname;
