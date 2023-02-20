@@ -56,7 +56,7 @@ if __name__ == '__main__':
         defaultfreq = 500 if tech == 'sky90' else 1500
         freq = args.targetfreq if args.targetfreq else defaultfreq
         config = args.version if args.version else 'rv64gc'
-        for mod in ['noFPU', 'noMulDiv', 'noPriv', 'PMP0']: 
+        for mod in ['noAtomic', 'noFPU', 'noMulDiv', 'noPriv', 'PMP0']: 
             runSynth(config, mod, tech, freq, maxopt, usesram)
     else:
         defaultfreq = 500 if tech == 'sky90' else 1500
