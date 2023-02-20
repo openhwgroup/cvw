@@ -144,7 +144,7 @@ module bpred (
   // BTB contains target address for all CFI
 
   btb #(`BTB_SIZE) 
-    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .PredPCF,
           .BTBPredInstrClassF,
