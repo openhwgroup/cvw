@@ -31,22 +31,24 @@
 `include "wally-config.vh"
 
 module btb #(parameter Depth = 10 ) (
-  input  logic             clk,
-  input  logic             reset,
-  input  logic             StallF, StallD, StallM, FlushD, FlushM,
-  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE,                 // PC at various stages
-  output logic [`XLEN-1:0] PredPCF,                                // BTB's guess at PC
-  output logic [3:0]       BTBPredInstrClassF,                        // BTB's guess at instruction class
+  input logic 			   clk,
+  input logic 			   reset,
+  input logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input logic [`XLEN-1:0]  PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
+  output logic [`XLEN-1:0] PredPCF, // BTB's guess at PC
+  output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
   // update
-  input  logic             AnyWrongPredInstrClassE,             // BTB's instruction class guess was wrong
-  input  logic [`XLEN-1:0] IEUAdrE,                                // Branch/jump target address to insert into btb
-  input  logic [3:0]       InstrClassD,                            // Instruction class to insert into btb
-  input  logic [3:0]       InstrClassE                             // Instruction class to insert into btb
+  input logic 			   AnyWrongPredInstrClassE, // BTB's instruction class guess was wrong
+  input logic [`XLEN-1:0]  IEUAdrE, // Branch/jump target address to insert into btb
+  input logic [`XLEN-1:0]  IEUAdrM, // Branch/jump target address to insert into btb
+  input logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
+  input logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
+  input logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
 );
 
-  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex;
+  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex;
   logic [`XLEN-1:0] 		ResetPC;
-  logic 					MatchF, MatchD, MatchE, MatchNextX, MatchXF;
+  logic 					MatchF, MatchD, MatchE, MatchM, MatchNextX, MatchXF;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic [`XLEN-1:0] 		PredPCD;  
@@ -59,6 +61,7 @@ module btb #(parameter Depth = 10 ) (
   assign PCFIndex = {PCF[Depth+1] ^ PCF[1], PCF[Depth:2]};
   assign PCDIndex = {PCD[Depth+1] ^ PCD[1], PCD[Depth:2]};
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
+  assign PCMIndex = {PCM[Depth+1] ^ PCM[1], PCM[Depth:2]};
 
   // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
   // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
@@ -70,13 +73,15 @@ module btb #(parameter Depth = 10 ) (
   assign MatchF = PCNextFIndex == PCFIndex;
   assign MatchD = PCNextFIndex == PCDIndex;
   assign MatchE = PCNextFIndex == PCEIndex;
+  assign MatchM = PCNextFIndex == PCMIndex;
   assign MatchNextX = MatchF | MatchD | MatchE;
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
   assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, PredPCF} :
                                 MatchD ? {InstrClassD, PredPCD} :
-                                {InstrClassE, IEUAdrE} ;
+                                MatchE ? {InstrClassE, IEUAdrE} :
+                                {InstrClassM, IEUAdrM} ;
 
   flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
 
@@ -90,6 +95,6 @@ module btb #(parameter Depth = 10 ) (
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEn), .bwe2('1));
 
-  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, {PredPCF}, {PredPCD});
+  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
 
 endmodule

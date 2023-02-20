@@ -56,6 +56,7 @@ module bpred (
   input  logic             JumpD, JumpE,
   input logic              PCSrcE,                    // Executation stage branch is taken
   input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
+  input logic [`XLEN-1:0]  IEUAdrM,                   // The branch/jump target address
   input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic             JumpOrTakenBranchM,        // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
@@ -143,14 +144,13 @@ module bpred (
   // BTB contains target address for all CFI
 
   btb #(`BTB_SIZE) 
-    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
-          .PCNextF, .PCF, .PCD, .PCE,
+    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+          .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .PredPCF,
           .BTBPredInstrClassF,
           .AnyWrongPredInstrClassE,
-          .IEUAdrE,
-          .InstrClassD,
-          .InstrClassE);
+          .IEUAdrE, .IEUAdrM,
+          .InstrClassD, .InstrClassE, .InstrClassM);
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
