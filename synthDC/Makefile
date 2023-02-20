@@ -72,6 +72,7 @@ else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/BTB_SIZE.*/BTB_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
 	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
 	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
