@@ -3,7 +3,7 @@
 # setup.csh
 # james.stine@okstate.edu 18 February 2023
 
-echo "Executing Wally setup.sh"
+echo "Executing Wally setup.csh"
 
 # Path to Wally repository
 set WALLY = $PWD
