@@ -38,19 +38,19 @@ module rom1p1r #(parameter ADDR_WIDTH = 8,
 
    // Core Memory
    logic [DATA_WIDTH-1:0] 	 ROM [(2**ADDR_WIDTH)-1:0];
-   if ((`USE_SRAM == 1) & (DATA_WIDTH == 64)) begin
+/*   if ((`USE_SRAM == 1) & (ADDR_WDITH == 7) & (DATA_WIDTH == 64)) begin
       rom1p1r_128x64 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));
 
-   end if ((`USE_SRAM == 1) & (DATA_WIDTH == 32)) begin
+   end if ((`USE_SRAM == 1) & (ADDR_WDITH == 7) & (DATA_WIDTH == 32)) begin
       rom1p1r_128x32 rom1 (.CLK(clk), .CEB(~ce), .A(addr[6:0]), .Q(dout));      
 
-   end else begin
-      always @ (posedge clk) begin
+   end else begin */
+   always @ (posedge clk) begin
 	 if(ce) dout <= ROM[addr];    
-      end
+   end
    
    // for FPGA, initialize with zero-stage bootloader
-   if(PRELOAD_ENABLED) begin
+   if(PRELOAD_ENABLED) 
       initial begin
 	 ROM[0] =  64'h9581819300002197; 
 	 ROM[1] =  64'h4281420141014081; 
@@ -96,7 +96,5 @@ module rom1p1r #(parameter ADDR_WIDTH = 8,
 	 ROM[41] = 64'h40a7853b4015551b;   
 	 ROM[42] = 64'h808210a7a02367c9;
       end 
-    end 
-  end 
 
 endmodule 
