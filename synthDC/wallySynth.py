@@ -16,9 +16,10 @@ def mask(command):
 
 if __name__ == '__main__':
     
-    techs = ['sky90', 'tsmc28']
+    techs = ['sky90', 'tsmc28', 'tsmc28psyn']
     allConfigs = ['rv32gc', 'rv32imc', 'rv64gc', 'rv64imc', 'rv32e', 'rv32i', 'rv64i']
     freqVaryPct = [-20, -12, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20]
+#    freqVaryPct = [-20, -10, 0, 10, 20]
 
     pool = Pool()
 
@@ -46,16 +47,16 @@ if __name__ == '__main__':
         config = args.version if args.version else 'rv32e'
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
             runSynth(config, mod, tech, freq, maxopt, usesram)
-    if args.configsweep:
+    elif args.configsweep:
         defaultfreq = 1500 if tech == 'sky90' else 5000
         freq = args.targetfreq if args.targetfreq else defaultfreq
         for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32imc', 'rv32e']: #configs
             runSynth(config, mod, tech, freq, maxopt, usesram)
-    if args.featuresweep:
+    elif args.featuresweep:
         defaultfreq = 500 if tech == 'sky90' else 1500
         freq = args.targetfreq if args.targetfreq else defaultfreq
         config = args.version if args.version else 'rv64gc'
-        for mod in ['noFPU', 'noMulDiv', 'noPriv', 'PMP0', 'orig']: 
+        for mod in ['noAtomic', 'noFPU', 'noMulDiv', 'noPriv', 'PMP0']: 
             runSynth(config, mod, tech, freq, maxopt, usesram)
     else:
         defaultfreq = 500 if tech == 'sky90' else 1500

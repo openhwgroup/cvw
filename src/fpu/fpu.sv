@@ -110,6 +110,7 @@ module fpu (
   logic 		        XInfE, YInfE, ZInfE;                  // is the input infinity - execute stage
   logic 		        XInfM, YInfM, ZInfM;                  // is the input infinity - memory stage
   logic 		        XExpMaxE;                             // is the exponent all ones (max value)
+  logic [`FLEN-1:0] XPostBoxE;                            // X after fixing bad NaN box.  Needed for 1-input operations
 
   // Fma Signals
   logic             FmaAddSubE;                           // Multiply by 1.0 when adding or subtracting
@@ -200,23 +201,20 @@ module fpu (
   mux3  #(`FLEN)  fzemux (FRD3E, FResultW, PreFpResM, ForwardZE, PreZE);
 
   // Select NAN-boxed value of Y = 1.0 in proper format for fma to add/subtract X*Y+Z
-  generate
-    if(`FPSIZES == 1) assign BoxedOneE = {2'b0, {`NE-1{1'b1}}, (`NF)'(0)};
-    else if(`FPSIZES == 2) 
-        mux2 #(`FLEN) fonemux ({{`FLEN-`LEN1{1'b1}}, 2'b0, {`NE1-1{1'b1}}, (`NF1)'(0)}, {2'b0, {`NE-1{1'b1}}, (`NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
-    else if(`FPSIZES == 3 | `FPSIZES == 4) 
-        mux4 #(`FLEN) fonemux ({{`FLEN-`S_LEN{1'b1}}, 2'b0, {`S_NE-1{1'b1}}, (`S_NF)'(0)}, 
-                            {{`FLEN-`D_LEN{1'b1}}, 2'b0, {`D_NE-1{1'b1}}, (`D_NF)'(0)}, 
-                            {{`FLEN-`H_LEN{1'b1}}, 2'b0, {`H_NE-1{1'b1}}, (`H_NF)'(0)}, 
-                            {2'b0, {`NE-1{1'b1}}, (`NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
-  endgenerate
+  if(`FPSIZES == 1) assign BoxedOneE = {2'b0, {`NE-1{1'b1}}, (`NF)'(0)};
+  else if(`FPSIZES == 2) 
+      mux2 #(`FLEN) fonemux ({{`FLEN-`LEN1{1'b1}}, 2'b0, {`NE1-1{1'b1}}, (`NF1)'(0)}, {2'b0, {`NE-1{1'b1}}, (`NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
+  else if(`FPSIZES == 3 | `FPSIZES == 4) 
+      mux4 #(`FLEN) fonemux ({{`FLEN-`S_LEN{1'b1}}, 2'b0, {`S_NE-1{1'b1}}, (`S_NF)'(0)}, 
+                          {{`FLEN-`D_LEN{1'b1}}, 2'b0, {`D_NE-1{1'b1}}, (`D_NF)'(0)}, 
+                          {{`FLEN-`H_LEN{1'b1}}, 2'b0, {`H_NE-1{1'b1}}, (`H_NF)'(0)}, 
+                          {2'b0, {`NE-1{1'b1}}, (`NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
   assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
   mux2  #(`FLEN)  fyaddmux (PreYE, BoxedOneE, FmaAddSubE, YE); // Force Y to be 1 for add/subtract
   
   // Select NAN-boxed value of Z = 0.0 in proper format for FMA for multiply X*Y+Z
   // For add and subtract, Z comes from second source operand
-  generate
-  if(`FPSIZES == 1) assign BoxedZeroE = 0;
+ if(`FPSIZES == 1) assign BoxedZeroE = 0;
   else if(`FPSIZES == 2) 
     mux2 #(`FLEN) fmulzeromux ({{`FLEN-`LEN1{1'b1}}, {`LEN1{1'b0}}}, (`FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
   else if(`FPSIZES == 3 | `FPSIZES == 4)
@@ -224,7 +222,6 @@ module fpu (
                                 {{`FLEN-`D_LEN{1'b1}}, {`D_LEN{1'b0}}}, 
                                 {{`FLEN-`H_LEN{1'b1}}, {`H_LEN{1'b0}}}, 
                                 (`FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
-  endgenerate
   assign FmaZSelE = {OpCtrlE[2]&OpCtrlE[1], OpCtrlE[2]&~OpCtrlE[1]};
   mux3  #(`FLEN)  fzmulmux (PreZE, BoxedZeroE, PreYE, FmaZSelE, ZE);
 
@@ -234,7 +231,7 @@ module fpu (
     .XNaN(XNaNE), .YNaN(YNaNE), .ZNaN(ZNaNE), .XSNaN(XSNaNE), .XEn(XEnE), 
     .YSNaN(YSNaNE), .ZSNaN(ZSNaNE), .XSubnorm(XSubnormE), 
     .XZero(XZeroE), .YZero(YZeroE), .ZZero(ZZeroE), .XInf(XInfE), .YInf(YInfE), 
-    .ZEn(ZEnE), .ZInf(ZInfE), .XExpMax(XExpMaxE));
+    .ZEn(ZEnE), .ZInf(ZInfE), .XExpMax(XExpMaxE), .XPostBox(XPostBoxE));
   
   // fused multiply add: fadd/sub, fmul, fmadd/fnmadd/fmsub/fnmsub
   fma fma (.Xs(XsE), .Ys(YsE), .Zs(ZsE), .Xe(XeE), .Ye(YeE), .Ze(ZeE), .Xm(XmE), .Ym(YmE), .Zm(ZmE), 
@@ -255,7 +252,7 @@ module fpu (
     .CmpFpRes(CmpFpResE), .CmpIntRes(CmpIntResE));
 
   // sign injection: fsgnj/fsgnjx/fsgnjn
-  fsgninj fsgninj(.OpCtrl(OpCtrlE[1:0]), .Xs(XsE), .Ys(YsE), .X(XE), .Fmt(FmtE), .SgnRes(SgnResE));
+  fsgninj fsgninj(.OpCtrl(OpCtrlE[1:0]), .Xs(XsE), .Ys(YsE), .X(XPostBoxE), .Fmt(FmtE), .SgnRes(SgnResE));
 
   // classify: fclass
   fclassify fclassify (.Xs(XsE), .XSubnorm(XSubnormE), .XZero(XZeroE), .XNaN(XNaNE), 
@@ -268,7 +265,6 @@ module fpu (
 
 
   // NaN Box SrcA to convert integer to requested FP size
-  generate
   if(`FPSIZES == 1) assign AlignedSrcAE = {{`FLEN-`XLEN{1'b1}}, ForwardedSrcAE};
   else if(`FPSIZES == 2) 
     mux2 #(`FLEN) SrcAMux ({{`FLEN-`LEN1{1'b1}}, ForwardedSrcAE[`LEN1-1:0]}, {{`FLEN-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE);
@@ -277,14 +273,12 @@ module fpu (
                             {{`FLEN-`D_LEN{1'b1}}, ForwardedSrcAE[`D_LEN-1:0]}, 
                             {{`FLEN-`H_LEN{1'b1}}, ForwardedSrcAE[`H_LEN-1:0]}, 
                             {{`FLEN-`XLEN{1'b1}}, ForwardedSrcAE}, FmtE, AlignedSrcAE); // NaN boxing zeroes
-  endgenerate
 
   // select a result that may be written to the FP register
   mux3  #(`FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
   // select the result that may be written to the integer register - to IEU
-  generate
   if(`FPSIZES == 1)
     assign SgnExtXE = XE;
   else if(`FPSIZES == 2) 
@@ -294,7 +288,7 @@ module fpu (
                                 {{`FLEN-`S_LEN{XsE}}, XE[`S_LEN-1:0]}, 
                                 {{`FLEN-`D_LEN{XsE}}, XE[`D_LEN-1:0]}, 
                                 XE, FmtE, SgnExtXE); 
-  endgenerate
+
   if (`FLEN>`XLEN)
     assign IntSrcXE = SgnExtXE[`XLEN-1:0];
   else 
