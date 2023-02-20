@@ -57,7 +57,7 @@ while (my $filename = readdir(DIR)) {
 }
 closedir(DIR);
 
-# print table of results
+# print table of results 
 printf("%20s\t", "");
 foreach my $config (@configs) {
     printf("%s\t", $config);
