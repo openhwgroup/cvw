@@ -107,15 +107,21 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
     .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
-  pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
-    .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-    .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-    .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
+  if (`PMP_ENTRIES > 0) 
+    pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
+      .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
+      .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
+      .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
+  else begin
+    assign PMPInstrAccessFaultF     = 0;
+    assign PMPStoreAmoAccessFaultM  = 0;
+    assign PMPLoadAccessFaultM      = 0;
+  end
 
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
-  assign InstrAccessFaultF    = (PMAInstrAccessFaultF | PMPInstrAccessFaultF) & ~(Translate & ~TLBHit);
-  assign LoadAccessFaultM     = (PMALoadAccessFaultM | PMPLoadAccessFaultM) & ~(Translate & ~TLBHit);
+  assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~(Translate & ~TLBHit);
+  assign LoadAccessFaultM     = (PMALoadAccessFaultM     | PMPLoadAccessFaultM)     & ~(Translate & ~TLBHit);
   assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~(Translate & ~TLBHit);
 
   // Misaligned faults

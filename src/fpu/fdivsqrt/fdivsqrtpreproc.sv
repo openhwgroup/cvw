@@ -129,7 +129,6 @@ module fdivsqrtpreproc (
 
     // pipeline registers
     flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
-    flopen #(1)        w64reg(clk, IFDivStartE, W64E,     W64M);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
     flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
@@ -137,6 +136,8 @@ module fdivsqrtpreproc (
     flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM);
     flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
     flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
+    if (`XLEN==64) 
+      flopen #(1)      w64reg(clk, IFDivStartE, W64E,     W64M);
 
   end else begin // Int not supported
     assign IFNormLenX = {Xm, {(`DIVb-`NF-1){1'b0}}};

@@ -137,7 +137,8 @@ module bpred (
   // Part 2 Branch target address prediction
   // BTB contains target address for all CFI
 
-  btb TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
+  btb #(`BTB_SIZE) 
+    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
           .PCNextF, .PCF, .PCD, .PCE,
           .PredPCF,
           .BTBPredInstrClassF,
