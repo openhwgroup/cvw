@@ -43,7 +43,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -o testbenchopt 
-    vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691  -fatal 7
+    vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7
 
     run -all
     run -all
@@ -52,7 +52,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     vopt +acc work_${1}_${2}.testbench -work work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -G NO_SPOOFING=1 -o testbenchopt 
-    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829  -fatal 7
+    vsim -lib work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3829,13286  -fatal 7
 
     #-- Run the Simulation
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
@@ -63,7 +63,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     exec ./slack-notifier/slack-notifier.py
 
 } elseif {$2 eq "ahb"} {
-    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
+    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${2}_${3}_${4}.testbench -work wkdir/work_${1}_${2}_${3}_${4} -G TEST=$2 -o testbenchopt
@@ -77,7 +77,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     run -all
     # power off -r /dut/core/*
 } else {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt

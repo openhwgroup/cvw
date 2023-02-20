@@ -69,7 +69,6 @@ module bpred (
   output logic             PredictionInstrClassWrongM // Class prediction is wrong
   );
 
-  logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
@@ -100,8 +99,8 @@ module bpred (
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
-    globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+    globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
@@ -119,6 +118,12 @@ module bpred (
       .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
 
+  end else if (`BPRED_TYPE == "BP_GSHARE_FORWARD") begin:Predictor
+    gshareForward #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .PCSrcE);
+	
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
 /* -----\/----- EXCLUDED -----\/-----
@@ -142,7 +147,6 @@ module bpred (
           .PCNextF, .PCF, .PCD, .PCE,
           .PredPCF,
           .BTBPredInstrClassF,
-          .PredValidF,
           .AnyWrongPredInstrClassE,
           .IEUAdrE,
           .InstrClassD,
@@ -180,8 +184,8 @@ module bpred (
 						PredInstrClassF[1];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-						PredInstrClassF[1] & PredValidF;
+	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
+						PredInstrClassF[1];
   end
   
   // Part 3 RAS
@@ -222,8 +226,13 @@ module bpred (
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
-  //assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD; // this does not work for cubic benchmark
+  //assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
+  assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
+
+  logic BPPredWrongEAlt;
+  logic NotMatch;
+  assign BPPredWrongEAlt = PredictionPCWrongE & InstrValidE & InstrValidD; // this does not work for cubic benchmark
+  assign NotMatch = BPPredWrongE != BPPredWrongEAlt;
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.
