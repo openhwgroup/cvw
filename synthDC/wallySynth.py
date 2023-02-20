@@ -46,12 +46,12 @@ if __name__ == '__main__':
         sc = args.freqsweep
         config = args.version if args.version else 'rv32e'
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
-            runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)
+            runSynth(config, mod, tech, freq, maxopt, usesram)
     elif args.configsweep:
         defaultfreq = 1500 if tech == 'sky90' else 5000
         freq = args.targetfreq if args.targetfreq else defaultfreq
         for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32imc', 'rv32e']: #configs
-            runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)
+            runSynth(config, mod, tech, freq, maxopt, usesram)
     elif args.featuresweep:
         defaultfreq = 500 if tech == 'sky90' else 1500
         freq = args.targetfreq if args.targetfreq else defaultfreq

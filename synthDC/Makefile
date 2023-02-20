@@ -21,7 +21,6 @@ export MAXCORES ?= 1
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
 export USESRAM ?= 0
-export USETOPO ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -129,9 +128,13 @@ mkdirecs:
 synth: mkdirecs configs rundc clean
 
 rundc:
-	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
-	
-	
+ifeq ($(TECH), tsmc28psyn)
+	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+else
+	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out	
+endif
+
+
 clean:
 	rm -rf $(OUTPUTDIR)/hdl
 	rm -rf $(OUTPUTDIR)/WORK
