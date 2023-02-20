@@ -50,7 +50,7 @@ my @configs = ("rv32e", "rv32i", "rv32imc", "rv32gc", "rv64i", "rv64gc");
 opendir(DIR, $dir) or die "Could not open $dir";
 
 while (my $filename = readdir(DIR)) {
-    if ($filename =~ /orig_tsmc28psyn/) {
+    if ($filename =~ /orig_tsmc28psyn/) { 
 #    if ($filename =~ /orig_sky90/) {
         &processRun("$dir/$filename");
     }
