@@ -117,7 +117,7 @@
 
 // largest length in IEU/FPU
 `define CVTLEN ((`NF<`XLEN) ? (`XLEN) : (`NF))
-`define LLEN ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN))
+`define LLEN (($unsigned(`FLEN)<$unsigned(`XLEN)) ? ($unsigned(`XLEN)) : ($unsigned(`FLEN)))
 `define LOGCVTLEN $unsigned($clog2(`CVTLEN+1))
 `define NORMSHIFTSZ (((`CVTLEN+`NF+1)>(`DIVb + 1 +`NF+1) & (`CVTLEN+`NF+1)>(3*`NF+6)) ? (`CVTLEN+`NF+1) : ((`DIVb + 1 +`NF+1) > (3*`NF+6) ? (`DIVb + 1 +`NF+1) : (3*`NF+6)))
 `define LOGNORMSHIFTSZ ($clog2(`NORMSHIFTSZ))
