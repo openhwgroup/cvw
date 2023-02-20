@@ -89,6 +89,7 @@ endif
 # when mod = noPriv, the privileged unit and PMP are disabled
 # when mod = noFPU, the FPU, privileged unit, and PMP are disabled
 # when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
+# when mod = noAtomic, the Atomic, MDU, FPU, privileged unit, and PMP are disabled
 
 ifneq ($(MOD), orig)
 	# PMP 0
@@ -103,6 +104,10 @@ ifneq ($(MOD), noPriv)
 ifneq ($(MOD), noFPU)
 	# no muldiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noMulDiv)
+	# no atomic
+	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/wally-config.vh
+endif
 endif
 endif
 endif
