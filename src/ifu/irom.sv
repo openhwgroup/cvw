@@ -33,8 +33,9 @@ module irom(
   output logic [31:0] 	  IROMInstrF // Instruction read data
 );
 
-  localparam ADDR_WDITH = $clog2(`IROM_RANGE/8); 
-  localparam OFFSET = $clog2(`XLEN/8);
+  localparam XLENBYTES = `XLEN/8;
+  localparam ADDR_WDITH = $clog2(`IROM_RANGE/XLENBYTES); 
+  localparam OFFSET = $clog2(XLENBYTES);
 
   logic [`XLEN-1:0] IROMInstrFFull;
   logic [31:0] 		RawIROMInstrF;
