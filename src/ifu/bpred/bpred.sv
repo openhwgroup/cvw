@@ -119,7 +119,7 @@ module bpred (
       .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
 
-  end else if (`BPRED_TYPE == "GSHARE_FORWARD") begin:Predictor
+  end else if (`BPRED_TYPE == "BP_GSHARE_FORWARD") begin:Predictor
     gshareForward #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
