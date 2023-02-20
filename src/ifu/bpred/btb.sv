@@ -38,7 +38,7 @@ module btb #(parameter Depth = 10 ) (
   output logic [`XLEN-1:0] PredPCF, // BTB's guess at PC
   output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
   // update
-  input logic 			   AnyWrongPredInstrClassE, // BTB's instruction class guess was wrong
+  input logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
   input logic [`XLEN-1:0]  IEUAdrE, // Branch/jump target address to insert into btb
   input logic [`XLEN-1:0]  IEUAdrM, // Branch/jump target address to insert into btb
   input logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
@@ -74,7 +74,7 @@ module btb #(parameter Depth = 10 ) (
   assign MatchD = PCNextFIndex == PCDIndex;
   assign MatchE = PCNextFIndex == PCEIndex;
   assign MatchM = PCNextFIndex == PCMIndex;
-  assign MatchNextX = MatchF | MatchD | MatchE;
+  assign MatchNextX = MatchF | MatchD | MatchE | MatchM;
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
@@ -88,12 +88,12 @@ module btb #(parameter Depth = 10 ) (
   assign {BTBPredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
 
-  assign UpdateEn = |InstrClassE | AnyWrongPredInstrClassE;
+  assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
 
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
-     .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEn), .bwe2('1));
+     .ce2(~StallM & ~FlushM), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
 

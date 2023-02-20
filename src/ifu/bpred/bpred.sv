@@ -148,7 +148,7 @@ module bpred (
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .PredPCF,
           .BTBPredInstrClassF,
-          .AnyWrongPredInstrClassE,
+          .PredictionInstrClassWrongM,
           .IEUAdrE, .IEUAdrM,
           .InstrClassD, .InstrClassE, .InstrClassM);
 
