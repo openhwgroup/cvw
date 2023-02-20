@@ -37,7 +37,6 @@ module btb #(parameter int Depth = 10 ) (
   input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE,                 // PC at various stages
   output logic [`XLEN-1:0] PredPCF,                                // BTB's guess at PC
   output logic [3:0]       BTBPredInstrClassF,                        // BTB's guess at instruction class
-  output logic             PredValidF,                             // BTB's guess is valid
   // update
   input  logic             AnyWrongPredInstrClassE,             // BTB's instruction class guess was wrong
   input  logic [`XLEN-1:0] IEUAdrE,                                // Branch/jump target address to insert into btb
@@ -45,16 +44,13 @@ module btb #(parameter int Depth = 10 ) (
   input  logic [3:0]       InstrClassE                             // Instruction class to insert into btb
 );
 
-  localparam TotalDepth = 2 ** Depth;
-  logic [TotalDepth-1:0]    ValidBits;
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex;
   logic [`XLEN-1:0] 		ResetPC;
   logic 					MatchF, MatchD, MatchE, MatchNextX, MatchXF;
-  logic [`XLEN+4:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
+  logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic [`XLEN-1:0] 		PredPCD;  
   logic 					UpdateEn;
-  logic 					TablePredValidF, PredValidD;
     
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -78,22 +74,14 @@ module btb #(parameter int Depth = 10 ) (
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardBTBPrediction = MatchF ? {PredValidF, BTBPredInstrClassF, PredPCF} :
-                                MatchD ? {PredValidD, InstrClassD, PredPCD} :
-                                {1'b1, InstrClassE, IEUAdrE} ;
+  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, PredPCF} :
+                                MatchD ? {InstrClassD, PredPCD} :
+                                {InstrClassE, IEUAdrE} ;
 
-  flopenr #(`XLEN+5) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
+  flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
 
-  assign {PredValidF, BTBPredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : {TablePredValidF, TableBTBPredictionF};
+  assign {BTBPredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
-  always_ff @ (posedge clk) begin
-    if (reset) begin
-      ValidBits <= #1 {TotalDepth{1'b0}};
-    end else if ((UpdateEn) & ~StallM & ~FlushM) begin
-      ValidBits[PCEIndex] <= #1 |InstrClassE;
-    end
-	if(~StallF | reset) TablePredValidF = ValidBits[PCNextFIndex];
-  end
 
   assign UpdateEn = |InstrClassE | AnyWrongPredInstrClassE;
 
@@ -102,6 +90,6 @@ module btb #(parameter int Depth = 10 ) (
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
      .ce2(~StallM & ~FlushM), .wa2(PCEIndex), .wd2({InstrClassE, IEUAdrE}), .we2(UpdateEn), .bwe2('1));
 
-  flopenrc #(`XLEN+1) BTBD(clk, reset, FlushD, ~StallD, {PredValidF, PredPCF}, {PredValidD, PredPCD});
+  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, {PredPCF}, {PredPCD});
 
 endmodule

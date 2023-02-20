@@ -69,7 +69,6 @@ module bpred (
   output logic             PredictionInstrClassWrongM // Class prediction is wrong
   );
 
-  logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
@@ -148,7 +147,6 @@ module bpred (
           .PCNextF, .PCF, .PCD, .PCE,
           .PredPCF,
           .BTBPredInstrClassF,
-          .PredValidF,
           .AnyWrongPredInstrClassE,
           .IEUAdrE,
           .InstrClassD,
@@ -186,8 +184,8 @@ module bpred (
 						PredInstrClassF[1];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-						PredInstrClassF[1] & PredValidF;
+	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
+						PredInstrClassF[1];
   end
   
   // Part 3 RAS
