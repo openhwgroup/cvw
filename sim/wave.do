@@ -95,13 +95,15 @@ add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/InstrClassE
 add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/NextValidPCE
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/PCNext0F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/NextValidPCE
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/PCF
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/BPPredPCF
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/SelBPPredF
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/PCNext0F
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
+add wave -noupdate -expand -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
 add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a1
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a2
@@ -355,11 +357,6 @@ add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/pmach
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/PMAInstrAccessFaultF
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/PMALoadAccessFaultM
 add wave -noupdate -group lsu -group pma /testbench/dut/core/lsu/dmmu/dmmu/PMAStoreAmoAccessFaultM
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/PhysicalAddress
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/ReadAccessM
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/WriteAccessM
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/PMPADDR_ARRAY_REGW
-add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/pmpchecker/PMPCFG_ARRAY_REGW
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPInstrAccessFaultF
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPLoadAccessFaultM
 add wave -noupdate -group lsu -group pmp /testbench/dut/core/lsu/dmmu/dmmu/PMPStoreAmoAccessFaultM
@@ -631,7 +628,7 @@ add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/Di
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchNextX
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {1156601 ns} 1} {{Cursor 5} {161886 ns} 0}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {1156601 ns} 1} {{Cursor 5} {394986 ns} 0}
 quietly wave cursor active 5
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -647,4 +644,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {161823 ns} {161929 ns}
+WaveRestoreZoom {394883 ns} {395051 ns}
