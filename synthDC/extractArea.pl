@@ -51,7 +51,7 @@ opendir(DIR, $dir) or die "Could not open $dir";
 
 while (my $filename = readdir(DIR)) {
     if ($filename =~ /orig_tsmc28psyn/) {
-#        print "$filename\n";
+#    if ($filename =~ /orig_sky90/) {
         &processRun("$dir/$filename");
     }
 }
@@ -82,7 +82,7 @@ foreach my $kw (@keywordsp) {
 
 sub processRun {
     my $fname = shift;
-    my $ffname = "$fname/reports/wallypipelinedcore_area.rep";
+    my $ffname = "$fname/reports/area.rep";
     open(FILE, "$ffname") or die ("Could not read $ffname");
 
     # Extract configuration from fname;
