@@ -83,7 +83,7 @@ module gshareForward #(parameter k = 10) (
     .rd1(TableDirPredictionF),
     .wa2(IndexM),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM & ~StallW & ~FlushW),
+    .we2(BranchInstrM),
     .bwe2(1'b1));
 
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
@@ -102,7 +102,7 @@ module gshareForward #(parameter k = 10) (
   assign GHRNext = BranchInstrM ? {PCSrcM, GHR[k-1:1]} : GHR;
   assign GHRM = GHR;
 
-  flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchInstrM, GHRNext, GHR);
+  flopenr #(k) GHRReg(clk, reset, ~StallW & ~FlushW & BranchInstrM, GHRNext, GHR);
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
 endmodule

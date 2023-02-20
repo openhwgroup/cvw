@@ -33,7 +33,7 @@
 module btb #(parameter Depth = 10 ) (
   input logic 			   clk,
   input logic 			   reset,
-  input logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
   input logic [`XLEN-1:0]  PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
   output logic [`XLEN-1:0] PredPCF, // BTB's guess at PC
   output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
@@ -93,7 +93,7 @@ module btb #(parameter Depth = 10 ) (
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
-     .ce2(~StallM & ~FlushM), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
+     .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
 
