@@ -131,6 +131,7 @@ logic [3:0] dummy;
         "embench":                        tests = embench;
         "coremark":                       tests = coremark;
         "arch32ba":     if (`ZBA_SUPPORTED) tests = arch32ba;
+        "arch32b":    if (`ZBB_SUPPORTED & `ZBA_SUPPORTED & `ZBS_SUPPORTED & `ZBC_SUPPORTED) tests = arch32b;
       endcase
     end
     if (tests.size() == 0) begin
