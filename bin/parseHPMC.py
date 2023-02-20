@@ -150,7 +150,6 @@ if(sys.argv[1] == '-b'):
     if(sys.argv[2] == '-s'):
         summery = 1
         sys.argv = sys.argv[1::]
-    print('summery = %d' % summery)
     for config in sys.argv[2::]:
         benchmarks = ProcessFile(config)
         ComputeAverage(benchmarks)
@@ -163,7 +162,16 @@ if(sys.argv[1] == '-b'):
         print(config)
         for benchmark in benchmarks:
             (nameString, opt, dataDict) = benchmark
+            print("BENCHMARK")
+            print(nameString)
+            print(opt)
+            print(dataDict)
             benchmarkAll.append((nameString, opt, config, dataDict))
+    print('ALL!!!!!!!!!!')
+    #for bench in benchmarkAll:
+    #    print('BENCHMARK')
+    #    print(bench)
+    #print('ALL!!!!!!!!!!')
 
     # now extract all branch prediction direction miss rates for each
     # namestring + opt, config
@@ -177,7 +185,6 @@ if(sys.argv[1] == '-b'):
 
     size = len(benchmarkDict)
     index = 1
-    print('summery = %d' % summery)
     if(summery == 0):
         print('Number of plots', size)
         for benchmarkName in benchmarkDict:

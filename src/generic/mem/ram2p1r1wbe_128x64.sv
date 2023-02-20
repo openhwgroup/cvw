@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// rom1p1r_128x64.sv
+// ram2p1rwbe_128x64.sv
 //
 // Written: james.stine@okstate.edu 28 January 2023
 // Modified: 
 //
-// Purpose: ROM wrapper for instantiating ROM IP
+// Purpose: RAM wrapper for instantiating RAM IP
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -24,15 +24,27 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rom1p1r_128x64( 
-  input  logic 	      CLK, 
-  input  logic 	      CEB, 
-  input  logic [6:0]  A, 
-  output logic [63:0] Q
+module ram2p1r1wbe_128x64( 
+  input  logic          CLKA, 
+  input  logic          CLKB, 
+  input  logic 	        CEBA, 
+  input  logic 	        CEBB, 
+  input  logic          WEBA,
+  input  logic          WEBB,
+  input  logic [6:0]    AA, 
+  input  logic [6:0]    AB, 
+  input  logic [63:0]   DA,
+  input  logic [63:0]   DB,
+  input  logic [63:0]   BWEBA, 
+  input  logic [63:0]   BWEBB, 
+  output logic [63:0]   QA,
+  output logic [63:0]   QB
 );
 
-   // replace "generic64x128RAM" with "TS3N..64X128.." module from your memory vendor
-ts3n28hpcpa128x64m8m romIP (.CLK, .CEB, .A, .Q);
-//   generic64x128ROM romIP (.CLK, .CEB, .A, .Q); 
+   // replace "generic128x64RAM" with "TSDN..128X64.." module from your memory vendor
+  TSDN28HPCPA128X64M4FW sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+  // generic128x64RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
+//			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
 endmodule
