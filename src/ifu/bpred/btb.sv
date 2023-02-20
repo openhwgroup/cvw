@@ -30,7 +30,7 @@
 
 `include "wally-config.vh"
 
-module btb #(parameter int Depth = 10 ) (
+module btb #(parameter Depth = 10 ) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallM, FlushD, FlushM,

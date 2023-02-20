@@ -116,7 +116,7 @@ if {  $find_clock != [list] } {
 }
 
 # Optimize paths that are close to critical
-set_critical_range [expr $my_period*0.05] $current_design
+set_critical_range 0.05 $current_design
 
 # Partitioning - flatten or hierarchically synthesize
 if { $maxopt == 1 } {
@@ -227,7 +227,7 @@ set write_cst  1        ;# generate report of constraints
 set write_hier 1        ;# generate hierarchy report
 
 # Report Constraint Violators
-set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_constraint_all_violators.rpt"]
+set filename [format "%s%s" $outputDir "/reports/constraint_all_violators.rpt"]
 redirect $filename {report_constraint -all_violators}
 
 # Check design
@@ -247,23 +247,23 @@ set filename [format "%s%s%s%s" $outputDir "/mapped/" $my_toplevel ".sdf"]
 write_sdf $filename
 
 # QoR
-set filename [format "%s%s%s%s"  $outputDir "/reports/" $my_toplevel "_qor.rep"]
+set filename [format "%s%s"  $outputDir "/reports/qor.rep"]
 redirect $filename { report_qor }
 
 # Report Timing
-set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_reportpath.rep"]
+set filename [format "%s%s" $outputDir "/reports/reportpath.rep"]
 #redirect $filename { report_path_group }
 
-set filename [format "%s%s%s%s" $outputDir "/reports/" $my_toplevel "_report_clock.rep"]
+set filename [format "%s%s" $outputDir "/reports/report_clock.rep"]
 # redirect $filename { report_clock }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_timing.rep"]
+set filename [format "%s%s" $outputDir  "/reports/timing.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mindelay.rep"]
+set filename [format "%s%s" $outputDir  "/reports/mindelay.rep"]
 redirect $filename { report_timing -capacitance -transition_time -nets -delay_type min -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_per_module_timing.rep"]
+set filename [format "%s%s" $outputDir  "/reports/per_module_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through ifu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through ieu ////\n\n\n" }
@@ -281,7 +281,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical paths through fpu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/*} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mdu_timing.rep"]
+set filename [format "%s%s" $outputDir  "/reports/mdu_timing.rep"]
 redirect -append $filename { echo "\n\n\n//// Critical paths through entire mdu ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/*} -nworst 1 }
 redirect -append $filename { echo "\n\n\n//// Critical paths through multiply unit ////\n\n\n" }
@@ -305,7 +305,7 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 redirect -append $filename { echo "\n\n\n//// Critical path through div/DAbsBE ////\n\n\n" }
 redirect -append $filename { report_timing -capacitance -transition_time -nets -through {mdu/genblk1.div/DAbsBE} -nworst 1 }
 
-# set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_fpu_timing.rep"]
+# set filename [format "%s%s%s%s" $outputDir  "/reports/fpu_timing.rep"]
 # redirect $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
 # redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.fma/*} -nworst 1 }
 # redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
@@ -313,90 +313,87 @@ redirect -append $filename { report_timing -capacitance -transition_time -nets -
 # redirect -append $filename { echo "\n\n\n//// Critical paths through faddcvt ////\n\n\n" }
 # redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fpu/fpu.faddcvt/*} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_ifu_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical path through PCF ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/PCF} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through PCNextF ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/PCNextF} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through FinalInstrRawF ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/FinalInstrRawF} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through InstrD ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/decomp/InstrD} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/ifu_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical path through PCF ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/PCF} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through PCNextF ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/PCNextF} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through FinalInstrRawF ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/FinalInstrRawF} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through InstrD ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/decomp/InstrD} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_stall_flush_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical path through StallD ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallD} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through StallE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through StallM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through StallW ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallW} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through FlushD ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushD} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through FlushE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through FlushM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through FlushW ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushW} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/stall_flush_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical path through StallD ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallD} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through StallE ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallE} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through StallM ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallM} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through StallW ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/StallW} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through FlushD ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushD} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through FlushE ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushE} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through FlushM ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushM} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through FlushW ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/FlushW} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_ieu_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R1D ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R1D} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R2D ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R2D} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/SrcAE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/SrcAE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ALUResultE ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ALUResultE} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/WriteDataW ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/WriteDataW} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ReadDataM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ReadDataM} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/ieu_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R1D ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R1D} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/R2D ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/R2D} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/SrcAE ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/SrcAE} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ALUResultE ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ALUResultE} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/WriteDataW ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/WriteDataW} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical path through datapath/ReadDataM ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ieu/dp/ReadDataM} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_fpu_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma1 ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma1/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/fpu_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical paths through fma ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/*} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through fma1 ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fma/fma1/*} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through fma2 ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {postprocess/*} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through fpdiv ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {divsqrt/*} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through fcvt ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {fcvt/*} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_mmu_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical paths through immu/physicaladdress ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/immu/PhysicalAddress} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through dmmu/physicaladdress ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {lsu/dmmu/PhysicalAddress} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/mmu_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical paths through immu/physicaladdress ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {ifu/immu/PhysicalAddress} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through dmmu/physicaladdress ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {lsu/dmmu/PhysicalAddress} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_priv_timing.rep"]
-redirect -append $filename { echo "\n\n\n//// Critical paths through priv/TrapM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/TrapM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through priv/CSRReadValM ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/csr/CSRReadValM} -nworst 1 }
-redirect -append $filename { echo "\n\n\n//// Critical paths through priv/CSRReadValW ////\n\n\n" }
-redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/CSRReadValW} -nworst 1 }
+# set filename [format "%s%s%s%s" $outputDir  "/reports/priv_timing.rep"]
+# redirect -append $filename { echo "\n\n\n//// Critical paths through priv/TrapM ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/TrapM} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through priv/CSRReadValM ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/csr/CSRReadValM} -nworst 1 }
+# redirect -append $filename { echo "\n\n\n//// Critical paths through priv/CSRReadValW ////\n\n\n" }
+# redirect -append $filename { report_timing -capacitance -transition_time -nets -through {priv/CSRReadValW} -nworst 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_min_timing.rep"]
-redirect $filename { report_timing -delay min }
-
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_area.rep"]
+set filename [format "%s%s" $outputDir  "/reports/area.rep"]
 redirect $filename { report_area -hierarchy -nosplit -physical -designware}
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_cell.rep"]
-# redirect $filename { report_cell [get_cells -hier *] }
+set filename [format "%s%s" $outputDir  "/reports/cell.rep"]
+#redirect $filename { report_cell [get_cells -hier *] }  # not too useful
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_power.rep"]
+set filename [format "%s%s" $outputDir  "/reports/power.rep"]
 redirect $filename { report_power -hierarchy -levels 1 }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_constraint.rep"]
+set filename [format "%s%s" $outputDir  "/reports/constraint.rep"]
 redirect $filename { report_constraint }
 
-set filename [format "%s%s%s%s" $outputDir  "/reports/" $my_toplevel "_hier.rep"]
+set filename [format "%s%s" $outputDir  "/reports/hier.rep"]
 # redirect $filename { report_hierarchy }
 
 # end run clock and echo run time in minutes
