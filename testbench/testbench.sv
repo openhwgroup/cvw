@@ -28,8 +28,8 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
+`define PrintHPMCounters 1
+`define BPRED_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -461,13 +461,36 @@ logic [3:0] dummy;
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 
+
   // initialize the branch predictor
-  if (`BPRED_SUPPORTED == 1)
-    begin
-      genvar adrindex;
-      
+  if (`BPRED_SUPPORTED == 1) begin
+    integer adrindex;
+
+	always @(*) begin
+	  if(reset) begin
+		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+		  force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+		end
+		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+		  force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+		end
+        #1;
+		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+		  release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+		end 
+		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+		  release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+		end
+	  end
+	end
+  end
+
+  
+  if (`BPRED_SUPPORTED == 1) begin
+/* -----\/----- EXCLUDED -----\/-----
+    genvar adrindex;
       // Initializing all zeroes into the branch predictor memory.
-      for(adrindex = 0; adrindex < 2**10; adrindex++) begin
+      for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
         initial begin 
         force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         #1;
@@ -481,6 +504,7 @@ logic [3:0] dummy;
         release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
         end
       end
+ -----/\----- EXCLUDED -----/\----- */
 
       if (`BPRED_LOGGER) begin
         string direction;
