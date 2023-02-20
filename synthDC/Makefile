@@ -20,7 +20,7 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
-export USESRAM ?= 1
+export USESRAM ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -29,8 +29,6 @@ export SAIFPOWER ?= 0
 
 OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
-
-
 
 default:
 	@echo "  Basic synthesis procedure for Wally:"
@@ -84,6 +82,15 @@ endif
 endif
 	
 # adjust config if synthesizing with any modifications
+# This code is subtle with ifneq.  It successively turns off a larger
+# set of features in order of cycle time limiting.
+# When mod = orig, all features are ON
+# When mod = PMP0, the number of PMP entries is set to 0
+# when mod = noPriv, the privileged unit and PMP are disabled
+# when mod = noFPU, the FPU, privileged unit, and PMP are disabled
+# when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
+# when mod = noAtomic, the Atomic, MDU, FPU, privileged unit, and PMP are disabled
+
 ifneq ($(MOD), orig)
 	# PMP 0
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
@@ -97,6 +104,10 @@ ifneq ($(MOD), noPriv)
 ifneq ($(MOD), noFPU)
 	# no muldiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noMulDiv)
+	# no atomic
+	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/wally-config.vh
+endif
 endif
 endif
 endif
@@ -116,13 +127,16 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-
 synth: mkdirecs configs rundc clean
 
 rundc:
-	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
-	
-	
+ifeq ($(TECH), tsmc28psyn)
+	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+else
+	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out	
+endif
+
+
 clean:
 	rm -rf $(OUTPUTDIR)/hdl
 	rm -rf $(OUTPUTDIR)/WORK

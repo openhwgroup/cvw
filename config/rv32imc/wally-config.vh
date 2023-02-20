@@ -43,6 +43,7 @@
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
+`define SSTC_SUPPORTED 0
 
 // LSU microarchitectural Features
 `define BUS_SUPPORTED 1
@@ -67,7 +68,7 @@
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-`define IDIV_BITSPERCYCLE 4
+`define IDIV_BITSPERCYCLE 2
 `define IDIV_ON_FPU 0
 
 // Legal number of PMP entries are 0, 16, or 64
@@ -134,6 +135,7 @@
 `define BPRED_SUPPORTED 0
 `define BPRED_TYPE "BP_GSHARE_FORWARD" // BPLOCALPAg or BPGLOBAL or BPTWOBIT or BPGSHARE
 `define BPRED_SIZE 10
+`define BTB_SIZE (`BPRED_SIZE)
 
 `define HPTW_WRITES_SUPPORTED 0
 

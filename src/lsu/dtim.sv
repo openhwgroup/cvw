@@ -42,12 +42,16 @@ module dtim(
 
   logic                      we;
  
-  localparam ADDR_WDITH = $clog2(`DTIM_RANGE/8);
-  localparam OFFSET     = $clog2(`LLEN/8);
+  localparam LLENBYTES  = `LLEN/8;
+  // verilator  lint_off WIDTH 
+  localparam DEPTH      = `DTIM_RANGE/LLENBYTES;
+  // verilator  lint_on WIDTH 
+  localparam ADDR_WDITH = $clog2(DEPTH);
+  localparam OFFSET     = $clog2(LLENBYTES);
 
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
-  ram1p1rwbe #(.DEPTH(`DTIM_RANGE/8), .WIDTH(`LLEN)) 
+  ram1p1rwbe #(.DEPTH(DEPTH), .WIDTH(`LLEN)) 
     ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(DTIMAdr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   

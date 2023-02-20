@@ -35,7 +35,7 @@ module ram1p1rwbe_64x128(
 );
 
    // replace "generic64x128RAM" with "TS1N..64X128.." module from your memory vendor
-  ts1n28hpcpsvtb64x128m4sw sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
-//  generic64x128RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
+   //generic64x128RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
+   TS1N28HPCPSVTB64X128M4SW sramIP(.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
 
 endmodule

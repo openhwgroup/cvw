@@ -72,7 +72,7 @@ module bpred (
   logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
-  logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD, PredInstrClassE;
+  logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
   logic [`XLEN-1:0]         PredPCF, RASPCF;
   logic                     PredictionPCWrongE;
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
@@ -143,7 +143,8 @@ module bpred (
   // Part 2 Branch target address prediction
   // BTB contains target address for all CFI
 
-  btb TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
+  btb #(`BTB_SIZE) 
+    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
           .PCNextF, .PCF, .PCD, .PCE,
           .PredPCF,
           .BTBPredInstrClassF,
@@ -213,8 +214,7 @@ module bpred (
   // pipeline the class
   flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
   flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
-  flopenrc #(4) PredInstrClassRegE(clk, reset, FlushE, ~StallE, PredInstrClassD, PredInstrClassE);
-
+ 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
   // if the class prediction is wrong a regular instruction may have been predicted as a taken branch
