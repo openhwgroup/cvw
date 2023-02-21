@@ -34,8 +34,7 @@ module privdec (
   input  logic         StallM,
   input  logic [31:20] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
-  input  logic         IllegalIEUInstrFaultM,               // Not a legal IEU instruction
-  input  logic         IllegalFPUInstrM,                    // Not a legal FPU instruction
+  input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
   input  logic [1:0]   PrivilegeModeW,                      // current privilege level
   input  logic         STATUS_TSR, STATUS_TVM, STATUS_TW,   // status bits
@@ -85,6 +84,6 @@ module privdec (
   ///////////////////////////////////////////
   
   assign IllegalPrivilegedInstrM = PrivilegedM & ~(sretM|mretM|ecallM|ebreakM|wfiM|sfencevmaM);
-  assign IllegalInstrFaultM = (IllegalIEUInstrFaultM & IllegalFPUInstrM) | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
-                               WFITimeoutM; 
+  assign IllegalInstrFaultM = IllegalIEUFPUInstrM | IllegalPrivilegedInstrM | IllegalCSRAccessM | 
+                              WFITimeoutM; 
 endmodule

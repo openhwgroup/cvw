@@ -65,7 +65,7 @@ module privileged (
   input  logic             LoadPageFaultM, StoreAmoPageFaultM,        // page faults
   input  logic             InstrMisalignedFaultM,                     // misaligned instruction fault
   input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,  // misaligned data fault
-  input  logic             IllegalIEUInstrFaultD, IllegalFPUInstrM,   // illegal instruction faults
+  input  logic             IllegalIEUFPUInstrD,                       // illegal instruction from IEU or FPU
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,       // interrupt sources
   input  logic [63:0]      MTIME_CLINT,                               // timer value from CLINT
   input  logic [4:0]       SetFflagsM,                                // set FCSR flags from FPU
@@ -95,7 +95,7 @@ module privileged (
   logic [11:0]             MIDELEG_REGW;                              // interrupt delegation CSR
   logic                    sretM, mretM;                              // supervisor / machine return instruction
   logic                    IllegalCSRAccessM;                         // Illegal access to CSR
-  logic                    IllegalIEUInstrFaultM;                     // Illegal IEU instruction, delayed to Mem stage
+  logic                    IllegalIEUFPUInstrM;                       // Illegal IEU or FPU instruction, delayed to Mem stage
   logic                    InstrPageFaultM;                           // Instruction page fault, delayed to Mem stage
   logic                    InstrAccessFaultM;                         // Instruction access fault, delayed to Mem stages
   logic                    IllegalInstrFaultM;                        // Illegal instruction fault
@@ -115,7 +115,7 @@ module privileged (
 
   // decode privileged instructions
   privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
-    .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .sfencevmaM);
 
@@ -137,8 +137,8 @@ module privileged (
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, 
-    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
+    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUFPUInstrD, 
+    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
   trap trap(.reset,

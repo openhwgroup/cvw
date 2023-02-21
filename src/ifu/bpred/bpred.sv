@@ -54,6 +54,7 @@ module bpred (
   input logic              InstrValidD, InstrValidE,
   input logic              PCSrcE,                    // Executation stage branch is taken
   input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
+  input logic [`XLEN-1:0]  IEUAdrM,                   // The branch/jump target address
   input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic             JumpOrTakenBranchM,        // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
@@ -67,7 +68,6 @@ module bpred (
   output logic             PredictionInstrClassWrongM // Class prediction is wrong
   );
 
-  logic                     PredValidF;
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
@@ -91,16 +91,29 @@ module bpred (
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
-  if (`BPRED_TYPE == "BPTWOBIT") begin:Predictor
+  if (`BPRED_TYPE == "BP_TWOBIT") begin:Predictor
     twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
-  end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
-    globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+  end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
+    gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .PCSrcE);
+
+  end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
+    gshare #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .PCSrcE);
+
+  end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
+    gsharebasic #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
+<<<<<<< HEAD
   end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
     speculativeglobalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .DirPredictionF, .DirPredictionWrongE,
@@ -116,6 +129,13 @@ module bpred (
       .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
       .PredInstrClassF, .InstrClassD, .InstrClassE, .WrongPredInstrClassD, .PCSrcE);
 
+=======
+  end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
+    gsharebasic #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
+	
+>>>>>>> upstream/main
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
 /* -----\/----- EXCLUDED -----\/-----
@@ -134,15 +154,14 @@ module bpred (
   // Part 2 Branch target address prediction
   // BTB contains target address for all CFI
 
-  btb TargetPredictor(.clk, .reset, .StallF, .StallD, .StallM, .FlushD, .FlushM,
-          .PCNextF, .PCF, .PCD, .PCE,
+  btb #(`BTB_SIZE) 
+    TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+          .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .PredPCF,
           .BTBPredInstrClassF,
-          .PredValidF,
-          .AnyWrongPredInstrClassE,
-          .IEUAdrE,
-          .InstrClassD,
-          .InstrClassE);
+          .PredictionInstrClassWrongM,
+          .IEUAdrE, .IEUAdrM,
+          .InstrClassD, .InstrClassE, .InstrClassM);
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
@@ -176,10 +195,8 @@ module bpred (
 						PredInstrClassF[3];
   end else begin
 	assign PredInstrClassF = BTBPredInstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1] & PredValidF) | 
-						PredInstrClassF[2] |
-						(PredInstrClassF[1] & PredValidF) |
-						(PredInstrClassF[3] & PredValidF);
+	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
+						PredInstrClassF[1];
   end
   
   // Part 3 RAS
@@ -222,7 +239,17 @@ module bpred (
   assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
+<<<<<<< HEAD
   assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
+=======
+  //assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
+  assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
+
+  logic BPPredWrongEAlt;
+  logic NotMatch;
+  assign BPPredWrongEAlt = PredictionPCWrongE & InstrValidE & InstrValidD; // this does not work for cubic benchmark
+  assign NotMatch = BPPredWrongE != BPPredWrongEAlt;
+>>>>>>> upstream/main
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.

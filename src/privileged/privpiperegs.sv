@@ -33,24 +33,24 @@ module privpiperegs (
   input  logic         StallD, StallE, StallM,
   input  logic         FlushD, FlushE, FlushM,
   input  logic         InstrPageFaultF, InstrAccessFaultF,  // instruction faults
-  input  logic         IllegalIEUInstrFaultD,               // illegal IEU instruction decoded
+  input  logic         IllegalIEUFPUInstrD,                 // illegal IEU instruction decoded
   output logic         InstrPageFaultM, InstrAccessFaultM,  // delayed instruction faults
-  output logic         IllegalIEUInstrFaultM                // delayed illegal IEU instruction
+  output logic         IllegalIEUFPUInstrM                  // delayed illegal IEU instruction
 );
 
   // Delayed fault signals
   logic                InstrPageFaultD, InstrAccessFaultD;
   logic                InstrPageFaultE, InstrAccessFaultE;
-  logic                IllegalIEUInstrFaultE; 
+  logic                IllegalIEUFPUInstrE; 
 
   // pipeline fault signals
   flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
                   {InstrPageFaultF, InstrAccessFaultF},
                   {InstrPageFaultD, InstrAccessFaultD});
   flopenrc #(3) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUInstrFaultD, InstrPageFaultD, InstrAccessFaultD}, 
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE});
+                  {IllegalIEUFPUInstrD, InstrPageFaultD, InstrAccessFaultD}, 
+                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE});
   flopenrc #(3) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUInstrFaultE, InstrPageFaultE, InstrAccessFaultE},
-                  {IllegalIEUInstrFaultM, InstrPageFaultM, InstrAccessFaultM});
+                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE},
+                  {IllegalIEUFPUInstrM, InstrPageFaultM, InstrAccessFaultM});
 endmodule
