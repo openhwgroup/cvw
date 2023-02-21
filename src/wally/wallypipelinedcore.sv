@@ -70,7 +70,7 @@ module wallypipelinedcore (
   logic [1:0] 					 MemRWM;
   logic 						 InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
-  logic                          IllegalBaseInstrFaultD, IllegalIEUInstrFaultD;
+  logic                          IllegalBaseInstrD, IllegalFPUInstrD, IllegalIEUFPUInstrD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
   logic                          LoadMisalignedFaultM, LoadAccessFaultM;
   logic                          StoreAmoMisalignedFaultM, StoreAmoAccessFaultM;
@@ -91,7 +91,6 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]              FCvtIntResW; 
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
-  logic                          IllegalFPUInstrM;
   logic                          FRegWriteM;
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
@@ -180,7 +179,7 @@ module wallypipelinedcore (
     .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
     // Faults out
-    .IllegalBaseInstrFaultD, .InstrPageFaultF, .IllegalIEUInstrFaultD, .InstrMisalignedFaultM,
+    .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
@@ -190,7 +189,7 @@ module wallypipelinedcore (
   // integer execution unit: integer register file, datapath and controller
   ieu ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD,
+     .InstrD, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, 
@@ -294,12 +293,12 @@ module wallypipelinedcore (
       .RASPredPCWrongM, .PredictionInstrClassWrongM,
       .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
-      .InstrMisalignedFaultM, .IllegalIEUInstrFaultD, 
+      .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
-      .IllegalFPUInstrM, .PrivilegeModeW, .SATP_REGW,
+      .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM);
@@ -347,7 +346,7 @@ module wallypipelinedcore (
       .FCvtIntResW, // fp -> int conversion result to be stored in int register
       .FCvtIntW,   // fpu result selection
       .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
-      .IllegalFPUInstrM, // Is the instruction an illegal fpu instruction
+      .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
       .SetFflagsM,        // FPU flags (to privileged unit)
       .FIntDivResultW); 
   end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
@@ -357,7 +356,7 @@ module wallypipelinedcore (
     assign FIntResM = 0;
     assign FCvtIntW = 0;
     assign FDivBusyE = 0;
-    assign IllegalFPUInstrM = 1;
+    assign IllegalFPUInstrD = 1;
     assign SetFflagsM = 0;
     assign FpLoadStoreM = 0;
   end

@@ -55,7 +55,7 @@ module fpu (
   output logic 		          FpLoadStoreM,  // Fp load instruction? (to LSU)
   output logic [`FLEN-1:0]  FWriteDataM,   // Data to be written to memory (to LSU) 
   output logic [`XLEN-1:0]  FIntResM,      // data to be written to integer register (to IEU)
-  output logic 		          IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
+  output logic 		          IllegalFPUInstrD, // Is the instruction an illegal fpu instruction (to IFU)
   output logic [4:0] 	      SetFflagsM,    // FPU flags (to privileged unit)
   // Writeback stage 
   input  logic [4:0] 	      RdW,           // which FP register to write to (from IEU)
@@ -171,7 +171,7 @@ module fpu (
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
               .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
-              .IllegalFPUInstrM, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
+              .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 

@@ -70,9 +70,10 @@ module ifu (
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
   output logic 				PredictionInstrClassWrongM,               // Class prediction is wrong
   // Faults
-  input logic 				IllegalBaseInstrFaultD,                   // Illegal non-compressed instruction
+  input logic 				IllegalBaseInstrD,                   // Illegal non-compressed instruction
+  input logic         IllegalFPUInstrD,                    // Illegal FP instruction
   output logic 				InstrPageFaultF,                          // Instruction page fault 
-  output logic 				IllegalIEUInstrFaultD,                    // Illegal instruction including compressed
+  output logic 				IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
   output logic 				InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   // mmu management
   input logic [1:0] 		PrivilegeModeW,                           // Priviledge mode in Writeback stage
@@ -116,6 +117,7 @@ module ifu (
   logic                        CompressedE;                           // The execution instruction is compressed
   logic [31:0] 				   PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
+  logic                  IllegalIEUInstrD;                 // IEU Instruction (regular or compressed) is not good
   
   logic [1:0]                  IFURWF;                                // IFU alreays read IFURWF = 10
   logic [31:0]                 InstrE;                                // Instruction in the Execution stage
@@ -349,11 +351,12 @@ module ifu (
   if (`C_SUPPORTED) begin
     logic IllegalCompInstrD;
     decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
-    assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
+    assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   end else begin  
     assign InstrD = InstrRawD;
-    assign IllegalIEUInstrFaultD = IllegalBaseInstrFaultD;
+    assign IllegalIEUInstrD = IllegalBaseInstrD;
   end
+  assign IllegalIEUFPUInstrD = IllegalIEUInstrD & IllegalFPUInstrD;
 
   // Misaligned PC logic
   // Instruction address misalignement only from br/jal(r) instructions.

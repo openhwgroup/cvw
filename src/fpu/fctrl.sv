@@ -60,14 +60,13 @@ module fctrl (
   output logic [4:0] 	        Adr1D, Adr2D, Adr3D,                // adresses of each input
   output logic [4:0] 	        Adr1E, Adr2E, Adr3E,                // adresses of each input
   // other control signals
-  output logic                IllegalFPUInstrM,                   // Is the instruction an illegal fpu instruction
+  output logic                IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
   output logic 		            FDivStartE, IDivStartE              // Start division or squareroot
   );
 
   `define FCTRLW 12
 
   logic [`FCTRLW-1:0]   ControlsD;    // control signals
-  logic                 IllegalFPUInstrD, IllegalFPUInstrE; // is the intruction an illegal fpu instruction
   logic 		            FRegWriteD;   // FP register write enable
   logic 		            FDivStartD;   // start division/sqrt
   logic 		            FWriteIntD;   // integer register write enable
@@ -280,9 +279,9 @@ module fctrl (
   assign Adr3D = InstrD[31:27];
  
   // D/E pipleine register
-  flopenrc #(14+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, IllegalFPUInstrD, FCvtIntD},
-              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE});
+  flopenrc #(13+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD},
+              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
@@ -292,9 +291,9 @@ module fctrl (
   else                             assign IDivStartE = 0; 
 
   // E/M pipleine register
-  flopenrc #(14+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
-              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, IllegalFPUInstrE, FCvtIntE},
-              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, IllegalFPUInstrM, FCvtIntM});
+  flopenrc #(13+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+              {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE},
+              {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM});
   
   // renameing for readability
   assign FpLoadStoreM = FResSelM[1];
