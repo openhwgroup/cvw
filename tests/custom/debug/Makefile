@@ -4,6 +4,7 @@ TARGET = debug
 
 $(TARGET).signature.output: $(TARGET).elf.memfile $(TARGET).elf
 	spike --isa=rv64gc +signature=$(TARGET).signature.output +signature-granularity=4 $(TARGET).elf
+	riscv_sim_RV64 debug.elf -T debug.sig
 #	diff --ignore-case $(TARGET).signature.output $(TARGET).reference_output || exit
 #	echo "Signature matches! Success!"
 	mkdir -p ../work 
