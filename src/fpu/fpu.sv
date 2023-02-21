@@ -160,6 +160,7 @@ module fpu (
   logic [`FLEN-1:0] BoxedOneE;                            // One value for Z for multiplication, with NaN boxing if needed
   logic             StallUnpackedM;                       // Stall unpacker outputs during multicycle fdivsqrt
   logic [`FLEN-1:0] SgnExtXE;                             // Sign-extended X input for move to integer
+  logic             mvsgn;                                // sign bit for extending move
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -278,21 +279,25 @@ module fpu (
   mux3  #(`FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
-  // select the result that may be written to the integer register - to IEU
-  if(`FPSIZES == 1)
+  // select the result that may be written to the integer register with fmv - to IEU
+  if(`FPSIZES == 1) begin
+    assign mvsgn = XE[`FLEN-1];
     assign SgnExtXE = XE;
-  else if(`FPSIZES == 2) 
-    mux2 #(`FLEN) sgnextmux ({{`FLEN-`LEN1{XsE}}, XE[`LEN1-1:0]}, XE, FmtE, SgnExtXE);
-  else if(`FPSIZES == 3 | `FPSIZES == 4)
-    mux4 #(`FLEN) fmulzeromux ({{`FLEN-`H_LEN{XsE}}, XE[`H_LEN-1:0]}, 
-                                {{`FLEN-`S_LEN{XsE}}, XE[`S_LEN-1:0]}, 
-                                {{`FLEN-`D_LEN{XsE}}, XE[`D_LEN-1:0]}, 
+  end else if(`FPSIZES == 2) begin
+    mux2 #(1)     sgnmux (XE[`LEN1-1], XE[`FLEN-1],FmtE, mvsgn);
+    mux2 #(`FLEN) sgnextmux ({{`FLEN-`LEN1{mvsgn}}, XE[`LEN1-1:0]}, XE, FmtE, SgnExtXE);
+  end else if(`FPSIZES == 3 | `FPSIZES == 4) begin
+    mux4 #(1)     sgnmux (XE[`H_LEN-1], XE[`S_LEN-1], XE[`D_LEN-1], XE[`LLEN-1], FmtE, mvsgn);
+    mux4 #(`FLEN) fmulzeromux ({{`FLEN-`H_LEN{mvsgn}}, XE[`H_LEN-1:0]}, 
+                                {{`FLEN-`S_LEN{mvsgn}}, XE[`S_LEN-1:0]}, 
+                                {{`FLEN-`D_LEN{mvsgn}}, XE[`D_LEN-1:0]}, 
                                 XE, FmtE, SgnExtXE); 
+  end
 
   if (`FLEN>`XLEN)
     assign IntSrcXE = SgnExtXE[`XLEN-1:0];
   else 
-    assign IntSrcXE = {{`XLEN-`FLEN{XsE}}, SgnExtXE};
+    assign IntSrcXE = {{`XLEN-`FLEN{mvsgn}}, SgnExtXE};
   mux3 #(`XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers
