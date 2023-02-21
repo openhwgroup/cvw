@@ -61,11 +61,11 @@ module gshare #(parameter k = 10,
 	assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
 	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   end else if(TYPE == "global") begin
-	assign IndexNextF = {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexF = {PCF[k+1] ^ PCF[1], PCF[k:2]};
-	assign IndexD = {PCD[k+1] ^ PCD[1], PCD[k:2]};
-	assign IndexE = {PCE[k+1] ^ PCE[1], PCE[k:2]};
-	assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};
+	assign IndexNextF = GHRNextF;
+	assign IndexF = GHRF;
+	assign IndexD = GHRD;
+	assign IndexE = GHRE;
+	assign IndexM = GHRM;
   end
 
   assign MatchF = BranchInstrF & ~FlushD & (IndexNextF == IndexF);

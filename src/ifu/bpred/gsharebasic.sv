@@ -54,8 +54,8 @@ module gsharebasic #(parameter k = 10,
 	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
 	assign IndexE = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   end else if(TYPE == "global") begin
-	assign IndexNextF = {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexE = {PCM[k+1] ^ PCM[1], PCM[k:2]};
+	assign IndexNextF = GHRNext;
+	assign IndexE = GHRE;
   end
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
