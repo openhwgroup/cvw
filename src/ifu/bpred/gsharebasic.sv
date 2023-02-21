@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
-// globalHistoryPredictor.sv
+// gsharebasic.sv
 //
-// Written: Shreya Sanghai
-// Email: ssanghai@hmc.edu
-// Created: March 16, 2021
-// Modified: 
+// Written: Ross Thompson
+// Email: ross1728@gmail.com
+// Created: 16 March 2021
+// Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.
+// Modified: 20 February 2023 
 //
 // Purpose: Global History Branch predictor with parameterized global history register
 // 
