@@ -94,36 +94,32 @@ module bpred (
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
-  if (`BPRED_TYPE == "BPTWOBIT") begin:Predictor
+  if (`BPRED_TYPE == "BP_TWOBIT") begin:Predictor
     twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
-  end else if (`BPRED_TYPE == "BPGLOBAL") begin:Predictor
-    globalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
-
-  end else if (`BPRED_TYPE == "BPSPECULATIVEGLOBAL") begin:Predictor
-    speculativeglobalhistory #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .DirPredictionF, .DirPredictionWrongE,
-      .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
-	    
-  end else if (`BPRED_TYPE == "BPGSHARE") begin:Predictor
+  end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
-
-  end else if (`BPRED_TYPE == "BPSPECULATIVEGSHARE") begin:Predictor
-    speculativegshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .DirPredictionF, .DirPredictionWrongE,
-      .PredInstrClassF, .InstrClassD, .InstrClassE, .InstrClassM, .WrongPredInstrClassD, .PCSrcE);
-
-  end else if (`BPRED_TYPE == "BP_GSHARE_FORWARD") begin:Predictor
-    gshareForward #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .PCSrcE);
+
+  end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
+    gshare #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .PCSrcE);
+
+  end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
+    gsharebasic #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
+
+  end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
+    gsharebasic #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 	
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me

@@ -28,7 +28,8 @@
 
 `include "wally-config.vh"
 
-module gshareForward #(parameter k = 10) (
+module gsharebasic #(parameter k = 10,
+                     parameter string TYPE = "global") (
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -36,54 +37,33 @@ module gshareForward #(parameter k = 10) (
   output logic [1:0]      DirPredictionF, 
   output logic            DirPredictionWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-  input logic             BranchInstrF, BranchInstrD, BranchInstrE, BranchInstrM, PCSrcE
+  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic             BranchInstrE, BranchInstrM, PCSrcE
 );
 
-  logic                    MatchF, MatchD, MatchE, MatchM;
-  logic                    MatchNextX, MatchXF;
-
-  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPrediction, ForwardDirPredictionF;
+  logic [k-1:0]            IndexNextF, IndexE;
+  logic [1:0]              DirPredictionD, DirPredictionE;
   logic [1:0]              NewDirPredictionE, NewDirPredictionM;
 
-
-  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM;
-
   logic [k-1:0]            GHRF, GHRD, GHRE, GHRM, GHR;
-  logic [k-1:0]            GHRNext, GHRNextF;
+  logic [k-1:0]            GHRNext;
   logic                    PCSrcM;
 
-  assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-
-  assign IndexF = GHRF ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
-  assign IndexD = GHRD ^ {PCD[k+1] ^ PCD[1], PCD[k:2]};
-  assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
-  assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
-
-  assign MatchF = BranchInstrF & ~FlushD & (IndexNextF == IndexF);
-  assign MatchD = BranchInstrD & ~FlushE & (IndexNextF == IndexD);
-  assign MatchE = BranchInstrE & ~FlushM & (IndexNextF == IndexE);
-  assign MatchM = BranchInstrM & ~FlushW & (IndexNextF == IndexM);
-  assign MatchNextX = MatchF | MatchD | MatchE | MatchM;
-
-  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
-
-  assign ForwardNewDirPrediction = MatchF ? {2{DirPredictionF[1]}} :
-                                   MatchD ? {2{DirPredictionD[1]}} :
-                                   MatchE ? {NewDirPredictionE} :
-                                   NewDirPredictionM ;
+  if(TYPE == "gshare") begin
+	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+	assign IndexE = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  end else if(TYPE == "global") begin
+	assign IndexNextF = {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+	assign IndexE = {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  end
   
-  flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
-
-  assign DirPredictionF = MatchXF ? ForwardDirPredictionF : TableDirPredictionF;
-
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
     .ra1(IndexNextF),
-    .rd1(TableDirPredictionF),
-    .wa2(IndexM),
+    .rd1(DirPredictionF),
+    .wa2(IndexE),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM),
+    .we2(BranchInstrM & ~StallW & ~FlushW),
     .bwe2(1'b1));
 
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
@@ -94,15 +74,14 @@ module gshareForward #(parameter k = 10) (
 
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
 
-  assign GHRNextF = BranchInstrF ? {DirPredictionF[1], GHRF[k-1:1]} : GHRF;
-  assign GHRF = BranchInstrD  ? {DirPredictionD[1], GHRD[k-1:1]} : GHRD;
-  assign GHRD = BranchInstrE ? {PCSrcE, GHRE[k-1:1]} : GHRE;
-  assign GHRE = BranchInstrM ? {PCSrcM, GHRM[k-1:1]} : GHRM;
-
   assign GHRNext = BranchInstrM ? {PCSrcM, GHR[k-1:1]} : GHR;
-  assign GHRM = GHR;
-
-  flopenr #(k) GHRReg(clk, reset, ~StallW & ~FlushW & BranchInstrM, GHRNext, GHR);
+  flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchInstrM, GHRNext, GHR);
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
+  flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
+  flopenrc #(k) GHRDReg(clk, reset, FlushD, ~StallD, GHRF, GHRD);
+  flopenrc #(k) GHREReg(clk, reset, FlushE, ~StallE, GHRD, GHRE);
+  flopenrc #(k) GHRMReg(clk, reset, FlushM, ~StallM, GHRE, GHRM);
+
+
 endmodule
