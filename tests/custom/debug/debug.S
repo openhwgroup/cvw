@@ -18,23 +18,28 @@ rvtest_entry_point:
     fsd f12, 0(a6)
 
     # openhwgroup/cvw Issue #56
-    fld f4, 16(a7)
+    fld f4, 16(a7) # cfa695b1047553b1
     fld f14, 24(a7)
     fsgnjx.s f10,f4,f14  # expected f 0xffffffff7fc00000, hdl has been giving 0xcfa695b1047553b1
-    fsd f19, 8(a6)
+    fsd f19, 16(a6)
 
     # openhwgroup/cvw Issue #57
     fld f0, 32(a7)
     fld f15, 40(a7)
     fsgnjx.s f30,f0,f15  # expected f 0xfffffffffb3754ef, hdl has been giving 0xffffffff7b3754ef
-    fsd f30, 16(a6)
+    fsd f30, 24(a6)
 
     # openhwgroup/cvw Issue #58
     fld f14, 48(a7)
     fclass.s x2, f14 # expected 0x0000000000000200, hdl had been giving 0x0000000000000220
-    sd x2, 24(a6)
+    sd x2, 32(a6)
 
     # fsgnjx.s, fclass.s, fsgnjn.s, fsgnj.s, fneg.s, fabs.s, fmv.s all treat inputs as dp rather than sp
+
+    #openhwgroup/cvw Issue #65 #expected 0xffffffffffffffff, hdl had been giving 0x00000000ffffffff
+    fld f17, 56(a7)
+    fmv.x.s x30, f17
+    sd x30, 40(a6)
 
 
 #########################
@@ -66,6 +71,7 @@ rvtest_data:
 .dword 0xffffffff7fc00000
 .dword 0xfffffffffb3754ef
 .dword 0x7fefffffffffffff
+.dword 0x00000000ffffffff
 
 .EQU XLEN,64
 begin_signature:
