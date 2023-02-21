@@ -239,7 +239,7 @@ module controller(
   assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
-  if (`ZBS_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+  if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE);
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;

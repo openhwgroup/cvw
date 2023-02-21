@@ -106,7 +106,7 @@ module alu #(parameter WIDTH=32) (
   assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
  
   // Select appropriate ALU Result
-  if (`ZBS_SUPPORTED) begin
+  if (`ZBS_SUPPORTED | `ZBB_SUPPORTED) begin
     always_comb
       if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
       else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
@@ -150,7 +150,7 @@ module alu #(parameter WIDTH=32) (
   end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
-  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED) begin : zbdecoder
+  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : zbdecoder
     always_comb
       case (BSelect)
       //ZBA_ZBB_ZBC_ZBS
