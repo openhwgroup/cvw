@@ -74,6 +74,7 @@ else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/BTB_SIZE.*/BTB_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
 	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
 	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
@@ -91,6 +92,7 @@ endif
 # when mod = noPriv, the privileged unit and PMP are disabled
 # when mod = noFPU, the FPU, privileged unit, and PMP are disabled
 # when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
+# when mod = noAtomic, the Atomic, MDU, FPU, privileged unit, and PMP are disabled
 
 ifneq ($(MOD), orig)
 	# PMP 0
@@ -105,6 +107,10 @@ ifneq ($(MOD), noPriv)
 ifneq ($(MOD), noFPU)
 	# no muldiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noMulDiv)
+	# no atomic
+	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/wally-config.vh
+endif
 endif
 endif
 endif

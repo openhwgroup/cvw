@@ -141,7 +141,7 @@ def areaDelay(tech, delays, areas, labels, fig, ax, norm=False):
     if norm:
         delays = [d/fo4 for d in delays]
         areas = [a/add32area for a in areas]
-    
+   
     plt.scatter(delays, areas, marker=marker, color=color)
     plt.xlabel('Cycle time (ns)')
     plt.ylabel('Area (sq microns)')
@@ -165,6 +165,9 @@ def plotFeatures(tech, width, config):
                 areas += [oneSynth.area]
                 labels += [oneSynth.mod]
 
+    if (delays == []):
+        print("No delays found for freq ", freq, ". Did you set --skyfreq and --tsmcfreq?\n")
+
     fig, (ax) = plt.subplots(1, 1)
 
     fig = areaDelay(tech, delays, areas, labels, fig, ax)
@@ -184,6 +187,7 @@ def plotConfigs(tech, mod=''):
             labels += [oneSynth.width + oneSynth.config]
 
     fig, (ax) = plt.subplots(1, 1)
+
 
     fig = areaDelay(tech, delays, areas, labels, fig, ax)
 
@@ -263,3 +267,4 @@ if __name__ == '__main__':
     plotConfigs('sky90', mod='orig')
     plotConfigs('tsmc28psyn', mod='orig')
     normAreaDelay(mod='orig')
+    os.system("./extractArea.pl");
