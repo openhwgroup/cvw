@@ -55,7 +55,7 @@ module fpu (
   output logic 		          FpLoadStoreM,  // Fp load instruction? (to LSU)
   output logic [`FLEN-1:0]  FWriteDataM,   // Data to be written to memory (to LSU) 
   output logic [`XLEN-1:0]  FIntResM,      // data to be written to integer register (to IEU)
-  output logic 		          IllegalFPUInstrM, // Is the instruction an illegal fpu instruction (to privileged unit)
+  output logic 		          IllegalFPUInstrD, // Is the instruction an illegal fpu instruction (to IFU)
   output logic [4:0] 	      SetFflagsM,    // FPU flags (to privileged unit)
   // Writeback stage 
   input  logic [4:0] 	      RdW,           // which FP register to write to (from IEU)
@@ -160,6 +160,7 @@ module fpu (
   logic [`FLEN-1:0] BoxedOneE;                            // One value for Z for multiplication, with NaN boxing if needed
   logic             StallUnpackedM;                       // Stall unpacker outputs during multicycle fdivsqrt
   logic [`FLEN-1:0] SgnExtXE;                             // Sign-extended X input for move to integer
+  logic             mvsgn;                                // sign bit for extending move
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -171,7 +172,7 @@ module fpu (
               .StallE, .StallM, .StallW, .FlushE, .FlushM, .FlushW, .FRM_REGW, .STATUS_FS, .FDivBusyE,
               .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
-              .IllegalFPUInstrM, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
+              .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
               .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
@@ -278,21 +279,25 @@ module fpu (
   mux3  #(`FLEN) FResMux(SgnResE, AlignedSrcAE, CmpFpResE, {OpCtrlE[2], &OpCtrlE[1:0]}, PreFpResE);
   assign PreNVE = CmpNVE&(OpCtrlE[2]|FWriteIntE);
 
-  // select the result that may be written to the integer register - to IEU
-  if(`FPSIZES == 1)
+  // select the result that may be written to the integer register with fmv - to IEU
+  if(`FPSIZES == 1) begin
+    assign mvsgn = XE[`FLEN-1];
     assign SgnExtXE = XE;
-  else if(`FPSIZES == 2) 
-    mux2 #(`FLEN) sgnextmux ({{`FLEN-`LEN1{XsE}}, XE[`LEN1-1:0]}, XE, FmtE, SgnExtXE);
-  else if(`FPSIZES == 3 | `FPSIZES == 4)
-    mux4 #(`FLEN) fmulzeromux ({{`FLEN-`H_LEN{XsE}}, XE[`H_LEN-1:0]}, 
-                                {{`FLEN-`S_LEN{XsE}}, XE[`S_LEN-1:0]}, 
-                                {{`FLEN-`D_LEN{XsE}}, XE[`D_LEN-1:0]}, 
+  end else if(`FPSIZES == 2) begin
+    mux2 #(1)     sgnmux (XE[`LEN1-1], XE[`FLEN-1],FmtE, mvsgn);
+    mux2 #(`FLEN) sgnextmux ({{`FLEN-`LEN1{mvsgn}}, XE[`LEN1-1:0]}, XE, FmtE, SgnExtXE);
+  end else if(`FPSIZES == 3 | `FPSIZES == 4) begin
+    mux4 #(1)     sgnmux (XE[`H_LEN-1], XE[`S_LEN-1], XE[`D_LEN-1], XE[`LLEN-1], FmtE, mvsgn);
+    mux4 #(`FLEN) fmulzeromux ({{`FLEN-`H_LEN{mvsgn}}, XE[`H_LEN-1:0]}, 
+                                {{`FLEN-`S_LEN{mvsgn}}, XE[`S_LEN-1:0]}, 
+                                {{`FLEN-`D_LEN{mvsgn}}, XE[`D_LEN-1:0]}, 
                                 XE, FmtE, SgnExtXE); 
+  end
 
   if (`FLEN>`XLEN)
     assign IntSrcXE = SgnExtXE[`XLEN-1:0];
   else 
-    assign IntSrcXE = {{`XLEN-`FLEN{XsE}}, SgnExtXE};
+    assign IntSrcXE = {{`XLEN-`FLEN{mvsgn}}, SgnExtXE};
   mux3 #(`XLEN) IntResMux (ClassResE, IntSrcXE, CmpIntResE, {~FResSelE[1], FResSelE[0]}, FIntResE);
 
   // E/M pipe registers

@@ -32,8 +32,8 @@ module ieu (
   input  logic 		          clk, reset,
   // Decode stage signals
   input  logic [31:0] 	    InstrD,                          // Instruction
-  input  logic 		          IllegalIEUInstrFaultD,           // Illegal instruction
-  output logic 		          IllegalBaseInstrFaultD,          // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
+  input  logic 		          IllegalIEUFPUInstrD,             // Illegal instruction
+  output logic 		          IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
   input  logic [`XLEN-1:0]  PCE,                             // PC
   input  logic [`XLEN-1:0]  PCLinkE,                         // PC + 4
@@ -94,7 +94,7 @@ module ieu (
            
   controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
-    .IllegalIEUInstrFaultD, .IllegalBaseInstrFaultD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
+    .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
