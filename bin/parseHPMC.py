@@ -124,8 +124,9 @@ def ProcessFile(fileName):
             benchmarks.append((testName, opt, HPMClist))
     return benchmarks
 
-def ComputeAverage(benchmarks):
+def ComputeArithmeticAverage(benchmarks):
     average = {}
+    index = 0
     for (testName, opt, HPMClist) in benchmarks:
         for field in HPMClist:
             value = HPMClist[field]
@@ -133,16 +134,39 @@ def ComputeAverage(benchmarks):
                 average[field] = value
             else:
                 average[field] += value
+        index += 1
     benchmarks.append(('All', '', average))
 
 def FormatToPlot(currBenchmark):
     names = []
     values = []
     for config in currBenchmark:
-        print ('config' , config)
+        #print ('config' , config)
         names.append(config[0])
         values.append(config[1])
     return (names, values)
+
+def GeometricAverage(benchmarks, field):
+    Product = 1
+    index = 0
+    for (testName, opt, HPMCList) in benchmarks:
+        #print(HPMCList)
+        Product *= HPMCList[field]
+        index += 1
+    return Product ** (1.0/index)
+
+def ComputeGeometricAverage(benchmarks):
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR']
+    AllAve = {}
+    for field in fields:
+        Product = 1
+        index = 0
+        for (testName, opt, HPMCList) in benchmarks:
+            #print(HPMCList)
+            Product *= HPMCList[field]
+            index += 1
+        AllAve[field] = Product ** (1.0/index)
+    benchmarks.append(('All', '', AllAve))
 
 if(sys.argv[1] == '-b'):
     configList = []
@@ -152,22 +176,24 @@ if(sys.argv[1] == '-b'):
         sys.argv = sys.argv[1::]
     for config in sys.argv[2::]:
         benchmarks = ProcessFile(config)
-        ComputeAverage(benchmarks)
+        #ComputeArithmeticAverage(benchmarks)
         ComputeAll(benchmarks)
+        ComputeGeometricAverage(benchmarks)
+        print('CONFIG: %s GEO MEAN: %f' % (config, GeometricAverage(benchmarks, 'BDMR')))
         configList.append((config.split('.')[0], benchmarks))
 
     # Merge all configruations into a single list
     benchmarkAll = []
     for (config, benchmarks) in configList:
-        print(config)
+        #print(config)
         for benchmark in benchmarks:
             (nameString, opt, dataDict) = benchmark
-            print("BENCHMARK")
-            print(nameString)
-            print(opt)
-            print(dataDict)
+            #print("BENCHMARK")
+            #print(nameString)
+            #print(opt)
+            #print(dataDict)
             benchmarkAll.append((nameString, opt, config, dataDict))
-    print('ALL!!!!!!!!!!')
+    #print('ALL!!!!!!!!!!')
     #for bench in benchmarkAll:
     #    print('BENCHMARK')
     #    print(bench)
