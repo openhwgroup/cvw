@@ -106,7 +106,7 @@ module bpred (
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
-    gshare #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gshare #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
       .PCSrcE);
@@ -117,7 +117,7 @@ module bpred (
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
-    gsharebasic #(`BPRED_SIZE, "global") DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gsharebasic #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
       .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
 	
