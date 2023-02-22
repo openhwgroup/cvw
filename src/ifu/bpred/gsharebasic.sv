@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module gsharebasic #(parameter k = 10,
-                     parameter string TYPE = "global") (
+                     parameter TYPE = 1) (
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -50,10 +50,10 @@ module gsharebasic #(parameter k = 10,
   logic [k-1:0]            GHRNext;
   logic                    PCSrcM;
 
-  if(TYPE == "gshare") begin
+  if(TYPE == 1) begin
 	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
 	assign IndexE = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
-  end else if(TYPE == "global") begin
+  end else if(TYPE == 0) begin
 	assign IndexNextF = GHRNext;
 	assign IndexE = GHRE;
   end

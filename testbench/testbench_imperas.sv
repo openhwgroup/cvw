@@ -40,6 +40,7 @@ module testbench;
 `ifdef USE_IMPERAS_DV
   import rvviPkg::*;
   import rvviApiPkg::*;
+  import idvApiPkg::*;
 `endif
 
   logic        clk;
