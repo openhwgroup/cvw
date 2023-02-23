@@ -24,6 +24,7 @@ if {$tech == "sky130"} {
     lappend search_path $s10lib
 } elseif {$tech == "tsmc28psyn"} {
     set TLU /home/jstine/TLU+
+    set OSUTLU /import/yukari1/pdk/TSMC/TLU+    
     set pdk /proj/models/tsmc28/libraries/28nmtsmc/tcbn28hpcplusbwp30p140_190a/
     set osupdk /import/yukari1/pdk/TSMC/28/CMOS/HPC+/stclib/9-track/tcbn28hpcplusbwp30p140-set/tcbn28hpcplusbwp30p140_190a_FE/    
     set s10lib $pdk/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp30p140_180a
@@ -32,7 +33,9 @@ if {$tech == "sky130"} {
     set mw_logic1_net VDD
     set mw_logic0_net VSS
     set CAPTABLE $TLU/1p8m/
-    set MW_REFERENCE_LIBRARY /home/jstine/MW
+    set MW /home/jstine/MW
+    set OSUMW /import/yukari1/pdk/TSMC/MW
+    set MW_REFERENCE_LIBRARY $MW
     set MW_TECH_FILE tcbn28hpcplusbwp30p140
     set MIN_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcbest.tluplus
     set MAX_TLU_FILE $CAPTABLE/crn28hpc+_1p08m+ut-alrdl_5x1z1u_rcworst.tluplus
