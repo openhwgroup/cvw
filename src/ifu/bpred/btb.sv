@@ -31,19 +31,20 @@
 `include "wally-config.vh"
 
 module btb #(parameter Depth = 10 ) (
-  input logic 			   clk,
-  input logic 			   reset,
-  input logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
-  input logic [`XLEN-1:0]  PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
-  output logic [`XLEN-1:0] PredPCF, // BTB's guess at PC
+  input  logic 			   clk,
+  input  logic 			   reset,
+  input  logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
+  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
+  output logic [`XLEN-1:0] BTAF, // BTB's guess at PC
+  output logic [`XLEN-1:0] BTAD,  
   output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
   // update
-  input logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
-  input logic [`XLEN-1:0]  IEUAdrE, // Branch/jump target address to insert into btb
-  input logic [`XLEN-1:0]  IEUAdrM, // Branch/jump target address to insert into btb
-  input logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
-  input logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
-  input logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
+  input  logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
+  input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
+  input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
+  input  logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
+  input  logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
+  input  logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
 );
 
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex;
@@ -51,7 +52,6 @@ module btb #(parameter Depth = 10 ) (
   logic 					MatchF, MatchD, MatchE, MatchM, MatchNextX, MatchXF;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
-  logic [`XLEN-1:0] 		PredPCD;  
   logic 					UpdateEn;
     
   // hashing function for indexing the PC
@@ -78,14 +78,14 @@ module btb #(parameter Depth = 10 ) (
   
   flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, PredPCF} :
-                                MatchD ? {InstrClassD, PredPCD} :
+  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, BTAF} :
+                                MatchD ? {InstrClassD, BTAD} :
                                 MatchE ? {InstrClassE, IEUAdrE} :
                                 {InstrClassM, IEUAdrM} ;
 
   flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
 
-  assign {BTBPredInstrClassF, PredPCF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
+  assign {BTBPredInstrClassF, BTAF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
 
   assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
@@ -95,6 +95,6 @@ module btb #(parameter Depth = 10 ) (
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredictionF),
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
 
-  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
+  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
 
 endmodule
