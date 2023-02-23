@@ -179,7 +179,7 @@ if(sys.argv[1] == '-b'):
         #ComputeArithmeticAverage(benchmarks)
         ComputeAll(benchmarks)
         ComputeGeometricAverage(benchmarks)
-        print('CONFIG: %s GEO MEAN: %f' % (config, GeometricAverage(benchmarks, 'BDMR')))
+        #print('CONFIG: %s GEO MEAN: %f' % (config, GeometricAverage(benchmarks, 'BDMR')))
         configList.append((config.split('.')[0], benchmarks))
 
     # Merge all configruations into a single list
@@ -212,7 +212,7 @@ if(sys.argv[1] == '-b'):
     size = len(benchmarkDict)
     index = 1
     if(summery == 0):
-        print('Number of plots', size)
+        #print('Number of plots', size)
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             (names, values) = FormatToPlot(currBenchmark)
@@ -249,7 +249,7 @@ if(sys.argv[1] == '-b'):
         print(dct)
         for cat in dct:
             (x, y) = dct[cat]
-            plt.scatter(x, y, label=cat)
+            plt.scatter(x, y, label='k')
             plt.plot(x, y)
             plt.ylabel('Prediction Accuracy')
             plt.xlabel('Size (b or k)')
