@@ -78,7 +78,7 @@ module bpred (
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
   logic [3:0]               InstrClassD;
   logic [3:0] 				InstrClassE;
-  logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE;
+  logic                     DirPredictionWrongE;
   
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
@@ -200,9 +200,7 @@ module bpred (
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
-  flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, AnyWrongPredInstrClassE},
-    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
+  flopenrc #(1) BPClassWrongRegM(clk, reset, FlushM, ~StallM, AnyWrongPredInstrClassE, PredictionInstrClassWrongM);
 
   // pipeline the class
   flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
@@ -242,10 +240,10 @@ module bpred (
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
   else	assign NextValidPCE = PCE;
 
-
   if(`ZICOUNTERS_SUPPORTED) begin
 	logic 					JumpOrTakenBranchE;
 	logic [`XLEN-1:0] 		BTAE, RASPCD, RASPCE;
+	logic BTBPredPCWrongE, RASPredPCWrongE;	
 	// performance counters
 	// 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
 	// 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
@@ -267,8 +265,12 @@ module bpred (
 
 	flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
 	flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+  flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
+    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE},
+    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM});
+  
   end else begin
-	assign {BTBPredPCWrongE, RASPredPCWrongE, JumpOrTakenBranchM} = '0;
+	assign {BTBPredPCWrongM, RASPredPCWrongM, JumpOrTakenBranchM} = '0;
   end
   
 endmodule
