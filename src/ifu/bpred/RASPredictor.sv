@@ -33,7 +33,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   input  logic             clk,
   input  logic 			   reset, 
   input  logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
-  input  logic [3:0] 	   WrongPredInstrClassD,                      // Prediction class is wrong
+  input  logic       	   WrongBPRetD,                      // Prediction class is wrong
   input  logic [3:0] 	   InstrClassD,
   input  logic [3:0]       InstrClassE,                  // Instr class
   input  logic [3:0]       PredInstrClassF,
@@ -61,7 +61,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
   assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
 
-  assign WrongPredRetD = (WrongPredInstrClassD[2]) & ~StallE & ~FlushE;
+  assign WrongPredRetD = (WrongBPRetD) & ~StallE & ~FlushE;
   assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]); // flushed ret
 
   assign RepairD = WrongPredRetD | FlushedRetDE ;
