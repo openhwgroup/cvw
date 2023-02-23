@@ -109,7 +109,6 @@ logic [3:0] dummy;
         "arch64zbb":     if (`ZBB_SUPPORTED) tests = arch64zbb;
         "arch64zbc":     if (`ZBC_SUPPORTED) tests = arch64zbc;
         "arch64zbs":     if (`ZBS_SUPPORTED) tests = arch64zbs;
-        "arch64b":    if (`ZBB_SUPPORTED & `ZBA_SUPPORTED & `ZBS_SUPPORTED & `ZBC_SUPPORTED) tests = arch64b;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -138,7 +137,6 @@ logic [3:0] dummy;
         "arch32zbb":     if (`ZBB_SUPPORTED) tests = arch32zbb;
         "arch32zbc":     if (`ZBC_SUPPORTED) tests = arch32zbc;
         "arch32zbs":     if (`ZBS_SUPPORTED) tests = arch32zbs;
-        "arch32b":    if (`ZBB_SUPPORTED & `ZBA_SUPPORTED & `ZBS_SUPPORTED & `ZBC_SUPPORTED) tests = arch32b;
       endcase
     end
     if (tests.size() == 0) begin
@@ -364,7 +362,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-              $stop;//***debug
+              //$stop;//***debug
              end
             i = i + 1;
           end
