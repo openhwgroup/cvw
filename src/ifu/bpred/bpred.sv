@@ -73,12 +73,12 @@ module bpred (
   logic [1:0]               DirPredictionF;
 
   logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
-  logic [`XLEN-1:0]         PredPCF, RASPCF;
+  logic [`XLEN-1:0]         BTAF, RASPCF;
   logic                     PredictionPCWrongE;
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
   logic [3:0]               InstrClassD;
   logic [3:0] 				InstrClassE;
-  logic                     DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE;
+  logic                     DirPredictionWrongE;
   
   logic                     SelBPPredF;
   logic [`XLEN-1:0]         BPPredPCF;
@@ -88,9 +88,8 @@ module bpred (
 
   logic 					BTBTargetWrongE;
   logic 					RASTargetWrongE;
-  logic 					JumpOrTakenBranchE;
 
-  logic [`XLEN-1:0] PredPCD, PredPCE, RASPCD, RASPCE;
+  logic [`XLEN-1:0] 		BTAD;
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -142,7 +141,7 @@ module bpred (
   btb #(`BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
-          .PredPCF,
+          .BTAF, .BTAD,
           .BTBPredInstrClassF,
           .PredictionInstrClassWrongM,
           .IEUAdrE, .IEUAdrM,
@@ -150,25 +149,28 @@ module bpred (
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
-	logic [4:0] CompressedOpcF;
 	logic [3:0] InstrClassF;
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
 	logic 		JumpF, BranchF;
-	
-	assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
 
-	assign cjal = CompressedOpcF == 5'h09 & `XLEN == 32;
-	assign cj = CompressedOpcF == 5'h0d;
-	assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	assign CJumpF = cjal | cj | cjr | cjalr;
-	assign CBranchF = CompressedOpcF[4:1] == 4'h7;
+	if(`C_SUPPORTED) begin
+	  logic [4:0] CompressedOpcF;
+	  assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
+	  assign cjal = CompressedOpcF == 5'h09 & `XLEN == 32;
+	  assign cj = CompressedOpcF == 5'h0d;
+	  assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
+	  assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
+	  assign CJumpF = cjal | cj | cjr | cjalr;
+	  assign CBranchF = CompressedOpcF[4:1] == 4'h7;
+	end else begin
+	  assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
+	end
 
 	assign JumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
 	assign BranchF = PostSpillInstrRawF[6:0] == 7'h63;
 	
 	assign InstrClassF[0] = BranchF | (`C_SUPPORTED & CBranchF);
-	assign InstrClassF[1] = JumpF | (`C_SUPPORTED & (cjal | cj | cj | cjalr));
+	assign InstrClassF[1] = JumpF | (`C_SUPPORTED & (CJumpF));
 	assign InstrClassF[2] = (JumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
 							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
@@ -189,7 +191,7 @@ module bpred (
 							.PredInstrClassF, .InstrClassD, .InstrClassE,
 							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
 
-  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : PredPCF;
+  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : BTAF;
 
   assign InstrClassD[0] = BranchD;
   assign InstrClassD[1] = JumpD ;
@@ -201,9 +203,7 @@ module bpred (
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
-  flopenrc #(4) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE, AnyWrongPredInstrClassE},
-    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM});
+  flopenrc #(1) BPClassWrongRegM(clk, reset, FlushM, ~StallM, AnyWrongPredInstrClassE, PredictionInstrClassWrongM);
 
   // pipeline the class
   flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
@@ -243,27 +243,37 @@ module bpred (
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
   else	assign NextValidPCE = PCE;
 
-  // performance counters
-  // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
-  // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
-  // 3. target ras    (ras target wrong / class[2])
-  // 4. direction     (br dir wrong / class[0])
+  if(`ZICOUNTERS_SUPPORTED) begin
+	logic 					JumpOrTakenBranchE;
+	logic [`XLEN-1:0] 		BTAE, RASPCD, RASPCE;
+	logic BTBPredPCWrongE, RASPredPCWrongE;	
+	// performance counters
+	// 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
+	// 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
+	// 3. target ras    (ras target wrong / class[2])
+	// 4. direction     (br dir wrong / class[0])
 
-  // Unforuantely we can't relay on PCD to infer the correctness of the BTB or RAS because the class prediction 
-  // could be wrong or the fall through address selected for branch predict not taken.
-  // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
-  // both without the above inaccuracies.
-  assign BTBPredPCWrongE = (PredPCE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
-  assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
+	// Unforuantely we can't use PCD to infer the correctness of the BTB or RAS because the class prediction 
+	// could be wrong or the fall through address selected for branch predict not taken.
+	// By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
+	// both without the above inaccuracies.
+	assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
+	assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
 
-  assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1];
+	assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1];
+	
+	flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
+
+	flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
+
+	flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
+	flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+  flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
+    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE},
+    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM});
   
-  flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
-
-  flopenrc #(`XLEN) BTBTargetDReg(clk, reset, FlushD, ~StallD, PredPCF, PredPCD);
-  flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, PredPCD, PredPCE);
-
-  flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
-  flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+  end else begin
+	assign {BTBPredPCWrongM, RASPredPCWrongM, JumpOrTakenBranchM} = '0;
+  end
   
 endmodule
