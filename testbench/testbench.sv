@@ -362,7 +362,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-              //$stop;//***debug
+              $stop;//***debug
              end
             i = i + 1;
           end
