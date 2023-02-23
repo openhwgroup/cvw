@@ -72,12 +72,9 @@ module bpred (
 
   logic [1:0]               DirPredictionF;
 
-  logic [3:0]               BTBPredInstrClassF, PredInstrClassF, PredInstrClassD;
   logic [`XLEN-1:0]         BTAF, RASPCF;
   logic                     PredictionPCWrongE;
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
-  logic [3:0]               InstrClassD;
-  logic [3:0] 				InstrClassE;
   logic                     DirPredictionWrongE;
   
   logic                     SelBPPredF;
@@ -91,34 +88,44 @@ module bpred (
 
   logic [`XLEN-1:0] 		BTAD;
 
+  logic 					BTBJalF, BTBRetF, BTBJumpF, BTBBranchF;
+  logic 					BPBranchF, BPJumpF, BPRetF, BPJalF;
+  logic 					BPBranchD, BPJumpD, BPRetD, BPJalD;
+  logic 					RetD, JalD;
+  logic 					RetE, JalE;
+  logic 					BranchM, JumpM, RetM, JalM;
+  logic 					WrongBPRetD;
+
+
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPRED_TYPE == "BP_TWOBIT") begin:Predictor
-    twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
+    twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
+      .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
+      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrF(BPBranchF), .BranchInstrD(BranchD), .BranchInstrE(BranchE), .BranchInstrM(BranchM),
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
     gshare #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(PredInstrClassF[0]), .BranchInstrD(InstrClassD[0]), .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]),
+      .BranchInstrF(BPBranchF), .BranchInstrD(BranchD), .BranchInstrE(BranchE), .BranchInstrM(BranchM),
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
+      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(InstrClassE[0]), .BranchInstrM(InstrClassM[0]), .PCSrcE);
+      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
 	
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -142,16 +149,16 @@ module bpred (
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .BTAF, .BTAD,
-          .BTBPredInstrClassF,
+          .BTBPredInstrClassF({BTBJalF, BTBRetF, BTBJumpF, BTBBranchF}),
           .PredictionInstrClassWrongM,
           .IEUAdrE, .IEUAdrM,
-          .InstrClassD, .InstrClassE, .InstrClassM);
+          .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}), .InstrClassM({JalM, RetM, JumpM, BranchM}));
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
 	logic [3:0] InstrClassF;
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
-	logic 		JumpF, BranchF;
+	logic 		NCJumpF, NCBranchF;
 
 	if(`C_SUPPORTED) begin
 	  logic [4:0] CompressedOpcF;
@@ -166,48 +173,46 @@ module bpred (
 	  assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
 	end
 
-	assign JumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
-	assign BranchF = PostSpillInstrRawF[6:0] == 7'h63;
+	assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
+	assign NCBranchF = PostSpillInstrRawF[6:0] == 7'h63;
 	
-	assign InstrClassF[0] = BranchF | (`C_SUPPORTED & CBranchF);
-	assign InstrClassF[1] = JumpF | (`C_SUPPORTED & (CJumpF));
-	assign InstrClassF[2] = (JumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
-							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
+	assign BPBranchF = NCBranchF | (`C_SUPPORTED & CBranchF);
+	assign BPJumpF = NCJumpF | (`C_SUPPORTED & (CJumpF));
+	assign BPRetF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
+					(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
-	assign InstrClassF[3] = (JumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
+	assign BPJalF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // jal(r) must link to ra or x5
 							(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
-	assign PredInstrClassF = InstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
-						PredInstrClassF[1];
   end else begin
-	assign PredInstrClassF = BTBPredInstrClassF;
-	assign SelBPPredF = (PredInstrClassF[0] & DirPredictionF[1]) | 
-						PredInstrClassF[1];
+	assign {BPJalF, BPRetF, BPJumpF, BPBranchF} = {BTBJalF, BTBRetF, BTBJumpF, BTBBranchF};
   end
+	assign SelBPPredF = (BPBranchF & DirPredictionF[1]) | BPJumpF;
   
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-							.PredInstrClassF, .InstrClassD, .InstrClassE,
-							.WrongPredInstrClassD, .RASPCF, .PCLinkE);
+							.PredInstrClassF({BPJalF, BPRetF, BPJumpF, BPBranchF}), .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}),
+							.WrongBPRetD, .RASPCF, .PCLinkE);
 
-  assign BPPredPCF = PredInstrClassF[2] ? RASPCF : BTAF;
+  assign BPPredPCF = BPRetF ? RASPCF : BTAF;
 
-  assign InstrClassD[0] = BranchD;
-  assign InstrClassD[1] = JumpD ;
-  assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
-  assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
+  //assign InstrClassD[0] = BranchD;
+  //assign InstrClassD[1] = JumpD ;
+  //assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
+  assign RetD = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
+  //assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
+  assign JalD = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
 
-  flopenrc #(4) InstrClassRegE(clk, reset,  FlushE, ~StallE, InstrClassD, InstrClassE);
-  flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, InstrClassE, InstrClassM);
+  flopenrc #(2) InstrClassRegE(clk, reset,  FlushE, ~StallE, {JalD, RetD}, {JalE, RetE});
+  flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, {JalE, RetE, JumpE, BranchE}, {JalM, RetM, JumpM, BranchM});
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
   flopenrc #(1) BPClassWrongRegM(clk, reset, FlushM, ~StallM, AnyWrongPredInstrClassE, PredictionInstrClassWrongM);
-
-  // pipeline the class
-  flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, PredInstrClassF, PredInstrClassD);
   flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
+
+  // pipeline the predicted class
+  flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, {BPJalF, BPRetF, BPJumpF, BPBranchF}, {BPJalD, BPRetD, BPJumpD, BPBranchD});
  
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
@@ -218,8 +223,8 @@ module bpred (
   assign PredictionPCWrongE = PCCorrectE != PCD;
 
   // branch class prediction wrong.
-  assign WrongPredInstrClassD = PredInstrClassD ^ InstrClassD[3:0];
-  assign AnyWrongPredInstrClassD = |WrongPredInstrClassD;
+  assign AnyWrongPredInstrClassD = |({BPJalD, BPRetD, BPJumpD, BPBranchD} ^ {JalD, RetD, JumpD, BranchD});
+  assign WrongBPRetD = BPRetD ^ RetD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
   //assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
@@ -257,10 +262,10 @@ module bpred (
 	// could be wrong or the fall through address selected for branch predict not taken.
 	// By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
 	// both without the above inaccuracies.
-	assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
-	assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
+	assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (BranchE | JumpE & ~RetE) & PCSrcE;
+	assign RASPredPCWrongE = (RASPCE != IEUAdrE) & RetE & PCSrcE;
 
-	assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1];
+	assign JumpOrTakenBranchE = (BranchE & PCSrcE) | JumpE;
 	
 	flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
 
@@ -275,5 +280,8 @@ module bpred (
   end else begin
 	assign {BTBPredPCWrongM, RASPredPCWrongM, JumpOrTakenBranchM} = '0;
   end
+
+  // **** Fix me
+  assign InstrClassM = {JalM, RetM, JumpM, BranchM};
   
 endmodule
