@@ -30,8 +30,6 @@ export SAIFPOWER ?= 0
 OLDCONFIGDIR ?= ${WALLY}/config
 export CONFIGDIR ?= $(OUTPUTDIR)/config
 
-
-
 default:
 	@echo "  Basic synthesis procedure for Wally:"
 	@echo "        Invoke with make synth"
@@ -129,7 +127,6 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
-
 
 synth: mkdirecs configs rundc clean
 

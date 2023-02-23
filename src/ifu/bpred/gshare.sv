@@ -33,8 +33,8 @@ module gshare #(parameter k = 10,
                 parameter integer TYPE = 1) (
   input logic             clk,
   input logic             reset,
-  input logic             StallF, StallD, StallE, StallM, 
-  input logic             FlushD, FlushE, FlushM,
+  input logic             StallF, StallD, StallE, StallM, StallW,
+  input logic             FlushD, FlushE, FlushM, FlushW,
   output logic [1:0]      DirPredictionF, 
   output logic            DirPredictionWrongE,
   // update
