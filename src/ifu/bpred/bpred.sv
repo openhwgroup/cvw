@@ -149,25 +149,28 @@ module bpred (
 
   // the branch predictor needs a compact decoding of the instruction class.
   if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
-	logic [4:0] CompressedOpcF;
 	logic [3:0] InstrClassF;
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
 	logic 		JumpF, BranchF;
-	
-	assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
 
-	assign cjal = CompressedOpcF == 5'h09 & `XLEN == 32;
-	assign cj = CompressedOpcF == 5'h0d;
-	assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
-	assign CJumpF = cjal | cj | cjr | cjalr;
-	assign CBranchF = CompressedOpcF[4:1] == 4'h7;
+	if(`C_SUPPORTED) begin
+	  logic [4:0] CompressedOpcF;
+	  assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
+	  assign cjal = CompressedOpcF == 5'h09 & `XLEN == 32;
+	  assign cj = CompressedOpcF == 5'h0d;
+	  assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
+	  assign cjalr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
+	  assign CJumpF = cjal | cj | cjr | cjalr;
+	  assign CBranchF = CompressedOpcF[4:1] == 4'h7;
+	end else begin
+	  assign {cjal, cj, cjr, cjalr, CJumpF, CBranchF} = '0;
+	end
 
 	assign JumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
 	assign BranchF = PostSpillInstrRawF[6:0] == 7'h63;
 	
 	assign InstrClassF[0] = BranchF | (`C_SUPPORTED & CBranchF);
-	assign InstrClassF[1] = JumpF | (`C_SUPPORTED & (cjal | cj | cj | cjalr));
+	assign InstrClassF[1] = JumpF | (`C_SUPPORTED & (CJumpF));
 	assign InstrClassF[2] = (JumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // return must return to ra or r5
 							(`C_SUPPORTED & (cjalr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
 	
