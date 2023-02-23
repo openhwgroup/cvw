@@ -36,7 +36,7 @@ module twoBitPredictor #(parameter k = 10) (
   input  logic [`XLEN-1:0] PCNextF, PCM,
   output logic [1:0]       DirPredictionF,
   output logic             DirPredictionWrongE,
-  input  logic             BranchInstrE, BranchInstrM,
+  input  logic             BranchE, BranchM,
   input  logic             PCSrcE
 );
 
@@ -60,13 +60,13 @@ module twoBitPredictor #(parameter k = 10) (
     .rd1(DirPredictionF),
     .wa2(IndexM),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM),
+    .we2(BranchM),
     .bwe2(1'b1));
   
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, DirPredictionD, DirPredictionE);
 
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
 
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
   flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);

@@ -103,29 +103,29 @@ module bpred (
     twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
       .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
+      .BranchE, .BranchM, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPBranchF), .BranchInstrD(BranchD), .BranchInstrE(BranchE), .BranchInstrM(BranchM),
+      .BPBranchF, .BranchD, .BranchE, .BranchM,
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
     gshare #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrF(BPBranchF), .BranchInstrD(BranchD), .BranchInstrE(BranchE), .BranchInstrM(BranchM),
+      .BPBranchF, .BranchD, .BranchE, .BranchM,
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
+      .BranchE, .BranchM, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BranchInstrE(BranchE), .BranchInstrM(BranchM), .PCSrcE);
+      .BranchE, .BranchM, .PCSrcE);
 	
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
@@ -191,7 +191,7 @@ module bpred (
   
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-							.PredInstrClassF({BPJalF, BPRetF, BPJumpF, BPBranchF}), .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}),
+							.BPRetF, .RetD, .RetE, .JalE,
 							.WrongBPRetD, .RASPCF, .PCLinkE);
 
   assign BPPredPCF = BPRetF ? RASPCF : BTAF;

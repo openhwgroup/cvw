@@ -39,7 +39,7 @@ module gsharebasic #(parameter k = 10,
   output logic            DirPredictionWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCM,
-  input logic             BranchInstrE, BranchInstrM, PCSrcE
+  input logic             BranchE, BranchM, PCSrcE
 );
 
   logic [k-1:0] 		  IndexNextF, IndexM;
@@ -64,7 +64,7 @@ module gsharebasic #(parameter k = 10,
     .rd1(DirPredictionF),
     .wa2(IndexM),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM),
+    .we2(BranchM),
     .bwe2(1'b1));
 
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
@@ -73,10 +73,10 @@ module gsharebasic #(parameter k = 10,
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
   flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);
 
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
 
-  assign GHRNext = BranchInstrM ? {PCSrcM, GHR[k-1:1]} : GHR;
-  flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchInstrM, GHRNext, GHR);
+  assign GHRNext = BranchM ? {PCSrcM, GHR[k-1:1]} : GHR;
+  flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchM, GHRNext, GHR);
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
   flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
