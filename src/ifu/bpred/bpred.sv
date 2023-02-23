@@ -88,9 +88,8 @@ module bpred (
 
   logic 					BTBTargetWrongE;
   logic 					RASTargetWrongE;
-  logic 					JumpOrTakenBranchE;
 
-  logic [`XLEN-1:0] BTAD, BTAE, RASPCD, RASPCE;
+  logic [`XLEN-1:0] 		BTAD;
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -243,26 +242,33 @@ module bpred (
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
   else	assign NextValidPCE = PCE;
 
-  // performance counters
-  // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
-  // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
-  // 3. target ras    (ras target wrong / class[2])
-  // 4. direction     (br dir wrong / class[0])
 
-  // Unforuantely we can't use PCD to infer the correctness of the BTB or RAS because the class prediction 
-  // could be wrong or the fall through address selected for branch predict not taken.
-  // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
-  // both without the above inaccuracies.
-  assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
-  assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
+  if(`ZICOUNTERS_SUPPORTED) begin
+	logic 					JumpOrTakenBranchE;
+	logic [`XLEN-1:0] 		BTAE, RASPCD, RASPCE;
+	// performance counters
+	// 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
+	// 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
+	// 3. target ras    (ras target wrong / class[2])
+	// 4. direction     (br dir wrong / class[0])
 
-  assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1];
-  
-  flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
+	// Unforuantely we can't use PCD to infer the correctness of the BTB or RAS because the class prediction 
+	// could be wrong or the fall through address selected for branch predict not taken.
+	// By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
+	// both without the above inaccuracies.
+	assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]) & PCSrcE;
+	assign RASPredPCWrongE = (RASPCE != IEUAdrE) & InstrClassE[2] & PCSrcE;
 
-  flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
+	assign JumpOrTakenBranchE = (InstrClassE[0] & PCSrcE) | InstrClassE[1];
+	
+	flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
 
-  flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
-  flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+	flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
+
+	flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
+	flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
+  end else begin
+	assign {BTBPredPCWrongE, RASPredPCWrongE, JumpOrTakenBranchM} = '0;
+  end
   
 endmodule
