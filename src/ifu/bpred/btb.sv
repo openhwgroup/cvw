@@ -52,7 +52,6 @@ module btb #(parameter Depth = 10 ) (
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic [`XLEN-1:0] 		PredPCD;  
-  logic [3:0] 				PredInstrClassD;  // *** copy of reg outside module
   logic 					UpdateEn;
     
   // hashing function for indexing the PC

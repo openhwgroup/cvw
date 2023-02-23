@@ -161,11 +161,13 @@ module wallypipelinedcore (
   logic                          FCvtIntE;
   logic                          CommittedF;
   logic 						 JumpOrTakenBranchM;
+  logic 						 BranchD, BranchE, JumpD, JumpE;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     .InstrValidM, .InstrValidE, .InstrValidD,
+    .BranchD, .BranchE, .JumpD, .JumpE,
     // Fetch
     .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
@@ -199,6 +201,7 @@ module wallypipelinedcore (
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
      .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
