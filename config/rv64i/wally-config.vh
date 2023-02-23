@@ -147,10 +147,10 @@
 `define DIVCOPIES 32'h4
 
 // bit manipulation
-`define ZBA_SUPPORTED 1
-`define ZBB_SUPPORTED 1
-`define ZBC_SUPPORTED 1
-`define ZBS_SUPPORTED 1
+`define ZBA_SUPPORTED 0
+`define ZBB_SUPPORTED 0
+`define ZBC_SUPPORTED 0
+`define ZBS_SUPPORTED 0
 
 // Memory synthesis configuration
 `define USE_SRAM 0
