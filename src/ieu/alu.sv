@@ -64,7 +64,7 @@ module alu #(parameter WIDTH=32) (
   if (`ZBA_SUPPORTED) begin: zbamuxes
     // Zero Extend Mux
     if (WIDTH == 64) begin
-      assign CondZextA = (BSelect[3] & (W64 | Funct3[0])) ? {{(32){1'b0}}, A[31:0]} : A; //NOTE: do we move this mux select logic into the Decode Stage?
+      assign CondZextA = (BSelect[3] & (W64)) ? {{(32){1'b0}}, A[31:0]} : A; //NOTE: do we move this mux select logic into the Decode Stage?
     end else assign CondZextA = A;
 
     // Pre-Shift Mux
