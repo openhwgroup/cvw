@@ -42,9 +42,11 @@ module btb #(parameter Depth = 10 ) (
   input  logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
   input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
   input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
+  input  logic [`XLEN-1:0] IEUAdrW,
   input  logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
   input  logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
-  input  logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
+  input  logic [3:0] 	   InstrClassM,                            // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassW
 );
 
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
@@ -53,8 +55,6 @@ module btb #(parameter Depth = 10 ) (
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic 					UpdateEn;
-  logic [3:0] 				InstrClassW;
-  logic [`XLEN-1:0] 		IEUAdrW;
     
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -102,7 +102,5 @@ module btb #(parameter Depth = 10 ) (
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
-
-  flopenrc #(`XLEN+4) IEUAdrWReg(clk, reset, FlushW, ~StallW, {InstrClassM, IEUAdrM}, {InstrClassW, IEUAdrW});
 
 endmodule
