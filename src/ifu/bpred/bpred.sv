@@ -94,9 +94,9 @@ module bpred (
   logic 					RetD, JalD;
   logic 					RetE, JalE;
   logic 					BranchM, JumpM, RetM, JalM;
+  logic 					BranchW, JumpW, RetW, JalW;
   logic 					WrongBPRetD;
-
-  logic [`XLEN-1:0] 		PCW;
+  logic [`XLEN-1:0] 		PCW, IEUAdrW;
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -152,8 +152,9 @@ module bpred (
           .BTAF, .BTAD,
           .BTBPredInstrClassF({BTBJalF, BTBRetF, BTBJumpF, BTBBranchF}),
           .PredictionInstrClassWrongM,
-          .IEUAdrE, .IEUAdrM,
-          .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}), .InstrClassM({JalM, RetM, JumpM, BranchM}));
+          .IEUAdrE, .IEUAdrM, .IEUAdrW,
+          .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}), .InstrClassM({JalM, RetM, JumpM, BranchM}),
+          .InstrClassW({JalW, RetW, JumpW, BranchW}));
 
   if (!`INSTR_CLASS_PRED) begin : DirectClassDecode
 	// This section is mainly for testing, verification, and PPA comparison.
@@ -205,6 +206,7 @@ module bpred (
 
   flopenrc #(2) InstrClassRegE(clk, reset,  FlushE, ~StallE, {JalD, RetD}, {JalE, RetE});
   flopenrc #(4) InstrClassRegM(clk, reset,  FlushM, ~StallM, {JalE, RetE, JumpE, BranchE}, {JalM, RetM, JumpM, BranchM});
+  flopenrc #(4) InstrClassRegW(clk, reset,  FlushM, ~StallW, {JalM, RetM, JumpM, BranchM}, {JalW, RetW, JumpW, BranchW});
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
 
   // branch predictor
@@ -283,5 +285,7 @@ module bpred (
   // **** Fix me
   assign InstrClassM = {JalM, RetM, JumpM, BranchM};
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
+  flopenrc #(`XLEN) IEUAdrWReg(clk, reset, FlushW, ~StallW, IEUAdrM, IEUAdrW);
+
   
 endmodule
