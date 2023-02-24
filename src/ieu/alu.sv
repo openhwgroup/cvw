@@ -54,6 +54,7 @@ module alu #(parameter WIDTH=32) (
   logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                           // Sign bits of A, B
   logic             Rotate;
+  logic [WIDTH:0]   shA;                                                                    // 65 bit input source to shifter
 
 
   if (`ZBS_SUPPORTED) begin: zbsdec
@@ -61,6 +62,17 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (BSelect[0]) ? MaskB : B;
   end else assign CondMaskB = B;
 
+
+  if (WIDTH == 64) begin
+  always_comb 
+    case ({W64, SubArith})
+      2'b00: shA = {{1'b0}, A};
+      2'b01: shA = {A[63], A};
+      2'b10: shA = {{33'b0}, A[31:0]};
+      2'b11: shA = {{33{A[31]}}, A[31:0]};
+    endcase
+  end else assign shA = (SubArith) ? {A[31], A} : {{1'b0},A};
+    
   if (`ZBA_SUPPORTED) begin: zbamuxes
     // Zero Extend Mux
     if (WIDTH == 64) begin
@@ -89,7 +101,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(Rotate));
+  shifternew sh(.shA(shA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(Rotate));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
