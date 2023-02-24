@@ -38,8 +38,8 @@ module adrdecs (
 
   localparam logic [3:0]          SUPPORTED_SIZE = (`LLEN == 32 ? 4'b0111 : 4'b1111);
  // Determine which region of physical memory (if any) is being accessed
-  adrdec dtimdec(PhysicalAddress, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[10]);  
-  adrdec iromdec(PhysicalAddress, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[9]);  
+  adrdec dtimdec(PhysicalAddress, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[10]);  
+  adrdec iromdec(PhysicalAddress, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[9]);  
   adrdec ddr4dec(PhysicalAddress, `EXT_MEM_BASE, `EXT_MEM_RANGE, `EXT_MEM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[8]);  
   adrdec bootromdec(PhysicalAddress, `BOOTROM_BASE, `BOOTROM_RANGE, `BOOTROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[7]);
   adrdec uncoreramdec(PhysicalAddress, `UNCORE_RAM_BASE, `UNCORE_RAM_RANGE, `UNCORE_RAM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[6]);
