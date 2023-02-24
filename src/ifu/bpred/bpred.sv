@@ -77,7 +77,7 @@ module bpred (
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
   logic                     DirPredictionWrongE;
   
-  logic                     SelBPPredF;
+  logic                     BPPCSrcF;
   logic [`XLEN-1:0]         BPPredPCF;
   logic [`XLEN-1:0]         PCNext0F;
   logic [`XLEN-1:0] 		PCCorrectE;
@@ -96,6 +96,7 @@ module bpred (
   logic 					BranchM, JumpM, RetM, JalM;
   logic 					WrongBPRetD;
 
+  logic [`XLEN-1:0] 		PCW;
 
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -147,16 +148,18 @@ module bpred (
 
   btb #(`BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-          .PCNextF, .PCF, .PCD, .PCE, .PCM,
+          .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW,
           .BTAF, .BTAD,
           .BTBPredInstrClassF({BTBJalF, BTBRetF, BTBJumpF, BTBBranchF}),
           .PredictionInstrClassWrongM,
           .IEUAdrE, .IEUAdrM,
           .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}), .InstrClassM({JalM, RetM, JumpM, BranchM}));
 
-  // the branch predictor needs a compact decoding of the instruction class.
-  if (`INSTR_CLASS_PRED == 0) begin : DirectClassDecode
-	logic [3:0] InstrClassF;
+  if (!`INSTR_CLASS_PRED) begin : DirectClassDecode
+	// This section is mainly for testing, verification, and PPA comparison.
+	// An alternative to using the BTB to store the instruction class is to partially decode
+	// the instructions in the Fetch stage into, Jal, Ret, Jump, and Branch instructions.
+	// This logic is not described in the text book as of 23 February 2023.
 	logic 		cjal, cj, cjr, cjalr, CJumpF, CBranchF;
 	logic 		NCJumpF, NCBranchF;
 
@@ -185,9 +188,10 @@ module bpred (
 							(`C_SUPPORTED & (cjal | (cjalr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
   end else begin
+	// This section connects the BTB's instruction class prediction.
 	assign {BPJalF, BPRetF, BPJumpF, BPBranchF} = {BTBJalF, BTBRetF, BTBJumpF, BTBBranchF};
   end
-	assign SelBPPredF = (BPBranchF & DirPredictionF[1]) | BPJumpF;
+	assign BPPCSrcF = (BPBranchF & DirPredictionF[1]) | BPJumpF;
   
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -196,11 +200,7 @@ module bpred (
 
   assign BPPredPCF = BPRetF ? RASPCF : BTAF;
 
-  //assign InstrClassD[0] = BranchD;
-  //assign InstrClassD[1] = JumpD ;
-  //assign InstrClassD[2] = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
   assign RetD = JumpD & (InstrD[19:15] & 5'h1B) == 5'h01; // return must return to ra or x5
-  //assign InstrClassD[3] = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
   assign JalD = JumpD & (InstrD[11:7] & 5'h1B) == 5'h01; // jal(r) must link to ra or x5
 
   flopenrc #(2) InstrClassRegE(clk, reset,  FlushE, ~StallE, {JalD, RetD}, {JalE, RetE});
@@ -227,7 +227,6 @@ module bpred (
   assign WrongBPRetD = BPRetD ^ RetD;
   
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  //assign BPPredWrongE = (PredictionPCWrongE & |InstrClassE | (AnyWrongPredInstrClassE & ~|InstrClassE));
   assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
 
   logic BPPredWrongEAlt;
@@ -237,7 +236,7 @@ module bpred (
 
   // Output the predicted PC or corrected PC on miss-predict.
   // Selects the BP or PC+2/4.
-  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, SelBPPredF, PCNext0F);
+  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPredPCF, BPPCSrcF, PCNext0F);
   // If the prediction is wrong select the correct address.
   mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
   // Correct branch/jump target.
@@ -283,5 +282,6 @@ module bpred (
 
   // **** Fix me
   assign InstrClassM = {JalM, RetM, JumpM, BranchM};
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
   
 endmodule
