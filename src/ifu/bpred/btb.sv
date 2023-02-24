@@ -34,7 +34,7 @@ module btb #(parameter Depth = 10 ) (
   input  logic 			   clk,
   input  logic 			   reset,
   input  logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
+  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, PCW,// PC at various stages
   output logic [`XLEN-1:0] BTAF, // BTB's guess at PC
   output logic [`XLEN-1:0] BTAD,  
   output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
@@ -47,12 +47,14 @@ module btb #(parameter Depth = 10 ) (
   input  logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
 );
 
-  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex;
+  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
   logic [`XLEN-1:0] 		ResetPC;
-  logic 					MatchF, MatchD, MatchE, MatchM, MatchNextX, MatchXF;
+  logic 					MatchF, MatchD, MatchE, MatchM, MatchW, MatchNextX, MatchX;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic 					UpdateEn;
+  logic [3:0] 				InstrClassW;
+  logic [`XLEN-1:0] 		IEUAdrW;
     
   // hashing function for indexing the PC
   // We have Depth bits to index, but XLEN bits as the input.
@@ -62,6 +64,7 @@ module btb #(parameter Depth = 10 ) (
   assign PCDIndex = {PCD[Depth+1] ^ PCD[1], PCD[Depth:2]};
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
   assign PCMIndex = {PCM[Depth+1] ^ PCM[1], PCM[Depth:2]};
+  assign PCWIndex = {PCW[Depth+1] ^ PCW[1], PCW[Depth:2]};
 
   // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
   // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
@@ -71,21 +74,24 @@ module btb #(parameter Depth = 10 ) (
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
   assign MatchF = PCNextFIndex == PCFIndex;
-  assign MatchD = PCNextFIndex == PCDIndex;
-  assign MatchE = PCNextFIndex == PCEIndex;
-  assign MatchM = PCNextFIndex == PCMIndex;
-  assign MatchNextX = MatchF | MatchD | MatchE | MatchM;
+  assign MatchD = PCFIndex == PCDIndex;
+  assign MatchE = PCFIndex == PCEIndex;
+  assign MatchM = PCFIndex == PCMIndex;
+  assign MatchW = PCFIndex == PCWIndex;
+  assign MatchX = MatchD | MatchE | MatchM | MatchW;
   
-  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
+//  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
-  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, BTAF} :
-                                MatchD ? {InstrClassD, BTAD} :
+  assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BTAD} :
                                 MatchE ? {InstrClassE, IEUAdrE} :
-                                {InstrClassM, IEUAdrM} ;
+                                MatchM ? {InstrClassM, IEUAdrM} :
+                                {InstrClassW, IEUAdrW} ;
 
+/* -----\/----- EXCLUDED -----\/-----
   flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
+ -----/\----- EXCLUDED -----/\----- */
 
-  assign {BTBPredInstrClassF, BTAF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
+  assign {BTBPredInstrClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
 
   assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
@@ -96,5 +102,7 @@ module btb #(parameter Depth = 10 ) (
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
+
+  flopenrc #(`XLEN+4) IEUAdrWReg(clk, reset, FlushW, ~StallW, {InstrClassM, IEUAdrM}, {InstrClassW, IEUAdrW});
 
 endmodule
