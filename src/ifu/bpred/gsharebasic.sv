@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module gsharebasic #(parameter k = 10,
-                     parameter string TYPE = "global") (
+                     parameter TYPE = 1) (
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -42,7 +42,7 @@ module gsharebasic #(parameter k = 10,
   input logic             BranchInstrE, BranchInstrM, PCSrcE
 );
 
-  logic [k-1:0]            IndexNextF, IndexE;
+  logic [k-1:0] 		  IndexNextF, IndexM;
   logic [1:0]              DirPredictionD, DirPredictionE;
   logic [1:0]              NewDirPredictionE, NewDirPredictionM;
 
@@ -50,21 +50,21 @@ module gsharebasic #(parameter k = 10,
   logic [k-1:0]            GHRNext;
   logic                    PCSrcM;
 
-  if(TYPE == "gshare") begin
+  if(TYPE == 1) begin
 	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexE = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
-  end else if(TYPE == "global") begin
+	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  end else if(TYPE == 0) begin
 	assign IndexNextF = GHRNext;
-	assign IndexE = GHRE;
+	assign IndexM = GHRM;
   end
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(~StallM & ~FlushM),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(DirPredictionF),
-    .wa2(IndexE),
+    .wa2(IndexM),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM & ~StallW & ~FlushW),
+    .we2(BranchInstrM),
     .bwe2(1'b1));
 
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
