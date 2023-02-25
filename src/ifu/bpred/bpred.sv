@@ -150,7 +150,7 @@ module bpred (
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW,
           .BTAF, .BTAD,
-          .BTBPredInstrClassF({BTBJalF, BTBRetF, BTBJumpF, BTBBranchF}),
+          .BTBIClassF({BTBJalF, BTBRetF, BTBJumpF, BTBBranchF}),
           .PredictionInstrClassWrongM,
           .IEUAdrE, .IEUAdrM, .IEUAdrW,
           .InstrClassD({JalD, RetD, JumpD, BranchD}), .InstrClassE({JalE, RetE, JumpE, BranchE}), .InstrClassM({JalM, RetM, JumpM, BranchM}),
