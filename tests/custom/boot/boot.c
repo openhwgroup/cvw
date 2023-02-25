@@ -1,4 +1,4 @@
-
+#include "boot.h"
 
 /* Card type flags (card_type) */
 #define CT_MMC          0x01            /* MMC ver 3 */
@@ -72,6 +72,7 @@
 #define SDC_DAT_INT_STATUS_CRC  0x0008  // CRC error
 #define SDC_DAT_INT_STATUS_CFE  0x0010  // Data FIFO underrun or overrun
 
+
 #define ERR_EOF             30
 #define ERR_NOT_ELF         31
 #define ERR_ELF_BITS        32
@@ -116,12 +117,7 @@ static int errno __attribute__((section(".bss")));
 static DSTATUS drv_status __attribute__((section(".bss")));
 static BYTE card_type __attribute__((section(".bss")));
 static uint32_t response[4] __attribute__((section(".bss")));
-static FATFS fatfs __attribute__((section(".bss")));
 static int alt_mem __attribute__((section(".bss")));
-static FIL fd __attribute__((section(".bss")));
-
-extern unsigned char _fbss[];
-extern unsigned char _ebss[];
 
 static const char * errno_to_str(void) {
     switch (errno) {
@@ -252,7 +248,7 @@ static int send_data_cmd(unsigned cmd, unsigned arg, void * buf, unsigned blocks
     case CMD2:
     case CMD9:
     case CMD10:
-        // R2
+         // R2
         command |= 2; // 136 bits
         command |= 1 << 3; // resp CRC
         break;
@@ -305,6 +301,9 @@ static int ini_sd(void) {
     /* Reset controller */
     regs->software_reset = 1;
     while ((regs->software_reset & 1) == 0) {}
+
+    // This clock divider is meant to initialize the card at
+    // 400kHz
     regs->clock_divider = 0x7c;
     regs->software_reset = 0;
     while (regs->software_reset) {}
@@ -369,30 +368,16 @@ static int ini_sd(void) {
     return 0;
 }
 
-DRESULT disk_read(BYTE drv, BYTE * buf, LBA_t sector, UINT count) {
+int disk_read(BYTE * buf, LBA_t sector, UINT count) {
 
-    if (!count) return RES_PARERR;
-    if (drv_status & STA_NOINIT) return RES_NOTRDY;
-
-    /* Convert LBA to byte address if needed */
-    if (!(card_type & CT_BLOCK)) sector *= 512;
-    while (count > 0) {
-        UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
-        unsigned bytes = bcnt * 512;
-        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return RES_ERROR;
-        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return RES_ERROR;
-        sector += (card_type & CT_BLOCK) ? bcnt : bytes;
-        count -= bcnt;
-        buf += bytes;
-    }
-
-    return RES_OK;
-}
-
-void disk_read(BYTE drv, BYTE * buf, LBA_t sector, UINT count) {
-
-    if (!count) return RES_PARERR;
-    if (drv_status & STA_NOINIT) return RES_NOTRDY;
+  /* This is not needed. This has everything to do with the FAT
+     filesystem stuff that I'm not including. All I need to do is
+     initialize the SD card and read from it. Anything in here that is
+     checking for potential errors, I'm going to have to temporarily
+     do without.
+   */
+  // if (!count) return RES_PARERR;
+    /* if (drv_status & STA_NOINIT) return RES_NOTRDY; */
 
     /* Convert LBA to byte address if needed */
     if (!(card_type & CT_BLOCK)) sector *= 512;
@@ -409,10 +394,19 @@ void disk_read(BYTE drv, BYTE * buf, LBA_t sector, UINT count) {
     return RES_OK;
 }
 
+void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
+    ini_sd();
+
+    BYTE * buf = (BYTE *)Dst;
+    
+    if (disk_read(buf, (LBA_t)address, (UINT)numBlocks) < 0) /* UART Print function?*/;
+}
+
+/*
 int main() {
   ini_sd();
-
   
   
   return 0;
 }
+*/
