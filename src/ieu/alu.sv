@@ -78,22 +78,17 @@ module alu #(parameter WIDTH=32) (
   // shifter rotate source select mux
   if (`ZBB_SUPPORTED) begin
     if (WIDTH == 64) assign rotA = (W64) ? {A[31:0], A[31:0]} : A;
-    else assign rotA = A; // NOTE: change this for the future!
+    else assign rotA = A; 
   end else assign rotA = A;
     
   if (`ZBA_SUPPORTED) begin: zbamuxes
-    // Zero Extend Mux
-    if (WIDTH == 64) begin
-      assign CondZextA = (BSelect[3] & (W64)) ? {{(32){1'b0}}, A[31:0]} : A; //NOTE: do we move this mux select logic into the Decode Stage?
-    end else assign CondZextA = A;
-
     // Pre-Shift Mux
     always_comb
       case (Funct3[2:1] & {2{BSelect[3]}})
-        2'b00: CondShiftA = CondZextA;
-        2'b01: CondShiftA = {CondZextA[WIDTH-2:0],{1'b0}};   // sh1add
-        2'b10: CondShiftA = {CondZextA[WIDTH-3:0],{2'b00}};  // sh2add
-        2'b11: CondShiftA = {CondZextA[WIDTH-4:0],{3'b000}}; // sh3add
+        2'b00: CondShiftA = shA[63:0];
+        2'b01: CondShiftA = {shA[WIDTH-2:0],{1'b0}};   // sh1add
+        2'b10: CondShiftA = {shA[WIDTH-3:0],{2'b00}};  // sh2add
+        2'b11: CondShiftA = {shA[WIDTH-4:0],{3'b000}}; // sh3add
       endcase
   end else assign CondShiftA = A;
 
