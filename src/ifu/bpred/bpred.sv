@@ -64,18 +64,18 @@ module bpred (
   // Report branch prediction status
   output logic             BPPredWrongE,              // Prediction is wrong
   output logic             BPPredWrongM,              // Prediction is wrong
-  output logic             DirPredictionWrongM,       // Prediction direction is wrong
+  output logic             BPDirPredWrongM,           // Prediction direction is wrong
   output logic             BTBPredPCWrongM,           // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
   output logic             PredictionInstrClassWrongM // Class prediction is wrong
   );
 
-  logic [1:0]               DirPredictionF;
+  logic [1:0]               BPDirPredF;
 
   logic [`XLEN-1:0]         BTAF, RASPCF;
   logic                     PredictionPCWrongE;
   logic                     AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
-  logic                     DirPredictionWrongE;
+  logic                     BPDirPredWrongE;
   
   logic                     BPPCSrcF;
   logic [`XLEN-1:0]         BPPredPCF;
@@ -103,29 +103,29 @@ module bpred (
   if (`BPRED_TYPE == "BP_TWOBIT") begin:Predictor
     twoBitPredictor #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
       .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW, 
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
     gshare #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW,
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL_BASIC") begin:Predictor
     gsharebasic #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCM, .DirPredictionF, .DirPredictionWrongE,
+      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 	
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
@@ -134,7 +134,7 @@ module bpred (
     localHistoryPredictor DirPredictor(.clk,
       .reset, .StallF, .StallE,
       .LookUpPC(PCNextF),
-      .Prediction(DirPredictionF),
+      .Prediction(BPDirPredF),
       // update
       .UpdatePC(PCE),
       .UpdateEN(InstrClassE[0] & ~StallE),
@@ -192,7 +192,7 @@ module bpred (
 	// This section connects the BTB's instruction class prediction.
 	assign {BPJalF, BPRetF, BPJumpF, BPBranchF} = {BTBJalF, BTBRetF, BTBJumpF, BTBBranchF};
   end
-	assign BPPCSrcF = (BPBranchF & DirPredictionF[1]) | BPJumpF;
+	assign BPPCSrcF = (BPBranchF & BPDirPredF[1]) | BPJumpF;
   
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -275,8 +275,8 @@ module bpred (
 	flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
 	flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
   flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-    {DirPredictionWrongE, BTBPredPCWrongE, RASPredPCWrongE},
-    {DirPredictionWrongM, BTBPredPCWrongM, RASPredPCWrongM});
+    {BPDirPredWrongE, BTBPredPCWrongE, RASPredPCWrongE},
+    {BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM});
   
   end else begin
 	assign {BTBPredPCWrongM, RASPredPCWrongM, JumpOrTakenBranchM} = '0;
