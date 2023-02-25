@@ -51,7 +51,7 @@ module btb #(parameter Depth = 10 ) (
 
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
   logic [`XLEN-1:0] 		ResetPC;
-  logic 					MatchF, MatchD, MatchE, MatchM, MatchW, MatchNextX, MatchX;
+  logic 					MatchF, MatchD, MatchE, MatchM, MatchW, MatchX;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic 					UpdateEn;
@@ -79,20 +79,13 @@ module btb #(parameter Depth = 10 ) (
   assign MatchM = PCFIndex == PCMIndex;
   assign MatchW = PCFIndex == PCWIndex;
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
-  
-//  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
 
   assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BTAD} :
                                 MatchE ? {InstrClassE, IEUAdrE} :
                                 MatchM ? {InstrClassM, IEUAdrM} :
                                 {InstrClassW, IEUAdrW} ;
 
-/* -----\/----- EXCLUDED -----\/-----
-  flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
- -----/\----- EXCLUDED -----/\----- */
-
   assign {BTBPredInstrClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredictionF};
-
 
   assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
 

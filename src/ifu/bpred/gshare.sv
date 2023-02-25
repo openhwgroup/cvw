@@ -43,9 +43,9 @@ module gshare #(parameter k = 10,
 );
 
   logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
-  logic                    MatchX, MatchXF;
+  logic                    MatchX;
 
-  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPredictionF, ForwardDirPredictionF;
+  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPredictionF;
   logic [1:0]              NewDirPredictionE, NewDirPredictionM, NewDirPredictionW;
 
   logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
@@ -70,22 +70,17 @@ module gshare #(parameter k = 10,
 
   flopenrc #(k) IndexWReg(clk, reset, FlushW, ~StallW, IndexM, IndexW);
 
-  //assign MatchF = BPBranchF & ~FlushD & (IndexNextF == IndexF);
   assign MatchD = BranchD & ~FlushE & (IndexF == IndexD);
   assign MatchE = BranchE & ~FlushM & (IndexF == IndexE);
   assign MatchM = BranchM & ~FlushW & (IndexF == IndexM);
   assign MatchW = BranchW & ~FlushW & (IndexF == IndexW);
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-//  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
-
   assign ForwardNewDirPredictionF = MatchD ? {2{DirPredictionD[1]}} :
                                    MatchE ? {NewDirPredictionE} :
                                    MatchM ? {NewDirPredictionM} :
 								   NewDirPredictionW ;
   
-  //flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
-
   assign DirPredictionF = MatchX ? ForwardNewDirPredictionF : TableDirPredictionF;
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
