@@ -84,7 +84,7 @@ module gshare #(parameter k = 10,
   assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(~StallM & ~FlushM),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(TableBPDirPredF),
     .wa2(IndexM),
