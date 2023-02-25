@@ -45,7 +45,7 @@ module gshare #(parameter k = 10,
   logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
   logic                    MatchX;
 
-  logic [1:0]              TableBPDirPredF, BPDirPredD, BPDirPredE, ForwardNewBPDirPredF;
+  logic [1:0]              TableBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
   logic [1:0]              NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
 
   logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
@@ -76,12 +76,12 @@ module gshare #(parameter k = 10,
   assign MatchW = BranchW & ~FlushW & (IndexF == IndexW);
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign ForwardNewBPDirPredF = MatchD ? {2{BPDirPredD[1]}} :
+  assign FwdNewDirPredF = MatchD ? {2{BPDirPredD[1]}} :
                                    MatchE ? {NewBPDirPredE} :
                                    MatchM ? {NewBPDirPredM} :
 								   NewBPDirPredW ;
   
-  assign BPDirPredF = MatchX ? ForwardNewBPDirPredF : TableBPDirPredF;
+  assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
