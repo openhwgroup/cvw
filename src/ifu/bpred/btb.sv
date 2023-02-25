@@ -34,7 +34,7 @@ module btb #(parameter Depth = 10 ) (
   input  logic 			   clk,
   input  logic 			   reset,
   input  logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
+  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, PCW,// PC at various stages
   output logic [`XLEN-1:0] BTAF, // BTB's guess at PC
   output logic [`XLEN-1:0] BTAD,  
   output logic [3:0] 	   BTBPredInstrClassF, // BTB's guess at instruction class
@@ -42,14 +42,16 @@ module btb #(parameter Depth = 10 ) (
   input  logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
   input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
   input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
+  input  logic [`XLEN-1:0] IEUAdrW,
   input  logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
   input  logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
-  input  logic [3:0] 	   InstrClassM                            // Instruction class to insert into btb
+  input  logic [3:0] 	   InstrClassM,                            // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassW
 );
 
-  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex;
+  logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
   logic [`XLEN-1:0] 		ResetPC;
-  logic 					MatchF, MatchD, MatchE, MatchM, MatchNextX, MatchXF;
+  logic 					MatchD, MatchE, MatchM, MatchW, MatchX;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic 					UpdateEn;
@@ -62,6 +64,7 @@ module btb #(parameter Depth = 10 ) (
   assign PCDIndex = {PCD[Depth+1] ^ PCD[1], PCD[Depth:2]};
   assign PCEIndex = {PCE[Depth+1] ^ PCE[1], PCE[Depth:2]};
   assign PCMIndex = {PCM[Depth+1] ^ PCM[1], PCM[Depth:2]};
+  assign PCWIndex = {PCW[Depth+1] ^ PCW[1], PCW[Depth:2]};
 
   // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
   // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
@@ -70,23 +73,18 @@ module btb #(parameter Depth = 10 ) (
   assign ResetPC = `RESET_VECTOR;
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
-  assign MatchF = PCNextFIndex == PCFIndex;
-  assign MatchD = PCNextFIndex == PCDIndex;
-  assign MatchE = PCNextFIndex == PCEIndex;
-  assign MatchM = PCNextFIndex == PCMIndex;
-  assign MatchNextX = MatchF | MatchD | MatchE | MatchM;
-  
-  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
+  assign MatchD = PCFIndex == PCDIndex;
+  assign MatchE = PCFIndex == PCEIndex;
+  assign MatchM = PCFIndex == PCMIndex;
+  assign MatchW = PCFIndex == PCWIndex;
+  assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign ForwardBTBPrediction = MatchF ? {BTBPredInstrClassF, BTAF} :
-                                MatchD ? {InstrClassD, BTAD} :
-                                MatchE ? {InstrClassE, IEUAdrE} :
-                                {InstrClassM, IEUAdrM} ;
+  assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BTAD} :
+                                 MatchE ? {InstrClassE, IEUAdrE} :
+                                 MatchM ? {InstrClassM, IEUAdrM} :
+                                 {InstrClassW, IEUAdrW} ;
 
-  flopenr #(`XLEN+4) ForwardBTBPredicitonReg(clk, reset, ~StallF, ForwardBTBPrediction, ForwardBTBPredictionF);
-
-  assign {BTBPredInstrClassF, BTAF} = MatchXF ? ForwardBTBPredictionF : {TableBTBPredictionF};
-
+  assign {BTBPredInstrClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
   assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
 
