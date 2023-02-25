@@ -141,7 +141,7 @@ module wallypipelinedcore (
   logic                          LSUHREADY;
   
   logic                          BPPredWrongE, BPPredWrongM;
-  logic                          DirPredictionWrongM;
+  logic                          BPDirPredWrongM;
   logic                          BTBPredPCWrongM;
   logic                          RASPredPCWrongM;
   logic                          PredictionInstrClassWrongM;
@@ -176,7 +176,7 @@ module wallypipelinedcore (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPPredWrongE,  .BPPredWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
@@ -289,7 +289,7 @@ module wallypipelinedcore (
       .RetM, .TrapM, .sfencevmaM,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD,
-      .DirPredictionWrongM, .BTBPredPCWrongM, .BPPredWrongM,
+      .BPDirPredWrongM, .BTBPredPCWrongM, .BPPredWrongM,
       .RASPredPCWrongM, .PredictionInstrClassWrongM,
       .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
