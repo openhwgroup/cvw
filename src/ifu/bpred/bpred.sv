@@ -285,7 +285,7 @@ module bpred (
   // **** Fix me
   assign InstrClassM = {JalM, RetM, JumpM, BranchM};
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
-  flopenrc #(`XLEN) IEUAdrWReg(clk, reset, FlushW, ~StallW, IEUAdrM, IEUAdrW);
+  flopenr #(`XLEN) IEUAdrWReg(clk, reset, ~StallW, IEUAdrM, IEUAdrW);
 
   
 endmodule

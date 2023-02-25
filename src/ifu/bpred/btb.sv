@@ -51,7 +51,7 @@ module btb #(parameter Depth = 10 ) (
 
   logic [Depth-1:0]         PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
   logic [`XLEN-1:0] 		ResetPC;
-  logic 					MatchF, MatchD, MatchE, MatchM, MatchW, MatchX;
+  logic 					MatchD, MatchE, MatchM, MatchW, MatchX;
   logic [`XLEN+3:0] 		ForwardBTBPrediction, ForwardBTBPredictionF;
   logic [`XLEN+3:0] 		TableBTBPredictionF;
   logic 					UpdateEn;
@@ -73,7 +73,6 @@ module btb #(parameter Depth = 10 ) (
   assign ResetPC = `RESET_VECTOR;
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
-  assign MatchF = PCNextFIndex == PCFIndex;
   assign MatchD = PCFIndex == PCDIndex;
   assign MatchE = PCFIndex == PCEIndex;
   assign MatchM = PCFIndex == PCMIndex;
@@ -81,9 +80,9 @@ module btb #(parameter Depth = 10 ) (
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
   assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BTAD} :
-                                MatchE ? {InstrClassE, IEUAdrE} :
-                                MatchM ? {InstrClassM, IEUAdrM} :
-                                {InstrClassW, IEUAdrW} ;
+                                 MatchE ? {InstrClassE, IEUAdrE} :
+                                 MatchM ? {InstrClassM, IEUAdrM} :
+                                 {InstrClassW, IEUAdrW} ;
 
   assign {BTBPredInstrClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredictionF};
 
