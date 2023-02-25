@@ -38,17 +38,17 @@ module gshare #(parameter k = 10,
   output logic [1:0]      DirPredictionF, 
   output logic            DirPredictionWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
-  input logic             BPBranchF, BranchD, BranchE, BranchM, PCSrcE
+  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, PCW,
+  input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
-  logic                    MatchF, MatchD, MatchE, MatchM;
-  logic                    MatchNextX, MatchXF;
+  logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
+  logic                    MatchX, MatchXF;
 
-  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPrediction, ForwardDirPredictionF;
-  logic [1:0]              NewDirPredictionE, NewDirPredictionM;
+  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPredictionF, ForwardDirPredictionF;
+  logic [1:0]              NewDirPredictionE, NewDirPredictionM, NewDirPredictionW;
 
-  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM;
+  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
 
   logic [k-1:0]            GHRF, GHRD, GHRE, GHRM;
   logic [k-1:0]            GHRNextM, GHRNextF;
@@ -68,22 +68,25 @@ module gshare #(parameter k = 10,
 	assign IndexM = GHRM;
   end
 
-  assign MatchF = BPBranchF & ~FlushD & (IndexNextF == IndexF);
-  assign MatchD = BranchD & ~FlushE & (IndexNextF == IndexD);
-  assign MatchE = BranchE & ~FlushM & (IndexNextF == IndexE);
-  assign MatchM = BranchM & ~FlushW & (IndexNextF == IndexM);
-  assign MatchNextX = MatchF | MatchD | MatchE | MatchM;
+  flopenrc #(k) IndexWReg(clk, reset, FlushW, ~StallW, IndexM, IndexW);
 
-  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
+  //assign MatchF = BPBranchF & ~FlushD & (IndexNextF == IndexF);
+  assign MatchD = BranchD & ~FlushE & (IndexF == IndexD);
+  assign MatchE = BranchE & ~FlushM & (IndexF == IndexE);
+  assign MatchM = BranchM & ~FlushW & (IndexF == IndexM);
+  assign MatchW = BranchW & ~FlushW & (IndexF == IndexW);
+  assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign ForwardNewDirPrediction = MatchF ? {2{DirPredictionF[1]}} :
-                                   MatchD ? {2{DirPredictionD[1]}} :
+//  flopenr #(1) MatchReg(clk, reset, ~StallF, MatchNextX, MatchXF);
+
+  assign ForwardNewDirPredictionF = MatchD ? {2{DirPredictionD[1]}} :
                                    MatchE ? {NewDirPredictionE} :
-                                   NewDirPredictionM ;
+                                   MatchM ? {NewDirPredictionM} :
+								   NewDirPredictionW ;
   
-  flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
+  //flopenr #(2) ForwardDirPredicitonReg(clk, reset, ~StallF, ForwardNewDirPrediction, ForwardDirPredictionF);
 
-  assign DirPredictionF = MatchXF ? ForwardDirPredictionF : TableDirPredictionF;
+  assign DirPredictionF = MatchX ? ForwardNewDirPredictionF : TableDirPredictionF;
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallM & ~FlushM),
@@ -99,6 +102,7 @@ module gshare #(parameter k = 10,
 
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
   flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);
+  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewDirPredictionM, NewDirPredictionW);
 
   assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
 

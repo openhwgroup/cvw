@@ -108,14 +108,14 @@ module bpred (
 
   end else if (`BPRED_TYPE == "BP_GSHARE") begin:Predictor
     gshare #(`BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BPBranchF, .BranchD, .BranchE, .BranchM,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .DirPredictionF, .DirPredictionWrongE,
+      .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW, 
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GLOBAL") begin:Predictor
     gshare #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCF, .PCD, .PCE, .PCM, .DirPredictionF, .DirPredictionWrongE,
-      .BPBranchF, .BranchD, .BranchE, .BranchM,
+      .PCNextF, .PCF, .PCD, .PCE, .PCM, .PCW, .DirPredictionF, .DirPredictionWrongE,
+      .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW,
       .PCSrcE);
 
   end else if (`BPRED_TYPE == "BP_GSHARE_BASIC") begin:Predictor
