@@ -54,6 +54,8 @@ module alu #(parameter WIDTH=32) (
   logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                           // Sign bits of A, B
   logic             Rotate;
+  logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
+  logic [WIDTH-1:0] rotA;                                                                    // XLEN bit input source to shifter
 
 
   if (`ZBS_SUPPORTED) begin: zbsdec
@@ -61,19 +63,32 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (BSelect[0]) ? MaskB : B;
   end else assign CondMaskB = B;
 
-  if (`ZBA_SUPPORTED) begin: zbamuxes
-    // Zero Extend Mux
-    if (WIDTH == 64) begin
-      assign CondZextA = (BSelect[3] & (W64)) ? {{(32){1'b0}}, A[31:0]} : A; //NOTE: do we move this mux select logic into the Decode Stage?
-    end else assign CondZextA = A;
 
+  // Sign/Zero extend mux
+  if (WIDTH == 64) begin // rv64 must handle word s/z extensions
+    always_comb 
+      case ({W64, SubArith})
+        2'b00: shA = {{1'b0}, A};
+        2'b01: shA = {A[63], A};
+        2'b10: shA = {{33'b0}, A[31:0]};
+        2'b11: shA = {{33{A[31]}}, A[31:0]};
+      endcase
+  end else assign shA = (SubArith) ? {A[31], A} : {{1'b0},A}; // rv32 does need to handle s/z extensions
+
+  // shifter rotate source select mux
+  if (`ZBB_SUPPORTED) begin
+    if (WIDTH == 64) assign rotA = (W64) ? {A[31:0], A[31:0]} : A;
+    else assign rotA = A; 
+  end else assign rotA = A;
+    
+  if (`ZBA_SUPPORTED) begin: zbamuxes
     // Pre-Shift Mux
     always_comb
       case (Funct3[2:1] & {2{BSelect[3]}})
-        2'b00: CondShiftA = CondZextA;
-        2'b01: CondShiftA = {CondZextA[WIDTH-2:0],{1'b0}};   // sh1add
-        2'b10: CondShiftA = {CondZextA[WIDTH-3:0],{2'b00}};  // sh2add
-        2'b11: CondShiftA = {CondZextA[WIDTH-4:0],{3'b000}}; // sh3add
+        2'b00: CondShiftA = shA[63:0];
+        2'b01: CondShiftA = {shA[WIDTH-2:0],{1'b0}};   // sh1add
+        2'b10: CondShiftA = {shA[WIDTH-3:0],{2'b00}};  // sh2add
+        2'b11: CondShiftA = {shA[WIDTH-4:0],{3'b000}}; // sh3add
       endcase
   end else assign CondShiftA = A;
 
@@ -89,7 +104,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift), .Rotate(Rotate));
+  shifternew sh(.shA(shA), .rotA(rotA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64(W64), .Y(Shift), .Rotate(Rotate));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
