@@ -55,7 +55,7 @@ module alu #(parameter WIDTH=32) (
   logic             Asign, Bsign;                                                           // Sign bits of A, B
   logic             Rotate;
   logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
-  logic [WIDTH-1:0] rotA;                                                                    // XLEN bit input source to shifter
+  logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
 
 
   if (`ZBS_SUPPORTED) begin: zbsdec
@@ -85,7 +85,7 @@ module alu #(parameter WIDTH=32) (
     // Pre-Shift Mux
     always_comb
       case (Funct3[2:1] & {2{BSelect[3]}})
-        2'b00: CondShiftA = shA[63:0];
+        2'b00: CondShiftA = shA[WIDTH-1:0];
         2'b01: CondShiftA = {shA[WIDTH-2:0],{1'b0}};   // sh1add
         2'b10: CondShiftA = {shA[WIDTH-3:0],{2'b00}};  // sh2add
         2'b11: CondShiftA = {shA[WIDTH-4:0],{3'b000}}; // sh3add
