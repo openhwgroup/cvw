@@ -38,7 +38,7 @@ module gshare #(parameter k = 10,
   output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, PCW,
+  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
