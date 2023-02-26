@@ -109,5 +109,5 @@ module tlbcontrol #(parameter ITLB = 0) (
   end
 
   assign TLBHit = CAMHit & TLBAccess;
-  assign TLBMiss = (~CAMHit | TLBFlush) & Translate & TLBAccess;
+  assign TLBMiss = ~CAMHit & TLBAccess & Translate ;
 endmodule
