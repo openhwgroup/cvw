@@ -101,7 +101,7 @@ package cvw;
   parameter BPRED_SUPPORTED = `BPRED_SUPPORTED;
   parameter BPRED_TYPE = `BPRED_TYPE;
   parameter BPRED_SIZE = `BPRED_SIZE;
-  parameter HPTW_WRITES_SUPPORTED = `HPTW_WRITES_SUPPORTED;
+  parameter SVADU_SUPPORTED = `SVADU_SUPPORTED;
 //  parameter  = `;
 
 
