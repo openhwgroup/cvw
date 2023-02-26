@@ -76,7 +76,7 @@ module tlbcontrol #(parameter ITLB = 0) (
     // only execute non-user mode pages.
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
       ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
-    if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
+    if(`SVADU_SUPPORTED) begin : hptwwrites
       assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
       assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end else begin
@@ -98,7 +98,7 @@ module tlbcontrol #(parameter ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
+    if(`SVADU_SUPPORTED) begin : hptwwrites
       assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
       assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~PTE_V));
     end else begin

@@ -125,7 +125,7 @@ module hptw (
 	assign ValidLeafPTE = ValidPTE & LeafPTE;
 	assign ValidNonLeafPTE = ValidPTE & ~LeafPTE;
 
-  if(`HPTW_WRITES_SUPPORTED) begin : hptwwrites
+  if(`SVADU_SUPPORTED) begin : hptwwrites
     logic                     ReadAccess, WriteAccess;
     logic                     InvalidRead, InvalidWrite;
     logic                     UpperBitsUnequalPageFault; 
@@ -262,7 +262,7 @@ module hptw (
 					else                                 										NextWalkerState = LEAF;
 			L0_RD: if (DCacheStallM)                     								NextWalkerState = L0_RD;
 				   else                                     							NextWalkerState = LEAF;
-			LEAF: if (`HPTW_WRITES_SUPPORTED & HPTWDAPageFault)             NextWalkerState = UPDATE_PTE;
+			LEAF: if (`SVADU_SUPPORTED & HPTWDAPageFault)             NextWalkerState = UPDATE_PTE;
 				  else 																										NextWalkerState = IDLE;
 			UPDATE_PTE: if(DCacheStallM) 		                        		NextWalkerState = UPDATE_PTE;
 						else 																									NextWalkerState = LEAF;
@@ -273,8 +273,8 @@ module hptw (
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
 
-  assign ITLBMissOrDAFaultF = ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF);
-  assign DTLBMissOrDAFaultM = DTLBMissM | (`HPTW_WRITES_SUPPORTED & DataDAPageFaultM);  
+  assign ITLBMissOrDAFaultF = ITLBMissF | (`SVADU_SUPPORTED & InstrDAPageFaultF);
+  assign DTLBMissOrDAFaultM = DTLBMissM | (`SVADU_SUPPORTED & DataDAPageFaultM);  
 
   // HTPW address/data/control muxing
 
@@ -291,7 +291,7 @@ module hptw (
   mux2 #(7) funct7mux(Funct7M, 7'b0, SelHPTW, LSUFunct7M);    
   mux2 #(2) atomicmux(AtomicM, 2'b00, SelHPTW, LSUAtomicM);
   mux2 #(`XLEN+2) lsupadrmux(IEUAdrExtM, HPTWAdrExt, SelHPTWAdr, IHAdrM);
-  if(`HPTW_WRITES_SUPPORTED)
+  if(`SVADU_SUPPORTED)
     mux2 #(`XLEN) lsuwritedatamux(WriteDataM, PTE, SelHPTW, IHWriteDataM);
   else assign IHWriteDataM = WriteDataM;
 
