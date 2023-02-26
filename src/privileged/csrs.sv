@@ -86,8 +86,8 @@ module csrs #(parameter
   assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL)) & InstrValidNotFlushedM;
   assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == `M_MODE | ~STATUS_TVM) & InstrValidNotFlushedM;
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN) & InstrValidNotFlushedM;
-  assign WriteSTIMECMPM = CSRSWriteM & (CSRAdrM == STIMECMP) & MCOUNTEREN_TM & InstrValidNotFlushedM;
-  assign WriteSTIMECMPHM = CSRSWriteM & (CSRAdrM == STIMECMPH) & MCOUNTEREN_TM & (`XLEN == 32) & InstrValidNotFlushedM;
+  assign WriteSTIMECMPM = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == `M_MODE | MCOUNTEREN_TM) & InstrValidNotFlushedM;
+  assign WriteSTIMECMPHM = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == `M_MODE | MCOUNTEREN_TM) & (`XLEN == 32) & InstrValidNotFlushedM;
 
   // CSRs
   flopenr #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
@@ -100,12 +100,14 @@ module csrs #(parameter
   else
     assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
   flopens #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
-  if (`XLEN == 64)
-    flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW);
-  else begin
-    flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW[31:0]);
-    flopenr #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, STIMECMP_REGW[63:32]);
-  end
+  if (`SSTC_SUPPORTED) begin
+    if (`XLEN == 64)
+      flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW);
+    else begin
+      flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW[31:0]);
+      flopenr #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, STIMECMP_REGW[63:32]);
+    end
+  end else STIMECMP_REGW = 0;
 
   // Supervisor timer interrupt logic
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
@@ -132,12 +134,12 @@ module csrs #(parameter
                     if (PrivilegeModeW == `S_MODE & STATUS_TVM) IllegalCSRSAccessM = 1;
                   end
       SCOUNTEREN:CSRSReadValM = {{(`XLEN-32){1'b0}}, SCOUNTEREN_REGW};
-      STIMECMP:  if (MCOUNTEREN_TM) CSRSReadValM = STIMECMP_REGW[`XLEN-1:0]; 
+      STIMECMP:  if (`SSTC_SUPPORTED & (PrivilegeModeW == `M_MODE | MCOUNTEREN_TM)) CSRSReadValM = STIMECMP_REGW[`XLEN-1:0]; 
                  else begin 
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end
-      STIMECMPH: if (MCOUNTEREN_TM & (`XLEN == 32)) CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
+      STIMECMPH: if (`SSTC_SUPPORTED & (`XLEN == 32) & (PrivilegeModeW == `M_MODE | MCOUNTEREN_TM)) CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
                  else begin // not supported for RV64
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
