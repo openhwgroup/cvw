@@ -107,7 +107,7 @@ module csrs #(parameter
       flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW[31:0]);
       flopenr #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, STIMECMP_REGW[63:32]);
     end
-  end else STIMECMP_REGW = 0;
+  end else assign STIMECMP_REGW = 0;
 
   // Supervisor timer interrupt logic
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
