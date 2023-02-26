@@ -77,7 +77,7 @@ module spill #(
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`HPTW_WRITES_SUPPORTED & InstrDAPageFaultF));
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrDAPageFaultF));
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= #1 STATE_READY;

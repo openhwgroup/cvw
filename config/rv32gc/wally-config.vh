@@ -137,7 +137,7 @@
 `define BPRED_SIZE 10
 `define BTB_SIZE 10
 
-`define HPTW_WRITES_SUPPORTED 0
+`define SVADU_SUPPORTED 0
 
 // FPU division architecture
 `define RADIX 32'h4
