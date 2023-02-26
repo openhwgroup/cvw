@@ -87,7 +87,7 @@ module hptw (
   logic [`XLEN-1:0] 	   TranslationVAdr;
   logic [`XLEN-1:0] 	   NextPTE;
   logic 				   UpdatePTE;
-  logic 				   DAPageFault;
+  logic 				   HPTWDAPageFault;
   logic [`PA_BITS-1:0] 	   HPTWReadAdr;
   logic 				   SelHPTWAdr;
   logic [`XLEN+1:0] 	   HPTWAdrExt;
@@ -167,14 +167,14 @@ module hptw (
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update.
-    assign DAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
+    assign HPTWDAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
     assign HPTWRW[0] = (WalkerState == UPDATE_PTE);
-    assign UpdatePTE = (WalkerState == LEAF) & DAPageFault;
+    assign UpdatePTE = (WalkerState == LEAF) & HPTWDAPageFault;
   end else begin // block: hptwwrites
     assign NextPTE = ReadDataM;
     assign HPTWAdr = HPTWReadAdr;
-    assign DAPageFault = '0;
+    assign HPTWDAPageFault = '0;
     assign UpdatePTE = '0;
     assign HPTWRW[0] = '0;
   end
@@ -182,8 +182,8 @@ module hptw (
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	assign HPTWRW[1] = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	assign DTLBWriteM = (WalkerState == LEAF & ~DAPageFault) & DTLBWalk;
-	assign ITLBWriteF = (WalkerState == LEAF & ~DAPageFault) & ~DTLBWalk;
+	assign DTLBWriteM = (WalkerState == LEAF & ~HPTWDAPageFault) & DTLBWalk;
+	assign ITLBWriteF = (WalkerState == LEAF & ~HPTWDAPageFault) & ~DTLBWalk;
   
 	// FSM to track PageType based on the levels of the page table traversed
 	flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
@@ -262,7 +262,7 @@ module hptw (
 					else                                 										NextWalkerState = LEAF;
 			L0_RD: if (DCacheStallM)                     								NextWalkerState = L0_RD;
 				   else                                     							NextWalkerState = LEAF;
-			LEAF: if (`HPTW_WRITES_SUPPORTED & DAPageFault)             NextWalkerState = UPDATE_PTE;
+			LEAF: if (`HPTW_WRITES_SUPPORTED & HPTWDAPageFault)             NextWalkerState = UPDATE_PTE;
 				  else 																										NextWalkerState = IDLE;
 			UPDATE_PTE: if(DCacheStallM) 		                        		NextWalkerState = UPDATE_PTE;
 						else 																									NextWalkerState = LEAF;
