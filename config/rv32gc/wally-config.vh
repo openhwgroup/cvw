@@ -113,6 +113,9 @@
 `define SDC_SUPPORTED 1'b0
 `define SDC_BASE   34'h00012100
 `define SDC_RANGE  34'h0000001F
+`define SPI_SUPPORTED 1'b1
+`define SPI_BASE   34'h10040000
+`define SPI_RANGE  34'h00000FFF
 
 // Bus Interface width
 `define AHBW 32
@@ -121,6 +124,7 @@
 
 // Tie GPIO outputs back to inputs
 `define GPIO_LOOPBACK_TEST 1
+`define SPI_LOOPBACK_TEST 1
 
 // Hardware configuration
 `define UART_PRESCALE 1
@@ -131,6 +135,7 @@
 `define PLIC_NUM_SRC_LT_32
 `define PLIC_GPIO_ID 3
 `define PLIC_UART_ID 10
+`define PLIC_SPI_ID  6
 
 `define BPRED_SUPPORTED 1
 `define BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
