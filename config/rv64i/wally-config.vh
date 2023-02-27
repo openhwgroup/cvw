@@ -127,7 +127,7 @@
 
 // Tie GPIO outputs back to inputs
 `define GPIO_LOOPBACK_TEST 1
-`define GPIO_LOOPBACK_TEST 1
+`define SPI_LOOPBACK_TEST 1
 
 // Hardware configuration
 `define UART_PRESCALE 1
