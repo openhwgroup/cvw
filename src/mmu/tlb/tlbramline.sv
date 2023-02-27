@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// vm64check.sv
+// tlbramline.sv
 //
-// Written: David_Harris@hmc.edu 4 November 2022
-// Modified: 
+// Written: David_Harris@hmc.edu 4 July 2021
+// Modified:
 //
-// Purpose: Check for good upper address bits in RV64 mode
+// Purpose: One line of the RAM, with enabled flip-flop and logic for reading into distributed OR
 // 
 // Documentation: RISC-V System on Chip Design Chapter 8
 //
@@ -28,23 +28,16 @@
 
 `include "wally-config.vh"
 
-module vm64check (
-  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
-  input  logic [`XLEN-1:0]        VAdr,
-  output logic                    SV39Mode, 
-  output logic                    UpperBitsUnequalPageFault
-);
+module tlbramline #(parameter WIDTH = 22)
+  (input  logic             clk, reset,
+   input  logic             re, we,
+   input  logic [WIDTH-1:0] d,
+   output logic [WIDTH-1:0] q,
+   output logic             PTE_G);
 
-  if (`XLEN == 64) begin
-    assign SV39Mode = (SATP_MODE == `SV39);
+   logic [WIDTH-1:0] line;
 
-    // page fault if upper bits aren't all the same
-    logic                           eq_63_47, eq_46_38;
-    assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
-    assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
-    assign UpperBitsUnequalPageFault = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
-  end else begin
-    assign SV39Mode = 0;
-    assign UpperBitsUnequalPageFault = 0;
-  end
+   flopenr #(WIDTH) pteflop(clk, reset, we, d, line);
+   assign q = re ? line : 0;
+   assign PTE_G = line[5]; // send global bit to CAM as part of ASID matching
 endmodule
