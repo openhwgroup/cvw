@@ -140,7 +140,7 @@ module wallypipelinedcore (
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
-  logic                          BPPredWrongE, BPPredWrongM;
+  logic                          BPWrongE, BPPredWrongM;
   logic                          BPDirPredWrongM;
   logic                          BTBPredPCWrongM;
   logic                          RASPredPCWrongM;
@@ -173,7 +173,7 @@ module wallypipelinedcore (
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPPredWrongE,  .BPPredWrongM, 
+    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPPredWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
@@ -268,7 +268,7 @@ module wallypipelinedcore (
 
   // global stall and flush control  
   hazard  hzu(
-    .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
     .LSUStallM, .IFUStallF,
     .FCvtIntStallD, .FPUStallD,

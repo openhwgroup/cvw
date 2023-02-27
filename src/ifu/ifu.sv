@@ -54,7 +54,7 @@ module ifu (
   input  logic [`XLEN-1:0] 	IEUAdrE,                                  // The branch/jump target address
   input  logic [`XLEN-1:0] 	IEUAdrM,                                  // The branch/jump target address
   output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
-  output logic 				BPPredWrongE,                             // Prediction is wrong
+  output logic 				BPWrongE,                             // Prediction is wrong
   output logic 				BPPredWrongM,                             // Prediction is wrong
   // Mem
   output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
@@ -331,12 +331,12 @@ module ifu (
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPPredWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
+                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
                 .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
-    assign BPPredWrongE = PCSrcE;
+    assign BPWrongE = PCSrcE;
     assign {InstrClassM, BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM} = '0;
     assign NextValidPCE = PCE;
   end      
