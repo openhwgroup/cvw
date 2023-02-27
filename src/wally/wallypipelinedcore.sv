@@ -313,7 +313,7 @@ module wallypipelinedcore (
   end
 
   // multiply/divide unit
-  if (`M_SUPPORTED) begin:mdu
+  if (`M_SUPPORTED | `ZMMUL_SUPPORTED) begin:mdu
     mdu mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE, 
       .Funct3E, .Funct3M, .IntDivE, .W64E,
