@@ -43,7 +43,7 @@ module tlbcontrol #(parameter ITLB = 0) (
   output logic                    TLBMiss,
   output logic                    TLBHit,
   output logic                    TLBPageFault,
-  output logic                    DAPageFault,
+  output logic                    UpdateDA,
   output logic                    SV39Mode,
   output logic                    Translate
 );
@@ -77,12 +77,12 @@ module tlbcontrol #(parameter ITLB = 0) (
     assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
       ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
     if(`SVADU_SUPPORTED) begin : hptwwrites
-      assign DAPageFault = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
-      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequal | Misaligned | ~PTE_V));
+      assign UpdateDA = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
+      assign TLBPageFault = Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequal | Misaligned | ~PTE_V);
     end else begin
       // fault for software handling if access bit is off
-      assign DAPageFault = ~PTE_A;
-      assign TLBPageFault = (Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | DAPageFault | UpperBitsUnequal | Misaligned | ~PTE_V));
+      assign UpdateDA = ~PTE_A;
+      assign TLBPageFault = Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpdateDA | UpperBitsUnequal | Misaligned | ~PTE_V);
     end
   end else begin:dtlb // Data TLB fault checking
     logic InvalidRead, InvalidWrite;
@@ -99,12 +99,12 @@ module tlbcontrol #(parameter ITLB = 0) (
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
     if(`SVADU_SUPPORTED) begin : hptwwrites
-      assign DAPageFault = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
+      assign UpdateDA = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
       assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequal | Misaligned | ~PTE_V));
     end else begin
       // Fault for software handling if access bit is off or writing a page with dirty bit off
-      assign DAPageFault = ~PTE_A | WriteAccess & ~PTE_D; 
-      assign TLBPageFault = (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | DAPageFault | UpperBitsUnequal | Misaligned | ~PTE_V));
+      assign UpdateDA = ~PTE_A | WriteAccess & ~PTE_D; 
+      assign TLBPageFault = (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpdateDA | UpperBitsUnequal | Misaligned | ~PTE_V));
     end
   end
 

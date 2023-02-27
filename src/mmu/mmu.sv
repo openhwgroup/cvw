@@ -51,7 +51,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   // Faults
   output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,  // access fault sources
   output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,        // page fault sources
-  output logic                DAPageFault,                                                // page fault due to setting dirty or access bit
+  output logic                UpdateDA,                                                // page fault due to setting dirty or access bit
   output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,             // misaligned fault sources
   // PMA checker signals
   input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
@@ -84,7 +84,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
           .PrivilegeModeW, .ReadAccess, .WriteAccess,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
-          .Translate, .TLBPageFault, .DAPageFault);
+          .Translate, .TLBPageFault, .UpdateDA);
   end else begin:tlb// just pass address through as physical
     assign Translate = 0;
     assign TLBMiss = 0;
