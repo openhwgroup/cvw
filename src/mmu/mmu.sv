@@ -70,6 +70,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   logic                       Translate;                // Translation occurs when virtual memory is active and DisableTranslation is off
   logic                       TLBHit;                   // Hit in TLB
   logic                       TLBPageFault;             // Page fault from TLB
+  logic                       ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
   
   // only instantiate TLB if Virtual Memory is supported
   if (`VIRTMEM_SUPPORTED) begin:tlb
@@ -118,6 +119,8 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
     assign PMPLoadAccessFaultM      = 0;
   end
 
+  assign ReadNoAmoAccessM = ReadAccessM & ~WriteAccessM;// AMO causes StoreAmo rather than Load fault
+
   // Access faults
   // If TLB miss and translating we want to not have faults from the PMA and PMP checkers.
   assign InstrAccessFaultF    = (PMAInstrAccessFaultF    | PMPInstrAccessFaultF)    & ~TLBMiss;
@@ -132,11 +135,11 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
       2'b10:  DataMisalignedM = VAdr[1] | VAdr[0]; // lw, sw, flw, fsw, lwu
       2'b11:  DataMisalignedM = |VAdr[2:0];        // ld, sd, fld, fsd
     endcase 
-  assign LoadMisalignedFaultM     = DataMisalignedM & ReadAccessM;
-  assign StoreAmoMisalignedFaultM = DataMisalignedM & (WriteAccessM | AtomicAccessM);
+  assign LoadMisalignedFaultM     = DataMisalignedM & ReadNoAmoAccessM;
+  assign StoreAmoMisalignedFaultM = DataMisalignedM & WriteAccessM;
 
   // Specify which type of page fault is occurring
   assign InstrPageFaultF    = TLBPageFault & ExecuteAccessF;
-  assign LoadPageFaultM     = TLBPageFault & ReadAccessM;
-  assign StoreAmoPageFaultM = TLBPageFault & (WriteAccessM | AtomicAccessM);
+  assign LoadPageFaultM     = TLBPageFault & ReadNoAmoAccessM; 
+  assign StoreAmoPageFaultM = TLBPageFault & WriteAccessM;
 endmodule
