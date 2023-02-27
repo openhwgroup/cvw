@@ -62,7 +62,7 @@ module bpred (
   output logic             JumpOrTakenBranchM,        // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
 
   // Report branch prediction status
-  output logic             BPPredWrongE,              // Prediction is wrong
+  output logic             BPWrongE,              // Prediction is wrong
   output logic             BPPredWrongM,              // Prediction is wrong
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
   output logic             BTBPredPCWrongM,           // Prediction target wrong
@@ -73,7 +73,7 @@ module bpred (
   logic [1:0] 		   BPDirPredF;
 
   logic [`XLEN-1:0] 	   BTAF, RASPCF;
-  logic 		   PredictionPCWrongE;
+  logic 		   BPPCWrongE;
   logic 		   AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
   logic 		   BPDirPredWrongE;
   
@@ -157,7 +157,6 @@ module bpred (
           .InstrClassM({CallM, ReturnM, JumpM, BranchM}),
           .InstrClassW({CallW, ReturnW, JumpW, BranchW}));
 
-
   icpred icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
 		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
 		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
@@ -174,10 +173,10 @@ module bpred (
   // this will result in PCD not being equal to the fall through address PCLinkE (PCE+4).
   // The next instruction is always valid as no other flush would occur at the same time as the branch and not
   // also flush the branch.  This will change in a superscaler cpu. 
-  assign PredictionPCWrongE = PCCorrectE != PCD;
+  assign BPPCWrongE = PCCorrectE != PCD;
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  assign BPPredWrongE = PredictionPCWrongE & InstrValidE & InstrValidD;
-  flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPPredWrongE, BPPredWrongM);
+  assign BPWrongE = BPPCWrongE & InstrValidE & InstrValidD;
+  flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPWrongE, BPPredWrongM);
   
   // Output the predicted PC or corrected PC on miss-predict.
   assign BPPCSrcF = (BPBranchF & BPDirPredF[1]) | BPJumpF;
@@ -185,7 +184,7 @@ module bpred (
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPCF, BPPCSrcF, PCNext0F);
   // If the prediction is wrong select the correct address.
-  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPPredWrongE, PCNext1F);  
+  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPWrongE, PCNext1F);  
   // Correct branch/jump target.
   mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
