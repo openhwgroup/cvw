@@ -96,7 +96,8 @@ module bpred (
   logic 		   BranchM, JumpM, ReturnM, CallM;
   logic 		   BranchW, JumpW, ReturnW, CallW;
   logic 		   WrongBPReturnD;
-
+  logic [`XLEN-1:0] BTAE;
+  
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
   if (`BPRED_TYPE == "BP_TWOBIT") begin:Predictor
@@ -148,9 +149,9 @@ module bpred (
   btb #(`BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
-          .BTAF, .BTAD,
+          .BTAF, .BTAD, .BTAE,
           .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
-          .PredictionInstrClassWrongM,
+          .PredictionInstrClassWrongM, .AnyWrongPredInstrClassE,
           .IEUAdrE, .IEUAdrM,
           .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
           .InstrClassE({CallE, ReturnE, JumpE, BranchE}), 
@@ -195,7 +196,7 @@ module bpred (
 
   if(`ZICOUNTERS_SUPPORTED) begin
     logic 					JumpOrTakenBranchE;
-    logic [`XLEN-1:0] 				BTAE, RASPCD, RASPCE;
+    logic [`XLEN-1:0] 	    RASPCD, RASPCE;
     logic 					BTBPredPCWrongE, RASPredPCWrongE;	
     // performance counters
     // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
@@ -213,8 +214,6 @@ module bpred (
     assign JumpOrTakenBranchE = (BranchE & PCSrcE) | JumpE;
     
     flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
-
-    flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
 
     flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
     flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
