@@ -42,7 +42,7 @@ module spill #(
   input logic [31:0] 	   InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
   input logic 			   IFUCacheBusStallD, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic 			   ITLBMissF,         // ITLB miss, ignore memory request
-  input logic 			   InstrDAPageFaultF, // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
+  input logic 			   InstrUpdateDAF, // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
   output logic [`XLEN-1:0] PCNextFSpill,      // The next PCF for one of the two memory addresses of the spill
   output logic [`XLEN-1:0] PCFSpill,          // PCF for one of the two memory addresses of the spill
   output logic 			   SelNextSpillF,     // During the transition between the two spill operations, the IFU should stall the pipeline
@@ -77,7 +77,7 @@ module spill #(
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrDAPageFaultF));
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= #1 STATE_READY;

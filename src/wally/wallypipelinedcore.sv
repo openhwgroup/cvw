@@ -156,7 +156,7 @@ module wallypipelinedcore (
   logic                          ICacheMiss;
   logic                          ICacheAccess;
   logic                          BreakpointFaultM, EcallFaultM;
-  logic                          InstrDAPageFaultF;
+  logic                          InstrUpdateDAF;
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
@@ -184,7 +184,7 @@ module wallypipelinedcore (
     .PrivilegeModeW, .PTE, .PageType, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV,
     .STATUS_MPP, .ITLBWriteF, .sfencevmaM, .ITLBMissF,
     // pmp/pma (inside mmu) signals. 
-    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrDAPageFaultF); 
+    .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF); 
     
   // integer execution unit: integer register file, datapath and controller
   ieu ieu(.clk, .reset,
@@ -238,7 +238,7 @@ module wallypipelinedcore (
     .HPTWInstrAccessFaultM,         // connects to privilege
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
-    .InstrDAPageFaultF,
+    .InstrUpdateDAF,
     .PCFSpill, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
