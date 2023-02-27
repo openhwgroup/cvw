@@ -93,15 +93,17 @@ module hptw (
   logic [`XLEN+1:0] 	   HPTWAdrExt;
   logic 				   ITLBMissOrDAFaultF;
   logic 				   DTLBMissOrDAFaultM;
+  logic                    LSUAccessFaultM;
   logic [`PA_BITS-1:0] 	   HPTWAdr;
   logic [1:0] 			   HPTWRW;
   logic [2:0] 			   HPTWSize; // 32 or 64 bit access
   statetype WalkerState, NextWalkerState, InitialWalkerState;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
-  assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
-  assign HPTWInstrAccessFaultM = WalkerState == IDLE ? 1'b0: (LSUStoreAmoAccessFaultM | LSULoadAccessFaultM) & ~DTLBWalk;
+  assign LSUAccessFault          = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
+  assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWInstrAccessFaultM   = WalkerState == IDLE ? 1'b0: LSUAccessFaultM & ~DTLBWalk;
 
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
