@@ -141,6 +141,7 @@
 `define BTB_SIZE 10
 
 `define SVADU_SUPPORTED 0
+`define ZMMUL_SUPPORTED 0
 
 // FPU division architecture
 `define RADIX 32'h4

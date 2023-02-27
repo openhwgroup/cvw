@@ -81,7 +81,7 @@ module lsu (
   input  logic [1:0]          STATUS_MPP,                           // Machine previous privilege mode
   input  logic [`XLEN-1:0]    PCFSpill,                                  // Fetch PC 
   input  logic                ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
-  input  logic                InstrDAPageFaultF,                    // ITLB hit needs to update dirty or access bits
+  input  logic                InstrUpdateDAF,                    // ITLB hit needs to update dirty or access bits
   output logic [`XLEN-1:0]    PTE,                                  // Page table entry write to ITLB
   output logic [1:0]          PageType,                             // Type of page table entry to write to ITLB
   output logic                ITLBWriteF,                           // Write PTE to ITLB
@@ -127,7 +127,7 @@ module lsu (
 
   logic                     DTLBMissM;                              // DTLB miss causes HPTW walk
   logic                     DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                     DataDAPageFaultM;                       // DTLB hit needs to update dirty or access bits
+  logic                     DataUpdateDAM;                       // DTLB hit needs to update dirty or access bits
   logic                     LSULoadAccessFaultM;                    // Load acces fault
   logic 					LSUStoreAmoAccessFaultM;                // Store access fault
   logic                     IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
@@ -151,7 +151,7 @@ module lsu (
 
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
-      .DTLBMissM, .DTLBWriteM, .InstrDAPageFaultF, .DataDAPageFaultM,
+      .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
       .FlushW, .DCacheStallM, .SATP_REGW, .PCFSpill,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
@@ -196,7 +196,7 @@ module lsu (
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
 	  .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
-      .DAPageFault(DataDAPageFaultM),
+      .UpdateDA(DataUpdateDAM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
       .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
