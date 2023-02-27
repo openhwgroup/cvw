@@ -127,8 +127,8 @@ module hptw (
 
   if(`SVADU_SUPPORTED) begin : hptwwrites
     logic                     ReadAccess, WriteAccess;
-    logic                     InvalidRead, InvalidWrite;
-    logic                     UpperBitsUnequalPageFault; 
+    logic                     InvalidRead, InvalidWrite, InvalidOp;
+    logic                     UpperBitsUnequal; 
     logic                     OtherPageFault;
     logic [1:0]               EffectivePrivilegeMode;
     logic                     ImproperPrivilege;
@@ -147,7 +147,7 @@ module hptw (
     mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
 
     assign {Dirty, Accessed} = PTE[7:6];
-    assign WriteAccess = MemRWM[0] | (|AtomicM);
+    assign WriteAccess = MemRWM[0]; // implies | (|AtomicM);
     assign SetDirty = ~Dirty & DTLBWalk & WriteAccess;
     assign ReadAccess = MemRWM[1];
 
@@ -157,11 +157,11 @@ module hptw (
 
     // Check for page faults
 		vm64check vm64check(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]), .VAdr(TranslationVAdr), 
-	  	.SV39Mode(), .UpperBitsUnequalPageFault);
+	  	.SV39Mode(), .UpperBitsUnequal);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
-    assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
-                            ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
+	assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
+    assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequal | Misaligned | ~Valid;
 
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access
