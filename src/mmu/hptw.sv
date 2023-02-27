@@ -100,7 +100,7 @@ module hptw (
   statetype WalkerState, NextWalkerState, InitialWalkerState;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
-  assign LSUAccessFault          = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
+  assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
   assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
   assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[0];
   assign HPTWInstrAccessFaultM   = WalkerState == IDLE ? 1'b0: LSUAccessFaultM & ~DTLBWalk;
