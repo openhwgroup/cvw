@@ -34,7 +34,7 @@ module icpred (
   input  logic             clk, reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
-  input logic [31:0]       PostSpillInstrRawF, InstrD,        // Instruction
+  input  logic [31:0]      PostSpillInstrRawF, InstrD,        // Instruction
   input  logic             BranchD, BranchE,
   input  logic             JumpD, JumpE,
   output logic             BranchM, BranchW,
