@@ -49,8 +49,8 @@ module hptw (
 	input  logic                ITLBMissF,
 	input  logic                DTLBMissM,
 	input  logic                FlushW,
-	input  logic                InstrDAPageFaultF,
-	input  logic                DataDAPageFaultM,
+	input  logic                InstrUpdateDAF,
+	input  logic                DataUpdateDAM,
 	output logic [`XLEN-1:0]    PTE, 								// page table entry to TLBs
 	output logic [1:0]          PageType, 					// page type to TLBs
 	output logic ITLBWriteF, DTLBWriteM, // write TLB with new entry
@@ -87,21 +87,23 @@ module hptw (
   logic [`XLEN-1:0] 	   TranslationVAdr;
   logic [`XLEN-1:0] 	   NextPTE;
   logic 				   UpdatePTE;
-  logic 				   HPTWDAPageFault;
+  logic 				   HPTWUpdateDA;
   logic [`PA_BITS-1:0] 	   HPTWReadAdr;
   logic 				   SelHPTWAdr;
   logic [`XLEN+1:0] 	   HPTWAdrExt;
   logic 				   ITLBMissOrDAFaultF;
   logic 				   DTLBMissOrDAFaultM;
+  logic                    LSUAccessFaultM;
   logic [`PA_BITS-1:0] 	   HPTWAdr;
   logic [1:0] 			   HPTWRW;
   logic [2:0] 			   HPTWSize; // 32 or 64 bit access
   statetype WalkerState, NextWalkerState, InitialWalkerState;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
-  assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : (LSULoadAccessFaultM | LSUStoreAmoAccessFaultM) & DTLBWalk & MemRWM[0];
-  assign HPTWInstrAccessFaultM = WalkerState == IDLE ? 1'b0: (LSUStoreAmoAccessFaultM | LSULoadAccessFaultM) & ~DTLBWalk;
+  assign LSUAccessFaultM         = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
+  assign LoadAccessFaultM 		 = WalkerState == IDLE ? LSULoadAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign StoreAmoAccessFaultM	 = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWInstrAccessFaultM   = WalkerState == IDLE ? 1'b0: LSUAccessFaultM & ~DTLBWalk;
 
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
@@ -127,8 +129,8 @@ module hptw (
 
   if(`SVADU_SUPPORTED) begin : hptwwrites
     logic                     ReadAccess, WriteAccess;
-    logic                     InvalidRead, InvalidWrite;
-    logic                     UpperBitsUnequalPageFault; 
+    logic                     InvalidRead, InvalidWrite, InvalidOp;
+    logic                     UpperBitsUnequal; 
     logic                     OtherPageFault;
     logic [1:0]               EffectivePrivilegeMode;
     logic                     ImproperPrivilege;
@@ -147,7 +149,7 @@ module hptw (
     mux2 #(`PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
 
     assign {Dirty, Accessed} = PTE[7:6];
-    assign WriteAccess = MemRWM[0] | (|AtomicM);
+    assign WriteAccess = MemRWM[0]; // implies | (|AtomicM);
     assign SetDirty = ~Dirty & DTLBWalk & WriteAccess;
     assign ReadAccess = MemRWM[1];
 
@@ -157,24 +159,24 @@ module hptw (
 
     // Check for page faults
 		vm64check vm64check(.SATP_MODE(SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS]), .VAdr(TranslationVAdr), 
-	  	.SV39Mode(), .UpperBitsUnequalPageFault);
+	  	.SV39Mode(), .UpperBitsUnequal);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
-    assign OtherPageFault = DTLBWalk? ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequalPageFault | Misaligned | ~Valid :
-                            ImproperPrivilege | ~Executable | UpperBitsUnequalPageFault | Misaligned | ~Valid;
+	assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
+    assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequal | Misaligned | ~Valid;
 
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access
     // and possibly also Dirty.  Dirty is set if the operation is a store/amo.
     // However any other fault should not cause the update.
-    assign HPTWDAPageFault = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
+    assign HPTWUpdateDA = ValidLeafPTE & (~Accessed | SetDirty) & ~OtherPageFault;
 
     assign HPTWRW[0] = (WalkerState == UPDATE_PTE);
-    assign UpdatePTE = (WalkerState == LEAF) & HPTWDAPageFault;
+    assign UpdatePTE = (WalkerState == LEAF) & HPTWUpdateDA;
   end else begin // block: hptwwrites
     assign NextPTE = ReadDataM;
     assign HPTWAdr = HPTWReadAdr;
-    assign HPTWDAPageFault = '0;
+    assign HPTWUpdateDA = '0;
     assign UpdatePTE = '0;
     assign HPTWRW[0] = '0;
   end
@@ -182,8 +184,8 @@ module hptw (
 	// Enable and select signals based on states
 	assign StartWalk = (WalkerState == IDLE) & TLBMiss;
 	assign HPTWRW[1] = (WalkerState == L3_RD) | (WalkerState == L2_RD) | (WalkerState == L1_RD) | (WalkerState == L0_RD);
-	assign DTLBWriteM = (WalkerState == LEAF & ~HPTWDAPageFault) & DTLBWalk;
-	assign ITLBWriteF = (WalkerState == LEAF & ~HPTWDAPageFault) & ~DTLBWalk;
+	assign DTLBWriteM = (WalkerState == LEAF & ~HPTWUpdateDA) & DTLBWalk;
+	assign ITLBWriteF = (WalkerState == LEAF & ~HPTWUpdateDA) & ~DTLBWalk;
   
 	// FSM to track PageType based on the levels of the page table traversed
 	flopr #(2) PageTypeReg(clk, reset, NextPageType, PageType);
@@ -262,7 +264,7 @@ module hptw (
 					else                                 										NextWalkerState = LEAF;
 			L0_RD: if (DCacheStallM)                     								NextWalkerState = L0_RD;
 				   else                                     							NextWalkerState = LEAF;
-			LEAF: if (`SVADU_SUPPORTED & HPTWDAPageFault)             NextWalkerState = UPDATE_PTE;
+			LEAF: if (`SVADU_SUPPORTED & HPTWUpdateDA)             NextWalkerState = UPDATE_PTE;
 				  else 																										NextWalkerState = IDLE;
 			UPDATE_PTE: if(DCacheStallM) 		                        		NextWalkerState = UPDATE_PTE;
 						else 																									NextWalkerState = LEAF;
@@ -273,8 +275,8 @@ module hptw (
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
 
-  assign ITLBMissOrDAFaultF = ITLBMissF | (`SVADU_SUPPORTED & InstrDAPageFaultF);
-  assign DTLBMissOrDAFaultM = DTLBMissM | (`SVADU_SUPPORTED & DataDAPageFaultM);  
+  assign ITLBMissOrDAFaultF = ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF);
+  assign DTLBMissOrDAFaultM = DTLBMissM | (`SVADU_SUPPORTED & DataUpdateDAM);  
 
   // HTPW address/data/control muxing
 
