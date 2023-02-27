@@ -72,7 +72,7 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
   output logic                    TLBHit,
   output logic                    Translate,
   output logic                    TLBPageFault,
-  output logic                    DAPageFault
+  output logic                    UpdateDA
 );
 
   logic [TLB_ENTRIES-1:0]         Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
@@ -105,7 +105,7 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
   tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
     .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
     .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
-    .DAPageFault, .SV39Mode, .Translate);
+    .UpdateDA, .SV39Mode, .Translate);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
   tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
