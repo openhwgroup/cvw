@@ -67,14 +67,14 @@ module bpred (
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
   output logic             BTBPredPCWrongM,           // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
-  output logic             PredictionInstrClassWrongM // Class prediction is wrong
+  output logic             IClassWrongM // Class prediction is wrong
   );
 
   logic [1:0] 		   BPDirPredF;
 
   logic [`XLEN-1:0] 	   BTAF, RASPCF;
   logic 		   BPPCWrongE;
-  logic 		   AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
+  logic 		   IClassWrongE;
   logic 		   BPDirPredWrongE;
   
   logic 		   BPPCSrcF;
@@ -153,7 +153,7 @@ module bpred (
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
           .BTAF, .BTAD, .BTAE,
           .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
-          .PredictionInstrClassWrongM, .AnyWrongPredInstrClassE,
+          .IClassWrongM, .IClassWrongE,
           .IEUAdrE, .IEUAdrM,
           .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
           .InstrClassE({CallE, ReturnE, JumpE, BranchE}), 
@@ -163,7 +163,7 @@ module bpred (
   icpred #(`INSTR_CLASS_PRED) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
 		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
 		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .PredictionInstrClassWrongM, .AnyWrongPredInstrClassE, .WrongBPReturnD);
+		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .WrongBPReturnD);
 
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
@@ -200,7 +200,7 @@ module bpred (
     logic [`XLEN-1:0] 	    RASPCD, RASPCE;
     logic 					BTBPredPCWrongE, RASPredPCWrongE;	
     // performance counters
-    // 1. class         (class wrong / minstret) (PredictionInstrClassWrongM / csr)                    // Correct now
+    // 1. class         (class wrong / minstret) (IClassWrongM / csr)                    // Correct now
     // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
     // 3. target ras    (ras target wrong / class[2])
     // 4. direction     (br dir wrong / class[0])

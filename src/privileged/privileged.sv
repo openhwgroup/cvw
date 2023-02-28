@@ -49,7 +49,7 @@ module privileged (
   input  logic 		         BPDirPredWrongM,                     // branch predictor guessed wrong directoin
   input  logic 		         BTBPredPCWrongM,                         // branch predictor guessed wrong target
   input  logic 		         RASPredPCWrongM,                         // return adddress stack guessed wrong target
-  input  logic 		         PredictionInstrClassWrongM,              // branch predictor guessed wrong instruction class
+  input  logic 		         IClassWrongM,              // branch predictor guessed wrong instruction class
   input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,                               // actual instruction class
   input  logic             JumpOrTakenBranchM,                               // actual instruction class
@@ -126,7 +126,7 @@ module privileged (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
     .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
-    .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
+    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
