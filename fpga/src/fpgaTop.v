@@ -90,9 +90,10 @@ module fpgaTop
 
   wire [31:0] 	   GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
 
-  wire 			   SDCCmdIn;
-  wire 			   SDCCmdOE;
-  wire 			   SDCCmdOut;
+  // Old SDC connections
+  // wire 			   SDCCmdIn;
+  // wire 			   SDCCmdOE;
+  // wire 			   SDCCmdOut;
 
   (* mark_debug = "true" *) wire [3:0] 	   m_axi_awid;
   (* mark_debug = "true" *) wire [7:0] 	   m_axi_awlen;
@@ -403,11 +404,18 @@ module fpgaTop
   wire m01_axi_rvalid;
   wire m01_axi_rready;
 
-  wire [3:0] SDCDatIn;
+  // Old SDC input
+  // wire [3:0] SDCDatIn;
 
+  // New SDC Command IOBUF connections
+  wire       sd_cmd_i;
   reg        sd_cmd_reg_o;
   reg        sd_cmd_reg_t;
+
+  // New SDC Data IOBUF connections
   wire [3:0] sd_dat_i;
+  reg  [3:0] sd_dat_reg_o;
+  reg        sd_dat_reg_t;
   
   assign GPIOPinsIn = {28'b0, GPI};
   assign GPO = GPIOPinsOut[4:0];
@@ -418,11 +426,11 @@ module fpgaTop
 
    
   // SD Card Tristate
+  /*
   IOBUF iobufSDCMD(.T(~SDCCmdOE), // iobuf's T is active low
 				   .I(SDCCmdOut),
 				   .O(SDCCmdIn),
 				   .IO(SDCCmd));
-
 
   genvar i;
   generate
@@ -433,8 +441,20 @@ module fpgaTop
 						   .IO(SDCDat[i]));
 	 end
   endgenerate
-
-  // IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(sdio_cmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
+  */
+   
+   // IOBUFS for new SDC peripheral
+   IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(SDCcmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
+   genvar    i;
+   generate
+      for (i = 0; i < 4; i = i + 1) begin
+         IOBUF iobufSDCDat(.T(sd_dat_reg_t),
+                           .I(sd_dat_reg_o[i]),
+                           .O(sd_dat_i[i]),
+                           .IO(SDCDat[i]) );
+      end
+   endgenerate
+   
   // IOBUF IOBUF_dat0 (.O(sd_dat_i[0]), .IO(sdio_dat[0]), .I(sd_dat_reg_o[0]), .T(sd_dat_reg_t));
   // IOBUF IOBUF_dat1 (.O(sd_dat_i[1]), .IO(sdio_dat[1]), .I(sd_dat_reg_o[1]), .T(sd_dat_reg_t));
   // IOBUF IOBUF_dat2 (.O(sd_dat_i[2]), .IO(sdio_dat[2]), .I(sd_dat_reg_o[2]), .T(sd_dat_reg_t));
@@ -830,14 +850,13 @@ module fpgaTop
 	 //.sdio_dat(4'b0),
 	 //.sdio_cd(1'b0)
 
-     //.sd_dat_reg_t(),
-     //.sd_dat_reg_o(),
-     .sd_dat_i(4'b0),
+     .sd_dat_reg_t(sd_dat_reg_t),
+     .sd_dat_reg_o(sd_dat_reg_o),
+     .sd_dat_i(sd_dat_i),
      
-     //.sd_cmd_reg_t(),
-     //.sd_cmd_reg_o(),
-     .sd_cmd_i(1'b0)
-	 
+     .sd_cmd_reg_t(sd_cmd_reg_t),
+     .sd_cmd_reg_o(sd_cmd_reg_o),
+     .sd_cmd_i(sd_cmd_i)
 	 );
 
   xlnx_axi_dwidth_conv_32to64 axi_conv_up
