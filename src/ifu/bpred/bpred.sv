@@ -39,7 +39,7 @@ module bpred (
   input  logic [31:0]      InstrD,                    // Decompressed decode stage instruction. Used to decode instruction class
   input  logic [`XLEN-1:0] PCNextF,                   // Next Fetch Address
   input  logic [`XLEN-1:0] PCPlus2or4F,               // PCF+2/4
-  output logic [`XLEN-1:0] PCNext1F,                  // Branch Predictor predicted or corrected fetch address on miss prediction
+  output logic [`XLEN-1:0] PC1NextF,                  // Branch Predictor predicted or corrected fetch address on miss prediction
   output logic [`XLEN-1:0] NextValidPCE,              // Address of next valid instruction after the instruction in the Memory stage
 
   // Update Predictor
@@ -63,7 +63,7 @@ module bpred (
 
   // Report branch prediction status
   output logic             BPWrongE,              // Prediction is wrong
-  output logic             BPPredWrongM,              // Prediction is wrong
+  output logic             BPWrongM,              // Prediction is wrong
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
   output logic             BTBPredPCWrongM,           // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
@@ -79,7 +79,7 @@ module bpred (
   
   logic 		   BPPCSrcF;
   logic [`XLEN-1:0] 	   BPPCF;
-  logic [`XLEN-1:0] 	   PCNext0F;
+  logic [`XLEN-1:0] 	   PC0NextF;
   logic [`XLEN-1:0] 	   PCCorrectE;
   logic [3:0] 		   WrongPredInstrClassD;
 
@@ -176,21 +176,21 @@ module bpred (
   // also flush the branch.  This will change in a superscaler cpu. 
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
   assign BPWrongE = (PCCorrectE != PCD) & InstrValidE & InstrValidD;
-  flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPWrongE, BPPredWrongM);
+  flopenrc #(1) BPWrongMReg(clk, reset, FlushM, ~StallM, BPWrongE, BPWrongM);
   
   // Output the predicted PC or corrected PC on miss-predict.
   assign BPPCSrcF = (BPBranchF & BPDirPredF[1]) | BPJumpF;
   mux2 #(`XLEN) pcmuxbp(BTAF, RASPCF, BPReturnF, BPPCF);
   // Selects the BP or PC+2/4.
-  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPCF, BPPCSrcF, PCNext0F);
+  mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPCF, BPPCSrcF, PC0NextF);
   // If the prediction is wrong select the correct address.
-  mux2 #(`XLEN) pcmux1(PCNext0F, PCCorrectE, BPWrongE, PCNext1F);  
+  mux2 #(`XLEN) pcmux1(PC0NextF, PCCorrectE, BPWrongE, PC1NextF);  
   // Correct branch/jump target.
   mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
   // Effectively this is PCM+4 or the non-existant PCLinkM
-  if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPPredWrongM, NextValidPCE);
+  if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else	assign NextValidPCE = PCE;
 
   if(`ZICOUNTERS_SUPPORTED) begin

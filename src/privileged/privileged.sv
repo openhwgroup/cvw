@@ -38,7 +38,7 @@ module privileged (
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
-  input  logic [`XLEN-1:0] PCM, PCNext2F,                             // program counter, next PC going to trap/return PC logic
+  input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
   // control signals
   input  logic             InstrValidM,                               // Current instruction is valid (not flushed)
   input  logic             CommittedM, CommittedF,                    // current instruction is using bus; don't interrupt
@@ -50,7 +50,7 @@ module privileged (
   input  logic 		         BTBPredPCWrongM,                         // branch predictor guessed wrong target
   input  logic 		         RASPredPCWrongM,                         // return adddress stack guessed wrong target
   input  logic 		         PredictionInstrClassWrongM,              // branch predictor guessed wrong instruction class
-  input  logic             BPPredWrongM,                              // branch predictor is wrong
+  input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,                               // actual instruction class
   input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,                                // data cache miss
@@ -121,11 +121,11 @@ module privileged (
 
   // Control and Status Registers
   csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
+    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
-    .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredWrongM,
+    .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
     .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
