@@ -69,85 +69,85 @@ module bmuctrl(
     casez({OpD, Funct7D, Funct3D})
     // ALUSelect_BSelect_ZBBSelect_BRegWrite_BW64_BALUOp
       // ZBS
-      17'b0010011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclri
+      17'b0010011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000_101;  // bclri
       17'b0010011_0100101_001: if (`XLEN == 64)
-                                 BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclri (rv64)
+                                 BMUControlsD = `BMUCTRLW'b111_0001_000_101;  // bclri (rv64)
                                else
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0010011_0100100_101:   BMUControlsD = `BMUCTRLW'b101_0001_000;  // bexti
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0010011_0100100_101:   BMUControlsD = `BMUCTRLW'b101_0001_000_101;  // bexti
       17'b0010011_0100101_101: if (`XLEN == 64)
-                                 BMUControlsD = `BMUCTRLW'b101_0001_000;  // bexti (rv64)
+                                 BMUControlsD = `BMUCTRLW'b101_0001_000_101;  // bexti (rv64)
                                else
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0010011_0110100_001:   BMUControlsD = `BMUCTRLW'b100_0001_000;  // binvi
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0010011_0110100_001:   BMUControlsD = `BMUCTRLW'b100_0001_000_101;  // binvi
       17'b0010011_0110101_001: if (`XLEN == 64)
-                                 BMUControlsD = `BMUCTRLW'b100_0001_000;  // binvi (rv64)
+                                 BMUControlsD = `BMUCTRLW'b100_0001_000_101;  // binvi (rv64)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0010011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000;  // bseti
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0010011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000_101;  // bseti
       17'b0010011_0010101_001: if (`XLEN == 64) 
-                                 BMUControlsD = `BMUCTRLW'b110_0001_000;  // bseti
+                                 BMUControlsD = `BMUCTRLW'b110_0001_000_101;  // bseti (rv64)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0110011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclr
-      17'b0110011_0100100_101:   BMUControlsD = `BMUCTRLW'b101_0001_000;  // bext
-      17'b0110011_0110100_001:   BMUControlsD = `BMUCTRLW'b100_0001_000;  // binv
-      17'b0110011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000;  // bset
-      17'b0?1?011_0?0000?_?01:   BMUControlsD = `BMUCTRLW'b001_0000_000;  // sra, srai, srl, srli, sll, slli
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0110011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000_101;  // bclr
+      17'b0110011_0100100_101:   BMUControlsD = `BMUCTRLW'b101_0001_000_101;  // bext
+      17'b0110011_0110100_001:   BMUControlsD = `BMUCTRLW'b100_0001_000_101;  // binv
+      17'b0110011_0010100_001:   BMUControlsD = `BMUCTRLW'b110_0001_000_101;  // bset
+      17'b0?1?011_0?0000?_?01:   BMUControlsD = `BMUCTRLW'b001_0000_000_101;  // sra, srai, srl, srli, sll, slli
       // ZBC
-      17'b0110011_0000101_0??:   BMUControlsD = `BMUCTRLW'b000_0010_000;  // ZBC instruction
+      17'b0110011_0000101_0??:   BMUControlsD = `BMUCTRLW'b000_0010_000_101;  // ZBC instruction
       // ZBA
-      17'b0110011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh1add
-      17'b0110011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh2add
-      17'b0110011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh3add
-      17'b0111011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh1add.uw
-      17'b0111011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh2add.uw
-      17'b0111011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // sh3add.uw
-      17'b0111011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000_000;  // add.uw
-      17'b0011011_000010?_001:   BMUControlsD = `BMUCTRLW'b001_1000_000;  // slli.uw
+      17'b0110011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000_101;  // sh1add
+      17'b0110011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000_101;  // sh2add
+      17'b0110011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000_101;  // sh3add
+      17'b0111011_0010000_010:   BMUControlsD = `BMUCTRLW'b000_1000_000_111;  // sh1add.uw
+      17'b0111011_0010000_100:   BMUControlsD = `BMUCTRLW'b000_1000_000_111;  // sh2add.uw
+      17'b0111011_0010000_110:   BMUControlsD = `BMUCTRLW'b000_1000_000_111;  // sh3add.uw
+      17'b0111011_0000100_000:   BMUControlsD = `BMUCTRLW'b000_1000_000_111;  // add.uw
+      17'b0011011_000010?_001:   BMUControlsD = `BMUCTRLW'b001_1000_000_111;  // slli.uw
       // ZBB
-      17'b0110011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rol
-      17'b0111011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rolw
-      17'b0110011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // ror
-      17'b0111011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rorw
-      17'b0010011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111;  // rori (rv32)
+      17'b0110011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111_101;  // rol
+      17'b0111011_0110000_001:   BMUControlsD = `BMUCTRLW'b001_0100_111_111;  // rolw
+      17'b0110011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111_101;  // ror
+      17'b0111011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111_111;  // rorw
+      17'b0010011_0110000_101:   BMUControlsD = `BMUCTRLW'b001_0100_111_101;  // rori (rv32)
       17'b0010011_0110001_101: if (`XLEN == 64) 
-                                 BMUControlsD = `BMUCTRLW'b001_0100_111;  // rori (rv64)
+                                 BMUControlsD = `BMUCTRLW'b001_0100_111_101;  // rori (rv64)
                                else
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
       17'b0011011_0110000_101: if (`XLEN == 64) 
-                                 BMUControlsD = `BMUCTRLW'b001_0100_111;  // roriw 
+                                 BMUControlsD = `BMUCTRLW'b001_0100_111_111;  // roriw 
                                else
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
       17'b0010011_0110000_001: if (Rs2D[2])
-                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // sign extend instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100_101;  // sign extend instruction
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0100_000;  // count instruction
-      17'b0011011_0110000_001:   BMUControlsD = `BMUCTRLW'b000_0100_000;  // count word instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0100_000_101;  // count instruction
+      17'b0011011_0110000_001:   BMUControlsD = `BMUCTRLW'b000_0100_000_111;  // count word instruction
       17'b0111011_0000100_100: if (`XLEN == 64)
-                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // zexth (rv64)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100_101;  // zexth (rv64)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
       17'b0110011_0000100_100: if (`XLEN == 32)
-                                 BMUControlsD = `BMUCTRLW'b000_0100_100;  // zexth (rv32)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_100_101;  // zexth (rv32)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0110011_0100000_111:   BMUControlsD = `BMUCTRLW'b111_0100_111;  // andn
-      17'b0110011_0100000_110:   BMUControlsD = `BMUCTRLW'b110_0100_111;  // orn
-      17'b0110011_0100000_100:   BMUControlsD = `BMUCTRLW'b100_0100_111;  // xnor
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0110011_0100000_111:   BMUControlsD = `BMUCTRLW'b111_0100_111_101;  // andn
+      17'b0110011_0100000_110:   BMUControlsD = `BMUCTRLW'b110_0100_111_101;  // orn
+      17'b0110011_0100000_100:   BMUControlsD = `BMUCTRLW'b100_0100_111_101;  // xnor
       17'b0010011_0110101_101: if (`XLEN == 64) 
-                                 BMUControlsD = `BMUCTRLW'b000_0100_011;  // rev8 (rv64)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_011_101;  // rev8 (rv64)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
       17'b0010011_0110100_101: if (`XLEN == 32) 
-                                 BMUControlsD = `BMUCTRLW'b000_0100_011;  // rev8 (rv32)
+                                 BMUControlsD = `BMUCTRLW'b000_0100_011_101;  // rev8 (rv32)
                                else 
-                                 BMUControlsD = `BMUCTRLW'b000_0000_000;  // illegal instruction
-      17'b0010011_0010100_101:   BMUControlsD = `BMUCTRLW'b000_0100_011;  // orc.b
-      17'b0110011_0000101_110:   BMUControlsD = `BMUCTRLW'b000_0100_101;  // max
-      17'b0110011_0000101_111:   BMUControlsD = `BMUCTRLW'b000_0100_101;  // maxu
-      17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // min
-      17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // minu
+                                 BMUControlsD = `BMUCTRLW'b000_0000_000_000;  // illegal instruction
+      17'b0010011_0010100_101:   BMUControlsD = `BMUCTRLW'b000_0100_011_101;  // orc.b
+      17'b0110011_0000101_110:   BMUControlsD = `BMUCTRLW'b000_0100_101_101;  // max
+      17'b0110011_0000101_111:   BMUControlsD = `BMUCTRLW'b000_0100_101_101;  // maxu
+      17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_0100_110_101;  // min
+      17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_0100_110_101;  // minu
                                  
       default:                   BMUControlsD = {Funct3D, {10'b0}};        // not B instruction or shift
     endcase
