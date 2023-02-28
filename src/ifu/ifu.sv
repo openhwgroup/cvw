@@ -88,7 +88,7 @@ module ifu (
   input logic [1:0] 		STATUS_MPP,                               // Status CSR: previous machine privilege level
   input logic               sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
   output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
-  output logic              InstrDAPageFaultF,                        // ITLB hit needs to update dirty or access bits
+  output logic              InstrUpdateDAF,                        // ITLB hit needs to update dirty or access bits
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],         // PMP configuration from privileged unit
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
   output logic 				InstrAccessFaultF,                        // Instruction access fault 
@@ -145,7 +145,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : Spill
     spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
-      .InstrDAPageFaultF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
+      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCNextFSpill = PCNextF;
     assign PCFSpill = PCF;
@@ -185,12 +185,12 @@ module ifu (
          .InstrAccessFaultF, .LoadAccessFaultM(), .StoreAmoAccessFaultM(),
          .InstrPageFaultF, .LoadPageFaultM(), .StoreAmoPageFaultM(),
          .LoadMisalignedFaultM(), .StoreAmoMisalignedFaultM(),
-         .DAPageFault(InstrDAPageFaultF),
+         .UpdateDA(InstrUpdateDAF),
          .AtomicAccessM(1'b0),.ExecuteAccessF(1'b1), .WriteAccessM(1'b0), .ReadAccessM(1'b0),
          .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin
-    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrDAPageFaultF} = '0;
+    assign {ITLBMissF, InstrAccessFaultF, InstrPageFaultF, InstrUpdateDAF} = '0;
     assign PCPF = PCFExt[`PA_BITS-1:0];
     assign CacheableF = '1;
     assign SelIROM = '0;
