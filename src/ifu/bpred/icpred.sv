@@ -42,10 +42,10 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             PredictionInstrClassWrongM, WrongBPReturnD
+  output logic             PredictionInstrClassWrongM, WrongBPReturnD, AnyWrongPredInstrClassE
 );
 
-  logic 		   AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
+  logic 		   AnyWrongPredInstrClassD;
   logic 					BPBranchD, BPJumpD, BPReturnD, BPCallD;
 
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
