@@ -56,6 +56,9 @@ module alu #(parameter WIDTH=32) (
   logic             Rotate;
   logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
+  logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
+
+  assign shASelect = {W64,SubArith};
 
 
   if (`ZBS_SUPPORTED) begin: zbsdec
@@ -67,7 +70,7 @@ module alu #(parameter WIDTH=32) (
   // Sign/Zero extend mux
   if (WIDTH == 64) begin // rv64 must handle word s/z extensions
     always_comb 
-      case ({W64, SubArith})
+      case (shASelect)
         2'b00: shA = {{1'b0}, A};
         2'b01: shA = {A[63], A};
         2'b10: shA = {{33'b0}, A[31:0]};
