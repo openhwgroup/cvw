@@ -31,12 +31,12 @@
 module twoBitPredictor #(parameter k = 10) (
   input  logic             clk,
   input  logic             reset,
-  input  logic             StallF, StallD, StallE, StallM,
-  input  logic             FlushD, FlushE, FlushM,
+  input  logic             StallF, StallD, StallE, StallM, StallW,
+  input  logic             FlushD, FlushE, FlushM, FlushW,
   input  logic [`XLEN-1:0] PCNextF, PCM,
   output logic [1:0]       DirPredictionF,
   output logic             DirPredictionWrongE,
-  input  logic             BranchInstrE, BranchInstrM,
+  input  logic             BranchE, BranchM,
   input  logic             PCSrcE
 );
 
@@ -55,18 +55,18 @@ module twoBitPredictor #(parameter k = 10) (
 
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(~StallM & ~FlushM),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(DirPredictionF),
     .wa2(IndexM),
     .wd2(NewDirPredictionM),
-    .we2(BranchInstrM & ~StallM & ~FlushM),
+    .we2(BranchM),
     .bwe2(1'b1));
   
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, DirPredictionD, DirPredictionE);
 
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchInstrE;
+  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
 
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
   flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);

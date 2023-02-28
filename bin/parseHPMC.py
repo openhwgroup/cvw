@@ -247,13 +247,25 @@ if(sys.argv[1] == '-b'):
                     currPercent.append(percent)
                     dct[PredType] = (currSize, currPercent)
         print(dct)
+        fig, axes = plt.subplots()
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue'}
         for cat in dct:
             (x, y) = dct[cat]
-            plt.scatter(x, y, label='k')
-            plt.plot(x, y)
-            plt.ylabel('Prediction Accuracy')
-            plt.xlabel('Size (b or k)')
-            plt.legend(loc='upper left')
+            x=[int(2**int(v)/4) for v in x]
+            print(x, y)
+            axes.plot(x,y, color=colors[cat])
+            axes.scatter(x,y, label=cat, marker=marker[cat], color=colors[cat])
+            #plt.scatter(x, y, label=cat)
+            #plt.plot(x, y)
+            #axes.set_xticks([4, 6, 8, 10, 12, 14])
+        axes.legend(loc='upper left')
+        axes.set_xscale("log")
+        axes.set_ylabel('Prediction Accuracy')
+        axes.set_xlabel('Size (bytes)')
+        axes.set_xticks([16, 64, 256, 1024, 4096, 16384])        
+        axes.set_xticklabels([16, 64, 256, 1024, 4096, 16384])
+        axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
     plt.show()
     
             
