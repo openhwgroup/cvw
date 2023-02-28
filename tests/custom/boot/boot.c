@@ -114,7 +114,7 @@ struct sdc_regs {
 static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013100;
 
 static int errno __attribute__((section(".bss")));
-static DSTATUS drv_status __attribute__((section(".bss")));
+// static DSTATUS drv_status __attribute__((section(".bss")));
 static BYTE card_type __attribute__((section(".bss")));
 static uint32_t response[4] __attribute__((section(".bss")));
 static int alt_mem __attribute__((section(".bss")));
@@ -310,7 +310,7 @@ static int ini_sd(void) {
     usleep(5000);
 
     card_type = 0;
-    drv_status = STA_NOINIT;
+    // drv_status = STA_NOINIT;
 
     if (regs->capability & SDC_CAPABILITY_SD_RESET) {
         /* Power cycle SD card */
@@ -364,7 +364,7 @@ static int ini_sd(void) {
     /* Set R/W block length to 512 */
     if (send_cmd(CMD16, 512) < 0) return -1;
 
-    drv_status &= ~STA_NOINIT;
+    // drv_status &= ~STA_NOINIT;
     return 0;
 }
 
@@ -385,13 +385,13 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
         UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
         unsigned bytes = bcnt * 512;
         if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return RES_ERROR;
-        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return RES_ERROR;
+        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return 1;
         sector += (card_type & CT_BLOCK) ? bcnt : bytes;
         count -= bcnt;
         buf += bytes;
     }
 
-    return RES_OK;
+    return 0;;
 }
 
 void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
