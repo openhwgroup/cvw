@@ -197,7 +197,8 @@ module controller(
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
   assign SFenceVmaD = PrivilegedD & (InstrD[31:25] ==  7'b0001001);
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
-
+  
+  //NOTE: Move the B conditional logic into bctrl
   if (`ZBA_SUPPORTED) begin
     // ALU Decoding is more comprehensive when ZBA is supported. Only conflict with Funct3 is with slt instructionsb
     assign sltD = (Funct3D == 3'b010 & (~BSelectD[3]));
