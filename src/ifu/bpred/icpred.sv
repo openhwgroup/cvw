@@ -42,10 +42,10 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             PredictionInstrClassWrongM, WrongBPReturnD, AnyWrongPredInstrClassE
+  output logic             IClassWrongM, WrongBPReturnD, IClassWrongE
 );
 
-  logic 		   AnyWrongPredInstrClassD;
+  logic 		   IClassWrongD;
   logic 					BPBranchD, BPJumpD, BPReturnD, BPCallD;
 
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
@@ -93,14 +93,14 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
   flopenrc #(4) InstrClassRegW(clk, reset,  FlushM, ~StallW, {CallM, ReturnM, JumpM, BranchM}, {CallW, ReturnW, JumpW, BranchW});
 
   // branch predictor
-  flopenrc #(1) BPClassWrongRegM(clk, reset, FlushM, ~StallM, AnyWrongPredInstrClassE, PredictionInstrClassWrongM);
-  flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, AnyWrongPredInstrClassD, AnyWrongPredInstrClassE);
+  flopenrc #(1) BPClassWrongRegM(clk, reset, FlushM, ~StallM, IClassWrongE, IClassWrongM);
+  flopenrc #(1) WrongInstrClassRegE(clk, reset, FlushE, ~StallE, IClassWrongD, IClassWrongE);
 
   // pipeline the predicted class
   flopenrc #(4) PredInstrClassRegD(clk, reset, FlushD, ~StallD, {BPCallF, BPReturnF, BPJumpF, BPBranchF}, {BPCallD, BPReturnD, BPJumpD, BPBranchD});
 
   // branch class prediction wrong.
-  assign AnyWrongPredInstrClassD = |({BPCallD, BPReturnD, BPJumpD, BPBranchD} ^ {CallD, ReturnD, JumpD, BranchD});
+  assign IClassWrongD = |({BPCallD, BPReturnD, BPJumpD, BPBranchD} ^ {CallD, ReturnD, JumpD, BranchD});
   assign WrongBPReturnD = BPReturnD ^ ReturnD;
 
 endmodule

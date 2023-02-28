@@ -69,7 +69,7 @@ module ifu (
   output logic 				BPDirPredWrongM,                      // Prediction direction is wrong
   output logic 				BTBPredPCWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
-  output logic 				PredictionInstrClassWrongM,               // Class prediction is wrong
+  output logic 				IClassWrongM,               // Class prediction is wrong
   // Faults
   input logic 				IllegalBaseInstrD,                   // Illegal non-compressed instruction
   input logic         IllegalFPUInstrD,                    // Illegal FP instruction
@@ -332,12 +332,12 @@ module ifu (
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPWrongM,
-                .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
+                .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
     assign BPWrongE = PCSrcE;
-    assign {InstrClassM, BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM} = '0;
+    assign {InstrClassM, BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM, IClassWrongM} = '0;
     assign NextValidPCE = PCE;
   end      
 

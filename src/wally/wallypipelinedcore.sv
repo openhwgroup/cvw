@@ -144,7 +144,7 @@ module wallypipelinedcore (
   logic                          BPDirPredWrongM;
   logic                          BTBPredPCWrongM;
   logic                          RASPredPCWrongM;
-  logic                          PredictionInstrClassWrongM;
+  logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
   logic                          InstrAccessFaultF, HPTWInstrAccessFaultM;
   logic [2:0]                    LSUHSIZE;
@@ -177,7 +177,7 @@ module wallypipelinedcore (
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
     .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
-    .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
+    .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
@@ -290,7 +290,7 @@ module wallypipelinedcore (
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
-      .RASPredPCWrongM, .PredictionInstrClassWrongM,
+      .RASPredPCWrongM, .IClassWrongM,
       .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 

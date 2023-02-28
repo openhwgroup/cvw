@@ -40,8 +40,8 @@ module btb #(parameter Depth = 10 ) (
   output logic [`XLEN-1:0] BTAE,
   output logic [3:0] 	   BTBIClassF, // BTB's guess at instruction class
   // update
-  input  logic 			   PredictionInstrClassWrongM, // BTB's instruction class guess was wrong
-  input  logic             AnyWrongPredInstrClassE,
+  input  logic 			   IClassWrongM, // BTB's instruction class guess was wrong
+  input  logic             IClassWrongE,
   input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
   input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
   input  logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
@@ -99,7 +99,7 @@ module btb #(parameter Depth = 10 ) (
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredF),
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(BTBWrongM), .bwe2('1));
 
-  assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
+  assign UpdateEn = |InstrClassM | IClassWrongM;
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
 
@@ -108,7 +108,7 @@ module btb #(parameter Depth = 10 ) (
   // 2. BTAWrongE is used by the performance counters to track when the BTB's BTA or instruction class is wrong.
   flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
   assign BTAWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]);
-  assign BTBWrongE = BTAWrongE | AnyWrongPredInstrClassE;
+  assign BTBWrongE = BTAWrongE | IClassWrongE;
   flopenrc #(1) BTBWrongMReg(clk, reset, FlushM, ~StallM, BTBWrongE, BTBWrongM);
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
