@@ -28,9 +28,8 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
 
-module icpred (
+module icpred #(parameter INSTR_CLASS_PRED = 1)(
   input  logic             clk, reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
@@ -49,7 +48,7 @@ module icpred (
   logic 		   AnyWrongPredInstrClassD, AnyWrongPredInstrClassE;
   logic 					BPBranchD, BPJumpD, BPReturnD, BPCallD;
 
-  if (!`INSTR_CLASS_PRED) begin : DirectClassDecode
+  if (!INSTR_CLASS_PRED) begin : DirectClassDecode
     // This section is mainly for testing, verification, and PPA comparison.
     // An alternative to using the BTB to store the instruction class is to partially decode
     // the instructions in the Fetch stage into, Call, Return, Jump, and Branch instructions.

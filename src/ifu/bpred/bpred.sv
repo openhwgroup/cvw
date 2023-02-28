@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
+`define INSTR_CLASS_PRED 0
 
 module bpred (
   input  logic             clk, reset,
@@ -158,7 +158,7 @@ module bpred (
           .InstrClassM({CallM, ReturnM, JumpM, BranchM}),
           .InstrClassW({CallW, ReturnW, JumpW, BranchW}));
 
-  icpred icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+  icpred #(`INSTR_CLASS_PRED) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
 		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
 		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
 		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .PredictionInstrClassWrongM, .WrongBPReturnD);
@@ -174,7 +174,6 @@ module bpred (
   // this will result in PCD not being equal to the fall through address PCLinkE (PCE+4).
   // The next instruction is always valid as no other flush would occur at the same time as the branch and not
   // also flush the branch.  This will change in a superscaler cpu. 
-  assign BPPCWrongE = ;
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
   assign BPWrongE = (PCCorrectE != PCD) & InstrValidE & InstrValidD;
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPWrongE, BPPredWrongM);
