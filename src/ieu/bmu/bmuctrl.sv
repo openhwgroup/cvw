@@ -38,6 +38,9 @@ module bmuctrl(
   output logic [2:0]  ALUSelectD,              // ALU Mux select signal
   output logic [3:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   output logic [2:0]  ZBBSelectD,              // ZBB mux select signal in Decode stage NOTE: do we need this in decode?
+  output logic        BRegWriteD,              // Indicates if it is a R type B instruction
+  output logic        BW64D,                   // Indiciates if it is a W type B instruction
+  output logic        BALUOpD,                 // Indicates if it is an ALU B instruction
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   output logic [2:0]  ALUSelectE,
@@ -50,7 +53,7 @@ module bmuctrl(
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs2D;                            // Rs2 source register in Decode stage
 
-  `define BMUCTRLW 10
+  `define BMUCTRLW 13
 
   logic [`BMUCTRLW-1:0] BMUControlsD;                 // Main B Instructions Decoder control signals
 
@@ -64,7 +67,7 @@ module bmuctrl(
   // Main Instruction Decoder
   always_comb
     casez({OpD, Funct7D, Funct3D})
-    // ALUSelect_BSelect_ZBBSelect
+    // ALUSelect_BSelect_ZBBSelect_BRegWrite_BW64_BALUOp
       // ZBS
       17'b0010011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000;  // bclri
       17'b0010011_0100101_001: if (`XLEN == 64)
@@ -146,12 +149,12 @@ module bmuctrl(
       17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // min
       17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_0100_110;  // minu
                                  
-      default:                   BMUControlsD = {Funct3D, {7'b0}};        // not B instruction or shift
+      default:                   BMUControlsD = {Funct3D, {10'b0}};        // not B instruction or shift
     endcase
 
   // Unpack Control Signals
 
-  assign {ALUSelectD,BSelectD,ZBBSelectD} = BMUControlsD;
+  assign {ALUSelectD,BSelectD,ZBBSelectD, BRegWriteD, BW64D, BALUOpD} = BMUControlsD;
 
    
 

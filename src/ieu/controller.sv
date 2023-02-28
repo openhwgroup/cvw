@@ -121,6 +121,9 @@ module controller(
   logic        IntDivM;                        // Integer divide instruction
   logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
+  logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
+  logic        BW64D;                          // Indiciates if it is a W type B instruction in decode stage
+  logic        BALUOpD;                        // Indicates if it is an ALU B instruction in decode stage
    
 
   // Extract fields
@@ -241,7 +244,7 @@ module controller(
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, BW64D, BALUOpD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE);
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
