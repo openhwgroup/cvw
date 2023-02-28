@@ -97,7 +97,7 @@ module btb #(parameter Depth = 10 ) (
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredF),
-     .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(UpdateEn), .bwe2('1));
+     .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(BTBWrongM), .bwe2('1));
 
   assign UpdateEn = |InstrClassM | PredictionInstrClassWrongM;
 

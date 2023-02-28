@@ -97,6 +97,8 @@ module bpred (
   logic 		   BranchW, JumpW, ReturnW, CallW;
   logic 		   WrongBPReturnD;
   logic [`XLEN-1:0] BTAE;
+
+  
   
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -161,7 +163,7 @@ module bpred (
   icpred #(`INSTR_CLASS_PRED) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
 		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
 		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .PredictionInstrClassWrongM, .WrongBPReturnD);
+		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .PredictionInstrClassWrongM, .AnyWrongPredInstrClassE, .WrongBPReturnD);
 
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
