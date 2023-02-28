@@ -55,11 +55,11 @@ module ifu (
   input  logic [`XLEN-1:0] 	IEUAdrM,                                  // The branch/jump target address
   output logic [`XLEN-1:0] 	PCE,                                      // Execution stage instruction address
   output logic 				BPWrongE,                             // Prediction is wrong
-  output logic 				BPPredWrongM,                             // Prediction is wrong
+  output logic 				BPWrongM,                             // Prediction is wrong
   // Mem
   output logic              CommittedF,                               // I$ or bus memory operation started, delay interrupts
   input  logic [`XLEN-1:0] 	UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
-  output logic [`XLEN-1:0]  PCNext2F,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
+  output logic [`XLEN-1:0]  PC2NextF,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   output logic [31:0] 		InstrD,                                   // The decoded instruction in Decode stage
   output logic [31:0]       InstrM,                                   // The decoded instruction in Memory stage
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
@@ -132,7 +132,7 @@ module ifu (
   logic 					   IFUCacheBusStallD;                     // EIther I$ or bus busy with multicycle operation
   logic 					   GatedStallD;                           // StallD gated by selected next spill
   // branch predictor signal
-  logic [`XLEN-1:0] 		   PCNext1F;                              // Branch predictor next PCF
+  logic [`XLEN-1:0] 		   PC1NextF;                              // Branch predictor next PCF
   logic                        BusCommittedF;                         // Bus memory operation in flight, delay interrupts
   logic 					   CacheCommittedF;                       // I$ memory operation started, delay interrupts
   logic                        SelIROM;                               // PMA indicates instruction address is in the IROM
@@ -297,8 +297,8 @@ module ifu (
   ////////////////////////////////////////////////////////////////////////////////////////////////
 
   if(`ZICSR_SUPPORTED | `ZIFENCEI_SUPPORTED)
-    mux2 #(`XLEN) pcmux2(.d0(PCNext1F), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PCNext2F));
-  else assign PCNext2F = PCNext1F;
+    mux2 #(`XLEN) pcmux2(.d0(PC1NextF), .d1(NextValidPCE), .s(CSRWriteFenceM),.y(PC2NextF));
+  else assign PC2NextF = PC1NextF;
 
   assign  PCNextF = {UnalignedPCNextF[`XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
   flopenl #(`XLEN) pcreg(clk, reset, ~StallF, PCNextF, `RESET_VECTOR, PCF);
@@ -330,12 +330,12 @@ module ifu (
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
-                .InstrD, .PCNextF, .PCPlus2or4F, .PCNext1F, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPPredWrongM,
+                .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
+                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPWrongM,
                 .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM);
 
   end else begin : bpred
-    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PCNext1F));    
+    mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
     assign BPWrongE = PCSrcE;
     assign {InstrClassM, BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM, PredictionInstrClassWrongM} = '0;
     assign NextValidPCE = PCE;
