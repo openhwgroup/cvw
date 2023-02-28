@@ -174,9 +174,9 @@ module bpred (
   // this will result in PCD not being equal to the fall through address PCLinkE (PCE+4).
   // The next instruction is always valid as no other flush would occur at the same time as the branch and not
   // also flush the branch.  This will change in a superscaler cpu. 
-  assign BPPCWrongE = PCCorrectE != PCD;
+  assign BPPCWrongE = ;
   // branch is wrong only if the PC does not match and both the Decode and Fetch stages have valid instructions.
-  assign BPWrongE = BPPCWrongE & InstrValidE & InstrValidD;
+  assign BPWrongE = (PCCorrectE != PCD) & InstrValidE & InstrValidD;
   flopenrc #(1) BPPredWrongMReg(clk, reset, FlushM, ~StallM, BPWrongE, BPPredWrongM);
   
   // Output the predicted PC or corrected PC on miss-predict.
