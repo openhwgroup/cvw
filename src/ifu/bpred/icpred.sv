@@ -42,7 +42,7 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
   output logic             ReturnD, ReturnE, ReturnM, ReturnW,
   input  logic             BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF,
   output logic             BPCallF, BPReturnF, BPJumpF, BPBranchF,
-  output logic             IClassWrongM, WrongBPReturnD, IClassWrongE
+  output logic             IClassWrongM, BPReturnWrongD, IClassWrongE
 );
 
   logic 		   IClassWrongD;
@@ -101,6 +101,6 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
 
   // branch class prediction wrong.
   assign IClassWrongD = |({BPCallD, BPReturnD, BPJumpD, BPBranchD} ^ {CallD, ReturnD, JumpD, BranchD});
-  assign WrongBPReturnD = BPReturnD ^ ReturnD;
+  assign BPReturnWrongD = BPReturnD ^ ReturnD;
 
 endmodule
