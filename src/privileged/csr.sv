@@ -63,7 +63,6 @@ module csr #(parameter
   input  logic             IClassWrongM,
   input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,
-  input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
@@ -259,7 +258,7 @@ module csr #(parameter
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
-      .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .JumpOrTakenBranchM, .BPWrongM,
+      .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
