@@ -160,7 +160,6 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-  logic 						 JumpOrTakenBranchM;
   logic 						 BranchD, BranchE, JumpD, JumpE;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
@@ -176,7 +175,7 @@ module wallypipelinedcore (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM,
     .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
@@ -291,7 +290,7 @@ module wallypipelinedcore (
       .FRegWriteM, .LoadStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM,
-      .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,

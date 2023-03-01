@@ -50,7 +50,6 @@ module csrc #(parameter
   input  logic 	            IClassWrongM,
   input  logic              BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]        InstrClassM,
-  input  logic              JumpOrTakenBranchM,                               // actual instruction class
   input  logic 	            DCacheMiss,
   input  logic 	            DCacheAccess,
   input  logic 	            ICacheMiss,
@@ -86,10 +85,10 @@ module csrc #(parameter
     assign CounterEvent[`COUNTERS-1:3] = 0;
   end else begin: cevent                                                                // User-defined counters
     assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[4] = BPDirPredWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
+    assign CounterEvent[4] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
     assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
-    assign CounterEvent[7] = JumpOrTakenBranchM & InstrValidNotFlushedM;                // jump or taken branch instructions
+    assign CounterEvent[7] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
     assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong

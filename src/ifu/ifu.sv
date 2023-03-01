@@ -65,7 +65,6 @@ module ifu (
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
-  output logic              JumpOrTakenBranchM,
   output logic 				BPDirPredWrongM,                      // Prediction direction is wrong
   output logic 				BTBPredPCWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
@@ -88,7 +87,7 @@ module ifu (
   input logic [1:0] 		STATUS_MPP,                               // Status CSR: previous machine privilege level
   input logic               sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
   output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
-  output logic              InstrUpdateDAF,                        // ITLB hit needs to update dirty or access bits
+  output logic              InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],         // PMP configuration from privileged unit
   input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
   output logic 				InstrAccessFaultF,                        // Instruction access fault 
@@ -331,7 +330,7 @@ module ifu (
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
-                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .JumpOrTakenBranchM, .BPWrongM,
+                .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
                 .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
