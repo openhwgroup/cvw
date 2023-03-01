@@ -57,8 +57,8 @@ module btb #(parameter Depth = 10 ) (
   logic [`XLEN+3:0] 	   TableBTBPredF;
   logic [`XLEN-1:0] 	   IEUAdrW;
   logic [`XLEN-1:0]        PCW;
-  logic 				   BTAWrongE, BTBWrongE;
-  logic 				   BTBWrongM;
+  logic 				   BTBWrongE, BTAWrongE;
+  logic 				   BTBWrongM, BTAWrongM;
   
   
   // hashing function for indexing the PC
@@ -108,9 +108,11 @@ module btb #(parameter Depth = 10 ) (
   // 2. BTAWrongE is used by the performance counters to track when the BTB's BTA or instruction class is wrong.
   flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
   assign BTAWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]);
-  assign BTBWrongE = BTAWrongE | IClassWrongE;
-  flopenrc #(1) BTBWrongMReg(clk, reset, FlushM, ~StallM, BTBWrongE, BTBWrongM);
-
+  //assign BTBWrongE = BTAWrongE | IClassWrongE;
+  //flopenrc #(1) BTBWrongMReg(clk, reset, FlushM, ~StallM, BTBWrongE, BTBWrongM);
+  flopenrc #(1) BTAWrongMReg(clk, reset, FlushM, ~StallM, BTAWrongE, BTAWrongM);  
+  assign BTBWrongM = BTAWrongM | IClassWrongM;
+  
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
   flopenr #(`XLEN) IEUAdrWReg(clk, reset, ~StallW, IEUAdrM, IEUAdrW);
 
