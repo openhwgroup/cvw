@@ -37,7 +37,7 @@ module csr #(parameter
   input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM,                    // current instruction
-  input  logic [`XLEN-1:0] PCM, PCNext2F,             // program counter, next PC going to trap/return logic
+  input  logic [`XLEN-1:0] PCM, PC2NextF,             // program counter, next PC going to trap/return logic
   input  logic [`XLEN-1:0] SrcAM, IEUAdrM,            // SrcA and memory address from IEU
   input  logic             CSRReadM, CSRWriteM,       // read or write CSR
   input  logic             TrapM,                     // trap is occurring
@@ -57,11 +57,11 @@ module csr #(parameter
   input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic             LoadStallD,
-  input  logic             DirPredictionWrongM,
+  input  logic             BPDirPredWrongM,
   input  logic             BTBPredPCWrongM,
   input  logic             RASPredPCWrongM,
-  input  logic             PredictionInstrClassWrongM,
-  input  logic             BPPredWrongM,                              // branch predictor is wrong
+  input  logic             IClassWrongM,
+  input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,
   input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,
@@ -155,7 +155,7 @@ module csr #(parameter
   // A return sets the PC to MEPC or SEPC
   assign RetM = mretM | sretM;
   mux2 #(`XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
-  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+  mux3 #(`XLEN) pcmux3(PC2NextF, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
   ///////////////////////////////////////////
   // CSRWriteValM
@@ -259,7 +259,7 @@ module csr #(parameter
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
-      .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM, .JumpOrTakenBranchM, .BPPredWrongM,
+      .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .JumpOrTakenBranchM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
