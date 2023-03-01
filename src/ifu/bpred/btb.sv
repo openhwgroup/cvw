@@ -92,14 +92,10 @@ module btb #(parameter Depth = 10 ) (
   assign {BTBIClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredF};
 
 
-  logic 				   UpdateEn;
-  
   // An optimization may be using a PC relative address.
   ram2p1r1wbe #(2**Depth, `XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredF),
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(BTBWrongM), .bwe2('1));
-
-  assign UpdateEn = |InstrClassM | IClassWrongM;
 
   flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
 
@@ -108,8 +104,7 @@ module btb #(parameter Depth = 10 ) (
   // 2. BTAWrongE is used by the performance counters to track when the BTB's BTA or instruction class is wrong.
   flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
   assign BTAWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]);
-  //assign BTBWrongE = BTAWrongE | IClassWrongE;
-  //flopenrc #(1) BTBWrongMReg(clk, reset, FlushM, ~StallM, BTBWrongE, BTBWrongM);
+
   flopenrc #(1) BTAWrongMReg(clk, reset, FlushM, ~StallM, BTAWrongE, BTAWrongM);  
   assign BTBWrongM = BTAWrongM | IClassWrongM;
   
