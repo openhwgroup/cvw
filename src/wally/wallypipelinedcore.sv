@@ -66,7 +66,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0]               PCFSpill, PCE, PCLinkE;
   logic [`XLEN-1:0] 			  PCM;
   logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-  logic [`XLEN-1:0]               UnalignedPCNextF, PCNext2F;
+  logic [`XLEN-1:0]               UnalignedPCNextF, PC2NextF;
   logic [1:0] 					 MemRWM;
   logic 						 InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
@@ -140,11 +140,11 @@ module wallypipelinedcore (
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
-  logic                          BPPredWrongE, BPPredWrongM;
-  logic                          DirPredictionWrongM;
+  logic                          BPWrongE, BPWrongM;
+  logic                          BPDirPredWrongM;
   logic                          BTBPredPCWrongM;
   logic                          RASPredPCWrongM;
-  logic                          PredictionInstrClassWrongM;
+  logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
   logic                          InstrAccessFaultF, HPTWInstrAccessFaultM;
   logic [2:0]                    LSUHSIZE;
@@ -169,15 +169,15 @@ module wallypipelinedcore (
     .InstrValidM, .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE,
     // Fetch
-    .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
+    .HRDATA, .PCFSpill, .IFUHADDR, .PC2NextF,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPPredWrongE,  .BPPredWrongM, 
+    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
-    .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
+    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
+    .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
@@ -268,7 +268,7 @@ module wallypipelinedcore (
 
   // global stall and flush control  
   hazard  hzu(
-    .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
     .LSUStallM, .IFUStallF,
     .FCvtIntStallD, .FPUStallD,
@@ -284,13 +284,13 @@ module wallypipelinedcore (
     privileged priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCNext2F,
+      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
       .RetM, .TrapM, .sfencevmaM,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD,
-      .DirPredictionWrongM, .BTBPredPCWrongM, .BPPredWrongM,
-      .RASPredPCWrongM, .PredictionInstrClassWrongM,
+      .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
+      .RASPredPCWrongM, .IClassWrongM,
       .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
@@ -304,7 +304,7 @@ module wallypipelinedcore (
       .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM);
   end else begin
     assign CSRReadValW = 0;
-    assign UnalignedPCNextF = PCNext2F;
+    assign UnalignedPCNextF = PC2NextF;
     assign RetM = 0;
     assign TrapM = 0;
     assign WFIStallM = 0;
