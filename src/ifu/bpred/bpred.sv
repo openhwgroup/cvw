@@ -95,7 +95,7 @@ module bpred (
   logic 		   ReturnE, CallE;
   logic 		   BranchM, JumpM, ReturnM, CallM;
   logic 		   BranchW, JumpW, ReturnW, CallW;
-  logic 		   WrongBPReturnD;
+  logic 		   BPReturnWrongD;
   logic [`XLEN-1:0] BTAE;
 
   
@@ -163,12 +163,12 @@ module bpred (
   icpred #(`INSTR_CLASS_PRED) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
 		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
 		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .WrongBPReturnD);
+		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .BPReturnWrongD);
 
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
 							.BPReturnF, .ReturnD, .ReturnE, .CallE,
-							.WrongBPReturnD, .RASPCF, .PCLinkE);
+							.BPReturnWrongD, .RASPCF, .PCLinkE);
 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
