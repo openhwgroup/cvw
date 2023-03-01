@@ -1,3 +1,7 @@
+#--showoverrides
+#--help --helpall
+--traceregs
+
 --override cpu/show_c_prefix=T
 --override cpu/unaligned=F
 --override cpu/ignore_non_leaf_DAU=1
@@ -33,3 +37,6 @@
 
 # ignore settings of bits DAU for non leaf page table walks
 --override cpu/ignore_non_leaf_DAU=1
+
+# mimpid = 0x100
+--override cpu/mimpid=0x100
