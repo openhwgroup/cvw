@@ -116,6 +116,7 @@ module controller(
   logic        IEURegWriteE;                   // Register write 
   logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
+  logic        IllegalBitmanipInstrD;          // Unrecognized B instruction
   logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE, FenceM;         // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
@@ -191,7 +192,8 @@ module controller(
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
-  assign IllegalBaseInstrD = ControlsD[0] | IllegalERegAdrD;
+  assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ; //NOTE: Do we want to segregate the IllegalBitmanipInstrD into its own output signal
+  //assign IllegalBaseInstrD = 1'b0;
   assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, W64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
@@ -243,7 +245,7 @@ module controller(
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
 
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
 
     assign RegWriteE = IEURegWriteE | FWriteIntE | BRegWriteE; // IRF register writes could come from IEU, BMU or FPU controllers
     assign SubArithD = (ALUOpD | BALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
@@ -262,6 +264,8 @@ module controller(
     assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
     assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
     assign ALUControlD = {W64D, SubArithD, ALUOpD};
+
+    assign IllegalBitmanipInstrD = 1'b1;
   end
 
   // Fences
