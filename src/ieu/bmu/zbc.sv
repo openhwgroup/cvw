@@ -43,16 +43,16 @@ module zbc #(parameter WIDTH=32) (
    
   //NOTE: Optimize this when doing decoder stuff.
   always_comb begin
-    casez (Funct3)
-      3'b001: begin //clmul
+    casez (Funct3[1:0])
+      2'b01: begin //clmul
         x = A;
         y = B;
       end
-      3'b011: begin //clmulh
+      2'b11: begin //clmulh
         x = {RevA[WIDTH-2:0], {1'b0}};
         y = {{1'b0}, RevB[WIDTH-2:0]};
       end
-      3'b010: begin //clmulr
+      2'b10: begin //clmulr
         x = RevA;
         y = RevB;
       end
