@@ -241,13 +241,13 @@ module controller(
   assign sltuD = (Funct3D == 3'b011); 
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
-  assign ALUControlD = {(W64D | BW64D), SubArithD, ALUOpD};
 
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
 
     assign RegWriteE = IEURegWriteE | FWriteIntE | BRegWriteE; // IRF register writes could come from IEU, BMU or FPU controllers
     assign SubArithD = (ALUOpD | BALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
+    assign ALUControlD = {(W64D | BW64D), SubArithD, ALUOpD};
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
@@ -261,6 +261,7 @@ module controller(
 
     assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
     assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
+    assign ALUControlD = {W64D, SubArithD, ALUOpD};
   end
 
   // Fences
