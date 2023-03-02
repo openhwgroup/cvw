@@ -41,7 +41,7 @@ module zbc #(parameter WIDTH=32) (
   bitreverse #(WIDTH) brA(.a(A), .b(RevA));
   bitreverse #(WIDTH) brB(.a(B), .b(RevB));
    
-  //NOTE: Optimize this when doing decoder stuff.
+  // zbc input select mux
   always_comb begin
     casez (Funct3[1:0])
       2'b01: begin //clmul
