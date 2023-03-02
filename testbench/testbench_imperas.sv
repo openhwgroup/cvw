@@ -149,10 +149,12 @@ module testbench;
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
         msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
       end
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,         "riscv.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,           "riscv"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,        "RV64GC"));
-      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 39));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     39));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
+
       if (!rvviRefInit(elffilename)) begin
         msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
       end
@@ -166,8 +168,8 @@ module testbench;
       
       // cannot predict this register due to latency between
       // pending and taken
-      void'(rvviRefCsrSetVolatile(0, 32'h344));
-      rvviRefCsrCompareEnable(0, 32'h344, RVVI_FALSE);
+      void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
+      void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
       
       // Memory lo, hi, priv (RVVI_MEMORY_PRIVILEGE_{READ,WRITE,EXEC})
       void'(rvviRefMemorySetPrivilege(56'h0, 56'h7fffffffff, 0));
@@ -187,8 +189,8 @@ module testbench;
           void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
       end
       if (`UART_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE)));
-          void'(rvviRefMemorySetPrivilege(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE), PRIV_RW));
+          void'(rvviRefMemorySetPrivilege(`UART_BASE, (`UART_BASE + `UART_RANGE), PRIV_RW));
+          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
       end
       if (`PLIC_SUPPORTED) begin
           void'(rvviRefMemorySetPrivilege(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE), PRIV_RW));
@@ -206,6 +208,8 @@ module testbench;
           void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
       end
 
+      void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
+      
       // These should be done in the attached client
 //      // Enable the trace2log module
 //      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
@@ -216,6 +220,11 @@ module testbench;
 //        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
 //      end
     end
+
+    always @(dut.core.MTimerInt) void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
+    always @(dut.core.MExtInt)   void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
+    always @(dut.core.SExtInt)   void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
+    always @(dut.core.MSwInt)    void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
 
     final begin
       void'(rvviRefShutdown());
