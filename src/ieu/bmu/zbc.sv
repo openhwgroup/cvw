@@ -66,7 +66,7 @@ module zbc #(parameter WIDTH=32) (
   clmul #(WIDTH) clm(.A(x), .B(y), .ClmulResult(ClmulResult));
   bitreverse  #(WIDTH) brClmulResult(.a(ClmulResult), .b(RevClmulResult));
 
-  assign ZBCResult = (Funct3 == 3'b011  || Funct3 == 3'b010) ? RevClmulResult : ClmulResult;
+  assign ZBCResult = (Funct3[1]) ? RevClmulResult : ClmulResult;
 
 
 endmodule
