@@ -1,12 +1,13 @@
 ///////////////////////////////////////////
-// twoBitPredictor.sv
+// gsharebasic.sv
 //
-// Written: Ross Thomposn
+// Written: Ross Thompson
 // Email: ross1728@gmail.com
-// Created: February 14, 2021
-// Modified: 
+// Created: 16 March 2021
+// Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.
+// Modified: 20 February 2023 
 //
-// Purpose: 2 bit saturating counter predictor with parameterized table depth.
+// Purpose: Global History Branch predictor with parameterized global history register
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -28,32 +29,35 @@
 
 `include "wally-config.vh"
 
-module twoBitPredictor #(parameter k = 10) (
-  input  logic             clk,
-  input  logic             reset,
-  input  logic             StallF, StallD, StallE, StallM, StallW,
-  input  logic             FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCM,
-  output logic [1:0]       BPDirPredF,
-  output logic             BPDirPredWrongE,
-  input  logic             BranchE, BranchM,
-  input  logic             PCSrcE
+module gsharebasic #(parameter k = 10,
+                     parameter TYPE = 1) (
+  input logic             clk,
+  input logic             reset,
+  input logic             StallF, StallD, StallE, StallM, StallW,
+  input logic             FlushD, FlushE, FlushM, FlushW,
+  output logic [1:0]      BPDirPredF, 
+  output logic            BPDirPredWrongE,
+  // update
+  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic             BranchE, BranchM, PCSrcE
 );
 
-  logic [k-1:0]            IndexNextF, IndexM;
-  logic [1:0]              PredictionMemory;
-  logic                    DoForwarding, DoForwardingF;
+  logic [k-1:0] 		  IndexNextF, IndexM;
   logic [1:0]              BPDirPredD, BPDirPredE;
   logic [1:0]              NewBPDirPredE, NewBPDirPredM;
 
-  // hashing function for indexing the PC
-  // We have k bits to index, but XLEN bits as the input.
-  // bit 0 is always 0, bit 1 is 0 if using 4 byte instructions, but is not always 0 if
-  // using compressed instructions.  XOR bit 1 with the MSB of index.
-  assign IndexNextF = {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-  assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
+  logic [k-1:0]            GHRF, GHRD, GHRE, GHRM, GHR;
+  logic [k-1:0]            GHRNext;
+  logic                    PCSrcM;
 
-
+  if(TYPE == 1) begin
+	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  end else if(TYPE == 0) begin
+	assign IndexNextF = GHRNext;
+	assign IndexM = GHRM;
+  end
+  
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
@@ -62,14 +66,23 @@ module twoBitPredictor #(parameter k = 10) (
     .wd2(NewBPDirPredM),
     .we2(BranchM),
     .bwe2(1'b1));
-  
+
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
-  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
-
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
   flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
-  
+
+  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
+
+  assign GHRNext = BranchM ? {PCSrcM, GHR[k-1:1]} : GHR;
+  flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchM, GHRNext, GHR);
+  flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+    
+  flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
+  flopenrc #(k) GHRDReg(clk, reset, FlushD, ~StallD, GHRF, GHRD);
+  flopenrc #(k) GHREReg(clk, reset, FlushE, ~StallE, GHRD, GHRE);
+  flopenrc #(k) GHRMReg(clk, reset, FlushM, ~StallM, GHRE, GHRM);
+
 
 endmodule

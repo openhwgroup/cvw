@@ -49,7 +49,7 @@ module fdivsqrtpostproc(
   logic [`DIVb+3:0] W, Sum, DM;
   logic [`DIVb:0] PreQmM;
   logic NegStickyM;
-  logic weq0E, weq0M, WZeroM;
+  logic weq0E, WZeroM;
   logic [`XLEN-1:0] IntDivResultM;
 
   //////////////////////////
@@ -81,7 +81,6 @@ module fdivsqrtpostproc(
   //////////////////////////
  
   flopenr #(1) WZeroMReg(clk, reset, ~StallM, WZeroE, WZeroM);
-  flopenr #(1) WeqZeroMReg(clk, reset, ~StallM, weq0E, weq0M);
 
   //////////////////////////
   // Memory Stage: Postprocessing

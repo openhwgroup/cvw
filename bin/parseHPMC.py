@@ -124,8 +124,9 @@ def ProcessFile(fileName):
             benchmarks.append((testName, opt, HPMClist))
     return benchmarks
 
-def ComputeAverage(benchmarks):
+def ComputeArithmeticAverage(benchmarks):
     average = {}
+    index = 0
     for (testName, opt, HPMClist) in benchmarks:
         for field in HPMClist:
             value = HPMClist[field]
@@ -133,16 +134,39 @@ def ComputeAverage(benchmarks):
                 average[field] = value
             else:
                 average[field] += value
+        index += 1
     benchmarks.append(('All', '', average))
 
 def FormatToPlot(currBenchmark):
     names = []
     values = []
     for config in currBenchmark:
-        print ('config' , config)
+        #print ('config' , config)
         names.append(config[0])
         values.append(config[1])
     return (names, values)
+
+def GeometricAverage(benchmarks, field):
+    Product = 1
+    index = 0
+    for (testName, opt, HPMCList) in benchmarks:
+        #print(HPMCList)
+        Product *= HPMCList[field]
+        index += 1
+    return Product ** (1.0/index)
+
+def ComputeGeometricAverage(benchmarks):
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR']
+    AllAve = {}
+    for field in fields:
+        Product = 1
+        index = 0
+        for (testName, opt, HPMCList) in benchmarks:
+            #print(HPMCList)
+            Product *= HPMCList[field]
+            index += 1
+        AllAve[field] = Product ** (1.0/index)
+    benchmarks.append(('All', '', AllAve))
 
 if(sys.argv[1] == '-b'):
     configList = []
@@ -150,20 +174,30 @@ if(sys.argv[1] == '-b'):
     if(sys.argv[2] == '-s'):
         summery = 1
         sys.argv = sys.argv[1::]
-    print('summery = %d' % summery)
     for config in sys.argv[2::]:
         benchmarks = ProcessFile(config)
-        ComputeAverage(benchmarks)
+        #ComputeArithmeticAverage(benchmarks)
         ComputeAll(benchmarks)
+        ComputeGeometricAverage(benchmarks)
+        #print('CONFIG: %s GEO MEAN: %f' % (config, GeometricAverage(benchmarks, 'BDMR')))
         configList.append((config.split('.')[0], benchmarks))
 
     # Merge all configruations into a single list
     benchmarkAll = []
     for (config, benchmarks) in configList:
-        print(config)
+        #print(config)
         for benchmark in benchmarks:
             (nameString, opt, dataDict) = benchmark
+            #print("BENCHMARK")
+            #print(nameString)
+            #print(opt)
+            #print(dataDict)
             benchmarkAll.append((nameString, opt, config, dataDict))
+    #print('ALL!!!!!!!!!!')
+    #for bench in benchmarkAll:
+    #    print('BENCHMARK')
+    #    print(bench)
+    #print('ALL!!!!!!!!!!')
 
     # now extract all branch prediction direction miss rates for each
     # namestring + opt, config
@@ -177,9 +211,8 @@ if(sys.argv[1] == '-b'):
 
     size = len(benchmarkDict)
     index = 1
-    print('summery = %d' % summery)
     if(summery == 0):
-        print('Number of plots', size)
+        #print('Number of plots', size)
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             (names, values) = FormatToPlot(currBenchmark)
@@ -214,13 +247,25 @@ if(sys.argv[1] == '-b'):
                     currPercent.append(percent)
                     dct[PredType] = (currSize, currPercent)
         print(dct)
+        fig, axes = plt.subplots()
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue'}
         for cat in dct:
             (x, y) = dct[cat]
-            plt.scatter(x, y, label=cat)
-            plt.plot(x, y)
-            plt.ylabel('Prediction Accuracy')
-            plt.xlabel('Size (b or k)')
-            plt.legend(loc='upper left')
+            x=[int(2**int(v)/4) for v in x]
+            print(x, y)
+            axes.plot(x,y, color=colors[cat])
+            axes.scatter(x,y, label=cat, marker=marker[cat], color=colors[cat])
+            #plt.scatter(x, y, label=cat)
+            #plt.plot(x, y)
+            #axes.set_xticks([4, 6, 8, 10, 12, 14])
+        axes.legend(loc='upper left')
+        axes.set_xscale("log")
+        axes.set_ylabel('Prediction Accuracy')
+        axes.set_xlabel('Size (bytes)')
+        axes.set_xticks([16, 64, 256, 1024, 4096, 16384])        
+        axes.set_xticklabels([16, 64, 256, 1024, 4096, 16384])
+        axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
     plt.show()
     
             

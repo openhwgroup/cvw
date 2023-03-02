@@ -209,6 +209,12 @@ It is most convenient if the sysadmin installs riscof into the server’s Python
 
 However, riscof can also be installed and run locally by individual users.
 
+### Other Python libraries
+
+While a sysadmin is installing Python libraries, it's worth doing some more that will be needed by visualization scripts.
+
+	$ sudo pip3 install matplotlib scipy sklearn adjustText lief
+
 ### Install Verilator
 
 Verilator is a free Verilog simulator with a good Lint tool used to catch errors in the SystemVerilog code.  It is needed to run regression.

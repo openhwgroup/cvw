@@ -12,7 +12,7 @@ export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= tsmc28
+export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -20,8 +20,7 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
-export USESRAM ?= 1
-export USETOPO ?= 0
+export USESRAM ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -50,18 +49,6 @@ DIRS = $(DIRS32) $(DIRS64)
 
 configs: $(CONFIG)
 $(CONFIG):
-ifeq ($(USETOPO), 0))
-ifeq ($(TECH), tsmc28psyn))
-	@echo "Bad configuration: you cannot use physical synthesis without tsmc28psyn and usetopo (i.e., -topo)"
-	exit 1
-endif
-endif
-ifeq ($(USETOPO), 1))
-ifneq ($(TECH), tsmc28psyn))
-	@echo "Bad configuration: you cannot use usetopo (i.e., -topo) without tsmc28psyn"
-	exit 1
-endif
-endif
 	@echo $(CONFIG)
 	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
 	cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
@@ -85,6 +72,7 @@ else
 	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
 	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/BTB_SIZE.*/BTB_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
 	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
 	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
@@ -95,6 +83,15 @@ endif
 endif
 	
 # adjust config if synthesizing with any modifications
+# This code is subtle with ifneq.  It successively turns off a larger
+# set of features in order of cycle time limiting.
+# When mod = orig, all features are ON
+# When mod = PMP0, the number of PMP entries is set to 0
+# when mod = noPriv, the privileged unit and PMP are disabled
+# when mod = noFPU, the FPU, privileged unit, and PMP are disabled
+# when mod = noMulDiv, the MDU, FPU, privileged unit, and PMP are disabled.
+# when mod = noAtomic, the Atomic, MDU, FPU, privileged unit, and PMP are disabled
+
 ifneq ($(MOD), orig)
 	# PMP 0
 	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
@@ -108,6 +105,10 @@ ifneq ($(MOD), noPriv)
 ifneq ($(MOD), noFPU)
 	# no muldiv
 	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noMulDiv)
+	# no atomic
+	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/wally-config.vh
+endif
 endif
 endif
 endif
@@ -130,11 +131,10 @@ mkdirecs:
 synth: mkdirecs configs rundc clean
 
 rundc:
-ifeq ($(USETOPO), 0)
-	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
-else
-	
+ifeq ($(TECH), tsmc28psyn)
 	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+else
+	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out	
 endif
 
 

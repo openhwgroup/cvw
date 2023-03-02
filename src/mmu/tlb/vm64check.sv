@@ -1,11 +1,13 @@
 ///////////////////////////////////////////
-// ram2p1rwbe_1024x68.sv
+// vm64check.sv
 //
-// Written: james.stine@okstate.edu 28 January 2023
+// Written: David_Harris@hmc.edu 4 November 2022
 // Modified: 
 //
-// Purpose: RAM wrapper for instantiating RAM IP
+// Purpose: Check for good upper address bits in RV64 mode
 // 
+// Documentation: RISC-V System on Chip Design Chapter 8
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -24,27 +26,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram2p1r1wbe_1024x68( 
-  input  logic          CLKA, 
-  input  logic          CLKB, 
-  input  logic 	        CEBA, 
-  input  logic 	        CEBB, 
-  input  logic          WEBA,
-  input  logic          WEBB,
-  input  logic [9:0]    AA, 
-  input  logic [9:0]    AB, 
-  input  logic [67:0]   DA,
-  input  logic [67:0]   DB,
-  input  logic [67:0]   BWEBA, 
-  input  logic [67:0]   BWEBB, 
-  output logic [67:0]   QA,
-  output logic [67:0]   QB
+`include "wally-config.vh"
+
+module vm64check (
+  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
+  input  logic [`XLEN-1:0]        VAdr,
+  output logic                    SV39Mode, 
+  output logic                    UpperBitsUnequal
 );
 
-   // replace "generic1024x68RAM" with "TSDN..1024X68.." module from your memory vendor
-   //generic1024x68RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-	 //		     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
-  TSDN28HPCPA1024X68M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+  if (`XLEN == 64) begin
+    assign SV39Mode = (SATP_MODE == `SV39);
 
+    // page fault if upper bits aren't all the same
+    logic                           eq_63_47, eq_46_38;
+    assign eq_46_38 = &(VAdr[46:38]) | ~|(VAdr[46:38]);
+    assign eq_63_47 = &(VAdr[63:47]) | ~|(VAdr[63:47]); 
+    assign UpperBitsUnequal = SV39Mode ? ~(eq_63_47 & eq_46_38) : ~eq_63_47;
+  end else begin
+    assign SV39Mode = 0;
+    assign UpperBitsUnequal = 0;
+  end
 endmodule

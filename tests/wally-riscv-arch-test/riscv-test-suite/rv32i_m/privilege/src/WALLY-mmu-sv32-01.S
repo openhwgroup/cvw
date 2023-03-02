@@ -52,9 +52,9 @@ test_cases:
 # 
 # ---------------------------------------------------------------------------------------------
 
-# =========== test 12.3.1.1 Page Table Translation ===========
+# =========== test 8.3.1.1 Page Table Translation ===========
 
-# test 12.3.1.1.1 write page tables / entries to phyiscal memory
+# test 8.3.1.1.1 write page tables / entries to phyiscal memory
 # sv32 Page table (See Figure 12.12***):
 # Level 1 page table, situated at 0x8000D000
 .4byte 0x8000D000, 0x20004C01, write32_test  # points to level 0 page table A
@@ -78,19 +78,19 @@ test_cases:
 .4byte 0x8000F000, 0x200000CF, write32_test # Vaddr 0x0 Paddr 0x80000000: aligned megapage
 .4byte 0x8000F800, 0x200000CF, write32_test # Vaddr 0x80000000 Paddr 0x80000000: aligned megapage (program and data memory)
 
-# test 12.3.1.1.2 write values to Paddrs in each page
-# each of these values is used for 12.3.1.1.3 and some other tests, specified in the comments.
+# test 8.3.1.1.2 write values to Paddrs in each page
+# each of these values is used for 8.3.1.1.3 and some other tests, specified in the comments.
 # when a test is supposed to fault, nothing is written into where it'll be reading/executing since it should fault before getting there.
-.4byte 0x800AAAA8, 0xBEEF0055, write32_test # 12.3.1.1.4 megapage
-.4byte 0x800FFAC0, 0xBEEF0033, write32_test # 12.3.1.3.2 
-.4byte 0x800E3130, 0xBEEF0077, write32_test # 12.3.1.3.2
-.4byte 0x808017E0, 0xBEEF0099, write32_test # 12.3.1.1.4 kilopage
-.4byte 0x80805EA0, 0xBEEF0440, write32_test # 12.3.1.3.3
-.4byte 0x80803AA0, 0xBEEF0BB0, write32_test # 12.3.1.3.7
+.4byte 0x800AAAA8, 0xBEEF0055, write32_test # 8.3.1.1.4 megapage
+.4byte 0x800FFAC0, 0xBEEF0033, write32_test # 8.3.1.3.2 
+.4byte 0x800E3130, 0xBEEF0077, write32_test # 8.3.1.3.2
+.4byte 0x808017E0, 0xBEEF0099, write32_test # 8.3.1.1.4 kilopage
+.4byte 0x80805EA0, 0xBEEF0440, write32_test # 8.3.1.3.3
+.4byte 0x80803AA0, 0xBEEF0BB0, write32_test # 8.3.1.3.7
 .4byte 0x8000FFA0, 0x11100393, write32_test # write executable code for "li x7, 0x111; ret" to executable region.
-.4byte 0x8000FFA4, 0x00008067, write32_test # Used for 12.3.1.3.1, 12.3.1.3.2
+.4byte 0x8000FFA4, 0x00008067, write32_test # Used for 8.3.1.3.1, 8.3.1.3.2
 
-# test 12.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
+# test 8.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .4byte 0x0, 0x0, goto_baremetal # satp.MODE = baremetal / no translation.
 .4byte 0x0, 0x0, goto_s_mode # change to S mode, 0xb written to output
 .4byte 0x800AAAA8, 0xBEEF0055, read32_test
@@ -102,38 +102,38 @@ test_cases:
 .4byte 0x8000FFA0, 0x11100393, read32_test
 .4byte 0x8000FFA4, 0x00008067, read32_test
 
-# test 12.3.1.1.4 check translation works in sv48, read the same values from previous tests, this time with Vaddrs
+# test 8.3.1.1.4 check translation works in sv48, read the same values from previous tests, this time with Vaddrs
 .4byte 0x8000D, 0x0, goto_sv32 # satp.MODE = sv32, Nothing written to output
 .4byte 0x4AAAA8, 0xBEEF0055, read32_test    # megapage at Vaddr 0x400000, Paddr 0x80000000
 .4byte 0xBFF7E0, 0xBEEF0099, read32_test    # kilopage at Vaddr 0xBFF000, Paddr 0x80201000
 
-# =========== test 12.3.1.2 page fault tests ===========
+# =========== test 8.3.1.2 page fault tests ===========
 
-# test 12.3.1.2.1 load page fault if upper bits of Vaddr are not the same
+# test 8.3.1.2.1 load page fault if upper bits of Vaddr are not the same
 # Not tested in rv32/sv32
 
-# test 12.3.1.2.2 load page fault when reading an address where the valid flag is zero
+# test 8.3.1.2.2 load page fault when reading an address where the valid flag is zero
 .4byte 0x6000, 0x0, read32_test
 
-# test 12.3.1.2.3 store page fault if PTE has W and ~R flags set
+# test 8.3.1.2.3 store page fault if PTE has W and ~R flags set
 .4byte 0x2000, 0x0, write32_test
 
-# test 12.3.1.2.4 Fault if last level PTE is a pointer
+# test 8.3.1.2.4 Fault if last level PTE is a pointer
 .4byte 0x0200, 0x0, read32_test
 
-# test 12.3.1.2.5 load page fault on misaligned pages
+# test 8.3.1.2.5 load page fault on misaligned pages
 .4byte 0xC00000, 0x0, read32_test   # misaligned megapage
 
-# =========== test 12.3.1.3 PTE Protection flags ===========
+# =========== test 8.3.1.3 PTE Protection flags ===========
 
-# test 12.3.1.3.1 User flag == 0
-# *** reads on pages with U=0 already tested in 12.3.1.1.4
+# test 8.3.1.3.1 User flag == 0
+# *** reads on pages with U=0 already tested in 8.3.1.1.4
 .4byte 0x40FFA0, 0x111, executable_test           # fetch success when U=0, priv=S
 .4byte 0x80400000, 0x1, goto_u_mode             # go to U mode, return to VPN 0x80400000 where PTE.U = 1. 0x9 written to output
 .4byte 0xBFFC80, 0xBEEF0550, read32_test    # load page fault when U=0, priv=U
 .4byte 0x40FFA0, 0xbad, executable_test           # instr page fault when U=0, priv=U
 
-# test 12.3.1.3.2 User flag == 1
+# test 8.3.1.3.2 User flag == 1
 .4byte 0x804FFAC0, 0xBEEF0033, read32_test  # read success when U=1, priv=U
 .4byte 0x80000000, 0x1, goto_s_mode             # go back to S mode, return to VPN 0x80000000 where PTE.U = 0. 0x8 written to output
 .4byte 0x0, 0x3, write_mxr_sum                # set sstatus.[MXR, SUM] = 11
@@ -142,58 +142,58 @@ test_cases:
 .4byte 0x0, 0x2, write_mxr_sum                # set sstatus.[MXR, SUM] = 10.
 .4byte 0x804FFAC0, 0xBEEF0033, read32_test  # load page fault when U-1, priv=S, sstatus.SUM=0
 
-# test 12.3.1.3.3 Read flag
-# *** reads on pages with R=1 already tested in 12.3.1.1.4
+# test 8.3.1.3.3 Read flag
+# *** reads on pages with R=1 already tested in 8.3.1.1.4
 .4byte 0x0, 0x1, write_mxr_sum            # set sstatus.[MXR, SUM] = 01.
 .4byte 0x5EA0, 0xBEEF0440, read32_test  # load page fault when R=0, sstatus.MXR=0
 .4byte 0x0, 0x3, write_mxr_sum            # set sstatus.[MXR, SUM] = 11.
 .4byte 0x5EA0, 0xBEEF0440, read32_test  # read success when R=0, MXR=1, X=1
 
-# test 12.3.1.3.4 Write flag
+# test 8.3.1.3.4 Write flag
 .4byte 0xBFF290, 0xBEEF0110, write32_test    # write success when W=1
 .4byte 0xBFF290, 0xBEEF0110, read32_test    # check write success by reading
 .4byte 0x5B78, 0xBEEF0CC0, write32_test      # store page fault when W=0
 
-# test 12.3.1.3.5 eXecute flag
-# *** fetches on pages with X = 1 already tested in 12.3.1.3.1
+# test 8.3.1.3.5 eXecute flag
+# *** fetches on pages with X = 1 already tested in 8.3.1.3.1
 .4byte 0xBFFDE0, 0xbad, executable_test             # instr page fault when X=0 
 
-# test 12.3.1.3.6 Accessed flag == 0
+# test 8.3.1.3.6 Accessed flag == 0
 .4byte 0x3020, 0xBEEF0770, write32_test # store page fault when A=0
 .4byte 0x3808, 0xBEEF0990, read32_test # load page fault when A=0
 
-# test 12.3.1.3.7 Dirty flag == 0
+# test 8.3.1.3.7 Dirty flag == 0
 .4byte 0x4658, 0xBEEF0AA0, write32_test # store page fault when D=0
 .4byte 0x4AA0, 0xBEEF0BB0, read32_test # read success when D=0
 
-# =========== test 12.3.1.4 SATP Register ===========
+# =========== test 8.3.1.4 SATP Register ===========
 
-# test 12.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
+# test 8.3.1.4.1 SATP ASID and PPN fields (test having two page tables with different ASID)
 // *** .4byte 0xFFFFFFFFFFFFF888, 0x0220DEADBEEF0099, write32_test # write identical value to global PTE to make sure it's still in the TLB
 .4byte 0x8000F, 0x11, goto_sv32 # go to SV39 on a second, very minimal page table
 .4byte 0xE3130, 0xBEEF0077, read32_test # Read success of old written value from a new page table mapping 
 
-# test 12.3.1.4.2 Test Global mapping
+# test 8.3.1.4.2 Test Global mapping
 // ***.4byte 0x7FFFFFF888, 0x0220DEADBEEF0099, read32_test # read success of global PTE undefined in current mapping.
 
 
-# =========== test 12.3.1.5 STATUS Registers ===========
+# =========== test 8.3.1.5 STATUS Registers ===========
 
-# test 12.3.1.5.1 mstatus.mprv translation
+# test 8.3.1.5.1 mstatus.mprv translation
 # *** mstatus.mprv = 0 tested on every one of the translated reads and writes before this.
 .4byte 0x8000D, 0x0, goto_sv32 // go back to old, extensive page table
 .4byte 0x80000000, 0x1, goto_m_mode // go to m mode to be able to write mstatus
 .4byte 0x1, 0x1, read_write_mprv // write 1 to mstatus.mprv and set mstatus.mpp to be 01=S
 .4byte 0xBFF7E0, 0xBEEF0099, read32_test // read test succeeds with translation even though we're in M mode since MPP=S and MPRV=1
 
-# test 12.3.1.5.2 mstatus.mprv clearing
+# test 8.3.1.5.2 mstatus.mprv clearing
 # mstatus.mprv is already 1 from the last test so going to S mode should clear it with the mret
 .4byte 0x80000000, 0x1, goto_s_mode // This should zero out the mprv bit but now to read and write mstatus, we have to 
 .4byte 0x80000000, 0x1, goto_m_mode // go back to m mode to allow us to reread mstatus.
 .4byte 0x0, 0x0, read_write_mprv // read what should be a zeroed out mprv value and then force it back to zero.
 
-# test 12.3.1.5.3 sstatus.mxr read
-# this bitfield already tested in 12.3.1.3.3
+# test 8.3.1.5.3 sstatus.mxr read
+# this bitfield already tested in 8.3.1.3.3
 
 # terminate tests
 .4byte 0x0, 0x0, terminate_test # brings us back into machine mode with a final ecall, writing 0x9 to the output.

@@ -50,6 +50,7 @@ string tvpaths[] = '{
 
   string embench[] = '{
     `EMBENCH,
+    "bd_speedopt_speed/src/nsichneu/nsichneu",
     "bd_speedopt_speed/src/cubic/cubic", // cubic is likely going to removed when embench 2.0 launches
     "bd_speedopt_speed/src/aha-mont64/aha-mont64",
     "bd_speedopt_speed/src/crc32/crc32",
@@ -61,7 +62,6 @@ string tvpaths[] = '{
     "bd_speedopt_speed/src/nettle-aes/nettle-aes",
     "bd_speedopt_speed/src/nettle-sha256/nettle-sha256",
     "bd_speedopt_speed/src/nbody/nbody",
-    "bd_speedopt_speed/src/nsichneu/nsichneu",
     "bd_speedopt_speed/src/picojpeg/picojpeg",
     // "bd_speedopt_speed/src/primecount/primecount",
     "bd_speedopt_speed/src/qrduino/qrduino",

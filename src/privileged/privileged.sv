@@ -38,7 +38,7 @@ module privileged (
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
-  input  logic [`XLEN-1:0] PCM, PCNext2F,                             // program counter, next PC going to trap/return PC logic
+  input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
   // control signals
   input  logic             InstrValidM,                               // Current instruction is valid (not flushed)
   input  logic             CommittedM, CommittedF,                    // current instruction is using bus; don't interrupt
@@ -46,11 +46,11 @@ module privileged (
   // processor events for performance counter logging
   input  logic             FRegWriteM,                                // instruction will write floating-point registers
   input  logic             LoadStallD,                                // load instruction is stalling
-  input  logic 		         DirPredictionWrongM,                     // branch predictor guessed wrong directoin
+  input  logic 		         BPDirPredWrongM,                     // branch predictor guessed wrong directoin
   input  logic 		         BTBPredPCWrongM,                         // branch predictor guessed wrong target
   input  logic 		         RASPredPCWrongM,                         // return adddress stack guessed wrong target
-  input  logic 		         PredictionInstrClassWrongM,              // branch predictor guessed wrong instruction class
-  input  logic             BPPredWrongM,                              // branch predictor is wrong
+  input  logic 		         IClassWrongM,              // branch predictor guessed wrong instruction class
+  input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,                               // actual instruction class
   input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,                                // data cache miss
@@ -65,7 +65,7 @@ module privileged (
   input  logic             LoadPageFaultM, StoreAmoPageFaultM,        // page faults
   input  logic             InstrMisalignedFaultM,                     // misaligned instruction fault
   input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,  // misaligned data fault
-  input  logic             IllegalIEUInstrFaultD, IllegalFPUInstrM,   // illegal instruction faults
+  input  logic             IllegalIEUFPUInstrD,                       // illegal instruction from IEU or FPU
   input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,       // interrupt sources
   input  logic [63:0]      MTIME_CLINT,                               // timer value from CLINT
   input  logic [4:0]       SetFflagsM,                                // set FCSR flags from FPU
@@ -95,7 +95,7 @@ module privileged (
   logic [11:0]             MIDELEG_REGW;                              // interrupt delegation CSR
   logic                    sretM, mretM;                              // supervisor / machine return instruction
   logic                    IllegalCSRAccessM;                         // Illegal access to CSR
-  logic                    IllegalIEUInstrFaultM;                     // Illegal IEU instruction, delayed to Mem stage
+  logic                    IllegalIEUFPUInstrM;                       // Illegal IEU or FPU instruction, delayed to Mem stage
   logic                    InstrPageFaultM;                           // Instruction page fault, delayed to Mem stage
   logic                    InstrAccessFaultM;                         // Instruction access fault, delayed to Mem stages
   logic                    IllegalInstrFaultM;                        // Illegal instruction fault
@@ -115,18 +115,18 @@ module privileged (
 
   // decode privileged instructions
   privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
-    .PrivilegedM, .IllegalIEUInstrFaultM, .IllegalCSRAccessM, .IllegalFPUInstrM, 
+    .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .sfencevmaM);
 
   // Control and Status Registers
   csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
+    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
-    .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredWrongM,
-    .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
+    .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
+    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
@@ -137,8 +137,8 @@ module privileged (
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUInstrFaultD, 
-    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUInstrFaultM);
+    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUFPUInstrD, 
+    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
   trap trap(.reset,

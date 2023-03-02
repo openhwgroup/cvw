@@ -29,12 +29,16 @@ module ram1p1rwbe_64x22(
   input  logic 	        CEB, 
   input  logic          WEB,
   input  logic [5:0]    A, 
-  input  logic [127:0]  D,
-  input  logic [127:0]  BWEB, 
-  output logic [127:0]  Q
+  input  logic [21:0]   D,
+  input  logic [21:0]   BWEB, 
+  output logic [21:0]   Q
 );
 
    // replace "generic64x22RAM" with "TS1N..64X22.." module from your memory vendor
-   generic64x22RAM sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
+   // use part of a larger RAM to avoid generating more flavors of RAM
+  logic [43:0] Qfull;
+  TS1N28HPCPSVTB64X44M4SW sramIP(.CLK, .CEB, .WEB, .A, .D({22'b0, D[21:0]}), .BWEB({22'b0, BWEB[21:0]}), .Q(Qfull));
+  assign Q = Qfull[21:0];
+   // genericRAM #(64, 22) sramIP (.CLK, .CEB, .WEB, .A, .D, .BWEB, .Q);
 
 endmodule

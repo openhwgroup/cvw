@@ -33,11 +33,11 @@ module RASPredictor #(parameter int StackSize = 16 )(
   input  logic             clk,
   input  logic 			   reset, 
   input  logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
-  input  logic [3:0] 	   WrongPredInstrClassD,                      // Prediction class is wrong
-  input  logic [3:0] 	   InstrClassD,
-  input  logic [3:0]       InstrClassE,                  // Instr class
-  input  logic [3:0]       PredInstrClassF,
-  input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a jal
+  input  logic       	   BPReturnWrongD,                      // Prediction class is wrong
+  input  logic      	   ReturnD,
+  input  logic             ReturnE, CallE,                  // Instr class
+  input  logic             BPReturnF,
+  input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a call
   output logic [`XLEN-1:0] RASPCF                                     // Top of the stack
    );
 
@@ -54,21 +54,21 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic 		 IncrRepairD, DecRepairD;
   
   logic 		 DecrementPtr;
-  logic 		 FlushedRetDE;
-  logic 		 WrongPredRetD;
+  logic 		 FlushedReturnDE;
+  logic 		 WrongPredReturnD;
   
   
-  assign PopF = PredInstrClassF[2] & ~StallD & ~FlushD;
-  assign PushE = InstrClassE[3] & ~StallM & ~FlushM;
+  assign PopF = BPReturnF & ~StallD & ~FlushD;
+  assign PushE = CallE & ~StallM & ~FlushM;
 
-  assign WrongPredRetD = (WrongPredInstrClassD[2]) & ~StallE & ~FlushE;
-  assign FlushedRetDE = (~StallE & FlushE & InstrClassD[2]) | (~StallM & FlushM & InstrClassE[2]); // flushed ret
+  assign WrongPredReturnD = (BPReturnWrongD) & ~StallE & ~FlushE;
+  assign FlushedReturnDE = (~StallE & FlushE & ReturnD) | (~StallM & FlushM & ReturnE); // flushed return
 
-  assign RepairD = WrongPredRetD | FlushedRetDE ;
+  assign RepairD = WrongPredReturnD | FlushedReturnDE ;
 
-  assign IncrRepairD = FlushedRetDE | (WrongPredRetD & ~InstrClassD[2]); // Guessed it was a ret, but its not
+  assign IncrRepairD = FlushedReturnDE | (WrongPredReturnD & ~ReturnD); // Guessed it was a return, but its not
 
-  assign DecRepairD =  WrongPredRetD & InstrClassD[2]; // Guessed non ret but is a ret.
+  assign DecRepairD =  WrongPredReturnD & ReturnD; // Guessed non return but is a return.
     
   assign CounterEn = PopF | PushE | RepairD;
 

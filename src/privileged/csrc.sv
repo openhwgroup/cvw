@@ -44,11 +44,11 @@ module csrc #(parameter
   input  logic 	            StallE, StallM, 
   input  logic              FlushM, 
   input  logic 	            InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
-  input  logic 	            DirPredictionWrongM,
+  input  logic 	            BPDirPredWrongM,
   input  logic 	            BTBPredPCWrongM,
   input  logic 	            RASPredPCWrongM,
-  input  logic 	            PredictionInstrClassWrongM,
-  input  logic              BPPredWrongM,                              // branch predictor is wrong
+  input  logic 	            IClassWrongM,
+  input  logic              BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]        InstrClassM,
   input  logic              JumpOrTakenBranchM,                               // actual instruction class
   input  logic 	            DCacheMiss,
@@ -86,18 +86,18 @@ module csrc #(parameter
     assign CounterEvent[`COUNTERS-1:3] = 0;
   end else begin: cevent                                                                // User-defined counters
     assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[4] = DirPredictionWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
+    assign CounterEvent[4] = BPDirPredWrongM & InstrValidNotFlushedM;               // Branch predictor wrong direction
     assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
     assign CounterEvent[7] = JumpOrTakenBranchM & InstrValidNotFlushedM;                // jump or taken branch instructions
     assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
-    assign CounterEvent[10] = PredictionInstrClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
+    assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
     assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
-    assign CounterEvent[12] = DCacheMiss & InstrValidNotFlushedM;                       // data cache miss
+    assign CounterEvent[12] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[13] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
-    assign CounterEvent[14] = ICacheMiss & InstrValidNotFlushedM;                       // instruction cache miss
-	assign CounterEvent[15] = BPPredWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
+    assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
+	assign CounterEvent[15] = BPWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
     assign CounterEvent[`COUNTERS-1:16] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
