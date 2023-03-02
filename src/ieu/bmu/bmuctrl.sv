@@ -45,7 +45,8 @@ module bmuctrl(
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   output logic [2:0]  ALUSelectE,
   output logic [3:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
-  output logic [2:0]  ZBBSelectE               // ZBB mux select signal
+  output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
+  output logic        BRegWriteE               // Indicates if it is a R type B instruction in Execute
 );
 
   logic [6:0] OpD;                             // Opcode in Decode stage
@@ -159,5 +160,5 @@ module bmuctrl(
    
 
   // BMU Execute stage pipieline control register
-  flopenrc#(10) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD}, {ALUSelectE, BSelectE, ZBBSelectE});
+  flopenrc#(11) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE});
 endmodule
