@@ -69,7 +69,7 @@ module bmuctrl(
   // Main Instruction Decoder
   always_comb
     casez({OpD, Funct7D, Funct3D})
-    // ALUSelect_BSelect_ZBBSelect_BRegWrite_BW64_BALUOp
+    // ALUSelect_BSelect_ZBBSelect_BRegWrite_BW64_BALUOp_IllegalBitmanipInstrD
       // ZBS
       17'b0010011_0100100_001:   BMUControlsD = `BMUCTRLW'b111_0001_000_1_0_1_0;  // bclri
       17'b0010011_0100101_001: if (`XLEN == 64)
