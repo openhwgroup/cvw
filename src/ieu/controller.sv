@@ -92,6 +92,9 @@ module controller(
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
   logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
+  logic	       BaseALUOpD, BaseW64D;           // ALU operation and W64 for Base instructions specifically
+  logic	       BaseRegWriteD;                  // Indicates if Base instruction register write instruction
+  logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic [2:0]  ALUSelectD;                     // ALU mux select signal
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
@@ -105,10 +108,8 @@ module controller(
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
-  logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
+  logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu or B-type ext clr, andn, orn, xnor
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
-  logic        bclrD, bextD;                   // Indicates if is one of these instructions
-  logic        andnD, ornD, xnorD;             // Indicates if is one of these instructions
   logic        maxE, maxuE, minE, minuE;       // Indicates if is one of these instructions in Execute Stage
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
@@ -117,6 +118,7 @@ module controller(
   logic        IEURegWriteE;                   // Register write 
   logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
+  logic        IllegalBitmanipInstrD;          // Unrecognized B instruction
   logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
@@ -126,6 +128,7 @@ module controller(
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
   logic        BW64D;                          // Indiciates if it is a W type B instruction in decode stage
   logic        BALUOpD;                        // Indicates if it is an ALU B instruction in decode stage
+  logic        BSubArithD;                     // TRUE for B-type ext, clr, andn, orn, xnor
    
 
   // Extract fields
@@ -137,7 +140,7 @@ module controller(
   // Main Instruction Decoder
   always_comb
     case(OpD)
-    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
+    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_BaseALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
       7'b0000000:     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Illegal instruction
       7'b0000011:     ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
       7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
@@ -162,14 +165,14 @@ module controller(
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
-      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | ((`ZBB_SUPPORTED & BSelectD[2]) | (`ZBC_SUPPORTED & BSelectD[1]) | (`ZBS_SUPPORTED & BSelectD[0]) | (`ZBA_SUPPORTED & BSelectD[3])))
+      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
                   else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])))
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-      7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (`ZBA_SUPPORTED & BSelectD[3]) | (`ZBB_SUPPORTED & BSelectD[2])) & `XLEN == 64)
+      7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
                   else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
@@ -192,10 +195,17 @@ module controller(
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
-  assign IllegalBaseInstrD = ControlsD[0] | IllegalERegAdrD;
-  assign {RegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
-          ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, W64D, CSRReadD, 
+  assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ; //NOTE: Do we want to segregate the IllegalBitmanipInstrD into its own output signal
+  //assign IllegalBaseInstrD = 1'b0;
+  assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
+          ResultSrcD, BranchD, BaseALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
+
+  // If either bitmanip signal or base instruction signal
+  assign ALUOpD = BaseALUOpD | BALUOpD; 
+  assign RegWriteD = BaseRegWriteD | BRegWriteD; 
+  assign W64D = BaseW64D | BW64D;
+  assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
   
 
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
@@ -211,27 +221,13 @@ module controller(
     assign sltD = (Funct3D == 3'b010);
   end
 
-  if (`ZBS_SUPPORTED) begin
-    assign bclrD = (ALUSelectD == 3'b111 & BSelectD[0]);
-    assign bextD = (ALUSelectD == 3'b101 & BSelectD[0]);
-  end else begin 
-    assign bclrD = 1'b0;
-    assign bextD = 1'b0;
-  end
-
   if (`ZBB_SUPPORTED) begin
-    assign andnD = (ALUSelectD == 3'b111 & BSelectD[2]);
-    assign ornD = (ALUSelectD == 3'b110 & BSelectD[2]);
-    assign xnorD = (ALUSelectD == 3'b100 & BSelectD[2]);
     // we only need these signals if we want to calculate a signedD flag in decode stage to pass to the comparator.
     assign maxE = (Funct3E[1:0] == 2'b10 & BSelectE[2]);
     assign maxuE = (Funct3E[1:0] == 2'b11 & BSelectE[2]);
     assign minE = (Funct3E[1:0] == 2'b00 & BSelectE[2]);
     assign minuE = (Funct3E[1:0] == 2'b01 & BSelectE[2]);
   end else begin
-    assign andnD = 0;
-    assign ornD = 0;
-    assign xnorD = 0;
     assign maxE = 0;
     assign maxuE = 0;
     assign minE = 0;
@@ -242,13 +238,14 @@ module controller(
   assign sltuD = (Funct3D == 3'b011); 
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
+  assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
+  assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
+  // BITMANIP Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
 
-    assign RegWriteE = IEURegWriteE | FWriteIntE | BRegWriteE; // IRF register writes could come from IEU, BMU or FPU controllers
-    assign SubArithD = (ALUOpD | BALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
-    assign ALUControlD = {(W64D | BW64D), SubArithD, ALUOpD};
+    //assign SubArithD = (ALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
@@ -259,10 +256,10 @@ module controller(
     assign BW64D = 1'b0;
     assign BALUOpD = 1'b0;
     assign BRegWriteE = 1'b0;
+    assign BSubArithD = 1'b0;
 
-    assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
-    assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
-    assign ALUControlD = {W64D, SubArithD, ALUOpD};
+
+    assign IllegalBitmanipInstrD = 1'b1;
   end
 
   // Fences
@@ -299,6 +296,7 @@ module controller(
   // Other execute stage controller signals
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
+  assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
