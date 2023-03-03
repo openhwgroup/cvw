@@ -66,7 +66,7 @@ module ifu (
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
   output logic 				BPDirPredWrongM,                          // Prediction direction is wrong
-  output logic 				BTBPredPCWrongM,                          // Prediction target wrong
+  output logic 				BTAWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
   output logic 				IClassWrongM,                             // Class prediction is wrong
   output logic 			    ICacheStallF,                             // I$ busy with multicycle operation
@@ -331,12 +331,12 @@ module ifu (
                 .BranchD, .BranchE, .JumpD, .JumpE,
                 .InstrD, .PCNextF, .PCPlus2or4F, .PC1NextF, .PCE, .PCM, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCF, .NextValidPCE,
                 .PCD, .PCLinkE, .InstrClassM, .BPWrongE, .PostSpillInstrRawF, .BPWrongM,
-                .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM);
+                .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM);
 
   end else begin : bpred
     mux2 #(`XLEN) pcmux1(.d0(PCPlus2or4F), .d1(IEUAdrE), .s(PCSrcE), .y(PC1NextF));    
     assign BPWrongE = PCSrcE;
-    assign {InstrClassM, BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM, IClassWrongM} = '0;
+    assign {InstrClassM, BPDirPredWrongM, BTAWrongM, RASPredPCWrongM, IClassWrongM} = '0;
     assign NextValidPCE = PCE;
   end      
 

@@ -46,7 +46,7 @@ module csrc #(parameter
   input  logic 	            InstrValidNotFlushedM, LoadStallD, StoreStallD, 
   input  logic              CSRMWriteM, CSRWriteM,
   input  logic 	            BPDirPredWrongM,
-  input  logic 	            BTBPredPCWrongM,
+  input  logic 	            BTAWrongM,
   input  logic 	            RASPredPCWrongM,
   input  logic 	            IClassWrongM,
   input  logic              BPWrongM,                              // branch predictor is wrong
@@ -99,7 +99,7 @@ module csrc #(parameter
     assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
 	assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
     assign CounterEvent[7] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
-    assign CounterEvent[8] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
+    assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
     assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
     assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.

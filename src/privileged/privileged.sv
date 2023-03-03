@@ -50,7 +50,7 @@ module privileged (
   input  logic             ICacheStallF,                              // I cache stalled
   input  logic             DCacheStallM,                              // D cache stalled
   input  logic 		       BPDirPredWrongM,                           // branch predictor guessed wrong direction
-  input  logic 		       BTBPredPCWrongM,                           // branch predictor guessed wrong target
+  input  logic 		       BTAWrongM,                           // branch predictor guessed wrong target
   input  logic 		       RASPredPCWrongM,                           // return adddress stack guessed wrong target
   input  logic 		       IClassWrongM,                              // branch predictor guessed wrong instruction class
   input  logic             BPWrongM,                                  // branch predictor is wrong
@@ -130,7 +130,7 @@ module privileged (
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
-    .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
+    .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
     .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,

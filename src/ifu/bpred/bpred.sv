@@ -64,7 +64,7 @@ module bpred (
   output logic             BPWrongE,              // Prediction is wrong
   output logic             BPWrongM,              // Prediction is wrong
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
-  output logic             BTBPredPCWrongM,           // Prediction target wrong
+  output logic             BTAWrongM,           // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
   output logic             IClassWrongM // Class prediction is wrong
   );
@@ -215,10 +215,10 @@ module bpred (
     flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
     flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
 				  {BPDirPredWrongE, BTBPredPCWrongE, RASPredPCWrongE},
-				  {BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM});
+				  {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
     
   end else begin
-    assign {BTBPredPCWrongM, RASPredPCWrongM} = '0;
+    assign {BTAWrongM, RASPredPCWrongM} = '0;
   end
 
   // **** Fix me
