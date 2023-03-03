@@ -106,9 +106,9 @@ module privileged (
   logic                    DelegateM;                                 // trap should be delegated
   logic                    wfiM;                                      // wait for interrupt instruction
   logic                    IntPendingM;                               // interrupt is pending, even if not enabled.  ends wfi
-  logic InterruptM;                         // interrupt occuring
-
-
+  logic 				   InterruptM;                                // interrupt occuring
+  logic                    ExceptionM;                                // Memory stage instruction caused a fault
+ 
   // track the current privilege level
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
@@ -126,6 +126,7 @@ module privileged (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
+    .sfencevmaM, .ExceptionM,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
@@ -149,7 +150,7 @@ module privileged (
     .mretM, .sretM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .RetM, .wfiM, .InterruptM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
+    .TrapM, .RetM, .wfiM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
 endmodule
 
 

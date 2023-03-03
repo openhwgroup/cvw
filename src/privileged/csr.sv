@@ -44,6 +44,7 @@ module csr #(parameter
   input  logic             mretM, sretM, wfiM,        // return or WFI instruction
   input  logic             IntPendingM,               // at least one interrupt is pending and could occur if enabled
   input  logic             InterruptM,                // interrupt is occurring
+  input  logic             ExceptionM,                // interrupt is occurring
   input  logic             MTimerInt,                 // timer interrupt
   input  logic             MExtInt, SExtInt,          // external interrupt (from PLIC) 
   input  logic             MSwInt,                    // software interrupt
@@ -68,6 +69,7 @@ module csr #(parameter
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
+  input  logic             sfencevmaM,
   // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -258,9 +260,10 @@ module csr #(parameter
   
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
-      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRMWriteM,
+      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
+      .InterruptM, .ExceptionM,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
