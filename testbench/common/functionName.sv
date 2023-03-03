@@ -159,9 +159,6 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
     end
     $fclose(ProgramLabelMapFP);
 
-	foreach(ProgramAddrMapMemory[i]) $display("%x", ProgramAddrMapMemory[i]);	
-	foreach(ProgramLabelMapMemory[i]) $display("%s", ProgramLabelMapMemory[i]);
-    
   end
 
   always @(PCM) begin
