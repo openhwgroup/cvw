@@ -287,7 +287,7 @@ module wallypipelinedcore (
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
       .RetM, .TrapM, .sfencevmaM,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD,
+      .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
       .RASPredPCWrongM, .IClassWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,

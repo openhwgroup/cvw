@@ -57,6 +57,7 @@ module csr #(parameter
   input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic             LoadStallD,
+  input  logic             StoreStallD,
   input  logic             BPDirPredWrongM,
   input  logic             BTBPredPCWrongM,
   input  logic             RASPredPCWrongM,
@@ -257,7 +258,7 @@ module csr #(parameter
   
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
-      .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
+      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRMWriteM,
       .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
