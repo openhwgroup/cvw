@@ -161,6 +161,7 @@ module wallypipelinedcore (
   logic                          FCvtIntE;
   logic                          CommittedF;
   logic 						 BranchD, BranchE, JumpD, JumpE;
+  logic 						 FenceM;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
@@ -207,7 +208,7 @@ module wallypipelinedcore (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .StoreStallD); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .FenceM, .StoreStallD); 
 
   lsu lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -285,7 +286,7 @@ module wallypipelinedcore (
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, .sfencevmaM,
+      .RetM, .TrapM, .sfencevmaM, .FenceM,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,

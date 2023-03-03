@@ -58,6 +58,7 @@ module csrc #(parameter
   input  logic              sfencevmaM,
   input  logic              InterruptM,
   input  logic              ExceptionM,
+  input  logic              FenceM,
   input  logic [11:0] 	    CSRAdrM,
   input  logic [1:0] 	    PrivilegeModeW,
   input  logic [`XLEN-1:0]  CSRWriteValM,
@@ -106,7 +107,7 @@ module csrc #(parameter
     assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[18] = '0;                                  //            //// ******** i cache miss cycles
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                        // CSR writes
-    assign CounterEvent[20] = '0;                                                       // ******** fence.i
+    assign CounterEvent[20] = FenceM & InstrValidNotFlushedM;                           // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
     assign CounterEvent[22] = InterruptM;                                               // interrupt, InstrValidNotFlushedM will be low
     assign CounterEvent[23] = ExceptionM;                                               // exceptions, InstrValidNotFlushedM will be low
