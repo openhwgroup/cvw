@@ -292,7 +292,7 @@ module wallypipelinedcore (
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
-      .RASPredPCWrongM, .IClassWrongM,
+      .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
