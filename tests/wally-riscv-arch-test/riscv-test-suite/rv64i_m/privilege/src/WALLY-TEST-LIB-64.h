@@ -127,22 +127,32 @@ cause_m_time_interrupt:
     lw t2, 0(t5)         // low word of MTIME
     lw t6, 4(t5)         // high word of MTIME
     add t3, t2, t3       // add desired offset to the current time
-    bgtu t3, t2, nowrap  // check new time exceeds current time (no wraparound)
+    bgtu t3, t2, nowrap_m  // check new time exceeds current time (no wraparound)
     addi t6, t6, 1       // if wrap, increment most significant word
     sw t6,4(t4)          // store into most significant word of MTIMECMP
-nowrap:
+nowrap_m:
     sw t3, 0(t4)         // store into least significant word of MTIMECMP
-time_loop:
+time_loop_m:
     addi a3, a3, -1
-    bnez a3, time_loop // go through this loop for [a3 value] iterations before returning without performing interrupt
+    bnez a3, time_loop_m // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
 
 cause_s_time_interrupt:
-    li t3, 0x20
-    csrs mip, t3 // set supervisor time interrupt pending.
-    nop // added extra nops in so the csrs can get through the pipeline before returning.
+    li t3, 0x2
+    csrs mcounteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
+    li t3, 0x30          // Desired offset from the present time
+    mv a3, t3            // copy value in to know to stop waiting for interrupt after this many cycles
+    // la t4, 0x02004000    // MTIMECMP register in CLINT 
+    la t5, 0x0200BFF8    // MTIME register in CLINT *** we still read from mtime since stimecmp is compared to it
+    lw t2, 0(t5)         // low word of MTIME
+    lw t6, 4(t5)         // high word of MTIME
+    add t3, t2, t3       // add desired offset to the current time
+    csrw 0x14D, t3     // store into most significant word of STIMECMP
+time_loop_s:
+    addi a3, a3, -1
+    bnez a3, time_loop_s // go through this loop for [a3 value] iterations before returning without performing interrupt
     ret
-
+    
 cause_m_soft_interrupt:
     la t3, 0x02000000      // MSIP register in CLINT
     li t4, 1               // 1 in the lsb
@@ -347,6 +357,9 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
 
 .endif
 
+    li t3, 0x2
+    csrs \MODE\()counteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
+
     // Respond to trap based on cause
     // All interrupts should return after being logged
     csrr ra, \MODE\()cause
@@ -417,6 +430,9 @@ trapreturn_specified_\MODE\():
     li a2, 0 // reset trapreturn inputs to the trap handler
 
 trapreturn_finished_\MODE\():
+    li t3, 0x2
+    csrc \MODE\()counteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
+
     csrw \MODE\()epc, ra            // update the epc with address of next instruction
     ld t2, -24(sp)     // restore registers from stack before returning
     ld t0, -16(sp)
@@ -539,7 +555,8 @@ soft_interrupt_\MODE\():
 time_interrupt_\MODE\():
     la t0, 0x02004000    // MTIMECMP register in CLINT
     li t2, 0xFFFFFFFF
-    sd t2, 0(t0) // reset interrupt by setting mtimecmp to 0xFFFFFFFF
+    sd t2, 0(t0) // reset interrupt by setting mtimecmp to max
+    csrw 0x14D, t2 // reset stime interrupts by doing the same.
     
     li t0, 0x20
     csrc \MODE\()ip, t0
