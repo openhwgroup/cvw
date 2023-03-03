@@ -35,14 +35,14 @@ module bmuctrl(
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
-  output logic [2:0]  ALUSelectD,              // ALU Mux select signal
+  output logic [2:0]  ALUSelectD,              // ALU Mux select signal in Decode Stage
   output logic [3:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   output logic [2:0]  ZBBSelectD,              // ZBB mux select signal in Decode stage NOTE: do we need this in decode?
-  output logic        BRegWriteD,              // Indicates if it is a R type B instruction
-  output logic        BW64D,                   // Indiciates if it is a W type B instruction
-  output logic        BALUOpD,                 // Indicates if it is an ALU B instruction
-  output logic        BSubArithD,              // Indicates if Bitmanip SubArith flag should be on
-  output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction
+  output logic        BRegWriteD,              // Indicates if it is a R type B instruction in Decode Stage
+  output logic        BW64D,                   // Indiciates if it is a W type B instruction in Decode Stage
+  output logic        BALUOpD,                 // Indicates if it is an ALU B instruction in Decode Stage
+  output logic        BSubArithD,              // TRUE if ext, clr, andn, orn, xnor instruction in Decode Stage
+  output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   output logic [2:0]  ALUSelectE,
@@ -156,7 +156,6 @@ module bmuctrl(
     endcase
 
   // Unpack Control Signals
-
   assign {ALUSelectD,BSelectD,ZBBSelectD, BRegWriteD, BW64D, BALUOpD, BSubArithD, IllegalBitmanipInstrD} = BMUControlsD;
 
    
