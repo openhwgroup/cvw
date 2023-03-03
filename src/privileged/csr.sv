@@ -59,6 +59,8 @@ module csr #(parameter
   // inputs for performance counters
   input  logic             LoadStallD,
   input  logic             StoreStallD,
+  input  logic             ICacheStallF,
+  input  logic             DCacheStallM,
   input  logic             BPDirPredWrongM,
   input  logic             BTBPredPCWrongM,
   input  logic             RASPredPCWrongM,
@@ -264,7 +266,7 @@ module csr #(parameter
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
-      .InterruptM, .ExceptionM, .FenceM,
+      .InterruptM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);

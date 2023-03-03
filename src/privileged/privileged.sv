@@ -46,7 +46,9 @@ module privileged (
   // processor events for performance counter logging
   input  logic             FRegWriteM,                                // instruction will write floating-point registers
   input  logic             LoadStallD,                                // load instruction is stalling
-  input  logic             StoreStallD,                               // load instruction is stalling
+  input  logic             StoreStallD,                               // store instruction is stalling
+  input  logic             ICacheStallF,                              // I cache stalled
+  input  logic             DCacheStallM,                              // D cache stalled
   input  logic 		       BPDirPredWrongM,                           // branch predictor guessed wrong direction
   input  logic 		       BTBPredPCWrongM,                           // branch predictor guessed wrong target
   input  logic 		       RASPredPCWrongM,                           // return adddress stack guessed wrong target
@@ -127,7 +129,7 @@ module privileged (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
-    .sfencevmaM, .ExceptionM, .FenceM,
+    .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,

@@ -55,6 +55,8 @@ module csrc #(parameter
   input  logic 	            DCacheAccess,
   input  logic 	            ICacheMiss,
   input  logic 	            ICacheAccess,
+  input  logic              ICacheStallF,
+  input  logic              DCacheStallM,
   input  logic              sfencevmaM,
   input  logic              InterruptM,
   input  logic              ExceptionM,
@@ -102,10 +104,10 @@ module csrc #(parameter
     assign CounterEvent[12] = StoreStallM & InstrValidNotFlushedM;                      //  Store Stall
     assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
     assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[15] = '0;                                               // 	              //// ******* d cache miss cycles
+    assign CounterEvent[15] = DCacheStallM;                                             // d cache miss cycles
     assign CounterEvent[16] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
     assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[18] = '0;                                  //            //// ******** i cache miss cycles
+    assign CounterEvent[18] = ICacheStallF;                                             // i cache miss cycles
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                        // CSR writes
     assign CounterEvent[20] = FenceM & InstrValidNotFlushedM;                           // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
