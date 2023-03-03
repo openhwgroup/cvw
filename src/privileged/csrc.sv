@@ -43,7 +43,8 @@ module csrc #(parameter
   input  logic 	            clk, reset,
   input  logic 	            StallE, StallM, 
   input  logic              FlushM, 
-  input  logic 	            InstrValidNotFlushedM, LoadStallD, CSRMWriteM, StoreStallD,
+  input  logic 	            InstrValidNotFlushedM, LoadStallD, StoreStallD, 
+  input  logic              CSRMWriteM, CSRWriteM,
   input  logic 	            BPDirPredWrongM,
   input  logic 	            BTBPredPCWrongM,
   input  logic 	            RASPredPCWrongM,
@@ -54,6 +55,9 @@ module csrc #(parameter
   input  logic 	            DCacheAccess,
   input  logic 	            ICacheMiss,
   input  logic 	            ICacheAccess,
+  input  logic              sfencevmaM,
+  input  logic              InterruptM,
+  input  logic              ExceptionM,
   input  logic [11:0] 	    CSRAdrM,
   input  logic [1:0] 	    PrivilegeModeW,
   input  logic [`XLEN-1:0]  CSRWriteValM,
@@ -100,12 +104,12 @@ module csrc #(parameter
     assign CounterEvent[15] = '0;                                               // 	              //// ******* d cache miss cycles
     assign CounterEvent[16] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
     assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[18] = '0;                                               //            //// ******** i cache miss cycles
-    assign CounterEvent[19] = '0;                                                       // ******** CSR writes
+    assign CounterEvent[18] = '0;                                  //            //// ******** i cache miss cycles
+    assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                        // CSR writes
     assign CounterEvent[20] = '0;                                                       // ******** fence.i
-    assign CounterEvent[21] = '0;                                                       // ******** sfence.vma
-    assign CounterEvent[22] = '0;                                                       // ******** # interrupts
-    assign CounterEvent[23] = '0;                                                       // ******** # exceptions
+    assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
+    assign CounterEvent[22] = InterruptM;                                               // interrupt, InstrValidNotFlushedM will be low
+    assign CounterEvent[23] = ExceptionM;                                               // exceptions, InstrValidNotFlushedM will be low
     assign CounterEvent[24] = '0;                                                       // ******** # division cycles
     assign CounterEvent[`COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
