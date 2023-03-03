@@ -401,17 +401,24 @@ logic [3:0] dummy;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin
+  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer HPMCindex;
+	logic 	StartSampleFirst;
+	logic 	StartSampleDelayed;
+	logic 	StartSample;
+	logic 	EndSample;
+	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
+	logic [`XLEN-1:0] FinalHPMCOUNTERH[`COUNTERS-1:0];
+
     string  HPMCnames[] = '{"Mcycle",
                             "------",
                             "InstRet",
                             "Br Count",
-                            "Jump, JR, Jal",
+                            "Jump Not Return",
                             "Return",
-                            "Br Dir Wrong",
-                            "Br Pred Wrong",
-                            "Br Target Wrong",
+                            "BP Wrong",
+                            "BP Dir Wrong",
+                            "BP Target Wrong",
                             "RAS Wrong",
                             "Instr Class Wrong",
 							"Load Stall",
@@ -429,15 +436,33 @@ logic [3:0] dummy;
                             "Exception",
                             "Divide Cycles"
 							};
+	assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+	flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+	
+	assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+	
     always @(negedge clk) begin
-      if(DCacheFlushStart & ~DCacheFlushDone) begin
+	  if(StartSample) begin
+		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
+		  InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+		end
+	  end
+	  if(EndSample) begin
+		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
+		  FinalHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+		end
+	  end
+      if(EndSample) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
           // unlikely to have more than 10M in any counter.
-          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex], HPMCnames[HPMCindex]);
-        end
-      end
-    end
+          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
+		end
+	  end
+	end
   end
+  
+
 
   // track the current function or global label
   if (DEBUG == 1) begin : FunctionName
