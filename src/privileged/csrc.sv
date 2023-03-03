@@ -84,20 +84,29 @@ module csrc #(parameter
   if(`QEMU) begin: cevent // No other performance counters in QEMU
     assign CounterEvent[`COUNTERS-1:3] = 0;
   end else begin: cevent                                                                // User-defined counters
-    assign CounterEvent[3] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[4] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
-    assign CounterEvent[5] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
-    assign CounterEvent[6] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
-    assign CounterEvent[7] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
-    assign CounterEvent[8] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
-    assign CounterEvent[9] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+    assign CounterEvent[3] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
+    assign CounterEvent[4] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
+    assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+	assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
+    assign CounterEvent[7] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
+    assign CounterEvent[8] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
+    assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
-    assign CounterEvent[11] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
-    assign CounterEvent[12] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[13] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
-    assign CounterEvent[14] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-	assign CounterEvent[15] = BPWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
-    assign CounterEvent[`COUNTERS-1:16] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+    assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[12] = '0 & InstrValidNotFlushedM;                        //  /// ********** store
+    assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
+    assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
+    assign CounterEvent[15] = '0;                                               // 	              //// ******* d cache miss cycles
+    assign CounterEvent[16] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
+    assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
+    assign CounterEvent[18] = '0;                                               //            //// ******** i cache miss cycles
+    assign CounterEvent[19] = '0;                                                       // ******** CSR writes
+    assign CounterEvent[20] = '0;                                                       // ******** fence.i
+    assign CounterEvent[21] = '0;                                                       // ******** sfence.vma
+    assign CounterEvent[22] = '0;                                                       // ******** # interrupts
+    assign CounterEvent[23] = '0;                                                       // ******** # exceptions
+    assign CounterEvent[24] = '0;                                                       // ******** # division cycles
+    assign CounterEvent[`COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
   // Counter update and write logic
