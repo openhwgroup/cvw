@@ -59,6 +59,8 @@ module privileged (
   input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
   input  logic             ICacheMiss,                                // instruction cache miss
   input  logic             ICacheAccess,                              // instruction cache access
+  input  logic             DivBusyE,                                  // integer divide busy
+  input  logic             FDivBusyE,                                 // floating point divide busy
   // fault sources
   input  logic             InstrAccessFaultF,                         // instruction access fault
   input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,    // load or store access fault
@@ -129,7 +131,7 @@ module privileged (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
-    .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM,
+    .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,

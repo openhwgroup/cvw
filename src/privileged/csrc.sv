@@ -61,6 +61,8 @@ module csrc #(parameter
   input  logic              InterruptM,
   input  logic              ExceptionM,
   input  logic              FenceM,
+  input  logic              DivBusyE,                                  // integer divide busy
+  input  logic              FDivBusyE,                                 // floating point divide busy
   input  logic [11:0] 	    CSRAdrM,
   input  logic [1:0] 	    PrivilegeModeW,
   input  logic [`XLEN-1:0]  CSRWriteValM,
@@ -113,7 +115,7 @@ module csrc #(parameter
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
     assign CounterEvent[22] = InterruptM;                                               // interrupt, InstrValidNotFlushedM will be low
     assign CounterEvent[23] = ExceptionM;                                               // exceptions, InstrValidNotFlushedM will be low
-    assign CounterEvent[24] = '0;                                                       // ******** # division cycles
+    assign CounterEvent[24] = DivBusyE | FDivBusyE;                                     // division cycles *** RT: might need to be delay until the next cycle
     assign CounterEvent[`COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
   end
   
