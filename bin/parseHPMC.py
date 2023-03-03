@@ -156,7 +156,7 @@ def GeometricAverage(benchmarks, field):
     return Product ** (1.0/index)
 
 def ComputeGeometricAverage(benchmarks):
-    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR']
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI']
     AllAve = {}
     for field in fields:
         Product = 1
@@ -248,11 +248,11 @@ if(sys.argv[1] == '-b'):
                     dct[PredType] = (currSize, currPercent)
         print(dct)
         fig, axes = plt.subplots()
-        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x'}
-        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue'}
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue'}
         for cat in dct:
             (x, y) = dct[cat]
-            x=[int(2**int(v)/4) for v in x]
+            x=[int(2**int(v)) for v in x]
             print(x, y)
             axes.plot(x,y, color=colors[cat])
             axes.scatter(x,y, label=cat, marker=marker[cat], color=colors[cat])
@@ -262,9 +262,9 @@ if(sys.argv[1] == '-b'):
         axes.legend(loc='upper left')
         axes.set_xscale("log")
         axes.set_ylabel('Prediction Accuracy')
-        axes.set_xlabel('Size (bytes)')
-        axes.set_xticks([16, 64, 256, 1024, 4096, 16384])        
-        axes.set_xticklabels([16, 64, 256, 1024, 4096, 16384])
+        axes.set_xlabel('Entries')
+        axes.set_xticks([64, 256, 1024, 4096, 16384, 65536])        
+        axes.set_xticklabels([64, 256, 1024, 4096, 16384, 65536])
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
     plt.show()
     
@@ -272,7 +272,9 @@ if(sys.argv[1] == '-b'):
 else:
     # steps 1 and 2
     benchmarks = ProcessFile(sys.argv[1])
-    ComputeAverage(benchmarks)
+    print(benchmarks[0])
+    ComputeAll(benchmarks)
+    ComputeGeometricAverage(benchmarks)
     # 3 process into useful data
     # cache hit rates
     # cache fill time
@@ -280,7 +282,6 @@ else:
     # hazard counts
     # CPI
     # instruction distribution
-    ComputeAll(benchmarks)
     for benchmark in benchmarks:
         printStats(benchmark)
 
