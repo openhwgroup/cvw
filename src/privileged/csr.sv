@@ -70,6 +70,7 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic             sfencevmaM,
+  input  logic             FenceM,
   // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -263,7 +264,7 @@ module csr #(parameter
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
-      .InterruptM, .ExceptionM,
+      .InterruptM, .ExceptionM, .FenceM,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
