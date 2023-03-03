@@ -51,16 +51,18 @@ module mdu(
 	// Divider
 	// Start a divide when a new division instruction is received and the divider isn't already busy or finishing
 	// When IDIV_ON_FPU is set, use the FPU divider instead
-	if (`IDIV_ON_FPU) begin  
+	// In ZMMUL, with M_SUPPORTED = 0, omit the divider
+	if ((`IDIV_ON_FPU) || (!`M_SUPPORTED)) begin:nodiv  
 	  assign QuotM = 0;
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
-	end else begin
+	end else begin:div
 		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
 							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		
 	// Result multiplexer
+	// For ZMMUL, QuotM and RemM are tied to 0, so the mux automatically simplifies
 	always_comb
 		case (Funct3M)	   
 			3'b000: PrelimResultM = ProdM[`XLEN-1:0];					// mul

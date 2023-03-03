@@ -38,7 +38,7 @@ module privileged (
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
-  input  logic [`XLEN-1:0] PCM, PCNext2F,                             // program counter, next PC going to trap/return PC logic
+  input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
   // control signals
   input  logic             InstrValidM,                               // Current instruction is valid (not flushed)
   input  logic             CommittedM, CommittedF,                    // current instruction is using bus; don't interrupt
@@ -46,17 +46,21 @@ module privileged (
   // processor events for performance counter logging
   input  logic             FRegWriteM,                                // instruction will write floating-point registers
   input  logic             LoadStallD,                                // load instruction is stalling
-  input  logic 		         DirPredictionWrongM,                     // branch predictor guessed wrong directoin
-  input  logic 		         BTBPredPCWrongM,                         // branch predictor guessed wrong target
-  input  logic 		         RASPredPCWrongM,                         // return adddress stack guessed wrong target
-  input  logic 		         PredictionInstrClassWrongM,              // branch predictor guessed wrong instruction class
-  input  logic             BPPredWrongM,                              // branch predictor is wrong
+  input  logic             StoreStallD,                               // store instruction is stalling
+  input  logic             ICacheStallF,                              // I cache stalled
+  input  logic             DCacheStallM,                              // D cache stalled
+  input  logic 		       BPDirPredWrongM,                           // branch predictor guessed wrong direction
+  input  logic 		       BTAWrongM,                           // branch predictor guessed wrong target
+  input  logic 		       RASPredPCWrongM,                           // return adddress stack guessed wrong target
+  input  logic 		       IClassWrongM,                              // branch predictor guessed wrong instruction class
+  input  logic             BPWrongM,                                  // branch predictor is wrong
   input  logic [3:0]       InstrClassM,                               // actual instruction class
-  input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,                                // data cache miss
   input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
   input  logic             ICacheMiss,                                // instruction cache miss
   input  logic             ICacheAccess,                              // instruction cache access
+  input  logic             DivBusyE,                                  // integer divide busy
+  input  logic             FDivBusyE,                                 // floating point divide busy
   // fault sources
   input  logic             InstrAccessFaultF,                         // instruction access fault
   input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,    // load or store access fault
@@ -84,6 +88,7 @@ module privileged (
   // control outputs  
   output logic             RetM, TrapM,                               // return instruction, or trap
   output logic             sfencevmaM,                                // sfence.vma instruction
+  input  logic             FenceM,                                    // fence instruction
   output logic             BigEndianM,                                // Use big endian in current privilege mode
   // Fault outputs
   output logic             BreakpointFaultM, EcallFaultM,             // breakpoint and Ecall traps should retire
@@ -106,9 +111,9 @@ module privileged (
   logic                    DelegateM;                                 // trap should be delegated
   logic                    wfiM;                                      // wait for interrupt instruction
   logic                    IntPendingM;                               // interrupt is pending, even if not enabled.  ends wfi
-  logic InterruptM;                         // interrupt occuring
-
-
+  logic 				   InterruptM;                                // interrupt occuring
+  logic                    ExceptionM;                                // Memory stage instruction caused a fault
+ 
   // track the current privilege level
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
@@ -121,12 +126,13 @@ module privileged (
 
   // Control and Status Registers
   csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PCNext2F,
+    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
-    .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPPredWrongM,
-    .PredictionInstrClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .JumpOrTakenBranchM,
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
+    .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
+    .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+    .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
@@ -149,7 +155,7 @@ module privileged (
     .mretM, .sretM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .RetM, .wfiM, .InterruptM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
+    .TrapM, .RetM, .wfiM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
 endmodule
 
 

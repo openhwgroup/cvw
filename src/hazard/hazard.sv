@@ -30,7 +30,7 @@
 
 module hazard (
   // Detect hazards
-  input logic  BPPredWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
   input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
   input logic  LSUStallM, IFUStallF,
   input logic  FCvtIntStallD, FPUStallD,
@@ -65,8 +65,8 @@ module hazard (
   // Similarly, CSR writes and fences flush all subsequent instructions and refetch them in light of the new operating modes and cache/TLB contents
   // Branch misprediction is found in the Execute stage and must flush the next two instructions.
   //   However, an active division operation resides in the Execute stage, and when the BP incorrectly mispredicts the divide as a taken branch, the divde must still complete
-  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPPredWrongE;
-  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPPredWrongE & ~(DivBusyE | FDivBusyE));
+  assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
+  assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
   assign FlushWCause = TrapM;
 
