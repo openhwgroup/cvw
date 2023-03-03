@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module shifternew (
+module shifter (
   input  logic [`XLEN:0]     shA,                           // shift Source
   input  logic [`XLEN-1:0]   rotA,                          // rotate source
   input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
