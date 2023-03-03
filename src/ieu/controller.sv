@@ -38,7 +38,9 @@ module controller(
   output logic [2:0]  ImmSrcD,                 // Type of immediate extension
   input  logic        IllegalIEUFPUInstrD,     // Illegal IEU and FPU instruction
   output logic        IllegalBaseInstrD,       // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
-  // Execute stage control signals             
+  output logic        JumpD,                   // Jump instruction
+  output logic        BranchD,                 // Branch instruction
+   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
   input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
@@ -52,7 +54,8 @@ module controller(
   output logic        IntDivE,                 // Integer divide
   output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
-  output logic        JumpE,	                 // jump instruction
+  output logic        JumpE,                   // jump instruction
+  output logic        BranchE,                 // Branch instruction
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
   output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
@@ -66,9 +69,7 @@ module controller(
   output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
-  output logic        BranchD, BranchE,
-  output logic        JumpD,
-
+  output logic        FenceM,                  // Fence instruction
   output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
   input  logic        StallW, FlushW,          // Stall, flush Writeback stage
@@ -116,7 +117,7 @@ module controller(
   logic        IEURegWriteE;                   // Register write 
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
   logic [1:0]  AtomicE;                        // Atomic instruction 
-  logic        FenceD, FenceE, FenceM;         // Fence instruction
+  logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
   logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
@@ -162,14 +163,14 @@ module controller(
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | ((`ZBB_SUPPORTED & BSelectD[2]) | (`ZBC_SUPPORTED & BSelectD[1]) | (`ZBS_SUPPORTED & BSelectD[0]) | (`ZBA_SUPPORTED & BSelectD[3])))
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
-                  else if (Funct7D == 7'b0000001 & `M_SUPPORTED)
+                  else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])))
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
       7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000 | (`ZBA_SUPPORTED & BSelectD[3]) | (`ZBB_SUPPORTED & BSelectD[2])) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
-                  else if (Funct7D == 7'b0000001 & `M_SUPPORTED & `XLEN == 64)
+                  else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])) & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction

@@ -12,7 +12,7 @@ export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= tsmc28
+export TECH ?= sky90
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
