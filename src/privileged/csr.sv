@@ -37,13 +37,14 @@ module csr #(parameter
   input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM,                    // current instruction
-  input  logic [`XLEN-1:0] PCM, PCNext2F,             // program counter, next PC going to trap/return logic
+  input  logic [`XLEN-1:0] PCM, PC2NextF,             // program counter, next PC going to trap/return logic
   input  logic [`XLEN-1:0] SrcAM, IEUAdrM,            // SrcA and memory address from IEU
   input  logic             CSRReadM, CSRWriteM,       // read or write CSR
   input  logic             TrapM,                     // trap is occurring
   input  logic             mretM, sretM, wfiM,        // return or WFI instruction
   input  logic             IntPendingM,               // at least one interrupt is pending and could occur if enabled
   input  logic             InterruptM,                // interrupt is occurring
+  input  logic             ExceptionM,                // interrupt is occurring
   input  logic             MTimerInt,                 // timer interrupt
   input  logic             MExtInt, SExtInt,          // external interrupt (from PLIC) 
   input  logic             MSwInt,                    // software interrupt
@@ -57,17 +58,23 @@ module csr #(parameter
   input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic             LoadStallD,
-  input  logic             DirPredictionWrongM,
-  input  logic             BTBPredPCWrongM,
+  input  logic             StoreStallD,
+  input  logic             ICacheStallF,
+  input  logic             DCacheStallM,
+  input  logic             BPDirPredWrongM,
+  input  logic             BTAWrongM,
   input  logic             RASPredPCWrongM,
-  input  logic             PredictionInstrClassWrongM,
-  input  logic             BPPredWrongM,                              // branch predictor is wrong
+  input  logic             IClassWrongM,
+  input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,
-  input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
+  input  logic             sfencevmaM,
+  input  logic             FenceM,
+  input  logic             DivBusyE,                                  // integer divide busy
+  input  logic             FDivBusyE,                                 // floating point divide busy
   // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -155,7 +162,7 @@ module csr #(parameter
   // A return sets the PC to MEPC or SEPC
   assign RetM = mretM | sretM;
   mux2 #(`XLEN) epcmux(SEPC_REGW, MEPC_REGW, mretM, EPC);
-  mux3 #(`XLEN) pcmux3(PCNext2F, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
+  mux3 #(`XLEN) pcmux3(PC2NextF, EPC, TrapVectorM, {TrapM, RetM}, UnalignedPCNextF);
 
   ///////////////////////////////////////////
   // CSRWriteValM
@@ -258,9 +265,10 @@ module csr #(parameter
   
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
-      .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
-      .DirPredictionWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM, .JumpOrTakenBranchM, .BPPredWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
+      .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
+      .InterruptM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);

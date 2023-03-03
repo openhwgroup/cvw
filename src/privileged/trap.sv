@@ -45,6 +45,7 @@ module trap (
   output logic 		                             TrapM,                                           // Trap is occurring
   output logic 		                             RetM,                                            // Return instruction being executed
   output logic 		                             InterruptM,                                      // Interrupt is occurring
+  output logic                                   ExceptionM,                                      // exception is occurring
   output logic 		                             IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic 		                             DelegateM,                                       // Delegate trap to supervisor handler
   output logic 		                             WFIStallM,                                       // Stall due to WFI instruction
@@ -52,7 +53,6 @@ module trap (
 );
 
   logic                                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
-  logic                                        ExceptionM;                                      // exception is occurring
   logic                                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
   logic                                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
   logic [11:0]       PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
