@@ -93,6 +93,7 @@ module controller(
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic	       BaseALUOpD, BaseW64D;           // ALU operation and W64 for Base instructions specifically
   logic	       BaseRegWriteD;                  // Indicates if Base instruction register write instruction
+  logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic [2:0]  ALUSelectD;                     // ALU mux select signal
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
@@ -106,7 +107,7 @@ module controller(
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
   logic        InvalidateICacheE, FlushDCacheE;// Invalidate I$, flush D$
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
-  logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu
+  logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu or B-type ext clr, andn, orn, xnor
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
   logic        bclrD, bextD;                   // Indicates if is one of these instructions
   logic        andnD, ornD, xnorD;             // Indicates if is one of these instructions
@@ -128,6 +129,7 @@ module controller(
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
   logic        BW64D;                          // Indiciates if it is a W type B instruction in decode stage
   logic        BALUOpD;                        // Indicates if it is an ALU B instruction in decode stage
+  logic        BSubArithD;                     // TRUE for B-type ext, clr, andn, orn, xnor
    
 
   // Extract fields
@@ -250,6 +252,7 @@ module controller(
   assign sltuD = (Funct3D == 3'b011); 
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
+  assign SubArithD = BaseSubArithD | BSubArithD;            // TRUE If B-type or R-type instruction involves inverted operand
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   // BITMANIP Configuration Block
@@ -267,6 +270,7 @@ module controller(
     assign BW64D = 1'b0;
     assign BALUOpD = 1'b0;
     assign BRegWriteE = 1'b0;
+    assign BSubArithD = 1'b0;
 
     assign SubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
 
