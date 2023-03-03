@@ -156,7 +156,7 @@ def GeometricAverage(benchmarks, field):
     return Product ** (1.0/index)
 
 def ComputeGeometricAverage(benchmarks):
-    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR']
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI']
     AllAve = {}
     for field in fields:
         Product = 1
@@ -205,9 +205,9 @@ if(sys.argv[1] == '-b'):
     for benchmark in benchmarkAll:
         (name, opt, config, dataDict) = benchmark
         if name+'_'+opt in benchmarkDict:
-            benchmarkDict[name+'_'+opt].append((config, dataDict['BDMR']))
+            benchmarkDict[name+'_'+opt].append((config, dataDict['BTMR']))
         else:
-            benchmarkDict[name+'_'+opt] = [(config, dataDict['BDMR'])]
+            benchmarkDict[name+'_'+opt] = [(config, dataDict['BTMR'])]
 
     size = len(benchmarkDict)
     index = 1
@@ -272,7 +272,9 @@ if(sys.argv[1] == '-b'):
 else:
     # steps 1 and 2
     benchmarks = ProcessFile(sys.argv[1])
-    ComputeAverage(benchmarks)
+    print(benchmarks[0])
+    ComputeAll(benchmarks)
+    ComputeGeometricAverage(benchmarks)
     # 3 process into useful data
     # cache hit rates
     # cache fill time
@@ -280,7 +282,6 @@ else:
     # hazard counts
     # CPI
     # instruction distribution
-    ComputeAll(benchmarks)
     for benchmark in benchmarks:
         printStats(benchmark)
 
