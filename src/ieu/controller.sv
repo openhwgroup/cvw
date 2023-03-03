@@ -215,8 +215,8 @@ module controller(
   
   //NOTE: Move the B conditional logic into bctrl
   if (`ZBA_SUPPORTED) begin
-    // ALU Decoding is more comprehensive when ZBA is supported. Only conflict with Funct3 is with slt instructionsb
-    assign sltD = (Funct3D == 3'b010 & ~(Funct7D[4]));
+    // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
+    assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
   end else begin
     assign sltD = (Funct3D == 3'b010);
   end
