@@ -59,13 +59,12 @@ module bpred (
   input logic [`XLEN-1:0]  IEUAdrM,                   // The branch/jump target address
   input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
-  output logic             JumpOrTakenBranchM,        // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
 
   // Report branch prediction status
   output logic             BPWrongE,              // Prediction is wrong
   output logic             BPWrongM,              // Prediction is wrong
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
-  output logic             BTBPredPCWrongM,           // Prediction target wrong
+  output logic             BTAWrongM,           // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
   output logic             IClassWrongM // Class prediction is wrong
   );
@@ -196,7 +195,6 @@ module bpred (
   else	assign NextValidPCE = PCE;
 
   if(`ZICOUNTERS_SUPPORTED) begin
-    logic 					JumpOrTakenBranchE;
     logic [`XLEN-1:0] 	    RASPCD, RASPCE;
     logic 					BTBPredPCWrongE, RASPredPCWrongE;	
     // performance counters
@@ -209,21 +207,18 @@ module bpred (
     // could be wrong or the fall through address selected for branch predict not taken.
     // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
     // both without the above inaccuracies.
+	// **** use BTAWrongM from BTB.
     assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
     assign RASPredPCWrongE = (RASPCE != IEUAdrE) & ReturnE & PCSrcE;
-
-    assign JumpOrTakenBranchE = (BranchE & PCSrcE) | JumpE;
-    
-    flopenrc #(1) JumpOrTakenBranchMReg(clk, reset, FlushM, ~StallM, JumpOrTakenBranchE, JumpOrTakenBranchM);
 
     flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
     flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
     flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
 				  {BPDirPredWrongE, BTBPredPCWrongE, RASPredPCWrongE},
-				  {BPDirPredWrongM, BTBPredPCWrongM, RASPredPCWrongM});
+				  {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
     
   end else begin
-    assign {BTBPredPCWrongM, RASPredPCWrongM, JumpOrTakenBranchM} = '0;
+    assign {BTAWrongM, RASPredPCWrongM} = '0;
   end
 
   // **** Fix me
