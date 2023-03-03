@@ -81,11 +81,11 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
-    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7
+    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
     #vsim -coverage -lib work_$2 workopt_$2
-
+    do wave.do
     # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
     run -all
