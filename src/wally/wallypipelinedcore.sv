@@ -162,12 +162,13 @@ module wallypipelinedcore (
   logic                          CommittedF;
   logic 						 BranchD, BranchE, JumpD, JumpE;
   logic 						 FenceM;
+  logic 						 DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     .InstrValidM, .InstrValidE, .InstrValidD,
-    .BranchD, .BranchE, .JumpD, .JumpE,
+    .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
     .HRDATA, .PCFSpill, .IFUHADDR, .PC2NextF,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
@@ -231,6 +232,7 @@ module wallypipelinedcore (
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
     .sfencevmaM,                   // connects to privilege
+    .DCacheStallM,                  // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
@@ -286,7 +288,7 @@ module wallypipelinedcore (
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, .sfencevmaM, .FenceM,
+      .RetM, .TrapM, .sfencevmaM, .FenceM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,

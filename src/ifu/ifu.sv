@@ -65,10 +65,11 @@ module ifu (
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
-  output logic 				BPDirPredWrongM,                      // Prediction direction is wrong
+  output logic 				BPDirPredWrongM,                          // Prediction direction is wrong
   output logic 				BTBPredPCWrongM,                          // Prediction target wrong
   output logic 				RASPredPCWrongM,                          // RAS prediction is wrong
-  output logic 				IClassWrongM,               // Class prediction is wrong
+  output logic 				IClassWrongM,                             // Class prediction is wrong
+  output logic 			    ICacheStallF,                             // I$ busy with multicycle operation
   // Faults
   input logic 				IllegalBaseInstrD,                   // Illegal non-compressed instruction
   input logic         IllegalFPUInstrD,                    // Illegal FP instruction
@@ -127,7 +128,6 @@ module ifu (
   logic 					   CacheableF;                            // PMA indicates instruction address is cacheable
   logic 					   SelNextSpillF;                         // In a spill, stall pipeline and gate local stallF
   logic 					   BusStall;                              // Bus interface busy with multicycle operation
-  logic 					   ICacheStallF;                          // I$ busy with multicycle operation
   logic 					   IFUCacheBusStallD;                     // EIther I$ or bus busy with multicycle operation
   logic 					   GatedStallD;                           // StallD gated by selected next spill
   // branch predictor signal
