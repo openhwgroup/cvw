@@ -54,6 +54,7 @@ module lsu (
   input  logic [1:0]          PrivilegeModeW,                       // Current privilege mode
   input  logic                BigEndianM,                           // Swap byte order to big endian
   input  logic                sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
+  output logic                DCacheStallM,                         // D$ busy with multicycle operation
   // fpu
   input  logic [`FLEN-1:0]    FWriteDataM,                          // Write data from FPU
   input  logic                FpLoadStoreM,                         // Selects FPU as store for write data
@@ -103,7 +104,6 @@ module lsu (
 
   logic                     GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
  
-  logic                     DCacheStallM;                           // D$ busy with multicycle operation
   logic                     BusStall;                               // Bus interface busy with multicycle operation
   logic                     HPTWStall;                              // HPTW busy with multicycle operation
 
