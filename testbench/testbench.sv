@@ -406,7 +406,7 @@ logic [3:0] dummy;
 	logic 	StartSampleFirst;
 	logic 	StartSampleDelayed;
 	logic 	StartSample;
-	logic 	EndSample;
+	logic 	EndSample, EndSampleFirst, EndSampleDelayed;
 	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
 	logic [`XLEN-1:0] FinalHPMCOUNTERH[`COUNTERS-1:0];
 
@@ -436,11 +436,27 @@ logic [3:0] dummy;
                             "Exception",
                             "Divide Cycles"
 							};
-	assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
-	flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-	assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-	
-	assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+
+	if(TEST == "embench") begin
+	  // embench runs warmup then runs start_trigger
+	  // embench end with stop_trigger.
+	  assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+
+	  assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+
+	end else begin
+	  // default start condiction is reset
+	  // default end condiction is end of test (DCacheFlushDone)
+	  assign StartSampleFirst = InReset;
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+
+	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+	end
 	
     always @(negedge clk) begin
 	  if(StartSample) begin
@@ -465,7 +481,7 @@ logic [3:0] dummy;
 
 
   // track the current function or global label
-  if (DEBUG == 1) begin : FunctionName
+  if (DEBUG == 1 | (`PrintHPMCounters & `ZICOUNTERS_SUPPORTED)) begin : FunctionName
     FunctionName FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
