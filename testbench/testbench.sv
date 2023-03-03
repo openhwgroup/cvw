@@ -155,9 +155,9 @@ logic [3:0] dummy;
   logic        HREADY;
   logic        HSELEXT;
   
-  logic             InitializingMemories;
-  integer           ResetCount, ResetThreshold;
-  logic             InReset;
+  logic 	   InitializingMemories;
+  integer 	   ResetCount, ResetThreshold;
+  logic 	   InReset;
 
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
@@ -228,7 +228,7 @@ logic [3:0] dummy;
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
       /* if (tests[0] == `IMPERASTEST)
-        pathname = tvpaths[0];
+       pathname = tvpaths[0];
        else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else memfilename = {pathname, tests[test], ".elf.memfile"};
@@ -268,9 +268,6 @@ logic [3:0] dummy;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
-  logic [`XLEN-1:0] debugmemoryadr;
-//  assign debugmemoryadr = dut.uncore.uncore.ram.ram.memory.RAM[5140];
-
   // check results
   assign reset_ext = InReset;
   
@@ -285,97 +282,97 @@ logic [3:0] dummy;
           ResetCount = 0;
         end
       end else begin
-      if (TEST == "coremark")
-        if (dut.core.priv.priv.EcallFaultM) begin
-          $display("Benchmark: coremark is done.");
-          $stop;
-        end
-      // Termination condition (i.e. we finished running current test) 
-      if (DCacheFlushDone) begin
-        integer begin_signature_addr;
-        InReset = 1;
-        begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
-        if (!begin_signature_addr)
-          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
-        testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
-        #600; // give time for instructions in pipeline to finish
-        if (TEST == "embench") begin
-          // Writes contents of begin_signature to .sim.output file
-          // this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
-          // also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
-          $display("Embench Benchmark: %s is done.", tests[test]);
-          if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
-          else outputfile = {pathname, tests[test], ".sim.output"};
-          outputFilePointer = $fopen(outputfile);
-          i = 0;
-          while ($unsigned(i) < $unsigned(5'd5)) begin
-            $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
-            i = i + 1;
+		if (TEST == "coremark")
+          if (dut.core.priv.priv.EcallFaultM) begin
+			$display("Benchmark: coremark is done.");
+			$stop;
           end
-          $fclose(outputFilePointer);
-          $display("Embench Benchmark: created output file: %s", outputfile);
-        end else begin 
-          // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-          // clear signature to prevent contamination from previous tests
-          for(i=0; i<SIGNATURESIZE; i=i+1) begin
-            sig32[i] = 'bx;
-          end
-          if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
-          else signame = {pathname, tests[test], ".signature.output"};
-          // read signature, reformat in 64 bits if necessary
-          $readmemh(signame, sig32);
-          i = 0;
-          while (i < SIGNATURESIZE) begin
-            if (`XLEN == 32) begin
-              signature[i] = sig32[i];
-              i = i+1;
-            end else begin
-              signature[i/2] = {sig32[i+1], sig32[i]};
-              i = i + 2;
-            end
-            if (i >= 4 & sig32[i-4] === 'bx) begin
-              if (i == 4) begin
-                i = SIGNATURESIZE+1; // flag empty file
-                $display("  Error: empty test file");
-              end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
-            end
-          end
+		// Termination condition (i.e. we finished running current test) 
+		if (DCacheFlushDone) begin
+          integer begin_signature_addr;
+          InReset = 1;
+          begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+          if (!begin_signature_addr)
+			$display("begin_signature addr not found in %s", ProgramLabelMapFile);
+          testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
+          testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
+          #600; // give time for instructions in pipeline to finish
+          if (TEST == "embench") begin
+			// Writes contents of begin_signature to .sim.output file
+			// this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
+			// also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
+			$display("Embench Benchmark: %s is done.", tests[test]);
+			if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+			else outputfile = {pathname, tests[test], ".sim.output"};
+			outputFilePointer = $fopen(outputfile);
+			i = 0;
+			while ($unsigned(i) < $unsigned(5'd5)) begin
+              $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+              i = i + 1;
+			end
+			$fclose(outputFilePointer);
+			$display("Embench Benchmark: created output file: %s", outputfile);
+          end else begin 
+			// for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+			// clear signature to prevent contamination from previous tests
+			for(i=0; i<SIGNATURESIZE; i=i+1) begin
+              sig32[i] = 'bx;
+			end
+			if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
+			else signame = {pathname, tests[test], ".signature.output"};
+			// read signature, reformat in 64 bits if necessary
+			$readmemh(signame, sig32);
+			i = 0;
+			while (i < SIGNATURESIZE) begin
+              if (`XLEN == 32) begin
+				signature[i] = sig32[i];
+				i = i+1;
+              end else begin
+				signature[i/2] = {sig32[i+1], sig32[i]};
+				i = i + 2;
+              end
+              if (i >= 4 & sig32[i-4] === 'bx) begin
+				if (i == 4) begin
+                  i = SIGNATURESIZE+1; // flag empty file
+                  $display("  Error: empty test file");
+				end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+              end
+			end
 
-          // Check errors
-          errors = (i == SIGNATURESIZE+1); // error if file is empty
-          i = 0;
-          /* verilator lint_off INFINITELOOP */
-          while (signature[i] !== 'bx) begin
-            logic [`XLEN-1:0] sig;
-            if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-            else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-            //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-            if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
-              errors = errors+1;
-              $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-                    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-              $stop;//***debug
-             end
-            i = i + 1;
+			// Check errors
+			errors = (i == SIGNATURESIZE+1); // error if file is empty
+			i = 0;
+			/* verilator lint_off INFINITELOOP */
+			while (signature[i] !== 'bx) begin
+              logic [`XLEN-1:0] sig;
+              if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+              else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+              //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+              if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+				errors = errors+1;
+				$display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+						 tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+				$stop;//***debug
+              end
+              i = i + 1;
+			end
+			/* verilator lint_on INFINITELOOP */
+			if (errors == 0) begin
+              $display("%s succeeded.  Brilliant!!!", tests[test]);
+			end
+			else begin
+              $display("%s failed with %d errors. :(", tests[test], errors);
+              totalerrors = totalerrors+1;
+			end
           end
-          /* verilator lint_on INFINITELOOP */
-          if (errors == 0) begin
-            $display("%s succeeded.  Brilliant!!!", tests[test]);
+          // move onto the next test, check to see if we're done
+          test = test + 1;
+          if (test == tests.size()) begin
+			if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+			else $display("FAIL: %d test programs had errors", totalerrors);
+			$stop;
           end
           else begin
-            $display("%s failed with %d errors. :(", tests[test], errors);
-            totalerrors = totalerrors+1;
-          end
-        end
-        // move onto the next test, check to see if we're done
-        test = test + 1;
-        if (test == tests.size()) begin
-          if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-          else $display("FAIL: %d test programs had errors", totalerrors);
-          $stop;
-        end
-        else begin
             InitializingMemories = 1;
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
@@ -394,46 +391,97 @@ logic [3:0] dummy;
               ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
-          if(!`FPGA) begin
-            updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-            $display("Read memfile %s", memfilename);
+			if(!`FPGA) begin
+              updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+              $display("Read memfile %s", memfilename);
+			end
           end
-        end
-      end // if (DCacheFlushDone)
+		end // if (DCacheFlushDone)
       end
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin
+  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer HPMCindex;
+	logic 	StartSampleFirst;
+	logic 	StartSampleDelayed;
+	logic 	StartSample;
+	logic 	EndSample, EndSampleFirst, EndSampleDelayed;
+	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
+	logic [`XLEN-1:0] FinalHPMCOUNTERH[`COUNTERS-1:0];
+
     string  HPMCnames[] = '{"Mcycle",
                             "------",
                             "InstRet",
-                            "Load Stall",
-                            "Br Dir Wrong",
                             "Br Count",
-                            "Br Target Wrong",
-                            "Jump, JR, Jal",
+                            "Jump Not Return",
+                            "Return",
+                            "BP Wrong",
+                            "BP Dir Wrong",
+                            "BP Target Wrong",
                             "RAS Wrong",
-                            "ret",
                             "Instr Class Wrong",
+							"Load Stall",
+							"Store Stall",
                             "D Cache Access",
                             "D Cache Miss",
+                            "D Cache Cycles",
                             "I Cache Access",
                             "I Cache Miss",
-							"Br Pred Wrong"};
+                            "I Cache Cycles",
+                            "CSR Write",
+                            "FenceI",
+                            "SFenceVMA",
+                            "Interrupt",
+                            "Exception",
+                            "Divide Cycles"
+							};
+
+	if(TEST == "embench") begin
+	  // embench runs warmup then runs start_trigger
+	  // embench end with stop_trigger.
+	  assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+
+	  assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+
+	end else begin
+	  // default start condiction is reset
+	  // default end condiction is end of test (DCacheFlushDone)
+	  assign StartSampleFirst = InReset;
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+
+	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+	end
+	
     always @(negedge clk) begin
-      if(DCacheFlushStart & ~DCacheFlushDone) begin
+	  if(StartSample) begin
+		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
+		  InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+		end
+	  end
+	  if(EndSample) begin
+		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
+		  FinalHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+		end
+	  end
+      if(EndSample) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
           // unlikely to have more than 10M in any counter.
-          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex], HPMCnames[HPMCindex]);
-        end
-      end
-    end
+          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
+		end
+	  end
+	end
   end
+  
+
 
   // track the current function or global label
-  if (DEBUG == 1) begin : FunctionName
+  if (DEBUG == 1 | (`PrintHPMCounters & `ZICOUNTERS_SUPPORTED)) begin : FunctionName
     FunctionName FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
@@ -487,40 +535,22 @@ logic [3:0] dummy;
 
   
   if (`BPRED_SUPPORTED == 1) begin
-/* -----\/----- EXCLUDED -----\/-----
-    genvar adrindex;
-      // Initializing all zeroes into the branch predictor memory.
-      for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-        initial begin 
-        force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-        #1;
-        release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
-        end
-      end
-      for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-        initial begin 
-        force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-        #1;
-        release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
-        end
-      end
- -----/\----- EXCLUDED -----/\----- */
-
-      if (`BPRED_LOGGER) begin
-        string direction;
-        int    file;
-		logic  PCSrcM;
-		flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
-        initial
-          file = $fopen("branch.log", "w");
-        always @(posedge clk) begin
-           if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-             direction = PCSrcM ? "t" : "n";
-             $fwrite(file, "%h %s\n", dut.core.PCM, direction);
-           end
-        end
-      end
+    if (`BPRED_LOGGER) begin
+      string direction;
+      int    file;
+	  logic  PCSrcM;
+	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+      initial begin
+        file = $fopen("branch.log", "w");
+	  end
+      always @(posedge clk) begin
+		if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+		  direction = PCSrcM ? "t" : "n";
+		  $fwrite(file, "%h %s\n", dut.core.PCM, direction);
+		end
+	  end
     end
+  end
 
   // check for hange up.
   logic [`XLEN-1:0] OldPCW;
