@@ -85,7 +85,6 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
     #vsim -coverage -lib work_$2 workopt_$2
-    do wave.do
     # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
     run -all
