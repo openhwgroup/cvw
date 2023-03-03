@@ -54,7 +54,7 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend result
 
   cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .CntResult(CntResult));
-  byteUnit #(WIDTH) bu(.A(A), .B(B), .ByteResult(ByteResult));
+  byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
   ext #(WIDTH) ext(.A(A), .B(B), .ExtResult(ExtResult));
 
 

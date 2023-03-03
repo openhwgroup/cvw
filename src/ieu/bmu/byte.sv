@@ -30,7 +30,8 @@
 `include "wally-config.vh"
 
 module byteUnit #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,          // Operands
+  input  logic [WIDTH-1:0] A,             // Operands
+  input  logic ByteSelect,                // LSB of Immediate
   output logic [WIDTH-1:0] ByteResult);   // rev8, orcb result
 
   logic [WIDTH-1:0] OrcBResult, Rev8Result;
@@ -41,6 +42,6 @@ module byteUnit #(parameter WIDTH=32) (
     assign Rev8Result[WIDTH-i-1:WIDTH-i-8] = A[i+7:i];
   end
 
-  assign ByteResult = (B[0]) ? OrcBResult : Rev8Result;
+  assign ByteResult = (ByteSelect) ? OrcBResult : Rev8Result;
 
 endmodule
