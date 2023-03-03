@@ -46,11 +46,12 @@ module privileged (
   // processor events for performance counter logging
   input  logic             FRegWriteM,                                // instruction will write floating-point registers
   input  logic             LoadStallD,                                // load instruction is stalling
-  input  logic 		         BPDirPredWrongM,                     // branch predictor guessed wrong directoin
-  input  logic 		         BTBPredPCWrongM,                         // branch predictor guessed wrong target
-  input  logic 		         RASPredPCWrongM,                         // return adddress stack guessed wrong target
-  input  logic 		         IClassWrongM,              // branch predictor guessed wrong instruction class
-  input  logic             BPWrongM,                              // branch predictor is wrong
+  input  logic             StoreStallD,                               // load instruction is stalling
+  input  logic 		       BPDirPredWrongM,                           // branch predictor guessed wrong direction
+  input  logic 		       BTBPredPCWrongM,                           // branch predictor guessed wrong target
+  input  logic 		       RASPredPCWrongM,                           // return adddress stack guessed wrong target
+  input  logic 		       IClassWrongM,                              // branch predictor guessed wrong instruction class
+  input  logic             BPWrongM,                                  // branch predictor is wrong
   input  logic [3:0]       InstrClassM,                               // actual instruction class
   input  logic             DCacheMiss,                                // data cache miss
   input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
@@ -123,7 +124,7 @@ module privileged (
     .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
-    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD,
+    .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .BPWrongM,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,

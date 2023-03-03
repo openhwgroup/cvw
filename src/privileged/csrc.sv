@@ -43,7 +43,7 @@ module csrc #(parameter
   input  logic 	            clk, reset,
   input  logic 	            StallE, StallM, 
   input  logic              FlushM, 
-  input  logic 	            InstrValidNotFlushedM, LoadStallD, CSRMWriteM,
+  input  logic 	            InstrValidNotFlushedM, LoadStallD, CSRMWriteM, StoreStallD,
   input  logic 	            BPDirPredWrongM,
   input  logic 	            BTBPredPCWrongM,
   input  logic 	            RASPredPCWrongM,
@@ -55,7 +55,7 @@ module csrc #(parameter
   input  logic 	            ICacheMiss,
   input  logic 	            ICacheAccess,
   input  logic [11:0] 	    CSRAdrM,
-  input  logic [1:0] 	      PrivilegeModeW,
+  input  logic [1:0] 	    PrivilegeModeW,
   input  logic [`XLEN-1:0]  CSRWriteValM,
   input  logic [31:0] 	    MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
   input  logic [63:0] 	    MTIME_CLINT, 
@@ -67,6 +67,7 @@ module csrc #(parameter
   logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
   logic [`XLEN-1:0]         HPMCOUNTERH_REGW[`COUNTERS-1:0];
   logic                     LoadStallE, LoadStallM;
+  logic                     StoreStallE, StoreStallM;
   logic [`COUNTERS-1:0]     WriteHPMCOUNTERM;
   logic [`COUNTERS-1:0]     CounterEvent;
   logic [63:0]              HPMCOUNTERPlusM[`COUNTERS-1:0];
@@ -74,8 +75,8 @@ module csrc #(parameter
   genvar i;
 
   // Interface signals
-  flopenrc #(1) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d(LoadStallD), .q(LoadStallE));  // don't flush the load stall during a load stall.
-  flopenrc #(1) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d(LoadStallE), .q(LoadStallM));	
+  flopenrc #(2) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d({StoreStallD, LoadStallD}), .q({StoreStallE, LoadStallE}));  // don't flush the load stall during a load stall.
+  flopenrc #(2) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d({StoreStallE, LoadStallE}), .q({StoreStallM, LoadStallM}));	
   
   // Determine when to increment each counter
   assign CounterEvent[0] = 1'b1;                                                        // MCYCLE always increments
@@ -92,8 +93,8 @@ module csrc #(parameter
     assign CounterEvent[8] = BTBPredPCWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
     assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
-    assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                        // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = '0 & InstrValidNotFlushedM;                        //  /// ********** store
+    assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[12] = StoreStallM & InstrValidNotFlushedM;                      //  Store Stall
     assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
     assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[15] = '0;                                               // 	              //// ******* d cache miss cycles
