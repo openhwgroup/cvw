@@ -58,14 +58,17 @@ module alu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
 
-  assign shASelect = {W64,SubArith};
 
+  // Extract control signals from ALUControl.
+  assign {W64, SubArith, ALUOp} = ALUControl;
+
+  // Pack control signals into shifter select
+  assign shASelect = {W64,SubArith};
 
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
     assign CondMaskB = (BSelect[0]) ? MaskB : B;
   end else assign CondMaskB = B;
-
 
   // Sign/Zero extend mux
   if (WIDTH == 64) begin // rv64 must handle word s/z extensions
@@ -98,9 +101,6 @@ module alu #(parameter WIDTH=32) (
   if (`ZBB_SUPPORTED) begin: rotatelogic
     assign Rotate = BSelect[2] & (ALUSelect == 3'b001); //NOTE: Do we want to move this logic into the Decode Stage?
   end else assign Rotate = 1'b0;
-
-  // Extract control signals from ALUControl.
-  assign {W64, SubArith, ALUOp} = ALUControl;
 
   // Addition
   assign CondInvB = SubArith ? ~CondMaskB : CondMaskB;
