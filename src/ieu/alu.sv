@@ -37,6 +37,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [2:0]       ZBBSelect,  // ZBB mux select signal
   input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,  // Comparator flags
+  input  logic             Rotate,     // Perform Rotate Operation
   output logic [WIDTH-1:0] ALUResult,     // ALU result
   output logic [WIDTH-1:0] Sum);       // Sum of operands
 
@@ -53,7 +54,6 @@ module alu #(parameter WIDTH=32) (
   logic             SubArith;                                                               // Performing subtraction or arithmetic right shift
   logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                           // Sign bits of A, B
-  logic             Rotate;
   logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
@@ -97,10 +97,6 @@ module alu #(parameter WIDTH=32) (
         2'b11: CondShiftA = {shA[WIDTH-4:0],{3'b000}}; // sh3add
       endcase
   end else assign CondShiftA = A;
-
-  if (`ZBB_SUPPORTED) begin: rotatelogic
-    assign Rotate = BSelect[2] & (ALUSelect == 3'b001); //NOTE: Do we want to move this logic into the Decode Stage?
-  end else assign Rotate = 1'b0;
 
   // Addition
   assign CondInvB = SubArith ? ~CondMaskB : CondMaskB;
