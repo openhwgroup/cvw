@@ -46,31 +46,18 @@ configs = [
     )
 ]
 
-configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_TWOBIT\" +define+BPRED_SIZE=6"
-tc = TestCase(
-    name="twobit6",
-    variant="rv32gc",
-    cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions twobit6 embench " + configOptions,
-    grepstr="")
-configs.append(tc)
-
-configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_TWOBIT\" +define+BPRED_SIZE=8"
-tc = TestCase(
-    name="twobit8",
-    variant="rv32gc",
-    cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc configOptions twobit8 embench " + configOptions,
-    grepstr="")
-configs.append(tc)
-
-configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_TWOBIT\" +define+BPRED_SIZE=10"
-tc = TestCase(
-    name="twobit10",
-    variant="rv32gc",
-    cmd="vsim > {} -c <<!\ndo wally-batch.do rv32gc configOptions twobit10 embench " + configOptions,
-    grepstr="")
-configs.append(tc)
-
-
+bpdSize = [6, 8, 10, 12, 14, 16]
+bpdType = ['twobit', 'gshare']
+for CurrBPType in bpdType:
+    for CurrBPSize in bpdSize:
+        name = CurrBPType+str(CurrBPSize)
+        configOptions = "+define+INSTR_CLASS_PRED=0 +define+BPRED_TYPE=\"BP_" + CurrBPType.upper() + "\" +define+BPRED_SIZE=" + str(CurrBPSize)
+        tc = TestCase(
+            name=name,
+            variant="rv32gc",
+            cmd="vsim > {} -c <<!\ndo wally-batch.do  rv32gc configOptions " + name + " embench " + configOptions,
+            grepstr="")
+        configs.append(tc)
 
 import os
 from multiprocessing import Pool, TimeoutError
