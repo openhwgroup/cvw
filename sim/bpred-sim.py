@@ -47,7 +47,7 @@ configs = [
 ]
 
 bpdSize = [6, 8, 10, 12, 14, 16]
-bpdType = ['twobit', 'gshare']
+bpdType = ['twobit', 'gshare', 'global', 'gshare_basic', 'global_basic']
 for CurrBPType in bpdType:
     for CurrBPSize in bpdSize:
         name = CurrBPType+str(CurrBPSize)
