@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 // controller.sv
 //
-// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu 
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu, kekim@hmc.edu
 // Created: 9 January 2021
-// Modified: 
+// Modified: 3 March 2023
 //
 // Purpose: Top level controller module
 // 
@@ -110,7 +110,6 @@ module controller(
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu or B-type ext clr, andn, orn, xnor
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
-  logic        maxE, maxuE, minE, minuE;       // Indicates if is one of these instructions in Execute Stage
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -215,25 +214,8 @@ module controller(
   assign FenceD = SFenceVmaD | FenceXD; // possible sfence.vma or fence.i
   
   //NOTE: Move the B conditional logic into bctrl
-  if (`ZBA_SUPPORTED) begin
-    // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
-    assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
-  end else begin
-    assign sltD = (Funct3D == 3'b010);
-  end
+ 
 
-  if (`ZBB_SUPPORTED) begin
-    // we only need these signals if we want to calculate a signedD flag in decode stage to pass to the comparator.
-    assign maxE = (Funct3E[1:0] == 2'b10 & BSelectE[2]);
-    assign maxuE = (Funct3E[1:0] == 2'b11 & BSelectE[2]);
-    assign minE = (Funct3E[1:0] == 2'b00 & BSelectE[2]);
-    assign minuE = (Funct3E[1:0] == 2'b01 & BSelectE[2]);
-  end else begin
-    assign maxE = 0;
-    assign maxuE = 0;
-    assign minE = 0;
-    assign minuE = 0;
-  end
 
   // ALU Decoding is lazy, only using func7[5] to distinguish add/sub and srl/sra
   assign sltuD = (Funct3D == 3'b011); 
@@ -245,7 +227,10 @@ module controller(
   // BITMANIP Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE);
-
+    if (`ZBA_SUPPORTED) begin
+      // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
+      assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
+    end else assign sltD = (Funct3D == 3'b010);
 
     //assign SubArithD = (ALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
   end else begin: bitmanipi
@@ -260,6 +245,8 @@ module controller(
     assign BRegWriteE = 1'b0;
     assign BSubArithD = 1'b0;
     assign BComparatorSignedE = 1'b0;
+
+    assign sltD = (Funct3D == 3'b010);
 
 
     assign IllegalBitmanipInstrD = 1'b1;
