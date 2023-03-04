@@ -221,9 +221,9 @@ if(sys.argv[1] == '-b'):
     for benchmark in benchmarkAll:
         (name, opt, config, dataDict) = benchmark
         if name+'_'+opt in benchmarkDict:
-            benchmarkDict[name+'_'+opt].append((config, dataDict['BDMR']))
+            benchmarkDict[name+'_'+opt].append((config, dataDict['BTMR']))
         else:
-            benchmarkDict[name+'_'+opt] = [(config, dataDict['BDMR'])]
+            benchmarkDict[name+'_'+opt] = [(config, dataDict['BTMR'])]
 
     size = len(benchmarkDict)
     index = 1
