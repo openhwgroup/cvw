@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 // alu.sv
 //
-// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu, kekim@hmc.edu
 // Created: 9 January 2021
-// Modified: 
+// Modified: 3 March 2023
 //
 // Purpose: RISC-V Arithmetic/Logic Unit
 //
