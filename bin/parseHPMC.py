@@ -39,20 +39,20 @@ def ComputeCPI(benchmark):
 def ComputeBranchDirMissRate(benchmark):
     'Computes and inserts branch direction miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    branchDirMissRate = 100.0 * int(dataDict['Br Dir Wrong']) / int(dataDict['Br Count'])
+    branchDirMissRate = 100.0 * int(dataDict['BP Dir Wrong']) / int(dataDict['Br Count'])
     dataDict['BDMR'] = branchDirMissRate
 
 def ComputeBranchTargetMissRate(benchmark):
     'Computes and inserts branch target miss prediction rate.'
     # *** this is wrong in the verilog test bench
     (nameString, opt, dataDict) = benchmark
-    branchTargetMissRate = 100.0 * int(dataDict['Br Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump, JR, Jal']) + int(dataDict['ret']))
+    branchTargetMissRate = 100.0 * int(dataDict['BP Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump Not Return']))
     dataDict['BTMR'] = branchTargetMissRate
 
 def ComputeRASMissRate(benchmark):
     'Computes and inserts return address stack miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    RASMPR = 100.0 * int(dataDict['RAS Wrong']) / int(dataDict['ret'])
+    RASMPR = 100.0 * int(dataDict['RAS Wrong']) / int(dataDict['Return'])
     dataDict['RASMPR'] = RASMPR
 
 def ComputeInstrClassMissRate(benchmark):
@@ -70,7 +70,9 @@ def ComputeICacheMissRate(benchmark):
 def ComputeICacheMissTime(benchmark):
     'Computes and inserts instruction class miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    ICacheMR = 100.0 * int(dataDict['I Cache Cycles']) / int(dataDict['I Cache Miss'])
+    cycles = int(dataDict['I Cache Miss'])
+    if(cycles == 0): ICacheMR = 0
+    else: ICacheMR = 100.0 * int(dataDict['I Cache Cycles']) / cycles
     dataDict['ICacheMT'] = ICacheMR
     
 def ComputeDCacheMissRate(benchmark):
@@ -82,8 +84,10 @@ def ComputeDCacheMissRate(benchmark):
 def ComputeDCacheMissTime(benchmark):
     'Computes and inserts instruction class miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    ICacheMR = 100.0 * int(dataDict['D Cache Cycles']) / int(dataDict['D Cache Miss'])
-    dataDict['DCacheMT'] = ICacheMR
+    cycles = int(dataDict['D Cache Miss'])
+    if(cycles == 0): DCacheMR = 0
+    else: DCacheMR = 100.0 * int(dataDict['D Cache Cycles']) / cycles
+    dataDict['DCacheMT'] = DCacheMR
 
 def ComputeAll(benchmarks):
     for benchmark in benchmarks:
