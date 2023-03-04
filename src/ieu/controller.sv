@@ -126,9 +126,10 @@ module controller(
   logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
-  logic        BW64D;                          // Indiciates if it is a W type B instruction in decode stage
+  logic        BW64D;                          // Indicates if it is a W type B instruction in decode stage
   logic        BALUOpD;                        // Indicates if it is an ALU B instruction in decode stage
   logic        BSubArithD;                     // TRUE for B-type ext, clr, andn, orn, xnor
+  logic        BComparatorSignedE;             // Indicates if max, min (signed comarison) instruction in Execute Stage
    
 
   // Extract fields
@@ -243,7 +244,8 @@ module controller(
 
   // BITMANIP Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE);
+
 
     //assign SubArithD = (ALUOpD) & (subD | sraD | sltD | sltuD | (`ZBS_SUPPORTED & (bextD | bclrD)) | (`ZBB_SUPPORTED & (andnD | ornD | xnorD))); // TRUE for R-type subtracts and sra, slt, sltu, and any B instruction that requires inverted operand
   end else begin: bitmanipi
@@ -257,6 +259,7 @@ module controller(
     assign BALUOpD = 1'b0;
     assign BRegWriteE = 1'b0;
     assign BSubArithD = 1'b0;
+    assign BComparatorSignedE = 1'b0;
 
 
     assign IllegalBitmanipInstrD = 1'b1;
@@ -286,8 +289,8 @@ module controller(
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
   //  Hence, only eq and lt flags are needed
-  assign BranchSignedE = (~(Funct3E[2:1] == 2'b11) & ~BSelectE[2]) | (`ZBB_SUPPORTED & (maxE | minE)) ;
-  //assign BranchSignedE = ~(Funct3E[2:1] == 2'b11);
+  //  We also want comparator to handle signed comparison on a max/min bitmanip instruction
+  assign BranchSignedE = (~(Funct3E[2:1] == 2'b11) & BranchE) | BComparatorSignedE ;
   assign {eqE, ltE} = FlagsE;
   mux2 #(1) branchflagmux(eqE, ltE, Funct3E[2], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];

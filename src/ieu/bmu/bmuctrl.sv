@@ -48,13 +48,15 @@ module bmuctrl(
   output logic [2:0]  ALUSelectE,
   output logic [3:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
-  output logic        BRegWriteE               // Indicates if it is a R type B instruction in Execute
+  output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
+  output logic        BComparatorSignedE       // Indicates if comparator signed in Execute Stage
 );
 
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs2D;                            // Rs2 source register in Decode stage
+  logic       BComparatorSignedD;              // Indicates if comparator signed (max, min instruction) in Decode Stage
 
   `define BMUCTRLW 15
 
@@ -158,8 +160,11 @@ module bmuctrl(
   // Unpack Control Signals
   assign {ALUSelectD,BSelectD,ZBBSelectD, BRegWriteD, BW64D, BALUOpD, BSubArithD, IllegalBitmanipInstrD} = BMUControlsD;
 
+  // Comparator should perform signed comparison when min/max instruction. We have overlap in funct3 with some branch instructions so we use opcode to differentiate betwen min/max and branches
+  assign BComparatorSignedD = (Funct3D[2]^Funct3D[0]) & ~OpD[6];
+
    
 
   // BMU Execute stage pipieline control register
-  flopenrc#(11) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE});
+  flopenrc#(12) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE});
 endmodule
