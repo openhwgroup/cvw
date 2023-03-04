@@ -16,15 +16,15 @@ echo \$WALLY set to ${WALLY}
 # Must edit these based on your local environment.  Ask your sysadmin.
 export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server
 export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-export QUESTAPATH=/cad/mentor/questa_sim-2022.4_2/questasim/bin     # Change this for your path to Questa
-export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
+export QUESTA_HOME=/cad/mentor/questa_sim-2022.4_2/questasim        # Change this for your path to Questa, excluding bin
+export SNPS_HOME=/cad/synopsys/SYN                                  # Change this for your path to Design Compiler, excluding bin
 
 # Path to RISC-V Tools
 export RISCV=/opt/riscv   # change this if you installed the tools in a different location
 
 # Tools
 # Questa and Synopsys
-export PATH=$QUESTAPATH:$SNPSPATH:$PATH
+export PATH=$QUESTA_HOME/bin:$SNPS_HOME/bin:$PATH
 # GCC
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
 export PATH=$PATH:$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin      # GCC tools
@@ -41,5 +41,16 @@ export PATH=/usr/local/bin/verilator:$PATH # Change this for your path to Verila
 # Imperas; put this in if you are using it
 #export PATH=$RISCV/imperas-riscv-tests/riscv-ovpsim-plus/bin/Linux64:$PATH  
 #export LD_LIBRARY_PATH=$RISCV/imperas_riscv_tests/riscv-ovpsim-plus/bin/Linux64:$LD_LIBRARY_PATH # remove if no imperas
+
+export IDV=$RISCV/ImperasDV-OpenHW
+if [ -e "$IDV" ]; then
+#    echo "Imperas exists"
+    export IMPERAS_HOME=$IDV/Imperas
+    export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
+    export ROOTDIR=~/
+    source ${IDV}/Imperas/bin/setup.sh
+    setupImperas ${IDV}/Imperas
+fi
+
 
 echo "setup done"

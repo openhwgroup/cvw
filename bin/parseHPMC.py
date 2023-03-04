@@ -67,11 +67,23 @@ def ComputeICacheMissRate(benchmark):
     ICacheMR = 100.0 * int(dataDict['I Cache Miss']) / int(dataDict['I Cache Access'])
     dataDict['ICacheMR'] = ICacheMR
 
+def ComputeICacheMissTime(benchmark):
+    'Computes and inserts instruction class miss prediction rate.'
+    (nameString, opt, dataDict) = benchmark
+    ICacheMR = 100.0 * int(dataDict['I Cache Cycles']) / int(dataDict['I Cache Miss'])
+    dataDict['ICacheMT'] = ICacheMR
+    
 def ComputeDCacheMissRate(benchmark):
     'Computes and inserts instruction class miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
     DCacheMR = 100.0 * int(dataDict['D Cache Miss']) / int(dataDict['D Cache Access'])
     dataDict['DCacheMR'] = DCacheMR
+
+def ComputeDCacheMissTime(benchmark):
+    'Computes and inserts instruction class miss prediction rate.'
+    (nameString, opt, dataDict) = benchmark
+    ICacheMR = 100.0 * int(dataDict['D Cache Cycles']) / int(dataDict['D Cache Miss'])
+    dataDict['DCacheMT'] = ICacheMR
 
 def ComputeAll(benchmarks):
     for benchmark in benchmarks:
@@ -81,23 +93,23 @@ def ComputeAll(benchmarks):
         ComputeRASMissRate(benchmark)
         ComputeInstrClassMissRate(benchmark)
         ComputeICacheMissRate(benchmark)
+        ComputeICacheMissTime(benchmark)
         ComputeDCacheMissRate(benchmark)
+        ComputeDCacheMissTime(benchmark)
     
 def printStats(benchmark):
     (nameString, opt, dataDict) = benchmark
-    CPI = dataDict['CPI']
-    BDMR = dataDict['BDMR']
-    BTMR = dataDict['BTMR']
-    RASMPR = dataDict['RASMPR']
     print('Test', nameString)
     print('Compile configuration', opt)
-    print('CPI \t\t\t  %1.2f' % CPI)
-    print('Branch Dir Pred Miss Rate %2.2f' % BDMR)
-    print('Branch Target Pred Miss Rate %2.2f' % BTMR)
-    print('RAS Miss Rate \t\t  %1.2f' % RASMPR)
+    print('CPI \t\t\t  %1.2f' % dataDict['CPI'])
+    print('Branch Dir Pred Miss Rate %2.2f' % dataDict['BDMR'])
+    print('Branch Target Pred Miss Rate %2.2f' % dataDict['BTMR'])
+    print('RAS Miss Rate \t\t  %1.2f' % dataDict['RASMPR'])
     print('Instr Class Miss Rate  %1.2f' % dataDict['ClassMPR'])
     print('I Cache Miss Rate  %1.4f' % dataDict['ICacheMR'])
+    print('I Cache Miss Ave Cycles  %1.4f' % dataDict['ICacheMT'])
     print('D Cache Miss Rate  %1.4f' % dataDict['DCacheMR'])
+    print('D Cache Miss Ave Cycles  %1.4f' % dataDict['DCacheMT'])
     print()
 
 def ProcessFile(fileName):
@@ -156,7 +168,7 @@ def GeometricAverage(benchmarks, field):
     return Product ** (1.0/index)
 
 def ComputeGeometricAverage(benchmarks):
-    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI']
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI', 'ICacheMT', 'DCacheMT']
     AllAve = {}
     for field in fields:
         Product = 1
