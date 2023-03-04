@@ -145,7 +145,7 @@ cause_s_time_interrupt:
     lw t2, 0(t5)         // low word of MTIME
     lw t6, 4(t5)         // high word of MTIME
     add t3, t2, t3       // add desired offset to the current time
-    csrw 0x14D, t3     // store into most significant word of STIMECMP
+    csrw stimecmp, t3     // store into most significant word of STIMECMP
 time_loop_s:
     addi a3, a3, -1
     bnez a3, time_loop_s // go through this loop for [a3 value] iterations before returning without performing interrupt
@@ -548,7 +548,7 @@ time_interrupt_\MODE\():
     la t0, 0x02004000    // MTIMECMP register in CLINT
     li t2, 0xFFFFFFFF
     sd t2, 0(t0) // reset interrupt by setting mtimecmp to max
-    csrw 0x14D, t2 // reset stime interrupts by doing the same.
+    csrw stimecmp, t2 // reset stime interrupts by doing the same.
     
     li t0, 0x20
     csrc \MODE\()ip, t0

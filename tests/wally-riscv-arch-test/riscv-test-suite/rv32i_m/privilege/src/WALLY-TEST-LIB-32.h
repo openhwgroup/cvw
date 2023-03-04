@@ -145,8 +145,8 @@ cause_s_time_interrupt:
     bgtu t3, t2, nowrap_s  // check new time exceeds current time (no wraparound)
     addi t6, t6, 1       // if wrap, increment most significant word
 nowrap_s:
-    csrw 0x14D, t3         // store into STIMECMP
-    csrw 0x15D, t6     // store into STIMECMPH
+    csrw stimecmp, t3         // store into STIMECMP
+    csrw stimecmph, t6     // store into STIMECMPH
 time_loop_s:
     addi a3, a3, -1
     bnez a3, time_loop_s // go through this loop for [a3 value] iterations before returning without performing interrupt
@@ -558,8 +558,8 @@ time_interrupt_\MODE\():
     li t2, 0xFFFFFFFF
     sw t2, 0(t0) // reset interrupt by setting mtimecmp to max
     //sw t2, 4(t0) // reset interrupt by setting mtimecmpH to max
-    csrw 0x14D, t2 // reset stime interrupts by doing the same to stimecmp and stimecmpH.
-    csrw 0x15D, t2
+    csrw stimecmp, t2 // reset stime interrupts by doing the same to stimecmp and stimecmpH.
+    csrw stimecmph, t2
 
 
     li t0, 0x20
