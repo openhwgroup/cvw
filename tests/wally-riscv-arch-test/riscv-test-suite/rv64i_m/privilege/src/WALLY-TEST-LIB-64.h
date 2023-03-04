@@ -138,8 +138,6 @@ time_loop_m:
     ret
 
 cause_s_time_interrupt:
-    li t3, 0x2
-    csrs mcounteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
     li t3, 0x30          // Desired offset from the present time
     mv a3, t3            // copy value in to know to stop waiting for interrupt after this many cycles
     // la t4, 0x02004000    // MTIMECMP register in CLINT 
@@ -357,9 +355,6 @@ trap_stack_saved_\MODE\(): // jump here after handling vectored interupt since w
 
 .endif
 
-    li t3, 0x2
-    csrs \MODE\()counteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
-
     // Respond to trap based on cause
     // All interrupts should return after being logged
     csrr ra, \MODE\()cause
@@ -430,9 +425,6 @@ trapreturn_specified_\MODE\():
     li a2, 0 // reset trapreturn inputs to the trap handler
 
 trapreturn_finished_\MODE\():
-    li t3, 0x2
-    csrc \MODE\()counteren, t3 // set mcounteren.TM to 1 to attempt to allow us to write to stimecmp
-
     csrw \MODE\()epc, ra            // update the epc with address of next instruction
     ld t2, -24(sp)     // restore registers from stack before returning
     ld t0, -16(sp)
