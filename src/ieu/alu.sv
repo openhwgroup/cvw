@@ -94,14 +94,8 @@ module alu #(parameter WIDTH=32) (
   end else assign rotA = A;
     
   if (`ZBA_SUPPORTED) begin: zbamuxes
-    // Pre-Shift Mux
-    always_comb
-      case (Funct3[2:1] & {2{PreShift}})
-        2'b00: CondShiftA = shA[WIDTH-1:0];
-        2'b01: CondShiftA = {shA[WIDTH-2:0],{1'b0}};   // sh1add
-        2'b10: CondShiftA = {shA[WIDTH-3:0],{2'b00}};  // sh2add
-        2'b11: CondShiftA = {shA[WIDTH-4:0],{3'b000}}; // sh3add
-      endcase
+    // Pre-Shift
+    assign CondShiftA = shA[WIDTH-1:0] << (Funct3[2:1] & {2{PreShift}});
   end else assign CondShiftA = A;
 
   // Addition
