@@ -85,7 +85,7 @@ module ieu (
   logic       SCE;                                           // Store Conditional instruction
   logic       FWriteIntM;                                    // FPU writing to integer register file
   logic       IntDivW;                                       // Integer divide instruction
-  logic [3:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
+  logic [1:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   logic [2:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
   logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
 

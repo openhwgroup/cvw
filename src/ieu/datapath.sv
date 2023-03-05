@@ -46,7 +46,7 @@ module datapath (
   input  logic [2:0]       ALUSelectE,              // ALU mux select signal
   input  logic             JumpE,                   // Is a jump (j) instruction
   input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  input  logic [3:0]       BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [1:0]       BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelectE,              // ZBB mux select signal
   input  logic [2:0]       BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})

@@ -33,7 +33,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,        // Operands
   input  logic [2:0]       ALUControl,  // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,   // ALU mux select signal
-  input  logic [3:0]       BSelect,     // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [1:0]       BSelect,     // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
   input  logic [2:0]       Funct3,      // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,   // Comparator flags
@@ -167,12 +167,11 @@ module alu #(parameter WIDTH=32) (
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : zbdecoder
     always_comb
       case (BSelect)
-      //ZBA_ZBB_ZBC_ZBS
-        4'b0001: ALUResult = FullResult;
-        4'b0010: ALUResult = ZBCResult;
-        4'b1000: ALUResult = FullResult; // NOTE: We don't use ALUResult because ZBA instructions don't sign extend the MSB of the right-hand word.
-        4'b0100: ALUResult = ZBBResult;
-        default: ALUResult = CondExtFullResult;
+        // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
+        2'b00: ALUResult = CondExtFullResult; 
+        2'b01: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+        2'b10: ALUResult = ZBBResult; 
+        2'b11: ALUResult = ZBCResult;
       endcase
   end else assign ALUResult = CondExtFullResult;
 endmodule
