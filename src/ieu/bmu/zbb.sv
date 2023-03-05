@@ -55,7 +55,7 @@ module zbb #(parameter WIDTH=32) (
 
   cnt #(WIDTH) cnt(.A(A), .RevA(RevA), .B(B[4:0]), .W64(W64), .CntResult(CntResult));
   byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
-  ext #(WIDTH) ext(.A(A), .B(B), .ExtResult(ExtResult));
+  ext #(WIDTH) ext(.A(A), .ExtSelect({B[2], B[0]}), .ExtResult(ExtResult));
 
 
   assign MaxResult = (lt) ? B : A;
