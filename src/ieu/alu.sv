@@ -43,11 +43,12 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult,CondExtFullResult, ZBCResult, ZBBResult; // Intermediate results
+  logic [WIDTH-1:0] CondInvB,CondMaskInvB, Shift, SLT, SLTU, FullResult,CondExtFullResult, ZBCResult, ZBBResult; // Intermediate results
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
   logic [WIDTH-1:0] CondZextA;                                                              // Result of Zero Extend A select mux
+  logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
   logic             Carry, Neg;                                                             // Flags: carry out, negative
   logic             LT, LTU;                                                                // Less than, Less than unsigned
   logic             W64;                                                                    // RV64 W-type instruction
@@ -60,6 +61,7 @@ module alu #(parameter WIDTH=32) (
   logic             Rotate;                                                                 // Indicates if it is Rotate instruction
   logic             Mask;                                                                   // Indicates if it is ZBS instruction
   logic             PreShift;                                                               // Inidicates if it is sh1add, sh2add, sh3add instruction
+  logic [1:0]       PreShiftAmt;                                                            // Amount to Pre-Shift A 
 
 
   // Extract control signals from ALUControl.
@@ -71,6 +73,8 @@ module alu #(parameter WIDTH=32) (
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
 
+  assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
+
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
     assign CondMaskB = (Mask) ? MaskB : B;
@@ -80,10 +84,10 @@ module alu #(parameter WIDTH=32) (
   if (WIDTH == 64) begin // rv64 must handle word s/z extensions
     always_comb 
       case (shASelect)
-        2'b00: shA = {{1'b0}, A};
-        2'b01: shA = {A[63], A};
-        2'b10: shA = {{33'b0}, A[31:0]};
-        2'b11: shA = {{33{A[31]}}, A[31:0]};
+        2'b00: shA = {{1'b0}, A}; // zero-extend double-word (srl)
+        2'b01: shA = {A[63], A};  // sign-extend double-word (sra)
+        2'b10: shA = {{33'b0}, A[31:0]}; // zero-extend word (add.uw, shadd.uw, srlw)
+        2'b11: shA = {{33{A[31]}}, A[31:0]}; //sign extend-word (sraw)
       endcase
   end else assign shA = (SubArith) ? {A[31], A} : {{1'b0},A}; // rv32 does need to handle s/z extensions
 
@@ -95,11 +99,12 @@ module alu #(parameter WIDTH=32) (
     
   if (`ZBA_SUPPORTED) begin: zbamuxes
     // Pre-Shift
-    assign CondShiftA = shA[WIDTH-1:0] << (Funct3[2:1] & {2{PreShift}});
+    assign CondShiftA = shA[WIDTH-1:0] << (PreShiftAmt);
   end else assign CondShiftA = A;
 
   // Addition
-  assign CondInvB = SubArith ? ~CondMaskB : CondMaskB;
+  assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
+  assign CondInvB = SubArith ? ~B : B;
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
@@ -128,9 +133,9 @@ module alu #(parameter WIDTH=32) (
         3'b001: FullResult = Shift;                         // sll, sra, or srl
         3'b010: FullResult = SLT;                           // slt
         3'b011: FullResult = SLTU;                          // sltu
-        3'b100: FullResult = A ^ CondInvB;                  // xor, xnor, binv
-        3'b110: FullResult = A | CondInvB;                  // or, orn, bset
-        3'b111: FullResult = A & CondInvB;                  // and, bclr
+        3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
+        3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
+        3'b111: FullResult = A & CondMaskInvB;              // and, bclr
         3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
       endcase
   end
@@ -154,13 +159,16 @@ module alu #(parameter WIDTH=32) (
   if (WIDTH == 64)  assign CondExtFullResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign CondExtFullResult = FullResult;
 
+  if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
+    bitreverse #(WIDTH) brA(.a(A), .b(RevA));
+  end
   //NOTE: This looks good and can be merged.
   if (`ZBC_SUPPORTED) begin: zbc
-    zbc #(WIDTH) ZBC(.A(A), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
+    zbc #(WIDTH) ZBC(.A(A), .RevA(RevA), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
 
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(A), .B(B), .ALUResult(CondExtFullResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+    zbb #(WIDTH) ZBB(.A(A), .RevA(RevA), .B(B), .ALUResult(CondExtFullResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
   end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
