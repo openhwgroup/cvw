@@ -41,7 +41,7 @@ module ext #(parameter WIDTH = 32) (
   assign zexthResult = {{(WIDTH-16){1'b0}},A[15:0]};
   assign sextbResult = {{(WIDTH-8){A[7]}},A[7:0]};
 
-  mux3 #(WIDTH) extmux(zexthResult, sextbResult, sexthResult, ExtSelect, ExtResult);
+  mux3 #(WIDTH) extmux(sextbResult, sexthResult, zexthResult, ExtSelect, ExtResult);
 
  
 endmodule
