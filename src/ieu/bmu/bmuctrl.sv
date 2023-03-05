@@ -156,6 +156,8 @@ module bmuctrl(
       17'b0010011_0010100_101:   BMUControlsD = `BMUCTRLW'b000_10_011_1_0_1_0_0_0_0_0;  // orc.b
       17'b0110011_0000101_110:   BMUControlsD = `BMUCTRLW'b000_10_101_1_0_1_0_0_0_0_0;  // max
       17'b0110011_0000101_111:   BMUControlsD = `BMUCTRLW'b000_10_101_1_0_1_0_0_0_0_0;  // maxu
+      17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_10_110_1_0_1_0_0_0_0_0;  // min
+      17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_10_110_1_0_1_0_0_0_0_0;  // minu
       default:                   BMUControlsD = {Funct3D, {12'b0}, {1'b1}};        // not B instruction or shift
     endcase
 
