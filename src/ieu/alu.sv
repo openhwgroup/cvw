@@ -30,16 +30,16 @@
 `include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
-  input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
-  input  logic [2:0]       ALUSelect,  // ALU mux select signal
-  input  logic [3:0]       BSelect,    // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [2:0]       ZBBSelect,  // ZBB mux select signal
-  input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
-  input  logic [1:0]       CompFlags,  // Comparator flags
-  input  logic             Rotate,     // Perform Rotate Operation
-  output logic [WIDTH-1:0] ALUResult,     // ALU result
-  output logic [WIDTH-1:0] Sum);       // Sum of operands
+  input  logic [WIDTH-1:0] A, B,        // Operands
+  input  logic [2:0]       ALUControl,  // With Funct3, indicates operation to perform
+  input  logic [2:0]       ALUSelect,   // ALU mux select signal
+  input  logic [3:0]       BSelect,     // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
+  input  logic [2:0]       Funct3,      // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
+  input  logic [1:0]       CompFlags,   // Comparator flags
+  input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
+  output logic [WIDTH-1:0] ALUResult,   // ALU result
+  output logic [WIDTH-1:0] Sum);        // Sum of operands
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
@@ -57,17 +57,23 @@ module alu #(parameter WIDTH=32) (
   logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
+  logic             Rotate;                                                                 // Indicates if it is Rotate instruction
+  logic             Mask;                                                                   // Indicates if it is ZBS instruction
+  logic             PreShift;                                                               // Inidicates if it is sh1add, sh2add, sh3add instruction
 
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
+
+  // Extract control signals from bitmanip ALUControl.
+  assign {Rotate, Mask, PreShift} = BALUControl;
 
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
 
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
-    assign CondMaskB = (BSelect[0]) ? MaskB : B;
+    assign CondMaskB = (Mask) ? MaskB : B;
   end else assign CondMaskB = B;
 
   // Sign/Zero extend mux
@@ -90,7 +96,7 @@ module alu #(parameter WIDTH=32) (
   if (`ZBA_SUPPORTED) begin: zbamuxes
     // Pre-Shift Mux
     always_comb
-      case (Funct3[2:1] & {2{BSelect[3]}})
+      case (Funct3[2:1] & {2{PreShift}})
         2'b00: CondShiftA = shA[WIDTH-1:0];
         2'b01: CondShiftA = {shA[WIDTH-2:0],{1'b0}};   // sh1add
         2'b10: CondShiftA = {shA[WIDTH-3:0],{2'b00}};  // sh2add
