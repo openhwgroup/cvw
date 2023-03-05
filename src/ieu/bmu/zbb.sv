@@ -31,13 +31,12 @@
 `include "wally-config.vh"
 
 module zbb #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,         // Operands
+  input  logic [WIDTH-1:0] A, RevA, B,   // Operands
   input  logic [WIDTH-1:0] ALUResult,    // ALU Result
   input  logic             W64,          // Indicates word operation
   input  logic             lt,           // lt flag
   input  logic [2:0]       ZBBSelect,    // Indicates word operation
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
-
 
   
   // count result
@@ -53,7 +52,8 @@ module zbb #(parameter WIDTH=32) (
   // sign/zero extend results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend result
 
-  cnt #(WIDTH) cnt(.A(A), .B(B), .W64(W64), .CntResult(CntResult));
+
+  cnt #(WIDTH) cnt(.A(A), .RevA(RevA), .B(B[4:0]), .W64(W64), .CntResult(CntResult));
   byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
   ext #(WIDTH) ext(.A(A), .B(B), .ExtResult(ExtResult));
 
