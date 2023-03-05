@@ -61,27 +61,8 @@ module zbb #(parameter WIDTH=32) (
   assign MaxResult = (lt) ? B : A;
   assign MinResult = (lt) ? A : B;
 
-  //can replace with structural mux by looking at bit 4 in rs2 field
-  always_comb begin 
-      case (ZBBSelect)
-      3'b111: ZBBResult = ALUResult;  // rotates, andn, xnor, orn
-      3'b000: ZBBResult = CntResult;  // count
-      3'b100: ZBBResult = ExtResult;  // sign/zero extend
-      3'b011: ZBBResult = ByteResult; // byte instructions
-      3'b110: ZBBResult = MinResult;  // min, minu
-      3'b101: ZBBResult = MaxResult;  // max, maxu 
-      /*15'b0010100_101_00111: ZBBResult = OrcBResult;
-      15'b0110100_101_11000: ZBBResult = Rev8Result;
-      15'b0110101_101_11000: ZBBResult = Rev8Result;
-      15'b0110000_001_00000: ZBBResult = czResult;
-      15'b0110000_001_00010: ZBBResult = cpopResult;
-      15'b0110000_001_00001: ZBBResult = czResult;
-      15'b0000100_100_00000: ZBBResult = zexthResult; 
-      15'b0110000_001_00100: ZBBResult = sextbResult;
-      15'b0110000_001_00101: ZBBResult = sexthResult;*/
-      default: ZBBResult = {(WIDTH){1'b0}};
-      endcase
-  end
+  // ZBB Result select mux
+  mux5 #(WIDTH) zbbresultmux(CntResult, ExtResult, ByteResult, MinResult, MaxResult, ZBBSelect, ZBBResult);
 
 
 endmodule
