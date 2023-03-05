@@ -58,7 +58,7 @@ module controller(
   output logic        BranchE,                 // Branch instruction
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
+  output logic [1:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
 
@@ -124,7 +124,7 @@ module controller(
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-  logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
+  logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
   logic        BW64D;                          // Indicates if it is a W type B instruction in decode stage
@@ -234,8 +234,8 @@ module controller(
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
-    assign BSelectE = 4'b0000;
-    assign BSelectD = 4'b0000;
+    assign BSelectE = 2'b00;
+    assign BSelectD = 2'b00;
     assign ZBBSelectE = 3'b000;
     assign BRegWriteD = 1'b0;
     assign BW64D = 1'b0;
