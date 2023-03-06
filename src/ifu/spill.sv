@@ -58,7 +58,7 @@ module spill #(
   logic                SpillF;
   logic                SelSpillF;
   logic 			         SpillSaveF;
-  logic [15:0]         InstrFirstHalf;
+  logic [15:0]         InstrFirstHalfF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
@@ -102,10 +102,10 @@ module spill #(
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // save the first 2 bytes
-  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalf);
+  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
 
   // merge together
-  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalf}, SpillF, PostSpillInstrRawF);
+  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SpillF, PostSpillInstrRawF);
 
   // Need to use always comb to avoid pessimistic x propagation if PostSpillInstrRawF is x
   always_comb
