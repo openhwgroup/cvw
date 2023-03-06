@@ -47,7 +47,7 @@ module ifu (
   output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
   output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
 
-  output logic [`XLEN-1:0]  PCFSpill,                                 // PCF with possible + 2 to handle spill to HPTW
+  output logic [`XLEN-1:0]  PCSpillF,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
   input  logic 				PCSrcE,                                   // Executation stage branch is taken
@@ -136,7 +136,7 @@ module ifu (
   logic 					   CacheCommittedF;                       // I$ memory operation started, delay interrupts
   logic                        SelIROM;                               // PMA indicates instruction address is in the IROM
   
-  assign PCFExt = {2'b00, PCFSpill};
+  assign PCFExt = {2'b00, PCSpillF};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Spill Support
@@ -144,10 +144,10 @@ module ifu (
 
   if(`C_SUPPORTED) begin : Spill
     spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
-      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
+      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCSpillF, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCNextFSpill = PCNextF;
-    assign PCFSpill = PCF;
+    assign PCSpillF = PCF;
     assign PostSpillInstrRawF = InstrRawF;
     assign {SelNextSpillF, CompressedF} = 0;
   end
