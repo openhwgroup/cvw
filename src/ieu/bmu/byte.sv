@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// clmul.sv
+// byte.sv
 //
 // Written: Kevin Kim <kekim@hmc.edu>
 // Created: 1 February 2023
-// Modified: 
+// Modified: 6 March 2023
 //
-// Purpose: Carry-Less multiplication top-level unit
+// Purpose: RISCV bitmanip byte-wise operation unit
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 

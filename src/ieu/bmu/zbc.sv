@@ -3,9 +3,9 @@
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
 // Created: 2 February 2023
-// Modified: 
+// Modified: 3 March 2023
 //
-// Purpose: RISC-V single bit manipulation unit (ZBC instructions)
+// Purpose: RISC-V ZBC top-level unit
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 

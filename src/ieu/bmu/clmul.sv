@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// clmul.sv (carry-less multiplier)
+// clmul.sv
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
 // Created: 1 February 2023
 // Modified: 
 //
-// Purpose: Carry-Less multiplication top-level unit
+// Purpose: Carry-Less multiplication unit
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 

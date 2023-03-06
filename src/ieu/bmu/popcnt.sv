@@ -1,6 +1,6 @@
 
 ///////////////////////////////////////////
-//
+// popccnt.sv
 // Written: Kevin Kim <kekim@hmc.edu>
 // Modified: 2/4/2023
 //
