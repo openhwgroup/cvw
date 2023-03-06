@@ -38,12 +38,13 @@ module alu #(parameter WIDTH=32) (
   input  logic [2:0]       Funct3,      // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,   // Comparator flags
   input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
-  output logic [WIDTH-1:0] ALUResult,   // ALU result
+  output logic [WIDTH-1:0] Result,      // ALU result
   output logic [WIDTH-1:0] Sum);        // Sum of operands
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB,CondMaskInvB, Shift, SLT, SLTU, FullResult,CondExtFullResult, ZBCResult, ZBBResult; // Intermediate results
+  logic [WIDTH-1:0] CondInvB,CondMaskInvB, Shift, SLT, SLTU, FullResult,ALUResult;          // Intermediate Signals 
+  logic [WIDTH-1:0] ZBCResult, ZBBResult;                                                   // Result of ZBB, ZBC
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
@@ -156,8 +157,8 @@ module alu #(parameter WIDTH=32) (
   
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign CondExtFullResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign CondExtFullResult = FullResult;
+  if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign ALUResult = FullResult;
 
   if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
     bitreverse #(WIDTH) brA(.a(A), .b(RevA));
@@ -168,7 +169,7 @@ module alu #(parameter WIDTH=32) (
   end else assign ZBCResult = 0;
 
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(A), .RevA(RevA), .B(B), .ALUResult(CondExtFullResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+    zbb #(WIDTH) ZBB(.A(A), .RevA(RevA), .B(B), .ALUResult(ALUResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
   end else assign ZBBResult = 0;
   
   // Final Result B instruction select mux
@@ -176,10 +177,10 @@ module alu #(parameter WIDTH=32) (
     always_comb
       case (BSelect)
         // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
-        2'b00: ALUResult = CondExtFullResult; 
-        2'b01: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
-        2'b10: ALUResult = ZBBResult; 
-        2'b11: ALUResult = ZBCResult;
+        2'b00: Result = ALUResult; 
+        2'b01: Result = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+        2'b10: Result = ZBBResult; 
+        2'b11: Result = ZBCResult;
       endcase
-  end else assign ALUResult = CondExtFullResult;
+  end else assign Result = ALUResult;
 endmodule
