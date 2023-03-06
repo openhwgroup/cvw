@@ -37,32 +37,19 @@ module zbb #(parameter WIDTH=32) (
   input  logic             lt,           // lt flag
   input  logic [2:0]       ZBBSelect,    // Indicates word operation
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
-
   
-  // count result
-  logic [WIDTH-1:0] CntResult;           
-  
-  // min,max result
-  logic [WIDTH-1:0] MaxResult;           
-  logic [WIDTH-1:0] MinResult;           
-
-  // byte results
-  logic [WIDTH-1:0] ByteResult;
-
-  // sign/zero extend results
-  logic [WIDTH-1:0] ExtResult;           // sign/zero extend result
-
+  logic [WIDTH-1:0] CntResult;           // count result
+  logic [WIDTH-1:0] MinResult,MaxResult; // min,max result
+  logic [WIDTH-1:0] ByteResult;          // byte results
+  logic [WIDTH-1:0] ExtResult;           // sign/zero extend results
 
   cnt #(WIDTH) cnt(.A(A), .RevA(RevA), .B(B[4:0]), .W64(W64), .CntResult(CntResult));
   byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
   ext #(WIDTH) ext(.A(A), .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult(ExtResult));
-
 
   assign MaxResult = (lt) ? B : A;
   assign MinResult = (lt) ? A : B;
 
   // ZBB Result select mux
   mux5 #(WIDTH) zbbresultmux(CntResult, ExtResult, ByteResult, MinResult, MaxResult, ZBBSelect, ZBBResult);
-
-
 endmodule

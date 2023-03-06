@@ -37,7 +37,6 @@ module bitreverse #(parameter WIDTH=32) (
   for (i=0; i<WIDTH;i++) begin:loop
     assign b[WIDTH-i-1] = a[i];
   end
-
 endmodule
 
 
