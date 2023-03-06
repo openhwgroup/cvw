@@ -39,7 +39,6 @@ module shifter (
   logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
   logic [`LOG_XLEN-1:0]    amttrunc, offset;                // Shift amount adjusted for RV64, right-shift amount
 
-
   if (`ZBB_SUPPORTED) begin: rotfunnel
     if (`XLEN==32) begin // rv32 with rotates
       always_comb  // funnel mux

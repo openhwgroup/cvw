@@ -39,6 +39,4 @@ module popcnt #(parameter WIDTH = 32) (
   end
 
   assign PopCnt = sum[$clog2(WIDTH):0];
-
-  
 endmodule

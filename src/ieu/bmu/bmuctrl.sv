@@ -63,10 +63,10 @@ module bmuctrl(
   logic       MaskD;                           // Indicates if zbs instruction in Decode Stage
   logic       PreShiftD;                       // Indicates if sh1add, sh2add, sh3add instruction in Decode Stage
   logic [2:0] BALUControlD;                    // ALU Control signals for B instructions
+
   `define BMUCTRLW 16
 
   logic [`BMUCTRLW-1:0] BMUControlsD;                 // Main B Instructions Decoder control signals
-
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -158,7 +158,7 @@ module bmuctrl(
       17'b0110011_0000101_111:   BMUControlsD = `BMUCTRLW'b000_10_100_1_0_1_0_0_0_0_0;  // maxu
       17'b0110011_0000101_100:   BMUControlsD = `BMUCTRLW'b000_10_011_1_0_1_0_0_0_0_0;  // min
       17'b0110011_0000101_101:   BMUControlsD = `BMUCTRLW'b000_10_011_1_0_1_0_0_0_0_0;  // minu
-      default:                   BMUControlsD = {Funct3D, {12'b0}, {1'b1}};        // not B instruction or shift
+      default:                   BMUControlsD = {Funct3D, {12'b0}, {1'b1}};             // not B instruction or shift
     endcase
 
   // Unpack Control Signals
@@ -169,8 +169,6 @@ module bmuctrl(
 
   // Comparator should perform signed comparison when min/max instruction. We have overlap in funct3 with some branch instructions so we use opcode to differentiate betwen min/max and branches
   assign BComparatorSignedD = (Funct3D[2]^Funct3D[0]) & ~OpD[6];
-
-   
 
   // BMU Execute stage pipieline control register
   flopenrc#(13) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});

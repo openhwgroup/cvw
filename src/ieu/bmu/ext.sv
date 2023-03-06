@@ -42,6 +42,4 @@ module ext #(parameter WIDTH = 32) (
   assign sextbResult = {{(WIDTH-8){A[7]}},A[7:0]};
 
   mux3 #(WIDTH) extmux(sextbResult, sexthResult, zexthResult, ExtSelect, ExtResult);
-
- 
 endmodule
