@@ -4,9 +4,9 @@
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
 // Created: 2 February 2023
-// Modified: 
+// Modified: March 6 2023
 //
-// Purpose: RISC-V miscellaneous bit manipulation unit (subset of ZBB instructions)
+// Purpose: RISC-V ZBB top level unit
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 

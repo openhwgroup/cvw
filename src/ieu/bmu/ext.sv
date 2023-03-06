@@ -1,6 +1,6 @@
 
 ///////////////////////////////////////////
-// cnt.sv
+// ext.sv
 //
 // Written: Kevin Kim <kekim@hmc.edu>
 // Created: 4 February 2023

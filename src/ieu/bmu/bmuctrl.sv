@@ -3,9 +3,9 @@
 //
 // Written: Kevin Kim <kekim@hmc.edu>
 // Created: 16 February 2023
-// Modified: 
+// Modified: 6 March 2023
 //
-// Purpose: Top level B instruction decoder
+// Purpose: Top level bit manipulation instruction decoder
 // 
 // Documentation: RISC-V System on Chip Design Chapter 4 (Section 4.1.4, Figure 4.8, Table 4.5)
 //
