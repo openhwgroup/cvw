@@ -44,7 +44,7 @@ module spill #(
   input logic 			   ITLBMissF,         // ITLB miss, ignore memory request
   input logic 			   InstrUpdateDAF, // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
   output logic [`XLEN-1:0] PCNextFSpill,      // The next PCF for one of the two memory addresses of the spill
-  output logic [`XLEN-1:0] PCFSpill,          // PCF for one of the two memory addresses of the spill
+  output logic [`XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
   output logic 			   SelNextSpillF,     // During the transition between the two spill operations, the IFU should stall the pipeline
   output logic [31:0] 	   PostSpillInstrRawF,// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic 			   CompressedF);      // The fetched instruction is compressed
@@ -69,7 +69,7 @@ module spill #(
   // select between PCNextF and PCF+2
   mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~FlushD), .y(PCNextFSpill));
   // select between PCF and PCF+2
-  mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
+  mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
 
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////
