@@ -127,13 +127,16 @@ module controller(
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
   // otherwise be cheap
 
-  if (`ZICSR_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED) begin // Exact integer decoding
+  if (`ZICSR_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
+    logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
     assign Funct7ZeroD = (Funct7D == 7'b0000000); // most R-type instructions
     assign Funct7b5D   = (Funct7D == 7'b0100000); // srai, sub
-    assign IShiftD     = (Funct3D == 3'b001 & Funct7ZeroD) | (Funct3D == 3'b101 & (Funct7ZeroD | Funct7b5D)); // slli, srli, srai, or w forms
-    assign INoShiftD   = (Funct3D != 3'b001 & Funct3D != 3'b101);
+    assign Funct7ShiftZeroD = (`XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
+    assign Funct7Shiftb5D   = (`XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
+    assign IShiftD     = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
+    assign INoShiftD   = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
     assign IFunctD     = IShiftD | INoShiftD;
     assign RFunctD     = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
     assign MFunctD     = (Funct7D == 7'b0000001) & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
@@ -143,7 +146,7 @@ module controller(
                          ((`XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD     = (Funct3D[2:1] != 2'b01); // legal branches
     assign JFunctD     = (Funct3D == 3'b000);
-  end else begin 
+  end else begin:legalcheck2
     assign IFunctD     = 1; // Don't bother to separate out shift decoding
     assign RFunctD     = ~Funct7D[0]; // Not a multiply
     assign MFunctD     = Funct7D[0] & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
