@@ -113,13 +113,33 @@ module controller(
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-   
+  logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
 
   // Extract fields
   assign OpD = InstrD[6:0];
   assign Funct3D = InstrD[14:12];
   assign Funct7D = InstrD[31:25];
   assign Rs1D = InstrD[19:15];
+
+  // Funct 7 checking
+  // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
+  // otherwise be cheap
+
+  if (`ZICSR_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED) begin // Exact integer decoding
+    logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
+
+    assign Funct7ZeroD = (Funct7D == 7'b0000000); // most R-type instructions
+    assign Funct7b5D   = (Funct7D == 7'b0100000); // srai, sub
+    assign IShiftD     = (Funct3D == 3'b001 & Funct7ZeroD) | (Funct3D == 3'b101 & (Funct7ZeroD | Funct7b5D)); // slli, srli, srai, or w forms
+    assign INoShiftD   = (Funct3D != 3'b001 & Funct3D != 3'b101);
+    assign IFunctD     = IShiftD | INoShiftD;
+    assign RFunctD     = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
+    assign MFunctD     = (Funct7D == 7'b0000001) & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+  end else begin 
+    assign IFunctD     = 1; // Don't bother to separate out shift decoding
+    assign RFunctD     = ~Funct7D[0]; // Not a multiply
+    assign MFunctD     = Funct7D[0] & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+  end
 
   // Main Instruction Decoder
   always_comb
@@ -132,9 +152,12 @@ module controller(
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
               	  else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
-      7'b0010011:     ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
+      7'b0010011: if (IFunctD)    
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
+                  else
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (`XLEN == 64)
+      7'b0011011: if (IFunctD & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
@@ -149,16 +172,16 @@ module controller(
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                   end else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
-      7'b0110011: if (Funct7D == 7'b0000000 | Funct7D == 7'b0100000)
+      7'b0110011: if (RFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
-                  else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])))
+                  else if (MFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-      7'b0111011: if ((Funct7D == 7'b0000000 | Funct7D == 7'b0100000) & `XLEN == 64)
+      7'b0111011: if (RFunctD & (`XLEN == 64))
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
-                  else if (Funct7D == 7'b0000001 & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])) & `XLEN == 64)
+                  else if (MFunctD & (`XLEN == 64))
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Non-implemented instruction
