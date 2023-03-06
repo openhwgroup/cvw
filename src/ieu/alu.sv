@@ -64,7 +64,6 @@ module alu #(parameter WIDTH=32) (
   logic             PreShift;                                                               // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]       PreShiftAmt;                                                            // Amount to Pre-Shift A 
 
-
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
@@ -152,18 +151,12 @@ module alu #(parameter WIDTH=32) (
         3'b110: FullResult = A | B;     // or 
         3'b111: FullResult = A & B;     // and
       endcase
-    
   end
-  
-
-  // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign ALUResult = FullResult;
 
   if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
     bitreverse #(WIDTH) brA(.a(A), .b(RevA));
   end
-  //NOTE: This looks good and can be merged.
+
   if (`ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A(A), .RevA(RevA), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
   end else assign ZBCResult = 0;
@@ -171,7 +164,11 @@ module alu #(parameter WIDTH=32) (
   if (`ZBB_SUPPORTED) begin: zbb
     zbb #(WIDTH) ZBB(.A(A), .RevA(RevA), .B(B), .ALUResult(ALUResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
   end else assign ZBBResult = 0;
-  
+
+  // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
+  if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign ALUResult = FullResult;
+
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : zbdecoder
     always_comb
