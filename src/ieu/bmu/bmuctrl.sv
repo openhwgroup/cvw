@@ -29,7 +29,6 @@
 
 `include "wally-config.vh"
 
-// NOTE: DO we want to make this XLEN parameterized?
 module bmuctrl(
   input  logic		    clk, reset,
   // Decode stage control signals
@@ -51,7 +50,6 @@ module bmuctrl(
   output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
   output logic        BComparatorSignedE,      // Indicates if comparator signed in Execute Stage
   output logic [2:0]  BALUControlE             // ALU Control signals for B instructions in Execute Stage
-
 );
 
   logic [6:0] OpD;                             // Opcode in Decode stage

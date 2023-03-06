@@ -222,7 +222,7 @@ module controller(
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
-  // BITMANIP Configuration Block
+  // bit manipulation Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
@@ -246,7 +246,6 @@ module controller(
     assign BALUControlE = 3'b0;
 
     assign sltD = (Funct3D == 3'b010);
-
 
     assign IllegalBitmanipInstrD = 1'b1;
   end
