@@ -6,6 +6,17 @@ add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
+add wave -noupdate /testbench/FunctionName/FunctionName/PCD
+add wave -noupdate /testbench/FunctionName/FunctionName/PCE
+add wave -noupdate /testbench/FunctionName/FunctionName/PCF
+add wave -noupdate /testbench/FunctionName/FunctionName/PCM
+add wave -noupdate /testbench/FunctionName/FunctionName/PCM_temp
+add wave -noupdate /testbench/FunctionName/FunctionName/PCMOld
+add wave -noupdate /testbench/dut/core/InstrValidM
+add wave -noupdate /testbench/FunctionName/FunctionName/FunctionAddr
+add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrIndex
+add wave -noupdate /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrMapLineCount
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
@@ -55,11 +66,12 @@ add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/c/RegWriteD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/RdD
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs1D
 add wave -noupdate -group {Decode Stage} /testbench/dut/core/ieu/dp/Rs2D
-add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/PCE
-add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ifu/InstrE
-add wave -noupdate -expand -group {Execution Stage} /testbench/InstrEName
-add wave -noupdate -expand -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
-add wave -noupdate -expand -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
+add wave -noupdate -group {Execution Stage} /testbench/InstrEName
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
+add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
@@ -622,10 +634,9 @@ add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/ICacheAcc
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/DCacheMiss
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/InstrValidNotFlushedM
 add wave -noupdate /testbench/clk
-add wave -noupdate /testbench/HPMCSample/FinalHPMCOUNTERH
 add wave -noupdate /testbench/HPMCSample/InitialHPMCOUNTERH
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {717301 ns} 0} {{Cursor 5} {394987 ns} 1}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {49231900 ns} 0} {{Cursor 5} {394987 ns} 1}
 quietly wave cursor active 4
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -641,4 +652,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {717254 ns} {717585 ns}
+WaveRestoreZoom {49231842 ns} {49231960 ns}

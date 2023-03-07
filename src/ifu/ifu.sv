@@ -47,7 +47,7 @@ module ifu (
   output logic [2:0]  IFUHBURST,             // Bus burst from IFU to EBU
   output logic [1:0]  IFUHTRANS,             // Bus transaction type from IFU to EBU
 
-  output logic [`XLEN-1:0]  PCFSpill,                                 // PCF with possible + 2 to handle spill to HPTW
+  output logic [`XLEN-1:0]  PCSpillF,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [`XLEN-1:0] 	PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
   input  logic 				PCSrcE,                                   // Executation stage branch is taken
@@ -101,7 +101,7 @@ module ifu (
   logic [`XLEN-1:0]            PCNextF;    // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
   logic                        BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   logic [`XLEN-1:0] 		   PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
-  logic [`XLEN-1:0]			   PCNextFSpill;                          // Next PCF after possible + 2 to handle spill
+  logic [`XLEN-1:0]			   PCSpillNextF;                          // Next PCF after possible + 2 to handle spill
   logic [`XLEN-1:0]            PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
   logic [`XLEN-1:2]            PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
   logic [`XLEN-1:0]            PCD;                                   // Decode stage instruction address
@@ -126,7 +126,7 @@ module ifu (
 
 
   logic 					   CacheableF;                            // PMA indicates instruction address is cacheable
-  logic 					   SelNextSpillF;                         // In a spill, stall pipeline and gate local stallF
+  logic 					   SelSpillNextF;                         // In a spill, stall pipeline and gate local stallF
   logic 					   BusStall;                              // Bus interface busy with multicycle operation
   logic 					   IFUCacheBusStallD;                     // EIther I$ or bus busy with multicycle operation
   logic 					   GatedStallD;                           // StallD gated by selected next spill
@@ -136,7 +136,7 @@ module ifu (
   logic 					   CacheCommittedF;                       // I$ memory operation started, delay interrupts
   logic                        SelIROM;                               // PMA indicates instruction address is in the IROM
   
-  assign PCFExt = {2'b00, PCFSpill};
+  assign PCFExt = {2'b00, PCSpillF};
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Spill Support
@@ -144,12 +144,12 @@ module ifu (
 
   if(`C_SUPPORTED) begin : Spill
     spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
-      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCNextFSpill, .PCFSpill, .SelNextSpillF, .PostSpillInstrRawF, .CompressedF);
+      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
-    assign PCNextFSpill = PCNextF;
-    assign PCFSpill = PCF;
+    assign PCSpillNextF = PCNextF;
+    assign PCSpillF = PCF;
     assign PostSpillInstrRawF = InstrRawF;
-    assign {SelNextSpillF, CompressedF} = 0;
+    assign {SelSpillNextF, CompressedF} = 0;
   end
 
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -213,7 +213,7 @@ module ifu (
 	logic IROMce;
 	assign IROMce = ~GatedStallD | reset;
     assign IFURWF = 2'b10;
-    irom irom(.clk, .ce(IROMce), .Adr(PCNextFSpill[`XLEN-1:0]), .IROMInstrF);
+    irom irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[`XLEN-1:0]), .IROMInstrF);
   end else begin
     assign IFURWF = 2'b10;
   end
@@ -245,7 +245,7 @@ module ifu (
              .CacheWriteData('0),
              .CacheRW(CacheRWF), 
              .CacheAtomic('0), .FlushCache('0),
-             .NextAdr(PCNextFSpill[11:0]),
+             .NextAdr(PCSpillNextF[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
       ahbcacheinterface #(WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW) 
@@ -286,8 +286,8 @@ module ifu (
   end
   
   assign IFUCacheBusStallD = ICacheStallF | BusStall;
-  assign IFUStallF = IFUCacheBusStallD | SelNextSpillF;
-  assign GatedStallD = StallD & ~SelNextSpillF;
+  assign IFUStallF = IFUCacheBusStallD | SelSpillNextF;
+  assign GatedStallD = StallD & ~SelSpillNextF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
 
