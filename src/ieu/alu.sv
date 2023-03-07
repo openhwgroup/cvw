@@ -80,17 +80,7 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (Mask) ? MaskB : B;
   end else assign CondMaskB = B;
 
-  /*// Sign/Zero extend mux
-  if (WIDTH == 64) begin // rv64 must handle word s/z extensions
-    always_comb 
-      case (shASelect)
-        2'b00: shA = {{1'b0}, A}; // zero-extend double-word (srl)
-        2'b01: shA = {A[63], A};  // sign-extend double-word (sra)
-        2'b10: shA = {{33'b0}, A[31:0]}; // zero-extend word (add.uw, shadd.uw, srlw)
-        2'b11: shA = {{33{A[31]}}, A[31:0]}; //sign extend-word (sraw)
-      endcase
-  end else assign shA = (SubArith) ? {A[31], A} : {{1'b0},A}; // rv32 does need to handle s/z extensions
-  */
+ 
   if (WIDTH == 64) begin
     mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A,{~W64, SubArith}, CondExtA);
