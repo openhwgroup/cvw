@@ -31,7 +31,8 @@
 `include "wally-config.vh"
 
 module cnt #(parameter WIDTH = 32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
+  input  logic [WIDTH-1:0] A, RevA,    // Operands
+  input  logic [4:0] B,                // Last 5 bits of immediate
   input  logic W64,                    // Indicates word operation
   output logic [WIDTH-1:0] CntResult   // count result
 );
@@ -40,52 +41,25 @@ module cnt #(parameter WIDTH = 32) (
   logic [WIDTH-1:0] czResult;        // count zeros result
   logic [WIDTH-1:0] cpopResult;      // population count result
   logic [WIDTH-1:0] lzcA, popcntA;
-  logic [WIDTH-1:0] revA;
 
-  //in both rv64, rv32
-  bitreverse #(WIDTH) brtz(.a(A), .b(revA));
-  
   //only in rv64
   if (WIDTH==64) begin
-    //NOTE: signal widths can be decreased
-    always_comb begin
-      //clz input select mux
-      case({B[4:0],W64})
-        6'b00000_0: lzcA = A;                       //clz
-        6'b00000_1: lzcA = {A[31:0],{32{1'b1}}};    //clzw
-        6'b00001_0: lzcA = revA;                    //ctz
-        6'b00001_1: lzcA = {revA[63:32],{32{1'b1}}}; //ctzw
-        default: lzcA = A;
-      endcase 
-
-      //cpop select mux
-      case ({B[4:0],W64})
-        6'b00010_0: popcntA = A;
-        6'b00010_1: popcntA = {{32{1'b0}}, A[31:0]};
-        default: popcntA = A;
-      endcase
-    end
+    //clz input select mux
+    mux4 #(WIDTH) lzcmux64(A, {A[31:0],{32{1'b1}}}, RevA, {RevA[63:32],{32{1'b1}}}, {B[0],W64}, lzcA);
+    //cpop select mux
+    mux2 #(WIDTH) popcntmux64(A, {{32{1'b0}}, A[31:0]}, W64, popcntA);
   end
+  //rv32
   else begin
-    //rv32
     assign popcntA = A;
-    always_comb begin
-      //clz input slect mux
-      case(B[4:0])
-        5'b00000: lzcA = A;
-        5'b00001: lzcA = revA;
-        default: lzcA = A;
-      endcase
-    end
+    mux2 #(WIDTH) lzcmux32(A, RevA, B[0], lzcA);
   end
 
-  
   lzc #(WIDTH) lzc(.num(lzcA), .ZeroCnt(czResult[$clog2(WIDTH):0]));
   popcnt #(WIDTH) popcntw(.num(popcntA), .PopCnt(cpopResult[$clog2(WIDTH):0]));
   // zero extend these results to fit into width *** There may be a more elegant way to do this
   assign czResult[WIDTH-1:$clog2(WIDTH)+1] = {(WIDTH-$clog2(WIDTH)-1){1'b0}}; 
   assign cpopResult[WIDTH-1:$clog2(WIDTH)+1] = {(WIDTH-$clog2(WIDTH)-1){1'b0}};
 
-  assign CntResult = (B[1]) ? cpopResult : czResult;
-
+  mux2 #(WIDTH) cntresultmux(czResult, cpopResult, B[1], CntResult);
 endmodule

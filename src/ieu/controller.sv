@@ -58,9 +58,10 @@ module controller(
   output logic        BranchE,                 // Branch instruction
   output logic        SCE,                     // Store Conditional instruction
   output logic        BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  output logic [3:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
+  output logic [1:0]  BSelectE,                // One-Hot encoding of if it's ZBA_ZBB_ZBC_ZBS instruction
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
-  output logic        RotateE,                 // Indicates if rotate instruction in Execute Stage
+  output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
+
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
   output logic [1:0]  MemRWM,                  // Mem read/write: MemRWM[1] = 1 for read, MemRWM[0] = 1 for write 
@@ -123,7 +124,7 @@ module controller(
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-  logic [3:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
+  logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
   logic        BW64D;                          // Indicates if it is a W type B instruction in decode stage
@@ -256,9 +257,9 @@ module controller(
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
   assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
-  // BITMANIP Configuration Block
+  // bit manipulation Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .RotateE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
@@ -268,8 +269,8 @@ module controller(
   end else begin: bitmanipi
     assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
-    assign BSelectE = 4'b0000;
-    assign BSelectD = 4'b0000;
+    assign BSelectE = 2'b00;
+    assign BSelectD = 2'b00;
     assign ZBBSelectE = 3'b000;
     assign BRegWriteD = 1'b0;
     assign BW64D = 1'b0;
@@ -277,10 +278,9 @@ module controller(
     assign BRegWriteE = 1'b0;
     assign BSubArithD = 1'b0;
     assign BComparatorSignedE = 1'b0;
-    assign RotateE = 1'b0;
+    assign BALUControlE = 3'b0;
 
     assign sltD = (Funct3D == 3'b010);
-
 
     assign IllegalBitmanipInstrD = 1'b1;
   end
