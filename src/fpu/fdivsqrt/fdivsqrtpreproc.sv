@@ -151,7 +151,7 @@ module fdivsqrtpreproc (
   lzc #(`DIVb) lzcY (IFNormLenD, mE);
 
   // Normalization shift
-  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); 
+  assign XPreproc = IFNormLenX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // *** try to remove this +1
   assign DPreproc = IFNormLenD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
 
   // append leading 1 (for normal inputs)
