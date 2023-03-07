@@ -97,6 +97,7 @@ module controller(
   logic	       BaseALUOpD, BaseW64D;           // ALU operation and W64 for Base instructions specifically
   logic	       BaseRegWriteD;                  // Indicates if Base instruction register write instruction
   logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
+  logic        BaseALUSrcBD;                   // Base instruction ALU B source select signal
   logic [2:0]  ALUControlD;                    // Determines ALU operation
   logic [2:0]  ALUSelectD;                     // ALU mux select signal
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
@@ -130,6 +131,7 @@ module controller(
   logic        BW64D;                          // Indicates if it is a W type B instruction in decode stage
   logic        BALUOpD;                        // Indicates if it is an ALU B instruction in decode stage
   logic        BSubArithD;                     // TRUE for B-type ext, clr, andn, orn, xnor
+  logic        BALUSrcBD;                      // B-type alu src select signal
   logic        BComparatorSignedE;             // Indicates if max, min (signed comarison) instruction in Execute Stage
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
@@ -179,15 +181,9 @@ module controller(
   always_comb begin
     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // default: Illegal instruction
     case(OpD)
-<<<<<<< HEAD
-    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_BaseALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
-      7'b0000000:     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Illegal instruction
-      7'b0000011:     ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
-=======
     // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
      7'b0000011: if (LFunctD) 
                       ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // loads
->>>>>>> origin
       7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
       7'b0001111: if (`ZIFENCEI_SUPPORTED)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
@@ -196,7 +192,7 @@ module controller(
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (IFunctD & `XLEN == 64)
+      7'b0011011: if ((IFunctD & `XLEN == 64))
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
@@ -239,7 +235,7 @@ module controller(
   assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
   assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ; //NOTE: Do we want to segregate the IllegalBitmanipInstrD into its own output signal
   //assign IllegalBaseInstrD = 1'b0;
-  assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, ALUSrcBD, MemRWD,
+  assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, BaseALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
 
@@ -247,6 +243,7 @@ module controller(
   assign ALUOpD = BaseALUOpD | BALUOpD; 
   assign RegWriteD = BaseRegWriteD | BRegWriteD; 
   assign W64D = BaseW64D | BW64D;
+  assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;
   assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
   
 
@@ -265,7 +262,7 @@ module controller(
 
   // bit manipulation Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, .BRegWriteD, .BALUSrcBD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
@@ -285,6 +282,7 @@ module controller(
     assign BSubArithD = 1'b0;
     assign BComparatorSignedE = 1'b0;
     assign BALUControlE = 3'b0;
+    assign BALUSrcBD = 1'b0;
 
     assign sltD = (Funct3D == 3'b010);
 
