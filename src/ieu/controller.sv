@@ -124,7 +124,6 @@ module controller(
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
-<<<<<<< HEAD
   logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
@@ -142,7 +141,6 @@ module controller(
   // Main Instruction Decoder
   always_comb
     case(OpD)
-<<<<<<< HEAD
     // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_BaseALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
       7'b0000000:     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // Illegal instruction
       7'b0000011:     ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // lw
