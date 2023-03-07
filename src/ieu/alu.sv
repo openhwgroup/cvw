@@ -80,7 +80,6 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (Mask) ? MaskB : B;
   end else assign CondMaskB = B;
 
- 
   if (WIDTH == 64) begin
     mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A,{~W64, SubArith}, CondExtA);
