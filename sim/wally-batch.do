@@ -32,6 +32,9 @@ if {$2 eq "ahb"} {
     }
     vlib wkdir/work_${1}_${2}
 }
+# Create directory for coverage data
+mkdir -p cov
+
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
@@ -80,7 +83,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
+    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
+#    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
     vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
     #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
@@ -91,6 +95,12 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # power off -r /dut/core/*
 } 
 
+coverage save -instance /testbench/dut cov/${1}_${2}.ucdb
+#vcover merge -out cov/cov.ucdb cov/rv*.ucdb
+#vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log
+
+#vcover merge -out cov/cov.ucdb cov
+#vcover report cov/cov.ucdb > cov/rpt
 #coverage report -file wally-coverage.txt
 # These aren't doing anything helpful
 #coverage report -memory 
