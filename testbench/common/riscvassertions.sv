@@ -23,7 +23,6 @@
 
 module riscvassertions;
   initial begin
-    $display("IDIV_ON_FPU = %b M_SUPPORTED %b comb %b\n", `IDIV_ON_FPU, `M_SUPPORTED, ((`IDIV_ON_FPU) || (!`M_SUPPORTED)));
     assert (`PMP_ENTRIES == 0 || `PMP_ENTRIES==16 || `PMP_ENTRIES==64) else $error("Illegal number of PMP entries: PMP_ENTRIES must be 0, 16, or 64");
     assert (`S_SUPPORTED || `VIRTMEM_SUPPORTED == 0) else $error("Virtual memory requires S mode support");
     assert (`IDIV_BITSPERCYCLE == 1 || `IDIV_BITSPERCYCLE==2 || `IDIV_BITSPERCYCLE==4) else $error("Illegal number of divider bits/cycle: IDIV_BITSPERCYCLE must be 1, 2, or 4");
