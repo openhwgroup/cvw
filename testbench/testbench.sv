@@ -415,7 +415,6 @@ logic [3:0] dummy;
 	logic 	StartSample;
 	logic 	EndSample, EndSampleFirst, EndSampleDelayed;
 	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
-	logic [`XLEN-1:0] FinalHPMCOUNTERH[`COUNTERS-1:0];
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -469,11 +468,6 @@ logic [3:0] dummy;
 	  if(StartSample) begin
 		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
 		  InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
-		end
-	  end
-	  if(EndSample) begin
-		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
-		  FinalHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
 		end
 	  end
       if(EndSample) begin
