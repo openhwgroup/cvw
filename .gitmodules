@@ -21,3 +21,6 @@
 [submodule "addins/coremark"]
 	path = addins/coremark
 	url = https://github.com/eembc/coremark
+[submodule "addins/branch-predictor-simulator"]
+	path = addins/branch-predictor-simulator
+	url = https://github.com/synxlin/branch-predictor-simulator.git

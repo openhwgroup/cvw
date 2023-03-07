@@ -43,9 +43,9 @@ module spill #(
   input logic 			   IFUCacheBusStallD, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic 			   ITLBMissF,         // ITLB miss, ignore memory request
   input logic 			   InstrUpdateDAF, // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
-  output logic [`XLEN-1:0] PCNextFSpill,      // The next PCF for one of the two memory addresses of the spill
-  output logic [`XLEN-1:0] PCFSpill,          // PCF for one of the two memory addresses of the spill
-  output logic 			   SelNextSpillF,     // During the transition between the two spill operations, the IFU should stall the pipeline
+  output logic [`XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
+  output logic [`XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
+  output logic 			   SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
   output logic [31:0] 	   PostSpillInstrRawF,// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
   output logic 			   CompressedF);      // The fetched instruction is compressed
 
@@ -57,8 +57,8 @@ module spill #(
   logic                TakeSpillF;
   logic                SpillF;
   logic                SelSpillF;
-  logic 			         SpillSaveF;
-  logic [15:0]         InstrFirstHalf;
+  logic 			   SpillSaveF;
+  logic [15:0]         InstrFirstHalfF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
@@ -67,9 +67,9 @@ module spill #(
   // compute PCF+2 from the raw PC+4
   mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
   // select between PCNextF and PCF+2
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelNextSpillF & ~FlushD), .y(PCNextFSpill));
+  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
   // select between PCF and PCF+2
-  mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCFSpill));
+  mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
 
   
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +94,7 @@ module spill #(
   end
 
   assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelNextSpillF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallD);
+  assign SelSpillNextF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallD);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF & ~FlushD;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,10 +102,10 @@ module spill #(
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   // save the first 2 bytes
-  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalf);
+  flopenr #(16) SpillInstrReg(clk, reset, SpillSaveF, InstrRawF[15:0], InstrFirstHalfF);
 
   // merge together
-  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalf}, SpillF, PostSpillInstrRawF);
+  mux2 #(32) postspillmux(InstrRawF, {InstrRawF[15:0], InstrFirstHalfF}, SpillF, PostSpillInstrRawF);
 
   // Need to use always comb to avoid pessimistic x propagation if PostSpillInstrRawF is x
   always_comb

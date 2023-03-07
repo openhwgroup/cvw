@@ -266,7 +266,7 @@ connect_debug_port u_ila_0/probe50 [get_nets [list wallypipelinedsoc/uncore.unco
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe51]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe51]
-connect_debug_port u_ila_0/probe51 [get_nets [list wallypipelinedsoc/core/hzu/BPPredWrongE ]]
+connect_debug_port u_ila_0/probe51 [get_nets [list wallypipelinedsoc/core/hzu/BPWrongE ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe52]
