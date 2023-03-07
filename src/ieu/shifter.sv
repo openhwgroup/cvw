@@ -30,10 +30,10 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN:0]     shA,                           // shift Source
+  input  logic [`XLEN-1:0]     shA,                           // shift Source
   input  logic [`XLEN-1:0]   rotA,                          // rotate source
   input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
-  input  logic                 Right, Rotate, W64,          // Shift right, rotate signals
+  input  logic                 Right, Rotate, W64, Sign,    // Shift right, rotate signals
   output logic [`XLEN-1:0]     Y);                          // Shifted result
 
   logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
@@ -45,7 +45,7 @@ module shifter (
         case({Right, Rotate})
           2'b00: z = {shA[31:0], 31'b0};
           2'b01: z = {rotA,rotA[31:1]};
-          2'b10: z = {{31{shA[32]}}, shA[31:0]};
+          2'b10: z = {{31{Sign}}, shA[31:0]};
           2'b11: z = {rotA[30:0],rotA};
         endcase
       assign amttrunc = Amt; // shift amount
@@ -54,7 +54,7 @@ module shifter (
         case ({Right, Rotate})
           2'b00: z = {shA[63:0],{63'b0}};
           2'b01: z = {rotA, rotA[63:1]};
-          2'b10: z = {{63{shA[64]}},shA[63:0]};
+          2'b10: z = {{63{Sign}},shA[63:0]};
           2'b11: z = {rotA[62:0],rotA[63:0]};
         endcase
       assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
@@ -62,12 +62,12 @@ module shifter (
   end else begin: norotfunnel
     if (`XLEN==32) begin:shifter // RV32
       always_comb  // funnel mux
-        if (Right)  z = {{31{shA[32]}}, shA[31:0]};
+        if (Right)  z = {{31{Sign}}, shA[31:0]};
         else        z = {shA[31:0], 31'b0};
       assign amttrunc = Amt; // shift amount
     end else begin:shifter  // RV64
       always_comb  // funnel mux
-        if (Right)  z = {{63{shA[64]}},shA[63:0]};
+        if (Right)  z = {{63{Sign}},shA[63:0]};
         else        z = {shA[63:0],{63'b0}};
       assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
     end

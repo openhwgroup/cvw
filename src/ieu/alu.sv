@@ -48,7 +48,7 @@ module alu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
-  logic [WIDTH-1:0] CondZextA;                                                              // Result of Zero Extend A select mux
+  logic [WIDTH-1:0] CondExtA;                                                              // Result of Zero Extend A select mux
   logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
   logic             Carry, Neg;                                                             // Flags: carry out, negative
   logic             LT, LTU;                                                                // Less than, Less than unsigned
@@ -56,7 +56,7 @@ module alu #(parameter WIDTH=32) (
   logic             SubArith;                                                               // Performing subtraction or arithmetic right shift
   logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                           // Sign bits of A, B
-  logic [WIDTH:0]   shA;                                                                    // XLEN+1 bit input source to shifter
+  logic             shSignA;
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
   logic             Rotate;                                                                 // Indicates if it is Rotate instruction
@@ -80,7 +80,7 @@ module alu #(parameter WIDTH=32) (
     assign CondMaskB = (Mask) ? MaskB : B;
   end else assign CondMaskB = B;
 
-  // Sign/Zero extend mux
+  /*// Sign/Zero extend mux
   if (WIDTH == 64) begin // rv64 must handle word s/z extensions
     always_comb 
       case (shASelect)
@@ -90,6 +90,14 @@ module alu #(parameter WIDTH=32) (
         2'b11: shA = {{33{A[31]}}, A[31:0]}; //sign extend-word (sraw)
       endcase
   end else assign shA = (SubArith) ? {A[31], A} : {{1'b0},A}; // rv32 does need to handle s/z extensions
+  */
+  if (WIDTH == 64) begin
+    mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
+    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A,{~W64, SubArith}, CondExtA);
+  end else begin 
+    mux2 #(1) signmux(1'b0, A[31], SubArith, shSignA);
+    assign CondExtA = A;
+  end
 
   // shifter rotate source select mux
   if (`ZBB_SUPPORTED) begin
@@ -99,7 +107,7 @@ module alu #(parameter WIDTH=32) (
     
   if (`ZBA_SUPPORTED) begin: zbamuxes
     // Pre-Shift
-    assign CondShiftA = shA[WIDTH-1:0] << (PreShiftAmt);
+    assign CondShiftA = CondExtA << (PreShiftAmt);
   end else assign CondShiftA = A;
 
   // Addition
@@ -108,7 +116,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.shA(shA), .rotA(rotA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64(W64), .Y(Shift), .Rotate(Rotate));
+  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA(rotA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64(W64), .Y(Shift), .Rotate(Rotate));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
