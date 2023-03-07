@@ -3,9 +3,9 @@
 //
 // Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
 // Created: 2 February 2023
-// Modified: 
+// Modified: 3 March 2023
 //
-// Purpose: RISC-V single bit manipulation unit (ZBC instructions)
+// Purpose: RISC-V ZBC top-level unit
 //
 // Documentation: RISC-V System on Chip Design Chapter ***
 // 
@@ -30,43 +30,25 @@
 `include "wally-config.vh"
 
 module zbc #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
-  input  logic [2:0]       Funct3,     // Indicates operation to perform
-  output logic [WIDTH-1:0] ZBCResult); // ZBC result
+  input  logic [WIDTH-1:0] A, RevA, B,       // Operands
+  input  logic [2:0]       Funct3,           // Indicates operation to perform
+  output logic [WIDTH-1:0] ZBCResult);       // ZBC result
 
   logic [WIDTH-1:0] ClmulResult, RevClmulResult;
-  logic [WIDTH-1:0] RevA, RevB;
+  logic [WIDTH-1:0] RevB;
   logic [WIDTH-1:0] x,y;
+  logic [1:0] select;
 
-  bitreverse #(WIDTH) brA(.a(A), .b(RevA));
+  assign select = ~Funct3[1:0];
+
   bitreverse #(WIDTH) brB(.a(B), .b(RevB));
-   
-  // zbc input select mux
-  always_comb begin
-    casez (Funct3[1:0])
-      2'b01: begin //clmul
-        x = A;
-        y = B;
-      end
-      2'b11: begin //clmulh
-        x = {RevA[WIDTH-2:0], {1'b0}};
-        y = {{1'b0}, RevB[WIDTH-2:0]};
-      end
-      2'b10: begin //clmulr
-        x = RevA;
-        y = RevB;
-      end
-      default: begin
-        x = 0;
-        y = 0;
-      end
-    endcase
-    
-  end
+
+  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, select, x);
+  mux3 #(WIDTH) ymux({{1'b0},RevB[WIDTH-2:0]}, RevB, B,  select, y);
+
   clmul #(WIDTH) clm(.A(x), .B(y), .ClmulResult(ClmulResult));
+  
   bitreverse  #(WIDTH) brClmulResult(.a(ClmulResult), .b(RevClmulResult));
 
-  assign ZBCResult = (Funct3[1]) ? RevClmulResult : ClmulResult;
-
-
+  mux2 #(WIDTH) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
 endmodule

@@ -1,6 +1,6 @@
 
 ///////////////////////////////////////////
-//
+// popccnt.sv
 // Written: Kevin Kim <kekim@hmc.edu>
 // Modified: 2/4/2023
 //
@@ -39,6 +39,4 @@ module popcnt #(parameter WIDTH = 32) (
   end
 
   assign PopCnt = sum[$clog2(WIDTH):0];
-
-  
 endmodule
