@@ -133,7 +133,7 @@ module csr #(parameter
     if (InterruptM)           NextFaultMtvalM = 0;
     else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
-      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
+      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault // *** this should probably set to the uncompressed instruction
       0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
       default:                NextFaultMtvalM = 0; // Ecall, interrupts
     endcase
