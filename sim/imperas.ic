@@ -1,11 +1,13 @@
 #--showoverrides
 #--help --helpall
---traceregs
 
 --override cpu/show_c_prefix=T
 --override cpu/unaligned=F
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
+
+# this should be 16 not 0
+--override cpu/PMP_registers=0
 
 # Enable the Imperas instruction coverage
 #-extlib    refRoot/cpu/cv=imperas.com/intercept/riscvInstructionCoverage/1.0
@@ -32,9 +34,6 @@
 # Store simulator output to logfile
 --output imperas.log
 
---override cpu/PMP_registers=0
-#--showoverrides
-#--mpdconsole
 
 # ignore settings of bits DAU for non leaf page table walks
 --override cpu/ignore_non_leaf_DAU=1
