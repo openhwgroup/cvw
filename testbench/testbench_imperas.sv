@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-// This is set from the commsnd line script
+// This is set from the command line script
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
@@ -121,10 +121,11 @@ module testbench;
       
     end
 
-  rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
-  wallyTracer wallyTracer(rvvi);
-
 `ifdef USE_IMPERAS_DV
+
+    rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+    wallyTracer wallyTracer(rvvi);
+
     trace2log idv_trace2log(rvvi);
     trace2cov idv_trace2cov(rvvi);
 
@@ -139,6 +140,7 @@ module testbench;
 
     int PRIV_RWX = RVVI_MEMORY_PRIVILEGE_READ | RVVI_MEMORY_PRIVILEGE_WRITE | RVVI_MEMORY_PRIVILEGE_EXEC;
     int PRIV_RW  = RVVI_MEMORY_PRIVILEGE_READ | RVVI_MEMORY_PRIVILEGE_WRITE;
+    int PRIV_RX  = RVVI_MEMORY_PRIVILEGE_READ |                               RVVI_MEMORY_PRIVILEGE_EXEC;
     int PRIV_X   =                                                            RVVI_MEMORY_PRIVILEGE_EXEC;
 
     initial begin 
@@ -170,11 +172,12 @@ module testbench;
       // pending and taken
       void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
       void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
-      
+
+/*
       // Memory lo, hi, priv (RVVI_MEMORY_PRIVILEGE_{READ,WRITE,EXEC})
       void'(rvviRefMemorySetPrivilege(56'h0, 56'h7fffffffff, 0));
       if (`BOOTROM_SUPPORTED)
-          void'(rvviRefMemorySetPrivilege(`BOOTROM_BASE, (`BOOTROM_BASE + `BOOTROM_RANGE), PRIV_X));
+          void'(rvviRefMemorySetPrivilege(`BOOTROM_BASE, (`BOOTROM_BASE + `BOOTROM_RANGE), PRIV_RX));
       if (`UNCORE_RAM_SUPPORTED)
           void'(rvviRefMemorySetPrivilege(`UNCORE_RAM_BASE, (`UNCORE_RAM_BASE + `UNCORE_RAM_RANGE), PRIV_RWX));
       if (`EXT_MEM_SUPPORTED)
@@ -200,6 +203,7 @@ module testbench;
           void'(rvviRefMemorySetPrivilege(`SDC_BASE, (`SDC_BASE + `SDC_RANGE), PRIV_RW));
           void'(rvviRefMemorySetVolatile(`SDC_BASE, (`SDC_BASE + `SDC_RANGE)));
       end
+*/
 
       if(`XLEN==32) begin
           void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
@@ -210,15 +214,6 @@ module testbench;
 
       void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
       
-      // These should be done in the attached client
-//      // Enable the trace2log module
-//      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
-//        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
-//      end
-//      
-//      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
-//        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
-//      end
     end
 
     always @(dut.core.MTimerInt) void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
