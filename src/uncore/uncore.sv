@@ -59,28 +59,30 @@ module uncore (
   output logic             SDCCmdOE,                  // SD Card command output enable
   input  logic             SDCCmdIn,                  // SD Card command input
   input  logic [3:0]       SDCDatIn,                  // SD Card data input
-  output logic             SDCCLK                     // SD Card clock
+  output logic             SDCCLK,                    // SD Card clock
+  input logic [3:0]        SPIIn,                     // SPI pins in
+  output logic [3:0]       SPIOut, SPICS              // SPI pins out and SPI chip select out
 );
   
   logic [`XLEN-1:0] HREADRam, HREADSDC;
 
-  logic [10:0]      HSELRegions;
-  logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic             HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic [11:0]      HSELRegions;
+  logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC, HSELSPI;
+  logic             HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
   logic             HRESPRam,  HRESPSDC;
   logic             HREADYRam, HRESPSDCD;
   logic [`XLEN-1:0] HREADBootRom; 
   logic             HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic             HSELNoneD;
-  logic             UARTIntr,GPIOIntr;
+  logic             UARTIntr,GPIOIntr,SPIIntr;
   logic 	          SDCIntM;
   
   logic             PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0]       PSEL, PREADY;
+  logic [4:0]       PSEL, PREADY;
   logic [31:0]      PADDR;
   logic [`XLEN-1:0] PWDATA;
   logic [`XLEN/8-1:0] PSTRB;
-  logic [3:0][`XLEN-1:0] PRDATA;
+  logic [4:0][`XLEN-1:0] PRDATA;
   logic [`XLEN-1:0] HREADBRIDGE;
   logic             HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -90,14 +92,14 @@ module uncore (
   adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[10:1];
+  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC, HSELSPI} = HSELRegions[11:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(4) ahbapbbridge (
-    .HCLK, .HRESETn, .HSEL({HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
+  ahbapbbridge #(5) ahbapbbridge (
+    .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
-  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART; // if any of the bridge signals are selected
+  assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
                 
   // on-chip RAM
   if (`UNCORE_RAM_SUPPORTED) begin : ram
@@ -156,9 +158,17 @@ module uncore (
       .SDCIntM	      
       );
   end else begin : sdc
-    assign SDCCLK = 0; 
+    assign SDCCLK = 0;
     assign SDCCmdOut = 0;
     assign SDCCmdOE = 0;
+  end
+  if (`SPI_SUPPORTED == 1) begin : spi
+    spi_apb spi (
+      .PCLK, .PRESETn, .PSEL(PSEL[4]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
+      .SPIOut, .SPIIn, .SPICS, .SPIIntr);
+  end else begin : spi
+    assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
   end
 
   // AHB Read Multiplexer
@@ -186,9 +196,9 @@ module uncore (
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, 
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
     {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
-    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
+    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELSPID, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
 

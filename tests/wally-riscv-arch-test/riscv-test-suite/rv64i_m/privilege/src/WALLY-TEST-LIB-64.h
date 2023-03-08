@@ -877,6 +877,7 @@ trap_handler_end_\MODE\(): // place to jump to so we can skip the trap handler a
     .8byte PLIC_THRESH1, 7, write32_test    # Set PLIC supervisor mode interrupt threshold to 7 to accept no interrupts
     .8byte PLIC_INTPRI_GPIO, 7, write32_test # Set GPIO to high priority
     .8byte PLIC_INTPRI_UART, 7, write32_test # Set UART to high priority
+    .8byte PLIC_INTPRI_SPI,  7, write32_test # Set SPI to high priority
     .8byte PLIC_INTEN00, 0xFFFFFFFF, write32_test # Enable all interrupt sources for machine mode
     .8byte PLIC_INTEN10, 0x00000000, write32_test # Disable all interrupt sources for supervisor mode
 .endm
@@ -1144,6 +1145,22 @@ uart_data_ready:
 uart_clearmodemintr:
     li t2, 0x10000006
     lb t2, 0(t2)
+    j test_loop
+
+spi_data_wait:
+    li t2, 0x10040070
+    li t3, 0x00000010
+    sw t3, 0(t2) //enable rx watermark interrupt
+    li t2, 0x10040074
+    lw t3, 0(t2) //read ie (interrupt enable register)
+    li t2, 0x00000010
+    bge t3, t2, spi_data_ready //branch to done if transmission complete
+    j spi_data_wait //else check again 
+    
+spi_data_ready:
+    li t2, 0x10040070
+    li t3, 0x00000000
+    sw t3, 0(t2) //disable rx watermark interrupt
     j test_loop
 
 goto_s_mode:

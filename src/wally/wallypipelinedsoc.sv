@@ -60,7 +60,10 @@ module wallypipelinedsoc (
   output logic 		            SDCCmdOut,        // SDC Command output
   output logic 		            SDCCmdOE,			    // SDC Command output enable
   input  logic [3:0] 	        SDCDatIn,         // SDC data input
-  output logic 		            SDCCLK			      // SDC clock
+  output logic 		            SDCCLK,			      // SDC clock
+  input logic  [3:0]          SPIIn,            // SPI pins in
+  output logic [3:0]          SPIOut,           // SPI pins out
+  output logic [3:0]          SPICS             // SPI chip select pins
 );
 
   // Uncore signals
@@ -87,7 +90,7 @@ module wallypipelinedsoc (
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
 	    .UARTSout, .MTIME_CLINT, 
-	    .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
+	    .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK, .SPIIn, .SPIOut, .SPICS);
   end
 
 endmodule

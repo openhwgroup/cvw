@@ -143,6 +143,7 @@ logic [3:0] dummy;
 
   logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
   logic        UARTSin, UARTSout;
+  logic [3:0] SPIIn, SPIOut, SPICS;
 
   logic        SDCCLK;
   logic        SDCCmdIn;
@@ -191,7 +192,7 @@ logic [3:0] dummy;
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
-                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK, .SPIIn, .SPIOut, .SPICS); 
 
   // Track names of instructions
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
@@ -355,7 +356,7 @@ logic [3:0] dummy;
               errors = errors+1;
               $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
                     tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-              $stop;//***debug
+              //$stop;//***debug
              end
             i = i + 1;
           end
