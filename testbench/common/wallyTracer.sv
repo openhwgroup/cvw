@@ -98,6 +98,37 @@ module wallyTracer(rvviTrace rvvi);
 	if(valid) begin 
 	  // machine CSRs
 	  // *** missing PMP and performance counters.
+	
+      // PMPCFG  space is 0-15 3a0 - 3af
+	  int i, i4, i8, csrid;
+      logic [`XLEN-1:0] pmp;
+      for (i=0; i<`PMP_ENTRIES; i+=8) begin
+        i4 = i / 4;
+        i8 = (i / 8) * 8;
+        pmp = 0;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+0] << 0;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+1] << 8;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+2] << 16;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+3] << 24;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+4] << 32;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+5] << 40;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+6] << 48;
+        pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+7] << 56;
+        
+        csrid = 12'h3A0 + i4;
+        //if (CSRArray[csrid] != pmp) $display("Info: %m pmpcfg%0d [%03X] %016X -> %016X", i4, csrid, CSRArray[csrid], pmp);
+        CSRArray[csrid] = pmp;
+      end
+
+      // PMPADDR space is 0-63 3b0 - 3ef
+      for (i=0; i<`PMP_ENTRIES; i++) begin
+        pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
+        
+        csrid = 12'h3B0 + i;
+        //if (CSRArray[csrid] != pmp) $display("Info: %m Change pmpaddr%0d [%03X] %016X -> %016X", i, csrid, CSRArray[csrid], pmp);
+        CSRArray[csrid] = pmp;
+      end
+      
 	  CSRArray[12'h300] = testbench.dut.core.priv.priv.csr.csrm.MSTATUS_REGW;
 	  CSRArray[12'h310] = testbench.dut.core.priv.priv.csr.csrm.MSTATUSH_REGW;
 	  CSRArray[12'h305] = testbench.dut.core.priv.priv.csr.csrm.MTVEC_REGW;
