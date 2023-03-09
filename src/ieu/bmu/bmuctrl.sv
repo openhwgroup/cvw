@@ -123,6 +123,8 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b001_00_111_1_1_1_1_0_1_0_0_0;  // roriw 
       17'b0010011_0110000_001: if (Rs2D[2])
                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // sign extend instruction
+                               else 
+                                 BMUControlsD = `BMUCTRLW'b000_10_000_1_1_0_1_0_0_0_0_0;  // count instruction
       17'b0011011_0110000_001:   BMUControlsD = `BMUCTRLW'b000_10_000_1_1_1_1_0_0_0_0_0;  // count word instruction
       17'b0111011_0000100_100: if (`XLEN == 64)
                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_0_0_1_0_0_0_0_0;  // zexth (rv64)
