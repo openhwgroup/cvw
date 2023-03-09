@@ -48,8 +48,10 @@ if [ -e "$IDV" ]; then
     export IMPERAS_HOME=$IDV/Imperas
     export IMPERAS_PERSONALITY=CPUMAN_DV_ASYNC
     export ROOTDIR=~/
-    source ${IDV}/Imperas/bin/setup.sh
-    setupImperas ${IDV}/Imperas
+    source ${IMPERAS_HOME}/bin/setup.sh
+    setupImperas ${IMPERAS_HOME}
+    export PATH=$IDV/scripts/cvw:$PATH
+    echo $PATH
 fi
 
 
