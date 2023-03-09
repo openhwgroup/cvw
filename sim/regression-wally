@@ -27,6 +27,8 @@ from collections import namedtuple
 regressionDir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(regressionDir)
 
+coverage = '-coverage' in sys.argv
+
 TestCase = namedtuple("TestCase", ['name', 'variant', 'cmd', 'grepstr'])
 # name:     the name of this test configuration (used in printing human-readable
 #           output and picking logfile names)
@@ -66,14 +68,6 @@ tc = TestCase(
 configs.append(tc)
 
 tests64gcimperas = ["imperas64i", "imperas64f", "imperas64d", "imperas64m", "imperas64c"] # unused
-tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
-for test in tests64gc:
-  tc = TestCase(
-        name=test,
-        variant="rv64gc",
-        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc "+test+"\n!",
-        grepstr="All tests ran without failures")
-  configs.append(tc)
 
 tests64i = ["arch64i"] 
 for test in tests64i:
@@ -131,6 +125,21 @@ for test in ahbTests:
         cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc ahb "+test[0]+" "+test[1]+"\n!",
         grepstr="All tests ran without failures")
   configs.append(tc)
+
+#tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
+tests64gc = ["arch64i", "arch64c",  "arch64m"] 
+if (coverage):  # delete all but 64gc tests when running coverage
+    configs = []
+    coverStr = '-coverage'
+else:
+   coverStr = ''
+for test in tests64gc:
+  tc = TestCase(
+        name=test,
+        variant="rv64gc",
+        cmd="vsim > {} -c <<!\ndo wally-batch.do rv64gc "+test+" " + coverStr + "\n!",
+        grepstr="All tests ran without failures")
+  configs.append(tc)
   
 
 import os
@@ -158,7 +167,7 @@ def run_test_case(config):
 
 def main():
     """Run the tests and count the failures"""
-    global configs
+    global configs, coverage
     try:
         os.chdir(regressionDir)
         os.mkdir("logs")
@@ -183,6 +192,10 @@ def main():
     elif '-buildroot' in sys.argv:
         TIMEOUT_DUR = 30*7200 # seconds
         configs=[getBuildrootTC(boot=True)]
+    elif '-coverage' in sys.argv:
+        TIMEOUT_DUR = 20*60 # seconds       
+        #configs.append(getBuildrootTC(boot=False))
+        os.system('rm cov/*.ucdb')
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
@@ -201,6 +214,11 @@ def main():
              num_fail+=1
              print(f"{bcolors.FAIL}%s_%s: Timeout - runtime exceeded %d seconds{bcolors.ENDC}" % (config.variant, config.name, TIMEOUT_DUR))
 
+    # Coverage report
+    if coverage:
+       print('Generating coverage report')
+       os.system('vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log')
+       os.system('vcover report -details cov/cov.ucdb > cov/rv64gc_coverage.rpt')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
