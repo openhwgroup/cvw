@@ -51,7 +51,6 @@ if [ -e "$IDV" ]; then
     source ${IMPERAS_HOME}/bin/setup.sh
     setupImperas ${IMPERAS_HOME}
     export PATH=$IDV/scripts/cvw:$PATH
-    echo $PATH
 fi
 
 
