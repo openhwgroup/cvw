@@ -447,6 +447,17 @@ logic [3:0] dummy;
 	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
 	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
+	end else if(TEST == "coremark") begin
+	  // embench runs warmup then runs start_trigger
+	  // embench end with stop_trigger.
+	  assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+
+	  assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+
 	end else begin
 	  // default start condiction is reset
 	  // default end condiction is end of test (DCacheFlushDone)
