@@ -366,11 +366,9 @@ add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VI
 add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/WalkerState
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/HPTWAdr
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PTE
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PCFSpill
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/NextPageType
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PageType
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ValidNonLeafPTE
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PCFSpill
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/ITLBMissF
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ITLBWriteF
@@ -467,7 +465,6 @@ add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/d
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/IFUCacheBusStallD
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/ITLBMissF
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/TakeSpillF
-add wave -noupdate -group ifu -group Spill /testbench/dut/core/ifu/SelNextSpillF
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HSIZE
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HBURST
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HTRANS
@@ -635,8 +632,10 @@ add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/DCacheMis
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/InstrValidNotFlushedM
 add wave -noupdate /testbench/clk
 add wave -noupdate /testbench/HPMCSample/InitialHPMCOUNTERH
+add wave -noupdate /testbench/HPMCSample/EndSample
+add wave -noupdate /testbench/HPMCSample/StartSample
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {49231900 ns} 0} {{Cursor 5} {394987 ns} 1}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {23 ns} 0} {{Cursor 5} {394987 ns} 1}
 quietly wave cursor active 4
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -652,4 +651,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {49231842 ns} {49231960 ns}
+WaveRestoreZoom {0 ns} {52 ns}
