@@ -43,7 +43,7 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB,CondMaskInvB, Shift, SLT, SLTU, FullResult,ALUResult;          // Intermediate Signals 
+  logic [WIDTH-1:0] CondMaskInvB, Shift, SLT, SLTU, FullResult,ALUResult;          // Intermediate Signals 
   logic [WIDTH-1:0] ZBCResult, ZBBResult;                                                   // Result of ZBB, ZBC
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
