@@ -101,8 +101,7 @@ module alu #(parameter WIDTH=32) (
 
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
-  assign CondInvB = SubArith ? ~B : B;
-  assign {Carry, Sum} = CondShiftA + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
+  assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
   shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA(rotA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64(W64), .Y(Shift), .Rotate(Rotate));
