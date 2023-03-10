@@ -38,7 +38,7 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, SLT, SLTU, FullResult;  // Intermediate results
+  logic [WIDTH-1:0] CondInvB, Shift, FullResult;             // Intermediate results
   logic             Carry, Neg;                              // Flags: carry out, negative
   logic             LT, LTU;                                 // Less than, Less than unsigned
   logic             W64;                                     // RV64 W-type instruction
@@ -66,21 +66,17 @@ module alu #(parameter WIDTH=32) (
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
  
-  // SLT
-  assign SLT = {{(WIDTH-1){1'b0}}, LT};
-  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
- 
   // Select appropriate ALU Result
   always_comb
-    if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
-    else casez (Funct3)               // Otherwise check Funct3
-      3'b000: FullResult = Sum;       // add or sub
-      3'b?01: FullResult = Shift;     // sll, sra, or srl
-      3'b010: FullResult = SLT;       // slt
-      3'b011: FullResult = SLTU;      // sltu
-      3'b100: FullResult = A ^ B;     // xor
-      3'b110: FullResult = A | B;     // or 
-      3'b111: FullResult = A & B;     // and
+    if (~ALUOp) FullResult = Sum;                     // Always add for ALUOp = 0 (address generation)
+    else casez (Funct3)                               // Otherwise check Funct3
+      3'b000: FullResult = Sum;                       // add or sub
+      3'b?01: FullResult = Shift;                     // sll, sra, or srl
+      3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};   // slt
+      3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};  // sltu
+      3'b100: FullResult = A ^ B;                     // xor
+      3'b110: FullResult = A | B;                     // or 
+      3'b111: FullResult = A & B;                     // and
     endcase
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
