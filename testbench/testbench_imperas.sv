@@ -138,11 +138,6 @@ module testbench;
                 .CMP_CSR     (1)
                ) idv_trace2api(rvvi);
 
-    int PRIV_RWX = RVVI_MEMORY_PRIVILEGE_READ | RVVI_MEMORY_PRIVILEGE_WRITE | RVVI_MEMORY_PRIVILEGE_EXEC;
-    int PRIV_RW  = RVVI_MEMORY_PRIVILEGE_READ | RVVI_MEMORY_PRIVILEGE_WRITE;
-    int PRIV_RX  = RVVI_MEMORY_PRIVILEGE_READ |                               RVVI_MEMORY_PRIVILEGE_EXEC;
-    int PRIV_X   =                                                            RVVI_MEMORY_PRIVILEGE_EXEC;
-
     initial begin 
       
       MAX_ERRS = 3;
@@ -173,37 +168,25 @@ module testbench;
       void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
       void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
 
-/*
-      // Memory lo, hi, priv (RVVI_MEMORY_PRIVILEGE_{READ,WRITE,EXEC})
-      void'(rvviRefMemorySetPrivilege(56'h0, 56'h7fffffffff, 0));
-      if (`BOOTROM_SUPPORTED)
-          void'(rvviRefMemorySetPrivilege(`BOOTROM_BASE, (`BOOTROM_BASE + `BOOTROM_RANGE), PRIV_RX));
-      if (`UNCORE_RAM_SUPPORTED)
-          void'(rvviRefMemorySetPrivilege(`UNCORE_RAM_BASE, (`UNCORE_RAM_BASE + `UNCORE_RAM_RANGE), PRIV_RWX));
-      if (`EXT_MEM_SUPPORTED)
-          void'(rvviRefMemorySetPrivilege(`EXT_MEM_BASE, (`EXT_MEM_BASE + `EXT_MEM_RANGE), PRIV_RWX));
-          
+      // Privileges for PMA are set in the imperas.ic
+      // volatile (IO) regions are defined here
+      // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
       if (`CLINT_SUPPORTED) begin
-          void'(rvviRefMemorySetPrivilege(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE), PRIV_RW));
           void'(rvviRefMemorySetVolatile(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE)));
       end
       if (`GPIO_SUPPORTED) begin
-          void'(rvviRefMemorySetPrivilege(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE), PRIV_RW));
           void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
       end
       if (`UART_SUPPORTED) begin
-          void'(rvviRefMemorySetPrivilege(`UART_BASE, (`UART_BASE + `UART_RANGE), PRIV_RW));
-          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
+          //void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
+          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + 7))); // BUG
       end
       if (`PLIC_SUPPORTED) begin
-          void'(rvviRefMemorySetPrivilege(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE), PRIV_RW));
           void'(rvviRefMemorySetVolatile(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE)));
       end
       if (`SDC_SUPPORTED) begin
-          void'(rvviRefMemorySetPrivilege(`SDC_BASE, (`SDC_BASE + `SDC_RANGE), PRIV_RW));
           void'(rvviRefMemorySetVolatile(`SDC_BASE, (`SDC_BASE + `SDC_RANGE)));
       end
-*/
 
       if(`XLEN==32) begin
           void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
