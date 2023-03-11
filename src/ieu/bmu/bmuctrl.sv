@@ -147,11 +147,11 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b001_00_111_1_1_0_1_0_1_0_0_0;  // rori (rv64)
       17'b0011011_0110000_101: if (`XLEN == 64 & `ZBB_SUPPORTED) 
                                  BMUControlsD = `BMUCTRLW'b001_00_111_1_1_1_1_0_1_0_0_0;  // roriw 
-      17'b0010011_0110000_001: if (Rs2D[2] & `ZBB_SUPPORTED)
+      17'b0010011_0110000_001: if (Rs2D[2] & `ZBB_SUPPORTED & (Rs2D[4:1] == 4'b0010))
                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // sign extend instruction
-                               else 
+                               else if (`ZBB_SUPPORTED & ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0])))
                                  BMUControlsD = `BMUCTRLW'b000_10_000_1_1_0_1_0_0_0_0_0;  // count instruction
-      17'b0011011_0110000_001: if (`XLEN == 64 & `ZBB_SUPPORTED)
+      17'b0011011_0110000_001: if (`XLEN == 64 & `ZBB_SUPPORTED & ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0])))
                                  BMUControlsD = `BMUCTRLW'b000_10_000_1_1_1_1_0_0_0_0_0;  // count word instruction
       17'b0111011_0000100_100: if (`XLEN == 64 & `ZBB_SUPPORTED)
                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_0_0_1_0_0_0_0_0;  // zexth (rv64)
@@ -163,11 +163,11 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b110_01_111_1_0_0_1_1_0_0_0_0;  // orn
       17'b0110011_0100000_100: if (`ZBB_SUPPORTED)
                                  BMUControlsD = `BMUCTRLW'b100_01_111_1_0_0_1_1_0_0_0_0;  // xnor
-      17'b0010011_0110101_101: if (`XLEN == 64 & `ZBB_SUPPORTED) 
+      17'b0010011_0110101_101: if (`XLEN == 64 & `ZBB_SUPPORTED & (Rs2D == 5'b11000))
                                  BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8 (rv64)
-      17'b0010011_0110100_101: if (`XLEN == 32 & `ZBB_SUPPORTED) 
+      17'b0010011_0110100_101: if (`XLEN == 32 & `ZBB_SUPPORTED & (Rs2D == 5'b11000)) 
                                  BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8 (rv32)
-      17'b0010011_0010100_101: if (`ZBB_SUPPORTED)
+      17'b0010011_0010100_101: if (`ZBB_SUPPORTED & Rs2D[4:0] == 5'b00111)
                                  BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // orc.b
       17'b0110011_0000101_110: if (`ZBB_SUPPORTED)
                                  BMUControlsD = `BMUCTRLW'b000_10_100_1_0_0_1_0_0_0_0_0;  // max
