@@ -35,9 +35,9 @@ module btb #(parameter Depth = 10 ) (
   input  logic 			   reset,
   input  logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
   input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,// PC at various stages
-  output logic [`XLEN-1:0] BTAF, // BTB's guess at PC
-  output logic [`XLEN-1:0] BTAD,
-  output logic [`XLEN-1:0] BTAE,
+  output logic [`XLEN-1:0] BPBTAF, // BTB's guess at PC
+  output logic [`XLEN-1:0] BPBTAD,
+  output logic [`XLEN-1:0] BPBTAE,
   output logic [3:0] 	   BTBIClassF, // BTB's guess at instruction class
   // update
   input  logic 			   IClassWrongM, // BTB's instruction class guess was wrong
@@ -57,8 +57,8 @@ module btb #(parameter Depth = 10 ) (
   logic [`XLEN+3:0] 	   TableBTBPredF;
   logic [`XLEN-1:0] 	   IEUAdrW;
   logic [`XLEN-1:0]        PCW;
-  logic 				   BTBWrongE, BTAWrongE;
-  logic 				   BTBWrongM, BTAWrongM;
+  logic 				   BTBWrongE, BPBTAWrongE;
+  logic 				   BTBWrongM, BPBTAWrongM;
   
   
   // hashing function for indexing the PC
@@ -84,12 +84,12 @@ module btb #(parameter Depth = 10 ) (
   assign MatchW = PCFIndex == PCWIndex;
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BTAD} :
+  assign ForwardBTBPredictionF = MatchD ? {InstrClassD, BPBTAD} :
                                  MatchE ? {InstrClassE, IEUAdrE} :
                                  MatchM ? {InstrClassM, IEUAdrM} :
                                  {InstrClassW, IEUAdrW} ;
 
-  assign {BTBIClassF, BTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredF};
+  assign {BTBIClassF, BPBTAF} = MatchX ? ForwardBTBPredictionF : {TableBTBPredF};
 
 
   // An optimization may be using a PC relative address.
@@ -97,16 +97,16 @@ module btb #(parameter Depth = 10 ) (
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredF),
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(BTBWrongM), .bwe2('1));
 
-  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BTAF, BTAD);
+  flopenrc #(`XLEN) BTBD(clk, reset, FlushD, ~StallD, BPBTAF, BPBTAD);
 
-  // BTAE is not strickly necessary.  However it is used by two parts of wally.
+  // BPBTAE is not strickly necessary.  However it is used by two parts of wally.
   // 1. It gates updates to the BTB when the prediction does not change.  This save power.
-  // 2. BTAWrongE is used by the performance counters to track when the BTB's BTA or instruction class is wrong.
-  flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BTAD, BTAE);
-  assign BTAWrongE = (BTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]);
+  // 2. BPBTAWrongE is used by the performance counters to track when the BTB's BPBTA or instruction class is wrong.
+  flopenrc #(`XLEN) BTBTargetEReg(clk, reset, FlushE, ~StallE, BPBTAD, BPBTAE);
+  assign BPBTAWrongE = (BPBTAE != IEUAdrE) & (InstrClassE[0] | InstrClassE[1] & ~InstrClassE[2]);
 
-  flopenrc #(1) BTAWrongMReg(clk, reset, FlushM, ~StallM, BTAWrongE, BTAWrongM);  
-  assign BTBWrongM = BTAWrongM | IClassWrongM;
+  flopenrc #(1) BPBTAWrongMReg(clk, reset, FlushM, ~StallM, BPBTAWrongE, BPBTAWrongM);  
+  assign BTBWrongM = BPBTAWrongM | IClassWrongM;
   
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
   flopenr #(`XLEN) IEUAdrWReg(clk, reset, ~StallW, IEUAdrM, IEUAdrW);
