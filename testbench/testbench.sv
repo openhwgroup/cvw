@@ -544,9 +544,11 @@ logic [3:0] dummy;
       string direction;
       int    file;
 	  logic  PCSrcM;
+	  string LogFile;
 	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
       initial begin
-        file = $fopen("branch.log", "w");
+		LogFile = $psprintf("branch_%s%d.log", `BPRED_TYPE, `BPRED_SIZE);
+        file = $fopen(LogFile, "w");
 	  end
       always @(posedge clk) begin
 		if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
