@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
-				          OFFSETLEN = 5, INDEXLEN = 9, DIRTY_BITS = 1) (
+				          OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
@@ -163,7 +163,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // Dirty bits
-  if (DIRTY_BITS) begin:dirty
+  if (!READ_ONLY_CACHE) begin:dirty
     always_ff @(posedge clk) begin
       // reset is optional.  Consider merging with TAG array in the future.
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
