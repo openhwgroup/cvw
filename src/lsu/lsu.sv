@@ -266,7 +266,7 @@ module lsu (
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
-        .FlushCache(FlushDCache), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
