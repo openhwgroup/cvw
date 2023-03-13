@@ -257,11 +257,7 @@ if(sys.argv[1] == '-b'):
     else:
         combined = benchmarkDict['All_']
         # merge the reference data into rtl data
-        print('Doing stuff')
-        print(combined)
         combined.extend(RefData)
-        print('Doing stuff')
-        print(combined)
         (name, value) = FormatToPlot(combined)
         lst = []
         dct = {}
