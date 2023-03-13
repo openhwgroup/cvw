@@ -36,12 +36,10 @@ import re
 #                           [14.5859173702079, 12.3634674403619, 10.5806018170154, 8.38831266973592, 6.37097544620762, 3.52638362703015])
 #}
 
-RefData = [('twobitCModel6', 11.068), ('twobitCModel8', 8.53864970807778), ('twobitCModel10', 7.59565430177984),
-           ('twobitCModel12', 6.38741598498948), ('twobitCModel14', 5.83662961500838), ('twobitCModel16', 5.83662961500838),
-           ('gshareCModel6', 14.5859173702079), ('gshareCModel8', 12.3634674403619), ('gshareCModel10', 10.5806018170154),
-           ('gshareCModel12', 8.38831266973592), ('gshareCModel14', 6.37097544620762), ('gshareCModel16', 3.52638362703015)]
-
-
+RefData = [('twobitCModel6', 11.0501534891674), ('twobitCModel8', 8.51829052266352), ('twobitCModel10', 7.56775222626483),
+           ('twobitCModel12', 6.31366834586515), ('twobitCModel14', 5.72699936834177), ('twobitCModel16', 5.72699936834177),
+           ('gshareCModel6', 14.5731555979574), ('gshareCModel8', 12.3155658100497), ('gshareCModel10', 10.4589596630561),
+           ('gshareCModel12', 8.25796055444401), ('gshareCModel14', 6.23093702707613), ('gshareCModel16', 3.34001125650374)]
 
 
 def ComputeCPI(benchmark):
