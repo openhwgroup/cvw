@@ -30,6 +30,20 @@ import sys
 import matplotlib.pyplot as plt
 import re
 
+#RefData={'twobitCModel' :(['6', '8', '10', '12', '14', '16'],
+#                          [11.0680836450622, 8.53864970807778, 7.59565430177984, 6.38741598498948, 5.83662961500838, 5.83662961500838]),
+#         'gshareCModel' : (['6', '8', '10', '12', '14', '16'],
+#                           [14.5859173702079, 12.3634674403619, 10.5806018170154, 8.38831266973592, 6.37097544620762, 3.52638362703015])
+#}
+
+RefData = [('twobitCModel6', 11.068), ('twobitCModel8', 8.53864970807778), ('twobitCModel10', 7.59565430177984),
+           ('twobitCModel12', 6.38741598498948), ('twobitCModel14', 5.83662961500838), ('twobitCModel16', 5.83662961500838),
+           ('gshareCModel6', 14.5859173702079), ('gshareCModel8', 12.3634674403619), ('gshareCModel10', 10.5806018170154),
+           ('gshareCModel12', 8.38831266973592), ('gshareCModel14', 6.37097544620762), ('gshareCModel16', 3.52638362703015)]
+
+
+
+
 def ComputeCPI(benchmark):
     'Computes and inserts CPI into benchmark stats.'
     (nameString, opt, dataDict) = benchmark
@@ -221,14 +235,15 @@ if(sys.argv[1] == '-b'):
     for benchmark in benchmarkAll:
         (name, opt, config, dataDict) = benchmark
         if name+'_'+opt in benchmarkDict:
-            benchmarkDict[name+'_'+opt].append((config, dataDict['BTMR']))
+            benchmarkDict[name+'_'+opt].append((config, dataDict['BDMR']))
         else:
-            benchmarkDict[name+'_'+opt] = [(config, dataDict['BTMR'])]
+            benchmarkDict[name+'_'+opt] = [(config, dataDict['BDMR'])]
 
     size = len(benchmarkDict)
     index = 1
     if(summery == 0):
         #print('Number of plots', size)
+
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             (names, values) = FormatToPlot(currBenchmark)
@@ -241,6 +256,12 @@ if(sys.argv[1] == '-b'):
             index += 1
     else:
         combined = benchmarkDict['All_']
+        # merge the reference data into rtl data
+        print('Doing stuff')
+        print(combined)
+        combined.extend(RefData)
+        print('Doing stuff')
+        print(combined)
         (name, value) = FormatToPlot(combined)
         lst = []
         dct = {}
@@ -264,8 +285,8 @@ if(sys.argv[1] == '-b'):
                     dct[PredType] = (currSize, currPercent)
         print(dct)
         fig, axes = plt.subplots()
-        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x'}
-        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue'}
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x', 'twobitCModel' : 'x', 'gshareCModel' : '*'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue', 'twobitCModel' : 'gray', 'gshareCModel' : 'dodgerblue'}
         for cat in dct:
             (x, y) = dct[cat]
             x=[int(2**int(v)) for v in x]
