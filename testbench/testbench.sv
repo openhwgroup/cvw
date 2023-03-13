@@ -545,12 +545,16 @@ logic [3:0] dummy;
       int    file;
 	  logic  PCSrcM;
 	  string LogFile;
+	  logic  resetD, resetEdge;
 	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+	  flop #(1) ResetDReg(clk, reset, resetD);
+	  assign resetEdge = ~reset & resetD;
       initial begin
-		LogFile = $psprintf("branch_%s%d.log", `BPRED_TYPE, `BPRED_SIZE);
+		LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
         file = $fopen(LogFile, "w");
 	  end
       always @(posedge clk) begin
+		if(resetEdge) $fwrite(file, "TRAIN\n");
 		if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
 		if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
 		  direction = PCSrcM ? "t" : "n";
