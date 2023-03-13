@@ -74,7 +74,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   logic                          SelAdr;
   logic [1:0]                    AdrSelMuxSel;
-  logic [SETLEN-1:0]             CAdr;
+  logic [SETLEN-1:0]             CacheSet;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearValid, ClearDirty, SetDirty, SetValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
@@ -106,24 +106,24 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Choose read address (CAdr).  Normally use NextAdr, but use PAdr during stalls
+  // Choose read address (CacheSet).  Normally use NextAdr, but use PAdr during stalls
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
   assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
   mux3 #(SETLEN) AdrSelMux(NextAdr[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
-    AdrSelMuxSel, CAdr);
+    AdrSelMuxSel, CacheSet);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
+    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
     .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
+      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn(LRUWriteEn & ~FlushStage),
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
