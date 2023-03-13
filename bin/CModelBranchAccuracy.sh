@@ -27,30 +27,31 @@
 ################################################################################################
 
 
-irectory="$1"
-Predictor="$2"
-Size="$3"
+Directory="$1"
+Files="$1/*.log"
 
-
-File="$1"
-BeginLineNumbers=`cat $File | grep -n "BEGIN" | awk -NF ':' '{print $1}'`
-Name=`cat $File | grep -n "BEGIN" | awk -NF '/' '{print $6_$4}'`
-EndLineNumbers=`cat $File | grep -n "END" | awk -NF ':' '{print $1}'`
-echo $Name
-echo $BeginLineNumbers
-echo $EndLineNumbers
-
-NameArray=($Name)
-BeginLineNumberArray=($BeginLineNumbers)
-EndLineNumberArray=($EndLineNumbers)
-
-mkdir -p branch
-Length=${#EndLineNumberArray[@]}
-for i in $(seq 0 1 $((Length-1)))
+for Pred in "bimodal" "gshare"
 do
-    CurrName=${NameArray[$i]}
-    CurrStart=$((${BeginLineNumberArray[$i]}+1))
-    CurrEnd=$((${EndLineNumberArray[$i]}-1))
-    echo $CurrName, $CurrStart, $CurrEnd
-    sed -n "${CurrStart},${CurrEnd}p" $File > branch/${CurrName}_branch.log
+    for Size in $(seq 6 2 16)
+    do
+	if [ $Pred = "gshare" ]; then
+	    SizeString="$Size $Size 18 1"
+	elif [ $Pred = "bimodal" ]; then
+	    SizeString="$Size 18 1"
+	fi
+
+	Product=1.0
+	Count=0
+	for File in $Files
+	do
+	    #echo "sim_bp $Pred $Size $Size 18 1 $File | tail -1 | awk '{print $4}'"
+	    #echo "sim_bp $Pred $SizeString $File | tail -1 | awk '{print $4}'"
+	    BMDR=`sim_bp $Pred $SizeString $File | tail -1 | awk '{print $4}'`
+	    Product=`echo "$Product * $BMDR" | bc`
+	    Count=$((Count+1))
+	done
+
+	GeoMean=`perl -E "say $Product**(1/$Count)"`
+	echo "$Pred$Size $GeoMean"
+    done
 done
