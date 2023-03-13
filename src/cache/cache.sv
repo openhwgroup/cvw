@@ -39,7 +39,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic [1:0]             CacheAtomic,       // Atomic operation
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [11:0]            NextAdr,           // Virtual address, but we only use the lower 12 bits.
+  input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [`PA_BITS-1:0]    PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
   input  logic [WORDLEN-1:0]     CacheWriteData,    // Data to write to cache (D$ only)
@@ -50,7 +50,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   output logic                   CacheMiss,         // Cache miss
   output logic                   CacheAccess,       // Cache access
   // lsu control
-  input  logic                   SelHPTW,           // Use PAdr from Hardware Page Table Walker rather than NextAdr
+  input  logic                   SelHPTW,           // Use PAdr from Hardware Page Table Walker rather than NextSet
   // Bus fsm interface
   input  logic                   CacheBusAck,       // Bus operation completed
   input  logic                   SelBusBeat,        // Word in cache line comes from BeatCount
@@ -106,12 +106,12 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Choose read address (CacheSet).  Normally use NextAdr, but use PAdr during stalls
+  // Choose read address (CacheSet).  Normally use NextSet, but use PAdr during stalls
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
   assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
-  mux3 #(SETLEN) AdrSelMux(NextAdr[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+  mux3 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSel, CacheSet);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
