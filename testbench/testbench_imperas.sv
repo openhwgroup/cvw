@@ -178,8 +178,7 @@ module testbench;
           void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
       end
       if (`UART_SUPPORTED) begin
-          //void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
-          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + 7))); // BUG
+          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
       end
       if (`PLIC_SUPPORTED) begin
           void'(rvviRefMemorySetVolatile(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE)));
