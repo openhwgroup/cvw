@@ -233,7 +233,7 @@ module ifu (
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
       cache #(.LINELEN(`ICACHE_LINELENINBITS),
               .NUMLINES(`ICACHE_WAYSIZEINBYTES*8/`ICACHE_LINELENINBITS),
-              .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .DCACHE(0))
+              .NUMWAYS(`ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
              .FetchBuffer, .CacheBusAck(ICacheBusAck),
              .CacheBusAdr(ICacheBusAdr), .CacheStall(ICacheStallF), 
@@ -245,7 +245,7 @@ module ifu (
              .CacheWriteData('0),
              .CacheRW(CacheRWF), 
              .CacheAtomic('0), .FlushCache('0),
-             .NextAdr(PCSpillNextF[11:0]),
+             .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
       ahbcacheinterface #(WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW) 

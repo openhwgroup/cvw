@@ -43,7 +43,7 @@ module hazard (
 );
 
   logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
-  logic                                       FirstUnstalledD, FirstUnstalledE, FirstUnstalledM, FirstUnstalledW;
+  logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
   logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
   
   // stalls and flushes
@@ -95,14 +95,14 @@ module hazard (
   assign #1 StallW = StallWCause;
 
   // detect the first stage that is not stalled
-  assign FirstUnstalledD = ~StallD & StallF;
-  assign FirstUnstalledE = ~StallE & StallD;
-  assign FirstUnstalledM = ~StallM & StallE;
-  assign FirstUnstalledW = ~StallW & StallM;
+  assign LatestUnstalledD = ~StallD & StallF;
+  assign LatestUnstalledE = ~StallE & StallD;
+  assign LatestUnstalledM = ~StallM & StallE;
+  assign LatestUnstalledW = ~StallW & StallM;
   
   // Each stage flushes if the previous stage is the last one stalled (for cause) or the system has reason to flush
-  assign #1 FlushD = FirstUnstalledD | FlushDCause; 
-  assign #1 FlushE = FirstUnstalledE | FlushECause;
-  assign #1 FlushM = FirstUnstalledM | FlushMCause;
-  assign #1 FlushW = FirstUnstalledW | FlushWCause;
+  assign #1 FlushD = LatestUnstalledD | FlushDCause; 
+  assign #1 FlushE = LatestUnstalledE | FlushECause;
+  assign #1 FlushM = LatestUnstalledM | FlushMCause;
+  assign #1 FlushW = LatestUnstalledW | FlushWCause;
 endmodule

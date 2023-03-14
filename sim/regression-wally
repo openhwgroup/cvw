@@ -126,8 +126,7 @@ for test in ahbTests:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-#tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
-tests64gc = ["arch64i", "arch64c",  "arch64m"] 
+tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     coverStr = '-coverage'
