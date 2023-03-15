@@ -29,6 +29,8 @@
 //   OR OTHER DEALINGS IN THE SOFTWARE.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
+
 `include "wally-config.vh"
 
 module spi_apb (
@@ -54,8 +56,9 @@ module spi_apb (
     logic [31:0] cs_id, cs_def, cs_mode;
     logic [31:0] delay0, delay1;
     logic [31:0] fmt;
-    logic [31:0] tx_data, rx_data, tx_mark, rx_mark;
-    logic [31:0] f_ctrl, f_fmt;
+    logic [31:0] rx_data, tx_mark, rx_mark;
+    logic [7:0] tx_data;
+    //logic [31:0] f_ctrl, f_fmt;
     logic [31:0] ie, ip;
 
     logic [7:0] entry;
@@ -94,7 +97,7 @@ module spi_apb (
             delay0 <= #1 {8'b0,8'b1,8'b0,8'b1};
             delay1 <= #1 {8'b0,8'b0,8'b0,8'b1};
             fmt <= #1 {12'b0,4'd8,16'b0};
-            tx_data[30:0] <= #1 31'b0;
+            tx_data <= #1 8'b0;
             tx_mark <= #1 0;
             rx_mark <= #1 0;
             //f_ctrl <= #1 32'b1;
@@ -108,7 +111,7 @@ module spi_apb (
             //From spec. "Hardware interlocks ensure that the current transfer completes before mode transitions and control register updates take effect"
             // Interpreting 'current transfer' as everything in FIFO, otherwise control register bits have to be added to each FIFO frame
             /* verilator lint_off CASEINCOMPLETE */
-            if (memwrite & ~busy)
+            if (memwrite)
                 case(entry) //flop to sample inputs
                     8'h00: sck_div <= Din;
                     8'h04: sck_mode <= Din;
@@ -118,8 +121,7 @@ module spi_apb (
                     8'h28: delay0 <= Din;
                     8'h2C: delay1 <= Din;
                     8'h40: fmt <= Din;
-                    8'h48: if (~tx_data[31]) tx_data <= {TXwfull, 23'b0, Din[7:0]};
-                           else tx_data <= {TXwfull, 31'b0};
+                    8'h48: if (~TXwfull) tx_data <= Din[7:0];
                     8'h50: tx_mark <= Din;
                     8'h54: rx_mark <= Din;
                     8'h70: ie <= Din;
@@ -137,7 +139,7 @@ module spi_apb (
                 8'h28: Dout <= #1 delay0;
                 8'h2C: Dout <= #1 delay1;
                 8'h40: Dout <= #1 fmt;
-                8'h48: Dout <= #1 {tx_data[31], 31'b0};
+                8'h48: Dout <= #1 {TXwfull, 31'b0};
                 8'h4C: if (~rx_data[31]) Dout <= #1 rx_data;
                 8'h50: Dout <= #1 tx_mark;
                 8'h54: Dout <= #1 rx_mark;
@@ -149,7 +151,7 @@ module spi_apb (
 
     //SCK_CONTROL
     logic sck;
-    logic [12:0] div_counter;
+    logic [12:0] div_counter, div_counter_edge;
     logic tx_empty;
     logic sclk_edge;
     logic sclk_duty;
@@ -162,8 +164,27 @@ module spi_apb (
     logic interxfr_cmp;
     logic [8:0] interxfr_cnt;
     logic [3:0] cs_internal;
-    logic [5:0] frame_cnt;
-    logic [5:0] frame_cmp;
+    logic [4:0] frame_cnt;
+    logic [4:0] frame_cmp;
+    logic active;
+    logic frame_cmp_bool;
+    logic [4:0] frame_cnt_shifted;
+    logic [4:0] frame_cnt_shift_pre;
+    logic [4:0] penultimate_frame;
+    logic [4:0] frame_cmp_pre_bool;
+
+    //assign frame_cnt_shifted = (frame_cnt << fmt[1:0]);
+    always_comb
+        case(fmt[1:0])
+            2'b00: frame_cnt_shifted = frame_cnt;
+            2'b01: frame_cnt_shifted = {frame_cnt[3:0], 1'b0};
+            2'b10: frame_cnt_shifted = {frame_cnt[2:0], 2'b0};
+        endcase
+    
+    assign penultimate_frame = fmt[1] ? {3'b0,fmt[1:0]} : {3'b0, 2'b01};
+    assign frame_cmp_bool = (frame_cnt_shifted < frame_cmp);
+    assign frame_cnt_shift_pre = frame_cnt_shifted + penultimate_frame;
+    assign frame_cmp_pre_bool = (frame_cnt_shift_pre >= frame_cmp);
 
 
     // definitions for FIFO
@@ -174,26 +195,43 @@ module spi_apb (
     logic [7:0] TXrdata, RXwdata;
     logic [2:0] txWWatermarkLevel, rxRWatermarkLevel;
 
+    logic sclk_reset_0, sclk_reset_1;
 
-    assign sclk_edge = (div_counter == (({sck_div[11:0], 1'b0}) + 13'b1));
-    //assign tx_empty = ~|(tx_data[7:0]);
+
+
+    assign sclk_edge = (div_counter_edge == (({sck_div[11:0], 1'b0}) + 13'b1));
+    //assign tx_empty = ~|(tx_data);
     //incorrect way to assess this, replace FSM assign at end
-    assign sclk_duty = (div_counter == (sck_div[11:0] + 12'b1));
+    assign sclk_duty = (div_counter == (sck_div[11:0]));
     assign delay0_cmp = sck_mode[0] ? (delay0_cnt == ({delay0[7:0], 1'b0})) : (delay0_cnt == ({delay0[7:0], 1'b0} + 9'b1));
     assign delay1_cmp = sck_mode[0] ? (delay1_cnt == (({delay0[23:16], 1'b0}) + 9'b1)) : (delay1_cnt == ({delay0[23:16], 1'b0}));
     assign intercs_cmp = (intercs_cnt == ({delay1[7:0],1'b0}));
     assign interxfr_cmp = (interxfr_cnt == ({delay1[23:16], 1'b0}));
-    assign frame_cmp = (fmt[0] | fmt[1]) ? ({1'b0,fmt[19:16],1'b0}) : {2'b0,fmt[19:16]};
+    assign frame_cmp = (fmt[0] | fmt[1]) ? ({1'b0,fmt[19:16]}) : {1'b0,fmt[19:16]};
+
+    typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1,DELAY_1,INTER_CS, INTER_XFR} statetype;
+    statetype state;
 
     //producing signal high every (2*scc_div)+1) cycles
     always_ff @(posedge PCLK, negedge PRESETn)
-        if(~PRESETn | sclk_edge) div_counter <= #1 0;
-        else if (~sclk_edge) begin
-            div_counter <= div_counter + 13'b1;
+        if(~PRESETn | sclk_duty ) begin
+            div_counter <= #1 0;
         end
+
+        else begin
+            div_counter <= div_counter + 13'b1;
+            sclk_reset_0 <= 1;
+        end
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if(~PRESETn | sclk_edge ) begin
+            div_counter_edge <= #1 0;
+        end
+        else begin
+            div_counter_edge <= div_counter_edge + 13'b1;
+            sclk_reset_1 <= 1;
+        end
+
     
-    typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1,DELAY_1,INTER_CS, INTER_XFR} statetype;
-    statetype state;
 
     always_ff @(posedge sclk_duty, negedge PRESETn)
         if (~PRESETn) state <= CS_INACTIVE;
@@ -202,7 +240,7 @@ module spi_apb (
                 CS_INACTIVE: begin
                         delay0_cnt <= 9'b1;
                         delay1_cnt <= 9'b1;
-                        frame_cnt <= 6'b0;
+                        frame_cnt <= 5'b0;
                         intercs_cnt <= 9'b10;
                         interxfr_cnt <= 9'b1;
                         if (~TXrempty & ((|(delay0[7:0])) | ~sck_mode[0])) state <= DELAY_0;
@@ -213,18 +251,17 @@ module spi_apb (
                         if (delay0_cmp) state <= ACTIVE_0;
                         end
                 ACTIVE_0: begin 
-                        if (frame_cnt == 6'b0) 
                         frame_cnt <= frame_cnt + 6'b1;
                         state <= ACTIVE_1;
                         end
                 ACTIVE_1: begin
                         interxfr_cnt <= 9'b1;
-                        if ((frame_cnt << fmt[1:0]) < frame_cmp) state <= ACTIVE_0;
+                        if (frame_cmp_bool) state <= ACTIVE_0;
                         else if ((cs_mode[1:0] == 2'b10) & ~|(delay1[23:17]) & (~TXrempty)) begin
                             state <= ACTIVE_0;
                             delay0_cnt <= 9'b1;
                             delay1_cnt <= 9'b1;
-                            frame_cnt <= 6'b0;
+                            frame_cnt <= 5'b0;
                             intercs_cnt <= 9'b10;
                         end
                         else if (cs_mode[1:0] == 2'b10) state <= INTER_XFR;
@@ -243,7 +280,7 @@ module spi_apb (
                         state <= ACTIVE_0;
                         delay0_cnt <= 9'b1;
                         delay1_cnt <= 9'b1;
-                        frame_cnt <= 6'b0;
+                        frame_cnt <= 5'b0;
                         intercs_cnt <= 9'b10;
                         interxfr_cnt <= interxfr_cnt + 9'b1;
                         if (interxfr_cmp) state <= ACTIVE_0;
@@ -253,6 +290,8 @@ module spi_apb (
     assign cs_internal = ((state == CS_INACTIVE | state == INTER_CS) ? cs_def[3:0] : ~cs_def[3:0]);
     assign sck = (state == ACTIVE_0) ? ~sck_mode[1] : sck_mode[1];
     assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(delay1[23:17]) & (cs_mode[1:0]) == 2'b10) & ((frame_cnt << fmt[1:0]) >= frame_cmp))) | state == DELAY_1);
+    assign active = (state == ACTIVE_0 | state == ACTIVE_1);
+
 
 
     //FIFOs CURRENTLY SRAM BASED ON "The existence of fall-through architecture has a historical basis. New developments no longer use this principle."
@@ -268,17 +307,22 @@ module spi_apb (
 
     logic txShiftEmpty, rxShiftEmpty;
     logic sck_phase_sel;
-    assign TXwinc = (memwrite & (entry == 8'h48) & ~tx_data[31]);
+    assign TXwinc = (memwrite & (entry == 8'h48) & ~TXwfull);
     assign TXrinc = txShiftEmpty;
-    //assign tx_data[31] = TXwfull;
+    /*
+    
+    always_ff@(posedge PCLK)
+        tx_data[31] <= TXwfull;
+  
+    */
 
     assign RXwinc = rxShiftEmpty;
     assign RXrinc = ((entry == 8'h4C) & ~rx_data[31]);
     assign rx_data[31] = RXrempty;
     
 
-    FIFO_async #(3,8) txFIFO(PCLK, sck_phase_sel, PRESETn, TXwinc, TXrinc, tx_data[7:0],fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
-    FIFO_async #(3,8) rxFIFO(sck_phase_sel, PCLK, PRESETn, RXwinc, RXrinc, RXwdata[7:0], fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
+    FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc, TXrinc, tx_data,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
+    FIFO_async #(3,8) rxFIFO(sclk_duty, PCLK, PRESETn, RXwinc, RXrinc, RXwdata[7:0], fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
 
 
 
@@ -291,16 +335,15 @@ module spi_apb (
     logic [7:0] rxShift;
 
     assign sck_phase_sel = sck_mode[0] ? (sck_mode[1] ? sck : ~sck) : (sck_mode[1] ? ~sck : sck);
-    always_ff @(posedge sck_phase_sel, negedge PRESETn)
+    always_ff @(posedge sck_phase_sel, negedge PRESETn, posedge (sclk_duty & ~active))
         if(~PRESETn) begin 
                 txShift <= 8'b0;
-                txShiftEmpty <= 1;
             end
         else begin
-            txShiftEmpty <= (~busy & ~txShiftEmpty);
-            if (~busy) begin
-                txShift <= TXrdata;
-            end else begin
+           // txShiftEmpty <= (~active & ~txShiftEmpty);
+            
+            if (~active) txShift <= TXrdata;
+            else begin
                 case (fmt[1:0])
                     2'b00: txShift <= {txShift[6:0], 1'b0};
                     2'b01: txShift <= {txShift[5:0], 2'b0};
@@ -308,21 +351,24 @@ module spi_apb (
                     default: txShift <= {txShift[6:0], 1'b0}; 
                 endcase
             end
-        
-            case (fmt[1:0])
-                2'b00: SPIOut[0] <= txShift[7]; 
-                2'b01: {SPIOut[0], SPIOut[1]} <= txShift[7:6];
-                2'b10: {SPIOut[0],SPIOut[1],SPIOut[2],SPIOut[3]} <= txShift[7:4];
-                default: SPIOut[0] <= txShift[7];
-            endcase
         end
+    always_comb
+        if (active) begin
+            case(fmt[1:0])
+                2'b00: SPIOut = {3'b0,txShift[7]}; 
+                2'b01: SPIOut = {2'b0,txShift[6], txShift[7]};
+                // assuming SPIOut[0] is first bit transmitted etc
+                2'b10: SPIOut = {txShift[3], txShift[2], txShift[1], txShift[0]};
+                default: SPIOut = {3'b0, txShift[7]};
+            endcase
+        end else SPIOut = 4'b0;
     always_ff @(posedge sck_phase_sel, negedge PRESETn)
         if(~PRESETn) begin  
                 rxShift <= 8'b0;
                 rxShiftEmpty <= 1'b1;
             end
         else if(~fmt[3]) begin
-            rxShiftEmpty <= (~busy & ~rxShiftEmpty);
+            rxShiftEmpty <= (~active & ~rxShiftEmpty);
             if(`SPI_LOOPBACK_TEST) begin
                 case(fmt[1:0])
                     2'b00: rxShift <= { rxShift[7:1], SPIOut[0]};
@@ -340,6 +386,14 @@ module spi_apb (
                 endcase
             end
         end
+    always_ff @(posedge sclk_duty, negedge PRESETn)
+        if (~PRESETn) txShiftEmpty <= 1'b1;
+        else begin
+            // edge case where first frame is last frame might cause contention
+            if ((~|(frame_cnt) | txShiftEmpty) & ~TXrempty) txShiftEmpty <= 0;
+            else if (frame_cmp_pre_bool & (state == ACTIVE_0)) txShiftEmpty <= 1;
+        end
+
     assign SPIIntr = ((ip[0] & ie[0]) | (ip[1] & ie[1]));
     logic [3:0] CSauto, CShold, CSoff;
     always_comb
@@ -350,6 +404,7 @@ module spi_apb (
             2'b11: CSauto = {cs_internal[3],cs_def[2], cs_def[1], cs_def[0]};
         endcase
     assign SPICS = cs_mode[1] ? cs_def[3:0]: CSauto;
+
 endmodule
 
 module FIFO_async #(parameter M = 3, N = 8)(
@@ -615,7 +670,7 @@ endmodule
         if (~PRESETn) RXwfull <= 1'b0;
         else          RXwfull <= RXwfull_val;
     
-logic sck_phase_sel;
+    logic sck_phase_sel;
     logic [7:0] txShift;
     logic [7:0] rxShift;
     logic txShiftEmpty, rxShiftEmpty;
@@ -624,7 +679,7 @@ logic sck_phase_sel;
         if(~PRESETn) txShift <= 8'b0;
         else begin
             if (~TXrempty) begin
-                tx_fifo <= (fmt[2] ? ({tx_fifo[0], tx_fifo[1] , tx_fifo[2], tx_fifo[3], tx_data[4], tx_data[5], tx_data[6], tx_data[7]}) : tx_data[7:0]);
+                tx_fifo <= (fmt[2] ? ({tx_fifo[0], tx_fifo[1] , tx_fifo[2], tx_fifo[3], tx_data[4], tx_data[5], tx_data[6], tx_data[7]}) : tx_data);
             end else begin
                 case (fmt[1:0])
                     2'b00: tx_fifo <= {tx_fifo[6:0], 1'b0};
@@ -662,7 +717,7 @@ always_ff @(posedge sclk_duty, negedge PRESETn)
                             interxfr_cnt <= 9'b1;
                             frame_cnt <= 6'b0;
                             
-                            if (tx_data[31]) state <= DELAY_0;
+                            if (TXwfull) state <= DELAY_0;
                             end
                 DELAY_0: begin
                         intercs_cnt <= 9'b0;

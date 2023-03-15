@@ -163,6 +163,7 @@ logic [3:0] dummy;
   // instantiate device to be tested
   assign GPIOPinsIn = 0;
   assign UARTSin = 1;
+  assign SPIIn = 0;
 
   if(`EXT_MEM_SUPPORTED) begin
     ram_ahb #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 

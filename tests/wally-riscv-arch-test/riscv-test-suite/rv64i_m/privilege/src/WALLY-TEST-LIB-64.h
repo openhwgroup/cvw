@@ -1149,11 +1149,11 @@ uart_clearmodemintr:
 
 spi_data_wait:
     li t2, 0x10040070
-    li t3, 0x00000010
+    li t3, 0x00000002
     sw t3, 0(t2) //enable rx watermark interrupt
     li t2, 0x10040074
     lw t3, 0(t2) //read ie (interrupt enable register)
-    li t2, 0x00000010
+    li t2, 0x00000002
     bge t3, t2, spi_data_ready //branch to done if transmission complete
     j spi_data_wait //else check again 
     

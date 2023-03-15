@@ -112,6 +112,12 @@ add wave -hex /testbench/dut/uncore/uncore/gpio/gpio/*
 #add wave -divider
 #add wave -hex /testbench/dut/core/ebu/ebu/*
 #add wave -divider
+
+add wave -divider
+add wave -hex /testbench/dut/uncore/uncore/spi/spi/*
+add wave -divider
+add wave -hex /testbench/dut/uncore/uncore/spi/spi/txFIFO*
+add wave -hex /testbench/dut/uncore/uncore/spi/spi/rxFIFO*
 #add wave -divider
 
 # everything else
