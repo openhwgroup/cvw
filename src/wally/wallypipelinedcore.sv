@@ -161,7 +161,6 @@ module wallypipelinedcore (
   logic                          FCvtIntE;
   logic                          CommittedF;
   logic 						 BranchD, BranchE, JumpD, JumpE;
-  logic 						 FenceM;
   logic 						 DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
@@ -201,7 +200,7 @@ module wallypipelinedcore (
      .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
-     .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
@@ -209,7 +208,7 @@ module wallypipelinedcore (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .FenceM, .StoreStallD); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
 
   lsu lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -288,7 +287,7 @@ module wallypipelinedcore (
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
       .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, .sfencevmaM, .FenceM, .DCacheStallM, .ICacheStallF,
+      .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,
       .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
