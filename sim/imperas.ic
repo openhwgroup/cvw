@@ -6,6 +6,7 @@
 --override cpu/ignore_non_leaf_DAU=1
 --override cpu/wfi_is_nop=T
 --override cpu/mimpid=0x100
+--override cpu/misa_Extensions_mask=0x0
 
 # THIS NEEDS FIXING to 16
 --override cpu/PMP_registers=0

@@ -69,6 +69,7 @@ logic [3:0] dummy;
 
   logic 	    DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
+  logic StartSample, EndSample;
     
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
@@ -405,8 +406,7 @@ logic [3:0] dummy;
     integer HPMCindex;
 	logic 	StartSampleFirst;
 	logic 	StartSampleDelayed;
-	logic 	StartSample;
-	logic 	EndSample, EndSampleFirst, EndSampleDelayed;
+	logic 	EndSampleFirst, EndSampleDelayed;
 	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
 
     string  HPMCnames[] = '{"Mcycle",
@@ -544,15 +544,23 @@ logic [3:0] dummy;
       string direction;
       int    file;
 	  logic  PCSrcM;
+	  string LogFile;
+	  logic  resetD, resetEdge;
 	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+	  flop #(1) ResetDReg(clk, reset, resetD);
+	  assign resetEdge = ~reset & resetD;
       initial begin
-        file = $fopen("branch.log", "w");
+		LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
+        file = $fopen(LogFile, "w");
 	  end
       always @(posedge clk) begin
+		if(resetEdge) $fwrite(file, "TRAIN\n");
+		if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
 		if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
 		  direction = PCSrcM ? "t" : "n";
 		  $fwrite(file, "%h %s\n", dut.core.PCM, direction);
 		end
+		if(EndSample) $fwrite(file, "END %s\n", memfilename);
 	  end
     end
   end
