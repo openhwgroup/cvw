@@ -138,8 +138,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 } 
 
 if {$coverage} {
-    do coverage-exclusions.do
-    coverage save -instance /testbench/dut cov/${1}_${2}.ucdb
+    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
+    coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb
 }
 
 # These aren't doing anything helpful
