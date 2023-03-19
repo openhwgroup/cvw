@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module cachefsm (
+module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,
   // hazard and privilege unit
@@ -112,8 +112,8 @@ module cachefsm (
     NextState = STATE_READY;
     case (CurrState)
       STATE_READY: if(InvalidateCache)                      NextState = STATE_READY;
-                   else if(FlushCache)                      NextState = STATE_FLUSH;
-                   else if(AnyMiss & ~LineDirty)            NextState = STATE_FETCH;
+                   else if(FlushCache & ~READ_ONLY_CACHE)   NextState = STATE_FLUSH;
+                   else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty))  NextState = STATE_FETCH;
                    else if(AnyMiss & LineDirty)             NextState = STATE_WRITEBACK;
                    else                                     NextState = STATE_READY;
       STATE_FETCH: if(CacheBusAck)                          NextState = STATE_WRITE_LINE;
@@ -125,11 +125,11 @@ module cachefsm (
                               else                          NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
       STATE_FLUSH: if(LineDirty)                            NextState = STATE_FLUSH_WRITEBACK;
-	               else if (FlushFlag)                      NextState = STATE_READ_HOLD;
-	               else                                     NextState = STATE_FLUSH;
-	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)   NextState = STATE_FLUSH;
-	                          else if(CacheBusAck)          NextState = STATE_READ_HOLD;
-	                          else                          NextState = STATE_FLUSH_WRITEBACK;
+	               else if (FlushFlag)                        NextState = STATE_READ_HOLD;
+	               else                                       NextState = STATE_FLUSH;
+	  STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)     NextState = STATE_FLUSH;
+	                          else if(CacheBusAck)            NextState = STATE_READ_HOLD;
+	                          else                            NextState = STATE_FLUSH_WRITEBACK;
       default:                                              NextState = STATE_READY;
     endcase
   end
