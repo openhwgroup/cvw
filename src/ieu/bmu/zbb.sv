@@ -47,8 +47,8 @@ module zbb #(parameter WIDTH=32) (
   byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
   ext #(WIDTH) ext(.A(A), .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult(ExtResult));
 
-  assign MaxResult = (lt) ? B : A;
-  assign MinResult = (lt) ? A : B;
+  mux2 #(WIDTH) maxmux(A, B, lt, MaxResult);
+  mux2 #(WIDTH) minmux(B, A, lt, MinResult);
 
   // ZBB Result select mux
   mux5 #(WIDTH) zbbresultmux(CntResult, ExtResult, ByteResult, MinResult, MaxResult, ZBBSelect, ZBBResult);
