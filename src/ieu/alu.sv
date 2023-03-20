@@ -116,10 +116,6 @@ module alu #(parameter WIDTH=32) (
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
  
-  // SLT
-  assign SLT = {{(WIDTH-1){1'b0}}, LT};
-  assign SLTU = {{(WIDTH-1){1'b0}}, LTU};
- 
   // Select appropriate ALU Result
   if (`ZBS_SUPPORTED | `ZBB_SUPPORTED) begin
     always_comb

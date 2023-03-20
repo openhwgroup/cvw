@@ -62,7 +62,7 @@ make install
 # elf2hex
 cd $RISCV
 #export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
-gexport PATH=$RISCV/bin:$PATH
+export PATH=$RISCV/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
 cd elf2hex
 autoreconf -i

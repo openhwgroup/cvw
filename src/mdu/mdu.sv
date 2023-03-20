@@ -32,11 +32,11 @@ module mdu(
   input  logic 							clk, reset,
   input  logic 							StallM, StallW, 
   input  logic							FlushE, FlushM, FlushW,
-	input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
-	input  logic [2:0] 				Funct3E, Funct3M,									// type of MDU operation
-	input  logic 							IntDivE, W64E, 										// Integer division/remainder, and W-type instrutions
-	output logic [`XLEN-1:0] 	MDUResultW,												// multiply/divide result
-	output logic 							DivBusyE													// busy signal to stall pipeline in Execute stage
+  input  logic [`XLEN-1:0] 	ForwardedSrcAE, ForwardedSrcBE, 	// inputs A and B from IEU forwarding mux output
+  input  logic [2:0] 				Funct3E, Funct3M,									// type of MDU operation
+  input  logic 							IntDivE, W64E, 										// Integer division/remainder, and W-type instrutions
+  output logic [`XLEN-1:0] 	MDUResultW,												// multiply/divide result
+  output logic 							DivBusyE													// busy signal to stall pipeline in Execute stage
 );
 
 	logic [`XLEN*2-1:0] 			ProdM; 														// double-width product from mul

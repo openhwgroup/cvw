@@ -71,7 +71,7 @@ module bpred (
 
   logic [1:0] 		   BPDirPredF;
 
-  logic [`XLEN-1:0] 	   BTAF, RASPCF;
+  logic [`XLEN-1:0] 	   BPBTAF, RASPCF;
   logic 		   BPPCWrongE;
   logic 		   IClassWrongE;
   logic 		   BPDirPredWrongE;
@@ -85,7 +85,7 @@ module bpred (
   logic 		   BTBTargetWrongE;
   logic 		   RASTargetWrongE;
 
-  logic [`XLEN-1:0] 	   BTAD;
+  logic [`XLEN-1:0] 	   BPBTAD;
 
   logic 		   BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
   logic 		   BPBranchF, BPJumpF, BPReturnF, BPCallF;
@@ -95,7 +95,7 @@ module bpred (
   logic 		   BranchM, JumpM, ReturnM, CallM;
   logic 		   BranchW, JumpW, ReturnW, CallW;
   logic 		   BPReturnWrongD;
-  logic [`XLEN-1:0] BTAE;
+  logic [`XLEN-1:0] BPBTAE;
 
   
   
@@ -150,7 +150,7 @@ module bpred (
   btb #(`BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
           .PCNextF, .PCF, .PCD, .PCE, .PCM,
-          .BTAF, .BTAD, .BTAE,
+          .BPBTAF, .BPBTAD, .BPBTAE,
           .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
           .IClassWrongM, .IClassWrongE,
           .IEUAdrE, .IEUAdrM,
@@ -181,7 +181,7 @@ module bpred (
   
   // Output the predicted PC or corrected PC on miss-predict.
   assign BPPCSrcF = (BPBranchF & BPDirPredF[1]) | BPJumpF;
-  mux2 #(`XLEN) pcmuxbp(BTAF, RASPCF, BPReturnF, BPPCF);
+  mux2 #(`XLEN) pcmuxbp(BPBTAF, RASPCF, BPReturnF, BPPCF);
   // Selects the BP or PC+2/4.
   mux2 #(`XLEN) pcmux0(PCPlus2or4F, BPPCF, BPPCSrcF, PC0NextF);
   // If the prediction is wrong select the correct address.
@@ -196,7 +196,7 @@ module bpred (
 
   if(`ZICOUNTERS_SUPPORTED) begin
     logic [`XLEN-1:0] 	    RASPCD, RASPCE;
-    logic 					BTBPredPCWrongE, RASPredPCWrongE;	
+    logic 					BTAWrongE, RASPredPCWrongE;	
     // performance counters
     // 1. class         (class wrong / minstret) (IClassWrongM / csr)                    // Correct now
     // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
@@ -207,14 +207,14 @@ module bpred (
     // could be wrong or the fall through address selected for branch predict not taken.
     // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
     // both without the above inaccuracies.
-	// **** use BTAWrongM from BTB.
-    assign BTBPredPCWrongE = (BTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
+	// **** use BPBTAWrongM from BTB.
+    assign BTAWrongE = (BPBTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
     assign RASPredPCWrongE = (RASPCE != IEUAdrE) & ReturnE & PCSrcE;
 
     flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
     flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
     flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-				  {BPDirPredWrongE, BTBPredPCWrongE, RASPredPCWrongE},
+				  {BPDirPredWrongE, BTAWrongE, RASPredPCWrongE},
 				  {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
     
   end else begin
