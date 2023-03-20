@@ -77,7 +77,7 @@ module alu #(parameter WIDTH=32) (
 
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
-    assign CondMaskB = (Mask) ? MaskB : B;
+    mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
 
   if (WIDTH == 64) begin
@@ -89,9 +89,8 @@ module alu #(parameter WIDTH=32) (
   end
 
   // shifter rotate source select mux
-  if (`ZBB_SUPPORTED) begin
-    if (WIDTH == 64) assign rotA = (W64) ? {A[31:0], A[31:0]} : A;
-    else assign rotA = A; 
+  if (`ZBB_SUPPORTED & WIDTH == 64) begin
+    mux2 #(WIDTH) rotmux(A, {A[31:0], A[31:0]}, W64, rotA);
   end else assign rotA = A;
     
   if (`ZBA_SUPPORTED) begin: zbamuxes
