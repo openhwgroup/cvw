@@ -43,7 +43,7 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondMaskInvB, Shift, SLT, SLTU, FullResult,ALUResult;                   // Intermediate Signals 
+  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult,ALUResult;                   // Intermediate Signals 
   logic [WIDTH-1:0] ZBCResult, ZBBResult;                                                   // Result of ZBB, ZBC
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
@@ -123,8 +123,8 @@ module alu #(parameter WIDTH=32) (
       else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
         3'b000: FullResult = Sum;                           // add or sub
         3'b001: FullResult = Shift;                         // sll, sra, or srl
-        3'b010: FullResult = SLT;                           // slt
-        3'b011: FullResult = SLTU;                          // sltu
+        3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
+        3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
         3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
         3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
         3'b111: FullResult = A & CondMaskInvB;              // and, bclr
@@ -137,8 +137,8 @@ module alu #(parameter WIDTH=32) (
       else casez (ALUSelect)            // Otherwise check Funct3 NOTE: change signal name to ALUSelect
         3'b000: FullResult = Sum;       // add or sub
         3'b?01: FullResult = Shift;     // sll, sra, or srl
-        3'b010: FullResult = SLT;       // slt
-        3'b011: FullResult = SLTU;      // sltu
+        3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};        // slt
+        3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};       // sltu
         3'b100: FullResult = A ^ B;     // xor
         3'b110: FullResult = A | B;     // or 
         3'b111: FullResult = A & B;     // and
