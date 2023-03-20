@@ -42,6 +42,6 @@ module byteUnit #(parameter WIDTH=32) (
     assign Rev8Result[WIDTH-i-1:WIDTH-i-8] = A[i+7:i];
   end
 
-  assign ByteResult = (ByteSelect) ? OrcBResult : Rev8Result;
+  mux2 #(WIDTH) bytemux(Rev8Result, OrcBResult, ByteSelect, ByteResult);
 
 endmodule
