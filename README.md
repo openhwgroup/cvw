@@ -261,6 +261,22 @@ $ make all
 
 Note: When the make tasks complete, you’ll find source code in $RISCV/buildroot/output/build and the executables in $RISCV/buildroot/output/images.
 
+### Generate load images for linux boot
+
+The Questa linux boot uses preloaded bootram and ram memory.  We use QEMU to generate these preloaded memory files.  Files output in $RISCV/linux-testvectors
+
+	cd cvw/linux/testvector-generation
+	./genInitMem.sh
+
+This may require changing file permissions to the linux-testvectors directory.
+
+### Generate QEMU linux trace
+
+The linux testbench can instruction by instruction compare Wally's committed instructions against QEMU.  To do this QEMU outputs a log file consisting of all instructions executed.  Interrupts are handled by forcing the testbench to generate an interrupt at the same cycle as in QEMU.  Generating this trace will take more than 24 hours.
+
+	cd cvw/linux/testvector-generation
+	./genTrace.sh
+
 ### Download Synthesis Libraries
 
 For logic synthesis, we need a synthesis tool (see Section 3.XREF) and a cell library.  Clone the OSU 12-track cell library for the Skywater 130 nm process:
