@@ -43,5 +43,4 @@ module byteUnit #(parameter WIDTH=32) (
   end
 
   mux2 #(WIDTH) bytemux(Rev8Result, OrcBResult, ByteSelect, ByteResult);
-
 endmodule

@@ -47,7 +47,6 @@ module clmul #(parameter WIDTH=32) (
       ClmulResult[i] = s[WIDTH*i+j-1];
     end
   end
-
 endmodule
 
 
