@@ -62,7 +62,7 @@ make install
 # elf2hex
 cd $RISCV
 #export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
-gexport PATH=$RISCV/bin:$PATH
+export PATH=$RISCV/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
 cd elf2hex
 autoreconf -i
@@ -115,9 +115,12 @@ opam install sail -y
 eval $(opam config env)
 git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
+# Current bug in Sail - use hash that works for Wally
+#   (may remove later if Sail is ever fixed)
+git checkout 4d05aa1698a0003a4f6f99e1380c743711c32052
 make -j ${NUM_THREADS}
-ARCH=RV32 make
-ARCH=RV64 make
+ARCH=RV32 make -j ${NUM_THREADS}
+ARCH=RV64 make -j ${NUM_THREADS}
 ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
