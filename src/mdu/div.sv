@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module intdivrestoring(
+module div(
   input  logic             clk,
   input  logic             reset,
   input  logic             StallM,
@@ -107,7 +107,7 @@ module intdivrestoring(
   // one copy of divstep for each bit produced per cycle
   genvar i;
   for (i=0; i<`IDIV_BITSPERCYCLE; i = i+1)
-    intdivrestoringstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
+    divstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
 
   //////////////////////////////
   // Memory Stage: output sign correction and special cases

@@ -88,7 +88,7 @@ module privileged (
   // control outputs  
   output logic             RetM, TrapM,                               // return instruction, or trap
   output logic             sfencevmaM,                                // sfence.vma instruction
-  input  logic             FenceM,                                    // fence instruction
+  input  logic             InvalidateICacheM,                                    // fence instruction
   output logic             BigEndianM,                                // Use big endian in current privilege mode
   // Fault outputs
   output logic             BreakpointFaultM, EcallFaultM,             // breakpoint and Ecall traps should retire
@@ -131,7 +131,7 @@ module privileged (
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
     .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .BPWrongM,
-    .sfencevmaM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+    .sfencevmaM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
     .IClassWrongM, .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
     .NextPrivilegeModeM, .PrivilegeModeW, .CauseM, .SelHPTW,
     .STATUS_MPP, .STATUS_SPP, .STATUS_TSR, .STATUS_TVM,

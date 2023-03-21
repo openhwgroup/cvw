@@ -57,8 +57,8 @@ module mdu(
 	  assign RemM = 0;
 	  assign DivBusyE = 0;
 	end else begin:div
-		intdivrestoring div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
-							.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
+		div div(.clk, .reset, .StallM, .FlushE, .DivSignedE(~Funct3E[0]), .W64E, .IntDivE, 
+				.ForwardedSrcAE, .ForwardedSrcBE, .DivBusyE, .QuotM, .RemM);
 	end
 		
 	// Result multiplexer
