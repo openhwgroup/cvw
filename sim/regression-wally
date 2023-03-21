@@ -220,6 +220,7 @@ def main():
        os.system('vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log')
        os.system('vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt')
        os.system('vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt')
+       os.system('vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt')
        os.system('vcover report -details -threshH 100 -html cov/cov.ucdb')
     # Count the number of failures
     if num_fail:
