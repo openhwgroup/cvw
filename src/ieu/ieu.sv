@@ -71,8 +71,7 @@ module ieu (
   output logic 		          FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
   output logic              MDUStallD, CSRRdStallD, StoreStallD,
   output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
-  output logic 		          CSRWriteFenceM,                   // CSR write or fence instruction needs to flush subsequent instructions
-  output logic              FenceM
+  output logic 		          CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
@@ -103,8 +102,8 @@ controller c(
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
-    .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .FenceM, .StoreStallD);
+    .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,

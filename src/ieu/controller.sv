@@ -71,7 +71,6 @@ module controller(
   output logic        RegWriteM,               // Instruction writes a register (needed for Hazard unit)
   output logic        InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
   output logic        InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
-  output logic        FenceM,                  // Fence instruction
   output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
   input  logic        StallW, FlushW,          // Stall, flush Writeback stage
@@ -136,6 +135,7 @@ module controller(
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        JFunctD;                        // detect jalr instruction
+  logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -335,7 +335,6 @@ module controller(
 
   // Flush F, D, and E stages on a CSR write or Fence.I or SFence.VMA
   assign CSRWriteFenceM = CSRWriteM | FenceM;
-  //  assign CSRWriteFencePendingDEM = CSRWriteD | CSRWriteE | CSRWriteM | FenceD | FenceE | FenceM;
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write
