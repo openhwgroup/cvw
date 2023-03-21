@@ -197,7 +197,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
+  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
 		.FlushStage, .CacheRW, .CacheAtomic, .Stall,
  		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
 		.CacheMiss, .CacheAccess, .SelAdr, 

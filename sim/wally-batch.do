@@ -124,7 +124,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     if {$coverage} {
-        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
+#        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
         vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
     } else {
         vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
@@ -138,8 +139,8 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
 } 
 
 if {$coverage} {
-    do coverage-exclusions.do
-    coverage save -instance /testbench/dut cov/${1}_${2}.ucdb
+    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
+    coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb
 }
 
 # These aren't doing anything helpful

@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 2 October 2021
 // Modified: 
 //
-// Purpose: Restoring integer division step.  k steps are used in intdivrestoring
+// Purpose: Radix-2 restoring integer division step.  k steps are used in div
 // 
 // Documentation: RISC-V System on Chip Design Chapter 12 (Figure 12.19)
 //
@@ -30,7 +30,7 @@
 
 /* verilator lint_off UNOPTFLAT */
 
-module intdivrestoringstep(
+module divstep(
   input  logic [`XLEN-1:0] W,     // Residual in
   input  logic [`XLEN-1:0] XQ,    // bits of dividend X and quotient Q in
   input  logic [`XLEN-1:0] DAbsB, // complement of absolute value of divisor D (for subtraction)

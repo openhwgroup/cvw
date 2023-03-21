@@ -87,7 +87,8 @@ module subwordread
       3'b001:  ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
       3'b010:  ReadDataM = {{`LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
       3'b011:  ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-      3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq
+      3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu
+//      3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
       3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};   // lhu
       3'b110:  ReadDataM = {{`LLEN-32{1'b0}}, WordM[31:0]};       // lwu
       default: ReadDataM = ReadDataWordMuxM; // Shouldn't happen

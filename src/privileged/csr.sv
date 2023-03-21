@@ -72,7 +72,7 @@ module csr #(parameter
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
   input  logic             sfencevmaM,
-  input  logic             FenceM,
+  input  logic             InvalidateICacheM,
   input  logic             DivBusyE,                                  // integer divide busy
   input  logic             FDivBusyE,                                 // floating point divide busy
   // outputs from CSRs
@@ -210,7 +210,7 @@ module csr #(parameter
   csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+    .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
@@ -268,7 +268,7 @@ module csr #(parameter
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
-      .InterruptM, .ExceptionM, .FenceM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
+      .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);
