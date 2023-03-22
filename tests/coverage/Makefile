@@ -1,19 +1,21 @@
-TARGET = badinstr
+SRCS = $(wildcard *.S)
+PROGS = $(patsubst %.S,%,$(SRCS))
 
-$(TARGET).objdump: $(TARGET)
-	riscv64-unknown-elf-objdump -D $(TARGET) > $(TARGET).objdump
+all: $(PROGS)
+
+%: %.S WALLY-init-lib.h Makefile
+	echo $@
+	riscv64-unknown-elf-gcc -g -o $@.elf -march=rv64gc -mabi=lp64 -mcmodel=medany \
+	    -nostartfiles -T../../examples/link/link.ld $@.S 
+	riscv64-unknown-elf-objdump -D $@.elf > $@.objdump
     
-$(TARGET): $(TARGET).S WALLY-init-lib.S Makefile
-	riscv64-unknown-elf-gcc -g -o $(TARGET) -march=rv64gc -mabi=lp64 -mcmodel=medany \
-	    -nostartfiles -T../../examples/link/link.ld $(TARGET).S 
-
-sim:
-	spike +signature=$(TARGET).signature.output +signature-granularity=8 $(TARGET)
-	diff --ignore-case $(TARGET).signature.output $(TARGET).reference_output || exit
+sim: %.elf
+	spike +signature=%.signature.output +signature-granularity=8 %.elf
+	diff --ignore-case %.signature.output %.reference_output || exit
 	echo "Signature matches! Success!"
 
 clean:
-	rm -f $(TARGET) $(TARGET).objdump $(TARGET).signature.output
+	rm -f *.elf *.objdump *.signature.output
 
 
 
