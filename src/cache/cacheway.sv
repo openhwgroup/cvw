@@ -30,12 +30,12 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
-				          OFFSETLEN = 5, INDEXLEN = 9, DIRTY_BITS = 1) (
+				          OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
-  input  logic [$clog2(NUMLINES)-1:0] CAdr,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [$clog2(NUMLINES)-1:0] CacheSet,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the dirty bit in the selected way and set
@@ -114,7 +114,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
-    .addr(CAdr), .dout(ReadTag), .bwe('1),
+    .addr(CacheSet), .dout(ReadTag), .bwe('1),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   
@@ -136,7 +136,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CAdr),
+    ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
@@ -152,9 +152,9 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-	  ValidWay <= #1 ValidBits[CAdr];
+	  ValidWay <= #1 ValidBits[CacheSet];
 	  if(InvalidateCache)                    ValidBits <= #1 '0;
-      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CAdr] <= #1 SetValidWay;
+      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end
 
@@ -163,13 +163,13 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   // Dirty bits
-  if (DIRTY_BITS) begin:dirty
+  if (!READ_ONLY_CACHE) begin:dirty
     always_ff @(posedge clk) begin
       // reset is optional.  Consider merging with TAG array in the future.
       //if (reset) DirtyBits <= #1 {NUMLINES{1'b0}}; 
       if(CacheEn) begin
-        Dirty <= #1 DirtyBits[CAdr];
-        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CAdr] <= #1 SetDirtyWay;
+        Dirty <= #1 DirtyBits[CacheSet];
+        if((SetDirtyWay | ClearDirtyWay) & ~FlushStage) DirtyBits[CacheSet] <= #1 SetDirtyWay;
       end
     end
   end else assign Dirty = 1'b0;

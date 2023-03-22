@@ -54,6 +54,7 @@ module lsu (
   input  logic [1:0]          PrivilegeModeW,                       // Current privilege mode
   input  logic                BigEndianM,                           // Swap byte order to big endian
   input  logic                sfencevmaM,                           // Virtual memory address fence, invalidate TLB entries
+  output logic                DCacheStallM,                         // D$ busy with multicycle operation
   // fpu
   input  logic [`FLEN-1:0]    FWriteDataM,                          // Write data from FPU
   input  logic                FpLoadStoreM,                         // Selects FPU as store for write data
@@ -79,7 +80,7 @@ module lsu (
   input  logic [`XLEN-1:0]    SATP_REGW,                            // SATP (supervisor address translation and protection) CSR
   input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
   input  logic [1:0]          STATUS_MPP,                           // Machine previous privilege mode
-  input  logic [`XLEN-1:0]    PCFSpill,                                  // Fetch PC 
+  input  logic [`XLEN-1:0]    PCSpillF,                                  // Fetch PC 
   input  logic                ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
   input  logic                InstrUpdateDAF,                    // ITLB hit needs to update dirty or access bits
   output logic [`XLEN-1:0]    PTE,                                  // Page table entry write to ITLB
@@ -87,7 +88,7 @@ module lsu (
   output logic                ITLBWriteF,                           // Write PTE to ITLB
   output logic                SelHPTW,                              // During a HPTW walk the effective privilege mode becomes S_MODE
   input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
-  input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
+  input var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
 );
 
   logic [`XLEN+1:0]         IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
@@ -103,7 +104,6 @@ module lsu (
 
   logic                     GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
  
-  logic                     DCacheStallM;                           // D$ busy with multicycle operation
   logic                     BusStall;                               // Bus interface busy with multicycle operation
   logic                     HPTWStall;                              // HPTW busy with multicycle operation
 
@@ -152,7 +152,7 @@ module lsu (
   if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
-      .FlushW, .DCacheStallM, .SATP_REGW, .PCFSpill,
+      .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
       .ReadDataM(ReadDataM[`XLEN-1:0]), // ReadDataM is LLEN, but HPTW only needs XLEN
       .WriteDataM, .Funct3M, .LSUFunct3M, .Funct7M, .LSUFunct7M,
@@ -264,9 +264,9 @@ module lsu (
 	  assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .DCACHE(1)) dcache(
+              .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
-        .FlushCache(FlushDCache), .NextAdr(IEUAdrE[11:0]), .PAdr(PAdrM), 
+        .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
         .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),

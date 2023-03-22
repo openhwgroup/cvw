@@ -34,7 +34,7 @@
 module hptw (
 	input  logic                clk, reset,
 	input  logic [`XLEN-1:0]    SATP_REGW, 					// includes SATP.MODE to determine number of levels in page table
-	input  logic [`XLEN-1:0]    PCFSpill,  							// addresses to translate
+	input  logic [`XLEN-1:0]    PCSpillF,  							// addresses to translate
 	input  logic [`XLEN+1:0]    IEUAdrExtM, 				// addresses to translate
 	input  logic [1:0]          MemRWM, AtomicM,
 	// system status
@@ -91,8 +91,8 @@ module hptw (
   logic [`PA_BITS-1:0] 	   HPTWReadAdr;
   logic 				   SelHPTWAdr;
   logic [`XLEN+1:0] 	   HPTWAdrExt;
-  logic 				   ITLBMissOrDAFaultF;
-  logic 				   DTLBMissOrDAFaultM;
+  logic 				   ITLBMissOrUpdateDAF;
+  logic 				   DTLBMissOrUpdateDAM;
   logic                    LSUAccessFaultM;
   logic [`PA_BITS-1:0] 	   HPTWAdr;
   logic [1:0] 			   HPTWRW;
@@ -108,14 +108,14 @@ module hptw (
 	// Extract bits from CSRs and inputs
 	assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
 	assign BasePageTablePPN = SATP_REGW[`PPN_BITS-1:0];
-	assign TLBMiss = (DTLBMissOrDAFaultM | ITLBMissOrDAFaultF);
+	assign TLBMiss = (DTLBMissOrUpdateDAM | ITLBMissOrUpdateDAF);
 
 	// Determine which address to translate
-	mux2 #(`XLEN) vadrmux(PCFSpill, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
+	mux2 #(`XLEN) vadrmux(PCSpillF, IEUAdrExtM[`XLEN-1:0], DTLBWalk, TranslationVAdr);
 	assign CurrentPPN = PTE[`PPN_BITS+9:10];
 
 	// State flops
-	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrDAFaultM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
+	flopenr #(1) TLBMissMReg(clk, reset, StartWalk, DTLBMissOrUpdateDAM, DTLBWalk); // when walk begins, record whether it was for DTLB (or record 0 for ITLB)
 	assign PRegEn = HPTWRW[1] & ~DCacheStallM | UpdatePTE;
 	flopenr #(`XLEN) PTEReg(clk, reset, PRegEn, NextPTE, PTE); // Capture page table entry from data cache
 
@@ -275,8 +275,8 @@ module hptw (
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
 
-  assign ITLBMissOrDAFaultF = ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF);
-  assign DTLBMissOrDAFaultM = DTLBMissM | (`SVADU_SUPPORTED & DataUpdateDAM);  
+  assign ITLBMissOrUpdateDAF = ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF);
+  assign DTLBMissOrUpdateDAM = DTLBMissM | (`SVADU_SUPPORTED & DataUpdateDAM);  
 
   // HTPW address/data/control muxing
 

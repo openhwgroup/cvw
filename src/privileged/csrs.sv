@@ -99,13 +99,13 @@ module csrs #(parameter
     flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
   else
     assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
-  flopens #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
+  flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
   if (`SSTC_SUPPORTED) begin
     if (`XLEN == 64)
-      flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW);
+      flopenl #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, 64'hFFFFFFFFFFFFFFFF, STIMECMP_REGW);
     else begin
-      flopenr #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, STIMECMP_REGW[31:0]);
-      flopenr #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, STIMECMP_REGW[63:32]);
+      flopenl #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, 32'hFFFFFFFF, STIMECMP_REGW[31:0]);
+      flopenl #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, 32'hFFFFFFFF, STIMECMP_REGW[63:32]);
     end
   end else assign STIMECMP_REGW = 0;
 
@@ -123,7 +123,7 @@ module csrs #(parameter
       SSTATUS:   CSRSReadValM = SSTATUS_REGW;
       STVEC:     CSRSReadValM = STVEC_REGW;
       SIP:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields  
-      SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW & 12'h222}; // only read supervisor fields
+      SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields
       SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
       SEPC:      CSRSReadValM = SEPC_REGW;
       SCAUSE:    CSRSReadValM = SCAUSE_REGW;

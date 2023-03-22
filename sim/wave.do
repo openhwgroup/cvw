@@ -6,7 +6,17 @@ add wave -noupdate /testbench/reset
 add wave -noupdate /testbench/reset_ext
 add wave -noupdate /testbench/memfilename
 add wave -noupdate /testbench/dut/core/SATP_REGW
-add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/BPPredWrongE
+add wave -noupdate /testbench/FunctionName/FunctionName/PCD
+add wave -noupdate /testbench/FunctionName/FunctionName/PCE
+add wave -noupdate /testbench/FunctionName/FunctionName/PCF
+add wave -noupdate /testbench/FunctionName/FunctionName/PCM
+add wave -noupdate /testbench/FunctionName/FunctionName/PCM_temp
+add wave -noupdate /testbench/FunctionName/FunctionName/PCMOld
+add wave -noupdate /testbench/dut/core/InstrValidM
+add wave -noupdate /testbench/FunctionName/FunctionName/FunctionAddr
+add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrIndex
+add wave -noupdate /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate /testbench/FunctionName/FunctionName/ProgramAddrMapLineCount
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/RetM
 add wave -noupdate -group HDU -expand -group hazards -color Pink /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group HDU -expand -group hazards /testbench/dut/core/hzu/LoadStallD
@@ -60,7 +70,8 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
-add wave -noupdate -group {Execution Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
+add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
@@ -91,19 +102,10 @@ add wave -noupdate -group CSRs -group {user mode} /testbench/dut/core/priv/priv/
 add wave -noupdate -group Bpred -group {branch update selection inputs} -divider {class check}
 add wave -noupdate -group Bpred -group prediction /testbench/dut/core/ifu/bpred/bpred/RASPCF
 add wave -noupdate -group Bpred -group prediction -expand -group ex /testbench/dut/core/ifu/bpred/bpred/PCSrcE
-add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/PredictionPCWrongE
-add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/InstrClassE
-add wave -noupdate -group Bpred -group {bp wrong} /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
-add wave -noupdate -group Bpred /testbench/dut/core/ifu/bpred/bpred/BPPredWrongE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNextF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/NextValidPCE
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCF
 add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCPlus2or4F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/BPPredPCF
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/SelBPPredF
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/bpred/bpred/PCNext0F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/PCNext1F
-add wave -noupdate -group {PCNext Generation} /testbench/dut/core/ifu/BPPredWrongE
 add wave -noupdate -group RegFile -expand /testbench/dut/core/ieu/dp/regf/rf
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a1
 add wave -noupdate -group RegFile /testbench/dut/core/ieu/dp/regf/a2
@@ -364,11 +366,9 @@ add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VI
 add wave -noupdate -group lsu -expand -group ptwalker -color Gold /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/WalkerState
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/HPTWAdr
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PTE
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PCFSpill
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/NextPageType
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PageType
 add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ValidNonLeafPTE
-add wave -noupdate -group lsu -expand -group ptwalker /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/PCFSpill
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/ITLBMissF
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/DTLBMissM
 add wave -noupdate -group lsu -expand -group ptwalker -expand -group types /testbench/dut/core/lsu/VIRTMEM_SUPPORTED/hptw/ITLBWriteF
@@ -457,7 +457,6 @@ add wave -noupdate -group {debug trace} -expand -group mem -color Yellow /testbe
 add wave -noupdate -group {debug trace} -expand -group mem /testbench/dut/core/PCM
 add wave -noupdate -group {debug trace} -expand -group mem -color Brown /testbench/dut/core/hzu/TrapM
 add wave -noupdate -group {debug trace} -expand -group wb /testbench/PCW
-add wave -noupdate -group {pc selection} /testbench/dut/core/ifu/PCNext2F
 add wave -noupdate -group ifu /testbench/dut/core/ifu/InstrRawF
 add wave -noupdate -group ifu /testbench/dut/core/ifu/PostSpillInstrRawF
 add wave -noupdate -group ifu /testbench/dut/core/ifu/IFUStallF
@@ -465,9 +464,7 @@ add wave -noupdate -group ifu -group Spill /testbench/dut/core/ifu/Spill/spill/C
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/SpillF
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/IFUCacheBusStallD
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/ITLBMissF
-add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/InstrDAPageFaultF
 add wave -noupdate -group ifu -group Spill -expand -group takespill /testbench/dut/core/ifu/Spill/spill/TakeSpillF
-add wave -noupdate -group ifu -group Spill /testbench/dut/core/ifu/SelNextSpillF
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HSIZE
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HBURST
 add wave -noupdate -group ifu -group bus /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/HTRANS
@@ -558,19 +555,29 @@ add wave -noupdate -group ifu -group itlb -expand -group key19 {/testbench/dut/c
 add wave -noupdate -group ifu -group itlb -expand -group key19 {/testbench/dut/core/ifu/immu/immu/tlb/tlb/tlbcam/camlines[19]/Query1}
 add wave -noupdate -expand -group {Performance Counters} -label MCYCLE -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[0]}
 add wave -noupdate -expand -group {Performance Counters} -label MINSTRET -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[2]}
-add wave -noupdate -expand -group {Performance Counters} -label {LOAD STORE HAZARD} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {BP DIRECTION WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {BP INSTRUCTION} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {BTA/JTA WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {JAL(R) INSTRUCTION} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {RAS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {RETURN INSTRUCTION} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {BP CLASS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group BRP -label {Branch Predictor Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -label {ICACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group ICACHE -label {ICACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
-add wave -noupdate -expand -group {Performance Counters} -expand -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label Branch -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[3]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {Jump (Not Return)} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[4]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label Return -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[5]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {BP Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[6]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {BP Dir Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[7]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {BTA Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[8]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {RAS Wrong} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[9]}
+add wave -noupdate -expand -group {Performance Counters} -expand -group BP -label {BP CLASS WRONG} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[10]}
+add wave -noupdate -expand -group {Performance Counters} -group ICACHE -label {I Cache Access} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[16]}
+add wave -noupdate -expand -group {Performance Counters} -group ICACHE -label {I Cache Miss} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[17]}
+add wave -noupdate -expand -group {Performance Counters} -group ICACHE -label {I Cache Miss Cycles} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[18]}
+add wave -noupdate -expand -group {Performance Counters} -group DCACHE -label {Load Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[11]}
+add wave -noupdate -expand -group {Performance Counters} -group DCACHE -label {Store Stall} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[12]}
+add wave -noupdate -expand -group {Performance Counters} -group DCACHE -label {DCACHE MISS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[14]}
+add wave -noupdate -expand -group {Performance Counters} -group DCACHE -label {DCACHE ACCESS} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[13]}
+add wave -noupdate -expand -group {Performance Counters} -group DCACHE -label {D Cache Miss Cycles} -radix unsigned {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[15]}
+add wave -noupdate -expand -group {Performance Counters} -group Privileged -label {CSR Write} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[19]}
+add wave -noupdate -expand -group {Performance Counters} -group Privileged -label Fence.I {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[20]}
+add wave -noupdate -expand -group {Performance Counters} -group Privileged -label sfence.VMA {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[21]}
+add wave -noupdate -expand -group {Performance Counters} -group Privileged -label Interrupt {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[22]}
+add wave -noupdate -expand -group {Performance Counters} -group Privileged -label Exception {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[23]}
+add wave -noupdate -expand -group {Performance Counters} -label {FDiv or IDiv Cycles} {/testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW[24]}
+add wave -noupdate -expand -group {Performance Counters} /testbench/dut/core/priv/priv/csr/counters/counters/HPMCOUNTER_REGW
 add wave -noupdate -group {ifu } -color Gold /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/CurrState
 add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/AHBBuscachefsm/HREADY
 add wave -noupdate -group {ifu } /testbench/dut/core/ifu/bus/icache/ahbcacheinterface/FetchBuffer
@@ -604,10 +611,6 @@ add wave -noupdate -group uncore /testbench/dut/uncore/uncore/HRDATA
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/rd
 add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
 add wave -noupdate -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PCSrcE
-add wave -noupdate -group {branch direction} -expand -group {branch outcome} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionE
-add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/TableDirPredictionF
-add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchXF
-add wave -noupdate -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionWrongE
 add wave -noupdate -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushM
 add wave -noupdate -group {branch direction} -expand -group conditions /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushE
 add wave -noupdate -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
@@ -615,27 +618,24 @@ add wave -noupdate -group {branch direction} -expand -group ghr /testbench/dut/c
 add wave -noupdate -group {branch direction} -expand -group ghr /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRE
 add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushD
 add wave -noupdate -group {branch direction} -expand -group nextghr2 /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
-add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/NewDirPredictionE
 add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexE
 add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/StallM
 add wave -noupdate -group {branch direction} /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/FlushM
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHR
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/PCNextF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/GHRNextF
 add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/IndexNextF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/DirPredictionF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/BranchInstrF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/Predictor/DirPredictor/MatchNextX
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredInstrClassF
-add wave -noupdate /testbench/dut/core/ifu/bpred/bpred/PredValidF
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/DCacheAccess
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/ICacheMiss
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/ICacheAccess
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/DCacheMiss
 add wave -noupdate /testbench/dut/core/priv/priv/csr/counters/counters/InstrValidNotFlushedM
+add wave -noupdate /testbench/clk
+add wave -noupdate /testbench/HPMCSample/InitialHPMCOUNTERH
+add wave -noupdate /testbench/HPMCSample/EndSample
+add wave -noupdate /testbench/HPMCSample/StartSample
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {368581 ns} 0} {{Cursor 5} {394987 ns} 1}
+WaveRestoreCursors {{Cursor 2} {314596 ns} 1} {{Cursor 3} {314460 ns} 1} {{Cursor 4} {391801 ns} 1} {{Cursor 4} {23 ns} 0} {{Cursor 5} {394987 ns} 1}
 quietly wave cursor active 4
 configure wave -namecolwidth 250
 configure wave -valuecolwidth 194
@@ -651,4 +651,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {368125 ns} {368797 ns}
+WaveRestoreZoom {0 ns} {52 ns}

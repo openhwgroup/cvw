@@ -1,3 +1,12 @@
+///////////////////////////////////////////
+// badinstr.S
+//
+// Written: David_Harris@hmc.edu 21 March 2023
+//
+// Purpose: Test illegal instruction opcodes
+//
+// A component of the CORE-V-WALLY configurable RISC-V project.
+// 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
@@ -12,3 +21,16 @@
 // License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
+////////////////////////////////////////////////////////////////////////////////////////////////
+
+// load code to initalize stack, handle interrupts, terminate
+#include "WALLY-init-lib.h"
+
+main:
+    .word 0x00000033 // legal R-type instruction
+    .word 0x80000033 // illegal R-type instruction
+    .word 0x00007003 // illegal Load instruction
+    .word 0x00000000 // illegal instruction
+
+    j done
+

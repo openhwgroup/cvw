@@ -43,7 +43,7 @@
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
-`define SSTC_SUPPORTED 0
+`define SSTC_SUPPORTED 1
 
 // LSU microarchitectural Features
 `define BUS_SUPPORTED 1
@@ -134,7 +134,7 @@
 
 `define BPRED_SUPPORTED 1
 `define BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-`define BPRED_SIZE 10
+`define BPRED_SIZE 16
 `define BTB_SIZE 10
 
 `define SVADU_SUPPORTED 0

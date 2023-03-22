@@ -98,8 +98,8 @@ module ieu (
     .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
-    .RegWriteM, .InvalidateICacheM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
-    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .StoreStallD);
+    .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
+    .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
 
   datapath   dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,

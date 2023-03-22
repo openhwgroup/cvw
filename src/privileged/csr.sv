@@ -37,6 +37,7 @@ module csr #(parameter
   input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
   input  logic [31:0]      InstrM,                    // current instruction
+  input  logic [31:0]      InstrOrigM,                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [`XLEN-1:0] PCM, PC2NextF,             // program counter, next PC going to trap/return logic
   input  logic [`XLEN-1:0] SrcAM, IEUAdrM,            // SrcA and memory address from IEU
   input  logic             CSRReadM, CSRWriteM,       // read or write CSR
@@ -44,6 +45,7 @@ module csr #(parameter
   input  logic             mretM, sretM, wfiM,        // return or WFI instruction
   input  logic             IntPendingM,               // at least one interrupt is pending and could occur if enabled
   input  logic             InterruptM,                // interrupt is occurring
+  input  logic             ExceptionM,                // interrupt is occurring
   input  logic             MTimerInt,                 // timer interrupt
   input  logic             MExtInt, SExtInt,          // external interrupt (from PLIC) 
   input  logic             MSwInt,                    // software interrupt
@@ -57,17 +59,23 @@ module csr #(parameter
   input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic             LoadStallD,
+  input  logic             StoreStallD,
+  input  logic             ICacheStallF,
+  input  logic             DCacheStallM,
   input  logic             BPDirPredWrongM,
-  input  logic             BTBPredPCWrongM,
+  input  logic             BTAWrongM,
   input  logic             RASPredPCWrongM,
   input  logic             IClassWrongM,
   input  logic             BPWrongM,                              // branch predictor is wrong
   input  logic [3:0]       InstrClassM,
-  input  logic             JumpOrTakenBranchM,                               // actual instruction class
   input  logic             DCacheMiss,
   input  logic             DCacheAccess,
   input  logic             ICacheMiss,
   input  logic             ICacheAccess,
+  input  logic             sfencevmaM,
+  input  logic             InvalidateICacheM,
+  input  logic             DivBusyE,                                  // integer divide busy
+  input  logic             FDivBusyE,                                 // floating point divide busy
   // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
@@ -78,7 +86,7 @@ module csr #(parameter
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]       STATUS_FS,
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output logic [2:0]       FRM_REGW, 
   //
   output logic [`XLEN-1:0] CSRReadValW,               // value read from CSR
@@ -126,7 +134,7 @@ module csr #(parameter
     if (InterruptM)           NextFaultMtvalM = 0;
     else case (CauseM)
       12, 1, 3:               NextFaultMtvalM = PCM;  // Instruction page/access faults, breakpoint
-      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrM}; // Illegal instruction fault
+      2:                      NextFaultMtvalM = {{(`XLEN-32){1'b0}}, InstrOrigM}; // Illegal instruction fault 
       0, 4, 6, 13, 15, 5, 7:  NextFaultMtvalM = IEUAdrM; // Instruction misaligned, Load/Store Misaligned/page/access faults
       default:                NextFaultMtvalM = 0; // Ecall, interrupts
     endcase
@@ -203,7 +211,7 @@ module csr #(parameter
   csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+    .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
@@ -258,9 +266,10 @@ module csr #(parameter
   
   if (`ZICOUNTERS_SUPPORTED) begin:counters
     csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
-      .InstrValidNotFlushedM, .LoadStallD, .CSRMWriteM,
-      .BPDirPredWrongM, .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM, .JumpOrTakenBranchM, .BPWrongM,
-      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess,
+      .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
+      .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,
+      .InterruptM, .ExceptionM, .InvalidateICacheM, .ICacheStallF, .DCacheStallM, .DivBusyE, .FDivBusyE,
       .CSRAdrM, .PrivilegeModeW, .CSRWriteValM,
       .MCOUNTINHIBIT_REGW, .MCOUNTEREN_REGW, .SCOUNTEREN_REGW,
       .MTIME_CLINT,  .CSRCReadValM, .IllegalCSRCAccessM);

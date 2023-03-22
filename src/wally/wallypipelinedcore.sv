@@ -62,8 +62,8 @@ module wallypipelinedcore (
   logic [`XLEN-1:0] 			  SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  logic [31:0] 					 InstrM;
-  logic [`XLEN-1:0]               PCFSpill, PCE, PCLinkE;
+  logic [31:0] 					 InstrM, InstrOrigM;
+  logic [`XLEN-1:0]               PCSpillF, PCE, PCLinkE;
   logic [`XLEN-1:0] 			  PCM;
   logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
   logic [`XLEN-1:0]               UnalignedPCNextF, PC2NextF;
@@ -110,7 +110,7 @@ module wallypipelinedcore (
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [`XLEN-1:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [`PA_BITS-3:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
@@ -142,7 +142,7 @@ module wallypipelinedcore (
   
   logic                          BPWrongE, BPWrongM;
   logic                          BPDirPredWrongM;
-  logic                          BTBPredPCWrongM;
+  logic                          BTAWrongM;
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
@@ -160,24 +160,24 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-  logic 						 JumpOrTakenBranchM;
   logic 						 BranchD, BranchE, JumpD, JumpE;
+  logic 						 DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     .InstrValidM, .InstrValidE, .InstrValidD,
-    .BranchD, .BranchE, .JumpD, .JumpE,
+    .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
-    .HRDATA, .PCFSpill, .IFUHADDR, .PC2NextF,
+    .HRDATA, .PCSpillF, .IFUHADDR, .PC2NextF,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM, .JumpOrTakenBranchM,
-    .BTBPredPCWrongM, .RASPredPCWrongM, .IClassWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .InstrClassM, .BPDirPredWrongM,
+    .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
@@ -200,7 +200,7 @@ module wallypipelinedcore (
      .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
-     .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
@@ -208,7 +208,7 @@ module wallypipelinedcore (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .StoreStallD); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
 
   lsu lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -231,6 +231,7 @@ module wallypipelinedcore (
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
     .sfencevmaM,                   // connects to privilege
+    .DCacheStallM,                  // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
@@ -239,7 +240,7 @@ module wallypipelinedcore (
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrUpdateDAF,
-    .PCFSpill, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
   if(`BUS_SUPPORTED) begin : ebu
@@ -285,13 +286,13 @@ module wallypipelinedcore (
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
-      .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, .sfencevmaM,
+      .InstrM, .InstrOrigM, .CSRReadValW, .UnalignedPCNextF,
+      .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD,
-      .BPDirPredWrongM, .BTBPredPCWrongM, .BPWrongM,
-      .RASPredPCWrongM, .IClassWrongM,
-      .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .FRegWriteM, .LoadStallD, .StoreStallD,
+      .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
+      .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
