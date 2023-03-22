@@ -62,7 +62,7 @@ This section describes the open source toolchain installation.  These steps shou
 
 ## TL;DR Open Source Tool-chain Installation
 
-The full instalation details are involved can be be skipped using the following script, wally-tool-chain-install.sh.
+The full installation details are involved can be be skipped using the following script, wally-tool-chain-install.sh.
 The script installs the open source tools to /opt/riscv by default.  This can be changed by supply the path as the first argument.  This script does not install buildroot (see the Detailed Tool-chain Install Guide in the following section) and does not install commercial EDA tools; Siemens Questa, Synopsys Design Compiler, or Cadence Innovus (see section Installing IDA Tools). It must be run as root or with sudo. This script is tested for Ubuntu, 20.04 and 22.04. Fedora and Red Hat can be installed in the Detailed Tool-chain Install Guide.
 
 	$ sudo wally-tool-chain-install.sh <optional, install directory, defaults to /opt/riscv>
