@@ -1,6 +1,5 @@
 hart_ids: [0]
 hart0:
-  #ISA: RV32IMAFDCZicsr_Zifencei
   ISA: RV32IMAFDCZicsr_Zifencei_Zba_Zbb_Zbc_Zbs
   physical_addr_sz: 32
   User_Spec_Version: '2.3'
