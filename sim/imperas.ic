@@ -1,5 +1,7 @@
-#--showoverrides
-#--showcommands
+#--mpdconsole refRoot
+#--gdbconsole
+--showoverrides
+--showcommands
 
 # Core settings
 --override cpu/unaligned=F
@@ -9,7 +11,14 @@
 --override cpu/misa_Extensions_mask=0x0
 
 # THIS NEEDS FIXING to 16
---override cpu/PMP_registers=0
+--override cpu/PMP_registers=16
+--override cpu/PMP_undefined=T
+
+# Illegal instruction should not contain the bit pattern
+# illegal pmp read contained this
+# --override cpu/tval_ii_code=F
+
+--registerset cpu/SCOUNTEREN=0x1
 
 # PMA Settings 
 # 'r': read access allowed
@@ -24,16 +33,16 @@
 # '8': 8-byte accesses allowed
 # '-', space: ignored (use for input string formatting).
 #
-# SV39 Memory 0x0000000000 0x7FFFFFFFFF
+# SVxx Memory 0x0000000000 0x7FFFFFFFFF
 #
---callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ------ ---- "; # INITIAL
---callcommand refRoot/cpu/setPMA -lo 0x0000001000 -hi 0x0000001FFF -attributes " r-x-A- 1248 "; # BOOTROM
---callcommand refRoot/cpu/setPMA -lo 0x0000012100 -hi 0x000001211F -attributes " rw--A- --48 "; # SDC
---callcommand refRoot/cpu/setPMA -lo 0x0002000000 -hi 0x000200FFFF -attributes " rw--A- 1248 "; # CLINT
---callcommand refRoot/cpu/setPMA -lo 0x000C000000 -hi 0x000FFFFFFF -attributes " rw--A- --4- "; # PLIC
---callcommand refRoot/cpu/setPMA -lo 0x0010000000 -hi 0x0010000007 -attributes " rw--A- 1--- "; # UART0 error - 0x10000000 - 0x100000FF
---callcommand refRoot/cpu/setPMA -lo 0x0010060000 -hi 0x00100600FF -attributes " rw--A- --4- "; # GPIO  error - 0x10006000 - 0x100060FF
---callcommand refRoot/cpu/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwx--- 1248 "; # UNCORE_RAM
+--callcommand refRoot/cpu/setPMA -lo 0x0000000000 -hi 0x7FFFFFFFFF -attributes " ------ ---- " # INITIAL
+--callcommand refRoot/cpu/setPMA -lo 0x0000001000 -hi 0x0000001FFF -attributes " r-x-A- 1248 " # BOOTROM
+--callcommand refRoot/cpu/setPMA -lo 0x0000012100 -hi 0x000001211F -attributes " rw--A- --48 " # SDC
+--callcommand refRoot/cpu/setPMA -lo 0x0002000000 -hi 0x000200FFFF -attributes " rw--A- 1248 " # CLINT
+--callcommand refRoot/cpu/setPMA -lo 0x000C000000 -hi 0x000FFFFFFF -attributes " rw--A- --4- " # PLIC
+--callcommand refRoot/cpu/setPMA -lo 0x0010000000 -hi 0x0010000007 -attributes " rw--A- 1--- " # UART0 error - 0x10000000 - 0x100000FF
+--callcommand refRoot/cpu/setPMA -lo 0x0010060000 -hi 0x00100600FF -attributes " rw--A- --4- " # GPIO  error - 0x10006000 - 0x100060FF
+--callcommand refRoot/cpu/setPMA -lo 0x0080000000 -hi 0x008FFFFFFF -attributes " rwx--- 1248 " # UNCORE_RAM
 
 # Enable the Imperas instruction coverage
 #-extlib    refRoot/cpu/cv=imperas.com/intercept/riscvInstructionCoverage/1.0
@@ -42,7 +51,7 @@
 
 # Add Imperas simulator application instruction tracing
 --override cpu/show_c_prefix=T
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange
+--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 10000000
 
 # Exceptions and pagetables debug
 --override cpu/debugflags=6
