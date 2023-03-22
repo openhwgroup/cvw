@@ -39,17 +39,17 @@ module zbb #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
   
   logic [WIDTH-1:0] CntResult;           // count result
-  logic [WIDTH-1:0] MinResult,MaxResult; // min,max result
+  logic [WIDTH-1:0] MinResult,MaxResult, MinMaxResult; // min,max result
   logic [WIDTH-1:0] ByteResult;          // byte results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend results
 
-  cnt #(WIDTH) cnt(.A(A), .RevA(RevA), .B(B[4:0]), .W64(W64), .CntResult(CntResult));
-  byteUnit #(WIDTH) bu(.A(A), .ByteSelect(B[0]), .ByteResult(ByteResult));
-  ext #(WIDTH) ext(.A(A), .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult(ExtResult));
+  cnt #(WIDTH) cnt(.A, .RevA, .B(B[4:0]), .W64, .CntResult);
+  byteUnit #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
+  ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 
-  mux2 #(WIDTH) maxmux(A, B, lt, MaxResult);
-  mux2 #(WIDTH) minmux(B, A, lt, MinResult);
+  // ZBBSelect[2] differentiates between min(u) vs max(u) instruction
+  mux2 #(WIDTH) minmaxmux(B, A, lt^ZBBSelect[2], MinMaxResult);
 
   // ZBB Result select mux
-  mux5 #(WIDTH) zbbresultmux(CntResult, ExtResult, ByteResult, MinResult, MaxResult, ZBBSelect, ZBBResult);
+  mux4 #(WIDTH) zbbresultmux(CntResult, ExtResult, ByteResult, MinMaxResult, ZBBSelect[1:0], ZBBResult);
 endmodule
