@@ -35,8 +35,7 @@ module clmul #(parameter WIDTH=32) (
 
   logic [(WIDTH*WIDTH)-1:0] s;               // intermediary signals for carry-less multiply
   
-  integer i;
-  integer j;
+  integer i,j;
 
   always_comb begin
     for (i=0;i<WIDTH;i++) begin: outer

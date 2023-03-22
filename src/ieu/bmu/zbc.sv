@@ -41,14 +41,14 @@ module zbc #(parameter WIDTH=32) (
 
   assign select = ~Funct3[1:0];
 
-  bitreverse #(WIDTH) brB(.a(B), .b(RevB));
+  bitreverse #(WIDTH) brB(.A(B), .RevA(RevB));
 
   mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, select, x);
   mux3 #(WIDTH) ymux({{1'b0},RevB[WIDTH-2:0]}, RevB, B,  select, y);
 
   clmul #(WIDTH) clm(.A(x), .B(y), .ClmulResult(ClmulResult));
   
-  bitreverse  #(WIDTH) brClmulResult(.a(ClmulResult), .b(RevClmulResult));
+  bitreverse  #(WIDTH) brClmulResult(.A(ClmulResult), .RevA(RevClmulResult));
 
   mux2 #(WIDTH) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
 endmodule
