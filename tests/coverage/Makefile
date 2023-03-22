@@ -16,11 +16,12 @@ all: $(OBJECTS)
 %.elf.objdump: %.elf
 
 %.elf: $(SRCDIR)/%.$(SEXT) WALLY-init-lib.h Makefile
+	# Change many things if bit width isn't 64
 	echo $@
 	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gc -mabi=lp64 -mcmodel=medany \
 	    -nostartfiles -T../../examples/link/link.ld $<
 	riscv64-unknown-elf-objdump -D $@ > $@.objdump
-	riscv64-unknown-elf-elf2hex --bit-width $(if $(findstring rv64,$*),64,32) --input $@ --output $@.memfile
+	riscv64-unknown-elf-elf2hex --bit-width 64 --input $@ --output $@.memfile
 	extractFunctionRadix.sh $@.objdump
     
 sim: %.elf
@@ -29,7 +30,7 @@ sim: %.elf
 	echo "Signature matches! Success!"
 
 clean:
-	rm -f *.elf *.objdump *.signature.output
+	rm -f *.elf *.objdump *.signature.output *.addr *.lab *.memfile
 
 
 
