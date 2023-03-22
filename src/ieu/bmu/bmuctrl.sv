@@ -7,7 +7,7 @@
 //
 // Purpose: Top level bit manipulation instruction decoder
 // 
-// Documentation: RISC-V System on Chip Design Chapter 4 (Section 4.1.4, Figure 4.8, Table 4.5)
+// Documentation: RISC-V System on Chip Design Chapter 15
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -165,8 +165,6 @@ module bmuctrl(
                                  BMUControlsD = `BMUCTRLW'b100_01_111_1_0_0_1_1_0_0_0_0;  // xnor
       17'b0010011_011010?_101: if ((`XLEN == 32 ^ Funct7D[0]) & `ZBB_SUPPORTED & (Rs2D == 5'b11000))
                                  BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8
-      //17'b0010011_0110100_101: if (`XLEN == 32 & `ZBB_SUPPORTED & (Rs2D == 5'b11000)) 
-      //                           BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8 (rv32)
       17'b0010011_0010100_101: if (`ZBB_SUPPORTED & Rs2D[4:0] == 5'b00111)
                                  BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // orc.b
       17'b0110011_0000101_110: if (`ZBB_SUPPORTED)

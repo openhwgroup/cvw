@@ -8,7 +8,7 @@
 //
 // Purpose: Bit reverse submodule
 //
-// Documentation: RISC-V System on Chip Design Chapter ***
+// Documentation: RISC-V System on Chip Design Chapter 15
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
