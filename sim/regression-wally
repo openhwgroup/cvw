@@ -129,6 +129,8 @@ for test in ahbTests:
 tests64gc = ["arch64f", "arch64d", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
+    tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv", "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
+#    tests64gc.append(["imperas64f", "imperas64d", "imperas64c", "imperas64i"])
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -215,12 +217,13 @@ def main():
 
     # Coverage report
     if coverage:
-       print('Generating coverage report')
-       os.system('vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log')
-       os.system('vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt')
-       os.system('vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt')
-       os.system('vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt')
-       os.system('vcover report -details -threshH 100 -html cov/cov.ucdb')
+       os.system('make coverage')
+       #print('Generating coverage report')
+       #os.system('vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log')
+       #os.system('vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt')
+       #os.system('vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt')
+       #os.system('vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt')
+       #os.system('vcover report -details -threshH 100 -html cov/cov.ucdb')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)

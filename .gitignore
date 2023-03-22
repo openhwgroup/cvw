@@ -111,3 +111,4 @@ sim/imperas.log
 sim/results-error/
 sim/test1.rep
 sim/vsim.log
+tests/coverage/*.S
