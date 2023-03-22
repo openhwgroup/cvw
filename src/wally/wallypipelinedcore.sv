@@ -110,7 +110,7 @@ module wallypipelinedcore (
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [`XLEN-1:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [`PA_BITS-3:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls

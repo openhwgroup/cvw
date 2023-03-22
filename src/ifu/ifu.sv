@@ -90,7 +90,7 @@ module ifu (
   output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
   output logic              InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],         // PMP configuration from privileged unit
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
+  input  var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
   output logic 				InstrAccessFaultF,                        // Instruction access fault 
   output logic              ICacheAccess,                             // Report I$ read to performance counters
   output logic              ICacheMiss                                // Report I$ miss to performance counters
