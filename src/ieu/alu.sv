@@ -93,7 +93,7 @@ module alu #(parameter WIDTH=32) (
     mux2 #(WIDTH) rotmux(A, {A[31:0], A[31:0]}, W64, rotA);
   end else assign rotA = A;
     
-  if (`ZBA_SUPPORTED) begin: zbamuxes
+  if (`ZBA_SUPPORTED) begin: zbapreshift
     // Pre-Shift
     assign CondShiftA = CondExtA << (PreShiftAmt);
   end else assign CondShiftA = A;
@@ -103,7 +103,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA(rotA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64(W64), .Y(Shift), .Rotate(Rotate));
+  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate);
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -125,9 +125,9 @@ module alu #(parameter WIDTH=32) (
         3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
         3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
         3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
+        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
         3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
         3'b111: FullResult = A & CondMaskInvB;              // and, bclr
-        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
       endcase
   end
   else begin
@@ -145,15 +145,15 @@ module alu #(parameter WIDTH=32) (
   end
 
   if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
-    bitreverse #(WIDTH) brA(.a(A), .b(RevA));
+    bitreverse #(WIDTH) brA(.A, .RevA);
   end
 
   if (`ZBC_SUPPORTED) begin: zbc
-    zbc #(WIDTH) ZBC(.A(A), .RevA(RevA), .B(B), .Funct3(Funct3), .ZBCResult(ZBCResult));
+    zbc #(WIDTH) ZBC(.A, .RevA, .B, .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A(A), .RevA(RevA), .B(B), .ALUResult(ALUResult), .W64(W64), .lt(CompFlags[0]), .ZBBSelect(ZBBSelect), .ZBBResult(ZBBResult));
+    zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
