@@ -1,3 +1,26 @@
+coverage:
+	#make -C ../tests/coverage --jobs
+	#iter-elf.bash --cover --search ../tests/coverage
+	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb riscv.ucdb -logfile cov/log
+	vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/ebu. > cov/rv64gc_coverage_ebu.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/priv. > cov/rv64gc_coverage_priv.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/ifu. > cov/rv64gc_coverage_ifu.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/lsu. > cov/rv64gc_coverage_lsu.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/fpu. > cov/rv64gc_coverage_fpu.rpt
+	vcover report cov/cov.ucdb -details -instance=/core/ieu. > cov/rv64gc_coverage_ieu.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ebu. > cov/rv64gc_uncovered_ebu.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/priv. > cov/rv64gc_uncovered_priv.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ifu. > cov/rv64gc_uncovered_ifu.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/lsu. > cov/rv64gc_uncovered_lsu.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/fpu. > cov/rv64gc_uncovered_fpu.rpt
+	vcover report cov/cov.ucdb -below 100 -details -instance=/core/ieu. > cov/rv64gc_uncovered_ieu.rpt
+	vcover report -hierarchical cov/cov.ucdb > cov/rv64gc_coverage_hierarchical.rpt
+	vcover report -below 100 -hierarchical cov/cov.ucdb > cov/rv64gc_uncovered_hierarchical.rpt
+#	vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt
+#	vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt
+	vcover report -details -threshH 100 -html cov/cov.ucdb
+
 all: riscoftests memfiles
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test

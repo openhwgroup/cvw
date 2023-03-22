@@ -34,7 +34,7 @@
 // *** remove MYIMPERASTEST cases when ported 
 
 string tvpaths[] = '{
-    "../addins/imperas-riscv-tests/work/",
+    "$RISCV/imperas-riscv-tests/work/",
     "../tests/riscof/work/riscv-arch-test/",
     "../tests/riscof/work/wally-riscv-arch-test/",
     "../tests/imperas-riscv-tests/work/",
