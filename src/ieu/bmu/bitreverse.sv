@@ -30,12 +30,12 @@
 `include "wally-config.vh"
 
 module bitreverse #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] a,
-  output logic [WIDTH-1:0] b);
+  input  logic [WIDTH-1:0] A,
+  output logic [WIDTH-1:0] RevA);
 
   genvar i;
   for (i=0; i<WIDTH;i++) begin:loop
-    assign b[WIDTH-i-1] = a[i];
+    assign RevA[WIDTH-i-1] = A[i];
   end
 endmodule
 
