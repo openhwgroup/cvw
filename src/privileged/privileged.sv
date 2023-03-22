@@ -37,6 +37,7 @@ module privileged (
   input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
+  input  logic [31:0]      InstrOrigM,                                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
   input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
   // control signals
@@ -81,7 +82,7 @@ module privileged (
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,       // status register bits
   output logic [1:0]       STATUS_MPP, STATUS_FS,                     // status register bits
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],       // PMP configuration entries to MMU
-  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
+  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
   output logic [2:0]       FRM_REGW,                                  // FPU rounding mode
   // PC logic output in privileged unit
   output logic [`XLEN-1:0] UnalignedPCNextF,                          // Next PC from trap/return PC logic
@@ -126,7 +127,7 @@ module privileged (
 
   // Control and Status Registers
   csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
+    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,

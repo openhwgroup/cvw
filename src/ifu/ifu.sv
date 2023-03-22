@@ -62,6 +62,7 @@ module ifu (
   output logic [`XLEN-1:0]  PC2NextF,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
   output logic [31:0] 		InstrD,                                   // The decoded instruction in Decode stage
   output logic [31:0]       InstrM,                                   // The decoded instruction in Memory stage
+  output logic [31:0]       InstrOrigM,                                   // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   output logic [`XLEN-1:0] 	PCM,                                      // Memory stage instruction address
   // branch predictor
   output logic [3:0] 		InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
@@ -90,7 +91,7 @@ module ifu (
   output logic 				ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
   output logic              InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
   input  var logic [7:0] PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],         // PMP configuration from privileged unit
-  input  var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
+  input  var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP address from privileged unit
   output logic 				InstrAccessFaultF,                        // Instruction access fault 
   output logic              ICacheAccess,                             // Report I$ read to performance counters
   output logic              ICacheMiss                                // Report I$ miss to performance counters
@@ -116,6 +117,7 @@ module ifu (
   logic                        CompressedF;                           // The fetched instruction is compressed
   logic                        CompressedD;                           // The decoded instruction is compressed
   logic                        CompressedE;                           // The execution instruction is compressed
+  logic                        CompressedM;                           // The execution instruction is compressed
   logic [31:0] 				   PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
   logic [31:0] 				   InstrRawD;                             // Non-decompressed instruction in the Decode stage
   logic                  IllegalIEUInstrD;                 // IEU Instruction (regular or compressed) is not good
@@ -135,6 +137,7 @@ module ifu (
   logic                        BusCommittedF;                         // Bus memory operation in flight, delay interrupts
   logic 					   CacheCommittedF;                       // I$ memory operation started, delay interrupts
   logic                        SelIROM;                               // PMA indicates instruction address is in the IROM
+  logic [15:0]       InstrRawE, InstrRawM;
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -385,5 +388,10 @@ module ifu (
   flopenrc #(1) CompressedDReg(clk, reset, FlushD, ~StallD, CompressedF, CompressedD);
   flopenrc #(1) CompressedEReg(clk, reset, FlushE, ~StallE, CompressedD, CompressedE);
   assign PCLinkE = PCE + (CompressedE ? 2 : 4);
-  
+
+  // pipeline original compressed instruction in case it is needed for MTVAL on an illegal instruction exception
+  flopenrc #(16) InstrRawEReg(clk, reset, FlushE, ~StallE, InstrRawD[15:0], InstrRawE);
+  flopenrc #(16) InstrRawMReg(clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
+  flopenrc #(1)  CompressedMReg(clk, reset, FlushM, ~StallM, CompressedE, CompressedM);
+  mux2     #(32) InstrOrigMux(InstrM, {16'b0, InstrRawM}, CompressedM, InstrOrigM); 
 endmodule

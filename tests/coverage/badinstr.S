@@ -24,11 +24,12 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // load code to initalize stack, handle interrupts, terminate
-#include "WALLY-init-lib.S"
+#include "WALLY-init-lib.h"
 
 main:
-    .word 0x00000033 // legal instruction
-    .word 0x80000033 // illegal instruction
+    .word 0x00000033 // legal R-type instruction
+    .word 0x80000033 // illegal R-type instruction
+    .word 0x00007003 // illegal Load instruction
     .word 0x00000000 // illegal instruction
 
     j done

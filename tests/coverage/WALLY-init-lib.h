@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// WALLY-init-lib.S
+// WALLY-init-lib.h
 //
 // Written: David_Harris@hmc.edu 21 March 2023
 //
