@@ -39,7 +39,7 @@ module zbb #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
   
   logic [WIDTH-1:0] CntResult;           // count result
-  logic [WIDTH-1:0] MinResult,MaxResult, MinMaxResult; // min,max result
+  logic [WIDTH-1:0] MinMaxResult;        // min,max result
   logic [WIDTH-1:0] ByteResult;          // byte results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend results
 
