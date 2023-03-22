@@ -8,7 +8,7 @@
 //
 // Purpose: RISC-V ZBB top level unit
 //
-// Documentation: RISC-V System on Chip Design Chapter ***
+// Documentation: RISC-V System on Chip Design Chapter 15
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
