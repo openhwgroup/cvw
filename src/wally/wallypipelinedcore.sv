@@ -62,7 +62,7 @@ module wallypipelinedcore (
   logic [`XLEN-1:0] 			  SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  logic [31:0] 					 InstrM;
+  logic [31:0] 					 InstrM, InstrOrigM;
   logic [`XLEN-1:0]               PCSpillF, PCE, PCLinkE;
   logic [`XLEN-1:0] 			  PCM;
   logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
@@ -176,7 +176,7 @@ module wallypipelinedcore (
     .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .BPDirPredWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .InstrClassM, .BPDirPredWrongM,
     .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
@@ -286,7 +286,7 @@ module wallypipelinedcore (
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
-      .InstrM, .CSRReadValW, .UnalignedPCNextF,
+      .InstrM, .InstrOrigM, .CSRReadValW, .UnalignedPCNextF,
       .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
       .FRegWriteM, .LoadStallD, .StoreStallD,

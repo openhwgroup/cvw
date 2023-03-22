@@ -37,6 +37,7 @@ module privileged (
   input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
   input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
   input  logic [31:0]      InstrM,                                    // Instruction
+  input  logic [31:0]      InstrOrigM,                                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
   input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
   // control signals
@@ -126,7 +127,7 @@ module privileged (
 
   // Control and Status Registers
   csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
-    .InstrM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
+    .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
     .MTIME_CLINT, .InstrValidM, .FRegWriteM, .LoadStallD, .StoreStallD,
