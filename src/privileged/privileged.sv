@@ -81,7 +81,7 @@ module privileged (
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,       // status register bits
   output logic [1:0]       STATUS_MPP, STATUS_FS,                     // status register bits
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],       // PMP configuration entries to MMU
-  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
+  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
   output logic [2:0]       FRM_REGW,                                  // FPU rounding mode
   // PC logic output in privileged unit
   output logic [`XLEN-1:0] UnalignedPCNextF,                          // Next PC from trap/return PC logic

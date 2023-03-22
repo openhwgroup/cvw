@@ -85,7 +85,7 @@ module csr #(parameter
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV, STATUS_TW,
   output logic [1:0]       STATUS_FS,
   output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  output var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
+  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output logic [2:0]       FRM_REGW, 
   //
   output logic [`XLEN-1:0] CSRReadValW,               // value read from CSR

@@ -56,7 +56,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   // PMA checker signals
   input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
   input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],                        // PMP configuration
-  input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                        // PMP addresses
+  input var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                        // PMP addresses
 );
 
   logic [`PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB                   
