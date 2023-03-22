@@ -33,16 +33,4 @@ main:
     .word 0x00000000 // illegal instruction
 
     j done
-/*
-main:
-    # Change to user mode
-    li a0, 0            # a0 = 0: argument to enter user mode
-    ecall               # System call to enter user mode
 
-    # Wait for timer interrupts
-    li t0, 0x1000       # loop counter start value
-loop: 
-    addi t0, t0, -1     # decrement counter
-    bne t0, zero, loop  # and repeat until zero
-
-*/
