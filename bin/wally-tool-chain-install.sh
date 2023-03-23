@@ -34,18 +34,19 @@ export PATH=$PATH:$RISCV/bin
 set -e # break on error
 
 # Modify accordingly for your machine
+# Increasing NUM_THREADS will speed up parallel compilation of the tools
 NUM_THREADS=1 # for low memory machines > 16GiB
 #NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
 
-# Update and Upgrade (see https://itsfoss.com/apt-update-vs-upgrade/)
+# Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 apt update
 apt upgrade
 
 # INSTALL 
-apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev
+apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
@@ -55,6 +56,10 @@ then
 fi
 
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
+# To install GCC from source can take hours to compile. 
+#This configuration enables multilib to target many flavors of RISC-V.   
+# This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
+
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
