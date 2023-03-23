@@ -107,6 +107,10 @@ logic [3:0] dummy;
         "fpga":                           tests = fpga;
         "ahb" :                           tests = ahb;
         "coverage64gc" :                  tests = coverage64gc;
+        "arch64zba":     if (`ZBA_SUPPORTED) tests = arch64zba;
+        "arch64zbb":     if (`ZBB_SUPPORTED) tests = arch64zbb;
+        "arch64zbc":     if (`ZBC_SUPPORTED) tests = arch64zbc;
+        "arch64zbs":     if (`ZBS_SUPPORTED) tests = arch64zbs;
       endcase 
     end else begin // RV32
       case (TEST)
@@ -131,7 +135,10 @@ logic [3:0] dummy;
         "wally32periph":                   tests = wally32periph;
         "embench":                        tests = embench;
         "coremark":                       tests = coremark;
-        "arch32ba":     if (`ZBA_SUPPORTED) tests = arch32ba;
+        "arch32zba":     if (`ZBA_SUPPORTED) tests = arch32zba;
+        "arch32zbb":     if (`ZBB_SUPPORTED) tests = arch32zbb;
+        "arch32zbc":     if (`ZBC_SUPPORTED) tests = arch32zbc;
+        "arch32zbs":     if (`ZBS_SUPPORTED) tests = arch32zbs;
       endcase
     end
     if (tests.size() == 0) begin
