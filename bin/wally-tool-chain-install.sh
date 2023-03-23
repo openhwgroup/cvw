@@ -99,6 +99,8 @@ make -j ${NUM_THREADS}
 make install
 
 # Spike (https://github.com/riscv-software-src/riscv-isa-sim)
+# Spike also takes a while to install and compile, but this can be done concurrently 
+#with the GCC installation. After the build, we need to change two Makefiles to support atomic instructions.
 cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
@@ -111,12 +113,13 @@ sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
 # Sail (https://github.com/riscv/sail-riscv)
-#Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 
+# Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 
 # is an object-oriented extension of ML, which in turn is a functional programming 
-#language suited to formal verification.  OCaml is installed with the opam OCcaml 
-#package manager. Sail has so many dependencies that it can be difficult to install.
-# This script forks for Ubuntu.
+# language suited to formal verification.  OCaml is installed with the opam OCcaml 
+# package manager. Sail has so many dependencies that it can be difficult to install.
+# This script works for Ubuntu.
 
+# Do these commands only for RedHat / Rocky 8 to build from source.
 #cd $RISCV
 #git clone https://github.com/Z3Prover/z3.git
 #cd z3
@@ -146,33 +149,4 @@ ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
 pip3 install testresources
 pip3 install riscof --ignore-installed PyYAML
-
-# RedHat / Rocky 8 Linux doesn't have the packages in the default pacakge
-# manager.  Instead, build them form source using:
-#	$ sudo bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)"
-#	When prompted, put it in /usr/bin
-#	$ sudo yum groupinstall 'Development Tools'
-#	$ sudo yum -y install gmp-devel
-#	$ sudo yum -y install zlib-devel
-#	$ git clone https://github.com/Z3Prover/z3.git 
-#	$ cd z3
-#	$ python scripts/mk_make.py
-#	$ cd build
-#	$ make
-#	$ sudo make install
-#	$ cd ../..
-#	$ sudo pip3 install chardet==3.0.4
-#	$ sudo pip3 install urllib3==1.22
-
-
-# Verilator
-#apt install -y verilator
-
-# install github cli (gh)
-#type -p curl >/dev/null || sudo apt install curl -y
-#curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-#&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-#&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-#&& sudo apt update \
-#&& sudo apt install gh -y
 
