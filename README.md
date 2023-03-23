@@ -65,9 +65,13 @@ This section describes the open source toolchain installation.  The
 current version of the toolchain has been tested on Ubuntu and Red
 Hat/Rocky 8 Linux.  Ubuntu works more smoothly and is recommended
 unless you have a compelling need for RedHat.  
+
 Ubuntu users can install the tools by running
 
 	$ sudo $WALLY/bin/wally-tool-chain-install.sh
+
+See wally-tool-chain-install.sh for a detailed description of each component,
+or to issue the commands one at a time to install on the command line.
 
 ### Download Synthesis Libraries
 
