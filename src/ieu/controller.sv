@@ -131,6 +131,7 @@ module controller(
   logic        JFunctD;                        // detect jalr instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
+  logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -161,6 +162,7 @@ module controller(
                               ((`XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
     assign JFunctD          = (Funct3D == 3'b000);
+    assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1; // Don't bother to separate out shift decoding
     assign RFunctD = ~Funct7D[0]; // Not a multiply
@@ -168,7 +170,8 @@ module controller(
     assign LFunctD = 1; // don't bother to check Funct3 for loads
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
-    assign JFunctD = 1; // don't bother to check Funct3 for jumps    
+    assign JFunctD = 1; // don't bother to check Funct3 for jumps
+    assign IWValidFunct3D = 1;
   end
 
   // Main Instruction Decoder
@@ -187,7 +190,7 @@ module controller(
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (IFunctD & `XLEN == 64)
+      7'b0011011: if (IFunctD & IWValidFunct3D & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
