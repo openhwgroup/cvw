@@ -27,21 +27,26 @@
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
 `define WALLYTEST "2"
-`define MYIMPERASTEST   "3"
-`define COREMARK "4"
-`define EMBENCH "5"
-`define CUSTOM "6"
-// *** remove MYIMPERASTEST cases when ported 
+`define COREMARK "3"
+`define EMBENCH "4"
+`define CUSTOM "5"
+`define COVERAGE "6"
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
     "../tests/riscof/work/riscv-arch-test/",
     "../tests/riscof/work/wally-riscv-arch-test/",
-    "../tests/imperas-riscv-tests/work/",
     "../benchmarks/coremark/work/",
     "../addins/embench-iot/",
-    "../tests/custom/work/"
+    "../tests/custom/work/",
+    "../tests/coverage/"
     };
+
+  string coverage64gc[] = '{
+    `COVERAGE,
+    "badinstr",
+    "csrwrites"
+  };
 
   string coremark[] = '{
     `COREMARK,

@@ -11,7 +11,7 @@ import matplotlib.lines as lines
 import matplotlib as mpl
 import numpy as np
 from collections import namedtuple
-import sklearn.metrics as skm
+import sklearn.metrics as skm  # depricated, will need to replace with scikit-learn
 import os
 
 def synthsfromcsv(filename):

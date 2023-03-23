@@ -100,10 +100,10 @@ module csrs #(parameter
   else
     assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
   flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
-  if (`SSTC_SUPPORTED) begin
-    if (`XLEN == 64)
+  if (`SSTC_SUPPORTED) begin : sstc
+    if (`XLEN == 64) begin : sstc64
       flopenl #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, 64'hFFFFFFFFFFFFFFFF, STIMECMP_REGW);
-    else begin
+    end else begin : sstc32
       flopenl #(`XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, 32'hFFFFFFFF, STIMECMP_REGW[31:0]);
       flopenl #(`XLEN) STIMECMPHreg(clk, reset, WriteSTIMECMPHM, CSRWriteValM, 32'hFFFFFFFF, STIMECMP_REGW[63:32]);
     end
