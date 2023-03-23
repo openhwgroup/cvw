@@ -43,8 +43,12 @@ module datapath (
   input  logic [2:0]       ALUControlE,             // Indicate operation ALU performs
   input  logic             ALUSrcAE, ALUSrcBE,      // ALU operands
   input  logic             ALUResultSrcE,           // Selects result to pass on to Memory stage
+  input  logic [2:0]       ALUSelectE,              // ALU mux select signal
   input  logic             JumpE,                   // Is a jump (j) instruction
   input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
+  input  logic [1:0]       BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelectE,              // ZBB mux select signal
+  input  logic [2:0]       BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
   output logic [`XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
@@ -56,7 +60,7 @@ module datapath (
   output logic [`XLEN-1:0] WriteDataM,              // Write data in Memory stage
   // Writeback stage signals
   input  logic             StallW, FlushW,          // Stall, flush Writeback stage
- input  logic             RegWriteW, IntDivW,  // Write register file, integer divide instruction
+  input  logic             RegWriteW, IntDivW,      // Write register file, integer divide instruction
   input  logic             SquashSCW,               // Squash a store conditional when a conflict arose
   input  logic [2:0]       ResultSrcW,              // Select source of result to write back to register file
   input  logic [`XLEN-1:0] FCvtIntResW,             // FPU convert fp to integer result
@@ -109,7 +113,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, Funct3E, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, FlagsE, BALUControlE, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
