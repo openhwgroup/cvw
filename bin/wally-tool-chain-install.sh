@@ -35,15 +35,15 @@ set -e # break on error
 
 # Modify accordingly for your machine
 # Increasing NUM_THREADS will speed up parallel compilation of the tools
-NUM_THREADS=1 # for low memory machines > 16GiB
+NUM_THREADS=2 # for low memory machines > 16GiB
 #NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
 
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
-apt update
-apt upgrade
+apt update -y
+apt upgrade -y
 apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator
 
 # Other python libraries used through the book.
