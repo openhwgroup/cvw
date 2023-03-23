@@ -44,9 +44,10 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 apt update
 apt upgrade
+apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator
 
-# INSTALL 
-apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev
+# Other python libraries used through the book.
+pip3 install matplotlib scipy scikit-learn adjustText lief
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
@@ -59,6 +60,10 @@ fi
 # To install GCC from source can take hours to compile. 
 #This configuration enables multilib to target many flavors of RISC-V.   
 # This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
+# Note that GCC12.2 has binutils 2.39, which has a known performance bug that causes
+# objdump to run 100x slower than in previous versions, causing riscof to make versy slowly.
+# However GCC12.x is needed for bit manipulation instructions.  There is an open issue to fix this:
+# https://github.com/riscv-collab/riscv-gnu-toolchain/issues/1188
 
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
@@ -69,6 +74,12 @@ make -j ${NUM_THREADS}
 make install
 
 # elf2hex (https://github.com/sifive/elf2hex)
+#The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation. 
+# Note: The exe2hex utility that comes with Spike doesn’t work for our purposes because it doesn’t 
+# handle programs that start at 0x80000000. The SiFive version above is touchy to install. 
+# For example, if Python version 2.x is in your path, it won’t install correctly. 
+# Also, be sure riscv64-unknown-elf-objcopy shows up in your path in $RISCV/riscv-gnu-toolchain/bin 
+# at the time of compilation, or elf2hex won’t work properly.
 cd $RISCV
 export PATH=$RISCV/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
@@ -78,11 +89,6 @@ autoreconf -i
 make
 make install
 
-# Update Python3.6 for QEMU
-apt-get -y update
-apt-get -y install python3-pip
-apt-get -y install pkg-config
-apt-get -y install libglib2.0-dev
 
 # QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 cd $RISCV
@@ -105,17 +111,23 @@ sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
 # Sail (https://github.com/riscv/sail-riscv)
-cd $RISCV
-apt-get install -y opam  build-essential libgmp-dev z3 pkg-config zlib1g-dev
-git clone https://github.com/Z3Prover/z3.git
-cd z3
-python scripts/mk_make.py
-cd build
-make  -j ${NUM_THREADS}
-make install
-cd ../..
-pip3 install chardet==3.0.4
-pip3 install urllib3==1.22
+#Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 
+# is an object-oriented extension of ML, which in turn is a functional programming 
+#language suited to formal verification.  OCaml is installed with the opam OCcaml 
+#package manager. Sail has so many dependencies that it can be difficult to install.
+# This script forks for Ubuntu.
+
+#cd $RISCV
+#git clone https://github.com/Z3Prover/z3.git
+#cd z3
+#python scripts/mk_make.py
+#cd build
+#make  -j ${NUM_THREADS}
+#make install
+#cd ../..
+#pip3 install chardet==3.0.4
+#pip3 install urllib3==1.22
+
 opam init -y --disable-sandboxing
 opam switch create ocaml-base-compiler.4.06.1
 opam install sail -y 
@@ -135,16 +147,32 @@ ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 pip3 install testresources
 pip3 install riscof --ignore-installed PyYAML
 
+# RedHat / Rocky 8 Linux doesn't have the packages in the default pacakge
+# manager.  Instead, build them form source using:
+#	$ sudo bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)"
+#	When prompted, put it in /usr/bin
+#	$ sudo yum groupinstall 'Development Tools'
+#	$ sudo yum -y install gmp-devel
+#	$ sudo yum -y install zlib-devel
+#	$ git clone https://github.com/Z3Prover/z3.git 
+#	$ cd z3
+#	$ python scripts/mk_make.py
+#	$ cd build
+#	$ make
+#	$ sudo make install
+#	$ cd ../..
+#	$ sudo pip3 install chardet==3.0.4
+#	$ sudo pip3 install urllib3==1.22
+
+
 # Verilator
-apt install -y verilator
+#apt install -y verilator
 
 # install github cli (gh)
-type -p curl >/dev/null || sudo apt install curl -y
-curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
-&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-&& sudo apt update \
-&& sudo apt install gh -y
+#type -p curl >/dev/null || sudo apt install curl -y
+#curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \
+#&& sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
+#&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
+#&& sudo apt update \
+#&& sudo apt install gh -y
 
-# Other python libraries used through the book.
-pip3 install matplotlib scipy scikit-learn adjustText lief
