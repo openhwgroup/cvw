@@ -61,6 +61,7 @@ Build the tests and run a regression simulation with Questa to prove everything 
 
 # Toolchain Installation (Sys Admin)
 
+<<<<<<< HEAD
 This section describes the open source toolchain installation.  These steps should only be done once by the system admin.
 
 ## TL;DR Open Source Tool-chain Installation
@@ -282,6 +283,14 @@ The linux testbench can instruction by instruction compare Wally's committed ins
 
 	cd cvw/linux/testvector-generation
 	./genTrace.sh
+=======
+This section describes the open source toolchain installation.  The
+current version of the toolchain has been tested on Ubuntu and Red
+Hat/Rocky 8.  The latter is more difficult to install and Ubuntu may
+be more recommended for new users.  The <pre>wally-tool-chain-install.sh</pre> script inside
+the bin directory can be utilized to install the toolchain on Ubuntu
+using sudo.
+>>>>>>> a7e00e438681f72433225abccf3aef5f3c8913e7
 
 ### Download Synthesis Libraries
 
