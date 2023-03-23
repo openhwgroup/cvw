@@ -36,6 +36,7 @@ main:
     .word 0x00004023  // Illegal store instruction
     .word 0x0400003B  // Illegal RW or MulDivW instruction
     .word 0x00007067  // Illegal JALR instruction
+    .word 0x00002063  // Illegal branch instruction
 
     j done
 
