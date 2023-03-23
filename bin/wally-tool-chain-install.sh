@@ -5,6 +5,7 @@
 ## Written: Ross Thompson ross1728@gmail.com
 ## Created: 18 January 2023
 ## Modified: 22 January 2023
+## Modified: 23 March 2023
 ##
 ## Purpose: Open source tool chain installation script
 ##
@@ -26,18 +27,20 @@
 ## and limitations under the License.
 ################################################################################################
 
+# Use /opt/riscv for installation - may require running script with sudo
 export RISCV="${1:-/opt/riscv}"
 export PATH=$PATH:$RISCV/bin
 
 set -e # break on error
 
+# Modify accordingly for your machine
 NUM_THREADS=1 # for low memory machines > 16GiB
 #NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
 
-# UPDATE / UPGRADE
+# Update and Upgrade (see https://itsfoss.com/apt-update-vs-upgrade/)
 apt update
 apt upgrade
 
@@ -51,7 +54,7 @@ then
     ln -sf /usr/bin/python3 /usr/bin/python
 fi
 
-# gcc cross-compiler
+# gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
@@ -60,9 +63,8 @@ git checkout 2023.01.31
 make -j ${NUM_THREADS}
 make install
 
-# elf2hex
+# elf2hex (https://github.com/sifive/elf2hex)
 cd $RISCV
-#export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
 export PATH=$RISCV/bin:$PATH
 git clone https://github.com/sifive/elf2hex.git
 cd elf2hex
@@ -77,7 +79,7 @@ apt-get -y install python3-pip
 apt-get -y install pkg-config
 apt-get -y install libglib2.0-dev
 
-# QEMU
+# QEMU (https://www.qemu.org/docs/master/system/target-riscv.html)
 cd $RISCV
 git clone --recurse-submodules https://github.com/qemu/qemu
 cd qemu
@@ -85,7 +87,7 @@ cd qemu
 make -j ${NUM_THREADS}
 make install
 
-# Spike
+# Spike (https://github.com/riscv-software-src/riscv-isa-sim)
 cd $RISCV
 git clone https://github.com/riscv-software-src/riscv-isa-sim
 mkdir -p riscv-isa-sim/build
@@ -97,7 +99,7 @@ cd ../arch_test_target/spike/device
 sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
-# SAIL
+# Sail (https://github.com/riscv/sail-riscv)
 cd $RISCV
 apt-get install -y opam  build-essential libgmp-dev z3 pkg-config zlib1g-dev
 git clone https://github.com/Z3Prover/z3.git
