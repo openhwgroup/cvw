@@ -40,6 +40,7 @@ Clone your fork of the repo, run the setup script, and build the tests:
 
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+	$ git remote add upstream https://github.com/openhwgroup/cvw
 	$ cd cvw
 	$ source ./setup.sh
 	$ make
