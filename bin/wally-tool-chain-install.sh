@@ -39,6 +39,7 @@ sudo mkdir -p $RISCV
 
 # UPDATE / UPGRADE
 apt update
+apt upgrade
 
 # INSTALL 
 apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev
@@ -137,3 +138,7 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
 && echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
 && sudo apt update \
 && sudo apt install gh -y
+
+# Other python libraries used through the book.
+sudo pip3 install matplotlib scipy sklearn adjustText leif
+
