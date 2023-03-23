@@ -30,7 +30,12 @@ main:
     .word 0x00000033 // legal R-type instruction
     .word 0x80000033 // illegal R-type instruction
     .word 0x00007003 // illegal Load instruction
+    .word 0x80005013 // illegal I-type instruction: srli: op = 0010011, funct3 = 101, funct7 = 1000000
     .word 0x00000000 // illegal instruction
+    .word 0x0000701B  // Illegal IW instruction
+    .word 0x00004023  // Illegal store instruction
+    .word 0x0400003B  // Illegal RW or MulDivW instruction
+    .word 0x00007067  // Illegal JALR instruction
 
     j done
 
