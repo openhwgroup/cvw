@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 // shifter.sv
 //
-// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu, Kevin Kim <kekim@hmc.edu>
 // Created: 9 January 2021
-// Modified: 
+// Modified: 6 February 2023
 //
 // Purpose: RISC-V 32/64 bit shifter
 // 
@@ -30,42 +30,49 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0]     A,                     // Source
-  input  logic [`LOG_XLEN-1:0] Amt,                   // Shift amount
-  input  logic                 Right, Arith, W64,     // Shift right, arithmetic, RV64 W-type shift
-  output logic [`XLEN-1:0]     Y);                    // Shifted result
+  input  logic [`XLEN-1:0]     shA,                           // shift Source
+  input  logic [`XLEN-1:0]   rotA,                          // rotate source
+  input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
+  input  logic                 Right, Rotate, W64, Sign,    // Shift right, rotate signals
+  output logic [`XLEN-1:0]     Y);                          // Shifted result
 
-  logic [2*`XLEN-2:0]      z, zshift;                 // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
-  logic [`LOG_XLEN-1:0]    amttrunc, offset;          // Shift amount adjusted for RV64, right-shift amount
+  logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
+  logic [`LOG_XLEN-1:0]    amttrunc, offset;                // Shift amount adjusted for RV64, right-shift amount
 
-  // Handle left and right shifts with a funnel shifter.
-  // For RV32, only 32-bit shifts are needed.   
-  // For RV64, 32- and 64-bit shifts are needed, with sign extension.
-
-  // Funnel shifter input (see CMOS VLSI Design 4e Section 11.8.1, note Table 11.11 shift types wrong)
-  if (`XLEN==32) begin:shifter // RV32
-    always_comb  // funnel mux
-      if (Right) 
-        if (Arith) z = {{31{A[31]}}, A};
-        else       z = {31'b0, A};
-      else         z = {A, 31'b0};
-    assign amttrunc = Amt; // shift amount
-  end else begin:shifter  // RV64
-    always_comb  // funnel mux
-      if (W64) begin // 32-bit shifts
-        if (Right)
-          if (Arith) z = {64'b0, {31{A[31]}}, A[31:0]};
-          else       z = {95'b0, A[31:0]};
-        else         z = {32'b0, A[31:0], 63'b0};
-      end else begin
-        if (Right)
-          if (Arith) z = {{63{A[63]}}, A};
-          else       z = {63'b0, A};
-        else         z = {A, 63'b0};         
-      end
-    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
+  if (`ZBB_SUPPORTED) begin: rotfunnel
+    if (`XLEN==32) begin // rv32 with rotates
+      always_comb  // funnel mux
+        case({Right, Rotate})
+          2'b00: z = {shA[31:0], 31'b0};
+          2'b01: z = {rotA,rotA[31:1]};
+          2'b10: z = {{31{Sign}}, shA[31:0]};
+          2'b11: z = {rotA[30:0],rotA};
+        endcase
+      assign amttrunc = Amt; // shift amount
+    end else begin // rv64 with rotates
+      always_comb  // funnel mux
+        case ({Right, Rotate})
+          2'b00: z = {shA[63:0],{63'b0}};
+          2'b01: z = {rotA, rotA[63:1]};
+          2'b10: z = {{63{Sign}},shA[63:0]};
+          2'b11: z = {rotA[62:0],rotA[63:0]};
+        endcase
+      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
+    end
+  end else begin: norotfunnel
+    if (`XLEN==32) begin:shifter // RV32
+      always_comb  // funnel mux
+        if (Right)  z = {{31{Sign}}, shA[31:0]};
+        else        z = {shA[31:0], 31'b0};
+      assign amttrunc = Amt; // shift amount
+    end else begin:shifter  // RV64
+      always_comb  // funnel mux
+        if (Right)  z = {{63{Sign}},shA[63:0]};
+        else        z = {shA[63:0],{63'b0}};
+      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
+    end
   end
-
+  
   // Opposite offset for right shifts
   assign offset = Right ? amttrunc : ~amttrunc;
   
