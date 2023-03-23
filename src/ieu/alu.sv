@@ -116,32 +116,18 @@ module alu #(parameter WIDTH=32) (
   assign LTU = ~Carry;
  
   // Select appropriate ALU Result
-  if (`ZBS_SUPPORTED | `ZBB_SUPPORTED) begin
-    always_comb
-      if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
-      else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
-        3'b000: FullResult = Sum;                           // add or sub
-        3'b001: FullResult = Shift;                         // sll, sra, or srl
-        3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
-        3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
-        3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
-        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
-        3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
-        3'b111: FullResult = A & CondMaskInvB;              // and, bclr
-      endcase
-  end
-  else begin
-    always_comb
-      if (~ALUOp) FullResult = Sum;     // Always add for ALUOp = 0 (address generation)
-      else casez (ALUSelect)            // Otherwise check Funct3 NOTE: change signal name to ALUSelect
-        3'b000: FullResult = Sum;       // add or sub
-        3'b?01: FullResult = Shift;     // sll, sra, or srl
-        3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};        // slt
-        3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};       // sltu
-        3'b100: FullResult = A ^ B;     // xor
-        3'b110: FullResult = A | B;     // or 
-        3'b111: FullResult = A & B;     // and
-      endcase
+  always_comb begin
+    if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
+    else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
+      3'b000: FullResult = Sum;                           // add or sub
+      3'b001: FullResult = Shift;                         // sll, sra, or srl
+      3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
+      3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
+      3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
+      3'b101: FullResult = (`ZBS_SUPPORTED | `ZBB_SUPPORTED) ? {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}} : Shift;// bext
+      3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
+      3'b111: FullResult = A & CondMaskInvB;              // and, bclr
+    endcase
   end
 
   if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse

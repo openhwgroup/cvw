@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module alu #(parameter WIDTH=32) (
+module bitmanipalu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,        // Operands
   input  logic [2:0]       ALUControl,  // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,   // ALU mux select signal
@@ -38,16 +38,17 @@ module alu #(parameter WIDTH=32) (
   input  logic [2:0]       Funct3,      // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,   // Comparator flags
   input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
+  output logic [WIDTH-1:0] CondMaskB,
+  output logic [WIDTH-1:0] CondShiftA,
+  output logic [WIDTH-1:0] rotA,
   output logic [WIDTH-1:0] Result,      // ALU result
-  output logic [WIDTH-1:0] Sum);        // Sum of operands
+  output logic [WIDTH-1:0] ZBBResult,   // ZBB result
+  output logic [WIDTH-1:0] ZBCResult);  // ZBC result    
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
   logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult,ALUResult;                   // Intermediate Signals 
-  logic [WIDTH-1:0] ZBCResult, ZBBResult;                                                   // Result of ZBB, ZBC
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
-  logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
-  logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
   logic [WIDTH-1:0] CondExtA;                                                               // Result of Zero Extend A select mux
   logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
   logic             Carry, Neg;                                                             // Flags: carry out, negative
@@ -57,7 +58,6 @@ module alu #(parameter WIDTH=32) (
   logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                           // Sign bits of A, B
   logic             shSignA;
-  logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
   logic             Rotate;                                                                 // Indicates if it is Rotate instruction
   logic             Mask;                                                                   // Indicates if it is ZBS instruction
@@ -73,8 +73,6 @@ module alu #(parameter WIDTH=32) (
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
 
-  assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
-
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
     mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
@@ -87,24 +85,12 @@ module alu #(parameter WIDTH=32) (
   end else assign rotA = A;
     
   if (`ZBA_SUPPORTED) begin: zbapreshift
+    assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
     // Pre-Shift
     assign CondShiftA = CondExtA << (PreShiftAmt);
-  end else assign CondShiftA = A;
-
-  // Select appropriate ALU Result
-  if (`ZBS_SUPPORTED | `ZBB_SUPPORTED) begin
-    always_comb
-      if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
-      else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
-        3'b000: FullResult = Sum;                           // add or sub
-        3'b001: FullResult = Shift;                         // sll, sra, or srl
-        3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
-        3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
-        3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
-        3'b101: FullResult = {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}};// bext
-        3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
-        3'b111: FullResult = A & CondMaskInvB;              // and, bclr
-      endcase
+  end else begin
+    assign PreShiftAmt = 2'b0;
+    assign CondShiftA = A;
   end
 
   if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
@@ -119,13 +105,4 @@ module alu #(parameter WIDTH=32) (
     zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
-  // Final Result B instruction select mux
-always_comb
-    case (BSelect)
-    // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
-    2'b00: Result = ALUResult; 
-    2'b01: Result = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
-    2'b10: Result = ZBBResult; 
-    2'b11: Result = ZBCResult;
-    endcase
 endmodule
