@@ -15,12 +15,11 @@ all: $(OBJECTS)
 
 %.elf.objdump: %.elf
 
+# Change many things if bit width isn't 64
 %.elf: $(SRCDIR)/%.$(SEXT) WALLY-init-lib.h Makefile
-	# Change many things if bit width isn't 64
-	echo $@
 	riscv64-unknown-elf-gcc -g -o $@ -march=rv64gc -mabi=lp64 -mcmodel=medany \
 	    -nostartfiles -T../../examples/link/link.ld $<
-	riscv64-unknown-elf-objdump -D $@ > $@.objdump
+	riscv64-unknown-elf-objdump -S $@ > $@.objdump
 	riscv64-unknown-elf-elf2hex --bit-width 64 --input $@ --output $@.memfile
 	extractFunctionRadix.sh $@.objdump
     
