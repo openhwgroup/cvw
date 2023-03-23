@@ -140,5 +140,4 @@ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo 
 && sudo apt install gh -y
 
 # Other python libraries used through the book.
-sudo pip3 install matplotlib scipy sklearn adjustText leif
-
+pip3 install matplotlib scipy scikit-learn adjustText lief
