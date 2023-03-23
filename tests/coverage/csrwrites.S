@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
-// badinstr.S
+// csrwrites.S
 //
 // Written: David_Harris@hmc.edu 21 March 2023
 //
-// Purpose: Test illegal instruction opcodes
+// Purpose: Test writes to CSRs
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -27,16 +27,9 @@
 #include "WALLY-init-lib.h"
 
 main:
-    .word 0x00000033 // legal R-type instruction
-    .word 0x80000033 // illegal R-type instruction
-    .word 0x00007003 // illegal Load instruction
-    .word 0x80005013 // illegal I-type instruction: srli: op = 0010011, funct3 = 101, funct7 = 1000000
-    .word 0x00000000 // illegal instruction
-    .word 0x0000701B  // Illegal IW instruction
-    .word 0x00004023  // Illegal store instruction
-    .word 0x0400003B  // Illegal RW or MulDivW instruction
-    .word 0x00007067  // Illegal JALR instruction
-    .word 0x00002063  // Illegal branch instruction
+    csrrw t0, stimecmp, t0
+    csrrw t0, satp, t0
+    csrrw t0, stvec, t0
+    csrrw t0, sscratch, t0
 
     j done
-

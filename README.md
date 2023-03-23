@@ -11,15 +11,15 @@ Wally is described in an upcoming textbook, *RISC-V System-on-Chip Design*, by H
 
 New users may wish to do the following setup to access the server via a GUI and use a text editor.
 
+	Git started with Git configuration and authentication: B.1 (replace with your name and email)
+		$ git config --global user.name "Ben Bitdiddle"
+		$ git config --global user.email "ben_bitdiddle@wally.edu"
+		$ git config --global pull.rebase false
 	Optional: Download and install x2go - A.1.1
 	Optional: Download and install VSCode - A.4.2
 	Optional: Make sure you can log into your server via x2go and via a terminal
 		Terminal on Mac, cmd on Windows, xterm on Linux
 		See A.1 about ssh -Y login from a terminal
-	Git started with Git configuration and authentication: B.1
-		$ git config --global user.name ″Ben Bitdiddle″
-		$ git config --global user.email ″ben_bitdiddle@wally.edu″
-		$ git config --global pull.rebase false
 
 Then clone the repo, source setup,  make the tests and run regression
 
@@ -30,20 +30,20 @@ Then clone the repo, source setup,  make the tests and run regression
 	
 	On the Linux computer where you will be working, log in
 
+Clone your fork of the repo and run the setup script.  
+
+	$ cd
+	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
+	$ git remote add upstream https://github.com/openhwgroup/cvw
+	$ cd cvw
+	$ source ./setup.sh
+
 Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.
 
 	if [ -f ~/cvw/setup.sh ]; then
 		source ~/cvw/setup.sh
 	fi
 
-Clone your fork of the repo, run the setup script, and build the tests:
-
-	$ cd
-	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
-	$ cd cvw
-	$ source ./setup.sh
-	$ make
-	
 Edit setup.sh and change the following lines to point to the path and license server for your Siemens Questa and Synopsys Design Compiler installation and license server.  If you only have Questa, you can still simulate but cannot run logic synthesis.
 
 	export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
@@ -51,8 +51,11 @@ Edit setup.sh and change the following lines to point to the path and license se
 	export QUESTAPATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin     # Change this for your path to Questa
 	export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
 
-Run a regression simulation with Questa to prove everything is installed.
+If the tools are not yet installed on your server, follow the Toolchain Installation instructions in the section below.
 
+Build the tests and run a regression simulation with Questa to prove everything is installed.  Building tests will take a while.
+
+	$ make
 	$ cd sim
 	$ ./regression-wally       (depends on having Questa installed)
 
@@ -60,32 +63,15 @@ Run a regression simulation with Questa to prove everything is installed.
 
 This section describes the open source toolchain installation.  The
 current version of the toolchain has been tested on Ubuntu and Red
-Hat/Rocky 8.  The latter is more difficult to install and Ubuntu may
-be more recommended for new users.  The <pre>wally-tool-chain-install.sh</pre> script inside
-the bin directory can be utilized to install the toolchain on Ubuntu
-using sudo.
+Hat/Rocky 8 Linux.  Ubuntu works more smoothly and is recommended
+unless you have a compelling need for RedHat.  
 
-### Download Synthesis Libraries
+Ubuntu users can install the tools by running
 
-For logic synthesis, we need a synthesis tool (see Section 3.XREF) and a cell library.  Clone the OSU 12-track cell library for the Skywater 130 nm process:
+	$ sudo $WALLY/bin/wally-tool-chain-install.sh
 
-	$ cd $RISCV
-	$ mkdir cad
-	$ mkdir cad/lib
-	$ cd cad/lib
-	$ git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12
-
-### Install github cli
-
-The github cli allows users to directly issue pull requests from their fork back to openhwgroup/cvw using the command line.
-
-	$ type -p curl >/dev/null || sudo apt install curl -y
-	$ curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg \ && sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg \
-	&& echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null \
-	&& sudo apt update \
-	&& sudo apt install gh -y
-
-
+See wally-tool-chain-install.sh for a detailed description of each component,
+or to issue the commands one at a time to install on the command line.
 ## Installing EDA Tools
 
 Electronic Design Automation (EDA) tools are vital to implementations of System on Chip architectures as well as validating different designs.   Open-source and commercial tools exist for multiple strategies and although the one can spend a lifetime using combinations of different tools, only a small subset of tools is utilized for this text.  The tools are chosen because of their ease in access as well as their repeatability for accomplishing many of the tasks utilized to design Wally.  It is anticipated that additional tools may be documented later after this is text is published to improve use and access.
