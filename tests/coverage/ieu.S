@@ -33,6 +33,8 @@ main:
     clz t1, t0
     li t0, -1
     clz t1, t0
+    li t0, 1
+    clz t1, t0
 
     # Test forwarding from store conditional
     lr.w t0, 0(a0)
