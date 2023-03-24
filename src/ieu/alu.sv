@@ -52,9 +52,9 @@ module alu #(parameter WIDTH=32) (
   logic             LT, LTU;                                                      // Less than, Less than unsigned
   logic             Asign, Bsign;                                                 // Sign bits of A, B
 
-  // A, A sign bit muxes
+  // *** explain this part better; possibly move into shifter and BMU?
   if (WIDTH == 64) begin
-    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, CondExtA); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
+    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]}, {{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, CondExtA); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
   end else begin 
     assign CondExtA = A;
   end
