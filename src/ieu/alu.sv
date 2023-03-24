@@ -114,7 +114,8 @@ module alu #(parameter WIDTH=32) (
 
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, .Funct3, .CompFlags, .BALUControl, .CondExtA, .ALUResult, .FullResult,
+    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, 
+       .Funct3, .CompFlags, .BALUControl, .CondExtA, .ALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .rotA, .Result);
   end else begin
     assign Result = ALUResult;
