@@ -31,34 +31,34 @@
 `include "wally-config.vh"
 
 module btb #(parameter Depth = 10 ) (
-  input  logic 			   clk,
-  input  logic 			   reset,
-  input  logic 			   StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
+  input  logic             clk,
+  input  logic             reset,
+  input  logic             StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
   input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,// PC at various stages
   output logic [`XLEN-1:0] BPBTAF, // BTB's guess at PC
   output logic [`XLEN-1:0] BPBTAD,
   output logic [`XLEN-1:0] BPBTAE,
-  output logic [3:0] 	   BTBIClassF, // BTB's guess at instruction class
+  output logic [3:0]       BTBIClassF, // BTB's guess at instruction class
   // update
-  input  logic 			   IClassWrongM, // BTB's instruction class guess was wrong
+  input  logic             IClassWrongM, // BTB's instruction class guess was wrong
   input  logic             IClassWrongE,
   input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
   input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
-  input  logic [3:0] 	   InstrClassD, // Instruction class to insert into btb
-  input  logic [3:0] 	   InstrClassE, // Instruction class to insert into btb
-  input  logic [3:0] 	   InstrClassM,                            // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassD, // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassE, // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassM,                            // Instruction class to insert into btb
   input  logic [3:0]       InstrClassW
 );
 
-  logic [Depth-1:0] 	   PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
-  logic [`XLEN-1:0] 	   ResetPC;
-  logic 		   MatchD, MatchE, MatchM, MatchW, MatchX;
-  logic [`XLEN+3:0] 	   ForwardBTBPrediction, ForwardBTBPredictionF;
-  logic [`XLEN+3:0] 	   TableBTBPredF;
-  logic [`XLEN-1:0] 	   IEUAdrW;
+  logic [Depth-1:0]        PCNextFIndex, PCFIndex, PCDIndex, PCEIndex, PCMIndex, PCWIndex;
+  logic [`XLEN-1:0]        ResetPC;
+  logic                    MatchD, MatchE, MatchM, MatchW, MatchX;
+  logic [`XLEN+3:0]        ForwardBTBPrediction, ForwardBTBPredictionF;
+  logic [`XLEN+3:0]        TableBTBPredF;
+  logic [`XLEN-1:0]        IEUAdrW;
   logic [`XLEN-1:0]        PCW;
-  logic 				   BTBWrongE, BPBTAWrongE;
-  logic 				   BTBWrongM, BPBTAWrongM;
+  logic                    BTBWrongE, BPBTAWrongE;
+  logic                    BTBWrongM, BPBTAWrongM;
   
   
   // hashing function for indexing the PC
@@ -110,6 +110,5 @@ module btb #(parameter Depth = 10 ) (
   
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
   flopenr #(`XLEN) IEUAdrWReg(clk, reset, ~StallW, IEUAdrM, IEUAdrW);
-
 
 endmodule

@@ -47,7 +47,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
   // performance counter outputs
   output logic       CacheMiss,         // Cache miss  
-  output logic       CacheAccess,		// Cache access
+  output logic       CacheAccess,    // Cache access
 
   // cache internals
   input  logic       CacheHit,          // Exactly 1 way hits
@@ -69,21 +69,21 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic       CacheEn            // Enable the cache memory arrays.  Disable hold read data constant
 );
   
-  logic               resetDelay;
-  logic               AMO, StoreAMO;
-  logic               AnyUpdateHit, AnyHit;
-  logic               AnyMiss;
-  logic               FlushFlag;
+  logic              resetDelay;
+  logic              AMO, StoreAMO;
+  logic              AnyUpdateHit, AnyHit;
+  logic              AnyMiss;
+  logic              FlushFlag;
     
   typedef enum logic [3:0]{STATE_READY, // hit states
-                                   // miss states
-					               STATE_FETCH,
-					               STATE_WRITEBACK,
-					               STATE_WRITE_LINE,
-                                   STATE_READ_HOLD,  // required for back to back reads. structural hazard on writting SRAM
-                                   // flush cache 
-					               STATE_FLUSH,
-					               STATE_FLUSH_WRITEBACK} statetype;
+                           // miss states
+                           STATE_FETCH,
+                           STATE_WRITEBACK,
+                           STATE_WRITE_LINE,
+                           STATE_READ_HOLD,  // required for back to back reads. structural hazard on writting SRAM
+                           // flush cache 
+                           STATE_FLUSH,
+                           STATE_FLUSH_WRITEBACK} statetype;
 
   statetype CurrState, NextState;
 
@@ -111,26 +111,26 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)
-      STATE_READY: if(InvalidateCache)                      NextState = STATE_READY;
-                   else if(FlushCache & ~READ_ONLY_CACHE)   NextState = STATE_FLUSH;
-                   else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty))  NextState = STATE_FETCH;
-                   else if(AnyMiss & LineDirty)             NextState = STATE_WRITEBACK;
-                   else                                     NextState = STATE_READY;
-      STATE_FETCH: if(CacheBusAck)                          NextState = STATE_WRITE_LINE;
-                            else                            NextState = STATE_FETCH;
-      STATE_WRITE_LINE:                                     NextState = STATE_READ_HOLD;
-      STATE_READ_HOLD: if(Stall)                            NextState = STATE_READ_HOLD;
-                             else                           NextState = STATE_READY;
-      STATE_WRITEBACK: if(CacheBusAck)                      NextState = STATE_FETCH;
-                              else                          NextState = STATE_WRITEBACK;
+      STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;
+                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
+                             else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;
+                             else if(AnyMiss & LineDirty)                      NextState = STATE_WRITEBACK;
+                             else                                              NextState = STATE_READY;
+      STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
+                             else                                              NextState = STATE_FETCH;
+      STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
+      STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_READY;
+      STATE_WRITEBACK:       if(CacheBusAck)                                   NextState = STATE_FETCH;
+                             else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
-      STATE_FLUSH: if(LineDirty)                            NextState = STATE_FLUSH_WRITEBACK;
-	               else if (FlushFlag)                        NextState = STATE_READ_HOLD;
-	               else                                       NextState = STATE_FLUSH;
-	    STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)   NextState = STATE_FLUSH;
-	                          else if(CacheBusAck)            NextState = STATE_READ_HOLD;
-	                          else                            NextState = STATE_FLUSH_WRITEBACK;
-      default:                                              NextState = STATE_READY;
+      STATE_FLUSH:           if(LineDirty)                                     NextState = STATE_FLUSH_WRITEBACK;
+                             else if (FlushFlag)                               NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_FLUSH;
+      STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)                      NextState = STATE_FLUSH;
+                             else if(CacheBusAck)                              NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_FLUSH_WRITEBACK;
+      default:                                                                 NextState = STATE_READY;
     endcase
   end
 
@@ -156,14 +156,14 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
 
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
-					(CurrState == STATE_FLUSH) | 
-					(CurrState == STATE_FLUSH_WRITEBACK);
+          (CurrState == STATE_FLUSH) | 
+          (CurrState == STATE_FLUSH_WRITEBACK);
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
-						 (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
+             (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
-						 (CurrState == STATE_FLUSH_WRITEBACK & CacheBusAck);
+             (CurrState == STATE_FLUSH_WRITEBACK & CacheBusAck);
   assign FlushCntRst = (CurrState == STATE_FLUSH & FlushFlag & ~LineDirty) |
-						  (CurrState == STATE_FLUSH_WRITEBACK & FlushFlag & CacheBusAck);
+              (CurrState == STATE_FLUSH_WRITEBACK & FlushFlag & CacheBusAck);
   // Bus interface controls
   assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
                          (CurrState == STATE_FETCH & ~CacheBusAck) | 

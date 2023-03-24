@@ -36,7 +36,7 @@ module div(
   input  logic             IntDivE,                       // integer division/remainder instruction of any type
   input  logic             DivSignedE,                    // signed division 
   input  logic             W64E,                          // W-type instructions (divw, divuw, remw, remuw)
-	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Forwarding mux outputs for Source A and B
+  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,// Forwarding mux outputs for Source A and B
   output logic             DivBusyE,                      // Divide is busy - stall pipeline
   output logic [`XLEN-1:0] QuotM, RemM                    // Quotient and remainder outputs
  );
@@ -76,7 +76,7 @@ module div(
     mux2 #(`XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
   end else begin // RV32 has no W-type instructions
     assign XinE = ForwardedSrcAE;
-    assign DinE = ForwardedSrcBE;	    
+    assign DinE = ForwardedSrcBE;      
     end   
 
   // Extract sign bits and check fo division by zero

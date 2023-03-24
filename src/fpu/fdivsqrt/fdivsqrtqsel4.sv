@@ -32,21 +32,21 @@ module fdivsqrtqsel4 (
   input  logic [2:0] Dmsbs,
   input  logic [4:0] Smsbs,
   input  logic [7:0] WSmsbs, WCmsbs,
-  input  logic Sqrt, j1,
+  input  logic       Sqrt, j1,
   output logic [3:0] udigit
 );
-	logic [6:0] Wmsbs;
-	logic [7:0] PreWmsbs;
-	logic [2:0] A;
+  logic [6:0] Wmsbs;
+  logic [7:0] PreWmsbs;
+  logic [2:0] A;
 
-	assign PreWmsbs = WCmsbs + WSmsbs;
-	assign Wmsbs = PreWmsbs[7:1];
-	// D = 0001.xxx...
-	// Dmsbs = |   |
+  assign PreWmsbs = WCmsbs + WSmsbs;
+  assign Wmsbs = PreWmsbs[7:1];
+  // D = 0001.xxx...
+  // Dmsbs = |   |
   // W =      xxxx.xxx...
-	// Wmsbs = |        |
+  // Wmsbs = |        |
 
-	logic [3:0] USel4[1023:0];
+  logic [3:0] USel4[1023:0];
 
   // Prepopulate selection table; this is constant at compile time
   always_comb begin 
@@ -109,5 +109,5 @@ module fdivsqrtqsel4 (
     end else A = Dmsbs;
 
   // Select quotient digit from lookup table based on A and W
-	assign udigit = USel4[{A,Wmsbs}];
+  assign udigit = USel4[{A,Wmsbs}];
 endmodule

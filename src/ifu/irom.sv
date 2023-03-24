@@ -27,10 +27,10 @@
 `include "wally-config.vh"
 
 module irom(
-  input logic 			  clk, 
-  input logic 			  ce,        // Chip Enable.  0: Holds IROMInstrF constant
+  input logic             clk, 
+  input logic             ce,        // Chip Enable.  0: Holds IROMInstrF constant
   input logic [`XLEN-1:0] Adr,       // PCNextFSpill
-  output logic [31:0] 	  IROMInstrF // Instruction read data
+  output logic [31:0]     IROMInstrF // Instruction read data
 );
 
   localparam XLENBYTES = `XLEN/8;
@@ -38,16 +38,16 @@ module irom(
   localparam OFFSET = $clog2(XLENBYTES);
 
   logic [`XLEN-1:0] IROMInstrFFull;
-  logic [31:0] 		RawIROMInstrF;
+  logic [31:0]     RawIROMInstrF;
 
-  logic [1:0] 			AdrD;
+  logic [1:0]       AdrD;
   flopen #(2) AdrReg(clk, ce, Adr[2:1], AdrD);
 
   rom1p1r #(ADDR_WDITH, `XLEN) rom(.clk, .ce, .addr(Adr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(IROMInstrFFull));
   if (`XLEN == 32) assign RawIROMInstrF = IROMInstrFFull;
   else             begin
-	// IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
-	// haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
+  // IROM is aligned to XLEN words, but instructions are 32 bits.  Select between the two
+  // haves.  Adr is the Next PCF not PCF so we delay 1 cycle.
     assign RawIROMInstrF = AdrD[1] ? IROMInstrFFull[63:32] : IROMInstrFFull[31:0];
   end
   // If the memory addres is aligned to 2 bytes return the upper 2 bytes in the lower 2 bytes.
