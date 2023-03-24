@@ -71,8 +71,8 @@ logic [3:0] dummy;
   logic riscofTest; 
   logic StartSample, EndSample;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
+  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.soc.core.ieu.dp.StallW, dut.soc.core.ifu.PCM, PCW);
+  flopenr  #(32)   InstrWReg(clk, reset, ~dut.soc.core.ieu.dp.StallW,  dut.soc.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
@@ -197,16 +197,16 @@ logic [3:0] dummy;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc_32e dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
-  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.InstrRawF[31:0],
-                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                dut.core.ifu.InstrM,  InstrW,
+  instrTrackerTB it(clk, reset, dut.soc.core.ieu.dp.FlushE,
+                dut.soc.core.ifu.InstrRawF[31:0],
+                dut.soc.core.ifu.InstrD, dut.soc.core.ifu.InstrE,
+                dut.soc.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // initialize tests
@@ -232,7 +232,7 @@ logic [3:0] dummy;
       // the design.
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
+          dut.soc.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
@@ -245,14 +245,14 @@ logic [3:0] dummy;
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        $readmemh(romfilename, dut.soc.uncore.uncore.bootrom.bootrom.memory.ROM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // force sdc timers
-        force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        force dut.soc.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
-        if (`IROM_SUPPORTED) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-        else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DTIM_SUPPORTED) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        if (`IROM_SUPPORTED) $readmemh(memfilename, dut.soc.core.ifu.irom.irom.rom.ROM);
+        else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.soc.uncore.uncore.ram.ram.memory.RAM);
+        if (`DTIM_SUPPORTED) $readmemh(memfilename, dut.soc.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -292,7 +292,7 @@ logic [3:0] dummy;
         end
       end else begin
 		if (TEST == "coremark")
-          if (dut.core.priv.priv.EcallFaultM) begin
+          if (dut.soc.core.priv.priv.EcallFaultM) begin
 			$display("Benchmark: coremark is done.");
 			$stop;
           end
@@ -356,8 +356,8 @@ logic [3:0] dummy;
 			/* verilator lint_off INFINITELOOP */
 			while (signature[i] !== 'bx) begin
               logic [`XLEN-1:0] sig;
-              if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-              else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+              if (`DTIM_SUPPORTED) sig = dut.soc.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+              else if (`UNCORE_RAM_SUPPORTED) sig = dut.soc.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
               //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
               if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
 				errors = errors+1;
@@ -389,10 +389,10 @@ logic [3:0] dummy;
             //pathname = tvpaths[tests[0]];
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
-            //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            //$readmemh(memfilename, dut.soc.uncore.uncore.ram.ram.memory.RAM);
+            if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.soc.core.ifu.irom.irom.rom.ROM);
+            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.soc.uncore.uncore.ram.ram.memory.RAM);
+            if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.soc.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -481,13 +481,13 @@ logic [3:0] dummy;
     always @(negedge clk) begin
 	  if(StartSample) begin
 		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
-		  InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+		  InitialHPMCOUNTERH[HPMCindex] <= dut.soc.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
 		end
 	  end
       if(EndSample) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
           // unlikely to have more than 10M in any counter.
-          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
+          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.soc.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
 		end
 	  end
 	end
@@ -509,15 +509,15 @@ logic [3:0] dummy;
   // or sd gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (`ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
+  if (`ZICSR_SUPPORTED) assign ecf = dut.soc.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
-			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
-			     (dut.core.ieu.dp.regf.we3 & 
-			      dut.core.ieu.dp.regf.a3 == 3 & 
-			      dut.core.ieu.dp.regf.wd3 == 1)) |
-           ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
-           ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
+			    (dut.soc.core.ieu.dp.regf.rf[3] == 1 | 
+			     (dut.soc.core.ieu.dp.regf.we3 & 
+			      dut.soc.core.ieu.dp.regf.a3 == 3 & 
+			      dut.soc.core.ieu.dp.regf.wd3 == 1)) |
+           ((dut.soc.core.ifu.InstrM == 32'h6f | dut.soc.core.ifu.InstrM == 32'hfc32a423 | dut.soc.core.ifu.InstrM == 32'hfc32a823) & dut.soc.core.ieu.c.InstrValidM ) |
+           ((dut.soc.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
   DCacheFlushFSM DCacheFlushFSM(.clk(clk),
     			.reset(reset),
@@ -532,17 +532,17 @@ logic [3:0] dummy;
 	always @(*) begin
 	  if(reset) begin
 		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-		  force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+		  force dut.soc.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
 		end
 		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-		  force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+		  force dut.soc.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
 		end
         #1;
 		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-		  release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+		  release dut.soc.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
 		end 
 		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-		  release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+		  release dut.soc.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
 		end
 	  end
 	end
@@ -556,7 +556,7 @@ logic [3:0] dummy;
 	  logic  PCSrcM;
 	  string LogFile;
 	  logic  resetD, resetEdge;
-	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+	  flopenrc #(1) PCSrcMReg(clk, reset, dut.soc.core.FlushM, ~dut.soc.core.StallM, dut.soc.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
 	  flop #(1) ResetDReg(clk, reset, resetD);
 	  assign resetEdge = ~reset & resetD;
       initial begin
@@ -566,9 +566,9 @@ logic [3:0] dummy;
       always @(posedge clk) begin
 		if(resetEdge) $fwrite(file, "TRAIN\n");
 		if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
-		if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+		if(dut.soc.core.ifu.InstrClassM[0] & ~dut.soc.core.StallW & ~dut.soc.core.FlushW & dut.soc.core.InstrValidM) begin
 		  direction = PCSrcM ? "t" : "n";
-		  $fwrite(file, "%h %s\n", dut.core.PCM, direction);
+		  $fwrite(file, "%h %s\n", dut.soc.core.PCM, direction);
 		end
 		if(EndSample) $fwrite(file, "END %s\n", memfilename);
 	  end
@@ -610,12 +610,12 @@ module DCacheFlushFSM
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
 	if(`DCACHE_SUPPORTED) begin
-	  localparam numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-	  localparam sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-	  localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+	  localparam numlines = testbench.dut.soc.core.lsu.bus.dcache.dcache.NUMLINES;
+	  localparam numways = testbench.dut.soc.core.lsu.bus.dcache.dcache.NUMWAYS;
+	  localparam linebytelen = testbench.dut.soc.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+	  localparam linelen = testbench.dut.soc.core.lsu.bus.dcache.dcache.LINELEN;
+	  localparam sramlen = testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+	  localparam cachesramwords = testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
 	  localparam numwords = sramlen/`XLEN;
     localparam lognumlines = $clog2(numlines);
 	  localparam loglinebytelen = $clog2(linebytelen);
@@ -638,13 +638,13 @@ module DCacheFlushFSM
 					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
 			    copyShadow(.clk,
           .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS-1-tagstart:0]),
-          .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
-          .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
+          .tag(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS-1-tagstart:0]),
+          .valid(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
+          .dirty(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
                            // these dirty bit selections would be needed if dirty is moved inside the tag array.
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS+tagstart]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.RAM[index]),
+          //.dirty(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
+          //.dirty(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS+tagstart]),
+          .data(testbench.dut.soc.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.RAM[index]),
           .index(index),
           .cacheWord(cacheWord),
           .CacheData(CacheData[way][index][cacheWord]),

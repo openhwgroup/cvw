@@ -26,21 +26,20 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-//import cvw::*;  // global CORE-V-Wally parameters
-`include "wally-config.vh"
+import cvw::*;  // global CORE-V-Wally parameters
 
-module wallypipelinedcore (
+module wallypipelinedcore #(parameter cvw_t P) (
    input  logic                  clk, reset,
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [`AHBW-1:0]       HRDATA,
+   input  logic [P.AHBW-1:0]       HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [`PA_BITS-1:0]    HADDR,
-   output logic [`AHBW-1:0]       HWDATA,
-   output logic [`XLEN/8-1:0]     HWSTRB,
+   output logic [P.PA_BITS-1:0]    HADDR,
+   output logic [P.AHBW-1:0]       HWDATA,
+   output logic [P.XLEN/8-1:0]     HWSTRB,
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -58,15 +57,15 @@ module wallypipelinedcore (
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
-  logic [`XLEN-1:0]               ForwardedSrcAE, ForwardedSrcBE;
-  logic [`XLEN-1:0] 			  SrcAM;
+  logic [P.XLEN-1:0]               ForwardedSrcAE, ForwardedSrcBE;
+  logic [P.XLEN-1:0] 			  SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
   logic [31:0] 					 InstrM, InstrOrigM;
-  logic [`XLEN-1:0]               PCSpillF, PCE, PCLinkE;
-  logic [`XLEN-1:0] 			  PCM;
-  logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-  logic [`XLEN-1:0]               UnalignedPCNextF, PC2NextF;
+  logic [P.XLEN-1:0]               PCSpillF, PCE, PCLinkE;
+  logic [P.XLEN-1:0] 			  PCM;
+  logic [P.XLEN-1:0]               CSRReadValW, MDUResultW;
+  logic [P.XLEN-1:0]               UnalignedPCNextF, PC2NextF;
   logic [1:0] 					 MemRWM;
   logic 						 InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
@@ -86,32 +85,32 @@ module wallypipelinedcore (
   logic [4:0]                    RdE, RdM, RdW;
   logic                          FPUStallD;
   logic                          FWriteIntE;
-  logic [`FLEN-1:0]               FWriteDataM;
-  logic [`XLEN-1:0]               FIntResM;  
-  logic [`XLEN-1:0]              FCvtIntResW; 
+  logic [P.FLEN-1:0]               FWriteDataM;
+  logic [P.XLEN-1:0]               FIntResM;  
+  logic [P.XLEN-1:0]              FCvtIntResW; 
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
   logic                          FRegWriteM;
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
-  logic [`XLEN-1:0]               FIntDivResultW;
+  logic [P.XLEN-1:0]               FIntDivResultW;
 
   // memory management unit signals
   logic                          ITLBWriteF;
   logic                          ITLBMissF;
-  logic [`XLEN-1:0]               SATP_REGW;
+  logic [P.XLEN-1:0]               SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic  [1:0]                   STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
-  logic [`XLEN-1:0]               PTE;
+  logic [P.XLEN-1:0]               PTE;
   logic [1:0]                    PageType;
   logic                          sfencevmaM, WFIStallM;
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [`PA_BITS-3:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
-  var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [P.PA_BITS-3:0]           PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
+  var logic [7:0]                PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0];
 
   // IMem stalls
   logic                          IFUStallF;
@@ -119,14 +118,14 @@ module wallypipelinedcore (
 
   // cpu lsu interface
   logic [2:0]                    Funct3M;
-  logic [`XLEN-1:0]               IEUAdrE;
-  logic [`XLEN-1:0]  WriteDataM;
-  logic [`XLEN-1:0]  IEUAdrM;  
-  logic [`LLEN-1:0]               ReadDataW;  
+  logic [P.XLEN-1:0]               IEUAdrE;
+  logic [P.XLEN-1:0]  WriteDataM;
+  logic [P.XLEN-1:0]  IEUAdrM;  
+  logic [P.LLEN-1:0]               ReadDataW;  
   logic                          CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0]            IFUHADDR;
+  logic [P.PA_BITS-1:0]            IFUHADDR;
   logic [2:0]                    IFUHBURST;
   logic [1:0]                    IFUHTRANS;
   logic [2:0]                    IFUHSIZE;
@@ -134,9 +133,9 @@ module wallypipelinedcore (
   logic                          IFUHREADY;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0]            LSUHADDR;
-  logic [`XLEN-1:0]               LSUHWDATA;
-  logic [`XLEN/8-1:0]             LSUHWSTRB;
+  logic [P.PA_BITS-1:0]            LSUHADDR;
+  logic [P.XLEN-1:0]               LSUHWDATA;
+  logic [P.XLEN/8-1:0]             LSUHWSTRB;
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
@@ -203,7 +202,7 @@ module wallypipelinedcore (
      .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
-     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
+     .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[P.XLEN-1:0]),
      .InstrValidM, .InstrValidE, .InstrValidD, .FCvtIntResW, .FCvtIntW,
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -243,7 +242,7 @@ module wallypipelinedcore (
     .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
-  if(`BUS_SUPPORTED) begin : ebu
+  if (P.BUS_SUPPORTED) begin : ebu
     ebu ebu(// IFU connections
       .clk, .reset,
       // IFU interface
@@ -281,7 +280,7 @@ module wallypipelinedcore (
     .FlushD, .FlushE, .FlushM, .FlushW);    
 
   // privileged unit
-  if (`ZICSR_SUPPORTED) begin:priv
+  if (P.ZICSR_SUPPORTED) begin:priv
     privileged priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
@@ -314,7 +313,7 @@ module wallypipelinedcore (
   end
 
   // multiply/divide unit
-  if (`M_SUPPORTED | `ZMMUL_SUPPORTED) begin:mdu
+  if (P.M_SUPPORTED | P.ZMMUL_SUPPORTED) begin:mdu
     mdu mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE, 
       .Funct3E, .Funct3M, .IntDivE, .W64E,
@@ -325,12 +324,12 @@ module wallypipelinedcore (
   end
 
   // floating point unit
-  if (`F_SUPPORTED) begin:fpu
+  if (P.F_SUPPORTED) begin:fpu
     fpu fpu(
       .clk, .reset,
       .FRM_REGW, // Rounding mode from CSR
       .InstrD, // instruction from IFU
-      .ReadDataW(ReadDataW[`FLEN-1:0]),// Read data from memory
+      .ReadDataW(ReadDataW[P.FLEN-1:0]),// Read data from memory
       .ForwardedSrcAE, // Integer input being processed (from IEU)
       .StallE, .StallM, .StallW, // stall signals from HZU
       .FlushE, .FlushM, .FlushW, // flush signals from HZU
