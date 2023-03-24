@@ -102,6 +102,7 @@ module bmuctrl(
                                   BMUControlsD = `BMUCTRLW'b000_10_000_1_1_0_1_0_0_0_0_0;  // count instruction
         17'b0110011_0000100_100: if (`XLEN == 32)
                                   BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
+        17'b0010011_0110000_101: BMUControlsD = `BMUCTRLW'b001_00_111_1_1_0_1_0_1_0_0_0;  // rori (rv32)                          
         17'b0110011_0100000_111: BMUControlsD = `BMUCTRLW'b111_01_111_1_0_0_1_1_0_0_0_0;  // andn
         17'b0110011_0100000_110: BMUControlsD = `BMUCTRLW'b110_01_111_1_0_0_1_1_0_0_0_0;  // orn
         17'b0110011_0100000_100: BMUControlsD = `BMUCTRLW'b100_01_111_1_0_0_1_1_0_0_0_0;  // xnor
