@@ -89,8 +89,6 @@ module ebu (
   logic                       IFUReq;
   logic 					  LSUReq;
 
-  
-  
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
