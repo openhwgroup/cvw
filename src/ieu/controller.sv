@@ -45,7 +45,6 @@ module controller(
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
   input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
   output logic        PCSrcE,                  // Select signal to choose next PC (for datapath and Hazard unit)
-  output logic [2:0]  ALUControlE,             // ALU operation to perform
   output logic 	      ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
@@ -54,6 +53,7 @@ module controller(
   output logic        IntDivE,                 // Integer divide
   output logic        MDUE,                    // MDU (multiply/divide) operatio
   output logic        W64E,                    // RV64 W-type operation
+  output logic        SubArithE,               // Subtraction or arithmetic shift
   output logic        JumpE,                   // jump instruction
   output logic        BranchE,                 // Branch instruction
   output logic        SCE,                     // Store Conditional instruction
@@ -93,7 +93,7 @@ module controller(
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
   logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
   logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
-  logic	       BaseALUOpD, BaseW64D;           // ALU operation and W64 for Base instructions specifically
+  logic	       BaseW64D;                       // W64 for Base instructions specifically
   logic	       BaseRegWriteD;                  // Indicates if Base instruction register write instruction
   logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic        BaseALUSrcBD;                   // Base instruction ALU B source select signal
@@ -111,6 +111,7 @@ module controller(
   logic [`CTRLW-1:0] ControlsD;                // Main Instruction Decoder control signals
   logic        SubArithD;                      // TRUE for R-type subtracts and sra, slt, sltu or B-type ext clr, andn, orn, xnor
   logic        subD, sraD, sltD, sltuD;        // Indicates if is one of these instructions
+  logic        ALUOpE;                         // 0 for address generationm 1 for ALU operations
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
@@ -118,22 +119,18 @@ module controller(
   logic        IEURegWriteE;                   // Register write 
   logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
-  logic        IllegalBitmanipInstrD;          // Unrecognized B instruction
   logic [1:0]  AtomicE;                        // Atomic instruction 
   logic        FenceD, FenceE;                 // Fence instruction
   logic        SFenceVmaD;                     // sfence.vma instruction
   logic        IntDivM;                        // Integer divide instruction
   logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
-  logic        BRegWriteD;                     // Indicates if it is a R type B instruction in decode stage
-  logic        BW64D;                          // Indicates if it is a W type B instruction in decode stage
-  logic        BSubArithD;                     // TRUE for B-type ext, clr, andn, orn, xnor
-  logic        BALUSrcBD;                      // B-type alu src select signal
   logic        BComparatorSignedE;             // Indicates if max, min (signed comarison) instruction in Execute Stage
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        JFunctD;                        // detect jalr instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
+  logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -231,17 +228,10 @@ module controller(
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
-  assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ; //NOTE: Do we want to segregate the IllegalBitmanipInstrD into its own output signal
   //assign IllegalBaseInstrD = 1'b0;
   assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
-
-  // If either bitmanip signal or base instruction signal
-  assign RegWriteD = BaseRegWriteD | BRegWriteD; 
-  assign W64D = BaseW64D | BW64D;
-  assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;
-  assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
   
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
@@ -253,34 +243,45 @@ module controller(
   assign subD = (Funct3D == 3'b000 & Funct7D[5] & OpD[5]);  // OpD[5] needed to distinguish sub from addi
   assign sraD = (Funct3D == 3'b101 & Funct7D[5]);
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
-  assign ALUControlD = {W64D, SubArithD, ALUOpD};
 
   // bit manipulation Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+    logic IllegalBitmanipInstrD;          // Unrecognized B instruction
+    logic BRegWriteD;                     // Indicates if it is a R type BMU instruction in decode stage
+    logic BW64D;                          // Indicates if it is a W type BMU instruction in decode stage
+    logic BSubArithD;                     // TRUE for BMU ext, clr, andn, orn, xnor
+    logic BALUSrcBD;                      // BMU alu src select signal
+
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
-      .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
+      .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
     end else assign sltD = (Funct3D == 3'b010);
 
+    // Combine base and bit manipulation signals
+    assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ;
+    assign RegWriteD = BaseRegWriteD | BRegWriteD; 
+    assign W64D = BaseW64D | BW64D;
+    assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;
+    assign SubArithD = BaseSubArithD | BSubArithD; // TRUE If BMU or R-type instruction involves inverted operand
+
   end else begin: bitmanipi
-    assign ALUSelectE = Funct3E;
+    assign ALUSelectD = ALUOpD ? Funct3D : 3'b000; // add for address generation when not doing ALU operation
+    assign sltD = (Funct3D == 3'b010);
+    assign IllegalBaseInstrD = ControlsD[0] | IllegalERegAdrD ;
+    assign RegWriteD = BaseRegWriteD; 
+    assign W64D = BaseW64D;
+    assign ALUSrcBD = BaseALUSrcBD;
+    assign SubArithD = BaseSubArithD; // TRUE If B-type or R-type instruction involves inverted operand
+
+    // tie off unused bit manipulation signals
     assign BSelectE = 2'b00;
     assign BSelectD = 2'b00;
     assign ZBBSelectE = 3'b000;
-    assign BRegWriteD = 1'b0;
-    assign BW64D = 1'b0;
-    assign BRegWriteE = 1'b0;
-    assign BSubArithD = 1'b0;
     assign BComparatorSignedE = 1'b0;
     assign BALUControlE = 3'b0;
-    assign BALUSrcBD = 1'b0;
-
-    assign sltD = (Funct3D == 3'b010);
-
-    assign IllegalBitmanipInstrD = 1'b1;
   end
 
   // Fences
@@ -300,9 +301,9 @@ module controller(
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(28) controlregE(clk, reset, FlushE, ~StallE,
-                           {RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUControlD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
-                           {IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUControlE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
+  flopenrc #(29) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
