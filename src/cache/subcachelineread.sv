@@ -33,8 +33,8 @@ module subcachelineread #(parameter LINELEN, WORDLEN,
   parameter MUXINTERVAL )(     // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to `LLEN for D$
 
   input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0] PAdr,       // Physical address 
-  input  logic [LINELEN-1:0] 									  ReadDataLine,// Read data of the whole cacheline
-  output logic [WORDLEN-1:0] 									  ReadDataWord // read data of selected word.
+  input  logic [LINELEN-1:0]                     ReadDataLine,// Read data of the whole cacheline
+  output logic [WORDLEN-1:0]                     ReadDataWord // read data of selected word.
 );
 
   localparam WORDSPERLINE = LINELEN/MUXINTERVAL;
@@ -50,7 +50,7 @@ module subcachelineread #(parameter LINELEN, WORDLEN,
 
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux
-	  assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1 : (index*MUXINTERVAL)];
+    assign ReadDataLineSets[index] = ReadDataLinePad[(index*MUXINTERVAL)+WORDLEN-1 : (index*MUXINTERVAL)];
   end
   
   // variable input mux

@@ -27,8 +27,8 @@
 module ram2p1r1wbe_1024x68( 
   input  logic          CLKA, 
   input  logic          CLKB, 
-  input  logic 	        CEBA, 
-  input  logic 	        CEBB, 
+  input  logic          CEBA, 
+  input  logic          CEBB, 
   input  logic          WEBA,
   input  logic          WEBB,
   input  logic [9:0]    AA, 
@@ -43,8 +43,8 @@ module ram2p1r1wbe_1024x68(
 
    // replace "generic1024x68RAM" with "TSDN..1024X68.." module from your memory vendor
    //generic1024x68RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-	 //		     .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+   //         .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
   TSDN28HPCPA1024X68M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-			   .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
+    .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
 
 endmodule

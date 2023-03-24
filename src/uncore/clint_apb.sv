@@ -40,7 +40,7 @@ module clint_apb (
   output logic [`XLEN-1:0]    PRDATA,
   output logic                PREADY,
   output logic [63:0] MTIME, 
-  output logic 			          MTimerInt, MSwInt
+  output logic                MTimerInt, MSwInt
 );
 
   logic                       MSIP;

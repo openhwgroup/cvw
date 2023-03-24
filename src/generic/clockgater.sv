@@ -27,9 +27,9 @@
 `include "wally-config.vh"
 
 module clockgater (
-  input logic 	E,
-  input logic 	SE,
-  input logic 	CLK,
+  input  logic E,
+  input  logic SE,
+  input  logic CLK,
   output logic ECLK
 );
 
@@ -39,10 +39,10 @@ module clockgater (
     // VERY IMPORTANT.
     // This part functionally models a clock gater, but does not necessarily meet the timing constrains a real standard cell would.
     // Do not use this in synthesis!
-    logic 	enable_q;
+    logic   enable_q;
     always_latch begin
       if(~CLK) begin
-	      enable_q <= E | SE;
+        enable_q <= E | SE;
       end
     end
     assign ECLK = enable_q & CLK;

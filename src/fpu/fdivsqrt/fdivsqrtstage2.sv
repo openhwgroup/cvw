@@ -31,32 +31,32 @@
 /* verilator lint_off UNOPTFLAT */
 module fdivsqrtstage2 (
   input  logic [`DIVb-1:0] D,
-  input  logic [`DIVb+3:0]  DBar, 
-  input  logic [`DIVb:0] U, UM,
-  input  logic [`DIVb+3:0]  WS, WC,
+  input  logic [`DIVb+3:0] DBar, 
+  input  logic [`DIVb:0]   U, UM,
+  input  logic [`DIVb+3:0] WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtE,
-  output logic un,
+  input  logic             SqrtE,
+  output logic             un,
   output logic [`DIVb+1:0] CNext,
-  output logic [`DIVb:0] UNext, UMNext, 
-  output logic [`DIVb+3:0]  WSNext, WCNext
+  output logic [`DIVb:0]   UNext, UMNext, 
+  output logic [`DIVb+3:0] WSNext, WCNext
 );
  /* verilator lint_on UNOPTFLAT */
 
-  logic [`DIVb+3:0]  Dsel;
-  logic up, uz;
-  logic [`DIVb+3:0] F;
-  logic [`DIVb+3:0] AddIn;
-  logic [`DIVb+3:0]  WSA, WCA;
+  logic [`DIVb+3:0]        Dsel;
+  logic                    up, uz;
+  logic [`DIVb+3:0]        F;
+  logic [`DIVb+3:0]        AddIn;
+  logic [`DIVb+3:0]        WSA, WCA;
 
   // Qmient Selection logic
   // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
   // q encoding:
-	// 1000 = +2
-	// 0100 = +1
-	// 0000 =  0
-	// 0010 = -1
-	// 0001 = -2
+  // 1000 = +2
+  // 0100 = +1
+  // 0000 =  0
+  // 0010 = -1
+  // 0001 = -2
   fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
 
   // Sqrt F generation.  Extend C, U, UM to Q4.k

@@ -31,58 +31,58 @@
 
 module uncore (
   // AHB Bus Interface
-  input  logic             HCLK, HRESETn,
-  input  logic             TIMECLK,
+  input  logic                HCLK, HRESETn,
+  input  logic                TIMECLK,
   input  logic [`PA_BITS-1:0] HADDR,
-  input  logic [`AHBW-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  input  logic             HWRITE,
-  input  logic [2:0]       HSIZE,
-  input  logic [2:0]       HBURST,
-  input  logic [3:0]       HPROT,
-  input  logic [1:0]       HTRANS,
-  input  logic             HMASTLOCK,
-  input  logic [`AHBW-1:0] HRDATAEXT,
-  input  logic             HREADYEXT, HRESPEXT,
-  output logic [`AHBW-1:0] HRDATA,
-  output logic             HREADY, HRESP,
-  output logic             HSELEXT,
-  // peripheral pins
-  output logic             MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
-  output logic             MExtInt, SExtInt,          // External interrupts from PLIC
-  output logic [63:0]      MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]      GPIOPinsIn,                // GPIO pin input value
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
-  input  logic             UARTSin,                   // UART serial input
-  output logic             UARTSout,                  // UART serial output
-  output logic             SDCCmdOut,                 // SD Card command output
-  output logic             SDCCmdOE,                  // SD Card command output enable
-  input  logic             SDCCmdIn,                  // SD Card command input
-  input  logic [3:0]       SDCDatIn,                  // SD Card data input
-  output logic             SDCCLK                     // SD Card clock
+  input  logic [`AHBW-1:0]    HWDATA,
+  input  logic [`XLEN/8-1:0]  HWSTRB,
+  input  logic                HWRITE,
+  input  logic [2:0]          HSIZE,
+  input  logic [2:0]          HBURST,
+  input  logic [3:0]          HPROT,
+  input  logic [1:0]          HTRANS,
+  input  logic                HMASTLOCK,
+  input  logic [`AHBW-1:0]    HRDATAEXT,
+  input  logic                HREADYEXT, HRESPEXT,
+  output logic [`AHBW-1:0]    HRDATA,
+  output logic                HREADY, HRESP,
+  output logic                HSELEXT,
+  // peripheral pins          
+  output logic                MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
+  output logic                MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [63:0]         MTIME_CLINT,               // MTIME, from CLINT
+  input  logic [31:0]         GPIOPinsIn,                // GPIO pin input value
+  output logic [31:0]         GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
+  input  logic                UARTSin,                   // UART serial input
+  output logic                UARTSout,                  // UART serial output
+  output logic                SDCCmdOut,                 // SD Card command output
+  output logic                SDCCmdOE,                  // SD Card command output enable
+  input  logic                SDCCmdIn,                  // SD Card command input
+  input  logic [3:0]          SDCDatIn,                  // SD Card data input
+  output logic                SDCCLK                     // SD Card clock
 );
   
-  logic [`XLEN-1:0] HREADRam, HREADSDC;
+  logic [`XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [10:0]      HSELRegions;
-  logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic             HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
-  logic             HRESPRam,  HRESPSDC;
-  logic             HREADYRam, HRESPSDCD;
-  logic [`XLEN-1:0] HREADBootRom; 
-  logic             HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
-  logic             HSELNoneD;
-  logic             UARTIntr,GPIOIntr;
-  logic 	          SDCIntM;
+  logic [10:0]                HSELRegions;
+  logic                       HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
+  logic                       HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic                       HRESPRam,  HRESPSDC;
+  logic                       HREADYRam, HRESPSDCD;
+  logic [`XLEN-1:0]           HREADBootRom; 
+  logic                       HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
+  logic                       HSELNoneD;
+  logic                       UARTIntr,GPIOIntr;
+  logic                       SDCIntM;
   
-  logic             PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0]       PSEL, PREADY;
-  logic [31:0]      PADDR;
-  logic [`XLEN-1:0] PWDATA;
-  logic [`XLEN/8-1:0] PSTRB;
-  logic [3:0][`XLEN-1:0] PRDATA;
-  logic [`XLEN-1:0] HREADBRIDGE;
-  logic             HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+  logic                       PCLK, PRESETn, PWRITE, PENABLE;
+  logic [3:0]                 PSEL, PREADY;
+  logic [31:0]                PADDR;
+  logic [`XLEN-1:0]           PWDATA;
+  logic [`XLEN/8-1:0]         PSTRB;
+  logic [3:0][`XLEN-1:0]      PRDATA;
+  logic [`XLEN-1:0]           HREADBRIDGE;
+  logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -153,7 +153,7 @@ module uncore (
       // sdc interface
       .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,
       // interrupt to PLIC
-      .SDCIntM	      
+      .SDCIntM        
       );
   end else begin : sdc
     assign SDCCLK = 0; 
@@ -163,22 +163,22 @@ module uncore (
 
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-		              ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
+                  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({`XLEN{HSELBootRomD}} & HREADBootRom) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-		             HSELEXTD & HRESPEXT |
+                 HSELEXTD & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
-                 HSELSDC & HRESPSDC;		 
+                 HSELSDC & HRESPSDC;     
 
   assign HREADY = HSELRamD & HREADYRam |
-		              HSELEXTD & HREADYEXT |		  
+                  HSELEXTD & HREADYEXT |      
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-                  HSELSDCD & HREADYSDC |		  
+                  HSELSDCD & HREADYSDC |      
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)

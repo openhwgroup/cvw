@@ -30,20 +30,20 @@
 `include "wally-config.vh"
 
 module fcvt (
-  input  logic                    Xs,         // input's sign
-  input  logic [`NE-1:0]          Xe,         // input's exponent
-  input  logic [`NF:0]            Xm,         // input's fraction
-  input  logic [`XLEN-1:0]        Int,        // integer input - from IEU
-  input  logic [2:0]              OpCtrl,     // choose which opperation (look below for values)
-  input  logic                    ToInt,      // is fp->int (since it's writting to the integer register)
-  input  logic                    XZero,      // is the input zero
-  input  logic [`FMTBITS-1:0]     Fmt,        // the input's precision (11=quad 01=double 00=single 10=half)
-  output logic [`NE:0]            Ce,         // the calculated expoent
-  output logic [`LOGCVTLEN-1:0]   ShiftAmt,   // how much to shift by
+  input  logic                    Xs,          // input's sign
+  input  logic [`NE-1:0]          Xe,          // input's exponent
+  input  logic [`NF:0]            Xm,          // input's fraction
+  input  logic [`XLEN-1:0]        Int,         // integer input - from IEU
+  input  logic [2:0]              OpCtrl,      // choose which opperation (look below for values)
+  input  logic                    ToInt,       // is fp->int (since it's writting to the integer register)
+  input  logic                    XZero,       // is the input zero
+  input  logic [`FMTBITS-1:0]     Fmt,         // the input's precision (11=quad 01=double 00=single 10=half)
+  output logic [`NE:0]            Ce,          // the calculated expoent
+  output logic [`LOGCVTLEN-1:0]   ShiftAmt,    // how much to shift by
   output logic                    ResSubnormUf,// does the result underflow or is subnormal
-  output logic                    Cs,         // the result's sign
-  output logic                    IntZero,    // is the integer zero?
-  output logic [`CVTLEN-1:0]      LzcIn       // input to the Leading Zero Counter (priority encoder)
+  output logic                    Cs,          // the result's sign
+  output logic                    IntZero,     // is the integer zero?
+  output logic [`CVTLEN-1:0]      LzcIn        // input to the Leading Zero Counter (priority encoder)
   );
 
   // OpCtrls:
@@ -60,7 +60,7 @@ module fcvt (
   logic [`XLEN-1:0]       PosInt;     // the positive integer input
   logic [`XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
   logic [`NE-2:0]         NewBias;    // the bias of the final result
-  logic [`NE-1:0]	        OldExp;     // the old exponent
+  logic [`NE-1:0]         OldExp;     // the old exponent
   logic                   Signed;     // is the opperation with a signed integer?
   logic                   Int64;      // is the integer 64 bits?
   logic                   IntToFp;    // is the opperation an int->fp conversion?
