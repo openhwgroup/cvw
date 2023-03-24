@@ -44,7 +44,7 @@ module bmuctrl(
   output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
   // Execute stage control signals             
   input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
-  output logic [2:0]  ALUSelectE,
+  output logic [2:0]  ALUSelectD,              // ALU select
   output logic [1:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
   output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
@@ -61,7 +61,7 @@ module bmuctrl(
   logic       MaskD;                           // Indicates if zbs instruction in Decode Stage
   logic       PreShiftD;                       // Indicates if sh1add, sh2add, sh3add instruction in Decode Stage
   logic [2:0] BALUControlD;                    // ALU Control signals for B instructions
-  logic [2:0] BALUSelectD, ALUSelectD;         // ALU Mux select signal in Decode Stage
+  logic [2:0] BALUSelectD;                     // ALU Mux select signal in Decode Stage for BMU operations
   logic       BALUOpD;                         // Indicates if it is an ALU B instruction in Decode Stage
 
   `define BMUCTRLW 17
@@ -179,5 +179,5 @@ module bmuctrl(
   assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
   // BMU Execute stage pipieline control register
-  flopenrc#(13) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});
+  flopenrc#(10) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});
 endmodule

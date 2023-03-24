@@ -40,7 +40,8 @@ module datapath (
   input  logic [2:0]       Funct3E,                 // Funct3 field of instruction in Execute stage
   input  logic             StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]       ForwardAE, ForwardBE,    // Forward ALU operands from later stages
-  input  logic [2:0]       ALUControlE,             // Indicate operation ALU performs
+  input  logic             W64E,                    // W64-type instruction
+  input  logic             SubArithE,               // Subtraction or arithmetic shift
   input  logic             ALUSrcAE, ALUSrcBE,      // ALU operands
   input  logic             ALUResultSrcE,           // Selects result to pass on to Memory stage
   input  logic [2:0]       ALUSelectE,              // ALU mux select signal
@@ -113,7 +114,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, ALUControlE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, FlagsE, BALUControlE, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, FlagsE, BALUControlE, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 

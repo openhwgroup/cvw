@@ -31,7 +31,7 @@
 
 module bitmanipalu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,                    // Operands
-  input  logic [2:0]       ALUControl,              // With Funct3, indicates operation to perform
+  input  logic             W64,                     // W64-type instruction
   input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
   input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
@@ -46,16 +46,10 @@ module bitmanipalu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
   logic [WIDTH-1:0] MaskB;                          // BitMask of B
   logic [WIDTH-1:0] RevA;                           // Bit-reversed A
-  logic             W64;                            // RV64 W-type instruction
-  logic             SubArith;                       // Performing subtraction or arithmetic right shift
-  logic             ALUOp;                          // 0 for address generation addition or 1 for regular ALU ops
   logic             Rotate;                         // Indicates if it is Rotate instruction
   logic             Mask;                           // Indicates if it is ZBS instruction
   logic             PreShift;                       // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]       PreShiftAmt;                    // Amount to Pre-Shift A 
-
-  // Extract control signals from ALUControl.
-  assign {W64, SubArith, ALUOp} = ALUControl;
 
   // Extract control signals from bitmanip ALUControl.
   assign {Mask, PreShift} = BALUControl[1:0];
