@@ -30,13 +30,13 @@
 `include "wally-config.vh"
 
 module arrs(
-  input  logic 	clk,
-  input  logic 	areset,
+  input  logic  clk,
+  input  logic  areset,
   output logic  reset
 );
 
-  logic 	      metaStable;
-  logic 	      resetB;
+  logic         metaStable;
+  logic         resetB;
   
   always_ff @(posedge clk , posedge areset) begin
     if (areset) begin
