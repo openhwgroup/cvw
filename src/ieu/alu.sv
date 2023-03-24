@@ -86,9 +86,8 @@ module alu #(parameter WIDTH=32) (
  
   // Select appropriate ALU Result
   always_comb begin
-    if (~ALUOp) FullResult = Sum;                         // Always add for ALUOp = 0 (address generation)
-    else casez (ALUSelect)                                // Otherwise check Funct3 NOTE: change signal name to ALUSelect
-      3'b000: FullResult = Sum;                           // add or sub
+    case (ALUSelect)                                
+      3'b000: FullResult = Sum;                           // add or sub (including address generation)
       3'b001: FullResult = Shift;                         // sll, sra, or srl
       3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
       3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
