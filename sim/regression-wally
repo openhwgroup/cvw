@@ -162,7 +162,7 @@ def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
     logname = "logs/"+config.variant+"_"+config.name+".log"
     cmd = config.cmd.format(logname)
-    print(cmd)
+#    print(cmd)
     os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):

@@ -123,7 +123,7 @@ module fctrl (
                     7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0; // fsub
                     7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0; // fmul
                     7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0; // fdiv
-                    7'b01011??: ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
+                    7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
                     7'b00100??: case(Funct3D)
                                   3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_000_0_0_0; // fsgnj
                                   3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_001_0_0_0; // fsgnjn
@@ -141,7 +141,8 @@ module fctrl (
                                   3'b000:  ControlsD = `FCTRLW'b0_1_00_xx_011_0_0_0; // fle
                                   default: ControlsD = `FCTRLW'b0_0_00_xx_000__0_1_0; // non-implemented instruction
                                 endcase
-                    7'b11100??: if (Funct3D == 3'b001)          ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
+                    7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
+                                                                ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
                                 else if (Funct3D[1:0] == 2'b00) ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.w   to int reg
                                 else if (Funct3D[1:0] == 2'b01) ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.d   to int reg
                                 else                            ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction
