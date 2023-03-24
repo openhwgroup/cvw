@@ -56,7 +56,7 @@ module ebufsmarb (
   logic 	     IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
   logic 	     FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
   logic 	     BeatCntEn;
-  logic [4-1:0]      NextBeatCount, BeatCount;   // Position within a burst transfer
+  logic [3:0]      BeatCount;   // Position within a burst transfer
   logic 	     CntReset;
   logic [3:0] 	     Threshold;                  // Number of beats derived from HBURST
 
@@ -91,31 +91,36 @@ module ebufsmarb (
   // This is necessary because the pipeline is stalled for the entire duration of both transactions,
   // and the LSU memory request will stil be active.
   flopr #(1) ifureqreg(HCLK, ~HRESETn, IFUReq, IFUReqD);
-  assign LSUDisable = CurrState == ARBITRATE ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
-  assign LSUSelect = NextState == ARBITRATE ? 1'b1: LSUReq;
+  assign LSUDisable = (CurrState == ARBITRATE) ? 1'b0 : (IFUReqD & ~(HREADY & FinalBeatD));
+  assign LSUSelect = (NextState == ARBITRATE) ? 1'b1: LSUReq;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Burst mode logic
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  flopenr #(4) BeatCountReg(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, NextBeatCount, BeatCount);  
-  assign NextBeatCount = BeatCount + 1'b1;
-
   assign CntReset = NextState == IDLE;
   assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
-  assign BeatCntEn = (NextState == ARBITRATE & HREADY);
-
+  assign BeatCntEn = (NextState == ARBITRATE) & HREADY;
+  counter #(4) BeatCounter(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, BeatCount);  
+ 
   // Used to store data from data phase of AHB.
   flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | CntReset, BeatCntEn, FinalBeat, FinalBeatD);
 
   // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
-  always_comb begin
-    case(HBURST)
+  //  HBURST[2:1] Beats
+  //  00          1
+  //  01          4
+  //  10          8
+  //  11          16
+  always_comb 
+    if (HBURST[2:1] == 2'b00) Threshold = 4'b0000;
+    else                      Threshold = (2 << HBURST[2:1]) - 1;
+/*    case(HBURST)
       0:        Threshold = 4'b0000;
       3:        Threshold = 4'b0011; // INCR4
       5:        Threshold = 4'b0111; // INCR8
       7:        Threshold = 4'b1111; // INCR16
       default:  Threshold = 4'b0000; // INCR without end.
     endcase
-  end
+  end */
 endmodule
