@@ -44,27 +44,28 @@ module alu #(parameter WIDTH=32) (
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
   logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, ALUResult;                   // Intermediate Signals 
-  logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
-  logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
-  logic [WIDTH-1:0] CondExtA;                                                               // Result of Zero Extend A select mux
-  logic             Carry, Neg;                                                             // Flags: carry out, negative
-  logic             LT, LTU;                                                                // Less than, Less than unsigned
-  logic             W64;                                                                    // RV64 W-type instruction
-  logic             SubArith;                                                               // Performing subtraction or arithmetic right shift
-  logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
-  logic             Asign, Bsign;                                                           // Sign bits of A, B
+  logic [WIDTH-1:0] CondMaskB;                                                    // Result of B mask select mux
+  logic [WIDTH-1:0] CondShiftA;                                                   // Result of A shifted select mux
+  logic [WIDTH-1:0] CondExtA;                                                     // Result of Zero Extend A select mux
+  logic             Carry, Neg;                                                   // Flags: carry out, negative
+  logic             LT, LTU;                                                      // Less than, Less than unsigned
+  logic             W64;                                                          // RV64 W-type instruction
+  logic             SubArith;                                                     // Performing subtraction or arithmetic right shift
+  logic             ALUOp;                                                        // 0 for address generation addition or 1 for regular ALU ops
+  logic             Asign, Bsign;                                                 // Sign bits of A, B
   logic             shSignA;
-  logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
-  logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
-  logic             Rotate;                                                                 // Indicates if it is Rotate instruction
+  logic [WIDTH-1:0] rotA;                                                         // XLEN bit input source to shifter
+  logic [1:0]       shASelect;                                                    // select signal for shifter source generation mux 
+  logic             Rotate;                                                       // Indicates if it is Rotate instruction
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
+  // Extract rotate signal from BALUControl.
   assign Rotate = BALUControl[2];
 
-  // Pack control signals into shifter select
-  assign shASelect = {W64,SubArith};
+  // Pack control signals into shifter select signal.
+  assign shASelect = {W64, SubArith};
 
   // A, A sign bit muxes
   if (WIDTH == 64) begin
