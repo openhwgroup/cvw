@@ -41,8 +41,8 @@ module gpio_apb (
   output logic [`XLEN-1:0]  PRDATA,
   output logic              PREADY,
   input  logic [31:0]       iof0, iof1,
-  input  logic [31:0]       GPIOPinsIn,
-  output logic [31:0]       GPIOPinsOut, GPIOPinsEn,
+  input  logic [31:0]       GPIOIN,
+  output logic [31:0]       GPIOOUT, GPIOEN,
   output logic              GPIOIntr
 );
 
@@ -138,8 +138,8 @@ module gpio_apb (
 
   // chip i/o
   // connect OUT to IN for loopback testing
-  if (`GPIO_LOOPBACK_TEST) assign input0d = ((output_en & GPIOPinsOut) | (~output_en & GPIOPinsIn)) & input_en;
-  else                     assign input0d = GPIOPinsIn & input_en;
+  if (`GPIO_LOOPBACK_TEST) assign input0d = ((output_en & GPIOOUT) | (~output_en & GPIOIN)) & input_en;
+  else                     assign input0d = GPIOIN & input_en;
 
   // synchroninzer for inputs
   flop #(32) sync1(PCLK,input0d,input1d);
@@ -148,8 +148,8 @@ module gpio_apb (
   assign input_val = input3d;
   assign iof_out = iof_sel & iof1 | ~iof_sel & iof0;         // per-bit mux between iof1 and iof0
   assign gpio_out = iof_en & iof_out | ~iof_en & output_val; // per-bit mux between IOF and output_val
-  assign GPIOPinsOut = gpio_out ^ out_xor;                   // per-bit flip output polarity
-  assign GPIOPinsEn = output_en;
+  assign GPIOOUT = gpio_out ^ out_xor;                   // per-bit flip output polarity
+  assign GPIOEN = output_en;
 
   assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};
 endmodule
