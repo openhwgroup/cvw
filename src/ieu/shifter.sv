@@ -40,42 +40,41 @@ module shifter (
   logic                    Sign;                              // Sign bit for sign extension
 
   assign Sign = A[`XLEN-1] & SubArith;  // sign bit for sign extension
-
-  if (`ZBB_SUPPORTED) begin: rotfunnel
-    if (`XLEN==32) begin // rv32 with rotates
+  if (`XLEN==32) begin // rv32
+    if (`ZBB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
       always_comb  // funnel mux
         case({Right, Rotate})
           2'b00: z = {A[31:0], 31'b0};
           2'b01: z = {A[31:0], A[31:1]};
           2'b10: z = {{31{Sign}}, A[31:0]};
-          2'b11: z = {A[30:0], A};
+          2'b11: z = {A[30:0], A[31:0]};
         endcase
-      assign amttrunc = Amt; // shift amount
-    end else begin // rv64 with rotates
+    end else begin: norotfunnel32 //rv32 shifter without rotates
+      always_comb  // funnel mux
+        if (Right)  z = {{31{Sign}}, A[31:0]};
+        else        z = {A[31:0], 31'b0};
+    end
+    assign amttrunc = Amt; // shift amount
+  end else begin // rv64
+    logic [`XLEN-1:0]         A64;                            
+    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]}, {{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, A64); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
+    if (`ZBB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
       // shifter rotate source select mux
       logic [`XLEN-1:0]   RotA;                          // rotate source
       mux2 #(`XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons
       always_comb  // funnel mux
         case ({Right, Rotate})
-          2'b00: z = {A[63:0],{63'b0}};
-          2'b01: z = {RotA, RotA[63:1]};
-          2'b10: z = {{63{Sign}}, A[63:0]};
-          2'b11: z = {RotA[62:0], RotA};
+          2'b00: z = {A64[63:0],{63'b0}};
+          2'b01: z = {RotA[63:0], RotA[63:1]};
+          2'b10: z = {{63{Sign}}, A64[63:0]};
+          2'b11: z = {RotA[62:0], RotA[63:0]};
         endcase
-      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
-    end
-  end else begin: norotfunnel
-    if (`XLEN==32) begin:shifter // RV32
+    end else begin: norotfunnel64 // rv64 shifter without rotates
       always_comb  // funnel mux
-        if (Right)  z = {{31{Sign}}, A[31:0]};
-        else        z = {A[31:0], 31'b0};
-      assign amttrunc = Amt; // shift amount
-    end else begin:shifter  // RV64
-      always_comb  // funnel mux
-        if (Right)  z = {{63{Sign}}, A[63:0]};
-        else        z = {A[63:0], {63'b0}};
-      assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
+        if (Right)  z = {{63{Sign}}, A64[63:0]};
+        else        z = {A64[63:0], {63'b0}};
     end
+    assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
   end
   
   // Opposite offset for right shifts
