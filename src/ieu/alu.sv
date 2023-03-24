@@ -33,7 +33,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,        // Operands
   input  logic [2:0]       ALUControl,  // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,   // ALU mux select signal
-  input  logic [1:0]       BSelect,     // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [1:0]       BSelect,     // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
   input  logic [2:0]       Funct3,      // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,   // Comparator flags
@@ -43,13 +43,10 @@ module alu #(parameter WIDTH=32) (
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult,ALUResult;                   // Intermediate Signals 
-  logic [WIDTH-1:0] ZBCResult, ZBBResult;                                                   // Result of ZBB, ZBC
-  logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
+  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, ALUResult;                   // Intermediate Signals 
   logic [WIDTH-1:0] CondMaskB;                                                              // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                             // Result of A shifted select mux
   logic [WIDTH-1:0] CondExtA;                                                               // Result of Zero Extend A select mux
-  logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
   logic             Carry, Neg;                                                             // Flags: carry out, negative
   logic             LT, LTU;                                                                // Less than, Less than unsigned
   logic             W64;                                                                    // RV64 W-type instruction
@@ -60,14 +57,11 @@ module alu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] rotA;                                                                   // XLEN bit input source to shifter
   logic [1:0]       shASelect;                                                              // select signal for shifter source generation mux 
   logic             Rotate;                                                                 // Indicates if it is Rotate instruction
-  logic             Mask;                                                                   // Indicates if it is ZBS instruction
-  logic             PreShift;                                                               // Inidicates if it is sh1add, sh2add, sh3add instruction
-  logic [1:0]       PreShiftAmt;                                                            // Amount to Pre-Shift A 
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
-  assign {Rotate, Mask, PreShift} = BALUControl;
+  assign Rotate = BALUControl[2];
 
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
