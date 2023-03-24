@@ -34,7 +34,6 @@ module bmuctrl(
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
-  output logic [2:0]  ALUSelectD,              // ALU Mux select signal in Decode Stage
   output logic [1:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   output logic [2:0]  ZBBSelectD,              // ZBB mux select signal in Decode stage NOTE: do we need this in decode?
   output logic        BRegWriteD,              // Indicates if it is a R type B instruction in Decode Stage
@@ -62,6 +61,7 @@ module bmuctrl(
   logic       MaskD;                           // Indicates if zbs instruction in Decode Stage
   logic       PreShiftD;                       // Indicates if sh1add, sh2add, sh3add instruction in Decode Stage
   logic [2:0] BALUControlD;                    // ALU Control signals for B instructions
+  logic [2:0] ALUSelectD;                      // ALU Mux select signal in Decode Stage
 
   `define BMUCTRLW 17
   `define BMUCTRLWSUB3 14

@@ -55,22 +55,14 @@ module alu #(parameter WIDTH=32) (
   logic             Asign, Bsign;                                                 // Sign bits of A, B
   logic             shSignA;
   logic [WIDTH-1:0] rotA;                                                         // XLEN bit input source to shifter
-  logic [1:0]       shASelect;                                                    // select signal for shifter source generation mux 
-  logic             Rotate;                                                       // Indicates if it is Rotate instruction
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
-  // Extract rotate signal from BALUControl.
-  assign Rotate = BALUControl[2];
-
-  // Pack control signals into shifter select signal.
-  assign shASelect = {W64, SubArith};
-
   // A, A sign bit muxes
   if (WIDTH == 64) begin
     mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
-    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A,{~W64, SubArith}, CondExtA);
+    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, CondExtA); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
   end else begin 
     mux2 #(1) signmux(1'b0, A[31], SubArith, shSignA);
     assign CondExtA = A;
@@ -81,7 +73,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate);
+  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 

@@ -98,7 +98,6 @@ module controller(
   logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic        BaseALUSrcBD;                   // Base instruction ALU B source select signal
   logic [2:0]  ALUControlD;                    // Determines ALU operation
-  logic [2:0]  ALUSelectD;                     // ALU mux select signal
   logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
   logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
   logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
@@ -260,7 +259,7 @@ module controller(
 
   // bit manipulation Configuration Block
   if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUSelectD, .BSelectD, .ZBBSelectD, 
+    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BALUOpD, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
       .ALUSelectE, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
@@ -269,7 +268,6 @@ module controller(
     end else assign sltD = (Funct3D == 3'b010);
 
   end else begin: bitmanipi
-    assign ALUSelectD = Funct3D;
     assign ALUSelectE = Funct3E;
     assign BSelectE = 2'b00;
     assign BSelectD = 2'b00;
