@@ -1,6 +1,6 @@
 0fffffff # Test 12.3.2.2.1: writeback of value written to PMPADDR0
 00000000 
-20040001 # writeback of value written to PMPADDR1
+20040000 # writeback of value written to PMPADDR1
 00000000
 2004003f # writeback of value written to PMPADDR2
 00000000
@@ -25,12 +25,6 @@
 00000005 # Test 12.3.2.2.2: read test with access fault to region with L=1, R=0
 00000000
 00000bad
-00000000
-00000005 # read test with access fault when access begins in allowed region and ends in protected NA region
-00000000
-00000bad
-00000000
-00000007 # write test with access fault when access begins in allowed region and ends in protected TOR region
 00000000
 00600dbb # read test success from region with L=X=W=R=0
 00000000

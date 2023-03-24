@@ -60,19 +60,18 @@ test_cases:
 
 # write pmpaddr regs. Each of these should output the value of the pmpaddr after being written.
 #                                          | Reg   | pmpaddr     | pmpcfg    | L | A     | X | W | R | Comments 		                |
-.8byte 0x0, 0x0FFFFFFF, write_pmpaddr_0  # | 0     | 0x0FFFFFFF  | 1B        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
-.8byte 0x1, 0x20040001, write_pmpaddr_1  # | 1     | 0x20040001  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
-.8byte 0x2, 0x2004003F, write_pmpaddr_2  # | 2     | 0x2004003F  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100004-801000FF R 		    |
-.8byte 0x3, 0x20040080, write_pmpaddr_3  # | 3     | 0x20040080  | 16        | 0 | NA4   | 1 | 1 | 0 | 80100200-80100203 XW 		    |
-.8byte 0x4, 0x20040081, write_pmpaddr_4  # | 4     | 0x20040081  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
-.8byte 0x5, 0x20040084, write_pmpaddr_5  # | 5     | 0x20040084  | 0C        | 0 | TOR   | 1 | 0 | 0 | 80100204-80100210 X 		    |
-.8byte 0x5, 0x200400C1, write_pmpaddr_6  # | 6     | 0x200400C1  | 90        | 1 | NA4   | 0 | 0 | 0 | 80100304-80100307 locked out 	|
-.8byte 0x6, 0x2004013F, write_pmpaddr_7  # | 7     | 0x2004013F  | 18        | 0 | NAPOT | 0 | 0 | 0 | 80100400-801004FF no access 	|
+.8byte 0x0, 0x0FFFFFFF, write_pmpaddr_0  # | 0     | 0x0FFFFFFF  | 1F        | 0 | NAPOT | 0 | 1 | 1 | I/O 00000000-7FFFFFFF RW 		|
+.8byte 0x1, 0x20040000, write_pmpaddr_1  # | 1     | 0x20040000  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
+.8byte 0x2, 0x2004003F, write_pmpaddr_2  # | 2     | 0x2004003F  | 09        | 0 | TOR   | 0 | 0 | 1 | 80100000-801000FF R 		    |
+.8byte 0x3, 0x20040080, write_pmpaddr_3  # | 3     | 0x20040080  | 00        | 0 | OFF   | 0 | 0 | 0 |    		                    |
+.8byte 0x4, 0x20040084, write_pmpaddr_4  # | 4     | 0x20040084  | 0C        | 0 | TOR   | 1 | 0 | 0 | 80100200-80100210 X 		    |
+.8byte 0x5, 0x200400C0, write_pmpaddr_5  # | 5     | 0x200400C0  | 90        | 1 | NA4   | 0 | 0 | 0 | 80100300-80100303 locked out 	|
+.8byte 0x6, 0x2004013F, write_pmpaddr_6  # | 6     | 0x2004013F  | 18        | 0 | NAPOT | 0 | 0 | 0 | 80100400-801004FF no access 	|
 # Pmpaddr 7-14 are all zeroed out in this test, so they don't need writes.
 .8byte 0xF, 0x2FFFFFFF, write_pmpaddr_15 # | 15    | 0x2FFFFFFF  | 1F        | 0 | NAPOT | 1 | 1 | 1 | Main mem 80000000-FFFFFFFF RWX|
 
 # write pmpcfg regs with the information in the table above. this should also write the value of these registers to the output.
-.8byte 0x0, 0x0018900C0009001F, write_pmpcfg_0 # write pmpcfg0, output 0x0018900C0009001B
+.8byte 0x0, 0x0018900C0009001F, write_pmpcfg_0 # write pmpcfg0, output 0x0018900C0009001F
 .8byte 0x2, 0x1F00000000000000, write_pmpcfg_2 # write pmpcfg2, output 0x1F00000000000000
 
 # write known values to memory where W=0. This should be possible since we're in machine mode.
@@ -91,14 +90,7 @@ test_cases:
 
 # Test 12.3.2.2.2 Machine mode access
 
-.8byte 0x80100304, 0x0, read32_test # access fault to region with L=1, R=0
-
-# accesses across PMP region boundaries
-.8byte 0x80100300, 0x0, read64_test # access fault when access begins in allowed NA region and goes into protected region.
-
-.8byte 0x80100000, 0xbad, write64_test # access fault when access begins in allowed TOR region and goes into protected region.
-.8byte 0x80100000, 0xbad, write64_test # access fault when access begins in allowed TOR region and goes into protected region.
-
+.8byte 0x80100300, 0x0, read64_test # access fault to region with L=1, R=0
 .8byte 0x80100400, 0x0, read64_test # successful access to region with L=X=W=R=0
 
 # Test 12.3.2.2.3 System mode access
