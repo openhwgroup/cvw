@@ -51,14 +51,11 @@ module alu #(parameter WIDTH=32) (
   logic             Carry, Neg;                                                   // Flags: carry out, negative
   logic             LT, LTU;                                                      // Less than, Less than unsigned
   logic             Asign, Bsign;                                                 // Sign bits of A, B
-  logic             ShiftSignA;
 
   // A, A sign bit muxes
   if (WIDTH == 64) begin
-    mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, ShiftSignA);
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, CondExtA); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
   end else begin 
-    mux2 #(1) signmux(1'b0, A[31], SubArith, ShiftSignA);
     assign CondExtA = A;
   end
 
@@ -67,7 +64,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.A(CondExtA), .Sign(ShiftSignA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate(BALUControl[2]));
+  shifter sh(.A(CondExtA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
