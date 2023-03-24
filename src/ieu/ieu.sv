@@ -76,7 +76,6 @@ module ieu (
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension 
   logic [1:0] FlagsE;                                        // Comparison flags ({eq, lt})
-  logic [2:0] ALUControlE;                                   // ALU control indicates function to perform
   logic       ALUSrcAE, ALUSrcBE;                            // ALU source operands
   logic [2:0] ResultSrcW;                                    // Selects result in Writeback stage
   logic       ALUResultSrcE;                                 // Selects ALU result to pass on to Memory stage
@@ -87,6 +86,7 @@ module ieu (
   logic [1:0] BSelectE;                                      // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   logic [2:0] ZBBSelectE;                                    // ZBB Result Select Signal in Execute Stage
   logic [2:0] BALUControlE;                                  // ALU Control signals for B instructions in Execute Stage
+  logic       SubArithE;                                     // Subtraction or arithmetic shift
 
   // Forwarding signals
   logic [4:0] Rs1D, Rs2D, Rs1E, Rs2E;                        // Source and destination registers
@@ -99,15 +99,15 @@ module ieu (
 controller c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
-    .PCSrcE, .ALUControlE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
-    .Funct3E, .IntDivE, .MDUE, .W64E, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .StallM, .FlushM, .MemRWM,
+    .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
+    .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .StallM, .FlushM, .MemRWM,
     .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
 
   datapath   dp(
-    .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE,
-    .ALUControlE, .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
+    .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
+    .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
     .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
