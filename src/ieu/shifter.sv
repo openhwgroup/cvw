@@ -30,13 +30,16 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0]     A,                           // shift Source
-  input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
-  input  logic                 Right, Rotate, W64, Sign,    // Shift right, rotate signals
-  output logic [`XLEN-1:0]     Y);                          // Shifted result
+  input  logic [`XLEN-1:0]     A,                             // shift Source
+  input  logic [`LOG_XLEN-1:0] Amt,                           // Shift amount
+  input  logic                 Right, Rotate, W64, SubArith, // Shift right, rotate, W64-type operation, arithmetic shift
+  output logic [`XLEN-1:0]     Y);                            // Shifted result
 
-  logic [2*`XLEN-2:0]      z, zshift;                       // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
-  logic [`LOG_XLEN-1:0]    amttrunc, offset;                // Shift amount adjusted for RV64, right-shift amount
+  logic [2*`XLEN-2:0]      z, zshift;                         // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
+  logic [`LOG_XLEN-1:0]    amttrunc, Offset;                  // Shift amount adjusted for RV64, right-shift amount
+  logic                    Sign;                              // Sign bit for sign extension
+
+  assign Sign = A[`XLEN-1] & SubArith;  // sign bit for sign extension
 
   if (`ZBB_SUPPORTED) begin: rotfunnel
     if (`XLEN==32) begin // rv32 with rotates
@@ -76,10 +79,10 @@ module shifter (
   end
   
   // Opposite offset for right shifts
-  assign offset = Right ? amttrunc : ~amttrunc;
+  assign Offset = Right ? amttrunc : ~amttrunc;
   
   // Funnel operation
-  assign zshift = z >> offset;
+  assign zshift = z >> Offset;
   assign Y = zshift[`XLEN-1:0];    
 endmodule
 
