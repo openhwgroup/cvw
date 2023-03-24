@@ -62,11 +62,10 @@ module bitmanipalu #(parameter WIDTH=32) (
 
   // Mask Generation Mux
   if (`ZBS_SUPPORTED) begin: zbsdec
-    decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
+    decoder #($clog2(WIDTH)) maskgen(B[$clog2(WIDTH)-1:0], MaskB);
     mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
  
-    
   // 0-3 bit Pre-Shift Mux
   if (`ZBA_SUPPORTED) begin: zbapreshift
     assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};

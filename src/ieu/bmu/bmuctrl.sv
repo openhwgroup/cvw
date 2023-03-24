@@ -34,12 +34,12 @@ module bmuctrl(
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
+  input  logic        ALUOpD,                  // Regular ALU Operation
   output logic [1:0]  BSelectD,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding in Decode stage
   output logic [2:0]  ZBBSelectD,              // ZBB mux select signal in Decode stage NOTE: do we need this in decode?
   output logic        BRegWriteD,              // Indicates if it is a R type B instruction in Decode Stage
   output logic        BALUSrcBD,               // Indicates if it is an I/IW (non auipc) type B instruction in Decode Stage
   output logic        BW64D,                   // Indiciates if it is a W type B instruction in Decode Stage
-  output logic        BALUOpD,                 // Indicates if it is an ALU B instruction in Decode Stage
   output logic        BSubArithD,              // TRUE if ext, clr, andn, orn, xnor instruction in Decode Stage
   output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
   // Execute stage control signals             
@@ -61,10 +61,10 @@ module bmuctrl(
   logic       MaskD;                           // Indicates if zbs instruction in Decode Stage
   logic       PreShiftD;                       // Indicates if sh1add, sh2add, sh3add instruction in Decode Stage
   logic [2:0] BALUControlD;                    // ALU Control signals for B instructions
-  logic [2:0] ALUSelectD;                      // ALU Mux select signal in Decode Stage
+  logic [2:0] BALUSelectD, ALUSelectD;         // ALU Mux select signal in Decode Stage
+  logic       BALUOpD;                         // Indicates if it is an ALU B instruction in Decode Stage
 
   `define BMUCTRLW 17
-  `define BMUCTRLWSUB3 14
 
   logic [`BMUCTRLW-1:0] BMUControlsD;                 // Main B Instructions Decoder control signals
 
@@ -76,8 +76,8 @@ module bmuctrl(
 
   // Main Instruction Decoder
   always_comb begin
-    // ALUSelect_BSelect_ZBBSelect_BRegWrite_BALUSrcB_BW64_BALUOp_BSubArithD_RotateD_MaskD_PreShiftD_IllegalBitmanipInstrD
-    BMUControlsD = {Funct3D, `BMUCTRLWSUB3'b00_000_0_0_0_0_0_0_0_0_1};  // default: Illegal instruction
+    // BALUSelect_BSelect_ZBBSelect_BRegWrite_BALUSrcB_BW64_BALUOp_BSubArithD_RotateD_MaskD_PreShiftD_IllegalBitmanipInstrD
+    BMUControlsD = `BMUCTRLW'b000_00_000_0_0_0_0_0_0_0_0_1;  // default: Illegal bmu instruction;
     if (`ZBA_SUPPORTED) begin
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0010000_010: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_0_1_0_0_0_1_0;  // sh1add
@@ -157,7 +157,7 @@ module bmuctrl(
           17'b0010011_001010?_001: BMUControlsD = `BMUCTRLW'b110_01_000_1_1_0_1_0_0_1_0_0;  // bseti (rv64)
         endcase
     end
-    if (`ZBB_SUPPORTED | `ZBS_SUPPORTED) // rv32i/64i shift instructions need certain BMU shifter control when BMU shifter is used
+    if (`ZBB_SUPPORTED | `ZBS_SUPPORTED) // rv32i/64i shift instructions need BMU ALUSelect when BMU shifter is used
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_00_000_1_0_0_1_0_0_0_0_0;  // sra, srl, sll
         17'b0010011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_00_000_1_1_0_1_0_0_0_0_0;  // srai, srli, slli
@@ -167,13 +167,16 @@ module bmuctrl(
   end
 
   // Unpack Control Signals
-  assign {ALUSelectD,BSelectD,ZBBSelectD, BRegWriteD,BALUSrcBD, BW64D, BALUOpD, BSubArithD, RotateD, MaskD, PreShiftD, IllegalBitmanipInstrD} = BMUControlsD;
+  assign {BALUSelectD, BSelectD, ZBBSelectD, BRegWriteD,BALUSrcBD, BW64D, BALUOpD, BSubArithD, RotateD, MaskD, PreShiftD, IllegalBitmanipInstrD} = BMUControlsD;
   
   // Pack BALUControl Signals
   assign BALUControlD = {RotateD, MaskD, PreShiftD};
 
   // Comparator should perform signed comparison when min/max instruction. We have overlap in funct3 with some branch instructions so we use opcode to differentiate betwen min/max and branches
   assign BComparatorSignedD = (Funct3D[2]^Funct3D[0]) & ~OpD[6];
+
+  // Choose ALUSelect brom BMU for BMU operations, Funct3 for IEU operations, or 0 for addition
+  assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
   // BMU Execute stage pipieline control register
   flopenrc#(13) controlregBMU(clk, reset, FlushE, ~StallE, {ALUSelectD, BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {ALUSelectE, BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});
