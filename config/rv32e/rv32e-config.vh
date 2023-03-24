@@ -45,133 +45,133 @@ localparam    FLEN =     32;
 `include "test-shared.vh"
  
 
- /*
+ 
 // include shared configuration
-`include "wally-shared.vh"
+//`include "wally-shared.vh"
 
-`define FPGA 0
-`define QEMU 0
+localparam FPGA = 0;
+localparam QEMU = 0;
 
 // RV32 or RV64: XLEN = 32 or 64
-`define XLEN 32
+localparam XLEN = 32;
 
 // IEEE 754 compliance
-`define IEEE754 0
+localparam IEEE754 = 0;
 
 // E
-`define MISA (32'h00000010) 
-`define ZICSR_SUPPORTED 0
-`define ZIFENCEI_SUPPORTED 0
-`define COUNTERS 0
-`define ZICOUNTERS_SUPPORTED 0
-`define ZFH_SUPPORTED 0
-`define SSTC_SUPPORTED 0
+localparam MISA = (32'h00000010); 
+localparam ZICSR_SUPPORTED = 0;
+localparam ZIFENCEI_SUPPORTED = 0;
+localparam COUNTERS = 0;
+localparam ZICOUNTERS_SUPPORTED = 0;
+localparam ZFH_SUPPORTED = 0;
+localparam SSTC_SUPPORTED = 0;
 
 // LSU microarchitectural Features
-`define BUS_SUPPORTED 1
-`define DCACHE_SUPPORTED 0
-`define ICACHE_SUPPORTED 0
-`define VIRTMEM_SUPPORTED 0
-`define VECTORED_INTERRUPTS_SUPPORTED 0 
-`define BIGENDIAN_SUPPORTED 0
+localparam BUS_SUPPORTED = 1;
+localparam DCACHE_SUPPORTED = 0;
+localparam ICACHE_SUPPORTED = 0;
+localparam VIRTMEM_SUPPORTED = 0;
+localparam VECTORED_INTERRUPTS_SUPPORTED = 0; 
+localparam BIGENDIAN_SUPPORTED = 0;
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 0
-`define DTLB_ENTRIES 0
+localparam ITLB_ENTRIES = 0;
+localparam DTLB_ENTRIES = 0;
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
-`define DCACHE_NUMWAYS 4
-`define DCACHE_WAYSIZEINBYTES 4096
-`define DCACHE_LINELENINBITS 512
-`define ICACHE_NUMWAYS 4
-`define ICACHE_WAYSIZEINBYTES 4096
-`define ICACHE_LINELENINBITS 512
+localparam DCACHE_NUMWAYS = 4;
+localparam DCACHE_WAYSIZEINBYTES = 4096;
+localparam DCACHE_LINELENINBITS = 512;
+localparam ICACHE_NUMWAYS = 4;
+localparam ICACHE_WAYSIZEINBYTES = 4096;
+localparam ICACHE_LINELENINBITS = 512;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-`define IDIV_BITSPERCYCLE 1
-`define IDIV_ON_FPU 0
+localparam IDIV_BITSPERCYCLE = 1;
+localparam IDIV_ON_FPU = 0;
 
 // Legal number of PMP entries are 0, 16, or 64
-`define PMP_ENTRIES 0
+localparam PMP_ENTRIES = 0;
 
 // Address space
-`define RESET_VECTOR 32'h80000000
+localparam RESET_VECTOR = 32'h80000000;
 
 // WFI Timeout Wait
-`define WFI_TIMEOUT_BIT 16
+localparam WFI_TIMEOUT_BIT = 16;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
-`define DTIM_SUPPORTED 1'b0
-`define DTIM_BASE       34'h80000000
-`define DTIM_RANGE      34'h007FFFFF
-`define IROM_SUPPORTED 1'b0
-`define IROM_BASE       34'h80000000
-`define IROM_RANGE      34'h007FFFFF
-`define BOOTROM_SUPPORTED 1'b1
-`define BOOTROM_BASE   34'h00001000 
-`define BOOTROM_RANGE  34'h00000FFF
-`define UNCORE_RAM_SUPPORTED 1'b1
-`define UNCORE_RAM_BASE       34'h80000000
-`define UNCORE_RAM_RANGE      34'h07FFFFFF
-`define EXT_MEM_SUPPORTED 1'b0
-`define EXT_MEM_BASE       34'h80000000
-`define EXT_MEM_RANGE      34'h07FFFFFF
-`define CLINT_SUPPORTED 1'b0
-`define CLINT_BASE  34'h02000000
-`define CLINT_RANGE 34'h0000FFFF
-`define GPIO_SUPPORTED 1'b0
-`define GPIO_BASE   34'h10060000
-`define GPIO_RANGE  34'h000000FF
-`define UART_SUPPORTED 1'b0
-`define UART_BASE   34'h10000000
-`define UART_RANGE  34'h00000007
-`define PLIC_SUPPORTED 1'b0
-`define PLIC_BASE   34'h0C000000
-`define PLIC_RANGE  34'h03FFFFFF
-`define SDC_SUPPORTED 1'b0
-`define SDC_BASE   34'h00012100
-`define SDC_RANGE  34'h0000001F
+localparam DTIM_SUPPORTED = 1'b0;
+localparam DTIM_BASE = ;      34'h80000000
+localparam DTIM_RANGE = ;     34'h007FFFFF
+localparam IROM_SUPPORTED = 1'b0;
+localparam IROM_BASE = ;      34'h80000000
+localparam IROM_RANGE = ;     34'h007FFFFF
+localparam BOOTROM_SUPPORTED = 1'b1;
+localparam BOOTROM_BASE = ;  34'h00001000 
+localparam BOOTROM_RANGE = ; 34'h00000FFF
+localparam UNCORE_RAM_SUPPORTED = 1'b1;
+localparam UNCORE_RAM_BASE = ;      34'h80000000
+localparam UNCORE_RAM_RANGE = ;     34'h07FFFFFF
+localparam EXT_MEM_SUPPORTED = 1'b0;
+localparam EXT_MEM_BASE = ;      34'h80000000
+localparam EXT_MEM_RANGE = ;     34'h07FFFFFF
+localparam CLINT_SUPPORTED = 1'b0;
+localparam CLINT_BASE = ; 34'h02000000
+localparam CLINT_RANGE = 34'h0000FFFF;
+localparam GPIO_SUPPORTED = 1'b0;
+localparam GPIO_BASE = ;  34'h10060000
+localparam GPIO_RANGE = ; 34'h000000FF
+localparam UART_SUPPORTED = 1'b0;
+localparam UART_BASE = ;  34'h10000000
+localparam UART_RANGE = ; 34'h00000007
+localparam PLIC_SUPPORTED = 1'b0;
+localparam PLIC_BASE = ;  34'h0C000000
+localparam PLIC_RANGE = ; 34'h03FFFFFF
+localparam SDC_SUPPORTED = 1'b0;
+localparam SDC_BASE = ;  34'h00012100
+localparam SDC_RANGE = ; 34'h0000001F
 
 // Bus Interface width
-`define AHBW 32
+localparam AHBW = 32;
 
 // Test modes
 
 // Tie GPIO outputs back to inputs
-`define GPIO_LOOPBACK_TEST 1
+localparam GPIO_LOOPBACK_TEST = 1;
 
 // Hardware configuration
-`define UART_PRESCALE 1
+localparam UART_PRESCALE = 1;
 
 // Interrupt configuration
-`define PLIC_NUM_SRC 10 
+localparam PLIC_NUM_SRC = 10; 
 // comment out the following if >=32 sources
 `define PLIC_NUM_SRC_LT_32
-`define PLIC_GPIO_ID 3
-`define PLIC_UART_ID 10
+localparam PLIC_GPIO_ID = 3;
+localparam PLIC_UART_ID = 10;
 
-`define BPRED_SUPPORTED 0
-`define BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-`define BPRED_SIZE 10
-`define BTB_SIZE 10
+localparam BPRED_SUPPORTED = 0;
+localparam BPRED_TYPE = "BP_GSHARE"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
+localparam BPRED_SIZE = 10;
+localparam BTB_SIZE = 10;
 
-`define SVADU_SUPPORTED 0
-`define ZMMUL_SUPPORTED 0
+localparam SVADU_SUPPORTED = 0;
+localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
-`define RADIX 32'h4
-`define DIVCOPIES 32'h4
+localparam RADIX = 32'h4;
+localparam DIVCOPIES = 32'h4;
 
 // bit manipulation
-`define ZBA_SUPPORTED 0
-`define ZBB_SUPPORTED 0
-`define ZBC_SUPPORTED 0
-`define ZBS_SUPPORTED 0
+localparam ZBA_SUPPORTED = 0;
+localparam ZBB_SUPPORTED = 0;
+localparam ZBC_SUPPORTED = 0;
+localparam ZBS_SUPPORTED = 0;
 
 // Memory synthesis configuration
-`define USE_SRAM 0
+localparam USE_SRAM = 0;
  */

@@ -26,7 +26,7 @@
 
 module ram1p1rwbe_64x128( 
   input  logic          CLK, 
-  input  logic 	        CEB, 
+  input  logic          CEB, 
   input  logic          WEB,
   input  logic [5:0]    A, 
   input  logic [127:0]  D,

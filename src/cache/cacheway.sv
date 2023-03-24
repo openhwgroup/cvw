@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
-				          OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
+                  OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
@@ -86,18 +86,12 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
   
   mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
-  //assign SelTag = VictimWay | FlushWay;
-  //assign SelData = HitWay | FlushWayEn | VictimWayEn;
   
   mux2 #(1) selectedwaymux(HitWay, SelTag, SelNonHit , SelData);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Enable demux
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // RT: Can we merge these two muxes?  This is also shared in cacheLRU.
-  //mux3 #(1) selectwaymux(HitWay, VictimWay, FlushWay,     {SelFlush, SetValid}, SelData);
-  //mux3 #(1) selecteddatamux(HitWay, VictimWay, FlushWay, {SelFlush, SelNonHit}, SelData);
 
   assign SetValidWay = SetValid & SelData;
   assign ClearValidWay = ClearValid & SelData;
@@ -116,8 +110,6 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag), .bwe('1),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
-
-  
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelTag ? ReadTag : '0; // AND part of AOMux
@@ -152,8 +144,8 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-	  ValidWay <= #1 ValidBits[CacheSet];
-	  if(InvalidateCache)                    ValidBits <= #1 '0;
+    ValidWay <= #1 ValidBits[CacheSet];
+    if(InvalidateCache)                    ValidBits <= #1 '0;
       else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end

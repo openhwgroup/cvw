@@ -30,7 +30,7 @@
 `include "wally-config.vh"
 
 module bmuctrl(
-  input  logic		    clk, reset,
+  input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
@@ -43,7 +43,7 @@ module bmuctrl(
   output logic        BSubArithD,              // TRUE if ext, clr, andn, orn, xnor instruction in Decode Stage
   output logic        IllegalBitmanipInstrD,   // Indicates if it is unrecognized B instruction in Decode Stage
   // Execute stage control signals             
-  input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
+  input  logic        StallE, FlushE,          // Stall, flush Execute stage
   output logic [2:0]  ALUSelectD,              // ALU select
   output logic [1:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
@@ -66,7 +66,7 @@ module bmuctrl(
 
   `define BMUCTRLW 17
 
-  logic [`BMUCTRLW-1:0] BMUControlsD;                 // Main B Instructions Decoder control signals
+  logic [`BMUCTRLW-1:0] BMUControlsD;          // Main B Instructions Decoder control signals
 
   // Extract fields
   assign OpD = InstrD[6:0];

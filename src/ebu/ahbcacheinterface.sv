@@ -35,7 +35,7 @@ module ahbcacheinterface #(
   parameter LINELEN,       // Number of bits in cacheline
   parameter LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
 )(
-  input  logic                 HCLK, HRESETn,
+  input  logic                HCLK, HRESETn,
   // bus interface controls
   input logic                 HREADY,                  // AHB peripheral ready
   output logic [1:0]          HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
@@ -56,7 +56,7 @@ module ahbcacheinterface #(
   input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
   output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
   output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
-  output logic [AHBWLOGBWPL-1:0]   BeatCount,               // Beat position within the cache line in the Address Phase
+  output logic [AHBWLOGBWPL-1:0] BeatCount,               // Beat position within the cache line in the Address Phase
   output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
@@ -76,10 +76,10 @@ module ahbcacheinterface #(
   logic [`PA_BITS-1:0]        LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [`AHBW/8-1:0] 		    BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
+  logic [`AHBW/8-1:0]         BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
   logic [`AHBW-1:0]           PreHWDATA;                              // AHB Address phase write data
 
-  genvar                       index;
+  genvar                      index;
 
   // fetch buffer is made of BEATSPERLINE flip-flops
   for (index = 0; index < BEATSPERLINE; index++) begin:fetchbuffer
@@ -100,7 +100,7 @@ module ahbcacheinterface #(
     logic [`AHBW-1:0]          AHBWordSets [(LLENPOVERAHBW)-1:0];
     genvar                     index;
     for (index = 0; index < LLENPOVERAHBW; index++) begin:readdatalinesetsmux
-	    assign AHBWordSets[index] = CacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
+        assign AHBWordSets[index] = CacheReadDataWordM[(index*`AHBW)+`AHBW-1: (index*`AHBW)];
     end
     assign CacheReadDataWordAHB = AHBWordSets[BeatCount[$clog2(LLENPOVERAHBW)-1:0]];
   end else assign CacheReadDataWordAHB = CacheReadDataWordM[`AHBW-1:0];      
@@ -118,5 +118,5 @@ module ahbcacheinterface #(
   buscachefsm #(BeatCountThreshold, AHBWLOGBWPL) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
-	  .HREADY, .HTRANS, .HWRITE, .HBURST);
+      .HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule

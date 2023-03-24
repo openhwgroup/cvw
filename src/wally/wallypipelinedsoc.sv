@@ -50,22 +50,22 @@ module wallypipelinedsoc #(parameter cvw_t P) (
   output logic 		            HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0] 	      GPIOPinsIn,       // inputs from GPIO
-  output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
+  input  logic [31:0]         GPIOPinsIn,       // inputs from GPIO
+  output logic [31:0]         GPIOPinsOut,      // output values for GPIO
   output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
-  input  logic 		            UARTSin,          // UART serial data input
-  output logic 		            UARTSout,         // UART serial data output
-  input  logic 		            SDCCmdIn,         // SDC Command input
-  output logic 		            SDCCmdOut,        // SDC Command output
-  output logic 		            SDCCmdOE,			    // SDC Command output enable
-  input  logic [3:0] 	        SDCDatIn,         // SDC data input
-  output logic 		            SDCCLK			      // SDC clock
+  input  logic                UARTSin,          // UART serial data input
+  output logic                UARTSout,         // UART serial data output
+  input  logic                SDCCmdIn,         // SDC Command input
+  output logic                SDCCmdOut,        // SDC Command output
+  output logic                SDCCmdOE,         // SDC Command output enable
+  input  logic [3:0]          SDCDatIn,         // SDC data input
+  output logic                SDCCLK            // SDC clock
 );
 
   // Uncore signals
   logic [P.AHBW-1:0]            HRDATA;           // from AHB mux in uncore
   logic                       HRESP;            // response from AHB
-  logic                       MTimerInt, MSwInt; // timer and software interrupts from CLINT
+  logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
@@ -85,8 +85,8 @@ module wallypipelinedsoc #(parameter cvw_t P) (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
-	    .UARTSout, .MTIME_CLINT, 
-	    .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
+      .UARTSout, .MTIME_CLINT, 
+      .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
   end
 
 endmodule

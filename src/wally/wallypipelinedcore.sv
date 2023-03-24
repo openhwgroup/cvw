@@ -34,12 +34,21 @@ module wallypipelinedcore #(parameter cvw_t P) (
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
+<<<<<<< HEAD
    input  logic [P.AHBW-1:0]       HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
    output logic [P.PA_BITS-1:0]    HADDR,
    output logic [P.AHBW-1:0]       HWDATA,
    output logic [P.XLEN/8-1:0]     HWSTRB,
+=======
+   input  logic [`AHBW-1:0]      HRDATA,
+   input  logic                  HREADY, HRESP,
+   output logic                  HCLK, HRESETn,
+   output logic [`PA_BITS-1:0]   HADDR,
+   output logic [`AHBW-1:0]      HWDATA,
+   output logic [`XLEN/8-1:0]    HWSTRB,
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -57,6 +66,7 @@ module wallypipelinedcore #(parameter cvw_t P) (
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
+<<<<<<< HEAD
   logic [P.XLEN-1:0]               ForwardedSrcAE, ForwardedSrcBE;
   logic [P.XLEN-1:0] 			  SrcAM;
   logic [2:0]                    Funct3E;
@@ -68,6 +78,19 @@ module wallypipelinedcore #(parameter cvw_t P) (
   logic [P.XLEN-1:0]               UnalignedPCNextF, PC2NextF;
   logic [1:0] 					 MemRWM;
   logic 						 InstrValidD, InstrValidE, InstrValidM;
+=======
+  logic [`XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
+  logic [`XLEN-1:0]              SrcAM;
+  logic [2:0]                    Funct3E;
+  logic [31:0]                   InstrD;
+  logic [31:0]                   InstrM, InstrOrigM;
+  logic [`XLEN-1:0]              PCSpillF, PCE, PCLinkE;
+  logic [`XLEN-1:0]              PCM;
+  logic [`XLEN-1:0]              CSRReadValW, MDUResultW;
+  logic [`XLEN-1:0]              UnalignedPCNextF, PC2NextF;
+  logic [1:0]                    MemRWM;
+  logic                          InstrValidD, InstrValidE, InstrValidM;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrD, IllegalFPUInstrD, IllegalIEUFPUInstrD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -85,32 +108,55 @@ module wallypipelinedcore #(parameter cvw_t P) (
   logic [4:0]                    RdE, RdM, RdW;
   logic                          FPUStallD;
   logic                          FWriteIntE;
+<<<<<<< HEAD
   logic [P.FLEN-1:0]               FWriteDataM;
   logic [P.XLEN-1:0]               FIntResM;  
   logic [P.XLEN-1:0]              FCvtIntResW; 
+=======
+  logic [`FLEN-1:0]              FWriteDataM;
+  logic [`XLEN-1:0]              FIntResM;  
+  logic [`XLEN-1:0]              FCvtIntResW; 
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
   logic                          FRegWriteM;
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
+<<<<<<< HEAD
   logic [P.XLEN-1:0]               FIntDivResultW;
+=======
+  logic [`XLEN-1:0]              FIntDivResultW;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
 
   // memory management unit signals
   logic                          ITLBWriteF;
   logic                          ITLBMissF;
+<<<<<<< HEAD
   logic [P.XLEN-1:0]               SATP_REGW;
+=======
+  logic [`XLEN-1:0]              SATP_REGW;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic  [1:0]                   STATUS_MPP, STATUS_FS;
+  logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
+<<<<<<< HEAD
   logic [P.XLEN-1:0]               PTE;
+=======
+  logic [`XLEN-1:0]              PTE;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic [1:0]                    PageType;
   logic                          sfencevmaM, WFIStallM;
   logic                          SelHPTW;
 
   // PMA checker signals
+<<<<<<< HEAD
   var logic [P.PA_BITS-3:0]           PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0];
+=======
+  var logic [`PA_BITS-3:0]       PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
 
   // IMem stalls
   logic                          IFUStallF;
@@ -118,6 +164,7 @@ module wallypipelinedcore #(parameter cvw_t P) (
 
   // cpu lsu interface
   logic [2:0]                    Funct3M;
+<<<<<<< HEAD
   logic [P.XLEN-1:0]               IEUAdrE;
   logic [P.XLEN-1:0]  WriteDataM;
   logic [P.XLEN-1:0]  IEUAdrM;  
@@ -126,6 +173,16 @@ module wallypipelinedcore #(parameter cvw_t P) (
 
   // AHB ifu interface
   logic [P.PA_BITS-1:0]            IFUHADDR;
+=======
+  logic [`XLEN-1:0]              IEUAdrE;
+  logic [`XLEN-1:0]              WriteDataM;
+  logic [`XLEN-1:0]              IEUAdrM;  
+  logic [`LLEN-1:0]              ReadDataW;  
+  logic                          CommittedM;
+
+  // AHB ifu interface
+  logic [`PA_BITS-1:0]           IFUHADDR;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic [2:0]                    IFUHBURST;
   logic [1:0]                    IFUHTRANS;
   logic [2:0]                    IFUHSIZE;
@@ -133,9 +190,15 @@ module wallypipelinedcore #(parameter cvw_t P) (
   logic                          IFUHREADY;
   
   // AHB LSU interface
+<<<<<<< HEAD
   logic [P.PA_BITS-1:0]            LSUHADDR;
   logic [P.XLEN-1:0]               LSUHWDATA;
   logic [P.XLEN/8-1:0]             LSUHWSTRB;
+=======
+  logic [`PA_BITS-1:0]           LSUHADDR;
+  logic [`XLEN-1:0]              LSUHWDATA;
+  logic [`XLEN/8-1:0]            LSUHWSTRB;
+>>>>>>> 46e08410112c38dc213a034105f96f6979e1680a
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
@@ -159,8 +222,8 @@ module wallypipelinedcore #(parameter cvw_t P) (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-  logic 						 BranchD, BranchE, JumpD, JumpE;
-  logic 						 DCacheStallM, ICacheStallF;
+  logic                          BranchD, BranchE, JumpD, JumpE;
+  logic                          DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
@@ -246,20 +309,10 @@ module wallypipelinedcore #(parameter cvw_t P) (
     ebu ebu(// IFU connections
       .clk, .reset,
       // IFU interface
-      .IFUHADDR,
-      .IFUHBURST, 
-      .IFUHTRANS, 
-      .IFUHREADY,
-      .IFUHSIZE,
+      .IFUHADDR, .IFUHBURST, .IFUHTRANS, .IFUHREADY, .IFUHSIZE,
       // LSU interface
-      .LSUHADDR,
-      .LSUHWDATA,
-      .LSUHWSTRB,
-      .LSUHSIZE,
-      .LSUHBURST,
-      .LSUHTRANS,
-      .LSUHWRITE,
-      .LSUHREADY,
+      .LSUHADDR, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, .LSUHBURST,
+      .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
       // BUS interface
       .HREADY, .HRESP, .HCLK, .HRESETn,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
