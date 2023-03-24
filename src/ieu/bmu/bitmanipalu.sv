@@ -32,17 +32,15 @@
 module bitmanipalu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,                    // Operands
   input  logic [2:0]       ALUControl,              // With Funct3, indicates operation to perform
-  input  logic [2:0]       ALUSelect,               // ALU mux select signal
   input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
-  input  logic [2:0]       Funct3,                  // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
+  input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
   input  logic [1:0]       CompFlags,               // Comparator flags
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
   input  logic [WIDTH-1:0] CondExtA,                // A Conditional Extend Intermediary Signal
   input  logic [WIDTH-1:0] ALUResult, FullResult,   // ALUResult, FullResult signals
   output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
   output logic [WIDTH-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
-  output logic [WIDTH-1:0] rotA,                    // Rotate source signal
   output logic [WIDTH-1:0] Result);                 // Result
 
   logic [WIDTH-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
@@ -68,12 +66,8 @@ module bitmanipalu #(parameter WIDTH=32) (
     mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
  
-  // shifter rotate source select mux
-  if (`ZBB_SUPPORTED & WIDTH == 64) begin
-    mux2 #(WIDTH) rotmux(A, {A[31:0], A[31:0]}, W64, rotA);
-  end else assign rotA = A;
     
-  // Pre-Shift Mux
+  // 0-3 bit Pre-Shift Mux
   if (`ZBA_SUPPORTED) begin: zbapreshift
     assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
     assign CondShiftA = CondExtA << (PreShiftAmt);

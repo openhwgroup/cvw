@@ -30,8 +30,7 @@
 `include "wally-config.vh"
 
 module shifter (
-  input  logic [`XLEN-1:0]     shA,                           // shift Source
-  input  logic [`XLEN-1:0]   rotA,                          // rotate source
+  input  logic [`XLEN-1:0]     A,                           // shift Source
   input  logic [`LOG_XLEN-1:0] Amt,                         // Shift amount
   input  logic                 Right, Rotate, W64, Sign,    // Shift right, rotate signals
   output logic [`XLEN-1:0]     Y);                          // Shifted result
@@ -43,32 +42,35 @@ module shifter (
     if (`XLEN==32) begin // rv32 with rotates
       always_comb  // funnel mux
         case({Right, Rotate})
-          2'b00: z = {shA[31:0], 31'b0};
-          2'b01: z = {rotA,rotA[31:1]};
-          2'b10: z = {{31{Sign}}, shA[31:0]};
-          2'b11: z = {rotA[30:0],rotA};
+          2'b00: z = {A[31:0], 31'b0};
+          2'b01: z = {A[31:0], A[31:1]};
+          2'b10: z = {{31{Sign}}, A[31:0]};
+          2'b11: z = {A[30:0], A};
         endcase
       assign amttrunc = Amt; // shift amount
     end else begin // rv64 with rotates
+      // shifter rotate source select mux
+      logic [`XLEN-1:0]   RotA;                          // rotate source
+      mux2 #(`XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons
       always_comb  // funnel mux
         case ({Right, Rotate})
-          2'b00: z = {shA[63:0],{63'b0}};
-          2'b01: z = {rotA, rotA[63:1]};
-          2'b10: z = {{63{Sign}},shA[63:0]};
-          2'b11: z = {rotA[62:0],rotA[63:0]};
+          2'b00: z = {A[63:0],{63'b0}};
+          2'b01: z = {RotA, RotA[63:1]};
+          2'b10: z = {{63{Sign}}, A[63:0]};
+          2'b11: z = {RotA[62:0], RotA};
         endcase
       assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
     end
   end else begin: norotfunnel
     if (`XLEN==32) begin:shifter // RV32
       always_comb  // funnel mux
-        if (Right)  z = {{31{Sign}}, shA[31:0]};
-        else        z = {shA[31:0], 31'b0};
+        if (Right)  z = {{31{Sign}}, A[31:0]};
+        else        z = {A[31:0], 31'b0};
       assign amttrunc = Amt; // shift amount
     end else begin:shifter  // RV64
       always_comb  // funnel mux
-        if (Right)  z = {{63{Sign}},shA[63:0]};
-        else        z = {shA[63:0],{63'b0}};
+        if (Right)  z = {{63{Sign}}, A[63:0]};
+        else        z = {A[63:0], {63'b0}};
       assign amttrunc = W64 ? {1'b0, Amt[4:0]} : Amt; // 32- or 64-bit shift
     end
   end

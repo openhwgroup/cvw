@@ -54,7 +54,6 @@ module alu #(parameter WIDTH=32) (
   logic             ALUOp;                                                        // 0 for address generation addition or 1 for regular ALU ops
   logic             Asign, Bsign;                                                 // Sign bits of A, B
   logic             shSignA;
-  logic [WIDTH-1:0] rotA;                                                         // XLEN bit input source to shifter
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
@@ -73,7 +72,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.shA(CondExtA), .Sign(shSignA), .rotA, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate(BALUControl[2]));
+  shifter sh(.A(CondExtA), .Sign(shSignA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -106,13 +105,12 @@ module alu #(parameter WIDTH=32) (
 
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, 
+    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .BSelect, .ZBBSelect, 
        .Funct3, .CompFlags, .BALUControl, .CondExtA, .ALUResult, .FullResult,
-      .CondMaskB, .CondShiftA, .rotA, .Result);
+      .CondMaskB, .CondShiftA, .Result);
   end else begin
     assign Result = ALUResult;
     assign CondMaskB = B;
     assign CondShiftA = A;
-    assign rotA = A;
   end
 endmodule
