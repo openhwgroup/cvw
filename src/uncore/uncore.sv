@@ -57,11 +57,11 @@ module uncore (
   output logic [31:0]      GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
   input  logic             UARTSin,                   // UART serial input
   output logic             UARTSout,                  // UART serial output
-  output logic             SDCCmdOut,                 // SD Card command output
+  /*output logic             SDCCmdOut,                 // SD Card command output
   output logic             SDCCmdOE,                  // SD Card command output enable
   input  logic             SDCCmdIn,                  // SD Card command input
   input  logic [3:0]       SDCDatIn,                  // SD Card data input
-  output logic             SDCCLK                     // SD Card clock
+  output logic             SDCCLK                     // SD Card clock*/
 );
   
   logic [`XLEN-1:0] HREADRam, HREADSDC;
@@ -158,10 +158,10 @@ module uncore (
       // interrupt to PLIC
       .SDCIntM	      
       );
-  end else begin : sdc
+  /*end else begin : sdc
     assign SDCCLK = 0; 
     assign SDCCmdOut = 0;
-    assign SDCCmdOE = 0;
+    assign SDCCmdOE = 0;*/
   end
 
   // AHB Read Multiplexer
