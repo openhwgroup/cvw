@@ -45,6 +45,7 @@ string tvpaths[] = '{
   string coverage64gc[] = '{
     `COVERAGE,
     "ieu",
+    "ebu",
     "csrwrites"
   };
 
