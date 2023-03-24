@@ -69,35 +69,33 @@ module bpred (
   output logic             IClassWrongM // Class prediction is wrong
   );
 
-  logic [1:0] 		   BPDirPredF;
+  logic [1:0]              BPDirPredF;
 
-  logic [`XLEN-1:0] 	   BPBTAF, RASPCF;
-  logic 		   BPPCWrongE;
-  logic 		   IClassWrongE;
-  logic 		   BPDirPredWrongE;
+  logic [`XLEN-1:0]        BPBTAF, RASPCF;
+  logic                    BPPCWrongE;
+  logic                    IClassWrongE;
+  logic                    BPDirPredWrongE;
   
-  logic 		   BPPCSrcF;
-  logic [`XLEN-1:0] 	   BPPCF;
-  logic [`XLEN-1:0] 	   PC0NextF;
-  logic [`XLEN-1:0] 	   PCCorrectE;
-  logic [3:0] 		   WrongPredInstrClassD;
+  logic                    BPPCSrcF;
+  logic [`XLEN-1:0]        BPPCF;
+  logic [`XLEN-1:0]        PC0NextF;
+  logic [`XLEN-1:0]        PCCorrectE;
+  logic [3:0]              WrongPredInstrClassD;
 
-  logic 		   BTBTargetWrongE;
-  logic 		   RASTargetWrongE;
+  logic                    BTBTargetWrongE;
+  logic                    RASTargetWrongE;
 
-  logic [`XLEN-1:0] 	   BPBTAD;
+  logic [`XLEN-1:0]        BPBTAD;
 
-  logic 		   BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
-  logic 		   BPBranchF, BPJumpF, BPReturnF, BPCallF;
-  logic 		   BPBranchD, BPJumpD, BPReturnD, BPCallD;
-  logic 		   ReturnD, CallD;
-  logic 		   ReturnE, CallE;
-  logic 		   BranchM, JumpM, ReturnM, CallM;
-  logic 		   BranchW, JumpW, ReturnW, CallW;
-  logic 		   BPReturnWrongD;
-  logic [`XLEN-1:0] BPBTAE;
-
-  
+  logic                    BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF;
+  logic                    BPBranchF, BPJumpF, BPReturnF, BPCallF;
+  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                    ReturnD, CallD;
+  logic                    ReturnE, CallE;
+  logic                    BranchM, JumpM, ReturnM, CallM;
+  logic                    BranchW, JumpW, ReturnW, CallW;
+  logic                    BPReturnWrongD;
+  logic [`XLEN-1:0]        BPBTAE;
   
   // Part 1 branch direction prediction
   // look into the 2 port Sram model. something is wrong. 
@@ -128,7 +126,7 @@ module bpred (
     gsharebasic #(`BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
-	
+  
   end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
     // *** Fix me
 /* -----\/----- EXCLUDED -----\/-----
@@ -149,25 +147,25 @@ module bpred (
 
   btb #(`BTB_SIZE) 
     TargetPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-          .PCNextF, .PCF, .PCD, .PCE, .PCM,
-          .BPBTAF, .BPBTAD, .BPBTAE,
-          .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
-          .IClassWrongM, .IClassWrongE,
-          .IEUAdrE, .IEUAdrM,
-          .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
-          .InstrClassE({CallE, ReturnE, JumpE, BranchE}), 
-          .InstrClassM({CallM, ReturnM, JumpM, BranchM}),
-          .InstrClassW({CallW, ReturnW, JumpW, BranchW}));
+      .PCNextF, .PCF, .PCD, .PCE, .PCM,
+      .BPBTAF, .BPBTAD, .BPBTAE,
+      .BTBIClassF({BTBCallF, BTBReturnF, BTBJumpF, BTBBranchF}),
+      .IClassWrongM, .IClassWrongE,
+      .IEUAdrE, .IEUAdrM,
+      .InstrClassD({CallD, ReturnD, JumpD, BranchD}), 
+      .InstrClassE({CallE, ReturnE, JumpE, BranchE}), 
+      .InstrClassM({CallM, ReturnM, JumpM, BranchM}),
+      .InstrClassW({CallW, ReturnW, JumpW, BranchW}));
 
   icpred #(`INSTR_CLASS_PRED) icpred(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-		.PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
-		.CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
-		.BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .BPReturnWrongD);
+    .PostSpillInstrRawF, .InstrD, .BranchD, .BranchE, .JumpD, .JumpE, .BranchM, .BranchW, .JumpM, .JumpW,
+    .CallD, .CallE, .CallM, .CallW, .ReturnD, .ReturnE, .ReturnM, .ReturnW, .BTBCallF, .BTBReturnF, .BTBJumpF,
+    .BTBBranchF, .BPCallF, .BPReturnF, .BPJumpF, .BPBranchF, .IClassWrongM, .IClassWrongE, .BPReturnWrongD);
 
   // Part 3 RAS
   RASPredictor RASPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-							.BPReturnF, .ReturnD, .ReturnE, .CallE,
-							.BPReturnWrongD, .RASPCF, .PCLinkE);
+    .BPReturnF, .ReturnD, .ReturnE, .CallE,
+    .BPReturnWrongD, .RASPCF, .PCLinkE);
 
   // Check the prediction
   // if it is a CFI then check if the next instruction address (PCD) matches the branch's target or fallthrough address.
@@ -192,11 +190,11 @@ module bpred (
   // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
   // Effectively this is PCM+4 or the non-existant PCLinkM
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
-  else	assign NextValidPCE = PCE;
+  else  assign NextValidPCE = PCE;
 
   if(`ZICOUNTERS_SUPPORTED) begin
-    logic [`XLEN-1:0] 	    RASPCD, RASPCE;
-    logic 					BTAWrongE, RASPredPCWrongE;	
+    logic [`XLEN-1:0]       RASPCD, RASPCE;
+    logic                   BTAWrongE, RASPredPCWrongE;  
     // performance counters
     // 1. class         (class wrong / minstret) (IClassWrongM / csr)                    // Correct now
     // 2. target btb    (btb target wrong / class[0,1,3])  (btb target wrong / (br + j + jal)
@@ -207,15 +205,15 @@ module bpred (
     // could be wrong or the fall through address selected for branch predict not taken.
     // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
     // both without the above inaccuracies.
-	// **** use BPBTAWrongM from BTB.
+  // **** use BPBTAWrongM from BTB.
     assign BTAWrongE = (BPBTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
     assign RASPredPCWrongE = (RASPCE != IEUAdrE) & ReturnE & PCSrcE;
 
     flopenrc #(`XLEN) RASTargetDReg(clk, reset, FlushD, ~StallD, RASPCF, RASPCD);
     flopenrc #(`XLEN) RASTargetEReg(clk, reset, FlushE, ~StallE, RASPCD, RASPCE);
     flopenrc #(3) BPPredWrongRegM(clk, reset, FlushM, ~StallM, 
-				  {BPDirPredWrongE, BTAWrongE, RASPredPCWrongE},
-				  {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
+      {BPDirPredWrongE, BTAWrongE, RASPredPCWrongE},
+      {BPDirPredWrongM, BTAWrongM, RASPredPCWrongM});
     
   end else begin
     assign {BTAWrongM, RASPredPCWrongM} = '0;

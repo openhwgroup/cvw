@@ -48,7 +48,7 @@ module csru #(parameter
   logic [4:0]              FFLAGS_REGW;
   logic [2:0]              NextFRMM;
   logic [4:0]              NextFFLAGSM;
-  logic 				   SetOrWriteFFLAGSM;
+  logic                    SetOrWriteFFLAGSM;
   
   // Write enables
   //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & InstrValidNotFlushedM;

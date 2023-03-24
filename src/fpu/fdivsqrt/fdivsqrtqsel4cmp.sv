@@ -32,19 +32,19 @@ module fdivsqrtqsel4cmp (
   input  logic [2:0] Dmsbs,
   input  logic [4:0] Smsbs,
   input  logic [7:0] WSmsbs, WCmsbs,
-  input  logic SqrtE, j1,
+  input  logic       SqrtE, j1,
   output logic [3:0] udigit
 );
-	logic [6:0] Wmsbs;
-	logic [7:0] PreWmsbs;
-	logic [2:0] A;
+  logic [6:0] Wmsbs;
+  logic [7:0] PreWmsbs;
+  logic [2:0] A;
 
-	assign PreWmsbs = WCmsbs + WSmsbs;
-	assign Wmsbs = PreWmsbs[7:1];
-	// D = 0001.xxx...
-	// Dmsbs = |   |
+  assign PreWmsbs = WCmsbs + WSmsbs;
+  assign Wmsbs = PreWmsbs[7:1];
+  // D = 0001.xxx...
+  // Dmsbs = |   |
   // W =      xxxx.xxx...
-	// Wmsbs = |        |
+  // Wmsbs = |        |
 
   logic [6:0] mk2, mk1, mk0, mkm1;
   logic [6:0] mks2[7:0], mks1[7:0]; 
@@ -87,5 +87,5 @@ module fdivsqrtqsel4cmp (
     else if ($signed(Wmsbs) >= $signed(mk1)) udigit = 4'b0100; // choose 1
     else if ($signed(Wmsbs) >= $signed(mk0)) udigit = 4'b0000; // choose 0
     else if ($signed(Wmsbs) >= $signed(mkm1)) udigit = 4'b0010; // choose -1
-    else udigit = 4'b0001; // choose -2	
+    else udigit = 4'b0001; // choose -2  
 endmodule

@@ -31,10 +31,10 @@
 
 module RASPredictor #(parameter int StackSize = 16 )(
   input  logic             clk,
-  input  logic 			   reset, 
-  input  logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
-  input  logic       	   BPReturnWrongD,                      // Prediction class is wrong
-  input  logic      	   ReturnD,
+  input  logic             reset, 
+  input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input  logic             BPReturnWrongD,                      // Prediction class is wrong
+  input  logic             ReturnD,
   input  logic             ReturnE, CallE,                  // Instr class
   input  logic             BPReturnF,
   input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a call
@@ -48,14 +48,14 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
 
-  logic 		 PopF;
-  logic 		 PushE;
-  logic 		 RepairD;
-  logic 		 IncrRepairD, DecRepairD;
+  logic      PopF;
+  logic      PushE;
+  logic      RepairD;
+  logic      IncrRepairD, DecRepairD;
   
-  logic 		 DecrementPtr;
-  logic 		 FlushedReturnDE;
-  logic 		 WrongPredReturnD;
+  logic      DecrementPtr;
+  logic      FlushedReturnDE;
+  logic      WrongPredReturnD;
   
   
   assign PopF = BPReturnF & ~StallD & ~FlushD;
@@ -85,7 +85,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<StackSize; index++)
-		memory[index] <= {`XLEN{1'b0}};
+    memory[index] <= {`XLEN{1'b0}};
     end else if(PushE) begin
       memory[NextPtr] <= #1 PCLinkE;
     end

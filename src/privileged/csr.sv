@@ -96,11 +96,11 @@ module csr #(parameter
 );
 
   logic [`XLEN-1:0]        CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
-  logic [`XLEN-1:0] CSRReadValM;  
-  logic [`XLEN-1:0] CSRSrcM;
-  logic [`XLEN-1:0] CSRRWM, CSRRSM, CSRRCM;  
-  logic [`XLEN-1:0] CSRWriteValM;
-  logic [`XLEN-1:0] MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
+  logic [`XLEN-1:0]        CSRReadValM;  
+  logic [`XLEN-1:0]        CSRSrcM;
+  logic [`XLEN-1:0]        CSRRWM, CSRRSM, CSRRCM;  
+  logic [`XLEN-1:0]        CSRWriteValM;
+  logic [`XLEN-1:0]        MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
   logic [`XLEN-1:0]        STVEC_REGW, MTVEC_REGW;
   logic [`XLEN-1:0]        MEPC_REGW, SEPC_REGW;
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
@@ -117,7 +117,7 @@ module csr #(parameter
   logic [`XLEN-1:0]        TVecM, TrapVectorM, NextFaultMtvalM;
   logic                    MTrapM, STrapM;
   logic [`XLEN-1:0]        EPC;
-  logic 			             RetM;
+  logic                    RetM;
   logic                    SelMtvecM;
   logic [`XLEN-1:0]        TVecAlignedM;
   logic                    InstrValidNotFlushedM;
@@ -153,7 +153,7 @@ module csr #(parameter
     logic VectoredM;
     logic [`XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-	  assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
+    assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else 
     assign TrapVectorM = TVecAlignedM;

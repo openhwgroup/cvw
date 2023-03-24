@@ -45,11 +45,11 @@ module fdivsqrtqsel2 (
   assign g = ps & pc;
 
   assign magnitude = ~((ps[2]^pc[2]) & (ps[1]^pc[1]) & 
-			  (ps[0]^pc[0]));
+        (ps[0]^pc[0]));
   assign sign = (ps[3]^pc[3])^
       (ps[2] & pc[2] | ((ps[2]^pc[2]) &
-			    (ps[1]&pc[1] | ((ps[1]^pc[1]) &
-						(ps[0]&pc[0])))));
+          (ps[1]&pc[1] | ((ps[1]^pc[1]) &
+            (ps[0]&pc[0])))));
 
   // Produce digit = +1, 0, or -1
   assign up = magnitude & ~sign;
