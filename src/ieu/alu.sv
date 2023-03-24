@@ -72,6 +72,7 @@ module alu #(parameter WIDTH=32) (
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
 
+  // A, A sign bit muxes
   if (WIDTH == 64) begin
     mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]},{{32{A[31]}}, A[31:0]}, A,{~W64, SubArith}, CondExtA);
@@ -80,7 +81,6 @@ module alu #(parameter WIDTH=32) (
     assign CondExtA = A;
   end
 
-    
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
@@ -113,14 +113,13 @@ module alu #(parameter WIDTH=32) (
     endcase
   end
 
-
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign ALUResult = FullResult;
 
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, .Funct3, .CompFlags, .BALUControl,
+    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, .Funct3, .CompFlags, .BALUControl, .CondExtA, .ALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .rotA, .Result);
   end else begin
     assign Result = ALUResult;
