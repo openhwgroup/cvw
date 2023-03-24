@@ -33,37 +33,34 @@ module bitmanipalu #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,                    // Operands
   input  logic [2:0]       ALUControl,              // With Funct3, indicates operation to perform
   input  logic [2:0]       ALUSelect,               // ALU mux select signal
-  input  logic [1:0]       BSelect,                 // One-Hot encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
   input  logic [2:0]       Funct3,                  // With ALUControl, indicates operation to perform NOTE: Change signal name to ALUSelect
   input  logic [1:0]       CompFlags,               // Comparator flags
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
   input  logic [WIDTH-1:0] CondExtA,                // A Conditional Extend Intermediary Signal
   input  logic [WIDTH-1:0] ALUResult, FullResult,   // ALUResult, FullResult signals
-  output logic [WIDTH-1:0] CondMaskB,               // B is a mask for ZBS instructions
-  output logic [WIDTH-1:0] CondShiftA,              // A for ShAdd instructions
-  output logic [WIDTH-1:0] rotA,                    // A for rotate instructions
+  output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
+  output logic [WIDTH-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
+  output logic [WIDTH-1:0] rotA,                    // Rotate source signal
   output logic [WIDTH-1:0] Result);                 // Result
 
-  // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
-  // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondMaskInvB, Shift;                                                    // Intermediate Signals 
-  logic [WIDTH-1:0] ZBBResult, ZBCResult;                                                   // ZBB, ZBC Result
-  logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
-  logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
-  logic             W64;                                                                    // RV64 W-type instruction
-  logic             SubArith;                                                               // Performing subtraction or arithmetic right shift
-  logic             ALUOp;                                                                  // 0 for address generation addition or 1 for regular ALU ops
-  logic             Rotate;                                                                 // Indicates if it is Rotate instruction
-  logic             Mask;                                                                   // Indicates if it is ZBS instruction
-  logic             PreShift;                                                               // Inidicates if it is sh1add, sh2add, sh3add instruction
-  logic [1:0]       PreShiftAmt;                                                            // Amount to Pre-Shift A 
+  logic [WIDTH-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
+  logic [WIDTH-1:0] MaskB;                          // BitMask of B
+  logic [WIDTH-1:0] RevA;                           // Bit-reversed A
+  logic             W64;                            // RV64 W-type instruction
+  logic             SubArith;                       // Performing subtraction or arithmetic right shift
+  logic             ALUOp;                          // 0 for address generation addition or 1 for regular ALU ops
+  logic             Rotate;                         // Indicates if it is Rotate instruction
+  logic             Mask;                           // Indicates if it is ZBS instruction
+  logic             PreShift;                       // Inidicates if it is sh1add, sh2add, sh3add instruction
+  logic [1:0]       PreShiftAmt;                    // Amount to Pre-Shift A 
 
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
   // Extract control signals from bitmanip ALUControl.
-  assign {Rotate, Mask, PreShift} = BALUControl;
+  assign {Mask, PreShift} = BALUControl[1:0];
 
   // Mask Generation Mux
   if (`ZBS_SUPPORTED) begin: zbsdec
@@ -90,14 +87,17 @@ module bitmanipalu #(parameter WIDTH=32) (
     bitreverse #(WIDTH) brA(.A, .RevA);
   end
 
+  // ZBC Unit
   if (`ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A, .RevA, .B, .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
+  // ZBB Unit
   if (`ZBB_SUPPORTED) begin: zbb
     zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
+  // Result Select Mux
   always_comb
     case (BSelect)
       // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
@@ -106,5 +106,4 @@ module bitmanipalu #(parameter WIDTH=32) (
       2'b10: Result = ZBBResult; 
       2'b11: Result = ZBCResult;
     endcase
-
 endmodule
