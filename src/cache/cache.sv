@@ -98,9 +98,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic                          CacheEn;
   logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
   logic [LINELEN/8-1:0]          LineByteMask, DemuxedByteMask, FetchBufferByteSel;
-  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
+  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
 
-  genvar                      index;
+  genvar                         index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
@@ -154,9 +154,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   
   // Bus address for fetch, writeback, or flush writeback
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-		.s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+    .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
+    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
@@ -198,11 +198,11 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.FlushStage, .CacheRW, .CacheAtomic, .Stall,
- 		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
-		.CacheMiss, .CacheAccess, .SelAdr, 
-		.ClearValid, .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
-		.FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
-		.FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
+    .FlushStage, .CacheRW, .CacheAtomic, .Stall,
+    .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
+    .CacheMiss, .CacheAccess, .SelAdr, 
+    .ClearValid, .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
+    .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
+    .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CacheEn, .LRUWriteEn);
 endmodule 
