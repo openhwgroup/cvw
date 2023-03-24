@@ -49,7 +49,7 @@ jal cause_s_soft_interrupt // only cause one interrupt since we just want to tes
 
 GOTO_M_MODE 
 
-jal cause_s_soft_interrupt // set software interrupt pending without it firing so we can make it fire in U mode
+jal cause_s_soft_from_m_interrupt // set software interrupt pending without it firing so we can make it fire in U mode
 
 GOTO_U_MODE // Should cause software interrupt to fire off. 
 

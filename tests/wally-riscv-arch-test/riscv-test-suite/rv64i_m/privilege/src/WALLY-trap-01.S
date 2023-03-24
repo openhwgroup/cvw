@@ -50,7 +50,7 @@ GOTO_S_MODE // Causes U mode ecall
 GOTO_M_MODE // Causes S mode ecall
 
 
-jal cause_s_soft_interrupt 
+jal cause_s_soft_from_m_interrupt
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt
 jal cause_m_time_interrupt
@@ -72,7 +72,7 @@ jal cause_store_addr_misaligned
 jal cause_store_acc
 jal cause_ecall // M mode ecall
 
-jal cause_s_soft_interrupt // The delegated S mode interrupts should not fire since we're running in M mode.
+jal cause_s_soft_interrupt // S Mode Interrupts Ignored in M mode. sip writeable when mideleg = 1
 jal cause_m_soft_interrupt
 jal cause_s_time_interrupt 
 jal cause_m_time_interrupt
