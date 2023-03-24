@@ -57,7 +57,7 @@ module ebufsmarb (
   logic 	     FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
   logic 	     BeatCntEn;
   logic [3:0]      BeatCount;   // Position within a burst transfer
-  logic 	     CntReset;
+  logic 	     BeatCntReset;
   logic [3:0] 	     Threshold;                  // Number of beats derived from HBURST
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -98,13 +98,13 @@ module ebufsmarb (
   // Burst mode logic
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign CntReset = NextState == IDLE;
+  assign BeatCntReset = NextState == IDLE;
   assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
   assign BeatCntEn = (NextState == ARBITRATE) & HREADY;
-  counter #(4) BeatCounter(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, BeatCount);  
+  counter #(4) BeatCounter(HCLK, ~HRESETn | BeatCntReset | FinalBeat, BeatCntEn, BeatCount);  
  
   // Used to store data from data phase of AHB.
-  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | CntReset, BeatCntEn, FinalBeat, FinalBeatD);
+  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, FinalBeat, FinalBeatD);
 
   // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
   //  HBURST[2:1] Beats
