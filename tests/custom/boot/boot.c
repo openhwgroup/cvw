@@ -121,25 +121,6 @@ static int alt_mem __attribute__((section(".bss")));
 
 static const char * errno_to_str(void) {
     switch (errno) {
-    case FR_OK: return "No error";
-    case FR_DISK_ERR: return "Disk I/O error";
-    case FR_INT_ERR: return "Assertion failed";
-    case FR_NOT_READY: return "Disk not ready";
-    case FR_NO_FILE: return "File not found";
-    case FR_NO_PATH: return "Path not found";
-    case FR_INVALID_NAME: return "Invalid path";
-    case FR_DENIED: return "Access denied";
-    case FR_EXIST: return "Already exist";
-    case FR_INVALID_OBJECT: return "The FS object is invalid";
-    case FR_WRITE_PROTECTED: return "The drive is write protected";
-    case FR_INVALID_DRIVE: return "The drive number is invalid";
-    case FR_NOT_ENABLED: return "The volume has no work area";
-    case FR_NO_FILESYSTEM: return "Not a valid FAT volume";
-    case FR_MKFS_ABORTED: return "The f_mkfs() aborted";
-    case FR_TIMEOUT: return "Timeout";
-    case FR_LOCKED: return "Locked";
-    case FR_NOT_ENOUGH_CORE: return "Not enough memory";
-    case FR_TOO_MANY_OPEN_FILES: return "Too many open files";
     case ERR_EOF: return "Unexpected EOF";
     case ERR_NOT_ELF: return "Not an ELF file";
     case ERR_ELF_BITS: return "Wrong ELF word size";

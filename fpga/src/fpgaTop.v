@@ -28,23 +28,24 @@
 
 module fpgaTop 
   (input           default_250mhz_clk1_0_n,
-   input 		   default_250mhz_clk1_0_p, 
-   input 		   reset,
-   input 		   south_rst,
+   input           default_250mhz_clk1_0_p, 
+   input           reset,
+   input           south_rst,
 
-   input [3:0] 	   GPI,
+   input [3:0]     GPI,
    output [4:0]    GPO,
 
-   input 		   UARTSin,
-   output 		   UARTSout,
+   input           UARTSin,
+   output          UARTSout,
 
-   inout [3:0] 	   SDCDat,
-   output 		   SDCCLK,
-   inout 		   SDCCmd,
+   inout [3:0]     SDCDat,
+   output          SDCCLK,
+   inout           SDCCmd,
+   input           SDCCD, 
 
-   output 		   calib,
-   output 		   cpu_reset,
-   output 		   ahblite_resetn,
+   output          calib,
+   output          cpu_reset,
+   output          ahblite_resetn,
 
    output [16 : 0] c0_ddr4_adr,
    output [1 : 0]  c0_ddr4_ba,
@@ -56,8 +57,8 @@ module fpgaTop
    inout [7 : 0]   c0_ddr4_dqs_t,
    output [0 : 0]  c0_ddr4_odt,
    output [0 : 0]  c0_ddr4_bg,
-   output 		   c0_ddr4_reset_n,
-   output 		   c0_ddr4_act_n,
+   output          c0_ddr4_reset_n,
+   output          c0_ddr4_act_n,
    output [0 : 0]  c0_ddr4_ck_c,
    output [0 : 0]  c0_ddr4_ck_t
    );
@@ -188,6 +189,7 @@ module fpgaTop
 
   wire s00_axi_aclk;
   wire s00_axi_aresetn;
+  wire [3:0] s00_axi_awid;
   wire [31:0]s00_axi_awaddr;
   wire [7:0]s00_axi_awlen;
   wire [2:0]s00_axi_awsize;
@@ -244,11 +246,9 @@ module fpgaTop
   wire s01_axi_wlast;
   wire s01_axi_wvalid;
   wire s01_axi_wready;
-  wire [3:0]m01_axi_bid;
   wire [1:0]s01_axi_bresp;
   wire s01_axi_bvalid;
   wire s01_axi_bready;
-  wire [3:0]m01_axi_bid;
   wire [31:0]s01_axi_araddr;
   wire [7:0]s01_axi_arlen;
   wire [2:0]s01_axi_arsize;
@@ -260,7 +260,6 @@ module fpgaTop
   wire [3:0]s01_axi_arqos; //
   wire s01_axi_arvalid;
   wire s01_axi_arready;
-  wire [3:0]m01_axi_rid;
   wire [63:0]s01_axi_rdata;
   wire [1:0]s01_axi_rresp;
   wire s01_axi_rlast;
@@ -376,7 +375,7 @@ module fpgaTop
   wire [3:0]m01_axi_awqos;
   wire m01_axi_awvalid;
   wire m01_axi_awready;
-  wire [31:0]m01_axi_wdata;
+  wire [63:0]m01_axi_wdata;
   wire [3:0]m01_axi_wstrb;
   wire m01_axi_wlast;
   wire m01_axi_wvalid;
@@ -398,7 +397,7 @@ module fpgaTop
   wire m01_axi_arvalid;
   wire m01_axi_arready;
   wire [3:0] m01_axi_rid;
-  wire [31:0]m01_axi_rdata;
+  wire [63:0]m01_axi_rdata;
   wire [1:0]m01_axi_rresp;
   wire m01_axi_rlast;
   wire m01_axi_rvalid;
@@ -409,13 +408,13 @@ module fpgaTop
 
   // New SDC Command IOBUF connections
   wire       sd_cmd_i;
-  reg        sd_cmd_reg_o;
-  reg        sd_cmd_reg_t;
+  wire        sd_cmd_reg_o;
+  wire        sd_cmd_reg_t;
 
   // New SDC Data IOBUF connections
   wire [3:0] sd_dat_i;
-  reg  [3:0] sd_dat_reg_o;
-  reg        sd_dat_reg_t;
+  wire  [3:0] sd_dat_reg_o;
+  wire        sd_dat_reg_t;
   
   assign GPIOPinsIn = {28'b0, GPI};
   assign GPO = GPIOPinsOut[4:0];
@@ -444,7 +443,7 @@ module fpgaTop
   */
    
    // IOBUFS for new SDC peripheral
-   IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(SDCcmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
+   IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(SDCCmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
    genvar    i;
    generate
       for (i = 0; i < 4; i = i + 1) begin
@@ -502,13 +501,13 @@ module fpgaTop
      .GPIOPinsEn(GPIOPinsEn),
      // UART
      .UARTSin(UARTSin),
-     .UARTSout(UARTSout),  
+     .UARTSout(UARTSout)  
      // SD Card   
-     .SDCDatIn(SDCDatIn),
+     /*.SDCDatIn(SDCDatIn),
      .SDCCmdIn(SDCCmdIn),     
      .SDCCmdOut(SDCCmdOut),
      .SDCCmdOE(SDCCmdOE),
-     .SDCCLK(SDCCLK));
+     .SDCCLK(SDCCLK));*/
 
   // ahb lite to axi bridge
   xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
@@ -568,7 +567,7 @@ module fpgaTop
 	 .aresetn(peripheral_aresetn),
 
 	 // Connect Masters
-	 .s_axi_awid({8'b0, m_axi_awid}),
+	 .s_axi_awid({4'b0, m_axi_awid}),
 	 .s_axi_awaddr({m01_axi_awaddr, m_axi_awaddr}),
 	 .s_axi_awlen({m01_axi_awlen, m_axi_awlen}),
 	 .s_axi_awsize({m01_axi_awsize, m_axi_awsize}),
@@ -588,7 +587,7 @@ module fpgaTop
 	 .s_axi_bresp({m01_axi_bresp, m_axi_bresp}),
 	 .s_axi_bvalid({m01_axi_bvalid, m_axi_bvalid}),
 	 .s_axi_bready({m01_axi_bready, m_axi_bready}),
-	 .s_axi_arid({8'b0, m_axi_arid}),
+	 .s_axi_arid({4'b0, m_axi_arid}),
 	 .s_axi_araddr({m01_axi_araddr, m_axi_araddr}),
 	 .s_axi_arlen({m01_axi_arlen, m_axi_arlen}),
 	 .s_axi_arsize({m01_axi_arsize, m_axi_arsize}),
@@ -624,7 +623,7 @@ module fpgaTop
      .m_axi_wlast({s01_axi_wlast, s00_axi_wlast}),
      .m_axi_wvalid({s01_axi_wvalid, s00_axi_wvalid}),
      .m_axi_wready({s01_axi_wready, s00_axi_wready}),
-     .m_axi_bid({8'b0, s00_axi_bid}),
+     .m_axi_bid({4'b0, s00_axi_bid}),
      .m_axi_bresp({s01_axi_bresp, s00_axi_bresp}),
      .m_axi_bvalid({s01_axi_bvalid, s00_axi_bvalid}),
      .m_axi_bready({s01_axi_bready, s00_axi_bready}),
@@ -640,7 +639,7 @@ module fpgaTop
      .m_axi_araddr({s01_axi_araddr, s00_axi_araddr}),
      .m_axi_arlock({s01_axi_arlock, s00_axi_arlock}),
      .m_axi_arready({s01_axi_arready, s00_axi_arready}),
-     .m_axi_rid({8'b0, s00_axi_rid}),
+     .m_axi_rid({4'b0, s00_axi_rid}),
      .m_axi_rdata({s01_axi_rdata, s00_axi_rdata}),
      .m_axi_rresp({s01_axi_rresp, s00_axi_rresp}),
      .m_axi_rvalid({s01_axi_rvalid, s00_axi_rvalid}),
@@ -856,7 +855,10 @@ module fpgaTop
      
      .sd_cmd_reg_t(sd_cmd_reg_t),
      .sd_cmd_reg_o(sd_cmd_reg_o),
-     .sd_cmd_i(sd_cmd_i)
+     .sd_cmd_i(sd_cmd_i),
+
+     .sdio_clk(SDCCLK),
+     .sdio_cd(SDCCD)
 	 );
 
   xlnx_axi_dwidth_conv_32to64 axi_conv_up
