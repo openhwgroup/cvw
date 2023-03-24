@@ -30,27 +30,27 @@
 `define RAM_LATENCY 0
 
 module ram_ahb #(parameter BASE=0, RANGE = 65535) (
-  input  logic             HCLK, HRESETn, 
-  input  logic             HSELRam,
-  input  logic [`PA_BITS-1:0]      HADDR,
-  input  logic             HWRITE,
-  input  logic             HREADY,
-  input  logic [1:0]       HTRANS,
-  input  logic [`XLEN-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  output logic [`XLEN-1:0] HREADRam,
-  output logic             HRESPRam, HREADYRam
+  input  logic                HCLK, HRESETn, 
+  input  logic                HSELRam,
+  input  logic [`PA_BITS-1:0] HADDR,
+  input  logic                HWRITE,
+  input  logic                HREADY,
+  input  logic [1:0]          HTRANS,
+  input  logic [`XLEN-1:0]    HWDATA,
+  input  logic [`XLEN/8-1:0]  HWSTRB,
+  output logic [`XLEN-1:0]    HREADRam,
+  output logic                HRESPRam, HREADYRam
 );
 
   localparam               ADDR_WIDTH = $clog2(RANGE/8);
   localparam               OFFSET = $clog2(`XLEN/8);   
 
-  logic [`XLEN/8-1:0] 	   ByteMask;
-  logic [`PA_BITS-1:0]     HADDRD, RamAddr;
-  logic				             initTrans;
-  logic				             memwrite, memwriteD, memread;
-  logic                    nextHREADYRam;
-  logic                    DelayReady;
+  logic [`XLEN/8-1:0]         ByteMask;
+  logic [`PA_BITS-1:0]        HADDRD, RamAddr;
+  logic                       initTrans;
+  logic                       memwrite, memwriteD, memread;
+  logic                       nextHREADYRam;
+  logic                       DelayReady;
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing
@@ -92,13 +92,13 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
       else CurrState <= #1 NextState;  
 
     always_comb begin
-	  case(CurrState)
-	    READY: if(initTrans & ~CycleFlag) NextState = DELAY;
+    case(CurrState)
+      READY: if(initTrans & ~CycleFlag) NextState = DELAY;
         else                          NextState = READY;
         DELAY: if(CycleFlag)                  NextState = READY;
-		else                          NextState = DELAY;
-	    default:                                      NextState = READY;
-	  endcase
+    else                          NextState = DELAY;
+      default:                                      NextState = READY;
+    endcase
     end
 
     assign CycleFlag = Cycle == `RAM_LATENCY;
@@ -108,7 +108,6 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   end else begin
     assign DelayReady = 0;
   end
-  
-  
+
 endmodule
   

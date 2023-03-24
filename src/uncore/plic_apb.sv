@@ -43,37 +43,37 @@
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
 module plic_apb (
-  input  logic             PCLK, PRESETn,
-  input  logic             PSEL,
-  input  logic [27:0]      PADDR, 
-  input  logic [`XLEN-1:0] PWDATA,
+  input  logic               PCLK, PRESETn,
+  input  logic               PSEL,
+  input  logic [27:0]        PADDR, 
+  input  logic [`XLEN-1:0]   PWDATA,
   input  logic [`XLEN/8-1:0] PSTRB,
-  input  logic             PWRITE,
-  input  logic             PENABLE,
-  output logic [`XLEN-1:0] PRDATA,
-  output logic             PREADY,
-  input  logic             UARTIntr,GPIOIntr,
-  output logic             MExtInt, SExtInt
+  input  logic               PWRITE,
+  input  logic               PENABLE,
+  output logic [`XLEN-1:0]   PRDATA,
+  output logic               PREADY,
+  input  logic               UARTIntr,GPIOIntr,
+  output logic               MExtInt, SExtInt
 );
 
-  logic memwrite, memread;
-  logic [23:0] entry;
-  logic [31:0] Din, Dout;
+  logic                      memwrite, memread;
+  logic [23:0]               entry;
+  logic [31:0]               Din, Dout;
 
   // context-independent signals
-  logic [`N:1]      requests;
-  logic [`N:1][2:0] intPriority;
-  logic [`N:1]      intInProgress, intPending, nextIntPending;
+  logic [`N:1]               requests;
+  logic [`N:1][2:0]          intPriority;
+  logic [`N:1]               intInProgress, intPending, nextIntPending;
   
   // context-dependent signals
-  logic [`C-1:0][2:0]       intThreshold;
-  logic [`C-1:0][`N:1]      intEn;
-  logic [`C-1:0][5:0]       intClaim; // ID's are 6 bits if we stay within 63 sources
-  logic [`C-1:0][7:1][`N:1] irqMatrix;
-  logic [`C-1:0][7:1]       priorities_with_irqs;
-  logic [`C-1:0][7:1]       max_priority_with_irqs;
-  logic [`C-1:0][`N:1]      irqs_at_max_priority;
-  logic [`C-1:0][7:1]       threshMask;
+  logic [`C-1:0][2:0]        intThreshold;
+  logic [`C-1:0][`N:1]       intEn;
+  logic [`C-1:0][5:0]        intClaim; // ID's are 6 bits if we stay within 63 sources
+  logic [`C-1:0][7:1][`N:1]  irqMatrix;
+  logic [`C-1:0][7:1]        priorities_with_irqs;
+  logic [`C-1:0][7:1]        max_priority_with_irqs;
+  logic [`C-1:0][`N:1]       irqs_at_max_priority;
+  logic [`C-1:0][7:1]        threshMask;
 
   // =======
   // AHB I/O
@@ -128,7 +128,7 @@ module plic_apb (
       if (memread)
         casez(entry)
           24'h000000: Dout <= #1 32'b0;  // there is no intPriority[0]
-          24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};		  
+          24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};      
           `ifdef PLIC_NUM_SRC_LT_32
           24'h001000: Dout <= #1 {{(31-`N){1'b0}},intPending,1'b0};
           24'h002000: Dout <= #1 {{(31-`N){1'b0}},intEn[0],1'b0};

@@ -40,52 +40,52 @@ module csrc #(parameter
   TIME  = 12'hC01,
   TIMEH = 12'hC81
 ) (
-  input  logic 	            clk, reset,
-  input  logic 	            StallE, StallM, 
-  input  logic              FlushM, 
-  input  logic 	            InstrValidNotFlushedM, LoadStallD, StoreStallD, 
-  input  logic              CSRMWriteM, CSRWriteM,
-  input  logic 	            BPDirPredWrongM,
-  input  logic 	            BTAWrongM,
-  input  logic 	            RASPredPCWrongM,
-  input  logic 	            IClassWrongM,
-  input  logic              BPWrongM,                              // branch predictor is wrong
-  input  logic [3:0]        InstrClassM,
-  input  logic 	            DCacheMiss,
-  input  logic 	            DCacheAccess,
-  input  logic 	            ICacheMiss,
-  input  logic 	            ICacheAccess,
-  input  logic              ICacheStallF,
-  input  logic              DCacheStallM,
-  input  logic              sfencevmaM,
-  input  logic              InterruptM,
-  input  logic              ExceptionM,
-  input  logic              InvalidateICacheM,
-  input  logic              DivBusyE,                                  // integer divide busy
-  input  logic              FDivBusyE,                                 // floating point divide busy
-  input  logic [11:0] 	    CSRAdrM,
-  input  logic [1:0] 	    PrivilegeModeW,
-  input  logic [`XLEN-1:0]  CSRWriteValM,
-  input  logic [31:0] 	    MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-  input  logic [63:0] 	    MTIME_CLINT, 
-  output logic [`XLEN-1:0]  CSRCReadValM,
-  output logic 	            IllegalCSRCAccessM
+  input  logic             clk, reset,
+  input  logic             StallE, StallM, 
+  input  logic             FlushM, 
+  input  logic             InstrValidNotFlushedM, LoadStallD, StoreStallD, 
+  input  logic             CSRMWriteM, CSRWriteM,
+  input  logic             BPDirPredWrongM,
+  input  logic             BTAWrongM,
+  input  logic             RASPredPCWrongM,
+  input  logic             IClassWrongM,
+  input  logic             BPWrongM,                              // branch predictor is wrong
+  input  logic [3:0]       InstrClassM,
+  input  logic             DCacheMiss,
+  input  logic             DCacheAccess,
+  input  logic             ICacheMiss,
+  input  logic             ICacheAccess,
+  input  logic             ICacheStallF,
+  input  logic             DCacheStallM,
+  input  logic             sfencevmaM,
+  input  logic             InterruptM,
+  input  logic             ExceptionM,
+  input  logic             InvalidateICacheM,
+  input  logic             DivBusyE,                                  // integer divide busy
+  input  logic             FDivBusyE,                                 // floating point divide busy
+  input  logic [11:0]      CSRAdrM,
+  input  logic [1:0]       PrivilegeModeW,
+  input  logic [`XLEN-1:0] CSRWriteValM,
+  input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+  input  logic [63:0]      MTIME_CLINT, 
+  output logic [`XLEN-1:0] CSRCReadValM,
+  output logic             IllegalCSRCAccessM
 );
 
-  logic [4:0]               CounterNumM;
-  logic [`XLEN-1:0] HPMCOUNTER_REGW[`COUNTERS-1:0];
-  logic [`XLEN-1:0]         HPMCOUNTERH_REGW[`COUNTERS-1:0];
-  logic                     LoadStallE, LoadStallM;
-  logic                     StoreStallE, StoreStallM;
-  logic [`COUNTERS-1:0]     WriteHPMCOUNTERM;
-  logic [`COUNTERS-1:0]     CounterEvent;
-  logic [63:0]              HPMCOUNTERPlusM[`COUNTERS-1:0];
-  logic [`XLEN-1:0]         NextHPMCOUNTERM[`COUNTERS-1:0];
-  genvar i;
+  logic [4:0]              CounterNumM;
+  logic [`XLEN-1:0]        HPMCOUNTER_REGW[`COUNTERS-1:0];
+  logic [`XLEN-1:0]        HPMCOUNTERH_REGW[`COUNTERS-1:0];
+  logic                    LoadStallE, LoadStallM;
+  logic                    StoreStallE, StoreStallM;
+  logic [`COUNTERS-1:0]    WriteHPMCOUNTERM;
+  logic [`COUNTERS-1:0]    CounterEvent;
+  logic [63:0]             HPMCOUNTERPlusM[`COUNTERS-1:0];
+  logic [`XLEN-1:0]        NextHPMCOUNTERM[`COUNTERS-1:0];
+  genvar                   i;
 
   // Interface signals
   flopenrc #(2) LoadStallEReg(.clk, .reset, .clear(1'b0), .en(~StallE), .d({StoreStallD, LoadStallD}), .q({StoreStallE, LoadStallE}));  // don't flush the load stall during a load stall.
-  flopenrc #(2) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d({StoreStallE, LoadStallE}), .q({StoreStallM, LoadStallM}));	
+  flopenrc #(2) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d({StoreStallE, LoadStallE}), .q({StoreStallM, LoadStallM}));  
   
   // Determine when to increment each counter
   assign CounterEvent[0] = 1'b1;                                                        // MCYCLE always increments
@@ -97,11 +97,11 @@ module csrc #(parameter
     assign CounterEvent[3] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[4] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
     assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
-	assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                     // branch predictor wrong
+  assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                            // branch predictor wrong
     assign CounterEvent[7] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
-    assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                   // branch predictor wrong target
+    assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
-    assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;       // instruction class predictor wrong
+    assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                     // instruction class predictor wrong
     assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.
     assign CounterEvent[12] = StoreStallM & InstrValidNotFlushedM;                      //  Store Stall
     assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
@@ -111,7 +111,7 @@ module csrc #(parameter
     assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[18] = ICacheStallF;                                             // i cache miss cycles
     assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                        // CSR writes
-    assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                           // fence.i
+    assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                // fence.i
     assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
     assign CounterEvent[22] = InterruptM;                                               // interrupt, InstrValidNotFlushedM will be low
     assign CounterEvent[23] = ExceptionM;                                               // exceptions, InstrValidNotFlushedM will be low

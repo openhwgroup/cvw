@@ -52,19 +52,12 @@ module alu #(parameter WIDTH=32) (
   logic             LT, LTU;                                                      // Less than, Less than unsigned
   logic             Asign, Bsign;                                                 // Sign bits of A, B
 
-  // *** explain this part better; possibly move into shifter and BMU?
-  if (WIDTH == 64) begin
-    mux3 #(64) extendmux({{32{1'b0}}, A[31:0]}, {{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, CondExtA); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
-  end else begin 
-    assign CondExtA = A;
-  end
-
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.A(CondExtA), .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -97,7 +90,7 @@ module alu #(parameter WIDTH=32) (
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
     bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
-      .Funct3, .CompFlags, .BALUControl, .CondExtA, .ALUResult, .FullResult,
+      .Funct3, .CompFlags, .BALUControl, .ALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .Result);
   end else begin
     assign Result = ALUResult;
