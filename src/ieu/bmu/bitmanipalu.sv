@@ -41,13 +41,11 @@ module bitmanipalu #(parameter WIDTH=32) (
   output logic [WIDTH-1:0] CondMaskB,
   output logic [WIDTH-1:0] CondShiftA,
   output logic [WIDTH-1:0] rotA,
-  output logic [WIDTH-1:0] Result,      // ALU result
-  output logic [WIDTH-1:0] ZBBResult,   // ZBB result
-  output logic [WIDTH-1:0] ZBCResult);  // ZBC result    
-
+  output logic [WIDTH-1:0] Result);     // Result
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult,ALUResult;                   // Intermediate Signals 
+  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult,ALUResult;                              // Intermediate Signals 
+  logic [WIDTH-1:0] ZBBResult, ZBCResult;                                                   // ZBB, ZBC Result
   logic [WIDTH-1:0] MaskB;                                                                  // BitMask of B
   logic [WIDTH-1:0] CondExtA;                                                               // Result of Zero Extend A select mux
   logic [WIDTH-1:0] RevA;                                                                   // Bit-reversed A
@@ -70,14 +68,10 @@ module bitmanipalu #(parameter WIDTH=32) (
   // Extract control signals from bitmanip ALUControl.
   assign {Rotate, Mask, PreShift} = BALUControl;
 
-  // Pack control signals into shifter select
-  assign shASelect = {W64,SubArith};
-
   if (`ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
     mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
-
  
   // shifter rotate source select mux
   if (`ZBB_SUPPORTED & WIDTH == 64) begin
@@ -104,5 +98,14 @@ module bitmanipalu #(parameter WIDTH=32) (
   if (`ZBB_SUPPORTED) begin: zbb
     zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
+
+  always_comb
+    case (BSelect)
+      // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
+      2'b00: Result = ALUResult; 
+      2'b01: Result = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+      2'b10: Result = ZBBResult; 
+      2'b11: Result = ZBCResult;
+    endcase
 
 endmodule

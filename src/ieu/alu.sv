@@ -67,18 +67,10 @@ module alu #(parameter WIDTH=32) (
   // Extract control signals from ALUControl.
   assign {W64, SubArith, ALUOp} = ALUControl;
 
-  // Extract control signals from bitmanip ALUControl.
   assign {Rotate, Mask, PreShift} = BALUControl;
 
   // Pack control signals into shifter select
   assign shASelect = {W64,SubArith};
-
-  assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
-
-  if (`ZBS_SUPPORTED) begin: zbsdec
-    decoder #($clog2(WIDTH)) maskgen (B[$clog2(WIDTH)-1:0], MaskB);
-    mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
-  end else assign CondMaskB = B;
 
   if (WIDTH == 64) begin
     mux3 #(1) signmux(A[63], A[31], 1'b0, {~SubArith, W64}, shSignA);
@@ -88,16 +80,7 @@ module alu #(parameter WIDTH=32) (
     assign CondExtA = A;
   end
 
-  // shifter rotate source select mux
-  if (`ZBB_SUPPORTED & WIDTH == 64) begin
-    mux2 #(WIDTH) rotmux(A, {A[31:0], A[31:0]}, W64, rotA);
-  end else assign rotA = A;
     
-  if (`ZBA_SUPPORTED) begin: zbapreshift
-    // Pre-Shift
-    assign CondShiftA = CondExtA << (PreShiftAmt);
-  end else assign CondShiftA = A;
-
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
@@ -130,31 +113,19 @@ module alu #(parameter WIDTH=32) (
     endcase
   end
 
-  if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
-    bitreverse #(WIDTH) brA(.A, .RevA);
-  end
-
-  if (`ZBC_SUPPORTED) begin: zbc
-    zbc #(WIDTH) ZBC(.A, .RevA, .B, .Funct3, .ZBCResult);
-  end else assign ZBCResult = 0;
-
-  if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
-  end else assign ZBBResult = 0;
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
   if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
   else              assign ALUResult = FullResult;
 
   // Final Result B instruction select mux
-  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : zbdecoder
-    always_comb
-      case (BSelect)
-        // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
-        2'b00: Result = ALUResult; 
-        2'b01: Result = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
-        2'b10: Result = ZBBResult; 
-        2'b11: Result = ZBCResult;
-      endcase
-  end else assign Result = ALUResult;
+  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
+    bitmanipalu #(WIDTH) balu(.A, .B, .ALUControl, .ALUSelect, .BSelect, .ZBBSelect, .Funct3, .CompFlags, .BALUControl,
+      .CondMaskB, .CondShiftA, .rotA, .Result);
+  end else begin
+    assign Result = ALUResult;
+    assign CondMaskB = B;
+    assign CondShiftA = A;
+    assign rotA = A;
+  end
 endmodule
