@@ -35,8 +35,8 @@ set -e # break on error
 
 # Modify accordingly for your machine
 # Increasing NUM_THREADS will speed up parallel compilation of the tools
-NUM_THREADS=2 # for low memory machines > 16GiB
-#NUM_THREADS=8  # for >= 32GiB
+#NUM_THREADS=2 # for low memory machines > 16GiB
+NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
