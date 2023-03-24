@@ -29,27 +29,27 @@
 `include "wally-config.vh"
 
 module ieu (
-  input  logic 		          clk, reset,
+  input  logic               clk, reset,
   // Decode stage signals
-  input  logic [31:0] 	    InstrD,                          // Instruction
-  input  logic 		          IllegalIEUFPUInstrD,             // Illegal instruction
-  output logic 		          IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
+  input  logic [31:0]       InstrD,                          // Instruction
+  input  logic              IllegalIEUFPUInstrD,             // Illegal instruction
+  output logic              IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
   input  logic [`XLEN-1:0]  PCE,                             // PC
   input  logic [`XLEN-1:0]  PCLinkE,                         // PC + 4
-  output logic 		          PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
-  input  logic 		          FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
+  output logic              PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
+  input  logic              FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
   output logic [`XLEN-1:0]  IEUAdrE,                         // Memory address
-  output logic 		          IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
-  output logic [2:0] 	      Funct3E,                         // Funct3 instruction field
+  output logic              IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
+  output logic [2:0]        Funct3E,                         // Funct3 instruction field
   output logic [`XLEN-1:0]  ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
   // Memory stage signals
-  input  logic 		          SquashSCW,                       // Squash store conditional, from LSU
-  output logic [1:0] 	      MemRWM,                          // Read/write control goes to LSU
-  output logic [1:0] 	      AtomicM,                         // Atomic control goes to LSU
+  input  logic              SquashSCW,                       // Squash store conditional, from LSU
+  output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
+  output logic [1:0]        AtomicM,                         // Atomic control goes to LSU
   output logic [`XLEN-1:0]  WriteDataM,                      // Write data to LSU
-  output logic [2:0] 	      Funct3M,                         // Funct3 (size and signedness) to LSU
+  output logic [2:0]        Funct3M,                         // Funct3 (size and signedness) to LSU
   output logic [`XLEN-1:0]  SrcAM,                           // ALU SrcA to Privileged unit and FPU
   output logic [4:0]        RdM,                             // Destination register
   input  logic [`XLEN-1:0]  FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
@@ -66,12 +66,12 @@ module ieu (
   output logic [4:0]        RdW,                             // Destination register
   input  logic [`XLEN-1:0]  ReadDataW,                       // LSU's read data
   // Hazard unit signals
-  input  logic 		          StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
-  input  logic 		          FlushD, FlushE, FlushM, FlushW,  // Flush signals
-  output logic 		          FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
+  input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
+  input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
+  output logic              FCvtIntStallD, LoadStallD,       // Stall causes from IEU to hazard unit
   output logic              MDUStallD, CSRRdStallD, StoreStallD,
-  output logic 		          CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
-  output logic 		          CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
+  output logic              CSRReadM, CSRWriteM, PrivilegedM,// CSR read, CSR write, is privileged instruction
+  output logic              CSRWriteFenceM                   // CSR write or fence instruction needs to flush subsequent instructions
 );
 
   logic [2:0] ImmSrcD;                                       // Select type of immediate extension 

@@ -30,43 +30,43 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic 		            clk, 
+  input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
-  input  logic [`AHBW-1:0]     HRDATAEXT,
-  input  logic 		            HREADYEXT, HRESPEXT,
-  output logic 		            HSELEXT,
+  input  logic [`AHBW-1:0]    HRDATAEXT,
+  input  logic                HREADYEXT, HRESPEXT,
+  output logic                HSELEXT,
   // outputs to external memory, shared with uncore memory
-  output logic 		            HCLK, HRESETn,
-  output logic [`PA_BITS-1:0]  HADDR,
-  output logic [`AHBW-1:0]     HWDATA,
-  output logic [`XLEN/8-1:0]   HWSTRB,
-  output logic 		            HWRITE,
-  output logic [2:0] 	        HSIZE,
-  output logic [2:0] 	        HBURST,
-  output logic [3:0] 	        HPROT,
-  output logic [1:0] 	        HTRANS,
-  output logic 		            HMASTLOCK,
-  output logic 		            HREADY,
+  output logic                HCLK, HRESETn,
+  output logic [`PA_BITS-1:0] HADDR,
+  output logic [`AHBW-1:0]    HWDATA,
+  output logic [`XLEN/8-1:0]  HWSTRB,
+  output logic                HWRITE,
+  output logic [2:0]          HSIZE,
+  output logic [2:0]          HBURST,
+  output logic [3:0]          HPROT,
+  output logic [1:0]          HTRANS,
+  output logic                HMASTLOCK,
+  output logic                HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0] 	      GPIOPinsIn,       // inputs from GPIO
-  output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
+  input  logic [31:0]         GPIOPinsIn,       // inputs from GPIO
+  output logic [31:0]         GPIOPinsOut,      // output values for GPIO
   output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
-  input  logic 		            UARTSin,          // UART serial data input
-  output logic 		            UARTSout,         // UART serial data output
-  input  logic 		            SDCCmdIn,         // SDC Command input
-  output logic 		            SDCCmdOut,        // SDC Command output
-  output logic 		            SDCCmdOE,			    // SDC Command output enable
-  input  logic [3:0] 	        SDCDatIn,         // SDC data input
-  output logic 		            SDCCLK			      // SDC clock
+  input  logic                UARTSin,          // UART serial data input
+  output logic                UARTSout,         // UART serial data output
+  input  logic                SDCCmdIn,         // SDC Command input
+  output logic                SDCCmdOut,        // SDC Command output
+  output logic                SDCCmdOE,         // SDC Command output enable
+  input  logic [3:0]          SDCDatIn,         // SDC data input
+  output logic                SDCCLK            // SDC clock
 );
 
   // Uncore signals
-  logic [`AHBW-1:0]            HRDATA;           // from AHB mux in uncore
+  logic [`AHBW-1:0]           HRDATA;           // from AHB mux in uncore
   logic                       HRESP;            // response from AHB
-  logic                       MTimerInt, MSwInt; // timer and software interrupts from CLINT
+  logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
 
@@ -86,8 +86,8 @@ module wallypipelinedsoc (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
-	    .UARTSout, .MTIME_CLINT, 
-	    .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
+      .UARTSout, .MTIME_CLINT, 
+      .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
   end
 
 endmodule
