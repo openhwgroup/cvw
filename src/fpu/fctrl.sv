@@ -31,53 +31,53 @@ module fctrl (
   input  logic                clk,
   input  logic                reset,
   // input control signals
-  input  logic                StallE, StallM, StallW, // stall signals
-  input  logic                FlushE, FlushM, FlushW, // flush signals
-  input  logic                IntDivE,                // is inteteger division
-  input  logic [2:0]          FRM_REGW,               // rounding mode from CSR
-  input  logic [1:0]          STATUS_FS,              // is FPU enabled?
-  input  logic                FDivBusyE,              // is the divider busy
-  // intruction
-  input  logic [31:0]         InstrD,                 // the full instruction
-  input  logic [6:0]          Funct7D,                // bits 31:25 of instruction - may contain percision
-  input  logic [6:0]          OpD,                    // bits 6:0 of instruction
-  input  logic [4:0]          Rs2D,                   // bits 24:20 of instruction
-  input  logic [2:0]          Funct3D, Funct3E,       // bits 14:12 of instruction - may contain rounding mode
-  // input mux selections
-  output logic                XEnD, YEnD, ZEnD,       // enable inputs
-  output logic                XEnE, YEnE, ZEnE,       // enable inputs
-  // opperation mux selections
-  output logic 		            FCvtIntE, FCvtIntW,     // convert to integer opperation
-  output logic [2:0] 	        FrmM,                   // FP rounding mode
-  output logic [`FMTBITS-1:0] FmtE, FmtM,             // FP format
-  output logic [2:0] 	        OpCtrlE, OpCtrlM,       // Select which opperation to do in each component
-  output logic                FpLoadStoreM,           // FP load or store instruction
-  output logic [1:0] 	        PostProcSelE, PostProcSelM,         // select result in the post processing unit
-  output logic [1:0] 	        FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
+  input  logic                StallE, StallM, StallW,             // stall signals
+  input  logic                FlushE, FlushM, FlushW,             // flush signals
+  input  logic                IntDivE,                            // is inteteger division
+  input  logic [2:0]          FRM_REGW,                           // rounding mode from CSR
+  input  logic [1:0]          STATUS_FS,                          // is FPU enabled?
+  input  logic                FDivBusyE,                          // is the divider busy
+  // intruction                                                   
+  input  logic [31:0]         InstrD,                             // the full instruction
+  input  logic [6:0]          Funct7D,                            // bits 31:25 of instruction - may contain percision
+  input  logic [6:0]          OpD,                                // bits 6:0 of instruction
+  input  logic [4:0]          Rs2D,                               // bits 24:20 of instruction
+  input  logic [2:0]          Funct3D, Funct3E,                   // bits 14:12 of instruction - may contain rounding mode
+  // input mux selections                                         
+  output logic                XEnD, YEnD, ZEnD,                   // enable inputs
+  output logic                XEnE, YEnE, ZEnE,                   // enable inputs
+  // opperation mux selections                                    
+  output logic                FCvtIntE, FCvtIntW,                 // convert to integer opperation
+  output logic [2:0]          FrmM,                               // FP rounding mode
+  output logic [`FMTBITS-1:0] FmtE, FmtM,                         // FP format
+  output logic [2:0]          OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
+  output logic                FpLoadStoreM,                       // FP load or store instruction
+  output logic [1:0]          PostProcSelE, PostProcSelM,         // select result in the post processing unit
+  output logic [1:0]          FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   // register control signals
-  output logic 		            FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
-  output logic 		            FWriteIntE, FWriteIntM,             // Write to integer register
-  output logic [4:0] 	        Adr1D, Adr2D, Adr3D,                // adresses of each input
-  output logic [4:0] 	        Adr1E, Adr2E, Adr3E,                // adresses of each input
+  output logic                FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
+  output logic                FWriteIntE, FWriteIntM,             // Write to integer register
+  output logic [4:0]          Adr1D, Adr2D, Adr3D,                // adresses of each input
+  output logic [4:0]          Adr1E, Adr2E, Adr3E,                // adresses of each input
   // other control signals
   output logic                IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
-  output logic 		            FDivStartE, IDivStartE              // Start division or squareroot
+  output logic                FDivStartE, IDivStartE              // Start division or squareroot
   );
 
   `define FCTRLW 12
 
-  logic [`FCTRLW-1:0]   ControlsD;    // control signals
-  logic 		            FRegWriteD;   // FP register write enable
-  logic 		            FDivStartD;   // start division/sqrt
-  logic 		            FWriteIntD;   // integer register write enable
-  logic [2:0] 	        OpCtrlD;      // Select which opperation to do in each component
-  logic [1:0] 	        PostProcSelD; // select result in the post processing unit
-  logic [1:0] 	        FResSelD;     // Select one of the results that finish in the memory stage
-  logic [2:0]           FrmD, FrmE;   // FP rounding mode
-  logic [`FMTBITS-1:0]  FmtD;         // FP format
-  logic [1:0]           Fmt;          // format - before possible reduction
-  logic                 SupportedFmt; // is the format supported
-  logic                 FCvtIntD, FCvtIntM; // convert to integer opperation
+  logic [`FCTRLW-1:0]         ControlsD;          // control signals
+  logic                       FRegWriteD;         // FP register write enable
+  logic                       FDivStartD;         // start division/sqrt
+  logic                       FWriteIntD;         // integer register write enable
+  logic [2:0]                 OpCtrlD;            // Select which opperation to do in each component
+  logic [1:0]                 PostProcSelD;       // select result in the post processing unit
+  logic [1:0]                 FResSelD;           // Select one of the results that finish in the memory stage
+  logic [2:0]                 FrmD, FrmE;         // FP rounding mode
+  logic [`FMTBITS-1:0]        FmtD;               // FP format
+  logic [1:0]                 Fmt;                // format - before possible reduction
+  logic                       SupportedFmt;       // is the format supported
+  logic                       FCvtIntD, FCvtIntM; // convert to integer opperation
 
   // FPU Instruction Decoder
   assign Fmt = Funct7D[1:0];
@@ -123,7 +123,7 @@ module fctrl (
                     7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0; // fsub
                     7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0; // fmul
                     7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0; // fdiv
-                    7'b01011??: ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
+                    7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
                     7'b00100??: case(Funct3D)
                                   3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_000_0_0_0; // fsgnj
                                   3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_001_0_0_0; // fsgnjn
@@ -141,7 +141,8 @@ module fctrl (
                                   3'b000:  ControlsD = `FCTRLW'b0_1_00_xx_011_0_0_0; // fle
                                   default: ControlsD = `FCTRLW'b0_0_00_xx_000__0_1_0; // non-implemented instruction
                                 endcase
-                    7'b11100??: if (Funct3D == 3'b001)          ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
+                    7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
+                                                                ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
                                 else if (Funct3D[1:0] == 2'b00) ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.w   to int reg
                                 else if (Funct3D[1:0] == 2'b01) ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.d   to int reg
                                 else                            ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction

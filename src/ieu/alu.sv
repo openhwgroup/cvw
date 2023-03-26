@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
 // alu.sv
 //
-// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu
+// Written: David_Harris@hmc.edu, Sarah.Harris@unlv.edu, kekim@hmc.edu
 // Created: 9 January 2021
-// Modified: 
+// Modified: 3 March 2023
 //
 // Purpose: RISC-V Arithmetic/Logic Unit
 //
@@ -30,31 +30,34 @@
 `include "wally-config.vh"
 
 module alu #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,       // Operands
-  input  logic [2:0]       ALUControl, // With Funct3, indicates operation to perform
-  input  logic [2:0]       Funct3,     // With ALUControl, indicates operation to perform
-  output logic [WIDTH-1:0] Result,     // ALU result
-  output logic [WIDTH-1:0] Sum);       // Sum of operands
+  input  logic [WIDTH-1:0] A, B,        // Operands
+  input  logic             W64,         // W64-type instruction
+  input  logic             SubArith,    // Subtraction or arithmetic shift
+  input  logic [2:0]       ALUSelect,   // ALU mux select signal
+  input  logic [1:0]       BSelect,     // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
+  input  logic [2:0]       Funct3,      // For BMU decoding
+  input  logic [1:0]       CompFlags,   // Comparator flags
+  input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
+  output logic [WIDTH-1:0] Result,      // ALU result
+  output logic [WIDTH-1:0] Sum);        // Sum of operands
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondInvB, Shift, FullResult;             // Intermediate results
-  logic             Carry, Neg;                              // Flags: carry out, negative
-  logic             LT, LTU;                                 // Less than, Less than unsigned
-  logic             W64;                                     // RV64 W-type instruction
-  logic             SubArith;                                // Performing subtraction or arithmetic right shift
-  logic             ALUOp;                                   // 0 for address generation addition or 1 for regular ALU ops
-  logic             Asign, Bsign;                            // Sign bits of A, B
-
-  // Extract control signals from ALUControl.
-  assign {W64, SubArith, ALUOp} = ALUControl;
+  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, ALUResult;                   // Intermediate Signals 
+  logic [WIDTH-1:0] CondMaskB;                                                    // Result of B mask select mux
+  logic [WIDTH-1:0] CondShiftA;                                                   // Result of A shifted select mux
+  logic [WIDTH-1:0] CondExtA;                                                     // Result of Zero Extend A select mux
+  logic             Carry, Neg;                                                   // Flags: carry out, negative
+  logic             LT, LTU;                                                      // Less than, Less than unsigned
+  logic             Asign, Bsign;                                                 // Sign bits of A, B
 
   // Addition
-  assign CondInvB = SubArith ? ~B : B;
-  assign {Carry, Sum} = A + CondInvB + {{(WIDTH-1){1'b0}}, SubArith};
+  assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
+  assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
-  // Shifts
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .Arith(SubArith), .W64, .Y(Shift));
+  // Shifts (configurable for rotation)
+  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -67,20 +70,31 @@ module alu #(parameter WIDTH=32) (
   assign LTU = ~Carry;
  
   // Select appropriate ALU Result
-  always_comb
-    if (~ALUOp) FullResult = Sum;                     // Always add for ALUOp = 0 (address generation)
-    else casez (Funct3)                               // Otherwise check Funct3
-      3'b000: FullResult = Sum;                       // add or sub
-      3'b?01: FullResult = Shift;                     // sll, sra, or srl
-      3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};   // slt
-      3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};  // sltu
-      3'b100: FullResult = A ^ B;                     // xor
-      3'b110: FullResult = A | B;                     // or 
-      3'b111: FullResult = A & B;                     // and
+  always_comb begin
+    case (ALUSelect)                                
+      3'b000: FullResult = Sum;                           // add or sub (including address generation)
+      3'b001: FullResult = Shift;                         // sll, sra, or srl
+      3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
+      3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
+      3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
+      3'b101: FullResult = (`ZBS_SUPPORTED | `ZBB_SUPPORTED) ? {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
+      3'b111: FullResult = A & CondMaskInvB;              // and, bclr
     endcase
+  end
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign Result = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign Result = FullResult;
-endmodule
+  if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign ALUResult = FullResult;
 
+  // Final Result B instruction select mux
+  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
+    bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
+      .Funct3, .CompFlags, .BALUControl, .ALUResult, .FullResult,
+      .CondMaskB, .CondShiftA, .Result);
+  end else begin
+    assign Result = ALUResult;
+    assign CondMaskB = B;
+    assign CondShiftA = A;
+  end
+endmodule

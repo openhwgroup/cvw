@@ -9,7 +9,7 @@ current_dir = $(shell pwd)
 #XLEN    ?= 64
 
 #all: root wally32 wally64
-all: root arch32 wally32  wally32e arch64 wally64
+all: root arch32 wally32 wally32e arch64 wally64
 
 root:
 	mkdir -p $(work_dir)

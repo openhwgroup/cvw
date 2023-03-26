@@ -27,21 +27,27 @@
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
 `define WALLYTEST "2"
-`define MYIMPERASTEST   "3"
-`define COREMARK "4"
-`define EMBENCH "5"
-`define CUSTOM "6"
-// *** remove MYIMPERASTEST cases when ported 
+`define COREMARK "3"
+`define EMBENCH "4"
+`define CUSTOM "5"
+`define COVERAGE "6"
 
 string tvpaths[] = '{
     "$RISCV/imperas-riscv-tests/work/",
     "../tests/riscof/work/riscv-arch-test/",
     "../tests/riscof/work/wally-riscv-arch-test/",
-    "../tests/imperas-riscv-tests/work/",
     "../benchmarks/coremark/work/",
     "../addins/embench-iot/",
-    "../tests/custom/work/"
+    "../tests/custom/work/",
+    "../tests/coverage/"
     };
+
+  string coverage64gc[] = '{
+    `COVERAGE,
+    "ieu",
+    "ebu",
+    "csrwrites"
+  };
 
   string coremark[] = '{
     `COREMARK,
@@ -881,12 +887,52 @@ string imperas32f[] = '{
     "rv32i_m/Zifencei/src/Fencei.S"
     };
 
-  string arch32ba[] = '{
+  string arch32zba[] = '{
     `RISCVARCHTEST,
-    // *** unclear why add.uw isn't in the list
-    "rv64i_m/B/src/sh1add-01.S",
-    "rv64i_m/B/src/sh1add-02.S",
-    "rv64i_m/B/src/sh1add-013.S"
+    "rv32i_m/B/src/sh1add-01.S",
+    "rv32i_m/B/src/sh2add-01.S",
+    "rv32i_m/B/src/sh3add-01.S"
+  };
+
+  string arch32zbb[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/max-01.S",
+    "rv32i_m/B/src/maxu-01.S",
+    "rv32i_m/B/src/min-01.S",
+    "rv32i_m/B/src/minu-01.S",
+    "rv32i_m/B/src/orcb_32-01.S",
+    "rv32i_m/B/src/rev8_32-01.S",
+    "rv32i_m/B/src/andn-01.S",
+    "rv32i_m/B/src/orn-01.S",
+    "rv32i_m/B/src/xnor-01.S",
+    "rv32i_m/B/src/zext.h_32-01.S",
+    "rv32i_m/B/src/sext.b-01.S",
+    "rv32i_m/B/src/sext.h-01.S",
+    "rv32i_m/B/src/clz-01.S",
+    "rv32i_m/B/src/cpop-01.S",
+    "rv32i_m/B/src/ctz-01.S",
+    "rv32i_m/B/src/ror-01.S",
+    "rv32i_m/B/src/rori-01.S",
+    "rv32i_m/B/src/rol-01.S"
+  };
+
+  string arch32zbc[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/clmul-01.S",
+    "rv32i_m/B/src/clmulh-01.S",
+    "rv32i_m/B/src/clmulr-01.S"
+  };
+
+  string arch32zbs[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/bclr-01.S",
+    "rv32i_m/B/src/bclri-01.S",
+    "rv32i_m/B/src/bext-01.S",
+    "rv32i_m/B/src/bexti-01.S",
+    "rv32i_m/B/src/binv-01.S",
+    "rv32i_m/B/src/binvi-01.S",
+    "rv32i_m/B/src/bset-01.S",
+    "rv32i_m/B/src/bseti-01.S"
   };
 
   string arch64m[] = '{
@@ -1326,6 +1372,65 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fssub.d_b8-01.S"
 };
 
+string arch64zba[] = '{
+      `RISCVARCHTEST,
+      "rv64i_m/B/src/slli.uw-01.S",
+      "rv64i_m/B/src/add.uw-01.S",
+      "rv64i_m/B/src/sh1add-01.S",
+      "rv64i_m/B/src/sh2add-01.S",
+      "rv64i_m/B/src/sh3add-01.S",
+      "rv64i_m/B/src/sh1add.uw-01.S",
+      "rv64i_m/B/src/sh2add.uw-01.S",
+      "rv64i_m/B/src/sh3add.uw-01.S"
+  };
+
+string arch64zbb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/max-01.S",
+    "rv64i_m/B/src/maxu-01.S",
+    "rv64i_m/B/src/min-01.S",
+    "rv64i_m/B/src/minu-01.S",
+    "rv64i_m/B/src/orcb_64-01.S",
+    "rv64i_m/B/src/rev8-01.S",
+    "rv64i_m/B/src/andn-01.S",
+    "rv64i_m/B/src/orn-01.S",
+    "rv64i_m/B/src/xnor-01.S",
+    "rv64i_m/B/src/zext.h-01.S",
+    "rv64i_m/B/src/sext.b-01.S",
+    "rv64i_m/B/src/sext.h-01.S",
+    "rv64i_m/B/src/clz-01.S",
+    "rv64i_m/B/src/clzw-01.S",
+    "rv64i_m/B/src/cpop-01.S",
+    "rv64i_m/B/src/cpopw-01.S",
+    "rv64i_m/B/src/ctz-01.S",
+    "rv64i_m/B/src/ctzw-01.S",
+    "rv64i_m/B/src/rolw-01.S",
+    "rv64i_m/B/src/ror-01.S",
+    "rv64i_m/B/src/rori-01.S",
+    "rv64i_m/B/src/roriw-01.S",
+    "rv64i_m/B/src/rorw-01.S",
+    "rv64i_m/B/src/rol-01.S"
+};
+
+string arch64zbc[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/clmul-01.S",
+    "rv64i_m/B/src/clmulh-01.S",
+    "rv64i_m/B/src/clmulr-01.S"
+};
+
+string arch64zbs[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/bclr-01.S",
+    "rv64i_m/B/src/bclri-01.S",
+    "rv64i_m/B/src/bext-01.S",
+    "rv64i_m/B/src/bexti-01.S",
+    "rv64i_m/B/src/binv-01.S",
+    "rv64i_m/B/src/binvi-01.S",
+    "rv64i_m/B/src/bset-01.S",
+    "rv64i_m/B/src/bseti-01.S"
+};
+
     string arch32priv[] = '{
     `RISCVARCHTEST,
     "rv32i_m/privilege/src/ebreak.S",
@@ -1752,7 +1857,6 @@ string imperas32f[] = '{
  
  string wally64priv[] = '{
     `WALLYTEST,
-//    "rv64i_m/privilege/src/BUG66",
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv64i_m/privilege/src/WALLY-mie-01.S",
@@ -1763,15 +1867,15 @@ string imperas32f[] = '{
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
     "rv64i_m/privilege/src/WALLY-pma-01.S",
     "rv64i_m/privilege/src/WALLY-pmp-01.S",
-//    "rv64i_m/privilege/src/WALLY-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-sie-01.S",
     "rv64i_m/privilege/src/WALLY-status-mie-01.S",
-//    "rv64i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-status-sie-01.S",
     "rv64i_m/privilege/src/WALLY-status-tw-01.S",
     "rv64i_m/privilege/src/WALLY-status-tvm-01.S",
     "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S",
-//    "rv64i_m/privilege/src/WALLY-stvec-01.S",
-//    "rv64i_m/privilege/src/WALLY-trap-01.S",
-//    "rv64i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv64i_m/privilege/src/WALLY-stvec-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-s-01.S",
     "rv64i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv64i_m/privilege/src/WALLY-trap-u-01.S",
     "rv64i_m/privilege/src/WALLY-wfi-01.S",
@@ -1851,15 +1955,15 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",
-//    "rv32i_m/privilege/src/WALLY-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-sie-01.S",
     "rv32i_m/privilege/src/WALLY-status-mie-01.S",
-//    "rv32i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-status-sie-01.S",
     "rv32i_m/privilege/src/WALLY-status-tw-01.S",
     "rv32i_m/privilege/src/WALLY-status-tvm-01.S",
     "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S",
-//    "rv32i_m/privilege/src/WALLY-stvec-01.S",
-//    "rv32i_m/privilege/src/WALLY-trap-01.S",
-//    "rv32i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv32i_m/privilege/src/WALLY-stvec-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-s-01.S",
     "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",

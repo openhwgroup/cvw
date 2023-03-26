@@ -1,10 +1,15 @@
+
 ///////////////////////////////////////////
-// badinstr.S
+// ext.sv
 //
-// Written: David_Harris@hmc.edu 21 March 2023
+// Written: Kevin Kim <kekim@hmc.edu>
+// Created: 4 February 2023
+// Modified: 
 //
-// Purpose: Test illegal instruction opcodes
+// Purpose: Sign/Zero Extension Submodule
 //
+// Documentation: RISC-V System on Chip Design Chapter 15
+// 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -23,14 +28,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// load code to initalize stack, handle interrupts, terminate
-#include "WALLY-init-lib.h"
+`include "wally-config.vh"
 
-main:
-    .word 0x00000033 // legal R-type instruction
-    .word 0x80000033 // illegal R-type instruction
-    .word 0x00007003 // illegal Load instruction
-    .word 0x00000000 // illegal instruction
+module ext #(parameter WIDTH = 32) (
+  input  logic [WIDTH-1:0] A,            // Operands
+  input  logic [1:0] ExtSelect,          // B[2], B[0] of immediate
+  output logic [WIDTH-1:0] ExtResult);   // Extend Result
 
-    j done
+  logic [WIDTH-1:0] sexthResult, zexthResult, sextbResult;
 
+  assign sexthResult = {{(WIDTH-16){A[15]}},A[15:0]};
+  assign zexthResult = {{(WIDTH-16){1'b0}},A[15:0]};
+  assign sextbResult = {{(WIDTH-8){A[7]}},A[7:0]};
+
+  mux3 #(WIDTH) extmux(sextbResult, sexthResult, zexthResult, ExtSelect, ExtResult);
+endmodule
