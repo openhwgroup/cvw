@@ -1,4 +1,4 @@
-#--mpdconsole refRoot
+#--mpdconsole
 #--gdbconsole
 --showoverrides
 --showcommands
@@ -17,8 +17,6 @@
 # Illegal instruction should not contain the bit pattern
 # illegal pmp read contained this
 # --override cpu/tval_ii_code=F
-
---registerset cpu/SCOUNTEREN=0x1
 
 # PMA Settings 
 # 'r': read access allowed
@@ -51,7 +49,7 @@
 
 # Add Imperas simulator application instruction tracing
 --override cpu/show_c_prefix=T
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 10000000
+--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 10500000
 
 # Exceptions and pagetables debug
 --override cpu/debugflags=6
