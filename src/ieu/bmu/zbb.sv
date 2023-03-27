@@ -42,7 +42,7 @@ module zbb #(parameter WIDTH=32) (
   logic [WIDTH-1:0] ByteResult;          // byte results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend results
 
-  cnt #(WIDTH) cnt(.A, .RevA, .B(B[4:0]), .W64, .CntResult);
+  cnt #(WIDTH) cnt(.A, .RevA, .B(B[1:0]), .W64, .CntResult);
   byteUnit #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
   ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 
