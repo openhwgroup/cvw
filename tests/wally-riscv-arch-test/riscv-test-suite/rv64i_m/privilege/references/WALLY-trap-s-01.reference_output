@@ -60,14 +60,6 @@
 00000000
 00000000 # masked out mstatus.mpp = 0 (from U mode), mstatus.MPIE = 0, and mstatus.MIE = 0
 00000000
-0007ec01 # value to indicate successful vectoring on s soft interrupt 
-00000000
-00000001 # scause value from s soft interrupt
-80000000
-00000000 # stval for ssoft interrupt (0x0)
-00000000
-00000800 # masked out mstatus.mpp = 1, mstatus.MPIE = 0, and mstatus.MIE = 0
-00000000
 0007ec03 # value to indicate successful vectoring on m soft interrupt 
 00000000
 00000003 # scause value from m soft interrupt

@@ -37,7 +37,6 @@ module bitmanipalu #(parameter WIDTH=32) (
   input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
   input  logic [1:0]       CompFlags,               // Comparator flags
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
-  input  logic [WIDTH-1:0] CondExtA,                // A Conditional Extend Intermediary Signal
   input  logic [WIDTH-1:0] ALUResult, FullResult,   // ALUResult, FullResult signals
   output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
   output logic [WIDTH-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
@@ -50,6 +49,7 @@ module bitmanipalu #(parameter WIDTH=32) (
   logic             Mask;                           // Indicates if it is ZBS instruction
   logic             PreShift;                       // Inidicates if it is sh1add, sh2add, sh3add instruction
   logic [1:0]       PreShiftAmt;                    // Amount to Pre-Shift A 
+  logic [WIDTH-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
 
   // Extract control signals from bitmanip ALUControl.
   assign {Mask, PreShift} = BALUControl[1:0];
@@ -62,8 +62,11 @@ module bitmanipalu #(parameter WIDTH=32) (
  
   // 0-3 bit Pre-Shift Mux
   if (`ZBA_SUPPORTED) begin: zbapreshift
+    if (WIDTH == 64) begin
+      mux2 #(64) zextmux(A, {{32{1'b0}}, A[31:0]}, W64, CondZextA); 
+    end else assign CondZextA = A;
     assign PreShiftAmt = Funct3[2:1] & {2{PreShift}};
-    assign CondShiftA = CondExtA << (PreShiftAmt);
+    assign CondShiftA = CondZextA << (PreShiftAmt);
   end else begin
     assign PreShiftAmt = 2'b0;
     assign CondShiftA = A;
