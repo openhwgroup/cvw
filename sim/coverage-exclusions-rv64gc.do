@@ -24,11 +24,22 @@
 #// and limitations under the License.
 #////////////////////////////////////////////////////////////////////////////////////////////////
 
+# LZA (i<64) statement confuses coverage tool 
+# This is ugly to exlcude the whole file - is there a better option
+coverage exclude -srcfile lzc.sv 
+
+
+######################
+# Toggle exclusions
+#   Not used because toggle coverage isn't measured
+######################
+
 # Exclude DivBusyE from all design units because rv64gc uses the fdivsqrt unit for integer division
-coverage exclude -togglenode DivBusyE -du *
+#coverage exclude -togglenode DivBusyE -du *
 # Exclude QuotM and RemM from MDU because rv64gc uses the fdivsqrt rather tha div unit for integer division
-coverage exclude -togglenode /dut/core/mdu/mdu/QuotM
-coverage exclude -togglenode /dut/core/mdu/mdu/RemM
+#coverage exclude -togglenode /dut/core/mdu/mdu/QuotM
+#coverage exclude -togglenode /dut/core/mdu/mdu/RemM
 
 # StallFCause is hardwired to 0
-coverage exclude -togglenode /dut/core/hzu/StallFCause
+#coverage exclude -togglenode /dut/core/hzu/StallFCause
+

@@ -162,6 +162,11 @@ cause_s_soft_interrupt:
     csrs sip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
     ret
 
+cause_s_soft_from_m_interrupt:
+    li t3, 0x2
+    csrs mip, t3 // set supervisor software interrupt pending. SIP is a subset of MIP, so writing this should also change MIP.
+    ret
+
 cause_m_ext_interrupt:
     // ========== Configure PLIC ==========
     li a3, 0x40

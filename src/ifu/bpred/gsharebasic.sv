@@ -42,20 +42,20 @@ module gsharebasic #(parameter k = 10,
   input logic             BranchE, BranchM, PCSrcE
 );
 
-  logic [k-1:0] 		  IndexNextF, IndexM;
-  logic [1:0]              BPDirPredD, BPDirPredE;
-  logic [1:0]              NewBPDirPredE, NewBPDirPredM;
+  logic [k-1:0]           IndexNextF, IndexM;
+  logic [1:0]             BPDirPredD, BPDirPredE;
+  logic [1:0]             NewBPDirPredE, NewBPDirPredM;
 
-  logic [k-1:0]            GHRF, GHRD, GHRE, GHRM, GHR;
-  logic [k-1:0]            GHRNext;
-  logic                    PCSrcM;
+  logic [k-1:0]           GHRF, GHRD, GHRE, GHRM, GHR;
+  logic [k-1:0]           GHRNext;
+  logic                   PCSrcM;
 
   if(TYPE == 1) begin
-	assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  assign IndexNextF = GHR ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+  assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   end else if(TYPE == 0) begin
-	assign IndexNextF = GHRNext;
-	assign IndexM = GHRM;
+  assign IndexNextF = GHRNext;
+  assign IndexM = GHRM;
   end
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),

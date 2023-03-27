@@ -32,7 +32,7 @@ module lzc #(parameter WIDTH = 1) (
   
   always_comb begin
     i = 0;
-    while (~num[WIDTH-1-i] & (i < WIDTH)) i = i+1;  // search for leading one
+    while ((i < WIDTH) & ~num[WIDTH-1-i]) i = i+1;  // search for leading one
     ZeroCnt = i[$clog2(WIDTH+1)-1:0];
   end
 endmodule
