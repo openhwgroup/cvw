@@ -84,7 +84,7 @@ module bitmanipalu #(parameter WIDTH=32) (
 
   // ZBB Unit
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A, .RevA, .B, .ALUResult, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
+    zbb #(WIDTH) ZBB(.A, .RevA, .B, .W64, .lt(CompFlags[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
   // Result Select Mux
