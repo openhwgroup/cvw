@@ -336,9 +336,6 @@ module testbench;
           void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
         end       
         
-        // ERROR Temporary as it powers up as 0x1
-        void'(rvviRefCsrSet(0, 32'h106, 1));       // RTL sets SCOUNTEREN to 1 for some reason
-        
         // cannot predict this register due to latency between
         // pending and taken
         void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP

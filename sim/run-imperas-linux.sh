@@ -4,6 +4,6 @@ export RISCV=/scratch/moore/RISCV
 
 export IMPERAS_TOOLS=$(pwd)/imperas.ic
 export OTHERFLAGS="+TRACE2LOG_ENABLE=1"
-export OTHERFLAGS="+TRACE2LOG_ENABLE=1 +TRACE2LOG_AFTER=10000000" 
+export OTHERFLAGS="+TRACE2LOG_ENABLE=1 +TRACE2LOG_AFTER=10500000" 
 
 vsim -c -do "do wally-linux-imperas.do buildroot buildroot-no-trace $::env(RISCV) 0 0 0"
