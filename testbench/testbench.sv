@@ -150,7 +150,7 @@ logic [3:0] dummy;
   string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
   integer outputFilePointer;
 
-  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
 
   logic        SDCCLK;
@@ -169,7 +169,7 @@ logic [3:0] dummy;
   logic 	   InReset;
 
   // instantiate device to be tested
-  assign GPIOPinsIn = 0;
+  assign GPIOIN = 0;
   assign UARTSin = 1;
 
   if(`EXT_MEM_SUPPORTED) begin
@@ -199,7 +199,7 @@ logic [3:0] dummy;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
