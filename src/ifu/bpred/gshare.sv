@@ -42,30 +42,30 @@ module gshare #(parameter k = 10,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
-  logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
-  logic                    MatchX;
+  logic                   MatchF, MatchD, MatchE, MatchM, MatchW;
+  logic                   MatchX;
 
-  logic [1:0]              TableBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
-  logic [1:0]              NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
+  logic [1:0]             TableBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
+  logic [1:0]             NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
 
-  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
+  logic [k-1:0]           IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
 
-  logic [k-1:0]            GHRF, GHRD, GHRE, GHRM;
-  logic [k-1:0]            GHRNextM, GHRNextF;
-  logic                    PCSrcM;
+  logic [k-1:0]           GHRF, GHRD, GHRE, GHRM;
+  logic [k-1:0]           GHRNextM, GHRNextF;
+  logic                   PCSrcM;
 
   if(TYPE == 1) begin
-	assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexF = GHRF ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
-	assign IndexD = GHRD ^ {PCD[k+1] ^ PCD[1], PCD[k:2]};
-	assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
-	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+  assign IndexF = GHRF ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
+  assign IndexD = GHRD ^ {PCD[k+1] ^ PCD[1], PCD[k:2]};
+  assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
+  assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   end else if(TYPE == 0) begin
-	assign IndexNextF = GHRNextF;
-	assign IndexF = GHRF;
-	assign IndexD = GHRD;
-	assign IndexE = GHRE;
-	assign IndexM = GHRM;
+  assign IndexNextF = GHRNextF;
+  assign IndexF = GHRF;
+  assign IndexD = GHRD;
+  assign IndexE = GHRE;
+  assign IndexM = GHRM;
   end
 
   flopenrc #(k) IndexWReg(clk, reset, FlushW, ~StallW, IndexM, IndexW);
@@ -79,7 +79,7 @@ module gshare #(parameter k = 10,
   assign FwdNewDirPredF = MatchD ? {2{BPDirPredD[1]}} :
                                    MatchE ? {NewBPDirPredE} :
                                    MatchM ? {NewBPDirPredM} :
-								   NewBPDirPredW ;
+                   NewBPDirPredW ;
   
   assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 

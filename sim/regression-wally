@@ -79,7 +79,7 @@ for test in tests64i:
   configs.append(tc)
 
 tests32gcimperas = ["imperas32i", "imperas32f", "imperas32m", "imperas32c"] # unused
-tests32gc = ["arch32f", "arch32d", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32zi", "wally32a",  "wally32priv", "wally32periph"]  
+tests32gc = ["arch32f", "arch32d", "arch32i", "arch32priv", "arch32c",  "arch32m", "arch32zi", "arch32zba", "arch32zbb", "arch32zbc", "arch32zbs", "wally32a",  "wally32priv", "wally32periph"]  
 for test in tests32gc:
   tc = TestCase(
         name=test,
@@ -126,12 +126,18 @@ for test in ahbTests:
         grepstr="All tests ran without failures")
   configs.append(tc)
 
-#tests64gc = ["arch64i", "arch64c",  "arch64m"] 
-tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
+tests64gc = ["arch64f", "arch64d", "arch64i", "arch64zba", "arch64zbb", "arch64zbc", "arch64zbs", 
+             "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
-    tests64gc = ["arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv", "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
-#    tests64gc.append(["imperas64f", "imperas64d", "imperas64c", "imperas64i"])
+    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+                 "arch64zi", "wally64a", "wally64periph", "wally64priv", 
+                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
+                 "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
+#    tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+#                 "arch64zi", "wally64a", "wally64periph", "wally64priv", 
+#                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
+#                 "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -156,7 +162,7 @@ def run_test_case(config):
     """Run the given test case, and return 0 if the test suceeds and 1 if it fails"""
     logname = "logs/"+config.variant+"_"+config.name+".log"
     cmd = config.cmd.format(logname)
-    print(cmd)
+#    print(cmd)
     os.chdir(regressionDir)
     os.system(cmd)
     if search_log_for_text(config.grepstr, logname):

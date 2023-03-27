@@ -37,7 +37,7 @@ module fdivsqrtpostproc(
   input  logic [`DIVb+1:0]  FirstC,
   input  logic              SqrtE,
   input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
-	input  logic [`XLEN-1:0]  AM,
+  input  logic [`XLEN-1:0]  AM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
   input  logic [`DIVBLEN:0] nM, mM,
   output logic [`DIVb:0]    QmM, 
@@ -46,11 +46,11 @@ module fdivsqrtpostproc(
   output logic [`XLEN-1:0]  FIntDivResultM
 );
   
-  logic [`DIVb+3:0] W, Sum, DM;
-  logic [`DIVb:0] PreQmM;
-  logic NegStickyM;
-  logic weq0E, WZeroM;
-  logic [`XLEN-1:0] IntDivResultM;
+  logic [`DIVb+3:0]         W, Sum, DM;
+  logic [`DIVb:0]           PreQmM;
+  logic                     NegStickyM;
+  logic                     weq0E, WZeroM;
+  logic [`XLEN-1:0]         IntDivResultM;
 
   //////////////////////////
   // Execute Stage: Detect early termination for an exact result

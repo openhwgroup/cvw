@@ -32,12 +32,12 @@
 module fmalza #(WIDTH) ( 
   input logic [WIDTH-1:0]             A,      // addend
   input logic [2*`NF+1:0]             Pm,     // product
-  input logic 		                    Cin,    // carry in
+  input logic                         Cin,    // carry in
   input logic                         sub,    // subtraction
   output logic [$clog2(WIDTH+1)-1:0]  SCnt    // normalization shift count for the positive result
 ); 
 
-  logic [WIDTH:0] 	                  F;              // most significant bit of F indicates leading digit
+  logic [WIDTH:0]                     F;              // most significant bit of F indicates leading digit
   logic [WIDTH-1:0]                   B;              // zero-extended product with same size as aligned A
   logic [WIDTH-1:0]                   P, G, K;        // propagate, generate, kill for each column
   logic [WIDTH-1:0]                   Pp1, Gm1, Km1;  // propagate shifted right by 1, generate/kill shifted left 1
