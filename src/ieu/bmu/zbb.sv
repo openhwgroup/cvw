@@ -32,7 +32,6 @@
 
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,   // Operands
-  input  logic [WIDTH-1:0] ALUResult,    // ALU Result
   input  logic             W64,          // Indicates word operation
   input  logic             lt,           // lt flag
   input  logic [2:0]       ZBBSelect,    // Indicates word operation
