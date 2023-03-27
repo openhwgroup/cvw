@@ -45,7 +45,7 @@ vlog +incdir+../config/$1 \
      -suppress 7063 
 
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
-vsim workopt +nowarn3829  -fatal 7 \
+eval vsim workopt +nowarn3829  -fatal 7 \
      -sv_lib $env(IMPERAS_HOME)/lib/Linux64/ImperasLib/imperas.com/verification/riscv/1.0/model \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS)
 view wave
