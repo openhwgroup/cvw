@@ -30,6 +30,7 @@
 
 `define PrintHPMCounters 1
 `define BPRED_LOGGER 1
+`define INSTR_FETCH_ADDR_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
@@ -546,7 +547,29 @@ logic [3:0] dummy;
 		end
 	  end
 	end
+end
+
+
+  if (`INSTR_FETCH_ADDR_LOGGER == 1) begin
+    int    file;
+	string LogFile;
+	logic  resetD, resetEdge;
+	flop #(1) ResetDReg(clk, reset, resetD);
+	assign resetEdge = ~reset & resetD;
+    initial begin
+	  LogFile = $psprintf("ICache.log");
+      file = $fopen(LogFile, "w");
+	end
+    always @(posedge clk) begin
+	  if(resetEdge) $fwrite(file, "TRAIN\n");
+	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(dut.core.StallD & ~dut.core.FlushD) begin
+	    $fwrite(file, "%h R\n", dut.core.ifu.PCF);
+	  end
+	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    end
   end
+  
 
   
   if (`BPRED_SUPPORTED == 1) begin
