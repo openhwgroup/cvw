@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export RISCV=/scratch/moore/RISCV
+#export RISCV=/scratch/moore/RISCV
 
 export IMPERAS_TOOLS=$(pwd)/imperas.ic
 export OTHERFLAGS="+TRACE2LOG_ENABLE=1"
