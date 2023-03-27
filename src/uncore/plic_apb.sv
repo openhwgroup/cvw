@@ -97,7 +97,7 @@ module plic_apb (
   // ==================
   // Register Interface
   // ==================
-  always @(posedge PCLK,negedge PRESETn) begin
+  always @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
       intPriority   <= #1 {`N{3'b0}};

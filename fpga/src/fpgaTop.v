@@ -88,7 +88,7 @@ module fpgaTop
   
   
 
-  wire [31:0] 	   GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  wire [31:0] 	   GPIOIN, GPIOOUT, GPIOEN;
 
   wire 			   SDCCmdIn;
   wire 			   SDCCmdOE;
@@ -183,8 +183,8 @@ module fpgaTop
 
   
 
-  assign GPIOPinsIn = {28'b0, GPI};
-  assign GPO = GPIOPinsOut[4:0];
+  assign GPIOIN = {28'b0, GPI};
+  assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
   assign calib = c0_init_calib_complete;
@@ -231,9 +231,9 @@ module fpgaTop
      .HMASTLOCK(HMASTLOCK),
      .HREADY(HREADY),
      // GPIO
-     .GPIOPinsIn(GPIOPinsIn),
-     .GPIOPinsOut(GPIOPinsOut),
-     .GPIOPinsEn(GPIOPinsEn),
+     .GPIOIN(GPIOIN),
+     .GPIOOUT(GPIOOUT),
+     .GPIOEN(GPIOEN),
      // UART
      .UARTSin(UARTSin),
      .UARTSout(UARTSout),  
