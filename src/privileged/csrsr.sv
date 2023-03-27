@@ -53,8 +53,6 @@ module csrsr (
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
   
-  initial $monitor("QEMU=%0d STATUS_SXL=%0d STATUS_UXL=%0d", `QEMU, STATUS_SXL, STATUS_UXL);
-
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
