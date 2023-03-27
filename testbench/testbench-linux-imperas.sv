@@ -263,8 +263,8 @@ module testbench;
   logic [3:0]       HPROT;
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
-  logic [31:0]      GPIOPinsIn;
-  logic [31:0]      GPIOPinsOut, GPIOPinsEn;
+  logic [31:0]      GPIOIN;
+  logic [31:0]      GPIOOUT, GPIOEN;
   logic             UARTSin, UARTSout;
 
   // FPGA-specific Stuff
@@ -430,7 +430,7 @@ module testbench;
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HWSTRB, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
-			.TIMECLK('0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+			.TIMECLK('0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout,
 			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
 
