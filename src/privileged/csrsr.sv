@@ -52,6 +52,8 @@ module csrsr (
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
+  
+  initial $monitor("QEMU=%0d STATUS_SXL=%0d STATUS_UXL=%0d", `QEMU, STATUS_SXL, STATUS_UXL);
 
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
