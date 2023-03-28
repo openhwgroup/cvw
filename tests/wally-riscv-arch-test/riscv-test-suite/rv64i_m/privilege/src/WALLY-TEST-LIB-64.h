@@ -57,6 +57,11 @@ RVTEST_CODE_BEGIN
     csrw sscratch, sp
     la sp, stack_top
 
+    // set up PMP so user and supervisor mode can access full address space
+    csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
+    li t0, 0xFFFFFFFF   
+    csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
+
 .endm
 
 // Code to trigger traps goes here so we have consistent mtvals for instruction adresses
