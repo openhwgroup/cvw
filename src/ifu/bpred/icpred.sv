@@ -45,16 +45,16 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
   output logic             IClassWrongM, BPReturnWrongD, IClassWrongE
 );
 
-  logic 		   IClassWrongD;
-  logic 					BPBranchD, BPJumpD, BPReturnD, BPCallD;
+  logic                    IClassWrongD;
+  logic                    BPBranchD, BPJumpD, BPReturnD, BPCallD;
 
   if (!INSTR_CLASS_PRED) begin : DirectClassDecode
     // This section is mainly for testing, verification, and PPA comparison.
     // An alternative to using the BTB to store the instruction class is to partially decode
     // the instructions in the Fetch stage into, Call, Return, Jump, and Branch instructions.
     // This logic is not described in the text book as of 23 February 2023.
-    logic 		ccall, cj, cjr, ccallr, CJumpF, CBranchF;
-    logic 		NCJumpF, NCBranchF;
+    logic     ccall, cj, cjr, ccallr, CJumpF, CBranchF;
+    logic     NCJumpF, NCBranchF;
 
     if(`C_SUPPORTED) begin
       logic [4:0] CompressedOpcF;
@@ -75,10 +75,10 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
     assign BPBranchF = NCBranchF | (`C_SUPPORTED & CBranchF);
     assign BPJumpF = NCJumpF | (`C_SUPPORTED & (CJumpF));
     assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // returnurn must returnurn to ra or r5
-		    (`C_SUPPORTED & (ccallr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
+        (`C_SUPPORTED & (ccallr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
     
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
-		    (`C_SUPPORTED & (ccall | (ccallr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
+        (`C_SUPPORTED & (ccall | (ccallr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
   end else begin
     // This section connects the BTB's instruction class prediction.

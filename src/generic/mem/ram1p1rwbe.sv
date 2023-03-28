@@ -49,39 +49,39 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44) (
   // ***************************************************************************
   // TRUE SRAM macro
   // ***************************************************************************
- if ((`USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
+  if ((`USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     genvar index;
-     // 64 x 128-bit SRAM
-     logic [WIDTH-1:0] BitWriteMask;
-     for (index=0; index < WIDTH; index++) 
-       assign BitWriteMask[index] = bwe[index/8];
+    // 64 x 128-bit SRAM
+    logic [WIDTH-1:0] BitWriteMask;
+    for (index=0; index < WIDTH; index++) 
+      assign BitWriteMask[index] = bwe[index/8];
     ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
-			      .A(addr), .D(din), 
-			      .BWEB(~BitWriteMask), .Q(dout));
+      .A(addr), .D(din), 
+      .BWEB(~BitWriteMask), .Q(dout));
     
   end else if ((`USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
-     genvar index;
-     // 64 x 44-bit SRAM
-     logic [WIDTH-1:0] BitWriteMask;
-     for (index=0; index < WIDTH; index++) 
-       assign BitWriteMask[index] = bwe[index/8];
-     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
-			      .A(addr), .D(din), 
-			      .BWEB(~BitWriteMask), .Q(dout));
+    genvar index;
+    // 64 x 44-bit SRAM
+    logic [WIDTH-1:0] BitWriteMask;
+    for (index=0; index < WIDTH; index++) 
+      assign BitWriteMask[index] = bwe[index/8];
+    ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
+      .A(addr), .D(din), 
+      .BWEB(~BitWriteMask), .Q(dout));
 
   end else if ((`USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
-     genvar index;
-     // 64 x 22-bit SRAM
-     logic [WIDTH-1:0] BitWriteMask;
-     for (index=0; index < WIDTH; index++) 
-       assign BitWriteMask[index] = bwe[index/8];
-     ram1p1rwbe_64x22 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
-			      .A(addr), .D(din), 
-			      .BWEB(~BitWriteMask), .Q(dout));     
+    genvar index;
+    // 64 x 22-bit SRAM
+    logic [WIDTH-1:0] BitWriteMask;
+    for (index=0; index < WIDTH; index++) 
+      assign BitWriteMask[index] = bwe[index/8];
+    ram1p1rwbe_64x22 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
+      .A(addr), .D(din), 
+      .BWEB(~BitWriteMask), .Q(dout));     
     
-  // ***************************************************************************
-  // READ first SRAM model
-  // ***************************************************************************
+    // ***************************************************************************
+    // READ first SRAM model
+    // ***************************************************************************
   end else begin: ram
     integer i;
 
@@ -91,19 +91,18 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44) (
     assign dout = RAM[addrd];
 
     /*      // Read
-      always_ff @(posedge clk) 
-	if(ce) dout <= #1 mem[addr]; */
-
+     always_ff @(posedge clk) 
+     if(ce) dout <= #1 mem[addr]; */
 
     // Write divided into part for bytes and part for extra msbs
-	// Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
-	// Therefore these always blocks use the older always @(posedge clk) 
+    // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
+    // Therefore these always blocks use the older always @(posedge clk) 
     if(WIDTH >= 8) 
       always @(posedge clk) 
         if (ce & we) 
           for(i = 0; i < WIDTH/8; i++) 
             if(bwe[i]) RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
-          
+  
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 
         if (ce & we & bwe[WIDTH/8])

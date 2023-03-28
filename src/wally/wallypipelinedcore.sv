@@ -35,12 +35,12 @@ module wallypipelinedcore (
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [`AHBW-1:0]       HRDATA,
+   input  logic [`AHBW-1:0]      HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [`PA_BITS-1:0]    HADDR,
-   output logic [`AHBW-1:0]       HWDATA,
-   output logic [`XLEN/8-1:0]     HWSTRB,
+   output logic [`PA_BITS-1:0]   HADDR,
+   output logic [`AHBW-1:0]      HWDATA,
+   output logic [`XLEN/8-1:0]    HWSTRB,
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -58,17 +58,17 @@ module wallypipelinedcore (
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
-  logic [`XLEN-1:0]               ForwardedSrcAE, ForwardedSrcBE;
-  logic [`XLEN-1:0] 			  SrcAM;
+  logic [`XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
+  logic [`XLEN-1:0]              SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  logic [31:0] 					 InstrM, InstrOrigM;
-  logic [`XLEN-1:0]               PCSpillF, PCE, PCLinkE;
-  logic [`XLEN-1:0] 			  PCM;
-  logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-  logic [`XLEN-1:0]               UnalignedPCNextF, PC2NextF;
-  logic [1:0] 					 MemRWM;
-  logic 						 InstrValidD, InstrValidE, InstrValidM;
+  logic [31:0]                   InstrM, InstrOrigM;
+  logic [`XLEN-1:0]              PCSpillF, PCE, PCLinkE;
+  logic [`XLEN-1:0]              PCM;
+  logic [`XLEN-1:0]              CSRReadValW, MDUResultW;
+  logic [`XLEN-1:0]              UnalignedPCNextF, PC2NextF;
+  logic [1:0]                    MemRWM;
+  logic                          InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrD, IllegalFPUInstrD, IllegalIEUFPUInstrD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -86,8 +86,8 @@ module wallypipelinedcore (
   logic [4:0]                    RdE, RdM, RdW;
   logic                          FPUStallD;
   logic                          FWriteIntE;
-  logic [`FLEN-1:0]               FWriteDataM;
-  logic [`XLEN-1:0]               FIntResM;  
+  logic [`FLEN-1:0]              FWriteDataM;
+  logic [`XLEN-1:0]              FIntResM;  
   logic [`XLEN-1:0]              FCvtIntResW; 
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
@@ -95,22 +95,22 @@ module wallypipelinedcore (
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
-  logic [`XLEN-1:0]               FIntDivResultW;
+  logic [`XLEN-1:0]              FIntDivResultW;
 
   // memory management unit signals
   logic                          ITLBWriteF;
   logic                          ITLBMissF;
-  logic [`XLEN-1:0]               SATP_REGW;
+  logic [`XLEN-1:0]              SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic  [1:0]                   STATUS_MPP, STATUS_FS;
+  logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
-  logic [`XLEN-1:0]               PTE;
+  logic [`XLEN-1:0]              PTE;
   logic [1:0]                    PageType;
   logic                          sfencevmaM, WFIStallM;
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [`PA_BITS-3:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [`PA_BITS-3:0]       PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
@@ -119,14 +119,14 @@ module wallypipelinedcore (
 
   // cpu lsu interface
   logic [2:0]                    Funct3M;
-  logic [`XLEN-1:0]               IEUAdrE;
-  logic [`XLEN-1:0]  WriteDataM;
-  logic [`XLEN-1:0]  IEUAdrM;  
-  logic [`LLEN-1:0]               ReadDataW;  
+  logic [`XLEN-1:0]              IEUAdrE;
+  logic [`XLEN-1:0]              WriteDataM;
+  logic [`XLEN-1:0]              IEUAdrM;  
+  logic [`LLEN-1:0]              ReadDataW;  
   logic                          CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0]            IFUHADDR;
+  logic [`PA_BITS-1:0]           IFUHADDR;
   logic [2:0]                    IFUHBURST;
   logic [1:0]                    IFUHTRANS;
   logic [2:0]                    IFUHSIZE;
@@ -134,9 +134,9 @@ module wallypipelinedcore (
   logic                          IFUHREADY;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0]            LSUHADDR;
-  logic [`XLEN-1:0]               LSUHWDATA;
-  logic [`XLEN/8-1:0]             LSUHWSTRB;
+  logic [`PA_BITS-1:0]           LSUHADDR;
+  logic [`XLEN-1:0]              LSUHWDATA;
+  logic [`XLEN/8-1:0]            LSUHWSTRB;
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
@@ -160,8 +160,8 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-  logic 						 BranchD, BranchE, JumpD, JumpE;
-  logic 						 DCacheStallM, ICacheStallF;
+  logic                          BranchD, BranchE, JumpD, JumpE;
+  logic                          DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
@@ -247,20 +247,10 @@ module wallypipelinedcore (
     ebu ebu(// IFU connections
       .clk, .reset,
       // IFU interface
-      .IFUHADDR,
-      .IFUHBURST, 
-      .IFUHTRANS, 
-      .IFUHREADY,
-      .IFUHSIZE,
+      .IFUHADDR, .IFUHBURST, .IFUHTRANS, .IFUHREADY, .IFUHSIZE,
       // LSU interface
-      .LSUHADDR,
-      .LSUHWDATA,
-      .LSUHWSTRB,
-      .LSUHSIZE,
-      .LSUHBURST,
-      .LSUHTRANS,
-      .LSUHWRITE,
-      .LSUHREADY,
+      .LSUHADDR, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, .LSUHBURST,
+      .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
       // BUS interface
       .HREADY, .HRESP, .HCLK, .HRESETn,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
