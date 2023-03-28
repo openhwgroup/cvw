@@ -40,6 +40,10 @@ rvtest_entry_point:
     la t0, topoftrapstack 
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
     csrsi mstatus, 0x8  # Turn on mstatus.MIE global interrupt enable
+    # set up PMP so user and supervisor mode can access full address space
+    csrw pmpcfg0, 0xF   # configure PMP0 to TOR RWX
+    li t0, 0xFFFFFFFF   
+    csrw pmpaddr0, t0   # configure PMP0 top of range to 0xFFFFFFFF to allow all 32-bit addresses
     j main              # Call main function in user test program
 
 done:
