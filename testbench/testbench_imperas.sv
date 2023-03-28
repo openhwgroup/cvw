@@ -73,7 +73,7 @@ module testbench;
   string 		testName;
   string memfilename, testDir, adrstr, elffilename;
 
-  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
 
   logic        SDCCLK;
@@ -217,7 +217,7 @@ module testbench;
 
 
   // instantiate device to be tested
-  assign GPIOPinsIn = 0;
+  assign GPIOIN = 0;
   assign UARTSin = 1;
 
   if(`EXT_MEM_SUPPORTED) begin
@@ -247,7 +247,7 @@ module testbench;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
