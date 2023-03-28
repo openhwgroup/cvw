@@ -135,7 +135,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   end
 
   // com back to CPU
-  assign CacheCommitted = CurrState != STATE_READY;
+  assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & CurrState == STATE_READ_HOLD);
   assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
