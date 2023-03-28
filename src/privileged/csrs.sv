@@ -131,7 +131,7 @@ module csrs #(parameter
       SATP:      if (`VIRTMEM_SUPPORTED & (PrivilegeModeW == `M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
                  else begin
                    CSRSReadValM = 0;
-                   if (PrivilegeModeW == `S_MODE & STATUS_TVM) IllegalCSRSAccessM = 1;
+                   IllegalCSRSAccessM = 1;
                  end
       SCOUNTEREN:CSRSReadValM = {{(`XLEN-32){1'b0}}, SCOUNTEREN_REGW};
       STIMECMP:  if (`SSTC_SUPPORTED & (PrivilegeModeW == `M_MODE | MCOUNTEREN_TM)) CSRSReadValM = STIMECMP_REGW[`XLEN-1:0]; 
