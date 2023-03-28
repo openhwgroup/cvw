@@ -184,6 +184,31 @@ module fctrl (
                                   5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.d   d->l
                                   5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
                                 endcase
+                    7'b1101010: case(Rs2D)
+                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
+                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
+                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.h.l   l->h
+                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.h.lu lu->h
+                                endcase
+                    7'b1100010: case(Rs2D)
+                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.h   h->w
+                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.h  h->wu
+                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.h   h->l
+                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.h  h->lu
+                                endcase
+                    7'b1101011: case(Rs2D)
+                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.q.w   w->q
+                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.q.wu wu->q
+                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.q.l   l->q
+                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.q.lu lu->q
+                                endcase
+                    7'b1100011: case(Rs2D)
+                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.q   q->w
+                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.q  q->wu
+                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.q   q->l
+                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.q  q->lu
+                                endcase
+                              
                     /* verilator lint_off CASEINCOMPLETE */
                     default:    ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction
                   endcase
