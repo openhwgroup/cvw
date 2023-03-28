@@ -169,7 +169,8 @@ logic [3:0] dummy;
   logic 	   InitializingMemories;
   integer 	   ResetCount, ResetThreshold;
   logic 	   InReset;
-
+  logic        Begin;
+  
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
@@ -417,7 +418,7 @@ logic [3:0] dummy;
   if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer HPMCindex;
 	logic 	StartSampleFirst;
-	logic 	StartSampleDelayed;
+	logic 	StartSampleDelayed, BeginDelayed;
 	logic 	EndSampleFirst, EndSampleDelayed;
 	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
 
@@ -474,10 +475,13 @@ logic [3:0] dummy;
 	  // default start condiction is reset
 	  // default end condiction is end of test (DCacheFlushDone)
 	  assign StartSampleFirst = InReset;
-	  flop #(1) StartSampleReg(clk, StartSampleFirst, StartSampleDelayed);
+	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
 	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-
 	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+
+	  flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
+	  assign Begin = StartSampleFirst & ~ BeginDelayed;
+
 	end
 	
     always @(negedge clk) begin
@@ -566,7 +570,7 @@ end
 	end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
-	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(Enable) begin  // only log i cache reads
 	    $fwrite(file, "%h R\n", dut.core.ifu.PCPF);
 	  end
@@ -587,7 +591,7 @@ end
 	end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
-	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
         if(dut.core.lsu.bus.dcache.CacheRWM == 2'b10) begin
 	      $fwrite(file, "%h R\n", dut.core.lsu.PAdrM);
