@@ -56,7 +56,7 @@ module pmpchecker (
   logic [`PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
   logic [`PMP_ENTRIES-1:0] PAgePMPAdr; // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
 
-  if (`PMP_ENTRIES > 0) // prevent complaints about array of no elements when PMP_ENTRIES = 0
+  if (`PMP_ENTRIES > 0) begin: pmp // prevent complaints about array of no elements when PMP_ENTRIES = 0
     pmpadrdec pmpadrdecs[`PMP_ENTRIES-1:0](
       .PhysicalAddress, 
       .PMPCfg(PMPCFG_ARRAY_REGW),
@@ -64,6 +64,7 @@ module pmpchecker (
       .PAgePMPAdrIn({PAgePMPAdr[`PMP_ENTRIES-2:0], 1'b1}),
       .PAgePMPAdrOut(PAgePMPAdr),
       .Match, .L, .X, .W, .R);
+  end
 
   priorityonehot #(`PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
 
