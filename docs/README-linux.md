@@ -16,6 +16,7 @@ To configure and build Buildroot:
 	$ make --jobs
 
 To generate disassembly files and the device tree, run another make script.  Note that you can expect some warnings about phandle references while running dtc on wally-virt.dtb.
+Depending on your system configuration this makefile may need a bit of tweaking.  It places the output buildroot images in $RISCV/linux-testvectors and the buildroot object dumps in $RISCV/buildroot/output/images/disassembly.  If these directories are owned by root then the makefile will likely fail.  You can either change the makefile's target directories or change temporarily change the owner of the two directories.
 
 $ source ~/riscv-wally/setup.sh
 $ cd $WALLY/linux/buildroot-scripts
