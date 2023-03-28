@@ -568,11 +568,13 @@ end
       file = $fopen(LogFile, "w");
 	  $fwrite(file, "BEGIN %s\n", memfilename);
 	end
+    string HitMissString;
+    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" : "M";
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(Enable) begin  // only log i cache reads
-	    $fwrite(file, "%h R\n", dut.core.ifu.PCPF);
+	    $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
@@ -582,8 +584,10 @@ end
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
+    string HitMissString;
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
+    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" : "M";
     initial begin
 	  LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
@@ -594,13 +598,13 @@ end
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
         if(dut.core.lsu.bus.dcache.CacheRWM == 2'b10) begin
-	      $fwrite(file, "%h R\n", dut.core.lsu.PAdrM);
+	      $fwrite(file, "%h R %s\n", dut.core.lsu.PAdrM, HitMissString);
         end else if (dut.core.lsu.bus.dcache.CacheRWM == 2'b01) begin
-	      $fwrite(file, "%h W\n", dut.core.lsu.PAdrM);
+	      $fwrite(file, "%h W %s\n", dut.core.lsu.PAdrM, HitMissString);
         end else if (dut.core.lsu.bus.dcache.CacheAtomicM[1] == 1'b1) begin // *** This may change
-	      $fwrite(file, "%h A\n", dut.core.lsu.PAdrM);
+	      $fwrite(file, "%h A %s\n", dut.core.lsu.PAdrM, HitMissString);
         end else if (dut.core.lsu.bus.dcache.FlushDCache) begin
-	      $fwrite(file, "%h F\n", dut.core.lsu.PAdrM);
+	      $fwrite(file, "%h F %s\n", dut.core.lsu.PAdrM, HitMissString);
         end
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
