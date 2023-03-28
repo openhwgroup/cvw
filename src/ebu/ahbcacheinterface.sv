@@ -33,7 +33,8 @@ module ahbcacheinterface #(
   parameter BEATSPERLINE,  // Number of AHBW words (beats) in cacheline
   parameter AHBWLOGBWPL,   // Log2 of ^
   parameter LINELEN,       // Number of bits in cacheline
-  parameter LLENPOVERAHBW  // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+  parameter LLENPOVERAHBW, // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+  parameter READ_ONLY_CACHE
 )(
   input  logic                HCLK, HRESETn,
   // bus interface controls
@@ -115,7 +116,7 @@ module ahbcacheinterface #(
   
   flopen #(`AHBW/8) HWSTRBReg(HCLK, HREADY, BusByteMaskM[`AHBW/8-1:0], HWSTRB);
   
-  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL) AHBBuscachefsm(
+  buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
       .HREADY, .HTRANS, .HWRITE, .HBURST);

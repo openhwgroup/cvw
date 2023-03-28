@@ -251,7 +251,7 @@ module ifu (
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
-      ahbcacheinterface #(WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW) 
+      ahbcacheinterface #(WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
