@@ -474,7 +474,7 @@ logic [3:0] dummy;
 	  // default start condiction is reset
 	  // default end condiction is end of test (DCacheFlushDone)
 	  assign StartSampleFirst = InReset;
-	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+	  flop #(1) StartSampleReg(clk, StartSampleFirst, StartSampleDelayed);
 	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
 	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
@@ -555,16 +555,19 @@ end
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
+    logic  Enable;
+    assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
     initial begin
 	  LogFile = $psprintf("ICache.log");
       file = $fopen(LogFile, "w");
+	  $fwrite(file, "BEGIN %s\n", memfilename);
 	end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
-	  if(~dut.core.StallD & ~dut.core.FlushD) begin
+	  if(Enable) begin  // only log i cache reads
 	    $fwrite(file, "%h R\n", dut.core.ifu.PCPF);
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
@@ -580,6 +583,7 @@ end
     initial begin
 	  LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
+	  $fwrite(file, "BEGIN %s\n", memfilename);
 	end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
