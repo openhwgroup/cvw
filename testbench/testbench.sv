@@ -532,7 +532,7 @@ logic [3:0] dummy;
 
 
   // initialize the branch predictor
-  if (`BPRED_SUPPORTED == 1) begin
+  if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
 	always @(*) begin
@@ -555,7 +555,7 @@ logic [3:0] dummy;
 end
 
 
-  if (`I_CACHE_ADDR_LOGGER == 1) begin
+  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
@@ -580,7 +580,7 @@ end
     end
   end
 
-  if (`D_CACHE_ADDR_LOGGER == 1) begin
+  if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
@@ -611,7 +611,7 @@ end
     end
   end
 
-  if (`BPRED_SUPPORTED == 1) begin
+  if (`BPRED_SUPPORTED) begin
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;
