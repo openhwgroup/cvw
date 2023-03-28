@@ -155,9 +155,9 @@ module fctrl (
                     7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
                                                ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
                     7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
-                                               ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.h.(s/d//h)
+                                               ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
                     7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
-                                               ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.q.(s/h/d)
+                                               ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
                     // *** other formats here
                     /* verilator lint_off CASEINCOMPLETE */
                     7'b1101000: case(Rs2D)
