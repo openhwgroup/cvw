@@ -84,8 +84,8 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
   logic [1:0]                     HitPageType;
   logic                           CAMHit;
   logic                           SV39Mode;
-  logic 				                  Misaligned;
-  logic 				                  MegapageMisaligned;
+  logic                           Misaligned;
+  logic                           MegapageMisaligned;
 
   if(`XLEN == 32) begin
     assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
@@ -94,7 +94,7 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
     logic  GigapageMisaligned, TerapageMisaligned;
     assign TerapageMisaligned = |(PPN[26:0]); // must have zero PPN2, PPN1, PPN0
     assign GigapageMisaligned = |(PPN[17:0]); // must have zero PPN1 and PPN0
-    assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0		  
+    assign MegapageMisaligned = |(PPN[8:0]); // must have zero PPN0      
     assign Misaligned = ((HitPageType == 2'b11) & TerapageMisaligned) | 
               ((HitPageType == 2'b10) & GigapageMisaligned) | 
               ((HitPageType == 2'b01) & MegapageMisaligned);

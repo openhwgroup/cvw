@@ -33,29 +33,29 @@
 
 `include "wally-config.vh"
 
-module controllerinputstage #(
+module controllerinput #(
   parameter SAVE_ENABLED = 1           // 1: Save manager inputs if Save = 1, 0: Don't save inputs
 )(
-  input logic 				  HCLK, 
-  input logic 				  HRESETn,
-  input logic 				  Save,     // Two or more managers requesting (HTRANS != 00) at the same time.  Save the non-granted manager inputs
-  input logic 				  Restore,  // Restore a saved manager inputs when it is finally granted
-  input logic 				  Disable,  // Supress HREADY to the non-granted manager
-  output logic 				  Request,  // This manager is making a request
+  input logic                 HCLK, 
+  input logic                 HRESETn,
+  input logic                 Save,     // Two or more managers requesting (HTRANS != 00) at the same time.  Save the non-granted manager inputs
+  input logic                 Restore,  // Restore a saved manager inputs when it is finally granted
+  input logic                 Disable,  // Supress HREADY to the non-granted manager
+  output logic                Request,  // This manager is making a request
   // controller input
-  input logic [1:0] 		  HTRANSIn,  // Manager input. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
-  input logic 				  HWRITEIn,  // Manager input. AHB 0: Read operation 1: Write operation 
-  input logic [2:0] 		  HSIZEIn,   // Manager input. AHB transaction width
-  input logic [2:0] 		  HBURSTIn,  // Manager input. AHB burst length
+  input logic [1:0]           HTRANSIn,  // Manager input. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  input logic                 HWRITEIn,  // Manager input. AHB 0: Read operation 1: Write operation 
+  input logic [2:0]           HSIZEIn,   // Manager input. AHB transaction width
+  input logic [2:0]           HBURSTIn,  // Manager input. AHB burst length
   input logic [`PA_BITS-1:0]  HADDRIn,   // Manager input. AHB address
-  output logic 				  HREADYOut, // Indicate to manager the peripherial is not busy and another manager does not have priority
+  output logic                HREADYOut, // Indicate to manager the peripherial is not busy and another manager does not have priority
   // controller output
-  output logic [1:0] 		  HTRANSOut, // Aribrated manager transaction. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
-  output logic 				  HWRITEOut, // Aribrated manager transaction. AHB 0: Read operation 1: Write operation 
-  output logic [2:0] 		  HSIZEOut,  // Aribrated manager transaction. AHB transaction width
-  output logic [2:0] 		  HBURSTOut, // Aribrated manager transaction. AHB burst length 
+  output logic [1:0]          HTRANSOut, // Aribrated manager transaction. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic                HWRITEOut, // Aribrated manager transaction. AHB 0: Read operation 1: Write operation 
+  output logic [2:0]          HSIZEOut,  // Aribrated manager transaction. AHB transaction width
+  output logic [2:0]          HBURSTOut, // Aribrated manager transaction. AHB burst length 
   output logic [`PA_BITS-1:0] HADDROut,  // Aribrated manager transaction. AHB address
-  input logic 				  HREADYIn   // Peripherial ready
+  input logic                 HREADYIn   // Peripherial ready
 );
 
   logic                       HWRITESave;

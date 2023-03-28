@@ -29,8 +29,8 @@
 `include "wally-config.vh"
 
 module fregfile (
-  input logic 	           clk, reset,
-  input logic 	           we4,             // write enable
+  input logic              clk, reset,
+  input logic              we4,             // write enable
   input logic [4:0]        a1, a2, a3, a4,  // adresses
   input logic [`FLEN-1:0]  wd4,             // write data
   output logic [`FLEN-1:0] rd1, rd2, rd3    // read data
@@ -46,7 +46,7 @@ module fregfile (
    
    always_ff @(negedge clk) // or posedge reset)
      if (reset) for(i=0; i<32; i++) rf[i] <= 0;
-     else if (we4) rf[a4] <= wd4;	
+     else if (we4) rf[a4] <= wd4;  
    
    assign #2 rd1 = rf[a1];
    assign #2 rd2 = rf[a2];

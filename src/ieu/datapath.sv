@@ -108,7 +108,7 @@ module datapath (
   flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
   flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
   flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
-	
+  
   mux3  #(`XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(`XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
@@ -121,7 +121,7 @@ module datapath (
   // Memory stage pipeline register
   flopenrc #(`XLEN) SrcAMReg(clk, reset, FlushM, ~StallM, SrcAE, SrcAM);
   flopenrc #(`XLEN) IEUResultMReg(clk, reset, FlushM, ~StallM, IEUResultE, IEUResultM);
-  flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);	
+  flopenrc #(5)     RdMReg(clk, reset, FlushM, ~StallM, RdE, RdM);  
   flopenrc #(`XLEN) WriteDataMReg(clk, reset, FlushM, ~StallM, ForwardedSrcBE, WriteDataM); 
   
   // Writeback stage pipeline register and logic

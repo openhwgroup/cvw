@@ -31,34 +31,33 @@
 `include "wally-config.vh"
 
 module ebufsmarb (
-  input  logic 	     HCLK,
-  input  logic 	     HRESETn,
+  input  logic       HCLK,
+  input  logic       HRESETn,
   input  logic [2:0] HBURST,
  //  AHB burst length
   
-  input  logic 	     HREADY,
+  input  logic       HREADY,
 
-  input  logic 	     LSUReq,
-  input  logic 	     IFUReq,
+  input  logic       LSUReq,
+  input  logic       IFUReq,
   
+  output logic       IFUSave,
+  output logic       IFURestore,
+  output logic       IFUDisable,
+  output logic       IFUSelect,
+  output logic       LSUDisable,
+  output logic       LSUSelect);
   
-  output logic 	     IFUSave,
-  output logic 	     IFURestore,
-  output logic 	     IFUDisable,
-  output logic 	     IFUSelect,
-  output logic 	     LSUDisable,
-  output logic 	     LSUSelect);
-  
-  typedef enum 	     logic [1:0] {IDLE, ARBITRATE} statetype;
+  typedef enum       logic [1:0] {IDLE, ARBITRATE} statetype;
   statetype          CurrState, NextState;
 
-  logic 	     both;                       // Both the LSU and IFU request at the same time
-  logic 	     IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
-  logic 	     FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
-  logic 	     BeatCntEn;
-  logic [3:0]      BeatCount;   // Position within a burst transfer
-  logic 	     CntReset;
-  logic [3:0] 	     Threshold;                  // Number of beats derived from HBURST
+  logic              both;                       // Both the LSU and IFU request at the same time
+  logic              IFUReqD;                    // 1 cycle delayed IFU request. Part of arbitration
+  logic              FinalBeat, FinalBeatD;      // Indicates the last beat of a burst
+  logic              BeatCntEn;
+  logic [3:0]        BeatCount;   // Position within a burst transfer
+  logic              BeatCntReset;
+  logic [3:0]        Threshold;                  // Number of beats derived from HBURST
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Aribtration scheme
@@ -70,8 +69,8 @@ module ebufsmarb (
   flopenl #(.TYPE(statetype)) busreg(HCLK, ~HRESETn, 1'b1, NextState, IDLE, CurrState);
   always_comb 
     case (CurrState) 
-      IDLE: if (both)                                           NextState = ARBITRATE; 
-            else                                                NextState = IDLE;
+      IDLE:      if (both)                                      NextState = ARBITRATE; 
+                 else                                           NextState = IDLE;
       ARBITRATE: if (HREADY & FinalBeatD & ~(LSUReq & IFUReq))  NextState = IDLE;
                  else                                           NextState = ARBITRATE;
       default:                                                  NextState = IDLE;
@@ -98,29 +97,26 @@ module ebufsmarb (
   // Burst mode logic
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign CntReset = NextState == IDLE;
+  assign BeatCntReset = NextState == IDLE;
   assign FinalBeat = (BeatCount == Threshold); // Detect when we are waiting on the final access.
-  assign BeatCntEn = (NextState == ARBITRATE) & HREADY;
-  counter #(4) BeatCounter(HCLK, ~HRESETn | CntReset | FinalBeat, BeatCntEn, BeatCount);  
+  // Counting the beats in the EBU is only necessary when both the LSU and IFU request concurrently.  
+  // LSU has priority. HREADY serves double duty during a burst transaction.  It indicates when the
+  // beat completes and when the transaction finishes.  However there is nothing external to
+  // differentiate them.  The EBU counts the HREADY beats so it knows when to switch to the IFU's 
+  // request.
+  assign BeatCntEn = (NextState == ARBITRATE) & HREADY; 
+  counter #(4) BeatCounter(HCLK, ~HRESETn | BeatCntReset | FinalBeat, BeatCntEn, BeatCount);  
  
   // Used to store data from data phase of AHB.
-  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | CntReset, BeatCntEn, FinalBeat, FinalBeatD);
+  flopenr #(1) FinalBeatReg(HCLK, ~HRESETn | BeatCntReset, BeatCntEn, FinalBeat, FinalBeatD);
 
-  // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST.
-  //  HBURST[2:1] Beats
-  //  00          1
-  //  01          4
-  //  10          8
-  //  11          16
+  // unlike the bus fsm in lsu/ifu, we need to derive the number of beats from HBURST, Threshold = num beats - 1.
+  //  HBURST[2:1] Beats  threshold
+  //  00          1      0
+  //  01          4      3
+  //  10          8      7
+  //  11          16     15
   always_comb 
     if (HBURST[2:1] == 2'b00) Threshold = 4'b0000;
     else                      Threshold = (2 << HBURST[2:1]) - 1;
-/*    case(HBURST)
-      0:        Threshold = 4'b0000;
-      3:        Threshold = 4'b0011; // INCR4
-      5:        Threshold = 4'b0111; // INCR8
-      7:        Threshold = 4'b1111; // INCR16
-      default:  Threshold = 4'b0000; // INCR without end.
-    endcase
-  end */
 endmodule

@@ -26,6 +26,13 @@
 
 `include "wally-config.vh"
 
+// This is set from the command line script
+// `define USE_IMPERAS_DV
+
+`ifdef USE_IMPERAS_DV
+  `include "rvvi/imperasDV.svh"
+`endif
+
 `define DEBUG_TRACE 0
 // Debug Levels
 // 0: don't check against QEMU
@@ -47,7 +54,11 @@ module testbench;
   parameter NO_SPOOFING = 0;
 
 
-
+  `ifdef USE_IMPERAS_DV
+    import rvviPkg::*;
+    import rvviApiPkg::*;
+    import idvApiPkg::*;
+  `endif
 
 
 
@@ -264,8 +275,155 @@ module testbench;
   logic [3:0] SDCDatIn;
 
   // Hardwire UART, GPIO pins
-  assign GPIOIN = 0;
+  assign GPIOPinsIn = 0;
   assign UARTSin = 1;
+
+  
+  
+  `ifdef USE_IMPERAS_DV
+
+      logic         DCacheFlushDone, DCacheFlushStart;
+
+      rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+      wallyTracer wallyTracer(rvvi);
+
+      trace2log idv_trace2log(rvvi);
+//      trace2cov idv_trace2cov(rvvi);
+
+      // enabling of comparison types
+      trace2api #(.CMP_PC      (1),
+                  .CMP_INS     (1),
+                  .CMP_GPR     (1),
+                  .CMP_FPR     (1),
+                  .CMP_VR      (0),
+                  .CMP_CSR     (1)
+                 ) idv_trace2api(rvvi);
+
+      initial begin
+        int iter;
+        #1;
+        MAX_ERRS = 3;
+
+        // Initialize REF (do this before initializing the DUT)
+        if (!rvviVersionCheck(RVVI_API_VERSION)) begin
+          msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+        end
+      
+        void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
+        void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
+        void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
+        void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     56));
+        void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
+
+        if (!rvviRefInit("")) begin
+          msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+        end
+
+        // Volatile CSRs
+        void'(rvviRefCsrSetVolatile(0, 32'hC00));   // CYCLE
+        void'(rvviRefCsrSetVolatile(0, 32'hB00));   // MCYCLE
+        void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
+        void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
+        void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+        
+        // User HPMCOUNTER3 - HPMCOUNTER31
+        for (iter='hC03; iter<='hC1F; iter++) begin
+          void'(rvviRefCsrSetVolatile(0, iter));   // HPMCOUNTERx
+        end       
+        
+        // Machine MHPMCOUNTER3 - MHPMCOUNTER31
+        for (iter='hB03; iter<='hB1F; iter++) begin
+          void'(rvviRefCsrSetVolatile(0, iter));   // MHPMCOUNTERx
+        end       
+        
+        // cannot predict this register due to latency between
+        // pending and taken
+        void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
+        void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
+
+        // Privileges for PMA are set in the imperas.ic
+        // volatile (IO) regions are defined here
+        // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
+        if (`CLINT_SUPPORTED) begin
+            void'(rvviRefMemorySetVolatile(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE)));
+        end
+        if (`GPIO_SUPPORTED) begin
+            void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
+        end
+        if (`UART_SUPPORTED) begin
+            void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
+        end
+        if (`PLIC_SUPPORTED) begin
+            void'(rvviRefMemorySetVolatile(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE)));
+        end
+        if (`SDC_SUPPORTED) begin
+            void'(rvviRefMemorySetVolatile(`SDC_BASE, (`SDC_BASE + `SDC_RANGE)));
+        end
+
+        if(`XLEN==32) begin
+            void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
+            void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
+            void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
+            void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
+        end
+
+        void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
+        
+        // Load memory
+        begin
+            longint x64;
+            int x32[2];
+            longint index;
+            
+            $sformat(testvectorDir,"%s/linux-testvectors/",RISCV_DIR);
+
+            $display("RVVI Loading bootmem.bin");
+            memFile = $fopen({testvectorDir,"bootmem.bin"}, "rb");
+            index = 'h1000 - 8;
+            while(!$feof(memFile)) begin
+                index+=8;
+                readResult = $fread(x64, memFile);
+                if (x64 == 0) continue;
+                x32[0] = x64 & 'hffffffff;
+                x32[1] = x64 >> 32;
+                rvviRefMemoryWrite(0, index+0, x32[0], 4);
+                rvviRefMemoryWrite(0, index+4, x32[1], 4);
+                //$display("boot %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+            end
+            $fclose(memFile);
+            
+            $display("RVVI Loading ram.bin");
+            memFile = $fopen({testvectorDir,"ram.bin"}, "rb");
+            index = 'h80000000 - 8;
+            while(!$feof(memFile)) begin
+                index+=8;
+                readResult = $fread(x64, memFile);
+                if (x64 == 0) continue;
+                x32[0] = x64 & 'hffffffff;
+                x32[1] = x64 >> 32;
+                rvviRefMemoryWrite(0, index+0, x32[0], 4);
+                rvviRefMemoryWrite(0, index+4, x32[1], 4);
+                //$display("ram  %08X x32[0]=%08X x32[1]=%08X", index, x32[0], x32[1]);
+            end
+            $fclose(memFile);
+            
+            $display("RVVI Loading Complete");
+            
+            void'(rvviRefPcSet(0, 'h1000)); // set BOOTROM address
+        end
+      end
+
+      always @(dut.core.MTimerInt) void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
+      always @(dut.core.MExtInt)   void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
+      always @(dut.core.SExtInt)   void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
+      always @(dut.core.MSwInt)    void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
+
+      final begin
+        void'(rvviRefShutdown());
+      end
+
+  `endif
+  
 
   // Wally
   wallypipelinedsoc dut(.clk, .reset, .reset_ext,
@@ -430,6 +588,7 @@ module testbench;
       memFile = $fopen({checkpointDir,"ram.bin"}, "rb");
     readResult = $fread(dut.uncore.uncore.ram.ram.memory.RAM,memFile);
     $fclose(memFile);
+  
     // ---------- Ground-Zero -----------
     if (CHECKPOINT==0) begin
       traceFileM = $fopen({testvectorDir,"all.txt"}, "r");
