@@ -290,7 +290,7 @@ module uartPC16550D(
   assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
 
   // receive FIFO and register
-  always_ff @(posedge PCLK, negedge PRESETn)
+  always_ff @(posedge PCLK)
     if (~PRESETn) begin
       rxfifohead <= #1 0; rxfifotail <= #1 0; rxdataready <= #1 0; RXBR <= #1 0;
     end else begin
