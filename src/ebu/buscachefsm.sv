@@ -33,7 +33,8 @@
 // HCLK and clk must be the same clock!
 module buscachefsm #(
   parameter BeatCountThreshold,                      // Largest beat index
-  parameter AHBWLOGBWPL                              // Log2 of BEATSPERLINE
+  parameter AHBWLOGBWPL,                             // Log2 of BEATSPERLINE
+  parameter READ_ONLY_CACHE
 )(
   input  logic                   HCLK,
   input  logic                   HRESETn,
@@ -121,7 +122,7 @@ module buscachefsm #(
                     (CurrState == DATA_PHASE) | 
           (CurrState == CACHE_FETCH & ~HREADY) |
           (CurrState == CACHE_WRITEBACK & ~HREADY);
-  assign BusCommitted = CurrState != ADR_PHASE;
+  assign BusCommitted = (CurrState != ADR_PHASE) & ~(READ_ONLY_CACHE & CurrState == MEM3);
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW)) & ~Flush) |
