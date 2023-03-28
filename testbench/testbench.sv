@@ -30,6 +30,8 @@
 
 `define PrintHPMCounters 1
 `define BPRED_LOGGER 1
+`define I_CACHE_ADDR_LOGGER 1
+`define D_CACHE_ADDR_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -546,9 +548,57 @@ logic [3:0] dummy;
 		end
 	  end
 	end
+end
+
+
+  if (`I_CACHE_ADDR_LOGGER == 1) begin
+    int    file;
+	string LogFile;
+	logic  resetD, resetEdge;
+	flop #(1) ResetDReg(clk, reset, resetD);
+	assign resetEdge = ~reset & resetD;
+    initial begin
+	  LogFile = $psprintf("ICache.log");
+      file = $fopen(LogFile, "w");
+	end
+    always @(posedge clk) begin
+	  if(resetEdge) $fwrite(file, "TRAIN\n");
+	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(~dut.core.StallD & ~dut.core.FlushD) begin
+	    $fwrite(file, "%h R\n", dut.core.ifu.PCPF);
+	  end
+	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    end
   end
 
-  
+  if (`D_CACHE_ADDR_LOGGER == 1) begin
+    int    file;
+	string LogFile;
+	logic  resetD, resetEdge;
+	flop #(1) ResetDReg(clk, reset, resetD);
+	assign resetEdge = ~reset & resetD;
+    initial begin
+	  LogFile = $psprintf("DCache.log");
+      file = $fopen(LogFile, "w");
+	end
+    always @(posedge clk) begin
+	  if(resetEdge) $fwrite(file, "TRAIN\n");
+	  if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+        if(dut.core.lsu.bus.dcache.CacheRWM == 2'b10) begin
+	      $fwrite(file, "%h R\n", dut.core.lsu.PAdrM);
+        end else if (dut.core.lsu.bus.dcache.CacheRWM == 2'b01) begin
+	      $fwrite(file, "%h W\n", dut.core.lsu.PAdrM);
+        end else if (dut.core.lsu.bus.dcache.CacheAtomicM[1] == 1'b1) begin // *** This may change
+	      $fwrite(file, "%h A\n", dut.core.lsu.PAdrM);
+        end else if (dut.core.lsu.bus.dcache.FlushDCache) begin
+	      $fwrite(file, "%h F\n", dut.core.lsu.PAdrM);
+        end
+	  end
+	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    end
+  end
+
   if (`BPRED_SUPPORTED == 1) begin
     if (`BPRED_LOGGER) begin
       string direction;
