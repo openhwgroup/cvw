@@ -29,9 +29,9 @@
 `include "tests.vh"
 
 `define PrintHPMCounters 1
-`define BPRED_LOGGER 1
-`define I_CACHE_ADDR_LOGGER 1
-`define D_CACHE_ADDR_LOGGER 1
+`define BPRED_LOGGER 0
+`define I_CACHE_ADDR_LOGGER 0
+`define D_CACHE_ADDR_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
