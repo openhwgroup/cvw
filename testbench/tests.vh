@@ -47,6 +47,7 @@ string tvpaths[] = '{
     "ieu",
     "ebu",
     "csrwrites",
+    "fpu",
     "priv"
   };
 
