@@ -71,7 +71,7 @@ test_cases:
 
 # =========== Verify all registers reset to correct values ===========
 
-.8byte sck_div, 0x00000011, read32_test     # sck_div reset to 0x3
+.8byte sck_div, 0x00000003, read32_test     # sck_div reset to 0x3
 .8byte sck_mode, 0x00000000, read32_test    # sck_mode reset to 0x0
 .8byte cs_id, 0x00000000, read32_test       # cs_id reset to 0x0
 .8byte cs_def, 0x00000001, read32_test      # cs_def reset to 0x1
@@ -103,24 +103,24 @@ test_cases:
 
 # Test phase
 
-.8byte sck_div, 0x00000011, write32_test    # reset sck_div to 0x11 so only sck_mode is different
-.8byte sck_mode, 0x00000001, write32_test   # change phase to sck inactive high
+.8byte sck_div, 0x00000003, write32_test    # reset sck_div to 0x03 so only sck_mode is different
+.8byte sck_mode, 0x00000001, write32_test   # change phase to falling edge
 .8byte tx_data, 0x000000A0, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000A0, read32_test     # read rx_data
 
 # Test polarity 
 
-.8byte sck_mode, 0x00000000, write32_test   # reset sck phase to active low
-.8byte sck_mode, 0x00000010, write32_test   # set sck polarity to trailing edge sample
+.8byte sck_mode, 0x00000000, write32_test   # reset sck phase to rising edge
+.8byte sck_mode, 0x00000002, write32_test   # set sck polarity active low
 .8byte tx_data, 0x0000000B, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x0000000B, read32_test     # read rx_data
 
 # Test chip select polarity
 
-.8byte sck_mode, 0x00000000, write32_test   # reset sck polarity to leading edge sample
-.8byte cs_def, 0x0000000D, write32_test     # set cs[0] to inactive low
+.8byte sck_mode, 0x00000000, write32_test   # reset sck polarity to active high
+.8byte cs_def, 0x0000000E, write32_test     # set cs[0] to inactive low
 .8byte tx_data, 0x00000079, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000079, read32_test     # read rx_data
@@ -175,7 +175,7 @@ test_cases:
 # Test arbitrary cs-sck delay (sck phase 0)
 
 .8byte sck_mode, 0x00000000, write32_test   # set sck phase to 0
-.8byte delay0, 0x000100AF, write32_test     # set cs-sck delay to AF cycles
+.8byte delay0, 0x00010005, write32_test     # set cs-sck delay to AF cycles
 .8byte tx_data, 0x000000AF, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x000000AF, read32_test     # read rx_data
@@ -193,11 +193,11 @@ test_cases:
 .8byte sck_mode, 0x00000001, write32_test   # set sck_mode[0] to 1 (sck phase = 1)
 .8byte tx_data, 0x0000006B, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x00000000, read32_test     # read rx_data
+.8byte rx_data, 0x0000006B, read32_test     # read rx_data
 
 # Test arbitrary sck-cs delay (sck phase 1)
 
-.8byte delay0, 0x00A50001, write32_test     # set cs-sck delay to A5 cycles
+.8byte delay0, 0x00050001, write32_test     # set cs-sck delay to A5 cycles
 .8byte tx_data, 0x00000011, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000011, read32_test     # read rx_data
@@ -205,7 +205,7 @@ test_cases:
 # Test arbitrary sck-cs delay (sck phase 0)
 
 .8byte sck_mode, 0x00000000, write32_test   # set sck phase to 0
-.8byte delay0, 0x00050001, write32_test     # set cs-sck delay to 5 cycles
+.8byte delay0, 0x00A50001, write32_test     # set cs-sck delay to 5 cycles
 .8byte tx_data, 0x00000015, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000015, read32_test     # read rx_data

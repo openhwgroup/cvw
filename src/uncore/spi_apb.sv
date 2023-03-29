@@ -30,6 +30,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
+// figure out cs off mode
+// simplify cs auto/hold logic
+//simply sck phase select logic
+
 
 `include "wally-config.vh"
 
@@ -215,14 +219,14 @@ module spi_apb (
 
 
 
-    assign sclk_edge = (div_counter_edge == (({sck_div[11:0], 1'b0}) + 13'b1));
+    assign sclk_edge = (div_counter_edge >= (({sck_div[11:0], 1'b0}) + 13'b1));
     //assign tx_empty = ~|(tx_data);
     //incorrect way to assess this, replace FSM assign at end
-    assign sclk_duty = (div_counter == (sck_div[11:0]));
+    assign sclk_duty = (div_counter >= (sck_div[11:0]));
     assign delay0_cmp = sck_mode[0] ? (delay0_cnt == ({delay0[7:0], 1'b0})) : (delay0_cnt == ({delay0[7:0], 1'b0} + 9'b1));
     assign delay1_cmp = sck_mode[0] ? (delay1_cnt == (({delay0[23:16], 1'b0}) + 9'b1)) : (delay1_cnt == ({delay0[23:16], 1'b0}));
-    assign intercs_cmp = (intercs_cnt == ({delay1[7:0],1'b0}));
-    assign interxfr_cmp = (interxfr_cnt == ({delay1[23:16], 1'b0}));
+    assign intercs_cmp = (intercs_cnt >= ({delay1[7:0],1'b0}));
+    assign interxfr_cmp = (interxfr_cnt >= ({delay1[23:16], 1'b0}));
     // double number of frames in dual or quad mode because we must wait for peripheral to send back
     assign frame_cmp = (fmt[0] | fmt[1]) ? ({1'b0,fmt[19:16], 1'b0}) : {2'b0,fmt[19:16]};
 
@@ -249,7 +253,7 @@ module spi_apb (
         end
 
     
-
+    logic txShiftEmpty, rxShiftEmpty;
     always_ff @(posedge sclk_duty, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
                             frame_cnt <= 6'b0;
@@ -262,8 +266,8 @@ module spi_apb (
                         frame_cnt <= 6'b0;
                         intercs_cnt <= 9'b10;
                         interxfr_cnt <= 9'b1;
-                        if (~TXrempty & ((|(delay0[7:0])) | ~sck_mode[0])) state <= DELAY_0;
-                        else if (~TXrempty) state <= ACTIVE_0;
+                        if ((~TXrempty | ~txShiftEmpty) & ((|(delay0[7:0])) | ~sck_mode[0])) state <= DELAY_0;
+                        else if ((~TXrempty | ~txShiftEmpty)) state <= ACTIVE_0;
                         end
                 DELAY_0: begin
                         delay0_cnt <= delay0_cnt + 9'b1;
@@ -296,13 +300,15 @@ module spi_apb (
                         if (intercs_cmp ) state <= CS_INACTIVE;
                         end
                 INTER_XFR: begin
-                        state <= ACTIVE_0;
                         delay0_cnt <= 9'b1;
                         delay1_cnt <= 9'b1;
                         frame_cnt <= 6'b0;
                         intercs_cnt <= 9'b10;
                         interxfr_cnt <= interxfr_cnt + 9'b1;
-                        if (interxfr_cmp) state <= ACTIVE_0;
+                        if ((entry == (8'h18 | 8'h10) | ((entry == 8'h14) & ((PWDATA[cs_id]) != cs_def[cs_id])))) state <= CS_INACTIVE;
+                        if (interxfr_cmp & ~TXrempty) state <= ACTIVE_0;
+                        else if (~|cs_mode[1:0]) state <= CS_INACTIVE;
+                        
                         end
             endcase
             /* verilator lint_off CASEINCOMPLETE */
@@ -317,6 +323,7 @@ module spi_apb (
 
 
 
+
     //FIFOs CURRENTLY SRAM BASED ON "The existence of fall-through architecture has a historical basis. New developments no longer use this principle."
     //https://www.ti.com/lit/an/scaa042a/scaa042a.pdf
     //However, 8 byte is very small, may adjust based on synthesis results.
@@ -328,10 +335,13 @@ module spi_apb (
     //fifomem asynch ram
 
     logic TXrempty_delay;
+    logic TXwinc_delay;
 
-    logic txShiftEmpty, rxShiftEmpty;
     logic sck_phase_sel;
     assign TXwinc = (memwrite & (entry == 8'h48) & ~TXwfull);
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) TXwinc_delay <= 0;
+        else TXwinc_delay <= TXwinc;
     assign TXrinc = txShiftEmpty;
     /*
     
@@ -350,7 +360,7 @@ module spi_apb (
     assign sample_edge = sck_mode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     
 
-    FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc, TXrinc, tx_data,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
+    FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc_delay, TXrinc, tx_data,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
     FIFO_async #(3,8) rxFIFO(sclk_duty, PCLK, PRESETn, RXwinc, RXrinc, rxShift, fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
 
     txShiftFSM txShiftFSM_1 (sclk_duty, PRESETn, TXrempty_delay, rx_frame_cmp_pre_bool, active0, txShiftEmpty);
@@ -371,7 +381,17 @@ module spi_apb (
     
 
     //assign sck_phase_sel = sck_mode[0] ? (sck_mode[1] ? sck : ~sck) : (sck_mode[1] ? ~sck : sck);
-    assign sck_phase_sel = sck_mode[0] ? (sck_mode[1] ? ~sck : sck) : (sck_mode[1] ? sck : ~sck);
+    //assign sck_phase_sel = sck_mode[0] ? (sck_mode[1] ? ~sck : sck) : (sck_mode[1] ? sck : ~sck);
+
+    always_comb
+        case(sck_mode[1:0])
+            2'b00: sck_phase_sel = ~sck;
+            2'b01: sck_phase_sel = (sck & |(frame_cnt));
+            2'b10: sck_phase_sel = sck;
+            2'b11: sck_phase_sel = (~sck & |(frame_cnt));
+            default: sck_phase_sel = sck;
+        endcase
+        
     always_ff @(posedge sck_phase_sel, negedge PRESETn, posedge (sclk_duty & ~active))
         if(~PRESETn) begin 
                 txShift <= 8'b0;
@@ -379,8 +399,8 @@ module spi_apb (
         else begin
            // txShiftEmpty <= (~active & ~txShiftEmpty);
             
-            if (~active) txShift <= TXrdata;
-            else begin
+            if (~active & ~TXrempty) txShift <= TXrdata;
+            else if (active) begin
                 case (fmt[1:0])
                     2'b00: txShift <= {txShift[6:0], 1'b0};
                     2'b01: txShift <= {txShift[5:0], 2'b0};
@@ -390,7 +410,7 @@ module spi_apb (
             end
         end
     always_comb
-        if (active) begin
+        if (active | delay0_cmp) begin
             case(fmt[1:0])
                 2'b00: SPIOut = {3'b0,txShift[7]}; 
                 2'b01: SPIOut = {2'b0,txShift[6], txShift[7]};
@@ -399,7 +419,7 @@ module spi_apb (
                 default: SPIOut = {3'b0, txShift[7]};
             endcase
         end else SPIOut = 4'b0;
-    always_ff @(posedge sck_phase_sel, negedge PRESETn)
+    always_ff @(posedge sample_edge, negedge PRESETn)
         if(~PRESETn) begin  
                 rxShift <= 8'b0;
                 rxShiftEmpty <= 1'b1;
@@ -454,14 +474,27 @@ module spi_apb (
     */
     assign SPIIntr = ((ip[0] & ie[0]) | (ip[1] & ie[1]));
     logic [3:0] CSauto, CShold, CSoff;
+    logic CShold_single;
     always_comb
         case(cs_id[1:0])
-            2'b00: CSauto = {cs_def[3], cs_def[2], cs_def[1], cs_internal[0]};
-            2'b01: CSauto = {cs_def[3],cs_def[2], cs_internal[1], cs_def[0]};
-            2'b10: CSauto = {cs_def[3],cs_internal[2], cs_def[1], cs_def[0]};
-            2'b11: CSauto = {cs_internal[3],cs_def[2], cs_def[1], cs_def[0]};
+            2'b00: begin CSauto = {cs_def[3], cs_def[2], cs_def[1], cs_internal[0]};
+                         CShold = {cs_def[3], cs_def[2], cs_def[1], CShold_single};
+                    end
+            2'b01: begin CSauto = {cs_def[3],cs_def[2], cs_internal[1], cs_def[0]};
+                         CShold = {cs_def[3],cs_def[2], CShold_single, cs_def[0]};
+                    end
+            2'b10: begin CSauto = {cs_def[3],cs_internal[2], cs_def[1], cs_def[0]};
+                         CShold = {cs_def[3], CShold_single, cs_def[1], cs_def[0]};
+                    end
+            2'b11: begin CSauto = {cs_internal[3],cs_def[2], cs_def[1], cs_def[0]};
+                         CShold = {CShold_single, cs_def[2], cs_def[1], cs_def[0]};
+                    end
         endcase
-    assign SPICS = cs_mode[1] ? cs_def[3:0]: CSauto;
+    
+    assign CShold_single = (state == CS_INACTIVE);
+    //placeholder before i determine what "disable hardware control means" (leave floating, leave as last set, change to default etc)
+    assign SPICS = cs_mode[0] ? 4'b1111 : CSauto;
+
 
 endmodule
 
@@ -544,7 +577,7 @@ module FIFO_async #(parameter M = 3, N = 8)(
     assign wbinnext = wbin + {3'b0, (winc & ~wfull)};
     assign wgraynext = (wbinnext >> 1) ^ wbinnext;
 
-    assign wfull_val = (wgraynext == {(~wq2_rptr[M-1:M-2]),wq2_rptr[M-2:0]});
+    assign wfull_val = (wgraynext == {(~wq2_rptr[M:M-1]),wq2_rptr[M-2:0]});
 
     always_ff @(posedge wclk, negedge PRESETn)
         if (~PRESETn) wfull <= 1'b0;
