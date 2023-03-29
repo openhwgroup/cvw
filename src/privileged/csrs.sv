@@ -73,8 +73,8 @@ module csrs #(parameter
   logic                    WriteSSCRATCHM, WriteSEPCM;
   logic                    WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
   logic                    WriteSTIMECMPM, WriteSTIMECMPHM;
-  logic [`XLEN-1:0]        SSCRATCH_REGW, STVAL_REGW;
-  logic [4:0]              SCAUSE_REGW;      
+  logic [`XLEN-1:0]        SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
+  // logic [4:0]              ;      
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
@@ -94,7 +94,7 @@ module csrs #(parameter
   flopenr #(`XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
   flopenr #(`XLEN) SSCRATCHreg(clk, reset, WriteSSCRATCHM, CSRWriteValM, SSCRATCH_REGW);
   flopenr #(`XLEN) SEPCreg(clk, reset, WriteSEPCM, NextEPCM, SEPC_REGW); 
-  flopenr #(5)     SCAUSEreg(clk, reset, WriteSCAUSEM, NextCauseM, SCAUSE_REGW);
+  flopenr #(`XLEN) SCAUSEreg(clk, reset, WriteSCAUSEM, {NextCauseM[4], {(`XLEN-5){1'b0}}, NextCauseM[3:0]}, SCAUSE_REGW);
   flopenr #(`XLEN) STVALreg(clk, reset, WriteSTVALM, NextMtvalM, STVAL_REGW);
   if (`VIRTMEM_SUPPORTED)
     flopenr #(`XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
@@ -127,7 +127,7 @@ module csrs #(parameter
       SIE:       CSRSReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW & 12'h222 & MIDELEG_REGW}; // only read supervisor fields
       SSCRATCH:  CSRSReadValM = SSCRATCH_REGW;
       SEPC:      CSRSReadValM = SEPC_REGW;
-      SCAUSE:    CSRSReadValM = {SCAUSE_REGW[4], {(`XLEN-5){1'b0}}, SCAUSE_REGW[3:0]};
+      SCAUSE:    CSRSReadValM = SCAUSE_REGW;
       STVAL:     CSRSReadValM = STVAL_REGW;
       SATP:      if (`VIRTMEM_SUPPORTED & (PrivilegeModeW == `M_MODE | ~STATUS_TVM)) CSRSReadValM = SATP_REGW;
                  else begin
