@@ -28,7 +28,7 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 1
+`define PrintHPMCounters 0
 `define BPRED_LOGGER 0
 `define I_CACHE_ADDR_LOGGER 0
 `define D_CACHE_ADDR_LOGGER 0
