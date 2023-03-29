@@ -28,6 +28,9 @@
 
 main:
 
+    bseti t0, zero, 14  # turn on FPU
+    csrs mstatus, t0
+
     # Test legal instructions not covered elsewhere
     flq ft0, 0(a0)
     flh ft0, 8(a0)
