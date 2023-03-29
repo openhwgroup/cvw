@@ -48,7 +48,8 @@ string tvpaths[] = '{
     "ebu",
     "csrwrites",
     "priv",
-    "ifu"
+    "ifu",
+    "fpu"
   };
 
   string coremark[] = '{
