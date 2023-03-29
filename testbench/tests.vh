@@ -47,7 +47,8 @@ string tvpaths[] = '{
     "ieu",
     "ebu",
     "csrwrites",
-    "priv"
+    "priv",
+    "ifu"
   };
 
   string coremark[] = '{
