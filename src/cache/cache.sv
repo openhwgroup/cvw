@@ -168,14 +168,21 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
   end
   assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
-  assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
 
-  // Merge write data into fetched cache line for store miss
-  for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+  if(!READ_ONLY_CACHE) begin:WriteSelLogic
+    // Merge write data into fetched cache line for store miss
+    for(index = 0; index < LINELEN/8; index++) begin
+       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
+         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+    end
+    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
-   
+  else
+    begin:WriteSelLogic
+       // No need for this mux if the cache does not handle writes.
+       assign LineWriteData = FetchBuffer;
+       assign LineByteMask = '1;
+    end
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
