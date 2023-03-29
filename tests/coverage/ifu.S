@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // ifu.S
 //
-// Written: David_Harris@hmc.edu 28 March 2023
+// Written: sriley@g.hmc.edu 28 March 2023
 //
 // Purpose: Test coverage for IFU
 //
