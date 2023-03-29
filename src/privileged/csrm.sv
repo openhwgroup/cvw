@@ -69,20 +69,21 @@ module csrm #(parameter
   DSCRATCH1 = 12'h7B3,
   // Constants
   ZERO = {(`XLEN){1'b0}},
-  MEDELEG_MASK = ~(ZERO | `XLEN'b1 << 11),
+  MEDELEG_MASK = 16'hB3FF,
   MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
 ) (
   input  logic                    clk, reset, 
   input  logic                    InstrValidNotFlushedM, 
   input  logic                    CSRMWriteM, MTrapM,
   input  logic [11:0]             CSRAdrM,
-  input  logic [`XLEN-1:0]        NextEPCM, NextCauseM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
+  input  logic [`XLEN-1:0]        NextEPCM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
+  input  logic [4:0]              NextCauseM,
   input  logic [`XLEN-1:0]        CSRWriteValM,
   input  logic [11:0]             MIP_REGW, MIE_REGW,
   output logic [`XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
   output logic [`XLEN-1:0]        MEPC_REGW,    
   output logic [31:0]             MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-  output logic [`XLEN-1:0]        MEDELEG_REGW,
+  output logic [15:0]             MEDELEG_REGW,
   output logic [11:0]             MIDELEG_REGW,
   output var logic [7:0]          PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
   output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
@@ -91,8 +92,8 @@ module csrm #(parameter
 );
 
   logic [`XLEN-1:0]               MISA_REGW, MHARTID_REGW;
-  logic [`XLEN-1:0]               MSCRATCH_REGW;
-  logic [`XLEN-1:0]               MCAUSE_REGW, MTVAL_REGW;
+  logic [`XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW;
+  logic [4:0]                     MCAUSE_REGW;
   logic                           WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                           WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                           WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
@@ -150,13 +151,13 @@ module csrm #(parameter
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
   if (`S_SUPPORTED) begin:deleg // DELEG registers should exist
-    flopenr #(`XLEN) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM & MEDELEG_MASK, MEDELEG_REGW);
-    flopenr #(12)    MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
+    flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
+    flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
   end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
 
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
+  flopenr #(5)     MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0; // MTVAL tied to 0 in QEMU configuration
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
@@ -192,13 +193,13 @@ module csrm #(parameter
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
       MTVEC:     CSRMReadValM = MTVEC_REGW;
-      MEDELEG:   CSRMReadValM = MEDELEG_REGW;
+      MEDELEG:   CSRMReadValM = {{(`XLEN-16){1'b0}}, MEDELEG_REGW};
       MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
       MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
       MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
       MEPC:      CSRMReadValM = MEPC_REGW;
-      MCAUSE:    CSRMReadValM = MCAUSE_REGW;
+      MCAUSE:    CSRMReadValM = {MCAUSE_REGW[4], {(`XLEN-5){1'b0}}, MCAUSE_REGW[3:0]};
       MTVAL:     CSRMReadValM = MTVAL_REGW;
       MTINST:    CSRMReadValM = 0; // implemented as trivial zero
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
