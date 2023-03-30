@@ -74,7 +74,6 @@ module csrs #(parameter
   logic                    WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
   logic                    WriteSTIMECMPM, WriteSTIMECMPHM;
   logic [`XLEN-1:0]        SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
-  // logic [4:0]              ;      
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
