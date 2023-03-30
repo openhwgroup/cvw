@@ -96,8 +96,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
   logic                          SelFetchBuffer;
   logic                          CacheEn;
-  logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
-  logic [LINELEN/8-1:0]          LineByteMask, DemuxedByteMask, FetchBufferByteSel;
+  logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
 
   genvar                         index;
@@ -161,15 +160,17 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
-
-  // Adjust byte mask from word to cache line
-  onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
-  for(index = 0; index < 2**LOGCWPL; index++) begin
-    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
-  end
-  assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
-
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
+    logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
+    logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
+
+    // Adjust byte mask from word to cache line
+    onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
+    for(index = 0; index < 2**LOGCWPL; index++) begin
+       assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+    end
+    assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
+
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
        mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
