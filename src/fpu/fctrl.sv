@@ -103,22 +103,14 @@ module fctrl (
         7'b0000111: case(Funct3D)
                       3'b010:                      ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flw
                       3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // fld
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // fld not supported
                       3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flq
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // flq not supported
                       3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flh
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // flh not supported
-                      default:                     ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction
                     endcase
         7'b0100111: case(Funct3D)
                       3'b010:                      ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsw
                       3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsd
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // fsd not supported
                       3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsq
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // fsq not supported
                       3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsh
-                              else                ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // fsh not supported
-                      default:                     ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // non-implemented instruction
                     endcase
         7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0; // fmadd
         7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0; // fmsub
