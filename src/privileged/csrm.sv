@@ -92,8 +92,7 @@ module csrm #(parameter
 );
 
   logic [`XLEN-1:0]               MISA_REGW, MHARTID_REGW;
-  logic [`XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW;
-  logic [4:0]                     MCAUSE_REGW;
+  logic [`XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic                           WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                           WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                           WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
@@ -157,7 +156,7 @@ module csrm #(parameter
 
   flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
   flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenr #(5)     MCAUSEreg(clk, reset, WriteMCAUSEM, NextCauseM, MCAUSE_REGW);
+  flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[4], {(`XLEN-5){1'b0}}, NextCauseM[3:0]}, MCAUSE_REGW);
   if(`QEMU) assign MTVAL_REGW = `XLEN'b0; // MTVAL tied to 0 in QEMU configuration
   else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
@@ -199,7 +198,7 @@ module csrm #(parameter
       MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
       MEPC:      CSRMReadValM = MEPC_REGW;
-      MCAUSE:    CSRMReadValM = {MCAUSE_REGW[4], {(`XLEN-5){1'b0}}, MCAUSE_REGW[3:0]};
+      MCAUSE:    CSRMReadValM = MCAUSE_REGW;
       MTVAL:     CSRMReadValM = MTVAL_REGW;
       MTINST:    CSRMReadValM = 0; // implemented as trivial zero
       MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
