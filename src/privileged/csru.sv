@@ -51,9 +51,8 @@ module csru #(parameter
   logic                    SetOrWriteFFLAGSM;
   
   // Write enables
-  //assign WriteFCSRM = CSRUWriteM & (CSRAdrM == FCSR)  & InstrValidNotFlushedM;
-  assign WriteFRMM = (CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR))  & InstrValidNotFlushedM;
-  assign WriteFFLAGSM = (CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR)) & InstrValidNotFlushedM;
+  assign WriteFRMM =    CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
+  assign WriteFFLAGSM = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR);
 
   // Write Values
   assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
