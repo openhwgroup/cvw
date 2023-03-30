@@ -106,6 +106,7 @@ module csr #(parameter
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
+  logic                    GatedCSRMWriteM, GatedCSRSWriteM, GatedCSRUWriteM;
   logic                    WriteFRMM, WriteFFLAGSM;
   logic [`XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
@@ -200,8 +201,11 @@ module csr #(parameter
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[`XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
   assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
-  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
-  assign CSRUWriteM = CSRWriteM;  
+  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW)  & InstrValidNotFlushedM;
+  assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
+  assign GatedCSRMWriteM = CSRMWriteM & InstrValidNotFlushedM;
+//  assign GatedCSRSWriteM = CSRSWriteM & InstrValidNotFlushedM;
+//  assign GatedCSRUWriteM = CSRUWriteM & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
 

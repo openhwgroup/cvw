@@ -77,7 +77,6 @@ module csrs #(parameter
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
-  // *** can InstrValidNotFlushed be factored out of all these writes into CSRWriteM?
   assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS)  & InstrValidNotFlushedM;
   assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC) & InstrValidNotFlushedM;
   assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH) & InstrValidNotFlushedM;
