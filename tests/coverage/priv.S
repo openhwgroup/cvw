@@ -34,6 +34,10 @@ main:
 
     # Test read to stimecmp fails when MCOUNTEREN_TM is not set
     addi t0, zero, 0
-    csrr t0, stimecmp 
+    csrr t0, stimecmp  
+    li t3, 0x20
+    csrw stimecmp, t3
+
+
 
     j done
