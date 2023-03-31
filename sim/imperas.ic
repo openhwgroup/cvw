@@ -6,7 +6,7 @@
 # Core settings
 --override cpu/unaligned=F
 --override cpu/ignore_non_leaf_DAU=1
---override cpu/wfi_is_nop=T
+#--override cpu/wfi_is_nop=T
 --override cpu/mimpid=0x100
 --override cpu/misa_Extensions_mask=0x0
 
@@ -49,7 +49,7 @@
 
 # Add Imperas simulator application instruction tracing
 --override cpu/show_c_prefix=T
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 10500000
+--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 800000
 
 # Exceptions and pagetables debug
 --override cpu/debugflags=6
