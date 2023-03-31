@@ -28,8 +28,10 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 1
-`define BPRED_LOGGER 1
+`define PrintHPMCounters 0
+`define BPRED_LOGGER 0
+`define I_CACHE_ADDR_LOGGER 0
+`define D_CACHE_ADDR_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
@@ -150,7 +152,7 @@ logic [3:0] dummy;
   string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
   integer outputFilePointer;
 
-  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
 
   logic        SDCCLK;
@@ -167,9 +169,10 @@ logic [3:0] dummy;
   logic 	   InitializingMemories;
   integer 	   ResetCount, ResetThreshold;
   logic 	   InReset;
-
+  logic        Begin;
+  
   // instantiate device to be tested
-  assign GPIOPinsIn = 0;
+  assign GPIOIN = 0;
   assign UARTSin = 1;
 
   if(`EXT_MEM_SUPPORTED) begin
@@ -199,7 +202,7 @@ logic [3:0] dummy;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
@@ -415,7 +418,7 @@ logic [3:0] dummy;
   if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer HPMCindex;
 	logic 	StartSampleFirst;
-	logic 	StartSampleDelayed;
+	logic 	StartSampleDelayed, BeginDelayed;
 	logic 	EndSampleFirst, EndSampleDelayed;
 	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
 
@@ -474,8 +477,11 @@ logic [3:0] dummy;
 	  assign StartSampleFirst = InReset;
 	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
 	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-
 	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+
+	  flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
+	  assign Begin = StartSampleFirst & ~ BeginDelayed;
+
 	end
 	
     always @(negedge clk) begin
@@ -526,7 +532,7 @@ logic [3:0] dummy;
 
 
   // initialize the branch predictor
-  if (`BPRED_SUPPORTED == 1) begin
+  if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
 	always @(*) begin
@@ -546,10 +552,66 @@ logic [3:0] dummy;
 		end
 	  end
 	end
+end
+
+
+  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin
+    int    file;
+	string LogFile;
+	logic  resetD, resetEdge;
+    logic  Enable;
+    assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+	flop #(1) ResetDReg(clk, reset, resetD);
+	assign resetEdge = ~reset & resetD;
+    initial begin
+	  LogFile = $psprintf("ICache.log");
+      file = $fopen(LogFile, "w");
+	  $fwrite(file, "BEGIN %s\n", memfilename);
+	end
+    string HitMissString;
+    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" : "M";
+    always @(posedge clk) begin
+	  if(resetEdge) $fwrite(file, "TRAIN\n");
+	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(Enable) begin  // only log i cache reads
+	    $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
+	  end
+	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    end
   end
 
-  
-  if (`BPRED_SUPPORTED == 1) begin
+  if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin
+    int    file;
+	string LogFile;
+	logic  resetD, resetEdge;
+    string HitMissString;
+	flop #(1) ResetDReg(clk, reset, resetD);
+	assign resetEdge = ~reset & resetD;
+    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" : "M";
+    initial begin
+	  LogFile = $psprintf("DCache.log");
+      file = $fopen(LogFile, "w");
+	  $fwrite(file, "BEGIN %s\n", memfilename);
+	end
+    always @(posedge clk) begin
+	  if(resetEdge) $fwrite(file, "TRAIN\n");
+	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
+	  if(~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+        if(dut.core.lsu.bus.dcache.CacheRWM == 2'b10) begin
+	      $fwrite(file, "%h R %s\n", dut.core.lsu.PAdrM, HitMissString);
+        end else if (dut.core.lsu.bus.dcache.CacheRWM == 2'b01) begin
+	      $fwrite(file, "%h W %s\n", dut.core.lsu.PAdrM, HitMissString);
+        end else if (dut.core.lsu.bus.dcache.CacheAtomicM[1] == 1'b1) begin // *** This may change
+	      $fwrite(file, "%h A %s\n", dut.core.lsu.PAdrM, HitMissString);
+        end else if (dut.core.lsu.bus.dcache.FlushDCache) begin
+	      $fwrite(file, "%h F %s\n", dut.core.lsu.PAdrM, HitMissString);
+        end
+	  end
+	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    end
+  end
+
+  if (`BPRED_SUPPORTED) begin
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;

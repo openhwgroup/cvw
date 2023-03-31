@@ -29,49 +29,49 @@
 `include "wally-config.vh"
 
 module fdivsqrt(
-  input  logic clk, 
-  input  logic reset, 
+  input  logic                clk, 
+  input  logic                reset, 
   input  logic [`FMTBITS-1:0] FmtE,
-  input  logic XsE,
-  input  logic [`NF:0] XmE, YmE,
-  input  logic [`NE-1:0] XeE, YeE,
-  input  logic XInfE, YInfE, 
-  input  logic XZeroE, YZeroE, 
-  input  logic XNaNE, YNaNE, 
-  input  logic FDivStartE, IDivStartE,
-  input  logic StallM,
-  input  logic FlushE,
-  input  logic SqrtE, SqrtM,
-	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	input  logic [2:0] 	Funct3E, Funct3M,
-	input  logic IntDivE, W64E,
-  output logic DivStickyM,
-  output logic FDivBusyE, IFDivStartE, FDivDoneE,
-  output logic [`NE+1:0] QeM,
-  output logic [`DIVb:0] QmM,
-  output logic [`XLEN-1:0] FIntDivResultM
+  input  logic                XsE,
+  input  logic [`NF:0]        XmE, YmE,
+  input  logic [`NE-1:0]      XeE, YeE,
+  input  logic                XInfE, YInfE, 
+  input  logic                XZeroE, YZeroE, 
+  input  logic                XNaNE, YNaNE, 
+  input  logic                FDivStartE, IDivStartE,
+  input  logic                StallM,
+  input  logic                FlushE,
+  input  logic                SqrtE, SqrtM,
+  input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic [2:0]          Funct3E, Funct3M,
+  input  logic                IntDivE, W64E,
+  output logic                DivStickyM,
+  output logic                FDivBusyE, IFDivStartE, FDivDoneE,
+  output logic [`NE+1:0]      QeM,
+  output logic [`DIVb:0]      QmM,
+  output logic [`XLEN-1:0]    FIntDivResultM
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
   // Computes X/Y, sqrt(X), A/B, or A%B
 
-  logic [`DIVb+3:0] WS, WC;           // Partial remainder components
-  logic [`DIVb+3:0] X;                // Iterator Initial Value (from dividend)
-  logic [`DIVb-1:0] DPreproc, D;      // Iterator Divisor
-  logic [`DIVb:0]   FirstU, FirstUM;  // Intermediate result values
-  logic [`DIVb+1:0] FirstC;           // Step tracker
-  logic Firstun;                      // Quotient selection
-  logic WZeroE;                       // Early termination flag
-  logic SpecialCaseM;                 // Divide by zero, square root of negative, etc.
-  logic DivStartE;                    // Enable signal for flops during stall
-
-  // Integer div/rem signals
-  logic BZeroM;                       // Denominator is zero
-  logic IntDivM;                         // Integer operation
-  logic [`DIVBLEN:0] nE, nM, mM;      // Shift amounts
-  logic NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
-  logic [`XLEN-1:0] AM;               // Original Numerator for postprocessor
-  logic ISpecialCaseE;                // Integer div/remainder special cases
+  logic [`DIVb+3:0]           WS, WC;                       // Partial remainder components
+  logic [`DIVb+3:0]           X;                            // Iterator Initial Value (from dividend)
+  logic [`DIVb-1:0]           DPreproc, D;                  // Iterator Divisor
+  logic [`DIVb:0]             FirstU, FirstUM;              // Intermediate result values
+  logic [`DIVb+1:0]           FirstC;                       // Step tracker
+  logic                       Firstun;                      // Quotient selection
+  logic                       WZeroE;                       // Early termination flag
+  logic                       SpecialCaseM;                 // Divide by zero, square root of negative, etc.
+  logic                       DivStartE;                    // Enable signal for flops during stall
+                                                            
+  // Integer div/rem signals                                
+  logic                       BZeroM;                       // Denominator is zero
+  logic                       IntDivM;                      // Integer operation
+  logic [`DIVBLEN:0]          nE, nM, mM;                   // Shift amounts
+  logic                       NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
+  logic [`XLEN-1:0]           AM;                           // Original Numerator for postprocessor
+  logic                       ISpecialCaseE;                // Integer div/remainder special cases
 
   fdivsqrtpreproc fdivsqrtpreproc(                        // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE), 

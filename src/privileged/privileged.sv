@@ -34,86 +34,86 @@ module privileged (
   input  logic             StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW, 
   // CSR Reads and Writes, and values needed for traps
-  input  logic  CSRReadM, CSRWriteM,         // Read or write CSRs
-  input  logic [`XLEN-1:0] SrcAM,                                     // GPR register to write
-  input  logic [31:0]      InstrM,                                    // Instruction
-  input  logic [31:0]      InstrOrigM,                                // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [`XLEN-1:0] IEUAdrM,                                   // address from IEU
-  input  logic [`XLEN-1:0] PCM, PC2NextF,                             // program counter, next PC going to trap/return PC logic
-  // control signals
-  input  logic             InstrValidM,                               // Current instruction is valid (not flushed)
-  input  logic             CommittedM, CommittedF,                    // current instruction is using bus; don't interrupt
-  input  logic             PrivilegedM,                               // privileged instruction
-  // processor events for performance counter logging
-  input  logic             FRegWriteM,                                // instruction will write floating-point registers
-  input  logic             LoadStallD,                                // load instruction is stalling
-  input  logic             StoreStallD,                               // store instruction is stalling
-  input  logic             ICacheStallF,                              // I cache stalled
-  input  logic             DCacheStallM,                              // D cache stalled
-  input  logic 		       BPDirPredWrongM,                           // branch predictor guessed wrong direction
-  input  logic 		       BTAWrongM,                           // branch predictor guessed wrong target
-  input  logic 		       RASPredPCWrongM,                           // return adddress stack guessed wrong target
-  input  logic 		       IClassWrongM,                              // branch predictor guessed wrong instruction class
-  input  logic             BPWrongM,                                  // branch predictor is wrong
-  input  logic [3:0]       InstrClassM,                               // actual instruction class
-  input  logic             DCacheMiss,                                // data cache miss
-  input  logic             DCacheAccess,                              // data cache accessed (hit or miss)
-  input  logic             ICacheMiss,                                // instruction cache miss
-  input  logic             ICacheAccess,                              // instruction cache access
-  input  logic             DivBusyE,                                  // integer divide busy
-  input  logic             FDivBusyE,                                 // floating point divide busy
-  // fault sources
-  input  logic             InstrAccessFaultF,                         // instruction access fault
-  input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,    // load or store access fault
-  input  logic             HPTWInstrAccessFaultM,                     // hardware page table access fault while fetching instruction PTE
-  input  logic             InstrPageFaultF,                           // page faults
-  input  logic             LoadPageFaultM, StoreAmoPageFaultM,        // page faults
-  input  logic             InstrMisalignedFaultM,                     // misaligned instruction fault
-  input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM,  // misaligned data fault
-  input  logic             IllegalIEUFPUInstrD,                       // illegal instruction from IEU or FPU
-  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,       // interrupt sources
-  input  logic [63:0]      MTIME_CLINT,                               // timer value from CLINT
-  input  logic [4:0]       SetFflagsM,                                // set FCSR flags from FPU
-  input  logic             SelHPTW,                                   // HPTW in use.  Causes system to use S-mode endianness for accesses
-  // CSR outputs
-  output logic [`XLEN-1:0] CSRReadValW,                               // Value read from CSR
-  output logic [1:0]       PrivilegeModeW,                            // current privilege mode
-  output logic [`XLEN-1:0] SATP_REGW,                                 // supervisor address translation register
-  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,       // status register bits
-  output logic [1:0]       STATUS_MPP, STATUS_FS,                     // status register bits
-  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],       // PMP configuration entries to MMU
-  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0], // PMP address entries to MMU
-  output logic [2:0]       FRM_REGW,                                  // FPU rounding mode
-  // PC logic output in privileged unit
-  output logic [`XLEN-1:0] UnalignedPCNextF,                          // Next PC from trap/return PC logic
-  // control outputs  
-  output logic             RetM, TrapM,                               // return instruction, or trap
-  output logic             sfencevmaM,                                // sfence.vma instruction
-  input  logic             InvalidateICacheM,                                    // fence instruction
-  output logic             BigEndianM,                                // Use big endian in current privilege mode
-  // Fault outputs
-  output logic             BreakpointFaultM, EcallFaultM,             // breakpoint and Ecall traps should retire
-  output logic             WFIStallM                                  // Stall in Memory stage for WFI until interrupt or timeout
-);
-
-  logic [`LOG_XLEN-1:0]    CauseM;                                    // trap cause
-  logic [`XLEN-1:0]        MEDELEG_REGW;                              // exception delegation CSR
-  logic [11:0]             MIDELEG_REGW;                              // interrupt delegation CSR
-  logic                    sretM, mretM;                              // supervisor / machine return instruction
-  logic                    IllegalCSRAccessM;                         // Illegal access to CSR
-  logic                    IllegalIEUFPUInstrM;                       // Illegal IEU or FPU instruction, delayed to Mem stage
-  logic                    InstrPageFaultM;                           // Instruction page fault, delayed to Mem stage
-  logic                    InstrAccessFaultM;                         // Instruction access fault, delayed to Mem stages
-  logic                    IllegalInstrFaultM;                        // Illegal instruction fault
-  logic                    STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM; // Status bits needed within privileged unit
-  logic                    STATUS_MIE, STATUS_SIE;                    // status bits: interrupt enables
-  logic [11:0]             MIP_REGW, MIE_REGW;                        // interrupt pending and enable bits
-  logic [1:0]              NextPrivilegeModeM;                        // next privilege mode based on trap or return
-  logic                    DelegateM;                                 // trap should be delegated
-  logic                    wfiM;                                      // wait for interrupt instruction
-  logic                    IntPendingM;                               // interrupt is pending, even if not enabled.  ends wfi
-  logic 				   InterruptM;                                // interrupt occuring
-  logic                    ExceptionM;                                // Memory stage instruction caused a fault
+  input  logic             CSRReadM, CSRWriteM,                            // Read or write CSRs
+  input  logic [`XLEN-1:0] SrcAM,                                          // GPR register to write
+  input  logic [31:0]      InstrM,                                         // Instruction
+  input  logic [31:0]      InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
+  input  logic [`XLEN-1:0] IEUAdrM,                                        // address from IEU
+  input  logic [`XLEN-1:0] PCM, PC2NextF,                                  // program counter, next PC going to trap/return PC logic
+  // control signals                                                       
+  input  logic             InstrValidM,                                    // Current instruction is valid (not flushed)
+  input  logic             CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
+  input  logic             PrivilegedM,                                    // privileged instruction
+  // processor events for performance counter logging                      
+  input  logic             FRegWriteM,                                     // instruction will write floating-point registers
+  input  logic             LoadStallD,                                     // load instruction is stalling
+  input  logic             StoreStallD,                                    // store instruction is stalling
+  input  logic             ICacheStallF,                                   // I cache stalled
+  input  logic             DCacheStallM,                                   // D cache stalled
+  input  logic             BPDirPredWrongM,                                // branch predictor guessed wrong direction
+  input  logic             BTAWrongM,                                      // branch predictor guessed wrong target
+  input  logic             RASPredPCWrongM,                                // return adddress stack guessed wrong target
+  input  logic             IClassWrongM,                                   // branch predictor guessed wrong instruction class
+  input  logic             BPWrongM,                                       // branch predictor is wrong
+  input  logic [3:0]       InstrClassM,                                    // actual instruction class
+  input  logic             DCacheMiss,                                     // data cache miss
+  input  logic             DCacheAccess,                                   // data cache accessed (hit or miss)
+  input  logic             ICacheMiss,                                     // instruction cache miss
+  input  logic             ICacheAccess,                                   // instruction cache access
+  input  logic             DivBusyE,                                       // integer divide busy
+  input  logic             FDivBusyE,                                      // floating point divide busy
+  // fault sources                                                         
+  input  logic             InstrAccessFaultF,                              // instruction access fault
+  input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,         // load or store access fault
+  input  logic             HPTWInstrAccessFaultM,                          // hardware page table access fault while fetching instruction PTE
+  input  logic             InstrPageFaultF,                                // page faults
+  input  logic             LoadPageFaultM, StoreAmoPageFaultM,             // page faults
+  input  logic             InstrMisalignedFaultM,                          // misaligned instruction fault
+  input  logic             LoadMisalignedFaultM, StoreAmoMisalignedFaultM, // misaligned data fault
+  input  logic             IllegalIEUFPUInstrD,                            // illegal instruction from IEU or FPU
+  input  logic             MTimerInt, MExtInt, SExtInt, MSwInt,            // interrupt sources
+  input  logic [63:0]      MTIME_CLINT,                                    // timer value from CLINT
+  input  logic [4:0]       SetFflagsM,                                     // set FCSR flags from FPU
+  input  logic             SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
+  // CSR outputs                                                           
+  output logic [`XLEN-1:0] CSRReadValW,                                    // Value read from CSR
+  output logic [1:0]       PrivilegeModeW,                                 // current privilege mode
+  output logic [`XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
+  output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,            // status register bits
+  output logic [1:0]       STATUS_MPP, STATUS_FS,                          // status register bits
+  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],            // PMP configuration entries to MMU
+  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],   // PMP address entries to MMU
+  output logic [2:0]       FRM_REGW,                                       // FPU rounding mode
+  // PC logic output in privileged unit                                    
+  output logic [`XLEN-1:0] UnalignedPCNextF,                               // Next PC from trap/return PC logic
+  // control outputs                                                       
+  output logic             RetM, TrapM,                                    // return instruction, or trap
+  output logic             sfencevmaM,                                     // sfence.vma instruction
+  input  logic             InvalidateICacheM,                                         // fence instruction
+  output logic             BigEndianM,                                     // Use big endian in current privilege mode
+  // Fault outputs                                                         
+  output logic             BreakpointFaultM, EcallFaultM,                  // breakpoint and Ecall traps should retire
+  output logic             WFIStallM                                       // Stall in Memory stage for WFI until interrupt or timeout
+);                                                                         
+                                                                           
+  logic [3:0]              CauseM;                                         // trap cause
+  logic [15:0]             MEDELEG_REGW;                                   // exception delegation CSR
+  logic [11:0]             MIDELEG_REGW;                                   // interrupt delegation CSR
+  logic                    sretM, mretM;                                   // supervisor / machine return instruction
+  logic                    IllegalCSRAccessM;                              // Illegal access to CSR
+  logic                    IllegalIEUFPUInstrM;                            // Illegal IEU or FPU instruction, delayed to Mem stage
+  logic                    InstrPageFaultM;                                // Instruction page fault, delayed to Mem stage
+  logic                    InstrAccessFaultM;                              // Instruction access fault, delayed to Mem stages
+  logic                    IllegalInstrFaultM;                             // Illegal instruction fault
+  logic                    STATUS_SPP, STATUS_TSR, STATUS_TW, STATUS_TVM;  // Status bits needed within privileged unit
+  logic                    STATUS_MIE, STATUS_SIE;                         // status bits: interrupt enables
+  logic [11:0]             MIP_REGW, MIE_REGW;                             // interrupt pending and enable bits
+  logic [1:0]              NextPrivilegeModeM;                             // next privilege mode based on trap or return
+  logic                    DelegateM;                                      // trap should be delegated
+  logic                    wfiM;                                           // wait for interrupt instruction
+  logic                    IntPendingM;                                    // interrupt is pending, even if not enabled.  ends wfi
+  logic                    InterruptM;                                     // interrupt occuring
+  logic                    ExceptionM;                                     // Memory stage instruction caused a fault
  
   // track the current privilege level
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,

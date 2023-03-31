@@ -26,7 +26,7 @@
 
 module rom1p1r_128x32( 
   input  logic          CLK, 
-  input  logic 	        CEB, 
+  input  logic           CEB, 
   input  logic [6:0]    A, 
   output logic [31:0]   Q
 );

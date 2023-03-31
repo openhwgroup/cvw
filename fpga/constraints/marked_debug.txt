@@ -120,8 +120,6 @@ ebu/ebu.sv: logic     HCLK
 ebu/ebu.sv: logic      HREADY
 ebu/ebu.sv: logic      HRESP
 ebu/ebu.sv: logic      HADDR
-ebu/ebu.sv: logic      HWDATA
-ebu/ebu.sv: logic      HWSTRB
 ebu/ebu.sv: logic     HWRITE
 ebu/ebu.sv: logic      HSIZE
 ebu/ebu.sv: logic      HBURST
