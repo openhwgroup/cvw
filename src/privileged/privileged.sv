@@ -96,8 +96,8 @@ module privileged (
   output logic             WFIStallM                                       // Stall in Memory stage for WFI until interrupt or timeout
 );                                                                         
                                                                            
-  logic [`LOG_XLEN-1:0]    CauseM;                                         // trap cause
-  logic [`XLEN-1:0]        MEDELEG_REGW;                                   // exception delegation CSR
+  logic [3:0]              CauseM;                                         // trap cause
+  logic [15:0]             MEDELEG_REGW;                                   // exception delegation CSR
   logic [11:0]             MIDELEG_REGW;                                   // interrupt delegation CSR
   logic                    sretM, mretM;                                   // supervisor / machine return instruction
   logic                    IllegalCSRAccessM;                              // Illegal access to CSR
