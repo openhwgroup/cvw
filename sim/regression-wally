@@ -49,6 +49,7 @@ configs = [
 ]
 def getBuildrootTC(boot):
     INSTR_LIMIT = 4000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
+#    INSTR_LIMIT = 8000000 # multiple of 100000; 4M is interesting because it gets into the kernel and enabling VM
     MAX_EXPECTED = 246000000 # *** TODO: replace this with a search for the login prompt.
     if boot:
         name="buildrootboot"
@@ -56,7 +57,12 @@ def getBuildrootTC(boot):
         BRgrepstr="WallyHostname login:"
     else:
         name="buildroot"
-        BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
+        if (coverage):
+            print( "buildroot coverage")
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
+        else:
+            print( "buildroot no coverage")
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
@@ -130,14 +136,11 @@ tests64gc = ["arch64f", "arch64d", "arch64i", "arch64zba", "arch64zbb", "arch64z
              "arch64priv", "arch64c",  "arch64m", "arch64zi", "wally64a", "wally64periph", "wally64priv"] 
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
+#    tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", 
     tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
                  "arch64zi", "wally64a", "wally64periph", "wally64priv", 
                  "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
                  "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
-#    tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", 
-#                 "arch64zi", "wally64a", "wally64periph", "wally64priv", 
-#                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
-#                 "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -202,7 +205,7 @@ def main():
         configs=[getBuildrootTC(boot=True)]
     elif '-coverage' in sys.argv:
         TIMEOUT_DUR = 20*60 # seconds       
-        #configs.append(getBuildrootTC(boot=False))
+        configs.append(getBuildrootTC(boot=False))
         os.system('rm cov/*.ucdb')
     else:
         TIMEOUT_DUR = 10*60 # seconds
