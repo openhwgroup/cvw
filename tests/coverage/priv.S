@@ -36,4 +36,30 @@ main:
     addi t0, zero, 0
     csrr t0, stimecmp 
 
+    # CSR coverage
+    csrw scause, zero
+    csrw stval, zero
+    csrw scounteren, zero
+    csrw satp, zero
+
+    # satp write with mstatus.TVM = 1
+    bseti t0, zero, 20 
+    csrs mstatus, t0
+    csrw satp, zero
+
+    # STIMECMP from S mode
+    li t0, 1
+    ecall   # enter S-mode
+    csrw stimecmp, zero
+    li t0, 3
+    ecall   # return to M-mode
+    csrsi mcounteren, 2 # mcounteren_tm = 1
+    li t0, 1
+    ecall   # supervisor mode again
+    csrw stimecmp, zero
+    li t0, 3
+    ecall  # machine mode again
+
+
+
     j done
