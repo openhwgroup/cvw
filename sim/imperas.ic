@@ -10,9 +10,14 @@
 --override cpu/mimpid=0x100
 --override cpu/misa_Extensions_mask=0x0
 
-# THIS NEEDS FIXING to 16
 --override cpu/PMP_registers=16
 --override cpu/PMP_undefined=T
+
+# Wally-specific non-default configuraiton
+--override refRoot/cpu/Sstc=T 
+# Zba doesn't seem to exist - Lee is finding the name
+#--override refRoot/cpu/Zba=T 
+
 
 # Illegal instruction should not contain the bit pattern
 # illegal pmp read contained this
@@ -47,8 +52,11 @@
 #-override  refRoot/cpu/cv/cover=basic
 #-override  refRoot/cpu/cv/extensions=RV32I
 
+
+
 # Add Imperas simulator application instruction tracing
 --override cpu/show_c_prefix=T
+
 --trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 800000
 
 # Exceptions and pagetables debug
