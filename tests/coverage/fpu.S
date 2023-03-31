@@ -28,7 +28,7 @@
 
 main:
 
-    bseti t0, zero, 14  # turn on FPU
+    #bseti t0, zero, 14  # turn on FPU
     csrs mstatus, t0
 
     # Test legal instructions not covered elsewhere
@@ -36,8 +36,12 @@ main:
     flh ft0, 8(a0)
     fsq ft0, 0(a0)
     fsh ft0, 8(a0)
+
+    # Tests for fpu/fctrl.sv
+    ## The following cover lines 149 to 154
     fcvt.h.s ft1, ft0
     fcvt.q.s ft2, ft0
+    ## The following cover lines 179 to 204
     fcvt.h.w ft3, a0
     fcvt.h.wu ft3, a0
     fcvt.h.l ft3, a0
@@ -55,7 +59,6 @@ main:
     fcvt.l.q a0, ft3
     fcvt.lu.q a0, ft3
 
- 
     # Test illegal instructions are detected
     .word 0x00000007 // illegal floating-point load (bad Funct3)
     .word 0x00000027 // illegal floating-point store (bad Funct3)
