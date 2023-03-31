@@ -90,6 +90,7 @@ module wallyTracer(rvviTrace rvvi);
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
 
   logic valid;
+  int csrid;
 
   always_comb begin
 	// Since we are detected the CSR change by comparing the old value we need to
@@ -116,7 +117,6 @@ module wallyTracer(rvviTrace rvvi);
         pmp |= testbench.dut.core.priv.priv.csr.csrm.PMPCFG_ARRAY_REGW[i8+7] << 56;
         
         csrid = 12'h3A0 + i4;
-        //if (CSRArray[csrid] != pmp) $display("Info: %m pmpcfg%0d [%03X] %016X -> %016X", i4, csrid, CSRArray[csrid], pmp);
         CSRArray[csrid] = pmp;
       end
 
@@ -125,7 +125,6 @@ module wallyTracer(rvviTrace rvvi);
         pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
         
         csrid = 12'h3B0 + i;
-        //if (CSRArray[csrid] != pmp) $display("Info: %m Change pmpaddr%0d [%03X] %016X -> %016X", i, csrid, CSRArray[csrid], pmp);
         CSRArray[csrid] = pmp;
       end
       
@@ -163,11 +162,22 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
 	  CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
 	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
+	  CSRArray[12'h14D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW;
 	  // user CSRs
 	  CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
 	  CSRArray[12'h002] = testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW;
 	  CSRArray[12'h003] = {testbench.dut.core.priv.priv.csr.csru.csru.FRM_REGW, testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW};
+	
 	end else begin // hold the old value if the pipeline is stalled.
+
+      // PMP CFG 3A0 to 3AF
+      for(csrid='h3A0; csrid<='h3AF; csrid++)
+          CSRArray[csrid] = CSRArrayOld[csrid];
+      
+      // PMP ADDR 3B0 to 3EF
+      for(csrid='h3B0; csrid<='h3EF; csrid++)
+          CSRArray[csrid] = CSRArrayOld[csrid];
+
 	  CSRArray[12'h300] = CSRArrayOld[12'h300];
 	  CSRArray[12'h310] = CSRArrayOld[12'h310];
 	  CSRArray[12'h305] = CSRArrayOld[12'h305];
@@ -202,6 +212,7 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h143] = CSRArrayOld[12'h143];
 	  CSRArray[12'h142] = CSRArrayOld[12'h142];
 	  CSRArray[12'h144] = CSRArrayOld[12'h144];
+	  CSRArray[12'h14D] = CSRArrayOld[12'h14D];
 	  // user CSRs
 	  CSRArray[12'h001] = CSRArrayOld[12'h001];
 	  CSRArray[12'h002] = CSRArrayOld[12'h002];
@@ -209,7 +220,7 @@ module wallyTracer(rvviTrace rvvi);
 	end	  
   end
 
-  genvar 							index;
+  genvar index;
   assign rf[0] = '0;
   for(index = 1; index < NUMREGS; index += 1) 
 	assign rf[index] = testbench.dut.core.ieu.dp.regf.rf[index];
@@ -286,27 +297,181 @@ module wallyTracer(rvviTrace rvvi);
   // record previous csr value.
   integer index4;
   always_ff @(posedge clk) begin
-	for (index4 = 0; index4 < `NUM_CSRS; index4 += 1) begin
-// IMPERAS
-	  //CSR_W[index4] = (CSRArrayOld[index4] != CSRArray[index4]) ? 1 : 0;
-	  CSRArrayOld[index4] = CSRArray[index4];
-	end
+    CSRArrayOld[12'h300] = CSRArray[12'h300];
+    CSRArrayOld[12'h310] = CSRArray[12'h310];
+    CSRArrayOld[12'h305] = CSRArray[12'h305];
+    CSRArrayOld[12'h341] = CSRArray[12'h341];
+    CSRArrayOld[12'h306] = CSRArray[12'h306];
+    CSRArrayOld[12'h320] = CSRArray[12'h320];
+    CSRArrayOld[12'h302] = CSRArray[12'h302];
+    CSRArrayOld[12'h303] = CSRArray[12'h303];
+    CSRArrayOld[12'h344] = CSRArray[12'h344];
+    CSRArrayOld[12'h304] = CSRArray[12'h304];
+    CSRArrayOld[12'h301] = CSRArray[12'h301];
+    CSRArrayOld[12'hF14] = CSRArray[12'hF14];
+    CSRArrayOld[12'h340] = CSRArray[12'h340];
+    CSRArrayOld[12'h342] = CSRArray[12'h342];
+    CSRArrayOld[12'h343] = CSRArray[12'h343];
+    CSRArrayOld[12'hF11] = CSRArray[12'hF11];
+    CSRArrayOld[12'hF12] = CSRArray[12'hF12];
+    CSRArrayOld[12'hF13] = CSRArray[12'hF13];
+    CSRArrayOld[12'hF15] = CSRArray[12'hF15];
+    CSRArrayOld[12'h34A] = CSRArray[12'h34A];
+    // MCYCLE and MINSTRET
+    CSRArrayOld[12'hB00] = CSRArray[12'hB00];
+    CSRArrayOld[12'hB02] = CSRArray[12'hB02];
+    // supervisor CSRs
+    CSRArrayOld[12'h100] = CSRArray[12'h100];
+    CSRArrayOld[12'h104] = CSRArray[12'h104];
+    CSRArrayOld[12'h105] = CSRArray[12'h105];
+    CSRArrayOld[12'h141] = CSRArray[12'h141];
+    CSRArrayOld[12'h106] = CSRArray[12'h106];
+    CSRArrayOld[12'h180] = CSRArray[12'h180];
+    CSRArrayOld[12'h140] = CSRArray[12'h140];
+    CSRArrayOld[12'h143] = CSRArray[12'h143];
+    CSRArrayOld[12'h142] = CSRArray[12'h142];
+    CSRArrayOld[12'h144] = CSRArray[12'h144];
+    CSRArrayOld[12'h14D] = CSRArray[12'h14D];
+    // user CSRs
+    CSRArrayOld[12'h001] = CSRArray[12'h001];
+    CSRArrayOld[12'h002] = CSRArray[12'h002];
+    CSRArrayOld[12'h003] = CSRArray[12'h003];
+    
+    // PMP CFG 3A0 to 3AF
+    for(index4='h3A0; index4<='h3AF; index4++)
+        CSRArrayOld[index4] = CSRArray[index4];
+    
+    // PMP ADDR 3B0 to 3EF
+    for(index4='h3B0; index4<='h3EF; index4++)
+        CSRArrayOld[index4] = CSRArray[index4];
   end
   
   // check for csr value change.
-  genvar index5;
-  for(index5 = 0; index5 < `NUM_CSRS; index5 += 1) begin
-	// CSR_W should only indicate the change when the Writeback stage is not stalled and valid.
-    assign #2 CSR_W[index5] = (CSRArrayOld[index5] != CSRArray[index5]) ? 1 : 0;
-    assign rvvi.csr_wb[0][0][index5] = CSR_W[index5];
-    assign rvvi.csr[0][0][index5]    = CSRArray[index5];
+  assign #2 CSR_W[12'h300] = (CSRArrayOld[12'h300] != CSRArray[12'h300]) ? 1 : 0;
+  assign #2 CSR_W[12'h310] = (CSRArrayOld[12'h310] != CSRArray[12'h310]) ? 1 : 0;
+  assign #2 CSR_W[12'h305] = (CSRArrayOld[12'h305] != CSRArray[12'h305]) ? 1 : 0;
+  assign #2 CSR_W[12'h341] = (CSRArrayOld[12'h341] != CSRArray[12'h341]) ? 1 : 0;
+  assign #2 CSR_W[12'h306] = (CSRArrayOld[12'h306] != CSRArray[12'h306]) ? 1 : 0;
+  assign #2 CSR_W[12'h320] = (CSRArrayOld[12'h320] != CSRArray[12'h320]) ? 1 : 0;
+  assign #2 CSR_W[12'h302] = (CSRArrayOld[12'h302] != CSRArray[12'h302]) ? 1 : 0;
+  assign #2 CSR_W[12'h303] = (CSRArrayOld[12'h303] != CSRArray[12'h303]) ? 1 : 0;
+  assign #2 CSR_W[12'h344] = (CSRArrayOld[12'h344] != CSRArray[12'h344]) ? 1 : 0;
+  assign #2 CSR_W[12'h304] = (CSRArrayOld[12'h304] != CSRArray[12'h304]) ? 1 : 0;
+  assign #2 CSR_W[12'h301] = (CSRArrayOld[12'h301] != CSRArray[12'h301]) ? 1 : 0;
+  assign #2 CSR_W[12'hF14] = (CSRArrayOld[12'hF14] != CSRArray[12'hF14]) ? 1 : 0;
+  assign #2 CSR_W[12'h340] = (CSRArrayOld[12'h340] != CSRArray[12'h340]) ? 1 : 0;
+  assign #2 CSR_W[12'h342] = (CSRArrayOld[12'h342] != CSRArray[12'h342]) ? 1 : 0;
+  assign #2 CSR_W[12'h343] = (CSRArrayOld[12'h343] != CSRArray[12'h343]) ? 1 : 0;
+  assign #2 CSR_W[12'hF11] = (CSRArrayOld[12'hF11] != CSRArray[12'hF11]) ? 1 : 0;
+  assign #2 CSR_W[12'hF12] = (CSRArrayOld[12'hF12] != CSRArray[12'hF12]) ? 1 : 0;
+  assign #2 CSR_W[12'hF13] = (CSRArrayOld[12'hF13] != CSRArray[12'hF13]) ? 1 : 0;
+  assign #2 CSR_W[12'hF15] = (CSRArrayOld[12'hF15] != CSRArray[12'hF15]) ? 1 : 0;
+  assign #2 CSR_W[12'h34A] = (CSRArrayOld[12'h34A] != CSRArray[12'h34A]) ? 1 : 0;
+  assign #2 CSR_W[12'hB00] = (CSRArrayOld[12'hB00] != CSRArray[12'hB00]) ? 1 : 0;
+  assign #2 CSR_W[12'hB02] = (CSRArrayOld[12'hB02] != CSRArray[12'hB02]) ? 1 : 0;
+  assign #2 CSR_W[12'h100] = (CSRArrayOld[12'h100] != CSRArray[12'h100]) ? 1 : 0;
+  assign #2 CSR_W[12'h104] = (CSRArrayOld[12'h104] != CSRArray[12'h104]) ? 1 : 0;
+  assign #2 CSR_W[12'h105] = (CSRArrayOld[12'h105] != CSRArray[12'h105]) ? 1 : 0;
+  assign #2 CSR_W[12'h141] = (CSRArrayOld[12'h141] != CSRArray[12'h141]) ? 1 : 0;
+  assign #2 CSR_W[12'h106] = (CSRArrayOld[12'h106] != CSRArray[12'h106]) ? 1 : 0;
+  assign #2 CSR_W[12'h180] = (CSRArrayOld[12'h180] != CSRArray[12'h180]) ? 1 : 0;
+  assign #2 CSR_W[12'h140] = (CSRArrayOld[12'h140] != CSRArray[12'h140]) ? 1 : 0;
+  assign #2 CSR_W[12'h143] = (CSRArrayOld[12'h143] != CSRArray[12'h143]) ? 1 : 0;
+  assign #2 CSR_W[12'h142] = (CSRArrayOld[12'h142] != CSRArray[12'h142]) ? 1 : 0;
+  assign #2 CSR_W[12'h144] = (CSRArrayOld[12'h144] != CSRArray[12'h144]) ? 1 : 0;
+  assign #2 CSR_W[12'h14D] = (CSRArrayOld[12'h14D] != CSRArray[12'h14D]) ? 1 : 0;
+  assign #2 CSR_W[12'h001] = (CSRArrayOld[12'h001] != CSRArray[12'h001]) ? 1 : 0;
+  assign #2 CSR_W[12'h002] = (CSRArrayOld[12'h002] != CSRArray[12'h002]) ? 1 : 0;
+  assign #2 CSR_W[12'h003] = (CSRArrayOld[12'h003] != CSRArray[12'h003]) ? 1 : 0;
+  
+  assign rvvi.csr_wb[0][0][12'h300] = CSR_W[12'h300];
+  assign rvvi.csr_wb[0][0][12'h310] = CSR_W[12'h310];
+  assign rvvi.csr_wb[0][0][12'h305] = CSR_W[12'h305];
+  assign rvvi.csr_wb[0][0][12'h341] = CSR_W[12'h341];
+  assign rvvi.csr_wb[0][0][12'h306] = CSR_W[12'h306];
+  assign rvvi.csr_wb[0][0][12'h320] = CSR_W[12'h320];
+  assign rvvi.csr_wb[0][0][12'h302] = CSR_W[12'h302];
+  assign rvvi.csr_wb[0][0][12'h303] = CSR_W[12'h303];
+  assign rvvi.csr_wb[0][0][12'h344] = CSR_W[12'h344];
+  assign rvvi.csr_wb[0][0][12'h304] = CSR_W[12'h304];
+  assign rvvi.csr_wb[0][0][12'h301] = CSR_W[12'h301];
+  assign rvvi.csr_wb[0][0][12'hF14] = CSR_W[12'hF14];
+  assign rvvi.csr_wb[0][0][12'h340] = CSR_W[12'h340];
+  assign rvvi.csr_wb[0][0][12'h342] = CSR_W[12'h342];
+  assign rvvi.csr_wb[0][0][12'h343] = CSR_W[12'h343];
+  assign rvvi.csr_wb[0][0][12'hF11] = CSR_W[12'hF11];
+  assign rvvi.csr_wb[0][0][12'hF12] = CSR_W[12'hF12];
+  assign rvvi.csr_wb[0][0][12'hF13] = CSR_W[12'hF13];
+  assign rvvi.csr_wb[0][0][12'hF15] = CSR_W[12'hF15];
+  assign rvvi.csr_wb[0][0][12'h34A] = CSR_W[12'h34A];
+  assign rvvi.csr_wb[0][0][12'hB00] = CSR_W[12'hB00];
+  assign rvvi.csr_wb[0][0][12'hB02] = CSR_W[12'hB02];
+  assign rvvi.csr_wb[0][0][12'h100] = CSR_W[12'h100];
+  assign rvvi.csr_wb[0][0][12'h104] = CSR_W[12'h104];
+  assign rvvi.csr_wb[0][0][12'h105] = CSR_W[12'h105];
+  assign rvvi.csr_wb[0][0][12'h141] = CSR_W[12'h141];
+  assign rvvi.csr_wb[0][0][12'h106] = CSR_W[12'h106];
+  assign rvvi.csr_wb[0][0][12'h180] = CSR_W[12'h180];
+  assign rvvi.csr_wb[0][0][12'h140] = CSR_W[12'h140];
+  assign rvvi.csr_wb[0][0][12'h143] = CSR_W[12'h143];
+  assign rvvi.csr_wb[0][0][12'h142] = CSR_W[12'h142];
+  assign rvvi.csr_wb[0][0][12'h144] = CSR_W[12'h144];
+  assign rvvi.csr_wb[0][0][12'h14D] = CSR_W[12'h14D];
+  assign rvvi.csr_wb[0][0][12'h001] = CSR_W[12'h001];
+  assign rvvi.csr_wb[0][0][12'h002] = CSR_W[12'h002];
+  assign rvvi.csr_wb[0][0][12'h003] = CSR_W[12'h003];
+
+  assign rvvi.csr[0][0][12'h300]    = CSRArray[12'h300];
+  assign rvvi.csr[0][0][12'h310]    = CSRArray[12'h310];
+  assign rvvi.csr[0][0][12'h305]    = CSRArray[12'h305];
+  assign rvvi.csr[0][0][12'h341]    = CSRArray[12'h341];
+  assign rvvi.csr[0][0][12'h306]    = CSRArray[12'h306];
+  assign rvvi.csr[0][0][12'h320]    = CSRArray[12'h320];
+  assign rvvi.csr[0][0][12'h302]    = CSRArray[12'h302];
+  assign rvvi.csr[0][0][12'h303]    = CSRArray[12'h303];
+  assign rvvi.csr[0][0][12'h344]    = CSRArray[12'h344];
+  assign rvvi.csr[0][0][12'h304]    = CSRArray[12'h304];
+  assign rvvi.csr[0][0][12'h301]    = CSRArray[12'h301];
+  assign rvvi.csr[0][0][12'hF14]    = CSRArray[12'hF14];
+  assign rvvi.csr[0][0][12'h340]    = CSRArray[12'h340];
+  assign rvvi.csr[0][0][12'h342]    = CSRArray[12'h342];
+  assign rvvi.csr[0][0][12'h343]    = CSRArray[12'h343];
+  assign rvvi.csr[0][0][12'hF11]    = CSRArray[12'hF11];
+  assign rvvi.csr[0][0][12'hF12]    = CSRArray[12'hF12];
+  assign rvvi.csr[0][0][12'hF13]    = CSRArray[12'hF13];
+  assign rvvi.csr[0][0][12'hF15]    = CSRArray[12'hF15];
+  assign rvvi.csr[0][0][12'h34A]    = CSRArray[12'h34A];
+  assign rvvi.csr[0][0][12'hB00]    = CSRArray[12'hB00];
+  assign rvvi.csr[0][0][12'hB02]    = CSRArray[12'hB02];
+  assign rvvi.csr[0][0][12'h100]    = CSRArray[12'h100];
+  assign rvvi.csr[0][0][12'h104]    = CSRArray[12'h104];
+  assign rvvi.csr[0][0][12'h105]    = CSRArray[12'h105];
+  assign rvvi.csr[0][0][12'h141]    = CSRArray[12'h141];
+  assign rvvi.csr[0][0][12'h106]    = CSRArray[12'h106];
+  assign rvvi.csr[0][0][12'h180]    = CSRArray[12'h180];
+  assign rvvi.csr[0][0][12'h140]    = CSRArray[12'h140];
+  assign rvvi.csr[0][0][12'h143]    = CSRArray[12'h143];
+  assign rvvi.csr[0][0][12'h142]    = CSRArray[12'h142];
+  assign rvvi.csr[0][0][12'h144]    = CSRArray[12'h144];
+  assign rvvi.csr[0][0][12'h14D]    = CSRArray[12'h14D];
+  assign rvvi.csr[0][0][12'h001]    = CSRArray[12'h001];
+  assign rvvi.csr[0][0][12'h002]    = CSRArray[12'h002];
+  assign rvvi.csr[0][0][12'h003]    = CSRArray[12'h003];
+  
+  // PMP CFG 3A0 to 3AF
+  for(index='h3A0; index<='h3AF; index++) begin
+    assign #2 CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
+    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
+    assign rvvi.csr[0][0][index] = CSRArray[index];  
   end
-  
-//  always @rvvi.clk $display("%t @rvvi.clk=%X", $time, rvvi.clk);
-//  always @rvvi.csr[0][0]['h300] $display("%t rvvi.csr[0][0]['h300]=%X", $time, rvvi.csr[0][0]['h300]);
-//  always @rvvi.csr_wb[0][0]['h300] $display("%t rvvi.csr_wb[0][0]['h300]=%X", $time, rvvi.csr_wb[0][0]['h300]);
-//  always @rvvi.valid[0][0] $display("%t rvvi.valid[0][0]=%X", $time, rvvi.valid[0][0]);
-  
+
+  // PMP ADDR 3B0 to 3EF
+  for(index='h3B0; index<='h3EF; index++) begin
+    assign #2 CSR_W[index] = (CSRArrayOld[index] != CSRArray[index]) ? 1 : 0;
+    assign rvvi.csr_wb[0][0][index] = CSR_W[index];
+    assign rvvi.csr[0][0][index] = CSRArray[index];  
+  end
+   
   // *** implementation only cancel? so sc does not clear?
   assign rvvi.lrsc_cancel[0][0] = '0;
 

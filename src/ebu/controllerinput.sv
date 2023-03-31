@@ -33,7 +33,7 @@
 
 `include "wally-config.vh"
 
-module controllerinputstage #(
+module controllerinput #(
   parameter SAVE_ENABLED = 1           // 1: Save manager inputs if Save = 1, 0: Don't save inputs
 )(
   input logic                 HCLK, 

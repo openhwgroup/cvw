@@ -1,5 +1,5 @@
 
-all: riscoftests memfiles
+all: riscoftests memfiles coveragetests
 	# *** Build old tests/imperas-riscv-tests for now;
 	# Delete this part when the privileged tests transition over to tests/wally-riscv-arch-test
 	# DH: 2/27/22 temporarily commented out imperas-riscv-tests because license expired
@@ -18,7 +18,8 @@ all: riscoftests memfiles
 coverage:
 	#make -C ../tests/coverage --jobs
 	#iter-elf.bash --cover --search ../tests/coverage
-	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb riscv.ucdb -logfile cov/log
+	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb cov/buildroot_buildroot.ucdb riscv.ucdb -logfile cov/log
+#	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb riscv.ucdb /home/rthompson/buildroot_buildroot-no-trace.ucdb -logfile cov/log
 	vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt
 	vcover report cov/cov.ucdb -details -instance=/core/ebu. > cov/rv64gc_coverage_ebu.rpt
 	vcover report cov/cov.ucdb -details -instance=/core/priv. > cov/rv64gc_coverage_priv.rpt
@@ -50,3 +51,6 @@ riscoftests:
 	make -C ../tests/riscof/ 
 memfiles:
 	make -f makefile-memfile wally-sim-files --jobs
+
+coveragetests:
+	make -C ../tests/coverage/

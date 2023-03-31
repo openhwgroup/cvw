@@ -46,7 +46,10 @@ string tvpaths[] = '{
     `COVERAGE,
     "ieu",
     "ebu",
-    "csrwrites"
+    "csrwrites",
+    "priv",
+    "ifu",
+    "fpu"
   };
 
   string coremark[] = '{
@@ -1963,17 +1966,19 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",
     "rv32i_m/privilege/src/WALLY-endianness-01.S",
-    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S"
- };
-
- string wally32periph[] = '{
-    `WALLYTEST,
-    "rv32i_m/privilege/src/WALLY-periph-01.S",
+    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S",
+    // These peripherals are here instead of wally32periph because they don't work on rv32imc, which lacks a PMP register to configure
     "rv32i_m/privilege/src/WALLY-gpio-01.S",
     "rv32i_m/privilege/src/WALLY-clint-01.S",
     "rv32i_m/privilege/src/WALLY-uart-01.S",
     "rv32i_m/privilege/src/WALLY-plic-01.S",
     "rv32i_m/privilege/src/WALLY-plic-s-01.S"
+
+ };
+
+ string wally32periph[] = '{
+    `WALLYTEST,
+    "rv32i_m/privilege/src/WALLY-periph-01.S"
  };
 
 
