@@ -106,7 +106,7 @@ module csr #(parameter
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
-  logic                    GatedCSRMWriteM, GatedCSRSWriteM, GatedCSRUWriteM;
+  logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, WriteFFLAGSM;
   logic [`XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
@@ -200,12 +200,10 @@ module csr #(parameter
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
   assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[`XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
-  assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
+  assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
+  assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
   assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW)  & InstrValidNotFlushedM;
   assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
-  assign GatedCSRMWriteM = CSRMWriteM & InstrValidNotFlushedM;
-//  assign GatedCSRSWriteM = CSRSWriteM & InstrValidNotFlushedM;
-//  assign GatedCSRUWriteM = CSRUWriteM & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
 
@@ -213,7 +211,7 @@ module csr #(parameter
   // CSRs
   ///////////////////////////////////////////
 
-  csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
+  csri   csri(.clk, .reset,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
     .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
@@ -227,8 +225,8 @@ module csr #(parameter
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
     .STATUS_FS, .BigEndianM);
 
-  csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, 
-    .CSRMWriteM, .MTrapM, .CSRAdrM,
+  csrm  csrm(.clk, .reset, 
+    .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM,
     .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
     .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
     .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
@@ -238,7 +236,7 @@ module csr #(parameter
 
 
   if (`S_SUPPORTED) begin:csrs
-    csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
+    csrs  csrs(.clk, .reset,
       .CSRSWriteM, .STrapM, .CSRAdrM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
       .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),
