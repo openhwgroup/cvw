@@ -34,14 +34,14 @@ module csri #(parameter
   MIP = 12'h344,
   SIE = 12'h104,
   SIP = 12'h144) (
-  input  logic 			        clk, reset, 
-  input  logic 			        InstrValidNotFlushedM,
-  input  logic 			        CSRMWriteM, CSRSWriteM,
+  input  logic              clk, reset, 
+  input  logic              InstrValidNotFlushedM,
+  input  logic              CSRMWriteM, CSRSWriteM,
   input  logic [`XLEN-1:0]  CSRWriteValM,
-  input  logic [11:0] 		  CSRAdrM,
+  input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
   input  logic [11:0]       MIDELEG_REGW,
-  output logic [11:0] 	    MIP_REGW, MIE_REGW,
+  output logic [11:0]       MIP_REGW, MIE_REGW,
   output logic [11:0]       MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
 );
 

@@ -34,8 +34,8 @@ Clone your fork of the repo and run the setup script.
 
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
-	$ git remote add upstream https://github.com/openhwgroup/cvw
 	$ cd cvw
+	$ git remote add upstream https://github.com/openhwgroup/cvw
 	$ source ./setup.sh
 
 Add the following lines to your .bashrc or .bash_profile to run the setup script each time you log in.

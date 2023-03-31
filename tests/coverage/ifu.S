@@ -1,11 +1,10 @@
 ///////////////////////////////////////////
-// ram2p1rwbe_64x32.sv
+// ifu.S
 //
-// Written: james.stine@okstate.edu 28 January 2023
-// Modified: 
+// Written: sriley@g.hmc.edu 28 March 2023
 //
-// Purpose: RAM wrapper for instantiating RAM IP
-// 
+// Purpose: Test coverage for IFU
+//
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -24,26 +23,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ram2p1r1wbe_64x32( 
-  input  logic          CLKA, 
-  input  logic          CLKB, 
-  input  logic          CEBA, 
-  input  logic          CEBB, 
-  input  logic          WEBA,
-  input  logic          WEBB,
-  input  logic [5:0]    AA, 
-  input  logic [5:0]    AB, 
-  input  logic [31:0]   DA,
-  input  logic [31:0]   DB,
-  input  logic [31:0]   BWEBA, 
-  input  logic [31:0]   BWEBB, 
-  output logic [31:0]   QA,
-  output logic [31:0]   QB
-);
+// load code to initalize stack, handle interrupts, terminate
+#include "WALLY-init-lib.h"
 
-   // replace "generic64x32RAM" with "TSDN..64X32.." module from your memory vendor
-   //generic64x32RAM sramIP (.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-   //       .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
-  TSDN28HPCPA64X32M4MW sramIP(.CLKA, .CLKB, .CEBA, .CEBB, .WEBA, .WEBB, 
-    .AA, .AB, .DA, .DB, .BWEBA, .BWEBB, .QA, .QB);
-endmodule
+main:
+    # turn floating point on
+    li t0, 0x2000
+    csrs mstatus, t0
+
+    # calling compressed floating point load double instruction
+    //.halfword 0x2000 // CL type compressed floating-point ld-->funct3,imm,rs1',imm,rd',op
+                        // binary version 0000 0000 0000 0000 0010 0000 0000 0000
+    mv s0, sp
+    c.fld fs0, 0(s0)
+
+    j done

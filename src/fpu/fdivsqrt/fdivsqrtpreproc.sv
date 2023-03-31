@@ -29,35 +29,35 @@
 `include "wally-config.vh"
 
 module fdivsqrtpreproc (
-  input  logic clk,
-  input  logic IFDivStartE, 
-  input  logic [`NF:0] Xm, Ym,
-  input  logic [`NE-1:0] Xe, Ye,
+  input  logic                clk,
+  input  logic                IFDivStartE, 
+  input  logic [`NF:0]        Xm, Ym,
+  input  logic [`NE-1:0]      Xe, Ye,
   input  logic [`FMTBITS-1:0] Fmt,
-  input  logic Sqrt,
-  input  logic XZeroE,
-	input  logic [2:0] 	Funct3E,
-  output logic [`NE+1:0] QeM,
-  output logic [`DIVb+3:0] X,
-  output logic [`DIVb-1:0] DPreproc,
+  input  logic                Sqrt,
+  input  logic                XZeroE,
+  input  logic [2:0]          Funct3E,
+  output logic [`NE+1:0]      QeM,
+  output logic [`DIVb+3:0]    X,
+  output logic [`DIVb-1:0]    DPreproc,
   // Int-specific
-  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-	input  logic IntDivE, W64E,
-  output logic ISpecialCaseE,
-  output logic [`DIVBLEN:0] nE, nM, mM,
-  output logic NegQuotM, ALTBM, IntDivM, W64M,
-  output logic AsM, BZeroM,
-  output logic [`XLEN-1:0] AM
+  input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic                IntDivE, W64E,
+  output logic                ISpecialCaseE,
+  output logic [`DIVBLEN:0]   nE, nM, mM,
+  output logic                NegQuotM, ALTBM, IntDivM, W64M,
+  output logic                AsM, BZeroM,
+  output logic [`XLEN-1:0]    AM
 );
 
-  logic  [`DIVb-1:0] XPreproc;
-  logic  [`DIVb:0] PreSqrtX;
-  logic  [`DIVb+3:0] DivX, DivXShifted, SqrtX, PreShiftX;  // Variations of dividend, to be muxed
-  logic  [`NE+1:0] QeE;                       // Quotient Exponent (FP only)
-  logic  [`DIVb-1:0] IFNormLenX, IFNormLenD;  // Correctly-sized inputs for iterator
-  logic  [`DIVBLEN:0] mE, ell;                // Leading zeros of inputs
-  logic  NumerZeroE;                          // Numerator is zero (X or A)
-  logic  AZeroE, BZeroE;                      // A or B is Zero for integer division
+  logic [`DIVb-1:0]           XPreproc;
+  logic [`DIVb:0]             PreSqrtX;
+  logic [`DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
+  logic [`NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
+  logic [`DIVb-1:0]           IFNormLenX, IFNormLenD;              // Correctly-sized inputs for iterator
+  logic [`DIVBLEN:0]          mE, ell;                             // Leading zeros of inputs
+  logic                       NumerZeroE;                          // Numerator is zero (X or A)
+  logic                       AZeroE, BZeroE;                      // A or B is Zero for integer division
 
   if (`IDIV_ON_FPU) begin:intpreproc // Int Supported
     logic signedDiv, NegQuotE;

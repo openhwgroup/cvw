@@ -34,7 +34,7 @@ vlog +incdir+../config/$1 \
      -suppress 2583 \
      -suppress 7063 
 vopt +acc work.testbench -G DEBUG=1 -o workopt 
-vsim workopt +nowarn3829  -fatal 7 \
+eval vsim workopt +nowarn3829  -fatal 7 \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS)
 view wave
 #-- display input and output signals as hexidecimal values

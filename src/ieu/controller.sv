@@ -31,7 +31,7 @@
 
 
 module controller(
-  input  logic		    clk, reset,
+  input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
@@ -41,11 +41,11 @@ module controller(
   output logic        JumpD,                   // Jump instruction
   output logic        BranchD,                 // Branch instruction
    // Execute stage control signals             
-  input  logic 	      StallE, FlushE,          // Stall, flush Execute stage
+  input  logic        StallE, FlushE,          // Stall, flush Execute stage
   input  logic [1:0]  FlagsE,                  // Comparison flags ({eq, lt})
   input  logic        FWriteIntE,              // Write integer register, coming from FPU controller
   output logic        PCSrcE,                  // Select signal to choose next PC (for datapath and Hazard unit)
-  output logic 	      ALUSrcAE, ALUSrcBE,      // ALU operands
+  output logic        ALUSrcAE, ALUSrcBE,      // ALU operands
   output logic        ALUResultSrcE,           // Selects result to pass on to Memory stage
   output logic [2:0]  ALUSelectE,              // ALU mux select signal
   output logic        MemReadE, CSRReadE,      // Instruction reads memory, reads a CSR (needed for Hazard unit)
@@ -74,7 +74,7 @@ module controller(
   output logic        FWriteIntM,              // FPU controller writes integer register file
   // Writeback stage control signals
   input  logic        StallW, FlushW,          // Stall, flush Writeback stage
-  output logic 	      RegWriteW, IntDivW,      // Instruction writes a register, is an integer divide
+  output logic        RegWriteW, IntDivW,      // Instruction writes a register, is an integer divide
   output logic [2:0]  ResultSrcW,              // Select source of result to write back to register file
   // Stall during CSRs
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
@@ -89,16 +89,16 @@ module controller(
   `define CTRLW 23
 
   // pipelined control signals
-  logic 	     RegWriteD, RegWriteE;           // RegWrite (register will be written)
+  logic        RegWriteD, RegWriteE;           // RegWrite (register will be written)
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
   logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
-  logic	       ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
-  logic	       BaseW64D;                       // W64 for Base instructions specifically
-  logic	       BaseRegWriteD;                  // Indicates if Base instruction register write instruction
-  logic	       BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
+  logic        ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
+  logic        BaseW64D;                       // W64 for Base instructions specifically
+  logic        BaseRegWriteD;                  // Indicates if Base instruction register write instruction
+  logic        BaseSubArithD;                  // Indicates if Base instruction subtracts, sra, slt, sltu
   logic        BaseALUSrcBD;                   // Base instruction ALU B source select signal
   logic [2:0]  ALUControlD;                    // Determines ALU operation
-  logic 	     ALUSrcAD, ALUSrcBD;             // ALU inputs
+  logic        ALUSrcAD, ALUSrcBD;             // ALU inputs
   logic        ALUResultSrcD, W64D, MDUD;      // ALU result, is RV64 W-type, is multiply/divide instruction
   logic        CSRZeroSrcD;                    // Ignore setting and clearing zeros to CSR
   logic        CSRReadD;                       // CSR read instruction
@@ -115,7 +115,7 @@ module controller(
   logic        BranchTakenE;                   // Branch is taken
   logic        eqE, ltE;                       // Comparator outputs
   logic        unused; 
-	logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
+  logic        BranchFlagE;                    // Branch flag to use (chosen between eq or lt)
   logic        IEURegWriteE;                   // Register write 
   logic        BRegWriteE;                     // Register write from BMU controller in Execute Stage
   logic        IllegalERegAdrD;                // RV32E attempts to write upper 16 registers
@@ -131,6 +131,7 @@ module controller(
   logic        JFunctD;                        // detect jalr instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
+  logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -146,29 +147,31 @@ module controller(
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
-    assign Funct7ZeroD = (Funct7D == 7'b0000000); // most R-type instructions
-    assign Funct7b5D   = (Funct7D == 7'b0100000); // srai, sub
+    assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
+    assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
     assign Funct7ShiftZeroD = (`XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
     assign Funct7Shiftb5D   = (`XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
-    assign IShiftD     = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
-    assign INoShiftD   = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
-    assign IFunctD     = IShiftD | INoShiftD;
-    assign RFunctD     = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
-    assign MFunctD     = (Funct7D == 7'b0000001) & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD     = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
-                         ((`XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
-    assign SFunctD     = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
-                         ((`XLEN == 64) & (Funct3D == 3'b011));
-    assign BFunctD     = (Funct3D[2:1] != 2'b01); // legal branches
-    assign JFunctD     = (Funct3D == 3'b000);
+    assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
+    assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
+    assign IFunctD          = IShiftD | INoShiftD;
+    assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
+    assign MFunctD          = (Funct7D == 7'b0000001) & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+    assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
+                              ((`XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
+    assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
+                              ((`XLEN == 64) & (Funct3D == 3'b011));
+    assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
+    assign JFunctD          = (Funct3D == 3'b000);
+    assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
-    assign IFunctD     = 1; // Don't bother to separate out shift decoding
-    assign RFunctD     = ~Funct7D[0]; // Not a multiply
-    assign MFunctD     = Funct7D[0] & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
-    assign LFunctD     = 1; // don't bother to check Funct3 for loads
-    assign SFunctD     = 1; // don't bother to check Funct3 for stores
-    assign BFunctD     = 1; // don't bother to check Funct3 for branches
-    assign JFunctD     = 1; // don't bother to check Funct3 for jumps    
+    assign IFunctD = 1; // Don't bother to separate out shift decoding
+    assign RFunctD = ~Funct7D[0]; // Not a multiply
+    assign MFunctD = Funct7D[0] & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+    assign LFunctD = 1; // don't bother to check Funct3 for loads
+    assign SFunctD = 1; // don't bother to check Funct3 for stores
+    assign BFunctD = 1; // don't bother to check Funct3 for branches
+    assign JFunctD = 1; // don't bother to check Funct3 for jumps
+    assign IWValidFunct3D = 1;
   end
 
   // Main Instruction Decoder
@@ -182,12 +185,12 @@ module controller(
       7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
       7'b0001111: if (`ZIFENCEI_SUPPORTED)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
-              	  else
+                  else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (IFunctD & `XLEN == 64)
+      7'b0011011: if (IFunctD & IWValidFunct3D & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores

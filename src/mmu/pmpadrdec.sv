@@ -38,7 +38,7 @@ module pmpadrdec (
   input  logic [`PA_BITS-3:0]      PMPAdr,
   input  logic                  PAgePMPAdrIn,
   output logic                  PAgePMPAdrOut,
-  output logic                  Match, Active, 
+  output logic                  Match, 
   output logic                  L, X, W, R
 );
   
@@ -84,7 +84,6 @@ module pmpadrdec (
   assign X = PMPCfg[2];
   assign W = PMPCfg[1];
   assign R = PMPCfg[0];
-  assign Active = |PMPCfg[4:3];
 
   // known bug: The size of the access is not yet checked.  For example, if an NA4 entry matches 0xC-0xF and the system
   // attempts an 8-byte access to 0x8, the access should fail (see page 60 of privileged specification 20211203). This

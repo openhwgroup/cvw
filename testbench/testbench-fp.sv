@@ -702,7 +702,7 @@ module testbenchfp;
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
     fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
-              .XZero(XZero), .XSubnorm(XSubnorm), .OpCtrl(OpCtrlVal), .IntZero,
+              .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
               .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   end
 

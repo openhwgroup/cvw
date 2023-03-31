@@ -78,61 +78,61 @@ module lsu (
   output logic [`XLEN/8-1:0]  LSUHWSTRB,                            // Bus byte write enables from LSU to EBU
   // page table walker
   input  logic [`XLEN-1:0]    SATP_REGW,                            // SATP (supervisor address translation and protection) CSR
-  input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,     // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
+  input  logic                STATUS_MXR, STATUS_SUM, STATUS_MPRV,  // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
   input  logic [1:0]          STATUS_MPP,                           // Machine previous privilege mode
-  input  logic [`XLEN-1:0]    PCSpillF,                                  // Fetch PC 
+  input  logic [`XLEN-1:0]    PCSpillF,                             // Fetch PC 
   input  logic                ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
-  input  logic                InstrUpdateDAF,                    // ITLB hit needs to update dirty or access bits
+  input  logic                InstrUpdateDAF,                       // ITLB hit needs to update dirty or access bits
   output logic [`XLEN-1:0]    PTE,                                  // Page table entry write to ITLB
   output logic [1:0]          PageType,                             // Type of page table entry to write to ITLB
   output logic                ITLBWriteF,                           // Write PTE to ITLB
   output logic                SelHPTW,                              // During a HPTW walk the effective privilege mode becomes S_MODE
-  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
+  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],  // PMP configuration from privileged unit
   input var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]  // PMP address from privileged unit
 );
 
-  logic [`XLEN+1:0]         IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
-  logic [`XLEN+1:0]         IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
-  logic [`PA_BITS-1:0]      PAdrM;                                  // Physical memory address
-  logic [`XLEN+1:0] 		IHAdrM;                                 // Either IEU or HPTW memory address
+  logic [`XLEN+1:0]     IEUAdrExtM;                             // Memory stage address zero-extended to PA_BITS or XLEN whichever is longer
+  logic [`XLEN+1:0]     IEUAdrExtE;                             // Execution stage address zero-extended to PA_BITS or XLEN whichever is longer
+  logic [`PA_BITS-1:0]  PAdrM;                                  // Physical memory address
+  logic [`XLEN+1:0]     IHAdrM;                                 // Either IEU or HPTW memory address
 
-  logic [1:0] 				PreLSURWM;                              // IEU or HPTW Read/Write signal
-  logic [1:0] 				LSURWM;                                 // IEU or HPTW Read/Write signal gated by LR/SC
-  logic [2:0]               LSUFunct3M;                             // IEU or HPTW memory operation size
-  logic [6:0]               LSUFunct7M;                             // AMO function gated by HPTW
-  logic [1:0]               LSUAtomicM;                             // AMO signal gated by HPTW
+  logic [1:0]           PreLSURWM;                              // IEU or HPTW Read/Write signal
+  logic [1:0]           LSURWM;                                 // IEU or HPTW Read/Write signal gated by LR/SC
+  logic [2:0]           LSUFunct3M;                             // IEU or HPTW memory operation size
+  logic [6:0]           LSUFunct7M;                             // AMO function gated by HPTW
+  logic [1:0]           LSUAtomicM;                             // AMO signal gated by HPTW
 
-  logic                     GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
- 
-  logic                     BusStall;                               // Bus interface busy with multicycle operation
-  logic                     HPTWStall;                              // HPTW busy with multicycle operation
+  logic                 GatedStallW;                            // Hazard unit StallW gated when SelHPTW = 1
+  
+  logic                 BusStall;                               // Bus interface busy with multicycle operation
+  logic                 HPTWStall;                              // HPTW busy with multicycle operation
 
-  logic                     CacheableM;                             // PMA indicates memory address is cacheable
-  logic                     BusCommittedM;                          // Bus memory operation in flight, delay interrupts
-  logic 					DCacheCommittedM;                       // D$ memory operation started, delay interrupts
+  logic                 CacheableM;                             // PMA indicates memory address is cacheable
+  logic                 BusCommittedM;                          // Bus memory operation in flight, delay interrupts
+  logic                 DCacheCommittedM;                       // D$ memory operation started, delay interrupts
 
-  logic [`LLEN-1:0] 		DTIMReadDataWordM;                      // DTIM read data
-  logic [`LLEN-1:0] 		DCacheReadDataWordM;                    // D$ read data
-  logic [`LLEN-1:0] 		ReadDataWordMuxM;                       // DTIM or D$ read data
-  logic [`LLEN-1:0] 		LittleEndianReadDataWordM;              // Endian-swapped read data
-  logic [`LLEN-1:0] 		ReadDataWordM;                          // Read data before subword selection
-  logic [`LLEN-1:0]         ReadDataM;                              // Final read data
+  logic [`LLEN-1:0]     DTIMReadDataWordM;                      // DTIM read data
+  logic [`LLEN-1:0]     DCacheReadDataWordM;                    // D$ read data
+  logic [`LLEN-1:0]     ReadDataWordMuxM;                       // DTIM or D$ read data
+  logic [`LLEN-1:0]     LittleEndianReadDataWordM;              // Endian-swapped read data
+  logic [`LLEN-1:0]     ReadDataWordM;                          // Read data before subword selection
+  logic [`LLEN-1:0]     ReadDataM;                              // Final read data
 
-  logic [`XLEN-1:0] 		IHWriteDataM;                           // IEU or HPTW write data
-  logic [`XLEN-1:0] 		IMAWriteDataM;                          // IEU, HPTW, or AMO write data
-  logic [`LLEN-1:0]         IMAFWriteDataM;                         // IEU, HPTW, AMO, or FPU write data
-  logic [`LLEN-1:0] 		LittleEndianWriteDataM;                 // Ending-swapped write data 
-  logic [`LLEN-1:0] 		LSUWriteDataM;                          // Final write data
-  logic [(`LLEN-1)/8:0]     ByteMaskM;                              // Selects which bytes within a word to write
+  logic [`XLEN-1:0]     IHWriteDataM;                           // IEU or HPTW write data
+  logic [`XLEN-1:0]     IMAWriteDataM;                          // IEU, HPTW, or AMO write data
+  logic [`LLEN-1:0]     IMAFWriteDataM;                         // IEU, HPTW, AMO, or FPU write data
+  logic [`LLEN-1:0]     LittleEndianWriteDataM;                 // Ending-swapped write data 
+  logic [`LLEN-1:0]     LSUWriteDataM;                          // Final write data
+  logic [(`LLEN-1)/8:0] ByteMaskM;                              // Selects which bytes within a word to write
 
-  logic                     DTLBMissM;                              // DTLB miss causes HPTW walk
-  logic                     DTLBWriteM;                             // Writes PTE and PageType to DTLB
-  logic                     DataUpdateDAM;                       // DTLB hit needs to update dirty or access bits
-  logic                     LSULoadAccessFaultM;                    // Load acces fault
-  logic 					LSUStoreAmoAccessFaultM;                // Store access fault
-  logic                     IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
-  logic 					IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
-  logic                     SelDTIM;                                // Select DTIM rather than bus or D$
+  logic                 DTLBMissM;                              // DTLB miss causes HPTW walk
+  logic                 DTLBWriteM;                             // Writes PTE and PageType to DTLB
+  logic                 DataUpdateDAM;                          // DTLB hit needs to update dirty or access bits
+  logic                 LSULoadAccessFaultM;                    // Load acces fault
+  logic                 LSUStoreAmoAccessFaultM;                // Store access fault
+  logic                 IgnoreRequestTLB;                       // On either ITLB or DTLB miss, ignore miss so HPTW can handle
+  logic                 IgnoreRequest;                          // On FlushM or TLB miss ignore memory operation
+  logic                 SelDTIM;                                // Select DTIM rather than bus or D$
 
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,8 +164,8 @@ module lsu (
     assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;
-	assign LSUFunct7M = Funct7M; 
-	assign LSUAtomicM = AtomicM;
+  assign LSUFunct7M = Funct7M; 
+  assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
@@ -194,7 +194,7 @@ module lsu (
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
       .InstrAccessFaultF(), .LoadAccessFaultM(LSULoadAccessFaultM), 
       .StoreAmoAccessFaultM(LSUStoreAmoAccessFaultM), .InstrPageFaultF(), .LoadPageFaultM, 
-	  .StoreAmoPageFaultM,
+    .StoreAmoPageFaultM,
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .UpdateDA(DataUpdateDAM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
@@ -227,7 +227,7 @@ module lsu (
     logic [1:0]          DTIMMemRWM;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-	mux2 #(`PA_BITS) DTIMAdrMux(IEUAdrExtE[`PA_BITS-1:0], IEUAdrExtM[`PA_BITS-1:0], MemRWM[0], DTIMAdr);
+  mux2 #(`PA_BITS) DTIMAdrMux(IEUAdrExtE[`PA_BITS-1:0], IEUAdrExtM[`PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
@@ -250,18 +250,18 @@ module lsu (
       logic [AHBWLOGBWPL-1:0]  BeatCount;                                              // Position within a cacheline.  ahbcacheinterface to cache
       logic                DCacheBusAck;                                               // ahbcacheinterface completed fetch or writeback
       logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
-      logic [1:0] 		   CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
-	  logic [1:0] 		   BusRW;                                                      // Uncached bus memory access
+      logic [1:0]        CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
+    logic [1:0]        BusRW;                                                      // Uncached bus memory access
       logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
-      logic [1:0] 		   CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
-	  logic [1:0] 		   CacheAtomicM;                                               // Cache AMO
-	  logic 			   FlushDCache;                                                // Suppress d cache flush if there is an ITLB miss.
+      logic [1:0]        CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
+    logic [1:0]        CacheAtomicM;                                               // Cache AMO
+    logic          FlushDCache;                                                // Suppress d cache flush if there is an ITLB miss.
       
       assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
-	  assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
+    assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
       cache #(.LINELEN(`DCACHE_LINELENINBITS), .NUMLINES(`DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(`DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(`LLEN), .MUXINTERVAL(`LLEN), .READ_ONLY_CACHE(0)) dcache(
@@ -275,7 +275,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
-      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
@@ -285,8 +285,8 @@ module lsu (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
-	  // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
-	  // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
+    // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
+    // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
       // *** DTIMReadDataWordM should be increased to LLEN.
       // pma should generate exception for LLEN read to periph.
       mux3 #(`LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[`XLEN-1:0]}}),
@@ -305,7 +305,7 @@ module lsu (
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
 
-	  // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
+    // Mux between the 2 sources of read data, 0: Bus, 1: DTIM
       if(`DTIM_SUPPORTED) mux2 #(`XLEN) ReadDataMux2(FetchBuffer, DTIMReadDataWordM, SelDTIM, ReadDataWordMuxM);
       else assign ReadDataWordMuxM = FetchBuffer[`XLEN-1:0];
       assign LSUHBURST = 3'b0;
@@ -338,7 +338,7 @@ module lsu (
   // Subword Accesses
   /////////////////////////////////////////////////////////////////////////////////////////////
   subwordread subwordread(.ReadDataWordMuxM(LittleEndianReadDataWordM), .PAdrM(PAdrM[2:0]), .BigEndianM,
-		.FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
+    .FpLoadStoreM, .Funct3M(LSUFunct3M), .ReadDataM);
   subwordwrite subwordwrite(.LSUFunct3M, .IMAFWriteDataM, .LittleEndianWriteDataM);
 
   // Compute byte masks

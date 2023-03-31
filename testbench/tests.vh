@@ -46,7 +46,10 @@ string tvpaths[] = '{
     `COVERAGE,
     "ieu",
     "ebu",
-    "csrwrites"
+    "csrwrites",
+    "priv",
+    "ifu",
+    "fpu"
   };
 
   string coremark[] = '{
@@ -1852,7 +1855,6 @@ string arch64zbs[] = '{
  
  string wally64priv[] = '{
     `WALLYTEST,
-//    "rv64i_m/privilege/src/BUG66",
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv64i_m/privilege/src/WALLY-mie-01.S",
@@ -1863,15 +1865,15 @@ string arch64zbs[] = '{
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
     "rv64i_m/privilege/src/WALLY-pma-01.S",
     "rv64i_m/privilege/src/WALLY-pmp-01.S",
-//    "rv64i_m/privilege/src/WALLY-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-sie-01.S",
     "rv64i_m/privilege/src/WALLY-status-mie-01.S",
-//    "rv64i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv64i_m/privilege/src/WALLY-status-sie-01.S",
     "rv64i_m/privilege/src/WALLY-status-tw-01.S",
     "rv64i_m/privilege/src/WALLY-status-tvm-01.S",
     "rv64i_m/privilege/src/WALLY-status-fp-enabled-01.S",
-//    "rv64i_m/privilege/src/WALLY-stvec-01.S",
-//    "rv64i_m/privilege/src/WALLY-trap-01.S",
-//    "rv64i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv64i_m/privilege/src/WALLY-stvec-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-01.S",
+    "rv64i_m/privilege/src/WALLY-trap-s-01.S",
     "rv64i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv64i_m/privilege/src/WALLY-trap-u-01.S",
     "rv64i_m/privilege/src/WALLY-wfi-01.S",
@@ -1951,30 +1953,32 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",
-//    "rv32i_m/privilege/src/WALLY-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-sie-01.S",
     "rv32i_m/privilege/src/WALLY-status-mie-01.S",
-//    "rv32i_m/privilege/src/WALLY-status-sie-01.S",
+    "rv32i_m/privilege/src/WALLY-status-sie-01.S",
     "rv32i_m/privilege/src/WALLY-status-tw-01.S",
     "rv32i_m/privilege/src/WALLY-status-tvm-01.S",
     "rv32i_m/privilege/src/WALLY-status-fp-enabled-01.S",
-//    "rv32i_m/privilege/src/WALLY-stvec-01.S",
-//    "rv32i_m/privilege/src/WALLY-trap-01.S",
-//    "rv32i_m/privilege/src/WALLY-trap-s-01.S",
+    "rv32i_m/privilege/src/WALLY-stvec-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-01.S",
+    "rv32i_m/privilege/src/WALLY-trap-s-01.S",
     "rv32i_m/privilege/src/WALLY-trap-sret-01.S",
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",
     "rv32i_m/privilege/src/WALLY-endianness-01.S",
-    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S"
- };
-
- string wally32periph[] = '{
-    `WALLYTEST,
-    "rv32i_m/privilege/src/WALLY-periph-01.S",
+    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S",
+    // These peripherals are here instead of wally32periph because they don't work on rv32imc, which lacks a PMP register to configure
     "rv32i_m/privilege/src/WALLY-gpio-01.S",
     "rv32i_m/privilege/src/WALLY-clint-01.S",
     "rv32i_m/privilege/src/WALLY-uart-01.S",
     "rv32i_m/privilege/src/WALLY-plic-01.S",
     "rv32i_m/privilege/src/WALLY-plic-s-01.S"
+
+ };
+
+ string wally32periph[] = '{
+    `WALLYTEST,
+    "rv32i_m/privilege/src/WALLY-periph-01.S"
  };
 
 
