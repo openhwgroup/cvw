@@ -264,7 +264,9 @@ module controller(
     end else assign sltD = (Funct3D == 3'b010);
 
     // Combine base and bit manipulation signals
+    // coverage off: IllegalERegAdr can't occur in rv64gc; only applicable to E mode
     assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ;
+    // coverage on
     assign RegWriteD = BaseRegWriteD | BRegWriteD; 
     assign W64D = BaseW64D | BW64D;
     assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;

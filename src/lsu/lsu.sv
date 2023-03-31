@@ -149,7 +149,7 @@ module lsu (
   // MMU include PMP and is needed if any privileged supported
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
+  if(`VIRTMEM_SUPPORTED) begin : hptw
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
       .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
