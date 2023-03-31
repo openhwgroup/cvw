@@ -51,9 +51,9 @@ module wallypipelinedsoc_32e (
   output logic 		            HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0] 	      GPIOPinsIn,       // inputs from GPIO
-  output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
-  output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
+  input  logic [31:0] 	      GPIOIN,       // inputs from GPIO
+  output logic [31:0] 	      GPIOOUT,      // output values for GPIO
+  output logic [31:0]         GPIOEN,       // output enables for GPIO
   input  logic 		            UARTSin,          // UART serial data input
   output logic 		            UARTSout,         // UART serial data output
   input  logic 		            SDCCmdIn,         // SDC Command input

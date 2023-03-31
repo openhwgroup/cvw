@@ -78,7 +78,7 @@ typedef struct packed {
   byte         PMP_ENTRIES;
 
 // Address space
-  logic [63:0]         RESET_VECTOR;
+  logic [31:0]         RESET_VECTOR;
 
 // WFI Timeout Wait
   byte         WFI_TIMEOUT_BIT;
@@ -87,38 +87,35 @@ typedef struct packed {
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
   logic         DTIM_SUPPORTED;
-  logic [55:0]         DTIM_BASE;
-  logic [55:0]         DTIM_RANGE;
+  logic [33:0]         DTIM_BASE;
+  logic [33:0]         DTIM_RANGE;
   logic         IROM_SUPPORTED;
-  logic [55:0]         IROM_BASE;
-  logic [55:0]         IROM_RANGE;
+  logic [33:0]         IROM_BASE;
+  logic [33:0]         IROM_RANGE;
   logic         BOOTROM_SUPPORTED;
-  logic [55:0]         BOOTROM_BASE;
-  logic [55:0]         BOOTROM_RANGE;
+  logic [33:0]         BOOTROM_BASE;
+  logic [33:0]         BOOTROM_RANGE;
   logic         UNCORE_RAM_SUPPORTED;
-  logic [55:0]         UNCORE_RAM_BASE;
-  logic [55:0]         UNCORE_RAM_RANGE;
+  logic [33:0]         UNCORE_RAM_BASE;
+  logic [33:0]         UNCORE_RAM_RANGE;
   logic         EXT_MEM_SUPPORTED;
-  logic [55:0]         EXT_MEM_BASE;
-  logic [55:0]         EXT_MEM_RANGE;
+  logic [33:0]         EXT_MEM_BASE;
+  logic [33:0]         EXT_MEM_RANGE;
   logic         CLINT_SUPPORTED;
-  logic [55:0]         CLINT_BASE;
-  logic [55:0]         CLINT_RANGE;
+  logic [33:0]         CLINT_BASE;
+  logic [33:0]         CLINT_RANGE;
   logic         GPIO_SUPPORTED;
-  logic [55:0]         GPIO_BASE;
-  logic [55:0]         GPIO_RANGE;
+  logic [33:0]         GPIO_BASE;
+  logic [33:0]         GPIO_RANGE;
   logic         UART_SUPPORTED;
-  logic [55:0]         UART_BASE;
-  logic [55:0]         UART_RANGE;
+  logic [33:0]         UART_BASE;
+  logic [33:0]         UART_RANGE;
   logic         PLIC_SUPPORTED;
-  logic [55:0]         PLIC_BASE;
-  logic [55:0]         PLIC_RANGE;
+  logic [33:0]         PLIC_BASE;
+  logic [33:0]         PLIC_RANGE;
   logic         SDC_SUPPORTED;
-  logic [55:0]         SDC_BASE;
-  logic [55:0]         SDC_RANGE;
-
-// Bus Interface width
-  byte         AHBW;
+  logic [33:0]         SDC_BASE;
+  logic [33:0]         SDC_RANGE;
 
 // Test modes
 
@@ -130,8 +127,7 @@ typedef struct packed {
 
 // Interrupt configuration
   byte         PLIC_NUM_SRC;
-// comment out the following if >=32 sources
-  byte         PLIC_NUM_SRC_LT_32; // *** make automatic
+  logic        PLIC_NUM_SRC_LT_32;
   byte         PLIC_GPIO_ID;
   byte         PLIC_UART_ID;
 

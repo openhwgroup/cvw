@@ -1,20 +1,3 @@
-/* parameter cvw_t P = '{ 
-    PA_BITS : PA_BITS,
-    XLEN:     XLEN,
-    AHBW:     AHBW,
-    MISA:     MISA,
-    BUS_SUPPORTED: BUS_SUPPORTED,
-    ZICSR_SUPPORTED: ZICSR_SUPPORTED,
-    M_SUPPORTED: M_SUPPORTED,
-    ZMMUL_SUPPORTED: ZMMUL_SUPPORTED,
-    F_SUPPORTED: F_SUPPORTED,
-    PMP_ENTRIES: PMP_ENTRIES,
-    LLEN:     LLEN,
-    FPGA:     FPGA,
-    QEMU:     QEMU,
-    VPN_SEGMENT_BITS: VPN_SEGMENT_BITS,
-   FLEN:     FLEN
-}, */
 
 // Populate parameter structure with values specific to the current configuration
 
@@ -82,7 +65,6 @@ parameter cvw_t P = '{
   SDC_SUPPORTED :        SDC_SUPPORTED,
   SDC_BASE :        SDC_BASE,
   SDC_RANGE :        SDC_RANGE,
-  AHBW :        AHBW,
   GPIO_LOOPBACK_TEST :        GPIO_LOOPBACK_TEST,
   UART_PRESCALE :        UART_PRESCALE ,
   PLIC_NUM_SRC :        PLIC_NUM_SRC,

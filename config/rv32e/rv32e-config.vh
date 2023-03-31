@@ -26,18 +26,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 localparam PA_BITS = 34;
-localparam AHBW = 32;
-localparam XLEN = 32;
-localparam MISA = (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 );
-localparam    BUS_SUPPORTED = 1'b1;
-localparam    ZICSR_SUPPORTED = 1'b0;
+//localparam AHBW = 32;
+//localparam XLEN = 32;
+//localparam MISA = (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 );
+////localparam    BUS_SUPPORTED = 1'b1;
+//localparam    ZICSR_SUPPORTED = 1'b0;
 localparam    M_SUPPORTED = 1'b0;
-localparam    ZMMUL_SUPPORTED = 1'b0;
 localparam    F_SUPPORTED = 1'b0;
-localparam    PMP_ENTRIES = 0;
+//localparam    ZMMUL_SUPPORTED = 1'b0;
+//localparam    F_SUPPORTED = 1'b0;
+//localparam    PMP_ENTRIES = 0;
 localparam    LLEN =     32;
-localparam    FPGA =     1'b0;
-localparam    QEMU =     1'b0;
+//localparam    FPGA =     1'b0;
+//localparam    QEMU =     1'b0;
  //   //VPN_SEGMENT_BITS: (LLEN == 32 ? 10 : 9),
    // `include "test-shared.vh"
 localparam    FLEN =     32;
@@ -106,35 +107,35 @@ localparam WFI_TIMEOUT_BIT = 16;
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 localparam DTIM_SUPPORTED = 1'b0;
-localparam DTIM_BASE = ;      34'h80000000
-localparam DTIM_RANGE = ;     34'h007FFFFF
+localparam DTIM_BASE = 34'h80000000;      
+localparam DTIM_RANGE = 34'h007FFFFF;     
 localparam IROM_SUPPORTED = 1'b0;
-localparam IROM_BASE = ;      34'h80000000
-localparam IROM_RANGE = ;     34'h007FFFFF
+localparam IROM_BASE = 34'h80000000;     
+localparam IROM_RANGE = 34'h007FFFFF;     
 localparam BOOTROM_SUPPORTED = 1'b1;
-localparam BOOTROM_BASE = ;  34'h00001000 
-localparam BOOTROM_RANGE = ; 34'h00000FFF
+localparam BOOTROM_BASE = 34'h00001000;  
+localparam BOOTROM_RANGE = 34'h00000FFF; 
 localparam UNCORE_RAM_SUPPORTED = 1'b1;
-localparam UNCORE_RAM_BASE = ;      34'h80000000
-localparam UNCORE_RAM_RANGE = ;     34'h07FFFFFF
+localparam UNCORE_RAM_BASE = 34'h80000000;      
+localparam UNCORE_RAM_RANGE = 34'h07FFFFFF;     
 localparam EXT_MEM_SUPPORTED = 1'b0;
-localparam EXT_MEM_BASE = ;      34'h80000000
-localparam EXT_MEM_RANGE = ;     34'h07FFFFFF
+localparam EXT_MEM_BASE = 34'h80000000;      
+localparam EXT_MEM_RANGE = 34'h07FFFFFF;     
 localparam CLINT_SUPPORTED = 1'b0;
-localparam CLINT_BASE = ; 34'h02000000
+localparam CLINT_BASE = 34'h02000000; 
 localparam CLINT_RANGE = 34'h0000FFFF;
 localparam GPIO_SUPPORTED = 1'b0;
-localparam GPIO_BASE = ;  34'h10060000
-localparam GPIO_RANGE = ; 34'h000000FF
+localparam GPIO_BASE = 34'h10060000;  
+localparam GPIO_RANGE = 34'h000000FF; 
 localparam UART_SUPPORTED = 1'b0;
-localparam UART_BASE = ;  34'h10000000
-localparam UART_RANGE = ; 34'h00000007
+localparam UART_BASE = 34'h10000000;  
+localparam UART_RANGE = 34'h00000007; 
 localparam PLIC_SUPPORTED = 1'b0;
-localparam PLIC_BASE = ;  34'h0C000000
-localparam PLIC_RANGE = ; 34'h03FFFFFF
+localparam PLIC_BASE = 34'h0C000000;  
+localparam PLIC_RANGE = 34'h03FFFFFF; 
 localparam SDC_SUPPORTED = 1'b0;
-localparam SDC_BASE = ;  34'h00012100
-localparam SDC_RANGE = ; 34'h0000001F
+localparam SDC_BASE = 34'h00012100;  
+localparam SDC_RANGE = 34'h0000001F; 
 
 // Bus Interface width
 localparam AHBW = 32;
@@ -150,7 +151,7 @@ localparam UART_PRESCALE = 1;
 // Interrupt configuration
 localparam PLIC_NUM_SRC = 10; 
 // comment out the following if >=32 sources
-`define PLIC_NUM_SRC_LT_32
+localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
 localparam PLIC_GPIO_ID = 3;
 localparam PLIC_UART_ID = 10;
 
@@ -163,8 +164,8 @@ localparam SVADU_SUPPORTED = 0;
 localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
-localparam RADIX = 32'h4;
-localparam DIVCOPIES = 32'h4;
+localparam RADIX = 4;
+localparam DIVCOPIES = 4;
 
 // bit manipulation
 localparam ZBA_SUPPORTED = 0;
@@ -174,4 +175,4 @@ localparam ZBS_SUPPORTED = 0;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
- */
+ 
