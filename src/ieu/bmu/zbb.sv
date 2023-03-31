@@ -32,18 +32,17 @@
 
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,   // Operands
-  input  logic [WIDTH-1:0] ALUResult,    // ALU Result
   input  logic             W64,          // Indicates word operation
   input  logic             lt,           // lt flag
-  input  logic [2:0]       ZBBSelect,    // Indicates word operation
+  input  logic [2:0]       ZBBSelect,    // ZBB Result select signal
   output logic [WIDTH-1:0] ZBBResult);   // ZBB result
   
   logic [WIDTH-1:0] CntResult;           // count result
-  logic [WIDTH-1:0] MinMaxResult;        // min,max result
+  logic [WIDTH-1:0] MinMaxResult;        // min, max result
   logic [WIDTH-1:0] ByteResult;          // byte results
   logic [WIDTH-1:0] ExtResult;           // sign/zero extend results
 
-  cnt #(WIDTH) cnt(.A, .RevA, .B(B[4:0]), .W64, .CntResult);
+  cnt #(WIDTH) cnt(.A, .RevA, .B(B[1:0]), .W64, .CntResult);
   byteUnit #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
   ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 

@@ -36,6 +36,7 @@ main:
     addi t0, zero, 0
     csrr t0, stimecmp 
 
+<<<<<<< HEAD
     # CSR coverage
     csrw scause, zero
     csrw stval, zero
@@ -62,4 +63,13 @@ main:
 
 
 
+=======
+    # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
+    li t0, 0
+    csrw stval, t0
+    csrw scause, t0
+    csrw sepc, t0
+    csrw stimecmp, t0
+    
+>>>>>>> 37d289cf44530c3e3a6f53e54b06e6eda7f0c3c1
     j done
