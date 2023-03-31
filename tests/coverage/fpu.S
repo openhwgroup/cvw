@@ -38,10 +38,8 @@ main:
     fsh ft0, 8(a0)
 
     # Tests for fpu/fctrl.sv
-    ## The following cover lines 149 to 154
     fcvt.h.s ft1, ft0
     fcvt.q.s ft2, ft0
-    ## The following cover lines 179 to 204
     fcvt.h.w ft3, a0
     fcvt.h.wu ft3, a0
     fcvt.h.l ft3, a0
