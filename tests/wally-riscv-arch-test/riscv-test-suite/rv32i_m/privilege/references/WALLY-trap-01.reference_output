@@ -6,16 +6,16 @@
 00000000 # mtval of faulting instruction (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
-8000015c # mtval of breakpoint instruction adress
+80000168 # mtval of breakpoint instruction adress
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000004 # mcause from load address misaligned
-80000165 # mtval of misaligned address
+80000171 # mtval of misaligned address
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000005 # mcause from load access
 00000000 # mtval of accessed adress (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000006 # mcause from store misaligned
-8000017d # mtval of address with misaligned store instr
+80000189 # mtval of address with misaligned store instr
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000007 # mcause from store access
 00000000 # mtval of accessed address (0x0)
@@ -53,7 +53,7 @@
 8000000b # mcause value from m ext interrupt
 00000000 # mtval for mext interrupt (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
-fffff7ff # medeleg after attempted write of all 1's (only some bits are writeable)
+0000b3ff # medeleg after attempted write of all 1's (only some bits are writeable)
 00000222 # mideleg after attempted write of all 1's (only some bits are writeable) # skipping instruction address fault since they're impossible with compressed instrs enabled
 00000001 # mcause from an instruction access fault
 00000000 # mtval of faulting instruction address (0x0)
@@ -62,16 +62,16 @@ fffff7ff # medeleg after attempted write of all 1's (only some bits are writeabl
 00000000 # mtval of faulting instruction (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000003 # mcause from Breakpoint
-8000015c # mtval of breakpoint instruction adress
+80000168 # mtval of breakpoint instruction adress
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000004 # mcause from load address misaligned
-80000165 # mtval of misaligned address
+80000171 # mtval of misaligned address
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000005 # mcause from load access
 00000000 # mtval of accessed adress (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000006 # mcause from store misaligned
-8000017d # mtval of address with misaligned store instr
+80000189 # mtval of address with misaligned store instr
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
 00000007 # mcause from store access
 00000000 # mtval of accessed address (0x0)
