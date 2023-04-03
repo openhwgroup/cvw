@@ -26,6 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+//`include "cvw.vh"
 import cvw::*;  // global CORE-V-Wally parameters
 
 module wallypipelinedcore #(parameter cvw_t P) (

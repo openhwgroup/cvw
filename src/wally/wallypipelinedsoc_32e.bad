@@ -26,11 +26,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-//`include "cvw.vh"
-import cvw::*;  // global CORE-V-Wally parameters
+import cvw::*; // global CORE-V-Wally parameters
 `include "config.vh"
 
-module wallypipelinedsoc(
+module wallypipelinedsoc_32e (
   input  logic 		            clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
@@ -52,45 +51,19 @@ module wallypipelinedsoc(
   output logic 		            HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0]         GPIOIN,       // inputs from GPIO
-  output logic [31:0]         GPIOOUT,      // output values for GPIO
+  input  logic [31:0] 	      GPIOIN,       // inputs from GPIO
+  output logic [31:0] 	      GPIOOUT,      // output values for GPIO
   output logic [31:0]         GPIOEN,       // output enables for GPIO
-  input  logic                UARTSin,          // UART serial data input
-  output logic                UARTSout,         // UART serial data output
-  input  logic                SDCCmdIn,         // SDC Command input
-  output logic                SDCCmdOut,        // SDC Command output
-  output logic                SDCCmdOE,         // SDC Command output enable
-  input  logic [3:0]          SDCDatIn,         // SDC data input
-  output logic                SDCCLK            // SDC clock
+  input  logic 		            UARTSin,          // UART serial data input
+  output logic 		            UARTSout,         // UART serial data output
+  input  logic 		            SDCCmdIn,         // SDC Command input
+  output logic 		            SDCCmdOut,        // SDC Command output
+  output logic 		            SDCCmdOE,			    // SDC Command output enable
+  input  logic [3:0] 	        SDCDatIn,         // SDC data input
+  output logic 		            SDCCLK			      // SDC clock
 );
 
   `include "parameter-defs.vh"
 
-  // Uncore signals
-  logic [AHBW-1:0]            HRDATA;           // from AHB mux in uncore
-  logic                       HRESP;            // response from AHB
-  logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
-  logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
-  logic                       MExtInt,SExtInt;  // from PLIC
-
-  // synchronize reset to SOC clock domain
-  synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
-   
-  // instantiate processor and internal memories
-  wallypipelinedcore #(P) core (.clk, .reset,
-    .MTimerInt, .MExtInt, .SExtInt, .MSwInt, .MTIME_CLINT,
-    .HRDATA, .HREADY, .HRESP, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB,
-    .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK
-   );
-
-  // instantiate uncore if a bus interface exists
-  if (P.BUS_SUPPORTED) begin : uncore
-    uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
-      .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
-      .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
-      .UARTSout, .MTIME_CLINT, 
-      .SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK);
-  end
-
+  wallypipelinedsoc soc(.*);
 endmodule
