@@ -36,4 +36,11 @@ main:
     addi t0, zero, 0
     csrr t0, stimecmp 
 
+    # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
+    li t0, 0
+    csrw stval, t0
+    csrw scause, t0
+    csrw sepc, t0
+    csrw stimecmp, t0
+    
     j done

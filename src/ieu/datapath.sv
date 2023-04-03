@@ -114,7 +114,7 @@ module datapath (
   comparator #(`XLEN) comp(ForwardedSrcAE, ForwardedSrcBE, BranchSignedE, FlagsE);
   mux2  #(`XLEN)  srcamux(ForwardedSrcAE, PCE, ALUSrcAE, SrcAE);
   mux2  #(`XLEN)  srcbmux(ForwardedSrcBE, ImmExtE, ALUSrcBE, SrcBE);
-  alu   #(`XLEN)  alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, FlagsE, BALUControlE, ALUResultE, IEUAdrE);
+  alu   #(`XLEN)  alu(SrcAE, SrcBE, W64E, SubArithE, ALUSelectE, BSelectE, ZBBSelectE, Funct3E, FlagsE[0], BALUControlE, ALUResultE, IEUAdrE);
   mux2 #(`XLEN)   altresultmux(ImmExtE, PCLinkE, JumpE, AltResultE);
   mux2 #(`XLEN)   ieuresultmux(ALUResultE, AltResultE, ALUResultSrcE, IEUResultE);
 
