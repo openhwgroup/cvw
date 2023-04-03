@@ -55,7 +55,7 @@ module csr #(parameter
   input  logic [4:0]       SetFflagsM,                // Set floating point flag bits in FCSR
   input  logic [1:0]       NextPrivilegeModeM,        // STATUS bits updated based on next privilege mode
   input  logic [1:0]       PrivilegeModeW,            // current privilege mode
-  input  logic [`LOG_XLEN-1:0] CauseM,                // Trap cause
+  input  logic [3:0]       CauseM,                    // Trap cause
   input  logic             SelHPTW,                   // hardware page table walker active, so base endianness on supervisor mode
   // inputs for performance counters
   input  logic             LoadStallD,
@@ -79,7 +79,7 @@ module csr #(parameter
   // outputs from CSRs
   output logic [1:0]       STATUS_MPP,
   output logic             STATUS_SPP, STATUS_TSR, STATUS_TVM,
-  output logic [`XLEN-1:0] MEDELEG_REGW, 
+  output logic [15:0] MEDELEG_REGW, 
   output logic [`XLEN-1:0] SATP_REGW,
   output logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
   output logic             STATUS_MIE, STATUS_SIE,
@@ -106,8 +106,10 @@ module csr #(parameter
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
+  logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, WriteFFLAGSM;
-  logic [`XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextCauseM, NextMtvalM;
+  logic [`XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextMtvalM;
+  logic [4:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
@@ -153,7 +155,7 @@ module csr #(parameter
     logic VectoredM;
     logic [`XLEN-1:0] TVecPlusCauseM;
     assign VectoredM = InterruptM & (TVecM[1:0] == 2'b01);
-    assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM[3:0], 2'b00}; // 64-byte alignment allows concatenation rather than addition
+    assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM, 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else 
     assign TrapVectorM = TVecAlignedM;
@@ -196,11 +198,12 @@ module csr #(parameter
   assign CSRAdrM = InstrM[31:20];
   assign UnalignedNextEPCM = TrapM ? ((wfiM & IntPendingM) ? PCM+4 : PCM) : CSRWriteValM;
   assign NextEPCM = `C_SUPPORTED ? {UnalignedNextEPCM[`XLEN-1:1], 1'b0} : {UnalignedNextEPCM[`XLEN-1:2], 2'b00}; // 3.1.15 alignment
-  assign NextCauseM = TrapM ? {InterruptM, {(`XLEN-`LOG_XLEN-1){1'b0}}, CauseM}: CSRWriteValM;
+  assign NextCauseM = TrapM ? {InterruptM, CauseM}: {CSRWriteValM[`XLEN-1], CSRWriteValM[3:0]};
   assign NextMtvalM = TrapM ? NextFaultMtvalM : CSRWriteValM;
-  assign CSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
-  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW);
-  assign CSRUWriteM = CSRWriteM;  
+  assign UngatedCSRMWriteM = CSRWriteM & (PrivilegeModeW == `M_MODE);
+  assign CSRMWriteM = UngatedCSRMWriteM & InstrValidNotFlushedM;
+  assign CSRSWriteM = CSRWriteM & (|PrivilegeModeW)  & InstrValidNotFlushedM;
+  assign CSRUWriteM = CSRWriteM  & InstrValidNotFlushedM;
   assign MTrapM = TrapM & (NextPrivilegeModeM == `M_MODE);
   assign STrapM = TrapM & (NextPrivilegeModeM == `S_MODE) & `S_SUPPORTED;
 
@@ -208,7 +211,7 @@ module csr #(parameter
   // CSRs
   ///////////////////////////////////////////
 
-  csri   csri(.clk, .reset, .InstrValidNotFlushedM,  
+  csri   csri(.clk, .reset,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
     .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
@@ -222,8 +225,8 @@ module csr #(parameter
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
     .STATUS_FS, .BigEndianM);
 
-  csrm  csrm(.clk, .reset, .InstrValidNotFlushedM, 
-    .CSRMWriteM, .MTrapM, .CSRAdrM,
+  csrm  csrm(.clk, .reset, 
+    .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM,
     .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
     .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
     .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
@@ -233,7 +236,7 @@ module csr #(parameter
 
 
   if (`S_SUPPORTED) begin:csrs
-    csrs  csrs(.clk, .reset,  .InstrValidNotFlushedM,
+    csrs  csrs(.clk, .reset,
       .CSRSWriteM, .STrapM, .CSRAdrM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
       .STATUS_TVM, .MCOUNTEREN_TM(MCOUNTEREN_REGW[1]),

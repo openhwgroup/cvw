@@ -1,9 +1,9 @@
 ///////////////////////////////////////////
-// priv.S
+// ifu.S
 //
-// Written: David_Harris@hmc.edu 23 March 2023
+// Written: sriley@g.hmc.edu 28 March 2023
 //
-// Purpose: Test coverage for EBU
+// Purpose: Test coverage for IFU
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -27,20 +27,14 @@
 #include "WALLY-init-lib.h"
 
 main:
+    # turn floating point on
+    li t0, 0x2000
+    csrs mstatus, t0
 
-    # switch to supervisor mode
-    li a0, 1   
-    ecall
+    # calling compressed floating point load double instruction
+    //.halfword 0x2000 // CL type compressed floating-point ld-->funct3,imm,rs1',imm,rd',op
+                        // binary version 0000 0000 0000 0000 0010 0000 0000 0000
+    mv s0, sp
+    c.fld fs0, 0(s0)
 
-    # Test read to stimecmp fails when MCOUNTEREN_TM is not set
-    addi t0, zero, 0
-    csrr t0, stimecmp 
-
-    # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
-    li t0, 0
-    csrw stval, t0
-    csrw scause, t0
-    csrw sepc, t0
-    csrw stimecmp, t0
-    
     j done

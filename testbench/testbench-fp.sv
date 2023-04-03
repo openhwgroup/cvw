@@ -1,7 +1,8 @@
-///////////////////////////////////////////
+<///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
+// Modified: 4/2/2023
 //
 // Purpose: Testbench for Testfloat
 // 
@@ -32,75 +33,74 @@
 module testbenchfp;
   parameter TEST="none";
 
-  string      Tests[];        // list of tests to be run
-  logic [2:0] OpCtrl[];       // list of op controls
-  logic [2:0] Unit[];         // list of units being tested
-  logic WriteInt[];           // Is being written to integer resgiter
-  logic [2:0] Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
-  logic [1:0] Fmt[];          // list of formats for the other units
-  
+  string                       Tests[];        // list of tests to be run
+  logic [2:0]                  OpCtrl[];       // list of op controls
+  logic [2:0]                  Unit[];         // list of units being tested
+  logic                        WriteInt[];           // Is being written to integer resgiter
+  logic [2:0]                  Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
+  logic [1:0]                  Fmt[];          // list of formats for the other units  
 
-  logic               clk=0;
-  logic [31:0]        TestNum=0;    // index for the test
-  logic [31:0]        OpCtrlNum=0;  // index for OpCtrl
-  logic [31:0]        errors=0;     // how many errors
-  logic [31:0]        VectorNum=0;  // index for test vector
-  logic [31:0]        FrmNum=0;     // index for rounding mode
-  logic [`FLEN*4+7:0] TestVectors[8388609:0];     // list of test vectors
+  logic                        clk=0;
+  logic [31:0]                 TestNum=0;    // index for the test
+  logic [31:0]                 OpCtrlNum=0;  // index for OpCtrl
+  logic [31:0]                 errors=0;     // how many errors
+  logic [31:0]                 VectorNum=0;  // index for test vector
+  logic [31:0]                 FrmNum=0;     // index for rounding mode
+  logic [`FLEN*4+7:0]          TestVectors[8388609:0];     // list of test vectors
 
-  logic [1:0]           FmtVal;          // value of the current Fmt
-  logic [2:0]           UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
-  logic                 WriteIntVal;                // value of the current WriteInt
-  logic [`FLEN-1:0]     X, Y, Z;                    // inputs read from TestFloat
-  logic [`XLEN-1:0]     SrcA;                       // integer input
-  logic [`FLEN-1:0]	    Ans;                        // correct answer from TestFloat
-  logic [`FLEN-1:0]	    Res;                        // result from other units
-  logic [4:0]	 	        AnsFlg;                     // correct flags read from testfloat
-  logic [4:0]	 	        ResFlg, Flg;                // Result flags
-  logic	[`FMTBITS-1:0]  ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
-  logic [`FLEN-1:0]     FpRes, FpCmpRes;            // Results from each unit
-  logic [`XLEN-1:0]     IntRes, CmpRes;             // Results from each unit
-  logic [4:0]           FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
-  logic                 AnsNaN, ResNaN, NaNGood;
-  logic                 Xs, Ys, Zs;                 // sign of the inputs
-  logic [`NE-1:0]       Xe, Ye, Ze;                 // exponent of the inputs
-  logic [`NF:0]         Xm, Ym, Zm;                 // mantissas of the inputs
-  logic                 XNaN, YNaN, ZNaN;           // is the input NaN
-  logic                 XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
-  logic                 XSubnorm, ZSubnorm;           // is the input denormalized
-  logic                 XInf, YInf, ZInf;           // is the input infinity
-  logic                 XZero, YZero, ZZero;        // is the input zero
-  logic                 XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
-  logic  [`CVTLEN-1:0]  CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
-  logic                 IntZero;
-  logic                 CvtResSgnE;
-  logic [`NE:0]         CvtCalcExpE;    // the calculated expoent
-	logic [`LOGCVTLEN-1:0] CvtShiftAmtE;  // how much to shift by
-	logic [`DIVb:0]       Quot;
-  logic                 CvtResSubnormUfE;
-  logic                 DivStart, FDivBusyE, OldFDivBusyE;
-  logic                 reset = 1'b0;
-  logic [$clog2(`NF+2)-1:0] XZeroCnt, YZeroCnt;
-  logic [`DURLEN-1:0]   Dur;
+  logic [1:0]                  FmtVal;          // value of the current Fmt
+  logic [2:0]                  UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
+  logic                        WriteIntVal;                // value of the current WriteInt
+  logic [`FLEN-1:0]            X, Y, Z;                    // inputs read from TestFloat
+  logic [`XLEN-1:0]            SrcA;                       // integer input
+  logic [`FLEN-1:0]	       Ans;                        // correct answer from TestFloat
+  logic [`FLEN-1:0]	       Res;                        // result from other units
+  logic [4:0]	 	       AnsFlg;                     // correct flags read from testfloat
+  logic [4:0]	 	       ResFlg, Flg;                // Result flags
+  logic	[`FMTBITS-1:0]         ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
+  logic [`FLEN-1:0]            FpRes, FpCmpRes;            // Results from each unit
+  logic [`XLEN-1:0]            IntRes, CmpRes;             // Results from each unit
+  logic [4:0]                  FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
+  logic                        AnsNaN, ResNaN, NaNGood;
+  logic                        Xs, Ys, Zs;                 // sign of the inputs
+  logic [`NE-1:0]              Xe, Ye, Ze;                 // exponent of the inputs
+  logic [`NF:0]                Xm, Ym, Zm;                 // mantissas of the inputs
+  logic                        XNaN, YNaN, ZNaN;           // is the input NaN
+  logic                        XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
+  logic                        XSubnorm, ZSubnorm;           // is the input denormalized
+  logic                        XInf, YInf, ZInf;           // is the input infinity
+  logic                        XZero, YZero, ZZero;        // is the input zero
+  logic                        XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
+  logic  [`CVTLEN-1:0]         CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
+  logic                        IntZero;
+  logic                        CvtResSgnE;
+  logic [`NE:0]                CvtCalcExpE;    // the calculated expoent
+  logic [`LOGCVTLEN-1:0]       CvtShiftAmtE;  // how much to shift by
+  logic [`DIVb:0]              Quot;
+  logic                        CvtResSubnormUfE;
+  logic                        DivStart, FDivBusyE, OldFDivBusyE;
+  logic                        reset = 1'b0;
+  logic [$clog2(`NF+2)-1:0]    XZeroCnt, YZeroCnt;
+  logic [`DURLEN-1:0]          Dur;
 
   // in-between FMA signals
-  logic                 Mult;
-  logic                 Ss;
-  logic [`NE+1:0]	      Pe;
-  logic [`NE+1:0]	      Se;
-  logic 				        ASticky;
-  logic 					      KillProd; 
-  logic [$clog2(3*`NF+5)-1:0]	SCnt;
-  logic [3*`NF+3:0]	    Sm;       
-  logic 			          InvA;
-  logic 			          NegSum;
-  logic 			          As;
-  logic 			          Ps;
-  logic                 DivSticky;
-  logic                 DivDone;
-  logic                 DivNegSticky;
-  logic [`NE+1:0]       DivCalcExp;
-  logic                 divsqrtop;
+  logic                        Mult;
+  logic                        Ss;
+  logic [`NE+1:0]	       Pe;
+  logic [`NE+1:0]	       Se;
+  logic 		       ASticky;
+  logic 		       KillProd; 
+  logic [$clog2(3*`NF+5)-1:0]  SCnt;
+  logic [3*`NF+3:0]	       Sm;       
+  logic 		       InvA;
+  logic 		       NegSum;
+  logic 		       As;
+  logic 		       Ps;
+  logic                        DivSticky;
+  logic                        DivDone;
+  logic                        DivNegSticky;
+  logic [`NE+1:0]              DivCalcExp;
+  logic                        divsqrtop;
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,28 +126,28 @@ module testbenchfp;
     $display("TEST is %s", TEST);
     if (`Q_SUPPORTED) begin // if Quad percision is supported
       if (TEST === "cvtint"| TEST === "all") begin  // if testing integer conversion
-                                              // add the 128-bit cvtint tests to the to-be-tested list
-                                              Tests = {Tests, f128rv32cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
-                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b11};
-                                              end
-                                              if (`XLEN == 64) begin // if 64-bit integers are supported add their conversions
-                                                Tests = {Tests, f128rv64cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b11};
-                                              end
-                                              end
-                                            end
+         // add the 128-bit cvtint tests to the to-be-tested list
+         Tests = {Tests, f128rv32cvtint};
+         // add the op-codes for these tests to the op-code list
+         OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+         WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+         // add what unit is used and the fmt to their lists (one for each test)
+         for(int i = 0; i<20; i++) begin
+            Unit = {Unit, `CVTINTUNIT};
+            Fmt = {Fmt, 2'b11};
+         end
+         if (`XLEN == 64) begin // if 64-bit integers are supported add their conversions
+            Tests = {Tests, f128rv64cvtint};
+            // add the op-codes for these tests to the op-code list
+            OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+            WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+            // add what unit is used and the fmt to their lists (one for each test)
+            for(int i = 0; i<20; i++) begin
+               Unit = {Unit, `CVTINTUNIT};
+               Fmt = {Fmt, 2'b11};
+            end
+         end
+      end
       if (TEST === "cvtfp" | TEST === "all") begin  // if the floating-point conversions are being tested
         if(`D_SUPPORTED) begin // if double precision is supported
           // add the 128 <-> 64 bit conversions to the to-be-tested list
@@ -270,27 +270,27 @@ module testbenchfp;
     end
     if (`D_SUPPORTED) begin // if double precision is supported
       if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
-                                              Tests = {Tests, f64rv32cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
-                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b01};
-                                              end
-                                              if (`XLEN == 64) begin // if 64-bit integers are being supported
-                                                Tests = {Tests, f64rv64cvtint};
-                                                // add the op-codes for these tests to the op-code list
-                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                                // add what unit is used and the fmt to their lists (one for each test)
-                                                for(int i = 0; i<20; i++) begin
-                                                  Unit = {Unit, `CVTINTUNIT};
-                                                  Fmt = {Fmt, 2'b01};
-                                                end
-                                              end
-                                            end
+         Tests = {Tests, f64rv32cvtint};
+         // add the op-codes for these tests to the op-code list
+         OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+         WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+         // add what unit is used and the fmt to their lists (one for each test)
+         for(int i = 0; i<20; i++) begin
+            Unit = {Unit, `CVTINTUNIT};
+            Fmt = {Fmt, 2'b01};
+         end
+         if (`XLEN == 64) begin // if 64-bit integers are being supported
+            Tests = {Tests, f64rv64cvtint};
+            // add the op-codes for these tests to the op-code list
+            OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+            WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+            // add what unit is used and the fmt to their lists (one for each test)
+            for(int i = 0; i<20; i++) begin
+               Unit = {Unit, `CVTINTUNIT};
+               Fmt = {Fmt, 2'b01};
+            end
+         end
+      end
       if (TEST === "cvtfp" | TEST === "all") begin // if floating point conversions are being tested
         if(`F_SUPPORTED) begin // if single precision is supported
           // add the 64 <-> 32 bit conversions to the to-be-tested list
@@ -397,27 +397,27 @@ module testbenchfp;
     end
     if (`F_SUPPORTED) begin // if single precision being supported
       if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
-                                              Tests = {Tests, f32rv32cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
-                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b00};
-                                              end
-                                              if (`XLEN == 64) begin // if 64-bit integers are supported
-                                                Tests = {Tests, f32rv64cvtint};
-                                                // add the op-codes for these tests to the op-code list
-                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                                // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b00};
-                                              end
-                                              end
-                                            end
+         Tests = {Tests, f32rv32cvtint};
+         // add the op-codes for these tests to the op-code list
+         OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+         WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+         // add what unit is used and the fmt to their lists (one for each test)
+         for(int i = 0; i<20; i++) begin
+            Unit = {Unit, `CVTINTUNIT};
+            Fmt = {Fmt, 2'b00};
+         end
+         if (`XLEN == 64) begin // if 64-bit integers are supported
+            Tests = {Tests, f32rv64cvtint};
+            // add the op-codes for these tests to the op-code list
+            OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+            WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+            // add what unit is used and the fmt to their lists (one for each test)
+            for(int i = 0; i<20; i++) begin
+               Unit = {Unit, `CVTINTUNIT};
+               Fmt = {Fmt, 2'b00};
+            end
+         end
+      end
       if (TEST === "cvtfp" | TEST === "all") begin  // if floating point conversion is being tested
         if(`ZFH_SUPPORTED) begin 
           // add the 32 <-> 16 bit conversions to the to-be-tested list
@@ -508,27 +508,27 @@ module testbenchfp;
     end
     if (`ZFH_SUPPORTED) begin // if half precision supported
       if (TEST === "cvtint"| TEST === "all") begin // if in conversions are being tested
-                                              Tests = {Tests, f16rv32cvtint};
-                                              // add the op-codes for these tests to the op-code list
-                                              OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
-                                              WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                              // add what unit is used and the fmt to their lists (one for each test)
-                                              for(int i = 0; i<20; i++) begin
-                                                Unit = {Unit, `CVTINTUNIT};
-                                                Fmt = {Fmt, 2'b10};
-                                              end
-                                              if (`XLEN == 64) begin // if 64-bit integers are supported
-                                                Tests = {Tests, f16rv64cvtint};
-                                                // add the op-codes for these tests to the op-code list
-                                                OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
-                                                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
-                                                // add what unit is used and the fmt to their lists (one for each test)
-                                                for(int i = 0; i<20; i++) begin
-                                                  Unit = {Unit, `CVTINTUNIT};
-                                                  Fmt = {Fmt, 2'b10};
-                                                end
-                                              end
-                                            end
+         Tests = {Tests, f16rv32cvtint};
+         // add the op-codes for these tests to the op-code list
+         OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
+         WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+         // add what unit is used and the fmt to their lists (one for each test)
+         for(int i = 0; i<20; i++) begin
+            Unit = {Unit, `CVTINTUNIT};
+            Fmt = {Fmt, 2'b10};
+         end
+         if (`XLEN == 64) begin // if 64-bit integers are supported
+            Tests = {Tests, f16rv64cvtint};
+            // add the op-codes for these tests to the op-code list
+            OpCtrl = {OpCtrl, `FROM_UL_OPCTRL, `FROM_L_OPCTRL, `TO_UL_OPCTRL, `TO_L_OPCTRL};
+            WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
+            // add what unit is used and the fmt to their lists (one for each test)
+            for(int i = 0; i<20; i++) begin
+               Unit = {Unit, `CVTINTUNIT};
+               Fmt = {Fmt, 2'b10};
+            end
+         end
+      end
       if (TEST === "cmp"   | TEST === "all") begin // if comparisions are being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
         Tests = {Tests, f16cmp};
@@ -656,7 +656,8 @@ module testbenchfp;
   end
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
-  readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
+  readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
+                                    .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
                                     .Xs, .Ys, .Zs, .Unit(UnitVal),
                                     .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
                                     .Xm, .Ym, .Zm, .DivStart,
@@ -680,7 +681,7 @@ module testbenchfp;
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   // instantiate devices under test
-  if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "all") begin : fma
+  if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "sub" | TEST === "all") begin : fma
     fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
             .Xe(Xe), .Ye(Ye), .Ze(Ze), 
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
