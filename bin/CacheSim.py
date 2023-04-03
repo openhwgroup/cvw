@@ -43,7 +43,7 @@ class Cache:
                 self.ways[i].append(CacheLine())
         
         self.pLRU = []
-        for i in range(numsets):
+        for i in range(self.numsets):
             self.pLRU.append([0]*(self.numways-1))
     
     def flush(self):
@@ -55,6 +55,11 @@ class Cache:
         for way in self.ways:
             for line in way:
                 line.valid = False
+    
+    def clear_pLRU(self):
+        self.pLRU = []
+        for i in range(self.numsets):
+            self.pLRU.append([0]*(self.numways-1))
     
     def splitaddr(self, addr):
         # no need for offset in the sim
@@ -113,7 +118,7 @@ class Cache:
         #print("changing index", index, "to", int(not (waynum % 2)))
         while index > 0:
             parent = (index-1) // 2
-            tree[parent] = index % 2
+            tree[parent] = index % 2 
             #print("changing index", parent, "to", index%2)
             index = parent
 
@@ -126,9 +131,11 @@ class Cache:
         bottomrow = (self.numways - 1) // 2 #first index on the bottom row of the tree
         while index < bottomrow:
             if tree[index] == 0:
+                # Go to the left child
                 index = index*2 + 1
-            else:
-                index = index*2 + 2
+            else: #tree[index] == 1
+                # Go to the right child
+                index = index*2 + 2     
         
         victim = (index - bottomrow)*2
         if tree[index] == 1:
@@ -161,16 +168,17 @@ if __name__ == "__main__":
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
     
     # go looking in the sim directory for the file if it doesn't exist
-    if not os.path.isfile(args.file):
-        args.file = os.path.expanduser("~/cvw/sim/" + args.file)
+    # if not os.path.isfile(args.file):
+    #     args.file = os.path.expanduser("~/cvw/sim/" + args.file)
     
     with open(args.file, "r") as f:
         for ln in f:
             ln = ln.strip()
             lninfo = ln.split()
             if len(lninfo) < 3: #non-address line
-                if lninfo[0] == 'END':
+                if lninfo[0] == 'BEGIN':
                     cache.invalidate() # a new test is starting, so 'empty' the cache
+                    cache.clear_pLRU()
             else:
                 if lninfo[1] == 'F':
                     cache.flush()
@@ -178,10 +186,12 @@ if __name__ == "__main__":
                     addr = int(lninfo[0], 16)
                     result = cache.cacheaccess(addr, lninfo[1] == 'W') # add support for A
                     #tag, setnum = cache.splitaddr(addr)
-                    #print(tag, setnum, lninfo[2], result)
+                    #print(hex(tag), hex(setnum), lninfo[2], result)
                     if not result == lninfo[2]:
                         print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result)
                     #print()
+    
+    #print(cache)
                         
                         
 
