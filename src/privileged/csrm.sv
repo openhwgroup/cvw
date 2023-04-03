@@ -73,8 +73,7 @@ module csrm #(parameter
   MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
 ) (
   input  logic                    clk, reset, 
-  input  logic                    InstrValidNotFlushedM, 
-  input  logic                    CSRMWriteM, MTrapM,
+  input  logic                    UngatedCSRMWriteM, CSRMWriteM, MTrapM,
   input  logic [11:0]             CSRAdrM,
   input  logic [`XLEN-1:0]        NextEPCM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
   input  logic [4:0]              NextCauseM,
@@ -112,13 +111,13 @@ module csrm #(parameter
       else
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
       
-      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & InstrValidNotFlushedM & ~ADDRLocked[i];
+      assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~ADDRLocked[i];
       flopenr #(`PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[`PA_BITS-3:0], PMPADDR_ARRAY_REGW[i]);
       if (`XLEN==64) begin
-        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & InstrValidNotFlushedM & ~CFGLocked[i];
+        assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~CFGLocked[i];
         flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
       end else begin
-        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & InstrValidNotFlushedM & ~CFGLocked[i];
+        assign WritePMPCFGM[i]  = (CSRMWriteM & (CSRAdrM == (PMPCFG0+i/4))) & ~CFGLocked[i];
         flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%4)*8+7:(i%4)*8], PMPCFG_ARRAY_REGW[i]);
       end
     end
@@ -133,19 +132,19 @@ module csrm #(parameter
   assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
-  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS) & InstrValidNotFlushedM;
-  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH) & InstrValidNotFlushedM & (`XLEN==32);
-  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC) & InstrValidNotFlushedM;
-  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG) & InstrValidNotFlushedM;
-  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG) & InstrValidNotFlushedM;
-  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH) & InstrValidNotFlushedM;
-  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC)) & InstrValidNotFlushedM;
-  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE)) & InstrValidNotFlushedM;
-  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL)) & InstrValidNotFlushedM;
-  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN) & InstrValidNotFlushedM;
-  assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT) & InstrValidNotFlushedM;
+  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS);
+  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH)& (`XLEN==32);
+  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC);
+  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG);
+  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG);
+  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH);
+  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC));
+  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE));
+  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL));
+  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN);
+  assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT);
 
-  assign IllegalCSRMWriteReadonlyM = CSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
+  assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
 
   // CSRs
   flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
