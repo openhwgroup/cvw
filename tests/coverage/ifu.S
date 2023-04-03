@@ -36,6 +36,7 @@ main:
                         // binary version 0000 0000 0000 0000 0010 0000 0000 0000
     mv s0, sp
     c.fld fs0, 0(s0)
+
     c.fsd fs0, 0(s0)
 
     // c.fldsp fs0, 0
@@ -44,14 +45,10 @@ main:
     // c.fsdsp fs0, 0
     .hword 0xA002
 
-    # set XLEN to 64
-    li t0, 0x200000000
-    csrs mstatus, t0
-
     //# Illegal compressed instruction with op = 01, instr[15:10] = 100111, and 0's everywhere else
     //.hword 0x9C01
 
-    # Illegal compressed instruction 
+    # Line Illegal compressed instruction 
     .hword 0x9C41
 
     j done

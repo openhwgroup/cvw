@@ -57,7 +57,6 @@ main:
     fcvt.l.q a0, ft3
     fcvt.lu.q a0, ft3
 
-<<<<<<< HEAD
 
     // Tests verfying that half and quad floating point convertion instructions are not supported by rv64gc
     # fcvt.h.d ft3, ft0 // Somehow this instruction is taking the route on line 124
@@ -75,8 +74,6 @@ main:
     .word 0xd2400053    // Line 168 All False Test case - illegal instruction?
     .word 0xc2400053    // Line 174 All False Test case - illegal instruction?
 
-=======
->>>>>>> d4b7da34dee55ec8394ab391ecd6514c887a9790
     # Test illegal instructions are detected
     .word 0x00000007 // illegal floating-point load (bad Funct3)
     .word 0x00000027 // illegal floating-point store (bad Funct3)
