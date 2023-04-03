@@ -37,10 +37,10 @@ module bitmanipalu #(parameter WIDTH=32) (
   input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
   input  logic             CompLT,                  // Less-Than flag from comparator
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
-  input  logic [WIDTH-1:0] ALUResult, FullResult,   // ALUResult, FullResult signals
+  input  logic [WIDTH-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
   output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
   output logic [WIDTH-1:0] CondShiftA,              // A is conditionally shifted for ShAdd instructions
-  output logic [WIDTH-1:0] Result);                 // Result
+  output logic [WIDTH-1:0] ALUResult);              // Result
 
   logic [WIDTH-1:0] ZBBResult, ZBCResult;           // ZBB, ZBC Result
   logic [WIDTH-1:0] MaskB;                          // BitMask of B
@@ -91,9 +91,9 @@ module bitmanipalu #(parameter WIDTH=32) (
   always_comb
     case (BSelect)
       // 00: ALU, 01: ZBA/ZBS, 10: ZBB, 11: ZBC
-      2'b00: Result = ALUResult; 
-      2'b01: Result = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
-      2'b10: Result = ZBBResult; 
-      2'b11: Result = ZBCResult;
+      2'b00: ALUResult = PreALUResult; 
+      2'b01: ALUResult = FullResult;         // NOTE: We don't use ALUResult because ZBA/ZBS instructions don't sign extend the MSB of the right-hand word.
+      2'b10: ALUResult = ZBBResult; 
+      2'b11: ALUResult = ZBCResult;
     endcase
 endmodule
