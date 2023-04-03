@@ -36,19 +36,16 @@ module zbc #(parameter WIDTH=32) (
 
   logic [WIDTH-1:0] ClmulResult, RevClmulResult;
   logic [WIDTH-1:0] RevB;
-  logic [WIDTH-1:0] x,y;
-  logic [1:0] select;
+  logic [WIDTH-1:0] X, Y;
 
-  assign select = ~Funct3[1:0];
+  bitreverse #(WIDTH) brB(B, RevB);
 
-  bitreverse #(WIDTH) brB(.A(B), .RevA(RevB));
+  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
+  mux3 #(WIDTH) ymux({{1'b0}, RevB[WIDTH-2:0]}, RevB, B, ~Funct3[1:0], Y);
 
-  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, select, x);
-  mux3 #(WIDTH) ymux({{1'b0},RevB[WIDTH-2:0]}, RevB, B,  select, y);
-
-  clmul #(WIDTH) clm(.A(x), .B(y), .ClmulResult(ClmulResult));
+  clmul #(WIDTH) clm(.X, .Y, .ClmulResult);
   
-  bitreverse  #(WIDTH) brClmulResult(.A(ClmulResult), .RevA(RevClmulResult));
+  bitreverse  #(WIDTH) brClmulResult(ClmulResult, RevClmulResult);
 
   mux2 #(WIDTH) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
 endmodule
