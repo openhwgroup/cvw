@@ -35,7 +35,8 @@ module bitmanipalu #(parameter WIDTH=32) (
   input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,               // ZBB mux select signal
   input  logic [2:0]       Funct3,                  // Funct3 field of opcode indicates operation to perform
-  input  logic             CompLT,                  // Less-Than flag from comparator
+  input  logic             LT,                      // less than flag
+  input  logic             LTU,                     // less than unsigned flag
   input  logic [2:0]       BALUControl,             // ALU Control signals for B instructions in Execute Stage
   input  logic [WIDTH-1:0] PreALUResult, FullResult,// PreALUResult, FullResult signals
   output logic [WIDTH-1:0] CondMaskB,               // B is conditionally masked for ZBS instructions
@@ -84,7 +85,7 @@ module bitmanipalu #(parameter WIDTH=32) (
 
   // ZBB Unit
   if (`ZBB_SUPPORTED) begin: zbb
-    zbb #(WIDTH) ZBB(.A, .RevA, .B, .W64, .lt(CompLT), .ZBBSelect, .ZBBResult);
+    zbb #(WIDTH) ZBB(.A, .RevA, .B, .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 
   // Result Select Mux
