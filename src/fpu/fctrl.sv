@@ -90,118 +90,124 @@ module fctrl (
                          (Fmt2 == 2'b10 & `ZFH_SUPPORTED) | (Fmt2 == 2'b11 & `Q_SUPPORTED));
 
   // decode the instruction                       
-   // ControlsD: FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt
-   always_comb
+  // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt
+  always_comb
     if (STATUS_FS == 2'b00) // FPU instructions are illegal when FPU is disabled
       ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0;
     else if (OpD != 7'b0000111 & OpD != 7'b0100111 & ~SupportedFmt) 
       ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // for anything other than loads and stores, check for supported format
-    else begin
-      ControlsD = `FCTRLW'b0_0_00_xx_0xx_0_1_0; // default: illegal FPU instruction
+    else begin 
+      ControlsD = `FCTRLW'b0_0_00_xx_000_0_1_0; // default: non-implemented instruction
       /* verilator lint_off CASEINCOMPLETE */ // default value above has priority so no other default needed
       case(OpD)
-      7'b0000111: case(Funct3D)
-                    3'b010:                      ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flw
-                    3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // fld
-                    3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flq
-                    3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flh
-                  endcase
-      7'b0100111: case(Funct3D)
-                    3'b010:                      ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsw
-                    3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsd
-                    3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsq
-                    3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsh
-                  endcase
-      7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0; // fmadd
-      7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0; // fmsub
-      7'b1001011:   ControlsD = `FCTRLW'b1_0_01_10_010_0_0_0; // fnmsub
-      7'b1001111:   ControlsD = `FCTRLW'b1_0_01_10_011_0_0_0; // fnmadd
-      7'b1010011: casez(Funct7D)
-                    7'b00000??: ControlsD = `FCTRLW'b1_0_01_10_110_0_0_0; // fadd
-                    7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0; // fsub
-                    7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0; // fmul
-                    7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0; // fdiv
-                    7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
-                    7'b00100??: case(Funct3D)
-                                  3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_000_0_0_0; // fsgnj
-                                  3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_001_0_0_0; // fsgnjn
-                                  3'b010:  ControlsD = `FCTRLW'b1_0_00_xx_010_0_0_0; // fsgnjx
-                               endcase
-                    7'b00101??: case(Funct3D)
-                                  3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_110_0_0_0; // fmin
-                                  3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_101_0_0_0; // fmax
-                                endcase
-                    7'b10100??: case(Funct3D)
-                                  3'b010:  ControlsD = `FCTRLW'b0_1_00_xx_010_0_0_0; // feq
-                                  3'b001:  ControlsD = `FCTRLW'b0_1_00_xx_001_0_0_0; // flt
-                                  3'b000:  ControlsD = `FCTRLW'b0_1_00_xx_011_0_0_0; // fle
-                                endcase
-                    7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
-                                               ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
-                                else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                               ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.w / fmv.x.d to int register
-                    7'b111100?: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                               ControlsD = `FCTRLW'b1_0_00_xx_011_0_0_0; // fmv.w.x / fmv.d.x   to fp reg
-                    7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
-                                               ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
-                    7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
-                                               ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
-                    7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
-                                               ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
-                    7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
-                                               ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
-                   7'b1101000: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.s.w   w->s
-                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.s.wu wu->s
-                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.s.l   l->s
-                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.s.lu lu->s
-                                endcase
-                    7'b1100000: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.s   s->w
-                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.s  s->wu
-                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.s   s->l
-                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.s  s->lu
-                                endcase
-                    7'b1101001: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.d.w   w->d
-                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.d.wu wu->d
-                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.d.l   l->d
-                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.d.lu lu->d
-                                endcase
-                    7'b1100001: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.d   d->w
-                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.d  d->wu
-                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.d   d->l
-                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
-                                endcase
-                    7'b1101010: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
-                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
-                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.h.l   l->h
-                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.h.lu lu->h
-                                endcase
-                    7'b1100010: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.h   h->w
-                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.h  h->wu
-                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.h   h->l
-                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.h  h->lu
-                                endcase
-                    7'b1101011: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.q.w   w->q
-                                  5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.q.wu wu->q
-                                  5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.q.l   l->q
-                                  5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.q.lu lu->q
-                                endcase
-                    7'b1100011: case(Rs2D)
-                                  5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.q   q->w
-                                  5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.q  q->wu
-                                  5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.q   q->l
-                                  5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.q  q->lu
-                                endcase                            
-                  endcase
+        7'b0000111: case(Funct3D)
+                      3'b010:                      ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flw
+                      3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // fld
+                      3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flq
+                      3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_xx_0xx_0_0_0; // flh
+                    endcase
+        7'b0100111: case(Funct3D)
+                      3'b010:                      ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsw
+                      3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsd
+                      3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsq
+                      3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_xx_0xx_0_0_0; // fsh
+                    endcase
+        7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0; // fmadd
+        7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0; // fmsub
+        7'b1001011:   ControlsD = `FCTRLW'b1_0_01_10_010_0_0_0; // fnmsub
+        7'b1001111:   ControlsD = `FCTRLW'b1_0_01_10_011_0_0_0; // fnmadd
+        7'b1010011: casez(Funct7D)
+                      7'b00000??: ControlsD = `FCTRLW'b1_0_01_10_110_0_0_0; // fadd
+                      7'b00001??: ControlsD = `FCTRLW'b1_0_01_10_111_0_0_0; // fsub
+                      7'b00010??: ControlsD = `FCTRLW'b1_0_01_10_100_0_0_0; // fmul
+                      7'b00011??: ControlsD = `FCTRLW'b1_0_01_01_xx0_1_0_0; // fdiv
+                      7'b01011??: if (Rs2D == 5'b0000) ControlsD = `FCTRLW'b1_0_01_01_xx1_1_0_0; // fsqrt
+                      7'b00100??: case(Funct3D)
+                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_000_0_0_0; // fsgnj
+                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_001_0_0_0; // fsgnjn
+                                    3'b010:  ControlsD = `FCTRLW'b1_0_00_xx_010_0_0_0; // fsgnjx
+                                  endcase
+                      7'b00101??: case(Funct3D)
+                                    3'b000:  ControlsD = `FCTRLW'b1_0_00_xx_110_0_0_0; // fmin
+                                    3'b001:  ControlsD = `FCTRLW'b1_0_00_xx_101_0_0_0; // fmax
+                                  endcase
+                      7'b10100??: case(Funct3D)
+                                    3'b010:  ControlsD = `FCTRLW'b0_1_00_xx_010_0_0_0; // feq
+                                    3'b001:  ControlsD = `FCTRLW'b0_1_00_xx_001_0_0_0; // flt
+                                    3'b000:  ControlsD = `FCTRLW'b0_1_00_xx_011_0_0_0; // fle
+                                  endcase
+                      7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
+                                                ControlsD = `FCTRLW'b0_1_10_xx_000_0_0_0; // fclass
+                                  else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
+                                                ControlsD = `FCTRLW'b0_1_11_xx_000_0_0_0; // fmv.x.w / fmv.x.d to int register
+                      7'b111100?: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
+                                                ControlsD = `FCTRLW'b1_0_00_xx_011_0_0_0; // fmv.w.x / fmv.d.x   to fp reg
+                      7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
+                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
+                      7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
+                                                ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
+                      // coverage off
+                      // Not covered in testing because rv64gc does not support half or quad precision
+                      7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
+                                                ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
+                      7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
+                                                ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
+                      // coverage on
+                      7'b1101000: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.s.w   w->s
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.s.wu wu->s
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.s.l   l->s
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.s.lu lu->s
+                                  endcase
+                      7'b1100000: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.s   s->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.s  s->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.s   s->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.s  s->lu
+                                  endcase
+                      7'b1101001: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.d.w   w->d
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.d.wu wu->d
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.d.l   l->d
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.d.lu lu->d
+                                  endcase
+                      7'b1100001: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.d   d->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.d  d->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.d   d->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
+                                  endcase
+                      // coverage off
+                      // Not covered in testing because rv64gc does not support half or quad precision
+                      7'b1101010: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.h.l   l->h
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.h.lu lu->h
+                                  endcase
+                      7'b1100010: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.h   h->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.h  h->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.h   h->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.h  h->lu
+                                  endcase
+                      7'b1101011: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.q.w   w->q
+                                    5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.q.wu wu->q
+                                    5'b00010:    ControlsD = `FCTRLW'b1_0_01_00_111_0_0_0; // fcvt.q.l   l->q
+                                    5'b00011:    ControlsD = `FCTRLW'b1_0_01_00_110_0_0_0; // fcvt.q.lu lu->q
+                                  endcase
+                      7'b1100011: case(Rs2D)
+                                    5'b00000:    ControlsD = `FCTRLW'b0_1_01_00_001_0_0_1; // fcvt.w.q   q->w
+                                    5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.q  q->wu
+                                    5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.q   q->l
+                                    5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.q  q->lu
+                                  endcase
+                      // coverage on
+                    endcase
       endcase
-      /* verilator lint_off CASEINCOMPLETE */
     end
+    /* verilator lint_on CASEINCOMPLETE */
 
   // unswizzle control bits
   assign #1 {FRegWriteD, FWriteIntD, FResSelD, PostProcSelD, OpCtrlD, FDivStartD, IllegalFPUInstrD, FCvtIntD} = ControlsD;
@@ -327,7 +333,5 @@ module fctrl (
   flopenrc #(4)  MWCtrlReg(clk, reset, FlushW, ~StallW,
           {FRegWriteM, FResSelM, FCvtIntM},
           {FRegWriteW, FResSelW, FCvtIntW});
-  
-  //assign FCvtIntW = (FResSelW == 2'b01);
-
+ 
 endmodule
