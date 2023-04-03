@@ -30,20 +30,20 @@
 `include "wally-config.vh"
 
 module clmul #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, B,             // Operands
+  input  logic [WIDTH-1:0] X, Y,             // Operands
   output logic [WIDTH-1:0] ClmulResult);     // ZBS result
 
-  logic [(WIDTH*WIDTH)-1:0] s;               // intermediary signals for carry-less multiply
+  logic [(WIDTH*WIDTH)-1:0] S;               // intermediary signals for carry-less multiply
   
   integer i,j;
 
   always_comb begin
     for (i=0;i<WIDTH;i++) begin: outer
-      s[WIDTH*i]=A[0]&B[i];
+      S[WIDTH*i] = X[0] & Y[i];
       for (j=1;j<=i;j++) begin: inner
-        s[WIDTH*i+j] = (A[j]&B[i-j])^s[WIDTH*i+j-1];
+        S[WIDTH*i+j] = (X[j] & Y[i-j]) ^ S[WIDTH*i+j-1];
       end
-      ClmulResult[i] = s[WIDTH*i+j-1];
+      ClmulResult[i] = S[WIDTH*i+j-1];
     end
   end
 endmodule
