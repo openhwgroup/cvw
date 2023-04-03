@@ -98,7 +98,9 @@ module cacheLRU
     assign LRUUpdate[t1] = LRUUpdate[s] & WayEncoded[r];
   end
 
-  mux2 #(1) LRUMuxes[NUMWAYS-2:0](CurrLRU, ~WayExpanded, LRUUpdate, NextLRU);
+  // The root node of the LRU tree will always be selected in LRUUpdate. No mux needed.
+  assign NextLRU[NUMWAYS-2] = ~WayExpanded[NUMWAYS-2];
+  mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
 
   // Compute next victim way.
   for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
@@ -128,8 +130,8 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
-      if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
-      else if (LRUWriteEn & ~FlushStage) begin 
+      // if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+      if (LRUWriteEn & ~FlushStage) begin 
         LRUMemory[PAdr] <= NextLRU;
       end
       if(LRUWriteEn & ~FlushStage & (PAdr == CacheSet))
