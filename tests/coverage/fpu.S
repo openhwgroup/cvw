@@ -55,7 +55,23 @@ main:
     fcvt.l.q a0, ft3
     fcvt.lu.q a0, ft3
 
- 
+
+    // Tests verfying that half and quad floating point convertion instructions are not supported by rv64gc
+    # fcvt.h.d ft3, ft0 // Somehow this instruction is taking the route on line 124
+                      // idea: enable the Q extension for this to work properly? A: Q and halfs not supported in rv64gc
+    # fcvt.h.w ft3, a0
+    # fcvt.w.h a0, ft0
+    # fcvt.q.w ft3, a0
+    # fcvt.w.q a0, ft0
+    # fcvt.q.d ft3, ft0
+
+    .word 0x38007553    // Testing the all False case for 119 - funct7 under, op = 101 0011
+    .word 0x40000053    // Line 145 All False Test case - illegal instruction?
+    .word 0xd0400053    // Line 156 All False Test case - illegal instruction?
+    .word 0xc0400053    // Line 162 All False Test case - illegal instruction?
+    .word 0xd2400053    // Line 168 All False Test case - illegal instruction?
+    .word 0xc2400053    // Line 174 All False Test case - illegal instruction?
+
     # Test illegal instructions are detected
     .word 0x00000007 // illegal floating-point load (bad Funct3)
     .word 0x00000027 // illegal floating-point store (bad Funct3)
