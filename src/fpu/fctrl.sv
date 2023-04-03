@@ -146,10 +146,13 @@ module fctrl (
                                                ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
                     7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)
                                                ControlsD = `FCTRLW'b1_0_01_00_001_0_0_0; // fcvt.d.(s/h/q)
+                    // coverage off                           
+                    // We are turning off coverage because rv64gc configuration doesn't support quad or half
                     7'b0100010: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b10)
                                                ControlsD = `FCTRLW'b1_0_01_00_010_0_0_0; // fcvt.h.(s/d/q)
                     7'b0100011: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b11)
                                                ControlsD = `FCTRLW'b1_0_01_00_011_0_0_0; // fcvt.q.(s/h/d)
+                    // coverage on
                    7'b1101000: case(Rs2D)
                                   5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.s.w   w->s
                                   5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.s.wu wu->s
@@ -174,6 +177,9 @@ module fctrl (
                                   5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.d   d->l
                                   5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.d  d->lu
                                 endcase
+                    //coverage off
+                    // turning coverage off here because rv64gc configuration does not support floating point halfs and quads
+                    // verified that these branches will not ever be taken in rv64gc configuration.
                     7'b1101010: case(Rs2D)
                                   5'b00000:    ControlsD = `FCTRLW'b1_0_01_00_101_0_0_0; // fcvt.h.w   w->h
                                   5'b00001:    ControlsD = `FCTRLW'b1_0_01_00_100_0_0_0; // fcvt.h.wu wu->h
@@ -197,7 +203,8 @@ module fctrl (
                                   5'b00001:    ControlsD = `FCTRLW'b0_1_01_00_000_0_0_1; // fcvt.wu.q  q->wu
                                   5'b00010:    ControlsD = `FCTRLW'b0_1_01_00_011_0_0_1; // fcvt.l.q   q->l
                                   5'b00011:    ControlsD = `FCTRLW'b0_1_01_00_010_0_0_1; // fcvt.lu.q  q->lu
-                                endcase                            
+                                endcase
+                    // coverage on                            
                   endcase
       endcase
       /* verilator lint_off CASEINCOMPLETE */
