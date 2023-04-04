@@ -6,13 +6,17 @@
 # Core settings
 --override cpu/unaligned=F
 --override cpu/ignore_non_leaf_DAU=1
---override cpu/wfi_is_nop=T
+#--override cpu/wfi_is_nop=T
 --override cpu/mimpid=0x100
 --override cpu/misa_Extensions_mask=0x0
 
-# THIS NEEDS FIXING to 16
 --override cpu/PMP_registers=16
 --override cpu/PMP_undefined=T
+
+# Wally-specific non-default configuraiton
+--override refRoot/cpu/Sstc=T 
+--override cpu/add_implicit_Extensions=B 
+--override cpu/bitmanip_version=1.0.0
 
 # Illegal instruction should not contain the bit pattern
 # illegal pmp read contained this
@@ -47,9 +51,12 @@
 #-override  refRoot/cpu/cv/cover=basic
 #-override  refRoot/cpu/cv/extensions=RV32I
 
+
+
 # Add Imperas simulator application instruction tracing
 --override cpu/show_c_prefix=T
---trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 10500000
+
+--trace --tracechange --traceshowicount --tracemode -tracemem ASX --monitornetschange --traceafter 800000
 
 # Exceptions and pagetables debug
 --override cpu/debugflags=6

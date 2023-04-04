@@ -24,8 +24,12 @@
 #// and limitations under the License.
 #////////////////////////////////////////////////////////////////////////////////////////////////
 
+# This file should be a last resort.  It's preferable to put 
+# // coverage off 
+# statements inline with the code whenever possible.
+
 # LZA (i<64) statement confuses coverage tool 
-# This is ugly to exlcude the whole file - is there a better option
+# This is ugly to exlcude the whole file - is there a better option?  // coverage off isn't working
 coverage exclude -srcfile lzc.sv 
 
 

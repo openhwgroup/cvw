@@ -36,12 +36,36 @@ main:
     addi t0, zero, 0
     csrr t0, stimecmp 
 
+
+    # satp write with mstatus.TVM = 1
+    bseti t0, zero, 20 
+    csrs mstatus, t0
+    csrw satp, zero
+
+    # STIMECMP from S mode
+    li t0, 1
+    ecall   # enter S-mode
+    csrw stimecmp, zero
+    li t0, 3
+    ecall   # return to M-mode
+    csrsi mcounteren, 2 # mcounteren_tm = 1
+    li t0, 1
+    ecall   # supervisor mode again
+    csrw stimecmp, zero
+    li t0, 3
+    ecall  # machine mode again
+
+
+
     # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
     li t0, 0
     csrw stval, t0
     csrw scause, t0
     csrw sepc, t0
     csrw stimecmp, t0
+    csrw scounteren, zero
+    csrw satp, zero
+
 
     # Switch to machine mode
     li a0, 3   

@@ -88,7 +88,9 @@ module hazard (
   assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
 
   // Stall each stage for cause or if the next stage is stalled
+  // coverage off: StallFCause is always 0
   assign #1 StallF = StallFCause | StallD;
+  // coverage on
   assign #1 StallD = StallDCause | StallE;
   assign #1 StallE = StallECause | StallM;
   assign #1 StallM = StallMCause | StallW;
