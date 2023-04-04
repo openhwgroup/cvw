@@ -93,7 +93,7 @@ module privileged (
   output logic             BigEndianM,                                     // Use big endian in current privilege mode
   // Fault outputs                                                         
   output logic             BreakpointFaultM, EcallFaultM,                  // breakpoint and Ecall traps should retire
-  output logic             WFIStallM                                       // Stall in Memory stage for WFI until interrupt or timeout
+  output logic             wfiM, IntPendingM                               // Stall in Memory stage for WFI until interrupt pending or timeout
 );                                                                         
                                                                            
   logic [3:0]              CauseM;                                         // trap cause
@@ -110,8 +110,6 @@ module privileged (
   logic [11:0]             MIP_REGW, MIE_REGW;                             // interrupt pending and enable bits
   logic [1:0]              NextPrivilegeModeM;                             // next privilege mode based on trap or return
   logic                    DelegateM;                                      // trap should be delegated
-  logic                    wfiM;                                           // wait for interrupt instruction
-  logic                    IntPendingM;                                    // interrupt is pending, even if not enabled.  ends wfi
   logic                    InterruptM;                                     // interrupt occuring
   logic                    ExceptionM;                                     // Memory stage instruction caused a fault
  
@@ -156,7 +154,7 @@ module privileged (
     .mretM, .sretM, .PrivilegeModeW, 
     .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MEDELEG_REGW, .STATUS_MIE, .STATUS_SIE,
     .InstrValidM, .CommittedM, .CommittedF,
-    .TrapM, .RetM, .wfiM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .WFIStallM, .CauseM);
+    .TrapM, .RetM, .wfiM, .InterruptM, .ExceptionM, .IntPendingM, .DelegateM, .CauseM);
 endmodule
 
 
