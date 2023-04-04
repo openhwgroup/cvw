@@ -30,8 +30,8 @@
 
 `define PrintHPMCounters 0
 `define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 1
-`define D_CACHE_ADDR_LOGGER 1
+`define I_CACHE_ADDR_LOGGER 0
+`define D_CACHE_ADDR_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
@@ -599,7 +599,9 @@ end
                               "NULL";
     assign EvictString = HitMissString == "H" ? "X" :
                          dut.core.lsu.bus.dcache.dcache.LineDirty ? "E" : "N";
-    assign Enabled = ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM & (AccessTypeString != "NULL");
+    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
+                     ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
+                     (AccessTypeString != "NULL");
 
     initial begin
 	  LogFile = $psprintf("DCache.log");
