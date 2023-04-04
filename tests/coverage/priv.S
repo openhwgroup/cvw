@@ -42,5 +42,49 @@ main:
     csrw scause, t0
     csrw sepc, t0
     csrw stimecmp, t0
-    
+
+    # Switch to machine mode
+    li a0, 3   
+    ecall 
+    # Testing the HPMCOUNTERM performance counter: writing
+    # Base address is 2816 (MHPMCOUNTERBASE)
+    # There are 32 HPMCOUNTER registers
+    csrw 2816, t0
+    csrw 2817, t0
+    csrw 2818, t0
+    csrw 2819, t0
+    csrw 2820, t0
+    csrw 2821, t0
+    csrw 2822, t0
+    csrw 2823, t0
+    csrw 2824, t0
+    csrw 2825, t0
+    csrw 2826, t0
+    csrw 2827, t0
+    csrw 2828, t0
+    csrw 2829, t0
+    csrw 2830, t0
+    csrw 2831, t0  
+    csrw 2832, t0
+    csrw 2833, t0
+    csrw 2834, t0
+    csrw 2835, t0
+    csrw 2836, t0
+    csrw 2837, t0
+    csrw 2838, t0
+    csrw 2839, t0
+    csrw 2840, t0
+    csrw 2841, t0
+    csrw 2842, t0
+    csrw 2843, t0
+    csrw 2844, t0
+    csrw 2845, t0
+    csrw 2846, t0
+    csrw 2847, t0      
+
+    # Testing the HPMCOUNTERM performance counter: reading
+    csrr t0, 2817
     j done
+
+
+
