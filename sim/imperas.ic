@@ -15,9 +15,8 @@
 
 # Wally-specific non-default configuraiton
 --override refRoot/cpu/Sstc=T 
-# Zba doesn't seem to exist - Lee is finding the name
-#--override refRoot/cpu/Zba=T 
-
+--override cpu/add_implicit_Extensions=B 
+--override cpu/bitmanip_version=1.0.0
 
 # Illegal instruction should not contain the bit pattern
 # illegal pmp read contained this
