@@ -27,9 +27,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 //`include "cvw.vh"
-import cvw::*;  // global CORE-V-Wally parameters
+// global CORE-V-Wally parameters
 
-module wallypipelinedcore #(parameter cvw_t P) (
+module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
    input  logic                  clk, reset,
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,

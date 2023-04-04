@@ -27,9 +27,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+//`include "cvw.vh"
+//import cvw::*;  // global CORE-V-Wally parameters
 `include "wally-config.vh"
 
 module uncore (
+//module uncore import cvw::*;   #(parameter cvw_t P) (
   // AHB Bus Interface
   input  logic                HCLK, HRESETn,
   input  logic                TIMECLK,
