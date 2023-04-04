@@ -30,8 +30,8 @@
 
 `define PrintHPMCounters 0
 `define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 0
-`define D_CACHE_ADDR_LOGGER 0
+`define I_CACHE_ADDR_LOGGER 1
+`define D_CACHE_ADDR_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -555,7 +555,7 @@ logic [3:0] dummy;
 end
 
 
-  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin
+  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
@@ -569,7 +569,8 @@ end
 	  $fwrite(file, "BEGIN %s\n", memfilename);
 	end
     string HitMissString;
-    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" : "M";
+    assign HitMissString = dut.core.ifu.InvalidateICacheM ? "I" :
+                           dut.core.ifu.bus.icache.icache.CacheHit ? "H" : "M";
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
@@ -580,14 +581,26 @@ end
     end
   end
 
-  if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin
+  // old version
+  if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
-    string HitMissString;
+    logic  Enabled;
+    string AccessTypeString, HitMissString, EvictString;
+
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
     assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" : "M";
+    assign AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
+                              dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
+                              dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
+                              dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
+                              "NULL";
+    assign EvictString = HitMissString == "H" ? "X" :
+                         dut.core.lsu.bus.dcache.dcache.LineDirty ? "E" : "N";
+    assign Enabled = ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM & (AccessTypeString != "NULL");
+
     initial begin
 	  LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
@@ -596,22 +609,14 @@ end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
-	  if(~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-        if(dut.core.lsu.bus.dcache.CacheRWM == 2'b10) begin
-	      $fwrite(file, "%h R %s\n", dut.core.lsu.PAdrM, HitMissString);
-        end else if (dut.core.lsu.bus.dcache.CacheRWM == 2'b01) begin
-	      $fwrite(file, "%h W %s\n", dut.core.lsu.PAdrM, HitMissString);
-        end else if (dut.core.lsu.bus.dcache.CacheAtomicM[1] == 1'b1) begin // *** This may change
-	      $fwrite(file, "%h A %s\n", dut.core.lsu.PAdrM, HitMissString);
-        end else if (dut.core.lsu.bus.dcache.FlushDCache) begin
-	      $fwrite(file, "%h F %s\n", dut.core.lsu.PAdrM, HitMissString);
-        end
+	  if(Enabled) begin
+	    $fwrite(file, "%h %s %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString, EvictString);
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
   end
 
-  if (`BPRED_SUPPORTED) begin
+  if (`BPRED_SUPPORTED) begin : BranchLogger
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;
