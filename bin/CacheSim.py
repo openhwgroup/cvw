@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 ###########################################
-## testcount.pl
+## CacheSim.py
 ##
 ## Written: lserafini@hmc.edu
 ## Created: 27 March 2023
@@ -33,8 +33,9 @@
 # the log files to run this simulator on can be generated from testbench.sv
 # by setting I_CACHE_ADDR_LOGGER and/or D_CACHE_ADDR_LOGGER to 1 before running tests.
 # I (Lim) recommend logging a single set of tests (such as wally64priv) at a time.
-# with verbose mode off, the simulator only reports mismatches between its and Wally's behavior.
- # with verbose mode on, the simulator logs each access into the cache.
+# This helps avoid unexpected logger behavior.
+# With verbose mode off, the simulator only reports mismatches between its and Wally's behavior.
+# With verbose mode on, the simulator logs each access into the cache.
 
 import sys
 import math
