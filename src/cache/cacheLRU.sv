@@ -68,7 +68,8 @@ module cacheLRU
 
   ///// Update replacement bits.
 
-  // coverage off: Untestable without varying NUMWAYS.
+  // coverage off
+  // Excluded from coverage b/c it is untestable without varying NUMWAYS.
   function integer log2 (integer value);
     for (log2=0; value>0; log2=log2+1)
       value = value>>1;
