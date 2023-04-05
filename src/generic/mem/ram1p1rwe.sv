@@ -5,6 +5,8 @@
 // Created: 04 April 2023
 //
 // Purpose: ram1p1wre, but without byte-enable. Used for icache data.
+//          Be careful using this module, since coverage is turned off for (ce & we).
+//          In read-only caches, we never get (we=1, ce=0), so this waiver is needed.
 // 
 // Documentation: 
 //
@@ -85,8 +87,7 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
         // coverage off
         // ce only goes low when cachefsm is in READY state and Flush is asserted.
         // for read-only caches, we only goes high in the STATE_WRITE_LINE cachefsm state.
-        // so we can never get we=1, ce=0 for I$. Note that turning off coverage here
-        // might miss some cases for D$, however, when we might go high due to a store.
+        // so we can never get we=1, ce=0 for I$.
         if (ce & we)
         // coverage on
           for(i = 0; i < WIDTH/8; i++) 
