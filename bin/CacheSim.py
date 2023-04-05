@@ -2,13 +2,13 @@
 
 # Authors: Limnanthes Serafini (lserafini@hmc.edu) and Alec Vercruysse (avercruysse@hmc.edu)
 # TODO: add better (more formal?) attribution, commenting, improve output
-# maybe TODO: edit __repr__ of the classes?
-# it would also be nice if we could log evictions in Wally's caches
 
 import sys
 import math
 import argparse
 import os
+
+debug = True
 
 class CacheLine:
     def __init__(self):
@@ -62,13 +62,14 @@ class Cache:
             self.pLRU.append([0]*(self.numways-1))
     
     def splitaddr(self, addr):
-        # no need for offset in the sim
-        setnum = (addr >> self.offsetlen) - ((addr >> (self.setlen + self.offsetlen)) << self.setlen)
-        tag = addr >> (self.setlen + self.offsetlen)
-        return tag, setnum
+        # no need for offset in the sim, but it's here for debug
+        tag = addr >> (self.setlen + self.offsetlen) & int('1'*self.taglen, 2)
+        setnum = (addr >> self.offsetlen) & int('1'*self.setlen, 2)
+        offset = addr & int('1'*self.offsetlen, 2)
+        return tag, setnum, offset
     
     def cacheaccess(self, addr, write=False):
-        tag, setnum = self.splitaddr(addr)
+        tag, setnum, _ = self.splitaddr(addr)
 
         # check our ways to see if we have a hit
         for waynum in range(self.numways):
@@ -96,6 +97,7 @@ class Cache:
         # we need to evict. Select a victim and overwrite.
         victim = self.getvictimway(setnum)
         line = self.ways[victim][setnum]
+        prevdirty = line.dirty
         #print("Evicting tag", line.tag, "from set", setnum, "way", victim)
         #print("replacing with", tag)
         line.tag = tag
@@ -104,8 +106,8 @@ class Cache:
             line.dirty = True
         else:
             line.dirty = False
-        self.update_pLRU(waynum, setnum)
-        return 'M' # update this to 'E' if we get evictions loggable
+        self.update_pLRU(victim, setnum)
+        return 'D' if prevdirty else 'E'
 
     def update_pLRU(self, waynum, setnum):
         if self.numways == 1:
@@ -166,32 +168,42 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
+
+    extfile = os.path.expanduser(args.file)
     
-    # go looking in the sim directory for the file if it doesn't exist
-    # if not os.path.isfile(args.file):
-    #     args.file = os.path.expanduser("~/cvw/sim/" + args.file)
-    
-    with open(args.file, "r") as f:
+    with open(extfile, "r") as f:
         for ln in f:
             ln = ln.strip()
             lninfo = ln.split()
             if len(lninfo) < 3: #non-address line
-                if lninfo[0] == 'BEGIN':
+                if len(lninfo) > 0 and (lninfo[0] == 'BEGIN' or lninfo[0] == 'TRAIN'):
+                    #currently BEGIN and END traces aren't being recorded correctly
+                    #trying TRAIN clears instead
                     cache.invalidate() # a new test is starting, so 'empty' the cache
                     cache.clear_pLRU()
+                    if debug:
+                            print("new test?")
             else:
-                if lninfo[1] == 'F':
-                    cache.flush()
-                else:
-                    addr = int(lninfo[0], 16)
-                    result = cache.cacheaccess(addr, lninfo[1] == 'W') # add support for A
-                    #tag, setnum = cache.splitaddr(addr)
-                    #print(hex(tag), hex(setnum), lninfo[2], result)
-                    if not result == lninfo[2]:
-                        print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result)
-                    #print()
-    
-    #print(cache)
+                if len(lninfo[0]) >= (cache.addrlen/4): #more hacking around the logging issues
+                    if lninfo[1] == 'F':
+                        cache.flush()
+                        if debug:
+                            print("flush")
+                    elif lninfo[1] == 'I':
+                        cache.invalidate()
+                        if debug:
+                            print("inval")
+                    else:
+                        addr = int(lninfo[0], 16)
+                        iswrite = lninfo[1] == 'W' or lninfo[1] == 'A'
+                        result = cache.cacheaccess(addr, iswrite)
+                        if debug:
+                            tag, setnum, offset = cache.splitaddr(addr)
+                            print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
+                        if not result == lninfo[2]:
+                            print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result)
+                            if debug:
+                                break # breaking after the first mismatch makes for easier debugging  
                         
                         
 
