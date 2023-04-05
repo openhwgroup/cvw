@@ -30,8 +30,8 @@
 
 `define PrintHPMCounters 0
 `define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 0
-`define D_CACHE_ADDR_LOGGER 0
+`define I_CACHE_ADDR_LOGGER 1
+`define D_CACHE_ADDR_LOGGER 1
 
 module testbench;
   parameter DEBUG=0;
@@ -560,7 +560,13 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
 	string LogFile;
 	logic  resetD, resetEdge;
     logic  Enable;
-    assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+    // assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+    
+    // this version of enable does create repeated instructions (i.e, when there's a stall)
+    // but! it allows us to correctly log evictions
+    // and re-accessing the same portion of memory just generates another hit, so the duplicates are OK
+    // for now at least
+    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn;
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
     initial begin
@@ -600,15 +606,21 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
                               "NULL";
-    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
-                     ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
-                     (AccessTypeString != "NULL");
+    // assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
+    //                  ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
+    //                  (AccessTypeString != "NULL");
+
+    // this version of enable does create repeated instructions (i.e, when there's a stall)
+    // but! it allows us to correctly log evictions
+    // and re-accessing the same portion of memory just generates another hit, so the duplicates are OK
+    // for now at least
+    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn;
 
     initial begin
-	  LogFile = $psprintf("DCache.log");
+	    LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
-	  $fwrite(file, "BEGIN %s\n", memfilename);
-	end
+	    $fwrite(file, "BEGIN %s\n", memfilename);
+	  end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);

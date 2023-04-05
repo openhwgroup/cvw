@@ -8,7 +8,7 @@ import math
 import argparse
 import os
 
-debug = True
+fulltrace = False
 
 class CacheLine:
     def __init__(self):
@@ -23,8 +23,6 @@ class CacheLine:
     
     def __repr__(self):
         return self.__str__()
-    
-
 
 class Cache:
     def __init__(self, numsets, numways, addrlen, taglen):
@@ -177,33 +175,30 @@ if __name__ == "__main__":
             lninfo = ln.split()
             if len(lninfo) < 3: #non-address line
                 if len(lninfo) > 0 and (lninfo[0] == 'BEGIN' or lninfo[0] == 'TRAIN'):
-                    #currently BEGIN and END traces aren't being recorded correctly
-                    #trying TRAIN clears instead
+                    # currently BEGIN and END traces aren't being recorded correctly
+                    # trying TRAIN clears instead
                     cache.invalidate() # a new test is starting, so 'empty' the cache
                     cache.clear_pLRU()
-                    if debug:
-                            print("new test?")
+                    if fulltrace:
+                        print("New Test")
             else:
-                if len(lninfo[0]) >= (cache.addrlen/4): #more hacking around the logging issues
-                    if lninfo[1] == 'F':
-                        cache.flush()
-                        if debug:
-                            print("flush")
-                    elif lninfo[1] == 'I':
-                        cache.invalidate()
-                        if debug:
-                            print("inval")
-                    else:
-                        addr = int(lninfo[0], 16)
-                        iswrite = lninfo[1] == 'W' or lninfo[1] == 'A'
-                        result = cache.cacheaccess(addr, iswrite)
-                        if debug:
-                            tag, setnum, offset = cache.splitaddr(addr)
-                            print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
-                        if not result == lninfo[2]:
-                            print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result)
-                            if debug:
-                                break # breaking after the first mismatch makes for easier debugging  
+                if lninfo[1] == 'F':
+                    cache.flush()
+                    if fulltrace:
+                        print("F")
+                elif lninfo[1] == 'I':
+                    cache.invalidate()
+                    if fulltrace:
+                        print("I")
+                else:
+                    addr = int(lninfo[0], 16)
+                    iswrite = lninfo[1] == 'W' or lninfo[1] == 'A'
+                    result = cache.cacheaccess(addr, iswrite)
+                    if fulltrace:
+                        tag, setnum, offset = cache.splitaddr(addr)
+                        print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
+                    if not result == lninfo[2]:
+                        print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result)
                         
                         
 
