@@ -48,7 +48,6 @@ module trap (
   output logic                 ExceptionM,                                      // exception is occurring
   output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
   output logic                 DelegateM,                                       // Delegate trap to supervisor handler
-  output logic                 WFIStallM,                                       // Stall due to WFI instruction
   output logic [3:0]           CauseM                                           // trap cause
 );
 
@@ -74,7 +73,6 @@ module trap (
   assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
   assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
-  assign WFIStallM = wfiM & ~IntPendingM;
 
   ///////////////////////////////////////////
   // Trigger Traps and RET
