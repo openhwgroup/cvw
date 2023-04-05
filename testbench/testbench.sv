@@ -30,8 +30,8 @@
 
 `define PrintHPMCounters 0
 `define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 1
-`define D_CACHE_ADDR_LOGGER 1
+`define I_CACHE_ADDR_LOGGER 0
+`define D_CACHE_ADDR_LOGGER 0
 
 module testbench;
   parameter DEBUG=0;
@@ -562,11 +562,9 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     logic  Enable;
     // assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
     
-    // this version of enable does create repeated instructions (i.e, when there's a stall)
-    // but! it allows us to correctly log evictions
-    // and re-accessing the same portion of memory just generates another hit, so the duplicates are OK
-    // for now at least
-    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn;
+    // this version of Enable allows for accurate eviction logging.
+    // Likely needs further improvement.
+    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & ~reset;
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
     initial begin
@@ -588,7 +586,7 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     end
   end
 
-  // old version
+
   if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
 	string LogFile;
@@ -610,11 +608,11 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     //                  ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
     //                  (AccessTypeString != "NULL");
 
-    // this version of enable does create repeated instructions (i.e, when there's a stall)
-    // but! it allows us to correctly log evictions
-    // and re-accessing the same portion of memory just generates another hit, so the duplicates are OK
-    // for now at least
-    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn;
+    // This version of enable allows for accurate eviction logging. 
+    // Likely needs further improvement.
+    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
+                     ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
+                     (AccessTypeString != "NULL");
 
     initial begin
 	    LogFile = $psprintf("DCache.log");
