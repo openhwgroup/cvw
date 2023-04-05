@@ -555,7 +555,7 @@ logic [3:0] dummy;
 end
 
 
-if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
+  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
@@ -629,7 +629,7 @@ if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     end
   end
 
-  if (`BPRED_SUPPORTED) begin
+  if (`BPRED_SUPPORTED) begin : BranchLogger
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;
