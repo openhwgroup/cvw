@@ -38,8 +38,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
-  input  logic                        SetValid,       // Set the dirty bit in the selected way and set
-  input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
+  input  logic                        SetValid,       // Set the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
   input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
@@ -71,22 +70,26 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   logic [LINELEN/8-1:0]               FinalByteMask;
   logic                               SetValidEN;
   logic                               SetValidWay;
-  logic                               ClearValidWay;
   logic                               SetDirtyWay;
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
-  logic                               FlushWayEn, VictimWayEn;
 
-  // FlushWay and VictimWay are part of a one hot way selection.  Must clear them if FlushWay not selected
-  // or VictimWay not selected.
-  assign FlushWayEn = FlushWay & SelFlush;
-  assign VictimWayEn = VictimWay & SelWriteback;
-  
-  assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
-  
-  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
-  
+
+  if (!READ_ONLY_CACHE) begin:flushlogic
+    logic                               FlushWayEn;
+
+    mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
+
+    // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
+    assign FlushWayEn = FlushWay & SelFlush;
+    assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
+  end
+  else begin:flushlogic // no flush operation for read-only caches.
+    assign SelTag = VictimWay;
+    assign SelNonHit = SetValid;
+  end
+
   mux2 #(1) selectedwaymux(HitWay, SelTag, SelNonHit , SelData);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -94,12 +97,16 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign ClearValidWay = ClearValid & SelData;
-  assign SetDirtyWay = SetDirty & SelData;
   assign ClearDirtyWay = ClearDirty & SelData;
-  
+  if (!READ_ONLY_CACHE) begin
+    assign SetDirtyWay = SetDirty & SelData;
+    assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
+  end
+  else begin
+    assign SelectedWriteWordEn = SetValidWay & ~FlushStage;
+  end
+
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
   assign SetValidEN = SetValidWay & ~FlushStage;
 
@@ -107,8 +114,8 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
-    .addr(CacheSet), .dout(ReadTag), .bwe('1),
+  ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
+    .addr(CacheSet), .dout(ReadTag),
     .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
@@ -128,10 +135,18 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+    if (!READ_ONLY_CACHE) begin:wordram
+      ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+    end
+    else begin:wordram // no byte-enable needed for i$.
+      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .we(SelectedWriteWordEn));
+    end
   end
 
   // AND portion of distributed read multiplexers
@@ -146,7 +161,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     if(CacheEn) begin 
     ValidWay <= #1 ValidBits[CacheSet];
     if(InvalidateCache)                    ValidBits <= #1 '0;
-      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CacheSet] <= #1 SetValidWay;
+      else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end
 
