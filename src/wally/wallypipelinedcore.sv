@@ -146,7 +146,7 @@ module wallypipelinedcore (
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
-  logic                          InstrAccessFaultF, HPTWInstrAccessFaultM;
+  logic                          InstrAccessFaultF, HPTWInstrAccessFaultF;
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
   logic [1:0]                    LSUHTRANS;
@@ -237,7 +237,7 @@ module wallypipelinedcore (
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
     .LoadAccessFaultM,         // connects to privilege
-    .HPTWInstrAccessFaultM,         // connects to privilege
+    .HPTWInstrAccessFaultF,         // connects to privilege
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrUpdateDAF,
@@ -289,7 +289,7 @@ module wallypipelinedcore (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
-      .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+      .InstrAccessFaultF, .HPTWInstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
