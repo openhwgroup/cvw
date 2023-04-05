@@ -74,17 +74,22 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
-  logic                               FlushWayEn, VictimWayEn;
 
-  // FlushWay and VictimWay are part of a one hot way selection.  Must clear them if FlushWay not selected
-  // or VictimWay not selected.
-  assign FlushWayEn = FlushWay & SelFlush;
-  assign VictimWayEn = VictimWay & SelWriteback;
-  
-  assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
-  
-  mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
-  
+
+  if (!READ_ONLY_CACHE) begin:flushlogic
+    logic                               FlushWayEn;
+
+    mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
+
+    // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
+    assign FlushWayEn = FlushWay & SelFlush;
+    assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
+  end
+  else begin:flushlogic // no flush operation for read-only caches.
+    assign SelTag = VictimWay;
+    assign SelNonHit = SetValid;
+  end
+
   mux2 #(1) selectedwaymux(HitWay, SelTag, SelNonHit , SelData);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,11 +97,16 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign SetDirtyWay = SetDirty & SelData;
   assign ClearDirtyWay = ClearDirty & SelData;
-  
+  if (!READ_ONLY_CACHE) begin
+    assign SetDirtyWay = SetDirty & SelData;
+    assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
+  end
+  else begin
+    assign SelectedWriteWordEn = SetValidWay & ~FlushStage;
+  end
+
   // If writing the whole line set all write enables to 1, else only set the correct word.
-  assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
   assign SetValidEN = SetValidWay & ~FlushStage;
 
