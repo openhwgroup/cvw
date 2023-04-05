@@ -55,7 +55,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       FlushAdrFlag,      // On last set of a cache flush
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
-  output logic       ClearValid,        // Clear the valid bit in the selected way and set
   output logic       SetValid,          // Set the dirty bit in the selected way and set
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
@@ -146,7 +145,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign SetValid = CurrState == STATE_WRITE_LINE;
   assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |
                     (CurrState == STATE_WRITE_LINE & (StoreAMO));
-  assign ClearValid = '0;
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |
                       (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
