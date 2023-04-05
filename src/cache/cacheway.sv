@@ -39,7 +39,6 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
-  input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
   input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
@@ -71,7 +70,6 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   logic [LINELEN/8-1:0]               FinalByteMask;
   logic                               SetValidEN;
   logic                               SetValidWay;
-  logic                               ClearValidWay;
   logic                               SetDirtyWay;
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
@@ -94,7 +92,6 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign ClearValidWay = ClearValid & SelData;
   assign SetDirtyWay = SetDirty & SelData;
   assign ClearDirtyWay = ClearDirty & SelData;
   
@@ -154,7 +151,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     if(CacheEn) begin 
     ValidWay <= #1 ValidBits[CacheSet];
     if(InvalidateCache)                    ValidBits <= #1 '0;
-      else if (SetValidEN | (ClearValidWay & ~FlushStage)) ValidBits[CacheSet] <= #1 SetValidWay;
+      else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end
 
