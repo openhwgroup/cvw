@@ -198,10 +198,12 @@ module testbench;
       
     end
 
-    always @(dut.core.MTimerInt) void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
-    always @(dut.core.MExtInt)   void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
-    always @(dut.core.SExtInt)   void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
-    always @(dut.core.MSwInt)    void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
+    always @(dut.core.MTimerInt)   void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
+    always @(dut.core.MExtInt)     void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
+    always @(dut.core.SExtInt)     void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
+    always @(dut.core.MSwInt)      void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
+    always @(dut.core.priv.priv.csr.csrs.csrs.STimerInt) void'(rvvi.net_push("STimerInterrupt", dut.core.priv.priv.csr.csrs.csrs.STimerInt));
+
 
     final begin
       void'(rvviRefShutdown());

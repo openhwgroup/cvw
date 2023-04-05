@@ -36,7 +36,7 @@ module hazard (
   input logic  FCvtIntStallD, FPUStallD,
   input logic  DivBusyE, FDivBusyE,
   input logic  EcallFaultM, BreakpointFaultM,
-  input logic  WFIStallM,
+  input logic  wfiM, IntPendingM,
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
@@ -45,6 +45,12 @@ module hazard (
   logic                                       StallFCause, StallDCause, StallECause, StallMCause, StallWCause;
   logic                                       LatestUnstalledD, LatestUnstalledE, LatestUnstalledM, LatestUnstalledW;
   logic                                       FlushDCause, FlushECause, FlushMCause, FlushWCause;
+
+  logic WFIStallM, WFIInterruptedM;
+
+  // WFI logic
+  assign WFIStallM = wfiM & ~IntPendingM;         // WFI waiting for an interrupt or timeout
+  assign WFIInterruptedM = wfiM & IntPendingM;    // WFI detects a pending interrupt.  Retire WFI; trap if interrupt is enabled.
   
   // stalls and flushes
   // loads: stall for one cycle if the subsequent instruction depends on the load
@@ -68,7 +74,7 @@ module hazard (
   assign FlushDCause = TrapM | RetM | CSRWriteFenceM | BPWrongE;
   assign FlushECause = TrapM | RetM | CSRWriteFenceM |(BPWrongE & ~(DivBusyE | FDivBusyE));
   assign FlushMCause = TrapM | RetM | CSRWriteFenceM;
-  assign FlushWCause = TrapM;
+  assign FlushWCause = TrapM & ~WFIInterruptedM;
 
   // Stall causes
   //  Most data depenency stalls are identified in the decode stage
@@ -88,7 +94,9 @@ module hazard (
   assign StallWCause = (IFUStallF & ~FlushDCause) | (LSUStallM & ~FlushWCause);
 
   // Stall each stage for cause or if the next stage is stalled
+  // coverage off: StallFCause is always 0
   assign #1 StallF = StallFCause | StallD;
+  // coverage on
   assign #1 StallD = StallDCause | StallE;
   assign #1 StallE = StallECause | StallM;
   assign #1 StallM = StallMCause | StallW;

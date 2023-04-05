@@ -48,7 +48,6 @@ module bmuctrl(
   output logic [1:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
   output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
-  output logic        BComparatorSignedE,      // Indicates if comparator signed in Execute Stage
   output logic [2:0]  BALUControlE             // ALU Control signals for B instructions in Execute Stage
 );
 
@@ -56,7 +55,6 @@ module bmuctrl(
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs2D;                            // Rs2 source register in Decode stage
-  logic       BComparatorSignedD;              // Indicates if comparator signed (max, min instruction) in Decode Stage
   logic       RotateD;                         // Indicates if rotate instruction in Decode Stage
   logic       MaskD;                           // Indicates if zbs instruction in Decode Stage
   logic       PreShiftD;                       // Indicates if sh1add, sh2add, sh3add instruction in Decode Stage
@@ -101,8 +99,10 @@ module bmuctrl(
                                   BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // sign extend instruction
                                 else if ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0]))
                                   BMUControlsD = `BMUCTRLW'b000_10_000_1_1_0_1_0_0_0_0_0;  // count instruction
-        17'b0110011_0000100_100: if (`XLEN == 32)
-                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
+//        // coverage off: This case can't occur in RV64
+//        17'b0110011_0000100_100: if (`XLEN == 32)
+//                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
+//        // coverage on
         17'b0110011_0100000_111: BMUControlsD = `BMUCTRLW'b111_01_111_1_0_0_1_1_0_0_0_0;  // andn
         17'b0110011_0100000_110: BMUControlsD = `BMUCTRLW'b110_01_111_1_0_0_1_1_0_0_0_0;  // orn
         17'b0110011_0100000_100: BMUControlsD = `BMUCTRLW'b100_01_111_1_0_0_1_1_0_0_0_0;  // xnor
@@ -110,10 +110,10 @@ module bmuctrl(
                                   BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8
         17'b0010011_0010100_101: if (Rs2D[4:0] == 5'b00111)
                                   BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // orc.b
-        17'b0110011_0000101_110: BMUControlsD = `BMUCTRLW'b000_10_111_1_0_0_1_0_0_0_0_0;  // max
-        17'b0110011_0000101_111: BMUControlsD = `BMUCTRLW'b000_10_111_1_0_0_1_0_0_0_0_0;  // maxu
-        17'b0110011_0000101_100: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_0_0_0_0_0;  // min
-        17'b0110011_0000101_101: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_0_0_0_0_0;  // minu
+        17'b0110011_0000101_110: BMUControlsD = `BMUCTRLW'b000_10_111_1_0_0_1_1_0_0_0_0;  // max
+        17'b0110011_0000101_111: BMUControlsD = `BMUCTRLW'b000_10_111_1_0_0_1_1_0_0_0_0;  // maxu
+        17'b0110011_0000101_100: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_1_0_0_0_0;  // min
+        17'b0110011_0000101_101: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_1_0_0_0_0;  // minu
       endcase
       if (`XLEN==32)
         casez({OpD, Funct7D, Funct3D})
@@ -172,12 +172,9 @@ module bmuctrl(
   // Pack BALUControl Signals
   assign BALUControlD = {RotateD, MaskD, PreShiftD};
 
-  // Comparator should perform signed comparison when min/max instruction. We have overlap in funct3 with some branch instructions so we use opcode to differentiate betwen min/max and branches
-  assign BComparatorSignedD = (Funct3D[2]^Funct3D[0]) & ~OpD[6];
-
   // Choose ALUSelect brom BMU for BMU operations, Funct3 for IEU operations, or 0 for addition
   assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
   // BMU Execute stage pipieline control register
-  flopenrc#(10) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});
+  flopenrc#(9) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BALUControlD}, {BSelectE, ZBBSelectE, BRegWriteE, BALUControlE});
 endmodule

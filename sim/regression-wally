@@ -56,7 +56,12 @@ def getBuildrootTC(boot):
         BRgrepstr="WallyHostname login:"
     else:
         name="buildroot"
-        BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
+        if (coverage):
+            print( "buildroot coverage")
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0 -coverage\n!"
+        else:
+            print( "buildroot no coverage")
+            BRcmd="vsim > {} -c <<!\ndo wally-batch.do buildroot buildroot $RISCV "+str(INSTR_LIMIT)+" 1 0\n!"
         BRgrepstr=str(INSTR_LIMIT)+" instructions"
     return  TestCase(name,variant="rv64gc",cmd=BRcmd,grepstr=BRgrepstr)
 
@@ -131,14 +136,11 @@ tests64gc = ["arch64f", "arch64d", "arch64i", "arch64zba", "arch64zbb", "arch64z
 if (coverage):  # delete all but 64gc tests when running coverage
     configs = []
     tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m",
-#    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+##    tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", 
+    tests64gc = ["coverage64gc", "arch64i", "arch64priv", "arch64c",  "arch64m", 
                  "arch64zi", "wally64a", "wally64periph", "wally64priv", 
                  "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
                  "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
-#    tests64gc = ["coverage64gc", "arch64f", "arch64d", "arch64i", "arch64priv", "arch64c",  "arch64m", 
-#                 "arch64zi", "wally64a", "wally64periph", "wally64priv", 
-#                 "arch64zba",  "arch64zbb",  "arch64zbc",  "arch64zbs", 
-#                 "imperas64f", "imperas64d", "imperas64c", "imperas64i"] 
     coverStr = '-coverage'
 else:
    coverStr = ''
@@ -180,8 +182,6 @@ def main():
     try:
         os.chdir(regressionDir)
         os.mkdir("logs")
-        #print(os.getcwd())
-        #print(regressionDir)
     except:
         pass
     try:
@@ -202,9 +202,11 @@ def main():
         TIMEOUT_DUR = 30*7200 # seconds
         configs=[getBuildrootTC(boot=True)]
     elif '-coverage' in sys.argv:
-        TIMEOUT_DUR = 20*60 # seconds       
-        #configs.append(getBuildrootTC(boot=False))
-        os.system('rm cov/*.ucdb')
+        TIMEOUT_DUR = 20*60 # seconds    
+    #   Presently don't run buildroot because it has a different config and can't be merged with the rv64gc coverage.
+    #   Also it is slow to run.   
+    #    configs.append(getBuildrootTC(boot=False))
+        os.system('rm -f cov/*.ucdb')
     else:
         TIMEOUT_DUR = 10*60 # seconds
         configs.append(getBuildrootTC(boot=False))
@@ -226,12 +228,6 @@ def main():
     # Coverage report
     if coverage:
        os.system('make coverage')
-       #print('Generating coverage report')
-       #os.system('vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb -logfile cov/log')
-       #os.system('vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt')
-       #os.system('vcover report -below 100 cov/cov.ucdb > cov/rv64gc_coverage.rpt')
-       #os.system('vcover report -recursive cov/cov.ucdb > cov/rv64gc_recursive.rpt')
-       #os.system('vcover report -details -threshH 100 -html cov/cov.ucdb')
     # Count the number of failures
     if num_fail:
         print(f"{bcolors.FAIL}Regression failed with %s failed configurations{bcolors.ENDC}" % num_fail)
