@@ -81,14 +81,23 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
     // Therefore these always blocks use the older always @(posedge clk) 
     if(WIDTH >= 8) 
-      always @(posedge clk) 
-        if (ce & we) 
+      always @(posedge clk)
+        // coverage off
+        // ce only goes low when cachefsm is in READY state and Flush is asserted.
+        // for read-only caches, we only goes high in the STATE_WRITE_LINE cachefsm state.
+        // so we can never get we=1, ce=0 for I$. Note that turning off coverage here
+        // might miss some cases for D$, however, when we might go high due to a store.
+        if (ce & we)
+        // coverage on
           for(i = 0; i < WIDTH/8; i++) 
             RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-      always @(posedge clk) 
+      always @(posedge clk)
+        // coverage off
+        // (see the above explanation)
         if (ce & we)
+        // coverage on
           RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
   end
 
