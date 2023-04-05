@@ -125,12 +125,12 @@ module controller(
   logic        IntDivM;                        // Integer divide instruction
   logic [1:0]  BSelectD;                       // One-Hot encoding if it's ZBA_ZBB_ZBC_ZBS instruction in decode stage
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
-  logic        BComparatorSignedE;             // Indicates if max, min (signed comarison) instruction in Execute Stage
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        JFunctD;                        // detect jalr instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
+  logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
 
   // Extract fields
   assign OpD = InstrD[6:0];
@@ -161,6 +161,7 @@ module controller(
                               ((`XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
     assign JFunctD          = (Funct3D == 3'b000);
+    assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1; // Don't bother to separate out shift decoding
     assign RFunctD = ~Funct7D[0]; // Not a multiply
@@ -168,7 +169,8 @@ module controller(
     assign LFunctD = 1; // don't bother to check Funct3 for loads
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
-    assign JFunctD = 1; // don't bother to check Funct3 for jumps    
+    assign JFunctD = 1; // don't bother to check Funct3 for jumps
+    assign IWValidFunct3D = 1;
   end
 
   // Main Instruction Decoder
@@ -187,7 +189,7 @@ module controller(
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (IFunctD & `XLEN == 64)
+      7'b0011011: if (IFunctD & IWValidFunct3D & `XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
@@ -254,14 +256,16 @@ module controller(
 
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
-      .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
+      .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BALUControlE);
     if (`ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
     end else assign sltD = (Funct3D == 3'b010);
 
     // Combine base and bit manipulation signals
+    // coverage off: IllegalERegAdr can't occur in rv64gc; only applicable to E mode
     assign IllegalBaseInstrD = (ControlsD[0] & IllegalBitmanipInstrD) | IllegalERegAdrD ;
+    // coverage on
     assign RegWriteD = BaseRegWriteD | BRegWriteD; 
     assign W64D = BaseW64D | BW64D;
     assign ALUSrcBD = BaseALUSrcBD | BALUSrcBD;
@@ -280,7 +284,6 @@ module controller(
     assign BSelectE = 2'b00;
     assign BSelectD = 2'b00;
     assign ZBBSelectE = 3'b000;
-    assign BComparatorSignedE = 1'b0;
     assign BALUControlE = 3'b0;
   end
 
@@ -308,8 +311,7 @@ module controller(
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
   //  Hence, only eq and lt flags are needed
-  //  We also want comparator to handle signed comparison on a max/min bitmanip instruction
-  assign BranchSignedE = (~(Funct3E[2:1] == 2'b11) & BranchE) | BComparatorSignedE;
+  assign BranchSignedE = (~(Funct3E[2:1] == 2'b11) & BranchE);
   assign {eqE, ltE} = FlagsE;
   mux2 #(1) branchflagmux(eqE, ltE, Funct3E[2], BranchFlagE);
   assign BranchTakenE = BranchFlagE ^ Funct3E[0];

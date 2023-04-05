@@ -1,14 +1,10 @@
 ///////////////////////////////////////////
-// zbc.sv
+// ifu.S
 //
-// Written: Kevin Kim <kekim@hmc.edu> and Kip Macsai-Goren <kmacsaigoren@hmc.edu>
-// Created: 2 February 2023
-// Modified: 3 March 2023
+// Written: sriley@g.hmc.edu 28 March 2023
 //
-// Purpose: RISC-V ZBC top-level unit
+// Purpose: Test coverage for IFU
 //
-// Documentation: RISC-V System on Chip Design Chapter 15
-// 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
 // Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
@@ -27,25 +23,32 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
+// load code to initalize stack, handle interrupts, terminate
+#include "WALLY-init-lib.h"
 
-module zbc #(parameter WIDTH=32) (
-  input  logic [WIDTH-1:0] A, RevA, B,       // Operands
-  input  logic [2:0]       Funct3,           // Indicates operation to perform
-  output logic [WIDTH-1:0] ZBCResult);       // ZBC result
+main:
+    # turn floating point on
+    li t0, 0x2000
+    csrs mstatus, t0
 
-  logic [WIDTH-1:0] ClmulResult, RevClmulResult;
-  logic [WIDTH-1:0] RevB;
-  logic [WIDTH-1:0] X, Y;
+    # calling compressed floating point load double instruction
+    //.hword 0x2000 // CL type compressed floating-point ld-->funct3,imm,rs1',imm,rd',op
+                        // binary version 0000 0000 0000 0000 0010 0000 0000 0000
+    mv s0, sp
+    c.fld fs0, 0(s0)
 
-  bitreverse #(WIDTH) brB(B, RevB);
+    c.fsd fs0, 0(s0)
 
-  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
-  mux2 #(WIDTH) ymux(RevB, B, ~Funct3[1], Y);
+    // c.fldsp fs0, 0
+    .hword 0x2002
 
-  clmul #(WIDTH) clm(.X, .Y, .ClmulResult);
-  
-  bitreverse  #(WIDTH) brClmulResult(ClmulResult, RevClmulResult);
+    // c.fsdsp fs0, 0
+    .hword 0xA002
 
-  mux2 #(WIDTH) zbcresultmux(ClmulResult, RevClmulResult, Funct3[1], ZBCResult);
-endmodule
+    //# Illegal compressed instruction with op = 01, instr[15:10] = 100111, and 0's everywhere else
+    //.hword 0x9C01
+
+    # Line Illegal compressed instruction 
+    .hword 0x9C41
+
+    j done

@@ -37,14 +37,13 @@ module alu #(parameter WIDTH=32) (
   input  logic [1:0]       BSelect,     // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
   input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
   input  logic [2:0]       Funct3,      // For BMU decoding
-  input  logic [1:0]       CompFlags,   // Comparator flags
   input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
-  output logic [WIDTH-1:0] Result,      // ALU result
+  output logic [WIDTH-1:0] ALUResult,   // ALU result
   output logic [WIDTH-1:0] Sum);        // Sum of operands
 
   // CondInvB = ~B when subtracting, B otherwise. Shift = shift result. SLT/U = result of a slt/u instruction.
   // FullResult = ALU result before adjusting for a RV64 w-suffix instruction.
-  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, ALUResult;                   // Intermediate Signals 
+  logic [WIDTH-1:0] CondMaskInvB, Shift, FullResult, PreALUResult;                // Intermediate Signals 
   logic [WIDTH-1:0] CondMaskB;                                                    // Result of B mask select mux
   logic [WIDTH-1:0] CondShiftA;                                                   // Result of A shifted select mux
   logic [WIDTH-1:0] CondExtA;                                                     // Result of Zero Extend A select mux
@@ -84,16 +83,16 @@ module alu #(parameter WIDTH=32) (
   end
 
   // Support RV64I W-type addw/subw/addiw/shifts that discard upper 32 bits and sign-extend 32-bit result to 64 bits
-  if (WIDTH == 64)  assign ALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
-  else              assign ALUResult = FullResult;
+  if (WIDTH == 64)  assign PreALUResult = W64 ? {{32{FullResult[31]}}, FullResult[31:0]} : FullResult;
+  else              assign PreALUResult = FullResult;
 
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
     bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
-      .Funct3, .CompFlags, .BALUControl, .ALUResult, .FullResult,
-      .CondMaskB, .CondShiftA, .Result);
+      .Funct3, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
+      .CondMaskB, .CondShiftA, .ALUResult);
   end else begin
-    assign Result = ALUResult;
+    assign ALUResult = PreALUResult;
     assign CondMaskB = B;
     assign CondShiftA = A;
   end
