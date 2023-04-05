@@ -149,7 +149,7 @@ module lsu (
   // MMU include PMP and is needed if any privileged supported
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  if(`VIRTMEM_SUPPORTED) begin : VIRTMEM_SUPPORTED
+  if(`VIRTMEM_SUPPORTED) begin : hptw
     hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
       .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
@@ -275,7 +275,7 @@ module lsu (
         .FetchBuffer, .CacheBusRW, 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
 
-      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW)) ahbcacheinterface(
+      ahbcacheinterface #(.BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
         .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
