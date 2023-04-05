@@ -55,8 +55,8 @@
 `define BIGENDIAN_SUPPORTED 1
 
 // TLB configuration.  Entries should be a power of 2
-`define ITLB_ENTRIES 32
-`define DTLB_ENTRIES 32
+`define ITLB_ENTRIES 16
+`define DTLB_ENTRIES 16
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
