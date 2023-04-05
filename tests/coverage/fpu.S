@@ -67,12 +67,18 @@ main:
     # fcvt.w.q a0, ft0
     # fcvt.q.d ft3, ft0
 
+    # Completing branch coverage in fctrl.sv
     .word 0x38007553    // Testing the all False case for 119 - funct7 under, op = 101 0011
     .word 0x40000053    // Line 145 All False Test case - illegal instruction?
     .word 0xd0400053    // Line 156 All False Test case - illegal instruction?
     .word 0xc0400053    // Line 162 All False Test case - illegal instruction?
     .word 0xd2400053    // Line 168 All False Test case - illegal instruction?
     .word 0xc2400053    // Line 174 All False Test case - illegal instruction?
+
+    # Increasing conditional coverage in fctrl.sv
+    .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
+    .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
+    .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
 
     # Test illegal instructions are detected
     .word 0x00000007 // illegal floating-point load (bad Funct3)
