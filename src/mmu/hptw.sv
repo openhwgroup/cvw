@@ -64,7 +64,7 @@ module hptw (
   output logic             SelHPTW,
   output logic             HPTWStall,
   input  logic             LSULoadAccessFaultM, LSUStoreAmoAccessFaultM, 
-  output logic             LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultM
+  output logic             LoadAccessFaultM, StoreAmoAccessFaultM, HPTWInstrAccessFaultF
 );
 
   typedef enum logic [3:0] {L0_ADR, L0_RD, 
@@ -98,12 +98,25 @@ module hptw (
   logic [1:0]              HPTWRW;
   logic [2:0]              HPTWSize; // 32 or 64 bit access
   statetype                WalkerState, NextWalkerState, InitialWalkerState;
+  logic                    HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault;
+  logic                    HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay;
+  logic                    HPTWAccessFaultDelay;
+  logic                    TakeHPTWFault, TakeHPTWFaultDelay;
 
   // map hptw access faults onto either the original LSU load/store fault or instruction access fault
   assign LSUAccessFaultM       = LSULoadAccessFaultM | LSUStoreAmoAccessFaultM;
-  assign LoadAccessFaultM      = WalkerState == IDLE ? LSULoadAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
-  assign StoreAmoAccessFaultM  = WalkerState == IDLE ? LSUStoreAmoAccessFaultM : LSUAccessFaultM & DTLBWalk & MemRWM[0];
-  assign HPTWInstrAccessFaultM = WalkerState == IDLE ? 1'b0: LSUAccessFaultM & ~DTLBWalk;
+  assign HPTWLoadAccessFault   = LSUAccessFaultM & DTLBWalk & MemRWM[1] & ~MemRWM[0];
+  assign HPTWStoreAmoAccessFault = LSUAccessFaultM & DTLBWalk & MemRWM[0];
+  assign HPTWInstrAccessFault    = LSUAccessFaultM & ~DTLBWalk;
+
+  flopr #(4) HPTWAccesFaultReg(clk, reset, {TakeHPTWFault, HPTWLoadAccessFault, HPTWStoreAmoAccessFault, HPTWInstrAccessFault},
+                               {TakeHPTWFaultDelay, HPTWLoadAccessFaultDelay, HPTWStoreAmoAccessFaultDelay, HPTWInstrAccessFaultDelay});
+
+  assign TakeHPTWFault = WalkerState != IDLE;
+  
+  assign LoadAccessFaultM      = TakeHPTWFaultDelay ? HPTWLoadAccessFaultDelay : LSULoadAccessFaultM;
+  assign StoreAmoAccessFaultM  = TakeHPTWFaultDelay ? HPTWStoreAmoAccessFaultDelay : LSUStoreAmoAccessFaultM;
+  assign HPTWInstrAccessFaultF = TakeHPTWFaultDelay ? HPTWInstrAccessFaultDelay : 1'b0;
 
   // Extract bits from CSRs and inputs
   assign SvMode = SATP_REGW[`XLEN-1:`XLEN-`SVMODE_BITS];
@@ -247,22 +260,26 @@ module hptw (
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss & ~DCacheStallM)                        NextWalkerState = InitialWalkerState;
+      IDLE:       if (TLBMiss & ~DCacheStallM & ~HPTWAccessFaultDelay) NextWalkerState = InitialWalkerState;
                   else                                                NextWalkerState = IDLE;
       L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
       L3_RD:      if (DCacheStallM)                                   NextWalkerState = L3_RD;
+                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
                   else                                                NextWalkerState = L2_ADR;
       L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
                   else                                                NextWalkerState = LEAF;
       L2_RD:      if (DCacheStallM)                                   NextWalkerState = L2_RD;
+                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
                   else                                                NextWalkerState = L1_ADR;
       L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (DCacheStallM)                                   NextWalkerState = L1_RD;
+                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
                   else                                                NextWalkerState = L0_ADR;
       L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
       L0_RD:      if (DCacheStallM)                                   NextWalkerState = L0_RD;
+                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
                   else                                                NextWalkerState = LEAF;
       LEAF:       if (`SVADU_SUPPORTED & HPTWUpdateDA)                NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = IDLE;
@@ -273,7 +290,8 @@ module hptw (
 
   assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
   assign SelHPTW = WalkerState != IDLE;
-  assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss);
+  assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
+  assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss & ~(HPTWAccessFaultDelay));
 
   assign ITLBMissOrUpdateDAF = ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF);
   assign DTLBMissOrUpdateDAM = DTLBMissM | (`SVADU_SUPPORTED & DataUpdateDAM);  
