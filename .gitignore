@@ -113,3 +113,5 @@ sim/test1.rep
 sim/vsim.log
 tests/coverage/*.elf
 *.elf.memfile
+sim/*Cache.log
+sim/branch
