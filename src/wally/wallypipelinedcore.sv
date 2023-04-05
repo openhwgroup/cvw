@@ -106,7 +106,7 @@ module wallypipelinedcore (
   logic [1:0]                    PrivilegeModeW;
   logic [`XLEN-1:0]              PTE;
   logic [1:0]                    PageType;
-  logic                          sfencevmaM, WFIStallM;
+  logic                          sfencevmaM;
   logic                          SelHPTW;
 
   // PMA checker signals
@@ -146,7 +146,7 @@ module wallypipelinedcore (
   logic                          RASPredPCWrongM;
   logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
-  logic                          InstrAccessFaultF, HPTWInstrAccessFaultM;
+  logic                          InstrAccessFaultF, HPTWInstrAccessFaultF;
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
   logic [1:0]                    LSUHTRANS;
@@ -162,7 +162,8 @@ module wallypipelinedcore (
   logic                          CommittedF;
   logic                          BranchD, BranchE, JumpD, JumpE;
   logic                          DCacheStallM, ICacheStallF;
-  
+  logic                          wfiM, IntPendingM;
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
@@ -236,7 +237,7 @@ module wallypipelinedcore (
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
     .LoadAccessFaultM,         // connects to privilege
-    .HPTWInstrAccessFaultM,         // connects to privilege
+    .HPTWInstrAccessFaultF,         // connects to privilege
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrUpdateDAF,
@@ -265,7 +266,7 @@ module wallypipelinedcore (
     .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-    .WFIStallM,
+    .wfiM, .IntPendingM,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW);    
@@ -288,17 +289,18 @@ module wallypipelinedcore (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
-      .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+      .InstrAccessFaultF, .HPTWInstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM);
+      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW = 0;
     assign UnalignedPCNextF = PC2NextF;
     assign RetM = 0;
     assign TrapM = 0;
-    assign WFIStallM = 0;
+    assign wfiM = 0;
+    assign IntPendingM = 0;
     assign sfencevmaM = 0;
     assign BigEndianM = 0;
   end
