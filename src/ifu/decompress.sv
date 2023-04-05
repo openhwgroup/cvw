@@ -127,14 +127,14 @@ module decompress (
                     else // if (instr16[6:5] == 2'b11) 
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
                   else if (`XLEN > 32) //if (instr16[12:10] == 3'b111) full truth table no need to check [12:10] 
-                      if (instr16[6:5] == 2'b00)
+                    if (instr16[6:5] == 2'b00)
                       InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
-                      else if (instr16[6:5] == 2'b01)
+                    else if (instr16[6:5] == 2'b01)
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.addw
-                      else begin // reserved  
+                    else begin // reserved  
                       IllegalCompInstrD = 1;
                       InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
-                      end
+                    end
                   // coverage off
                   // are excluding this branch from coverage because in rv64gc XLEN is always 64 and thus greater than 32 bits
                   // This branch will only be taken if instr16[12:10] == 3'b111 and 'XLEN !> 32, because all other 
