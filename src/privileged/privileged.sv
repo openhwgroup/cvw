@@ -65,7 +65,7 @@ module privileged (
   // fault sources                                                         
   input  logic             InstrAccessFaultF,                              // instruction access fault
   input  logic             LoadAccessFaultM, StoreAmoAccessFaultM,         // load or store access fault
-  input  logic             HPTWInstrAccessFaultM,                          // hardware page table access fault while fetching instruction PTE
+  input  logic             HPTWInstrAccessFaultF,                          // hardware page table access fault while fetching instruction PTE
   input  logic             InstrPageFaultF,                                // page faults
   input  logic             LoadPageFaultM, StoreAmoPageFaultM,             // page faults
   input  logic             InstrMisalignedFaultM,                          // misaligned instruction fault
@@ -114,6 +114,8 @@ module privileged (
   logic                    IntPendingM;                                    // interrupt is pending, even if not enabled.  ends wfi
   logic                    InterruptM;                                     // interrupt occuring
   logic                    ExceptionM;                                     // Memory stage instruction caused a fault
+  logic                    HPTWInstrAccessFaultM;                          // Hardware page table access fault while fetching instruction PTE
+  
  
   // track the current privilege level
   privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
@@ -144,8 +146,8 @@ module privileged (
 
   // pipeline early-arriving trap sources
   privpiperegs ppr(.clk, .reset, .StallD, .StallE, .StallM, .FlushD, .FlushE, .FlushM,
-    .InstrPageFaultF, .InstrAccessFaultF, .IllegalIEUFPUInstrD, 
-    .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUFPUInstrM);
+    .InstrPageFaultF, .InstrAccessFaultF, .HPTWInstrAccessFaultF, .IllegalIEUFPUInstrD, 
+    .InstrPageFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
   trap trap(.reset,
