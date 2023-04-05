@@ -480,7 +480,7 @@ logic [3:0] dummy;
 	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
 
 	  flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
-	  assign Begin = StartSampleFirst & ~ BeginDelayed;
+	  assign Begin = StartSampleFirst & ~BeginDelayed;
 
 	end
 	
@@ -560,7 +560,11 @@ end
 	string LogFile;
 	logic  resetD, resetEdge;
     logic  Enable;
-    assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+    // assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+    
+    // this version of Enable allows for accurate eviction logging.
+    // Likely needs further improvement.
+    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & ~reset;
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
     initial begin
@@ -568,51 +572,58 @@ end
       file = $fopen(LogFile, "w");
 	  $fwrite(file, "BEGIN %s\n", memfilename);
 	end
-    string HitMissString;
-    assign HitMissString = dut.core.ifu.InvalidateICacheM ? "I" :
-                           dut.core.ifu.bus.icache.icache.CacheHit ? "H" : "M";
+    string AccessTypeString, HitMissString;
+    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
+                           dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
+    assign AccessTypeString = dut.core.ifu.InvalidateICacheM ? "I" : "R";
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(Enable) begin  // only log i cache reads
-	    $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
+	    $fwrite(file, "%h %s %s\n", dut.core.ifu.PCPF, AccessTypeString, HitMissString);
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
   end
 
-  // old version
+
   if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
 	string LogFile;
 	logic  resetD, resetEdge;
     logic  Enabled;
-    string AccessTypeString, HitMissString, EvictString;
+    string AccessTypeString, HitMissString;
 
 	flop #(1) ResetDReg(clk, reset, resetD);
 	assign resetEdge = ~reset & resetD;
-    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" : "M";
+    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
+                           (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
+                           dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
     assign AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
                               dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
                               "NULL";
-    assign EvictString = HitMissString == "H" ? "X" :
-                         dut.core.lsu.bus.dcache.dcache.LineDirty ? "E" : "N";
-    assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
+    // assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
+    //                  ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
+    //                  (AccessTypeString != "NULL");
+
+    // This version of enable allows for accurate eviction logging. 
+    // Likely needs further improvement.
+    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      (AccessTypeString != "NULL");
 
     initial begin
-	  LogFile = $psprintf("DCache.log");
+	    LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
-	  $fwrite(file, "BEGIN %s\n", memfilename);
-	end
+	    $fwrite(file, "BEGIN %s\n", memfilename);
+	  end
     always @(posedge clk) begin
 	  if(resetEdge) $fwrite(file, "TRAIN\n");
 	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
 	  if(Enabled) begin
-	    $fwrite(file, "%h %s %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString, EvictString);
+	    $fwrite(file, "%h %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString);
 	  end
 	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
