@@ -41,7 +41,7 @@ module zbc #(parameter WIDTH=32) (
   bitreverse #(WIDTH) brB(B, RevB);
 
   mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
-  mux3 #(WIDTH) ymux({{1'b0}, RevB[WIDTH-2:0]}, RevB, B, ~Funct3[1:0], Y);
+  mux2 #(WIDTH) ymux(RevB, B, ~Funct3[1], Y);
 
   clmul #(WIDTH) clm(.X, .Y, .ClmulResult);
   

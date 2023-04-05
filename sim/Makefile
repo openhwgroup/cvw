@@ -18,7 +18,8 @@ all: riscoftests memfiles coveragetests
 coverage:
 	#make -C ../tests/coverage --jobs
 	#iter-elf.bash --cover --search ../tests/coverage
-	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb riscv.ucdb -logfile cov/log
+	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb cov/buildroot_buildroot.ucdb riscv.ucdb -logfile cov/log
+#	vcover merge -out cov/cov.ucdb cov/rv64gc_arch64i.ucdb cov/rv64gc*.ucdb riscv.ucdb /home/rthompson/buildroot_buildroot-no-trace.ucdb -logfile cov/log
 	vcover report -details cov/cov.ucdb > cov/rv64gc_coverage_details.rpt
 	vcover report cov/cov.ucdb -details -instance=/core/ebu. > cov/rv64gc_coverage_ebu.rpt
 	vcover report cov/cov.ucdb -details -instance=/core/priv. > cov/rv64gc_coverage_priv.rpt
