@@ -128,10 +128,18 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+    if (!READ_ONLY_CACHE) begin:wordram
+      ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
+    end
+    else begin:wordram // no byte-enable needed for i$.
+      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
+      .we(SelectedWriteWordEn));
+    end
   end
 
   // AND portion of distributed read multiplexers
