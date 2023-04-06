@@ -90,16 +90,7 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
         // so we can never get we=1, ce=0 for I$.
         if (ce & we)
         // coverage on
-          for(i = 0; i < WIDTH/8; i++) 
-            RAM[addr][i*8 +: 8] <= #1 din[i*8 +: 8];
-  
-    if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
-      always @(posedge clk)
-        // coverage off
-        // (see the above explanation)
-        if (ce & we)
-        // coverage on
-          RAM[addr][WIDTH-1:WIDTH-WIDTH%8] <= #1 din[WIDTH-1:WIDTH-WIDTH%8];
+          RAM[addr] <= #1 din;
   end
 
 endmodule
