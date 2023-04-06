@@ -16,7 +16,7 @@ OBJECTS		:= $(OBJECTS:.$(CPPEXT)=.$(OBJEXT))
 OBJECTS		:= $(patsubst $(SRCDIR)/%,$(BUILDDIR)/%,$(OBJECTS))
 
 TARGETDIR	:= bin
-TARGET		:= $(TARGETDIR)/fpga-test-sdc
+TARGET		:= $(TARGETDIR)/boot
 ROOT		:= ..
 LIBRARY_DIRS	:= 
 LIBRARY_FILES	:=
@@ -24,7 +24,7 @@ LIBRARY_FILES	:=
 MARCH           :=-march=rv64imfdc
 MABI            :=-mabi=lp64d
 LINK_FLAGS      :=$(MARCH) $(MABI) -nostartfiles
-LINKER		:=linker.x
+LINKER		:=$(ROOT)/linker1000.x
 
 
 AFLAGS =$(MARCH) $(MABI) -W

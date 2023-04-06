@@ -175,25 +175,25 @@ reg  data_int_rst;
 reg  ctrl_rst;
 
 // AXI accessible registers
-reg  [31:0] argument_reg;
-reg  [`CMD_REG_SIZE-1:0] command_reg;
-reg  [`CMD_TIMEOUT_W-1:0] cmd_timeout_reg;
-reg  [`DATA_TIMEOUT_W-1:0] data_timeout_reg;
-reg  [0:0] software_reset_reg;
-wire [31:0] response_0_reg;
-wire [31:0] response_1_reg;
-wire [31:0] response_2_reg;
-wire [31:0] response_3_reg;
-reg  [`BLKSIZE_W-1:0] block_size_reg;
-reg  [1:0] controller_setting_reg;
-wire [`INT_CMD_SIZE-1:0] cmd_int_status_reg;
-wire [`INT_DATA_SIZE-1:0] data_int_status_reg;
-wire [`INT_DATA_SIZE-1:0] data_int_status;
-reg  [`INT_CMD_SIZE-1:0] cmd_int_enable_reg;
-reg  [`INT_DATA_SIZE-1:0] data_int_enable_reg;
-reg  [`BLKCNT_W-1:0] block_count_reg;
-reg  [dma_addr_bits-1:0] dma_addr_reg;
-reg  [7:0] clock_divider_reg = 124; // 400KHz
+(* mark_debug = "true" *) reg  [31:0] argument_reg;
+(* mark_debug = "true" *) reg  [`CMD_REG_SIZE-1:0] command_reg;
+(* mark_debug = "true" *) reg  [`CMD_TIMEOUT_W-1:0] cmd_timeout_reg;
+(* mark_debug = "true" *) reg  [`DATA_TIMEOUT_W-1:0] data_timeout_reg;
+(* mark_debug = "true" *) reg  [0:0] software_reset_reg;
+(* mark_debug = "true" *) wire [31:0] response_0_reg;
+(* mark_debug = "true" *) wire [31:0] response_1_reg;
+(* mark_debug = "true" *) wire [31:0] response_2_reg;
+(* mark_debug = "true" *) wire [31:0] response_3_reg;
+(* mark_debug = "true" *) reg  [`BLKSIZE_W-1:0] block_size_reg;
+(* mark_debug = "true" *) reg  [1:0] controller_setting_reg;
+(* mark_debug = "true" *) wire [`INT_CMD_SIZE-1:0] cmd_int_status_reg;
+(* mark_debug = "true" *) wire [`INT_DATA_SIZE-1:0] data_int_status_reg;
+(* mark_debug = "true" *) wire [`INT_DATA_SIZE-1:0] data_int_status;
+(* mark_debug = "true" *) reg  [`INT_CMD_SIZE-1:0] cmd_int_enable_reg;
+(* mark_debug = "true" *) reg  [`INT_DATA_SIZE-1:0] data_int_enable_reg;
+(* mark_debug = "true" *) reg  [`BLKCNT_W-1:0] block_count_reg;
+(* mark_debug = "true" *) reg  [dma_addr_bits-1:0] dma_addr_reg;
+(* mark_debug = "true" *) reg  [7:0] clock_divider_reg = 124; // 400KHz
 
 // ------ Clocks and resets
 
@@ -206,7 +206,7 @@ always @(posedge clock)
 
 reg [7:0] clock_cnt;
 reg clock_state;
-reg clock_posedge;
+(* mark_debug = "true" *) reg clock_posedge;
 reg clock_data_in;
 wire fifo_almost_full;
 wire fifo_almost_empty;
