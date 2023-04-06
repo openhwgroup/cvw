@@ -10,6 +10,10 @@
 --override cpu/mimpid=0x100
 --override refRoot/cpu/tvec_align=64
 
+# bit manipulation
+--override cpu/add_implicit_Extensions=B 
+--override cpu/bitmanip_version=1.0.0
+
 #  clarify
 #--override refRoot/cpu/mtvec_sext=F
 
