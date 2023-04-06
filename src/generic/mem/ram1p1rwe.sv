@@ -92,5 +92,5 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
       if (ce & we)
         // coverage on
         RAM[addr] <= #1 din;
-
+  end
 endmodule
