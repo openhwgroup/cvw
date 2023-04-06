@@ -61,7 +61,7 @@ module fdivsqrtpreproc (
 
   if (`IDIV_ON_FPU) begin:intpreproc // Int Supported
     logic signedDiv, NegQuotE;
-    logic AsBit, BsBit, AsE, BsE, ALTBE;
+    logic AsE, BsE, ALTBE;
     logic [`XLEN-1:0] AE, BE, PosA, PosB;
     logic [`DIVBLEN:0] ZeroDiff, p;
 
@@ -71,22 +71,16 @@ module fdivsqrtpreproc (
 
     // Source handling
     if (`XLEN==64) begin // 64-bit, supports W64
-      mux2 #(1) azeromux(~(|ForwardedSrcAE), ~(|ForwardedSrcAE[31:0]), W64E, AZeroE);
-      mux2 #(1) bzeromux(~(|ForwardedSrcBE), ~(|ForwardedSrcBE[31:0]), W64E, BZeroE);
-      mux2 #(1)  abitmux(ForwardedSrcAE[63], ForwardedSrcAE[31], W64E, AsBit);
-      mux2 #(1)  bbitmux(ForwardedSrcBE[63], ForwardedSrcBE[31], W64E, BsBit);
-      mux2 #(64)    amux(ForwardedSrcAE, {{(`XLEN-32){AsE}}, ForwardedSrcAE[31:0]}, W64E, AE);
-      mux2 #(64)    bmux(ForwardedSrcBE, {{(`XLEN-32){BsE}}, ForwardedSrcBE[31:0]}, W64E, BE);
-      assign AsE = signedDiv & AsBit;
-      assign BsE = signedDiv & BsBit;
+      mux2 #(64)    amux(ForwardedSrcAE, {{32{ForwardedSrcAE[31] & signedDiv}}, ForwardedSrcAE[31:0]}, W64E, AE);
+      mux2 #(64)    bmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31] & signedDiv}}, ForwardedSrcBE[31:0]}, W64E, BE);
     end else begin // 32 bits only
-      assign AsE = signedDiv & ForwardedSrcAE[31];
-      assign BsE = signedDiv & ForwardedSrcBE[31];
       assign AE = ForwardedSrcAE;
       assign BE = ForwardedSrcBE;
-      assign AZeroE = ~(|ForwardedSrcAE);
-      assign BZeroE = ~(|ForwardedSrcBE);
-    end
+     end
+    assign AZeroE = ~(|AE);
+    assign BZeroE = ~(|BE);
+    assign AsE = AE[`XLEN-1] & signedDiv;
+    assign BsE = BE[`XLEN-1] & signedDiv; 
 
     // Force integer inputs to be postiive
     mux2 #(`XLEN) posamux(AE, -AE, AsE, PosA);
