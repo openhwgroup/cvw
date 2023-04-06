@@ -926,212 +926,93 @@ set_property port_width 1 [get_debug_ports u_ila_0/probe173]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe173]
 connect_debug_port u_ila_0/probe173 [get_nets [list {m_axi_rready}]]
 
-
+# ============== AXI SDC STUFF ================
 create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe174]
+set_property port_width 1 [get_debug_ports u_ila_0/probe174]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe174]
-connect_debug_port u_ila_0/probe174 [get_nets [list {BUS_axi_awid[0]} {BUS_axi_awid[1]} {BUS_axi_awid[2]} {BUS_axi_awid[3]} ]]
-
+connect_debug_port u_ila_0/probe174 [get_nets [list {axiSDC/clock_posedge}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe175]
+set_property port_width 32 [get_debug_ports u_ila_0/probe175]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe175]
-connect_debug_port u_ila_0/probe175 [get_nets [list {BUS_axi_awlen[0]} {BUS_axi_awlen[1]} {BUS_axi_awlen[2]} {BUS_axi_awlen[3]} {BUS_axi_awlen[4]} {BUS_axi_awlen[5]} {BUS_axi_awlen[6]} {BUS_axi_awlen[7]} ]]
-
+connect_debug_port u_ila_0/probe175 [get_nets [list {axiSDC/argument_reg[0]} {axiSDC/argument_reg[1]} {axiSDC/argument_reg[2]} {axiSDC/argument_reg[3]} {axiSDC/argument_reg[4]} {axiSDC/argument_reg[5]} {axiSDC/argument_reg[6]} {axiSDC/argument_reg[7]} {axiSDC/argument_reg[8]} {axiSDC/argument_reg[9]} {axiSDC/argument_reg[10]} {axiSDC/argument_reg[11]} {axiSDC/argument_reg[12]} {axiSDC/argument_reg[13]} {axiSDC/argument_reg[14]} {axiSDC/argument_reg[15]} {axiSDC/argument_reg[16]} {axiSDC/argument_reg[17]} {axiSDC/argument_reg[18]} {axiSDC/argument_reg[19]} {axiSDC/argument_reg[20]} {axiSDC/argument_reg[21]} {axiSDC/argument_reg[22]} {axiSDC/argument_reg[23]} {axiSDC/argument_reg[24]} {axiSDC/argument_reg[25]} {axiSDC/argument_reg[26]} {axiSDC/argument_reg[27]} {axiSDC/argument_reg[28]} {axiSDC/argument_reg[29]} {axiSDC/argument_reg[30]} {axiSDC/argument_reg[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe176]
+set_property port_width 25 [get_debug_ports u_ila_0/probe176]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe176]
-connect_debug_port u_ila_0/probe176 [get_nets [list {BUS_axi_awsize[0]} {BUS_axi_awsize[1]} {BUS_axi_awsize[2]} ]]
-
+connect_debug_port u_ila_0/probe176 [get_nets [list {axiSDC/cmd_timeout_reg[0]} {axiSDC/cmd_timeout_reg[1]} {axiSDC/cmd_timeout_reg[2]} {axiSDC/cmd_timeout_reg[3]} {axiSDC/cmd_timeout_reg[4]} {axiSDC/cmd_timeout_reg[5]} {axiSDC/cmd_timeout_reg[6]} {axiSDC/cmd_timeout_reg[7]} {axiSDC/cmd_timeout_reg[8]} {axiSDC/cmd_timeout_reg[9]} {axiSDC/cmd_timeout_reg[10]} {axiSDC/cmd_timeout_reg[11]} {axiSDC/cmd_timeout_reg[12]} {axiSDC/cmd_timeout_reg[13]} {axiSDC/cmd_timeout_reg[14]} {axiSDC/cmd_timeout_reg[15]} {axiSDC/cmd_timeout_reg[16]} {axiSDC/cmd_timeout_reg[17]} {axiSDC/cmd_timeout_reg[18]} {axiSDC/cmd_timeout_reg[19]} {axiSDC/cmd_timeout_reg[20]} {axiSDC/cmd_timeout_reg[21]} {axiSDC/cmd_timeout_reg[22]} {axiSDC/cmd_timeout_reg[23]} {axiSDC/cmd_timeout_reg[24]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe177]
+set_property port_width 28 [get_debug_ports u_ila_0/probe177]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe177]
-connect_debug_port u_ila_0/probe177 [get_nets [list {BUS_axi_awburst[0]} {BUS_axi_awburst[1]} ]]
-
+connect_debug_port u_ila_0/probe177 [get_nets [list {axiSDC/data_timeout_reg[0]} {axiSDC/data_timeout_reg[1]} {axiSDC/data_timeout_reg[2]} {axiSDC/data_timeout_reg[3]} {axiSDC/data_timeout_reg[4]} {axiSDC/data_timeout_reg[5]} {axiSDC/data_timeout_reg[6]} {axiSDC/data_timeout_reg[7]} {axiSDC/data_timeout_reg[8]} {axiSDC/data_timeout_reg[9]} {axiSDC/data_timeout_reg[10]} {axiSDC/data_timeout_reg[11]} {axiSDC/data_timeout_reg[12]} {axiSDC/data_timeout_reg[13]} {axiSDC/data_timeout_reg[14]} {axiSDC/data_timeout_reg[15]} {axiSDC/data_timeout_reg[16]} {axiSDC/data_timeout_reg[17]} {axiSDC/data_timeout_reg[18]} {axiSDC/data_timeout_reg[19]} {axiSDC/data_timeout_reg[20]} {axiSDC/data_timeout_reg[21]} {axiSDC/data_timeout_reg[22]} {axiSDC/data_timeout_reg[23]} {axiSDC/data_timeout_reg[24]} {axiSDC/data_timeout_reg[25]} {axiSDC/data_timeout_reg[26]} {axiSDC/data_timeout_reg[27]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe178]
+set_property port_width 1 [get_debug_ports u_ila_0/probe178]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe178]
-connect_debug_port u_ila_0/probe178 [get_nets [list {BUS_axi_awcache[0]} {BUS_axi_awcache[1]} {BUS_axi_awcache[2]} {BUS_axi_awcache[3]} ]]
-
+connect_debug_port u_ila_0/probe178 [get_nets [list {axiSDC/software_reset_reg}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 31 [get_debug_ports u_ila_0/probe179]
+set_property port_width 32 [get_debug_ports u_ila_0/probe179]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe179]
-connect_debug_port u_ila_0/probe179 [get_nets [list {BUS_axi_awaddr[0]} {BUS_axi_awaddr[1]} {BUS_axi_awaddr[2]} {BUS_axi_awaddr[3]} {BUS_axi_awaddr[4]} {BUS_axi_awaddr[5]} {BUS_axi_awaddr[6]} {BUS_axi_awaddr[7]} {BUS_axi_awaddr[8]} {BUS_axi_awaddr[9]} {BUS_axi_awaddr[10]} {BUS_axi_awaddr[11]} {BUS_axi_awaddr[12]} {BUS_axi_awaddr[13]} {BUS_axi_awaddr[14]} {BUS_axi_awaddr[15]} {BUS_axi_awaddr[16]} {BUS_axi_awaddr[17]} {BUS_axi_awaddr[18]} {BUS_axi_awaddr[19]} {BUS_axi_awaddr[20]} {BUS_axi_awaddr[21]} {BUS_axi_awaddr[22]} {BUS_axi_awaddr[23]} {BUS_axi_awaddr[24]} {BUS_axi_awaddr[25]} {BUS_axi_awaddr[26]} {BUS_axi_awaddr[27]} {BUS_axi_awaddr[28]} {BUS_axi_awaddr[29]} {BUS_axi_awaddr[30]} ]]
-
+connect_debug_port u_ila_0/probe179 [get_nets [list {axiSDC/response_0_reg[0]} {axiSDC/response_0_reg[1]} {axiSDC/response_0_reg[2]} {axiSDC/response_0_reg[3]} {axiSDC/response_0_reg[4]} {axiSDC/response_0_reg[5]} {axiSDC/response_0_reg[6]} {axiSDC/response_0_reg[7]} {axiSDC/response_0_reg[8]} {axiSDC/response_0_reg[9]} {axiSDC/response_0_reg[10]} {axiSDC/response_0_reg[11]} {axiSDC/response_0_reg[12]} {axiSDC/response_0_reg[13]} {axiSDC/response_0_reg[14]} {axiSDC/response_0_reg[15]} {axiSDC/response_0_reg[16]} {axiSDC/response_0_reg[17]} {axiSDC/response_0_reg[18]} {axiSDC/response_0_reg[19]} {axiSDC/response_0_reg[20]} {axiSDC/response_0_reg[21]} {axiSDC/response_0_reg[22]} {axiSDC/response_0_reg[23]} {axiSDC/response_0_reg[24]} {axiSDC/response_0_reg[25]} {axiSDC/response_0_reg[26]} {axiSDC/response_0_reg[27]} {axiSDC/response_0_reg[28]} {axiSDC/response_0_reg[29]} {axiSDC/response_0_reg[30]} {axiSDC/response_0_reg[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe180]
+set_property port_width 32 [get_debug_ports u_ila_0/probe180]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe180]
-connect_debug_port u_ila_0/probe180 [get_nets [list {BUS_axi_awprot[0]} {BUS_axi_awprot[1]} {BUS_axi_awprot[2]} ]]
-
+connect_debug_port u_ila_0/probe180 [get_nets [list {axiSDC/response_1_reg[0]} {axiSDC/response_1_reg[1]} {axiSDC/response_1_reg[2]} {axiSDC/response_1_reg[3]} {axiSDC/response_1_reg[4]} {axiSDC/response_1_reg[5]} {axiSDC/response_1_reg[6]} {axiSDC/response_1_reg[7]} {axiSDC/response_1_reg[8]} {axiSDC/response_1_reg[9]} {axiSDC/response_1_reg[10]} {axiSDC/response_1_reg[11]} {axiSDC/response_1_reg[12]} {axiSDC/response_1_reg[13]} {axiSDC/response_1_reg[14]} {axiSDC/response_1_reg[15]} {axiSDC/response_1_reg[16]} {axiSDC/response_1_reg[17]} {axiSDC/response_1_reg[18]} {axiSDC/response_1_reg[19]} {axiSDC/response_1_reg[20]} {axiSDC/response_1_reg[21]} {axiSDC/response_1_reg[22]} {axiSDC/response_1_reg[23]} {axiSDC/response_1_reg[24]} {axiSDC/response_1_reg[25]} {axiSDC/response_1_reg[26]} {axiSDC/response_1_reg[27]} {axiSDC/response_1_reg[28]} {axiSDC/response_1_reg[29]} {axiSDC/response_1_reg[30]} {axiSDC/response_1_reg[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe181]
+set_property port_width 32 [get_debug_ports u_ila_0/probe181]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe181]
-connect_debug_port u_ila_0/probe181 [get_nets [list {BUS_axi_awvalid}]]
-
+connect_debug_port u_ila_0/probe181 [get_nets [list {axiSDC/response_2_reg[0]} {axiSDC/response_2_reg[1]} {axiSDC/response_2_reg[2]} {axiSDC/response_2_reg[3]} {axiSDC/response_2_reg[4]} {axiSDC/response_2_reg[5]} {axiSDC/response_2_reg[6]} {axiSDC/response_2_reg[7]} {axiSDC/response_2_reg[8]} {axiSDC/response_2_reg[9]} {axiSDC/response_2_reg[10]} {axiSDC/response_2_reg[11]} {axiSDC/response_2_reg[12]} {axiSDC/response_2_reg[13]} {axiSDC/response_2_reg[14]} {axiSDC/response_2_reg[15]} {axiSDC/response_2_reg[16]} {axiSDC/response_2_reg[17]} {axiSDC/response_2_reg[18]} {axiSDC/response_2_reg[19]} {axiSDC/response_2_reg[20]} {axiSDC/response_2_reg[21]} {axiSDC/response_2_reg[22]} {axiSDC/response_2_reg[23]} {axiSDC/response_2_reg[24]} {axiSDC/response_2_reg[25]} {axiSDC/response_2_reg[26]} {axiSDC/response_2_reg[27]} {axiSDC/response_2_reg[28]} {axiSDC/response_2_reg[29]} {axiSDC/response_2_reg[30]} {axiSDC/response_2_reg[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe182]
+set_property port_width 32 [get_debug_ports u_ila_0/probe182]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe182]
-connect_debug_port u_ila_0/probe182 [get_nets [list {BUS_axi_awready}]]
-
+connect_debug_port u_ila_0/probe182 [get_nets [list {axiSDC/dma_addr_reg[0]} {axiSDC/dma_addr_reg[1]} {axiSDC/dma_addr_reg[2]} {axiSDC/dma_addr_reg[3]} {axiSDC/dma_addr_reg[4]} {axiSDC/dma_addr_reg[5]} {axiSDC/dma_addr_reg[6]} {axiSDC/dma_addr_reg[7]} {axiSDC/dma_addr_reg[8]} {axiSDC/dma_addr_reg[9]} {axiSDC/dma_addr_reg[10]} {axiSDC/dma_addr_reg[11]} {axiSDC/dma_addr_reg[12]} {axiSDC/dma_addr_reg[13]} {axiSDC/dma_addr_reg[14]} {axiSDC/dma_addr_reg[15]} {axiSDC/dma_addr_reg[16]} {axiSDC/dma_addr_reg[17]} {axiSDC/dma_addr_reg[18]} {axiSDC/dma_addr_reg[19]} {axiSDC/dma_addr_reg[20]} {axiSDC/dma_addr_reg[21]} {axiSDC/dma_addr_reg[22]} {axiSDC/dma_addr_reg[23]} {axiSDC/dma_addr_reg[24]} {axiSDC/dma_addr_reg[25]} {axiSDC/dma_addr_reg[26]} {axiSDC/dma_addr_reg[27]} {axiSDC/dma_addr_reg[28]} {axiSDC/dma_addr_reg[29]} {axiSDC/dma_addr_reg[30]} {axiSDC/dma_addr_reg[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe183]
+set_property port_width 12 [get_debug_ports u_ila_0/probe183]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe183]
-connect_debug_port u_ila_0/probe183 [get_nets [list {BUS_axi_awlock}]]
-
+connect_debug_port u_ila_0/probe183 [get_nets [list {axiSDC/block_size_reg[0]} {axiSDC/block_size_reg[1]} {axiSDC/block_size_reg[2]} {axiSDC/block_size_reg[3]} {axiSDC/block_size_reg[4]} {axiSDC/block_size_reg[5]} {axiSDC/block_size_reg[6]} {axiSDC/block_size_reg[7]} {axiSDC/block_size_reg[8]} {axiSDC/block_size_reg[9]} {axiSDC/block_size_reg[10]} {axiSDC/block_size_reg[11]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe184]
+set_property port_width 2 [get_debug_ports u_ila_0/probe184]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe184]
-connect_debug_port u_ila_0/probe184 [get_nets [list {BUS_axi_wdata[0]} {BUS_axi_wdata[1]} {BUS_axi_wdata[2]} {BUS_axi_wdata[3]} {BUS_axi_wdata[4]} {BUS_axi_wdata[5]} {BUS_axi_wdata[6]} {BUS_axi_wdata[7]} {BUS_axi_wdata[8]} {BUS_axi_wdata[9]} {BUS_axi_wdata[10]} {BUS_axi_wdata[11]} {BUS_axi_wdata[12]} {BUS_axi_wdata[13]} {BUS_axi_wdata[14]} {BUS_axi_wdata[15]} {BUS_axi_wdata[16]} {BUS_axi_wdata[17]} {BUS_axi_wdata[18]} {BUS_axi_wdata[19]} {BUS_axi_wdata[20]} {BUS_axi_wdata[21]} {BUS_axi_wdata[22]} {BUS_axi_wdata[23]} {BUS_axi_wdata[24]} {BUS_axi_wdata[25]} {BUS_axi_wdata[26]} {BUS_axi_wdata[27]} {BUS_axi_wdata[28]} {BUS_axi_wdata[29]} {BUS_axi_wdata[30]} {BUS_axi_wdata[31]} {BUS_axi_wdata[32]} {BUS_axi_wdata[33]} {BUS_axi_wdata[34]} {BUS_axi_wdata[35]} {BUS_axi_wdata[36]} {BUS_axi_wdata[37]} {BUS_axi_wdata[38]} {BUS_axi_wdata[39]} {BUS_axi_wdata[40]} {BUS_axi_wdata[41]} {BUS_axi_wdata[42]} {BUS_axi_wdata[43]} {BUS_axi_wdata[44]} {BUS_axi_wdata[45]} {BUS_axi_wdata[46]} {BUS_axi_wdata[47]} {BUS_axi_wdata[48]} {BUS_axi_wdata[49]} {BUS_axi_wdata[50]} {BUS_axi_wdata[51]} {BUS_axi_wdata[52]} {BUS_axi_wdata[53]} {BUS_axi_wdata[54]} {BUS_axi_wdata[55]} {BUS_axi_wdata[56]} {BUS_axi_wdata[57]} {BUS_axi_wdata[58]} {BUS_axi_wdata[59]} {BUS_axi_wdata[60]} {BUS_axi_wdata[61]} {BUS_axi_wdata[62]} {BUS_axi_wdata[63]} ]]
-
+connect_debug_port u_ila_0/probe184 [get_nets [list {axiSDC/controller_setting_reg[0]} {axiSDC/controller_setting_reg[1]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe185]
+set_property port_width 5 [get_debug_ports u_ila_0/probe185]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe185]
-connect_debug_port u_ila_0/probe185 [get_nets [list {BUS_axi_wstrb[0]} {BUS_axi_wstrb[1]} {BUS_axi_wstrb[2]} {BUS_axi_wstrb[3]} {BUS_axi_wstrb[4]} {BUS_axi_wstrb[5]} {BUS_axi_wstrb[6]} {BUS_axi_wstrb[7]} ]]
-
+connect_debug_port u_ila_0/probe185 [get_nets [list {axiSDC/cmd_int_status_reg[0]} {axiSDC/cmd_int_status_reg[1]} {axiSDC/cmd_int_status_reg[2]} {axiSDC/cmd_int_status_reg[3]} {axiSDC/cmd_int_status_reg[4]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe186]
+set_property port_width 6 [get_debug_ports u_ila_0/probe186]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe186]
-connect_debug_port u_ila_0/probe186 [get_nets [list {BUS_axi_wlast}]]
-
+connect_debug_port u_ila_0/probe186 [get_nets [list {axiSDC/data_int_status_reg[0]} {axiSDC/data_int_status_reg[1]} {axiSDC/data_int_status_reg[2]} {axiSDC/data_int_status_reg[3]} {axiSDC/data_int_status_reg[4]} {axiSDC/data_int_status_reg[5]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe187]
+set_property port_width 6 [get_debug_ports u_ila_0/probe187]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe187]
-connect_debug_port u_ila_0/probe187 [get_nets [list {BUS_axi_wvalid}]]
-
+connect_debug_port u_ila_0/probe187 [get_nets [list {axiSDC/data_int_status[0]} {axiSDC/data_int_status[1]} {axiSDC/data_int_status[2]} {axiSDC/data_int_status[3]} {axiSDC/data_int_status[4]} {axiSDC/data_int_status[5]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe188]
+set_property port_width 5 [get_debug_ports u_ila_0/probe188]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe188]
-connect_debug_port u_ila_0/probe188 [get_nets [list {BUS_axi_wready}]]
-
+connect_debug_port u_ila_0/probe188 [get_nets [list {axiSDC/cmd_int_enable_reg[0]} {axiSDC/cmd_int_enable_reg[1]} {axiSDC/cmd_int_enable_reg[2]} {axiSDC/cmd_int_enable_reg[3]} {axiSDC/cmd_int_enable_reg[4]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe189]
+set_property port_width 6 [get_debug_ports u_ila_0/probe189]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe189]
-connect_debug_port u_ila_0/probe189 [get_nets [list {BUS_axi_bid[0]} {BUS_axi_bid[1]} {BUS_axi_bid[2]} {BUS_axi_bid[3]} ]]
-
+connect_debug_port u_ila_0/probe189 [get_nets [list {axiSDC/data_int_enable_reg[0]} {axiSDC/data_int_enable_reg[1]} {axiSDC/data_int_enable_reg[2]} {axiSDC/data_int_enable_reg[3]} {axiSDC/data_int_enable_reg[4]} {axiSDC/data_int_enable_reg[5]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe190]
+set_property port_width 16 [get_debug_ports u_ila_0/probe190]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe190]
-connect_debug_port u_ila_0/probe190 [get_nets [list {BUS_axi_bresp[0]} {BUS_axi_bresp[1]} ]]
-
+connect_debug_port u_ila_0/probe190 [get_nets [list {axiSDC/block_count_reg[0]} {axiSDC/block_count_reg[1]} {axiSDC/block_count_reg[2]} {axiSDC/block_count_reg[3]} {axiSDC/block_count_reg[4]} {axiSDC/block_count_reg[5]} {axiSDC/block_count_reg[6]} {axiSDC/block_count_reg[7]} {axiSDC/block_count_reg[8]} {axiSDC/block_count_reg[9]} {axiSDC/block_count_reg[10]} {axiSDC/block_count_reg[11]} {axiSDC/block_count_reg[12]} {axiSDC/block_count_reg[13]} {axiSDC/block_count_reg[14]} {axiSDC/block_count_reg[15]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe191]
+set_property port_width 8 [get_debug_ports u_ila_0/probe191]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe191]
-connect_debug_port u_ila_0/probe191 [get_nets [list {BUS_axi_bvalid}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe192]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe192]
-connect_debug_port u_ila_0/probe192 [get_nets [list {BUS_axi_bready}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe193]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe193]
-connect_debug_port u_ila_0/probe193 [get_nets [list {BUS_axi_arid[0]} {BUS_axi_arid[1]} {BUS_axi_arid[2]} {BUS_axi_arid[3]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe194]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe194]
-connect_debug_port u_ila_0/probe194 [get_nets [list {BUS_axi_arlen[0]} {BUS_axi_arlen[1]} {BUS_axi_arlen[2]} {BUS_axi_arlen[3]} {BUS_axi_arlen[4]} {BUS_axi_arlen[5]} {BUS_axi_arlen[6]} {BUS_axi_arlen[7]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe195]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe195]
-connect_debug_port u_ila_0/probe195 [get_nets [list {BUS_axi_arsize[0]} {BUS_axi_arsize[1]} {BUS_axi_arsize[2]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe196]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe196]
-connect_debug_port u_ila_0/probe196 [get_nets [list {BUS_axi_arburst[0]} {BUS_axi_arburst[1]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe197]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe197]
-connect_debug_port u_ila_0/probe197 [get_nets [list {BUS_axi_arprot[0]} {BUS_axi_arprot[1]} {BUS_axi_arprot[2]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe198]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe198]
-connect_debug_port u_ila_0/probe198 [get_nets [list {BUS_axi_arcache[0]} {BUS_axi_arcache[1]} {BUS_axi_arcache[2]} {BUS_axi_arcache[3]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe199]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe199]
-connect_debug_port u_ila_0/probe199 [get_nets [list {BUS_axi_arvalid}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 31 [get_debug_ports u_ila_0/probe200]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe200]
-connect_debug_port u_ila_0/probe200 [get_nets [list {BUS_axi_araddr[0]} {BUS_axi_araddr[1]} {BUS_axi_araddr[2]} {BUS_axi_araddr[3]} {BUS_axi_araddr[4]} {BUS_axi_araddr[5]} {BUS_axi_araddr[6]} {BUS_axi_araddr[7]} {BUS_axi_araddr[8]} {BUS_axi_araddr[9]} {BUS_axi_araddr[10]} {BUS_axi_araddr[11]} {BUS_axi_araddr[12]} {BUS_axi_araddr[13]} {BUS_axi_araddr[14]} {BUS_axi_araddr[15]} {BUS_axi_araddr[16]} {BUS_axi_araddr[17]} {BUS_axi_araddr[18]} {BUS_axi_araddr[19]} {BUS_axi_araddr[20]} {BUS_axi_araddr[21]} {BUS_axi_araddr[22]} {BUS_axi_araddr[23]} {BUS_axi_araddr[24]} {BUS_axi_araddr[25]} {BUS_axi_araddr[26]} {BUS_axi_araddr[27]} {BUS_axi_araddr[28]} {BUS_axi_araddr[29]} {BUS_axi_araddr[30]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe201]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe201]
-connect_debug_port u_ila_0/probe201 [get_nets [list {BUS_axi_arlock}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe202]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe202]
-connect_debug_port u_ila_0/probe202 [get_nets [list {BUS_axi_arready}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe203]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe203]
-connect_debug_port u_ila_0/probe203 [get_nets [list {BUS_axi_rid[0]} {BUS_axi_rid[1]} {BUS_axi_rid[2]} {BUS_axi_rid[3]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe204]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe204]
-connect_debug_port u_ila_0/probe204 [get_nets [list {BUS_axi_rdata[0]} {BUS_axi_rdata[1]} {BUS_axi_rdata[2]} {BUS_axi_rdata[3]} {BUS_axi_rdata[4]} {BUS_axi_rdata[5]} {BUS_axi_rdata[6]} {BUS_axi_rdata[7]} {BUS_axi_rdata[8]} {BUS_axi_rdata[9]} {BUS_axi_rdata[10]} {BUS_axi_rdata[11]} {BUS_axi_rdata[12]} {BUS_axi_rdata[13]} {BUS_axi_rdata[14]} {BUS_axi_rdata[15]} {BUS_axi_rdata[16]} {BUS_axi_rdata[17]} {BUS_axi_rdata[18]} {BUS_axi_rdata[19]} {BUS_axi_rdata[20]} {BUS_axi_rdata[21]} {BUS_axi_rdata[22]} {BUS_axi_rdata[23]} {BUS_axi_rdata[24]} {BUS_axi_rdata[25]} {BUS_axi_rdata[26]} {BUS_axi_rdata[27]} {BUS_axi_rdata[28]} {BUS_axi_rdata[29]} {BUS_axi_rdata[30]} {BUS_axi_rdata[31]} {BUS_axi_rdata[32]} {BUS_axi_rdata[33]} {BUS_axi_rdata[34]} {BUS_axi_rdata[35]} {BUS_axi_rdata[36]} {BUS_axi_rdata[37]} {BUS_axi_rdata[38]} {BUS_axi_rdata[39]} {BUS_axi_rdata[40]} {BUS_axi_rdata[41]} {BUS_axi_rdata[42]} {BUS_axi_rdata[43]} {BUS_axi_rdata[44]} {BUS_axi_rdata[45]} {BUS_axi_rdata[46]} {BUS_axi_rdata[47]} {BUS_axi_rdata[48]} {BUS_axi_rdata[49]} {BUS_axi_rdata[50]} {BUS_axi_rdata[51]} {BUS_axi_rdata[52]} {BUS_axi_rdata[53]} {BUS_axi_rdata[54]} {BUS_axi_rdata[55]} {BUS_axi_rdata[56]} {BUS_axi_rdata[57]} {BUS_axi_rdata[58]} {BUS_axi_rdata[59]} {BUS_axi_rdata[60]} {BUS_axi_rdata[61]} {BUS_axi_rdata[62]} {BUS_axi_rdata[63]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe205]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe205]
-connect_debug_port u_ila_0/probe205 [get_nets [list {BUS_axi_rresp[0]} {BUS_axi_rresp[1]} ]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe206]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe206]
-connect_debug_port u_ila_0/probe206 [get_nets [list {BUS_axi_rvalid}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe207]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe207]
-connect_debug_port u_ila_0/probe207 [get_nets [list {BUS_axi_rlast}]]
-
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe208]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe208]
-connect_debug_port u_ila_0/probe208 [get_nets [list {BUS_axi_rready}]]
+connect_debug_port u_ila_0/probe191 [get_nets [list {axiSDC/clock_divider_reg[0]} {axiSDC/clock_divider_reg[1]} {axiSDC/clock_divider_reg[2]} {axiSDC/clock_divider_reg[3]} {axiSDC/clock_divider_reg[4]} {axiSDC/clock_divider_reg[5]} {axiSDC/clock_divider_reg[6]} {axiSDC/clock_divider_reg[7]} ]]

@@ -55,7 +55,7 @@ module wallypipelinedsoc (
   output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
   output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
   input  logic 		            UARTSin,          // UART serial data input
-  output logic 		            UARTSout,         // UART serial data output
+  output logic 		            UARTSout         // UART serial data output
   /*input  logic 		            SDCCmdIn,         // SDC Command input
   output logic 		            SDCCmdOut,        // SDC Command output
   output logic 		            SDCCmdOE,			    // SDC Command output enable
@@ -86,7 +86,7 @@ module wallypipelinedsoc (
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
-	    .UARTSout, .MTIME_CLINT, 
+	    .UARTSout, .MTIME_CLINT 
 	    /*.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK*/);
   end
 

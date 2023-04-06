@@ -7,6 +7,9 @@ typedef unsigned char   BYTE;   /* char must be 8-bit */
 typedef uint16_t        WORD;   /* 16-bit unsigned integer */
 typedef uint32_t        DWORD;  /* 32-bit unsigned integer */
 typedef uint64_t        QWORD;  /* 64-bit unsigned integer */
-typedef WORD            WCHAR; 
+typedef WORD            WCHAR;
+
+typedef QWORD LBA_t;
 
 #endif // WALLYBOOT
+

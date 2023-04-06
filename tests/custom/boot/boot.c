@@ -1,3 +1,4 @@
+#include <stddef.h>
 #include "boot.h"
 
 /* Card type flags (card_type) */
@@ -82,6 +83,8 @@
 #define ERR_DATA_CRC        36
 #define ERR_DATA_FIFO       37
 #define ERR_BUF_ALIGNMENT   38
+#define FR_DISK_ERR         39
+#define FR_TIMEOUT          40
 
 struct sdc_regs {
     volatile uint32_t argument;
@@ -111,7 +114,9 @@ struct sdc_regs {
     volatile uint64_t dma_addres;
 };
 
-static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013100;
+#define MAX_BLOCK_CNT 0x1000
+
+static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013000;
 
 static int errno __attribute__((section(".bss")));
 // static DSTATUS drv_status __attribute__((section(".bss")));
@@ -130,6 +135,8 @@ static const char * errno_to_str(void) {
     case ERR_DATA_CRC: return "Data CRC error";
     case ERR_DATA_FIFO: return "Data FIFO error";
     case ERR_BUF_ALIGNMENT: return "Bad buffer alignment";
+    case FR_DISK_ERR: return "Disk error";
+    case FR_TIMEOUT: return "Timeout";
     }
     return "Unknown error code";
 }
@@ -285,7 +292,9 @@ static int ini_sd(void) {
 
     // This clock divider is meant to initialize the card at
     // 400kHz
-    regs->clock_divider = 0x7c;
+
+    // 22MHz/400kHz = 55 (base 10) = 0x37 - 0x01 = 0x36
+    regs->clock_divider = 0x36;
     regs->software_reset = 0;
     while (regs->software_reset) {}
     usleep(5000);
@@ -335,7 +344,8 @@ static int ini_sd(void) {
     if (send_cmd(CMD7, rca << 16) < 0) return -1;
 
     /* Clock 25MHz */
-    regs->clock_divider = 3;
+    // 22Mhz/2 = 11Mhz
+    regs->clock_divider = 1;
     usleep(10000);
 
     /* Bus width 1-bit */
@@ -365,7 +375,7 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
     while (count > 0) {
         UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
         unsigned bytes = bcnt * 512;
-        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return RES_ERROR;
+        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return 1;
         if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return 1;
         sector += (card_type & CT_BLOCK) ? bcnt : bytes;
         count -= bcnt;
