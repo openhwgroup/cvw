@@ -288,7 +288,7 @@ module hptw (
       default:                                                        NextWalkerState = IDLE; // should never be reached
     endcase // case (WalkerState)
 
-  assign IgnoreRequestTLB = WalkerState == IDLE & TLBMiss;
+  assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMiss) | (LSUAccessFaultM); // RT : 05 April 2023 if hptw request has pmp/a fault suppress bus access.
   assign SelHPTW = WalkerState != IDLE;
   assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
   assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss & ~(HPTWAccessFaultDelay));
