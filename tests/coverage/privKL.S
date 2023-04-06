@@ -49,7 +49,23 @@ main:
         addi a3, a3, -1
         bnez a3, time_loop_m // go through this loop for [a3 value] iterations before returning without performing interrupt
         ret
-    j done
     
-
+    # pmp tests
+    li t0, 34816
+    csrw 0x3A0, t0
+    li t0, 36864
+    csrw 0x3A0, t0
+    li t0, 32768
+    csrw 0x3A0, t0
+    li t0, 38912
+    csrw 0x3A0, t0
+    li t0, 0
+    csrw 0x3A0, t0
+    li t0, 2048
+    csrw 0x3A0, t0
+    li t0, 4096
+    csrw 0x3A0, t0
+    li t0, 6144
+    csrw 0x3A0, t0
+    j done
 
