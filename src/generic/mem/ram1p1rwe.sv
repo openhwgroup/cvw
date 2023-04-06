@@ -68,6 +68,8 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
     // READ first SRAM model
     // ***************************************************************************
   end else begin: ram
+    // *** Vivado is not implementing this as block ram for some reason.
+    // The version with byte write enables it correctly infers block ram.
     integer i;
 
     // Read
@@ -82,15 +84,13 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
     // Write divided into part for bytes and part for extra msbs
     // Questa sim version 2022.3_2 does not allow multiple drivers for RAM when using always_ff.
     // Therefore these always blocks use the older always @(posedge clk) 
-    if(WIDTH >= 8) 
-      always @(posedge clk)
-        // coverage off
-        // ce only goes low when cachefsm is in READY state and Flush is asserted.
-        // for read-only caches, we only goes high in the STATE_WRITE_LINE cachefsm state.
-        // so we can never get we=1, ce=0 for I$.
-        if (ce & we)
+    always @(posedge clk)
+      // coverage off
+      // ce only goes low when cachefsm is in READY state and Flush is asserted.
+      // for read-only caches, we only goes high in the STATE_WRITE_LINE cachefsm state.
+      // so we can never get we=1, ce=0 for I$.
+      if (ce & we)
         // coverage on
-          RAM[addr] <= #1 din;
-  end
+        RAM[addr] <= #1 din;
 
 endmodule
