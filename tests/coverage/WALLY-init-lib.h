@@ -36,6 +36,7 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
+    li t0, 0x80         
     csrw mie, t0        # Enable machine timer interrupt
     la t0, topoftrapstack 
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
