@@ -43,4 +43,45 @@ main:
 
     //.hword 0x9C01     //# Illegal compressed instruction with op = 01, instr[15:10] = 100111, and 0's everywhere else
 
+
+    // vm64check coverage
+    // check virtual addresses with bits 63:47 and/or 46:38 being equal or unequal
+    li t0, 0x0000000080000000
+    lw t1, 0(t0)
+    li t0, 0xFFFFFFFF80000000
+    lw t1, 0(t0)
+    li t1, 0xFFF8000080000000
+    lw t1, 0(t0)
+    li t1, 0x1000000080000000
+    lw t1, 0(t0)
+    li t1, 0x0000010080000000
+    lw t1, 0(t0)
+   li t0, 0x8000000000000000 
+   csrw satp, t0   # SV39 mode
+    li t0, 0x0000000080000000
+    lw t1, 0(t0)
+    li t0, 0xFFFFFFFF80000000
+    lw t1, 0(t0)
+    li t1, 0xFFF8000080000000
+    lw t1, 0(t0)
+    li t1, 0x1000000080000000
+    lw t1, 0(t0)
+    li t1, 0x0000010080000000
+    lw t1, 0(t0)
+   li t0, 0x9000000000000000 
+   csrw satp, t0   # SV48 mode
+    li t0, 0x0000000080000000
+    lw t1, 0(t0)
+    li t0, 0xFFFFFFFF80000000
+    lw t1, 0(t0)
+    li t1, 0xFFF8000080000000
+    lw t1, 0(t0)
+    li t1, 0x1000000080000000
+    lw t1, 0(t0)
+    li t1, 0x0000010080000000
+    lw t1, 0(t0)
+   li t0, 0x0000000000000000 
+   csrw satp, t0   # disable virtual memory
+   
+
     j done
