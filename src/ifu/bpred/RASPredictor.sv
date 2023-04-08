@@ -62,7 +62,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   assign PushE = CallE & ~StallM & ~FlushM;
 
   assign WrongPredReturnD = (BPReturnWrongD) & ~StallE & ~FlushE;
-  assign FlushedReturnDE = (~StallE & FlushE & ReturnD) | (~StallM & FlushM & ReturnE); // flushed return
+  assign FlushedReturnDE = (~StallE & FlushE & ReturnD) | (FlushM & ReturnE); // flushed return
 
   assign RepairD = WrongPredReturnD | FlushedReturnDE ;
 
