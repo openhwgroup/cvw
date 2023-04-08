@@ -33,7 +33,9 @@
 `include "wally-config.vh"
 module csrc #(parameter 
   MHPMCOUNTERBASE = 12'hB00,
+  MTIME = 12'hB01,               // this is a memory-mapped register; no such CSR exists, and access should fault
   MHPMCOUNTERHBASE = 12'hB80,
+  MTIMEH = 12'hB81,               // this is a memory-mapped register; no such CSR exists, and access should fault
   MHPMEVENTBASE = 12'h320,
   HPMCOUNTERBASE = 12'hC00,
   HPMCOUNTERHBASE = 12'hC80,
@@ -152,8 +154,10 @@ module csrc #(parameter
         /* verilator lint_off WIDTH */  
         if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT; // TIME register is a shadow of the memory-mapped MTIME from the CLINT
         /* verilator lint_on WIDTH */  
-        else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS) CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+        else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS & CSRAdrM != MTIME) 
+                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+        else if (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM  < HPMCOUNTERBASE+`COUNTERS)  
+                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else begin
             CSRCReadValM = 0;
             IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
@@ -164,10 +168,14 @@ module csrc #(parameter
         if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
         else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];
         /* verilator lint_on WIDTH */  
-        else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+`COUNTERS)    CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS)  CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+`COUNTERS)   CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+        else if (CSRAdrM >= MHPMCOUNTERBASE  & CSRAdrM < MHPMCOUNTERBASE+`COUNTERS & CSRAdrM != MTIME)   
+                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+        else if (CSRAdrM >= HPMCOUNTERBASE   & CSRAdrM < HPMCOUNTERBASE+`COUNTERS)    
+                 CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
+        else if (CSRAdrM >= MHPMCOUNTERHBASE & CSRAdrM < MHPMCOUNTERHBASE+`COUNTERS & CSRAdrM != MTIMEH)  
+                 CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
+        else if (CSRAdrM >= HPMCOUNTERHBASE  & CSRAdrM < HPMCOUNTERHBASE+`COUNTERS)   
+                 CSRCReadValM = HPMCOUNTERH_REGW[CounterNumM];
         else begin
           CSRCReadValM = 0;
           IllegalCSRCAccessM = 1; // requested CSR doesn't exist
