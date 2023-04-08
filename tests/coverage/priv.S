@@ -57,6 +57,9 @@ main:
     ecall  # machine mode again
 
 
+    # switch to supervisor mode
+    li a0, 1   
+    ecall
 
     # Test write to STVAL, SCAUSE, SEPC, and STIMECMP CSRs
     li t0, 0
@@ -71,6 +74,10 @@ main:
     # Switch to machine mode
     li a0, 3   
     ecall 
+
+    # Write to MCOUNTINHIBIT CSR
+    csrw mcountinhibit, t0
+
     # Testing the HPMCOUNTERM performance counter: writing
     # Base address is 2816 (MHPMCOUNTERBASE)
     # There are 32 HPMCOUNTER registers
@@ -109,6 +116,33 @@ main:
 
     # Testing the HPMCOUNTERM performance counter: reading
     csrr t0, 2817
+
+    # Test writes to pmp address registers
+    csrw 951, t0
+    csrw 952, t0
+    csrw 953, t0
+    csrw 954, t0
+    csrw 955, t0
+    csrw 956, t0
+    csrw 957, t0
+    csrw 958, t0
+
+
+    # Testing writes to MTVAL, MCAUSE    
+    li t0, 0
+    csrw mtval, t0
+    csrw mcause, t0
+
+    # set mstatus to enable floating point registers (mstatus.FS = 11)
+    bseti t1, zero, 13
+    csrs mstatus, t1
+    bseti t1, zero, 14
+    csrs mstatus, t1
+
+    # Test writes to floating point CSRs
+    csrw frm, t0
+    csrw fflags, t0
+
     j done
 
 
