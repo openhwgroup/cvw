@@ -130,7 +130,7 @@ module ifu (
   logic                       CacheableF;                            // PMA indicates instruction address is cacheable
   logic                       SelSpillNextF;                         // In a spill, stall pipeline and gate local stallF
   logic                       BusStall;                              // Bus interface busy with multicycle operation
-  logic                       IFUCacheBusStallD;                     // EIther I$ or bus busy with multicycle operation
+  logic                       IFUCacheBusStallF;                     // EIther I$ or bus busy with multicycle operation
   logic                       GatedStallD;                           // StallD gated by selected next spill
   // branch predictor signal
   logic [`XLEN-1:0]           PC1NextF;                              // Branch predictor next PCF
@@ -147,7 +147,7 @@ module ifu (
 
   if(`C_SUPPORTED) begin : Spill
     spill #(`ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
-      .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
+      .InstrUpdateDAF, .IFUCacheBusStallF, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
     assign PCSpillF = PCF;
@@ -288,8 +288,8 @@ module ifu (
     assign InstrRawF = IROMInstrF;
   end
   
-  assign IFUCacheBusStallD = ICacheStallF | BusStall;
-  assign IFUStallF = IFUCacheBusStallD | SelSpillNextF;
+  assign IFUCacheBusStallF = ICacheStallF | BusStall;
+  assign IFUStallF = IFUCacheBusStallF | SelSpillNextF;
   assign GatedStallD = StallD & ~SelSpillNextF;
   
   flopenl #(32) AlignedInstrRawDFlop(clk, reset | FlushD, ~StallD, PostSpillInstrRawF, nop, InstrRawD);
