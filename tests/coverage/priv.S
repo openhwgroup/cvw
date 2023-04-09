@@ -33,7 +33,8 @@ main:
     ecall
 
     # Test read to stimecmp fails when MCOUNTEREN_TM is not set
-    addi t0, zero, 0
+    li t1, -3
+    csrw stimecmp, t1
     csrr t0, stimecmp 
 
 
