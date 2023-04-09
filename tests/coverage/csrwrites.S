@@ -27,9 +27,11 @@
 #include "WALLY-init-lib.h"
 
 main:
+    li t0, -5
+    csrw stimecmp, t0   # initialize so ImperasDV agrees
     csrrw t0, stimecmp, t0
-    csrrw t0, satp, t0
-    csrrw t0, stvec, t0
-    csrrw t0, sscratch, t0
+    csrrw t0, satp, zero
+    csrrw t0, stvec, zero
+    csrrw t0, sscratch, zero
 
     j done
