@@ -122,11 +122,14 @@ module ram2p1r1wbe #(parameter DEPTH=1024, WIDTH=68) (
      if(ce1) rd1 <= #1 mem[ra1]; */
     
     // Write divided into part for bytes and part for extra msbs
+    // coverage off     
+    //   when byte write enables are tied high, the last IF is always taken
     if(WIDTH >= 8) 
       always @(posedge clk) 
         if (ce2 & we2) 
           for(i = 0; i < WIDTH/8; i++) 
             if(bwe2[i]) mem[wa2][i*8 +: 8] <= #1 wd2[i*8 +: 8];
+    // coverage on
   
     if (WIDTH%8 != 0) // handle msbs if width not a multiple of 8
       always @(posedge clk) 
