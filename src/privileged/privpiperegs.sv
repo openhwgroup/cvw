@@ -33,24 +33,26 @@ module privpiperegs (
   input  logic         StallD, StallE, StallM,
   input  logic         FlushD, FlushE, FlushM,
   input  logic         InstrPageFaultF, InstrAccessFaultF,  // instruction faults
+  input  logic         HPTWInstrAccessFaultF,               // hptw fault during instruction page fetch
   input  logic         IllegalIEUFPUInstrD,                 // illegal IEU instruction decoded
   output logic         InstrPageFaultM, InstrAccessFaultM,  // delayed instruction faults
-  output logic         IllegalIEUFPUInstrM                  // delayed illegal IEU instruction
+  output logic         IllegalIEUFPUInstrM,                 // delayed illegal IEU instruction
+  output logic         HPTWInstrAccessFaultM                // hptw fault during instruction page fetch
 );
 
   // Delayed fault signals
-  logic                InstrPageFaultD, InstrAccessFaultD;
-  logic                InstrPageFaultE, InstrAccessFaultE;
+  logic                InstrPageFaultD, InstrAccessFaultD, HPTWInstrAccessFaultD;
+  logic                InstrPageFaultE, InstrAccessFaultE, HPTWInstrAccessFaultE;
   logic                IllegalIEUFPUInstrE; 
 
   // pipeline fault signals
-  flopenrc #(2) faultregD(clk, reset, FlushD, ~StallD,
-                  {InstrPageFaultF, InstrAccessFaultF},
-                  {InstrPageFaultD, InstrAccessFaultD});
-  flopenrc #(3) faultregE(clk, reset, FlushE, ~StallE,
-                  {IllegalIEUFPUInstrD, InstrPageFaultD, InstrAccessFaultD}, 
-                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE});
-  flopenrc #(3) faultregM(clk, reset, FlushM, ~StallM,
-                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE},
-                  {IllegalIEUFPUInstrM, InstrPageFaultM, InstrAccessFaultM});
+  flopenrc #(3) faultregD(clk, reset, FlushD, ~StallD,
+                  {InstrPageFaultF, InstrAccessFaultF, HPTWInstrAccessFaultF},
+                  {InstrPageFaultD, InstrAccessFaultD, HPTWInstrAccessFaultD});
+  flopenrc #(4) faultregE(clk, reset, FlushE, ~StallE,
+                  {IllegalIEUFPUInstrD, InstrPageFaultD, InstrAccessFaultD, HPTWInstrAccessFaultD}, 
+                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE, HPTWInstrAccessFaultE});
+  flopenrc #(4) faultregM(clk, reset, FlushM, ~StallM,
+                  {IllegalIEUFPUInstrE, InstrPageFaultE, InstrAccessFaultE, HPTWInstrAccessFaultE},
+                  {IllegalIEUFPUInstrM, InstrPageFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM});
 endmodule

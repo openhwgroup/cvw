@@ -42,6 +42,7 @@ main:
     clz t1, t0
 
     # Test forwarding from store conditional
+    mv a0, sp
     lr.w t0, 0(a0)
     sc.w t0, a1, 0(a0)
     addi t0, t0, 1
