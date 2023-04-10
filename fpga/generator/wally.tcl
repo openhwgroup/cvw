@@ -33,8 +33,13 @@ read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
 
 
-add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
-set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$boardSubName.xdc]
+if {$board=="ArtyA7"} {
+    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
+    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$board.xdc]
+} else {
+    add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
+    set_property PROCESSING_ORDER NORMAL [get_files  ../constraints/constraints-$boardSubName.xdc]
+}
 
 # define top level
 set_property top fpgaTop [current_fileset]

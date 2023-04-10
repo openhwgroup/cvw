@@ -405,7 +405,7 @@ module fpgaTop
      .ui_clk_sync_rst(ui_clk_sync_rst),
      .aresetn(~reset),
      .sys_rst(reset),
-     .mmcm_locked(mmcm_locked);
+     .mmcm_locked(mmcm_locked),
 
      // *** What are these? 
      .app_sr_req(1'b0),
