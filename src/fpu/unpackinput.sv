@@ -305,6 +305,6 @@ module unpackinput (
   assign SNaN = NaN&~Frac[`NF-1]&~BadNaNBox; // is the input a singnaling NaN?
   assign Inf = ExpMax & FracZero &En & ~BadNaNBox; // is the input infinity?
   assign Zero = ~ExpNonZero & FracZero & ~BadNaNBox; // is the input zero?
-  assign Subnorm = ~ExpNonZero & ~FracZero & ~BadNaNBox; // is the input subnormal
+  assign Subnorm = ~ExpNonZero & ~FracZero; // is the input subnormal
 
 endmodule
