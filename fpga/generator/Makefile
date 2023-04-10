@@ -1,14 +1,14 @@
 dst := IP
 sdc_src := ~/repos/sdc.tar.gz
 # vcu118
-#export XILINX_PART := xcvu9p-flga2104-2L-e
-#export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
-#export board := vcu118
+export XILINX_PART := xcvu9p-flga2104-2L-e
+export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
+export board := vcu118
 
 # vcu108
-export XILINX_PART := xcvu095-ffva2104-2-e
-export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
-export board := vcu108
+#export XILINX_PART := xcvu095-ffva2104-2-e
+#export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
+#export board := vcu108
 
 
 all: FPGA
@@ -18,6 +18,7 @@ FPGA: PreProcessFiles IP SDC
 
 IP: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ddr4-$(board).log \
+	$(dst)/xlnx_ddr3-artya7.log \
 	$(dst)/xlnx_axi_clock_converter.log \
 	 $(dst)/xlnx_ahblite_axi_bridge.log
 
