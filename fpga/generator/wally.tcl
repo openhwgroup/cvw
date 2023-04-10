@@ -3,20 +3,31 @@
 set partNumber $::env(XILINX_PART)
 set boardName $::env(XILINX_BOARD)
 set boardSubName [lindex [split ${boardName} :] 1]
+set board $::env(board)
 
 set ipName WallyFPGA
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
 read_ip IP/xlnx_proc_sys_reset.srcs/sources_1/ip/xlnx_proc_sys_reset/xlnx_proc_sys_reset.xci
 read_ip IP/xlnx_ahblite_axi_bridge.srcs/sources_1/ip/xlnx_ahblite_axi_bridge/xlnx_ahblite_axi_bridge.xci
 read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter.xci
-read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 
+if {$board=="ArtyA7"} {
+    read_ip IP/xlnx_ddr3.srcs/sources_1/ip/xlnx_ddr3/xlnx_ddr3.xci
+} else {
+    read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
+}
 
 read_verilog -sv [glob -type f ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
-read_verilog  {../src/fpgaTop.v}
+if {$board=="ArtyA7"} {
+    read_verilog  {../src/fpgaTopArtyA7.v}
+} else {
+    read_verilog  {../src/fpgaTop.v}
+}
 read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
 set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
@@ -30,7 +41,7 @@ set_property top fpgaTop [current_fileset]
 
 
 update_compile_order -fileset sources_1
-# This is important as the ddr4 IP contains the generate clock constraint which the user constraints depend on.
+# This is important as the ddr3/4 IP contains the generate clock constraint which the user constraints depend on.
 exec mkdir -p reports/
 exec rm -rf reports/*
 
@@ -57,8 +68,12 @@ report_clock_interaction                                                -file re
 
 write_verilog -force -mode funcsim sim/syn-funcsim.v
 
+if {$board=="ArtyA7"}{
+    source ../constraints/small-debug.xdc
 
-source ../constraints/debug2.xdc
+} else {    
+    source ../constraints/debug2.xdc
+}
 
 
 # set for RuntimeOptimized implementation

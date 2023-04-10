@@ -66,39 +66,6 @@ set_property IOSTANDARD LVCMOS33 [get_ports {reset}]
 
 
 
-##### cpu_reset #####
-# ***********
-set_property PACKAGE_PIN AV36 [get_ports {cpu_reset}]
-set_property IOSTANDARD LVCMOS12 [get_ports {cpu_reset}]
-set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports {cpu_reset}]
-set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports {cpu_reset}]
-
-
-##### calib #####
-# **********
-set_property PACKAGE_PIN BA37 [get_ports calib]
-set_property IOSTANDARD LVCMOS12 [get_ports calib]
-set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports calib]
-set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 20.000 [get_ports calib]
-set_max_delay -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_ports calib] 50.000
-
-
-##### ahblite_resetn #####
-# ***************
-set_property PACKAGE_PIN AU37 [get_ports {ahblite_resetn}]
-set_property IOSTANDARD LVCMOS12 [get_ports {ahblite_resetn}]
-set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports {ahblite_resetn}]
-set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports {ahblite_resetn}]
-
-
-##### south_rst #####
-# ***********************
-set_property PACKAGE_PIN BE22 [get_ports south_rst]
-set_property IOSTANDARD LVCMOS18 [get_ports south_rst]
-set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports south_rst]
-set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports south_rst]
-
-
 ##### SD Card I/O #####
 #***** may have to switch to Pmod JB or JC.
 set_property PACKAGE_PIN D4 [get_ports {SDCDat[3]}]
@@ -239,15 +206,7 @@ set_properity PACKAGE_PIN R5 [get_ports ddr3_odt[0]]
 set_properity PACKAGE_PIN U8 [get_ports ddr3_cs_n[0]]
 
 
-
-set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
-
-
-set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports c0_ddr4_reset_n]
-set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 20.000 [get_ports c0_ddr4_reset_n]
-
-
-
-set_max_delay -from [get_pins {xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/cal_RESET_n_reg[0]/C}] -to [get_ports c0_ddr4_reset_n] 50.000
+# **** may have to bring this one back 
+#set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
 
 
