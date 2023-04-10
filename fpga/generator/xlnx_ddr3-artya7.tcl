@@ -17,7 +17,7 @@ create_ip -name mig_7series -vendor xilinx.com -library ip -module_name $ipName
 # 4. Then reconstruct the list with the needed parameters.
 # turns out the ddr3 mig cannot be built this way like the ddr 4 mig?!?!?
 # instead we need to read the project file, but we have to copy it to the corret location first
-cp $WALLY/fpga/generator/xlnx_ddr3-artya7-mig.prj IP/xlnx_ddr3.srcs/sources_1/ip/xlnx_ddr3/
+exec cp ../xlnx_ddr3-artya7-mig.prj xlnx_ddr3.srcs/sources_1/ip/xlnx_ddr3/
 
 # unlike the vertex ultra scale and ultra scale + fpga's the atrix 7 mig we only get ui clock.
 
