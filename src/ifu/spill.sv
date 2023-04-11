@@ -40,7 +40,7 @@ module spill #(
   input logic [`XLEN-1:2]  PCPlus4F,          // PCF + 4
   input logic [`XLEN-1:0]  PCNextF,           // The next PCF
   input logic [31:0]       InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
-  input logic              IFUCacheBusStallD, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
+  input logic              IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic              ITLBMissF,         // ITLB miss, ignore memory request
   input logic              InstrUpdateDAF,    // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
   output logic [`XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
@@ -78,7 +78,7 @@ module spill #(
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallD & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF));
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= #1 STATE_READY;
@@ -88,14 +88,14 @@ module spill #(
     case (CurrState)
       STATE_READY: if (TakeSpillF)                NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
-      STATE_SPILL: if(IFUCacheBusStallD | StallD) NextState = STATE_SPILL;
+      STATE_SPILL: if(StallD)                     NextState = STATE_SPILL;
                    else                           NextState = STATE_READY;
       default:                                    NextState = STATE_READY;
     endcase
   end
 
   assign SelSpillF = (CurrState == STATE_SPILL);
-  assign SelSpillNextF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallD);
+  assign SelSpillNextF = (CurrState == STATE_READY & TakeSpillF) | (CurrState == STATE_SPILL & IFUCacheBusStallF);
   assign SpillSaveF = (CurrState == STATE_READY) & TakeSpillF & ~FlushD;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////

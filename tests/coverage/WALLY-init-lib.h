@@ -36,6 +36,7 @@ rvtest_entry_point:
     csrw mtvec, t0      # Initialize MTVEC to trap_handler
     csrw mideleg, zero  # Don't delegate interrupts
     csrw medeleg, zero  # Don't delegate exceptions
+    li t0, 0x80         
     csrw mie, t0        # Enable machine timer interrupt
     la t0, topoftrapstack 
     csrw mscratch, t0   # MSCRATCH holds trap stack pointer
@@ -65,9 +66,8 @@ interrupt:              # must be a timer interrupt
     j trap_return       # clean up and return
 
 exception:
-    csrr t1, mepc   # add 4 to MEPC to determine return Address
-    addi t1, t1, 4
-    csrw mepc, t1
+    li t0, 2
+    csrr t1, mcause
     li t1, 8            # is it an ecall trap?
     andi t0, t0, 0xFC # if CAUSE = 8, 9, or 11
     bne t0, t1, trap_return # ignore other exceptions
@@ -86,6 +86,20 @@ changeprivilege:
     csrs mstatus, a0    # set mstatus.MPP with desired privilege
 
 trap_return:            # return from trap handler
+    csrr t0, mepc  # get address of instruction that caused exception
+    lh t0, 0(t0)   # get instruction that caused exception
+    li t1, 3
+    and t0, t0, t1  # mask off upper bits
+    beq t0, t1, instr32  # if lower 2 bits are 11, instruction is uncompresssed
+    li t0, 2        # increment PC by 2 for compressed instruction
+    j updateepc
+instr32:
+    li t0, 4
+updateepc:
+    csrr t1, mepc   # add 2 or 4 (from t0) to MEPC to determine return Address
+    add t1, t1, t0
+    csrw mepc, t1
+
     ld t1, -8(tp)       # restore t1 and t0
     ld t0, 0(tp)
     csrrw tp, mscratch, tp  # restore tp
