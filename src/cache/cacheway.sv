@@ -101,14 +101,21 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   if (!READ_ONLY_CACHE) begin
     assign SetDirtyWay = SetDirty & SelData;
     assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
+    assign SetValidEN = SetValidWay & ~FlushStage;
   end
   else begin
+    // Don't cover FlushStage assertion during SetValidWay.
+    // it's not explicitely gated anywhere, but for read-only caches,
+    // there's no way that a FlushD can happen during the write stage
+    // of a fetch.
+    // coverage off -item e 1 -fecexprrow 4
     assign SelectedWriteWordEn = SetValidWay & ~FlushStage;
+    // coverage off -item e 1 -fecexprrow 4
+    assign SetValidEN = SetValidWay & ~FlushStage;
   end
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
-  assign SetValidEN = SetValidWay & ~FlushStage;
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Tag Array
