@@ -10,6 +10,10 @@ export board := vcu118
 #export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
 #export board := vcu108
 
+# Arty A7
+#export XILINX_PART := xc7a100tcsg324-1
+#export XILINX_BOARD := ArtyA7
+#export board := ArtyA7
 
 all: FPGA
 
@@ -18,7 +22,12 @@ FPGA: PreProcessFiles IP SDC
 
 IP: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ddr4-$(board).log \
-	$(dst)/xlnx_ddr3-artya7.log \
+	$(dst)/xlnx_ddr3-ArtyA7.log \
+	$(dst)/xlnx_axi_clock_converter.log \
+	 $(dst)/xlnx_ahblite_axi_bridge.log
+
+#IP: $(dst)/xlnx_proc_sys_reset.log \
+	$(dst)/xlnx_ddr3-ArtyA7.log \
 	$(dst)/xlnx_axi_clock_converter.log \
 	 $(dst)/xlnx_ahblite_axi_bridge.log
 

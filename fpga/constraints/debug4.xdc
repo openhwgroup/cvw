@@ -744,9 +744,9 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe143]
 connect_debug_port u_ila_0/probe143 [get_nets [list {m_axi_awcache[0]} {m_axi_awcache[1]} {m_axi_awcache[2]} {m_axi_awcache[3]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 32 [get_debug_ports u_ila_0/probe144]
+set_property port_width 31 [get_debug_ports u_ila_0/probe144]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe144]
-connect_debug_port u_ila_0/probe144 [get_nets [list {m_axi_awaddr[0]} {m_axi_awaddr[1]} {m_axi_awaddr[2]} {m_axi_awaddr[3]} {m_axi_awaddr[4]} {m_axi_awaddr[5]} {m_axi_awaddr[6]} {m_axi_awaddr[7]} {m_axi_awaddr[8]} {m_axi_awaddr[9]} {m_axi_awaddr[10]} {m_axi_awaddr[11]} {m_axi_awaddr[12]} {m_axi_awaddr[13]} {m_axi_awaddr[14]} {m_axi_awaddr[15]} {m_axi_awaddr[16]} {m_axi_awaddr[17]} {m_axi_awaddr[18]} {m_axi_awaddr[19]} {m_axi_awaddr[20]} {m_axi_awaddr[21]} {m_axi_awaddr[22]} {m_axi_awaddr[23]} {m_axi_awaddr[24]} {m_axi_awaddr[25]} {m_axi_awaddr[26]} {m_axi_awaddr[27]} {m_axi_awaddr[28]} {m_axi_awaddr[29]} {m_axi_awaddr[30]} {m_axi_awaddr[31]} ]]
+connect_debug_port u_ila_0/probe144 [get_nets [list {m_axi_awaddr[0]} {m_axi_awaddr[1]} {m_axi_awaddr[2]} {m_axi_awaddr[3]} {m_axi_awaddr[4]} {m_axi_awaddr[5]} {m_axi_awaddr[6]} {m_axi_awaddr[7]} {m_axi_awaddr[8]} {m_axi_awaddr[9]} {m_axi_awaddr[10]} {m_axi_awaddr[11]} {m_axi_awaddr[12]} {m_axi_awaddr[13]} {m_axi_awaddr[14]} {m_axi_awaddr[15]} {m_axi_awaddr[16]} {m_axi_awaddr[17]} {m_axi_awaddr[18]} {m_axi_awaddr[19]} {m_axi_awaddr[20]} {m_axi_awaddr[21]} {m_axi_awaddr[22]} {m_axi_awaddr[23]} {m_axi_awaddr[24]} {m_axi_awaddr[25]} {m_axi_awaddr[26]} {m_axi_awaddr[27]} {m_axi_awaddr[28]} {m_axi_awaddr[29]} {m_axi_awaddr[30]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe145]
