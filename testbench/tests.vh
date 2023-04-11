@@ -51,7 +51,8 @@ string tvpaths[] = '{
     "ifu",
     "fpu",
     "lsu",
-    "vm64check"
+    "vm64check",
+    "pmp"
   };
 
   string coremark[] = '{
