@@ -12,8 +12,6 @@ beef0099 # Read test success from confirming writes of known values
 0220dead
 beef0440 # Read test success from confirming writes of known values
 0330dead
-beef0bb0 # Read test success from confirming writes of known values
-0440dead
 beef0000 # Test 12.3.1.1.4: Read test success from checking translation works
 0000dead
 beef0055 # Read test success from checking translation works
@@ -86,15 +84,9 @@ beef0110 # Test 12.3.1.3.4: read test success
 00000000
 00000bad
 00000000
-0000000f # Test 12.3.1.3.6: write test with page fault
-00000000
-0000000d # read test with page fault
-00000000
-00000bad
-00000000
-0000000f # Test 12.3.1.3.7: write test with page fault
-00000000
-beef0bb0 # read test success
+beef0770 # Test 8.3.1.3.5: check successful read/write when A=0 and SVADU=1 
+0990dead
+beef0aa0 # Test 8.3.1.3.6: check successful read/write when D=0 and SVADU=1
 0440dead
 beef0000 # Test 12.3.1.4.1: read test success from new page table mapping
 0000dead
