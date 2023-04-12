@@ -36,6 +36,8 @@
 # This helps avoid unexpected logger behavior.
 # With verbose mode off, the simulator only reports mismatches between its and Wally's behavior.
 # With verbose mode on, the simulator logs each access into the cache.
+# Add -p or --perf to report the hit/miss ratio. 
+# Add -d or --dist to report the distribution of loads, stores, and atomic ops.
 
 import sys
 import math
@@ -197,11 +199,23 @@ if __name__ == "__main__":
     parser.add_argument('taglen', type=int, help="Length of the tag in bits", metavar="T")
     parser.add_argument('-f', "--file", required=True, help="Log file to simulate from")
     parser.add_argument('-v', "--verbose", action='store_true', help="verbose/full-trace mode")
+    parser.add_argument('-p', "--perf", action='store_true', help="Report hit/miss ratio")
+    parser.add_argument('-d', "--dist", action='store_true', help="Report distribution of operations")
 
     args = parser.parse_args()
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
     extfile = os.path.expanduser(args.file)
     nofails = True
+
+    if args.perf:
+        hits = 0
+        misses = 0
+
+    if args.dist:
+        loads = 0
+        stores = 0
+        atoms = 0
+        totalops = 0
 
     with open(extfile, "r") as f:
         for ln in f:
@@ -217,6 +231,9 @@ if __name__ == "__main__":
                         print("New Test")
                         
             else:
+                if args.dist:
+                    totalops += 1
+                
                 if lninfo[1] == 'F':
                     cache.flush()
                     if args.verbose:
@@ -229,11 +246,37 @@ if __name__ == "__main__":
                     addr = int(lninfo[0], 16)
                     iswrite = lninfo[1] == 'W' or lninfo[1] == 'A'
                     result = cache.cacheaccess(addr, iswrite)
+                    
                     if args.verbose:
                         tag, setnum, offset = cache.splitaddr(addr)
                         print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
+                    
+                    if args.perf:
+                        if result == 'H':
+                            hits += 1
+                        else:
+                            misses += 1
+                    
+                    if args.dist:
+                        if lninfo[1] == 'R':
+                            loads += 1
+                        elif lninfo[1] == 'W':
+                            stores += 1
+                        elif lninfo[1] == 'A':
+                            atoms += 1
+                    
                     if not result == lninfo[2]:
                         print("Result mismatch at address", lninfo[0]+ ". Wally:", lninfo[2]+", Sim:", result)
                         nofails = False
+    if args.dist:
+        percent_loads = str(round(100*loads/totalops))
+        percent_stores = str(round(100*stores/totalops))
+        percent_atoms = str(round(100*atoms/totalops))
+        print("This log had", percent_loads+"% loads,", percent_stores+"% stores, and", percent_atoms+"% atomic operations.")
+    
+    if args.perf:
+        ratio = round(hits/misses,3)
+        print("There were", hits, "hits and", misses, "misses. The hit/miss ratio was", str(ratio)+".")
+    
     if nofails:
         print("SUCCESS! There were no mismatches between Wally and the sim.")
