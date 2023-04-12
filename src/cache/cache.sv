@@ -73,7 +73,6 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
 
   logic                          SelAdr;
-  logic [1:0]                    AdrSelMuxSel;
   logic [SETLEN-1:0]             CacheSet;
   logic [LINELEN-1:0]            LineWriteData;
   logic                          ClearDirty, SetDirty, SetValid;
@@ -109,10 +108,18 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
-  mux3 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+  if (!READ_ONLY_CACHE) begin
+    logic [1:0]                    AdrSelMuxSel;
+    assign AdrSelMuxSel = {SelFlush, SelAdr | SelHPTW};
+    mux3 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
     AdrSelMuxSel, CacheSet);
-
+  end
+  else begin
+     logic                         AdrSelMuxSel;
+     assign AdrSelMuxSel = ((SelAdr | SelHPTW) & ~FlushStage);
+     mux2 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN],
+    AdrSelMuxSel, CacheSet);
+  end
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
@@ -152,11 +159,14 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
   // Bus address for fetch, writeback, or flush writeback
-  mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-    .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-    .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
-  
+  if (!READ_ONLY_CACHE)
+    mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+      .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+      .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
+      .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+  else
+    assign CacheBusAdr = {PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}};
+
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
