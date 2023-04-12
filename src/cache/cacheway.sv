@@ -97,9 +97,9 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SetValidWay = SetValid & SelData;
-  assign ClearDirtyWay = ClearDirty & SelData;
   if (!READ_ONLY_CACHE) begin
     assign SetDirtyWay = SetDirty & SelData;
+    assign ClearDirtyWay = ClearDirty & SelData;
     assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;
     assign SetValidEN = SetValidWay & ~FlushStage;
   end
