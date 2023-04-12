@@ -32,6 +32,9 @@ import argparse
 
 # NOTE: make sure testbench.sv has the ICache and DCache loggers enabled!
 # This does not check the test output for correctness, run regression for that.
+# Add -p or --perf to report the hit/miss ratio. 
+# Add -d or --dist to report the distribution of loads, stores, and atomic ops.
+# These distributions may not add up to 100; this is because of flushes or invalidations.
 
 class bcolors:
     HEADER = '\033[95m'

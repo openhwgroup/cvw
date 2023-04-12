@@ -38,6 +38,7 @@
 # With verbose mode on, the simulator logs each access into the cache.
 # Add -p or --perf to report the hit/miss ratio. 
 # Add -d or --dist to report the distribution of loads, stores, and atomic ops.
+# These distributions may not add up to 100; this is because of flushes or invalidations.
 
 import sys
 import math
