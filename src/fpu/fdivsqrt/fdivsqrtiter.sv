@@ -79,8 +79,8 @@ module fdivsqrtiter(
   assign initUM = {~SqrtE, {(`DIVb){1'b0}}};
   mux2   #(`DIVb+1)  Umux(UNext[`DIVCOPIES-1],  initU,  IFDivStartE, UMux);
   mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
-  flopen #(`DIVb+1)  UReg(clk, IFDivStartE|FDivBusyE, UMux,  U[0]);
-  flopen #(`DIVb+1) UMReg(clk, IFDivStartE|FDivBusyE, UMMux, UM[0]);
+  flopen #(`DIVb+1)  UReg(clk, FDivBusyE, UMux,  U[0]);
+  flopen #(`DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division
@@ -93,7 +93,7 @@ module fdivsqrtiter(
   
   assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
-  flopen #(`DIVb+2) creg(clk, IFDivStartE|FDivBusyE, NextC, C[0]);
+  flopen #(`DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
 
    // Divisior register
   flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
