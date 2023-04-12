@@ -86,7 +86,6 @@ test_cases:
 .4byte 0x800E3130, 0xBEEF0077, write32_test # 8.3.1.3.2
 .4byte 0x808017E0, 0xBEEF0099, write32_test # 8.3.1.1.4 kilopage
 .4byte 0x80805EA0, 0xBEEF0440, write32_test # 8.3.1.3.3
-.4byte 0x80803AA0, 0xBEEF0BB0, write32_test # 8.3.1.3.7
 .4byte 0x8000FFA0, 0x11100393, write32_test # write executable code for "li x7, 0x111; ret" to executable region.
 .4byte 0x8000FFA4, 0x00008067, write32_test # Used for 8.3.1.3.1, 8.3.1.3.2
 
@@ -98,7 +97,6 @@ test_cases:
 .4byte 0x800E3130, 0xBEEF0077, read32_test
 .4byte 0x808017E0, 0xBEEF0099, read32_test
 .4byte 0x80805EA0, 0xBEEF0440, read32_test
-.4byte 0x80803AA0, 0xBEEF0BB0, read32_test
 .4byte 0x8000FFA0, 0x11100393, read32_test
 .4byte 0x8000FFA4, 0x00008067, read32_test
 
@@ -159,12 +157,12 @@ test_cases:
 .4byte 0xBFFDE0, 0xbad, executable_test             # instr page fault when X=0 
 
 # test 8.3.1.3.6 Accessed flag == 0
-.4byte 0x3020, 0xBEEF0770, write32_test # store page fault when A=0
-.4byte 0x3808, 0xBEEF0990, read32_test # load page fault when A=0
+.4byte 0x3020, 0xBEEF0770, write32_test # Write success when A=0 and SVADU is enabled
+.4byte 0x3020, 0xBEEF0770, read32_test # Read success when A=0 and SVADU is enabled
 
 # test 8.3.1.3.7 Dirty flag == 0
-.4byte 0x4658, 0xBEEF0AA0, write32_test # store page fault when D=0
-.4byte 0x4AA0, 0xBEEF0BB0, read32_test # read success when D=0
+.4byte 0x4658, 0xBEEF0AA0, write32_test # write successs when D=0 and SVADU is enabled
+.4byte 0x4658, 0xBEEF0AA0, read32_test # read success when D=0
 
 # =========== test 8.3.1.4 SATP Register ===========
 
