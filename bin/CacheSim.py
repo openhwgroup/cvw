@@ -200,8 +200,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     cache = Cache(args.numlines, args.numways, args.addrlen, args.taglen)
-    #numtests = -1
     extfile = os.path.expanduser(args.file)
+    nofails = True
+
     with open(extfile, "r") as f:
         for ln in f:
             ln = ln.strip()
@@ -212,7 +213,6 @@ if __name__ == "__main__":
                     # trying TRAIN clears instead
                     cache.invalidate() # a new test is starting, so 'empty' the cache
                     cache.clear_pLRU()
-                    #numtests +=1
                     if args.verbose:
                         print("New Test")
                         
@@ -233,9 +233,7 @@ if __name__ == "__main__":
                         tag, setnum, offset = cache.splitaddr(addr)
                         print(hex(addr), hex(tag), hex(setnum), hex(offset), lninfo[2], result)
                     if not result == lninfo[2]:
-                        print("Result mismatch at address", lninfo[0], ". Wally:", lninfo[2],", Sim:", result) #, "in test", numtests)
-                        
-                        
-
-    
-
+                        print("Result mismatch at address", lninfo[0]+ ". Wally:", lninfo[2]+", Sim:", result)
+                        nofails = False
+    if nofails:
+        print("SUCCESS! There were no mismatches between Wally and the sim.")
