@@ -32,8 +32,7 @@
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
   input  logic                clk, 
-  input  logic                reset, 
-  input  logic                FlushStage,      // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                reset,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
@@ -134,11 +133,9 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
-      // if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
-      if (LRUWriteEn & ~FlushStage) begin 
+      if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
-      end
-      if(LRUWriteEn & ~FlushStage & (PAdr == CacheSet))
+      if(LRUWriteEn & (PAdr == CacheSet))
         CurrLRU <= #1 NextLRU;
       else 
         CurrLRU <= #1 LRUMemory[CacheSet];
