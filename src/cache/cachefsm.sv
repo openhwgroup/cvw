@@ -86,24 +86,17 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  // no atomic operations on i$
-  if (!READ_ONLY_CACHE) begin
-    assign AMO = CacheAtomic[1] & (&CacheRW);
-    assign StoreAMO = AMO | CacheRW[0];
-    assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache;
-    assign AnyUpdateHit = StoreAMO & CacheHit;
-    assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);  
-    assign CacheAccess = (AMO | CacheRW[1] | CacheRW[0]) & CurrState == STATE_READY; // for performance counter
-  end
-  else begin
-    assign AnyMiss = CacheRW[1] & ~CacheHit & ~InvalidateCache;
-    assign AnyUpdateHit = 0; // todo clear all RO cache of usage of this logic
-    assign AnyHit = CacheRW[1] & CacheHit;  
-    assign CacheAccess = CacheRW[1] & CurrState == STATE_READY; // for performance counter
-  end 
+  assign AMO = CacheAtomic[1] & (&CacheRW);
+  assign StoreAMO = AMO | CacheRW[0];
 
-  assign CacheMiss = CacheAccess & ~CacheHit; // for performance counter
+  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: icache storeAMO
+  assign AnyUpdateHit = (StoreAMO) & CacheHit;                             // exclusion-tag: icache storeAMO1
+  assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
+
+  // outputs for the performance counters.
+  assign CacheAccess = (AMO | CacheRW[1] | CacheRW[0]) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
+  assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
   // PCNextF will no longer be pointing to the correct address.
@@ -113,120 +106,81 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   always_ff @(posedge clk)
     if (reset | FlushStage)    CurrState <= #1 STATE_READY;
     else CurrState <= #1 NextState;  
-
-  // seperating NextState logic by ro vs rw cache results in code duplication but this is needed to hit coverage.
-  if (!READ_ONLY_CACHE)
-    always_comb begin
-       NextState = STATE_READY;
-       case (CurrState)
-         STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;
-                                else if(FlushCache)                               NextState = STATE_FLUSH;
-                                else if(AnyMiss & ~LineDirty)                     NextState = STATE_FETCH;
-                                else if(AnyMiss & LineDirty)                      NextState = STATE_WRITEBACK;
-                                else                                              NextState = STATE_READY;
-         STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
-                                else                                              NextState = STATE_FETCH;
-         STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
-         STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
-                                else                                              NextState = STATE_READY;
-         STATE_WRITEBACK:       if(CacheBusAck)                                   NextState = STATE_FETCH;
-                                else                                              NextState = STATE_WRITEBACK;
-         // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same 
-         // time as getting back the bus ack.
-         STATE_FLUSH:           if(LineDirty)                                     NextState = STATE_FLUSH_WRITEBACK;
-                                else if (FlushFlag)                               NextState = STATE_READ_HOLD;
-                                else                                              NextState = STATE_FLUSH;
-         STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)                      NextState = STATE_FLUSH;
-                                else if(CacheBusAck)                              NextState = STATE_READ_HOLD;
-                                else                                              NextState = STATE_FLUSH_WRITEBACK;
-         default:                                                                 NextState = STATE_READY;
-       endcase
-    end // always_comb
-  else // READ_ONLY_CACHE
-    always_comb begin  
-       NextState = STATE_READY;
-       case (CurrState)
-         STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;
-                                else if(AnyMiss)                                  NextState = STATE_FETCH;
-                                else                                              NextState = STATE_READY;
-         STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
-                                else                                              NextState = STATE_FETCH;
-         STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
-         STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
-                                else                                              NextState = STATE_READY;
-         default:                                                                 NextState = STATE_READY;
-       endcase // case (CurrState)
-    end // always_comb
+  
+  always_comb begin
+    NextState = STATE_READY;
+    case (CurrState)                                                                                        // exclusion-tag: icache state-case
+      STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;
+                             else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
+                             else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
+                             else if(AnyMiss & LineDirty)                      NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else                                              NextState = STATE_READY;
+      STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
+                             else                                              NextState = STATE_FETCH;
+      STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
+      STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_READY;
+      // exclusion-tag-start: icache case
+      STATE_WRITEBACK:       if(CacheBusAck)                                   NextState = STATE_FETCH;
+                             else                                              NextState = STATE_WRITEBACK;
+      // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
+      STATE_FLUSH:           if(LineDirty)                                     NextState = STATE_FLUSH_WRITEBACK;
+                             else if (FlushFlag)                               NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_FLUSH;
+      STATE_FLUSH_WRITEBACK: if(CacheBusAck & ~FlushFlag)                      NextState = STATE_FLUSH;
+                             else if(CacheBusAck)                              NextState = STATE_READ_HOLD;
+                             else                                              NextState = STATE_FLUSH_WRITEBACK;
+      // exclusion-tag-end: icache case
+      default:                                                                 NextState = STATE_READY;
+    endcase
+  end
 
   // com back to CPU
-  if (!READ_ONLY_CACHE) begin
-    assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
-                        (CurrState == STATE_FETCH) |
-                        (CurrState == STATE_WRITEBACK) |
-                        (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
-                        (CurrState == STATE_FLUSH) |
-                        (CurrState == STATE_FLUSH_WRITEBACK);
-    assign CacheCommitted = CurrState != STATE_READY;
-    assign SelAdr = (CurrState == STATE_READY & (StoreAMO | AnyMiss)) | // changes if store delay hazard removed
-                    (CurrState == STATE_FETCH) |
-                    (CurrState == STATE_WRITEBACK) |
-                    (CurrState == STATE_WRITE_LINE) |
-                    resetDelay;
-    assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |
-                      (CurrState == STATE_WRITE_LINE & (StoreAMO));
-    assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |
-                        (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
-
-    // Flush and eviction controls
-    assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
-                          (CurrState == STATE_READY & AnyMiss & LineDirty);
-    
-    assign SelFlush = (CurrState == STATE_READY & FlushCache) |
-                      (CurrState == STATE_FLUSH) | 
+  assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & CurrState == STATE_READ_HOLD);
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | // exclusion-tag: icache StallStates
+                      (CurrState == STATE_FETCH) |
+                      (CurrState == STATE_WRITEBACK) |
+                      (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
+                      (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_WRITEBACK);
-    assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
-                           (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
-    assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
-                           (CurrState == STATE_FLUSH_WRITEBACK & CacheBusAck);
-    assign FlushCntRst = (CurrState == STATE_FLUSH & FlushFlag & ~LineDirty) |
-                         (CurrState == STATE_FLUSH_WRITEBACK & FlushFlag & CacheBusAck);
-    // Bus interface controls
-    assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | 
-                           (CurrState == STATE_FETCH & ~CacheBusAck) | 
-                           (CurrState == STATE_WRITEBACK & CacheBusAck);
-    assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) |
-                           (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
-                           (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck);
-    // write enable internal to cache
-    assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache;
-  end
-  else begin
-    assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | 
-                        (CurrState == STATE_FETCH) |
-                        (CurrState == STATE_WRITE_LINE); // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
-    assign CacheCommitted = (CurrState != STATE_READY) & ~(CurrState == STATE_READ_HOLD);
-    assign SelAdr = (CurrState == STATE_READY & AnyMiss) | // changes if store delay hazard removed
-                    (CurrState == STATE_FETCH) |
-                    (CurrState == STATE_WRITE_LINE) |
-                    resetDelay;
-    assign SetDirty = 0;
-    assign ClearDirty = 0;
-    assign SelWriteback  = 0;
-    assign SelFlush      = 0;
-    assign FlushAdrCntEn = 0;
-    assign FlushWayCntEn = 0;
-    assign FlushCntRst   = 0;
-    assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss) | 
-                           (CurrState == STATE_FETCH & ~CacheBusAck);
-    assign CacheBusRW[0] = 0;
-    assign CacheEn = (~Stall | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache;
-  end // else: (READ_ONLY_CACHE)
-
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE;
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
+  // exclusion-tag-start: icache flushdirtycontrols
+  assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |         // exclusion-tag: icache SetDirty
+                    (CurrState == STATE_WRITE_LINE & (StoreAMO));
+  assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |   // exclusion-tag: icache ClearDirty
+                      (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
+  // Flush and eviction controls
+  assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
+                    (CurrState == STATE_READY & AnyMiss & LineDirty);
+
+  assign SelFlush = (CurrState == STATE_READY & FlushCache) |
+          (CurrState == STATE_FLUSH) | 
+          (CurrState == STATE_FLUSH_WRITEBACK);
+  assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
+             (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
+  assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
+             (CurrState == STATE_FLUSH_WRITEBACK & CacheBusAck);
+  assign FlushCntRst = (CurrState == STATE_FLUSH & FlushFlag & ~LineDirty) |
+              (CurrState == STATE_FLUSH_WRITEBACK & FlushFlag & CacheBusAck);
+  // exclusion-tag-end: icache flushdirtycontrols
+  // Bus interface controls
+  assign CacheBusRW[1] = (CurrState == STATE_READY & AnyMiss & ~LineDirty) | // exclusion-tag: icache CacheBusRCauses
+                         (CurrState == STATE_FETCH & ~CacheBusAck) | 
+                         (CurrState == STATE_WRITEBACK & CacheBusAck);
+  assign CacheBusRW[0] = (CurrState == STATE_READY & AnyMiss & LineDirty) | // exclusion-tag: icache CacheBusW
+                          (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
+                     (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck);
+
+  assign SelAdr = (CurrState == STATE_READY & (StoreAMO | AnyMiss)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+                  (CurrState == STATE_FETCH) |
+                  (CurrState == STATE_WRITEBACK) |
+                  (CurrState == STATE_WRITE_LINE) |
+                  resetDelay;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
+  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache;
                        
 endmodule // cachefsm
