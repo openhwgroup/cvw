@@ -100,7 +100,6 @@ test_cases:
 .8byte 0x80205AA0, 0x0000806711100393, write64_test# 8.3.1.3.5 write same executable code
 .8byte 0x80201888, 0x0220DEADBEEF0099, write64_test# 8.3.1.1.4
 .8byte 0x84212348, 0x0330DEADBEEF0440, write64_test# 8.3.1.3.3
-.8byte 0x80203AA0, 0x0440DEADBEEF0BB0, write64_test# 8.3.1.3.7
 
 # test 8.3.1.1.3 read values back from Paddrs without translation (this also verifies the previous test)
 .8byte 0x0, 0x0, goto_baremetal# satp.MODE = baremetal / no translation.
@@ -111,7 +110,6 @@ test_cases:
 .8byte 0x80203130, 0x0110DEADBEEF0077, read64_test
 .8byte 0x80201888, 0x0220DEADBEEF0099, read64_test
 .8byte 0x84212348, 0x0330DEADBEEF0440, read64_test
-.8byte 0x80203AA0, 0x0440DEADBEEF0BB0, read64_test
 
 # test 8.3.1.1.4 check translation works in sv39, read the same values from previous tests, this time with Vaddrs
 .8byte 0x8000D, 0x0, goto_sv39 # satp.MODE = sv39, with base page table PPN = 0x8000D and ASID = 0. current VPN: gigapage at 0x80000000.
@@ -174,12 +172,12 @@ test_cases:
 .8byte 0x5AA0, 0x1, executable_test                 # instr page fault when X=0
 
 # test 8.3.1.3.6 Accessed flag == 0
-.8byte 0x36D0, 0x0990DEADBEEF0770, write64_test# store page fault when A=0
-.8byte 0x3AB8, 0x0990DEADBEEF0990, read64_test# load page fault when A=0
+.8byte 0x36D0, 0x0990DEADBEEF0770, write64_test # Write success when A=0 and SVADU is enabled
+.8byte 0x36D0, 0x0990DEADBEEF0770, read64_test # Read success when A=0 and SVADU is enabled
 
 # test 8.3.1.3.7 Dirty flag == 0
-.8byte 0x4658, 0x0440DEADBEEF0AA0, write64_test# store page fault when D=0
-.8byte 0x4AA0, 0x0440DEADBEEF0BB0, read64_test# read success when D=0
+.8byte 0x4658, 0x0440DEADBEEF0AA0, write64_test # Write success when D=0 and SVADU is enabled
+.8byte 0x4658, 0x0440DEADBEEF0AA0, read64_test # read success when D=0
 
 # =========== test 8.3.1.4 SATP Register ===========
 
