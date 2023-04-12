@@ -32,6 +32,12 @@
 # This is ugly to exlcude the whole file - is there a better option?  // coverage off isn't working
 coverage exclude -srcfile lzc.sv 
 
+# Exclude D$ states from coverage in the I$ instance of cachefsm.
+# This is cleaner than trying to set an I$-specific pragma in cachefsm.sv
+# Also exclude the write line to ready transition for the I$ since we can't get a flush
+# during this operation.
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -fstate CurrState STATE_FLUSH STATE_FLUSH_WRITEBACK STATE_FLUSH_WRITEBACK
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -ftrans CurrState STATE_WRITE_LINE->STATE_READY
 
 ######################
 # Toggle exclusions
