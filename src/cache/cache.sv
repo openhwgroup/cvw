@@ -122,7 +122,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn(LRUWriteEn & ~FlushStage),
+      .clk, .reset, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn(LRUWriteEn & ~FlushStage),
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
