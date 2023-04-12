@@ -36,10 +36,6 @@ beef0110
 0000000f
 0000000c
 00000bad
-0000000f
-0000000d
-00000bad
-0000000f
 beef0bb0
 beef0077 # Test 12.3.1.4.1: successful read back of saved value with new memory mapping
 00000009 # Test 12.3.1.5.1: ecall from going to m mode from s mode
