@@ -89,16 +89,26 @@ module cacheLRU
     assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{WayEncoded[row]}};
   end
 
-  genvar               r, a, s;
+  genvar               node;
   assign LRUUpdate[NUMWAYS-2] = '1;
-  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin : enables
-    localparam p = NUMWAYS - s - 1;
-    localparam g = log2(p);
-    localparam t0 = s - p;
-    localparam t1 = t0 - 1;
-    localparam r = LOGNUMWAYS - g;
-    assign LRUUpdate[t0] = LRUUpdate[s] & ~WayEncoded[r];
-    assign LRUUpdate[t1] = LRUUpdate[s] & WayEncoded[r];
+  for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin : enables
+    localparam ctr = NUMWAYS - node - 1;
+    localparam ctr_depth = log2(ctr);
+    localparam lchild = node - ctr;
+    localparam rchild = lchild - 1;
+    localparam r = LOGNUMWAYS - ctr_depth;
+
+    // the child node will be updated if its parent was updated and
+    // the WayEncoded bit was the correct value.
+    // The if statement is only there for coverage since LRUUpdate[root] is always 1.
+    if (node == NUMWAYS-2) begin
+      assign LRUUpdate[lchild] = ~WayEncoded[r];
+      assign LRUUpdate[rchild] = WayEncoded[r];
+    end
+    else begin
+      assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
+      assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
+    end
   end
 
   // The root node of the LRU tree will always be selected in LRUUpdate. No mux needed.
@@ -106,15 +116,15 @@ module cacheLRU
   mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
 
   // Compute next victim way.
-  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
-    localparam t0 = 2*s - NUMWAYS;
+  for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin
+    localparam t0 = 2*node - NUMWAYS;
     localparam t1 = t0 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t0] : Intermediate[t1];
+    assign Intermediate[node] = CurrLRU[node] ? Intermediate[t0] : Intermediate[t1];
   end
-  for(s = NUMWAYS/2-1; s >= 0; s--) begin
-    localparam int0 = (NUMWAYS/2-1-s)*2;
+  for(node = NUMWAYS/2-1; node >= 0; node--) begin
+    localparam int0 = (NUMWAYS/2-1-node)*2;
     localparam int1 = int0 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
+    assign Intermediate[node] = CurrLRU[node] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
   logic [NUMWAYS-1:0] FirstZero;
