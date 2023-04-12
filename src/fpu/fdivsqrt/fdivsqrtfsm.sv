@@ -110,7 +110,7 @@ module fdivsqrtfsm(
   always_ff @(posedge clk) begin
       if (reset | FlushE) begin
           state <= #1 IDLE; 
-      end else if (IFDivStartE) begin 
+      end else if ((state == IDLE) & IFDivStartE) begin 
           step <= cycles; 
           if (SpecialCaseE) state <= #1 DONE;
           else              state <= #1 BUSY;
