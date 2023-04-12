@@ -29,16 +29,21 @@ vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-fp.sv 
 
 vsim -voptargs=+acc work.testbenchfp -G TEST=$2
 
-view wave
 #-- display input and output signals as hexidecimal values
-#do ./wave-dos/peripheral-waves.do
-add log -recursive /*
-#do wave.do deal with when ready
-
-do wave-fpu.do
+if {$3 == "wave"} {
+    puts "wave output is selected"
+    view wave
+    add log -recursive /*
+    do wave-fpu.do
+} elseif {$3 == "nowave"} {
+    puts "No wave output is selected"
+} else {
+    puts "Error with third argument"
+    exit 2
+}
+  
 
 #-- Run the Simulation 
-#run 3600 
 run -all
 noview testbench-fp.sv
 view wave
