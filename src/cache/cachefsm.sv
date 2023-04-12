@@ -224,8 +224,9 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE;
+  // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
-                      (CurrState == STATE_WRITE_LINE);
+                      (CurrState == STATE_WRITE_LINE) & ~FlushStage;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
                        
 endmodule // cachefsm
