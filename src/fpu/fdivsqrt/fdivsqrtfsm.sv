@@ -71,6 +71,7 @@ module fdivsqrtfsm(
 // NS = NF + 1
 // N = NS or NS+2 for div/sqrt.  
 
+// *** CT 4/13/23 move cycles calculation back to preprocesor
 /* verilator lint_off WIDTH */
   logic [`DURLEN+1:0] Nf, fbits; // number of fractional bits
   if (`FPSIZES == 1)
@@ -110,7 +111,8 @@ module fdivsqrtfsm(
   always_ff @(posedge clk) begin
       if (reset | FlushE) begin
           state <= #1 IDLE; 
-      end else if ((state == IDLE) & IFDivStartE) begin 
+      end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
+//       end else if ((state == IDLE) & IFDivStartE) begin // IFDivStartE implies stat is IDLE
           step <= cycles; 
           if (SpecialCaseE) state <= #1 DONE;
           else              state <= #1 BUSY;
