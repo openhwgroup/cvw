@@ -300,7 +300,7 @@ module controller(
     assign FlushDCacheD = 0;
   end
  
-  // Decocde stage pipeline control register
+  // Decode stage pipeline control register
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic

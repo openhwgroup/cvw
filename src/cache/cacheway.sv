@@ -35,7 +35,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
-  input  logic [$clog2(NUMLINES)-1:0] CacheSet,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [$clog2(NUMLINES)-1:0] CacheSet,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
@@ -45,14 +45,14 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   input  logic                        VictimWay,      // LRU selected this way as victim to evict
   input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
-  input  logic                        InvalidateCache,//Clear all valid bits
+  input  logic                        InvalidateCache,// Clear all valid bits
   input  logic [LINELEN/8-1:0]        LineByteMask,   // Final byte enables to cache (D$ only)
 
   output logic [LINELEN-1:0]          ReadDataLineWay,// This way's read data if valid
   output logic                        HitWay,         // This way hits
   output logic                        ValidWay,       // This way is valid
   output logic                        DirtyWay,       // This way is dirty
-  output logic [TAGLEN-1:0]           TagWay);        // THis way's tag if valid
+  output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
   localparam                          WORDSPERLINE = LINELEN/`XLEN;
   localparam                          BYTESPERLINE = LINELEN/8;
