@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module popcnt #(parameter WIDTH = 32) (
-  input logic  [WIDTH-1:0]            num,    // number to count total ones
+  input logic  [WIDTH-1:0]        num,    // number to count total ones
   output logic [$clog2(WIDTH):0]  PopCnt  // the total number of ones
 );
 
