@@ -1,4 +1,4 @@
-<///////////////////////////////////////////
+///////////////////////////////////////////
 //
 // Written: me@KatherineParry.com
 // Modified: 7/5/2022
@@ -26,32 +26,29 @@
 `include "wally-config.vh"
 `include "tests-fp.vh"
 
-// steps to run FMA Tests
-//    1) create test vectors in riscv-wally/Tests/fp with: ./run-all.sh
-//    2) go to cvw/testbench/fp/Tests
-//    3) run ./sim-fma-batch
 module testbenchfp;
   parameter TEST="none";
 
-  string                       Tests[];        // list of tests to be run
-  logic [2:0]                  OpCtrl[];       // list of op controls
-  logic [2:0]                  Unit[];         // list of units being tested
-  logic                        WriteInt[];           // Is being written to integer resgiter
+  string                       Tests[];                    // list of tests to be run
+  logic [2:0]                  OpCtrl[];                   // list of op controls
+  logic [2:0]                  Unit[];                     // list of units being tested
+  logic                        WriteInt[];                 // Is being written to integer resgiter
   logic [2:0]                  Frm[4:0] = {3'b100, 3'b010, 3'b011, 3'b001, 3'b000}; // rounding modes: rne-000, rz-001, ru-011, rd-010, rnm-100
-  logic [1:0]                  Fmt[];          // list of formats for the other units  
+  logic [1:0]                  Fmt[];                      // list of formats for the other units  
 
   logic                        clk=0;
-  logic [31:0]                 TestNum=0;    // index for the test
-  logic [31:0]                 OpCtrlNum=0;  // index for OpCtrl
-  logic [31:0]                 errors=0;     // how many errors
-  logic [31:0]                 VectorNum=0;  // index for test vector
-  logic [31:0]                 FrmNum=0;     // index for rounding mode
+  logic [31:0]                 TestNum=0;                  // index for the test
+  logic [31:0]                 OpCtrlNum=0;                // index for OpCtrl
+  logic [31:0]                 errors=0;                   // how many errors
+  logic [31:0]                 VectorNum=0;                // index for test vector
+  logic [31:0]                 FrmNum=0;                   // index for rounding mode
   logic [`FLEN*4+7:0]          TestVectors[8388609:0];     // list of test vectors
 
-  logic [1:0]                  FmtVal;          // value of the current Fmt
+  logic [1:0]                  FmtVal;                     // value of the current Fmt
   logic [2:0]                  UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
   logic                        WriteIntVal;                // value of the current WriteInt
   logic [`FLEN-1:0]            X, Y, Z;                    // inputs read from TestFloat
+  logic [`FLEN-1:0] 	       XPostBox;                   // inputs read from TestFloat
   logic [`XLEN-1:0]            SrcA;                       // integer input
   logic [`FLEN-1:0]	       Ans;                        // correct answer from TestFloat
   logic [`FLEN-1:0]	       Res;                        // result from other units
@@ -67,15 +64,15 @@ module testbenchfp;
   logic [`NF:0]                Xm, Ym, Zm;                 // mantissas of the inputs
   logic                        XNaN, YNaN, ZNaN;           // is the input NaN
   logic                        XSNaN, YSNaN, ZSNaN;        // is the input a signaling NaN
-  logic                        XSubnorm, ZSubnorm;           // is the input denormalized
+  logic                        XSubnorm, ZSubnorm;         // is the input denormalized
   logic                        XInf, YInf, ZInf;           // is the input infinity
   logic                        XZero, YZero, ZZero;        // is the input zero
   logic                        XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
   logic  [`CVTLEN-1:0]         CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
   logic                        IntZero;
   logic                        CvtResSgnE;
-  logic [`NE:0]                CvtCalcExpE;    // the calculated expoent
-  logic [`LOGCVTLEN-1:0]       CvtShiftAmtE;  // how much to shift by
+  logic [`NE:0]                CvtCalcExpE;                // the calculated expoent
+  logic [`LOGCVTLEN-1:0]       CvtShiftAmtE;               // how much to shift by
   logic [`DIVb:0]              Quot;
   logic                        CvtResSubnormUfE;
   logic                        DivStart, FDivBusyE, OldFDivBusyE;
@@ -101,6 +98,15 @@ module testbenchfp;
   logic                        DivNegSticky;
   logic [`NE+1:0]              DivCalcExp;
   logic                        divsqrtop;
+
+   // Missing logic vectors fdivsqrt
+   logic [2:0]                 Funct3E;
+   logic [2:0]                 Funct3M;
+   logic                       FlushE;
+   logic                       IFDivStartE, FDivDoneE;
+   logic [`NE+1:0]             QeM;
+   logic [`DIVb:0]             QmM;
+   logic [`XLEN-1:0]           FIntDivResultM;   
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -147,8 +153,9 @@ module testbenchfp;
                Fmt = {Fmt, 2'b11};
             end
          end
-      end
-      if (TEST === "cvtfp" | TEST === "all") begin  // if the floating-point conversions are being tested
+      end 
+      // if the floating-point conversions are being tested          
+      if (TEST === "cvtfp" | TEST === "all") begin  
         if(`D_SUPPORTED) begin // if double precision is supported
           // add the 128 <-> 64 bit conversions to the to-be-tested list
           Tests = {Tests, f128f64cvt};
@@ -571,38 +578,23 @@ module testbenchfp;
       end
       if (TEST === "div"   | TEST === "all") begin // if division is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
-        Tests = {f16div, Tests};
-        OpCtrl = {`DIV_OPCTRL, OpCtrl};
-        WriteInt = {1'b0, WriteInt};
-        for(int i = 0; i<5; i++) begin
-          Unit = {`DIVUNIT, Unit};
-          Fmt = {2'b10, Fmt};
-        end
-        /* Tests = {Tests, f16div};
+        Tests = {Tests, f16div};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
-        end */
+        end
       end
       if (TEST === "sqrt"  | TEST === "all") begin // if sqrt is being tested
         // add the correct tests/op-ctrls/unit/fmt to their lists
-        // reverse order
-        Tests = {f16sqrt, Tests};
-        OpCtrl = {`SQRT_OPCTRL, OpCtrl};
-        WriteInt = {1'b0, WriteInt};
-        for(int i = 0; i<5; i++) begin
-          Unit = {`DIVUNIT, Unit};
-          Fmt = {2'b10, Fmt};
-        end
-/*        Tests = {Tests, f16sqrt};
+        Tests = {Tests, f16sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
           Unit = {Unit, `DIVUNIT};
           Fmt = {Fmt, 2'b10};
-        end */
+        end 
       end
       if (TEST === "fma"   | TEST === "all") begin // if fma is being tested
         Tests = {Tests, f16fma};
@@ -656,18 +648,17 @@ module testbenchfp;
   end
 
   // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
-  readvectors readvectors          (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
-                                    .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
-                                    .Xs, .Ys, .Zs, .Unit(UnitVal),
-                                    .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
-                                    .Xm, .Ym, .Zm, .DivStart,
-                                    .XNaN, .YNaN, .ZNaN,
-                                    .XSNaN, .YSNaN, .ZSNaN, 
-                                    .XSubnorm, .ZSubnorm, 
-                                    .XZero, .YZero, .ZZero,
-                                    .XInf, .YInf, .ZInf, .XExpMax,
-                                    .X, .Y, .Z);
-
+  readvectors readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
+                           .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
+                           .Xs, .Ys, .Zs, .Unit(UnitVal),
+                           .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
+                           .Xm, .Ym, .Zm, .DivStart,
+                           .XNaN, .YNaN, .ZNaN,
+                           .XSNaN, .YSNaN, .ZSNaN, 
+                           .XSubnorm, .ZSubnorm, 
+                           .XZero, .YZero, .ZZero,
+                           .XInf, .YInf, .ZInf, .XExpMax,
+                           .X, .Y, .Z, .XPostBox);
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -713,11 +704,16 @@ module testbenchfp;
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
-    fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
-                    .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .XNaNE(XNaN), .YNaNE(YNaN), 
-                    .FDivStartE(DivStart), .IDivStartE(1'b0), .MDUE(1'b0), .W64E(1'b0),
-                    .StallM(1'b0), .DivSM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
-                    .QmM(Quot));
+     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+                       .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
+		       .XNaNE(XNaN), .YNaNE(YNaN), 
+                       .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
+                       .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
+                       .QmM(Quot),
+                       .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
+                       .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
+                       .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
   end
 
   assign CmpFlg[3:0] = 0;
@@ -726,6 +722,16 @@ module testbenchfp;
   always begin
     clk = 1; #5; clk = 0; #5;
   end
+
+  // Provide reset for divsqrt to reset state to IDLE
+  // Previous version did not initiate a divide due to missing state
+  // information.  This starts the FSM by putting the fdivsqrt into
+  // the IDLE state.
+  initial
+  begin
+    #0 reset = 1'b1;
+    #25 reset = 1'b0;     
+  end  
   
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -738,7 +744,7 @@ module testbenchfp;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 
-  //Check if the correct answer and result is a NaN
+  // Check if the correct answer and result is a NaN
   always_comb begin
     if(UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
       // an integer output can't be a NaN
@@ -809,7 +815,7 @@ end
   logic ResMatch, FlagMatch, CheckNow;
 
 always @(posedge clk) 
-  OldFDivBusyE = FDivBusyE;
+  OldFDivBusyE = FDivDoneE;
 
 // check results on falling edge of clk
 always @(negedge clk) begin
@@ -912,9 +918,15 @@ always @(negedge clk) begin
       $stop;
     end
 
-    if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) VectorNum += 1; // increment the vector
-
-    if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the end of file
+    // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
+    if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
+       repeat (12)
+	 @(posedge clk);
+       if (reset != 1'b1)
+	 VectorNum += 1; // increment the vector
+    end
+   
+    if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
 
       // increment the test
       TestNum += 1;
@@ -944,31 +956,29 @@ always @(negedge clk) begin
 endmodule
 
 
-
-
 module readvectors (
-  input logic clk,
-  input logic [`FLEN*4+7:0] TestVector,
+  input logic                clk,
+  input logic [`FLEN*4+7:0]  TestVector,
   input logic [`FMTBITS-1:0] ModFmt,
-  input logic [1:0] Fmt,
-  input logic [2:0] Unit,
-  input logic [31:0] VectorNum,
-  input logic [31:0] TestNum,
-  input logic [2:0] OpCtrl,
-  output logic [`FLEN-1:0] Ans,
-  output logic [`XLEN-1:0] SrcA,
-  output logic [4:0] AnsFlg,
-  output logic                    Xs, Ys, Zs,    // sign bits of XYZ
-  output logic [`NE-1:0]          Xe, Ye, Ze,    // exponents of XYZ (converted to largest supported precision)
-  output logic [`NF:0]            Xm, Ym, Zm,    // mantissas of XYZ (converted to largest supported precision)
-  output logic                    XNaN, YNaN, ZNaN,    // is XYZ a NaN
-  output logic                    XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-  output logic                    XSubnorm, ZSubnorm,   // is XYZ denormalized
-  output logic                    XZero, YZero, ZZero,         // is XYZ zero
-  output logic                    XInf, YInf, ZInf,            // is XYZ infinity
-  output logic                    XExpMax,
-  output logic                    DivStart,
-  output logic [`FLEN-1:0] X, Y, Z
+  input logic [1:0]          Fmt,
+  input logic [2:0]          Unit,
+  input logic [31:0]         VectorNum,
+  input logic [31:0]         TestNum,
+  input logic [2:0]          OpCtrl,
+  output logic [`FLEN-1:0]   Ans,
+  output logic [`XLEN-1:0]   SrcA,
+  output logic [4:0]         AnsFlg,
+  output logic               Xs, Ys, Zs, // sign bits of XYZ
+  output logic [`NE-1:0]     Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]       Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
+  output logic               XNaN, YNaN, ZNaN, // is XYZ a NaN
+  output logic               XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+  output logic               XSubnorm, ZSubnorm,  // is XYZ denormalized
+  output logic               XZero, YZero, ZZero, // is XYZ zero
+  output logic               XInf, YInf, ZInf,    // is XYZ infinity
+  output logic               XExpMax,
+  output logic               DivStart,
+  output logic [`FLEN-1:0]   X, Y, Z, XPostBox
 );
   logic XEn, YEn, ZEn;
 
@@ -1331,5 +1341,5 @@ module readvectors (
   unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                 .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                 .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
-                .XEn, .YEn, .ZEn, .XExpMax);
+                .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);
 endmodule
