@@ -32,9 +32,18 @@ main:
     csrs mstatus, t0
 
     #Pull denormalized FP number from memory and pass it to fclass.S for coverage
-    la t0, TestData
+    la t0, TestData1
     flw ft0, 0(t0)
     fclass.s t1, ft0
+
+    #Result Sign Test Coverage
+    la t0, TestData2
+    flw ft0, 0(t0)
+    flw ft1, 4(t0)
+    fadd.s ft2, ft0, ft1 #Adds coverage for inf as arg for FADD
+
+    flw ft2, 4(t0)
+    fmsub.s ft3, ft0, ft1, ft2 #Adds coverage for fmaAs or Z Sign Bit
 
     # Test legal instructions not covered elsewhere
     flq ft0, 0(a0)
@@ -105,5 +114,8 @@ main:
 
 .section .data
 .align 3
-TestData:
+TestData1:
 .int 0x00100000 #Denormalized FP number
+TestData2:
+.word 0x60000001 #Random FP Number (Pos)
+.word 0x7f800000 #INF
