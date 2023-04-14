@@ -134,7 +134,7 @@ module testbench;
         "wally32i":                       tests = wally32i; 
         "wally32e":                       tests = wally32e; 
         "wally32priv":                    tests = wally32priv;
-        "wally32periph":                   tests = wally32periph;
+        "wally32periph":                  tests = wally32periph;
         "embench":                        tests = embench;
         "coremark":                       tests = coremark;
         "arch32zba":     if (`ZBA_SUPPORTED) tests = arch32zba;
@@ -167,7 +167,7 @@ module testbench;
   logic        HSELEXT;
   
   logic        InitializingMemories;
-  integer 	   ResetCount, ResetThreshold;
+  integer      ResetCount, ResetThreshold;
   logic        InReset;
   logic        BeginSample;
   
