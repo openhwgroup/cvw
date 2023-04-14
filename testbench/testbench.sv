@@ -52,29 +52,29 @@ module testbench;
   string tests[];
   logic [3:0] dummy;
 
-  logic [`AHBW-1:0] HRDATAEXT;
-  logic             HREADYEXT, HRESPEXT;
+  logic [`AHBW-1:0]    HRDATAEXT;
+  logic                HREADYEXT, HRESPEXT;
   logic [`PA_BITS-1:0] HADDR;
-  logic [`AHBW-1:0] HWDATA;
-  logic [`XLEN/8-1:0] HWSTRB;
-  logic             HWRITE;
-  logic [2:0]       HSIZE;
-  logic [2:0]       HBURST;
-  logic [3:0]       HPROT;
-  logic [1:0]       HTRANS;
-  logic             HMASTLOCK;
-  logic             HCLK, HRESETn;
-  logic [`XLEN-1:0] PCW;
+  logic [`AHBW-1:0]    HWDATA;
+  logic [`XLEN/8-1:0]  HWSTRB;
+  logic                HWRITE;
+  logic [2:0]          HSIZE;
+  logic [2:0]          HBURST;
+  logic [3:0]          HPROT;
+  logic [1:0]          HTRANS;
+  logic                HMASTLOCK;
+  logic                HCLK, HRESETn;
+  logic [`XLEN-1:0]    PCW;
 
-  string ProgramAddrMapFile, ProgramLabelMapFile;
-  integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
+  string  ProgramAddrMapFile, ProgramLabelMapFile;
+  integer ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
 
-  logic 	    DCacheFlushDone, DCacheFlushStart;
+  logic DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
   logic StartSample, EndSample;
     
   flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
+  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
@@ -149,7 +149,7 @@ module testbench;
     end
   end
 
-  string signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
+  string  signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
   integer outputFilePointer;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
@@ -160,16 +160,16 @@ module testbench;
   logic        SDCCmdOut;
   logic        SDCCmdOE;
   logic [3:0]  SDCDatIn;
-  tri1 [3:0]   SDCDat;
+  tri1  [3:0]  SDCDat;
   tri1         SDCCmd;
 
   logic        HREADY;
   logic        HSELEXT;
   
-  logic 	   InitializingMemories;
+  logic        InitializingMemories;
   integer 	   ResetCount, ResetThreshold;
-  logic 	   InReset;
-  logic        Begin;
+  logic        InReset;
+  logic        BeginSample;
   
   // instantiate device to be tested
   assign GPIOIN = 0;
@@ -225,13 +225,14 @@ module testbench;
       totalerrors = 0;
       testadr = 0;
       testadrNoBase = 0;
-      // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests and  tests[0] == "2" refers to WallyRiscvArchTests 
+      // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
+      // and tests[0] == "2" refers to WallyRiscvArchTests 
       riscofTest = tests[0] == "1" | tests[0] == "2"; 
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
-      //  guarantee the  initialized reads.  For example a strcmp can read 6 byte
-      //  strings, but uses a load double to read them in.  If the last 2 bytes are
-      //  not initialized the compare results in an 'x' which propagates through 
+      // guarantee the  initialized reads.  For example a strcmp can read 6 byte
+      // strings, but uses a load double to read them in.  If the last 2 bytes are
+      // not initialized the compare results in an 'x' which propagates through 
       // the design.
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
@@ -243,7 +244,7 @@ module testbench;
        pathname = tvpaths[0];
        else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-      else memfilename = {pathname, tests[test], ".elf.memfile"};
+      else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (`FPGA) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
@@ -253,9 +254,9 @@ module testbench;
         // force sdc timers
         force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
-        if (`IROM_SUPPORTED) $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+        if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DTIM_SUPPORTED) $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        if (`DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -265,8 +266,9 @@ module testbench;
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       end
-      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find the addr of each label and fill the array
-      // to expand, add more elements to this array and initialize them to zero (also initilaize them to zero at the start of the next test)
+      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
+      // the addr of each label and fill the array. To expand, add more elements to this array 
+      // and initialize them to zero (also initilaize them to zero at the start of the next test)
       if(!`FPGA) begin
         updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
         $display("Read memfile %s", memfilename);
@@ -294,99 +296,99 @@ module testbench;
           ResetCount = 0;
         end
       end else begin
-		if (TEST == "coremark")
+        if (TEST == "coremark")
           if (dut.core.priv.priv.EcallFaultM) begin
-			$display("Benchmark: coremark is done.");
-			$stop;
+            $display("Benchmark: coremark is done.");
+            $stop;
           end
-		// Termination condition (i.e. we finished running current test) 
-		if (DCacheFlushDone) begin
+        // Termination condition (i.e. we finished running current test) 
+        if (DCacheFlushDone) begin
           integer begin_signature_addr;
           InReset = 1;
           begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
           if (!begin_signature_addr)
-			$display("begin_signature addr not found in %s", ProgramLabelMapFile);
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
           testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
           testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
           #600; // give time for instructions in pipeline to finish
           if (TEST == "embench") begin
             // Writes contents of begin_signature to .sim.output file
-            // this contains instret and cycles for start and end of test run, used by embench python speed script to calculate embench speed score
-            // also begin_signature contains the results of the self checking mechanism, which will be read by the python script for error checking
+            // this contains instret and cycles for start and end of test run, used by embench 
+            // python speed script to calculate embench speed score. 
+            // also, begin_signature contains the results of the self checking mechanism, 
+            // which will be read by the python script for error checking
             $display("Embench Benchmark: %s is done.", tests[test]);
             if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
             else outputfile = {pathname, tests[test], ".sim.output"};
             outputFilePointer = $fopen(outputfile);
             i = 0;
             while ($unsigned(i) < $unsigned(5'd5)) begin
-                    $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
-                    i = i + 1;
+              $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+              i = i + 1;
             end
             $fclose(outputFilePointer);
             $display("Embench Benchmark: created output file: %s", outputfile);
           end else if (TEST == "coverage64gc") begin
             $display("Coverage tests don't get checked");
           end else begin 
-			// for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-			// clear signature to prevent contamination from previous tests
-			for(i=0; i<SIGNATURESIZE; i=i+1) begin
+            // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+            // clear signature to prevent contamination from previous tests
+            for(i=0; i<SIGNATURESIZE; i=i+1) begin
               sig32[i] = 'bx;
-			end
-			if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
-			else signame = {pathname, tests[test], ".signature.output"};
-			// read signature, reformat in 64 bits if necessary
-			$readmemh(signame, sig32);
-			i = 0;
-			while (i < SIGNATURESIZE) begin
+            end
+            if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
+            else signame = {pathname, tests[test], ".signature.output"};
+            // read signature, reformat in 64 bits if necessary
+            $readmemh(signame, sig32);
+            i = 0;
+            while (i < SIGNATURESIZE) begin
               if (`XLEN == 32) begin
-				signature[i] = sig32[i];
-				i = i+1;
+                signature[i] = sig32[i];
+                i = i+1;
               end else begin
-				signature[i/2] = {sig32[i+1], sig32[i]};
-				i = i + 2;
+                signature[i/2] = {sig32[i+1], sig32[i]};
+                i = i + 2;
               end
               if (i >= 4 & sig32[i-4] === 'bx) begin
-				if (i == 4) begin
+                if (i == 4) begin
                   i = SIGNATURESIZE+1; // flag empty file
                   $display("  Error: empty test file");
-				end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+                end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
               end
-			end
+            end
 
-			// Check errors
-			errors = (i == SIGNATURESIZE+1); // error if file is empty
-			i = 0;
-			/* verilator lint_off INFINITELOOP */
-			while (signature[i] !== 'bx) begin
+            // Check errors
+            errors = (i == SIGNATURESIZE+1); // error if file is empty
+            i = 0;
+            /* verilator lint_off INFINITELOOP */
+            while (signature[i] !== 'bx) begin
               logic [`XLEN-1:0] sig;
               if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
               else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
               //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
               if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
-				errors = errors+1;
-				$display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-						 tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-				$stop;//***debug
+                errors = errors+1;
+                $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+						    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+                $stop; //***debug
               end
               i = i + 1;
-			end
-			/* verilator lint_on INFINITELOOP */
-			if (errors == 0) begin
+            end
+            /* verilator lint_on INFINITELOOP */
+            if (errors == 0) begin
               $display("%s succeeded.  Brilliant!!!", tests[test]);
-			end
-			else begin
+            end else begin
               $display("%s failed with %d errors. :(", tests[test], errors);
               totalerrors = totalerrors+1;
-			end
+            end
           end
           // move onto the next test, check to see if we're done
           test = test + 1;
           if (test == tests.size()) begin
-			if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-			else $display("FAIL: %d test programs had errors", totalerrors);
-			$stop;
-          end
-          else begin
+          if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+          else $display("FAIL: %d test programs had errors", totalerrors);
+          $stop;
+          end else begin
             InitializingMemories = 1;
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
@@ -394,7 +396,7 @@ module testbench;
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-            else if (`UNCORE_RAM_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+            else if (`UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
@@ -405,22 +407,22 @@ module testbench;
               ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
-			if(!`FPGA) begin
+            if(!`FPGA) begin
               updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
               $display("Read memfile %s", memfilename);
-			end
+            end
           end
-		end // if (DCacheFlushDone)
+        end // if (DCacheFlushDone)
       end
     end // always @ (negedge clk)
 
 
   if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
-    integer HPMCindex;
-	logic 	StartSampleFirst;
-	logic 	StartSampleDelayed, BeginDelayed;
-	logic 	EndSampleFirst, EndSampleDelayed;
-	logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
+    integer           HPMCindex;
+    logic             StartSampleFirst;
+    logic             StartSampleDelayed, BeginDelayed;
+    logic             EndSampleFirst, EndSampleDelayed;
+    logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -433,8 +435,8 @@ module testbench;
                             "BP Target Wrong",
                             "RAS Wrong",
                             "Instr Class Wrong",
-							"Load Stall",
-							"Store Stall",
+                            "Load Stall",
+                            "Store Stall",
                             "D Cache Access",
                             "D Cache Miss",
                             "D Cache Cycles",
@@ -447,56 +449,55 @@ module testbench;
                             "Interrupt",
                             "Exception",
                             "Divide Cycles"
-							};
+                          };
 
-	if(TEST == "embench") begin
-	  // embench runs warmup then runs start_trigger
-	  // embench end with stop_trigger.
-	  assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
-	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+    if(TEST == "embench") begin
+      // embench runs warmup then runs start_trigger
+      // embench end with stop_trigger.
+      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
+      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-	  assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
-	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
+      flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
-	end else if(TEST == "coremark") begin
-	  // embench runs warmup then runs start_trigger
-	  // embench end with stop_trigger.
-	  assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
-	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+	  end else if(TEST == "coremark") begin
+      // embench runs warmup then runs start_trigger
+	    // embench end with stop_trigger.
+      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
+      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
 
-	  assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
-	  flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-	  assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
+      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
+      flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
+      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
-	end else begin
-	  // default start condiction is reset
-	  // default end condiction is end of test (DCacheFlushDone)
-	  assign StartSampleFirst = InReset;
-	  flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-	  assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-	  assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
+    end else begin
+      // default start condiction is reset
+      // default end condiction is end of test (DCacheFlushDone)
+      assign StartSampleFirst = InReset;
+      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
+      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
+      assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
 
-	  flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
-	  assign Begin = StartSampleFirst & ~BeginDelayed;
+      flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
+      assign BeginSample = StartSampleFirst & ~BeginDelayed;
 
-	end
-	
+    end
     always @(negedge clk) begin
-	  if(StartSample) begin
-		for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
-		  InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
-		end
-	  end
+      if(StartSample) begin
+        for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
+          InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
+        end
+      end
       if(EndSample) begin
         for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
           // unlikely to have more than 10M in any counter.
           $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
-		end
-	  end
-	end
+        end
+      end
+    end
   end
   
 
@@ -535,24 +536,24 @@ module testbench;
   if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
-	always @(*) begin
-	  if(reset) begin
-		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-		  force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-		end
-		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-		  force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-		end
-        #1;
-		for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-		  release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
-		end 
-		for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-		  release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
-		end
-	  end
-	end
-end
+    always @(*) begin
+      if(reset) begin
+        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+        end
+        for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+          force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        end
+          #1;
+        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
+        end 
+        for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+          release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
+        end
+      end
+    end
+  end
 
 
   if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
@@ -565,28 +566,28 @@ end
                     dut.core.ifu.immu.immu.pmachecker.Cacheable &
                     ~dut.core.ifu.bus.icache.icache.cachefsm.FlushStage &
                     ~reset;
-	  flop #(1) ResetDReg(clk, reset, resetD);
-	  assign resetEdge = ~reset & resetD;
+    flop #(1) ResetDReg(clk, reset, resetD);
+    assign resetEdge = ~reset & resetD;
 
     flop #(1) InvalReg(clk, dut.core.ifu.InvalidateICacheM, InvalDelayed);
-	  assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
+    assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
 
     initial begin
-	    LogFile = $psprintf("ICache.log");
+      LogFile = $psprintf("ICache.log");
       file = $fopen(LogFile, "w");
-	    $fwrite(file, "BEGIN %s\n", memfilename);
-	  end
+      $fwrite(file, "BEGIN %s\n", memfilename);
+    end
     string AccessTypeString, HitMissString;
     assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
                            dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
     always @(posedge clk) begin
-	  if(resetEdge) $fwrite(file, "TRAIN\n");
-	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
-	  if(Enable) begin  // only log i cache reads
-	    $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
-	  end
+    if(resetEdge) $fwrite(file, "TRAIN\n");
+    if(BeginSample) $fwrite(file, "BEGIN %s\n", memfilename);
+    if(Enable) begin  // only log i cache reads
+      $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
+    end
     if(InvalEdge) $fwrite(file, "0 I X\n");
-	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+    if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
   end
 
@@ -615,18 +616,18 @@ end
                      (AccessTypeString != "NULL");
 
     initial begin
-	    LogFile = $psprintf("DCache.log");
+      LogFile = $psprintf("DCache.log");
       file = $fopen(LogFile, "w");
-	    $fwrite(file, "BEGIN %s\n", memfilename);
-	  end
+      $fwrite(file, "BEGIN %s\n", memfilename);
+    end
     always @(posedge clk) begin
-	  if(resetEdge) $fwrite(file, "TRAIN\n");
-	  if(Begin) $fwrite(file, "BEGIN %s\n", memfilename);
-	  if(Enabled) begin
-	    $fwrite(file, "%h %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString);
-	  end
-    if(dut.core.lsu.bus.dcache.dcache.cachefsm.FlushFlag) $fwrite(file, "0 F X\n");
-	  if(EndSample) $fwrite(file, "END %s\n", memfilename);
+      if(resetEdge) $fwrite(file, "TRAIN\n");
+      if(BeginSample) $fwrite(file, "BEGIN %s\n", memfilename);
+      if(Enabled) begin
+        $fwrite(file, "%h %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString);
+      end
+      if(dut.core.lsu.bus.dcache.dcache.cachefsm.FlushFlag) $fwrite(file, "0 F X\n");
+      if(EndSample) $fwrite(file, "END %s\n", memfilename);
     end
   end
 
@@ -634,45 +635,45 @@ end
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;
-	  logic  PCSrcM;
-	  string LogFile;
-	  logic  resetD, resetEdge;
-	  flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
-	  flop #(1) ResetDReg(clk, reset, resetD);
-	  assign resetEdge = ~reset & resetD;
+      logic  PCSrcM;
+      string LogFile;
+      logic  resetD, resetEdge;
+      flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+      flop #(1) ResetDReg(clk, reset, resetD);
+      assign resetEdge = ~reset & resetD;
       initial begin
-		LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
+        LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
         file = $fopen(LogFile, "w");
-	  end
+      end
       always @(posedge clk) begin
-		if(resetEdge) $fwrite(file, "TRAIN\n");
-		if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
-		if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-		  direction = PCSrcM ? "t" : "n";
-		  $fwrite(file, "%h %s\n", dut.core.PCM, direction);
-		end
-		if(EndSample) $fwrite(file, "END %s\n", memfilename);
-	  end
+        if(resetEdge) $fwrite(file, "TRAIN\n");
+        if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
+        if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
+          direction = PCSrcM ? "t" : "n";
+          $fwrite(file, "%h %s\n", dut.core.PCM, direction);
+        end
+        if(EndSample) $fwrite(file, "END %s\n", memfilename);
+      end
     end
   end
 
-  // check for hange up.
+  // check for hang up.
   logic [`XLEN-1:0] OldPCW;
-  integer 			WatchDogTimerCount;
-  localparam WatchDogTimerThreshold = 1000000;
-  logic 			WatchDogTimeOut;
+  integer           WatchDogTimerCount;
+  localparam        WatchDogTimerThreshold = 1000000;
+  logic             WatchDogTimeOut;
   always_ff @(posedge clk) begin
-	OldPCW <= PCW;
-	if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
-	else WatchDogTimerCount = '0;
+    OldPCW <= PCW;
+    if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
+    else WatchDogTimerCount = '0;
   end
 
   always_comb begin
-	WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
-	if(WatchDogTimeOut) begin
-	  $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
-	  $stop;
-	end
+    WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
+    if(WatchDogTimeOut) begin
+      $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
+      $stop;
+	  end
   end
   
 endmodule
@@ -690,34 +691,34 @@ module DCacheFlushFSM
 
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
-	if(`DCACHE_SUPPORTED) begin
-	  localparam numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-	  localparam sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-	  localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-	  localparam numwords = sramlen/`XLEN;
-    localparam lognumlines = $clog2(numlines);
-	  localparam loglinebytelen = $clog2(linebytelen);
-	  localparam lognumways = $clog2(numways);
-	  localparam tagstart = lognumlines + loglinebytelen;
+  if(`DCACHE_SUPPORTED) begin
+    localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+    localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+    localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+    localparam linelen        = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+    localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
+    localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+    localparam numwords       = sramlen/`XLEN;
+    localparam lognumlines    = $clog2(numlines);
+    localparam loglinebytelen = $clog2(linebytelen);
+    localparam lognumways     = $clog2(numways);
+    localparam tagstart       = lognumlines + loglinebytelen;
 
 
 
-	  genvar 			 index, way, cacheWord;
-	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic [sramlen-1:0] cacheline;
-	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  genvar 			         index, way, cacheWord;
+	  logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic [sramlen-1:0]  cacheline;
+	  logic [`XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic                CacheValid [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic                CacheDirty [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+	  logic [`PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     for(index = 0; index < numlines; index++) begin
-		  for(way = 0; way < numways; way++) begin
-		    for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
-			    copyShadow #(.tagstart(tagstart),
-					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
-			    copyShadow(.clk,
+      for(way = 0; way < numways; way++) begin
+        for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
+          copyShadow #(.tagstart(tagstart),
+          .loglinebytelen(loglinebytelen), .sramlen(sramlen))
+          copyShadow(.clk,
           .start,
           .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS-1-tagstart:0]),
           .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
@@ -766,18 +767,18 @@ endmodule
 
 module copyShadow
   #(parameter tagstart, loglinebytelen, sramlen)
-  (input logic clk,
-   input logic 			     start,
-   input logic [`PA_BITS-1:tagstart] tag,
-   input logic 			     valid, dirty,
-   input logic [sramlen-1:0] 	     data,
-   input logic [32-1:0] 	     index,
-   input logic [32-1:0] 	     cacheWord,
-   output logic [sramlen-1:0] 	     CacheData,
-   output logic [`PA_BITS-1:0] 	     CacheAdr,
-   output logic [`XLEN-1:0] 	     CacheTag,
-   output logic 		     CacheValid,
-   output logic 		     CacheDirty);
+  (input  logic                       clk,
+   input  logic                       start,
+   input  logic [`PA_BITS-1:tagstart] tag,
+   input  logic                       valid, dirty,
+   input  logic [sramlen-1:0]         data,
+   input  logic [32-1:0]              index,
+   input  logic [32-1:0]              cacheWord,
+   output logic [sramlen-1:0]         CacheData,
+   output logic [`PA_BITS-1:0]        CacheAdr,
+   output logic [`XLEN-1:0]           CacheTag,
+   output logic                       CacheValid,
+   output logic                       CacheDirty);
   
 
   always_ff @(posedge clk) begin
@@ -806,8 +807,7 @@ task automatic updateProgramAddrLabelArray;
       integer returncode;
       returncode = $fscanf(ProgramLabelMapFP, "%s\n", label);
       returncode = $fscanf(ProgramAddrMapFP, "%s\n", adrstr);
-      if (ProgramAddrLabelArray.exists(label)) 
-        ProgramAddrLabelArray[label] = adrstr.atohex();
+      if (ProgramAddrLabelArray.exists(label)) ProgramAddrLabelArray[label] = adrstr.atohex();
     end
   end
   $fclose(ProgramLabelMapFP);
