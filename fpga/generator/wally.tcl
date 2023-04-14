@@ -57,12 +57,11 @@ synth_design -rtl -name rtl_1
 
 report_clocks -file reports/clocks.rpt
 
-# this does synthesis? wtf?
+# this does synthesis.
 launch_runs synth_1 -jobs 4
 
 wait_on_run synth_1
 open_run synth_1
-
 
 check_timing -verbose                                                   -file reports/check_timing.rpt
 report_timing -max_paths 10 -nworst 10 -delay_type max -sort_by slack   -file reports/timing_WORST_10.rpt
