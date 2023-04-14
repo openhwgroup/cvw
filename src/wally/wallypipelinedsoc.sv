@@ -29,8 +29,7 @@
 //`include "cvw.vh"
 // global CORE-V-Wally parameters
 
-  `include "config.vh"
-
+`include "config.vh"
 
 module wallypipelinedsoc import cvw::*; (
   input  logic 		            clk, 
@@ -88,7 +87,7 @@ module wallypipelinedsoc import cvw::*; (
 
   // instantiate uncore if a bus interface exists
   if (P.BUS_SUPPORTED) begin : uncore
-    uncore uncore(.HCLK, .HRESETn, .TIMECLK,
+    uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOIN, .GPIOOUT, .GPIOEN, .UARTSin, 
