@@ -45,6 +45,30 @@ main:
     flw ft2, 4(t0)
     fmsub.s ft3, ft0, ft1, ft2 #Adds coverage for fmaAs or Z Sign Bit
 
+    #Adds Coverage for Flag fmaAs, fmaPs, YSNaN, ZSNaN
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft0, 8(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft1, 12(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft2, 12(t0)
+    flw ft1, 4(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    #Add Coverage for round lsbRes
+    flw ft0, 16(t0)
+    flw ft1, 4(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    #Fix BadNaNBox test on unpackinput Z
+    la t0, TestData2
+    flw ft3, 0(t0)
+    flw ft4, 0(t0)
+    fadd.s ft5, ft3, ft4
+
     # Test legal instructions not covered elsewhere
     flq ft0, 0(a0)
     flh ft0, 8(a0)
@@ -117,5 +141,8 @@ main:
 TestData1:
 .int 0x00100000 #Denormalized FP number
 TestData2:
-.word 0x60000001 #Random FP Number (Pos)
+.int 0x3f800000 #FP 1.0
 .word 0x7f800000 #INF
+.int 0xbf800000 #FP -1.0
+.int 0x7fa00000 #SNaN
+.int 0x3fffffff #OverFlow Test
