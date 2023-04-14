@@ -32,8 +32,8 @@
 
 module cnt #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] A, RevA,    // Operands
-  input  logic [1:0] B,                // Last 2 bits of immediate
-  input  logic W64,                    // Indicates word operation
+  input  logic [1:0]       B,          // Last 2 bits of immediate
+  input  logic             W64,        // Indicates word operation
   output logic [WIDTH-1:0] CntResult   // count result
 );
 
