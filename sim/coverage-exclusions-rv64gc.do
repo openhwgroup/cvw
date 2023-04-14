@@ -47,3 +47,17 @@ coverage exclude -srcfile lzc.sv
 # StallFCause is hardwired to 0
 #coverage exclude -togglenode /dut/core/hzu/StallFCause
 
+# Excluding peripherals as sources of instructions for the ifu
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/clintdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/gpiodec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uartdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/plicdec
+
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
+
+
+#Excluding the bootrom, uncoreran, and clint as sources for the lsu
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
+#set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
+#coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -linerange $line-$line -item e 1 -fecexprrow 5
