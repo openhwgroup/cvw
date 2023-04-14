@@ -69,8 +69,8 @@ module mdu(
       3'b001: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];    // mulh
       3'b010: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];    // mulhsu
       3'b011: PrelimResultM = ProdM[`XLEN*2-1:`XLEN];    // mulhu
-      3'b100: PrelimResultM = QuotM;                    // div
-      3'b101: PrelimResultM = QuotM;                    // divu
+      3'b100: PrelimResultM = QuotM;                     // div
+      3'b101: PrelimResultM = QuotM;                     // divu
       3'b110: PrelimResultM = RemM;                      // rem
       3'b111: PrelimResultM = RemM;                      // remu
     endcase 

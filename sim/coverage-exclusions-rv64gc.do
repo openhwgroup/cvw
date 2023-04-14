@@ -36,18 +36,17 @@ coverage exclude -srcfile lzc.sv
 coverage exclude -scope /core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
 
 
-######################
-# Toggle exclusions
-#   Not used because toggle coverage isn't measured
-######################
+# Excluding peripherals as sources of instructions for the ifu
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/clintdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/gpiodec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uartdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/plicdec
 
-# Exclude DivBusyE from all design units because rv64gc uses the fdivsqrt unit for integer division
-#coverage exclude -togglenode DivBusyE -du *
-# Exclude QuotM and RemM from MDU because rv64gc uses the fdivsqrt rather tha div unit for integer division
-#coverage exclude -togglenode /dut/core/mdu/mdu/QuotM
-#coverage exclude -togglenode /dut/core/mdu/mdu/RemM
-
-# StallFCause is hardwired to 0
-#coverage exclude -togglenode /dut/core/hzu/StallFCause
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
 
 
+#Excluding the bootrom, uncoreran, and clint as sources for the lsu
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
+#set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
+#coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -linerange $line-$line -item e 1 -fecexprrow 5

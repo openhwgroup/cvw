@@ -48,7 +48,7 @@ module fsgninj (
   
   // format final result based on precision
   //    - uses NaN-blocking format
-  //        - if there are any unsused bits the most significant bits are filled with 1s
+  //        - if there are any unused bits the most significant bits are filled with 1s
   
   if (`FPSIZES == 1)
     assign SgnRes = {ResSgn, X[`FLEN-2:0]};

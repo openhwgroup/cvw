@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 ###########################################
-## CacheSimTest.py
+## rv64gc_CacheSim.py
 ##
 ## Written: lserafini@hmc.edu
 ## Created: 11 April 2023

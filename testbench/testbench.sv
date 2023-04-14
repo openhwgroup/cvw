@@ -49,8 +49,8 @@ module testbench;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
 
-string tests[];
-logic [3:0] dummy;
+  string tests[];
+  logic [3:0] dummy;
 
   logic [`AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
@@ -559,11 +559,8 @@ end
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
-    logic  Enable;
-    // assign Enable = ~dut.core.StallD & ~dut.core.FlushD & dut.core.ifu.bus.icache.CacheRWF[1] & ~reset;
+    logic  Enable, InvalDelayed;
     
-    // this version of Enable allows for accurate eviction logging.
-    // Likely needs further improvement.
     assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & 
                     dut.core.ifu.immu.immu.pmachecker.Cacheable &
                     ~dut.core.ifu.bus.icache.icache.cachefsm.FlushStage &
@@ -596,13 +593,13 @@ end
 
   if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
-	string LogFile;
-	logic  resetD, resetEdge;
+    string LogFile;
+    logic  resetD, resetEdge;
     logic  Enabled;
     string AccessTypeString, HitMissString;
 
-	flop #(1) ResetDReg(clk, reset, resetD);
-	assign resetEdge = ~reset & resetD;
+    flop #(1) ResetDReg(clk, reset, resetD);
+    assign resetEdge = ~reset & resetD;
     assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
                            (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
                            dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
@@ -611,12 +608,7 @@ end
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
                               dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
                               "NULL";
-    // assign Enabled = (dut.core.lsu.bus.dcache.dcache.cachefsm.CurrState == 0) &
-    //                  ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
-    //                  (AccessTypeString != "NULL");
-
-    // This version of enable allows for accurate eviction logging. 
-    // Likely needs further improvement.
+    
     assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
