@@ -32,6 +32,9 @@
 # This is ugly to exlcude the whole file - is there a better option?  // coverage off isn't working
 coverage exclude -srcfile lzc.sv 
 
+# FDIVSQRT has 
+coverage exclude -scope /core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
+
 
 ######################
 # Toggle exclusions
@@ -46,4 +49,5 @@ coverage exclude -srcfile lzc.sv
 
 # StallFCause is hardwired to 0
 #coverage exclude -togglenode /dut/core/hzu/StallFCause
+
 
