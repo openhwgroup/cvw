@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// dcache (data cache) fsm
+// cachefsm.sv
 //
 // Written: Ross Thompson ross1728@gmail.com
 // Created: 25 August 2021
 // Modified: 20 January 2023
 //
-// Purpose: Controller for the dcache fsm
+// Purpose: Controller for the cache fsm
 //
 // Documentation: RISC-V System on Chip Design Chapter 7 (Figure 7.14 and Table 7.1)
 //
