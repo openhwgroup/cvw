@@ -31,8 +31,8 @@ localparam PA_BITS = 34;
 //localparam MISA = (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 );
 ////localparam    BUS_SUPPORTED = 1'b1;
 //localparam    ZICSR_SUPPORTED = 1'b0;
-localparam    M_SUPPORTED = 1'b0;
-localparam    F_SUPPORTED = 1'b0;
+// localparam    M_SUPPORTED = 1'b0;
+// localparam    F_SUPPORTED = 1'b0;
 //localparam    ZMMUL_SUPPORTED = 1'b0;
 //localparam    F_SUPPORTED = 1'b0;
 //localparam    PMP_ENTRIES = 0;
@@ -43,7 +43,7 @@ localparam    LLEN =     32;
    // `include "test-shared.vh"
 localparam    FLEN =     32;
 
-`include "test-shared.vh"
+
  
 
  
@@ -175,4 +175,6 @@ localparam ZBS_SUPPORTED = 0;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
+
+`include "test-shared.vh"
  

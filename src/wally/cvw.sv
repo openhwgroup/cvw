@@ -35,17 +35,17 @@
 package cvw;
 
 typedef struct packed {
-  byte          FPGA;   // Modifications to tare
-  byte          QEMU;   // Hacks to agree with QEMU during Linux boot
-  byte          XLEN;   // Machine width (32 or 64)
+  longint          FPGA;   // Modifications to tare
+  longint          QEMU;   // Hacks to agree with QEMU during Linux boot
+  longint       XLEN;   // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   logic [31:0]  MISA;   // Machine Instruction Set Architecture
-  byte          AHBW;   // AHB bus width (usually = XLEN)
+  longint          AHBW;   // AHB bus width (usually = XLEN)
 
   // RISC-V Features
   logic         ZICSR_SUPPORTED;
   logic         ZIFENCEI_SUPPORTED;
-  byte          COUNTERS;
+  longint          COUNTERS;
   logic         ZICOUNTERS_SUPPORTED;
   logic         ZFH_SUPPORTED;
   logic         SSTC_SUPPORTED;
@@ -55,27 +55,40 @@ typedef struct packed {
   logic         SVADU_SUPPORTED;
   logic         ZMMUL_SUPPORTED;
 
+  logic         A_SUPPORTED;
+  logic         B_SUPPORTED;
+  logic         C_SUPPORTED;
+  logic         D_SUPPORTED;
+  logic         E_SUPPORTED;
+  logic         F_SUPPORTED;
+  logic         I_SUPPORTED;
+  logic         M_SUPPORTED;
+  logic         Q_SUPPORTED;
+  logic         S_SUPPORTED;
+  logic         U_SUPPORTED;
+
+
   // Microarchitectural Features
   logic         BUS_SUPPORTED;
   logic         DCACHE_SUPPORTED;
   logic         ICACHE_SUPPORTED;
 
 // TLB configuration.  Entries should be a power of 2
-  byte         ITLB_ENTRIES;
-  byte         DTLB_ENTRIES;
+  longint         ITLB_ENTRIES;
+  longint         DTLB_ENTRIES;
 
 // Cache configuration.  Sizes should be a power of two
-// typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
-  byte         DCACHE_NUMWAYS;
-  shortint         DCACHE_WAYSIZEINBYTES;
-  shortint         DCACHE_LINELENINBITS;
-  byte         ICACHE_NUMWAYS;
-  shortint         ICACHE_WAYSIZEINBYTES;
-  shortint         ICACHE_LINELENINBITS;
+// typical configuration 4 ways, 4096 longints per way, 256 bit or more lines
+  longint         DCACHE_NUMWAYS;
+  longint         DCACHE_WAYSIZEINBYTES;
+  longint         DCACHE_LINELENINBITS;
+  longint         ICACHE_NUMWAYS;
+  longint         ICACHE_WAYSIZEINBYTES;
+  longint         ICACHE_LINELENINBITS;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-  byte         IDIV_BITSPERCYCLE;
+  longint         IDIV_BITSPERCYCLE;
   logic         IDIV_ON_FPU;
 
 // Legal number of PMP entries are 0, 16, or 64
@@ -85,7 +98,7 @@ typedef struct packed {
   logic [31:0]         RESET_VECTOR;
 
 // WFI Timeout Wait
-  byte         WFI_TIMEOUT_BIT;
+  longint         WFI_TIMEOUT_BIT;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -130,20 +143,20 @@ typedef struct packed {
   logic         UART_PRESCALE ;
 
 // Interrupt configuration
-  byte         PLIC_NUM_SRC;
+  longint         PLIC_NUM_SRC;
   logic        PLIC_NUM_SRC_LT_32;
-  byte         PLIC_GPIO_ID;
-  byte         PLIC_UART_ID;
+  longint         PLIC_GPIO_ID;
+  longint         PLIC_UART_ID;
 
   logic         BPRED_SUPPORTED;
   //parameter         BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-  byte         BPRED_SIZE;
-  byte         BTB_SIZE;
+  longint         BPRED_SIZE;
+  longint         BTB_SIZE;
 
 
 // FPU division architecture
-  byte         RADIX;
-  byte         DIVCOPIES;
+  longint         RADIX;
+  longint         DIVCOPIES;
 
 // bit manipulation
   logic         ZBA_SUPPORTED;
@@ -154,14 +167,14 @@ typedef struct packed {
 // Memory synthesis configuration
   logic         USE_SRAM;
   
-  logic M_SUPPORTED;
-  logic F_SUPPORTED;
+  // logic M_SUPPORTED;
+  // logic F_SUPPORTED;
   logic [63:0] LLEN;
   logic [63:0] FLEN;
 
   // 
-  byte VPN_SEGMENT_BITS;
-  byte          PA_BITS;  // size of physical address
+  longint VPN_SEGMENT_BITS;
+  longint          PA_BITS;  // size of physical address
 
 } cvw_t;
 
