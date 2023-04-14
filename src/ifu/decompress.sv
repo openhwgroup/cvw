@@ -44,7 +44,7 @@ module decompress (
   logic [5:0]         immSH;
   logic [1:0]         op;
     
-  // Extrac op and register source/destination fields
+  // Extract op and register source/destination fields
   assign instr16 = InstrRawD[15:0]; // instruction is already aligned
   assign op = instr16[1:0];
   assign rds1 = instr16[11:7];

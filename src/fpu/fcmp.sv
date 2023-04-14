@@ -71,11 +71,11 @@ module fcmp (
   //    EQ - quiet - sets invalid if signaling NaN input
   always_comb begin
     case (OpCtrl[2:0])
-        3'b110: CmpNV = EitherSNaN;//min 
-        3'b101: CmpNV = EitherSNaN;//max
-        3'b010: CmpNV = EitherSNaN;//equal
-        3'b001: CmpNV = EitherNaN;//less than
-        3'b011: CmpNV = EitherNaN;//less than or equal
+        3'b110: CmpNV = EitherSNaN; //min 
+        3'b101: CmpNV = EitherSNaN; //max
+        3'b010: CmpNV = EitherSNaN; //equal
+        3'b001: CmpNV = EitherNaN;  //less than
+        3'b011: CmpNV = EitherNaN;  //less than or equal
         default: CmpNV = 1'bx;
     endcase
   end 
@@ -137,19 +137,19 @@ module fcmp (
           if(YNaN)    CmpFpRes = NaNRes;   // X = NaN Y = NaN
           else        CmpFpRes = Y;        // X = NaN Y != NaN
         else
-          if(YNaN)    CmpFpRes = X; // X != NaN Y = NaN
+          if(YNaN)    CmpFpRes = X;        // X != NaN Y = NaN
           else // X,Y != NaN
-              if(LT)   CmpFpRes = Y; // X < Y
-              else     CmpFpRes = X; // X > Y
+              if(LT)  CmpFpRes = Y;        // X < Y
+              else    CmpFpRes = X;        // X > Y
     else  // MIN
         if(XNaN)
           if(YNaN)    CmpFpRes = NaNRes;   // X = NaN Y = NaN
           else        CmpFpRes = Y;        // X = NaN Y != NaN
         else
-          if(YNaN)    CmpFpRes = X; // X != NaN Y = NaN
+          if(YNaN)    CmpFpRes = X;        // X != NaN Y = NaN
           else // X,Y != NaN
-              if(LT)   CmpFpRes = X; // X < Y
-              else     CmpFpRes = Y; // X > Y
+              if(LT)  CmpFpRes = X;        // X < Y
+              else    CmpFpRes = Y;        // X > Y
                                   
   // LT/LE/EQ
   //    - -0 = 0
