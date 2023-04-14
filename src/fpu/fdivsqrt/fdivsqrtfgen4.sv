@@ -29,7 +29,7 @@
 `include "wally-config.vh"
 
 module fdivsqrtfgen4 (
-  input  logic [3:0] udigit,
+  input  logic [3:0]       udigit,
   input  logic [`DIVb+3:0] C, U, UM,
   output logic [`DIVb+3:0] F
 );

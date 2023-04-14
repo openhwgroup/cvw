@@ -48,25 +48,25 @@ module bpred (
   input  logic [`XLEN-1:0] PCE,                       // Execution stage instruction address
   input  logic [`XLEN-1:0] PCM,                       // Memory stage instruction address
 
-  input logic [31:0]       PostSpillInstrRawF,        // Instruction
+  input  logic [31:0]      PostSpillInstrRawF,        // Instruction
 
   // Branch and jump outcome
-  input logic              InstrValidD, InstrValidE,
+  input  logic             InstrValidD, InstrValidE,
   input  logic             BranchD, BranchE,
   input  logic             JumpD, JumpE,
-  input logic              PCSrcE,                    // Executation stage branch is taken
-  input logic [`XLEN-1:0]  IEUAdrE,                   // The branch/jump target address
-  input logic [`XLEN-1:0]  IEUAdrM,                   // The branch/jump target address
-  input logic [`XLEN-1:0]  PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
+  input  logic             PCSrcE,                    // Executation stage branch is taken
+  input  logic [`XLEN-1:0] IEUAdrE,                   // The branch/jump target address
+  input  logic [`XLEN-1:0] IEUAdrM,                   // The branch/jump target address
+  input  logic [`XLEN-1:0] PCLinkE,                   // The address following the branch instruction. (AKA Fall through address)
   output logic [3:0]       InstrClassM,               // The valid instruction class. 1-hot encoded as call, return, jr (not return), j, br
 
   // Report branch prediction status
-  output logic             BPWrongE,              // Prediction is wrong
-  output logic             BPWrongM,              // Prediction is wrong
+  output logic             BPWrongE,                  // Prediction is wrong
+  output logic             BPWrongM,                  // Prediction is wrong
   output logic             BPDirPredWrongM,           // Prediction direction is wrong
-  output logic             BTAWrongM,           // Prediction target wrong
+  output logic             BTAWrongM,                 // Prediction target wrong
   output logic             RASPredPCWrongM,           // RAS prediction is wrong
-  output logic             IClassWrongM // Class prediction is wrong
+  output logic             IClassWrongM               // Class prediction is wrong
   );
 
   logic [1:0]              BPDirPredF;
@@ -187,7 +187,7 @@ module bpred (
   // Correct branch/jump target.
   mux2 #(`XLEN) pccorrectemux(PCLinkE, IEUAdrE, PCSrcE, PCCorrectE);
   
-  // If the fence/csrw was predicted as a taken branch then we select PCF, rather PCE.
+  // If the fence/csrw was predicted as a taken branch then we select PCF, rather than PCE.
   // Effectively this is PCM+4 or the non-existant PCLinkM
   if(`INSTR_CLASS_PRED) mux2 #(`XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else  assign NextValidPCE = PCE;
@@ -201,11 +201,11 @@ module bpred (
     // 3. target ras    (ras target wrong / class[2])
     // 4. direction     (br dir wrong / class[0])
 
-    // Unforuantely we can't use PCD to infer the correctness of the BTB or RAS because the class prediction 
+    // Unfortunately we can't use PCD to infer the correctness of the BTB or RAS because the class prediction 
     // could be wrong or the fall through address selected for branch predict not taken.
     // By pipeline the BTB's PC and RAS address through the pipeline we can measure the accuracy of
     // both without the above inaccuracies.
-  // **** use BPBTAWrongM from BTB.
+    // **** use BPBTAWrongM from BTB.
     assign BTAWrongE = (BPBTAE != IEUAdrE) & (BranchE | JumpE & ~ReturnE) & PCSrcE;
     assign RASPredPCWrongE = (RASPCE != IEUAdrE) & ReturnE & PCSrcE;
 

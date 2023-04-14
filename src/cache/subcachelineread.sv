@@ -1,11 +1,11 @@
 ///////////////////////////////////////////
-// subcachelineread
+// subcachelineread.sv
 //
 // Written: Ross Thompson ross1728@gmail.com
 // Created: 4 February 2022
 // Modified: 20 January 2023
 //
-// Purpose: Muxes the cache line downto the word size.  Also include possilbe save/restore registers/muxes.
+// Purpose: Muxes the cache line down to the word size.  Also include possible save/restore registers/muxes.
 //
 // Documentation: RISC-V System on Chip Design Chapter 7
 
@@ -31,7 +31,6 @@
 
 module subcachelineread #(parameter LINELEN, WORDLEN, 
   parameter MUXINTERVAL )(     // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to `LLEN for D$
-
   input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0] PAdr,       // Physical address 
   input  logic [LINELEN-1:0]                     ReadDataLine,// Read data of the whole cacheline
   output logic [WORDLEN-1:0]                     ReadDataWord // read data of selected word.
