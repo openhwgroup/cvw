@@ -88,20 +88,24 @@ test_cases:
 
 .8byte delay0,  0x00010000, write32_test
 .8byte tx_data, 0x00000011, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
+.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000011, read32_test     # read rx_data
 
 .8byte sck_div, 0x00000101, write32_test    # set sck_div to 0x101
 .8byte tx_data, 0x00000022, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
+.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000022, read32_test     # read rx_data
 
 .8byte sck_div, 0x00000003, write32_test    # set sck_div to 0x101
-.8byte tx_data, 0x00000033, write32_test   # place 8'h11 into tx_data
-.8byte tx_data, 0x00000044, write32_test   # place 8'h11 into tx_data
-.8byte tx_data, 0x00000055, write32_test   # place 8'h11 into tx_data
-.8byte tx_data, 0x00000066, write32_test   # place 8'h11 into tx_data
-
-
-
+#.8byte tx_data, 0x00000033, write32_test   # place 8'h11 into tx_data
+#.8byte tx_data, 0x00000044, write32_test   # place 8'h11 into tx_data
+#.8byte tx_data, 0x00000055, write32_test   # place 8'h11 into tx_data
+#.8byte tx_data, 0x00000066, write32_test   # place 8'h11 into tx_data
+.8byte tx_data, 0x66554433, spi_burst_send
+#.8byte tx_data, 0x44, write08_test
+.8byte 0x0, 0x00000003, spi_data_wait
+.8byte rx_data, 0x00000033, read32_test
+.8byte rx_data, 0x00000044, read32_test
+.8byte rx_data, 0x00000055, read32_test
+.8byte rx_data, 0x00000066, read32_test
 .8byte 0x0, 0x0, terminate_test

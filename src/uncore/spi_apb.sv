@@ -176,7 +176,7 @@ module spi_apb (
     logic [5:0] tx_frame_cnt_shift_pre;
     logic [5:0] tx_penultimate_frame;
     logic [5:0] rx_penultimate_frame;
-    logic [5:0] rx_frame_cnt_shifted_pre;
+    logic [5:0] rx_frame_cnt_shift_pre;
     logic tx_frame_cmp_pre_bool;
     logic rx_frame_cmp_pre_bool;
     logic [5:0] frame_cmp_protocol;
@@ -201,9 +201,11 @@ module spi_apb (
     
     assign frame_cmp_bool = (frame_cnt_shifted < frame_cmp);
     assign tx_frame_cnt_shift_pre = frame_cnt_shifted + tx_penultimate_frame;
+    assign rx_frame_cnt_shift_pre = frame_cnt_shifted + tx_penultimate_frame;
+
     assign frame_cmp_protocol = (fmt[1] | fmt[0]) ? {1'b0, frame_cmp[5:1]} : frame_cmp;
     assign tx_frame_cmp_pre_bool = (tx_frame_cnt_shift_pre >= frame_cmp_protocol);
-    assign rx_frame_cmp_pre_bool = (tx_frame_cnt_shift_pre >= frame_cmp);
+    assign rx_frame_cmp_pre_bool = (rx_frame_cnt_shift_pre >= frame_cmp);
 
 
 
@@ -357,13 +359,15 @@ module spi_apb (
     logic [7:0] txShift;
     logic [7:0] rxShift;
     logic sample_edge;
+    logic [7:0] endianTxData;
     assign sample_edge = sck_mode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
+    assign endianTxData =  fmt[2] ? {tx_data[0], tx_data[1], tx_data[2], tx_data[3], tx_data[4], tx_data[5], tx_data[6], tx_data[7]} : tx_data[7:0];
     
 
-    FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc_delay, TXrinc, tx_data,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
+    FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc_delay, TXrinc, endianTxData,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
     FIFO_async #(3,8) rxFIFO(sclk_duty, PCLK, PRESETn, RXwinc, RXrinc, rxShift, fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
 
-    txShiftFSM txShiftFSM_1 (sclk_duty, PRESETn, TXrempty_delay, rx_frame_cmp_pre_bool, active0, txShiftEmpty);
+    txShiftFSM txShiftFSM_1 (PCLK, PRESETn, TXrempty, rx_frame_cmp_pre_bool, active0, txShiftEmpty);
     rxShiftFSM rxShiftFSM_1 (sclk_duty, PRESETn, rx_frame_cmp_pre_bool, sample_edge, rxShiftFull);
 
     always_ff @(posedge sclk_duty, negedge PRESETn)
@@ -399,7 +403,7 @@ module spi_apb (
         else begin
            // txShiftEmpty <= (~active & ~txShiftEmpty);
             
-            if (~active & ~TXrempty) txShift <= TXrdata;
+            if ((~active & ~TXrempty) | ((cs_mode[1:0] == 2'b10) & ~|(delay1[23:17]) & (~TXrempty) & txShiftEmpty)) txShift <= TXrdata;
             else if (active) begin
                 case (fmt[1:0])
                     2'b00: txShift <= {txShift[6:0], 1'b0};
@@ -521,7 +525,7 @@ module FIFO_async #(parameter M = 3, N = 8)(
 
     assign rdata = mem[raddr];
     always_ff @(posedge wclk)
-        if(winc & ~wfull) mem[waddr] <= (~endian) ? wdata : {wdata[0], wdata[1], wdata[2], wdata[3], wdata[4], wdata[5], wdata[6], wdata[7] };
+        if(winc & ~wfull) mem[waddr] <= wdata;
 
     always_ff @(posedge wclk, negedge PRESETn)
         if (~PRESETn) begin
@@ -594,6 +598,7 @@ module txShiftFSM(
 
     typedef enum logic {txShiftEmptyState, txShiftNotEmptyState} statetype;
     statetype tx_state, tx_nextstate;
+
     always_ff @(posedge sclk_duty, negedge PRESETn)
         if (~PRESETn) tx_state <= txShiftEmptyState;
         else          tx_state <= tx_nextstate;
@@ -605,7 +610,8 @@ module txShiftFSM(
                     else if (|(frame_cnt)) tx_nextstate <= txShiftNotEmptyState;
                 end
                 txShiftNotEmptyState: begin
-                    if (rx_frame_cmp_pre_bool & (active0)) tx_nextstate <= txShiftEmptyState;
+                    frame_num <= frame_num + 4'b1;
+                    if ((rx_frame_cmp_pre_bool & (active0)) & tx_nextstate <= txShiftEmptyState;
                     else tx_nextstate <= txShiftNotEmptyState;
                 end
             endcase

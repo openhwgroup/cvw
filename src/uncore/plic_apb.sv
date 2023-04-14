@@ -52,7 +52,7 @@ module plic_apb (
   input  logic             PENABLE,
   output logic [`XLEN-1:0] PRDATA,
   output logic             PREADY,
-  input  logic             UARTIntr,GPIOIntr,
+  input  logic             UARTIntr,GPIOIntr,SPIIntr,
   output logic             MExtInt, SExtInt
 );
 
@@ -166,6 +166,9 @@ module plic_apb (
     `endif
     `ifdef PLIC_UART_ID
       requests[`PLIC_UART_ID] = UARTIntr;
+    `endif
+    `ifdef PLIC_SPI_ID
+      requests[`PLIC_SPI_ID] = SPIIntr;
     `endif
   end
 
