@@ -47,7 +47,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
   // performance counter outputs
   output logic       CacheMiss,         // Cache miss  
-  output logic       CacheAccess,    // Cache access
+  output logic       CacheAccess,       // Cache access
 
   // cache internals
   input  logic       CacheHit,          // Exactly 1 way hits
@@ -55,7 +55,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       FlushAdrFlag,      // On last set of a cache flush
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
-  output logic       SetValid,          // Set the dirty bit in the selected way and set
+  output logic       SetValid,          // Set the valid bit in the selected way and set
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
