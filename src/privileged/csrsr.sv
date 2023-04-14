@@ -93,7 +93,7 @@ module csrsr (
 
   // harwired STATUS bits
   assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
+  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override register with 0 if only machine mode supported
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
 /*  assign STATUS_UBE = 0; // little-endian
