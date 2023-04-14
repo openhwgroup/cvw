@@ -85,62 +85,62 @@ module testbench;
     //tests = '{};
     if (`XLEN == 64) begin // RV64
       case (TEST)
-        "arch64i":                        tests = arch64i;
-        "arch64priv":                     tests = arch64priv;
+        "arch64i":                               tests = arch64i;
+        "arch64priv":                            tests = arch64priv;
         "arch64c":      if (`C_SUPPORTED) 
-                          if (`ZICSR_SUPPORTED) tests = {arch64c, arch64cpriv};
-                          else                  tests = {arch64c};
-        "arch64m":      if (`M_SUPPORTED) tests = arch64m;
-        "arch64f":      if (`F_SUPPORTED) tests = arch64f;
-        "arch64d":      if (`D_SUPPORTED) tests = arch64d;  
+                          if (`ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
+                          else                   tests = {arch64c};
+        "arch64m":      if (`M_SUPPORTED)        tests = arch64m;
+        "arch64f":      if (`F_SUPPORTED)        tests = arch64f;
+        "arch64d":      if (`D_SUPPORTED)        tests = arch64d;  
         "arch64zi":     if (`ZIFENCEI_SUPPORTED) tests = arch64zi;
-        "imperas64i":                     tests = imperas64i;
-        "imperas64f":   if (`F_SUPPORTED) tests = imperas64f;
-        "imperas64d":   if (`D_SUPPORTED) tests = imperas64d;
-        "imperas64m":   if (`M_SUPPORTED) tests = imperas64m;
-        "wally64a":     if (`A_SUPPORTED) tests = wally64a;
-        "imperas64c":   if (`C_SUPPORTED) tests = imperas64c;
-                        else              tests = imperas64iNOc;
-        "custom":                         tests = custom;
-        "wally64i":                       tests = wally64i; 
-        "wally64priv":                    tests = wally64priv;
-        "wally64periph":                  tests = wally64periph;
-        "coremark":                       tests = coremark;
-        "fpga":                           tests = fpga;
-        "ahb" :                           tests = ahb;
-        "coverage64gc" :                  tests = coverage64gc;
-        "arch64zba":     if (`ZBA_SUPPORTED) tests = arch64zba;
-        "arch64zbb":     if (`ZBB_SUPPORTED) tests = arch64zbb;
-        "arch64zbc":     if (`ZBC_SUPPORTED) tests = arch64zbc;
-        "arch64zbs":     if (`ZBS_SUPPORTED) tests = arch64zbs;
+        "imperas64i":                            tests = imperas64i;
+        "imperas64f":   if (`F_SUPPORTED)        tests = imperas64f;
+        "imperas64d":   if (`D_SUPPORTED)        tests = imperas64d;
+        "imperas64m":   if (`M_SUPPORTED)        tests = imperas64m;
+        "wally64a":     if (`A_SUPPORTED)        tests = wally64a;
+        "imperas64c":   if (`C_SUPPORTED)        tests = imperas64c;
+                        else                     tests = imperas64iNOc;
+        "custom":                                tests = custom;
+        "wally64i":                              tests = wally64i; 
+        "wally64priv":                           tests = wally64priv;
+        "wally64periph":                         tests = wally64periph;
+        "coremark":                              tests = coremark;
+        "fpga":                                  tests = fpga;
+        "ahb" :                                  tests = ahb;
+        "coverage64gc" :                         tests = coverage64gc;
+        "arch64zba":     if (`ZBA_SUPPORTED)     tests = arch64zba;
+        "arch64zbb":     if (`ZBB_SUPPORTED)     tests = arch64zbb;
+        "arch64zbc":     if (`ZBC_SUPPORTED)     tests = arch64zbc;
+        "arch64zbs":     if (`ZBS_SUPPORTED)     tests = arch64zbs;
       endcase 
     end else begin // RV32
       case (TEST)
-        "arch32i":                        tests = arch32i;
-        "arch32priv":                     tests = arch32priv;
+        "arch32i":                               tests = arch32i;
+        "arch32priv":                            tests = arch32priv;
         "arch32c":      if (`C_SUPPORTED) 
-                          if (`ZICSR_SUPPORTED) tests = {arch32c, arch32cpriv};
-                          else                  tests = {arch32c};
-        "arch32m":      if (`M_SUPPORTED) tests = arch32m;
-        "arch32f":      if (`F_SUPPORTED) tests = arch32f;
-        "arch32d":      if (`D_SUPPORTED) tests = arch32d;
+                          if (`ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
+                          else                   tests = {arch32c};
+        "arch32m":      if (`M_SUPPORTED)        tests = arch32m;
+        "arch32f":      if (`F_SUPPORTED)        tests = arch32f;
+        "arch32d":      if (`D_SUPPORTED)        tests = arch32d;
         "arch32zi":     if (`ZIFENCEI_SUPPORTED) tests = arch32zi;
-        "imperas32i":                     tests = imperas32i;
-        "imperas32f":   if (`F_SUPPORTED) tests = imperas32f;
-        "imperas32m":   if (`M_SUPPORTED) tests = imperas32m;
-        "wally32a":     if (`A_SUPPORTED) tests = wally32a;
-        "imperas32c":   if (`C_SUPPORTED) tests = imperas32c;
-                        else              tests = imperas32iNOc;
-        "wally32i":                       tests = wally32i; 
-        "wally32e":                       tests = wally32e; 
-        "wally32priv":                    tests = wally32priv;
-        "wally32periph":                  tests = wally32periph;
-        "embench":                        tests = embench;
-        "coremark":                       tests = coremark;
-        "arch32zba":     if (`ZBA_SUPPORTED) tests = arch32zba;
-        "arch32zbb":     if (`ZBB_SUPPORTED) tests = arch32zbb;
-        "arch32zbc":     if (`ZBC_SUPPORTED) tests = arch32zbc;
-        "arch32zbs":     if (`ZBS_SUPPORTED) tests = arch32zbs;
+        "imperas32i":                            tests = imperas32i;
+        "imperas32f":   if (`F_SUPPORTED)        tests = imperas32f;
+        "imperas32m":   if (`M_SUPPORTED)        tests = imperas32m;
+        "wally32a":     if (`A_SUPPORTED)        tests = wally32a;
+        "imperas32c":   if (`C_SUPPORTED)        tests = imperas32c;
+                        else                     tests = imperas32iNOc;
+        "wally32i":                              tests = wally32i; 
+        "wally32e":                              tests = wally32e; 
+        "wally32priv":                           tests = wally32priv;
+        "wally32periph":                         tests = wally32periph;
+        "embench":                               tests = embench;
+        "coremark":                              tests = coremark;
+        "arch32zba":     if (`ZBA_SUPPORTED)     tests = arch32zba;
+        "arch32zbb":     if (`ZBB_SUPPORTED)     tests = arch32zbb;
+        "arch32zbc":     if (`ZBC_SUPPORTED)     tests = arch32zbc;
+        "arch32zbs":     if (`ZBS_SUPPORTED)     tests = arch32zbs;
       endcase
     end
     if (tests.size() == 0) begin
@@ -307,7 +307,7 @@ module testbench;
           InReset = 1;
           begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
           if (!begin_signature_addr)
-          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+            $display("begin_signature addr not found in %s", ProgramLabelMapFile);
           testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
           testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
           #600; // give time for instructions in pipeline to finish
@@ -462,7 +462,7 @@ module testbench;
       flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
       assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
 
-	  end else if(TEST == "coremark") begin
+    end else if(TEST == "coremark") begin
       // embench runs warmup then runs start_trigger
 	    // embench end with stop_trigger.
       assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
@@ -560,7 +560,8 @@ module testbench;
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
-    logic  Enable, InvalDelayed;
+    logic  Enable;
+    logic  InvalDelayed, InvalEdge;
     
     assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & 
                     dut.core.ifu.immu.immu.pmachecker.Cacheable &
@@ -706,13 +707,13 @@ module DCacheFlushFSM
 
 
 
-	  genvar 			         index, way, cacheWord;
-	  logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    genvar               index, way, cacheWord;
+    logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     logic [sramlen-1:0]  cacheline;
-	  logic [`XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic                CacheValid [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic                CacheDirty [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic [`XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic                CacheValid [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic                CacheDirty [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic [`PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     for(index = 0; index < numlines; index++) begin
       for(way = 0; way < numways; way++) begin
         for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
