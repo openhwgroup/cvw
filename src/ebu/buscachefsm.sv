@@ -40,29 +40,29 @@ module buscachefsm #(
   input  logic                   HRESETn,
 
   // IEU interface
-  input  logic                   Stall,                   // Core pipeline is stalled
-  input  logic                   Flush,                   // Pipeline stage flush. Prevents bus transaction from starting
-  input  logic [1:0]             BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
-  output logic                   BusStall,                // Bus is busy with an in flight memory operation
-  output logic                   BusCommitted,            // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
+  input  logic                   Stall,              // Core pipeline is stalled
+  input  logic                   Flush,              // Pipeline stage flush. Prevents bus transaction from starting
+  input  logic [1:0]             BusRW,              // Uncached memory operation read/write control: 10: read, 01: write
+  output logic                   BusStall,           // Bus is busy with an in flight memory operation
+  output logic                   BusCommitted,       // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
                             
   // ahb cache interface locals.            
-  output logic                   CaptureEn,               // Enable updating the Fetch buffer with valid data from HRDATA
+  output logic                   CaptureEn,          // Enable updating the Fetch buffer with valid data from HRDATA
                             
   // cache interface                  
-  input  logic [1:0]             CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
-  output logic                   CacheBusAck,             // Handshack to $ indicating bus transaction completed
+  input  logic [1:0]             CacheBusRW,         // Cache bus operation, 01: writeback, 10: fetch
+  output logic                   CacheBusAck,        // Handshack to $ indicating bus transaction completed
   
   // lsu interface
   output logic [AHBWLOGBWPL-1:0] BeatCount,          // Beat position within the cache line in the Address Phase
   output logic [AHBWLOGBWPL-1:0] BeatCountDelayed,   // Beat within the cache line in the second (Data) cache stage
-  output logic                   SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
+  output logic                   SelBusBeat,         // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // BUS interface
-  input  logic                   HREADY,                  // AHB peripheral ready
-  output logic [1:0]             HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
-  output logic                   HWRITE,                  // AHB 0: Read operation 1: Write operation 
-  output logic [2:0]             HBURST                   // AHB burst length
+  input  logic                   HREADY,             // AHB peripheral ready
+  output logic [1:0]             HTRANS,             // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic                   HWRITE,             // AHB 0: Read operation 1: Write operation 
+  output logic [2:0]             HBURST              // AHB burst length
 );
   
   typedef enum logic [2:0] {ADR_PHASE, DATA_PHASE, MEM3, CACHE_FETCH, CACHE_WRITEBACK}               busstatetype;
@@ -78,8 +78,8 @@ module buscachefsm #(
   logic                   CacheAccess;
   
   always_ff @(posedge HCLK)
-    if (~HRESETn | Flush)    CurrState <= #1 ADR_PHASE;
-    else CurrState <= #1 NextState;  
+    if (~HRESETn | Flush) CurrState <= #1 ADR_PHASE;
+    else                  CurrState <= #1 NextState;  
   
   always_comb begin
       case(CurrState)

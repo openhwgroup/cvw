@@ -38,27 +38,27 @@ module ahbcacheinterface #(
 )(
   input  logic                HCLK, HRESETn,
   // bus interface controls
-  input logic                 HREADY,                  // AHB peripheral ready
+  input  logic                HREADY,                  // AHB peripheral ready
   output logic [1:0]          HTRANS,                  // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
   output logic                HWRITE,                  // AHB 0: Read operation 1: Write operation 
   output logic [2:0]          HSIZE,                   // AHB transaction width
   output logic [2:0]          HBURST,                  // AHB burst length
   // bus interface buses
-  input logic [`AHBW-1:0]     HRDATA,                  // AHB read data
+  input  logic [`AHBW-1:0]    HRDATA,                  // AHB read data
   output logic [`PA_BITS-1:0] HADDR,                   // AHB address
   output logic [`AHBW-1:0]    HWDATA,                  // AHB write data
   output logic [`AHBW/8-1:0]  HWSTRB,                  // AHB byte mask
   
   // cache interface
-  input logic [`PA_BITS-1:0]  CacheBusAdr,             // Address of cache line
-  input logic [`LLEN-1:0]     CacheReadDataWordM,      // one word of cache line during a writeback
-  input logic                 CacheableOrFlushCacheM,  // Memory operation is cacheable or flushing D$
-  input logic                 Cacheable,               // Memory operation is cachable
-  input logic [1:0]           CacheBusRW,              // Cache bus operation, 01: writeback, 10: fetch
-  output logic                CacheBusAck,             // Handshack to $ indicating bus transaction completed
-  output logic [LINELEN-1:0]  FetchBuffer,             // Register to hold beats of cache line as the arrive from bus
-  output logic [AHBWLOGBWPL-1:0] BeatCount,               // Beat position within the cache line in the Address Phase
-  output logic                SelBusBeat,              // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
+  input  logic [`PA_BITS-1:0] CacheBusAdr,            // Address of cache line
+  input  logic [`LLEN-1:0]    CacheReadDataWordM,     // One word of cache line during a writeback
+  input  logic                CacheableOrFlushCacheM, // Memory operation is cacheable or flushing D$
+  input  logic                Cacheable,              // Memory operation is cachable
+  input  logic [1:0]          CacheBusRW,             // Cache bus operation, 01: writeback, 10: fetch
+  output logic                CacheBusAck,            // Handshake to $ indicating bus transaction completed
+  output logic [LINELEN-1:0]  FetchBuffer,            // Register to hold beats of cache line as the arrive from bus
+  output logic [AHBWLOGBWPL-1:0] BeatCount,           // Beat position within the cache line in the Address Phase
+  output logic                SelBusBeat,             // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
   input logic [`PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
@@ -77,7 +77,7 @@ module ahbcacheinterface #(
   logic [`PA_BITS-1:0]        LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [`AHBW/8-1:0]         BusByteMaskM;                           // Byte enables within a word.  For cache request all 1s
+  logic [`AHBW/8-1:0]         BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
   logic [`AHBW-1:0]           PreHWDATA;                              // AHB Address phase write data
 
   genvar                      index;
@@ -107,7 +107,7 @@ module ahbcacheinterface #(
   end else assign CacheReadDataWordAHB = CacheReadDataWordM[`AHBW-1:0];      
   
   mux2 #(`AHBW) HWDATAMux(.d0(CacheReadDataWordAHB), .d1(WriteDataM[`AHBW-1:0]),
-     .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
+    .s(~(CacheableOrFlushCacheM)), .y(PreHWDATA));
   flopen #(`AHBW) wdreg(HCLK, HREADY, PreHWDATA, HWDATA); // delay HWDATA by 1 cycle per spec
 
   // *** bummer need a second byte mask for bus as it is AHBW rather than LLEN.
@@ -119,5 +119,5 @@ module ahbcacheinterface #(
   buscachefsm #(BeatCountThreshold, AHBWLOGBWPL, READ_ONLY_CACHE) AHBBuscachefsm(
     .HCLK, .HRESETn, .Flush, .BusRW, .Stall, .BusCommitted, .BusStall, .CaptureEn, .SelBusBeat,
     .CacheBusRW, .CacheBusAck, .BeatCount, .BeatCountDelayed,
-      .HREADY, .HTRANS, .HWRITE, .HBURST);
+    .HREADY, .HTRANS, .HWRITE, .HBURST);
 endmodule
