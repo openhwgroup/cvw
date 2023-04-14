@@ -4,6 +4,8 @@
 # This clock is not used by wally or the AHB Bus. However it is used by the AXI BUS on the DD3 IP.
 
 # clock comes from pin E3 and is 100Mhz
+# output of mmcm is /4 => 25Mhz
+create_clock -period 25.000 -name mmcm_clkout1 -waveform {0.000 12.500} [get_nets xlnx_ddr3_c0/ui_clk]
 
 create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
 
@@ -39,12 +41,12 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_por
 ##### UART #####
 # *** IOSTANDARD is probably wrong
 set_property PACKAGE_PIN A9 [get_ports UARTSin]
-set_property PACKAGE_PIN D0 [get_ports UARTSout]
+set_property PACKAGE_PIN D10 [get_ports UARTSout]
 set_max_delay -from [get_ports UARTSin] 10.000
 set_max_delay -to [get_ports UARTSout] 10.000
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSout]
-set_property DRIVE 6 [get_ports UARTSout]
+set_property DRIVE 4 [get_ports UARTSout]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports UARTSin]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports UARTSin]
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports UARTSout]
@@ -53,12 +55,8 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_por
 
 ##### reset #####
 #************** reset is inverted
-set_input_delay -clock [get_clocks default_250mhz_clk1_0_p] -min -add_delay 2.000 [get_ports reset]
-set_input_delay -clock [get_clocks default_250mhz_clk1_0_p] -max -add_delay 2.000 [get_ports reset]
-set_input_delay -clock [get_clocks mmcm_clkout0] -min -add_delay 0.000 [get_ports reset]
-set_input_delay -clock [get_clocks mmcm_clkout0] -max -add_delay 0.000 [get_ports reset]
-set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports reset]
-set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports reset]
+set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports reset]
+set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports reset]
 set_max_delay -from [get_ports reset] 15.000
 set_false_path -from [get_ports reset]
 set_property PACKAGE_PIN C2 [get_ports {reset}]
@@ -72,7 +70,7 @@ set_property PACKAGE_PIN D4 [get_ports {SDCDat[3]}]
 set_property PACKAGE_PIN D2 [get_ports {SDCDat[2]}]
 set_property PACKAGE_PIN E2 [get_ports {SDCDat[1]}]
 set_property PACKAGE_PIN F4 [get_ports {SDCDat[0]}]
-set_property PACKAGE_PIN F2 [get_ports SDCCLK]
+set_property PACKAGE_PIN F3 [get_ports SDCCLK]
 set_property PACKAGE_PIN D3 [get_ports {SDCCmd}]
 
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[3]}]
@@ -101,59 +99,59 @@ set_output_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 6.000 [get_por
 set_output_delay -clock [get_clocks CLKDiv64_Gen] 0.000 [get_ports SDCCLK]
 
 # *********************************
-set_property DCI_CASCADE {64} [get_iobanks 65]
-set_property INTERNAL_VREF 0.9 [get_iobanks 65]
+#set_property DCI_CASCADE {64} [get_iobanks 65]
+#set_property INTERNAL_VREF 0.9 [get_iobanks 65]
 
 # ddr3
 
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[1]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[2]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[3]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[4]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[5]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[6]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[7]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[8]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[9]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[10]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[11]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[12]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[13]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[14]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dq[15]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dm[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_dm[1]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[1]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[2]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[3]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[4]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[5]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[6]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[7]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[8]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[9]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[10]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[11]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[12]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[13]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[14]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dq[15]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dm[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_dm[1]
 set_property IOSTANDARD DIFF [get_ports ddr3_dqs_p[0]
 set_property IOSTANDARD DIFF [get_ports ddr3_dqs_n[0]
 set_property IOSTANDARD DIFF [get_ports ddr3_dqs_p[1]
 set_property IOSTANDARD DIFF [get_ports ddr3_dqs_n[1]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[13]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[12]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[11]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[10]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[9]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[8]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[7]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[6]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[5]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[4]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[3]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[2]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[1]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_addr[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_ba[2]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_ba[1]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_ba[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[13]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[12]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[11]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[10]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[9]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[8]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[7]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[6]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[5]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[4]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[3]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[2]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[1]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_addr[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_ba[2]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_ba[1]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_ba[0]
 set_property IOSTANDARD DIFF [get_ports ddr3_ck_p[0]
 set_property IOSTANDARD DIFF [get_ports ddr3_ck_n[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_ras_n
-set_property IOSTANDARD SSTL135 [get_ports ddr3_cas_n
-set_property IOSTANDARD SSTL135 [get_ports ddr3_we_n
-set_property IOSTANDARD SSTL135 [get_ports ddr3_reset_n
-set_property IOSTANDARD SSTL135 [get_ports ddr3_cke[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_odt[0]
-set_property IOSTANDARD SSTL135 [get_ports ddr3_cs_n[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_ras_n
+set_property IOSTANDARD SSTL15 [get_ports ddr3_cas_n
+set_property IOSTANDARD SSTL15 [get_ports ddr3_we_n
+set_property IOSTANDARD SSTL15 [get_ports ddr3_reset_n
+set_property IOSTANDARD SSTL15 [get_ports ddr3_cke[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_odt[0]
+set_property IOSTANDARD SSTL15 [get_ports ddr3_cs_n[0]
 
 
 set_properity PACKAGE_PIN K5 [get_ports ddr3_dq[0]]
