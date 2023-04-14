@@ -62,6 +62,17 @@ coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $sta
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusW"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache SelAdrCauses"] -item e 1 -fecexprrow 4 10
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache CacheBusRCauses"] -item e 1 -fecexprrow 1-2 12
+# cache.sv AdrSelMux and CacheBusAdrMux, excluding unhit Flush branch
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/AdrSelMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheBusAdrMux -linerange [GetLineNum ../src/generic/mux.sv "exclusion-tag: mux3"] -item b 1 3
+# CacheWay Dirty logic. -scope does not accept wildcards.
+set numcacheways 4
+for {set i 0} {$i < $numcacheways} {incr i} {
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SetDirtyWay"] -item e 1
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SelectedWiteWordEn"] -item e 1 -fecexprrow 4 6
+    # below: flushD can't go high during an icache write b/c of pipeline stall
+    coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SetValidEN"] -item e 1 -fecexprrow 4
+}
 
 ######################
 # Toggle exclusions

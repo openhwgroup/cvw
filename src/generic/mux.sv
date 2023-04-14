@@ -40,7 +40,7 @@ module mux3 #(parameter WIDTH = 8) (
   input  logic [1:0]       s, 
   output logic [WIDTH-1:0] y);
 
-  assign y = s[1] ? d2 : (s[0] ? d1 : d0); 
+  assign y = s[1] ? d2 : (s[0] ? d1 : d0); // exclusion-tag: mux3
 endmodule
 
 module mux4 #(parameter WIDTH = 8) (
