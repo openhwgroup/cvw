@@ -593,13 +593,13 @@ end
 
   if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
-	  string LogFile;
-	  logic  resetD, resetEdge;
+    string LogFile;
+    logic  resetD, resetEdge;
     logic  Enabled;
     string AccessTypeString, HitMissString;
 
-	  flop #(1) ResetDReg(clk, reset, resetD);
-	  assign resetEdge = ~reset & resetD;
+    flop #(1) ResetDReg(clk, reset, resetD);
+    assign resetEdge = ~reset & resetD;
     assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
                            (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
                            dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
