@@ -164,7 +164,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   logic                          DCacheStallM, ICacheStallF;
   
   // instruction fetch unit: PC, branch prediction, instruction cache
-  ifu ifu(.clk, .reset,
+  ifu #(P) ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     .InstrValidM, .InstrValidE, .InstrValidD,
     .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
