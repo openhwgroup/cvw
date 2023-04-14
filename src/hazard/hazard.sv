@@ -30,13 +30,13 @@
 
 module hazard (
   // Detect hazards
-  input logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
-  input logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
-  input logic  LSUStallM, IFUStallF,
-  input logic  FCvtIntStallD, FPUStallD,
-  input logic  DivBusyE, FDivBusyE,
-  input logic  EcallFaultM, BreakpointFaultM,
-  input logic  wfiM, IntPendingM,
+  input  logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
+  input  logic  LoadStallD, StoreStallD, MDUStallD, CSRRdStallD,
+  input  logic  LSUStallM, IFUStallF,
+  input  logic  FCvtIntStallD, FPUStallD,
+  input  logic  DivBusyE, FDivBusyE,
+  input  logic  EcallFaultM, BreakpointFaultM,
+  input  logic  wfiM, IntPendingM,
   // Stall & flush outputs
   output logic StallF, StallD, StallE, StallM, StallW,
   output logic FlushD, FlushE, FlushM, FlushW
