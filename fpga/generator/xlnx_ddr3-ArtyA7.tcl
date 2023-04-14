@@ -10,9 +10,8 @@ set_property board_part $boardName [current_project]
 # really just these two lines which change
 create_ip -name mig_7series -vendor xilinx.com -library ip -module_name $ipName
 
-exec ls ../xlnx_ddr3-artya7-mig.prj
-exec ls ./IP/$ipName.srcs/sources_1/ip/$ipName
-exec cp ../xlnx_ddr3-artya7-mig.prj ./IP/$ipName.srcs/sources_1/ip/$ipName/xlnx_ddr3-artya7-mig.prj
+exec mkdir -p IP/$ipName.srcs/sources_1/ip/$ipName
+exec cp ../xlnx_ddr3-artya7-mig.prj $ipName.srcs/sources_1/ip/$ipName/xlnx_ddr3-artya7-mig.prj
 
 set_property -dict [list CONFIG.XML_INPUT_FILE {xlnx_ddr3-artya7-mig.prj} CONFIG.RESET_BOARD_INTERFACE {Custom} CONFIG.MIG_DONT_TOUCH_PARAM {Custom} CONFIG.BOARD_MIG_PARAM {Custom}] [get_ips $ipName]
 
