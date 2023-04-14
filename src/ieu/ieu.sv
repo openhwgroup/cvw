@@ -29,7 +29,7 @@
 `include "wally-config.vh"
 
 module ieu (
-  input  logic               clk, reset,
+  input  logic              clk, reset,
   // Decode stage signals
   input  logic [31:0]       InstrD,                          // Instruction
   input  logic              IllegalIEUFPUInstrD,             // Illegal instruction

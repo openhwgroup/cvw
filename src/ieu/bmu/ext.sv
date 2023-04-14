@@ -32,7 +32,7 @@
 
 module ext #(parameter WIDTH = 32) (
   input  logic [WIDTH-1:0] A,            // Operands
-  input  logic [1:0] ExtSelect,          // B[2], B[0] of immediate
+  input  logic [1:0]       ExtSelect,    // B[2], B[0] of immediate
   output logic [WIDTH-1:0] ExtResult);   // Extend Result
 
   logic [WIDTH-1:0] sexthResult, zexthResult, sextbResult;
