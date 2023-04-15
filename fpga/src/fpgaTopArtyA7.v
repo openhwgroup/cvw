@@ -173,6 +173,8 @@ module fpgaTop
   wire             ui_clk_sync_rst;
   
   wire 			   CLK208;
+  wire             clk167;
+  wire             clk200;
 
   wire             app_sr_active;
   wire             app_ref_ack;
@@ -185,6 +187,20 @@ module fpgaTop
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
   assign calib = c0_init_calib_complete;
+
+  // mmcm
+
+  // the ddr3 mig7 requires 2 input clocks 
+  // 1. sys clock which is 167 MHz = ddr3 clock / 4
+  // 2. a second clock which is 200 MHz
+  // Wally requires a slower clock.  At this point I don't know what speed the atrix 7 will run so I'm initially targetting 25Mhz.
+  // the mig will output a clock at 1/4 the sys clock or 41Mhz which might work with wally so we may be able to simplify the logic a lot.
+  xlnx_mmcm xln_mmcm(.clk_out1(clk167),
+                     .clk_out2(clk200),
+                     .clk_out3(CPUCLK),
+                     .reset(reset),
+                     .locked(),
+                     .clk_in1(default_100mhz_clk));
   
   // SD Card Tristate
   IOBUF iobufSDCMD(.T(~SDCCmdOE), // iobuf's T is active low
@@ -398,10 +414,10 @@ module fpgaTop
      .ddr3_odt(ddr3_odt),
 
      // clocks. I still don't understand why this needs two?
-     .sys_clk_i(default_100mhz_clk),
-     .clk_ref_i(default_100mhz_clk),
+     .sys_clk_i(clk167),
+     .clk_ref_i(clk200),
 
-     .ui_clk(CLK208),
+     .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
      .aresetn(~reset),
      .sys_rst(reset),
