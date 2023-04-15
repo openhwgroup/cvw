@@ -5,7 +5,7 @@
 
 # clock comes from pin E3 and is 100Mhz
 # output of mmcm is /4 => 25Mhz
-create_clock -period 25.000 -name mmcm_clkout1 -waveform {0.000 12.500} [get_nets xlnx_ddr3_c0/ui_clk]
+#create_clock -period 25.000 -name mmcm_clkout1 -waveform {0.000 12.500} [get_nets xlnx_ddr3_c0/ui_clk]
 
 create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
 

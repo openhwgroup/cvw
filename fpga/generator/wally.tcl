@@ -18,6 +18,7 @@ read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/x
 
 if {$board=="ArtyA7"} {
     read_ip IP/xlnx_ddr3.srcs/sources_1/ip/xlnx_ddr3/xlnx_ddr3.xci
+    read_ip IP/xlnx_mmcm.srcs/sources_1/ip/xlnx_mmcm/xlnx_mmcm.xci
 } else {
     read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 }
