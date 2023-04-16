@@ -28,6 +28,7 @@ FPGA: PreProcessFiles IP SDC
 
 IP: $(dst)/xlnx_proc_sys_reset.log \
 	$(dst)/xlnx_ddr3-ArtyA7.log \
+	$(dst)/xlnx_mmcm.log \
 	$(dst)/xlnx_axi_clock_converter.log \
 	 $(dst)/xlnx_ahblite_axi_bridge.log
 
