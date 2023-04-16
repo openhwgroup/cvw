@@ -198,9 +198,12 @@ module csrsr (
         STATUS_UBE <= #1 CSRWriteValM[6]  & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
         STATUS_MBE <= #1 nextMBE;
         STATUS_SBE <= #1 nextSBE;
+      // coverage off
+      // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if (WriteMSTATUSHM) begin
         STATUS_MBE <= #1 CSRWriteValM[5] & `BIGENDIAN_SUPPORTED;
         STATUS_SBE <= #1 CSRWriteValM[4] & `S_SUPPORTED & `BIGENDIAN_SUPPORTED;
+      // coverage on
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];
