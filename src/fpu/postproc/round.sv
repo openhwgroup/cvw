@@ -111,7 +111,7 @@ module round(
 
 
   // determine what format the final result is in: int or fp
-  assign IntRes = CvtOp & ToInt;
+  assign IntRes = ToInt;
   assign FpRes = ~IntRes;
 
   // sticky bit calculation

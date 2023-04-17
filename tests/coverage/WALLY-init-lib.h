@@ -66,8 +66,7 @@ interrupt:              # must be a timer interrupt
     j trap_return       # clean up and return
 
 exception:
-    li t0, 2
-    csrr t1, mcause
+    csrr t0, mcause
     li t1, 8            # is it an ecall trap?
     andi t0, t0, 0xFC # if CAUSE = 8, 9, or 11
     bne t0, t1, trap_return # ignore other exceptions

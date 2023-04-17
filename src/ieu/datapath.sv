@@ -138,7 +138,8 @@ module datapath (
       assign MulDivResultW = MDUResultW;
     end
   end else begin:fpmux
-    assign IFResultM = IEUResultM; assign IFCvtResultW = IFResultW;
+    assign IFResultM = IEUResultM; 
+    assign IFCvtResultW = IFResultW;
     assign MulDivResultW = MDUResultW;
   end
   mux5  #(`XLEN)  resultmuxW(IFCvtResultW, ReadDataW, CSRReadValW, MulDivResultW, SCResultW, ResultSrcW, ResultW); 
