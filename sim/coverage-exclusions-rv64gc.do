@@ -34,6 +34,9 @@ do GetLineNum.do
 # This is ugly to exlcude the whole file - is there a better option?  // coverage off isn't working
 coverage exclude -srcfile lzc.sv 
 
+# FDIVSQRT has 
+coverage exclude -scope /core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
+
 ### Exclude D$ states and logic for the I$ instance
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
 # Also exclude the write line to ready transition for the I$ since we can't get a flush during this operation.
@@ -74,19 +77,6 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SetValidEN"] -item e 1 -fecexprrow 4
 }
 
-######################
-# Toggle exclusions
-#   Not used because toggle coverage isn't measured
-######################
-
-# Exclude DivBusyE from all design units because rv64gc uses the fdivsqrt unit for integer division
-#coverage exclude -togglenode DivBusyE -du *
-# Exclude QuotM and RemM from MDU because rv64gc uses the fdivsqrt rather tha div unit for integer division
-#coverage exclude -togglenode /dut/core/mdu/mdu/QuotM
-#coverage exclude -togglenode /dut/core/mdu/mdu/RemM
-
-# StallFCause is hardwired to 0
-#coverage exclude -togglenode /dut/core/hzu/StallFCause
 
 # Excluding peripherals as sources of instructions for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/clintdec
