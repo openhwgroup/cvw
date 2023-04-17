@@ -28,7 +28,7 @@
 
 module fpgaTop 
   (input           default_100mhz_clk,
-   input           reset,
+(* mark_debug = "true" *)   input           resetn,
 
    input [3:0]     GPI,
    output [4:0]    GPO,
@@ -58,12 +58,12 @@ module fpgaTop
    );
 
   wire 			   CPUCLK;
-  wire 			   c0_ddr4_ui_clk_sync_rst;
-  wire 			   bus_struct_reset;
-  wire 			   peripheral_reset;
-  wire 			   interconnect_aresetn;
-  wire 			   peripheral_aresetn;
-  wire 			   mb_reset;
+(* mark_debug = "true" *)  wire 			   c0_ddr4_ui_clk_sync_rst;
+(* mark_debug = "true" *)  wire 			   bus_struct_reset;
+(* mark_debug = "true" *)  wire 			   peripheral_reset;
+(* mark_debug = "true" *)  wire 			   interconnect_aresetn;
+(* mark_debug = "true" *)  wire 			   peripheral_aresetn;
+(* mark_debug = "true" *)  wire 			   mb_reset;
   
   wire 			   HCLKOpen;
   wire 			   HRESETnOpen;
@@ -214,7 +214,7 @@ module fpgaTop
   xlnx_proc_sys_reset xlnx_proc_sys_reset_0
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(c0_ddr4_ui_clk_sync_rst),
-     .aux_reset_in(south_rst),
+     .aux_reset_in(1'b0),
      .mb_debug_sys_rst(1'b0),
      .dcm_locked(c0_init_calib_complete),
      .mb_reset(mb_reset),  //open
@@ -353,7 +353,7 @@ module fpgaTop
      .s_axi_rready(m_axi_rready),
 
      .m_axi_aclk(BUSCLK),
-     .m_axi_aresetn(~reset),
+     .m_axi_aresetn(resetn),
      .m_axi_awid(BUS_axi_awid),
      .m_axi_awlen(BUS_axi_awlen),
      .m_axi_awsize(BUS_axi_awsize),
@@ -421,8 +421,8 @@ module fpgaTop
 
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
-     .aresetn(~reset),
-     .sys_rst(reset),
+     .aresetn(resetn),
+     .sys_rst(~resetn),
      .mmcm_locked(mmcm_locked),
 
      // *** What are these? 
