@@ -112,7 +112,7 @@ module fdivsqrtpostproc(
 
     // Select quotient or remainder and do normalization shift
     mux2 #(`DIVBLEN+1) normshiftmux(((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR))), (mM + (`DIVBLEN+1)'(`DIVa)), RemOpM, NormShiftM);
-    mux2 #(`DIVb+4)   presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    mux2 #(`DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
 
     // special case logic

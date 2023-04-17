@@ -31,7 +31,7 @@
 
 module byteUnit #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A,             // Operands
-  input  logic ByteSelect,                // LSB of Immediate
+  input  logic             ByteSelect,    // LSB of Immediate
   output logic [WIDTH-1:0] ByteResult);   // rev8, orcb result
 
   logic [WIDTH-1:0] OrcBResult, Rev8Result;
