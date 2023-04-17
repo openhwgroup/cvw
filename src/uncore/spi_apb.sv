@@ -193,19 +193,31 @@ module spi_apb (
     //generates the correct value to determine if current frame is second to last
     always_comb
         case(fmt[1:0])
-            2'b00: tx_penultimate_frame = 6'b000001;
-            2'b01: tx_penultimate_frame = 6'b000010;
-            2'b10: tx_penultimate_frame = 6'b000011;
-            default: tx_penultimate_frame = 6'b000001;
+            2'b00: begin
+                    tx_penultimate_frame = 6'b000001;
+                    frame_cmp_protocol = frame_cmp;
+                    end
+            2'b01: begin
+                    tx_penultimate_frame = 6'b000010;
+                    frame_cmp_protocol = fmt[16] ? frame_cmp + 6'b1 : frame_cmp;
+                    end
+            2'b10: begin 
+                    tx_penultimate_frame = 6'b000100;
+                    if (fmt[19:16] > 4'b0100) frame_cmp_protocol = 6'b010000;
+                    else frame_cmp_protocol = 6'b001000;
+                    end
+            default: begin
+                        tx_penultimate_frame = 6'b000001;
+                        frame_cmp_protocol = frame_cmp;
+                    end
+
         endcase
     
-    assign frame_cmp_bool = (frame_cnt_shifted < frame_cmp);
+    assign frame_cmp_bool = (frame_cnt_shifted < frame_cmp_protocol);
     assign tx_frame_cnt_shift_pre = frame_cnt_shifted + tx_penultimate_frame;
     assign rx_frame_cnt_shift_pre = frame_cnt_shifted + tx_penultimate_frame;
-
-    assign frame_cmp_protocol = (fmt[1] | fmt[0]) ? {1'b0, frame_cmp[5:1]} : frame_cmp;
     assign tx_frame_cmp_pre_bool = (tx_frame_cnt_shift_pre >= frame_cmp_protocol);
-    assign rx_frame_cmp_pre_bool = (rx_frame_cnt_shift_pre >= frame_cmp);
+    assign rx_frame_cmp_pre_bool = (rx_frame_cnt_shift_pre >= frame_cmp_protocol);
 
 
 
@@ -258,7 +270,7 @@ module spi_apb (
     logic txShiftEmpty, rxShiftEmpty;
     always_ff @(posedge sclk_duty, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
-                            frame_cnt <= 6'b0;
+                            frame_cnt <= 6'b0;                      
         
         /* verilator lint_off CASEINCOMPLETE */
         end else case (state)
