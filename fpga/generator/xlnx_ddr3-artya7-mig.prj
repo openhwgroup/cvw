@@ -43,10 +43,10 @@
 
   <Controller number="0">
     <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
-    <TimePeriod>6000</TimePeriod>
+    <TimePeriod>3000</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
-    <InputClkFreq>102.564</InputClkFreq>
+    <InputClkFreq>166.666</InputClkFreq>
     <UIExtraClocks>0</UIExtraClocks>
     <MMCM_VCO>666</MMCM_VCO>
     <MMCMClkOut0> 1.000</MMCMClkOut0>
