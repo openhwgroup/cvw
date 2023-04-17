@@ -35,7 +35,7 @@ do GetLineNum.do
 coverage exclude -srcfile lzc.sv 
 
 # FDIVSQRT has 
-coverage exclude -scope /core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
 
 ### Exclude D$ states and logic for the I$ instance
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
