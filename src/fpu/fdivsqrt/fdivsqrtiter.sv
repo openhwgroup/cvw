@@ -29,10 +29,10 @@
 `include "wally-config.vh"
 
 module fdivsqrtiter(
-  input  logic clk,
-  input  logic IFDivStartE, 
-  input  logic FDivBusyE, 
-  input  logic SqrtE,
+  input  logic             clk,
+  input  logic             IFDivStartE, 
+  input  logic             FDivBusyE, 
+  input  logic             SqrtE,
   input  logic [`DIVb+3:0] X,
   input  logic [`DIVb-1:0] DPreproc,
   output logic [`DIVb-1:0] D,
