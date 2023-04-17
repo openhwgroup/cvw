@@ -167,7 +167,7 @@ module fpgaTop
   wire 			   BUSCLK;
   
 
-  wire 			   c0_init_calib_complete;
+  (* mark_debug = "true" *)  wire 			   c0_init_calib_complete;
   wire 			   dbg_clk;
   wire [511 : 0]   dbg_bus;
   wire             ui_clk_sync_rst;
@@ -179,8 +179,10 @@ module fpgaTop
   wire             app_sr_active;
   wire             app_ref_ack;
   wire             app_zq_ack;
-  wire             mmcm_locked;
+  (* mark_debug = "true" *)  wire             mmcm_locked;
   wire [11:0]      device_temp;
+  (* mark_debug = "true" *)  wire             mmcm1_locked;
+  
 
   assign GPIOIN = {28'b0, GPI};
   assign GPO = GPIOOUT[4:0];
@@ -198,8 +200,8 @@ module fpgaTop
   xlnx_mmcm xln_mmcm(.clk_out1(clk167),
                      .clk_out2(clk200),
                      .clk_out3(CPUCLK),
-                     .reset(reset),
-                     .locked(),
+                     .reset(1'b0),
+                     .locked(mmcm1_locked),
                      .clk_in1(default_100mhz_clk));
   
   // SD Card Tristate
