@@ -101,17 +101,19 @@ module fdivsqrtpreproc (
   lzc #(`DIVb) lzcX (IFX, ell);
   lzc #(`DIVb) lzcY (IFD, mE);
 
-  // Normalization shift
-  assign XPreproc = IFX << (ell + {{`DIVBLEN{1'b0}}, 1'b1}); // *** try to remove this +1
-  assign DPreproc = IFD << (mE + {{`DIVBLEN{1'b0}}, 1'b1}); 
+  // Normalization shift: shift off leading one
+  assign XPreproc = (IFX << ell) << 1;
+  assign DPreproc = (IFD << mE)  << 1; 
 
-  // append leading 1 (for normal inputs)
+  // append leading 1 (for nonzero inputs)
   // shift square root to be in range [1/4, 1)
   // Normalized numbers are shifted right by 1 if the exponent is odd
   // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
   mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
+  // *** CT 4/13/23 Create D output here with leading 1 appended as well, use in the other modules
 
+  // ***CT: factor out fdivsqrtcycles
   if (`IDIV_ON_FPU) begin:intrightshift // Int Supported
     logic [`DIVBLEN:0] ZeroDiff, p;
     logic  ALTBE;
@@ -119,7 +121,7 @@ module fdivsqrtpreproc (
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
     assign ALTBE = ZeroDiff[`DIVBLEN];  // A less than B (A has more leading zeros)
-    mux2 #(`DIVBLEN+1) pmux(ZeroDiff, {(`DIVBLEN+1){1'b0}}, ALTBE, p);            // *** is there a more graceful way to write these constants    
+    mux2 #(`DIVBLEN+1) pmux(ZeroDiff, '0, ALTBE, p);              
 
     // Integer special cases (terminate immediately)
     assign ISpecialCaseE = BZeroE | ALTBE;
