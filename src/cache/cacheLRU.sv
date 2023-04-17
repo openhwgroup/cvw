@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// dcache (data cache)
+// cacheLRU.sv
 //
 // Written: Ross Thompson ross1728@gmail.com
 // Created: 20 July 2021
@@ -32,12 +32,11 @@
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
   input  logic                clk, 
-  input  logic                reset, 
-  input  logic                FlushStage,      // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                reset,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
-  input  logic [SETLEN-1:0]   CacheSet,            // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
+  input  logic [SETLEN-1:0]   CacheSet,        // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
@@ -90,16 +89,26 @@ module cacheLRU
     assign WayExpanded[StartIndex : EndIndex] = {{DuplicationFactor}{WayEncoded[row]}};
   end
 
-  genvar               r, a, s;
+  genvar               node;
   assign LRUUpdate[NUMWAYS-2] = '1;
-  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin : enables
-    localparam p = NUMWAYS - s - 1;
-    localparam g = log2(p);
-    localparam t0 = s - p;
-    localparam t1 = t0 - 1;
-    localparam r = LOGNUMWAYS - g;
-    assign LRUUpdate[t0] = LRUUpdate[s] & ~WayEncoded[r];
-    assign LRUUpdate[t1] = LRUUpdate[s] & WayEncoded[r];
+  for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin : enables
+    localparam ctr = NUMWAYS - node - 1;
+    localparam ctr_depth = log2(ctr);
+    localparam lchild = node - ctr;
+    localparam rchild = lchild - 1;
+    localparam r = LOGNUMWAYS - ctr_depth;
+
+    // the child node will be updated if its parent was updated and
+    // the WayEncoded bit was the correct value.
+    // The if statement is only there for coverage since LRUUpdate[root] is always 1.
+    if (node == NUMWAYS-2) begin
+      assign LRUUpdate[lchild] = ~WayEncoded[r];
+      assign LRUUpdate[rchild] = WayEncoded[r];
+    end
+    else begin
+      assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
+      assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
+    end
   end
 
   // The root node of the LRU tree will always be selected in LRUUpdate. No mux needed.
@@ -107,15 +116,15 @@ module cacheLRU
   mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
 
   // Compute next victim way.
-  for(s = NUMWAYS-2; s >= NUMWAYS/2; s--) begin
-    localparam t0 = 2*s - NUMWAYS;
+  for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin
+    localparam t0 = 2*node - NUMWAYS;
     localparam t1 = t0 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? Intermediate[t0] : Intermediate[t1];
+    assign Intermediate[node] = CurrLRU[node] ? Intermediate[t0] : Intermediate[t1];
   end
-  for(s = NUMWAYS/2-1; s >= 0; s--) begin
-    localparam int0 = (NUMWAYS/2-1-s)*2;
+  for(node = NUMWAYS/2-1; node >= 0; node--) begin
+    localparam int0 = (NUMWAYS/2-1-node)*2;
     localparam int1 = int0 + 1;
-    assign Intermediate[s] = CurrLRU[s] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
+    assign Intermediate[node] = CurrLRU[node] ? int1[LOGNUMWAYS-1:0] : int0[LOGNUMWAYS-1:0];
   end
 
   logic [NUMWAYS-1:0] FirstZero;
@@ -134,11 +143,9 @@ module cacheLRU
   always_ff @(posedge clk) begin
     if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
-      // if((InvalidateCache | FlushCache) & ~FlushStage) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
-      if (LRUWriteEn & ~FlushStage) begin 
+      if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
-      end
-      if(LRUWriteEn & ~FlushStage & (PAdr == CacheSet))
+      if(LRUWriteEn & (PAdr == CacheSet))
         CurrLRU <= #1 NextLRU;
       else 
         CurrLRU <= #1 LRUMemory[CacheSet];

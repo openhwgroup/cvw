@@ -1,7 +1,7 @@
 ///////////////////////////////////////////
 // btb.sv
 //
-// Written: Ross Thomposn ross1728@gmail.com
+// Written: Ross Thompson ross1728@gmail.com
 // Created: February 15, 2021
 // Modified: 24 January 2023 
 //
@@ -34,19 +34,19 @@ module btb #(parameter Depth = 10 ) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,// PC at various stages
-  output logic [`XLEN-1:0] BPBTAF, // BTB's guess at PC
+  input  logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, // PC at various stages
+  output logic [`XLEN-1:0] BPBTAF,                      // BTB's guess at PC
   output logic [`XLEN-1:0] BPBTAD,
   output logic [`XLEN-1:0] BPBTAE,
-  output logic [3:0]       BTBIClassF, // BTB's guess at instruction class
+  output logic [3:0]       BTBIClassF,                  // BTB's guess at instruction class
   // update
-  input  logic             IClassWrongM, // BTB's instruction class guess was wrong
+  input  logic             IClassWrongM,                // BTB's instruction class guess was wrong
   input  logic             IClassWrongE,
-  input  logic [`XLEN-1:0] IEUAdrE, // Branch/jump target address to insert into btb
-  input  logic [`XLEN-1:0] IEUAdrM, // Branch/jump target address to insert into btb
-  input  logic [3:0]       InstrClassD, // Instruction class to insert into btb
-  input  logic [3:0]       InstrClassE, // Instruction class to insert into btb
-  input  logic [3:0]       InstrClassM,                            // Instruction class to insert into btb
+  input  logic [`XLEN-1:0] IEUAdrE,                     // Branch/jump target address to insert into btb
+  input  logic [`XLEN-1:0] IEUAdrM,                     // Branch/jump target address to insert into btb
+  input  logic [3:0]       InstrClassD,                 // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassE,                 // Instruction class to insert into btb
+  input  logic [3:0]       InstrClassM,                 // Instruction class to insert into btb
   input  logic [3:0]       InstrClassW
 );
 
@@ -73,7 +73,7 @@ module btb #(parameter Depth = 10 ) (
 
   // must output a valid PC and valid bit during reset.  Because only PCF, not PCNextF is reset, PCNextF is invalid
   // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
-  // While thie mux could be included in IFU it is not necessary for the IROM/I$/bus.
+  // While the mux could be included in IFU it is not necessary for the IROM/I$/bus.
   // For now it is optimal to leave it here.
   assign ResetPC = `RESET_VECTOR;
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 

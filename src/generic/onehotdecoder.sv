@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// oneHotDecoder.sv
+// onehotdecoder.sv
 //
 // Written: ross1728@gmail.com July 09, 2021
 // Modified: 
