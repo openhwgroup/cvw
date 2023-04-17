@@ -90,5 +90,9 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
 
 #Excluding the bootrom, uncoreran, and clint as sources for the lsu
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
-#set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
-#coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -linerange $line-$line -item e 1 -fecexprrow 5
+
+set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -linerange $line-$line -item e 1 -fecexprrow 5
+
+set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
