@@ -29,6 +29,7 @@
 module fpgaTop 
   (input           default_100mhz_clk,
 (* mark_debug = "true" *)   input           resetn,
+   input           south_reset,
 
    input [3:0]     GPI,
    output [4:0]    GPO,
@@ -214,7 +215,7 @@ module fpgaTop
   xlnx_proc_sys_reset xlnx_proc_sys_reset_0
     (.slowest_sync_clk(CPUCLK),
      .ext_reset_in(c0_ddr4_ui_clk_sync_rst),
-     .aux_reset_in(1'b0),
+     .aux_reset_in(south_reset),
      .mb_debug_sys_rst(1'b0),
      .dcm_locked(c0_init_calib_complete),
      .mb_reset(mb_reset),  //open
@@ -353,7 +354,7 @@ module fpgaTop
      .s_axi_rready(m_axi_rready),
 
      .m_axi_aclk(BUSCLK),
-     .m_axi_aresetn(resetn),
+     .m_axi_aresetn(~resetn),
      .m_axi_awid(BUS_axi_awid),
      .m_axi_awlen(BUS_axi_awlen),
      .m_axi_awsize(BUS_axi_awsize),
@@ -421,8 +422,8 @@ module fpgaTop
 
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
-     .aresetn(resetn),
-     .sys_rst(~resetn),
+     .aresetn(~resetn),
+     .sys_rst(resetn),
      .mmcm_locked(mmcm_locked),
 
      // *** What are these? 
