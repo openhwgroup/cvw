@@ -25,7 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-localparam PA_BITS = 34;
+// localparam PA_BITS = 34;
 //localparam AHBW = 32;
 //localparam XLEN = 32;
 //localparam MISA = (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 18 | 1 << 20 | 1 << 12 | 1 << 0 );
@@ -36,12 +36,12 @@ localparam PA_BITS = 34;
 //localparam    ZMMUL_SUPPORTED = 1'b0;
 //localparam    F_SUPPORTED = 1'b0;
 //localparam    PMP_ENTRIES = 0;
-localparam    LLEN =     32;
+// localparam    LLEN =     32;
 //localparam    FPGA =     1'b0;
 //localparam    QEMU =     1'b0;
  //   //VPN_SEGMENT_BITS: (LLEN == 32 ? 10 : 9),
    // `include "test-shared.vh"
-localparam    FLEN =     32;
+// localparam    FLEN =     32;
 
 
  
