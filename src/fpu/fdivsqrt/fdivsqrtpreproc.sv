@@ -33,8 +33,8 @@ module fdivsqrtpreproc (
   input  logic                IFDivStartE, 
   input  logic [`NF:0]        Xm, Ym,
   input  logic [`NE-1:0]      Xe, Ye,
-  input  logic [`FMTBITS-1:0] Fmt,
-  input  logic                Sqrt,
+  input  logic [`FMTBITS-1:0] FmtE,
+  input  logic                SqrtE,
   input  logic                XZeroE,
   input  logic [2:0]          Funct3E,
   output logic [`NE+1:0]      QeM,
@@ -43,7 +43,8 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic                IntDivE, W64E,
   output logic                ISpecialCaseE,
-  output logic [`DIVBLEN:0]   nE, nM, mM,
+  output logic [`DURLEN-1:0]  cycles,
+  output logic [`DIVBLEN:0]   nM, mM,
   output logic                NegQuotM, ALTBM, IntDivM, W64M,
   output logic                AsM, BZeroM,
   output logic [`XLEN-1:0]    AM
@@ -54,7 +55,7 @@ module fdivsqrtpreproc (
   logic [`DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [`NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
   logic [`DIVb-1:0]           IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
-  logic [`DIVBLEN:0]          mE, ell;                             // Leading zeros of inputs
+  logic [`DIVBLEN:0]          mE, nE, ell;                             // Leading zeros of inputs
   logic                       NumerZeroE;                          // Numerator is zero (X or A)
   logic                       AZeroE, BZeroE;                      // A or B is Zero for integer division
   logic                       signedDiv;                           // signed division
@@ -169,10 +170,13 @@ module fdivsqrtpreproc (
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
-  mux2 #(`DIVb+4) prexmux(DivX, SqrtX, Sqrt, PreShiftX);
+  mux2 #(`DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
  
   // Floating-point exponent
-  fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
+  fdivsqrtexpcalc expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
   flopen #(`NE+2) expreg(clk, IFDivStartE, QeE, QeM);
+
+  // Number of FSM cycles (to FSM)
+  fdivsqrtcycles cyclecalc(.FmtE, .SqrtE, .IntDivE, .nE, .cycles);
 endmodule
 
