@@ -199,8 +199,8 @@ module fpgaTop
   wire [2:0]s00_axi_awprot;
   wire [3:0]s00_axi_awregion;
   wire [3:0]s00_axi_awqos;
-  wire s00_axi_awvalid;
-  wire s00_axi_awready;
+  (* mark_debug = "true" *) wire s00_axi_awvalid;
+  (* mark_debug = "true" *) wire s00_axi_awready;
   wire [63:0]s00_axi_wdata;
   wire [7:0]s00_axi_wstrb;
   wire s00_axi_wlast;
@@ -242,8 +242,8 @@ module fpgaTop
   wire [2:0]s01_axi_awprot;
   wire [3:0]s01_axi_awregion;
   wire [3:0]s01_axi_awqos; // qos signals need to be 0 for SDC
-  wire s01_axi_awvalid;
-  wire s01_axi_awready;
+  (* mark_debug = "true" *) wire s01_axi_awvalid;
+  (* mark_debug = "true" *) wire s01_axi_awready;
   wire [63:0]s01_axi_wdata;
   wire [7:0]s01_axi_wstrb;
   wire s01_axi_wlast;
@@ -279,8 +279,8 @@ module fpgaTop
   wire [2:0]axi4in_axi_awprot;
   wire [3:0]axi4in_axi_awregion;
   wire [3:0]axi4in_axi_awqos;
-  wire axi4in_axi_awvalid;
-  wire axi4in_axi_awready;
+  (* mark_debug = "true" *) wire axi4in_axi_awvalid;
+  (* mark_debug = "true" *) wire axi4in_axi_awready;
   wire [31:0]axi4in_axi_wdata;
   wire [3:0]axi4in_axi_wstrb;
   wire axi4in_axi_wlast;
@@ -307,25 +307,25 @@ module fpgaTop
   wire axi4in_axi_rready;
 
   // AXI4 to AXI4-Lite Protocol converter output
-  wire [31:0]SDCin_axi_awaddr;
-  wire [2:0]SDCin_axi_awprot;
-  wire SDCin_axi_awvalid;
-  wire SDCin_axi_awready;
-  wire [31:0]SDCin_axi_wdata;
-  wire [3:0]SDCin_axi_wstrb;
-  wire SDCin_axi_wvalid;
-  wire SDCin_axi_wready;
-  wire [1:0]SDCin_axi_bresp;
-  wire SDCin_axi_bvalid;
-  wire SDCin_axi_bready;
-  wire [31:0]SDCin_axi_araddr;
-  wire [2:0]SDCin_axi_arprot;
-  wire SDCin_axi_arvalid;
-  wire SDCin_axi_arready;
-  wire [31:0]SDCin_axi_rdata;
-  wire [1:0]SDCin_axi_rresp;
-  wire SDCin_axi_rvalid;
-  wire SDCin_axi_rready;
+  (* mark_debug = "true" *) wire [31:0]SDCin_axi_awaddr;
+  (* mark_debug = "true" *) wire [2:0]SDCin_axi_awprot;
+  (* mark_debug = "true" *) wire SDCin_axi_awvalid;
+  (* mark_debug = "true" *) wire SDCin_axi_awready;
+  (* mark_debug = "true" *) wire [31:0]SDCin_axi_wdata;
+  (* mark_debug = "true" *) wire [3:0]SDCin_axi_wstrb;
+  (* mark_debug = "true" *) wire SDCin_axi_wvalid;
+  (* mark_debug = "true" *) wire SDCin_axi_wready;
+  (* mark_debug = "true" *) wire [1:0]SDCin_axi_bresp;
+  (* mark_debug = "true" *) wire SDCin_axi_bvalid;
+  (* mark_debug = "true" *) wire SDCin_axi_bready;
+  (* mark_debug = "true" *) wire [31:0]SDCin_axi_araddr;
+  (* mark_debug = "true" *) wire [2:0]SDCin_axi_arprot;
+  (* mark_debug = "true" *) wire SDCin_axi_arvalid;
+  (* mark_debug = "true" *) wire SDCin_axi_arready;
+  (* mark_debug = "true" *) wire [31:0]SDCin_axi_rdata;
+  (* mark_debug = "true" *) wire [1:0]SDCin_axi_rresp;
+  (* mark_debug = "true" *) wire SDCin_axi_rvalid;
+  (* mark_debug = "true" *) wire SDCin_axi_rready;
   // ----------------------------------------------------------------
 
   // 32to64 dwidth converter input interface -----------------------
@@ -338,8 +338,8 @@ module fpgaTop
   wire [2:0]SDCout_axi_awprot;
   wire [3:0]SDCout_axi_awregion;
   wire [3:0]SDCout_axi_awqos;
-  wire SDCout_axi_awvalid;
-  wire SDCout_axi_awready;
+  (* mark_debug = "true" *) wire SDCout_axi_awvalid;
+  (* mark_debug = "true" *) wire SDCout_axi_awready;
   wire [31:0]SDCout_axi_wdata;
   wire [3:0]SDCout_axi_wstrb;
   wire SDCout_axi_wlast;
@@ -376,8 +376,8 @@ module fpgaTop
   wire [2:0]m01_axi_awprot;
   wire [3:0]m01_axi_awregion;
   wire [3:0]m01_axi_awqos;
-  wire m01_axi_awvalid;
-  wire m01_axi_awready;
+  (* mark_debug = "true" *) wire m01_axi_awvalid;
+  (* mark_debug = "true" *) wire m01_axi_awready;
   wire [63:0]m01_axi_wdata;
   wire [3:0]m01_axi_wstrb;
   wire m01_axi_wlast;
@@ -571,7 +571,7 @@ module fpgaTop
 	 .aresetn(peripheral_aresetn),
 
 	 // Connect Masters
-	 .s_axi_awid({4'b0001, m_axi_awid}),
+	 .s_axi_awid({4'b1000, m_axi_awid}),
 	 .s_axi_awaddr({m01_axi_awaddr, m_axi_awaddr}),
 	 .s_axi_awlen({m01_axi_awlen, m_axi_awlen}),
 	 .s_axi_awsize({m01_axi_awsize, m_axi_awsize}),
@@ -591,7 +591,7 @@ module fpgaTop
 	 .s_axi_bresp({m01_axi_bresp, m_axi_bresp}),
 	 .s_axi_bvalid({m01_axi_bvalid, m_axi_bvalid}),
 	 .s_axi_bready({m01_axi_bready, m_axi_bready}),
-	 .s_axi_arid({4'b0001, m_axi_arid}),
+	 .s_axi_arid({4'b1000, m_axi_arid}),
 	 .s_axi_araddr({m01_axi_araddr, m_axi_araddr}),
 	 .s_axi_arlen({m01_axi_arlen, m_axi_arlen}),
 	 .s_axi_arsize({m01_axi_arsize, m_axi_arsize}),
@@ -627,7 +627,7 @@ module fpgaTop
      .m_axi_wlast({s01_axi_wlast, s00_axi_wlast}),
      .m_axi_wvalid({s01_axi_wvalid, s00_axi_wvalid}),
      .m_axi_wready({s01_axi_wready, s00_axi_wready}),
-     .m_axi_bid({4'b0001, s00_axi_bid}),
+     .m_axi_bid({4'b1000, s00_axi_bid}),
      .m_axi_bresp({s01_axi_bresp, s00_axi_bresp}),
      .m_axi_bvalid({s01_axi_bvalid, s00_axi_bvalid}),
      .m_axi_bready({s01_axi_bready, s00_axi_bready}),
@@ -643,7 +643,7 @@ module fpgaTop
      .m_axi_araddr({s01_axi_araddr, s00_axi_araddr}),
      .m_axi_arlock({s01_axi_arlock, s00_axi_arlock}),
      .m_axi_arready({s01_axi_arready, s00_axi_arready}),
-     .m_axi_rid({4'b0, s00_axi_rid}),
+     .m_axi_rid({4'b1000, s00_axi_rid}),
      .m_axi_rdata({s01_axi_rdata, s00_axi_rdata}),
      .m_axi_rresp({s01_axi_rresp, s00_axi_rresp}),
      .m_axi_rvalid({s01_axi_rvalid, s00_axi_rvalid}),
