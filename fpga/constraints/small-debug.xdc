@@ -39,50 +39,30 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe3]
 connect_debug_port u_ila_0/probe3 [get_nets [list {wallypipelinedsoc/core/InstrM[0]} {wallypipelinedsoc/core/InstrM[1]} {wallypipelinedsoc/core/InstrM[2]} {wallypipelinedsoc/core/InstrM[3]} {wallypipelinedsoc/core/InstrM[4]} {wallypipelinedsoc/core/InstrM[5]} {wallypipelinedsoc/core/InstrM[6]} {wallypipelinedsoc/core/InstrM[7]} {wallypipelinedsoc/core/InstrM[8]} {wallypipelinedsoc/core/InstrM[9]} {wallypipelinedsoc/core/InstrM[10]} {wallypipelinedsoc/core/InstrM[11]} {wallypipelinedsoc/core/InstrM[12]} {wallypipelinedsoc/core/InstrM[13]} {wallypipelinedsoc/core/InstrM[14]} {wallypipelinedsoc/core/InstrM[15]} {wallypipelinedsoc/core/InstrM[16]} {wallypipelinedsoc/core/InstrM[17]} {wallypipelinedsoc/core/InstrM[18]} {wallypipelinedsoc/core/InstrM[19]} {wallypipelinedsoc/core/InstrM[20]} {wallypipelinedsoc/core/InstrM[21]} {wallypipelinedsoc/core/InstrM[22]} {wallypipelinedsoc/core/InstrM[23]} {wallypipelinedsoc/core/InstrM[24]} {wallypipelinedsoc/core/InstrM[25]} {wallypipelinedsoc/core/InstrM[26]} {wallypipelinedsoc/core/InstrM[27]} {wallypipelinedsoc/core/InstrM[28]} {wallypipelinedsoc/core/InstrM[29]} {wallypipelinedsoc/core/InstrM[30]} {wallypipelinedsoc/core/InstrM[31]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe4]
+set_property port_width 32 [get_debug_ports u_ila_0/probe4]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe4]
-connect_debug_port u_ila_0/probe4 [get_nets [list mmcm1_locked ]]
+connect_debug_port u_ila_0/probe4 [get_nets [list {wallypipelinedsoc/core/lsu/LSUHADDR[0]} {wallypipelinedsoc/core/lsu/LSUHADDR[1]} {wallypipelinedsoc/core/lsu/LSUHADDR[2]} {wallypipelinedsoc/core/lsu/LSUHADDR[3]} {wallypipelinedsoc/core/lsu/LSUHADDR[4]} {wallypipelinedsoc/core/lsu/LSUHADDR[5]} {wallypipelinedsoc/core/lsu/LSUHADDR[6]} {wallypipelinedsoc/core/lsu/LSUHADDR[7]} {wallypipelinedsoc/core/lsu/LSUHADDR[8]} {wallypipelinedsoc/core/lsu/LSUHADDR[9]} {wallypipelinedsoc/core/lsu/LSUHADDR[10]} {wallypipelinedsoc/core/lsu/LSUHADDR[11]} {wallypipelinedsoc/core/lsu/LSUHADDR[12]} {wallypipelinedsoc/core/lsu/LSUHADDR[13]} {wallypipelinedsoc/core/lsu/LSUHADDR[14]} {wallypipelinedsoc/core/lsu/LSUHADDR[15]} {wallypipelinedsoc/core/lsu/LSUHADDR[16]} {wallypipelinedsoc/core/lsu/LSUHADDR[17]} {wallypipelinedsoc/core/lsu/LSUHADDR[18]} {wallypipelinedsoc/core/lsu/LSUHADDR[19]} {wallypipelinedsoc/core/lsu/LSUHADDR[20]} {wallypipelinedsoc/core/lsu/LSUHADDR[21]} {wallypipelinedsoc/core/lsu/LSUHADDR[22]} {wallypipelinedsoc/core/lsu/LSUHADDR[23]} {wallypipelinedsoc/core/lsu/LSUHADDR[24]} {wallypipelinedsoc/core/lsu/LSUHADDR[25]} {wallypipelinedsoc/core/lsu/LSUHADDR[26]} {wallypipelinedsoc/core/lsu/LSUHADDR[27]} {wallypipelinedsoc/core/lsu/LSUHADDR[28]} {wallypipelinedsoc/core/lsu/LSUHADDR[29]} {wallypipelinedsoc/core/lsu/LSUHADDR[30]} {wallypipelinedsoc/core/lsu/LSUHADDR[31]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe5]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe5]
-connect_debug_port u_ila_0/probe5 [get_nets [list mmcm_locked ]]
+connect_debug_port u_ila_0/probe5 [get_nets [list wallypipelinedsoc/core/lsu/LSUHREADY ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe6]
+set_property port_width 28 [get_debug_ports u_ila_0/probe6]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe6]
-connect_debug_port u_ila_0/probe6 [get_nets [list c0_init_calib_complete ]]
+connect_debug_port u_ila_0/probe6 [get_nets [list {m_axi_araddr[0]} {m_axi_araddr[1]} {m_axi_araddr[2]} {m_axi_araddr[3]} {m_axi_araddr[4]} {m_axi_araddr[5]} {m_axi_araddr[6]} {m_axi_araddr[7]} {m_axi_araddr[8]} {m_axi_araddr[9]} {m_axi_araddr[10]} {m_axi_araddr[11]} {m_axi_araddr[12]} {m_axi_araddr[13]} {m_axi_araddr[14]} {m_axi_araddr[15]} {m_axi_araddr[16]} {m_axi_araddr[17]} {m_axi_araddr[18]} {m_axi_araddr[19]} {m_axi_araddr[20]} {m_axi_araddr[21]} {m_axi_araddr[22]} {m_axi_araddr[23]} {m_axi_araddr[24]} {m_axi_araddr[25]} {m_axi_araddr[26]} {m_axi_araddr[27]}  ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe7]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe7]
-connect_debug_port u_ila_0/probe7 [get_nets [list bus_struct_reset ]]
+connect_debug_port u_ila_0/probe7 [get_nets [list {m_axi_arready}]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 1 [get_debug_ports u_ila_0/probe8]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe8]
-connect_debug_port u_ila_0/probe8 [get_nets [list peripheral_reset ]]
+connect_debug_port u_ila_0/probe8 [get_nets [list {m_axi_arvalid}]]
 
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe9]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe9]
-connect_debug_port u_ila_0/probe9 [get_nets [list interconnect_aresetn ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe10]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe10]
-connect_debug_port u_ila_0/probe10 [get_nets [list peripheral_aresetn ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe11]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe11]
-connect_debug_port u_ila_0/probe11 [get_nets [list mb_reset ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe12]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe12]
-connect_debug_port u_ila_0/probe12 [get_nets [list c0_ddr4_ui_clk_sync_rst ]]
 
 # the debug hub has issues with the clocks from the mmcm so lets give up an connect to the 100Mhz input clock.
 #connect_debug_port dbg_hub/clk [get_nets default_100mhz_clk]
