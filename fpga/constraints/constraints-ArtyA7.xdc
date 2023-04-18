@@ -213,7 +213,7 @@ set_properity PACKAGE_PIN U8 [get_ports ddr3_cs_n[0]]
 
 
 # **** may have to bring this one back 
-#set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 15.000
+#set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 20.000
 
 
 set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets wallypipelinedsoc/uncore.uncore/sdc.SDC/clockgater/CLK]
