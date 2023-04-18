@@ -41,6 +41,14 @@ main:
     flw ft0, 0(t0)
     flw ft1, 4(t0)
     fadd.s ft2, ft0, ft1 #Adds coverage for inf as arg for FADD
+    
+        
+    #Pull NaN FP number from memory and pass to fle.S for coverage
+    la t0, TestData3
+    flw ft0, 0(t0)
+    flw ft1, 4(t0)
+    fle.s t1, ft0, ft1
+    
 
     flw ft2, 4(t0)
     fmsub.s ft3, ft0, ft1, ft2 #Adds coverage for fmaAs or Z Sign Bit
@@ -146,3 +154,6 @@ TestData2:
 .int 0xbf800000 #FP -1.0
 .int 0x7fa00000 #SNaN
 .int 0x3fffffff #OverFlow Test
+TestData3:
+.int 0x3f800000
+.int 0x7fffffff
