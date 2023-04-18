@@ -198,64 +198,64 @@ typedef struct packed {
 // Floating point constants for Quad, Double, Single, and Half precisions
   logic [31:0] Q_LEN;
   logic [31:0] Q_NE;
-  logic [31:0] Q_NF;
+  longint Q_NF;
   logic [31:0] Q_BIAS;
   logic [1:0] Q_FMT;
   logic [31:0] D_LEN;
   logic [31:0] D_NE;
-  logic [31:0] D_NF;
+  longint D_NF;
   logic [31:0] D_BIAS;
   logic [1:0] D_FMT;
   logic [31:0] S_LEN;
   logic [31:0] S_NE;
-  logic [31:0] S_NF;
+  longint S_NF;
   logic [31:0] S_BIAS;
   logic [1:0] S_FMT;
   logic [31:0] H_LEN;
   logic [31:0] H_NE;
-  logic [31:0] H_NF;
+  longint H_NF;
   logic [31:0] H_BIAS;
   logic [1:0] H_FMT;
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
   logic [31:0] FLEN;
   logic [31:0] NE  ;
-  logic [31:0] NF  ;
+  longint NF  ;
   logic [1:0] FMT ;
   logic [31:0] BIAS;
 
 // Floating point constants needed for FPU paramerterization
-  int FPSIZES;
-  int FMTBITS;
+  logic [31:0] FPSIZES;
+  logic [31:0] FMTBITS;
   logic [31:0] LEN1 ;
   logic [31:0] NE1  ;
-  logic [31:0] NF1  ;
+  longint NF1  ;
   logic [1:0] FMT1 ;
   logic [31:0] BIAS1;
   logic [31:0] LEN2 ;
   logic [31:0] NE2  ;
-  logic [31:0] NF2  ;
+  longint NF2  ;
   logic [1:0] FMT2 ;
   logic [31:0] BIAS2;
 
 // largest length in IEU/FPU
-  int CVTLEN;
-  int LLEN;
-  int LOGCVTLEN;
-  int NORMSHIFTSZ;
-  int LOGNORMSHIFTSZ;
-  int CORRSHIFTSZ;
+  longint CVTLEN;
+  logic [31:0] LLEN;
+  logic [31:0] LOGCVTLEN;
+  longint NORMSHIFTSZ;
+  logic [31:0] LOGNORMSHIFTSZ;
+  longint CORRSHIFTSZ;
 
 // division constants
-  int DIVN       ;
-  int LOGR;
-  int RK         ;
-  int LOGRK      ;
-  int FPDUR      ;
-  int DURLEN     ;
-  int DIVb       ;
-  int DIVBLEN    ;
-  int DIVa       ;
+  longint DIVN       ;
+  logic [31:0] LOGR;
+  logic [31:0] RK         ;
+  logic [31:0] LOGRK      ;
+  longint FPDUR      ;
+  logic [31:0] DURLEN     ;
+  longint DIVb       ;
+  logic [31:0] DIVBLEN    ;
+  longint DIVa       ;
 
 } cvw_t;
 

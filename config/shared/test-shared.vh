@@ -41,24 +41,26 @@ localparam LOG_XLEN = (XLEN == 32 ? 5 : 6);
 localparam PMPCFG_ENTRIES = (PMP_ENTRIES/8);
 
 // Floating point constants for Quad, Double, Single, and Half precisions
+// Lim - I've made some of these 64 bit to avoid width warnings. 
+// If errors crop up, try downsizing back to 32.
 localparam Q_LEN = 32'd128;
 localparam Q_NE = 32'd15;
-localparam Q_NF = 32'd112;
+localparam Q_NF = 64'd112;
 localparam Q_BIAS = 32'd16383;
 localparam Q_FMT = 2'd3;
 localparam D_LEN = 32'd64;
 localparam D_NE = 32'd11;
-localparam D_NF = 32'd52;
+localparam D_NF = 64'd52;
 localparam D_BIAS = 32'd1023;
 localparam D_FMT = 2'd1;
 localparam S_LEN = 32'd32;
 localparam S_NE = 32'd8;
-localparam S_NF = 32'd23;
+localparam S_NF = 64'd23;
 localparam S_BIAS = 32'd127;
 localparam S_FMT = 2'd0;
 localparam H_LEN = 32'd16;
 localparam H_NE = 32'd5;
-localparam H_NF = 32'd10;
+localparam H_NF = 64'd10;
 localparam H_BIAS = 32'd15;
 localparam H_FMT = 2'd2;
 
@@ -90,14 +92,6 @@ localparam NF2   = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_NF   : H_NF);
 localparam FMT2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? 2'd0    : 2'd2);
 localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 
-// largest length in IEU/FPU
-localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));
-localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
-localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
-localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
-localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
-localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVN+1+NF) > (3*NF+4) ? (DIVN+1+NF) : (3*NF+4)));
-
 // division constants
 localparam DIVN        = (((NF<XLEN) & IDIV_ON_FPU) ? XLEN : NF+2); // standard length of input
 localparam LOGR        = ($clog2(RADIX));           // r = log(R)
@@ -108,6 +102,15 @@ localparam DURLEN      = ($clog2(FPDUR+1));
 localparam DIVb        = (FPDUR*LOGR*DIVCOPIES-1); // canonical fdiv size (b)
 localparam DIVBLEN     = ($clog2(DIVb+1)-1);
 localparam DIVa        = (DIVb+1-XLEN); // used for idiv on fpu
+
+// largest length in IEU/FPU
+localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));
+localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
+localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
+localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));
+localparam LOGNORMSHIFTSZ = ($clog2(NORMSHIFTSZ));
+localparam CORRSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVN+1+NF) > (3*NF+4) ? (DIVN+1+NF) : (3*NF+4)));
+
 
 // Disable spurious Verilator warnings
 
