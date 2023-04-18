@@ -136,14 +136,14 @@ module fpgaTop
   wire [3:0] 	   BUS_axi_awcache;
   wire [30:0] 	   BUS_axi_awaddr;
   wire [2:0] 	   BUS_axi_awprot;
-  wire 			   BUS_axi_awvalid;
-  wire 			   BUS_axi_awready;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_awvalid;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_awready;
   wire 			   BUS_axi_awlock;
   wire [63:0] 	   BUS_axi_wdata;
   wire [7:0] 	   BUS_axi_wstrb;
   wire 			   BUS_axi_wlast;
-  wire 			   BUS_axi_wvalid;
-  wire 			   BUS_axi_wready;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_wvalid;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_wready;
   wire [3:0] 	   BUS_axi_bid;
   wire [1:0] 	   BUS_axi_bresp;
   wire 			   BUS_axi_bvalid;
@@ -154,16 +154,16 @@ module fpgaTop
   wire [1:0] 	   BUS_axi_arburst;
   wire [2:0] 	   BUS_axi_arprot;
   wire [3:0] 	   BUS_axi_arcache;
-  wire 			   BUS_axi_arvalid;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_arvalid;
   wire [30:0] 	   BUS_axi_araddr;
   wire 			   BUS_axi_arlock;
-  wire 			   BUS_axi_arready;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_arready;
   wire [3:0] 	   BUS_axi_rid;
   wire [63:0] 	   BUS_axi_rdata;
-  wire [1:0] 	   BUS_axi_rresp;
-  wire 			   BUS_axi_rvalid;
+  (* mark_debug = "true" *)  wire [1:0] 	   BUS_axi_rresp;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_rvalid;
   wire 			   BUS_axi_rlast;
-  wire 			   BUS_axi_rready;
+  (* mark_debug = "true" *)  wire 			   BUS_axi_rready;
   
   wire 			   BUSCLK;
   
@@ -171,7 +171,7 @@ module fpgaTop
   (* mark_debug = "true" *)  wire 			   c0_init_calib_complete;
   wire 			   dbg_clk;
   wire [511 : 0]   dbg_bus;
-  wire             ui_clk_sync_rst;
+  (* mark_debug = "true" *)   wire             ui_clk_sync_rst;
   
   wire 			   CLK208;
   wire             clk167;
