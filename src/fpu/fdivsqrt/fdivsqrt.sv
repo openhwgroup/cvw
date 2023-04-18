@@ -57,7 +57,7 @@ module fdivsqrt(
 
   logic [`DIVb+3:0]           WS, WC;                       // Partial remainder components
   logic [`DIVb+3:0]           X;                            // Iterator Initial Value (from dividend)
-  logic [`DIVb-1:0]           D;                  // Iterator Divisor
+  logic [`DIVb+3:0]           D;                  // Iterator Divisor
   logic [`DIVb:0]             FirstU, FirstUM;              // Intermediate result values
   logic [`DIVb+1:0]           FirstC;                       // Step tracker
   logic                       Firstun;                      // Quotient selection

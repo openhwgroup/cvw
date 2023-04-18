@@ -38,8 +38,7 @@ module fdivsqrtpreproc (
   input  logic                XZeroE,
   input  logic [2:0]          Funct3E,
   output logic [`NE+1:0]      QeM,
-  output logic [`DIVb+3:0]    X,
-  output logic [`DIVb-1:0]    D,
+  output logic [`DIVb+3:0]    X, D,
   // Int-specific
   input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic                IntDivE, W64E,
@@ -111,7 +110,9 @@ module fdivsqrtpreproc (
   // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
   mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
-  // *** CT 4/13/23 Create D output here with leading 1 appended as well, use in the other modules
+
+   // Divisior register
+  flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, DPreproc}, D);
 
   // ***CT: factor out fdivsqrtcycles
   if (`IDIV_ON_FPU) begin:intrightshift // Int Supported
@@ -173,8 +174,5 @@ module fdivsqrtpreproc (
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
   flopen #(`NE+2) expreg(clk, IFDivStartE, QeE, QeM);
-
-   // Divisior register
-  flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
 endmodule
 
