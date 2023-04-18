@@ -18,8 +18,8 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPI[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPI[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPI[0]}]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports {GPI[*]}]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports {GPI[*]}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPI[*]}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPI[*]}]
 set_max_delay -from [get_ports {GPI[*]}] 10.000
 
 ##### GPO ####
@@ -47,8 +47,8 @@ set_max_delay -to [get_ports UARTSout] 14.000
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSout]
 set_property DRIVE 4 [get_ports UARTSout]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports UARTSin]
-set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports UARTSin]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports UARTSin]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports UARTSin]
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports UARTSout]
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports UARTSout]
 

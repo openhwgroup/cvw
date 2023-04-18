@@ -42,7 +42,7 @@
   </FPGADevice>
 
   <Controller number="0">
-    <MemoryDevice>DDR3_SDRAM/Components/MT41J128M16XX-125</MemoryDevice>
+    <MemoryDevice>DDR3_SDRAM/Components/MT41K128M16XX-15E</MemoryDevice>
     <TimePeriod>3000</TimePeriod>
     <VccAuxIO>1.8V</VccAuxIO>
     <PHYRatio>4:1</PHYRatio>
@@ -114,7 +114,7 @@
       <Pin IN_TERM="" IOSTANDARD="DIFF_SSTL135" PADName="U2" SLEW="" VCCAUX_IO="" name="ddr3_dqs_p[1]"/>
       <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="R5" SLEW="" VCCAUX_IO="" name="ddr3_odt[0]"/>
       <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="P3" SLEW="" VCCAUX_IO="" name="ddr3_ras_n"/>
-      <Pin IN_TERM="" IOSTANDARD="LVCMOS135" PADName="K6" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
+      <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="K6" SLEW="" VCCAUX_IO="" name="ddr3_reset_n"/>
       <Pin IN_TERM="" IOSTANDARD="SSTL135" PADName="P5" SLEW="" VCCAUX_IO="" name="ddr3_we_n"/>
     </PinSelection>
     <System_Clock>
@@ -126,7 +126,7 @@
       <Pin Bank="Select Bank" PADName="No connect" name="tg_compare_error"/>
     </System_Control>
     <TimingParameters>
-      <Parameters tcke="5" tfaw="40" tras="35" trcd="13.75" trefi="7.8" trfc="160" trp="13.75" trrd="7.5" trtp="7.5" twtr="7.5"/>
+      <Parameters tcke="5.625" tfaw="45" tras="36" trcd="13.5" trefi="7.8" trfc="160" trp="13.5" trrd="7.5" trtp="7.5" twtr="7.5"/>
     </TimingParameters>
     <mrBurstLength name="Burst Length">8 - Fixed</mrBurstLength>
     <mrBurstType name="Read Burst Type and Length">Sequential</mrBurstType>
@@ -135,10 +135,10 @@
     <mrDllReset name="DLL Reset">No</mrDllReset>
     <mrPdMode name="DLL control for precharge PD">Slow Exit</mrPdMode>
     <emrDllEnable name="DLL Enable">Enable</emrDllEnable>
-    <emrOutputDriveStrength name="Output Driver Impedance Control">RZQ/7</emrOutputDriveStrength>
+    <emrOutputDriveStrength name="Output Driver Impedance Control">RZQ/6</emrOutputDriveStrength>
     <emrMirrorSelection name="Address Mirroring">Disable</emrMirrorSelection>
     <emrCSSelection name="Controller Chip Select Pin">Enable</emrCSSelection>
-    <emrRTT name="RTT (nominal) - On Die Termination (ODT)">RZQ/4</emrRTT>
+    <emrRTT name="RTT (nominal) - On Die Termination (ODT)">RZQ/6</emrRTT>
     <emrPosted name="Additive Latency (AL)">0</emrPosted>
     <emrOCD name="Write Leveling Enable">Disabled</emrOCD>
     <emrDQS name="TDQS enable">Enabled</emrDQS>
