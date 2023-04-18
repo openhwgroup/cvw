@@ -354,7 +354,7 @@ module fpgaTop
      .s_axi_rready(m_axi_rready),
 
      .m_axi_aclk(BUSCLK),
-     .m_axi_aresetn(~resetn),
+     .m_axi_aresetn(resetn),
      .m_axi_awid(BUS_axi_awid),
      .m_axi_awlen(BUS_axi_awlen),
      .m_axi_awsize(BUS_axi_awsize),
