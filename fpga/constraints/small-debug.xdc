@@ -109,7 +109,7 @@ set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe17]
 connect_debug_port u_ila_0/probe17 [get_nets [list {BUS_axi_arready}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe18]
+set_property port_width 1 [get_debug_ports u_ila_0/probe18]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe18]
 connect_debug_port u_ila_0/probe18 [get_nets [list {BUS_axi_rvalid}]]
 
