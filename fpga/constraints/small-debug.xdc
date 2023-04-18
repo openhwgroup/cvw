@@ -17,7 +17,7 @@ set_property C_ADV_TRIGGER true [get_debug_cores u_ila_0 ]
 set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0 ]
 set_property ALL_PROBE_SAME_MU_CNT 4 [get_debug_cores u_ila_0 ]
 endgroup
-connect_debug_port u_ila_0/clk [get_nets [list xlnx_ddr3_c0/u_xlnx_ddr3_mig/u_ddr3_infrastructure/CLK ]]
+connect_debug_port u_ila_0/clk [get_nets CPUCLK]
 
 set_property port_width 64 [get_debug_ports u_ila_0/probe0]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe0]
