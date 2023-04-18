@@ -34,8 +34,7 @@ module fdivsqrtiter(
   input  logic             FDivBusyE, 
   input  logic             SqrtE,
   input  logic [`DIVb+3:0] X,
-  input  logic [`DIVb-1:0] DPreproc,
-  output logic [`DIVb-1:0] D,
+  input  logic [`DIVb-1:0] D,
   output logic [`DIVb:0]   FirstU, FirstUM,
   output logic [`DIVb+1:0] FirstC,
   output logic             Firstun,
@@ -94,9 +93,6 @@ module fdivsqrtiter(
   assign initC = {initCUpper, {`DIVb{1'b0}}};
   mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(`DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
-
-   // Divisior register
-  flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
 
   // Divisor Selections
   //  - choose the negitive version of what's being selected

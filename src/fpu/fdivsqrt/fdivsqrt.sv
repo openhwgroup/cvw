@@ -57,7 +57,7 @@ module fdivsqrt(
 
   logic [`DIVb+3:0]           WS, WC;                       // Partial remainder components
   logic [`DIVb+3:0]           X;                            // Iterator Initial Value (from dividend)
-  logic [`DIVb-1:0]           DPreproc, D;                  // Iterator Divisor
+  logic [`DIVb-1:0]           D;                  // Iterator Divisor
   logic [`DIVb:0]             FirstU, FirstUM;              // Intermediate result values
   logic [`DIVb+1:0]           FirstC;                       // Step tracker
   logic                       Firstun;                      // Quotient selection
@@ -75,8 +75,7 @@ module fdivsqrt(
 
   fdivsqrtpreproc fdivsqrtpreproc(                        // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE), 
-    .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, 
-    .QeM, .X, .DPreproc, 
+    .Fmt(FmtE), .Sqrt(SqrtE), .XZeroE, .Funct3E, .QeM, .X, .D, 
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .nE, .BZeroM, .nM, .mM, .AM, 
@@ -90,8 +89,8 @@ module fdivsqrt(
     .IDivStartE, .ISpecialCaseE, .nE, .IntDivE);
 
   fdivsqrtiter fdivsqrtiter(                              // CSA Iterator
-    .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .DPreproc, 
-    .D, .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
+    .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
+    .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
 
   fdivsqrtpostproc fdivsqrtpostproc(                      // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 

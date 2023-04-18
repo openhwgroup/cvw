@@ -39,7 +39,7 @@ module fdivsqrtpreproc (
   input  logic [2:0]          Funct3E,
   output logic [`NE+1:0]      QeM,
   output logic [`DIVb+3:0]    X,
-  output logic [`DIVb-1:0]    DPreproc,
+  output logic [`DIVb-1:0]    D,
   // Int-specific
   input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic                IntDivE, W64E,
@@ -50,7 +50,7 @@ module fdivsqrtpreproc (
   output logic [`XLEN-1:0]    AM
 );
 
-  logic [`DIVb-1:0]           XPreproc;
+  logic [`DIVb-1:0]           XPreproc, DPreproc;
   logic [`DIVb:0]             PreSqrtX;
   logic [`DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [`NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
@@ -173,5 +173,8 @@ module fdivsqrtpreproc (
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt, .Xe, .Ye, .Sqrt, .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
   flopen #(`NE+2) expreg(clk, IFDivStartE, QeE, QeM);
+
+   // Divisior register
+  flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
 endmodule
 
