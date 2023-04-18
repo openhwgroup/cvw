@@ -416,7 +416,6 @@ module fpgaTop
      .ddr3_dm(ddr3_dm),
      .ddr3_odt(ddr3_odt),
 
-     // clocks. I still don't understand why this needs two?
      .sys_clk_i(clk167),
      .clk_ref_i(clk200),
 
