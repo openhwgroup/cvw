@@ -42,8 +42,8 @@ set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [g
 # *** IOSTANDARD is probably wrong
 set_property PACKAGE_PIN A9 [get_ports UARTSin]
 set_property PACKAGE_PIN D10 [get_ports UARTSout]
-set_max_delay -from [get_ports UARTSin] 10.000
-set_max_delay -to [get_ports UARTSout] 10.000
+set_max_delay -from [get_ports UARTSin] 14.000
+set_max_delay -to [get_ports UARTSout] 14.000
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSout]
 set_property DRIVE 4 [get_ports UARTSout]
