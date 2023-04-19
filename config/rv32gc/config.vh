@@ -29,10 +29,10 @@
 // `include "wally-shared.vh"
 
 localparam FPGA = 0;
-localparam QEMU = 0;
+localparam QEMU = 32'd0;
 
 // RV32 or RV64: XLEN = 32 or 64
-localparam XLEN = 32;
+localparam XLEN = 32'd32;
 
 // IEEE 754 compliance
 localparam IEEE754 = 0;
@@ -40,7 +40,7 @@ localparam IEEE754 = 0;
 localparam MISA = (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 <<3 | 1 << 5);
 localparam ZICSR_SUPPORTED = 1;
 localparam ZIFENCEI_SUPPORTED = 1;
-localparam COUNTERS = 32;
+localparam COUNTERS = 32'd32;
 localparam ZICOUNTERS_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
@@ -54,31 +54,31 @@ localparam VECTORED_INTERRUPTS_SUPPORTED = 1;
 localparam BIGENDIAN_SUPPORTED = 1;
 
 // TLB configuration.  Entries should be a power of 2
-localparam ITLB_ENTRIES = 32;
-localparam DTLB_ENTRIES = 32;
+localparam ITLB_ENTRIES = 32'd32;
+localparam DTLB_ENTRIES = 32'd32;
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
-localparam DCACHE_NUMWAYS = 4;
-localparam DCACHE_WAYSIZEINBYTES = 4096;
-localparam DCACHE_LINELENINBITS = 512;
-localparam ICACHE_NUMWAYS = 4;
-localparam ICACHE_WAYSIZEINBYTES = 4096;
-localparam ICACHE_LINELENINBITS = 512;
+localparam DCACHE_NUMWAYS = 32'd4;
+localparam DCACHE_WAYSIZEINBYTES = 32'd4096;
+localparam DCACHE_LINELENINBITS = 32'd512;
+localparam ICACHE_NUMWAYS = 32'd4;
+localparam ICACHE_WAYSIZEINBYTES = 32'd4096;
+localparam ICACHE_LINELENINBITS = 32'd512;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-localparam IDIV_BITSPERCYCLE = 4;
+localparam IDIV_BITSPERCYCLE = 32'd4;
 localparam IDIV_ON_FPU = 1;
 
 // Legal number of PMP entries are 0, 16, or 64
-localparam PMP_ENTRIES = 16;
+localparam PMP_ENTRIES = 8'd16;
 
 // Address space
 localparam RESET_VECTOR = 32'h80000000;
 
 // WFI Timeout Wait
-localparam WFI_TIMEOUT_BIT = 16;
+localparam WFI_TIMEOUT_BIT = 32'd16;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -115,7 +115,7 @@ localparam SDC_BASE   = 34'h00012100;
 localparam SDC_RANGE  = 34'h0000001F;
 
 // Bus Interface width
-localparam AHBW = 32;
+localparam AHBW = 32'd32;
 
 // Test modes
 
@@ -126,23 +126,23 @@ localparam GPIO_LOOPBACK_TEST = 1;
 localparam UART_PRESCALE = 1;
 
 // Interrupt configuration
-localparam PLIC_NUM_SRC = 10;
+localparam PLIC_NUM_SRC = 32'd10;
 // comment out the following if >=32 sources
 localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
-localparam PLIC_GPIO_ID = 3;
-localparam PLIC_UART_ID = 10;
+localparam PLIC_GPIO_ID = 32'd3;
+localparam PLIC_UART_ID = 32'd10;
 
 localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = "BP_GSHARE"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-localparam BPRED_SIZE = 16;
-localparam BTB_SIZE = 10;
+localparam BPRED_SIZE = 32'd16;
+localparam BTB_SIZE = 32'd10;
 
 localparam SVADU_SUPPORTED = 0;
 localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
-localparam RADIX = 4;
-localparam DIVCOPIES = 4;
+localparam RADIX = 32'd4;
+localparam DIVCOPIES = 32'd4;
 
 // bit manipulation
 localparam ZBA_SUPPORTED = 1;

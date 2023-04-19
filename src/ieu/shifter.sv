@@ -36,7 +36,7 @@ module shifter import cvw::*;  #(parameter cvw_t P) (
   logic [2*P.XLEN-2:0]      Z, ZShift;                         // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
   logic [P.LOG_XLEN-1:0]    TruncAmt, Offset;                  // Shift amount adjusted for RV64, right-shift amount
   logic                    Sign;                              // Sign bit for sign extension
-  logic [64:0]             XLENPred;
+  logic [31:0]             XLENPred;
   logic [P.LOG_XLEN-1:0]    XLENPredTrunc;
 
   assign XLENPred = P.XLEN-1;

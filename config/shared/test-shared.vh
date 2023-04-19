@@ -5,20 +5,20 @@ localparam S_MODE  = (2'b01);
 localparam U_MODE  = (2'b00);
 
 // Virtual Memory Constants
-localparam VPN_SEGMENT_BITS = (XLEN == 32 ? 10 : 9);
+localparam VPN_SEGMENT_BITS = (XLEN == 32 ? 32'd10 : 32'd9);
 localparam VPN_BITS = (XLEN==32 ? (2*VPN_SEGMENT_BITS) : (4*VPN_SEGMENT_BITS));
-localparam PPN_BITS = (XLEN==32 ? 22 : 44);
-localparam PA_BITS = (XLEN==32 ? 34 : 56);
-localparam SVMODE_BITS = (XLEN==32 ? 1 : 4);
-localparam ASID_BASE = (XLEN==32 ? 22 : 44);
-localparam ASID_BITS = (XLEN==32 ? 9 : 16);
+localparam PPN_BITS = (XLEN==32 ? 32'd22 : 32'd44);
+localparam PA_BITS = (XLEN==32 ? 32'd34 : 32'd6);
+localparam SVMODE_BITS = (XLEN==32 ? 32'd1 : 32'd4);
+localparam ASID_BASE = (XLEN==32 ? 32'd22 : 32'd44);
+localparam ASID_BITS = (XLEN==32 ? 32'd9 : 32'd16);
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
 localparam NO_TRANSLATE = 0;
 localparam SV32 = 1;
-localparam SV39 = 8;
-localparam SV48 = 9;
+localparam SV39 = 32'd8;
+localparam SV48 = 32'd9;
 
 // macros to define supported modes
 localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);
@@ -35,32 +35,32 @@ localparam U_SUPPORTED = ((MISA >> 20) % 2 == 1);
 // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
 
 // logarithm of XLEN, used for number of index bits to select
-localparam LOG_XLEN = (XLEN == 32 ? 5 : 6);
+localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);
 
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-localparam PMPCFG_ENTRIES = (PMP_ENTRIES/8);
+localparam PMPCFG_ENTRIES = (PMP_ENTRIES/8'd8);
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-// Lim - I've made some of these 64 bit to avoid width warnings. 
+// Lim: I've made some of these 64 bit to avoid width warnings. 
 // If errors crop up, try downsizing back to 32.
 localparam Q_LEN = 32'd128;
 localparam Q_NE = 32'd15;
-localparam Q_NF = 64'd112;
+localparam Q_NF = 32'd112;
 localparam Q_BIAS = 32'd16383;
 localparam Q_FMT = 2'd3;
 localparam D_LEN = 32'd64;
 localparam D_NE = 32'd11;
-localparam D_NF = 64'd52;
+localparam D_NF = 32'd52;
 localparam D_BIAS = 32'd1023;
 localparam D_FMT = 2'd1;
 localparam S_LEN = 32'd32;
 localparam S_NE = 32'd8;
-localparam S_NF = 64'd23;
+localparam S_NF = 32'd23;
 localparam S_BIAS = 32'd127;
 localparam S_FMT = 2'd0;
 localparam H_LEN = 32'd16;
 localparam H_NE = 32'd5;
-localparam H_NF = 64'd10;
+localparam H_NF = 32'd10;
 localparam H_BIAS = 32'd15;
 localparam H_FMT = 2'd2;
 

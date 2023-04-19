@@ -35,17 +35,17 @@
 package cvw;
 
 typedef struct packed {
-  logic       FPGA;       // Modifications to tare
-  longint       QEMU;     // Hacks to agree with QEMU during Linux boot
-  longint       XLEN;     // Machine width (32 or 64)
+  logic         FPGA;     // Modifications to tare
+  int           QEMU;     // Hacks to agree with QEMU during Linux boot
+  int           XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
-  logic [31:0]  MISA;     // Machine Instruction Set Architecture
-  longint       AHBW;     // AHB bus width (usually = XLEN)
+  int  MISA;     // Machine Instruction Set Architecture
+  int       AHBW;     // AHB bus width (usually = XLEN)
 
   // RISC-V Features
   logic         ZICSR_SUPPORTED;
   logic         ZIFENCEI_SUPPORTED;
-  longint       COUNTERS;
+  int           COUNTERS;
   logic         ZICOUNTERS_SUPPORTED;
   logic         ZFH_SUPPORTED;
   logic         SSTC_SUPPORTED;
@@ -61,31 +61,31 @@ typedef struct packed {
   logic         ICACHE_SUPPORTED;
 
 // TLB configuration.  Entries should be a power of 2
-  longint       ITLB_ENTRIES;
-  longint       DTLB_ENTRIES;
+  int       ITLB_ENTRIES;
+  int       DTLB_ENTRIES;
 
 // Cache configuration.  Sizes should be a power of two
-// typical configuration 4 ways, 4096 longints per way, 256 bit or more lines
-  longint       DCACHE_NUMWAYS;
-  longint       DCACHE_WAYSIZEINBYTES;
-  longint       DCACHE_LINELENINBITS;
-  longint       ICACHE_NUMWAYS;
-  longint       ICACHE_WAYSIZEINBYTES;
-  longint       ICACHE_LINELENINBITS;
+// typical configuration 4 ways, 4096 ints per way, 256 bit or more lines
+  int       DCACHE_NUMWAYS;
+  int       DCACHE_WAYSIZEINBYTES;
+  int       DCACHE_LINELENINBITS;
+  int       ICACHE_NUMWAYS;
+  int       ICACHE_WAYSIZEINBYTES;
+  int       ICACHE_LINELENINBITS;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-  longint       IDIV_BITSPERCYCLE;
+  int       IDIV_BITSPERCYCLE;
   logic         IDIV_ON_FPU;
 
 // Legal number of PMP entries are 0, 16, or 64
   byte          PMP_ENTRIES;
 
 // Address space
-  logic [31:0]  RESET_VECTOR;
+  int  RESET_VECTOR;
 
 // WFI Timeout Wait
-  longint       WFI_TIMEOUT_BIT;
+  int       WFI_TIMEOUT_BIT;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
@@ -130,20 +130,20 @@ typedef struct packed {
   logic         UART_PRESCALE ;
 
 // Interrupt configuration
-  longint       PLIC_NUM_SRC;
+  int       PLIC_NUM_SRC;
   logic         PLIC_NUM_SRC_LT_32;
-  longint       PLIC_GPIO_ID;
-  longint       PLIC_UART_ID;
+  int       PLIC_GPIO_ID;
+  int       PLIC_UART_ID;
 
   logic         BPRED_SUPPORTED;
   //parameter         BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-  longint       BPRED_SIZE;
-  longint       BTB_SIZE;
+  int       BPRED_SIZE;
+  int       BTB_SIZE;
 
 
 // FPU division architecture
-  longint       RADIX;
-  longint       DIVCOPIES;
+  int       RADIX;
+  int       DIVCOPIES;
 
 // bit manipulation
   logic         ZBA_SUPPORTED;
@@ -161,20 +161,20 @@ typedef struct packed {
   logic [1:0] U_MODE ;
 
 // Virtual Memory Constants
-  longint VPN_SEGMENT_BITS;
-  longint VPN_BITS;
-  longint PPN_BITS;
-  longint PA_BITS;
-  longint SVMODE_BITS;
-  longint ASID_BASE;
-  longint ASID_BITS;
+  int VPN_SEGMENT_BITS;
+  int VPN_BITS;
+  int PPN_BITS;
+  int PA_BITS;
+  int SVMODE_BITS;
+  int ASID_BASE;
+  int ASID_BITS;
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
   logic NO_TRANSLATE; //=0, so maybe logic is OK
   logic SV32; //=1, so maybe logic is OK
-  longint SV39;
-  longint SV48;
+  int SV39;
+  int SV48;
 
 // macros to define supported modes
   logic A_SUPPORTED;
@@ -190,72 +190,72 @@ typedef struct packed {
   logic U_SUPPORTED;
   
 // logarithm of XLEN, used for number of index bits to select
-  longint LOG_XLEN;
+  int LOG_XLEN;
 
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-  longint PMPCFG_ENTRIES;
+  byte PMPCFG_ENTRIES;
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-  logic [31:0] Q_LEN;
-  logic [31:0] Q_NE;
-  longint Q_NF;
-  logic [31:0] Q_BIAS;
+  int Q_LEN;
+  int Q_NE;
+  int Q_NF;
+  int Q_BIAS;
   logic [1:0] Q_FMT;
-  logic [31:0] D_LEN;
-  logic [31:0] D_NE;
-  longint D_NF;
-  logic [31:0] D_BIAS;
+  int D_LEN;
+  int D_NE;
+  int D_NF;
+  int D_BIAS;
   logic [1:0] D_FMT;
-  logic [31:0] S_LEN;
-  logic [31:0] S_NE;
-  longint S_NF;
-  logic [31:0] S_BIAS;
+  int S_LEN;
+  int S_NE;
+  int S_NF;
+  int S_BIAS;
   logic [1:0] S_FMT;
-  logic [31:0] H_LEN;
-  logic [31:0] H_NE;
-  longint H_NF;
-  logic [31:0] H_BIAS;
+  int H_LEN;
+  int H_NE;
+  int H_NF;
+  int H_BIAS;
   logic [1:0] H_FMT;
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-  logic [31:0] FLEN;
-  logic [31:0] NE  ;
-  longint NF  ;
+  int FLEN;
+  int NE  ;
+  int NF  ;
   logic [1:0] FMT ;
-  logic [31:0] BIAS;
+  int BIAS;
 
 // Floating point constants needed for FPU paramerterization
-  logic [31:0] FPSIZES;
-  logic [31:0] FMTBITS;
-  logic [31:0] LEN1 ;
-  logic [31:0] NE1  ;
-  longint NF1  ;
+  int FPSIZES;
+  int FMTBITS;
+  int LEN1 ;
+  int NE1  ;
+  int NF1  ;
   logic [1:0] FMT1 ;
-  logic [31:0] BIAS1;
-  logic [31:0] LEN2 ;
-  logic [31:0] NE2  ;
-  longint NF2  ;
+  int BIAS1;
+  int LEN2 ;
+  int NE2  ;
+  int NF2  ;
   logic [1:0] FMT2 ;
-  logic [31:0] BIAS2;
+  int BIAS2;
 
 // largest length in IEU/FPU
-  longint CVTLEN;
-  logic [31:0] LLEN;
-  logic [31:0] LOGCVTLEN;
-  longint NORMSHIFTSZ;
-  logic [31:0] LOGNORMSHIFTSZ;
-  longint CORRSHIFTSZ;
+  int CVTLEN;
+  int LLEN;
+  int LOGCVTLEN;
+  int NORMSHIFTSZ;
+  int LOGNORMSHIFTSZ;
+  int CORRSHIFTSZ;
 
 // division constants
-  longint DIVN       ;
-  logic [31:0] LOGR;
-  logic [31:0] RK         ;
-  logic [31:0] LOGRK      ;
-  longint FPDUR      ;
-  logic [31:0] DURLEN     ;
-  longint DIVb       ;
-  logic [31:0] DIVBLEN    ;
-  longint DIVa       ;
+  int DIVN       ;
+  int LOGR;
+  int RK         ;
+  int LOGRK      ;
+  int FPDUR      ;
+  int DURLEN     ;
+  int DIVb       ;
+  int DIVBLEN    ;
+  int DIVa       ;
 
 } cvw_t;
 

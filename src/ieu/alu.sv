@@ -49,7 +49,7 @@ module alu import cvw::*;  #(parameter cvw_t P) (
   logic                Carry, Neg;                                            // Flags: carry out, negative
   logic                LT, LTU;                                               // Less than, Less than unsigned
   logic                Asign, Bsign;                                          // Sign bits of A, B
-  logic [64:0]         XLENPred;
+  logic [31:0]         XLENPred;
   logic [P.LOG_XLEN-1:0] XLENPredTrunc;
 
   assign XLENPred = P.XLEN - 1;

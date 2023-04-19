@@ -35,7 +35,7 @@ module comparator #(parameter WIDTH=64, LOG_WIDTH=5) (
 
   logic             eq, lt;         // Flags: equal (eq), less than (lt)
   logic [WIDTH-1:0] af, bf;         // Operands with msb flipped (inverted) when signed
-  logic [63:0] WIDTHPred;
+  logic [31:0] WIDTHPred;
   logic [LOG_WIDTH-1:0] WIDTHPredTrunc;
 
 
