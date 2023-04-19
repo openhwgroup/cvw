@@ -55,6 +55,7 @@ string tvpaths[] = '{
     "pmp",
     "tlbKP",
     "dcache1",
+    "dcache2"
   };
 
   string coremark[] = '{
