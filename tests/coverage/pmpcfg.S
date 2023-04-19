@@ -36,4 +36,6 @@ main:
     li t0, 0x8800
     csrw pmpcfg0, t0
 
+
     j done
+
