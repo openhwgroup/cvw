@@ -69,7 +69,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 );
   
   logic              resetDelay;
-  logic              AMO, StoreAMO;
+  logic              StoreAMO;
   logic              AnyUpdateHit, AnyHit;
   logic              AnyMiss;
   logic              FlushFlag;
@@ -86,16 +86,15 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  assign AMO = CacheAtomic[1] & (&CacheRW);
-  assign StoreAMO = AMO | CacheRW[0];
+  assign StoreAMO = CacheRW[0]; // AMO operations assert CacheRW[0]
 
-  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: icache storeAMO
+  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (StoreAMO) & CacheHit;                             // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
-  assign CacheAccess = (AMO | CacheRW[1] | CacheRW[0]) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
+  assign CacheAccess = (|CacheRW) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
@@ -110,10 +109,10 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   always_comb begin
     NextState = STATE_READY;
     case (CurrState)                                                                                        // exclusion-tag: icache state-case
-      STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;
+      STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss & LineDirty)                      NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if(AnyMiss) /* & LineDirty */                NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
       STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
                              else                                              NextState = STATE_FETCH;
@@ -160,6 +159,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
           (CurrState == STATE_FLUSH_WRITEBACK);
+  // coverage off -item e -fecexprrow 1
+  // (state is always FLUSH_WRITEBACK when FlushWayFlag & CacheBusAck)
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
              (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
   assign FlushWayCntEn = (CurrState == STATE_FLUSH & ~LineDirty) |
@@ -181,6 +182,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                   (CurrState == STATE_WRITE_LINE) |
                   resetDelay;
   assign SelFetchBuffer = CurrState == STATE_WRITE_LINE | CurrState == STATE_READ_HOLD;
-  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache;
+  assign CacheEn = (~Stall | FlushCache | AnyMiss) | (CurrState != STATE_READY) | reset | InvalidateCache; // exclusion-tag: dcache CacheEn
                        
 endmodule // cachefsm
