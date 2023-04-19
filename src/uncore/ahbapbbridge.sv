@@ -25,8 +25,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-//P.include "wally-config.vh"
-
 module ahbapbbridge import cvw::*;  #(parameter cvw_t P, PERIPHS = 2) (
   input  logic                HCLK, HRESETn,
   input  logic [PERIPHS-1:0]  HSEL,  
