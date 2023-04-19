@@ -421,8 +421,8 @@ module fpgaTop
 
      .ui_clk(BUSCLK),
      .ui_clk_sync_rst(ui_clk_sync_rst),
-     .aresetn(~resetn),
-     .sys_rst(resetn),
+     .aresetn(resetn),
+     .sys_rst(resetn),    // omg. this is active low?!?!?? 
      .mmcm_locked(mmcm_locked),
 
      // *** What are these? 
