@@ -242,19 +242,19 @@ module fctrl (
   
   //    X - all except int->fp, store, load, mv int->fp
   assign XEnD = ~(((FResSelD==2'b10)&~FWriteIntD)|                                                 // load/store
-                  ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                             // mv int to float - There was an issue here, this condition was not refering to mv int -> fp  // ((FResSelD==2'b11)&FRegWriteD)|
+                  ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                                // mv int to float
                   ((FResSelD==2'b01)&(PostProcSelD==2'b00)&OpCtrlD[2]));                           // cvt int to float
 
   //    Y - all except cvt, mv, load, class, sqrt
   assign YEnD = ~(((FResSelD==2'b10)&(FWriteIntD|FRegWriteD))|                                     // load or class 
-                  ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                                // mv int to float as above // previously mv both ways - Another issue here, previously (FResSelD==2'b11)| does not cover mv both way int-> fp and fp-> int
-                  ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                    // mv float to int                   // mv both ways
+                  ((FResSelD==2'b00)&FRegWriteD&(OpCtrlD==3'b011))|                                // mv int to float as above
+                  ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int 
                   ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
-                  // Removed (FResSelD==2'b11)| removed to avoid redundancy 
+
 
   //    Z - fma ops only
-  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                  // fma, add, sub   // Removed &(FResSelD==2'b01) because it' redundant, Changed all the xx PostProcSelD to 00 to avoid unnecessary contention errors.
+  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub   
 
 
   //  Final Res Sel:
