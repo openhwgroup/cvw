@@ -70,7 +70,7 @@ localparam IDIV_BITSPERCYCLE = 32'd1;
 localparam IDIV_ON_FPU = 0;
 
 // Legal number of PMP entries are 0, 16, or 64
-localparam PMP_ENTRIES = 0;
+localparam PMP_ENTRIES = 32'd0;
 
 // Address space
 localparam RESET_VECTOR = 32'h80000000;
