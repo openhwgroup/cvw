@@ -27,19 +27,17 @@
 // SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module privileged (
+module privileged import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
   input  logic             StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW, 
   // CSR Reads and Writes, and values needed for traps
   input  logic             CSRReadM, CSRWriteM,                            // Read or write CSRs
-  input  logic [`XLEN-1:0] SrcAM,                                          // GPR register to write
+  input  logic [P.XLEN-1:0] SrcAM,                                          // GPR register to write
   input  logic [31:0]      InstrM,                                         // Instruction
   input  logic [31:0]      InstrOrigM,                                     // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
-  input  logic [`XLEN-1:0] IEUAdrM,                                        // address from IEU
-  input  logic [`XLEN-1:0] PCM, PC2NextF,                                  // program counter, next PC going to trap/return PC logic
+  input  logic [P.XLEN-1:0] IEUAdrM,                                        // address from IEU
+  input  logic [P.XLEN-1:0] PCM, PC2NextF,                                  // program counter, next PC going to trap/return PC logic
   // control signals                                                       
   input  logic             InstrValidM,                                    // Current instruction is valid (not flushed)
   input  logic             CommittedM, CommittedF,                         // current instruction is using bus; don't interrupt
@@ -76,16 +74,16 @@ module privileged (
   input  logic [4:0]       SetFflagsM,                                     // set FCSR flags from FPU
   input  logic             SelHPTW,                                        // HPTW in use.  Causes system to use S-mode endianness for accesses
   // CSR outputs                                                           
-  output logic [`XLEN-1:0] CSRReadValW,                                    // Value read from CSR
+  output logic [P.XLEN-1:0] CSRReadValW,                                    // Value read from CSR
   output logic [1:0]       PrivilegeModeW,                                 // current privilege mode
-  output logic [`XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
+  output logic [P.XLEN-1:0] SATP_REGW,                                      // supervisor address translation register
   output logic             STATUS_MXR, STATUS_SUM, STATUS_MPRV,            // status register bits
   output logic [1:0]       STATUS_MPP, STATUS_FS,                          // status register bits
-  output var logic [7:0]   PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],            // PMP configuration entries to MMU
-  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],   // PMP address entries to MMU
+  output var logic [7:0]   PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],            // PMP configuration entries to MMU
+  output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],   // PMP address entries to MMU
   output logic [2:0]       FRM_REGW,                                       // FPU rounding mode
   // PC logic output in privileged unit                                    
-  output logic [`XLEN-1:0] UnalignedPCNextF,                               // Next PC from trap/return PC logic
+  output logic [P.XLEN-1:0] UnalignedPCNextF,                               // Next PC from trap/return PC logic
   // control outputs                                                       
   output logic             RetM, TrapM,                                    // return instruction, or trap
   output logic             sfencevmaM,                                     // sfence.vma instruction
@@ -116,17 +114,17 @@ module privileged (
   logic                    ExceptionM;                                     // Memory stage instruction caused a fault
  
   // track the current privilege level
-  privmode privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
+  privmode #(P) privmode(.clk, .reset, .StallW, .TrapM, .mretM, .sretM, .DelegateM,
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   // decode privileged instructions
-  privdec pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
+  privdec #(P) pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .sfencevmaM);
 
   // Control and Status Registers
-  csr csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
+  csr #(P) csr(.clk, .reset, .FlushM, .FlushW, .StallE, .StallM, .StallW,
     .InstrM, .InstrOrigM, .PCM, .SrcAM, .IEUAdrM, .PC2NextF,
     .CSRReadM, .CSRWriteM, .TrapM, .mretM, .sretM, .wfiM, .IntPendingM, .InterruptM,
     .MTimerInt, .MExtInt, .SExtInt, .MSwInt,

@@ -29,7 +29,7 @@
 // `include "wally-shared.vh"
 
 localparam FPGA = 0;
-localparam QEMU = 32'd0;
+localparam QEMU = 0;
 
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd32;
@@ -72,7 +72,7 @@ localparam IDIV_BITSPERCYCLE = 32'd4;
 localparam IDIV_ON_FPU = 1;
 
 // Legal number of PMP entries are 0, 16, or 64
-localparam PMP_ENTRIES = 8'd16;
+localparam PMP_ENTRIES = 32'd16;
 
 // Address space
 localparam RESET_VECTOR = 32'h80000000;

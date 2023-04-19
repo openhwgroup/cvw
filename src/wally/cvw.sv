@@ -36,7 +36,7 @@ package cvw;
 
 typedef struct packed {
   logic         FPGA;     // Modifications to tare
-  int           QEMU;     // Hacks to agree with QEMU during Linux boot
+  logic           QEMU;     // Hacks to agree with QEMU during Linux boot
   int           XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int  MISA;     // Machine Instruction Set Architecture
@@ -79,7 +79,7 @@ typedef struct packed {
   logic         IDIV_ON_FPU;
 
 // Legal number of PMP entries are 0, 16, or 64
-  byte          PMP_ENTRIES;
+  int          PMP_ENTRIES;
 
 // Address space
   int  RESET_VECTOR;
@@ -193,7 +193,7 @@ typedef struct packed {
   int LOG_XLEN;
 
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-  byte PMPCFG_ENTRIES;
+  int PMPCFG_ENTRIES;
 
 // Floating point constants for Quad, Double, Single, and Half precisions
   int Q_LEN;

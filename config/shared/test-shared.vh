@@ -38,7 +38,7 @@ localparam U_SUPPORTED = ((MISA >> 20) % 2 == 1);
 localparam LOG_XLEN = (XLEN == 32 ? 32'd5 : 32'd6);
 
 // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-localparam PMPCFG_ENTRIES = (PMP_ENTRIES/8'd8);
+localparam PMPCFG_ENTRIES = (PMP_ENTRIES/32'd8);
 
 // Floating point constants for Quad, Double, Single, and Half precisions
 // Lim: I've made some of these 64 bit to avoid width warnings. 

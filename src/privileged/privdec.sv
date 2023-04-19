@@ -27,9 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module privdec (
+module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
   input  logic         StallM,
   input  logic [31:20] InstrM,                              // privileged instruction function field
@@ -52,24 +50,24 @@ module privdec (
   // Decode privileged instructions
   ///////////////////////////////////////////
 
-  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
-                      (PrivilegeModeW == `M_MODE | PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
-  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
+  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & P.S_SUPPORTED & 
+                      (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~STATUS_TSR); 
+  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == P.M_MODE);
   assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
   assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
   assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
   assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001) & 
-                      (PrivilegeModeW == `M_MODE | (PrivilegeModeW == `S_MODE & ~STATUS_TVM)); 
+                      (PrivilegeModeW == P.M_MODE | (PrivilegeModeW == P.S_MODE & ~STATUS_TVM)); 
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
 
-  if (`U_SUPPORTED) begin:wfi
-    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+  if (P.U_SUPPORTED) begin:wfi
+    logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
-    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
-    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+    floprc #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT]; 
   end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////
