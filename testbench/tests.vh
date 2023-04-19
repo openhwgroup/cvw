@@ -53,6 +53,8 @@ string tvpaths[] = '{
     "lsu",
     "vm64check",
     "pmp",
+    "dcache1",
+    "dcache2"
     "pmpcfg",
     "pmpcfg1",
     "pmpcfg2",
