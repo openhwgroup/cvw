@@ -27,20 +27,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // This comparator is best
-module comparator #(parameter WIDTH=64) (
+module comparator #(parameter WIDTH=64, LOG_WIDTH=5) (
   input  logic [WIDTH-1:0] a, b,    // Operands
   input  logic             sgnd,    // Signed operands
   output logic [1:0]       flags);  // Output flags: {eq, lt}
 
   logic             eq, lt;         // Flags: equal (eq), less than (lt)
   logic [WIDTH-1:0] af, bf;         // Operands with msb flipped (inverted) when signed
+  logic [63:0] WidthMinus;
+  logic [LOG_WIDTH-1:0] WidthMinusTrunc;
+
+
+  assign WidthMinus = (WIDTH-1);
+  assign WidthMinusTrunc = WidthMinus[LOG_WIDTH-1:0];
 
   // For signed numbers, flip most significant bit
-  assign af = {a[WIDTH-1] ^ sgnd, a[WIDTH-2:0]};
-  assign bf = {b[WIDTH-1] ^ sgnd, b[WIDTH-2:0]};
+  assign af = {a[WidthMinusTrunc] ^ sgnd, a[WIDTH-2:0]};
+  assign bf = {b[WidthMinusTrunc] ^ sgnd, b[WIDTH-2:0]};
 
   // Behavioral description gives best results
   assign eq = (a == b);            // eq = 1 when operands are equal, 0 otherwise

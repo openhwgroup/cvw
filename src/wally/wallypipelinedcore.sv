@@ -26,7 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-//`include "cvw.vh"
 // global CORE-V-Wally parameters
 
 module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
@@ -187,7 +186,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
     .PMPCFG_ARRAY_REGW,  .PMPADDR_ARRAY_REGW, .InstrAccessFaultF, .InstrUpdateDAF); 
     
   // integer execution unit: integer register file, datapath and controller
-  ieu ieu(.clk, .reset,
+  ieu #(P) ieu(.clk, .reset,
      // Decode Stage interface
      .InstrD, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
@@ -210,7 +209,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
 
-  lsu lsu(
+  lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
     .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
@@ -244,7 +243,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
     .LSUStallM);                    
 
   if (P.BUS_SUPPORTED) begin : ebu
-    ebu ebu(// IFU connections
+    ebu #(P) ebu(// IFU connections
       .clk, .reset,
       // IFU interface
       .IFUHADDR, .IFUHBURST, .IFUHTRANS, .IFUHREADY, .IFUHSIZE,
@@ -257,8 +256,9 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
       .HPROT, .HTRANS, .HMASTLOCK);
   end
 
-  // global stall and flush control  
-  hazard  hzu(
+  // global stall and flush control
+  // does not need parameterization  
+  hazard hzu(
     .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
     .LSUStallM, .IFUStallF,
