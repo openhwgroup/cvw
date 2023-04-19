@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module aplusbeq0 #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] a, b,
   output logic             zero

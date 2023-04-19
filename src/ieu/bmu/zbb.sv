@@ -28,8 +28,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,   // Operands
   input  logic             W64,          // Indicates word operation
