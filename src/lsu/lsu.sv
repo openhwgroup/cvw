@@ -162,8 +162,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign PreLSURWM = MemRWM; 
     assign IHAdrM = IEUAdrExtM;
     assign LSUFunct3M = Funct3M;
-  assign LSUFunct7M = Funct7M; 
-  assign LSUAtomicM = AtomicM;
+    assign LSUFunct7M = Funct7M; 
+    assign LSUAtomicM = AtomicM;
     assign IHWriteDataM = WriteDataM;
     assign LoadAccessFaultM = LSULoadAccessFaultM;
     assign StoreAmoAccessFaultM = LSUStoreAmoAccessFaultM;   
@@ -225,15 +225,15 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic [1:0]          DTIMMemRWM;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-  mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
+    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
     dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.XLEN-1:0]), .ByteMaskM(ByteMaskM[P.XLEN/8-1:0]));
-  end else begin
-  end
+  end 
+
   if (P.BUS_SUPPORTED) begin : bus              
     if(P.DCACHE_SUPPORTED) begin : dcache
       localparam   LLENWORDSPERLINE = P.DCACHE_LINELENINBITS/P.LLEN;             // Number of LLEN words in cacheline
@@ -249,17 +249,17 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                DCacheBusAck;                                               // ahbcacheinterface completed fetch or writeback
       logic                SelBusBeat;                                                 // ahbcacheinterface selects postion in cacheline with BeatCount
       logic [1:0]        CacheBusRW;                                                 // Cache sends request to ahbcacheinterface
-    logic [1:0]        BusRW;                                                      // Uncached bus memory access
+      logic [1:0]        BusRW;                                                      // Uncached bus memory access
       logic                CacheableOrFlushCacheM;                                     // Memory address is cacheable or operation is a cache flush
       logic [1:0]        CacheRWM;                                                   // Cache read (10), write (01), AMO (11)
-    logic [1:0]        CacheAtomicM;                                               // Cache AMO
-    logic          FlushDCache;                                                // Suppress d cache flush if there is an ITLB miss.
+      logic [1:0]        CacheAtomicM;                                               // Cache AMO
+      logic          FlushDCache;                                                // Suppress d cache flush if there is an ITLB miss.
       
       assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
-    assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
+      assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
       cache #(.LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
@@ -283,8 +283,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .Cacheable(CacheableOrFlushCacheM), .BusRW, .Stall(GatedStallW),
         .BusStall, .BusCommitted(BusCommittedM));
 
-    // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
-    // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
+      // Mux between the 3 sources of read data, 0: cache, 1: Bus, 2: DTIM
+      // Uncache bus access may be smaller width than LLEN.  Duplicate LLENPOVERAHBW times.
       // *** DTIMReadDataWordM should be increased to LLEN.
       // pma should generate exception for LLEN read to periph.
       mux3 #(P.LLEN) UnCachedDataMux(.d0(DCacheReadDataWordM), .d1({LLENPOVERAHBW{FetchBuffer[P.XLEN-1:0]}}),
@@ -298,7 +298,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign LSUHADDR = PAdrM;
       assign LSUHSIZE = LSUFunct3M;
 
-      ahbinterface #(1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
+      ahbinterface #(P, 1) ahbinterface(.HCLK(clk), .HRESETn(~reset), .Flush(FlushW), .HREADY(LSUHREADY), 
         .HRDATA(HRDATA), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HWDATA(LSUHWDATA),
         .HWSTRB(LSUHWSTRB), .BusRW, .ByteMask(ByteMaskM), .WriteData(LSUWriteDataM),
         .Stall(GatedStallW), .BusStall, .BusCommitted(BusCommittedM), .FetchBuffer(FetchBuffer));
