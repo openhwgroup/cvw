@@ -53,6 +53,10 @@ string tvpaths[] = '{
     "lsu",
     "vm64check",
     "pmp",
+
+    "pmpcfg",
+    "pmpcfg1",
+    "pmpcfg2",
     "tlbKP",
     "ifuCamlineWrite"
   };
