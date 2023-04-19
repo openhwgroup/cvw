@@ -37,7 +37,7 @@ module cacheway import cvw::*;  #(parameter cvw_t P,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
+  input  logic [P.PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the dirty bit in the selected way and set
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
@@ -56,11 +56,11 @@ module cacheway import cvw::*;  #(parameter cvw_t P,
   output logic                        DirtyWay,       // This way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // THis way's tag if valid
 
-  localparam                          WORDSPERLINE = LINELEN/`XLEN;
+  localparam                          WORDSPERLINE = LINELEN/P.XLEN;
   localparam                          BYTESPERLINE = LINELEN/8;
   localparam                          LOGWPL = $clog2(WORDSPERLINE);
-  localparam                          LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam                          BYTESPERWORD = `XLEN/8;
+  localparam                          LOGXLENBYTES = $clog2(P.XLEN/8);
+  localparam                          BYTESPERWORD = P.XLEN/8;
 
   logic [NUMLINES-1:0]                ValidBits;
   logic [NUMLINES-1:0]                DirtyBits;
@@ -110,12 +110,12 @@ module cacheway import cvw::*;  #(parameter cvw_t P,
 
   ram1p1rwbe #(.P(P), .DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag), .bwe('1),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
+    .din(PAdr[P.PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign DirtyWay = SelTag & Dirty & ValidWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign HitWay = ValidWay & (ReadTag == PAdr[P.PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array

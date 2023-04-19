@@ -27,10 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module subcachelineread #(parameter LINELEN, WORDLEN, 
-  parameter MUXINTERVAL )(     // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to `LLEN for D$
+  parameter MUXINTERVAL )(     // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to P.LLEN for D$
 
   input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0] PAdr,       // Physical address 
   input  logic [LINELEN-1:0]                     ReadDataLine,// Read data of the whole cacheline
