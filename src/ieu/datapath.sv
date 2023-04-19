@@ -96,8 +96,8 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   assign Rs1D      = InstrD[19:15];
   assign Rs2D      = InstrD[24:20];
   assign RdD       = InstrD[11:7];
-  regfile regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
-  extend ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
+  regfile #(P) regf(clk, reset, RegWriteW, Rs1D, Rs2D, RdW, ResultW, R1D, R2D);
+  extend #(P) ext(.InstrD(InstrD[31:7]), .ImmSrcD, .ImmExtD);
  
   // Execute stage pipeline register and logic
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);

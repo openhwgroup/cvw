@@ -49,26 +49,26 @@ module alu import cvw::*;  #(parameter cvw_t P) (
   logic                Carry, Neg;                                            // Flags: carry out, negative
   logic                LT, LTU;                                               // Less than, Less than unsigned
   logic                Asign, Bsign;                                          // Sign bits of A, B
-  logic [64:0]         XLENMinus;
-  logic [P.LOG_XLEN-1:0] XLENMinusTrunc;
+  logic [64:0]         XLENPred;
+  logic [P.LOG_XLEN-1:0] XLENPredTrunc;
 
-  assign XLENMinus = P.XLEN - 1;
-  assign XLENMinusTrunc = XLENMinus[P.LOG_XLEN-1:0];
+  assign XLENPred = P.XLEN - 1;
+  assign XLENPredTrunc = XLENPred[P.LOG_XLEN-1:0];
 
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(P.XLEN-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.A, .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
+  shifter #(P) sh(.A, .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
   // and the result has the opposite sign of A.
   // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
-  assign Neg  = Sum[XLENMinusTrunc];
-  assign Asign = A[XLENMinusTrunc];
-  assign Bsign = B[XLENMinusTrunc];
+  assign Neg  = Sum[XLENPredTrunc];
+  assign Asign = A[XLENPredTrunc];
+  assign Bsign = B[XLENPredTrunc];
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
  
