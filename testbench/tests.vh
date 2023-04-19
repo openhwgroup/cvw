@@ -53,7 +53,8 @@ string tvpaths[] = '{
     "lsu",
     "vm64check",
     "pmp",
-    "tlbKP"
+    "tlbKP",
+    "ifuCamlineWrite"
   };
 
   string coremark[] = '{
