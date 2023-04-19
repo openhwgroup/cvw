@@ -251,10 +251,10 @@ module fctrl (
                   ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int 
                   ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
-                  // Removed (FResSelD==2'b11)| removed to avoid redundancy 
+
 
   //    Z - fma ops only
-  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                  // fma, add, sub   // Removed &(FResSelD==2'b01) because it' redundant, Changed all the xx PostProcSelD to 00 to avoid unnecessary contention errors.
+  assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub   
 
 
   //  Final Res Sel:
