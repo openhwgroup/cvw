@@ -69,7 +69,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 );
   
   logic              resetDelay;
-  logic              AMO, StoreAMO;
+  logic              StoreAMO;
   logic              AnyUpdateHit, AnyHit;
   logic              AnyMiss;
   logic              FlushFlag;
@@ -86,16 +86,15 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  assign AMO = CacheAtomic[1] & (&CacheRW);
-  assign StoreAMO = AMO | CacheRW[0];
+  assign StoreAMO = CacheRW[0]; // AMO operations assert CacheRW[0]
 
-  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: icache storeAMO
+  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
   assign AnyUpdateHit = (StoreAMO) & CacheHit;                             // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
-  assign CacheAccess = (AMO | CacheRW[1] | CacheRW[0]) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
+  assign CacheAccess = (|CacheRW) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
