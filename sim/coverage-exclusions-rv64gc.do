@@ -52,7 +52,7 @@ set end [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag-end: icache case"]
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange $start-$end
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache WRITEBACKStatement"]
 # exclude Atomic Operation logic
-coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache storeAMO"] -item e 1 -fecexprrow 6
+coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 6
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache storeAMO1"] -item e 1 -fecexprrow 2-4
 coverage exclude -scope /dut/core/ifu/bus/icache/icache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: icache AnyUpdateHit"] -item e 1 -fecexprrow 2
 # cache write logic
@@ -76,6 +76,19 @@ for {set i 0} {$i < $numcacheways} {incr i} {
     # below: flushD can't go high during an icache write b/c of pipeline stall
     coverage exclude -scope /dut/core/ifu/bus/icache/icache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: icache SetValidEN"] -item e 1 -fecexprrow 4
 }
+
+## D$ Exclusions.
+# InvalidateCache is I$ only:
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item b 2
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: dcache InvalidateCheck"] -item s 1
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: dcache CacheEn"] -item e 1 -fecexprrow 12
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
+set numcacheways 4
+for {set i 0} {$i < $numcacheways} {incr i} {
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item be 1 -fecexprrow 4
+}
+# D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
+coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
 
 
 # Excluding peripherals as sources of instructions for the ifu
