@@ -93,25 +93,22 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
 
 
-#Excluding specific signals in lsu that will never be toggled
+#Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -linerange $line-$line -item e 1 -fecexprrow 5
-
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
 
+# Excluding signals in lsu: the lsu never executes instructions so 'ExecuteAccess' will never be 1
 set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX ="]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 6
-
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 4
 
 # Excluding ReadAccess and WriteAccess signal in the ifu that will never be true
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| WriteAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2 4
-
 set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-5
-
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-3
