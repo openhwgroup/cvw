@@ -35,7 +35,7 @@
 package cvw;
 
 typedef struct packed {
-  longint       FPGA;     // Modifications to tare
+  logic       FPGA;       // Modifications to tare
   longint       QEMU;     // Hacks to agree with QEMU during Linux boot
   longint       XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)

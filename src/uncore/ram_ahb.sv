@@ -26,27 +26,26 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 `define RAM_LATENCY 0
 
-module ram_ahb #(parameter BASE=0, RANGE = 65535) (
+module ram_ahb import cvw::*;  #(parameter cvw_t P, BASE=0, RANGE = 65535) (
   input  logic                HCLK, HRESETn, 
   input  logic                HSELRam,
-  input  logic [`PA_BITS-1:0] HADDR,
+  input  logic [P.PA_BITS-1:0] HADDR,
   input  logic                HWRITE,
   input  logic                HREADY,
   input  logic [1:0]          HTRANS,
-  input  logic [`XLEN-1:0]    HWDATA,
-  input  logic [`XLEN/8-1:0]  HWSTRB,
-  output logic [`XLEN-1:0]    HREADRam,
+  input  logic [P.XLEN-1:0]    HWDATA,
+  input  logic [P.XLEN/8-1:0]  HWSTRB,
+  output logic [P.XLEN-1:0]    HREADRam,
   output logic                HRESPRam, HREADYRam
 );
 
   localparam               ADDR_WIDTH = $clog2(RANGE/8);
-  localparam               OFFSET = $clog2(`XLEN/8);   
+  localparam               OFFSET = $clog2(P.XLEN/8);   
 
-  logic [`XLEN/8-1:0]         ByteMask;
-  logic [`PA_BITS-1:0]        HADDRD, RamAddr;
+  logic [P.XLEN/8-1:0]         ByteMask;
+  logic [P.PA_BITS-1:0]        HADDRD, RamAddr;
   logic                       initTrans;
   logic                       memwrite, memwriteD, memread;
   logic                       nextHREADYRam;
@@ -59,7 +58,7 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   assign memread = initTrans & ~HWRITE;
  
   flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
-  flopenr #(`PA_BITS)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
+  flopenr #(P.PA_BITS)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
 
   // Stall on a read after a write because the RAM can't take both adddresses on the same cycle
   assign nextHREADYRam = (~(memwriteD & memread)) & ~DelayReady;
@@ -68,10 +67,10 @@ module ram_ahb #(parameter BASE=0, RANGE = 65535) (
   assign HRESPRam = 0; // OK
 
   // On writes or during a wait state, use address delayed by one cycle to sync RamAddr with HWDATA or hold stalled address
-  mux2 #(`PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
+  mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  ram1p1rwbe #(.DEPTH(RANGE/8), .WIDTH(`XLEN)) memory(.clk(HCLK), .ce(1'b1), 
+  ram1p1rwbe #(.P(P), .DEPTH(RANGE/8), .WIDTH(P.XLEN[31:0])) memory(.clk(HCLK), .ce(1'b1), 
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
 
