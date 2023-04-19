@@ -25,6 +25,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// include shared configuration
+// `include "wally-shared.vh"
+
 localparam FPGA = 0;
 localparam QEMU = 0;
 
@@ -34,26 +37,25 @@ localparam XLEN = 32'd32;
 // IEEE 754 compliance
 localparam IEEE754 = 0;
 
-// E
-localparam MISA = (32'h00000010); 
-localparam ZICSR_SUPPORTED = 0;
-localparam ZIFENCEI_SUPPORTED = 0;
-localparam COUNTERS = 32'd0;
-localparam ZICOUNTERS_SUPPORTED = 0;
+localparam MISA = (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 <<3 | 1 << 5);
+localparam ZICSR_SUPPORTED = 1;
+localparam ZIFENCEI_SUPPORTED = 1;
+localparam COUNTERS = 32'd32;
+localparam ZICOUNTERS_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
-localparam SSTC_SUPPORTED = 0;
+localparam SSTC_SUPPORTED = 1;
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 1;
-localparam DCACHE_SUPPORTED = 0;
-localparam ICACHE_SUPPORTED = 0;
-localparam VIRTMEM_SUPPORTED = 0;
-localparam VECTORED_INTERRUPTS_SUPPORTED = 0; 
-localparam BIGENDIAN_SUPPORTED = 0;
+localparam DCACHE_SUPPORTED = 1;
+localparam ICACHE_SUPPORTED = 1;
+localparam VIRTMEM_SUPPORTED = 1;
+localparam VECTORED_INTERRUPTS_SUPPORTED = 1;
+localparam BIGENDIAN_SUPPORTED = 1;
 
 // TLB configuration.  Entries should be a power of 2
-localparam ITLB_ENTRIES = 32'd0;
-localparam DTLB_ENTRIES = 32'd0;
+localparam ITLB_ENTRIES = 32'd32;
+localparam DTLB_ENTRIES = 32'd32;
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 bytes per way, 256 bit or more lines
@@ -66,11 +68,11 @@ localparam ICACHE_LINELENINBITS = 32'd512;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-localparam IDIV_BITSPERCYCLE = 32'd1;
-localparam IDIV_ON_FPU = 0;
+localparam IDIV_BITSPERCYCLE = 32'd4;
+localparam IDIV_ON_FPU = 1;
 
 // Legal number of PMP entries are 0, 16, or 64
-localparam PMP_ENTRIES = 32'd0;
+localparam PMP_ENTRIES = 32'd16;
 
 // Address space
 localparam RESET_VECTOR = 32'h80000000;
@@ -82,35 +84,35 @@ localparam WFI_TIMEOUT_BIT = 32'd16;
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 localparam DTIM_SUPPORTED = 1'b0;
-localparam DTIM_BASE = 34'h80000000;      
-localparam DTIM_RANGE = 34'h007FFFFF;     
+localparam DTIM_BASE       = 34'h80000000;
+localparam DTIM_RANGE      = 34'h007FFFFF;
 localparam IROM_SUPPORTED = 1'b0;
-localparam IROM_BASE = 34'h80000000;     
-localparam IROM_RANGE = 34'h007FFFFF;     
+localparam IROM_BASE       = 34'h80000000;
+localparam IROM_RANGE      = 34'h007FFFFF;
 localparam BOOTROM_SUPPORTED = 1'b1;
-localparam BOOTROM_BASE = 34'h00001000;  
-localparam BOOTROM_RANGE = 34'h00000FFF; 
+localparam BOOTROM_BASE   = 34'h00001000;
+localparam BOOTROM_RANGE  = 34'h00000FFF;
 localparam UNCORE_RAM_SUPPORTED = 1'b1;
-localparam UNCORE_RAM_BASE = 34'h80000000;      
-localparam UNCORE_RAM_RANGE = 34'h07FFFFFF;     
+localparam UNCORE_RAM_BASE       = 34'h80000000;
+localparam UNCORE_RAM_RANGE      = 34'h07FFFFFF;
 localparam EXT_MEM_SUPPORTED = 1'b0;
-localparam EXT_MEM_BASE = 34'h80000000;      
-localparam EXT_MEM_RANGE = 34'h07FFFFFF;     
-localparam CLINT_SUPPORTED = 1'b0;
-localparam CLINT_BASE = 34'h02000000; 
+localparam EXT_MEM_BASE       = 34'h80000000;
+localparam EXT_MEM_RANGE      = 34'h07FFFFFF;
+localparam CLINT_SUPPORTED = 1'b1;
+localparam CLINT_BASE  = 34'h02000000;
 localparam CLINT_RANGE = 34'h0000FFFF;
-localparam GPIO_SUPPORTED = 1'b0;
-localparam GPIO_BASE = 34'h10060000;  
-localparam GPIO_RANGE = 34'h000000FF; 
-localparam UART_SUPPORTED = 1'b0;
-localparam UART_BASE = 34'h10000000;  
-localparam UART_RANGE = 34'h00000007; 
-localparam PLIC_SUPPORTED = 1'b0;
-localparam PLIC_BASE = 34'h0C000000;  
-localparam PLIC_RANGE = 34'h03FFFFFF; 
+localparam GPIO_SUPPORTED = 1'b1;
+localparam GPIO_BASE   = 34'h10060000;
+localparam GPIO_RANGE  = 34'h000000FF;
+localparam UART_SUPPORTED = 1'b1;
+localparam UART_BASE   = 34'h10000000;
+localparam UART_RANGE  = 34'h00000007;
+localparam PLIC_SUPPORTED = 1'b1;
+localparam PLIC_BASE   = 34'h0C000000;
+localparam PLIC_RANGE  = 34'h03FFFFFF;
 localparam SDC_SUPPORTED = 1'b0;
-localparam SDC_BASE = 34'h00012100;  
-localparam SDC_RANGE = 34'h0000001F; 
+localparam SDC_BASE   = 34'h00012100;
+localparam SDC_RANGE  = 34'h0000001F;
 
 // Bus Interface width
 localparam AHBW = 32'd32;
@@ -124,15 +126,15 @@ localparam GPIO_LOOPBACK_TEST = 1;
 localparam UART_PRESCALE = 1;
 
 // Interrupt configuration
-localparam PLIC_NUM_SRC = 32'd10; 
+localparam PLIC_NUM_SRC = 32'd10;
 // comment out the following if >=32 sources
 localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
 localparam PLIC_GPIO_ID = 32'd3;
 localparam PLIC_UART_ID = 32'd10;
 
-localparam BPRED_SUPPORTED = 0;
+localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = "BP_GSHARE"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-localparam BPRED_SIZE = 32'd10;
+localparam BPRED_SIZE = 32'd16;
 localparam BTB_SIZE = 32'd10;
 
 localparam SVADU_SUPPORTED = 0;
@@ -143,13 +145,12 @@ localparam RADIX = 32'd4;
 localparam DIVCOPIES = 32'd4;
 
 // bit manipulation
-localparam ZBA_SUPPORTED = 0;
-localparam ZBB_SUPPORTED = 0;
-localparam ZBC_SUPPORTED = 0;
-localparam ZBS_SUPPORTED = 0;
+localparam ZBA_SUPPORTED = 1;
+localparam ZBB_SUPPORTED = 1;
+localparam ZBC_SUPPORTED = 1;
+localparam ZBS_SUPPORTED = 1;
 
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
 `include "test-shared.vh"
- 

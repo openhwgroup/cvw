@@ -100,13 +100,13 @@ module uncore import cvw::*;  #(parameter cvw_t P) (
                 
   // on-chip RAM
   if (P.UNCORE_RAM_SUPPORTED) begin : ram
-    ram_ahb #(.BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE)) ram (
+    ram_ahb #(.P(P), .BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE)) ram (
       .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
   end
 
  if (P.BOOTROM_SUPPORTED) begin : bootrom
-    rom_ahb #(.BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE))
+    rom_ahb #(.P(P), .BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE))
     bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
   end

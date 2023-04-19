@@ -27,18 +27,16 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module regfile (
+module regfile import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
   input  logic             we3,                 // Write enable
   input  logic [ 4:0]      a1, a2, a3,          // Source registers to read (a1, a2), destination register to write (a3)
-  input  logic [`XLEN-1:0] wd3,                 // Write data for port 3
-  output logic [`XLEN-1:0] rd1, rd2);           // Read data for ports 1, 2
+  input  logic [P.XLEN-1:0] wd3,                 // Write data for port 3
+  output logic [P.XLEN-1:0] rd1, rd2);           // Read data for ports 1, 2
 
-  localparam NUMREGS = `E_SUPPORTED ? 16 : 32;  // only 16 registers in E mode
+  localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;  // only 16 registers in E mode
 
-  logic [`XLEN-1:0] rf[NUMREGS-1:1];
+  logic [P.XLEN-1:0] rf[NUMREGS-1:1];
   integer i;
 
   // Three ported register file

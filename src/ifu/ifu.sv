@@ -25,8 +25,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module ifu import cvw::*;  #(parameter cvw_t P) (
   input  logic                clk, reset,
   input  logic                StallF, StallD, StallE, StallM, StallW,
@@ -213,8 +211,8 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
   if (P.IROM_SUPPORTED) begin : irom
-  logic IROMce;
-  assign IROMce = ~GatedStallD | reset;
+    logic IROMce;
+    assign IROMce = ~GatedStallD | reset;
     assign IFURWF = 2'b10;
     irom irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[P.XLEN-1:0]), .IROMInstrF);
   end else begin
@@ -234,7 +232,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
-      cache #(.LINELEN(P.ICACHE_LINELENINBITS),
+      cache #(.P(P), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMLINES(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
@@ -271,7 +269,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
       assign IFUHSIZE = 3'b010;
 
-      ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
+      ahbinterface #(P, 0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));

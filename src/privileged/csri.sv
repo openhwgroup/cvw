@@ -29,14 +29,14 @@
 
 `include "wally-config.vh"
 
-module csri #(parameter 
+module csri import cvw::*;  #(parameter cvw_t P, 
   MIE = 12'h304,
   MIP = 12'h344,
   SIE = 12'h104,
   SIP = 12'h144) (
   input  logic              clk, reset, 
   input  logic              CSRMWriteM, CSRSWriteM,
-  input  logic [`XLEN-1:0]  CSRWriteValM,
+  input  logic [P.XLEN-1:0]  CSRWriteValM,
   input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
   input  logic [11:0]       MIDELEG_REGW,
@@ -58,8 +58,8 @@ module csri #(parameter
   // MEIP, MTIP, MSIP are read-only
   // SEIP, STIP, SSIP is writable in MIP if S mode exists
   // SSIP is writable in SIP if S mode exists
-  if (`S_SUPPORTED) begin:mask
-    if (`SSTC_SUPPORTED) begin
+  if (P.S_SUPPORTED) begin:mask
+    if (P.SSTC_SUPPORTED) begin
       assign MIP_WRITE_MASK = 12'h202; // SEIP and SSIP are writable, but STIP is not writable when STIMECMP is implemented (see SSTC spec)
       assign STIP = STimerInt;
     end else begin

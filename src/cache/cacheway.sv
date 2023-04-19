@@ -29,14 +29,15 @@
 
 `include "wally-config.vh"
 
-module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
+module cacheway import cvw::*;  #(parameter cvw_t P, 
+                  NUMLINES=512, LINELEN = 256, TAGLEN = 26,
                   OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,           // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
+  input  logic [P.PA_BITS-1:0]         PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the dirty bit in the selected way and set
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
@@ -55,11 +56,11 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   output logic                        DirtyWay,       // This way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // THis way's tag if valid
 
-  localparam                          WORDSPERLINE = LINELEN/`XLEN;
+  localparam                          WORDSPERLINE = LINELEN/P.XLEN;
   localparam                          BYTESPERLINE = LINELEN/8;
   localparam                          LOGWPL = $clog2(WORDSPERLINE);
-  localparam                          LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam                          BYTESPERWORD = `XLEN/8;
+  localparam                          LOGXLENBYTES = $clog2(P.XLEN/8);
+  localparam                          BYTESPERWORD = P.XLEN/8;
 
   logic [NUMLINES-1:0]                ValidBits;
   logic [NUMLINES-1:0]                DirtyBits;
@@ -107,14 +108,14 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
+  ram1p1rwbe #(.P(P), .DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag), .bwe('1),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
+    .din(PAdr[P.PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign DirtyWay = SelTag & Dirty & ValidWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign HitWay = ValidWay & (ReadTag == PAdr[P.PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -128,7 +129,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
-    ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+    ram1p1rwbe #(.P(P), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));

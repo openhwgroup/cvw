@@ -27,10 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-
-module controller(
+module controller import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
@@ -143,30 +140,30 @@ module controller(
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
   // otherwise be cheap
 
-  if (`ZICSR_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED) begin:legalcheck // Exact integer decoding
+  if (P.ZICSR_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED | P.ZBS_SUPPORTED) begin:legalcheck // Exact integer decoding
     logic Funct7ZeroD, Funct7b5D, IShiftD, INoShiftD;
     logic Funct7ShiftZeroD, Funct7Shiftb5D;
 
     assign Funct7ZeroD      = (Funct7D == 7'b0000000); // most R-type instructions
     assign Funct7b5D        = (Funct7D == 7'b0100000); // srai, sub
-    assign Funct7ShiftZeroD = (`XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
-    assign Funct7Shiftb5D   = (`XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
+    assign Funct7ShiftZeroD = (P.XLEN==64) ? (Funct7D[6:1] == 6'b000000) : Funct7ZeroD;
+    assign Funct7Shiftb5D   = (P.XLEN==64) ? (Funct7D[6:1] == 6'b010000) : Funct7b5D;
     assign IShiftD          = (Funct3D == 3'b001 & Funct7ShiftZeroD) | (Funct3D == 3'b101 & (Funct7ShiftZeroD | Funct7Shiftb5D)); // slli, srli, srai, or w forms
     assign INoShiftD        = ((Funct3D != 3'b001) & (Funct3D != 3'b101));
     assign IFunctD          = IShiftD | INoShiftD;
     assign RFunctD          = ((Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) | Funct7ZeroD;
-    assign MFunctD          = (Funct7D == 7'b0000001) & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+    assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
-                              ((`XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
+                              ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
     assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
-                              ((`XLEN == 64) & (Funct3D == 3'b011));
+                              ((P.XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
     assign JFunctD          = (Funct3D == 3'b000);
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1; // Don't bother to separate out shift decoding
     assign RFunctD = ~Funct7D[0]; // Not a multiply
-    assign MFunctD = Funct7D[0] & (`M_SUPPORTED | (`ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
+    assign MFunctD = Funct7D[0] & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD = 1; // don't bother to check Funct3 for loads
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
@@ -183,19 +180,19 @@ module controller(
      7'b0000011: if (LFunctD) 
                       ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // loads
       7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
-      7'b0001111: if (`ZIFENCEI_SUPPORTED)
+      7'b0001111: if (P.ZIFENCEI_SUPPORTED)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
                   else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
-      7'b0011011: if (IFunctD & IWValidFunct3D & `XLEN == 64)
+      7'b0011011: if (IFunctD & IWValidFunct3D & P.XLEN == 64)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
       7'b0100111:     ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_1; // fsw - only legal if FP supported
-      7'b0101111: if (`A_SUPPORTED) begin
+      7'b0101111: if (P.A_SUPPORTED) begin
                     if (InstrD[31:27] == 5'b00010)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0; // lr
                     else if (InstrD[31:27] == 5'b00011)
@@ -208,16 +205,16 @@ module controller(
                   else if (MFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-      7'b0111011: if (RFunctD & (`XLEN == 64))
+      7'b0111011: if (RFunctD & (P.XLEN == 64))
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
-                  else if (MFunctD & (`XLEN == 64))
+                  else if (MFunctD & (P.XLEN == 64))
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
       7'b1100011: if (BFunctD)   
                       ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
       7'b1100111: if (JFunctD)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
-      7'b1110011: if (`ZICSR_SUPPORTED) begin
+      7'b1110011: if (P.ZICSR_SUPPORTED) begin
                    if (Funct3D == 3'b000)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in priveleged modules
                    else
@@ -230,7 +227,7 @@ module controller(
   // Unswizzle control bits
   // Squash control signals if coming from an illegal compressed instruction
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
-  assign IllegalERegAdrD = `E_SUPPORTED & `ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
+  assign IllegalERegAdrD = P.E_SUPPORTED & P.ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
   //assign IllegalBaseInstrD = 1'b0;
   assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
@@ -248,7 +245,7 @@ module controller(
   assign BaseSubArithD = ALUOpD & (subD | sraD | sltD | sltuD);
 
   // bit manipulation Configuration Block
-  if (`ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
+  if (P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED | P.ZBC_SUPPORTED) begin: bitmanipi //change the conditional expression to OR any Z supported flags
     logic IllegalBitmanipInstrD;          // Unrecognized B instruction
     logic BRegWriteD;                     // Indicates if it is a R type BMU instruction in decode stage
     logic BW64D;                          // Indicates if it is a W type BMU instruction in decode stage
@@ -258,7 +255,7 @@ module controller(
     bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
       .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
-    if (`ZBA_SUPPORTED) begin
+    if (P.ZBA_SUPPORTED) begin
       // ALU Decoding is more comprehensive when ZBA is supported. slt and slti conflicts with sh1add, sh1add.uw
       assign sltD = (Funct3D == 3'b010 & (~(Funct7D[4]) | ~OpD[5])) ;
     end else assign sltD = (Funct3D == 3'b010);
@@ -292,7 +289,7 @@ module controller(
   // Fences
   // Ordinary fence is presently a nop
   // fence.i flushes the D$ and invalidates the I$ if Zifencei is supported and I$ is implemented
-  if (`ZIFENCEI_SUPPORTED & `ICACHE_SUPPORTED) begin:fencei
+  if (P.ZIFENCEI_SUPPORTED & P.ICACHE_SUPPORTED) begin:fencei
     logic FenceID;
     assign FenceID = FenceXD & (Funct3D == 3'b001); // is it a FENCE.I instruction?
     assign InvalidateICacheD = FenceID;
@@ -341,5 +338,5 @@ module controller(
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write
-  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & `DCACHE_SUPPORTED)) | (|AtomicD));
+  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED)) | (|AtomicD));
 endmodule

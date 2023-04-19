@@ -180,6 +180,6 @@ module bmuctrl(
   // Choose ALUSelect brom BMU for BMU operations, Funct3 for IEU operations, or 0 for addition
   assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
-  // BMU Execute stage pipieline control register
+  // BMU Execute stage pipeline control register
   flopenrc#(10) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BComparatorSignedD,  BALUControlD}, {BSelectE, ZBBSelectE, BRegWriteE, BComparatorSignedE, BALUControlE});
 endmodule

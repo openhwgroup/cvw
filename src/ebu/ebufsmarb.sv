@@ -28,8 +28,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module ebufsmarb (
   input  logic       HCLK,
   input  logic       HRESETn,

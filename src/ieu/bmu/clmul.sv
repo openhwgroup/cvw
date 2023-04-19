@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module clmul #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,             // Operands
   output logic [WIDTH-1:0] ClmulResult);     // ZBS result
