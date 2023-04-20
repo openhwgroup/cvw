@@ -43,7 +43,7 @@ module fdivsqrtpreproc (
   input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic                IntDivE, W64E,
   output logic                ISpecialCaseE,
-  output logic [`DURLEN-1:0]  cycles,
+  output logic [`DURLEN-1:0]  CyclesE,
   output logic [`DIVBLEN:0]   nM, mM,
   output logic                NegQuotM, ALTBM, IntDivM, W64M,
   output logic                AsM, BZeroM,
@@ -62,6 +62,7 @@ module fdivsqrtpreproc (
   logic                       NegQuotE;                            // Integer quotient is negative
   logic                       AsE, BsE;                            // Signs of integer inputs
   logic [`XLEN-1:0]           AE;                                  // input A after W64 adjustment
+  logic  ALTBE;
 
   //////////////////////////////////////////////////////
   // Integer Preprocessing
@@ -113,13 +114,16 @@ module fdivsqrtpreproc (
   assign XPreproc = (IFX << ell) << 1;
   assign DPreproc = (IFD << mE)  << 1; 
 
+  // *** CT: move to fdivsqrtintpreshift
+
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
+  //  Determine DivXShifted (X shifted to digit boundary)
+  //  and nE (number of fractional digits)
   //////////////////////////////////////////////////////
 
   if (`IDIV_ON_FPU) begin:intrightshift // Int Supported
     logic [`DIVBLEN:0] ZeroDiff, p;
-    logic  ALTBE;
 
     // calculate number of fractional bits p
     assign ZeroDiff = mE - ell;         // Difference in number of leading zeros
@@ -129,37 +133,24 @@ module fdivsqrtpreproc (
     // Integer special cases (terminate immediately)
     assign ISpecialCaseE = BZeroE | ALTBE;
 
-  /* verilator lint_off WIDTH */
     // calculate number of fractional digits nE and right shift amount RightShiftX to complete in discrete number of steps
 
     if (`LOGRK > 0) begin // more than 1 bit per cycle
       logic [`LOGRK-1:0] IntTrunc, RightShiftX;
       logic [`DIVBLEN:0] TotalIntBits, IntSteps;
-
+      /* verilator lint_off WIDTH */
       assign TotalIntBits = `LOGR + p;                            // Total number of result bits (r integer bits plus p fractional bits)
       assign IntTrunc = TotalIntBits % `RK;                       // Truncation check for ceiling operator
       assign IntSteps = (TotalIntBits >> `LOGRK) + |IntTrunc;     // Number of steps for int div
       assign nE = (IntSteps * `DIVCOPIES) - 1;                    // Fractional digits
       assign RightShiftX = `RK - 1 - ((TotalIntBits - 1) % `RK);  // Right shift amount
       assign DivXShifted = DivX >> RightShiftX;                   // shift X by up to R*K-1 to complete in nE steps
+      /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign nE = p; 
       assign DivXShifted = DivX;
     end
-  /* verilator lint_on WIDTH */
-    // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
-    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
-    flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
-    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
-    flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
-    flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM); 
-    flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
-    flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
-    if (`XLEN==64) 
-      flopen #(1)      w64reg(clk, IFDivStartE, W64E,     W64M);
   end else begin
-    assign X = PreShiftX;
     assign ISpecialCaseE = 0;
   end
 
@@ -183,21 +174,35 @@ module fdivsqrtpreproc (
   // Selet integer or floating-point operands
   //////////////////////////////////////////////////////
 
-  mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
+  if (`IDIV_ON_FPU) begin
+    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
+  end else begin
+    assign X = PreShiftX;
+  end
 
    // Divisior register
   flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, DPreproc}, D);
-
-
-
-
-  
  
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
   flopen #(`NE+2) expreg(clk, IFDivStartE, QeE, QeM);
 
   // Number of FSM cycles (to FSM)
-  fdivsqrtcycles cyclecalc(.FmtE, .SqrtE, .IntDivE, .nE, .cycles);
+  fdivsqrtcycles cyclecalc(.FmtE, .SqrtE, .IntDivE, .nE, .CyclesE);
+
+  if (`IDIV_ON_FPU) begin:intpipelineregs
+    // pipeline registers
+    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
+    flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
+    flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
+    flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
+    flopen #(1)      asignreg(clk, IFDivStartE, AsE,      AsM);
+    flopen #(`DIVBLEN+1) nreg(clk, IFDivStartE, nE,       nM); 
+    flopen #(`DIVBLEN+1) mreg(clk, IFDivStartE, mE,       mM);
+    flopen #(`XLEN)   srcareg(clk, IFDivStartE, AE,       AM);
+    if (`XLEN==64) 
+      flopen #(1)      w64reg(clk, IFDivStartE, W64E,     W64M);
+  end
+
 endmodule
 
