@@ -49,11 +49,7 @@ module alu import cvw::*;  #(parameter cvw_t P) (
   logic                Carry, Neg;                                            // Flags: carry out, negative
   logic                LT, LTU;                                               // Less than, Less than unsigned
   logic                Asign, Bsign;                                          // Sign bits of A, B
-  logic [31:0]         XLENPred;
-  logic [P.LOG_XLEN-1:0] XLENPredTrunc;
 
-  assign XLENPred = P.XLEN - 1;
-  assign XLENPredTrunc = XLENPred[P.LOG_XLEN-1:0];
 
   // Addition
   assign CondMaskInvB = SubArith ? ~CondMaskB : CondMaskB;
@@ -66,9 +62,9 @@ module alu import cvw::*;  #(parameter cvw_t P) (
   // Overflow occurs when the numbers being subtracted have the opposite sign 
   // and the result has the opposite sign of A.
   // LT is simplified from Overflow = Asign & Bsign & Asign & Neg; LT = Neg ^ Overflow
-  assign Neg  = Sum[XLENPredTrunc];
-  assign Asign = A[XLENPredTrunc];
-  assign Bsign = B[XLENPredTrunc];
+  assign Neg  = Sum[P.XLEN-1];
+  assign Asign = A[P.XLEN-1];
+  assign Bsign = B[P.XLEN-1];
   assign LT = Asign & ~Bsign | Asign & Neg | ~Bsign & Neg; 
   assign LTU = ~Carry;
  

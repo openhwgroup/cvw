@@ -36,13 +36,8 @@ module shifter import cvw::*;  #(parameter cvw_t P) (
   logic [2*P.XLEN-2:0]      Z, ZShift;                         // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
   logic [P.LOG_XLEN-1:0]    TruncAmt, Offset;                  // Shift amount adjusted for RV64, right-shift amount
   logic                    Sign;                              // Sign bit for sign extension
-  logic [31:0]             XLENPred;
-  logic [P.LOG_XLEN-1:0]    XLENPredTrunc;
 
-  assign XLENPred = P.XLEN-1;
-  assign XLENPredTrunc = XLENPred[P.LOG_XLEN-1:0];
-
-  assign Sign = A[XLENPredTrunc] & SubArith;  // sign bit for sign extension
+  assign Sign = A[P.XLEN-1] & SubArith;  // sign bit for sign extension
   if (P.XLEN==32) begin // rv32
     if (P.ZBB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
       always_comb  // funnel mux
