@@ -223,7 +223,7 @@ module csr import cvw::*;  #(parameter cvw_t P,
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TVM,
     .STATUS_FS, .BigEndianM);
 
-  csrm csrm(.clk, .reset, 
+  csrm #(.P(P)) csrm(.clk, .reset, 
     .UngatedCSRMWriteM, .CSRMWriteM, .MTrapM, .CSRAdrM,
     .NextEPCM, .NextCauseM, .NextMtvalM, .MSTATUS_REGW, .MSTATUSH_REGW,
     .CSRWriteValM, .CSRMReadValM, .MTVEC_REGW,
@@ -255,7 +255,7 @@ module csr import cvw::*;  #(parameter cvw_t P,
 
   // Floating Point CSRs in User Mode only needed if Floating Point is supported
   if (P.F_SUPPORTED | P.D_SUPPORTED) begin:csru
-    csru  csru(.clk, .reset, .InstrValidNotFlushedM, 
+    csru  #(P) csru(.clk, .reset, .InstrValidNotFlushedM, 
       .CSRUWriteM, .CSRAdrM, .CSRWriteValM, .STATUS_FS, .CSRUReadValM,  
       .SetFflagsM, .FRM_REGW, .WriteFRMM, .WriteFFLAGSM,
       .IllegalCSRUAccessM);
@@ -266,7 +266,7 @@ module csr import cvw::*;  #(parameter cvw_t P,
   end
   
   if (P.ZICOUNTERS_SUPPORTED) begin:counters
-    csrc  counters(.clk, .reset, .StallE, .StallM, .FlushM,
+    csrc  #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
       .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .sfencevmaM,

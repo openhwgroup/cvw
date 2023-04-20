@@ -70,7 +70,7 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P, BASE=0, RANGE = 65535) (
   mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  ram1p1rwbe #(.P(P), .DEPTH(RANGE/8), .WIDTH(P.XLEN[31:0])) memory(.clk(HCLK), .ce(1'b1), 
+  ram1p1rwbe #(.P(P), .DEPTH(RANGE/8), .WIDTH(P.XLEN)) memory(.clk(HCLK), .ce(1'b1), 
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
 

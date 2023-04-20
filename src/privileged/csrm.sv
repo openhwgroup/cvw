@@ -31,9 +31,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module csrm #(parameter 
+module csrm import cvw::*;  #(parameter cvw_t P,
   // Machine CSRs
   MVENDORID = 12'hF11,
   MARCHID = 12'hF12,
@@ -68,52 +66,52 @@ module csrm #(parameter
   DSCRATCH0 = 12'h7B2,
   DSCRATCH1 = 12'h7B3,
   // Constants
-  ZERO = {(`XLEN){1'b0}},
+  ZERO = {(P.XLEN){1'b0}},
   MEDELEG_MASK = 16'hB3FF,
   MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
 ) (
   input  logic                    clk, reset, 
   input  logic                    UngatedCSRMWriteM, CSRMWriteM, MTrapM,
   input  logic [11:0]             CSRAdrM,
-  input  logic [`XLEN-1:0]        NextEPCM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
+  input  logic [P.XLEN-1:0]        NextEPCM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
   input  logic [4:0]              NextCauseM,
-  input  logic [`XLEN-1:0]        CSRWriteValM,
+  input  logic [P.XLEN-1:0]        CSRWriteValM,
   input  logic [11:0]             MIP_REGW, MIE_REGW,
-  output logic [`XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
-  output logic [`XLEN-1:0]        MEPC_REGW,    
+  output logic [P.XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
+  output logic [P.XLEN-1:0]        MEPC_REGW,    
   output logic [31:0]             MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
   output logic [15:0]             MEDELEG_REGW,
   output logic [11:0]             MIDELEG_REGW,
-  output var logic [7:0]          PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],
-  output var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW [`PMP_ENTRIES-1:0],
+  output var logic [7:0]          PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
+  output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   output logic                    WriteMSTATUSM, WriteMSTATUSHM,
   output logic                    IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
 );
 
-  logic [`XLEN-1:0]               MISA_REGW, MHARTID_REGW;
-  logic [`XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
+  logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
+  logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
   logic                           WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                           WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                           WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
-  if (`PMP_ENTRIES > 0) begin:pmp
-    logic [`PMP_ENTRIES-1:0] WritePMPCFGM;
-    logic [`PMP_ENTRIES-1:0] WritePMPADDRM ; 
-    logic [`PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
-    for(i=0; i<`PMP_ENTRIES; i++) begin
+  if (P.PMP_ENTRIES > 0) begin:pmp
+    logic [P.PMP_ENTRIES-1:0] WritePMPCFGM;
+    logic [P.PMP_ENTRIES-1:0] WritePMPADDRM ; 
+    logic [P.PMP_ENTRIES-1:0] ADDRLocked, CFGLocked;
+    for(i=0; i<P.PMP_ENTRIES; i++) begin
       // when the lock bit is set, don't allow writes to the PMPCFG or PMPADDR
       // also, when the lock bit of the next entry is set and the next entry is TOR, don't allow writes to this entry PMPADDR
       assign CFGLocked[i] = PMPCFG_ARRAY_REGW[i][7];
-      if (i == `PMP_ENTRIES-1) 
+      if (i == P.PMP_ENTRIES-1) 
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7];
       else
         assign ADDRLocked[i] = PMPCFG_ARRAY_REGW[i][7] | (PMPCFG_ARRAY_REGW[i+1][7] & PMPCFG_ARRAY_REGW[i+1][4:3] == 2'b01);
       
       assign WritePMPADDRM[i] = (CSRMWriteM & (CSRAdrM == (PMPADDR0+i))) & ~ADDRLocked[i];
-      flopenr #(`PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[`PA_BITS-3:0], PMPADDR_ARRAY_REGW[i]);
-      if (`XLEN==64) begin
+      flopenr #(P.PA_BITS-2) PMPADDRreg(clk, reset, WritePMPADDRM[i], CSRWriteValM[P.PA_BITS-3:0], PMPADDR_ARRAY_REGW[i]);
+      if (P.XLEN==64) begin
         assign WritePMPCFGM[i] = (CSRMWriteM & (CSRAdrM == (PMPCFG0+2*(i/8)))) & ~CFGLocked[i];
         flopenr #(8) PMPCFGreg(clk, reset, WritePMPCFGM[i], CSRWriteValM[(i%8)*8+7:(i%8)*8], PMPCFG_ARRAY_REGW[i]);
       end else begin
@@ -123,17 +121,17 @@ module csrm #(parameter
     end
   end
 
-  localparam MISA_26 = (`MISA) & 32'h03ffffff;
+  localparam MISA_26 = (P.MISA) & 32'h03ffffff;
 
   // MISA is hardwired.  Spec says it could be written to disable features, but this is not supported by Wally
-  assign MISA_REGW = {(`XLEN == 32 ? 2'b01 : 2'b10), {(`XLEN-28){1'b0}}, MISA_26[25:0]};
+  assign MISA_REGW = {(P.XLEN == 32 ? 2'b01 : 2'b10), {(P.XLEN-28){1'b0}}, MISA_26[25:0]};
 
   // MHARTID is hardwired. It only exists as a signal so that the testbench can easily see it.
   assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
   assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS);
-  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH)& (`XLEN==32);
+  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH)& (P.XLEN==32);
   assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC);
   assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG);
   assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG);
@@ -147,19 +145,19 @@ module csrm #(parameter
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
 
   // CSRs
-  flopenr #(`XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[`XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
-  if (`S_SUPPORTED) begin:deleg // DELEG registers should exist
-    flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK, MEDELEG_REGW);
-    flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK, MIDELEG_REGW);
+  flopenr #(P.XLEN) MTVECreg(clk, reset, WriteMTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, MTVEC_REGW); 
+  if (P.S_SUPPORTED) begin:deleg // DELEG registers should exist
+    flopenr #(16) MEDELEGreg(clk, reset, WriteMEDELEGM, CSRWriteValM[15:0] & MEDELEG_MASK[15:0], MEDELEG_REGW);
+    flopenr #(12) MIDELEGreg(clk, reset, WriteMIDELEGM, CSRWriteValM[11:0] & MIDELEG_MASK[11:0], MIDELEG_REGW);
   end else assign {MEDELEG_REGW, MIDELEG_REGW} = 0;
 
-  flopenr #(`XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
-  flopenr #(`XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
-  flopenr #(`XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[4], {(`XLEN-5){1'b0}}, NextCauseM[3:0]}, MCAUSE_REGW);
-  if(`QEMU) assign MTVAL_REGW = `XLEN'b0; // MTVAL tied to 0 in QEMU configuration
-  else flopenr #(`XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
+  flopenr #(P.XLEN) MSCRATCHreg(clk, reset, WriteMSCRATCHM, CSRWriteValM, MSCRATCH_REGW);
+  flopenr #(P.XLEN) MEPCreg(clk, reset, WriteMEPCM, NextEPCM, MEPC_REGW); 
+  flopenr #(P.XLEN) MCAUSEreg(clk, reset, WriteMCAUSEM, {NextCauseM[4], {(P.XLEN-5){1'b0}}, NextCauseM[3:0]}, MCAUSE_REGW);
+  if(P.QEMU) assign MTVAL_REGW = {P.XLEN{1'b0}}; // MTVAL tied to 0 in QEMU configuration
+  else flopenr #(P.XLEN) MTVALreg(clk, reset, WriteMTVALM, NextMtvalM, MTVAL_REGW);
   flopenr #(32)   MCOUNTINHIBITreg(clk, reset, WriteMCOUNTINHIBITM, CSRWriteValM[31:0], MCOUNTINHIBIT_REGW);
-  if (`U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
+  if (P.U_SUPPORTED) begin: mcounteren // MCOUNTEREN only exists when user mode is supported
     flopenr #(32)   MCOUNTERENreg(clk, reset, WriteMCOUNTERENM, CSRWriteValM[31:0], MCOUNTEREN_REGW);
   end else assign MCOUNTEREN_REGW = '0;
 
@@ -168,11 +166,11 @@ module csrm #(parameter
   logic [5:0] entry;
   always_comb begin
     entry = '0;
-    IllegalCSRMAccessM = !(`S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
-    if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
-      CSRMReadValM = {{(`XLEN-(`PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]};
-    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin
-      if (`XLEN==64) begin
+    IllegalCSRMAccessM = !(P.S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
+    if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + P.PMP_ENTRIES) // reading a PMP entry
+      CSRMReadValM = {{(P.XLEN-(P.PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]};
+    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + P.PMP_ENTRIES/4) begin
+      if (P.XLEN==64) begin
         entry = ({CSRAdrM[11:1], 1'b0} - PMPCFG0)*4; // disregard odd entries in RV64
         CSRMReadValM = {PMPCFG_ARRAY_REGW[entry+7],PMPCFG_ARRAY_REGW[entry+6],PMPCFG_ARRAY_REGW[entry+5],PMPCFG_ARRAY_REGW[entry+4],
                         PMPCFG_ARRAY_REGW[entry+3],PMPCFG_ARRAY_REGW[entry+2],PMPCFG_ARRAY_REGW[entry+1],PMPCFG_ARRAY_REGW[entry]};
@@ -185,23 +183,23 @@ module csrm #(parameter
       MISA_ADR:  CSRMReadValM = MISA_REGW;
       MVENDORID: CSRMReadValM = 0;
       MARCHID:   CSRMReadValM = 0;
-      MIMPID:    CSRMReadValM = `XLEN'h100; // pipelined implementation
+      MIMPID:    CSRMReadValM = {{P.XLEN-12{1'b0}}, 12'h100}; // pipelined implementation
       MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
       MCONFIGPTR: CSRMReadValM = 0; // hardwired to 0
       MSTATUS:   CSRMReadValM = MSTATUS_REGW;
       MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
       MTVEC:     CSRMReadValM = MTVEC_REGW;
-      MEDELEG:   CSRMReadValM = {{(`XLEN-16){1'b0}}, MEDELEG_REGW};
-      MIDELEG:   CSRMReadValM = {{(`XLEN-12){1'b0}}, MIDELEG_REGW};
-      MIP:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIP_REGW};
-      MIE:       CSRMReadValM = {{(`XLEN-12){1'b0}}, MIE_REGW};
+      MEDELEG:   CSRMReadValM = {{(P.XLEN-16){1'b0}}, MEDELEG_REGW};
+      MIDELEG:   CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
+      MIP:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW};
+      MIE:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW};
       MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
       MEPC:      CSRMReadValM = MEPC_REGW;
       MCAUSE:    CSRMReadValM = MCAUSE_REGW;
       MTVAL:     CSRMReadValM = MTVAL_REGW;
       MTINST:    CSRMReadValM = 0; // implemented as trivial zero
-      MCOUNTEREN:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTEREN_REGW};
-      MCOUNTINHIBIT:CSRMReadValM = {{(`XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
+      MCOUNTEREN:CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+      MCOUNTINHIBIT:CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
 
       default: begin
                  CSRMReadValM = 0;

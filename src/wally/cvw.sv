@@ -45,7 +45,7 @@ typedef struct packed {
   // RISC-V Features
   logic         ZICSR_SUPPORTED;
   logic         ZIFENCEI_SUPPORTED;
-  int           COUNTERS;
+  logic [11:0]           COUNTERS;
   logic         ZICOUNTERS_SUPPORTED;
   logic         ZFH_SUPPORTED;
   logic         SSTC_SUPPORTED;

@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module csrsr import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset, StallW,
   input  logic             WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM, 

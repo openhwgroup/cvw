@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module csri import cvw::*;  #(parameter cvw_t P, 
   MIE = 12'h304,
   MIP = 12'h344,

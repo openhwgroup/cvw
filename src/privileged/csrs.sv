@@ -28,8 +28,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module csrs import cvw::*;  #(parameter cvw_t P, 
   // Supervisor CSRs
   SSTATUS = 12'h100,
@@ -66,7 +64,6 @@ module csrs import cvw::*;  #(parameter cvw_t P,
 
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
-  localparam SEDELEG_MASK = ~(ZERO | `XLEN'b111 << 9);
 
   logic                    WriteSTVECM;
   logic                    WriteSSCRATCHM, WriteSEPCM;

@@ -146,7 +146,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .InstrPageFaultM, .InstrAccessFaultM, .IllegalIEUFPUInstrM);
 
   // trap logic
-  trap trap(.reset,
+  trap #(P) trap(.reset,
     .InstrMisalignedFaultM, .InstrAccessFaultM, .HPTWInstrAccessFaultM, .IllegalInstrFaultM,
     .BreakpointFaultM, .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
     .LoadAccessFaultM, .StoreAmoAccessFaultM, .EcallFaultM, .InstrPageFaultM,
