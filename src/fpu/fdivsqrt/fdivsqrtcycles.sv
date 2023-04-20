@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fdivsqrt.sv
+// fdivsqrtcycles.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu, amaiuolo@hmc.edu
 // Modified: 18 April 2022
 //
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
+// Purpose: Determine number of cycles for divsqrt
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13
 //

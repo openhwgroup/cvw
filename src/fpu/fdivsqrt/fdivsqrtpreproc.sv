@@ -63,6 +63,10 @@ module fdivsqrtpreproc (
   logic                       AsE, BsE;                            // Signs of integer inputs
   logic [`XLEN-1:0]           AE;                                  // input A after W64 adjustment
 
+  //////////////////////////////////////////////////////
+  // Integer Preprocessing
+  //////////////////////////////////////////////////////
+
   if (`IDIV_ON_FPU) begin:intpreproc // Int Supported
     logic [`XLEN-1:0] BE, PosA, PosB;
 
@@ -90,12 +94,16 @@ module fdivsqrtpreproc (
     // Select integer or floating point inputs
     mux2 #(`DIVb) ifxmux({Xm, {(`DIVb-`NF-1){1'b0}}}, {PosA, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFX);
     mux2 #(`DIVb) ifdmux({Ym, {(`DIVb-`NF-1){1'b0}}}, {PosB, {(`DIVb-`XLEN){1'b0}}}, IntDivE, IFD);
-
-
+    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
   end else begin // Int not supported
     assign IFX = {Xm, {(`DIVb-`NF-1){1'b0}}};
     assign IFD = {Ym, {(`DIVb-`NF-1){1'b0}}};
+    assign NumerZeroE = XZeroE;
   end
+
+  //////////////////////////////////////////////////////
+  // Integer & FP leading zero and normalization shift
+  //////////////////////////////////////////////////////
 
   // count leading zeros for Subnorm FP and to normalize integer inputs
   lzc #(`DIVb) lzcX (IFX, ell);
@@ -105,17 +113,10 @@ module fdivsqrtpreproc (
   assign XPreproc = (IFX << ell) << 1;
   assign DPreproc = (IFD << mE)  << 1; 
 
-  // append leading 1 (for nonzero inputs)
-  // shift square root to be in range [1/4, 1)
-  // Normalized numbers are shifted right by 1 if the exponent is odd
-  // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
-  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
-  assign DivX = {3'b000, ~NumerZeroE, XPreproc};
+  //////////////////////////////////////////////////////
+  // Integer Right Shift to digit boundary
+  //////////////////////////////////////////////////////
 
-   // Divisior register
-  flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, DPreproc}, D);
-
-  // ***CT: factor out fdivsqrtcycles
   if (`IDIV_ON_FPU) begin:intrightshift // Int Supported
     logic [`DIVBLEN:0] ZeroDiff, p;
     logic  ALTBE;
@@ -146,11 +147,6 @@ module fdivsqrtpreproc (
       assign DivXShifted = DivX;
     end
   /* verilator lint_on WIDTH */
-
-    // Selet integer or floating-point operands
-    mux2 #(1)    numzmux(XZeroE, AZeroE, IntDivE, NumerZeroE);
-    mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
-
     // pipeline registers
     flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
@@ -163,14 +159,39 @@ module fdivsqrtpreproc (
     if (`XLEN==64) 
       flopen #(1)      w64reg(clk, IFDivStartE, W64E,     W64M);
   end else begin
-    assign NumerZeroE = XZeroE;
     assign X = PreShiftX;
+    assign ISpecialCaseE = 0;
   end
+
+  //////////////////////////////////////////////////////
+  // Floating-Point Preprocessing
+  // append leading 1 (for nonzero inputs)
+  // shift square root to be in range [1/4, 1)
+  // Normalized numbers are shifted right by 1 if the exponent is odd
+  // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
+  //////////////////////////////////////////////////////
+
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
+  assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(`DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
+  
+  //////////////////////////////////////////////////////
+  // Selet integer or floating-point operands
+  //////////////////////////////////////////////////////
+
+  mux2 #(`DIVb+4) xmux(PreShiftX, DivXShifted, IntDivE, X);
+
+   // Divisior register
+  flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, DPreproc}, D);
+
+
+
+
+  
  
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
