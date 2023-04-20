@@ -55,10 +55,10 @@ module fdivsqrtpreproc (
   logic [`DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [`NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
   logic [`DIVb-1:0]           IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
-  logic [`DIVBLEN:0]          mE, nE, ell;                             // Leading zeros of inputs
+  logic [`DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
   logic                       NumerZeroE;                          // Numerator is zero (X or A)
   logic                       AZeroE, BZeroE;                      // A or B is Zero for integer division
-  logic                       signedDiv;                           // signed division
+  logic                       SignedDivE;                          // signed division
   logic                       NegQuotE;                            // Integer quotient is negative
   logic                       AsE, BsE;                            // Signs of integer inputs
   logic [`XLEN-1:0]           AE;                                  // input A after W64 adjustment
@@ -72,20 +72,20 @@ module fdivsqrtpreproc (
     logic [`XLEN-1:0] BE, PosA, PosB;
 
     // Extract inputs, signs, zero, depending on W64 mode if applicable
-    assign signedDiv = ~Funct3E[0];
+    assign SignedDivE = ~Funct3E[0];
   
     // Source handling
     if (`XLEN==64) begin // 64-bit, supports W64
-      mux2 #(64)    amux(ForwardedSrcAE, {{32{ForwardedSrcAE[31] & signedDiv}}, ForwardedSrcAE[31:0]}, W64E, AE);
-      mux2 #(64)    bmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31] & signedDiv}}, ForwardedSrcBE[31:0]}, W64E, BE);
+      mux2 #(64)    amux(ForwardedSrcAE, {{32{ForwardedSrcAE[31] & SignedDivE}}, ForwardedSrcAE[31:0]}, W64E, AE);
+      mux2 #(64)    bmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31] & SignedDivE}}, ForwardedSrcBE[31:0]}, W64E, BE);
     end else begin // 32 bits only
       assign AE = ForwardedSrcAE;
       assign BE = ForwardedSrcBE;
      end
     assign AZeroE = ~(|AE);
     assign BZeroE = ~(|BE);
-    assign AsE = AE[`XLEN-1] & signedDiv;
-    assign BsE = BE[`XLEN-1] & signedDiv; 
+    assign AsE = AE[`XLEN-1] & SignedDivE;
+    assign BsE = BE[`XLEN-1] & SignedDivE; 
     assign NegQuotE = AsE ^ BsE; // Integer Quotient is negative
 
     // Force integer inputs to be postiive
@@ -162,10 +162,10 @@ module fdivsqrtpreproc (
   // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
   //////////////////////////////////////////////////////
 
-  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   assign DivX = {3'b000, ~NumerZeroE, XPreproc};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(`DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
@@ -192,7 +192,7 @@ module fdivsqrtpreproc (
 
   if (`IDIV_ON_FPU) begin:intpipelineregs
     // pipeline registers
-    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,     IntDivM);
+    flopen #(1)        mdureg(clk, IFDivStartE, IntDivE,  IntDivM);
     flopen #(1)       altbreg(clk, IFDivStartE, ALTBE,    ALTBM);
     flopen #(1)    negquotreg(clk, IFDivStartE, NegQuotE, NegQuotM);
     flopen #(1)      bzeroreg(clk, IFDivStartE, BZeroE,   BZeroM);
