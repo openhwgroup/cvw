@@ -59,6 +59,9 @@ string tvpaths[] = '{
     "pmpcfg1",
     "pmpcfg2",
     "tlbKP",
+    "tlbMP",
+    "tlbASID",
+    "tlbGLB",
     "ifuCamlineWrite"
   };
 
