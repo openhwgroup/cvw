@@ -56,14 +56,18 @@ module spi_apb (
 
     //SPI registers
 
-    logic [31:0] sck_div, sck_mode;
-    logic [31:0] cs_id, cs_def, cs_mode;
-    logic [31:0] delay0, delay1;
-    logic [31:0] fmt;
-    logic [31:0] rx_data, tx_mark, rx_mark;
-    logic [7:0] tx_data;
+    logic [11:0] sck_div;
+    logic [1:0] sck_mode;
+    logic [1:0] cs_id;
+    logic [3:0] cs_def; 
+    logic [1:0] cs_mode;
+    logic [15:0] delay0, delay1;
+    logic [7:0] fmt;
+    logic [8:0] rx_data;
+    logic [3:0] tx_mark, rx_mark;
+    logic [8:0] tx_data;
     //logic [31:0] f_ctrl, f_fmt;
-    logic [31:0] ie, ip;
+    logic [1:0] ie, ip;
 
     logic [7:0] entry;
     logic memwrite;
@@ -93,14 +97,14 @@ module spi_apb (
     //starting with single lane module no flash control
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
-            sck_div <= #1 32'd3;
+            sck_div <= #1 11'd3;
             sck_mode <= #1 0;
-            cs_id <= #1 32'b0;
-            cs_def <= #1 32'b1;
+            cs_id <= #1 2'b0;
+            cs_def <= #1 4'b1;
             cs_mode <= #1 0;
-            delay0 <= #1 {8'b0,8'b1,8'b0,8'b1};
-            delay1 <= #1 {8'b0,8'b0,8'b0,8'b1};
-            fmt <= #1 {12'b0,4'd8,16'b0};
+            delay0 <= #1 {8'b1,8'b1};
+            delay1 <= #1 {8'b0,8'b1};
+            fmt <= #1 {8'b10000000};
             tx_data <= #1 8'b0;
             tx_mark <= #1 0;
             rx_mark <= #1 0;
@@ -117,23 +121,23 @@ module spi_apb (
             /* verilator lint_off CASEINCOMPLETE */
             if (memwrite)
                 case(entry) //flop to sample inputs
-                    8'h00: sck_div <= Din;
-                    8'h04: sck_mode <= Din;
-                    8'h10: cs_id <= Din;
-                    8'h14: cs_def <= Din;
-                    8'h18: cs_mode <= Din;
-                    8'h28: delay0 <= Din;
-                    8'h2C: delay1 <= Din;
-                    8'h40: fmt <= Din;
+                    8'h00: sck_div <= Din[11:0];
+                    8'h04: sck_mode <= Din[1:0];
+                    8'h10: cs_id <= Din[1:0];
+                    8'h14: cs_def <= Din[3:0];
+                    8'h18: cs_mode <= Din[1:0];
+                    8'h28: delay0 <= Din[7:0];
+                    8'h2C: delay1 <= Din[7:0];
+                    8'h40: fmt <= Din[7:0];
                     8'h48: if (~TXwfull) tx_data <= Din[7:0];
-                    8'h50: tx_mark <= Din;
-                    8'h54: rx_mark <= Din;
-                    8'h70: ie <= Din;
+                    8'h50: tx_mark <= Din[2:0];
+                    8'h54: rx_mark <= Din[2:0];
+                    8'h70: ie <= Din[1:0];
                 endcase
             /* verilator lint_off CASEINCOMPLETE */
             //interrupt clearance
-            ip[0] <= ie[0] & txRMark;
-            ip[1] <= ie[1] & rxWMark;  
+            ip[0] <= txRMark;
+            ip[1] <= rxWMark;  
             case(entry) // flop to sample inputs
                 8'h00: Dout <= #1 sck_div;
                 8'h04: Dout <= #1 sck_mode;
@@ -143,8 +147,8 @@ module spi_apb (
                 8'h28: Dout <= #1 delay0;
                 8'h2C: Dout <= #1 delay1;
                 8'h40: Dout <= #1 fmt;
-                8'h48: Dout <= #1 {TXwfull, 31'b0};
-                8'h4C: if (~rx_data[31]) Dout <= #1 rx_data;
+                8'h48: Dout <= #1 {TXwfull, 8'b0};
+                8'h4C: if (~rx_data[8]) Dout <= #1 rx_data;
                 8'h50: Dout <= #1 tx_mark;
                 8'h54: Dout <= #1 rx_mark;
                 8'h70: Dout <= #1 ie;
@@ -199,11 +203,11 @@ module spi_apb (
                     end
             2'b01: begin
                     tx_penultimate_frame = 6'b000010;
-                    frame_cmp_protocol = fmt[16] ? frame_cmp + 6'b1 : frame_cmp;
+                    frame_cmp_protocol = fmt[4] ? frame_cmp + 6'b1 : frame_cmp;
                     end
             2'b10: begin 
                     tx_penultimate_frame = 6'b000100;
-                    if (fmt[19:16] > 4'b0100) frame_cmp_protocol = 6'b010000;
+                    if (fmt[7:4] > 4'b0100) frame_cmp_protocol = 6'b010000;
                     else frame_cmp_protocol = 6'b001000;
                     end
             default: begin
@@ -230,19 +234,21 @@ module spi_apb (
     logic [2:0] txWWatermarkLevel, rxRWatermarkLevel;
 
     logic sclk_reset_0, sclk_reset_1;
+    logic TXrempty_delay;
+    logic [7:0] rx_shift_frame;
 
 
 
-    assign sclk_edge = (div_counter_edge >= (({sck_div[11:0], 1'b0}) + 13'b1));
+    assign sclk_edge = (div_counter_edge >= (({sck_div, 1'b0}) + 13'b1));
     //assign tx_empty = ~|(tx_data);
     //incorrect way to assess this, replace FSM assign at end
-    assign sclk_duty = (div_counter >= (sck_div[11:0]));
+    assign sclk_duty = (div_counter >= (sck_div));
     assign delay0_cmp = sck_mode[0] ? (delay0_cnt == ({delay0[7:0], 1'b0})) : (delay0_cnt == ({delay0[7:0], 1'b0} + 9'b1));
-    assign delay1_cmp = sck_mode[0] ? (delay1_cnt == (({delay0[23:16], 1'b0}) + 9'b1)) : (delay1_cnt == ({delay0[23:16], 1'b0}));
+    assign delay1_cmp = sck_mode[0] ? (delay1_cnt == (({delay0[15:8], 1'b0}) + 9'b1)) : (delay1_cnt == ({delay0[15:8], 1'b0}));
     assign intercs_cmp = (intercs_cnt >= ({delay1[7:0],1'b0}));
-    assign interxfr_cmp = (interxfr_cnt >= ({delay1[23:16], 1'b0}));
+    assign interxfr_cmp = (interxfr_cnt >= ({delay1[15:8], 1'b0}));
     // double number of frames in dual or quad mode because we must wait for peripheral to send back
-    assign frame_cmp = (fmt[0] | fmt[1]) ? ({1'b0,fmt[19:16], 1'b0}) : {2'b0,fmt[19:16]};
+    assign frame_cmp = (fmt[0] | fmt[1]) ? ({1'b0,fmt[7:4], 1'b0}) : {2'b0,fmt[7:4]};
 
     typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1,DELAY_1,INTER_CS, INTER_XFR} statetype;
     statetype state;
@@ -294,7 +300,7 @@ module spi_apb (
                 ACTIVE_1: begin
                         interxfr_cnt <= 9'b1;
                         if (frame_cmp_bool) state <= ACTIVE_0;
-                        else if ((cs_mode[1:0] == 2'b10) & ~|(delay1[23:17]) & (~TXrempty)) begin
+                        else if ((cs_mode[1:0] == 2'b10) & ~|(delay1[15:8]) & (~TXrempty)) begin
                             state <= ACTIVE_0;
                             delay0_cnt <= 9'b1;
                             delay1_cnt <= 9'b1;
@@ -302,7 +308,7 @@ module spi_apb (
                             intercs_cnt <= 9'b10;
                         end
                         else if (cs_mode[1:0] == 2'b10) state <= INTER_XFR;
-                        else if ((~|(delay0[23:17])) & ~sck_mode[0]) state <= INTER_CS;
+                        else if ((~|(delay0[15:8])) & ~sck_mode[0]) state <= INTER_CS;
                         else state <= DELAY_1;
                         end
                 DELAY_1: begin
@@ -320,7 +326,7 @@ module spi_apb (
                         intercs_cnt <= 9'b10;
                         interxfr_cnt <= interxfr_cnt + 9'b1;
                         if ((entry == (8'h18 | 8'h10) | ((entry == 8'h14) & ((PWDATA[cs_id]) != cs_def[cs_id])))) state <= CS_INACTIVE;
-                        if (interxfr_cmp & ~TXrempty) state <= ACTIVE_0;
+                        if (interxfr_cmp & ~TXrempty_delay) state <= ACTIVE_0;
                         else if (~|cs_mode[1:0]) state <= CS_INACTIVE;
                         
                         end
@@ -328,7 +334,7 @@ module spi_apb (
             /* verilator lint_off CASEINCOMPLETE */
     assign cs_internal = ((state == CS_INACTIVE | state == INTER_CS) ? cs_def[3:0] : ~cs_def[3:0]);
     assign sck = (state == ACTIVE_0) ? ~sck_mode[1] : sck_mode[1];
-    assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(delay1[23:17]) & (cs_mode[1:0]) == 2'b10) & ((frame_cnt << fmt[1:0]) >= frame_cmp))) | state == DELAY_1);
+    assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(delay1[15:8]) & (cs_mode[1:0]) == 2'b10) & ((frame_cnt << fmt[1:0]) >= frame_cmp))) | state == DELAY_1);
     assign active = (state == ACTIVE_0 | state == ACTIVE_1);
 
     logic active0;
@@ -348,7 +354,7 @@ module spi_apb (
     //TXFIFO
     //fifomem asynch ram
 
-    logic TXrempty_delay;
+    
     logic TXwinc_delay;
 
     logic sck_phase_sel;
@@ -365,8 +371,11 @@ module spi_apb (
     */
 
     assign RXwinc = rxShiftFull;
-    assign RXrinc = ((entry == 8'h4C) & ~rx_data[31]);
-    assign rx_data[31] = RXrempty;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) RXrinc <= 0;
+        else if (~RXrinc)    RXrinc <= ((entry == 8'h4C) & ~rx_data[8]);
+        else            RXrinc <= 0;
+    assign rx_data[8] = RXrempty;
 
     logic [7:0] txShift;
     logic [7:0] rxShift;
@@ -377,10 +386,10 @@ module spi_apb (
     
 
     FIFO_async #(3,8) txFIFO(PCLK, sclk_duty, PRESETn, TXwinc_delay, TXrinc, endianTxData,fmt[2], txWWatermarkLevel, tx_mark[2:0], TXrdata[7:0], TXwfull, TXrempty, txWMark, txRMark);
-    FIFO_async #(3,8) rxFIFO(sclk_duty, PCLK, PRESETn, RXwinc, RXrinc, rxShift, fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
+    FIFO_async #(3,8) rxFIFO(sclk_duty, PCLK, PRESETn, RXwinc, RXrinc, rx_shift_frame, fmt[2], rx_mark[2:0], rxRWatermarkLevel, rx_data[7:0], RXwfull, RXrempty, rxWMark, rxRMark);
 
     txShiftFSM txShiftFSM_1 (PCLK, PRESETn, TXrempty, rx_frame_cmp_pre_bool, active0, txShiftEmpty);
-    rxShiftFSM rxShiftFSM_1 (sclk_duty, PRESETn, rx_frame_cmp_pre_bool, sample_edge, rxShiftFull);
+    rxShiftFSM rxShiftFSM_1 (sclk_duty, PRESETn, rx_frame_cmp_pre_bool, sample_edge, active0, sck_mode[0], rxShiftFull);
 
     always_ff @(posedge sclk_duty, negedge PRESETn)
         if (~PRESETn) TXrempty_delay <= 1;
@@ -415,7 +424,7 @@ module spi_apb (
         else begin
            // txShiftEmpty <= (~active & ~txShiftEmpty);
             
-            if ((~active & ~TXrempty) | ((cs_mode[1:0] == 2'b10) & ~|(delay1[23:17]) & (~TXrempty) & txShiftEmpty)) txShift <= TXrdata;
+            if ((~active & ~TXrempty) | ((cs_mode[1:0] == 2'b10) & ~|(delay1[15:8]) & (~TXrempty) & txShiftEmpty)) txShift <= TXrdata;
             else if (active) begin
                 case (fmt[1:0])
                     2'b00: txShift <= {txShift[6:0], 1'b0};
@@ -426,7 +435,7 @@ module spi_apb (
             end
         end
     always_comb
-        if (active | delay0_cmp) begin
+    if (active | delay0_cmp | ~txShiftEmpty) begin
             case(fmt[1:0])
                 2'b00: SPIOut = {3'b0,txShift[7]}; 
                 2'b01: SPIOut = {2'b0,txShift[6], txShift[7]};
@@ -436,9 +445,9 @@ module spi_apb (
             endcase
         end else SPIOut = 4'b0;
     always_ff @(posedge sample_edge, negedge PRESETn)
-        if(~PRESETn) begin  
+        if(~PRESETn | ~active) begin  
                 rxShift <= 8'b0;
-                rxShiftEmpty <= 1'b1;
+                //rxShiftEmpty <= 1'b1;
             end
         else if(~fmt[3]) begin
             //rxShiftEmpty <= (~active & ~rxShiftEmpty);
@@ -459,6 +468,35 @@ module spi_apb (
                 endcase
             end
         end
+    always_comb
+        if (fmt[2]) begin 
+            case(fmt[7:4])
+                4'b0001: rx_shift_frame = {7'b0, rxShift[0]};
+                4'b0010: rx_shift_frame = {6'b0, rxShift[1:0]};
+                4'b0011: rx_shift_frame = {5'b0, rxShift[2:0]};
+                4'b0100: rx_shift_frame = {4'b0, rxShift[3:0]};
+                4'b0101: rx_shift_frame = {3'b0, rxShift[4:0]};
+                4'b0110: rx_shift_frame = {2'b0, rxShift[5:0]};
+                4'b0111: rx_shift_frame = {1'b0, rxShift[6:0]};
+                4'b1000: rx_shift_frame = rxShift;
+                default: rx_shift_frame = rxShift;
+            endcase
+        end else begin
+            case(fmt[7:4])
+                4'b0001: rx_shift_frame = {rxShift[0], 7'b0};
+                4'b0010: rx_shift_frame = {rxShift[1:0], 6'b0};
+                4'b0011: rx_shift_frame = {rxShift[2:0], 5'b0};
+                4'b0100: rx_shift_frame = {rxShift[3:0], 4'b0};
+                4'b0101: rx_shift_frame = {rxShift[4:0], 3'b0};
+                4'b0110: rx_shift_frame = {rxShift[5:0], 2'b0};
+                4'b0111: rx_shift_frame = {rxShift[6:0], 1'b0};
+                4'b1000: rx_shift_frame = rxShift;
+                default: rx_shift_frame = rxShift;
+            endcase
+        end
+
+
+
     // the state== ACTIVE_0 isn't going to work if phase is reversed (? not true actually) or if protocol is dual or quad
     // need to determine state condition based on phase and need to add protocol protection
     //logic sample_edge;
@@ -659,10 +697,10 @@ endmodule
 
 module rxShiftFSM(
     input logic sclk_duty, PRESETn,
-    input logic rx_frame_cmp_pre_bool, sample_edge,
+    input logic rx_frame_cmp_pre_bool, sample_edge, active0, sck_mode,
     output logic rxShiftFull
 );
-
+    logic active = sck_mode ? active0 : ~active0;
     typedef enum logic [1:0] {rxShiftFullState, rxShiftNotFullState, rxShiftDelayState} statetype;
     statetype rx_state, rx_nextstate;
     always_ff @(posedge sclk_duty, negedge PRESETn)
@@ -677,7 +715,7 @@ module rxShiftFSM(
                 rxShiftDelayState: rx_nextstate <= rxShiftFullState;
             endcase
 
-        assign rxShiftFull = (rx_nextstate == rxShiftFullState);
+        assign rxShiftFull = sck_mode ? (rx_state == rxShiftFullState) : (rx_nextstate == rxShiftFullState);
 endmodule
 
 
@@ -705,8 +743,8 @@ endmodule
                         
                     end
                 ACTIVE_0: begin
-                          if (~(frame_cnt == fmt[19:16])) nextstate <= ACTIVE_1;
-                          elseif ((~|(delay0[23:16])) | (~sck_mode[0])) nextstate <= INTER_CS; 
+                          if (~(frame_cnt == fmt[7:4])) nextstate <= ACTIVE_1;
+                          elseif ((~|(delay0[15:8])) | (~sck_mode[0])) nextstate <= INTER_CS; 
                           else           nextstate = DELAY_1;
                           end
                 ACTIVE_1: begin
@@ -715,8 +753,8 @@ endmodule
                 DELAY_1: begin
                         delay1_cnt = delay1_cnt + 8'b1;
                         if (delay1_cmp & ~|(cs_mode)) nextstate <= INTER_CS;
-                        elseif (delay1_cmp & |(cs_mode) & |(delay1[32:16])) nextstate <= INTER_XFR;
-                        elseif (delay1_cmp & |(cs_mode) & ~|(delay1[32:16])) nextstate <= INTER_XFR;
+                        elseif (delay1_cmp & |(cs_mode) & |(delay1[15:8])) nextstate <= INTER_XFR;
+                        elseif (delay1_cmp & |(cs_mode) & ~|(delay1[15:8])) nextstate <= INTER_XFR;
                         else nextstate <= DELAY_1;
                         end
                 INTER_CS: begin
@@ -875,13 +913,14 @@ endmodule
                     default: tx_fifo <= {tx_fifo[6:0], 1'b0}; 
                 endcase
             end
-        
+            
             case (fmt[1:0])
                 2'b00: SPIOut[0] <= tx_fifo[7]; 
                 2'b01: {SPIOut[0], SPIOut[1]} <= tx_fifo[7:6];
                 2'b10: {SPIOut[0],SPIOut[1],SPIOut[2],SPIOut[3]} <= tx_fifo[7:4];
                 default: SPIOut[0] <= tx_fifo[7];
             endcase
+            
         end
     always_ff @(posedge sck_phase_sel, negedge PRESETn)
         if(~PRESETn) rx_fifo <= 8'b0;
@@ -893,6 +932,7 @@ endmodule
                 default: rx_fifo <= {SPIIn, rx_fifo[6:0]};
             endcase
         end
+
 
 
 always_ff @(posedge sclk_duty, negedge PRESETn)

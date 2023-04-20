@@ -1160,9 +1160,6 @@ uart_clearmodemintr:
 spi_data_wait:
     li t2, 0x10040054
     sw t4, 0(t2) // set rx watermark level 
-    li t2, 0x10040070
-    li t3, 0x00000002
-    sw t3, 0(t2) //enable rx watermark interrupt
     li t2, 0x10040074
     lw t3, 0(t2) //read ip (interrupt pending register)
     li t2, 0x00000002
