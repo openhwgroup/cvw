@@ -127,7 +127,7 @@ typedef struct packed {
   logic         GPIO_LOOPBACK_TEST;
 
 // Hardware configuration
-  logic         UART_PRESCALE ;
+  int         UART_PRESCALE ;
 
 // Interrupt configuration
   int       PLIC_NUM_SRC;

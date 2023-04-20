@@ -123,7 +123,7 @@ localparam AHBW = 32'd32;
 localparam GPIO_LOOPBACK_TEST = 1;
 
 // Hardware configuration
-localparam UART_PRESCALE = 1;
+localparam UART_PRESCALE = 32'd1;
 
 // Interrupt configuration
 localparam PLIC_NUM_SRC = 32'd10;
