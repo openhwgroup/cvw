@@ -1,5 +1,7 @@
 dst := IP
 sdc_src := ~/repos/sdc.tar.gz
+
+# Select the desired board and the all build rules
 # vcu118
 #export XILINX_PART := xcvu9p-flga2104-2L-e
 #export XILINX_BOARD := xilinx.com:vcu118:part0:2.4
@@ -15,22 +17,28 @@ export XILINX_PART := xc7a100tcsg324-1
 export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
 export board := ArtyA7
 
-all: FPGA
+# for Arty A7 and S7 boards
+all: FPGA_Arty
 
-FPGA: PreProcessFiles IP SDC
+# VCU 108 and VCU 118 boards
+#all: FPGA_VCU
+
+FPGA_Arty: PreProcessFiles IP_Arty SDC
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
-#IP: $(dst)/xlnx_proc_sys_reset.log \
-	$(dst)/xlnx_ddr4-$(board).log \
-	$(dst)/xlnx_ddr3-ArtyA7.log \
-	$(dst)/xlnx_axi_clock_converter.log \
-	 $(dst)/xlnx_ahblite_axi_bridge.log
+FPGA_VCU: PreProcessFiles IP_VCU SDC
+	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
-IP: $(dst)/xlnx_proc_sys_reset.log \
-	$(dst)/xlnx_ddr3-ArtyA7.log \
+IP_VCU: $(dst)/xlnx_proc_sys_reset.log \
+	$(dst)/xlnx_ddr4-$(board).log \
+	$(dst)/xlnx_axi_clock_converter.log \
+	$(dst)/xlnx_ahblite_axi_bridge.log
+
+IP_Arty: $(dst)/xlnx_proc_sys_reset.log \
+	$(dst)/xlnx_ddr3-$(board).log \
 	$(dst)/xlnx_mmcm.log \
 	$(dst)/xlnx_axi_clock_converter.log \
-	 $(dst)/xlnx_ahblite_axi_bridge.log
+	$(dst)/xlnx_ahblite_axi_bridge.log
 
 SDC:
 	cp $(sdc_src) ../src/
