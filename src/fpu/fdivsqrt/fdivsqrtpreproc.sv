@@ -50,7 +50,7 @@ module fdivsqrtpreproc (
   output logic [`XLEN-1:0]    AM
 );
 
-  logic [`DIVb-1:0]           XPreproc, DPreproc;
+  logic [`DIVb-1:0]           Xfract, Dfract;
   logic [`DIVb:0]             PreSqrtX;
   logic [`DIVb+3:0]           DivX, DivXShifted, SqrtX, PreShiftX; // Variations of dividend, to be muxed
   logic [`NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
@@ -111,8 +111,8 @@ module fdivsqrtpreproc (
   lzc #(`DIVb) lzcY (IFD, mE);
 
   // Normalization shift: shift off leading one
-  assign XPreproc = (IFX << ell) << 1;
-  assign DPreproc = (IFD << mE)  << 1; 
+  assign Xfract = (IFX << ell) << 1;
+  assign Dfract = (IFD << mE)  << 1; 
 
   // *** CT: move to fdivsqrtintpreshift
 
@@ -154,6 +154,8 @@ module fdivsqrtpreproc (
     assign ISpecialCaseE = 0;
   end
 
+  // CT *** fdivsqrtfplead1
+
   //////////////////////////////////////////////////////
   // Floating-Point Preprocessing
   // append leading 1 (for nonzero inputs)
@@ -162,10 +164,10 @@ module fdivsqrtpreproc (
   // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
   //////////////////////////////////////////////////////
 
-  assign DivX = {3'b000, ~NumerZeroE, XPreproc};
+  assign DivX = {3'b000, ~NumerZeroE, Xfract};
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
-  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, XPreproc}, {1'b0, ~XZeroE, XPreproc[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
+  mux2 #(`DIVb+1) sqrtxmux({~XZeroE, Xfract}, {1'b0, ~XZeroE, Xfract[`DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
   if (`RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(`DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
@@ -181,7 +183,7 @@ module fdivsqrtpreproc (
   end
 
    // Divisior register
-  flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, DPreproc}, D);
+  flopen #(`DIVb+4) dreg(clk, IFDivStartE, {4'b0001, Dfract}, D);
  
   // Floating-point exponent
   fdivsqrtexpcalc expcalc(.Fmt(FmtE), .Xe, .Ye, .Sqrt(SqrtE), .XZero(XZeroE), .ell, .m(mE), .Qe(QeE));
