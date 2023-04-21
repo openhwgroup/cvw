@@ -31,6 +31,44 @@ main:
     #bseti t0, zero, 14  # turn on FPU
     csrs mstatus, t0
 
+    #Pull denormalized FP number from memory and pass it to fclass.S for coverage
+    la t0, TestData1
+    flw ft0, 0(t0)
+    fclass.s t1, ft0
+
+    #Result Sign Test Coverage
+    la t0, TestData2
+    flw ft0, 0(t0)
+    flw ft1, 4(t0)
+    fadd.s ft2, ft0, ft1 #Adds coverage for inf as arg for FADD
+
+    flw ft2, 4(t0)
+    fmsub.s ft3, ft0, ft1, ft2 #Adds coverage for fmaAs or Z Sign Bit
+
+    #Adds Coverage for Flag fmaAs, fmaPs, YSNaN, ZSNaN
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft0, 8(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft1, 12(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    flw ft2, 12(t0)
+    flw ft1, 4(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    #Add Coverage for round lsbRes
+    flw ft0, 16(t0)
+    flw ft1, 4(t0)
+    fmadd.s ft3, ft0, ft1, ft2
+
+    #Fix BadNaNBox test on unpackinput Z
+    la t0, TestData2
+    flw ft3, 0(t0)
+    flw ft4, 0(t0)
+    fadd.s ft5, ft3, ft4
+
     # Test legal instructions not covered elsewhere
     flq ft0, 0(a0)
     flh ft0, 8(a0)
@@ -79,6 +117,10 @@ main:
     .word 0xc5000007    // Attempting to toggle (Op7 != 7) to 0 on line 97 in fctrl, not sure what instruction this works out to
     .word 0xe0101053    // toggling (Rs2D == 0) to 0 on line 139 in fctrl. Illegal Intsr (like fclass but incorrect rs2)
     .word 0xe0100053    // toggling (Rs2D == 0) to 0 on line 141 in fctrl. Illegal Intsr (like fmv but incorrect rs2)
+    .word 0x40500053    // toggling (Rs2D[4:2] == 0) to 0 on line 145 in fctrl. 
+    .word 0x40300053    // toggling SupportFmt2 to 0 on line 145 in fctrl.
+    .word 0x42100053    // toggling (Rs2D[1:0] != 1) to 0 on line 147 in fctrl. Illegal Instr
+    .word 0xf0100053    // toggling (Rs2D == 0) to 0 on line 143 in fctrl. Illegal Instr
 
     # Test illegal instructions are detected
     .word 0x00000007 // illegal floating-point load (bad Funct3)
@@ -94,3 +136,13 @@ main:
 
     j done
 
+.section .data
+.align 3
+TestData1:
+.int 0x00100000 #Denormalized FP number
+TestData2:
+.int 0x3f800000 #FP 1.0
+.word 0x7f800000 #INF
+.int 0xbf800000 #FP -1.0
+.int 0x7fa00000 #SNaN
+.int 0x3fffffff #OverFlow Test

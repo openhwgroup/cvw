@@ -51,7 +51,19 @@ string tvpaths[] = '{
     "ifu",
     "fpu",
     "lsu",
-    "vm64check"
+    "vm64check",
+    "pmp",
+    "dcache1",
+    "dcache2",
+    "pmpcfg",
+    "pmpcfg1",
+    "pmpcfg2",
+    "tlbKP",
+    "tlbMP",
+    "tlbM3",
+    "tlbASID",
+    "tlbGLB",
+    "ifuCamlineWrite"
   };
 
   string coremark[] = '{
@@ -1906,8 +1918,10 @@ string arch64zbs[] = '{
     "rv64i_m/privilege/src/WALLY-mie-01.S",
     "rv64i_m/privilege/src/WALLY-minfo-01.S",
     "rv64i_m/privilege/src/WALLY-misa-01.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",
+//    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",  // run this if SVADU_SUPPORTED = 0
+//    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",  // run this if SVADU_SUPPORTED = 0
+    "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
+    "rv64i_m/privilege/src/WALLY-mmu-sv48-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
     "rv64i_m/privilege/src/WALLY-pma-01.S",
     "rv64i_m/privilege/src/WALLY-pmp-01.S",
@@ -1995,7 +2009,8 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
-    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
+//    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
+    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S",
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",

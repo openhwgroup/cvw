@@ -30,7 +30,7 @@
 
 module fdivsqrtqsel2 ( 
   input  logic [3:0] ps, pc, 
-  output logic  up, uz, un
+  output logic       up, uz, un
 );
  
   logic [3:0]  p, g;

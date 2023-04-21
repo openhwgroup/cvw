@@ -93,7 +93,7 @@ module csrsr (
 
   // harwired STATUS bits
   assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
+  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override register with 0 if only machine mode supported
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
 /*  assign STATUS_UBE = 0; // little-endian
@@ -198,9 +198,12 @@ module csrsr (
         STATUS_UBE <= #1 CSRWriteValM[6]  & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
         STATUS_MBE <= #1 nextMBE;
         STATUS_SBE <= #1 nextSBE;
+      // coverage off
+      // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if (WriteMSTATUSHM) begin
         STATUS_MBE <= #1 CSRWriteValM[5] & `BIGENDIAN_SUPPORTED;
         STATUS_SBE <= #1 CSRWriteValM[4] & `S_SUPPORTED & `BIGENDIAN_SUPPORTED;
+      // coverage on
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];

@@ -140,7 +140,7 @@
 `define BPRED_SIZE 10
 `define BTB_SIZE 10
 
-`define SVADU_SUPPORTED 0
+`define SVADU_SUPPORTED 1
 `define ZMMUL_SUPPORTED 0
 
 // FPU division architecture

@@ -29,16 +29,19 @@ vlog +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-fp.sv 
 
 vsim -voptargs=+acc work.testbenchfp -G TEST=$2
 
-view wave
-#-- display input and output signals as hexidecimal values
-#do ./wave-dos/peripheral-waves.do
-add log -recursive /*
-#do wave.do deal with when ready
-
-do wave-fpu.do
+# Determine if nowave argument is provided
+#   this removes any output to a wlf or wave window to reduce
+#   disk space.
+if {($argc > 2) && ($3 eq "nowave")} {
+    puts "No wave output is selected"
+} else {
+    puts "wave output is selected"
+    view wave
+    add log -recursive /*
+    do wave-fpu.do    
+}  
 
 #-- Run the Simulation 
-#run 3600 
 run -all
 noview testbench-fp.sv
 view wave

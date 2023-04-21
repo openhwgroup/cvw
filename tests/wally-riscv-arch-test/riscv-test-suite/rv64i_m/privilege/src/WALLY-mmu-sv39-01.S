@@ -173,6 +173,9 @@ test_cases:
 # *** fetches on pages with X = 1 already tested in 8.3.1.3.1
 .8byte 0x5AA0, 0x1, executable_test                 # instr page fault when X=0
 
+# In the following two tests, SVADU is not supported, so the software handles the A/D bits
+# Since SVADU is 0, Accesses to A/D=0 causes a fault for the trap handler to fix those bits
+
 # test 8.3.1.3.6 Accessed flag == 0
 .8byte 0x36D0, 0x0990DEADBEEF0770, write64_test# store page fault when A=0
 .8byte 0x3AB8, 0x0990DEADBEEF0990, read64_test# load page fault when A=0
