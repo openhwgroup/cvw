@@ -148,7 +148,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.VIRTMEM_SUPPORTED) begin : hptw
-    hptw hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
+    hptw #(P) hptw(.clk, .reset, .MemRWM, .AtomicM, .ITLBMissF, .ITLBWriteF,
       .DTLBMissM, .DTLBWriteM, .InstrUpdateDAF, .DataUpdateDAM,
       .FlushW, .DCacheStallM, .SATP_REGW, .PCSpillF,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .PrivilegeModeW,
@@ -185,7 +185,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   if(P.ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
     assign DisableTranslation = SelHPTW | FlushDCacheM;
-    mmu #(.TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
+    mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
       .PTE, .PageTypeWriteVal(PageType), .TLBWrite(DTLBWriteM), .TLBFlush(sfencevmaM),

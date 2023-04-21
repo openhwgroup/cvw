@@ -26,11 +26,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module tlbcontrol #(parameter ITLB = 0) (
-  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
-  input  logic [`XLEN-1:0]        VAdr,
+module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
+  input  logic [P.SVMODE_BITS-1:0] SATP_MODE,
+  input  logic [P.XLEN-1:0]        VAdr,
   input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
   input  logic [1:0]              STATUS_MPP,
   input  logic [1:0]              PrivilegeModeW, // Current privilege level of the processeor
@@ -58,13 +56,13 @@ module tlbcontrol #(parameter ITLB = 0) (
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SATP_MODE != `NO_TRANSLATE) & (EffectivePrivilegeMode != `M_MODE) & ~DisableTranslation; 
+  assign Translate = (SATP_MODE != P.NO_TRANSLATE) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;
 
   // Check that upper bits are legal (all 0s or all 1s)
-  vm64check vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
+  vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
 
   // unswizzle useful PTE bits
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
@@ -74,9 +72,9 @@ module tlbcontrol #(parameter ITLB = 0) (
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
     // User mode may only execute user mode pages, and supervisor mode may
     // only execute non-user mode pages.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == `S_MODE) & PTE_U);
-    if(`SVADU_SUPPORTED) begin : hptwwrites
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U);
+    if(P.SVADU_SUPPORTED) begin : hptwwrites
       assign UpdateDA = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
       assign TLBPageFault = Translate  & TLBHit & (ImproperPrivilege | ~PTE_X | UpperBitsUnequal | Misaligned | ~PTE_V);
     end else begin
@@ -89,8 +87,8 @@ module tlbcontrol #(parameter ITLB = 0) (
 
     // User mode may only load/store from user mode pages, and supervisor mode
     // may only access user mode pages when STATUS_SUM is low.
-    assign ImproperPrivilege = ((EffectivePrivilegeMode == `U_MODE) & ~PTE_U) |
-      ((EffectivePrivilegeMode == `S_MODE) & PTE_U & ~STATUS_SUM);
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & ~STATUS_SUM);
     // Check for read error. Reads are invalid when the page is not readable
     // (and executable pages are not readable) or when the page is neither
     // readable nor executable (and executable pages are readable).
@@ -98,7 +96,7 @@ module tlbcontrol #(parameter ITLB = 0) (
     // Check for write error. Writes are invalid when the page's write bit is
     // low.
     assign InvalidWrite = WriteAccess & ~PTE_W;
-    if(`SVADU_SUPPORTED) begin : hptwwrites
+    if(P.SVADU_SUPPORTED) begin : hptwwrites
       assign UpdateDA = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
       assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequal | Misaligned | ~PTE_V));
     end else begin

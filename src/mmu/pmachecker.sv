@@ -28,10 +28,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module pmachecker (
-  input  logic [`PA_BITS-1:0] PhysicalAddress,
+module pmachecker import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
   input  logic                AtomicAccessM,  // Atomic access
   input  logic                ExecuteAccessF, // Execute access 

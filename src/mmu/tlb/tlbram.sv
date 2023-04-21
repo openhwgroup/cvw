@@ -28,27 +28,25 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module tlbram #(parameter TLB_ENTRIES = 8) (
+module tlbram import cvw::*;  #(parameter cvw_t P, TLB_ENTRIES = 8) (
   input  logic                      clk, reset,
-  input  logic [`XLEN-1:0]          PTE,
+  input  logic [P.XLEN-1:0]          PTE,
   input  logic [TLB_ENTRIES-1:0]    Matches, WriteEnables,
-  output logic [`PPN_BITS-1:0]      PPN,
+  output logic [P.PPN_BITS-1:0]      PPN,
   output logic [7:0]                PTEAccessBits,
   output logic [TLB_ENTRIES-1:0]    PTE_Gs
 );
 
-  logic [`PPN_BITS+9:0] RamRead[TLB_ENTRIES-1:0];
-  logic [`PPN_BITS+9:0] PageTableEntry;
+  logic [P.PPN_BITS+9:0] RamRead[TLB_ENTRIES-1:0];
+  logic [P.PPN_BITS+9:0] PageTableEntry;
 
   // RAM implemented with array of flops and AND/OR read logic
-  tlbramline #(`PPN_BITS+10) tlbramline[TLB_ENTRIES-1:0]
+  tlbramline #(P.PPN_BITS+10) tlbramline[TLB_ENTRIES-1:0]
      (.clk, .reset, .re(Matches), .we(WriteEnables), 
-      .d(PTE[`PPN_BITS+9:0]), .q(RamRead), .PTE_G(PTE_Gs));
-  or_rows #(TLB_ENTRIES, `PPN_BITS+10) PTEOr(RamRead, PageTableEntry);
+      .d(PTE[P.PPN_BITS+9:0]), .q(RamRead), .PTE_G(PTE_Gs));
+  or_rows #(TLB_ENTRIES, P.PPN_BITS+10) PTEOr(RamRead, PageTableEntry);
 
   // Rename the bits read from the TLB RAM
   assign PTEAccessBits = PageTableEntry[7:0];
-  assign PPN = PageTableEntry[`PPN_BITS+9:10];
+  assign PPN = PageTableEntry[P.PPN_BITS+9:10];
 endmodule
