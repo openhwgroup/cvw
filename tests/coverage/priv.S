@@ -142,6 +142,66 @@ main:
     # Test writes to floating point CSRs
     csrw frm, t0
     csrw fflags, t0
+    
+    # CSRC MCOUNTEREN Register
+    # Go to machine mode
+    li a0, 3
+    ecall
+    # Activate HPM3
+    li t0, -1
+    csrw mcounteren, t0
+    csrw scounteren, t0
+
+    # Go to supervisor
+    li a0, 1
+    ecall
+    #try to write to HPMs
+    csrw 333, t0
+    #go to user mode
+    li a0, 0
+    ecall
+    csrr t0, hpmcounter22
+
+    # setting registers bits to 0
+    li a0, 3 # back to machine mode
+    ecall
+    li t0, 0
+    csrw mcounteren, t0
+    csrw scounteren, t0
+
+    # Write to satp when status.TVM is 1 from machine mode
+    bseti t0, zero, 20 
+    csrs mstatus, t0
+
+    csrw satp, t0
+
+
+
+    # Test checking privilege for reading counters (using counter 22 as an example)
+
+    # Go to machine mode
+    li a0, 3
+    ecall
+
+    # Set SCOUNTEREN to all 0s, MCOUNTEREN to all 1s
+    li t0, 0
+    csrw scounteren, t0
+    li t1, -1
+    csrw mcounteren, t1
+
+
+    # Go to supervisor mode
+    li a0, 1
+    ecall
+
+    # try to read from HPM22
+    csrr t0, hpmcounter22
+
+    # go to user mode
+    li a0, 0
+    ecall
+
+    csrr t0, hpmcounter22
 
     j done
 

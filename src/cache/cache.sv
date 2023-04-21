@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// cache 
+// cache.sv
 //
 // Written: Ross Thompson ross1728@gmail.com
 // Created: 7 July 2021
@@ -122,7 +122,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn(LRUWriteEn & ~FlushStage),
+      .clk, .reset, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
@@ -167,22 +167,22 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     // Adjust byte mask from word to cache line
     onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
     for(index = 0; index < 2**LOGCWPL; index++) begin
-       assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+      assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
     end
     assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
 
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
-       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-         .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+      mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
+        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
   else
     begin:WriteSelLogic
-       // No need for this mux if the cache does not handle writes.
-       assign LineWriteData = FetchBuffer;
-       assign LineByteMask = '1;
+      // No need for this mux if the cache does not handle writes.
+      assign LineWriteData = FetchBuffer;
+      assign LineByteMask = '1;
     end
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
@@ -203,8 +203,8 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     assign FlushWayFlag = FlushWay[NUMWAYS-1];
   end // block: flushlogic
   else begin:flushlogic
-     assign FlushWayFlag = 0;
-     assign FlushAdrFlag = 0;
+    assign FlushWayFlag = 0;
+    assign FlushAdrFlag = 0;
   end
    
   /////////////////////////////////////////////////////////////////////////////////////////////

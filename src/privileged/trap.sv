@@ -81,11 +81,14 @@ module trap (
   ///////////////////////////////////////////
   
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
+  // coverage off -item e 1 -fecexprrow 2
+  // excludes InstrMisalignedFaultM from coverage of this line, since misaligned instructions cannot occur in rv64gc.
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
+  // coverage on
   assign TrapM = ExceptionM | InterruptM; 
   assign RetM = mretM | sretM;
 
@@ -105,7 +108,10 @@ module trap (
     else if (InstrPageFaultM)          CauseM = 12;
     else if (BothInstrAccessFaultM)    CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
+    // coverage off
+    // Misaligned instructions cannot occur in rv64gc
     else if (InstrMisalignedFaultM)    CauseM = 0;
+    // coverage on
     else if (BreakpointFaultM)         CauseM = 3;
     else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
     else if (LoadMisalignedFaultM)     CauseM = 4;
