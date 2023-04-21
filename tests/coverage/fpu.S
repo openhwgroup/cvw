@@ -35,6 +35,10 @@ main:
     la t0, TestData1
     flw ft0, 0(t0)
     fclass.s t1, ft0
+    
+    la t0, TestData1
+    flw ft0, 4(t0)
+    fclass.s t1, ft0
 
     #Result Sign Test Coverage
     la t0, TestData2
@@ -140,6 +144,7 @@ main:
 .align 3
 TestData1:
 .int 0x00100000 #Denormalized FP number
+.int 0x80100000 #Negative Denorm FP
 TestData2:
 .int 0x3f800000 #FP 1.0
 .word 0x7f800000 #INF
