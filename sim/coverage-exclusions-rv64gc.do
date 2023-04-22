@@ -31,11 +31,14 @@
 do GetLineNum.do
 
 # LZA (i<64) statement confuses coverage tool 
-# This is ugly to exlcude the whole file - is there a better option?  // coverage off isn't working
+# DH 4/22/23: Exclude all LZAs
 coverage exclude -srcfile lzc.sv 
 
-# FDIVSQRT has 
+# DH 4/22/23: FDIVSQRT can't go directly from done to busy again
 coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state DONE->BUSY
+# DH 4/22/23: The busy->idle transition only occurs if a FlushE occurs while the divider is busy.  The flush is caused by a trap or return,
+# which won't happen while the divider is busy. 
+coverage exclude -scope /dut/core/fpu/fpu/fdivsqrt/fdivsqrtfsm -ftrans state BUSY->IDLE
 
 ### Exclude D$ states and logic for the I$ instance
 # This is cleaner than trying to set an I$-specific pragma in cachefsm.sv (which would exclude it for the D$ instance too)
