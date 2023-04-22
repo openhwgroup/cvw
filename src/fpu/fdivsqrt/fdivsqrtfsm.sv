@@ -63,9 +63,7 @@ module fdivsqrtfsm(
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
   always_ff @(posedge clk) begin
-      // coverage off: dh 4/22/23 FlushE doesn't seem to happen while fdivsqrt is busy
       if (reset | FlushE) begin
-      // coverage on
           state <= #1 IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
           step <= CyclesE; 
