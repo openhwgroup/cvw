@@ -138,10 +138,10 @@ module fctrl (
                                   endcase
                       7'b11100??: if (Funct3D == 3'b001 & Rs2D == 5'b00000)          
                                                 ControlsD = `FCTRLW'b0_1_10_00_000_0_0_0; // fclass
-                                  else if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0; // fmv.x.w / fmv.x.d to int register
-                      7'b111100?: if (Funct3D == 3'b000 & Rs2D == 5'b00000) 
-                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0; // fmv.w.x / fmv.d.x   to fp reg
+                                  else if (Funct3D == 3'b000 & Rs2D == 5'b00000 & SupportedFmt) 
+                                                ControlsD = `FCTRLW'b0_1_11_00_000_0_0_0; // fmv.x.w/d/h/q  fp to int register
+                      7'b111100?: if (Funct3D == 3'b000 & Rs2D == 5'b00000 & SupportedFmt) 
+                                                ControlsD = `FCTRLW'b1_0_00_00_011_0_0_0; // fmv.w/d/h/q.x  int to fp reg
                       7'b0100000: if (Rs2D[4:2] == 3'b000 & SupportedFmt2 & Rs2D[1:0] != 2'b00)
                                                 ControlsD = `FCTRLW'b1_0_01_00_000_0_0_0; // fcvt.s.(d/q/h)
                       7'b0100001: if (Rs2D[4:2] == 3'b000  & SupportedFmt2 & Rs2D[1:0] != 2'b01)

@@ -39,7 +39,7 @@ module fdivsqrtfsm(
   input  logic               StallM, FlushE,
   input  logic               IntDivE,
   input  logic               ISpecialCaseE,
-  input  logic [`DURLEN-1:0] cycles,
+  input  logic [`DURLEN-1:0] CyclesE,
   output logic               IFDivStartE,
   output logic               FDivBusyE, FDivDoneE,
   output logic               SpecialCaseM
@@ -67,7 +67,7 @@ module fdivsqrtfsm(
           state <= #1 IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
 //       end else if ((state == IDLE) & IFDivStartE) begin // IFDivStartE implies stat is IDLE
-          step <= cycles; 
+          step <= CyclesE; 
           if (SpecialCaseE) state <= #1 DONE;
           else              state <= #1 BUSY;
       end else if (state == BUSY) begin 
