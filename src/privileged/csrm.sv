@@ -171,7 +171,8 @@ module csrm #(parameter
     IllegalCSRMAccessM = !(`S_SUPPORTED) & (CSRAdrM == MEDELEG | CSRAdrM == MIDELEG); // trap on DELEG register access when no S or N-mode
     if (CSRAdrM >= PMPADDR0 & CSRAdrM < PMPADDR0 + `PMP_ENTRIES) // reading a PMP entry
       CSRMReadValM = {{(`XLEN-(`PA_BITS-2)){1'b0}}, PMPADDR_ARRAY_REGW[CSRAdrM - PMPADDR0]};
-    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4) begin
+    else if (CSRAdrM >= PMPCFG0 & CSRAdrM < PMPCFG0 + `PMP_ENTRIES/4 & (`XLEN==32 | CSRAdrM[0] == 0)) begin
+      // only odd-numbered PMPCFG entries exist in RV64
       if (`XLEN==64) begin
         entry = ({CSRAdrM[11:1], 1'b0} - PMPCFG0)*4; // disregard odd entries in RV64
         CSRMReadValM = {PMPCFG_ARRAY_REGW[entry+7],PMPCFG_ARRAY_REGW[entry+6],PMPCFG_ARRAY_REGW[entry+5],PMPCFG_ARRAY_REGW[entry+4],
