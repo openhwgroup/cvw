@@ -66,7 +66,6 @@ module fdivsqrtfsm(
       if (reset | FlushE) begin
           state <= #1 IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
-//       end else if ((state == IDLE) & IFDivStartE) begin // IFDivStartE implies stat is IDLE
           step <= CyclesE; 
           if (SpecialCaseE) state <= #1 DONE;
           else              state <= #1 BUSY;
