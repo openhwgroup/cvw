@@ -26,26 +26,24 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 /* verilator lint_off UNOPTFLAT */
 
-module divstep(
-  input  logic [`XLEN-1:0] W,     // Residual in
-  input  logic [`XLEN-1:0] XQ,    // bits of dividend X and quotient Q in
-  input  logic [`XLEN-1:0] DAbsB, // complement of absolute value of divisor D (for subtraction)
-  output logic [`XLEN-1:0] WOut,  // Residual out
-  output logic [`XLEN-1:0] XQOut  // bits of dividend and quotient out: discard one bit of X, append one bit of Q
+module divstep import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.XLEN-1:0] W,     // Residual in
+  input  logic [P.XLEN-1:0] XQ,    // bits of dividend X and quotient Q in
+  input  logic [P.XLEN-1:0] DAbsB, // complement of absolute value of divisor D (for subtraction)
+  output logic [P.XLEN-1:0] WOut,  // Residual out
+  output logic [P.XLEN-1:0] XQOut  // bits of dividend and quotient out: discard one bit of X, append one bit of Q
 );
 
-  logic [`XLEN-1:0] WShift;       // Shift W left by one bit, bringing in most significant bit of X
-  logic [`XLEN-1:0] WPrime;       // WShift - D, for comparison and possible result
+  logic [P.XLEN-1:0] WShift;       // Shift W left by one bit, bringing in most significant bit of X
+  logic [P.XLEN-1:0] WPrime;       // WShift - D, for comparison and possible result
   logic qi, qib;                  // Quotient digit and its complement
   
-  assign {WShift, XQOut} = {W[`XLEN-2:0], XQ, qi};  // shift W and X/Q left, insert quotient bit at bottom
-  adder #(`XLEN+1) wdsub({1'b0, WShift}, {1'b1, DAbsB}, {qib, WPrime}); // effective subtractor, carry out determines quotient bit
+  assign {WShift, XQOut} = {W[P.XLEN-2:0], XQ, qi};  // shift W and X/Q left, insert quotient bit at bottom
+  adder #(P.XLEN+1) wdsub({1'b0, WShift}, {1'b1, DAbsB}, {qib, WPrime}); // effective subtractor, carry out determines quotient bit
   assign qi = ~qib;
-  mux2 #(`XLEN) wrestoremux(WShift, WPrime, qi, WOut); // if quotient is zero, restore W
+  mux2 #(P.XLEN) wrestoremux(WShift, WPrime, qi, WOut); // if quotient is zero, restore W
 endmodule
 
 /* verilator lint_on UNOPTFLAT */
