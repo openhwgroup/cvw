@@ -229,7 +229,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
-    dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
+    dtim #(P) dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.XLEN-1:0]), .ByteMaskM(ByteMaskM[P.XLEN/8-1:0]));
   end 

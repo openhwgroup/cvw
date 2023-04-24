@@ -136,7 +136,7 @@ typedef struct packed {
   int       PLIC_UART_ID;
 
   logic     BPRED_SUPPORTED;
-  //parameter    BPRED_TYPE;
+  //longint   BPRED_TYPE;
   int       BPRED_SIZE;
   int       BTB_SIZE;
 

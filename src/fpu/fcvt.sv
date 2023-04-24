@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module fcvt import cvw::*;  #(parameter cvw_t P) (
   input  logic                    Xs,          // input's sign
   input  logic [P.NE-1:0]          Xe,          // input's exponent
