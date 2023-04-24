@@ -128,14 +128,10 @@ module bpred (
       .BranchE, .BranchM, .PCSrcE);
   
   end else if (`BPRED_TYPE == "BP_LOCAL") begin:Predictor
-    localHistoryPredictor DirPredictor(.clk,
-      .reset, .StallD, .StallF, .StallE, .FlushD, .FlushE, 
-      .LookUpPC(PCNextF),
-      .BPDirPredF,
-      // update
-      .UpdatePC(PCE),
-      .UpdateEN(BranchE & ~StallE),
-      .PCSrcE);
+    localHistoryPredictor #(6, 10)
+DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
+      .BranchE, .BranchM, .PCSrcE);
   end 
 
   // Part 2 Branch target address prediction

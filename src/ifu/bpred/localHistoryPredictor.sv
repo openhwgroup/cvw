@@ -1,10 +1,11 @@
 ///////////////////////////////////////////
-// locallHistoryPredictor.sv
+// gsharebasic.sv
 //
-// Written: Shreya Sanghai
-// Email: ssanghai@hmc.edu
-// Created: March 16, 2021
-// Modified: 
+// Written: Ross Thompson
+// Email: ross1728@gmail.com
+// Created: 16 March 2021
+// Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.
+// Modified: 20 February 2023 
 //
 // Purpose: Global History Branch predictor with parameterized global history register
 // 
@@ -28,114 +29,73 @@
 
 `include "wally-config.vh"
 
-module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local history branches
-                                         k = 10) ( // number of past branches stored
-  input  logic             clk,
-  input  logic             reset,
-  input  logic             StallD, StallF,  StallE,
-  input  logic             FlushD, FlushE,
-  input  logic [`XLEN-1:0] LookUpPC,
-  output logic [1:0]       BPDirPredF,
+module localHistoryPredictor #(parameter m = 6, // 2^m = number of local history branches 
+                               parameter k = 10) ( // number of past branches stored
+  input logic             clk,
+  input logic             reset,
+  input logic             StallF, StallD, StallE, StallM, StallW,
+  input logic             FlushD, FlushE, FlushM, FlushW,
+  output logic [1:0]      BPDirPredF, 
+  output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0]  UpdatePC,
-  input logic              UpdateEN, PCSrcE
-
+  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic             BranchE, BranchM, PCSrcE
 );
 
-  logic [2**m-1:0][k-1:0]  LHRNextF;
-  logic [k-1:0]            LHRF, ForwardLHRNext, LHRFNext;
-  logic [m-1:0]            LookUpPCIndex, UpdatePCIndex;
-  logic [1:0]              PredictionMemory;
-  logic                    DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
-  logic [1:0]              UpdatePredictionF;
-  logic [1:0]              BPDirPredD, BPDirPredE;
-  logic [1:0]              NewBPDirPredE, NewBPDirPredM;
+  logic [k-1:0]           IndexNextF, IndexM;
+  logic [1:0]             BPDirPredD, BPDirPredE;
+  logic [1:0]             NewBPDirPredE, NewBPDirPredM;
+
+  logic [k-1:0]           GHRF, GHRD, GHRE, GHRM, GHR;
+  logic [k-1:0]           GHRNext;
+  logic                   PCSrcM;
+  logic [2**m-1:0][k-1:0]  LHR;
+  logic [m-1:0]            IndexLHRNextF, IndexLHRM;
   
+  logic                    UpdateM;
 
-  assign LHRFNext = {PCSrcE, LHRF[k-1:1]}; 
-  assign UpdatePCIndex = {UpdatePC[m+1] ^ UpdatePC[1], UpdatePC[m:2]};
-  assign LookUpPCIndex = {LookUpPC[m+1] ^ LookUpPC[1], LookUpPC[m:2]};  
-
-  // INCASE we do ahead pipelining
-  //    ram2p1r1wb #(m,k) LHR(.clk(clk)),
-  //                 .reset(reset),
-  //                 .RA1(LookUpPCIndex), // need hashing function to get correct PC address 
-  //                 .RD1(LHRF),
-  //                 .REN1(~StallF),
-  //                 .WA1(UpdatePCIndex),
-  //                 .WD1(LHRENExt),
-  //                 .WEN1(UpdateEN),
-  //                 .BitWEN1(2'b11));  
-
-  genvar      index;
-  for (index = 0; index < 2**m; index = index +1) begin:localhist
-    flopenr #(k) LocalHistoryRegister(.clk, .reset, .en(UpdateEN & (index == UpdatePCIndex)),
-                                      .d(LHRFNext), .q(LHRNextF[index]));
-  end 
-
-  // need to forward when updating to the same address as reading.
-  // first we compare to see if the update and lookup addreses are the same
-  assign DoForwarding = LookUpPCIndex == UpdatePCIndex;
-  assign ForwardLHRNext = DoForwarding ? LHRFNext :LHRNextF[LookUpPCIndex]; 
-
-  // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
-  // LHR referes to the address that the past k branches points to in the prediction stage 
-  // LHRE refers to the address that the past k branches points to in the exectution stage
+  assign IndexNextF = GHRNext;
+  assign IndexM = GHRM;
+  
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(UpdateEN),
-    .ra1(ForwardLHRNext),
-    .rd1(PredictionMemory),
-    .wa2(LHRFNext),
-    .wd2(NewBPDirPredE),
-    .we2(UpdateEN),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
+    .ra1(IndexNextF),
+    .rd1(BPDirPredF),
+    .wa2(IndexM),
+    .wd2(NewBPDirPredM),
+    .we2(BranchM),
     .bwe2(1'b1));
 
-
-  
-  assign DoForwardingPHT = LHRFNext == ForwardLHRNext; 
-
-
-  // register the update value and the forwarding signal into the Fetch stage
-  // TODO: add stall logic ***
-  flopr #(1) DoForwardingReg(.clk(clk),
-        .reset(reset),
-        .d(DoForwardingPHT),
-        .q(DoForwardingPHTF));
-  
-  flopr #(2) UpdatePredictionReg(.clk(clk),
-     .reset(reset),
-     .d(NewBPDirPredE),
-     .q(UpdatePredictionF));
-
-  assign BPDirPredF = DoForwardingPHTF ? UpdatePredictionF : PredictionMemory;
-  
   flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
-  //pipeline for LHR
-  flopenrc #(k) LHRFReg(.clk(clk),
-   .reset(reset),
-   .en(~StallF),
-   .clear(1'b0),
-   .d(ForwardLHRNext),
-   .q(LHRF));
-
-   
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
-   
-  /*
-   flopenrc #(k) LHRDReg(.clk(clk),
-   .reset(reset),
-   .en(~StallD),
-   .clear(FlushD),
-   .d(LHRF),
-   .q(LHRD));
-   
-   flopenrc #(k) LHREReg(.clk(clk),
-   .reset(reset),
-   .en(~StallE),
-   .clear(FlushE),
-   .d(LHRD),
-   .q(LHRE));
-   */
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
+
+  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
+
+  assign GHRNext = BranchM ? {PCSrcM, GHR[k-1:1]} : GHR;
+
+  // this is local history
+  genvar      index;
+  assign UpdateM = BranchM & ~StallM & ~FlushM;
+  assign IndexLHRM = {PCM[m+1] ^ PCM[1], PCM[m:2]};
+  for (index = 0; index < 2**m; index = index +1) begin:localhist
+    flopenr #(k) LocalHistoryRegister(.clk, .reset, .en(UpdateM & (index == IndexLHRM)),
+                                      .d(GHRNext), .q(LHR[index]));
+  end
+  assign IndexLHRNextF = {PCNextF[m+1] ^ PCNextF[1], PCNextF[m:2]};
+  assign GHR = LHR[IndexLHRNextF];
+
+  // this is global history
+  //flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchM, GHRNext, GHR);
+
+  flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
+    
+  flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
+  flopenrc #(k) GHRDReg(clk, reset, FlushD, ~StallD, GHRF, GHRD);
+  flopenrc #(k) GHREReg(clk, reset, FlushE, ~StallE, GHRD, GHRE);
+  flopenrc #(k) GHRMReg(clk, reset, FlushM, ~StallM, GHRE, GHRM);
+
+
 endmodule
