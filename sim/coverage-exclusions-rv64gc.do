@@ -128,3 +128,7 @@ set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-5
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-3
+
+# Excluding reset and clear for impossible case in the wficountreg in privdec
+set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
+coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
