@@ -27,9 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module bmuctrl(
+module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic        clk, reset,
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
@@ -78,13 +76,13 @@ module bmuctrl(
   always_comb begin
     // BALUSelect_BSelect_ZBBSelect_BRegWrite_BALUSrcB_BW64_BALUOp_BSubArithD_RotateD_MaskD_PreShiftD_IllegalBitmanipInstrD
     BMUControlsD = `BMUCTRLW'b000_00_000_0_0_0_0_0_0_0_0_1;  // default: Illegal bmu instruction;
-    if (`ZBA_SUPPORTED) begin
+    if (P.ZBA_SUPPORTED) begin
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0010000_010: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_0_1_0_0_0_1_0;  // sh1add
         17'b0110011_0010000_100: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_0_1_0_0_0_1_0;  // sh2add
         17'b0110011_0010000_110: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_0_1_0_0_0_1_0;  // sh3add
       endcase
-      if (`XLEN==64)
+      if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
           17'b0111011_0010000_010: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_1_1_0_0_0_1_0;  // sh1add.uw
           17'b0111011_0010000_100: BMUControlsD = `BMUCTRLW'b000_01_000_1_0_1_1_0_0_0_1_0;  // sh2add.uw
@@ -93,7 +91,7 @@ module bmuctrl(
           17'b0011011_000010?_001: BMUControlsD = `BMUCTRLW'b001_01_000_1_1_1_1_0_0_0_0_0;  // slli.uw
         endcase
     end
-    if (`ZBB_SUPPORTED) begin
+    if (P.ZBB_SUPPORTED) begin
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0110000_001: BMUControlsD = `BMUCTRLW'b001_01_111_1_0_0_1_0_1_0_0_0;  // rol
         17'b0110011_0110000_101: BMUControlsD = `BMUCTRLW'b001_01_111_1_0_0_1_0_1_0_0_0;  // ror
@@ -102,13 +100,13 @@ module bmuctrl(
                                 else if ((Rs2D[4:2]==3'b000) & ~(Rs2D[1] & Rs2D[0]))
                                   BMUControlsD = `BMUCTRLW'b000_10_000_1_1_0_1_0_0_0_0_0;  // count instruction
 //        // coverage off: This case can't occur in RV64
-//        17'b0110011_0000100_100: if (`XLEN == 32)
+//        17'b0110011_0000100_100: if (P.XLEN == 32)
 //                                  BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
 //        // coverage on
         17'b0110011_0100000_111: BMUControlsD = `BMUCTRLW'b111_01_111_1_0_0_1_1_0_0_0_0;  // andn
         17'b0110011_0100000_110: BMUControlsD = `BMUCTRLW'b110_01_111_1_0_0_1_1_0_0_0_0;  // orn
         17'b0110011_0100000_100: BMUControlsD = `BMUCTRLW'b100_01_111_1_0_0_1_1_0_0_0_0;  // xnor
-        17'b0010011_011010?_101: if ((`XLEN == 32 ^ Funct7D[0]) & (Rs2D == 5'b11000))
+        17'b0010011_011010?_101: if ((P.XLEN == 32 ^ Funct7D[0]) & (Rs2D == 5'b11000))
                                   BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // rev8
         17'b0010011_0010100_101: if (Rs2D[4:0] == 5'b00111)
                                   BMUControlsD = `BMUCTRLW'b000_10_010_1_1_0_1_0_0_0_0_0;  // orc.b
@@ -117,12 +115,12 @@ module bmuctrl(
         17'b0110011_0000101_100: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_0_0_0_0_0;  // min
         17'b0110011_0000101_101: BMUControlsD = `BMUCTRLW'b000_10_011_1_0_0_1_0_0_0_0_0;  // minu
       endcase
-      if (`XLEN==32)
+      if (P.XLEN==32)
         casez({OpD, Funct7D, Funct3D})
           17'b0110011_0000100_100: BMUControlsD = `BMUCTRLW'b000_10_001_1_1_0_1_0_0_0_0_0;  // zexth (rv32)
           17'b0010011_0110000_101: BMUControlsD = `BMUCTRLW'b001_00_111_1_1_0_1_0_1_0_0_0;  // rori (rv32)                          
         endcase
-      else if (`XLEN==64)
+      else if (P.XLEN==64)
         casez({OpD, Funct7D, Funct3D})
           17'b0111011_0000100_100: BMUControlsD = `BMUCTRLW'b000_10_001_1_0_0_1_0_0_0_0_0;  // zexth (rv64)
           17'b0111011_0110000_001: BMUControlsD = `BMUCTRLW'b001_00_111_1_0_1_1_0_1_0_0_0;  // rolw
@@ -133,25 +131,25 @@ module bmuctrl(
                                     BMUControlsD = `BMUCTRLW'b000_10_000_1_1_1_1_0_0_0_0_0;  // count word instruction
         endcase
     end
-    if (`ZBC_SUPPORTED)
+    if (P.ZBC_SUPPORTED)
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0000101_0??: BMUControlsD = `BMUCTRLW'b000_11_000_1_0_0_1_0_0_0_0_0;  // ZBC instruction
       endcase
-    if (`ZBS_SUPPORTED) begin // ZBS
+    if (P.ZBS_SUPPORTED) begin // ZBS
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0100100_001: BMUControlsD = `BMUCTRLW'b111_01_000_1_0_0_1_1_0_1_0_0;  // bclr
         17'b0110011_0100100_101: BMUControlsD = `BMUCTRLW'b101_01_000_1_0_0_1_1_0_1_0_0;  // bext
         17'b0110011_0110100_001: BMUControlsD = `BMUCTRLW'b100_01_000_1_0_0_1_0_0_1_0_0;  // binv
         17'b0110011_0010100_001: BMUControlsD = `BMUCTRLW'b110_01_000_1_0_0_1_0_0_1_0_0;  // bset
       endcase
-      if (`XLEN==32) // ZBS 64-bit
+      if (P.XLEN==32) // ZBS 64-bit
         casez({OpD, Funct7D, Funct3D})
           17'b0010011_0100100_001: BMUControlsD = `BMUCTRLW'b111_01_000_1_1_0_1_1_0_1_0_0;  // bclri
           17'b0010011_0100100_101: BMUControlsD = `BMUCTRLW'b101_01_000_1_1_0_1_1_0_1_0_0;  // bexti
           17'b0010011_0110100_001: BMUControlsD = `BMUCTRLW'b100_01_000_1_1_0_1_0_0_1_0_0;  // binvi
           17'b0010011_0010100_001: BMUControlsD = `BMUCTRLW'b110_01_000_1_1_0_1_0_0_1_0_0;  // bseti
         endcase
-      else if (`XLEN==64) // ZBS 64-bit
+      else if (P.XLEN==64) // ZBS 64-bit
         casez({OpD, Funct7D, Funct3D})
           17'b0010011_010010?_001: BMUControlsD = `BMUCTRLW'b111_01_000_1_1_0_1_1_0_1_0_0;  // bclri (rv64)
           17'b0010011_010010?_101: BMUControlsD = `BMUCTRLW'b101_01_000_1_1_0_1_1_0_1_0_0;  // bexti (rv64)
@@ -159,7 +157,7 @@ module bmuctrl(
           17'b0010011_001010?_001: BMUControlsD = `BMUCTRLW'b110_01_000_1_1_0_1_0_0_1_0_0;  // bseti (rv64)
         endcase
     end
-    if (`ZBB_SUPPORTED | `ZBS_SUPPORTED) // rv32i/64i shift instructions need BMU ALUSelect when BMU shifter is used
+    if (P.ZBB_SUPPORTED | P.ZBS_SUPPORTED) // rv32i/64i shift instructions need BMU ALUSelect when BMU shifter is used
       casez({OpD, Funct7D, Funct3D})
         17'b0110011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_00_000_1_0_0_1_0_0_0_0_0;  // sra, srl, sll
         17'b0010011_0?0000?_?01: BMUControlsD = `BMUCTRLW'b001_00_000_1_1_0_1_0_0_0_0_0;  // srai, srli, slli

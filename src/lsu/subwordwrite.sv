@@ -27,16 +27,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module subwordwrite (
+module subwordwrite import cvw::*;  #(parameter cvw_t P) (
   input logic [2:0]          LSUFunct3M,
-  input logic [`LLEN-1:0]    IMAFWriteDataM,
-  output logic [`LLEN-1:0]   LittleEndianWriteDataM
+  input logic [P.LLEN-1:0]    IMAFWriteDataM,
+  output logic [P.LLEN-1:0]   LittleEndianWriteDataM
 );
 
   // Replicate data for subword writes
-  if (`LLEN == 128) begin:sww
+  if (P.LLEN == 128) begin:sww
     always_comb 
       case(LSUFunct3M[2:0])
         3'b000:  LittleEndianWriteDataM = {16{IMAFWriteDataM[7:0]}}; // sb
@@ -45,7 +43,7 @@ module subwordwrite (
         3'b011:  LittleEndianWriteDataM = {2{IMAFWriteDataM[63:0]}}; // sd
         default: LittleEndianWriteDataM = IMAFWriteDataM;            // sq
       endcase
-  end else if (`LLEN == 64) begin:sww
+  end else if (P.LLEN == 64) begin:sww
     always_comb 
       case(LSUFunct3M[1:0])
         2'b00:  LittleEndianWriteDataM = {8{IMAFWriteDataM[7:0]}};  // sb

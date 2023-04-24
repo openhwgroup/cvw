@@ -252,7 +252,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     logic BSubArithD;                     // TRUE for BMU ext, clr, andn, orn, xnor
     logic BALUSrcBD;                      // BMU alu src select signal
 
-    bmuctrl bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
+    bmuctrl #(P) bmuctrl(.clk, .reset, .StallD, .FlushD, .InstrD, .ALUOpD, .BSelectD, .ZBBSelectD, 
       .BRegWriteD, .BALUSrcBD, .BW64D, .BSubArithD, .IllegalBitmanipInstrD, .StallE, .FlushE, 
       .ALUSelectD, .BSelectE, .ZBBSelectE, .BRegWriteE, .BComparatorSignedE, .BALUControlE);
     if (P.ZBA_SUPPORTED) begin

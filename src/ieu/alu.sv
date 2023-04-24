@@ -88,7 +88,7 @@ module alu import cvw::*;  #(parameter cvw_t P) (
 
   // Final Result B instruction select mux
   if (P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(P.XLEN) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
+    bitmanipalu #(P, P.XLEN) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
       .Funct3, .CompLT, .BALUControl, .ALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .Result);
   end else begin
