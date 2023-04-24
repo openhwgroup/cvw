@@ -135,8 +135,8 @@ typedef struct packed {
   int       PLIC_GPIO_ID;
   int       PLIC_UART_ID;
 
-  logic         BPRED_SUPPORTED;
-  //parameter         BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
+  logic     BPRED_SUPPORTED;
+  //parameter    BPRED_TYPE;
   int       BPRED_SIZE;
   int       BTB_SIZE;
 

@@ -72,7 +72,7 @@ parameter cvw_t P = '{
   PLIC_GPIO_ID :        PLIC_GPIO_ID,
   PLIC_UART_ID :        PLIC_UART_ID,
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
-  //parameter :        BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
+  //BPRED_TYPE :        BPRED_TYPE,
   BPRED_SIZE :        BPRED_SIZE,
   BTB_SIZE :        BTB_SIZE,
   RADIX :        RADIX,

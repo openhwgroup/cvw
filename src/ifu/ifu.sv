@@ -144,7 +144,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
 
   if(P.C_SUPPORTED) begin : Spill
-    spill #(P.ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
+    spill #(P, P.ICACHE_SUPPORTED) spill(.clk, .reset, .StallD, .FlushD, .PCF, .PCPlus4F, .PCNextF, .InstrRawF,
       .InstrUpdateDAF, .IFUCacheBusStallD, .ITLBMissF, .PCSpillNextF, .PCSpillF, .SelSpillNextF, .PostSpillInstrRawF, .CompressedF);
   end else begin : NoSpill
     assign PCSpillNextF = PCNextF;
@@ -351,7 +351,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // expand 16-bit compressed instructions to 32 bits
   if (P.C_SUPPORTED) begin
     logic IllegalCompInstrD;
-    decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
+    decompress #(P) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   end else begin  
     assign InstrD = InstrRawD;
