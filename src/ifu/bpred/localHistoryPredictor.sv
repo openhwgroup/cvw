@@ -32,13 +32,14 @@ module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local hist
                                          k = 10) ( // number of past branches stored
   input  logic             clk,
   input  logic             reset,
-  input  logic             StallF,  StallE,
+  input  logic             StallD, StallF,  StallE,
+  input  logic             FlushD, FlushE,
   input  logic [`XLEN-1:0] LookUpPC,
-  output logic [1:0]       Prediction,
+  output logic [1:0]       BPDirPredF,
   // update
   input logic [`XLEN-1:0]  UpdatePC,
-  input logic              UpdateEN, PCSrcE, 
-  input logic [1:0]        UpdatePrediction
+  input logic              UpdateEN, PCSrcE
+
 );
 
   logic [2**m-1:0][k-1:0]  LHRNextF;
@@ -47,6 +48,9 @@ module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local hist
   logic [1:0]              PredictionMemory;
   logic                    DoForwarding, DoForwardingF, DoForwardingPHT, DoForwardingPHTF;
   logic [1:0]              UpdatePredictionF;
+  logic [1:0]              BPDirPredD, BPDirPredE;
+  logic [1:0]              NewBPDirPredE, NewBPDirPredM;
+  
 
   assign LHRFNext = {PCSrcE, LHRF[k-1:1]}; 
   assign UpdatePCIndex = {UpdatePC[m+1] ^ UpdatePC[1], UpdatePC[m:2]};
@@ -77,19 +81,19 @@ module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local hist
   // Make Prediction by reading the correct address in the PHT and also update the new address in the PHT 
   // LHR referes to the address that the past k branches points to in the prediction stage 
   // LHRE refers to the address that the past k branches points to in the exectution stage
-  ram2p1r1wb #(k, 2) PHT(.clk(clk), 
-    .reset(reset),
+  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+    .ce1(~StallF), .ce2(UpdateEN),
     .ra1(ForwardLHRNext),
     .rd1(PredictionMemory),
-    .ren1(~StallF),
     .wa2(LHRFNext),
-    .wd2(UpdatePrediction),
-    .wen2(UpdateEN),
-    .bwe2(2'b11));
+    .wd2(NewBPDirPredE),
+    .we2(UpdateEN),
+    .bwe2(1'b1));
 
 
   
   assign DoForwardingPHT = LHRFNext == ForwardLHRNext; 
+
 
   // register the update value and the forwarding signal into the Fetch stage
   // TODO: add stall logic ***
@@ -100,11 +104,14 @@ module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local hist
   
   flopr #(2) UpdatePredictionReg(.clk(clk),
      .reset(reset),
-     .d(UpdatePrediction),
+     .d(NewBPDirPredE),
      .q(UpdatePredictionF));
 
-  assign Prediction = DoForwardingPHTF ? UpdatePredictionF : PredictionMemory;
+  assign BPDirPredF = DoForwardingPHTF ? UpdatePredictionF : PredictionMemory;
   
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
+
   //pipeline for LHR
   flopenrc #(k) LHRFReg(.clk(clk),
    .reset(reset),
@@ -112,6 +119,10 @@ module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local hist
    .clear(1'b0),
    .d(ForwardLHRNext),
    .q(LHRF));
+
+   
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
+   
   /*
    flopenrc #(k) LHRDReg(.clk(clk),
    .reset(reset),

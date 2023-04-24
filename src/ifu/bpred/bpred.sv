@@ -127,19 +127,15 @@ module bpred (
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   
-  end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
-    // *** Fix me
-/* -----\/----- EXCLUDED -----\/-----
+  end else if (`BPRED_TYPE == "BP_LOCAL") begin:Predictor
     localHistoryPredictor DirPredictor(.clk,
-      .reset, .StallF, .StallE,
+      .reset, .StallD, .StallF, .StallE, .FlushD, .FlushE, 
       .LookUpPC(PCNextF),
-      .Prediction(BPDirPredF),
+      .BPDirPredF,
       // update
       .UpdatePC(PCE),
-      .UpdateEN(InstrClassE[0] & ~StallE),
-      .PCSrcE,
-      .UpdatePrediction(InstrClassE[0]));
- -----/\----- EXCLUDED -----/\----- */
+      .UpdateEN(BranchE & ~StallE),
+      .PCSrcE);
   end 
 
   // Part 2 Branch target address prediction
