@@ -26,17 +26,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module localHistoryPredictor #(parameter m = 6,    // 2^m = number of local history branches
+module localHistoryPredictor import cvw::*;  #(parameter cvw_t P, m = 6,    // 2^m = number of local history branches
                                          k = 10) ( // number of past branches stored
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF,  StallE,
-  input  logic [`XLEN-1:0] LookUpPC,
+  input  logic [P.XLEN-1:0] LookUpPC,
   output logic [1:0]       Prediction,
   // update
-  input logic [`XLEN-1:0]  UpdatePC,
+  input logic [P.XLEN-1:0]  UpdatePC,
   input logic              UpdateEN, PCSrcE, 
   input logic [1:0]        UpdatePrediction
 );

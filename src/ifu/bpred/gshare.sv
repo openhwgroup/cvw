@@ -27,9 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module gshare #(parameter k = 10,
+module gshare import cvw::*;  #(parameter cvw_t P, k = 10,
                 parameter integer TYPE = 1) (
   input logic             clk,
   input logic             reset,
@@ -38,7 +36,7 @@ module gshare #(parameter k = 10,
   output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
+  input logic [P.XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
@@ -83,7 +81,7 @@ module gshare #(parameter k = 10,
   
   assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(TableBPDirPredF),

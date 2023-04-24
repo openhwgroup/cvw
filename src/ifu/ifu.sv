@@ -326,7 +326,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
   if (P.BPRED_SUPPORTED) begin : bpred
-    bpred bpred(.clk, .reset,
+    bpred #(P) bpred(.clk, .reset,
                 .StallF, .StallD, .StallE, .StallM, .StallW,
                 .FlushD, .FlushE, .FlushM, .FlushW, .InstrValidD, .InstrValidE, 
                 .BranchD, .BranchE, .JumpD, .JumpE,
