@@ -25,15 +25,14 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
-module unpackinput ( 
-  input  logic [`FLEN-1:0]        In,         // inputs from register file
+module unpackinput import cvw::*;  #(parameter cvw_t P) ( 
+  input  logic [P.FLEN-1:0]        In,         // inputs from register file
   input  logic                    En,         // enable the input
-  input  logic [`FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
+  input  logic [P.FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
   output logic                    Sgn,        // sign bits of the number 
-  output logic [`NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
-  output logic [`NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
+  output logic [P.NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
+  output logic [P.NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
   output logic                    NaN,        // is the number a NaN
   output logic                    SNaN,       // is the number a signaling NaN
   output logic                    Zero,       // is the number zero
@@ -42,29 +41,29 @@ module unpackinput (
   output logic                    FracZero,   // is the fraction zero
   output logic                    ExpMax,     // does In have the maximum exponent (NaN or Inf)
   output logic                    Subnorm,    // is the number subnormal
-  output logic [`FLEN-1:0]        PostBox     // Number reboxed correctly as a NaN
+  output logic [P.FLEN-1:0]        PostBox     // Number reboxed correctly as a NaN
 );
 
-  logic [`NF-1:0] Frac;       // Fraction of XYZ
+  logic [P.NF-1:0] Frac;       // Fraction of XYZ
   logic           BadNaNBox;  // incorrectly NaN Boxed
 
-  if (`FPSIZES == 1) begin        // if there is only one floating point format supported
+  if (P.FPSIZES == 1) begin        // if there is only one floating point format supported
       assign BadNaNBox = 0;
-      assign Sgn = In[`FLEN-1];  // sign bit
-      assign Frac = In[`NF-1:0];  // fraction (no assumed 1)
-      assign ExpNonZero = |In[`FLEN-2:`NF];  // is the exponent non-zero
-      assign Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
-      assign ExpMax = &In[`FLEN-2:`NF];  // is the exponent all 1's
+      assign Sgn = In[P.FLEN-1];  // sign bit
+      assign Frac = In[P.NF-1:0];  // fraction (no assumed 1)
+      assign ExpNonZero = |In[P.FLEN-2:P.NF];  // is the exponent non-zero
+      assign Exp = {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero};  // exponent.  subnormal numbers have effective biased exponent of 1
+      assign ExpMax = &In[P.FLEN-2:P.NF];  // is the exponent all 1's
       assign PostBox = In;
   
-  end else if (`FPSIZES == 2) begin   // if there are 2 floating point formats supported
+  end else if (P.FPSIZES == 2) begin   // if there are 2 floating point formats supported
       // largest format | smaller format
       //----------------------------------
-      //      `FLEN     |     `LEN1       length of floating point number
-      //      `NE       |     `NE1        length of exponent
-      //      `NF       |     `NF1        length of fraction
-      //      `BIAS     |     `BIAS1      exponent's bias value
-      //      `FMT      |     `FMT1       precision's format value - Q=11 D=01 Sticky=00 H=10
+      //      P.FLEN     |     P.LEN1       length of floating point number
+      //      P.NE       |     P.NE1        length of exponent
+      //      P.NF       |     P.NF1        length of fraction
+      //      P.BIAS     |     P.BIAS1      exponent's bias value
+      //      P.FMT      |     P.FMT1       precision's format value - Q=11 D=01 Sticky=00 H=10
 
       // Possible combinantions specified by spec:
       //      double and single
@@ -76,22 +75,22 @@ module unpackinput (
       //      quad   and half
       //      double and half
 
-      assign BadNaNBox = ~(Fmt|(&In[`FLEN-1:`LEN1])); // Check NaN boxing
+      assign BadNaNBox = ~(Fmt|(&In[P.FLEN-1:P.LEN1])); // Check NaN boxing
       always_comb
         if (BadNaNBox) begin
-//          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
-          PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, {(`LEN1-`NE1-2){1'b0}}};
+//          PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, In[P.LEN1-P.NE1-3:0]};
+          PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
         end else 
           PostBox = In;
 
       // choose sign bit depending on format - 1=larger precsion 0=smaller precision
-      assign Sgn = Fmt ? In[`FLEN-1] : (BadNaNBox ? 0 : In[`LEN1-1]); // improperly boxed NaNs are treated as positive
+      assign Sgn = Fmt ? In[P.FLEN-1] : (BadNaNBox ? 0 : In[P.LEN1-1]); // improperly boxed NaNs are treated as positive
 
       // extract the fraction, add trailing zeroes to the mantissa if nessisary
-      assign Frac = Fmt ? In[`NF-1:0] : {In[`NF1-1:0], (`NF-`NF1)'(0)};
+      assign Frac = Fmt ? In[P.NF-1:0] : {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
 
       // is the exponent non-zero
-      assign ExpNonZero = Fmt ? |In[`FLEN-2:`NF] : |In[`LEN1-2:`NF1]; 
+      assign ExpNonZero = Fmt ? |In[P.FLEN-2:P.NF] : |In[P.LEN1-2:P.NF1]; 
 
       // example double to single conversion:
       // 1023 = 0011 1111 1111
@@ -103,21 +102,21 @@ module unpackinput (
 
       // extract the exponent, converting the smaller exponent into the larger precision if nessisary
       //      - if the original precision had a Subnormal number convert the exponent value 1
-      assign Exp = Fmt ? {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero} : {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
+      assign Exp = Fmt ? {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero} : {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero}; 
 
       // is the exponent all 1's
-      assign ExpMax = Fmt ? &In[`FLEN-2:`NF] : &In[`LEN1-2:`NF1];
+      assign ExpMax = Fmt ? &In[P.FLEN-2:P.NF] : &In[P.LEN1-2:P.NF1];
   
 
-  end else if (`FPSIZES == 3) begin       // three floating point precsions supported
+  end else if (P.FPSIZES == 3) begin       // three floating point precsions supported
 
       // largest format | larger format  | smallest format
       //---------------------------------------------------
-      //      `FLEN     |     `LEN1      |    `LEN2       length of floating point number
-      //      `NE       |     `NE1       |    `NE2        length of exponent
-      //      `NF       |     `NF1       |    `NF2        length of fraction
-      //      `BIAS     |     `BIAS1     |    `BIAS2      exponent's bias value
-      //      `FMT      |     `FMT1      |    `FMT2       precision's format value - Q=11 D=01 Sticky=00 H=10
+      //      P.FLEN     |     P.LEN1      |    P.LEN2       length of floating point number
+      //      P.NE       |     P.NE1       |    P.NE2        length of exponent
+      //      P.NF       |     P.NF1       |    P.NF2        length of fraction
+      //      P.BIAS     |     P.BIAS1     |    P.BIAS2      exponent's bias value
+      //      P.FMT      |     P.FMT1      |    P.FMT2       precision's format value - Q=11 D=01 Sticky=00 H=10
 
       // Possible combinantions specified by spec:
       //      quad   and double and single
@@ -130,20 +129,20 @@ module unpackinput (
       // Check NaN boxing
       always_comb
           case (Fmt)
-              `FMT:  BadNaNBox = 0;
-              `FMT1: BadNaNBox = ~&In[`FLEN-1:`LEN1];
-              `FMT2: BadNaNBox = ~&In[`FLEN-1:`LEN2];
+              P.FMT:  BadNaNBox = 0;
+              P.FMT1: BadNaNBox = ~&In[P.FLEN-1:P.LEN1];
+              P.FMT2: BadNaNBox = ~&In[P.FLEN-1:P.LEN2];
               default: BadNaNBox = 1'bx;
           endcase
 
       always_comb
         if (BadNaNBox) begin
           case (Fmt)
-            `FMT: PostBox = In;
-//            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, In[`LEN1-`NE1-3:0]};
-//            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, In[`LEN2-`NE2-3:0]};
-            `FMT1: PostBox = {{(`FLEN-`LEN1){1'b1}}, 1'b1, {(`NE1+1){1'b1}}, {(`LEN1-`NE1-2){1'b0}}};
-            `FMT2: PostBox = {{(`FLEN-`LEN2){1'b1}}, 1'b1, {(`NE2+1){1'b1}}, {(`LEN2-`NE2-2){1'b0}}};
+            P.FMT: PostBox = In;
+//            P.FMT1: PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, In[P.LEN1-P.NE1-3:0]};
+//            P.FMT2: PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, In[P.LEN2-P.NE2-3:0]};
+            P.FMT1: PostBox = {{(P.FLEN-P.LEN1){1'b1}}, 1'b1, {(P.NE1+1){1'b1}}, {(P.LEN1-P.NE1-2){1'b0}}};
+            P.FMT2: PostBox = {{(P.FLEN-P.LEN2){1'b1}}, 1'b1, {(P.NE2+1){1'b1}}, {(P.LEN2-P.NE2-2){1'b0}}};
             default: PostBox = 'x;
           endcase
         end else 
@@ -154,27 +153,27 @@ module unpackinput (
         if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
         else
           case (Fmt)
-              `FMT:  Sgn = In[`FLEN-1];
-              `FMT1: Sgn = In[`LEN1-1];
-              `FMT2: Sgn = In[`LEN2-1];
+              P.FMT:  Sgn = In[P.FLEN-1];
+              P.FMT1: Sgn = In[P.LEN1-1];
+              P.FMT2: Sgn = In[P.LEN2-1];
               default: Sgn = 1'bx;
           endcase
 
        // extract the fraction
       always_comb
           case (Fmt)
-              `FMT: Frac = In[`NF-1:0];
-              `FMT1: Frac = {In[`NF1-1:0], (`NF-`NF1)'(0)};
-              `FMT2: Frac = {In[`NF2-1:0], (`NF-`NF2)'(0)};
-              default: Frac = {`NF{1'bx}};
+              P.FMT: Frac = In[P.NF-1:0];
+              P.FMT1: Frac = {In[P.NF1-1:0], (P.NF-P.NF1)'(0)};
+              P.FMT2: Frac = {In[P.NF2-1:0], (P.NF-P.NF2)'(0)};
+              default: Frac = {P.NF{1'bx}};
           endcase
 
       // is the exponent non-zero
       always_comb
           case (Fmt)
-              `FMT:  ExpNonZero = |In[`FLEN-2:`NF];     // if input is largest precision (`FLEN - ie quad or double)
-              `FMT1: ExpNonZero = |In[`LEN1-2:`NF1];  // if input is larger precsion (`LEN1 - double or single)
-              `FMT2: ExpNonZero = |In[`LEN2-2:`NF2]; // if input is smallest precsion (`LEN2 - single or half)
+              P.FMT:  ExpNonZero = |In[P.FLEN-2:P.NF];     // if input is largest precision (P.FLEN - ie quad or double)
+              P.FMT1: ExpNonZero = |In[P.LEN1-2:P.NF1];  // if input is larger precsion (P.LEN1 - double or single)
+              P.FMT2: ExpNonZero = |In[P.LEN2-2:P.NF2]; // if input is smallest precsion (P.LEN2 - single or half)
               default: ExpNonZero = 1'bx; 
           endcase
           
@@ -189,50 +188,50 @@ module unpackinput (
       // convert the larger precision's exponent to use the largest precision's bias
       always_comb 
           case (Fmt)
-              `FMT:  Exp = {In[`FLEN-2:`NF+1], In[`NF]|~ExpNonZero};
-              `FMT1: Exp = {In[`LEN1-2], {`NE-`NE1{~In[`LEN1-2]}}, In[`LEN1-3:`NF1+1], In[`NF1]|~ExpNonZero}; 
-              `FMT2: Exp = {In[`LEN2-2], {`NE-`NE2{~In[`LEN2-2]}}, In[`LEN2-3:`NF2+1], In[`NF2]|~ExpNonZero}; 
-              default: Exp = {`NE{1'bx}};
+              P.FMT:  Exp = {In[P.FLEN-2:P.NF+1], In[P.NF]|~ExpNonZero};
+              P.FMT1: Exp = {In[P.LEN1-2], {P.NE-P.NE1{~In[P.LEN1-2]}}, In[P.LEN1-3:P.NF1+1], In[P.NF1]|~ExpNonZero}; 
+              P.FMT2: Exp = {In[P.LEN2-2], {P.NE-P.NE2{~In[P.LEN2-2]}}, In[P.LEN2-3:P.NF2+1], In[P.NF2]|~ExpNonZero}; 
+              default: Exp = {P.NE{1'bx}};
           endcase
 
       // is the exponent all 1's
       always_comb
           case (Fmt)
-              `FMT:  ExpMax = &In[`FLEN-2:`NF];
-              `FMT1: ExpMax = &In[`LEN1-2:`NF1];
-              `FMT2: ExpMax = &In[`LEN2-2:`NF2];
+              P.FMT:  ExpMax = &In[P.FLEN-2:P.NF];
+              P.FMT1: ExpMax = &In[P.LEN1-2:P.NF1];
+              P.FMT2: ExpMax = &In[P.LEN2-2:P.NF2];
               default: ExpMax = 1'bx;
           endcase
 
-  end else if (`FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
+  end else if (P.FPSIZES == 4) begin      // if all precsisons are supported - quad, double, single, and half
   
       //    quad   |  double  |  single  |  half    
       //-------------------------------------------------------------------
-      //   `Q_LEN  |  `D_LEN  |  `S_LEN  |  `H_LEN     length of floating point number
-      //   `Q_NE   |  `D_NE   |  `S_NE   |  `H_NE      length of exponent
-      //   `Q_NF   |  `D_NF   |  `S_NF   |  `H_NF      length of fraction
-      //   `Q_BIAS |  `D_BIAS |  `S_BIAS |  `H_BIAS    exponent's bias value
-      //   `Q_FMT  |  `D_FMT  |  `S_FMT  |  `H_FMT     precision's format value - Q=11 D=01 Sticky=00 H=10
+      //   P.Q_LEN  |  P.D_LEN  |  P.S_LEN  |  P.H_LEN     length of floating point number
+      //   P.Q_NE   |  P.D_NE   |  P.S_NE   |  P.H_NE      length of exponent
+      //   P.Q_NF   |  P.D_NF   |  P.S_NF   |  P.H_NF      length of fraction
+      //   P.Q_BIAS |  P.D_BIAS |  P.S_BIAS |  P.H_BIAS    exponent's bias value
+      //   P.Q_FMT  |  P.D_FMT  |  P.S_FMT  |  P.H_FMT     precision's format value - Q=11 D=01 Sticky=00 H=10
 
       // Check NaN boxing
       always_comb
           case (Fmt)
               2'b11: BadNaNBox = 0;
-              2'b01: BadNaNBox = ~&In[`Q_LEN-1:`D_LEN];
-              2'b00: BadNaNBox = ~&In[`Q_LEN-1:`S_LEN];
-              2'b10: BadNaNBox = ~&In[`Q_LEN-1:`H_LEN];
+              2'b01: BadNaNBox = ~&In[P.Q_LEN-1:P.D_LEN];
+              2'b00: BadNaNBox = ~&In[P.Q_LEN-1:P.S_LEN];
+              2'b10: BadNaNBox = ~&In[P.Q_LEN-1:P.H_LEN];
           endcase
 
       always_comb
         if (BadNaNBox) begin
           case (Fmt)
             2'b11: PostBox = In;
-//            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, In[`D_LEN-`D_NE-3:0]};
-//            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, In[`S_LEN-`S_NE-3:0]};
-//            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, In[`H_LEN-`H_NE-3:0]};
-            2'b01: PostBox = {{(`Q_LEN-`D_LEN){1'b1}}, 1'b1, {(`D_NE+1){1'b1}}, {(`D_LEN-`D_NE-2){1'b0}}};
-            2'b00: PostBox = {{(`Q_LEN-`S_LEN){1'b1}}, 1'b1, {(`S_NE+1){1'b1}}, {(`S_LEN-`S_NE-2){1'b0}}};
-            2'b10: PostBox = {{(`Q_LEN-`H_LEN){1'b1}}, 1'b1, {(`H_NE+1){1'b1}}, {(`H_LEN-`H_NE-2){1'b0}}};
+//            2'b01: PostBox = {{(P.Q_LEN-P.D_LEN){1'b1}}, 1'b1, {(P.D_NE+1){1'b1}}, In[P.D_LEN-P.D_NE-3:0]};
+//            2'b00: PostBox = {{(P.Q_LEN-P.S_LEN){1'b1}}, 1'b1, {(P.S_NE+1){1'b1}}, In[P.S_LEN-P.S_NE-3:0]};
+//            2'b10: PostBox = {{(P.Q_LEN-P.H_LEN){1'b1}}, 1'b1, {(P.H_NE+1){1'b1}}, In[P.H_LEN-P.H_NE-3:0]};
+            2'b01: PostBox = {{(P.Q_LEN-P.D_LEN){1'b1}}, 1'b1, {(P.D_NE+1){1'b1}}, {(P.D_LEN-P.D_NE-2){1'b0}}};
+            2'b00: PostBox = {{(P.Q_LEN-P.S_LEN){1'b1}}, 1'b1, {(P.S_NE+1){1'b1}}, {(P.S_LEN-P.S_NE-2){1'b0}}};
+            2'b10: PostBox = {{(P.Q_LEN-P.H_LEN){1'b1}}, 1'b1, {(P.H_NE+1){1'b1}}, {(P.H_LEN-P.H_NE-2){1'b0}}};
           endcase
         end else 
           PostBox = In;
@@ -242,29 +241,29 @@ module unpackinput (
         if (BadNaNBox) Sgn = 0; // improperly boxed NaNs are treated as positive
         else
           case (Fmt)
-              2'b11: Sgn = In[`Q_LEN-1];
-              2'b01: Sgn = In[`D_LEN-1];
-              2'b00: Sgn = In[`S_LEN-1];
-              2'b10: Sgn = In[`H_LEN-1];
+              2'b11: Sgn = In[P.Q_LEN-1];
+              2'b01: Sgn = In[P.D_LEN-1];
+              2'b00: Sgn = In[P.S_LEN-1];
+              2'b10: Sgn = In[P.H_LEN-1];
           endcase
           
 
       // extract the fraction
       always_comb
           case (Fmt)
-              2'b11: Frac = In[`Q_NF-1:0];
-              2'b01: Frac = {In[`D_NF-1:0], (`Q_NF-`D_NF)'(0)};
-              2'b00: Frac = {In[`S_NF-1:0], (`Q_NF-`S_NF)'(0)};
-              2'b10: Frac = {In[`H_NF-1:0], (`Q_NF-`H_NF)'(0)};
+              2'b11: Frac = In[P.Q_NF-1:0];
+              2'b01: Frac = {In[P.D_NF-1:0], (P.Q_NF-P.D_NF)'(0)};
+              2'b00: Frac = {In[P.S_NF-1:0], (P.Q_NF-P.S_NF)'(0)};
+              2'b10: Frac = {In[P.H_NF-1:0], (P.Q_NF-P.H_NF)'(0)};
           endcase
 
       // is the exponent non-zero
       always_comb
           case (Fmt)
-              2'b11: ExpNonZero = |In[`Q_LEN-2:`Q_NF];
-              2'b01: ExpNonZero = |In[`D_LEN-2:`D_NF];
-              2'b00: ExpNonZero = |In[`S_LEN-2:`S_NF]; 
-              2'b10: ExpNonZero = |In[`H_LEN-2:`H_NF]; 
+              2'b11: ExpNonZero = |In[P.Q_LEN-2:P.Q_NF];
+              2'b01: ExpNonZero = |In[P.D_LEN-2:P.D_NF];
+              2'b00: ExpNonZero = |In[P.S_LEN-2:P.S_NF]; 
+              2'b10: ExpNonZero = |In[P.H_LEN-2:P.H_NF]; 
           endcase
 
 
@@ -280,20 +279,20 @@ module unpackinput (
       // 1 is added to the exponent if the input is zero or subnormal
       always_comb
           case (Fmt)
-              2'b11: Exp = {In[`Q_LEN-2:`Q_NF+1], In[`Q_NF]|~ExpNonZero};
-              2'b01: Exp = {In[`D_LEN-2], {`Q_NE-`D_NE{~In[`D_LEN-2]}}, In[`D_LEN-3:`D_NF+1], In[`D_NF]|~ExpNonZero};
-              2'b00: Exp = {In[`S_LEN-2], {`Q_NE-`S_NE{~In[`S_LEN-2]}}, In[`S_LEN-3:`S_NF+1], In[`S_NF]|~ExpNonZero};
-              2'b10: Exp = {In[`H_LEN-2], {`Q_NE-`H_NE{~In[`H_LEN-2]}}, In[`H_LEN-3:`H_NF+1], In[`H_NF]|~ExpNonZero}; 
+              2'b11: Exp = {In[P.Q_LEN-2:P.Q_NF+1], In[P.Q_NF]|~ExpNonZero};
+              2'b01: Exp = {In[P.D_LEN-2], {P.Q_NE-P.D_NE{~In[P.D_LEN-2]}}, In[P.D_LEN-3:P.D_NF+1], In[P.D_NF]|~ExpNonZero};
+              2'b00: Exp = {In[P.S_LEN-2], {P.Q_NE-P.S_NE{~In[P.S_LEN-2]}}, In[P.S_LEN-3:P.S_NF+1], In[P.S_NF]|~ExpNonZero};
+              2'b10: Exp = {In[P.H_LEN-2], {P.Q_NE-P.H_NE{~In[P.H_LEN-2]}}, In[P.H_LEN-3:P.H_NF+1], In[P.H_NF]|~ExpNonZero}; 
           endcase
 
 
       // is the exponent all 1's
       always_comb 
           case (Fmt)
-              2'b11: ExpMax = &In[`Q_LEN-2:`Q_NF];
-              2'b01: ExpMax = &In[`D_LEN-2:`D_NF];
-              2'b00: ExpMax = &In[`S_LEN-2:`S_NF];
-              2'b10: ExpMax = &In[`H_LEN-2:`H_NF];
+              2'b11: ExpMax = &In[P.Q_LEN-2:P.Q_NF];
+              2'b01: ExpMax = &In[P.D_LEN-2:P.D_NF];
+              2'b00: ExpMax = &In[P.S_LEN-2:P.S_NF];
+              2'b10: ExpMax = &In[P.H_LEN-2:P.H_NF];
           endcase
 
   end
@@ -302,7 +301,7 @@ module unpackinput (
   assign FracZero = ~|Frac & ~BadNaNBox; // is the fraction zero?
   assign Man = {ExpNonZero, Frac}; // add the assumed one (or zero if Subnormal or zero) to create the significand
   assign NaN = ((ExpMax & ~FracZero)|BadNaNBox)&En; // is the input a NaN?
-  assign SNaN = NaN&~Frac[`NF-1]&~BadNaNBox; // is the input a singnaling NaN?
+  assign SNaN = NaN&~Frac[P.NF-1]&~BadNaNBox; // is the input a singnaling NaN?
   assign Inf = ExpMax & FracZero &En & ~BadNaNBox; // is the input infinity?
   assign Zero = ~ExpNonZero & FracZero & ~BadNaNBox; // is the input zero?
   assign Subnorm = ~ExpNonZero & ~FracZero & ~BadNaNBox; // is the input subnormal

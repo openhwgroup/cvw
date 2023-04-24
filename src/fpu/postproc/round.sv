@@ -26,42 +26,40 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // what position is XLEN in?
 //  options: 
 //     1: XLEN > NF   > NF1
 //     2: NF   > XLEN > NF1
 //     3: NF   > NF1  > XLEN
 //  single and double will always be smaller than XLEN
-`define XLENPOS ((`XLEN>`NF) ? 1 : (`XLEN>`NF1) ? 2 : 3)
+`define XLENPOS ((P.XLEN>P.NF) ? 1 : (P.XLEN>P.NF1) ? 2 : 3)
 
-module round(
-  input  logic [`FMTBITS-1:0]     OutFmt,             // output format
+module round import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
   input  logic [2:0]              Frm,                // rounding mode
   input  logic [1:0]              PostProcSel,        // select the postprocessor output
   input  logic                    Ms,                 // normalized sign
-  input  logic [`CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
+  input  logic [P.CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
   // fma
   input  logic                    FmaOp,              // is an fma opperation being done?
-  input  logic [`NE+1:0]          FmaMe,              // exponent of the normalized sum for fma
+  input  logic [P.NE+1:0]          FmaMe,              // exponent of the normalized sum for fma
   input  logic                    FmaASticky,         // addend's sticky bit
   // divsqrt
   input  logic                    DivOp,              // is a division opperation being done
   input  logic                    DivSticky,          // divsqrt sticky bit
-  input  logic [`NE+1:0]          Qe,                 // the divsqrt calculated expoent
+  input  logic [P.NE+1:0]          Qe,                 // the divsqrt calculated expoent
   // cvt
   input  logic                    CvtOp,              // is a convert opperation being done
   input  logic                    ToInt,              // is the cvt op a cvt to integer
   input  logic                    CvtResSubnormUf,    // is the cvt result subnormal or underflow
   input  logic                    CvtResUf,           // does the cvt result underflow
-  input  logic [`NE:0]            CvtCe,              // the cvt calculated expoent
+  input  logic [P.NE:0]            CvtCe,              // the cvt calculated expoent
   // outputs
-  output logic [`NE+1:0]          Me,                 // normalied fraction
+  output logic [P.NE+1:0]          Me,                 // normalied fraction
   output logic                    UfPlus1,            // do you add one to the result if given an unbounded exponent
-  output logic [`NE+1:0]          FullRe,             // Re with bits to determine sign and overflow
-  output logic [`NE-1:0]          Re,                 // Result exponent
-  output logic [`NF-1:0]          Rf,                 // Result fractionNormS
+  output logic [P.NE+1:0]          FullRe,             // Re with bits to determine sign and overflow
+  output logic [P.NE-1:0]          Re,                 // Result exponent
+  output logic [P.NF-1:0]          Rf,                 // Result fractionNormS
   output logic                    Sticky,             // sticky bit
   output logic                    Plus1,              // do you add one to the final result
   output logic                    Round, Guard        // bits needed to calculate rounding
@@ -69,7 +67,7 @@ module round(
 
   logic           UfCalcPlus1;        // calculated plus one for unbounded exponent
   logic           NormSticky;         // normalized sum's sticky bit
-  logic [`NF-1:0] RoundFrac;          // rounded fraction
+  logic [P.NF-1:0] RoundFrac;          // rounded fraction
   logic           FpRes;              // is the result a floating point
   logic           IntRes;             // is the result an integer
   logic           FpGuard, FpRound;   // floating point round/guard bits
@@ -77,7 +75,7 @@ module round(
   logic           LsbRes;             // lsb of result
   logic           CalcPlus1;          // calculated plus1
   logic           FpPlus1;            // do you add one to the fp result 
-  logic [`FLEN:0] RoundAdd;           // how much to add to the result
+  logic [P.FLEN:0] RoundAdd;           // how much to add to the result
 
   ///////////////////////////////////////////////////////////////////////////////
   // Rounding
@@ -115,68 +113,68 @@ module round(
   assign FpRes = ~IntRes;
 
   // sticky bit calculation
-  if (`FPSIZES == 1) begin
+  if (P.FPSIZES == 1) begin
 
       //     1: XLEN > NF
       //      |         XLEN          |
       //      |    NF     |1|1|
       //                     ^    ^ if floating point result
       //                     ^ if not an FMA result
-      if (`XLENPOS == 1)assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF-2:`CORRSHIFTSZ-`XLEN-1]&FpRes) |
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:0]);
+      if (`XLENPOS == 1)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       //     2: NF > XLEN
-      if (`XLENPOS == 2)assign NormSticky = (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`NF-1]&IntRes) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:0]);
+      if (`XLENPOS == 2)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&IntRes) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
-  end else if (`FPSIZES == 2) begin
+  end else if (P.FPSIZES == 2) begin
       // XLEN is either 64 or 32
       // so half and single are always smaller then XLEN
 
       // 1: XLEN > NF   > NF1
-      if (`XLENPOS == 1) assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`NF-1]&FpRes&~OutFmt) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:`CORRSHIFTSZ-`XLEN-1]&FpRes) |
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:0]);
+      if (`XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&FpRes&~OutFmt) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (`XLENPOS == 2) assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`XLEN-1]&FpRes&~OutFmt) | 
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`NF-1]&(IntRes|~OutFmt)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:0]);
+      if (`XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&~OutFmt) | 
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(IntRes|~OutFmt)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (`XLENPOS == 3) assign NormSticky = (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`NF1-1]&IntRes) |
-                                                (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`NF-1]&(~OutFmt|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:0]);
+      if (`XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&IntRes) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
-  end else if (`FPSIZES == 3) begin
+  end else if (P.FPSIZES == 3) begin
       // 1: XLEN > NF   > NF1
-      if (`XLENPOS == 1) assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF2-2:`CORRSHIFTSZ-`NF1-1]&FpRes&(OutFmt==`FMT1)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`NF-1]&FpRes&~(OutFmt==`FMT)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:`CORRSHIFTSZ-`XLEN-1]&FpRes) |
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:0]);
+      if (`XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT1)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&FpRes&~(OutFmt==P.FMT)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (`XLENPOS == 2) assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF2-2:`CORRSHIFTSZ-`NF1-1]&FpRes&(OutFmt==`FMT1)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`XLEN-1]&FpRes&~(OutFmt==`FMT)) | 
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`NF-1]&(IntRes|~(OutFmt==`FMT))) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:0]);
+      if (`XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&FpRes&(OutFmt==P.FMT1)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.FMT)) | 
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(IntRes|~(OutFmt==P.FMT))) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (`XLENPOS == 3) assign NormSticky = (|Mf[`CORRSHIFTSZ-`NF2-2:`CORRSHIFTSZ-`XLEN-1]&FpRes&(OutFmt==`FMT1)) |
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`NF1-1]&((OutFmt==`FMT1)|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF1-2:`CORRSHIFTSZ-`NF-1]&(~(OutFmt==`FMT)|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`NF-2:0]);
+      if (`XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&(OutFmt==P.FMT1)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT1)|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT)|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
-  end else if (`FPSIZES == 4) begin
+  end else if (P.FPSIZES == 4) begin
       // Quad precision will always be greater than XLEN
       // 2: NF   > XLEN > NF1
-      if (`XLENPOS == 2) assign NormSticky = (|Mf[`CORRSHIFTSZ-`H_NF-2:`CORRSHIFTSZ-`S_NF-1]&FpRes&(OutFmt==`H_FMT)) |
-                                                (|Mf[`CORRSHIFTSZ-`S_NF-2:`CORRSHIFTSZ-`D_NF-1]&FpRes&((OutFmt==`S_FMT)|(OutFmt==`H_FMT))) | 
-                                                (|Mf[`CORRSHIFTSZ-`D_NF-2:`CORRSHIFTSZ-`XLEN-1]&FpRes&~(OutFmt==`Q_FMT)) | 
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`Q_NF-1]&(~(OutFmt==`Q_FMT)|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`Q_NF-2:0]);
+      if (`XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&FpRes&(OutFmt==P.H_FMT)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.D_NF-1]&FpRes&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) | 
+                                                (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&~(OutFmt==P.Q_FMT)) | 
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT)|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]);
       // 3: NF   > NF1  > XLEN
       // The extra XLEN bit will be ored later when caculating the final sticky bit - the ufplus1 not needed for integer
-      if (`XLENPOS == 3) assign NormSticky = (|Mf[`CORRSHIFTSZ-`H_NF-2:`CORRSHIFTSZ-`S_NF-1]&FpRes&(OutFmt==`H_FMT)) |
-                                                (|Mf[`CORRSHIFTSZ-`S_NF-2:`CORRSHIFTSZ-`XLEN-1]&FpRes&((OutFmt==`S_FMT)|(OutFmt==`H_FMT))) |
-                                                (|Mf[`CORRSHIFTSZ-`XLEN-2:`CORRSHIFTSZ-`D_NF-1]&((OutFmt==`S_FMT)|(OutFmt==`H_FMT)|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`D_NF-2:`CORRSHIFTSZ-`Q_NF-1]&(~(OutFmt==`Q_FMT)|IntRes)) |
-                                                (|Mf[`CORRSHIFTSZ-`Q_NF-2:0]);
+      if (`XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&FpRes&(OutFmt==P.H_FMT)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) |
+                                                (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT)|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT)|IntRes)) |
+                                                (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]);
 
   end
   
@@ -184,40 +182,40 @@ module round(
 
   // only add the Addend sticky if doing an FMA opperation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-  assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[`NE+1]&FmaOp | DivSticky&DivOp;
+  assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
   
 
 
 
   // determine round and LSB of the rounded value
   //      - underflow round bit is used to determint the underflow flag
-  if (`FPSIZES == 1) begin
-      assign FpGuard = Mf[`CORRSHIFTSZ-`NF-1];
-      assign FpLsbRes = Mf[`CORRSHIFTSZ-`NF];
-      assign FpRound = Mf[`CORRSHIFTSZ-`NF-2];
+  if (P.FPSIZES == 1) begin
+      assign FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
+      assign FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
+      assign FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
 
-  end else if (`FPSIZES == 2) begin
-      assign FpGuard = OutFmt ? Mf[`CORRSHIFTSZ-`NF-1] : Mf[`CORRSHIFTSZ-`NF1-1];
-      assign FpLsbRes = OutFmt ? Mf[`CORRSHIFTSZ-`NF] : Mf[`CORRSHIFTSZ-`NF1];
-      assign FpRound = OutFmt ? Mf[`CORRSHIFTSZ-`NF-2] : Mf[`CORRSHIFTSZ-`NF1-2];
+  end else if (P.FPSIZES == 2) begin
+      assign FpGuard = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-1] : Mf[P.CORRSHIFTSZ-P.NF1-1];
+      assign FpLsbRes = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF] : Mf[P.CORRSHIFTSZ-P.NF1];
+      assign FpRound = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-2] : Mf[P.CORRSHIFTSZ-P.NF1-2];
 
-  end else if (`FPSIZES == 3) begin
+  end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
-              `FMT: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`NF-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`NF];
-                  FpRound = Mf[`CORRSHIFTSZ-`NF-2];
+              P.FMT: begin
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
               end
-              `FMT1: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`NF1-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`NF1];
-                  FpRound = Mf[`CORRSHIFTSZ-`NF1-2];
+              P.FMT1: begin
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF1-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF1];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.NF1-2];
               end
-              `FMT2: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`NF2-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`NF2];
-                  FpRound = Mf[`CORRSHIFTSZ-`NF2-2];
+              P.FMT2: begin
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF2-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF2];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.NF2-2];
               end
               default: begin
                   FpGuard = 1'bx;
@@ -225,35 +223,35 @@ module round(
                   FpRound = 1'bx;
               end
           endcase
-  end else if (`FPSIZES == 4) begin
+  end else if (P.FPSIZES == 4) begin
       always_comb
           case (OutFmt)
               2'h3: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`Q_NF-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`Q_NF];
-                  FpRound = Mf[`CORRSHIFTSZ-`Q_NF-2];
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.Q_NF-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.Q_NF];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.Q_NF-2];
               end
               2'h1: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`D_NF-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`D_NF];
-                  FpRound = Mf[`CORRSHIFTSZ-`D_NF-2];
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.D_NF-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.D_NF];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.D_NF-2];
               end
               2'h0: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`S_NF-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`S_NF];
-                  FpRound = Mf[`CORRSHIFTSZ-`S_NF-2];
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.S_NF-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.S_NF];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.S_NF-2];
               end
               2'h2: begin
-                  FpGuard = Mf[`CORRSHIFTSZ-`H_NF-1];
-                  FpLsbRes = Mf[`CORRSHIFTSZ-`H_NF];
-                  FpRound = Mf[`CORRSHIFTSZ-`H_NF-2];
+                  FpGuard = Mf[P.CORRSHIFTSZ-P.H_NF-1];
+                  FpLsbRes = Mf[P.CORRSHIFTSZ-P.H_NF];
+                  FpRound = Mf[P.CORRSHIFTSZ-P.H_NF-2];
               end
           endcase
   end
 
-  assign Guard = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-1] : FpGuard;
-  assign LsbRes = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN] : FpLsbRes;
-  assign Round = ToInt&CvtOp ? Mf[`CORRSHIFTSZ-`XLEN-2] : FpRound;
+  assign Guard = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
+  assign LsbRes = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
+  assign Round = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
 
 
   always_comb begin
@@ -287,26 +285,26 @@ module round(
 
 
   // place Plus1 into the proper position for the format
-  if (`FPSIZES == 1) begin
-      assign RoundAdd = {{`FLEN{1'b0}}, FpPlus1};
+  if (P.FPSIZES == 1) begin
+      assign RoundAdd = {{P.FLEN{1'b0}}, FpPlus1};
 
-  end else if (`FPSIZES == 2) begin
+  end else if (P.FPSIZES == 2) begin
       // \/FLEN+1
       //  | NE+2 |        NF      |
       //  '-NE+2-^----NF1----^
-      // `FLEN+1-`NE-2-`NF1 = FLEN-1-NE-NF1
-      assign RoundAdd = {(`NE+1+`NF1)'(0), FpPlus1&~OutFmt, (`NF-`NF1-1)'(0), FpPlus1&OutFmt};
+      // P.FLEN+1-P.NE-2-P.NF1 = FLEN-1-NE-NF1
+      assign RoundAdd = {(P.NE+1+P.NF1)'(0), FpPlus1&~OutFmt, (P.NF-P.NF1-1)'(0), FpPlus1&OutFmt};
 
-  end else if (`FPSIZES == 3) begin
-      assign RoundAdd = {(`NE+1+`NF2)'(0), FpPlus1&(OutFmt==`FMT2), (`NF1-`NF2-1)'(0), FpPlus1&(OutFmt==`FMT1), (`NF-`NF1-1)'(0), FpPlus1&(OutFmt==`FMT)};
+  end else if (P.FPSIZES == 3) begin
+      assign RoundAdd = {(P.NE+1+P.NF2)'(0), FpPlus1&(OutFmt==P.FMT2), (P.NF1-P.NF2-1)'(0), FpPlus1&(OutFmt==P.FMT1), (P.NF-P.NF1-1)'(0), FpPlus1&(OutFmt==P.FMT)};
 
-  end else if (`FPSIZES == 4)      
-      assign RoundAdd = {(`Q_NE+1+`H_NF)'(0), FpPlus1&(OutFmt==`H_FMT), (`S_NF-`H_NF-1)'(0), FpPlus1&(OutFmt==`S_FMT), (`D_NF-`S_NF-1)'(0), FpPlus1&(OutFmt==`D_FMT), (`Q_NF-`D_NF-1)'(0), FpPlus1&(OutFmt==`Q_FMT)};
+  end else if (P.FPSIZES == 4)      
+      assign RoundAdd = {(P.Q_NE+1+P.H_NF)'(0), FpPlus1&(OutFmt==P.H_FMT), (P.S_NF-P.H_NF-1)'(0), FpPlus1&(OutFmt==P.S_FMT), (P.D_NF-P.S_NF-1)'(0), FpPlus1&(OutFmt==P.D_FMT), (P.Q_NF-P.D_NF-1)'(0), FpPlus1&(OutFmt==P.Q_FMT)};
 
 
 
   // trim unneeded bits from fraction
-  assign RoundFrac = Mf[`CORRSHIFTSZ-1:`CORRSHIFTSZ-`NF];
+  assign RoundFrac = Mf[P.CORRSHIFTSZ-1:P.CORRSHIFTSZ-P.NF];
   
 
 
@@ -314,7 +312,7 @@ module round(
   always_comb
       case(PostProcSel)
           2'b10: Me = FmaMe; // fma
-          2'b00: Me = {CvtCe[`NE], CvtCe}&{`NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
+          2'b00: Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
           // 2'b01: Me = DivDone ? Qe : '0; // divide
           2'b01: Me = Qe; // divide
           default: Me = '0; 
@@ -325,7 +323,7 @@ module round(
   // round the result
   //      - if the fraction overflows one should be added to the exponent
   assign {FullRe, Rf} = {Me, RoundFrac} + RoundAdd;
-  assign Re = FullRe[`NE-1:0];
+  assign Re = FullRe[P.NE-1:0];
 
 
 endmodule

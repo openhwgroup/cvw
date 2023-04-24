@@ -26,17 +26,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fregfile (
+module fregfile import cvw::*;  #(parameter cvw_t P) (
   input logic              clk, reset,
   input logic              we4,             // write enable
   input logic [4:0]        a1, a2, a3, a4,  // adresses
-  input logic [`FLEN-1:0]  wd4,             // write data
-  output logic [`FLEN-1:0] rd1, rd2, rd3    // read data
+  input logic [P.FLEN-1:0]  wd4,             // write data
+  output logic [P.FLEN-1:0] rd1, rd2, rd3    // read data
 );
    
-   logic [`FLEN-1:0] rf[31:0];
+   logic [P.FLEN-1:0] rf[31:0];
    integer i;
    
    // three ported register file

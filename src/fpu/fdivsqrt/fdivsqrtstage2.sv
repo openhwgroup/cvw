@@ -26,28 +26,26 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 /* verilator lint_off UNOPTFLAT */
-module fdivsqrtstage2 (
-  input  logic [`DIVb-1:0] D,
-  input  logic [`DIVb+3:0] DBar, 
-  input  logic [`DIVb:0]   U, UM,
-  input  logic [`DIVb+3:0] WS, WC,
-  input  logic [`DIVb+1:0] C,
+module fdivsqrtstage2 import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.DIVb-1:0] D,
+  input  logic [P.DIVb+3:0] DBar, 
+  input  logic [P.DIVb:0]   U, UM,
+  input  logic [P.DIVb+3:0] WS, WC,
+  input  logic [P.DIVb+1:0] C,
   input  logic             SqrtE,
   output logic             un,
-  output logic [`DIVb+1:0] CNext,
-  output logic [`DIVb:0]   UNext, UMNext, 
-  output logic [`DIVb+3:0] WSNext, WCNext
+  output logic [P.DIVb+1:0] CNext,
+  output logic [P.DIVb:0]   UNext, UMNext, 
+  output logic [P.DIVb+3:0] WSNext, WCNext
 );
  /* verilator lint_on UNOPTFLAT */
 
-  logic [`DIVb+3:0]        Dsel;
+  logic [P.DIVb+3:0]        Dsel;
   logic                    up, uz;
-  logic [`DIVb+3:0]        F;
-  logic [`DIVb+3:0]        AddIn;
-  logic [`DIVb+3:0]        WSA, WCA;
+  logic [P.DIVb+3:0]        F;
+  logic [P.DIVb+3:0]        AddIn;
+  logic [P.DIVb+3:0]        WSA, WCA;
 
   // Qmient Selection logic
   // Given partial remainder, select digit of +1, 0, or -1 (up, uz, un)
@@ -57,10 +55,10 @@ module fdivsqrtstage2 (
   // 0000 =  0
   // 0010 = -1
   // 0001 = -2
-  fdivsqrtqsel2 qsel2(WS[`DIVb+3:`DIVb], WC[`DIVb+3:`DIVb], up, uz, un);
+  fdivsqrtqsel2 qsel2(WS[P.DIVb+3:P.DIVb], WC[P.DIVb+3:P.DIVb], up, uz, un);
 
   // Sqrt F generation.  Extend C, U, UM to Q4.k
-  fdivsqrtfgen2 fgen2(.up, .uz, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
+  fdivsqrtfgen2 #(P) fgen2(.up, .uz, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
   // Divisor multiple
   always_comb
@@ -70,16 +68,16 @@ module fdivsqrtstage2 (
 
   // Partial Product Generation
   //  WSA, WCA = WS + WC - qD
-  mux2 #(`DIVb+4) addinmux(Dsel, F, SqrtE, AddIn);
-  csa #(`DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);
+  mux2 #(P.DIVb+4) addinmux(Dsel, F, SqrtE, AddIn);
+  csa #(P.DIVb+4) csa(WS, WC, AddIn, up&~SqrtE, WSA, WCA);
   assign WSNext = WSA << 1;
   assign WCNext = WCA << 1;
 
   // Shift thermometer code C
-  assign CNext = {1'b1, C[`DIVb+1:1]};
+  assign CNext = {1'b1, C[P.DIVb+1:1]};
 
   // Unified On-The-Fly Converter to accumulate result
-  fdivsqrtuotfc2 uotfc2(.up, .un, .C(CNext), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc2 #(P) uotfc2(.up, .un, .C(CNext), .U, .UM, .UNext, .UMNext);
 endmodule
 
 

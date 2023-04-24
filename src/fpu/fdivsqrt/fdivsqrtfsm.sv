@@ -26,12 +26,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtfsm(
+module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   input  logic clk, 
   input  logic reset, 
-  input  logic [`FMTBITS-1:0] FmtE,
+  input  logic [P.FMTBITS-1:0] FmtE,
   input  logic XInfE, YInfE, 
   input  logic XZeroE, YZeroE, 
   input  logic XNaNE, YNaNE, 
@@ -42,7 +40,7 @@ module fdivsqrtfsm(
   input  logic FlushE,
   input  logic WZeroE,
   input  logic IntDivE,
-  input  logic [`DIVBLEN:0] nE,
+  input  logic [P.DIVBLEN:0] nE,
   input  logic ISpecialCaseE,
   output logic IFDivStartE,
   output logic FDivBusyE, FDivDoneE,
@@ -52,57 +50,57 @@ module fdivsqrtfsm(
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
-  logic [`DURLEN-1:0] step;
-  logic [`DURLEN-1:0] cycles;
+  logic [P.DURLEN-1:0] step;
+  logic [P.DURLEN-1:0] cycles;
   logic SpecialCaseE, FSpecialCaseE;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
+  assign IFDivStartE = (FDivStartE | (IDivStartE & P.IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
  
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
-  if (`IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
+  if (P.IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
   else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
-// DIVN = `NF+3
+// DIVN = P.NF+3
 // NS = NF + 1
 // N = NS or NS+2 for div/sqrt.  
 
 /* verilator lint_off WIDTH */
-  logic [`DURLEN+1:0] Nf, fbits; // number of fractional bits
-  if (`FPSIZES == 1)
-    assign Nf = `NF;
-  else if (`FPSIZES == 2)
+  logic [P.DURLEN+1:0] Nf, fbits; // number of fractional bits
+  if (P.FPSIZES == 1)
+    assign Nf = P.NF;
+  else if (P.FPSIZES == 2)
     always_comb
       case (FmtE)
-        1'b0: Nf = `NF1;
-        1'b1: Nf = `NF;
+        1'b0: Nf = P.NF1;
+        1'b1: Nf = P.NF;
       endcase
-  else if (`FPSIZES == 3)
+  else if (P.FPSIZES == 3)
     always_comb
       case (FmtE)
-        `FMT: Nf = `NF;
-        `FMT1: Nf = `NF1;
-        `FMT2: Nf = `NF2; 
+        P.FMT: Nf = P.NF;
+        P.FMT1: Nf = P.NF1;
+        P.FMT2: Nf = P.NF2; 
       endcase
-  else if (`FPSIZES == 4)  
+  else if (P.FPSIZES == 4)  
     always_comb
       case(FmtE)
-        `S_FMT: Nf = `S_NF;
-        `D_FMT: Nf = `D_NF;
-        `H_FMT: Nf = `H_NF;
-        `Q_FMT: Nf = `Q_NF;
+        P.S_FMT: Nf = P.S_NF;
+        P.D_FMT: Nf = P.D_NF;
+        P.H_FMT: Nf = P.H_NF;
+        P.Q_FMT: Nf = P.Q_NF;
       endcase 
 
 
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
-    else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    if (`IDIV_ON_FPU) cycles =  IntDivE ? ((nE + 1)/`DIVCOPIES) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
-    else              cycles = (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    else       fbits = Nf + 2 + P.LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
+    if (P.IDIV_ON_FPU) cycles =  IntDivE ? ((nE + 1)/P.DIVCOPIES) : (fbits + (P.LOGR*P.DIVCOPIES)-1)/(P.LOGR*P.DIVCOPIES);
+    else              cycles = (fbits + (P.LOGR*P.DIVCOPIES)-1)/(P.LOGR*P.DIVCOPIES);
   end 
 
   /* verilator lint_on WIDTH */

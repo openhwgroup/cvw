@@ -26,22 +26,20 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 ///////////////////////////////
 // Unified OTFC, Radix 2 //
 ///////////////////////////////
-module fdivsqrtuotfc2(
+module fdivsqrtuotfc2 import cvw::*;  #(parameter cvw_t P) (
   input  logic         up, un,
-  input  logic [`DIVb+1:0] C,
-  input logic [`DIVb:0] U, UM,
-  output logic [`DIVb:0] UNext, UMNext
+  input  logic [P.DIVb+1:0] C,
+  input logic [P.DIVb:0] U, UM,
+  output logic [P.DIVb:0] UNext, UMNext
 );
   //  The on-the-fly converter transfers the divsqrt
   //  bits to the quotient as they come.
-  logic [`DIVb:0] K;
+  logic [P.DIVb:0] K;
 
-  assign K = (C[`DIVb:0] & ~(C[`DIVb:0] << 1)); // Thermometer to one hot encoding
+  assign K = (C[P.DIVb:0] & ~(C[P.DIVb:0] << 1)); // Thermometer to one hot encoding
 
   always_comb begin
     if (up) begin

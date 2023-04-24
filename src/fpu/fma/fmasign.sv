@@ -26,9 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fmasign(    
+module fmasign (    
   input  logic [2:0]  OpCtrl,     // opperation contol
   input  logic        Xs, Ys, Zs, // sign of the inputs
   output logic        Ps,         // the product's sign - takes opperation into account

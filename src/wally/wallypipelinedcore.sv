@@ -316,7 +316,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
 
   // floating point unit
   if (P.F_SUPPORTED) begin:fpu
-    fpu fpu(
+    fpu #(P) fpu(
       .clk, .reset,
       .FRM_REGW, // Rounding mode from CSR
       .InstrD, // instruction from IFU

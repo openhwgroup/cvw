@@ -25,17 +25,16 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
 
     // convert shift
-    //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
+    //      fp -> int: |  P.XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
     //          process:
     //              - start - CalcExp = 1 + XExp - Largest Bias
-    //                  |  `XLEN  zeros     |     Mantissa      | 0's if nessisary |
+    //                  |  P.XLEN  zeros     |     Mantissa      | 0's if nessisary |
     //
     //              - shift left 1 (1)
-    //                  | `XLEN-1 zeros |bit|     frac      | 0's if nessisary |
+    //                  | P.XLEN-1 zeros |bit|     frac      | 0's if nessisary |
     //                                      . <- binary point
     //
     //              - shift left till unbiased exponent is 0 (XExp - Largest Bias)
@@ -44,13 +43,13 @@
     //
     //      fp -> fp:
     //          - if result is subnormal or underflowed:
-    //              |  `NF-1  zeros   |     Mantissa      | 0's if nessisary | << NF+CalcExp-1
+    //              |  P.NF-1  zeros   |     Mantissa      | 0's if nessisary | << NF+CalcExp-1
     //          process:
     //             - start
     //                 |     mantissa      | 0's |
     //
     //             - shift right by NF-1 (NF-1)
-    //                 |  `NF-1  zeros   |     mantissa      | 0's |
+    //                 |  P.NF-1  zeros   |     mantissa      | 0's |
     //
     //             - shift left by CalcExp = XExp - Largest bias + new bias
     //                 |   0's  |     mantissa      |     0's      |
@@ -72,10 +71,10 @@
     //      | Nf 0's |      Qm       | << calculated shift amount
     //        .
 
-module normshift(
-  input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
-  input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
-  output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
+module normshift import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
+  input  logic [P.NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
+  output logic [P.NORMSHIFTSZ-1:0]     Shifted     // shifted result
 );
    
   assign Shifted = ShiftIn << ShiftAmt;

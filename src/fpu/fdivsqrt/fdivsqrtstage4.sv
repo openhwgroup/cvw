@@ -26,30 +26,28 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtstage4 (
-  input  logic [`DIVb-1:0] D,
-  input  logic [`DIVb+3:0] DBar, D2, DBar2,
-  input  logic [`DIVb:0] U,UM,
-  input  logic [`DIVb+3:0] WS, WC,
-  input  logic [`DIVb+1:0] C,
+module fdivsqrtstage4 import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.DIVb-1:0] D,
+  input  logic [P.DIVb+3:0] DBar, D2, DBar2,
+  input  logic [P.DIVb:0] U,UM,
+  input  logic [P.DIVb+3:0] WS, WC,
+  input  logic [P.DIVb+1:0] C,
   input  logic             SqrtE, j1,
-  output logic [`DIVb+1:0] CNext,
+  output logic [P.DIVb+1:0] CNext,
   output logic             un,
-  output logic [`DIVb:0]   UNext, UMNext, 
-  output logic [`DIVb+3:0] WSNext, WCNext
+  output logic [P.DIVb:0]   UNext, UMNext, 
+  output logic [P.DIVb+3:0] WSNext, WCNext
 );
 
-  logic [`DIVb+3:0]        Dsel;
+  logic [P.DIVb+3:0]        Dsel;
   logic [3:0]              udigit;
-  logic [`DIVb+3:0]        F;
-  logic [`DIVb+3:0]        AddIn;
+  logic [P.DIVb+3:0]        F;
+  logic [P.DIVb+3:0]        AddIn;
   logic [4:0]              Smsbs;
   logic [2:0]              Dmsbs;
   logic [7:0]              WCmsbs, WSmsbs;
   logic                    CarryIn;
-  logic [`DIVb+3:0]        WSA, WCA;
+  logic [P.DIVb+3:0]        WSA, WCA;
 
   // Digit Selection logic
   // u encoding:
@@ -58,16 +56,16 @@ module fdivsqrtstage4 (
   // 0000 =  0
   // 0010 = -1
   // 0001 = -2
-  assign Smsbs = U[`DIVb:`DIVb-4];
-  assign Dmsbs = D[`DIVb-1:`DIVb-3];
-  assign WCmsbs = WC[`DIVb+3:`DIVb-4];
-  assign WSmsbs = WS[`DIVb+3:`DIVb-4];
+  assign Smsbs = U[P.DIVb:P.DIVb-4];
+  assign Dmsbs = D[P.DIVb-1:P.DIVb-3];
+  assign WCmsbs = WC[P.DIVb+3:P.DIVb-4];
+  assign WSmsbs = WS[P.DIVb+3:P.DIVb-4];
 
   fdivsqrtqsel4cmp qsel4(.Dmsbs, .Smsbs, .WSmsbs, .WCmsbs, .SqrtE, .j1, .udigit);
   assign un = 1'b0; // unused for radix 4
 
   // F generation logic
-  fdivsqrtfgen4 fgen4(.udigit, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
+  fdivsqrtfgen4 #(P) fgen4(.udigit, .C({2'b11, CNext}), .U({3'b000, U}), .UM({3'b000, UM}), .F);
 
   // Divisor multiple logic
   always_comb
@@ -84,15 +82,15 @@ module fdivsqrtstage4 (
   //  {WS, WC}}Next = (WS + WC - qD or F) << 2
   assign AddIn = SqrtE ? F : Dsel;
   assign CarryIn = ~SqrtE & (udigit[3] | udigit[2]); // +1 for 2's complement of -D and -2D 
-  csa #(`DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
+  csa #(P.DIVb+4) csa(WS, WC, AddIn, CarryIn, WSA, WCA);
   assign WSNext = WSA << 2;
   assign WCNext = WCA << 2;
 
   // Shift thermometer code C
-  assign CNext = {2'b11, C[`DIVb+1:2]};
+  assign CNext = {2'b11, C[P.DIVb+1:2]};
  
   // On-the-fly converter to accumulate result
-  fdivsqrtuotfc4 fdivsqrtuotfc4(.udigit, .C(CNext[`DIVb:0]), .U, .UM, .UNext, .UMNext);
+  fdivsqrtuotfc4 #(P) fdivsqrtuotfc4(.udigit, .C(CNext[P.DIVb:0]), .U, .UM, .UNext, .UMNext);
 endmodule
 
 
