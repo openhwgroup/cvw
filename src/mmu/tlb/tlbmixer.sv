@@ -29,8 +29,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module tlbmixer import cvw::*;  #(parameter cvw_t P) (
     input  logic [P.VPN_BITS-1:0]   VPN,
     input  logic [P.PPN_BITS-1:0]   PPN,

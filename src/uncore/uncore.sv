@@ -28,7 +28,6 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module uncore import cvw::*;  #(parameter cvw_t P) (
-//module uncore import cvw::*;   #(parameter cvw_t P) (
   // AHB Bus Interface
   input  logic                HCLK, HRESETn,
   input  logic                TIMECLK,

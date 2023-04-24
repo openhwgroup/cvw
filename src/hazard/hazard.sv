@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module hazard (
   // Detect hazards
   input logic  BPWrongE, CSRWriteFenceM, RetM, TrapM,   
