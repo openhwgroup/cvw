@@ -26,11 +26,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module adrdec (
-  input  logic [`PA_BITS-1:0] PhysicalAddress,  // Physical address to decode
-  input  logic [`PA_BITS-1:0] Base, Range,      // Base and range of peripheral addresses
+module adrdec import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.PA_BITS-1:0] PhysicalAddress,  // Physical address to decode
+  input  logic [P.PA_BITS-1:0] Base, Range,      // Base and range of peripheral addresses
   input  logic                Supported,        // Is this peripheral supported?
   input  logic                AccessValid,      // Is the access type valid?
   input  logic [1:0]          Size,             // Size of access

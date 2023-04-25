@@ -52,7 +52,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign AccessRX = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
+  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable
   assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];

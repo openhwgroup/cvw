@@ -26,28 +26,27 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
   // verilator lint_off UNOPTFLAT 
 
-module adrdecs (
-  input  logic [`PA_BITS-1:0] PhysicalAddress,
+module adrdecs import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic                AccessRW, AccessRX, AccessRWX,
   input  logic [1:0]          Size,
   output logic [10:0]         SelRegions
 );
 
-  localparam logic [3:0]          SUPPORTED_SIZE = (`LLEN == 32 ? 4'b0111 : 4'b1111);
+  localparam logic [3:0]          SUPPORTED_SIZE = (P.LLEN == 32 ? 4'b0111 : 4'b1111);
  // Determine which region of physical memory (if any) is being accessed
-  adrdec dtimdec(PhysicalAddress, `DTIM_BASE, `DTIM_RANGE, `DTIM_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[10]);  
-  adrdec iromdec(PhysicalAddress, `IROM_BASE, `IROM_RANGE, `IROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[9]);  
-  adrdec ddr4dec(PhysicalAddress, `EXT_MEM_BASE, `EXT_MEM_RANGE, `EXT_MEM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[8]);  
-  adrdec bootromdec(PhysicalAddress, `BOOTROM_BASE, `BOOTROM_RANGE, `BOOTROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[7]);
-  adrdec uncoreramdec(PhysicalAddress, `UNCORE_RAM_BASE, `UNCORE_RAM_RANGE, `UNCORE_RAM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[6]);
-  adrdec clintdec(PhysicalAddress, `CLINT_BASE, `CLINT_RANGE, `CLINT_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[5]);
-  adrdec gpiodec(PhysicalAddress, `GPIO_BASE, `GPIO_RANGE, `GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[4]);
-  adrdec uartdec(PhysicalAddress, `UART_BASE, `UART_RANGE, `UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[3]);
-  adrdec plicdec(PhysicalAddress, `PLIC_BASE, `PLIC_RANGE, `PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[2]);
-  adrdec sdcdec(PhysicalAddress, `SDC_BASE, `SDC_RANGE, `SDC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE & 4'b1100, SelRegions[1]); 
+  adrdec #(P) dtimdec(PhysicalAddress, P.DTIM_BASE, P.DTIM_RANGE, P.DTIM_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[10]);  
+  adrdec #(P) iromdec(PhysicalAddress, P.IROM_BASE, P.IROM_RANGE, P.IROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[9]);  
+  adrdec #(P) ddr4dec(PhysicalAddress, P.EXT_MEM_BASE, P.EXT_MEM_RANGE, P.EXT_MEM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[8]);  
+  adrdec #(P) bootromdec(PhysicalAddress, P.BOOTROM_BASE, P.BOOTROM_RANGE, P.BOOTROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[7]);
+  adrdec #(P) uncoreramdec(PhysicalAddress, P.UNCORE_RAM_BASE, P.UNCORE_RAM_RANGE, P.UNCORE_RAM_SUPPORTED, AccessRWX, Size, SUPPORTED_SIZE, SelRegions[6]);
+  adrdec #(P) clintdec(PhysicalAddress, P.CLINT_BASE, P.CLINT_RANGE, P.CLINT_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[5]);
+  adrdec #(P) gpiodec(PhysicalAddress, P.GPIO_BASE, P.GPIO_RANGE, P.GPIO_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[4]);
+  adrdec #(P) uartdec(PhysicalAddress, P.UART_BASE, P.UART_RANGE, P.UART_SUPPORTED, AccessRW, Size, 4'b0001, SelRegions[3]);
+  adrdec #(P) plicdec(PhysicalAddress, P.PLIC_BASE, P.PLIC_RANGE, P.PLIC_SUPPORTED, AccessRW, Size, 4'b0100, SelRegions[2]);
+  adrdec #(P) sdcdec(PhysicalAddress, P.SDC_BASE, P.SDC_RANGE, P.SDC_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE & 4'b1100, SelRegions[1]); 
 
   assign SelRegions[0] = ~|(SelRegions[10:1]); // none of the regions are selected
 
