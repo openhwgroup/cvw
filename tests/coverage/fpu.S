@@ -36,6 +36,12 @@ main:
     flw ft0, 0(t0)
     fclass.s t1, ft0
 
+ # fmv.x.h and fmv.h.x Testing
+    la t1, TestData1
+    flw ft0, 16(t1)
+    fmv.x.h ft0, x1
+    fmv.h.x x0, ft1
+
     #Result Sign Test Coverage
     la t0, TestData2
     flw ft0, 0(t0)
