@@ -188,6 +188,7 @@ module spi_apb (
             2'b00: FrameCountShifted = FrameCount;
             2'b01: FrameCountShifted = {FrameCount[4:0], 1'b0};
             2'b10: FrameCountShifted = {FrameCount[3:0], 2'b0};
+            default: FrameCountShifted = FrameCount;
         endcase
     
     //assign penultimate_frame = Format[1] ? {4'b0,Format[1:0]} : {4'b0, 2'b01};
@@ -247,11 +248,9 @@ module spi_apb (
 
     //producing signal high every (2*scc_div)+1) cycles
     always_ff @(posedge PCLK, negedge PRESETn)
-        if(~PRESETn | SCLKDuty ) begin
-            DivCounter <= #1 0;
-        end else begin
-            DivCounter <= DivCounter + 13'b1;
-        end
+        if (~PRESETn) DivCounter <= #1 0;
+        else if (SCLKDuty) DivCounter <= 0;
+        else DivCounter <= DivCounter + 13'b1;
 
     
     logic TransmitShiftEmpty;
@@ -367,8 +366,8 @@ module spi_apb (
     assign TransmitDataEndian =  Format[2] ? {TransmitData[0], TransmitData[1], TransmitData[2], TransmitData[3], TransmitData[4], TransmitData[5], TransmitData[6], TransmitData[7]} : TransmitData[7:0];
     
 
-    FIFO_async #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian,Format[2], TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
-    FIFO_async #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, Format[2], ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
+    FIFO_async #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian,TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
+    FIFO_async #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     TransmitShiftFSM TransmitShiftFSM_1 (PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0, TransmitShiftEmpty);
     ReceiveShiftFSM ReceiveShiftFSM_1 (SCLKDuty, PRESETn, ReceivePenultimateFrameBoolean, SampleEdge, Active0, SckMode[0], ReceiveShiftFull);
@@ -387,14 +386,17 @@ module spi_apb (
         endcase
     
 
-    logic ActiveSimpleVariable;
-    assign ActiveSimpleVariable = SCLKDuty & ~Active;
-    always_ff @(posedge sckPhaseSelect, negedge PRESETn, posedge ActiveSimpleVariable)
+    //logic ShiftEdgeSCK;
+    //assign ShiftEdgeSCK = sckPhaseSelect | (SCLKDuty & ~Active);
+    logic TransmitShiftRegLoad;
+    assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active;
+    always_ff @(posedge sckPhaseSelect, negedge PRESETn, posedge TransmitShiftRegLoad)
         if(~PRESETn) begin 
                 TransmitShiftReg <= 8'b0;
             end
+        else if (TransmitShiftRegLoad) TransmitShiftReg <= TransmitFIFOReadData;
         else begin
-            if ((~Active & ~TransmitFIFOReadEmpty) | ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & TransmitShiftEmpty)) TransmitShiftReg <= TransmitFIFOReadData;
+            if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & TransmitShiftEmpty) TransmitShiftReg <= TransmitFIFOReadData;
             else if (Active) begin
                 case (Format[1:0])
                     2'b00: TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
@@ -415,10 +417,9 @@ module spi_apb (
             endcase
         end else SPIOut = 4'b0;
     always_ff @(posedge SampleEdge, negedge PRESETn)
-        if(~PRESETn | ~Active) begin  
-                ReceiveShiftReg <= 8'b0;
-            end
-        else if(~Format[3]) begin
+        if(~PRESETn)  ReceiveShiftReg <= 8'b0;
+        else if (~Active) ReceiveShiftReg <= 8'b0;
+        else if (~Format[3]) begin
             if(`SPI_LOOPBACK_TEST) begin
                 case(Format[1:0])
                     2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
@@ -501,7 +502,6 @@ module FIFO_async #(parameter M = 3, N = 8)(
     input logic wclk, rclk, PRESETn,
     input logic winc,rinc,
     input logic [N-1:0] wdata,
-    input logic endian,
     input logic [M-1:0] wwatermarklevel, rwatermarklevel,
     output logic [N-1:0] rdata,
     output logic wfull, rempty,
