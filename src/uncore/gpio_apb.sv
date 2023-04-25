@@ -28,8 +28,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic              PCLK, PRESETn,
   input  logic              PSEL,

@@ -214,7 +214,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     logic IROMce;
     assign IROMce = ~GatedStallD | reset;
     assign IFURWF = 2'b10;
-    irom irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[P.XLEN-1:0]), .IROMInstrF);
+    irom #(P) irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[P.XLEN-1:0]), .IROMInstrF);
   end else begin
     assign IFURWF = 2'b10;
   end
