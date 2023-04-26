@@ -120,9 +120,9 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h002084: intEn[1][`N:32] <= #1 Din[31:0];
           `endif
           24'h200000: intThreshold[0] <= #1 Din[2:0];
-          24'h200004: intInProgress <= #1 intInProgress & ~({`N{1'b1}} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
           24'h201000: intThreshold[1] <= #1 Din[2:0];
-          24'h201004: intInProgress <= #1 intInProgress & ~({`N{1'b1}} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h201004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // Read synchronously because a read can have side effect of changing intInProgress
       if (memread) begin
@@ -145,12 +145,12 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
             Dout <= #1 {26'b0,intClaim[0]};
-            intInProgress <= #1 intInProgress | ({`N{1'b1}} << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | ({{`N-1{1'b0}}, 1'b1} << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           24'h201000: Dout <= #1 {29'b0,intThreshold[1]};
           24'h201004: begin
             Dout <= #1 {26'b0,intClaim[1]};
-            intInProgress <= #1 intInProgress | ({`N{1'b1}} << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | ({{`N-1{1'b0}}, 1'b1} << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
@@ -161,11 +161,11 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // connect sources to requests
   always_comb begin
     requests = {`N{1'b0}};
-    if(P.PLIC_GPIO_ID) requests[P.PLIC_GPIO_ID] = GPIOIntr;
-    if(P.PLIC_UART_ID) requests[P.PLIC_UART_ID] = UARTIntr;
+    if(P.PLIC_GPIO_ID != 0) requests[P.PLIC_GPIO_ID] = GPIOIntr;
+    if(P.PLIC_UART_ID != 0) requests[P.PLIC_UART_ID] = UARTIntr;
   end
 
-  // pending interrupt requests
+  // pending interrupt request
   assign nextIntPending = (intPending | requests) & ~intInProgress; 
   flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 
