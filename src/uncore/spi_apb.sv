@@ -254,6 +254,7 @@ module spi_apb (
 
     
     logic TransmitShiftEmpty;
+    logic HoldModeDeassert;
     always_ff @(posedge SCLKDuty, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
                             FrameCount <= 6'b0;                      
@@ -280,6 +281,7 @@ module spi_apb (
                 ACTIVE_1: begin
                         InterXFRCount <= 9'b1;
                         if (FrameCompareBoolean) state <= ACTIVE_0;
+                        else if (HoldModeDeassert) state <= CS_INACTIVE;
                         else if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty)) begin
                             state <= ACTIVE_0;
                             Delay0Count <= 9'b1;
@@ -287,7 +289,6 @@ module spi_apb (
                             FrameCount <= 6'b0;
                             InterCSCount <= 9'b10;
                         end
-                        else if ((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID])))) state <= CS_INACTIVE;
                         else if (ChipSelectMode[1:0] == 2'b10) state <= INTER_XFR;
                         else if ((~|(Delay0[15:8])) & ~SckMode[0]) state <= INTER_CS;
                         else state <= DELAY_1;
@@ -306,8 +307,8 @@ module spi_apb (
                         FrameCount <= 6'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= InterXFRCount + 9'b1;
-                        if ((Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID])))) state <= CS_INACTIVE;
-                        if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
+                        if (HoldModeDeassert) state <= CS_INACTIVE;
+                        else if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
                         else if (~|ChipSelectMode[1:0]) state <= CS_INACTIVE;
                         
                         end
@@ -319,8 +320,15 @@ module spi_apb (
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
 
     logic Active0;
+    logic Inactive;
 
     assign Active0 = (state == ACTIVE_0);
+    assign Inactive = (state == CS_INACTIVE);
+    
+    always_ff @(posedge PCLK, negedge PRESETn, posedge Inactive)
+        if (~PRESETn) HoldModeDeassert <= 0;
+        else if (Inactive) HoldModeDeassert <= 0;
+        else if (((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID]))))) HoldModeDeassert <= 1;
 
 
 
@@ -344,12 +352,6 @@ module spi_apb (
         if (~PRESETn) TransmitFIFOWriteIncrementDelay <= 0;
         else TransmitFIFOWriteIncrementDelay <= TransmitFIFOWriteIncrement;
     assign TransmitFIFOReadIncrement = TransmitShiftEmpty;
-    /*
-    
-    always_ff@(posedge PCLK)
-        TransmitData[31] <= TransmitFIFOWriteFull;
-  
-    */
 
     assign ReceiveFIFOWriteIncrement = ReceiveShiftFull;
     always_ff @(posedge PCLK, negedge PRESETn)
@@ -370,7 +372,7 @@ module spi_apb (
     FIFO_async #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     TransmitShiftFSM TransmitShiftFSM_1 (PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0, TransmitShiftEmpty);
-    ReceiveShiftFSM ReceiveShiftFSM_1 (SCLKDuty, PRESETn, ReceivePenultimateFrameBoolean, SampleEdge, Active0, SckMode[0], ReceiveShiftFull);
+    ReceiveShiftFSM ReceiveShiftFSM_1 (SCLKDuty, PRESETn, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
 
     always_ff @(posedge SCLKDuty, negedge PRESETn)
         if (~PRESETn) TransmitFIFOReadEmptyDelay <= 1;
@@ -613,10 +615,9 @@ endmodule
 
 module ReceiveShiftFSM(
     input logic SCLKDuty, PRESETn,
-    input logic ReceivePenultimateFrameBoolean, SampleEdge, Active0, SckMode,
+    input logic ReceivePenultimateFrameBoolean, SampleEdge, SckMode,
     output logic ReceiveShiftFull
 );
-    logic Active = SckMode ? Active0 : ~Active0;
     typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} statetype;
     statetype ReceiveState, ReceiveNextState;
     always_ff @(posedge SCLKDuty, negedge PRESETn)

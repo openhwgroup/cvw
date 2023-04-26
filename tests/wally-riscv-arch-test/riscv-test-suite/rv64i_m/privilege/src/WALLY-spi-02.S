@@ -132,10 +132,11 @@ test_cases:
 
 # ============ mode = hold, inter_xfr delay = 0
 
-.8byte delay0, 0x00000101, writre32_test    # reset delay0 register
+.8byte delay0, 0x00000101, write32_test    # reset delay0 register
 .8byte sck_mode, 0x00000000, write32_test   # reset sck_mode register
 .8byte delay1, 0x00000001, write32_test     # set delay1 inter_xfr delay to 0
-.8byte tx_data, 0x44332211, spi_burst_send  #load tx_data
+.8byte cs_mode, 0x00000002, write32_test
+.8byte tx_data, 0x44332211, spi_burst_send  # load tx_data
 .8byte 0x0, 0x00000003, spi_data_wait       # wait for transmission to end
 .8byte rx_data, 0x000000011, read32_test
 .8byte rx_data, 0x000000022, read32_test
@@ -156,7 +157,11 @@ test_cases:
 
 .8byte delay1, 0x00000001, write32_test     # set delay1 inter_xfr delay to 0
 .8byte tx_data, 0x44332211, spi_burst_send  #load tx_data
-.8byte 0x0, 0x00000003, spi_data_wait       # wait for transmission to end
+.8byte 0x0, 0x00000001, spi_data_wait       # wait for transmission to end
+.8byte cs_def, 0x0000000E, write32_test
+.8byte cs_id, 0x00000002, write32_test
+.8byte cs_mode, 0x00000000, write32_test
+.8byte 0x0, 0x00000003, spi_data_wait
 .8byte rx_data, 0x000000011, read32_test
 .8byte rx_data, 0x000000022, read32_test
 .8byte rx_data, 0x000000033, read32_test
