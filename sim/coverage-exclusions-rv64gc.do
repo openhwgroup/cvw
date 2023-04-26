@@ -105,7 +105,7 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$lin
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 4
 
-# Excluding ReadAccess and WriteAccess signal in the ifu that will never be true
+# Excluding ReadAccess and WriteAccess signal in the ifu that will never be true, and ExecuteAccess is always true
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| WriteAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2 4
 set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM \\| ExecuteAccessF"]
