@@ -1,10 +1,10 @@
 ///////////////////////////////////////////
-// fdivsqrt.sv
+// fdivsqrtcycles.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu, amaiuolo@hmc.edu
 // Modified: 18 April 2022
 //
-// Purpose: Combined Divide and Square Root Floating Point and Integer Unit
+// Purpose: Determine number of cycles for divsqrt
 // 
 // Documentation: RISC-V System on Chip Design Chapter 13
 //
@@ -33,7 +33,7 @@ module fdivsqrtcycles(
   input  logic                SqrtE,
   input  logic                IntDivE,
   input  logic [`DIVBLEN:0]   nE,
-  output logic [`DURLEN-1:0]  cycles
+  output logic [`DURLEN-1:0]  CyclesE
 );
   logic [`DURLEN+1:0] Nf, fbits; // number of fractional bits
   // DIVN = `NF+3
@@ -68,8 +68,8 @@ module fdivsqrtcycles(
   always_comb begin 
     if (SqrtE) fbits = Nf + 2 + 2; // Nf + two fractional bits for round/guard + 2 for right shift by up to 2
     else       fbits = Nf + 2 + `LOGR; // Nf + two fractional bits for round/guard + integer bits - try this when placing results in msbs
-    if (`IDIV_ON_FPU) cycles =  IntDivE ? ((nE + 1)/`DIVCOPIES) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
-    else              cycles = (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    if (`IDIV_ON_FPU) CyclesE =  IntDivE ? ((nE + 1)/`DIVCOPIES) : (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
+    else              CyclesE = (fbits + (`LOGR*`DIVCOPIES)-1)/(`LOGR*`DIVCOPIES);
   end 
   /* verilator lint_on WIDTH */
 
