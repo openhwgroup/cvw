@@ -63,6 +63,9 @@ trap_handler:
     bgez t0, exception  # if msb is clear, it is an exception
 
 interrupt:              # must be a timer interrupt 
+    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
+    li t1, 0x02004000   # MTIMECMP in CLINT
+    sd t0, 0(t1)        
     j trap_return       # clean up and return
 
 exception:

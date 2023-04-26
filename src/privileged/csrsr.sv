@@ -122,7 +122,10 @@ module csrsr (
     logic [1:0] EndiannessPrivMode;
     always_comb begin
       if      (SelHPTW)                                  EndiannessPrivMode = `S_MODE;
+      //coverage off -item c 1 -feccondrow 1
+      // status.MPRV always gets reset upon leaving machine mode, so MPRV will never be high when out of machine mode
       else if (PrivilegeModeW == `M_MODE & STATUS_MPRV)  EndiannessPrivMode = STATUS_MPP;
+      //coverage on
       else                                               EndiannessPrivMode = PrivilegeModeW;
 
       case (EndiannessPrivMode) 

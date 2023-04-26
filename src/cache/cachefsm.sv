@@ -159,7 +159,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
           (CurrState == STATE_FLUSH_WRITEBACK);
-  // coverage off -item e -fecexprrow 1
+  // coverage off -item e 1 -fecexprrow 1
   // (state is always FLUSH_WRITEBACK when FlushWayFlag & CacheBusAck)
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
              (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);
