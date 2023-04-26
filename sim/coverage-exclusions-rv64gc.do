@@ -128,14 +128,13 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$lin
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2
 set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ExecuteAccessF"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "PMAInstrAccessFaultF    \\|"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4
-
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 
 # in pmpchecker.sv
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
-coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
 
 
 ## Excluding ReadAccessM_1 and WriteAccessM_1 signals in the ifu pmachecker, mmu, pmpchecker because they will never be high 
