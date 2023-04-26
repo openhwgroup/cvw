@@ -56,7 +56,7 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
-  assign Translate = (SATP_MODE != P.NO_TRANSLATE) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
+  assign Translate = (SATP_MODE != P.NO_TRANSLATE[P.SVMODE_BITS-1:0]) & (EffectivePrivilegeMode != P.M_MODE) & ~DisableTranslation; 
 
   // Determine whether TLB is being used
   assign TLBAccess = ReadAccess | WriteAccess;

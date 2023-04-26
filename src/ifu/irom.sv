@@ -32,7 +32,7 @@ module irom import cvw::*;  #(parameter cvw_t P) (
 );
 
   localparam XLENBYTES = {{P.PA_BITS-32{1'b0}}, P.XLEN/8}; // XLEN/8, adjusted for width
-  localparam ADDR_WDITH = $clog2(P.IROM_RANGE/XLENBYTES); 
+  localparam ADDR_WDITH = $clog2(P.IROM_RANGE[P.PA_BITS-1:0]/XLENBYTES); 
   localparam OFFSET = $clog2(XLENBYTES);
 
   logic [P.XLEN-1:0] IROMInstrFFull;

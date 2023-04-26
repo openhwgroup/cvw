@@ -73,7 +73,7 @@ module btb import cvw::*;  #(parameter cvw_t P, Depth = 10) (
   // during reset.  The BTB must produce a non X PC1NextF to allow the simulation to run.
   // While thie mux could be included in IFU it is not necessary for the IROM/I$/bus.
   // For now it is optimal to leave it here.
-  assign ResetPC = P.RESET_VECTOR;
+  assign ResetPC = P.RESET_VECTOR[P.XLEN-1:0];
   assign PCNextFIndex = reset ? ResetPC[Depth+1:2] : {PCNextF[Depth+1] ^ PCNextF[1], PCNextF[Depth:2]}; 
 
   assign MatchD = PCFIndex == PCDIndex;

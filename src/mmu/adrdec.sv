@@ -28,21 +28,21 @@
 
 module adrdec import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,  // Physical address to decode
-  input  logic [P.PA_BITS-1:0] Base, Range,      // Base and range of peripheral addresses
-  input  logic                Supported,        // Is this peripheral supported?
-  input  logic                AccessValid,      // Is the access type valid?
-  input  logic [1:0]          Size,             // Size of access
-  input  logic [3:0]          SizeMask,         // List of supported sizes: 0 = 8, 1 = 16, 2 = 32, 3 = 64-bit
-  output logic                Sel               // Decoder selects this peripheral
+  input  logic [63:0]          Base, Range,      // Base and range of peripheral addresses
+  input  logic                 Supported,        // Is this peripheral supported?
+  input  logic                 AccessValid,      // Is the access type valid?
+  input  logic [1:0]           Size,             // Size of access
+  input  logic [3:0]           SizeMask,         // List of supported sizes: 0 = 8, 1 = 16, 2 = 32, 3 = 64-bit
+  output logic                 Sel               // Decoder selects this peripheral
 );
 
-  logic                       Match;            // Address matches in range
-  logic                       SizeValid;        // Size of access is valid
+  logic                       Match;             // Address matches in range
+  logic                       SizeValid;         // Size of access is valid
 
   // determine if an address is in a range starting at the base
   // for example, if Base = 0x04002000 and range = 0x00000FFF,
   // then anything address between 0x04002000 and 0x04002FFF should match (HSEL=1)
-  assign Match = &((PhysicalAddress ~^ Base) | Range);
+  assign Match = &((PhysicalAddress ~^ Base[P.PA_BITS-1:0]) | Range[P.PA_BITS-1:0]);
 
   // determine if legal size of access is being made (byte, halfword, word, doubleword)
   assign SizeValid = SizeMask[Size]; 

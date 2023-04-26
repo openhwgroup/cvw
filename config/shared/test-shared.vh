@@ -15,10 +15,10 @@ localparam ASID_BITS = (XLEN==32 ? 32'd9 : 32'd16);
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
-localparam NO_TRANSLATE = 0;
-localparam SV32 = 1;
-localparam SV39 = 32'd8;
-localparam SV48 = 32'd9;
+localparam NO_TRANSLATE = 4'd0;
+localparam SV32 = 4'd1;
+localparam SV39 = 4'd8;
+localparam SV48 = 4'd9;
 
 // macros to define supported modes
 localparam A_SUPPORTED = ((MISA >> 0) % 2 == 1);

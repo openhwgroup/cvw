@@ -73,7 +73,7 @@ localparam IDIV_ON_FPU = 0;
 localparam PMP_ENTRIES = 32'd0;
 
 // Address space
-localparam RESET_VECTOR = 32'h80000000;
+localparam RESET_VECTOR = 64'h80000000;
 
 // WFI Timeout Wait
 localparam WFI_TIMEOUT_BIT = 32'd16;
@@ -82,35 +82,35 @@ localparam WFI_TIMEOUT_BIT = 32'd16;
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
 localparam DTIM_SUPPORTED = 1'b1;
-localparam DTIM_BASE       = 34'h80000000;
-localparam DTIM_RANGE      = 34'h007FFFFF;
+localparam DTIM_BASE       = 64'h80000000;
+localparam DTIM_RANGE      = 64'h007FFFFF;
 localparam IROM_SUPPORTED = 1'b1;
-localparam IROM_BASE       = 34'h80000000;
-localparam IROM_RANGE      = 34'h007FFFFF;
+localparam IROM_BASE       = 64'h80000000;
+localparam IROM_RANGE      = 64'h007FFFFF;
 localparam BOOTROM_SUPPORTED = 1'b0;
-localparam BOOTROM_BASE   = 34'h00001000;
-localparam BOOTROM_RANGE  = 34'h00000FFF;
+localparam BOOTROM_BASE   = 64'h00001000;
+localparam BOOTROM_RANGE  = 64'h00000FFF;
 localparam UNCORE_RAM_SUPPORTED = 1'b0;
-localparam UNCORE_RAM_BASE       = 34'h80000000;
-localparam UNCORE_RAM_RANGE      = 34'h07FFFFFF;
+localparam UNCORE_RAM_BASE       = 64'h80000000;
+localparam UNCORE_RAM_RANGE      = 64'h07FFFFFF;
 localparam EXT_MEM_SUPPORTED = 1'b0;
-localparam EXT_MEM_BASE       = 34'h80000000;
-localparam EXT_MEM_RANGE      = 34'h07FFFFFF;
+localparam EXT_MEM_BASE       = 64'h80000000;
+localparam EXT_MEM_RANGE      = 64'h07FFFFFF;
 localparam CLINT_SUPPORTED = 1'b0;
-localparam CLINT_BASE  = 34'h02000000;
-localparam CLINT_RANGE = 34'h0000FFFF;
+localparam CLINT_BASE  = 64'h02000000;
+localparam CLINT_RANGE = 64'h0000FFFF;
 localparam GPIO_SUPPORTED = 1'b0;
-localparam GPIO_BASE   = 34'h10060000;
-localparam GPIO_RANGE  = 34'h000000FF;
+localparam GPIO_BASE   = 64'h10060000;
+localparam GPIO_RANGE  = 64'h000000FF;
 localparam UART_SUPPORTED = 1'b0;
-localparam UART_BASE   = 34'h10000000;
-localparam UART_RANGE  = 34'h00000007;
+localparam UART_BASE   = 64'h10000000;
+localparam UART_RANGE  = 64'h00000007;
 localparam PLIC_SUPPORTED = 1'b0;
-localparam PLIC_BASE   = 34'h0C000000;
-localparam PLIC_RANGE  = 34'h03FFFFFF;
+localparam PLIC_BASE   = 64'h0C000000;
+localparam PLIC_RANGE  = 64'h03FFFFFF;
 localparam SDC_SUPPORTED = 1'b0;
-localparam SDC_BASE   = 34'h00012100;
-localparam SDC_RANGE  = 34'h0000001F;
+localparam SDC_BASE   = 64'h00012100;
+localparam SDC_RANGE  = 64'h0000001F;
 
 // Bus Interface width
 localparam AHBW = 32'd32;

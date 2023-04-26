@@ -301,7 +301,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   else assign PC2NextF = PC1NextF;
 
   assign  PCNextF = {UnalignedPCNextF[P.XLEN-1:1], 1'b0}; // hart-SPEC p. 21 about 16-bit alignment
-  flopenl #(P.XLEN) pcreg(clk, reset, ~StallF, PCNextF, P.RESET_VECTOR, PCF);
+  flopenl #(P.XLEN) pcreg(clk, reset, ~StallF, PCNextF, P.RESET_VECTOR[P.XLEN-1:0], PCF);
 
   // pcadder
   // add 2 or 4 to the PC, based on whether the instruction is 16 bits or 32

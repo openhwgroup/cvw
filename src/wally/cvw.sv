@@ -36,11 +36,11 @@ package cvw;
 
 typedef struct packed {
   logic         FPGA;     // Modifications to tare
-  logic           QEMU;     // Hacks to agree with QEMU during Linux boot
+  logic         QEMU;     // Hacks to agree with QEMU during Linux boot
   int           XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
-  int  MISA;     // Machine Instruction Set Architecture
-  int       AHBW;     // AHB bus width (usually = XLEN)
+  int           MISA;     // Machine Instruction Set Architecture
+  int           AHBW;     // AHB bus width (usually = XLEN)
 
   // RISC-V Features
   logic         ZICSR_SUPPORTED;
@@ -82,7 +82,7 @@ typedef struct packed {
   int          PMP_ENTRIES;
 
 // Address space
-  int  RESET_VECTOR;
+  longint  RESET_VECTOR;
 
 // WFI Timeout Wait
   int       WFI_TIMEOUT_BIT;
@@ -91,35 +91,35 @@ typedef struct packed {
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
   logic         DTIM_SUPPORTED;
-  logic [33:0]  DTIM_BASE;
-  logic [33:0]  DTIM_RANGE;
+  longint  DTIM_BASE;
+  longint  DTIM_RANGE;
   logic         IROM_SUPPORTED;
-  logic [33:0]  IROM_BASE;
-  logic [33:0]  IROM_RANGE;
+  longint  IROM_BASE;
+  longint  IROM_RANGE;
   logic         BOOTROM_SUPPORTED;
-  logic [33:0]  BOOTROM_BASE;
-  logic [33:0]  BOOTROM_RANGE;
+  longint  BOOTROM_BASE;
+  longint  BOOTROM_RANGE;
   logic         UNCORE_RAM_SUPPORTED;
-  logic [33:0]  UNCORE_RAM_BASE;
-  logic [33:0]  UNCORE_RAM_RANGE;
+  longint  UNCORE_RAM_BASE;
+  longint  UNCORE_RAM_RANGE;
   logic         EXT_MEM_SUPPORTED;
-  logic [33:0]  EXT_MEM_BASE;
-  logic [33:0]  EXT_MEM_RANGE;
+  longint  EXT_MEM_BASE;
+  longint  EXT_MEM_RANGE;
   logic         CLINT_SUPPORTED;
-  logic [33:0]  CLINT_BASE;
-  logic [33:0]  CLINT_RANGE;
+  longint  CLINT_BASE;
+  longint  CLINT_RANGE;
   logic         GPIO_SUPPORTED;
-  logic [33:0]  GPIO_BASE;
-  logic [33:0]  GPIO_RANGE;
+  longint  GPIO_BASE;
+  longint  GPIO_RANGE;
   logic         UART_SUPPORTED;
-  logic [33:0]  UART_BASE;
-  logic [33:0]  UART_RANGE;
+  longint  UART_BASE;
+  longint  UART_RANGE;
   logic         PLIC_SUPPORTED;
-  logic [33:0]  PLIC_BASE;
-  logic [33:0]  PLIC_RANGE;
+  longint  PLIC_BASE;
+  longint  PLIC_RANGE;
   logic         SDC_SUPPORTED;
-  logic [33:0]  SDC_BASE;
-  logic [33:0]  SDC_RANGE;
+  longint  SDC_BASE;
+  longint  SDC_RANGE;
 
 // Test modes
 
@@ -171,10 +171,10 @@ typedef struct packed {
 
 // constants to check SATP_MODE against
 // defined in Table 4.3 of the privileged spec
-  logic NO_TRANSLATE; //=0, so maybe logic is OK
-  logic SV32; //=1, so maybe logic is OK
-  int SV39;
-  int SV48;
+  logic [3:0] NO_TRANSLATE;
+  logic [3:0] SV32; 
+  logic [3:0] SV39;
+  logic [3:0] SV48;
 
 // macros to define supported modes
   logic A_SUPPORTED;
