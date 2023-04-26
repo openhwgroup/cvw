@@ -102,7 +102,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   assign SetDirtyWay = SetDirty & SelData;                                 // exclusion-tag: icache SetDirtyWay
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
-  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: icache SetValidEN
+  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
