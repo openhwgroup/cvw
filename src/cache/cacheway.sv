@@ -82,6 +82,8 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
 
     // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
+    // coverage off -item e 1 -fecexprrow 3
+    // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
     assign FlushWayEn = FlushWay & SelFlush;
     assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
   end
@@ -100,7 +102,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   assign SetDirtyWay = SetDirty & SelData;                                 // exclusion-tag: icache SetDirtyWay
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
-  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: icache SetValidEN
+  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
