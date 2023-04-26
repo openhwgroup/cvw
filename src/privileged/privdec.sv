@@ -69,7 +69,10 @@ module privdec (
     logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+  // coverage off -item e 1 -fecexprrow 1
+  // Excluding test case where we need to test WFI in a condition where it will never trap    
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+  // coverage on
   end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////
