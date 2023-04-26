@@ -161,12 +161,8 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // connect sources to requests
   always_comb begin
     requests = {`N{1'b0}};
-    `ifdef PLIC_GPIO_ID
-      requests[P.PLIC_GPIO_ID] = GPIOIntr;
-    `endif
-    `ifdef PLIC_UART_ID
-      requests[P.PLIC_UART_ID] = UARTIntr;
-    `endif
+    if(P.PLIC_GPIO_ID) requests[P.PLIC_GPIO_ID] = GPIOIntr;
+    if(P.PLIC_UART_ID) requests[P.PLIC_UART_ID] = UARTIntr;
   end
 
   // pending interrupt requests
