@@ -33,9 +33,7 @@ module fdivsqrtiter(
   input  logic             IFDivStartE, 
   input  logic             FDivBusyE, 
   input  logic             SqrtE,
-  input  logic [`DIVb+3:0] X,
-  input  logic [`DIVb-1:0] DPreproc,
-  output logic [`DIVb-1:0] D,
+  input  logic [`DIVb+3:0] X, D,
   output logic [`DIVb:0]   FirstU, FirstUM,
   output logic [`DIVb+1:0] FirstC,
   output logic             Firstun,
@@ -95,16 +93,11 @@ module fdivsqrtiter(
   mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
   flopen #(`DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
 
-   // Divisior register
-  flopen #(`DIVb) dreg(clk, IFDivStartE, DPreproc, D);
-
   // Divisor Selections
-  //  - choose the negitive version of what's being selected
-  //  - D is a 0.b mantissa
-  assign DBar    = {3'b111, 1'b0, ~D};
+  assign DBar    = ~D;        // for -D
   if(`RADIX == 4) begin : d2
-    assign DBar2 = {2'b11, 1'b0, ~D, 1'b1};
-    assign D2    = {2'b0, 1'b1, D, 1'b0};
+    assign D2    = D << 1;    // for 2D,  only used in R4
+    assign DBar2 = ~D2;       // for -2D, only used in R4
   end
 
   // k=DIVCOPIES of the recurrence logic

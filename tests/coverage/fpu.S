@@ -28,7 +28,7 @@
 
 main:
 
-    #bseti t0, zero, 14  # turn on FPU
+    bseti t0, zero, 14  # turn on FPU
     csrs mstatus, t0
 
     #Pull denormalized FP number from memory and pass it to fclass.S for coverage
@@ -105,6 +105,25 @@ main:
     # fcvt.w.q a0, ft0
     # fcvt.q.d ft3, ft0
 
+    // fdivsqrt: test busy->idle transition caused by a FlushE while divider is busy (when interrupt arrives)
+    // This code doesn't actually trigger a busy->idle transition because the pending timer interrupt doesn't occur until the division finishes.
+    li t0, 0x3F812345 # random value slightly bigger than 1
+    li t1, 0x3F823456
+    fmv.w.x ft0, t0  # move int to fp register
+    fmv.w.x ft1, t1
+    li t0, -1           # set mtimecmp to biggest number so it doesnt interrupt again
+    li t1, 0x02004000   # MTIMECMP in CLINT
+    sd t0, 0(t1)
+    csrsi mstatus, 0b1000   # enable interrupts with mstatus.MIE
+    li t1, 0x0200bff8   # read MTIME in CLINT
+    ld t0, 0(t1)        
+    addi t0, t0, 11
+    li t1, 0x02004000   # MTIMECMP in CLINT
+    sd t0, 0(t1)        # write mtime+10 to cause interrupt soon  This is very touchy timing and is sensitive to cache line fetch latency
+    nop
+    fdiv.s ft2, ft1, ft0 # should get interrupted, triggering a flush
+    csrci mstatus, 0b1000   # disable interrupts with mstatus.MIE
+
     # Completing branch coverage in fctrl.sv
     .word 0x38007553    // Testing the all False case for 119 - funct7 under, op = 101 0011
     .word 0x40000053    // Line 145 All False Test case - illegal instruction?
@@ -146,3 +165,4 @@ TestData2:
 .int 0xbf800000 #FP -1.0
 .int 0x7fa00000 #SNaN
 .int 0x3fffffff #OverFlow Test
+DivTestData:
