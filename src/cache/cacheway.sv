@@ -155,7 +155,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
     ValidWay <= #1 ValidBits[CacheSet];
-    if(InvalidateCache)                    ValidBits <= #1 '0;
+    if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end

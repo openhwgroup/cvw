@@ -189,6 +189,7 @@ main:
     li t1, -1
     csrw mcounteren, t1
 
+
     # Go to supervisor mode
     li a0, 1
     ecall
