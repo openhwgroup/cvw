@@ -88,7 +88,7 @@ coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [Get
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -linerange [GetLineNum ../src/cache/cachefsm.sv "exclusion-tag: cache AnyMiss"] -item e 1 -fecexprrow 4
 set numcacheways 4
 for {set i 0} {$i < $numcacheways} {incr i} {
-    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item be 1 -fecexprrow 4
+    coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/CacheWays[$i] -linerange [GetLineNum ../src/cache/cacheway.sv "exclusion-tag: dcache invalidateway"] -item bes 1 -fecexprrow 4
 }
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
