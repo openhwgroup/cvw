@@ -63,7 +63,8 @@ string tvpaths[] = '{
     "pmp",
     "pmpcfg",
     "pmpcfg1",
-    "pmpcfg2"
+    "pmpcfg2",
+    "pmppriority"
   };
 
   string coremark[] = '{
