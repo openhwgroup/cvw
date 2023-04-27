@@ -54,7 +54,7 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     li t5, 0x9001000000080080 // try making asid = 1 
     csrw satp, t5
     jalr t0
-     li t5, 0x9000000000080080 // try making asid = 1 
+     li t5, 0x9000000000080080 // try making asid = 0
     csrw satp, t5
     li t4, 0x1000
     add t0, t0, t4
