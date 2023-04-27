@@ -7,7 +7,9 @@ set boardName $::env(XILINX_BOARD)
 set ipName xlnx_axi_clock_converter
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
 create_ip -name axi_clock_converter -vendor xilinx.com -library ip -module_name $ipName
 
