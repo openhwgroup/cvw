@@ -63,7 +63,7 @@ module pmpadrdec (
   assign CurrentAdrFull  = {PMPAdr,  2'b00};
   assign PAltPMPAdr = {1'b0, PhysicalAddress} < {1'b0, CurrentAdrFull}; // unsigned comparison
   assign PAgePMPAdrOut = ~PAltPMPAdr;
-  assign TORMatch = PAgePMPAdrIn & PAltPMPAdr;
+  assign TORMatch = PAgePMPAdrIn & PAltPMPAdr; // exclusion-tag: PAgePMPAdrIn
 
   // Naturally aligned regions
   logic [`PA_BITS-1:0] NAMask, NABase;
