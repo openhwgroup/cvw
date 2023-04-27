@@ -48,7 +48,10 @@ main:
     li t3, 32     # Max amount of Loops = 32
 
 loop: bge t2, t3, nASID   # exit loop if i >= loops
-    lw t1, 0(t0)
+    li t1, 0x00008067 #load in jalr
+    sw t1, 0(t0)
+    fence.I
+    jalr t0
     li t4, 0x1000
     add t0, t0, t4
     addi t2, t2, 1
@@ -79,17 +82,17 @@ pagetable:
 .align 12 // level 2 page table, contains direction to a gigapageg
     .8byte 0x0
     .8byte 0x0
-    .8byte 0x200000CF // gigapage that starts at 8000 0000 goes to C000 0000
-    .8byte 0x200208C1 // pointer to next page table entry at 8008 2000
+    .8byte 0x200000EF // gigapage that starts at 8000 0000 goes to C000 0000
+    .8byte 0x200208E1 // pointer to next page table entry at 8008 2000
 
 .align 12 // level 1 page table, points to level 0 page table
     .8byte 0x20020CE1
 
 .align 12 // level 0 page table, points to address C000 0000 // FOR NOW ALL OF THESE GO TO 8 instead of C cause they start with 2
-    .8byte 0x200000CF // access xC000 0000
-    .8byte 0x200004CF // access xC000 1000
-    .8byte 0x200008CF // access xC000 2000
-    .8byte 0x20000CCF // access xC000 3000
+    .8byte 0x200000EF // access xC000 0000
+    .8byte 0x200004EF // access xC000 1000
+    .8byte 0x200008EF // access xC000 2000
+    .8byte 0x20000CEF // access xC000 3000
 
     .8byte 0x200010EF // access xC000 4000
     .8byte 0x200014EF
@@ -130,5 +133,47 @@ pagetable:
     .8byte 0x200084EF
     .8byte 0x200088EF
     .8byte 0x20008CEF
+
+        .8byte 0x200010EF // access xC000 4000
+    .8byte 0x200014EF
+    .8byte 0x200018EF
+    .8byte 0x20001CEF
+
+    .8byte 0x200020EF // access xC000 8000
+    .8byte 0x200024EF
+    .8byte 0x200028EF
+    .8byte 0x20002CEF
+
+    .8byte 0x200030EF // access xC000 C000
+    .8byte 0x200034EF
+    .8byte 0x200038EF
+    .8byte 0x20003CEF
+
+    .8byte 0x200040EF // access xC001 0000
+    .8byte 0x200044EF
+    .8byte 0x200048EF
+    .8byte 0x20004CEF
+
+    .8byte 0x200050EF // access xC001 4000
+    .8byte 0x200054EF
+    .8byte 0x200058EF
+    .8byte 0x20005CEF
+
+    .8byte 0x200060EF // access xC001 8000
+    .8byte 0x200064EF
+    .8byte 0x200068EF
+    .8byte 0x20006CEF
+
+    .8byte 0x200070EF // access xC001 C000
+    .8byte 0x200074eF
+    .8byte 0x200078EF
+    .8byte 0x20007CEF
+
+    .8byte 0x200080EF // access xC002 0000
+    .8byte 0x200084EF
+    .8byte 0x200088EF
+    .8byte 0x20008CEF
+
+
 
     
