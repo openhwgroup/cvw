@@ -46,26 +46,21 @@ main:
     li t5, 0            # j = 0 // now use as a counter for new asid loop 
     li t3, 32     # Max amount of Loops = 32
 
-loop: bge t2, t3, nASID   # exit loop if i >= loops
-    lw t1, 0(t0)
+loop: bge t2, t3, finished   # exit loop if i >= loops
+    li t1, 0x00008067 #load in jalr
+    sw t1, 0(t0)
+    fence.I
+    jalr t0
+    li t5, 0x9001000000080080 // try making asid = 1 
+    csrw satp, t5
+    jalr t0
+     li t5, 0x9000000000080080 // try making asid = 1 
+    csrw satp, t5
     li t4, 0x1000
     add t0, t0, t4
     addi t2, t2, 1
     j loop
-
-nASID: bne t5, zero, finished
-    li a0, 3   // go
-    ecall
-    li t5, 0x9000100000080080 // try making asid = 1 
-    csrw satp, t5
-    li a0, 1   
-    ecall
-    li t2, 0
-    li t0, 0xC0000000
-    li t5, 1 // make this not zero. 
-    j loop
-
-
+    
 finished:
     j done
 
