@@ -58,6 +58,7 @@ string tvpaths[] = '{
     "pmpcfg",
     "pmpcfg1",
     "pmpcfg2",
+    "pmpadrdecs",
     "tlbKP",
     "tlbMP",
     "tlbM3",
