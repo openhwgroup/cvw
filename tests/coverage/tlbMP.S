@@ -39,23 +39,20 @@ main:
     # switch to supervisor mode
     li a0, 1   
     ecall
+
     li t5, 0 
     li t0, 0x84000000 // go to first megapage
-    li t4, 0x1000 // put this outside the loop.
+    li t4, 0x200000 // put this outside the loop.
     li t2, 0      # i = 0
     li t3, 32     # Max amount of Loops = 16
 
-loop: bge t2, t3, lKP   # exit loop if i >= loops
-    lw t1, 0(t0)
+loop: bge t2, t3, finished   # exit loop if i >= loops
+    li t1, 0x00008067 #load in jalr
+    sw t1, 0(t0)
+    fence.I
+    jalr t0
     add t0, t0, t4
     addi t2, t2, 1
-    j loop
-
-lKP: bne t5, zero, finished
-    li t0, 0x80000000 
-    slli t4, t4, 9
-    addi t5, t5, 1
-    li t2, 0
     j loop
 
 finished:
@@ -77,6 +74,46 @@ pagetable:
 .align 12 // megapages starting at 8000 0000 going to 8480 0000  (32*2 MiB beyond that)
 
     .8byte 0x200000CF // access 8000,0000
+    .8byte 0x200800CF // access 8020,0000 
+    .8byte 0x201000CF // acesss 8040,0000
+    .8byte 0x201800CF // acesss 8060,0000
+
+    .8byte 0x202000CF // access 8080,0000
+    .8byte 0x202800CF // access 80A0,0000
+    .8byte 0x203000CF // access 80C0,0000
+    .8byte 0x203800CF // access 80E0,0000
+
+    .8byte 0x204000CF // access 8100,0000
+    .8byte 0x204800CF 
+    .8byte 0x205000CF 
+    .8byte 0x205800CF 
+
+    .8byte 0x206000CF // access 8180,0000
+    .8byte 0x206800CF 
+    .8byte 0x207000CF 
+    .8byte 0x207800CF 
+
+    .8byte 0x208000CF // access 8200,0000
+    .8byte 0x208800CF 
+    .8byte 0x209000CF 
+    .8byte 0x209800CF 
+
+    .8byte 0x20A000CF // access 8280,0000
+    .8byte 0x20A800CF 
+    .8byte 0x20B000CF 
+    .8byte 0x20B800CF 
+
+    .8byte 0x20C000CF // access 8300,0000
+    .8byte 0x20C800CF 
+    .8byte 0x20D000CF 
+    .8byte 0x20D800CF
+
+    .8byte 0x20E000CF // access 8380,0000
+    .8byte 0x20E800CF 
+    .8byte 0x20F000CF 
+    .8byte 0x20F800CF
+
+    .8byte 0x200000CF // access 8000,0000 I AM REPEATING PTE TO SAVE TIME.
     .8byte 0x200800CF // access 8020,0000 
     .8byte 0x201000CF // acesss 8040,0000
     .8byte 0x201800CF // acesss 8060,0000
