@@ -13,7 +13,9 @@ set boardName $::env(XILINX_BOARD)
 set ipName xlnx_ahblite_axi_bridge
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
 # really just these two lines which change
 create_ip -name ahblite_axi_bridge -vendor xilinx.com -library ip -module_name $ipName
