@@ -153,6 +153,8 @@ set line [GetLineNum ../src/mmu/mmu.sv "PMAInstrAccessFaultF    \\|"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
+set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3 
 
 
 ## The IFU has ReadAccess = WriteAccess = 0 and ExecuteAccess = 1 hardwired, so exclude alternatives
@@ -206,3 +208,7 @@ coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line
 # TLB not recently used never has all RU bits = 1 because it will then clear all to 0
 # This is a blunt instrument; perhaps there is a more graceful exclusion
 coverage exclude -srcfile priorityonehot.sv 
+
+# Excluding pmpadrdecs[0] coverage case for PAgePMPAdrIn being hardwired to 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
