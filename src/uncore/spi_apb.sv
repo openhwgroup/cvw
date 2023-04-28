@@ -30,9 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
-// figure out cs off mode
-// simplify cs auto/hold logic
-//simply sck phase select logic
+// scksc delay, intercs cs deassert
 
 
 `include "wally-config.vh"
@@ -64,18 +62,73 @@ module spi_apb (
     logic [15:0] Delay0, Delay1;
     logic [7:0] Format;
     logic [8:0] ReceiveData;
-    logic [3:0] TransmitWatermark, ReceiveWatermark;
+    logic [2:0] TransmitWatermark, ReceiveWatermark;
     logic [8:0] TransmitData;
     logic [1:0] InterruptEnable, InterruptPending;
 
+    //bus interface signals
     logic [7:0] Entry;
     logic Memwrite;
     logic [31:0] Din, Dout;
     logic busy;
+
+    //FIFO FSM signals
     logic TransmitWriteMark, TransmitReadMark, RecieveWriteMark, RecieveReadMark;
     logic TransmitFIFOWriteFull, TransmitFIFOReadEmpty;
+    logic TransmitFIFOWriteIncrement, TransmitFIFOReadIncrement;
+    logic ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement;
+    
+    logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
+    logic [7:0] TransmitFIFOReadData, ReceiveFIFOWriteData;
+    logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel;
+
+    logic TransmitFIFOReadEmptyDelay;
+    logic [7:0] ReceiveShiftRegEndian;
+
+    //transmission signals
+    logic sck;
+    logic [12:0] DivCounter;
+    logic SCLKDuty;
+    logic [8:0] Delay0Count;
+    logic [8:0] Delay1Count;
+    logic Delay0Compare;
+    logic Delay1Compare;
+    logic InterCSCompare;
+    logic [8:0] InterCSCount;
+    logic InterXFRCompare;
+    logic [8:0] InterXFRCount;
+    logic [3:0] ChipSelectInternal;
+    logic [5:0] FrameCount;
+    logic [5:0] FrameCompare;
+
+    logic FrameCompareBoolean;
+    logic [5:0] FrameCountShifted;
+    logic [5:0] ReceivePenultimateFrame;
+    logic [5:0] ReceivePenultimateFrameCount;
+    logic ReceivePenultimateFrameBoolean;
+    logic [5:0] FrameCompareProtocol;
+    logic ReceiveShiftFull;
+    logic TransmitShiftEmpty;
+    logic HoldModeDeassert;
 
 
+    //state fsm signals
+    logic Active;
+    logic Active0;
+    logic Inactive;
+
+    //shift reg signals
+    logic TransmitFIFOWriteIncrementDelay;
+    logic sckPhaseSelect;
+    logic [7:0] TransmitShiftReg;
+    logic [7:0] ReceiveShiftReg;
+    logic SampleEdge;
+    logic [7:0] TransmitDataEndian;
+    logic TransmitShiftRegLoad;
+
+    //CS signals
+    logic [3:0] ChipSelectAuto, ChipSelectHold, CSoff;
+    logic ChipSelectHoldSingle;
 
 
     assign Entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses
@@ -124,8 +177,8 @@ module spi_apb (
                     8'h10: ChipSelectID <= Din[1:0];
                     8'h14: ChipSelectDef <= Din[3:0];
                     8'h18: ChipSelectMode <= Din[1:0];
-                    8'h28: Delay0 <= Din[7:0];
-                    8'h2C: Delay1 <= Din[7:0];
+                    8'h28: Delay0 <= Din[15:0];
+                    8'h2C: Delay1 <= Din[15:0];
                     8'h40: Format <= Din[7:0];
                     8'h48: if (~TransmitFIFOWriteFull) TransmitData <= Din[7:0];
                     8'h50: TransmitWatermark <= Din[2:0];
@@ -156,32 +209,7 @@ module spi_apb (
         end
 
     //SCK_CONTROL
-    logic sck;
-    logic [12:0] DivCounter;
-    // DivCounter_edge;
-    // logic tx_empty;
-    // logic sclk_edge;
-    logic SCLKDuty;
-    logic [8:0] Delay0Count;
-    logic [8:0] Delay1Count;
-    logic Delay0Compare;
-    logic Delay1Compare;
-    logic InterCSCompare;
-    logic [8:0] InterCSCount;
-    logic InterXFRCompare;
-    logic [8:0] InterXFRCount;
-    logic [3:0] ChipSelectInternal;
-    logic [5:0] FrameCount;
-    logic [5:0] FrameCompare;
-    logic Active;
-    logic FrameCompareBoolean;
-    logic [5:0] FrameCountShifted;
-    logic [5:0] ReceivePenultimateFrame;
-    logic [5:0] ReceivePenultimateFrameCount;
-    //logic tx_FrameCompare_pre_bool;
-    logic ReceivePenultimateFrameBoolean;
-    logic [5:0] FrameCompareProtocol;
-    logic ReceiveShiftFull;
+    
 
     always_comb
         case(Format[1:0])
@@ -191,8 +219,7 @@ module spi_apb (
             default: FrameCountShifted = FrameCount;
         endcase
     
-    //assign penultimate_frame = Format[1] ? {4'b0,Format[1:0]} : {4'b0, 2'b01};
-    //generates the correct value to determine if current frame is second to last
+
     always_comb
         case(Format[1:0])
             2'b00: begin
@@ -219,25 +246,9 @@ module spi_apb (
     assign ReceivePenultimateFrameCount = FrameCountShifted + ReceivePenultimateFrame;
     assign ReceivePenultimateFrameBoolean = (ReceivePenultimateFrameCount >= FrameCompareProtocol);
 
-
-
-    // definitions for FIFO
-    logic TransmitFIFOWriteIncrement, TransmitFIFOReadIncrement;
-    logic ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement;
-    
-    logic ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty;
-    logic [7:0] TransmitFIFOReadData, ReceiveFIFOWriteData;
-    logic [2:0] TransmitWriteWatermarkLevel, ReceiveReadWatermarkLevel;
-
-    logic TransmitFIFOReadEmptyDelay;
-    logic [7:0] ReceiveShiftRegEndian;
-
-
-
-    //assign sclk_edge = (DivCounter_edge >= (({SckDiv, 1'b0}) + 13'b1));
     assign SCLKDuty = (DivCounter >= (SckDiv));
-    assign Delay0Compare = SckMode[0] ? (Delay0Count == ({Delay0[7:0], 1'b0})) : (Delay0Count == ({Delay0[7:0], 1'b0} + 9'b1));
-    assign Delay1Compare = SckMode[0] ? (Delay1Count == (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count == ({Delay0[15:8], 1'b0}));
+    assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count == ({Delay0[7:0], 1'b0} + 9'b1));
+    assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count == ({Delay0[15:8], 1'b0}));
     assign InterCSCompare = (InterCSCount >= ({Delay1[7:0],1'b0}));
     assign InterXFRCompare = (InterXFRCount >= ({Delay1[15:8], 1'b0}));
     // double number of frames in dual or quad mode because we must wait for peripheral to send back
@@ -253,8 +264,7 @@ module spi_apb (
         else DivCounter <= DivCounter + 13'b1;
 
     
-    logic TransmitShiftEmpty;
-    logic HoldModeDeassert;
+
     always_ff @(posedge SCLKDuty, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
                             FrameCount <= 6'b0;                      
@@ -263,7 +273,7 @@ module spi_apb (
         end else case (state)
                 CS_INACTIVE: begin
                         Delay0Count <= 9'b1;
-                        Delay1Count <= 9'b1;
+                        Delay1Count <= 9'b10;
                         FrameCount <= 6'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= 9'b1;
@@ -285,7 +295,7 @@ module spi_apb (
                         else if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty)) begin
                             state <= ACTIVE_0;
                             Delay0Count <= 9'b1;
-                            Delay1Count <= 9'b1;
+                            Delay1Count <= 9'b10;
                             FrameCount <= 6'b0;
                             InterCSCount <= 9'b10;
                         end
@@ -303,7 +313,7 @@ module spi_apb (
                         end
                 INTER_XFR: begin
                         Delay0Count <= 9'b1;
-                        Delay1Count <= 9'b1;
+                        Delay1Count <= 9'b10;
                         FrameCount <= 6'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= InterXFRCount + 9'b1;
@@ -314,13 +324,12 @@ module spi_apb (
                         end
             endcase
             /* verilator lint_off CASEINCOMPLETE */
-    assign ChipSelectInternal = ((state == CS_INACTIVE | state == INTER_CS) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]);
+    assign ChipSelectInternal = SckMode[0] ? ((state == CS_INACTIVE | state == INTER_CS) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]) : ((state == CS_INACTIVE | state == INTER_CS | (state == ACTIVE_1 & ~|(Delay0[15:8]) & ReceiveShiftFull)) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]);
     assign sck = (state == ACTIVE_0) ? ~SckMode[1] : SckMode[1];
     assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(Delay1[15:8]) & (ChipSelectMode[1:0]) == 2'b10) & ((FrameCount << Format[1:0]) >= FrameCompare))) | state == DELAY_1);
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
 
-    logic Active0;
-    logic Inactive;
+    
 
     assign Active0 = (state == ACTIVE_0);
     assign Inactive = (state == CS_INACTIVE);
@@ -328,25 +337,8 @@ module spi_apb (
     always_ff @(posedge PCLK, negedge PRESETn, posedge Inactive)
         if (~PRESETn) HoldModeDeassert <= 0;
         else if (Inactive) HoldModeDeassert <= 0;
-        else if (((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID]))))) HoldModeDeassert <= 1;
+        else if (((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID])))) & Memwrite) HoldModeDeassert <= 1;
 
-
-
-
-    //FIFOs CURRENTLY SRAM BASED ON "The existence of fall-through architecture has a historical basis. New developments no longer use this principle."
-    //https://www.ti.com/lit/an/scaa042a/scaa042a.pdf
-    //However, 8 byte is very small, may adjust based on synthesis results.
-    //FIFO design based on Simulation and Synthesis Techniques for Asynchronous FIFO Design Clifford E. Cummings SNUG 2002
-    //modules fifomem, syncr2w, syncw2r, rptrempty, wptrfull
-    //address space 8 bytes, needs n-1 = 3 bits, n szed ptrs to determine full/tx_empty
-
-    //TXFIFO
-    //fifomem asynch ram
-
-    
-    logic TransmitFIFOWriteIncrementDelay;
-
-    logic sckPhaseSelect;
     assign TransmitFIFOWriteIncrement = (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull);
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) TransmitFIFOWriteIncrementDelay <= 0;
@@ -360,10 +352,6 @@ module spi_apb (
         else            ReceiveFIFOReadIncrement <= 0;
     assign ReceiveData[8] = ReceiveFIFOReadEmpty;
 
-    logic [7:0] TransmitShiftReg;
-    logic [7:0] ReceiveShiftReg;
-    logic SampleEdge;
-    logic [7:0] TransmitDataEndian;
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign TransmitDataEndian =  Format[2] ? {TransmitData[0], TransmitData[1], TransmitData[2], TransmitData[3], TransmitData[4], TransmitData[5], TransmitData[6], TransmitData[7]} : TransmitData[7:0];
     
@@ -388,9 +376,8 @@ module spi_apb (
         endcase
     
 
-    //logic ShiftEdgeSCK;
-    //assign ShiftEdgeSCK = sckPhaseSelect | (SCLKDuty & ~Active);
-    logic TransmitShiftRegLoad;
+
+    
     assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active;
     always_ff @(posedge sckPhaseSelect, negedge PRESETn, posedge TransmitShiftRegLoad)
         if(~PRESETn) begin 
@@ -476,8 +463,7 @@ module spi_apb (
 
 
     assign SPIIntr = ((InterruptPending[0] & InterruptEnable[0]) | (InterruptPending[1] & InterruptEnable[1]));
-    logic [3:0] ChipSelectAuto, ChipSelectHold, CSoff;
-    logic ChipSelectHoldSingle;
+    
     always_comb
         case(ChipSelectID[1:0])
             2'b00: begin ChipSelectAuto = {ChipSelectDef[3], ChipSelectDef[2], ChipSelectDef[1], ChipSelectInternal[0]};
