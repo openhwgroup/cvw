@@ -97,6 +97,9 @@ for {set i 0} {$i < $numcacheways} {incr i} {
 # D$ writeback, flush, write_line, or flush_writeback states can't be cancelled by a flush
 coverage exclude -scope /dut/core/lsu/bus/dcache/dcache/cachefsm -ftrans CurrState STATE_WRITEBACK->STATE_READY STATE_FLUSH->STATE_READY STATE_WRITE_LINE->STATE_READY STATE_FLUSH_WRITEBACK->STATE_READY
 
+####################
+# Unused / illegal peripheral accesses
+####################
 
 # Excluding peripherals as sources of instructions for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/clintdec
@@ -104,14 +107,26 @@ coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/gpiodec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uartdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/plicdec
 
+# PMA Regions 8, 9, and 10 (dtim, irom, ddr4) are never used in the rv64gc configuration, so exclude coverage
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-cachable"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-idempotent"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4,6,8
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-atomic"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+set line [GetLineNum ../src/mmu/pmachecker.sv "exclusion-tag: unused-tim"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2,4
+
 # Excluding so far un-used instruction sources for the ifu
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/bootromdec
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/uncoreramdec
 
-
 #Excluding the bootrom, uncoreran, and clint as sources for the lsu
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/bootromdec
-
 
 #Excluding signals in lsu: clintdec and uncoreram accept all sizes so 'SizeValid' will never be 0
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
@@ -119,38 +134,36 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -lin
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
 
-## Excluding signals in lsu: the lsu never executes instructions so 'ExecuteAccessF' will never be 1
-# in pmachecker.sv
+####################
+# Unused access types due to sharing IFU and LSU logic
+####################
+
+## The lsu never executes instructions so 'ExecuteAccessF' will never be 1
 set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX ="]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 6
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 4
 set line [GetLineNum ../src/mmu/pmachecker.sv "ExecuteAccessF & PMAAccessFault"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2
-
-# in mmu.sv
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2
 set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "PMAInstrAccessFaultF    \\|"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
-
-# in pmpchecker.sv
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
+set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ExecuteAccessF"]
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 3 
 
 
-## Excluding ReadAccessM_1 and WriteAccessM_1 signals in the ifu pmachecker, mmu, pmpchecker because they will never be high 
-## and Excluding ExecuteAccessF_0 because it is always true/high in the ifu
-# in pmachecker.sv
+## The IFU has ReadAccess = WriteAccess = 0 and ExecuteAccess = 1 hardwired, so exclude alternatives
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| WriteAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2 4
 set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-5
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM \\| ExecuteAccessF"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1-3
-
 set line [GetLineNum ../src/mmu/pmachecker.sv "ExecuteAccessF & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 1
 set line [GetLineNum ../src/mmu/pmachecker.sv "ReadAccessM    & PMAAccessFault"]
@@ -159,8 +172,6 @@ set line [GetLineNum ../src/mmu/pmachecker.sv "WriteAccessM   & PMAAccessFault"]
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 2-4
 set line [GetLineNum ../src/mmu/pmachecker.sv "AccessRWX \\| AtomicAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker -linerange $line-$line -item e 1 -fecexprrow 3
-
-# in mmu.sv
 set line [GetLineNum ../src/mmu/mmu.sv "ExecuteAccessF \\| ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,3,4
 set line [GetLineNum ../src/mmu/mmu.sv "ReadAccessM & ~WriteAccessM"] 
@@ -175,21 +186,14 @@ set line [GetLineNum ../src/mmu/mmu.sv "TLBPageFault & WriteAccessM"]
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
 set line [GetLineNum ../src/mmu/mmu.sv "DataMisalignedM & ReadNoAmoAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 1,2,4
-
-# in pmpchecker.sv
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & WriteAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
 set line [GetLineNum ../src/mmu/pmpchecker.sv "EnforcePMP & ReadAccessM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker -linerange $line-$line -item e 1 -fecexprrow 1,2,4,5,6
-
-## Executing any LoadAccess or StoreAccess signal in the ifu - depend on Read and Write Access that the ifu will never have
-# in /mmu/mmu.sv
 set line [GetLineNum ../src/mmu/mmu.sv "PMALoadAccessFaultM     \\| PMPLoadAccessFaultM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
 set line [GetLineNum ../src/mmu/mmu.sv "PMAStoreAmoAccessFaultM \\| PMPStoreAmoAccessFaultM"] 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line -item e 1 -fecexprrow 2,4,5,6
-
-## Excluding ReadAccess_0, WriteAcess_1 in the TLB because the itlb only reads, and does not write
 set line [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "ReadAccess \\| WriteAccess"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $line-$line -item e 1 -fecexprrow 1,3,4
 set line [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "CAMHit & TLBAccess"] 
@@ -201,5 +205,10 @@ coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $l
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
 
+# TLB not recently used never has all RU bits = 1 because it will then clear all to 0
+# This is a blunt instrument; perhaps there is a more graceful exclusion
+coverage exclude -srcfile priorityonehot.sv 
+
 # Excluding pmpadrdecs[0] coverage case for PAgePMPAdrIn being hardwired to 1
 coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
