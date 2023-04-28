@@ -201,3 +201,5 @@ coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $l
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
 
+# Excluding pmpadrdecs[0] coverage case for PAgePMPAdrIn being hardwired to 1
+coverage exclude -scope /dut/core/ifu/immu/immu/pmp/pmpchecker/pmp/pmpadrdecs[0] -linerange [GetLineNum ../src/mmu/pmpadrdec.sv "exclusion-tag: PAgePMPAdrIn"] -item e 1 -fecexprrow 1
