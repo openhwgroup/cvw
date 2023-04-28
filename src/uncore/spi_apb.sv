@@ -30,7 +30,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
-// scksc delay, intercs cs deassert
+// last q's about reset values and how to test
 
 
 `include "wally-config.vh"
@@ -98,15 +98,15 @@ module spi_apb (
     logic InterXFRCompare;
     logic [8:0] InterXFRCount;
     logic [3:0] ChipSelectInternal;
-    logic [5:0] FrameCount;
-    logic [5:0] FrameCompare;
+    logic [4:0] FrameCount;
+    logic [4:0] FrameCompare;
 
     logic FrameCompareBoolean;
-    logic [5:0] FrameCountShifted;
-    logic [5:0] ReceivePenultimateFrame;
-    logic [5:0] ReceivePenultimateFrameCount;
+    logic [4:0] FrameCountShifted;
+    logic [4:0] ReceivePenultimateFrame;
+    logic [4:0] ReceivePenultimateFrameCount;
     logic ReceivePenultimateFrameBoolean;
-    logic [5:0] FrameCompareProtocol;
+    logic [4:0] FrameCompareProtocol;
     logic ReceiveShiftFull;
     logic TransmitShiftEmpty;
     logic HoldModeDeassert;
@@ -199,7 +199,7 @@ module spi_apb (
                 8'h2C: Dout <= #1 Delay1;
                 8'h40: Dout <= #1 Format;
                 8'h48: Dout <= #1 {TransmitFIFOWriteFull, 8'b0};
-                8'h4C: if (~ReceiveData[8]) Dout <= #1 ReceiveData;
+                8'h4C: Dout <= #1 ReceiveData;
                 8'h50: Dout <= #1 TransmitWatermark;
                 8'h54: Dout <= #1 ReceiveWatermark;
                 8'h70: Dout <= #1 InterruptEnable;
@@ -223,20 +223,20 @@ module spi_apb (
     always_comb
         case(Format[1:0])
             2'b00: begin
-                    ReceivePenultimateFrame = 6'b000001;
+                    ReceivePenultimateFrame = 5'b00001;
                     FrameCompareProtocol = FrameCompare;
                     end
             2'b01: begin
-                    ReceivePenultimateFrame = 6'b000010;
-                    FrameCompareProtocol = Format[4] ? FrameCompare + 6'b1 : FrameCompare;
+                    ReceivePenultimateFrame = 5'b00010;
+                    FrameCompareProtocol = Format[4] ? FrameCompare + 5'b1 : FrameCompare;
                     end
             2'b10: begin 
-                    ReceivePenultimateFrame = 6'b000100;
-                    if (Format[7:4] > 4'b0100) FrameCompareProtocol = 6'b010000;
-                    else FrameCompareProtocol = 6'b001000;
+                    ReceivePenultimateFrame = 5'b00100;
+                    if (Format[7:4] > 4'b0100) FrameCompareProtocol = 5'b10000;
+                    else FrameCompareProtocol = 5'b001000;
                     end
             default: begin
-                    ReceivePenultimateFrame = 6'b000001;
+                    ReceivePenultimateFrame = 5'b00001;
                     FrameCompareProtocol = FrameCompare;
                     end
 
@@ -247,12 +247,12 @@ module spi_apb (
     assign ReceivePenultimateFrameBoolean = (ReceivePenultimateFrameCount >= FrameCompareProtocol);
 
     assign SCLKDuty = (DivCounter >= (SckDiv));
-    assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count == ({Delay0[7:0], 1'b0} + 9'b1));
-    assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count == ({Delay0[15:8], 1'b0}));
+    assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count >= ({Delay0[7:0], 1'b0} + 9'b1));
+    assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count >= ({Delay0[15:8], 1'b0}));
     assign InterCSCompare = (InterCSCount >= ({Delay1[7:0],1'b0}));
     assign InterXFRCompare = (InterXFRCount >= ({Delay1[15:8], 1'b0}));
     // double number of frames in dual or quad mode because we must wait for peripheral to send back
-    assign FrameCompare = (Format[0] | Format[1]) ? ({1'b0,Format[7:4], 1'b0}) : {2'b0,Format[7:4]};
+    assign FrameCompare = (Format[0] | Format[1]) ? ({Format[7:4], 1'b0}) : {1'b0,Format[7:4]};
 
     typedef enum logic [2:0] {CS_INACTIVE, DELAY_0, ACTIVE_0, ACTIVE_1, DELAY_1,INTER_CS, INTER_XFR} statetype;
     statetype state;
@@ -267,14 +267,14 @@ module spi_apb (
 
     always_ff @(posedge SCLKDuty, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
-                            FrameCount <= 6'b0;                      
+                            FrameCount <= 5'b0;                      
         
         /* verilator lint_off CASEINCOMPLETE */
         end else case (state)
                 CS_INACTIVE: begin
                         Delay0Count <= 9'b1;
                         Delay1Count <= 9'b10;
-                        FrameCount <= 6'b0;
+                        FrameCount <= 5'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= 9'b1;
                         if ((~TransmitFIFOReadEmpty | ~TransmitShiftEmpty) & ((|(Delay0[7:0])) | ~SckMode[0])) state <= DELAY_0;
@@ -285,7 +285,7 @@ module spi_apb (
                         if (Delay0Compare) state <= ACTIVE_0;
                         end
                 ACTIVE_0: begin 
-                        FrameCount <= FrameCount + 6'b1;
+                        FrameCount <= FrameCount + 5'b1;
                         state <= ACTIVE_1;
                         end
                 ACTIVE_1: begin
@@ -296,7 +296,7 @@ module spi_apb (
                             state <= ACTIVE_0;
                             Delay0Count <= 9'b1;
                             Delay1Count <= 9'b10;
-                            FrameCount <= 6'b0;
+                            FrameCount <= 5'b0;
                             InterCSCount <= 9'b10;
                         end
                         else if (ChipSelectMode[1:0] == 2'b10) state <= INTER_XFR;
@@ -314,7 +314,7 @@ module spi_apb (
                 INTER_XFR: begin
                         Delay0Count <= 9'b1;
                         Delay1Count <= 9'b10;
-                        FrameCount <= 6'b0;
+                        FrameCount <= 5'b0;
                         InterCSCount <= 9'b10;
                         InterXFRCount <= InterXFRCount + 9'b1;
                         if (HoldModeDeassert) state <= CS_INACTIVE;
@@ -348,7 +348,7 @@ module spi_apb (
     assign ReceiveFIFOWriteIncrement = ReceiveShiftFull;
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) ReceiveFIFOReadIncrement <= 0;
-        else if (~ReceiveFIFOReadIncrement)    ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveData[8]);
+        else if (~ReceiveFIFOReadIncrement)    ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveData[8] & PSEL);
         else            ReceiveFIFOReadIncrement <= 0;
     assign ReceiveData[8] = ReceiveFIFOReadEmpty;
 
@@ -466,22 +466,16 @@ module spi_apb (
     
     always_comb
         case(ChipSelectID[1:0])
-            2'b00: begin ChipSelectAuto = {ChipSelectDef[3], ChipSelectDef[2], ChipSelectDef[1], ChipSelectInternal[0]};
-                         ChipSelectHold = {ChipSelectDef[3], ChipSelectDef[2], ChipSelectDef[1], ChipSelectHoldSingle};
-                    end
-            2'b01: begin ChipSelectAuto = {ChipSelectDef[3],ChipSelectDef[2], ChipSelectInternal[1], ChipSelectDef[0]};
-                         ChipSelectHold = {ChipSelectDef[3],ChipSelectDef[2], ChipSelectHoldSingle, ChipSelectDef[0]};
-                    end
-            2'b10: begin ChipSelectAuto = {ChipSelectDef[3],ChipSelectInternal[2], ChipSelectDef[1], ChipSelectDef[0]};
-                         ChipSelectHold = {ChipSelectDef[3], ChipSelectHoldSingle, ChipSelectDef[1], ChipSelectDef[0]};
-                    end
-            2'b11: begin ChipSelectAuto = {ChipSelectInternal[3],ChipSelectDef[2], ChipSelectDef[1], ChipSelectDef[0]};
-                         ChipSelectHold = {ChipSelectHoldSingle, ChipSelectDef[2], ChipSelectDef[1], ChipSelectDef[0]};
-                    end
+            2'b00: ChipSelectAuto = {ChipSelectDef[3], ChipSelectDef[2], ChipSelectDef[1], ChipSelectInternal[0]};
+
+            2'b01: ChipSelectAuto = {ChipSelectDef[3],ChipSelectDef[2], ChipSelectInternal[1], ChipSelectDef[0]};
+
+            2'b10: ChipSelectAuto = {ChipSelectDef[3],ChipSelectInternal[2], ChipSelectDef[1], ChipSelectDef[0]};
+
+            2'b11: ChipSelectAuto = {ChipSelectInternal[3],ChipSelectDef[2], ChipSelectDef[1], ChipSelectDef[0]};
         endcase
     
-    assign ChipSelectHoldSingle = (state == CS_INACTIVE);
-    assign SPICS = ChipSelectMode[0] ? 4'b1111 : ChipSelectAuto;
+    assign SPICS = ChipSelectMode[0] ? ChipSelectDef : ChipSelectAuto;
 
 
 endmodule

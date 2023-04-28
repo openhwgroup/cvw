@@ -1181,14 +1181,6 @@ spi_burst_send: //function for loading multiple frames at once to test delays wi
     sw t2, 0(t3)
     srli t2, t2, 8
     sw t2, 0(t3)
-
-    //srli t4, t4, 8
-    //sb t4, 0(t3)
-    //srli t4, t4, 8
-    //sb t4, 0(t3)
-    //srli t4, t4, 8
-    //sb t4, 0(t3)
-
     j test_loop
 
 goto_s_mode:
