@@ -175,7 +175,7 @@ module hptw (
       .SV39Mode(), .UpperBitsUnequal);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
-  assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
+    assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
     assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequal | Misaligned | ~Valid;
 
     // hptw needs to know if there is a Dirty or Access fault occuring on this
