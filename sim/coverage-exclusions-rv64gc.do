@@ -201,6 +201,13 @@ coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $l
 set line [GetLineNum ../src/mmu/tlb/tlbcontrol.sv "~CAMHit & TLBAccess"] 
 coverage exclude -scope /dut/core/ifu/immu/immu/tlb/tlb/tlbcontrol -linerange $line-$line -item e 1 -fecexprrow 3
 
+# IMMU only makes word-sized accesses
+set line [GetLineNum ../src/mmu/mmu.sv "exclusion-tag: immu-wordaccess"] 
+set line2 [expr $line + 6 ]
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item e 1 -fecexprrow 4
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item b 1
+coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item s 1
+
 # Excluding reset and clear for impossible case in the wficountreg in privdec
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
