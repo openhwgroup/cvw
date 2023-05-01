@@ -46,16 +46,16 @@ module localHistoryPredictor #(parameter m = 6, // 2^m = number of local history
   logic [1:0]             BPDirPredD, BPDirPredE;
   logic [1:0]             NewBPDirPredE, NewBPDirPredM;
 
-  logic [k-1:0]           GHRF, GHRD, GHRE, GHRM, GHR;
-  logic [k-1:0]           GHRNext;
+  logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHR;
+  logic [k-1:0]           LHRNextW;
   logic                   PCSrcM;
-  logic [2**m-1:0][k-1:0]  LHR;
+  logic [2**m-1:0][k-1:0]  LHRArray;
   logic [m-1:0]            IndexLHRNextF, IndexLHRM;
   
   logic                    UpdateM;
 
-  assign IndexNextF = GHRNext;
-  assign IndexM = GHRM;
+  assign IndexNextF = LHR;
+  assign IndexM = LHRM;
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
@@ -74,28 +74,28 @@ module localHistoryPredictor #(parameter m = 6, // 2^m = number of local history
 
   assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
 
-  assign GHRNext = BranchM ? {PCSrcM, GHR[k-1:1]} : GHR;
+  assign LHRNextW = BranchM ? {PCSrcM, LHRM[k-1:1]} : LHRM;
 
   // this is local history
   genvar      index;
-  assign UpdateM = BranchM & ~StallM & ~FlushM;
+  assign UpdateM = BranchM & ~StallW & ~FlushW;
   assign IndexLHRM = {PCM[m+1] ^ PCM[1], PCM[m:2]};
   for (index = 0; index < 2**m; index = index +1) begin:localhist
     flopenr #(k) LocalHistoryRegister(.clk, .reset, .en(UpdateM & (index == IndexLHRM)),
-                                      .d(GHRNext), .q(LHR[index]));
+                                      .d(LHRNextW), .q(LHRArray[index]));
   end
   assign IndexLHRNextF = {PCNextF[m+1] ^ PCNextF[1], PCNextF[m:2]};
-  assign GHR = LHR[IndexLHRNextF];
+  assign LHR = LHRArray[IndexLHRNextF];
 
   // this is global history
-  //flopenr #(k) GHRReg(clk, reset, ~StallM & ~FlushM & BranchM, GHRNext, GHR);
+  //flopenr #(k) LHRReg(clk, reset, ~StallM & ~FlushM & BranchM, LHRNextW, LHR);
 
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
-  flopenrc #(k) GHRFReg(clk, reset, FlushD, ~StallF, GHR, GHRF);
-  flopenrc #(k) GHRDReg(clk, reset, FlushD, ~StallD, GHRF, GHRD);
-  flopenrc #(k) GHREReg(clk, reset, FlushE, ~StallE, GHRD, GHRE);
-  flopenrc #(k) GHRMReg(clk, reset, FlushM, ~StallM, GHRE, GHRM);
+  flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHR, LHRF);
+  flopenrc #(k) LHRDReg(clk, reset, FlushD, ~StallD, LHRF, LHRD);
+  flopenrc #(k) LHREReg(clk, reset, FlushE, ~StallE, LHRD, LHRE);
+  flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
 
 
 endmodule
