@@ -62,7 +62,7 @@ module fdivsqrt(
   logic [`DIVb+1:0]           FirstC;                       // Step tracker
   logic                       Firstun;                      // Quotient selection
   logic                       WZeroE;                       // Early termination flag
-  logic [`DURLEN-1:0]         cycles;                       // FSM cycles
+  logic [`DURLEN-1:0]         CyclesE;                      // FSM cycles
   logic                       SpecialCaseM;                 // Divide by zero, square root of negative, etc.
   logic                       DivStartE;                    // Enable signal for flops during stall
                                                             
@@ -76,7 +76,7 @@ module fdivsqrt(
 
   fdivsqrtpreproc fdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
-    .FmtE, .SqrtE, .XZeroE, .Funct3E, .QeM, .X, .D, .cycles,
+    .FmtE, .SqrtE, .XZeroE, .Funct3E, .QeM, .X, .D, .CyclesE,
     // Int-specific 
     .ForwardedSrcAE, .ForwardedSrcBE, .IntDivE, .W64E, .ISpecialCaseE,
     .BZeroM, .nM, .mM, .AM, 
@@ -85,7 +85,7 @@ module fdivsqrt(
   fdivsqrtfsm fdivsqrtfsm(                                  // FSM
     .clk, .reset, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
-    .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, .cycles,
+    .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, .CyclesE,
     // Int-specific 
     .IDivStartE, .ISpecialCaseE, .IntDivE);
 

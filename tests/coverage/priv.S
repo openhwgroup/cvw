@@ -169,6 +169,24 @@ main:
     csrw mcounteren, t0
     csrw scounteren, t0
 
+    #getting the remainder of PMD instructions
+
+    #go to user mode
+    li a0, 0
+    ecall
+    #set status TVM to 0 by writing to bit 20 of mstatus as 0
+    #bseti t0, zero, 20 
+    sfence.vma zero, zero
+
+    # Go to supervisor mode
+    li a0, 1
+    ecall
+
+    sfence.vma zero, zero
+
+    li a0, 3
+    ecall
+
     # Write to satp when status.TVM is 1 from machine mode
     bseti t0, zero, 20 
     csrs mstatus, t0
@@ -202,6 +220,30 @@ main:
     ecall
 
     csrr t0, hpmcounter22
+
+    #getting the mpp and mstatus Mpriv condition met
+    #go to machine mode
+    li a0, 3
+    ecall
+    # set bit 17 of mstatus to enable STATUS_MPRV
+    bseti t1, zero, 17
+    csrs mstatus, t1
+
+    li a0, 3
+    ecall
+
+    # set bit 21 of mstatus to 0 to disable STATUS_TW
+    csrr t1, mstatus
+    bseti t2, zero, 21
+    not t2, t2
+    and t1, t1, t2
+    csrs mstatus, t1
+
+    # go to user mode
+    li a0, 0
+    ecall
+
+    wfi
 
     j done
 

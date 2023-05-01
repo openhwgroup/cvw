@@ -34,7 +34,7 @@ module amoalu (
   input  logic [`XLEN-1:0] IHWriteDataM, // LSU's WriteData
   input  logic [6:0]       LSUFunct7M,   // ALU Operation
   input  logic [2:0]       LSUFunct3M,   // Memoy access width
-  output logic [`XLEN-1:0] AMOResult     // ALU output
+  output logic [`XLEN-1:0] AMOResultM    // ALU output
 );
 
   logic [`XLEN-1:0] a, b, y;
@@ -60,17 +60,17 @@ module amoalu (
   if (`XLEN == 32) begin:sext
     assign a = ReadDataM;
     assign b = IHWriteDataM;
-    assign AMOResult = y;
+    assign AMOResultM = y;
   end else begin:sext // `XLEN = 64
     always_comb 
       if (LSUFunct3M[1:0] == 2'b10) begin // sign-extend word-length operations
         a = {{32{ReadDataM[31]}}, ReadDataM[31:0]};
         b = {{32{IHWriteDataM[31]}}, IHWriteDataM[31:0]};
-        AMOResult = {{32{y[31]}}, y[31:0]};
+        AMOResultM = {{32{y[31]}}, y[31:0]};
       end else begin
         a = ReadDataM;
         b = IHWriteDataM;
-        AMOResult = y;
+        AMOResultM = y;
       end
   end
 endmodule
