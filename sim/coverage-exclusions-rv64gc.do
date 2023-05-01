@@ -208,6 +208,12 @@ coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item e 
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item b 1
 coverage exclude -scope /dut/core/ifu/immu/immu -linerange $line-$line2 -item s 1
 
+# No irom
+set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & ~CacheableF & ~SelIROM"] 
+coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 6
+set line [GetLineNum ../src/ifu/ifu.sv "~ITLBMissF & CacheableF & ~SelIROM"] 
+coverage exclude -scope /dut/core/ifu -linerange $line-$line -item c 1 -feccondrow 4
+
 # Excluding reset and clear for impossible case in the wficountreg in privdec
 set line [GetLineNum ../src/generic/flop/floprc.sv "reset \\| clear"]
 coverage exclude -scope /dut/core/priv/priv/pmd/wfi/wficountreg -linerange $line-$line -item c 1 -feccondrow 2
