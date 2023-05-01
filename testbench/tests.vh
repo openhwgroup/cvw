@@ -52,18 +52,20 @@ string tvpaths[] = '{
     "fpu",
     "lsu",
     "vm64check",
-    "pmp",
+    "tlbASID",
+    "tlbGLB",
+    "tlbMP",
+    "tlbGP",
+    "tlbTP",
+    "ifuCamlineWrite",
     "dcache1",
     "dcache2",
+    "pmp",
     "pmpcfg",
     "pmpcfg1",
     "pmpcfg2",
-    "tlbKP",
-    "tlbMP",
-    "tlbM3",
-    "tlbASID",
-    "tlbGLB",
-    "ifuCamlineWrite"
+    "pmppriority",
+    "pmpadrdecs"
   };
 
   string coremark[] = '{

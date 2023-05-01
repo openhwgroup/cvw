@@ -115,3 +115,4 @@ tests/coverage/*.elf
 *.elf.memfile
 sim/*Cache.log
 sim/branch
+tests/fp/combined_IF_vectors/IF_vectors/*.tv
