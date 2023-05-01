@@ -57,14 +57,14 @@ module pmachecker (
   adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable
-  assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];
+  assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];  // exclusion-tag: unused-cachable
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
   // I/O is nonidempotent.  
-  assign Idempotent = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[7] | SelRegions[6];
+  assign Idempotent = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[7] | SelRegions[6]; // exclusion-tag: unused-idempotent
   // Atomic operations are only allowed on RAM
-  assign AtomicAllowed = SelRegions[10] | SelRegions[8] | SelRegions[6];
+  assign AtomicAllowed = SelRegions[10] | SelRegions[8] | SelRegions[6]; // exclusion-tag: unused-atomic
   // Check if tightly integrated memories are selected
-  assign SelTIM = SelRegions[10] | SelRegions[9];
+  assign SelTIM = SelRegions[10] | SelRegions[9]; // exclusion-tag: unused-tim
 
   // Detect access faults
   assign PMAAccessFault = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  

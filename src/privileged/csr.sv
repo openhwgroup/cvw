@@ -158,7 +158,7 @@ module csr #(parameter
     assign TVecPlusCauseM = {TVecAlignedM[`XLEN-1:6], CauseM, 2'b00}; // 64-byte alignment allows concatenation rather than addition
     mux2 #(`XLEN) trapvecmux(TVecAlignedM, TVecPlusCauseM, VectoredM, TrapVectorM);
   end else 
-    assign TrapVectorM = TVecAlignedM;
+    assign TrapVectorM = TVecAlignedM; // unvectored interrupt handler can be at any word-aligned address. This is called Sstvecd
 
   // Trap Returns
   // A trap sets the PC to TrapVector
