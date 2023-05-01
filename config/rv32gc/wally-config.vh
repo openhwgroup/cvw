@@ -43,7 +43,7 @@
 `define COUNTERS 32
 `define ZICOUNTERS_SUPPORTED 1
 `define ZFH_SUPPORTED 0
-`define SSTC_SUPPORTED 0
+`define SSTC_SUPPORTED 1
 
 // LSU microarchitectural Features
 `define BUS_SUPPORTED 1
@@ -139,10 +139,10 @@
 
 `define BPRED_SUPPORTED 1
 `define BPRED_TYPE "BP_GSHARE" // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-`define BPRED_SIZE 10
+`define BPRED_SIZE 16
 `define BTB_SIZE 10
 
-`define SVADU_SUPPORTED 0
+`define SVADU_SUPPORTED 1
 `define ZMMUL_SUPPORTED 0
 
 // FPU division architecture
@@ -150,10 +150,10 @@
 `define DIVCOPIES 32'h4
 
 // bit manipulation
-`define ZBA_SUPPORTED 0
-`define ZBB_SUPPORTED 0
-`define ZBC_SUPPORTED 0
-`define ZBS_SUPPORTED 0
+`define ZBA_SUPPORTED 1
+`define ZBB_SUPPORTED 1
+`define ZBC_SUPPORTED 1
+`define ZBS_SUPPORTED 1
 
 // Memory synthesis configuration
 `define USE_SRAM 0

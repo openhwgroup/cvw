@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module intdivrestoring(
+module div(
   input  logic             clk,
   input  logic             reset,
   input  logic             StallM,
@@ -36,7 +36,7 @@ module intdivrestoring(
   input  logic             IntDivE,                       // integer division/remainder instruction of any type
   input  logic             DivSignedE,                    // signed division 
   input  logic             W64E,                          // W-type instructions (divw, divuw, remw, remuw)
-	input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Forwarding mux outputs for Source A and B
+  input  logic [`XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,// Forwarding mux outputs for Source A and B
   output logic             DivBusyE,                      // Divide is busy - stall pipeline
   output logic [`XLEN-1:0] QuotM, RemM                    // Quotient and remainder outputs
  );
@@ -76,7 +76,7 @@ module intdivrestoring(
     mux2 #(`XLEN) dinmux(ForwardedSrcBE, {{32{ForwardedSrcBE[31]&DivSignedE}}, ForwardedSrcBE[31:0]}, W64E, DinE);
   end else begin // RV32 has no W-type instructions
     assign XinE = ForwardedSrcAE;
-    assign DinE = ForwardedSrcBE;	    
+    assign DinE = ForwardedSrcBE;      
     end   
 
   // Extract sign bits and check fo division by zero
@@ -107,7 +107,7 @@ module intdivrestoring(
   // one copy of divstep for each bit produced per cycle
   genvar i;
   for (i=0; i<`IDIV_BITSPERCYCLE; i = i+1)
-    intdivrestoringstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
+    divstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
 
   //////////////////////////////
   // Memory Stage: output sign correction and special cases

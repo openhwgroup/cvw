@@ -35,22 +35,29 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   string 	    FunctionName;
   
 
-  logic [`XLEN-1:0] PCF, PCD, PCE, FunctionAddr;
-  logic 	    StallD, StallE, FlushD, FlushE;
+  logic [`XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
+  logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
+  logic 		InstrValidM;
   integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
 
   assign PCF = testbench.dut.core.ifu.PCF;
   assign StallD = testbench.dut.core.StallD;
   assign StallE = testbench.dut.core.StallE;  
+  assign StallM = testbench.dut.core.StallM;  
   assign FlushD = testbench.dut.core.FlushD;
   assign FlushE = testbench.dut.core.FlushE;
+  assign FlushM = testbench.dut.core.FlushM;
+  assign InstrValidM = testbench.dut.core.InstrValidM;
 
   // copy from ifu
   // when the F and D stages are flushed we need to ensure the PCE is held so that the function name does not
   // erroneously change.
-  flopenrc #(`XLEN) PCDReg(clk, reset, 1'b0, ~StallD, FlushE & FlushD ? PCE : PCF, PCD);
-  flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, FlushE ? PCE : PCD, PCE);
-  
+  // also need to hold the old value not an erroneously fetched PC.
+  flopenr #(`XLEN) PCDReg(clk, reset, ~StallD, FlushD ? PCE : PCF, PCD);
+  flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, FlushD & FlushE ? PCF : FlushE ? PCE : PCD, PCE);
+  flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, FlushD & FlushE & FlushM ? PCF : FlushE & FlushM ? PCE : FlushM ? PCM : PCE, PCM_temp);
+  flopenr #(`XLEN) PCMOldReg(clk, reset, InstrValidM, PCM_temp, PCMOld);
+  assign PCM = InstrValidM ? PCM_temp : PCMOld;
   
 
   task automatic bin_search_min;
@@ -111,7 +118,11 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
 
   // preload
 //  initial begin
-  always @ (posedge reset) begin
+  always @ (negedge reset) begin
+	// clear out the old mapping between programs.
+	foreach(ProgramAddrMapMemory[i]) ProgramAddrMapMemory.delete(i);	
+	foreach(ProgramLabelMapMemory[i]) ProgramLabelMapMemory.delete(i);
+
     $readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
     // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
 
@@ -147,11 +158,11 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
       $display("Cannot open file %s for reading.", ProgramLabelMapFile);
     end
     $fclose(ProgramLabelMapFP);
-    
+
   end
 
-  always @(PCE) begin
-    bin_search_min(PCE, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
+  always @(PCM) begin
+    bin_search_min(PCM, ProgramAddrMapLineCount, ProgramAddrMapMemory, FunctionAddr, ProgramAddrIndex);
   end
 
   logic OrReducedAdr, AnyUnknown;

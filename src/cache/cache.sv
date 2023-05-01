@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// cache 
+// cache.sv
 //
 // Written: Ross Thompson ross1728@gmail.com
 // Created: 7 July 2021
@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, DCACHE) (
+module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -39,7 +39,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic [1:0]             CacheAtomic,       // Atomic operation
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
-  input  logic [11:0]            NextAdr,           // Virtual address, but we only use the lower 12 bits.
+  input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [`PA_BITS-1:0]    PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
   input  logic [WORDLEN-1:0]     CacheWriteData,    // Data to write to cache (D$ only)
@@ -50,7 +50,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   output logic                   CacheMiss,         // Cache miss
   output logic                   CacheAccess,       // Cache access
   // lsu control
-  input  logic                   SelHPTW,           // Use PAdr from Hardware Page Table Walker rather than NextAdr
+  input  logic                   SelHPTW,           // Use PAdr from Hardware Page Table Walker rather than NextSet
   // Bus fsm interface
   input  logic                   CacheBusAck,       // Bus operation completed
   input  logic                   SelBusBeat,        // Word in cache line comes from BeatCount
@@ -74,9 +74,9 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
 
   logic                          SelAdr;
   logic [1:0]                    AdrSelMuxSel;
-  logic [SETLEN-1:0]             CAdr;
+  logic [SETLEN-1:0]             CacheSet;
   logic [LINELEN-1:0]            LineWriteData;
-  logic                          ClearValid, ClearDirty, SetDirty, SetValid;
+  logic                          ClearDirty, SetDirty, SetValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
   logic                          CacheHit;
@@ -96,34 +96,33 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   logic [LINELEN-1:0]            ReadDataLine, ReadDataLineCache;
   logic                          SelFetchBuffer;
   logic                          CacheEn;
-  logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
-  logic [LINELEN/8-1:0]          LineByteMask, DemuxedByteMask, FetchBufferByteSel;
-  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0]          WordOffsetAddr;
+  logic [LINELEN/8-1:0]          LineByteMask;
+  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
 
-  genvar                      index;
+  genvar                         index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Read Path
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Choose read address (CAdr).  Normally use NextAdr, but use PAdr during stalls
+  // Choose read address (CacheSet).  Normally use NextSet, but use PAdr during stalls
   // and FlushAdr when handling D$ flushes
   // The icache must update to the newest PCNextF on flush as it is probably a trap.  Trap
   // sets PCNextF to XTVEC and the icache must start reading the instruction.
-  assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((DCACHE == 0) & FlushStage))};
-  mux3 #(SETLEN) AdrSelMux(NextAdr[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
-    AdrSelMuxSel, CAdr);
+  assign AdrSelMuxSel = {SelFlush, ((SelAdr | SelHPTW) & ~((READ_ONLY_CACHE == 1) & FlushStage))};
+  mux3 #(SETLEN) AdrSelMux(NextSet[SETTOP-1:OFFSETLEN], PAdr[SETTOP-1:OFFSETLEN], FlushAdr,
+    AdrSelMuxSel, CacheSet);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, DCACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CAdr, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
+  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
+    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
+    .SetValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .CacheEn, .FlushStage, .HitWay, .ValidWay, .VictimWay, .CAdr, .LRUWriteEn(LRUWriteEn & ~FlushStage),
+      .clk, .reset, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
       .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
@@ -138,7 +137,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   or_rows #(NUMWAYS, TAGLEN) TagAOMux(.a(TagWay), .y(Tag));
 
   // Data cache needs to choose word offset from PAdr or BeatCount to writeback dirty lines
-  if(DCACHE) 
+  if(!READ_ONLY_CACHE) 
     mux2 #(LOGBWPL) WordAdrrMux(.d0(PAdr[$clog2(LINELEN/8) - 1 : $clog2(MUXINTERVAL/8)]), 
       .d1(BeatCount), .s(SelBusBeat),
       .y(WordOffsetAddr)); 
@@ -154,55 +153,70 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   
   // Bus address for fetch, writeback, or flush writeback
   mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
-		.d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-		.s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+    .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
+    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
+  if(!READ_ONLY_CACHE) begin:WriteSelLogic
+    logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
+    logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
 
-  // Adjust byte mask from word to cache line
-  onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
-  for(index = 0; index < 2**LOGCWPL; index++) begin
-    assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
-  end
-  assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
-  assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
+    // Adjust byte mask from word to cache line
+    onehotdecoder #(LOGCWPL) adrdec(.bin(PAdr[LOGCWPL+LOGLLENBYTES-1:LOGLLENBYTES]), .decoded(MemPAdrDecoded));
+    for(index = 0; index < 2**LOGCWPL; index++) begin
+      assign DemuxedByteMask[(index+1)*(WORDLEN/8)-1:index*(WORDLEN/8)] = MemPAdrDecoded[index] ? ByteMask : '0;
+    end
+    assign FetchBufferByteSel = SetValid & ~SetDirty ? '1 : ~DemuxedByteMask;  // If load miss set all muxes to 1.
 
-  // Merge write data into fetched cache line for store miss
-  for(index = 0; index < LINELEN/8; index++) begin
-    mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-      .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+    // Merge write data into fetched cache line for store miss
+    for(index = 0; index < LINELEN/8; index++) begin
+      mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
+        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+    end
+    assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
-   
+  else
+    begin:WriteSelLogic
+      // No need for this mux if the cache does not handle writes.
+      assign LineWriteData = FetchBuffer;
+      assign LineByteMask = '1;
+    end
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  // Flush address (line number)
-  assign ResetOrFlushCntRst = reset | FlushCntRst;
-  flopenr #(SETLEN) FlushAdrReg(clk, ResetOrFlushCntRst, FlushAdrCntEn, FlushAdrP1, NextFlushAdr);
-  mux2    #(SETLEN) FlushAdrMux(NextFlushAdr, FlushAdrP1, FlushAdrCntEn, FlushAdr);
-  assign FlushAdrP1 = NextFlushAdr + 1'b1;
-  assign FlushAdrFlag = (NextFlushAdr == FLUSHADRTHRESHOLD[SETLEN-1:0]);
+  if (!READ_ONLY_CACHE) begin:flushlogic
+    // Flush address (line number)
+    assign ResetOrFlushCntRst = reset | FlushCntRst;
+    flopenr #(SETLEN) FlushAdrReg(clk, ResetOrFlushCntRst, FlushAdrCntEn, FlushAdrP1, NextFlushAdr);
+    mux2    #(SETLEN) FlushAdrMux(NextFlushAdr, FlushAdrP1, FlushAdrCntEn, FlushAdr);
+    assign FlushAdrP1 = NextFlushAdr + 1'b1;
+    assign FlushAdrFlag = (NextFlushAdr == FLUSHADRTHRESHOLD[SETLEN-1:0]);
 
-  // Flush way
-  flopenl #(NUMWAYS) FlushWayReg(clk, FlushWayCntEn, ResetOrFlushCntRst, {{NUMWAYS-1{1'b0}}, 1'b1}, NextFlushWay, FlushWay);
-  if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
-  else            assign NextFlushWay = FlushWay[NUMWAYS-1];
-  assign FlushWayFlag = FlushWay[NUMWAYS-1];
-
+    // Flush way
+    flopenl #(NUMWAYS) FlushWayReg(clk, FlushWayCntEn, ResetOrFlushCntRst, {{NUMWAYS-1{1'b0}}, 1'b1}, NextFlushWay, FlushWay);
+    if(NUMWAYS > 1) assign NextFlushWay = {FlushWay[NUMWAYS-2:0], FlushWay[NUMWAYS-1]};
+    else            assign NextFlushWay = FlushWay[NUMWAYS-1];
+    assign FlushWayFlag = FlushWay[NUMWAYS-1];
+  end // block: flushlogic
+  else begin:flushlogic
+    assign FlushWayFlag = 0;
+    assign FlushAdrFlag = 0;
+  end
+   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  cachefsm cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
-		.FlushStage, .CacheRW, .CacheAtomic, .Stall,
- 		.CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
-		.CacheMiss, .CacheAccess, .SelAdr, 
-		.ClearValid, .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
-		.FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
-		.FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
+  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
+    .FlushStage, .CacheRW, .CacheAtomic, .Stall,
+    .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
+    .CacheMiss, .CacheAccess, .SelAdr, 
+    .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
+    .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
+    .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CacheEn, .LRUWriteEn);
 endmodule 

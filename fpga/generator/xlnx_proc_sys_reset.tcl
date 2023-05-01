@@ -7,7 +7,9 @@ set boardName $::env(XILINX_BOARD)
 set ipName xlnx_proc_sys_reset
 
 create_project $ipName . -force -part $partNumber
-set_property board_part $boardName [current_project]
+if {$boardName!="ArtyA7"} {
+    set_property board_part $boardName [current_project]
+}
 
 # really just these two lines which change
 create_ip -name proc_sys_reset -vendor xilinx.com -library ip -module_name $ipName

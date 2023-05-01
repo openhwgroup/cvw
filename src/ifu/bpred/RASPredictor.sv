@@ -31,13 +31,13 @@
 
 module RASPredictor #(parameter int StackSize = 16 )(
   input  logic             clk,
-  input  logic 			   reset, 
-  input  logic 			   StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
-  input  logic       	   WrongBPRetD,                      // Prediction class is wrong
-  input  logic      	   RetD,
-  input  logic             RetE, JalE,                  // Instr class
-  input  logic             BPRetF,
-  input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a jal
+  input  logic             reset, 
+  input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
+  input  logic             BPReturnWrongD,                      // Prediction class is wrong
+  input  logic             ReturnD,
+  input  logic             ReturnE, CallE,                  // Instr class
+  input  logic             BPReturnF,
+  input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a call
   output logic [`XLEN-1:0] RASPCF                                     // Top of the stack
    );
 
@@ -48,27 +48,27 @@ module RASPredictor #(parameter int StackSize = 16 )(
   logic [StackSize-1:0]     [`XLEN-1:0] memory;
   integer        index;
 
-  logic 		 PopF;
-  logic 		 PushE;
-  logic 		 RepairD;
-  logic 		 IncrRepairD, DecRepairD;
+  logic      PopF;
+  logic      PushE;
+  logic      RepairD;
+  logic      IncrRepairD, DecRepairD;
   
-  logic 		 DecrementPtr;
-  logic 		 FlushedRetDE;
-  logic 		 WrongPredRetD;
+  logic      DecrementPtr;
+  logic      FlushedReturnDE;
+  logic      WrongPredReturnD;
   
   
-  assign PopF = BPRetF & ~StallD & ~FlushD;
-  assign PushE = JalE & ~StallM & ~FlushM;
+  assign PopF = BPReturnF & ~StallD & ~FlushD;
+  assign PushE = CallE & ~StallM & ~FlushM;
 
-  assign WrongPredRetD = (WrongBPRetD) & ~StallE & ~FlushE;
-  assign FlushedRetDE = (~StallE & FlushE & RetD) | (~StallM & FlushM & RetE); // flushed ret
+  assign WrongPredReturnD = (BPReturnWrongD) & ~StallE & ~FlushE;
+  assign FlushedReturnDE = (~StallE & FlushE & ReturnD) | (FlushM & ReturnE); // flushed return
 
-  assign RepairD = WrongPredRetD | FlushedRetDE ;
+  assign RepairD = WrongPredReturnD | FlushedReturnDE ;
 
-  assign IncrRepairD = FlushedRetDE | (WrongPredRetD & ~RetD); // Guessed it was a ret, but its not
+  assign IncrRepairD = FlushedReturnDE | (WrongPredReturnD & ~ReturnD); // Guessed it was a return, but its not
 
-  assign DecRepairD =  WrongPredRetD & RetD; // Guessed non ret but is a ret.
+  assign DecRepairD =  WrongPredReturnD & ReturnD; // Guessed non return but is a return.
     
   assign CounterEn = PopF | PushE | RepairD;
 
@@ -85,7 +85,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<StackSize; index++)
-		memory[index] <= {`XLEN{1'b0}};
+    memory[index] <= {`XLEN{1'b0}};
     end else if(PushE) begin
       memory[NextPtr] <= #1 PCLinkE;
     end

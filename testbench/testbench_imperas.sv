@@ -27,7 +27,7 @@
 
 `include "wally-config.vh"
 
-// This is set from the commsnd line script
+// This is set from the command line script
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
@@ -73,7 +73,7 @@ module testbench;
   string 		testName;
   string memfilename, testDir, adrstr, elffilename;
 
-  logic [31:0] GPIOPinsIn, GPIOPinsOut, GPIOPinsEn;
+  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
 
   logic        SDCCLK;
@@ -121,10 +121,11 @@ module testbench;
       
     end
 
-  rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
-  wallyTracer wallyTracer(rvvi);
-
 `ifdef USE_IMPERAS_DV
+
+    rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
+    wallyTracer wallyTracer(rvvi);
+
     trace2log idv_trace2log(rvvi);
     trace2cov idv_trace2cov(rvvi);
 
@@ -138,16 +139,19 @@ module testbench;
                ) idv_trace2api(rvvi);
 
     initial begin 
+      
       MAX_ERRS = 3;
 
       // Initialize REF (do this before initializing the DUT)
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
         msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
       end
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,         "riscv.ovpworld.org"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,           "riscv"));
-      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,        "RV64GC"));
-      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH, 39));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_NAME,              "riscv"));
+      void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VARIANT,           "RV64GC"));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MODEL_ADDRESS_BUS_WIDTH,     39));
+      void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
+
       if (!rvviRefInit(elffilename)) begin
         msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
       end
@@ -158,6 +162,30 @@ module testbench;
       void'(rvviRefCsrSetVolatile(0, 32'hC02));   // INSTRET
       void'(rvviRefCsrSetVolatile(0, 32'hB02));   // MINSTRET
       void'(rvviRefCsrSetVolatile(0, 32'hC01));   // TIME
+      
+      // cannot predict this register due to latency between
+      // pending and taken
+      void'(rvviRefCsrSetVolatile(0, 32'h344));   // MIP
+      void'(rvviRefCsrSetVolatile(0, 32'h144));   // SIP
+
+      // Privileges for PMA are set in the imperas.ic
+      // volatile (IO) regions are defined here
+      // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
+      if (`CLINT_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE)));
+      end
+      if (`GPIO_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
+      end
+      if (`UART_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
+      end
+      if (`PLIC_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE)));
+      end
+      if (`SDC_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(`SDC_BASE, (`SDC_BASE + `SDC_RANGE)));
+      end
 
       if(`XLEN==32) begin
           void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
@@ -166,15 +194,16 @@ module testbench;
           void'(rvviRefCsrSetVolatile(0, 32'hB82));   // MINSTRETH
       end
 
-      // Enable the trace2log module
-      if ($value$plusargs("TRACE2LOG_ENABLE=%d", TRACE2LOG_ENABLE)) begin
-        msgnote($sformatf("%m @ t=%0t: TRACE2LOG_ENABLE is %0d", $time, TRACE2LOG_ENABLE));
-      end
+      void'(rvviRefCsrSetVolatile(0, 32'h104));   // SIE - Temporary!!!!
       
-      if ($value$plusargs("TRACE2COV_ENABLE=%d", TRACE2COV_ENABLE)) begin
-        msgnote($sformatf("%m @ t=%0t: TRACE2COV_ENABLE is %0d", $time, TRACE2COV_ENABLE));
-      end
     end
+
+    always @(dut.core.MTimerInt)   void'(rvvi.net_push("MTimerInterrupt",    dut.core.MTimerInt));
+    always @(dut.core.MExtInt)     void'(rvvi.net_push("MExternalInterrupt", dut.core.MExtInt));
+    always @(dut.core.SExtInt)     void'(rvvi.net_push("SExternalInterrupt", dut.core.SExtInt));
+    always @(dut.core.MSwInt)      void'(rvvi.net_push("MSWInterrupt",       dut.core.MSwInt));
+    always @(dut.core.priv.priv.csr.csrs.csrs.STimerInt) void'(rvvi.net_push("STimerInterrupt", dut.core.priv.priv.csr.csrs.csrs.STimerInt));
+
 
     final begin
       void'(rvviRefShutdown());
@@ -190,7 +219,7 @@ module testbench;
 
 
   // instantiate device to be tested
-  assign GPIOPinsIn = 0;
+  assign GPIOIN = 0;
   assign UARTSin = 1;
 
   if(`EXT_MEM_SUPPORTED) begin
@@ -220,7 +249,7 @@ module testbench;
 
   wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn,
+                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
@@ -374,7 +403,7 @@ module DCacheFlushFSM
                            // these dirty bit selections would be needed if dirty is moved inside the tag array.
           //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
           //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS+tagstart]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].CacheDataMem.RAM[index]),
+          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.RAM[index]),
           .index(index),
           .cacheWord(cacheWord),
           .CacheData(CacheData[way][index][cacheWord]),

@@ -32,29 +32,28 @@
 module ahbinterface #(
   parameter LSU = 0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
 )( 
-  input logic 							HCLK, HRESETn,
+  input  logic                          HCLK, HRESETn,
   // bus interface
-  input logic 							HREADY,       // AHB peripheral ready
-  output logic [1:0] 					HTRANS,       // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
-  output logic 							HWRITE,       // AHB 0: Read operation 1: Write operation 
-  input logic [`XLEN-1:0] 				HRDATA,       // AHB read data
-  output logic [`XLEN-1:0] 				HWDATA,       // AHB write data
-  output logic [`XLEN/8-1:0] 			HWSTRB,       // AHB byte mask
+  input  logic                          HREADY,       // AHB peripheral ready
+  output logic [1:0]                    HTRANS,       // AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
+  output logic                          HWRITE,       // AHB 0: Read operation 1: Write operation 
+  input  logic [`XLEN-1:0]              HRDATA,       // AHB read data
+  output logic [`XLEN-1:0]              HWDATA,       // AHB write data
+  output logic [`XLEN/8-1:0]            HWSTRB,       // AHB byte mask
   
   // lsu/ifu interface
-  input logic 							Stall,        // Core pipeline is stalled
-  input logic 							Flush,        // Pipeline stage flush. Prevents bus transaction from starting
-  input logic [1:0] 					BusRW,        // Memory operation read/write control: 10: read, 01: write
-  input logic [`XLEN/8-1:0] 			ByteMask,     // Bytes enables within a word
-  input logic [`XLEN-1:0] 				WriteData,    // IEU write data for a store
-  output logic 							BusStall,     // Bus is busy with an in flight memory operation
-  output logic 							BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
+  input  logic                          Stall,        // Core pipeline is stalled
+  input  logic                          Flush,        // Pipeline stage flush. Prevents bus transaction from starting
+  input  logic [1:0]                    BusRW,        // Memory operation read/write control: 10: read, 01: write
+  input  logic [`XLEN/8-1:0]            ByteMask,     // Bytes enables within a word
+  input  logic [`XLEN-1:0]              WriteData,    // IEU write data for a store
+  output logic                          BusStall,     // Bus is busy with an in flight memory operation
+  output logic                          BusCommitted, // Bus is busy with an in flight memory operation and it is not safe to take an interrupt
   output logic [(LSU ? `XLEN : 32)-1:0] FetchBuffer   // Register to hold HRDATA after arriving from the bus
 );
   
-  logic                       CaptureEn;
-
-  localparam                  LEN = (LSU ? `XLEN : 32);   // 32 bits for IFU, XLEN for LSU
+  logic                                 CaptureEn;
+  localparam                            LEN = (LSU ? `XLEN : 32);   // 32 bits for IFU, XLEN for LSU
   
   flopen #(LEN) fb(.clk(HCLK), .en(CaptureEn), .d(HRDATA[LEN-1:0]), .q(FetchBuffer));
 
@@ -70,4 +69,5 @@ module ahbinterface #(
   busfsm busfsm(.HCLK, .HRESETn, .Flush, .BusRW,
     .BusCommitted, .Stall, .BusStall, .CaptureEn, .HREADY,
     .HTRANS, .HWRITE);
+
 endmodule

@@ -32,7 +32,7 @@
 `include "wally-config.vh"
 
 module decompress (
-  input  logic [31:0] InstrRawD,         // 32-bit instruction or raw un decompress instruction
+  input  logic [31:0] InstrRawD,         // 32-bit instruction or raw compressed 16-bit instruction in bottom half
   output logic [31:0] InstrD,            // Decompressed instruction
   output logic        IllegalCompInstrD  // Invalid decompressed instruction
 );
@@ -44,7 +44,7 @@ module decompress (
   logic [5:0]         immSH;
   logic [1:0]         op;
     
-  // Extrac op and register source/destination fields
+  // Extract op and register source/destination fields
   assign instr16 = InstrRawD[15:0]; // instruction is already aligned
   assign op = instr16[1:0];
   assign rds1 = instr16[11:7];
@@ -126,7 +126,7 @@ module decompress (
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
                     else // if (instr16[6:5] == 2'b11) 
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                  else if (instr16[12:10] == 3'b111 & `XLEN > 32)
+                  else if (`XLEN > 32) //if (instr16[12:10] == 3'b111) full truth table no need to check [12:10] 
                     if (instr16[6:5] == 2'b00)
                       InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
                     else if (instr16[6:5] == 2'b01)
@@ -135,10 +135,16 @@ module decompress (
                       IllegalCompInstrD = 1;
                       InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
                     end
+                  // coverage off
+                  // are excluding this branch from coverage because in rv64gc XLEN is always 64 and thus greater than 32 bits
+                  // This branch will only be taken if instr16[12:10] == 3'b111 and 'XLEN !> 32, because all other 
+                  // possible values for instr16[12:10] are covered by branches above. XLEN !> 32 
+                  // will never occur in rv64gc so this branch can not be covered
                   else begin // illegal instruction
                     IllegalCompInstrD = 1;
                     InstrD = {16'b0, instr16}; // preserve instruction for mtval on trap
                   end
+                  // coverage on
         5'b01101: InstrD = {immCJ, 5'b00000, 7'b1101111}; // c.j
         5'b01110: InstrD = {immCB[11:5], 5'b00000, rs1p, 3'b000, immCB[4:0], 7'b1100011}; // c.beqz
         5'b01111: InstrD = {immCB[11:5], 5'b00000, rs1p, 3'b001, immCB[4:0], 7'b1100011}; // c.bnez

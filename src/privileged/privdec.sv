@@ -69,7 +69,10 @@ module privdec (
     logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
     floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+  // coverage off -item e 1 -fecexprrow 1
+  // WFI Timout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
     assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+  // coverage on
   end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////

@@ -35,12 +35,12 @@ module wallypipelinedcore (
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [`AHBW-1:0]       HRDATA,
+   input  logic [`AHBW-1:0]      HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [`PA_BITS-1:0]    HADDR,
-   output logic [`AHBW-1:0]       HWDATA,
-   output logic [`XLEN/8-1:0]     HWSTRB,
+   output logic [`PA_BITS-1:0]   HADDR,
+   output logic [`AHBW-1:0]      HWDATA,
+   output logic [`XLEN/8-1:0]    HWSTRB,
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -58,17 +58,17 @@ module wallypipelinedcore (
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
-  logic [`XLEN-1:0]               ForwardedSrcAE, ForwardedSrcBE;
-  logic [`XLEN-1:0] 			  SrcAM;
+  logic [`XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
+  logic [`XLEN-1:0]              SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
-  logic [31:0] 					 InstrM;
-  logic [`XLEN-1:0]               PCFSpill, PCE, PCLinkE;
-  logic [`XLEN-1:0] 			  PCM;
-  logic [`XLEN-1:0]               CSRReadValW, MDUResultW;
-  logic [`XLEN-1:0]               UnalignedPCNextF, PCNext2F;
-  logic [1:0] 					 MemRWM;
-  logic 						 InstrValidD, InstrValidE, InstrValidM;
+  logic [31:0]                   InstrM, InstrOrigM;
+  logic [`XLEN-1:0]              PCSpillF, PCE, PCLinkE;
+  logic [`XLEN-1:0]              PCM;
+  logic [`XLEN-1:0]              CSRReadValW, MDUResultW;
+  logic [`XLEN-1:0]              UnalignedPCNextF, PC2NextF;
+  logic [1:0]                    MemRWM;
+  logic                          InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
   logic                          IllegalBaseInstrD, IllegalFPUInstrD, IllegalIEUFPUInstrD;
   logic                          InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM;
@@ -86,8 +86,8 @@ module wallypipelinedcore (
   logic [4:0]                    RdE, RdM, RdW;
   logic                          FPUStallD;
   logic                          FWriteIntE;
-  logic [`FLEN-1:0]               FWriteDataM;
-  logic [`XLEN-1:0]               FIntResM;  
+  logic [`FLEN-1:0]              FWriteDataM;
+  logic [`XLEN-1:0]              FIntResM;  
   logic [`XLEN-1:0]              FCvtIntResW; 
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
@@ -95,22 +95,22 @@ module wallypipelinedcore (
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
-  logic [`XLEN-1:0]               FIntDivResultW;
+  logic [`XLEN-1:0]              FIntDivResultW;
 
   // memory management unit signals
   logic                          ITLBWriteF;
   logic                          ITLBMissF;
-  logic [`XLEN-1:0]               SATP_REGW;
+  logic [`XLEN-1:0]              SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
-  logic  [1:0]                   STATUS_MPP, STATUS_FS;
+  logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
-  logic [`XLEN-1:0]               PTE;
+  logic [`XLEN-1:0]              PTE;
   logic [1:0]                    PageType;
-  logic                          sfencevmaM, WFIStallM;
+  logic                          sfencevmaM;
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [`XLEN-1:0]           PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
+  var logic [`PA_BITS-3:0]       PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0];
 
   // IMem stalls
@@ -119,14 +119,14 @@ module wallypipelinedcore (
 
   // cpu lsu interface
   logic [2:0]                    Funct3M;
-  logic [`XLEN-1:0]               IEUAdrE;
-  logic [`XLEN-1:0]  WriteDataM;
-  logic [`XLEN-1:0]  IEUAdrM;  
-  logic [`LLEN-1:0]               ReadDataW;  
+  logic [`XLEN-1:0]              IEUAdrE;
+  logic [`XLEN-1:0]              WriteDataM;
+  logic [`XLEN-1:0]              IEUAdrM;  
+  logic [`LLEN-1:0]              ReadDataW;  
   logic                          CommittedM;
 
   // AHB ifu interface
-  logic [`PA_BITS-1:0]            IFUHADDR;
+  logic [`PA_BITS-1:0]           IFUHADDR;
   logic [2:0]                    IFUHBURST;
   logic [1:0]                    IFUHTRANS;
   logic [2:0]                    IFUHSIZE;
@@ -134,19 +134,19 @@ module wallypipelinedcore (
   logic                          IFUHREADY;
   
   // AHB LSU interface
-  logic [`PA_BITS-1:0]            LSUHADDR;
-  logic [`XLEN-1:0]               LSUHWDATA;
-  logic [`XLEN/8-1:0]             LSUHWSTRB;
+  logic [`PA_BITS-1:0]           LSUHADDR;
+  logic [`XLEN-1:0]              LSUHWDATA;
+  logic [`XLEN/8-1:0]            LSUHWSTRB;
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
-  logic                          BPPredWrongE, BPPredWrongM;
-  logic                          DirPredictionWrongM;
-  logic                          BTBPredPCWrongM;
+  logic                          BPWrongE, BPWrongM;
+  logic                          BPDirPredWrongM;
+  logic                          BTAWrongM;
   logic                          RASPredPCWrongM;
-  logic                          PredictionInstrClassWrongM;
+  logic                          IClassWrongM;
   logic [3:0]                    InstrClassM;
-  logic                          InstrAccessFaultF, HPTWInstrAccessFaultM;
+  logic                          InstrAccessFaultF, HPTWInstrAccessFaultF;
   logic [2:0]                    LSUHSIZE;
   logic [2:0]                    LSUHBURST;
   logic [1:0]                    LSUHTRANS;
@@ -160,24 +160,25 @@ module wallypipelinedcore (
   logic                          BigEndianM;
   logic                          FCvtIntE;
   logic                          CommittedF;
-  logic 						 JumpOrTakenBranchM;
-  logic 						 BranchD, BranchE, JumpD, JumpE;
-  
+  logic                          BranchD, BranchE, JumpD, JumpE;
+  logic                          DCacheStallM, ICacheStallF;
+  logic                          wfiM, IntPendingM;
+
   // instruction fetch unit: PC, branch prediction, instruction cache
   ifu ifu(.clk, .reset,
     .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
     .InstrValidM, .InstrValidE, .InstrValidD,
-    .BranchD, .BranchE, .JumpD, .JumpE,
+    .BranchD, .BranchE, .JumpD, .JumpE, .ICacheStallF,
     // Fetch
-    .HRDATA, .PCFSpill, .IFUHADDR, .PCNext2F,
+    .HRDATA, .PCSpillF, .IFUHADDR, .PC2NextF,
     .IFUStallF, .IFUHBURST, .IFUHTRANS, .IFUHSIZE, .IFUHREADY, .IFUHWRITE,
     .ICacheAccess, .ICacheMiss,
     // Execute
-    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPPredWrongE,  .BPPredWrongM, 
+    .PCLinkE, .PCSrcE, .IEUAdrE, .IEUAdrM, .PCE, .BPWrongE,  .BPWrongM, 
     // Mem
     .CommittedF, .UnalignedPCNextF, .InvalidateICacheM, .CSRWriteFenceM,
-    .InstrD, .InstrM, .PCM, .InstrClassM, .DirPredictionWrongM, .JumpOrTakenBranchM,
-    .BTBPredPCWrongM, .RASPredPCWrongM, .PredictionInstrClassWrongM,
+    .InstrD, .InstrM, .InstrOrigM, .PCM, .InstrClassM, .BPDirPredWrongM,
+    .BTAWrongM, .RASPredPCWrongM, .IClassWrongM,
     // Faults out
     .IllegalBaseInstrD, .IllegalFPUInstrD, .InstrPageFaultF, .IllegalIEUFPUInstrD, .InstrMisalignedFaultM,
     // mmu management
@@ -200,7 +201,7 @@ module wallypipelinedcore (
      .WriteDataM, // Write data to LSU
      .Funct3M, // size and signedness to LSU
      .SrcAM, // to privilege and fpu
-     .RdE, .RdM, .FIntResM, .InvalidateICacheM, .FlushDCacheM,
+     .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
      .CSRReadValW, .MDUResultW, .FIntDivResultW, .RdW, .ReadDataW(ReadDataW[`XLEN-1:0]),
@@ -208,7 +209,7 @@ module wallypipelinedcore (
      // hazards
      .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
-     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .StoreStallD); 
+     .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
 
   lsu lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
@@ -231,35 +232,26 @@ module wallypipelinedcore (
     .STATUS_MPRV,  // from csr            
     .STATUS_MPP,  // from csr      
     .sfencevmaM,                   // connects to privilege
+    .DCacheStallM,                  // connects to privilege
     .LoadPageFaultM,   // connects to privilege
     .StoreAmoPageFaultM, // connects to privilege
     .LoadMisalignedFaultM, // connects to privilege
     .LoadAccessFaultM,         // connects to privilege
-    .HPTWInstrAccessFaultM,         // connects to privilege
+    .HPTWInstrAccessFaultF,         // connects to privilege
     .StoreAmoMisalignedFaultM, // connects to privilege
     .StoreAmoAccessFaultM,     // connects to privilege
     .InstrUpdateDAF,
-    .PCFSpill, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
+    .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
 
   if(`BUS_SUPPORTED) begin : ebu
     ebu ebu(// IFU connections
       .clk, .reset,
       // IFU interface
-      .IFUHADDR,
-      .IFUHBURST, 
-      .IFUHTRANS, 
-      .IFUHREADY,
-      .IFUHSIZE,
+      .IFUHADDR, .IFUHBURST, .IFUHTRANS, .IFUHREADY, .IFUHSIZE,
       // LSU interface
-      .LSUHADDR,
-      .LSUHWDATA,
-      .LSUHWSTRB,
-      .LSUHSIZE,
-      .LSUHBURST,
-      .LSUHTRANS,
-      .LSUHWRITE,
-      .LSUHREADY,
+      .LSUHADDR, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, .LSUHBURST,
+      .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
       // BUS interface
       .HREADY, .HRESP, .HCLK, .HRESETn,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST,
@@ -268,13 +260,13 @@ module wallypipelinedcore (
 
   // global stall and flush control  
   hazard  hzu(
-    .BPPredWrongE, .CSRWriteFenceM, .RetM, .TrapM,
+    .BPWrongE, .CSRWriteFenceM, .RetM, .TrapM,
     .LoadStallD, .StoreStallD, .MDUStallD, .CSRRdStallD,
     .LSUStallM, .IFUStallF,
     .FCvtIntStallD, .FPUStallD,
     .DivBusyE, .FDivBusyE,
     .EcallFaultM, .BreakpointFaultM,
-    .WFIStallM,
+    .wfiM, .IntPendingM,
     // Stall & flush outputs
     .StallF, .StallD, .StallE, .StallM, .StallW,
     .FlushD, .FlushE, .FlushM, .FlushW);    
@@ -284,30 +276,31 @@ module wallypipelinedcore (
     privileged priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
-      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PCNext2F,
-      .InstrM, .CSRReadValW, .UnalignedPCNextF,
-      .RetM, .TrapM, .sfencevmaM,
+      .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
+      .InstrM, .InstrOrigM, .CSRReadValW, .UnalignedPCNextF,
+      .RetM, .TrapM, .sfencevmaM, .InvalidateICacheM, .DCacheStallM, .ICacheStallF,
       .InstrValidM, .CommittedM, .CommittedF,
-      .FRegWriteM, .LoadStallD,
-      .DirPredictionWrongM, .BTBPredPCWrongM, .BPPredWrongM,
-      .RASPredPCWrongM, .PredictionInstrClassWrongM,
-      .InstrClassM, .JumpOrTakenBranchM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
+      .FRegWriteM, .LoadStallD, .StoreStallD,
+      .BPDirPredWrongM, .BTAWrongM, .BPWrongM,
+      .RASPredPCWrongM, .IClassWrongM, .DivBusyE, .FDivBusyE,
+      .InstrClassM, .DCacheMiss, .DCacheAccess, .ICacheMiss, .ICacheAccess, .PrivilegedM,
       .InstrPageFaultF, .LoadPageFaultM, .StoreAmoPageFaultM,
       .InstrMisalignedFaultM, .IllegalIEUFPUInstrD, 
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,
       .MTimerInt, .MExtInt, .SExtInt, .MSwInt,
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
-      .InstrAccessFaultF, .HPTWInstrAccessFaultM, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
+      .InstrAccessFaultF, .HPTWInstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
       .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .WFIStallM, .BigEndianM);
+      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW = 0;
-    assign UnalignedPCNextF = PCNext2F;
+    assign UnalignedPCNextF = PC2NextF;
     assign RetM = 0;
     assign TrapM = 0;
-    assign WFIStallM = 0;
+    assign wfiM = 0;
+    assign IntPendingM = 0;
     assign sfencevmaM = 0;
     assign BigEndianM = 0;
   end

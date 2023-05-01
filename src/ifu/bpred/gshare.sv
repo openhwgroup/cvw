@@ -35,37 +35,37 @@ module gshare #(parameter k = 10,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      DirPredictionF, 
-  output logic            DirPredictionWrongE,
+  output logic [1:0]      BPDirPredF, 
+  output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM, PCW,
+  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 
-  logic                    MatchF, MatchD, MatchE, MatchM, MatchW;
-  logic                    MatchX;
+  logic                   MatchF, MatchD, MatchE, MatchM, MatchW;
+  logic                   MatchX;
 
-  logic [1:0]              TableDirPredictionF, DirPredictionD, DirPredictionE, ForwardNewDirPredictionF;
-  logic [1:0]              NewDirPredictionE, NewDirPredictionM, NewDirPredictionW;
+  logic [1:0]             TableBPDirPredF, BPDirPredD, BPDirPredE, FwdNewDirPredF;
+  logic [1:0]             NewBPDirPredE, NewBPDirPredM, NewBPDirPredW;
 
-  logic [k-1:0]            IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
+  logic [k-1:0]           IndexNextF, IndexF, IndexD, IndexE, IndexM, IndexW;
 
-  logic [k-1:0]            GHRF, GHRD, GHRE, GHRM;
-  logic [k-1:0]            GHRNextM, GHRNextF;
-  logic                    PCSrcM;
+  logic [k-1:0]           GHRF, GHRD, GHRE, GHRM;
+  logic [k-1:0]           GHRNextM, GHRNextF;
+  logic                   PCSrcM;
 
   if(TYPE == 1) begin
-	assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
-	assign IndexF = GHRF ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
-	assign IndexD = GHRD ^ {PCD[k+1] ^ PCD[1], PCD[k:2]};
-	assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
-	assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
+  assign IndexNextF = GHRNextF ^ {PCNextF[k+1] ^ PCNextF[1], PCNextF[k:2]};
+  assign IndexF = GHRF ^ {PCF[k+1] ^ PCF[1], PCF[k:2]};
+  assign IndexD = GHRD ^ {PCD[k+1] ^ PCD[1], PCD[k:2]};
+  assign IndexE = GHRE ^ {PCE[k+1] ^ PCE[1], PCE[k:2]};
+  assign IndexM = GHRM ^ {PCM[k+1] ^ PCM[1], PCM[k:2]};
   end else if(TYPE == 0) begin
-	assign IndexNextF = GHRNextF;
-	assign IndexF = GHRF;
-	assign IndexD = GHRD;
-	assign IndexE = GHRE;
-	assign IndexM = GHRM;
+  assign IndexNextF = GHRNextF;
+  assign IndexF = GHRF;
+  assign IndexD = GHRD;
+  assign IndexE = GHRE;
+  assign IndexM = GHRM;
   end
 
   flopenrc #(k) IndexWReg(clk, reset, FlushW, ~StallW, IndexM, IndexW);
@@ -76,33 +76,33 @@ module gshare #(parameter k = 10,
   assign MatchW = BranchW & ~FlushW & (IndexF == IndexW);
   assign MatchX = MatchD | MatchE | MatchM | MatchW;
 
-  assign ForwardNewDirPredictionF = MatchD ? {2{DirPredictionD[1]}} :
-                                   MatchE ? {NewDirPredictionE} :
-                                   MatchM ? {NewDirPredictionM} :
-								   NewDirPredictionW ;
+  assign FwdNewDirPredF = MatchD ? {2{BPDirPredD[1]}} :
+                                   MatchE ? {NewBPDirPredE} :
+                                   MatchM ? {NewBPDirPredM} :
+                   NewBPDirPredW ;
   
-  assign DirPredictionF = MatchX ? ForwardNewDirPredictionF : TableDirPredictionF;
+  assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(~StallM & ~FlushM),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
-    .rd1(TableDirPredictionF),
+    .rd1(TableBPDirPredF),
     .wa2(IndexM),
-    .wd2(NewDirPredictionM),
+    .wd2(NewBPDirPredM),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
-  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, DirPredictionD, DirPredictionE);
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
-  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
-  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);
-  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewDirPredictionM, NewDirPredictionW);
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
+  flopenrc #(2) NewPredictionRegW(clk, reset,  FlushW, ~StallW, NewBPDirPredM, NewBPDirPredW);
 
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
+  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
 
-  assign GHRNextF = BPBranchF ? {DirPredictionF[1], GHRF[k-1:1]} : GHRF;
-  assign GHRF = BranchD  ? {DirPredictionD[1], GHRD[k-1:1]} : GHRD;
+  assign GHRNextF = BPBranchF ? {BPDirPredF[1], GHRF[k-1:1]} : GHRF;
+  assign GHRF = BranchD  ? {BPDirPredD[1], GHRD[k-1:1]} : GHRD;
   assign GHRD = BranchE ? {PCSrcE, GHRE[k-1:1]} : GHRE;
   assign GHRE = BranchM ? {PCSrcM, GHRM[k-1:1]} : GHRM;
 

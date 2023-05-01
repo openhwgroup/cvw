@@ -29,37 +29,36 @@
 `include "wally-config.vh"
 
 module fdivsqrtstage4 (
-  input  logic [`DIVb-1:0] D,
-  input  logic [`DIVb+3:0]  DBar, D2, DBar2,
-  input  logic [`DIVb:0] U, UM,
-  input  logic [`DIVb+3:0]  WS, WC,
+  input  logic [`DIVb+3:0] D, DBar, D2, DBar2,
+  input  logic [`DIVb:0]   U,UM,
+  input  logic [`DIVb+3:0] WS, WC,
   input  logic [`DIVb+1:0] C,
-  input  logic SqrtE, j1,
+  input  logic             SqrtE, j1,
   output logic [`DIVb+1:0] CNext,
-  output logic un,
-  output logic [`DIVb:0] UNext, UMNext, 
-  output logic [`DIVb+3:0]  WSNext, WCNext
+  output logic             un,
+  output logic [`DIVb:0]   UNext, UMNext, 
+  output logic [`DIVb+3:0] WSNext, WCNext
 );
 
-  logic [`DIVb+3:0]  Dsel;
-  logic [3:0]     udigit;
-  logic [`DIVb+3:0] F;
-  logic [`DIVb+3:0] AddIn;
-  logic [4:0] Smsbs;
-  logic [2:0] Dmsbs;
-  logic [7:0] WCmsbs, WSmsbs;
-  logic CarryIn;
-  logic [`DIVb+3:0]  WSA, WCA;
+  logic [`DIVb+3:0]        Dsel;
+  logic [3:0]              udigit;
+  logic [`DIVb+3:0]        F;
+  logic [`DIVb+3:0]        AddIn;
+  logic [4:0]              Smsbs;
+  logic [2:0]              Dmsbs;
+  logic [7:0]              WCmsbs, WSmsbs;
+  logic                    CarryIn;
+  logic [`DIVb+3:0]        WSA, WCA;
 
   // Digit Selection logic
   // u encoding:
-	// 1000 = +2
-	// 0100 = +1
-	// 0000 =  0
-	// 0010 = -1
-	// 0001 = -2
-  assign Smsbs = U[`DIVb:`DIVb-4];
-  assign Dmsbs = D[`DIVb-1:`DIVb-3];
+  // 1000 = +2
+  // 0100 = +1
+  // 0000 =  0
+  // 0010 = -1
+  // 0001 = -2
+  assign Smsbs  = U[`DIVb:`DIVb-4];
+  assign Dmsbs  = D[`DIVb-1:`DIVb-3];
   assign WCmsbs = WC[`DIVb+3:`DIVb-4];
   assign WSmsbs = WS[`DIVb+3:`DIVb-4];
 
@@ -75,7 +74,7 @@ module fdivsqrtstage4 (
       4'b1000: Dsel = DBar2;
       4'b0100: Dsel = DBar;
       4'b0000: Dsel = '0;
-      4'b0010: Dsel = {3'b0, 1'b1, D};
+      4'b0010: Dsel = D;
       4'b0001: Dsel = D2;
       default: Dsel = 'x;
     endcase

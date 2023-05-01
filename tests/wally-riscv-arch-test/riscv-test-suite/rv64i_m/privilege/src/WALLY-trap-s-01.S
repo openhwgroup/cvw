@@ -56,12 +56,12 @@ GOTO_U_MODE // Causes S mode ecall
 GOTO_S_MODE // Causes U mode ecall
 
 
-// some interrupts excluded becaus writing MIP is illegal from S mode
-jal cause_s_soft_interrupt 
+// some interrupts excluded because writing MIP is illegal from S mode and writing SIP is only possible when delegated, which is tested below (priv spec 3.1.9)
+//jal cause_s_soft_interrupt 
 jal cause_m_soft_interrupt
 jal cause_m_time_interrupt
 li a3, 0x40 // this interrupt involves a time loop waiting for the interrupt to go off.
-// since interrupts are not always enabled,
+// since interrupts are not always enabled, we need to make it stop after a certain number of loops, which is the number in a3
 jal cause_s_ext_interrupt_GPIO
 li a3, 0x40
 jal cause_m_ext_interrupt

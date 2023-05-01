@@ -49,14 +49,14 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   output logic                Idempotent,         // PMA indicates memory address is idempotent
   output logic                SelTIM,             // Select a tightly integrated memory
   // Faults
-  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM,  // access fault sources
-  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,        // page fault sources
-  output logic                UpdateDA,                                                // page fault due to setting dirty or access bit
-  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,             // misaligned fault sources
+  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM, // access fault sources
+  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,       // page fault sources
+  output logic                UpdateDA,                                                  // page fault due to setting dirty or access bit
+  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,            // misaligned fault sources
   // PMA checker signals
-  input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
-  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],                        // PMP configuration
-  input var logic [`XLEN-1:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                        // PMP addresses
+  input  logic                AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
+  input var logic [7:0]       PMPCFG_ARRAY_REGW[`PMP_ENTRIES-1:0],                       // PMP configuration
+  input var logic [`PA_BITS-3:0] PMPADDR_ARRAY_REGW[`PMP_ENTRIES-1:0]                    // PMP addresses
 );
 
   logic [`PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB                   
@@ -86,7 +86,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
           .Translate, .TLBPageFault, .UpdateDA);
-  end else begin:tlb// just pass address through as physical
+  end else begin:tlb // just pass address through as physical
     assign Translate = 0;
     assign TLBMiss = 0;
     assign TLBHit = 1; // *** is this necessary
@@ -108,12 +108,12 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
     .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
-  if (`PMP_ENTRIES > 0) 
+  if (`PMP_ENTRIES > 0) begin : pmp
     pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
-  else begin
+  end else begin
     assign PMPInstrAccessFaultF     = 0;
     assign PMPStoreAmoAccessFaultM  = 0;
     assign PMPLoadAccessFaultM      = 0;

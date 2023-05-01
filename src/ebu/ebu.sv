@@ -52,27 +52,26 @@ module ebu (
   output logic                LSUHREADY, // AHB peripheral. Never gated as LSU always has priority
 
   // AHB-Lite external signals
-  output logic HCLK, HRESETn, 
-  input  logic HREADY,               // AHB peripheral ready
-  input  logic HRESP,                // AHB peripheral response. 0: OK 1: Error
-  output logic [`PA_BITS-1:0] HADDR, // AHB address to peripheral after arbitration
-  output logic [`AHBW-1:0] HWDATA,   // AHB Write data after arbitration
-  output logic [`XLEN/8-1:0] HWSTRB, // AHB byte write enables after arbitration
-  output logic HWRITE,               // AHB transaction direction after arbitration
-  output logic [2:0] HSIZE,          // AHB transaction size after arbitration
-  output logic [2:0] HBURST,         // AHB burst length after arbitration
-  output logic [3:0] HPROT,          // AHB protection.  Wally does not use
-  output logic [1:0] HTRANS,         // AHB transaction request after arbitration
-  output logic HMASTLOCK             // AHB master lock.  Wally does not use
+  output logic                HCLK, HRESETn, 
+  input  logic                HREADY,    // AHB peripheral ready
+  input  logic                HRESP,     // AHB peripheral response. 0: OK 1: Error
+  output logic [`PA_BITS-1:0] HADDR,     // AHB address to peripheral after arbitration
+  output logic [`AHBW-1:0]    HWDATA,    // AHB Write data after arbitration
+  output logic [`XLEN/8-1:0]  HWSTRB,    // AHB byte write enables after arbitration
+  output logic                HWRITE,    // AHB transaction direction after arbitration
+  output logic [2:0]          HSIZE,     // AHB transaction size after arbitration
+  output logic [2:0]          HBURST,    // AHB burst length after arbitration
+  output logic [3:0]          HPROT,     // AHB protection.  Wally does not use
+  output logic [1:0]          HTRANS,    // AHB transaction request after arbitration
+  output logic                HMASTLOCK  // AHB master lock.  Wally does not use
 );
 
-
   logic                       LSUDisable;
-  logic 					  LSUSelect;
+  logic                       LSUSelect;
   logic                       IFUSave;
-  logic 					  IFURestore;
-  logic 					  IFUDisable;
-  logic 					  IFUSelect;
+  logic                       IFURestore;
+  logic                       IFUDisable;
+  logic                       IFUSelect;
 
   logic [`PA_BITS-1:0]        IFUHADDROut;
   logic [1:0]                 IFUHTRANSOut;
@@ -87,10 +86,8 @@ module ebu (
   logic                       LSUHWRITEOut;
 
   logic                       IFUReq;
-  logic 					  LSUReq;
+  logic                       LSUReq;
 
-  
-  
   assign HCLK = clk;
   assign HRESETn = ~reset;
 
@@ -101,14 +98,14 @@ module ebu (
   // input stages and muxing for IFU and LSU
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  controllerinputstage IFUInput(.HCLK, .HRESETn, .Save(IFUSave), .Restore(IFURestore), .Disable(IFUDisable),
+  controllerinput IFUInput(.HCLK, .HRESETn, .Save(IFUSave), .Restore(IFURestore), .Disable(IFUDisable),
     .Request(IFUReq),
     .HWRITEIn(1'b0), .HSIZEIn(IFUHSIZE), .HBURSTIn(IFUHBURST), .HTRANSIn(IFUHTRANS), .HADDRIn(IFUHADDR),
     .HWRITEOut(IFUHWRITEOut), .HSIZEOut(IFUHSIZEOut), .HBURSTOut(IFUHBURSTOut), .HREADYOut(IFUHREADY),
     .HTRANSOut(IFUHTRANSOut), .HADDROut(IFUHADDROut), .HREADYIn(HREADY));
 
   // LSU always has priority so there should never be a need to save and restore the address phase inputs.
-  controllerinputstage #(0) LSUInput(.HCLK, .HRESETn, .Save(1'b0), .Restore(1'b0), .Disable(LSUDisable),
+  controllerinput #(0) LSUInput(.HCLK, .HRESETn, .Save(1'b0), .Restore(1'b0), .Disable(LSUDisable),
     .Request(LSUReq),
     .HWRITEIn(LSUHWRITE), .HSIZEIn(LSUHSIZE), .HBURSTIn(LSUHBURST), .HTRANSIn(LSUHTRANS), .HADDRIn(LSUHADDR), .HREADYOut(LSUHREADY),
     .HWRITEOut(LSUHWRITEOut), .HSIZEOut(LSUHSIZEOut), .HBURSTOut(LSUHBURSTOut),
@@ -129,7 +126,7 @@ module ebu (
   // HRDATA is sent to all controllers at the core level.
 
   ebufsmarb ebufsmarb(.HCLK, .HRESETn, .HBURST, .HREADY, .LSUReq, .IFUReq, .IFUSave,
-		      .IFURestore, .IFUDisable, .IFUSelect, .LSUDisable, .LSUSelect);
+          .IFURestore, .IFUDisable, .IFUSelect, .LSUDisable, .LSUSelect);
   
 endmodule
 

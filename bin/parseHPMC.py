@@ -30,6 +30,18 @@ import sys
 import matplotlib.pyplot as plt
 import re
 
+#RefData={'twobitCModel' :(['6', '8', '10', '12', '14', '16'],
+#                          [11.0680836450622, 8.53864970807778, 7.59565430177984, 6.38741598498948, 5.83662961500838, 5.83662961500838]),
+#         'gshareCModel' : (['6', '8', '10', '12', '14', '16'],
+#                           [14.5859173702079, 12.3634674403619, 10.5806018170154, 8.38831266973592, 6.37097544620762, 3.52638362703015])
+#}
+
+RefData = [('twobitCModel6', 11.0501534891674), ('twobitCModel8', 8.51829052266352), ('twobitCModel10', 7.56775222626483),
+           ('twobitCModel12', 6.31366834586515), ('twobitCModel14', 5.72699936834177), ('twobitCModel16', 5.72699936834177),
+           ('gshareCModel6', 14.5731555979574), ('gshareCModel8', 12.3155658100497), ('gshareCModel10', 10.4589596630561),
+           ('gshareCModel12', 8.25796055444401), ('gshareCModel14', 6.23093702707613), ('gshareCModel16', 3.34001125650374)]
+
+
 def ComputeCPI(benchmark):
     'Computes and inserts CPI into benchmark stats.'
     (nameString, opt, dataDict) = benchmark
@@ -39,20 +51,20 @@ def ComputeCPI(benchmark):
 def ComputeBranchDirMissRate(benchmark):
     'Computes and inserts branch direction miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    branchDirMissRate = 100.0 * int(dataDict['Br Dir Wrong']) / int(dataDict['Br Count'])
+    branchDirMissRate = 100.0 * int(dataDict['BP Dir Wrong']) / int(dataDict['Br Count'])
     dataDict['BDMR'] = branchDirMissRate
 
 def ComputeBranchTargetMissRate(benchmark):
     'Computes and inserts branch target miss prediction rate.'
     # *** this is wrong in the verilog test bench
     (nameString, opt, dataDict) = benchmark
-    branchTargetMissRate = 100.0 * int(dataDict['Br Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump, JR, Jal']) + int(dataDict['ret']))
+    branchTargetMissRate = 100.0 * int(dataDict['BP Target Wrong']) / (int(dataDict['Br Count']) + int(dataDict['Jump Not Return']))
     dataDict['BTMR'] = branchTargetMissRate
 
 def ComputeRASMissRate(benchmark):
     'Computes and inserts return address stack miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
-    RASMPR = 100.0 * int(dataDict['RAS Wrong']) / int(dataDict['ret'])
+    RASMPR = 100.0 * int(dataDict['RAS Wrong']) / int(dataDict['Return'])
     dataDict['RASMPR'] = RASMPR
 
 def ComputeInstrClassMissRate(benchmark):
@@ -67,11 +79,27 @@ def ComputeICacheMissRate(benchmark):
     ICacheMR = 100.0 * int(dataDict['I Cache Miss']) / int(dataDict['I Cache Access'])
     dataDict['ICacheMR'] = ICacheMR
 
+def ComputeICacheMissTime(benchmark):
+    'Computes and inserts instruction class miss prediction rate.'
+    (nameString, opt, dataDict) = benchmark
+    cycles = int(dataDict['I Cache Miss'])
+    if(cycles == 0): ICacheMR = 0
+    else: ICacheMR = 100.0 * int(dataDict['I Cache Cycles']) / cycles
+    dataDict['ICacheMT'] = ICacheMR
+    
 def ComputeDCacheMissRate(benchmark):
     'Computes and inserts instruction class miss prediction rate.'
     (nameString, opt, dataDict) = benchmark
     DCacheMR = 100.0 * int(dataDict['D Cache Miss']) / int(dataDict['D Cache Access'])
     dataDict['DCacheMR'] = DCacheMR
+
+def ComputeDCacheMissTime(benchmark):
+    'Computes and inserts instruction class miss prediction rate.'
+    (nameString, opt, dataDict) = benchmark
+    cycles = int(dataDict['D Cache Miss'])
+    if(cycles == 0): DCacheMR = 0
+    else: DCacheMR = 100.0 * int(dataDict['D Cache Cycles']) / cycles
+    dataDict['DCacheMT'] = DCacheMR
 
 def ComputeAll(benchmarks):
     for benchmark in benchmarks:
@@ -81,23 +109,23 @@ def ComputeAll(benchmarks):
         ComputeRASMissRate(benchmark)
         ComputeInstrClassMissRate(benchmark)
         ComputeICacheMissRate(benchmark)
+        ComputeICacheMissTime(benchmark)
         ComputeDCacheMissRate(benchmark)
+        ComputeDCacheMissTime(benchmark)
     
 def printStats(benchmark):
     (nameString, opt, dataDict) = benchmark
-    CPI = dataDict['CPI']
-    BDMR = dataDict['BDMR']
-    BTMR = dataDict['BTMR']
-    RASMPR = dataDict['RASMPR']
     print('Test', nameString)
     print('Compile configuration', opt)
-    print('CPI \t\t\t  %1.2f' % CPI)
-    print('Branch Dir Pred Miss Rate %2.2f' % BDMR)
-    print('Branch Target Pred Miss Rate %2.2f' % BTMR)
-    print('RAS Miss Rate \t\t  %1.2f' % RASMPR)
+    print('CPI \t\t\t  %1.2f' % dataDict['CPI'])
+    print('Branch Dir Pred Miss Rate %2.2f' % dataDict['BDMR'])
+    print('Branch Target Pred Miss Rate %2.2f' % dataDict['BTMR'])
+    print('RAS Miss Rate \t\t  %1.2f' % dataDict['RASMPR'])
     print('Instr Class Miss Rate  %1.2f' % dataDict['ClassMPR'])
     print('I Cache Miss Rate  %1.4f' % dataDict['ICacheMR'])
+    print('I Cache Miss Ave Cycles  %1.4f' % dataDict['ICacheMT'])
     print('D Cache Miss Rate  %1.4f' % dataDict['DCacheMR'])
+    print('D Cache Miss Ave Cycles  %1.4f' % dataDict['DCacheMT'])
     print()
 
 def ProcessFile(fileName):
@@ -156,7 +184,7 @@ def GeometricAverage(benchmarks, field):
     return Product ** (1.0/index)
 
 def ComputeGeometricAverage(benchmarks):
-    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR']
+    fields = ['BDMR', 'BTMR', 'RASMPR', 'ClassMPR', 'ICacheMR', 'DCacheMR', 'CPI', 'ICacheMT', 'DCacheMT']
     AllAve = {}
     for field in fields:
         Product = 1
@@ -213,6 +241,7 @@ if(sys.argv[1] == '-b'):
     index = 1
     if(summery == 0):
         #print('Number of plots', size)
+
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             (names, values) = FormatToPlot(currBenchmark)
@@ -225,6 +254,8 @@ if(sys.argv[1] == '-b'):
             index += 1
     else:
         combined = benchmarkDict['All_']
+        # merge the reference data into rtl data
+        combined.extend(RefData)
         (name, value) = FormatToPlot(combined)
         lst = []
         dct = {}
@@ -248,11 +279,11 @@ if(sys.argv[1] == '-b'):
                     dct[PredType] = (currSize, currPercent)
         print(dct)
         fig, axes = plt.subplots()
-        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x'}
-        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue'}
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x', 'twobitCModel' : 'x', 'gshareCModel' : '*'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue', 'twobitCModel' : 'gray', 'gshareCModel' : 'dodgerblue'}
         for cat in dct:
             (x, y) = dct[cat]
-            x=[int(2**int(v)/4) for v in x]
+            x=[int(2**int(v)) for v in x]
             print(x, y)
             axes.plot(x,y, color=colors[cat])
             axes.scatter(x,y, label=cat, marker=marker[cat], color=colors[cat])
@@ -262,9 +293,9 @@ if(sys.argv[1] == '-b'):
         axes.legend(loc='upper left')
         axes.set_xscale("log")
         axes.set_ylabel('Prediction Accuracy')
-        axes.set_xlabel('Size (bytes)')
-        axes.set_xticks([16, 64, 256, 1024, 4096, 16384])        
-        axes.set_xticklabels([16, 64, 256, 1024, 4096, 16384])
+        axes.set_xlabel('Entries')
+        axes.set_xticks([64, 256, 1024, 4096, 16384, 65536])        
+        axes.set_xticklabels([64, 256, 1024, 4096, 16384, 65536])
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
     plt.show()
     
@@ -272,7 +303,9 @@ if(sys.argv[1] == '-b'):
 else:
     # steps 1 and 2
     benchmarks = ProcessFile(sys.argv[1])
-    ComputeAverage(benchmarks)
+    print(benchmarks[0])
+    ComputeAll(benchmarks)
+    ComputeGeometricAverage(benchmarks)
     # 3 process into useful data
     # cache hit rates
     # cache fill time
@@ -280,7 +313,6 @@ else:
     # hazard counts
     # CPI
     # instruction distribution
-    ComputeAll(benchmarks)
     for benchmark in benchmarks:
         printStats(benchmark)
 

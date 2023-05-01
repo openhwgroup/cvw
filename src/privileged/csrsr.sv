@@ -52,7 +52,7 @@ module csrsr (
   logic [1:0] STATUS_SXL, STATUS_UXL, STATUS_XS, STATUS_FS_INT, STATUS_MPP_NEXT;
   logic STATUS_MPIE, STATUS_SPIE, STATUS_UBE, STATUS_SBE, STATUS_MBE;
   logic nextMBE, nextSBE;
-
+  
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
@@ -68,7 +68,7 @@ module csrsr (
                           STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
                           STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,
                           /*1'b0, STATUS_MIE, 1'b0*/ 3'b0, STATUS_SIE, 1'b0};
-	  assign MSTATUSH_REGW = '0; // *** does not exist when XLEN=64, but don't want it to have an undefined value.  Spec is not clear what it should be.
+    assign MSTATUSH_REGW = '0; // *** does not exist when XLEN=64, but don't want it to have an undefined value.  Spec is not clear what it should be.
   end else begin: csrsr32 // RV32
     assign MSTATUS_REGW = {STATUS_SD, 8'b0,
                           STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,
@@ -93,7 +93,7 @@ module csrsr (
 
   // harwired STATUS bits
   assign STATUS_TSR = `S_SUPPORTED & STATUS_TSR_INT; // override reigster with 0 if supervisor mode not supported
-  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override reigster with 0 if only machine mode supported
+  assign STATUS_TW = (`S_SUPPORTED | `U_SUPPORTED) & STATUS_TW_INT; // override register with 0 if only machine mode supported
   assign STATUS_TVM = `S_SUPPORTED & STATUS_TVM_INT; // override reigster with 0 if supervisor mode not supported
   assign STATUS_MXR = `S_SUPPORTED & STATUS_MXR_INT; // override reigster with 0 if supervisor mode not supported
 /*  assign STATUS_UBE = 0; // little-endian
@@ -122,7 +122,10 @@ module csrsr (
     logic [1:0] EndiannessPrivMode;
     always_comb begin
       if      (SelHPTW)                                  EndiannessPrivMode = `S_MODE;
+      //coverage off -item c 1 -feccondrow 1
+      // status.MPRV always gets reset upon leaving machine mode, so MPRV will never be high when out of machine mode
       else if (PrivilegeModeW == `M_MODE & STATUS_MPRV)  EndiannessPrivMode = STATUS_MPP;
+      //coverage on
       else                                               EndiannessPrivMode = PrivilegeModeW;
 
       case (EndiannessPrivMode) 
@@ -174,8 +177,7 @@ module csrsr (
         STATUS_MIE <= #1 STATUS_MPIE; // restore global interrupt enable
         STATUS_MPIE <= #1 1; // 
         STATUS_MPP <= #1 `U_SUPPORTED ? `U_MODE : `M_MODE; // set MPP to lowest supported privilege level
-        // STATUS_MPRV_INT <= #1 0; // changed to this by Ross to solve Linux bug; might have been s spurious disagreement with QEMU
-        STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == `M_MODE); // Seems to be given by page 21 of spec.
+         STATUS_MPRV_INT <= #1 STATUS_MPRV_INT & (STATUS_MPP == `M_MODE); // page 21 of privileged spec.
       end else if (sretM) begin
         STATUS_SIE <= #1 STATUS_SPIE; // restore global interrupt enable
         STATUS_SPIE <= #1 `S_SUPPORTED; 
@@ -198,9 +200,12 @@ module csrsr (
         STATUS_UBE <= #1 CSRWriteValM[6]  & `U_SUPPORTED & `BIGENDIAN_SUPPORTED;
         STATUS_MBE <= #1 nextMBE;
         STATUS_SBE <= #1 nextSBE;
+      // coverage off
+      // MSTATUSH only exists in 32-bit configurations, will not be hit on rv64gc
       end else if (WriteMSTATUSHM) begin
         STATUS_MBE <= #1 CSRWriteValM[5] & `BIGENDIAN_SUPPORTED;
         STATUS_SBE <= #1 CSRWriteValM[4] & `S_SUPPORTED & `BIGENDIAN_SUPPORTED;
+      // coverage on
       end else if (WriteSSTATUSM) begin // write a subset of the STATUS bits
         STATUS_MXR_INT <= #1 CSRWriteValM[19];
         STATUS_SUM_INT <= #1 CSRWriteValM[18];

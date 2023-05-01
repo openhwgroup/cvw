@@ -27,21 +27,46 @@
 `define IMPERASTEST   "0"
 `define RISCVARCHTEST "1"
 `define WALLYTEST "2"
-`define MYIMPERASTEST   "3"
-`define COREMARK "4"
-`define EMBENCH "5"
-`define CUSTOM "6"
-// *** remove MYIMPERASTEST cases when ported 
+`define COREMARK "3"
+`define EMBENCH "4"
+`define CUSTOM "5"
+`define COVERAGE "6"
 
 string tvpaths[] = '{
-    "../addins/imperas-riscv-tests/work/",
+    "$RISCV/imperas-riscv-tests/work/",
     "../tests/riscof/work/riscv-arch-test/",
     "../tests/riscof/work/wally-riscv-arch-test/",
-    "../tests/imperas-riscv-tests/work/",
     "../benchmarks/coremark/work/",
     "../addins/embench-iot/",
-    "../tests/custom/work/"
+    "../tests/custom/work/",
+    "../tests/coverage/"
     };
+
+  string coverage64gc[] = '{
+    `COVERAGE,
+    "ieu",
+    "ebu",
+    "csrwrites",
+    "priv",
+    "ifu",
+    "fpu",
+    "lsu",
+    "vm64check",
+    "tlbASID",
+    "tlbGLB",
+    "tlbMP",
+    "tlbGP",
+    "tlbTP",
+    "ifuCamlineWrite",
+    "dcache1",
+    "dcache2",
+    "pmp",
+    "pmpcfg",
+    "pmpcfg1",
+    "pmpcfg2",
+    "pmppriority",
+    "pmpadrdecs"
+  };
 
   string coremark[] = '{
     `COREMARK,
@@ -881,12 +906,52 @@ string imperas32f[] = '{
     "rv32i_m/Zifencei/src/Fencei.S"
     };
 
-  string arch32ba[] = '{
+  string arch32zba[] = '{
     `RISCVARCHTEST,
-    // *** unclear why add.uw isn't in the list
-    "rv64i_m/B/src/sh1add-01.S",
-    "rv64i_m/B/src/sh1add-02.S",
-    "rv64i_m/B/src/sh1add-013.S"
+    "rv32i_m/B/src/sh1add-01.S",
+    "rv32i_m/B/src/sh2add-01.S",
+    "rv32i_m/B/src/sh3add-01.S"
+  };
+
+  string arch32zbb[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/max-01.S",
+    "rv32i_m/B/src/maxu-01.S",
+    "rv32i_m/B/src/min-01.S",
+    "rv32i_m/B/src/minu-01.S",
+    "rv32i_m/B/src/orcb_32-01.S",
+    "rv32i_m/B/src/rev8_32-01.S",
+    "rv32i_m/B/src/andn-01.S",
+    "rv32i_m/B/src/orn-01.S",
+    "rv32i_m/B/src/xnor-01.S",
+    "rv32i_m/B/src/zext.h_32-01.S",
+    "rv32i_m/B/src/sext.b-01.S",
+    "rv32i_m/B/src/sext.h-01.S",
+    "rv32i_m/B/src/clz-01.S",
+    "rv32i_m/B/src/cpop-01.S",
+    "rv32i_m/B/src/ctz-01.S",
+    "rv32i_m/B/src/ror-01.S",
+    "rv32i_m/B/src/rori-01.S",
+    "rv32i_m/B/src/rol-01.S"
+  };
+
+  string arch32zbc[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/clmul-01.S",
+    "rv32i_m/B/src/clmulh-01.S",
+    "rv32i_m/B/src/clmulr-01.S"
+  };
+
+  string arch32zbs[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/B/src/bclr-01.S",
+    "rv32i_m/B/src/bclri-01.S",
+    "rv32i_m/B/src/bext-01.S",
+    "rv32i_m/B/src/bexti-01.S",
+    "rv32i_m/B/src/binv-01.S",
+    "rv32i_m/B/src/binvi-01.S",
+    "rv32i_m/B/src/bset-01.S",
+    "rv32i_m/B/src/bseti-01.S"
   };
 
   string arch64m[] = '{
@@ -1003,6 +1068,28 @@ string imperas32f[] = '{
 
   string arch64f[] = '{
     `RISCVARCHTEST,
+    "rv64i_m/F/src/fdiv_b1-01.S",
+    "rv64i_m/F/src/fdiv_b20-01.S",
+    "rv64i_m/F/src/fdiv_b2-01.S",
+    "rv64i_m/F/src/fdiv_b21-01.S",
+    "rv64i_m/F/src/fdiv_b3-01.S",
+    "rv64i_m/F/src/fdiv_b4-01.S",
+    "rv64i_m/F/src/fdiv_b5-01.S",
+    "rv64i_m/F/src/fdiv_b6-01.S",
+    "rv64i_m/F/src/fdiv_b7-01.S",
+    "rv64i_m/F/src/fdiv_b8-01.S",
+    "rv64i_m/F/src/fdiv_b9-01.S",
+    "rv64i_m/F/src/fsqrt_b1-01.S",
+    "rv64i_m/F/src/fsqrt_b20-01.S",
+    "rv64i_m/F/src/fsqrt_b2-01.S",
+    "rv64i_m/F/src/fsqrt_b3-01.S",
+    "rv64i_m/F/src/fsqrt_b4-01.S",
+    "rv64i_m/F/src/fsqrt_b5-01.S",
+    "rv64i_m/F/src/fsqrt_b7-01.S",
+    "rv64i_m/F/src/fsqrt_b8-01.S",
+    "rv64i_m/F/src/fsqrt_b9-01.S",
+
+
     "rv64i_m/F/src/fadd_b10-01.S",
     "rv64i_m/F/src/fadd_b1-01.S",
     "rv64i_m/F/src/fadd_b11-01.S",
@@ -1154,6 +1241,28 @@ string imperas32f[] = '{
 
   string arch64d[] = '{
     `RISCVARCHTEST,
+    // for speed
+    "rv64i_m/D/src/fdiv.d_b1-01.S",
+    "rv64i_m/D/src/fdiv.d_b20-01.S",
+    "rv64i_m/D/src/fdiv.d_b2-01.S",
+    "rv64i_m/D/src/fdiv.d_b21-01.S",
+    "rv64i_m/D/src/fdiv.d_b3-01.S",
+    "rv64i_m/D/src/fdiv.d_b4-01.S",
+    "rv64i_m/D/src/fdiv.d_b5-01.S",
+    "rv64i_m/D/src/fdiv.d_b6-01.S",
+    "rv64i_m/D/src/fdiv.d_b7-01.S",
+    "rv64i_m/D/src/fdiv.d_b8-01.S",
+    "rv64i_m/D/src/fdiv.d_b9-01.S",
+    "rv64i_m/D/src/fsqrt.d_b1-01.S",
+    "rv64i_m/D/src/fsqrt.d_b20-01.S",
+    "rv64i_m/D/src/fsqrt.d_b2-01.S",
+    "rv64i_m/D/src/fsqrt.d_b3-01.S",
+    "rv64i_m/D/src/fsqrt.d_b4-01.S",
+    "rv64i_m/D/src/fsqrt.d_b5-01.S",
+    "rv64i_m/D/src/fsqrt.d_b7-01.S",
+    "rv64i_m/D/src/fsqrt.d_b8-01.S",
+    "rv64i_m/D/src/fsqrt.d_b9-01.S",
+
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
@@ -1324,6 +1433,65 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fssub.d_b5-01.S",
     "rv64i_m/D/src/fssub.d_b7-01.S",
     "rv64i_m/D/src/fssub.d_b8-01.S"
+};
+
+string arch64zba[] = '{
+      `RISCVARCHTEST,
+      "rv64i_m/B/src/slli.uw-01.S",
+      "rv64i_m/B/src/add.uw-01.S",
+      "rv64i_m/B/src/sh1add-01.S",
+      "rv64i_m/B/src/sh2add-01.S",
+      "rv64i_m/B/src/sh3add-01.S",
+      "rv64i_m/B/src/sh1add.uw-01.S",
+      "rv64i_m/B/src/sh2add.uw-01.S",
+      "rv64i_m/B/src/sh3add.uw-01.S"
+  };
+
+string arch64zbb[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/max-01.S",
+    "rv64i_m/B/src/maxu-01.S",
+    "rv64i_m/B/src/min-01.S",
+    "rv64i_m/B/src/minu-01.S",
+    "rv64i_m/B/src/orcb_64-01.S",
+    "rv64i_m/B/src/rev8-01.S",
+    "rv64i_m/B/src/andn-01.S",
+    "rv64i_m/B/src/orn-01.S",
+    "rv64i_m/B/src/xnor-01.S",
+    "rv64i_m/B/src/zext.h-01.S",
+    "rv64i_m/B/src/sext.b-01.S",
+    "rv64i_m/B/src/sext.h-01.S",
+    "rv64i_m/B/src/clz-01.S",
+    "rv64i_m/B/src/clzw-01.S",
+    "rv64i_m/B/src/cpop-01.S",
+    "rv64i_m/B/src/cpopw-01.S",
+    "rv64i_m/B/src/ctz-01.S",
+    "rv64i_m/B/src/ctzw-01.S",
+    "rv64i_m/B/src/rolw-01.S",
+    "rv64i_m/B/src/ror-01.S",
+    "rv64i_m/B/src/rori-01.S",
+    "rv64i_m/B/src/roriw-01.S",
+    "rv64i_m/B/src/rorw-01.S",
+    "rv64i_m/B/src/rol-01.S"
+};
+
+string arch64zbc[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/clmul-01.S",
+    "rv64i_m/B/src/clmulh-01.S",
+    "rv64i_m/B/src/clmulr-01.S"
+};
+
+string arch64zbs[] = '{
+    `RISCVARCHTEST,
+    "rv64i_m/B/src/bclr-01.S",
+    "rv64i_m/B/src/bclri-01.S",
+    "rv64i_m/B/src/bext-01.S",
+    "rv64i_m/B/src/bexti-01.S",
+    "rv64i_m/B/src/binv-01.S",
+    "rv64i_m/B/src/binvi-01.S",
+    "rv64i_m/B/src/bset-01.S",
+    "rv64i_m/B/src/bseti-01.S"
 };
 
     string arch32priv[] = '{
@@ -1747,14 +1915,15 @@ string imperas32f[] = '{
  
  string wally64priv[] = '{
     `WALLYTEST,
-//    "rv64i_m/privilege/src/BUG66",
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv64i_m/privilege/src/WALLY-mie-01.S",
     "rv64i_m/privilege/src/WALLY-minfo-01.S",
     "rv64i_m/privilege/src/WALLY-misa-01.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",
-    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",
+//    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",  // run this if SVADU_SUPPORTED = 0
+//    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",  // run this if SVADU_SUPPORTED = 0
+    "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
+    "rv64i_m/privilege/src/WALLY-mmu-sv48-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
     "rv64i_m/privilege/src/WALLY-pma-01.S",
     "rv64i_m/privilege/src/WALLY-pmp-01.S",
@@ -1845,7 +2014,8 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
-    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
+//    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
+    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S",
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",
@@ -1862,17 +2032,19 @@ string imperas32f[] = '{
     "rv32i_m/privilege/src/WALLY-trap-u-01.S",
     "rv32i_m/privilege/src/WALLY-wfi-01.S",
     "rv32i_m/privilege/src/WALLY-endianness-01.S",
-    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S"
- };
-
- string wally32periph[] = '{
-    `WALLYTEST,
-    "rv32i_m/privilege/src/WALLY-periph-01.S",
+    "rv32i_m/privilege/src/WALLY-satp-invalid-01.S",
+    // These peripherals are here instead of wally32periph because they don't work on rv32imc, which lacks a PMP register to configure
     "rv32i_m/privilege/src/WALLY-gpio-01.S",
     "rv32i_m/privilege/src/WALLY-clint-01.S",
     "rv32i_m/privilege/src/WALLY-uart-01.S",
     "rv32i_m/privilege/src/WALLY-plic-01.S",
     "rv32i_m/privilege/src/WALLY-plic-s-01.S"
+
+ };
+
+ string wally32periph[] = '{
+    `WALLYTEST,
+    "rv32i_m/privilege/src/WALLY-periph-01.S"
  };
 
 

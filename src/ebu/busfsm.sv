@@ -57,20 +57,20 @@ module busfsm (
     else                  CurrState <= #1 NextState;  
   
   always_comb begin
-	  case(CurrState)
-	    ADR_PHASE: if(HREADY & |BusRW) NextState = DATA_PHASE;
-                 else                  NextState = ADR_PHASE;
-      DATA_PHASE: if(HREADY)           NextState = MEM3;
-		          else                 NextState = DATA_PHASE;
-      MEM3: if(Stall)                  NextState = MEM3;
-		    else                       NextState = ADR_PHASE;
-	    default:                       NextState = ADR_PHASE;
-	  endcase
+      case(CurrState)
+        ADR_PHASE:  if(HREADY & |BusRW) NextState = DATA_PHASE;
+                    else                NextState = ADR_PHASE;
+        DATA_PHASE: if(HREADY)          NextState = MEM3;
+                    else                NextState = DATA_PHASE;
+        MEM3:       if(Stall)           NextState = MEM3;
+                    else                NextState = ADR_PHASE;
+        default:                        NextState = ADR_PHASE;
+      endcase
   end
 
   assign BusStall = (CurrState == ADR_PHASE & |BusRW) |
-//					(CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
-					(CurrState == DATA_PHASE); 
+//                  (CurrState == DATA_PHASE & ~BusRW[0]); // possible optimization here.  fails uart test, but i'm not sure the failure is valid.
+                    (CurrState == DATA_PHASE); 
   
   assign BusCommitted = CurrState != ADR_PHASE;
 

@@ -29,33 +29,32 @@
 `include "wally-config.vh"
 
 module trap (
-  input  logic 		                             reset, 
-  input  logic 		   InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
-  input  logic 		   BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
-  input  logic 		   LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
-  input  logic 		   LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
-  input  logic 		   mretM, sretM,                                    // return instructions
-  input  logic                                 wfiM,                                            // wait for interrupt instruction
-  input  logic [1:0] 	                         PrivilegeModeW,                                  // current privilege mode
-  input  logic [11:0] MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
-  input  logic [`XLEN-1:0]                     MEDELEG_REGW,                                    // exception delegation SR
-  input  logic 		                             STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
-  input  logic 		                             InstrValidM,                                     // current instruction is valid, not flushed
-  input  logic                                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
-  output logic 		                             TrapM,                                           // Trap is occurring
-  output logic 		                             RetM,                                            // Return instruction being executed
-  output logic 		                             InterruptM,                                      // Interrupt is occurring
-  output logic 		                             IntPendingM,                                     // Interrupt is pending, might occur if enabled
-  output logic 		                             DelegateM,                                       // Delegate trap to supervisor handler
-  output logic 		                             WFIStallM,                                       // Stall due to WFI instruction
-  output logic [`LOG_XLEN-1:0]                 CauseM                                           // trap cause
+  input  logic                 reset, 
+  input  logic                 InstrMisalignedFaultM, InstrAccessFaultM, HPTWInstrAccessFaultM, IllegalInstrFaultM,
+  input  logic                 BreakpointFaultM, LoadMisalignedFaultM, StoreAmoMisalignedFaultM,
+  input  logic                 LoadAccessFaultM, StoreAmoAccessFaultM, EcallFaultM, InstrPageFaultM,
+  input  logic                 LoadPageFaultM, StoreAmoPageFaultM,              // various trap sources
+  input  logic                 mretM, sretM,                                    // return instructions
+  input  logic                 wfiM,                                            // wait for interrupt instruction
+  input  logic [1:0]           PrivilegeModeW,                                  // current privilege mode
+  input  logic [11:0]          MIP_REGW, MIE_REGW, MIDELEG_REGW,                // interrupt pending, enabled, and delegate CSRs
+  input  logic [15:0]          MEDELEG_REGW,                                    // exception delegation SR
+  input  logic                 STATUS_MIE, STATUS_SIE,                          // machine/supervisor interrupt enables
+  input  logic                 InstrValidM,                                     // current instruction is valid, not flushed
+  input  logic                 CommittedM, CommittedF,                          // LSU/IFU has committed to a bus operation that can't be interrupted
+  output logic                 TrapM,                                           // Trap is occurring
+  output logic                 RetM,                                            // Return instruction being executed
+  output logic                 InterruptM,                                      // Interrupt is occurring
+  output logic                 ExceptionM,                                      // exception is occurring
+  output logic                 IntPendingM,                                     // Interrupt is pending, might occur if enabled
+  output logic                 DelegateM,                                       // Delegate trap to supervisor handler
+  output logic [3:0]           CauseM                                           // trap cause
 );
 
-  logic                                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
-  logic                                        ExceptionM;                                      // exception is occurring
-  logic                                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
-  logic                                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
-  logic [11:0]       PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
+  logic                        MIntGlobalEnM, SIntGlobalEnM;                    // Global interupt enables
+  logic                        Committed;                                       // LSU or IFU has committed to a bus operation that can't be interrupted
+  logic                        BothInstrAccessFaultM;                           // instruction or HPTW ITLB fill caused an Instruction Access Fault
+  logic [11:0]                 PendingIntsM, ValidIntsM, EnabledIntsM;          // interrupts are pending, valid, or enabled
 
   ///////////////////////////////////////////
   // Determine pending enabled interrupts
@@ -72,9 +71,8 @@ module trap (
   assign EnabledIntsM = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
   assign ValidIntsM = {12{~Committed}} & EnabledIntsM;
   assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
-  assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM[3:0]] : MEDELEG_REGW[CauseM]) & 
+  assign DelegateM = `S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == `U_MODE | PrivilegeModeW == `S_MODE);
-  assign WFIStallM = wfiM & ~IntPendingM;
 
   ///////////////////////////////////////////
   // Trigger Traps and RET
@@ -83,11 +81,14 @@ module trap (
   ///////////////////////////////////////////
   
   assign BothInstrAccessFaultM = InstrAccessFaultM | HPTWInstrAccessFaultM;
+  // coverage off -item e 1 -fecexprrow 2
+  // excludes InstrMisalignedFaultM from coverage of this line, since misaligned instructions cannot occur in rv64gc.
   assign ExceptionM = InstrMisalignedFaultM | BothInstrAccessFaultM | IllegalInstrFaultM |
                       LoadMisalignedFaultM | StoreAmoMisalignedFaultM |
                       InstrPageFaultM | LoadPageFaultM | StoreAmoPageFaultM |
                       BreakpointFaultM | EcallFaultM |
                       LoadAccessFaultM | StoreAmoAccessFaultM;
+  // coverage on
   assign TrapM = ExceptionM | InterruptM; 
   assign RetM = mretM | sretM;
 
@@ -107,9 +108,12 @@ module trap (
     else if (InstrPageFaultM)          CauseM = 12;
     else if (BothInstrAccessFaultM)    CauseM = 1;
     else if (IllegalInstrFaultM)       CauseM = 2;
+    // coverage off
+    // Misaligned instructions cannot occur in rv64gc
     else if (InstrMisalignedFaultM)    CauseM = 0;
+    // coverage on
     else if (BreakpointFaultM)         CauseM = 3;
-    else if (EcallFaultM)              CauseM = {{(`LOG_XLEN-4){1'b0}}, {2'b10}, PrivilegeModeW};
+    else if (EcallFaultM)              CauseM = {2'b10, PrivilegeModeW};
     else if (LoadMisalignedFaultM)     CauseM = 4;
     else if (StoreAmoMisalignedFaultM) CauseM = 6;
     else if (LoadPageFaultM)           CauseM = 13;

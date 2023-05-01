@@ -150,7 +150,7 @@ module spi_apb (
     //starting with single lane module no flash control
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
-            SckDiv <= #1 11'd3;
+            SckDiv <= #1 12'd3;
             SckMode <= #1 0;
             ChipSelectID <= #1 2'b0;
             ChipSelectDef <= #1 4'b1;
@@ -158,7 +158,7 @@ module spi_apb (
             Delay0 <= #1 {8'b1,8'b1};
             Delay1 <= #1 {8'b0,8'b1};
             Format <= #1 {8'b10000000};
-            TransmitData <= #1 8'b0;
+            TransmitData[7:0] <= #1 8'b0;
             TransmitWatermark <= #1 0;
             ReceiveWatermark <= #1 0;
             InterruptEnable <= #1 0;
@@ -180,7 +180,7 @@ module spi_apb (
                     8'h28: Delay0 <= Din[15:0];
                     8'h2C: Delay1 <= Din[15:0];
                     8'h40: Format <= Din[7:0];
-                    8'h48: if (~TransmitFIFOWriteFull) TransmitData <= Din[7:0];
+                    8'h48: if (~TransmitFIFOWriteFull) TransmitData[7:0] <= Din[7:0];
                     8'h50: TransmitWatermark <= Din[2:0];
                     8'h54: ReceiveWatermark <= Din[2:0];
                     8'h70: InterruptEnable <= Din[1:0];
@@ -190,21 +190,21 @@ module spi_apb (
             InterruptPending[0] <= TransmitReadMark;
             InterruptPending[1] <= RecieveWriteMark;  
             case(Entry) // flop to sample inputs
-                8'h00: Dout <= #1 SckDiv;
-                8'h04: Dout <= #1 SckMode;
-                8'h10: Dout <= #1 ChipSelectID;
-                8'h14: Dout <= #1 ChipSelectDef;
-                8'h18: Dout <= #1 ChipSelectMode;
-                8'h28: Dout <= #1 Delay0;
-                8'h2C: Dout <= #1 Delay1;
-                8'h40: Dout <= #1 Format;
-                8'h48: Dout <= #1 {TransmitFIFOWriteFull, 8'b0};
-                8'h4C: Dout <= #1 ReceiveData;
-                8'h50: Dout <= #1 TransmitWatermark;
-                8'h54: Dout <= #1 ReceiveWatermark;
-                8'h70: Dout <= #1 InterruptEnable;
-                8'h74: Dout <= #1 InterruptPending;
-                default: Dout <= #1 0;
+                8'h00: Dout[11:0] <= #1 SckDiv;
+                8'h04: Dout[1:0] <= #1 SckMode;
+                8'h10: Dout[1:0] <= #1 ChipSelectID;
+                8'h14: Dout[3:0] <= #1 ChipSelectDef;
+                8'h18: Dout[1:0] <= #1 ChipSelectMode;
+                8'h28: Dout[15:0] <= #1 Delay0;
+                8'h2C: Dout[15:0] <= #1 Delay1;
+                8'h40: Dout[7:0] <= #1 Format;
+                8'h48: Dout[8:0] <= #1 {TransmitFIFOWriteFull, 8'b0};
+                8'h4C: Dout[8:0] <= #1 ReceiveData;
+                8'h50: Dout[2:0] <= #1 TransmitWatermark;
+                8'h54: Dout[2:0] <= #1 ReceiveWatermark;
+                8'h70: Dout[1:0] <= #1 InterruptEnable;
+                8'h74: Dout[1:0] <= #1 InterruptPending;
+                default: Dout <= #1 32'b0;
             endcase
         end
 
@@ -214,8 +214,8 @@ module spi_apb (
     always_comb
         case(Format[1:0])
             2'b00: FrameCountShifted = FrameCount;
-            2'b01: FrameCountShifted = {FrameCount[4:0], 1'b0};
-            2'b10: FrameCountShifted = {FrameCount[3:0], 2'b0};
+            2'b01: FrameCountShifted = {FrameCount[3:0], 1'b0};
+            2'b10: FrameCountShifted = {FrameCount[2:0], 2'b0};
             default: FrameCountShifted = FrameCount;
         endcase
     
@@ -246,7 +246,7 @@ module spi_apb (
     assign ReceivePenultimateFrameCount = FrameCountShifted + ReceivePenultimateFrame;
     assign ReceivePenultimateFrameBoolean = (ReceivePenultimateFrameCount >= FrameCompareProtocol);
 
-    assign SCLKDuty = (DivCounter >= (SckDiv));
+    assign SCLKDuty = (DivCounter >= {1'b0,SckDiv});
     assign Delay0Compare = SckMode[0] ? (Delay0Count >= ({Delay0[7:0], 1'b0})) : (Delay0Count >= ({Delay0[7:0], 1'b0} + 9'b1));
     assign Delay1Compare = SckMode[0] ? (Delay1Count >= (({Delay0[15:8], 1'b0}) + 9'b1)) : (Delay1Count >= ({Delay0[15:8], 1'b0}));
     assign InterCSCompare = (InterCSCount >= ({Delay1[7:0],1'b0}));
@@ -337,8 +337,9 @@ module spi_apb (
     always_ff @(posedge PCLK, negedge PRESETn, posedge Inactive)
         if (~PRESETn) HoldModeDeassert <= 0;
         else if (Inactive) HoldModeDeassert <= 0;
+        /* verilator lint_off WIDTH */
         else if (((ChipSelectMode[1:0] == 2'b10) & (Entry == (8'h18 | 8'h10) | ((Entry == 8'h14) & ((PWDATA[ChipSelectID]) != ChipSelectDef[ChipSelectID])))) & Memwrite) HoldModeDeassert <= 1;
-
+         /* verilator lint_on WIDTH */
     assign TransmitFIFOWriteIncrement = (Memwrite & (Entry == 8'h48) & ~TransmitFIFOWriteFull);
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) TransmitFIFOWriteIncrementDelay <= 0;
@@ -580,12 +581,12 @@ module TransmitShiftFSM(
         always_comb
             case(TransmitState)
                 TransmitShiftEmptyState: begin
-                    if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrameBoolean & Active0))) TransmitNextState <= TransmitShiftEmptyState;
-                    else if (~TransmitFIFOReadEmpty) TransmitNextState <= TransmitShiftNotEmptyState;
+                    if (TransmitFIFOReadEmpty | (~TransmitFIFOReadEmpty & (ReceivePenultimateFrameBoolean & Active0))) TransmitNextState = TransmitShiftEmptyState;
+                    else if (~TransmitFIFOReadEmpty) TransmitNextState = TransmitShiftNotEmptyState;
                 end
                 TransmitShiftNotEmptyState: begin
-                    if (ReceivePenultimateFrameBoolean & Active0) TransmitNextState <= TransmitShiftEmptyState;
-                    else TransmitNextState <= TransmitShiftNotEmptyState;
+                    if (ReceivePenultimateFrameBoolean & Active0) TransmitNextState = TransmitShiftEmptyState;
+                    else TransmitNextState = TransmitShiftNotEmptyState;
                 end
             endcase
         assign TransmitShiftEmpty = (TransmitNextState == TransmitShiftEmptyState);
@@ -606,10 +607,10 @@ module ReceiveShiftFSM(
         
         always_comb
             case(ReceiveState)
-                ReceiveShiftFullState: ReceiveNextState <= ReceiveShiftNotFullState;
-                ReceiveShiftNotFullState: if (ReceivePenultimateFrameBoolean & (SampleEdge)) ReceiveNextState <= ReceiveShiftDelayState;
-                                     else ReceiveNextState <= ReceiveShiftNotFullState;
-                ReceiveShiftDelayState: ReceiveNextState <= ReceiveShiftFullState;
+                ReceiveShiftFullState: ReceiveNextState = ReceiveShiftNotFullState;
+                ReceiveShiftNotFullState: if (ReceivePenultimateFrameBoolean & (SampleEdge)) ReceiveNextState = ReceiveShiftDelayState;
+                                          else ReceiveNextState = ReceiveShiftNotFullState;
+                ReceiveShiftDelayState: ReceiveNextState = ReceiveShiftFullState;
             endcase
 
         assign ReceiveShiftFull = SckMode ? (ReceiveState == ReceiveShiftFullState) : (ReceiveNextState == ReceiveShiftFullState);

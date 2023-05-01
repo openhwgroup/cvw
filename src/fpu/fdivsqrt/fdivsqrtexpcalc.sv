@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// fdivsqrtpreproc.sv
+// fdivsqrtexpcalc.sv
 //
 // Written: David_Harris@hmc.edu, me@KatherineParry.com, cturek@hmc.edu
 // Modified:13 January 2022
@@ -30,11 +30,11 @@
 
 module fdivsqrtexpcalc(
   input  logic [`FMTBITS-1:0] Fmt,
-  input  logic [`NE-1:0] Xe, Ye,
-  input  logic Sqrt,
-  input  logic XZero, 
-  input  logic [`DIVBLEN:0] ell, m,
-  output logic [`NE+1:0] Qe
+  input  logic [`NE-1:0]      Xe, Ye,
+  input  logic                Sqrt,
+  input  logic                XZero, 
+  input  logic [`DIVBLEN:0]   ell, m,
+  output logic [`NE+1:0]      Qe
   );
   logic [`NE-2:0] Bias;
   logic [`NE+1:0] SXExp;
@@ -42,33 +42,33 @@ module fdivsqrtexpcalc(
   logic [`NE+1:0] DExp;
   
   if (`FPSIZES == 1) begin
-      assign Bias = (`NE-1)'(`BIAS); 
+    assign Bias = (`NE-1)'(`BIAS); 
 
   end else if (`FPSIZES == 2) begin
-      assign Bias = Fmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
+    assign Bias = Fmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
 
   end else if (`FPSIZES == 3) begin
-      always_comb
-          case (Fmt)
-              `FMT: Bias  =  (`NE-1)'(`BIAS);
-              `FMT1: Bias = (`NE-1)'(`BIAS1);
-              `FMT2: Bias = (`NE-1)'(`BIAS2);
-              default: Bias = 'x;
-          endcase
+    always_comb
+      case (Fmt)
+        `FMT: Bias  =  (`NE-1)'(`BIAS);
+        `FMT1: Bias = (`NE-1)'(`BIAS1);
+        `FMT2: Bias = (`NE-1)'(`BIAS2);
+        default: Bias = 'x;
+      endcase
 
   end else if (`FPSIZES == 4) begin        
-    always_comb
-        case (Fmt)
-            2'h3: Bias =  (`NE-1)'(`Q_BIAS);
-            2'h1: Bias =  (`NE-1)'(`D_BIAS);
-            2'h0: Bias =  (`NE-1)'(`S_BIAS);
-            2'h2: Bias =  (`NE-1)'(`H_BIAS);
-        endcase
+  always_comb
+    case (Fmt)
+      2'h3: Bias =  (`NE-1)'(`Q_BIAS);
+      2'h1: Bias =  (`NE-1)'(`D_BIAS);
+      2'h0: Bias =  (`NE-1)'(`S_BIAS);
+      2'h2: Bias =  (`NE-1)'(`H_BIAS);
+    endcase
   end
   assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - (`NE+2)'(`BIAS);
   assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
   
   // correct exponent for subnormal input's normalization shifts
-  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}) & {`NE+2{~XZero}};
+  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}); 
   assign Qe = Sqrt ? SExp : DExp;
 endmodule

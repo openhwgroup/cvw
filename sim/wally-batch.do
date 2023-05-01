@@ -26,12 +26,31 @@ if {$2 eq "ahb"} {
         vdel -lib wkdir/work_${1}_${2}_${3}_${4} -all
     }
     vlib wkdir/work_${1}_${2}_${3}_${4}
+
+
+} elseif {$2 eq "configOptions"} {
+    if [file exists wkdir/work_${1}_${3}_${4}] {
+        vdel -lib wkdir/work_${1}_${3}_${4} -all
+    }
+    vlib wkdir/work_${1}_${3}_${4}
+
 } else {
     if [file exists wkdir/work_${1}_${2}] {
         vdel -lib wkdir/work_${1}_${2} -all
     }
     vlib wkdir/work_${1}_${2}
 }
+# Create directory for coverage data
+mkdir -p cov
+
+# Check if measuring coverage
+ set coverage 0
+if {$argc >= 3} {
+    if {$3 eq "-coverage" || ($argc >= 7 && $7 eq "-coverage")} {
+        set coverage 1
+    }
+}
+
 # compile source files
 # suppress spurious warnngs about 
 # "Extra checking for conflicts with always_comb done at vopt time"
@@ -42,8 +61,14 @@ if {$2 eq "ahb"} {
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -o testbenchopt 
-    vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7
+    if { $coverage } {
+        echo "wally-batch buildroot coverage"
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -o testbenchopt +cover=sbecf
+        vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7 -cover
+     } else {
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G RISCV_DIR=$3 -G INSTR_LIMIT=$4 -G INSTR_WAVEON=$5 -G CHECKPOINT=$6 -o testbenchopt 
+        vsim -lib wkdir/work_${1}_${2} testbenchopt -suppress 8852,12070,3084,3691,13286  -fatal 7
+    }
 
     run -all
     run -all
@@ -76,25 +101,56 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # power add -r /dut/core/*
     run -all
     # power off -r /dut/core/*
+
+} elseif {$2 eq "configOptions"} {
+    # set arguments " "
+    # for {set i 5} {$i <= $argc} {incr i} {
+    # 	append arguments "\$$i "
+    # }
+    # puts $arguments
+    # set options eval $arguments
+    # **** fix this so we can pass any number of +defines.
+    # only allows 3 right now
+
+    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
+    # start and run simulation
+    # remove +acc flag for faster sim during regressions if there is no need to access internal signals
+    vopt wkdir/work_${1}_${3}_${4}.testbench -work wkdir/work_${1}_${3}_${4} -G TEST=$4 -o testbenchopt
+    vsim -lib wkdir/work_${1}_${3}_${4} testbenchopt  -fatal 7 -suppress 3829
+    # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
+    #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
+    #vsim -coverage -lib work_$2 workopt_$2
+    # power add generates the logging necessary for said generation.
+    # power add -r /dut/core/*
+    run -all
+    # power off -r /dut/core/*
+
 } else {
     vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
-    vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
-    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7
-    # Adding coverage increases runtime from 2:00 to 4:29.  Can't run it all the time
-    #vopt work_$2.testbench -work work_$2 -o workopt_$2 +cover=sbectf
-    #vsim -coverage -lib work_$2 workopt_$2
-
+    if {$coverage} {
+#        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbectf
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt +cover=sbecf
+        vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829 -coverage
+    } else {
+        vopt wkdir/work_${1}_${2}.testbench -work wkdir/work_${1}_${2} -G TEST=$2 -o testbenchopt
+        vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
+    }
+#    vsim -lib wkdir/work_${1}_${2} testbenchopt  -fatal 7 -suppress 3829
     # power add generates the logging necessary for said generation.
     # power add -r /dut/core/*
     run -all
     # power off -r /dut/core/*
 } 
 
-#coverage report -file wally-coverage.txt
+if {$coverage} {
+    echo "Saving coverage to ${1}_${2}.ucdb"
+    do coverage-exclusions-rv64gc.do  # beware: this assumes testing the rv64gc configuration
+    coverage save -instance /testbench/dut/core cov/${1}_${2}.ucdb
+}
+
 # These aren't doing anything helpful
-#coverage report -memory 
 #profile report -calltree -file wally-calltree.rpt -cutoff 2
 #power report -all -bsaif power.saif
 quit

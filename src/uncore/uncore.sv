@@ -31,8 +31,8 @@
 
 module uncore (
   // AHB Bus Interface
-  input  logic             HCLK, HRESETn,
-  input  logic             TIMECLK,
+  input  logic                HCLK, HRESETn,
+  input  logic                TIMECLK,
   input  logic [`PA_BITS-1:0] HADDR,
   input  logic [`AHBW-1:0] HWDATA,
   input  logic [`XLEN/8-1:0] HWSTRB,
@@ -51,8 +51,8 @@ module uncore (
   output logic             MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
   output logic             MExtInt, SExtInt,          // External interrupts from PLIC
   output logic [63:0]      MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]      GPIOPinsIn,                // GPIO pin input value
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
+  input  logic [31:0]      GPIOIN,                // GPIO pin input value
+  output logic [31:0]      GPIOOUT, GPIOEN,   // GPIO pin output value and enable
   input  logic             UARTSin,                   // UART serial input
   output logic             UARTSout,                  // UART serial output
   output logic             SDCCmdOut,                 // SD Card command output
@@ -64,7 +64,7 @@ module uncore (
   output logic [3:0]       SPIOut, SPICS              // SPI pins out and SPI chip select out
 );
   
-  logic [`XLEN-1:0] HREADRam, HREADSDC;
+  logic [`XLEN-1:0]           HREADRam, HREADSDC;
 
   logic [11:0]      HSELRegions;
   logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC, HSELSPI;
@@ -135,9 +135,9 @@ module uncore (
     gpio_apb gpio(
       .PCLK, .PRESETn, .PSEL(PSEL[0]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[0]), .PREADY(PREADY[0]), 
-      .iof0(), .iof1(), .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .GPIOIntr);
+      .iof0(), .iof1(), .GPIOIN, .GPIOOUT, .GPIOEN, .GPIOIntr);
   end else begin : gpio
-    assign GPIOPinsOut = 0; assign GPIOPinsEn = 0; assign GPIOIntr = 0;
+    assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
   end
   if (`UART_SUPPORTED == 1) begin : uart
     uart_apb uart(
@@ -155,7 +155,7 @@ module uncore (
       // sdc interface
       .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,
       // interrupt to PLIC
-      .SDCIntM	      
+      .SDCIntM        
       );
   end else begin : sdc
     assign SDCCLK = 0;
@@ -173,22 +173,22 @@ module uncore (
 
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-		              ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
+                  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({`XLEN{HSELBootRomD}} & HREADBootRom) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-		             HSELEXTD & HRESPEXT |
+                 HSELEXTD & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
-                 HSELSDC & HRESPSDC;		 
+                 HSELSDC & HRESPSDC;     
 
   assign HREADY = HSELRamD & HREADYRam |
-		              HSELEXTD & HREADYEXT |		  
+                  HSELEXTD & HREADYEXT |      
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-                  HSELSDCD & HREADYSDC |		  
+                  HSELSDCD & HREADYSDC |      
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)

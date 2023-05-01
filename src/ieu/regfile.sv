@@ -32,7 +32,7 @@
 module regfile (
   input  logic             clk, reset,
   input  logic             we3,                 // Write enable
-  input  logic [ 4:0]      a1, a2, a3,          // Source registers to read (a1, a2), destination register to write (a3)
+  input  logic [4:0]       a1, a2, a3,          // Source registers to read (a1, a2), destination register to write (a3)
   input  logic [`XLEN-1:0] wd3,                 // Write data for port 3
   output logic [`XLEN-1:0] rd1, rd2);           // Read data for ports 1, 2
 
@@ -52,7 +52,7 @@ module regfile (
     
   always_ff @(negedge clk)
     if (reset) for(i=1; i<NUMREGS; i++) rf[i] <= 0;
-    else       if (we3)            rf[a3] <= wd3;	
+    else       if (we3)            rf[a3] <= wd3;  
 
   assign #2 rd1 = (a1 != 0) ? rf[a1] : 0;
   assign #2 rd2 = (a2 != 0) ? rf[a2] : 0;

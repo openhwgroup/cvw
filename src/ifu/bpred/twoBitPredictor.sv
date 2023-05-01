@@ -34,8 +34,8 @@ module twoBitPredictor #(parameter k = 10) (
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
   input  logic [`XLEN-1:0] PCNextF, PCM,
-  output logic [1:0]       DirPredictionF,
-  output logic             DirPredictionWrongE,
+  output logic [1:0]       BPDirPredF,
+  output logic             BPDirPredWrongE,
   input  logic             BranchE, BranchM,
   input  logic             PCSrcE
 );
@@ -43,8 +43,8 @@ module twoBitPredictor #(parameter k = 10) (
   logic [k-1:0]            IndexNextF, IndexM;
   logic [1:0]              PredictionMemory;
   logic                    DoForwarding, DoForwardingF;
-  logic [1:0]              DirPredictionD, DirPredictionE;
-  logic [1:0]              NewDirPredictionE, NewDirPredictionM;
+  logic [1:0]              BPDirPredD, BPDirPredE;
+  logic [1:0]              NewBPDirPredE, NewBPDirPredM;
 
   // hashing function for indexing the PC
   // We have k bits to index, but XLEN bits as the input.
@@ -57,19 +57,19 @@ module twoBitPredictor #(parameter k = 10) (
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
-    .rd1(DirPredictionF),
+    .rd1(BPDirPredF),
     .wa2(IndexM),
-    .wd2(NewDirPredictionM),
+    .wd2(NewBPDirPredM),
     .we2(BranchM),
     .bwe2(1'b1));
   
-  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, DirPredictionF, DirPredictionD);
-  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, DirPredictionD, DirPredictionE);
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
+  flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
-  assign DirPredictionWrongE = PCSrcE != DirPredictionE[1] & BranchE;
+  assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
 
-  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(DirPredictionE), .NewState(NewDirPredictionE));
-  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewDirPredictionE, NewDirPredictionM);
+  satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
+  flopenrc #(2) NewPredictionRegM(clk, reset,  FlushM, ~StallM, NewBPDirPredE, NewBPDirPredM);
   
 
 endmodule
