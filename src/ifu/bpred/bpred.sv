@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
+`define INSTR_CLASS_PRED 0
 
 module bpred (
   input  logic             clk, reset,
@@ -128,7 +128,7 @@ module bpred (
       .BranchE, .BranchM, .PCSrcE);
   
   end else if (`BPRED_TYPE == "BP_LOCAL") begin:Predictor
-    localHistoryPredictor #(6, 10)
+    localHistoryPredictor #(`BPRED_NUM_LHR, `BPRED_SIZE)
 DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
