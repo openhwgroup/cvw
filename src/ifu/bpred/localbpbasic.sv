@@ -29,8 +29,8 @@
 
 `include "wally-config.vh"
 
-module localHistoryPredictor #(parameter m = 6, // 2^m = number of local history branches 
-                               parameter k = 10) ( // number of past branches stored
+module localbpbasic #(parameter m = 6, // 2^m = number of local history branches 
+                      parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
