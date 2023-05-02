@@ -74,6 +74,12 @@ module localHistoryPredictor #(parameter m = 6, // 2^m = number of local history
 
   assign BPDirPredWrongE = PCSrcE != BPDirPredE[1] & BranchE;
 
+  // this is the main difference between global and local history basic implementations rather than
+  // having multiple history registers.  In global, the ghr wraps back into itself directly without
+  // being pipelined.  IE. GHR is not read in F and then pipelined to M where it is updated.  Instead
+  // GHR is just read in M and updated.  GHR is still pipelined so that the PHT is updated with the correct
+  // GHR.  Local history in contrast must pipeline the specific history register read during F and then update
+  // that same one in M.  This implementation does not forward if a branch matches in the D, E, or M stages.
   assign LHRNextW = BranchM ? {PCSrcM, LHRM[k-1:1]} : LHRM;
 
   // this is local history
