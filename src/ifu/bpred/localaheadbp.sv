@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module localbpbasic #(parameter m = 6, // 2^m = number of local history branches 
+module localaheadbp #(parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
@@ -46,20 +46,22 @@ module localbpbasic #(parameter m = 6, // 2^m = number of local history branches
   logic [1:0]             BPDirPredD, BPDirPredE;
   logic [1:0]             NewBPDirPredE, NewBPDirPredM;
 
-  logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHR;
+  logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHRNextF;
   logic [k-1:0]           LHRNextW;
   logic                   PCSrcM;
-  logic [2**m-1:0][k-1:0]  LHRArray;
-  logic [m-1:0]            IndexLHRNextF, IndexLHRM;
+  logic [2**m-1:0][k-1:0] LHRArray;
+  logic [m-1:0]           IndexLHRNextF, IndexLHRM;
+  logic [`XLEN-1:0]       PCW;
+  
   
   logic                    UpdateM;
 
-  assign IndexNextF = LHR;
+  //assign IndexNextF = LHR;
   assign IndexM = LHRM;
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
-    .ra1(IndexNextF),
+    .ra1(LHRNextF),
     .rd1(BPDirPredF),
     .wa2(IndexM),
     .wd2(NewBPDirPredM),
@@ -83,25 +85,27 @@ module localbpbasic #(parameter m = 6, // 2^m = number of local history branches
   assign LHRNextW = BranchM ? {PCSrcM, LHRM[k-1:1]} : LHRM;
 
   // this is local history
-  genvar      index;
-  assign UpdateM = BranchM & ~StallW & ~FlushW;
-  assign IndexLHRM = {PCM[m+1] ^ PCM[1], PCM[m:2]};
-  for (index = 0; index < 2**m; index = index +1) begin:localhist
-    flopenr #(k) LocalHistoryRegister(.clk, .reset, .en(UpdateM & (index == IndexLHRM)),
-                                      .d(LHRNextW), .q(LHRArray[index]));
-  end
+  //genvar      index;
+  //assign UpdateM = BranchM & ~StallW & ~FlushW;
+  assign IndexLHRM = {PCW[m+1] ^ PCW[1], PCW[m:2]};
   assign IndexLHRNextF = {PCNextF[m+1] ^ PCNextF[1], PCNextF[m:2]};
-  assign LHR = LHRArray[IndexLHRNextF];
 
-  // this is global history
-  //flopenr #(k) LHRReg(clk, reset, ~StallM & ~FlushM & BranchM, LHRNextW, LHR);
+  ram2p1r1wbe #(2**m, k) BHT(.clk(clk),
+    .ce1(~StallF), .ce2(~StallW & ~FlushW),
+    .ra1(IndexLHRNextF),
+    .rd1(LHRNextF),
+    .wa2(IndexLHRM),
+    .wd2(LHRNextW),
+    .we2(BranchM),
+    .bwe2('1));  
 
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
-  flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHR, LHRF);
+  flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHRNextF, LHRF);
   flopenrc #(k) LHRDReg(clk, reset, FlushD, ~StallD, LHRF, LHRD);
   flopenrc #(k) LHREReg(clk, reset, FlushE, ~StallE, LHRD, LHRE);
   flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
 
+  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
 
 endmodule
