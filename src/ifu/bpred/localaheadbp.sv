@@ -35,7 +35,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirPredF, 
+  output logic [1:0]      BPDirPredD, 
   output logic            BPDirPredWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCM,
@@ -43,10 +43,11 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
 );
 
   logic [k-1:0]           IndexNextF, IndexM;
-  logic [1:0]             BPDirPredD, BPDirPredE;
+  //logic [1:0]             BPDirPredD, BPDirPredE;
+  logic [1:0]             BPDirPredE;
   logic [1:0]             NewBPDirPredE, NewBPDirPredM;
 
-  logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHRNextF;
+  logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHRW, LHRNextF;
   logic [k-1:0]           LHRNextW;
   logic                   PCSrcM;
   logic [2**m-1:0][k-1:0] LHRArray;
@@ -61,14 +62,14 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
-    .ra1(LHRNextF),
-    .rd1(BPDirPredF),
+    .ra1(LHRF),
+    .rd1(BPDirPredD),
     .wa2(IndexM),
     .wd2(NewBPDirPredM),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
+  //flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
@@ -93,7 +94,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   ram2p1r1wbe #(2**m, k) BHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexLHRNextF),
-    .rd1(LHRNextF),
+    .rd1(LHRF),
     .wa2(IndexLHRM),
     .wd2(LHRNextW),
     .we2(BranchM),
@@ -101,10 +102,12 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
 
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
     
-  flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHRNextF, LHRF);
+  //flopenrc #(k) LHRFReg(clk, reset, FlushD, ~StallF, LHRNextF, LHRF);
+  //assign LHRF = LHRNextF;
   flopenrc #(k) LHRDReg(clk, reset, FlushD, ~StallD, LHRF, LHRD);
   flopenrc #(k) LHREReg(clk, reset, FlushE, ~StallE, LHRD, LHRE);
   flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
+  flopenrc #(k) LHRWReg(clk, reset, FlushW, ~StallW, LHRNextW, LHRW);
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
 

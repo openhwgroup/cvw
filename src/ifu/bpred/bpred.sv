@@ -135,7 +135,7 @@ module bpred (
   end else if (`BPRED_TYPE == "BP_LOCAL_AHEAD") begin:Predictor
     localaheadbp #(`BPRED_NUM_LHR, `BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
-      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
+      .PCNextF, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   end 
 
