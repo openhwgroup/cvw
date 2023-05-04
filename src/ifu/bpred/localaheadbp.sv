@@ -35,7 +35,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
   input logic             FlushD, FlushE, FlushM, FlushW,
-  output logic [1:0]      BPDirPredD, 
+  output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
   input logic [`XLEN-1:0] PCNextF, PCM,
@@ -43,8 +43,8 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
 );
 
   logic [k-1:0]           IndexNextF, IndexM;
-  //logic [1:0]             BPDirPredD, BPDirPredE;
-  logic [1:0]             BPDirPredE;
+  logic [1:0]             BPDirPredD, BPDirPredE;
+  //logic [1:0]             BPDirPredE;
   logic [1:0]             NewBPDirPredE, NewBPDirPredM;
 
   logic [k-1:0]           LHRF, LHRD, LHRE, LHRM, LHRW, LHRNextF;
@@ -58,18 +58,18 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   logic                    UpdateM;
 
   //assign IndexNextF = LHR;
-  assign IndexM = LHRM;
+  assign IndexM = LHRW;
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
-    .rd1(BPDirPredD),
+    .rd1(BPDirPredF),
     .wa2(IndexM),
     .wd2(NewBPDirPredM),
     .we2(BranchM),
     .bwe2(1'b1));
 
-  //flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
+  flopenrc #(2) PredictionRegD(clk, reset,  FlushD, ~StallD, BPDirPredF, BPDirPredD);
   flopenrc #(2) PredictionRegE(clk, reset,  FlushE, ~StallE, BPDirPredD, BPDirPredE);
 
   satCounter2 BPDirUpdateE(.BrDir(PCSrcE), .OldState(BPDirPredE), .NewState(NewBPDirPredE));
@@ -83,7 +83,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   // GHR is both read and update in M.  GHR is still pipelined so that the PHT is updated with the correct
   // GHR.  Local history in contrast must pipeline the specific history register read during F and then update
   // that same one in M.  This implementation does not forward if a branch matches in the D, E, or M stages.
-  assign LHRNextW = BranchM ? {PCSrcM, LHRM[k-1:1]} : LHRM;
+  assign LHRNextW = BranchM ? {PCSrcM, LHRW[k-1:1]} : LHRW;
 
   // this is local history
   //genvar      index;
@@ -107,7 +107,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   flopenrc #(k) LHRDReg(clk, reset, FlushD, ~StallD, LHRF, LHRD);
   flopenrc #(k) LHREReg(clk, reset, FlushE, ~StallE, LHRD, LHRE);
   flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
-  flopenrc #(k) LHRWReg(clk, reset, FlushW, ~StallW, LHRNextW, LHRW);
+  flopenrc #(k) LHRWReg(clk, reset, FlushW, ~StallW, LHRM, LHRW);
 
   flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
 
