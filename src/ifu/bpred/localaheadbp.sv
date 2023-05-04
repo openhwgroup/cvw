@@ -62,7 +62,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   assign IndexM = LHRW;
   
   ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
-    .ce1(~StallF), .ce2(~StallW & ~FlushW),
+    .ce1(~StallD), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
     .rd1(BPDirPredD),
     .wa2(IndexM),
