@@ -137,6 +137,11 @@ module bpred (
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
+  end else if (`BPRED_TYPE == "BP_LOCAL_REPAIR") begin:Predictor
+    localreapirbp #(`BPRED_NUM_LHR, `BPRED_SIZE) DirPredictor(.clk, .reset, 
+      .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCE, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
+      .BranchD, .BranchE, .BranchM, .PCSrcE);
   end 
 
   // Part 2 Branch target address prediction
