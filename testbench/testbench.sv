@@ -537,7 +537,7 @@ module testbench;
     integer adrindex;
 
     // local history only
-    if (`BPRED_TYPE == "BP_LOCAL_AHEAD") begin
+    if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
       always @(*) begin
         if(reset) begin
           for(adrindex = 0; adrindex < 2**`BPRED_NUM_LHR; adrindex++) begin
