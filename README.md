@@ -33,7 +33,7 @@ Then clone the repo, source setup,  make the tests and run regression
 	
 	On the Linux computer where you will be working, log in
 
-Clone your fork of the repo and run the setup script.  
+Clone your fork of the repo and run the setup script. Change <yourgithubid> to your github id. 
 
 	$ cd
 	$ git clone --recurse-submodules https://github.com/<yourgithubid>/cvw
