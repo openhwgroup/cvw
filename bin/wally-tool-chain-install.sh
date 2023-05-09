@@ -44,8 +44,7 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 apt update -y
 apt upgrade -y
-apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator
-
+apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
 # Other python libraries used through the book.
 pip3 install matplotlib scipy scikit-learn adjustText lief
 
@@ -68,10 +67,11 @@ fi
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-git checkout 2023.01.31 
+git checkout 2023.01.31 #for 12.2.0; 2023.04.29 for 13.1
+#./configure --prefix=${RISCV} 
 ./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 make -j ${NUM_THREADS}
-make install
+#make install # is this necessary
 
 # elf2hex (https://github.com/sifive/elf2hex)
 #The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation. 
