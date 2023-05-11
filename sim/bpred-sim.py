@@ -61,7 +61,7 @@ configs = [
 
 bpdSize = [6, 8, 10, 12, 14, 16]
 LHRSize = [4, 8, 10]
-bpdType = ['local_basic']
+bpdType = ['local_repair']
 for CurrBPType in bpdType:
     for CurrBPSize in bpdSize:
         for CurrLHRSize in  LHRSize:
