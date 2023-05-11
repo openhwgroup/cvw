@@ -121,6 +121,7 @@ module localreapirbp #(parameter m = 6, // 2^m = number of local history branche
     end
   end
 
+  //assign SpeculativeFlushedF = '1;
   mux2 #(k) LHRMux(LHRSpeculativeF, LHRCommittedF, SpeculativeFlushedF, LHRF);
 
   flopenrc #(1) PCSrcMReg(clk, reset, FlushM, ~StallM, PCSrcE, PCSrcM);
