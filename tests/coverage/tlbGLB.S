@@ -3,8 +3,9 @@
 //
 // Written: mmendozamanriquez@hmc.edu 4 April 2023
 //          nlimpert@hmc.edu
+// Modified: kevin.j.thomas@okstate.edu May/4/20203
 //
-// Purpose: coverage for the global check. 
+// Purpose: Coverage for the Page Table Entry Global flag check.
 //
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -35,43 +36,47 @@ main:
     li t5, 0x9000000000080080 // try making asid = 0. 
     csrw satp, t5
 
-    # sfence.vma x0, x0
-
     # switch to supervisor mode
-    li a0, 1   
+    li a0, 1
     ecall
 
-    li t0, 0xC0000000
+    li t5, 0            # j = 0, run nASID only once
+    li t3, 32                       //Max amount of Loops = 32
+    li t4, 0x1000                   //offset between addressses.
+    li t1, 0x00008067               //load in jalr x0 x1 0 instruction to be stored
 
+setup:
+    li t0, 0xC0000000               //starting address
     li t2, 0             # i = 0
-    li t5, 0            # j = 0 // now use as a counter for new asid loop 
-    li t3, 32     # Max amount of Loops = 32
+    beq t5, zero, loop              //jump to first loop
 
-loop: bge t2, t3, nASID   # exit loop if i >= loops
-    li t1, 0x00008067 #load in jalr
-    sw t1, 0(t0)
-    fence.I
-    jalr t0
-    li t4, 0x1000
-    add t0, t0, t4
-    addi t2, t2, 1
+loop2:  #jump to each of the addresses in different address space
+    bge t2, t3, done
+    jalr t0                         //jump to instruction at the virtual address
+    add t0, t0, t4                  //change address for next loop
+    addi t2, t2, 1                  //keep track of number of loops ran
+    j loop2
+
+loop:   #store jalr across memory
+    bge t2, t3, nASID   # exit loop if i >= loops
+    sw t1, 0(t0)                    //stores this jalr in the virtual address
+    fence.I                         //invalidate instruction cache
+    jalr t0                         //jump to instruction at the virtual address
+    add t0, t0, t4                  //change address for next loop
+    addi t2, t2, 1                  //keep track of number of loops ran
     j loop
 
-nASID: bne t5, zero, finished
-    li a0, 3   // go
+nASID:   #swap to different address space -> jump to each address
+    li a0, 3                        //swap to machine mode
     ecall
-    li t5, 0x9000100000080080 // try making asid = 1 
+    li t5, 0x9000100000080080       //swap to address space 1 from 0
     csrw satp, t5
-    li a0, 1   
+    li a0, 1                        // change back to supervisor mode.
     ecall
-    li t2, 0
-    li t0, 0xC0000000
-    li t5, 1 // make this not zero. 
-    j loop
+    li t5, 1                        //flag for finished after loops
+    j setup
 
 
-finished:
-    j done
 
 .data
 .align 19
