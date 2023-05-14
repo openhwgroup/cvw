@@ -131,6 +131,7 @@ sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 #pip3 install chardet==3.0.4
 #pip3 install urllib3==1.22
 
+cd $RISCV
 opam init -y --disable-sandboxing
 opam switch create ocaml-base-compiler.4.06.1
 opam install sail -y 
@@ -144,6 +145,7 @@ git checkout 4d05aa1698a0003a4f6f99e1380c743711c32052
 make -j ${NUM_THREADS}
 ARCH=RV32 make -j ${NUM_THREADS}
 ARCH=RV64 make -j ${NUM_THREADS}
+# Note: following will complain if not running as root
 ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
