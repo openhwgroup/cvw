@@ -35,7 +35,7 @@
 #define PLIC_RANGE     0x03FFFFFF
 
 #include "WALLY-TEST-LIB-64.h" 
-RVTEST_ISA("RV64I_Zicsr")
+RVTEST_ISA("RV64I_Zicsr_Zifencei")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",pma)
 
 INIT_TESTS
