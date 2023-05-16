@@ -58,7 +58,7 @@ fi
 
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # To install GCC from source can take hours to compile. 
-#This configuration enables multilib to target many flavors of RISC-V.   
+# This configuration enables multilib to target many flavors of RISC-V.   
 # This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
 # Note that GCC12.2 has binutils 2.39, which has a known performance bug that causes
 # objdump to run 100x slower than in previous versions, causing riscof to make versy slowly.
@@ -68,7 +68,6 @@ fi
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-#git checkout 2023.01.31 #for 12.2.0; 2023.04.29 for 13.1
 # Temporarily use the following commands until gcc-13 is part of riscv-gnu-toolchain (issue #1249)
 git clone https://github.com/gcc-mirror/gcc -b releases/gcc-13 gcc-13
 ./configure --prefix=/opt/riscv --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" --with-gcc-src=`pwd`/gcc-13
@@ -141,13 +140,8 @@ opam install sail -y
 eval $(opam config env)
 git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
-# Current bug in Sail - use hash that works for Wally
-#   (may remove later if Sail is ever fixed)
-#git checkout 4d05aa1698a0003a4f6f99e1380c743711c32052
 make -j ${NUM_THREADS}
 ARCH=RV32 make -j ${NUM_THREADS}
-# next line seems redundant
-#ARCH=RV64 make -j ${NUM_THREADS}
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
 sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
