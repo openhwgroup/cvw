@@ -44,24 +44,11 @@ module specialcase(
   input  logic [`NE-1:0]      Re,         // Result exponent
   input  logic [`NE+1:0]      FullRe,     // Result full exponent
   input  logic [`NF-1:0]      Rf,         // Result fraction
-  // fma
-  input  logic                FmaOp,      // is it a fma opperation
   // divsqrt
   input  logic                DivOp,      // is it a divsqrt opperation
   input  logic                DivByZero,  // divide by zero flag
-  // cvt
-  input  logic                CvtOp,      // is it a conversion opperation
-  input  logic                IntZero,    // is the integer input zero
-  input  logic                IntToFp,    // is cvt int -> fp opperation
-  input  logic                Int64,      // is the integer 64 bits
-  input  logic                Signed,     // is the integer signed
-  input  logic [`NE:0]        CvtCe,      // the calculated expoent for cvt
-  input  logic                IntInvalid, // integer invalid flag to choose the result
-  input  logic                CvtResUf,   // does the convert result underflow
-  input  logic [`XLEN+1:0]    CvtNegRes,  // the possibly negated of the integer result
   // outputs
   output logic [`FLEN-1:0]    PostProcRes,// final result
-  output logic [`XLEN-1:0]    FCvtIntRes  // final integer result
 );
 
   logic [`FLEN-1:0]   XNaNRes;    // X is NaN result
@@ -71,7 +58,6 @@ module specialcase(
   logic [`FLEN-1:0]   UfRes;      // underflowed result result
   logic [`FLEN-1:0]   OfRes;      // overflowed result result
   logic [`FLEN-1:0]   NormRes;    // normal result
-  logic [`XLEN-1:0]   OfIntRes;   // the overflow result for integer output
   logic               OfResMax;   // does the of result output maximum norm fp number
   logic               KillRes;    // kill the result for underflow
   logic               SelOfRes;   // should the overflow result be selected
@@ -250,8 +236,8 @@ module specialcase(
   // output infinity with result sign if divide by zero
   if(`IEEE754)
     always_comb
-      if(XNaN)   PostProcRes = XNaNRes;
-      else if(YNaN)        PostProcRes = YNaNRes;
+      if(XNaN)                    PostProcRes = XNaNRes;
+      else if(YNaN)               PostProcRes = YNaNRes;
       else if(Invalid)            PostProcRes = InvalidRes;
       else if(SelOfRes)           PostProcRes = OfRes;
       else if(KillRes)            PostProcRes = UfRes;
@@ -263,46 +249,4 @@ module specialcase(
       else if(KillRes)            PostProcRes = UfRes;
       else                        PostProcRes = NormRes;
 
-  ///////////////////////////////////////////////////////////////////////////////////////
-  // integer result selection        
-  ///////////////////////////////////////////////////////////////////////////////////////        
-
-  // select the overflow integer res
-  //      - negitive infinity and out of range negitive input
-  //                 |  int  |  long  |
-  //          signed | -2^31 | -2^63  |
-  //        unsigned |   0   |    0   |
-  //
-  //      - positive infinity and out of range positive input and NaNs
-  //                 |   int  |  long  |
-  //          signed | 2^31-1 | 2^63-1 |
-  //        unsigned | 2^32-1 | 2^64-1 |
-  //
-  //      other: 32 bit unsinged res should be sign extended as if it were a signed number
-  always_comb
-    if(Signed)
-      if(Xs&~NaNIn) // signed negitive
-        if(Int64)   OfIntRes = {1'b1, {`XLEN-1{1'b0}}};
-        else        OfIntRes = {{`XLEN-32{1'b1}}, 1'b1, {31{1'b0}}};
-      else          // signed positive
-        if(Int64)   OfIntRes = {1'b0, {`XLEN-1{1'b1}}};
-        else        OfIntRes = {{`XLEN-32{1'b0}}, 1'b0, {31{1'b1}}};
-    else
-      if(Xs&~NaNIn) OfIntRes = {`XLEN{1'b0}}; // unsigned negitive
-      else          OfIntRes = {`XLEN{1'b1}}; // unsigned positive
-
-
-  // select the integer output
-  //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res
-  //      - if the input underflows
-  //          - if rounding and signed opperation and negitive input, output -1
-  //          - otherwise output a rounded 0
-  //      - otherwise output the normal res (trmined and sign extended if nessisary)
-  always_comb
-    if(IntInvalid)          FCvtIntRes = OfIntRes;
-    else if(CvtCe[`NE]) 
-      if(Xs&Signed&Plus1)   FCvtIntRes = {{`XLEN{1'b1}}};
-      else                  FCvtIntRes = {{`XLEN-1{1'b0}}, Plus1};
-    else if(Int64)          FCvtIntRes = CvtNegRes[`XLEN-1:0];
-    else                    FCvtIntRes = {{`XLEN-32{CvtNegRes[31]}}, CvtNegRes[31:0]};
 endmodule
