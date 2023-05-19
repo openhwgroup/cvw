@@ -87,7 +87,6 @@ module divremsqrtpostprocess (
   logic [`NE+1:0]             FmaMe;      // exponent of the normalized sum
   logic                       FmaSZero;   // is the sum zero
   logic [3*`NF+5:0]           FmaShiftIn; // fma shift input
-  logic [`NE+1:0]             NormSumExp; // exponent of the normalized sum not taking into account Subnormal or zero results
   logic                       FmaPreResultSubnorm; // is the result subnormal - calculated before LZA corection
   logic [$clog2(3*`NF+5)-1:0] FmaShiftAmt;// normalization shift amount for fma
   // division singals
@@ -147,35 +146,10 @@ module divremsqrtpostprocess (
   /*cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);*/
 
-  /*fmashiftcalc fmashiftcalc(.FmaSm, .FmaSCnt, .Fmt, .NormSumExp, .FmaSe,
-      .FmaSZero, .FmaPreResultSubnorm, .FmaShiftAmt, .FmaShiftIn);*/
-
   divshiftcalc divshiftcalc(.DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
   assign ShiftAmt = DivShiftAmt;
   assign ShiftIn = DivShiftIn;
-  /*
-  // select which unit's output to shift
-  always_comb
-    case(PostProcSel)
-      2'b10: begin // fma
-        ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(3*`NF+5){1'b0}}, FmaShiftAmt};
-        ShiftIn =  {FmaShiftIn, {`NORMSHIFTSZ-(3*`NF+6){1'b0}}};
-      end
-      2'b00: begin // cvt
-        ShiftAmt = {{`LOGNORMSHIFTSZ-$clog2(`CVTLEN+1){1'b0}}, CvtShiftAmt};
-        ShiftIn =  {CvtShiftIn, {`NORMSHIFTSZ-`CVTLEN-`NF-1{1'b0}}};
-      end
-      2'b01: begin //divsqrt
-        ShiftAmt = DivShiftAmt;
-        ShiftIn =  DivShiftIn;
-      end
-      default: begin 
-        ShiftAmt = {`LOGNORMSHIFTSZ{1'bx}}; 
-        ShiftIn = {`NORMSHIFTSZ{1'bx}}; 
-      end
-    endcase
-  */
   
   // main normalization shift
   normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
@@ -196,7 +170,7 @@ module divremsqrtpostprocess (
   // calulate result sign used in rounding unit
   divremsqrtroundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
 
-  round round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Qe,
+  divremsqrtround round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Qe,
       .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResSubnormUf, .Mf, .ToInt,  .CvtResUf,
       .DivSticky, .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);
 
@@ -206,12 +180,13 @@ module divremsqrtpostprocess (
 
   /*resultsign resultsign(.Frm, .FmaPs, .FmaAs, .Round, .Sticky, .Guard,
       .FmaOp, .ZInf, .InfIn, .FmaSZero, .Mult, .Ms, .Rs);*/
+  assign Rs = Ms;
 
   ///////////////////////////////////////////////////////////////////////////////
   // Flags
   ///////////////////////////////////////////////////////////////////////////////
 
-  flags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
+  divremsqrtflags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
               .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
               .NaNIn, .FmaAs, .FmaPs, .Round, .IntInvalid, .DivByZero,
               .Guard, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
@@ -221,7 +196,7 @@ module divremsqrtpostprocess (
   // Select the result
   ///////////////////////////////////////////////////////////////////////////////
 
-  negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
+  //negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
 
   specialcase specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
       .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
