@@ -145,7 +145,7 @@ module divremsqrtpostprocess (
   // round to nearest max magnitude
 
   // calulate result sign used in rounding unit
-  divremsqrtroundsign roundsign( .DivOp, .Sqrt, .Xs, .Ys, , .Ms);
+  divremsqrtroundsign roundsign( .DivOp, .Sqrt, .Xs, .Ys, Ms);
 
   divremsqrtround round(.OutFmt, .Frm, .Plus1, .Qe,
       .Ms, .Mf, .DivSticky, .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);

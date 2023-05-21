@@ -77,6 +77,9 @@ module drsu(
   logic                       NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
   logic [`XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
+  logic [`DIVb:0]             QmM;
+  logic [`NE+1:0]             QeM;
+  logic                       DivStickyM;
 
   divremsqrt divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 
             .XeE, .YeE, .SqrtE, .SqrtM,
