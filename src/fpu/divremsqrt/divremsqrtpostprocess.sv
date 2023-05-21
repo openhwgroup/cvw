@@ -47,7 +47,7 @@ module divremsqrtpostprocess (
   input logic  [`DIVb:0]                  DivQm,      // divsqrt significand
   // final results
   output logic [`FLEN-1:0]                PostProcRes,// postprocessor final result
-  output logic [4:0]                      PostProcFlg,// postprocesser flags
+  output logic [4:0]                      PostProcFlg // postprocesser flags
   );
   
   // general signals
@@ -163,7 +163,7 @@ module divremsqrtpostprocess (
   ///////////////////////////////////////////////////////////////////////////////
 
   divremsqrtflags flags(.XSNaN, .YSNaN, .XInf, .YInf, .InfIn, .XZero, .YZero, 
-              .Xs, .Sqrt,
+              .Xs, .OutFmt, .Sqrt,
               .NaNIn, .Round, .DivByZero,
               .Guard, .Sticky, .UfPlus1,.DivOp, .FullRe, .Plus1,
               .Me, .Invalid, .Overflow, .PostProcFlg);

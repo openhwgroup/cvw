@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-module specialcase(
+module divremsqrtspecialcase(
   input  logic                Xs,         // X sign
   input  logic [`NF:0]        Xm, Ym, // input significand's
   input  logic                XNaN, YNaN, // are the inputs NaN
@@ -48,7 +48,7 @@ module specialcase(
   input  logic                DivOp,      // is it a divsqrt opperation
   input  logic                DivByZero,  // divide by zero flag
   // outputs
-  output logic [`FLEN-1:0]    PostProcRes,// final result
+  output logic [`FLEN-1:0]    PostProcRes // final result
 );
 
   logic [`FLEN-1:0]   XNaNRes;    // X is NaN result

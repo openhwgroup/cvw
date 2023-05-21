@@ -48,7 +48,7 @@ module drsu(
   input  logic                IntDivE, W64E,
   input  logic [2:0]          Frm,
   input  logic [2:0]          OpCtrl,
-  input  logic [`FMTBits:0]   Fmt,
+  input  logic [`FMTBITS:0]   Fmt,
   input  logic [1:0]          PostProcSel,
   output logic                FDivBusyE, IFDivStartE, FDivDoneE,
   output logic [`FLEN-1:0]    FResM,
@@ -88,7 +88,7 @@ module drsu(
                     .FlushE, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3M,
                     .Funct3E, .IntDivE, .FIntDivResultM,
                     .FDivDoneE, .IFDivStartE);
-  divremsqrtpostprocess divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Frm(Frm), .Fmt(Fmt), .OpCtrl,
+  divremsqrtpostprocess divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(Fmt), .OpCtrl,
     .XZero(XZeroE), .YZero(YZeroE), .XInf(XInfE), .YInf(YInfE), .XNaN(XNaNE), .YNaN(YNaNE), .XSNaN(XSNaNE), 
     .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivQe(QeM), .DivQm(QmM), .PostProcRes(FResM), .PostProcFlg(FlgM));
 endmodule

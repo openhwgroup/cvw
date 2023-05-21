@@ -27,7 +27,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
-module roundsign(
+module divremsqrtroundsign(
   input logic         Xs,     // x sign
   input logic         Ys,     // y sign
   input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)

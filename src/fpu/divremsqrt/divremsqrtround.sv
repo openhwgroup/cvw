@@ -36,7 +36,7 @@
 //  single and double will always be smaller than XLEN
 `define XLENPOS ((`XLEN>`NF) ? 1 : (`XLEN>`NF1) ? 2 : 3)
 
-module round(
+module divremsqrtround(
   input  logic [`FMTBITS-1:0]     OutFmt,             // output format
   input  logic [2:0]              Frm,                // rounding mode
   input  logic                    Ms,                 // normalized sign
