@@ -28,13 +28,13 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
 
-module flags(
+module divremsqrtflags(
   input  logic                Xs,                     // X sign
   input  logic [`FMTBITS-1:0] OutFmt,                 // output format
   input  logic                InfIn,                  // is a Inf input being used
-  input  logic                XInf, YInf, ZInf,       // inputs are infinity
+  input  logic                XInf, YInf,             // inputs are infinity
   input  logic                NaNIn,                  // is a NaN input being used
-  input  logic                XSNaN, YSNaN, ZSNaN,    // inputs are signaling NaNs
+  input  logic                XSNaN, YSNaN,           // inputs are signaling NaNs
   input  logic                XZero, YZero,           // inputs are zero
   input  logic [`NE+1:0]      FullRe,                 // Re with bits to determine sign and overflow
   input  logic [`NE+1:0]      Me,                     // exponent of the normalized sum
@@ -49,7 +49,6 @@ module flags(
   output logic                DivByZero,              // divide by zero flag
   output logic                Overflow,               // overflow flag to select result
   output logic                Invalid,                // invalid flag to select the result
-  output logic                IntInvalid,             // invalid integer result to select
   output logic [4:0]          PostProcFlg             // flags
 );
 

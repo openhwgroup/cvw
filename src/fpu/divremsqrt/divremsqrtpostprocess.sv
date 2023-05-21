@@ -31,39 +31,23 @@
 module divremsqrtpostprocess (
   // general signals
   input logic                             Xs, Ys,     // input signs
-  input logic  [`NF:0]                    Xm, Ym, Zm, // input mantissas
+  input logic  [`NF:0]                    Xm, Ym,     // input mantissas
   input logic  [2:0]                      Frm,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
   input logic  [`FMTBITS-1:0]             Fmt,        // precision 1 = double 0 = single
   input logic  [2:0]                      OpCtrl,     // choose which opperation (look below for values)
   input logic                             XZero, YZero,        // inputs are zero
-  input logic                             XInf, YInf, ZInf,    // inputs are infinity
-  input logic                             XNaN, YNaN, ZNaN,    // inputs are NaN
-  input logic                             XSNaN, YSNaN, ZSNaN, // inputs are signaling NaNs
+  input logic                             XInf, YInf,          // inputs are infinity
+  input logic                             XNaN, YNaN,          // inputs are NaN
+  input logic                             XSNaN, YSNaN,        // inputs are signaling NaNs
   input logic  [1:0]                      PostProcSel,         // select result to be written to fp register
   //fma signals
-  input logic                             FmaAs,      // the modified Z sign - depends on instruction
-  input logic                             FmaPs,      // the product's sign
-  input logic                             FmaSs,      // Sum sign
-  input logic  [`NE+1:0]                  FmaSe,      // the sum's exponent
-  input logic  [3*`NF+3:0]                FmaSm,      // the positive sum
-  input logic                             FmaASticky, // sticky bit that is calculated during alignment
-  input logic  [$clog2(3*`NF+5)-1:0]      FmaSCnt,    // the normalization shift count
   //divide signals
   input logic                             DivSticky,  // divider sticky bit
   input logic  [`NE+1:0]                  DivQe,      // divsqrt exponent
   input logic  [`DIVb:0]                  DivQm,      // divsqrt significand
-  // conversion signals
-  input logic                             CvtCs,      // the result's sign
-  input logic  [`NE:0]                    CvtCe,      // the calculated expoent
-  input logic                             CvtResSubnormUf, // the convert result is subnormal or underflows
-  input logic  [`LOGCVTLEN-1:0]           CvtShiftAmt,// how much to shift by
-  input logic                             ToInt,      // is fp->int (since it's writting to the integer register)
-  input logic  [`CVTLEN-1:0]              CvtLzcIn,   // input to the Leading Zero Counter (without msb)
-  input logic                             IntZero,    // is the integer input zero
   // final results
   output logic [`FLEN-1:0]                PostProcRes,// postprocessor final result
   output logic [4:0]                      PostProcFlg,// postprocesser flags
-  output logic [`XLEN-1:0]                FCvtIntRes  // the integer conversion result
   );
   
   // general signals
@@ -83,12 +67,6 @@ module divremsqrtpostprocess (
   logic                       Invalid;    // invalid flag used to select results
   logic                       Guard, Round, Sticky; // bits needed to determine rounding
   logic [`FMTBITS-1:0]        OutFmt;     // output format
-  // fma signals
-  logic [`NE+1:0]             FmaMe;      // exponent of the normalized sum
-  logic                       FmaSZero;   // is the sum zero
-  logic [3*`NF+5:0]           FmaShiftIn; // fma shift input
-  logic                       FmaPreResultSubnorm; // is the result subnormal - calculated before LZA corection
-  logic [$clog2(3*`NF+5)-1:0] FmaShiftAmt;// normalization shift amount for fma
   // division singals
   logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;        // divsqrt shif amount
   logic [`NORMSHIFTSZ-1:0]    DivShiftIn;         // divsqrt shift input
@@ -109,7 +87,6 @@ module divremsqrtpostprocess (
   logic                       Signed;     // is the opperation with a signed integer?
   logic                       IntToFp;    // is the opperation an int->fp conversion?
   logic                       CvtOp;      // convertion opperation
-  logic                       FmaOp;      // fma opperation
   logic                       DivOp;      // divider opperation
   logic                       InfIn;      // are any of the inputs infinity
   logic                       NaNIn;      // are any of the inputs NaN
@@ -125,8 +102,8 @@ module divremsqrtpostprocess (
   assign Sqrt =  OpCtrl[0];
 
   // is there an input of infinity or NaN being used
-  assign InfIn = XInf|YInf|ZInf;
-  assign NaNIn = XNaN|YNaN|ZNaN;
+  assign InfIn = XInf|YInf;
+  assign NaNIn = XNaN|YNaN;
 
   // choose the ouptut format depending on the opperation
   //      - fp -> fp: OpCtrl contains the percision of the output
@@ -168,11 +145,10 @@ module divremsqrtpostprocess (
   // round to nearest max magnitude
 
   // calulate result sign used in rounding unit
-  divremsqrtroundsign roundsign(.FmaOp, .DivOp, .CvtOp, .Sqrt, .FmaSs, .Xs, .Ys, .CvtCs, .Ms);
+  divremsqrtroundsign roundsign( .DivOp, .Sqrt, .Xs, .Ys, , .Ms);
 
-  divremsqrtround round(.OutFmt, .Frm, .FmaASticky, .Plus1, .PostProcSel, .CvtCe, .Qe,
-      .Ms, .FmaMe, .FmaOp, .CvtOp, .CvtResSubnormUf, .Mf, .ToInt,  .CvtResUf,
-      .DivSticky, .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);
+  divremsqrtround round(.OutFmt, .Frm, .Plus1, .Qe,
+      .Ms, .Mf, .DivSticky, .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Sign calculation
@@ -186,11 +162,11 @@ module divremsqrtpostprocess (
   // Flags
   ///////////////////////////////////////////////////////////////////////////////
 
-  divremsqrtflags flags(.XSNaN, .YSNaN, .ZSNaN, .XInf, .YInf, .ZInf, .InfIn, .XZero, .YZero, 
-              .Xs, .Sqrt, .ToInt, .IntToFp, .Int64, .Signed, .OutFmt, .CvtCe,
-              .NaNIn, .FmaAs, .FmaPs, .Round, .IntInvalid, .DivByZero,
-              .Guard, .Sticky, .UfPlus1, .CvtOp, .DivOp, .FmaOp, .FullRe, .Plus1,
-              .Me, .CvtNegResMsbs, .Invalid, .Overflow, .PostProcFlg);
+  divremsqrtflags flags(.XSNaN, .YSNaN, .XInf, .YInf, .InfIn, .XZero, .YZero, 
+              .Xs, .Sqrt,
+              .NaNIn, .Round, .DivByZero,
+              .Guard, .Sticky, .UfPlus1,.DivOp, .FullRe, .Plus1,
+              .Me, .Invalid, .Overflow, .PostProcFlg);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Select the result
@@ -198,9 +174,9 @@ module divremsqrtpostprocess (
 
   //negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
 
-  specialcase specialcase(.Xs, .Xm, .Ym, .Zm, .XZero, .IntInvalid,
-      .IntZero, .Frm, .OutFmt, .XNaN, .YNaN, .ZNaN, .CvtResUf, 
-      .NaNIn, .IntToFp, .Int64, .Signed, .CvtOp, .FmaOp, .Plus1, .Invalid, .Overflow, .InfIn, .CvtNegRes,
-      .XInf, .YInf, .DivOp, .DivByZero, .FullRe, .CvtCe, .Rs, .Re, .Rf, .PostProcRes, .FCvtIntRes);
+  divremsqrtspecialcase specialcase(.Xs, .Xm, .Ym, .XZero, 
+      .Frm, .OutFmt, .XNaN, .YNaN,  
+      .NaNIn, .Plus1, .Invalid, .Overflow, .InfIn,
+      .XInf, .YInf, .DivOp, .DivByZero, .FullRe, .Rs, .Re, .Rf, .PostProcRes );
 
 endmodule

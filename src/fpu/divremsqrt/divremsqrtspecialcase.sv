@@ -30,8 +30,8 @@
 
 module specialcase(
   input  logic                Xs,         // X sign
-  input  logic [`NF:0]        Xm, Ym, Zm, // input significand's
-  input  logic                XNaN, YNaN, ZNaN, // are the inputs NaN
+  input  logic [`NF:0]        Xm, Ym, // input significand's
+  input  logic                XNaN, YNaN, // are the inputs NaN
   input  logic [2:0]          Frm,        // rounding mode
   input  logic [`FMTBITS-1:0] OutFmt,     // output format
   input  logic                InfIn,      // are any inputs infinity
@@ -53,7 +53,6 @@ module specialcase(
 
   logic [`FLEN-1:0]   XNaNRes;    // X is NaN result
   logic [`FLEN-1:0]   YNaNRes;    // Y is NaN result
-  logic [`FLEN-1:0]   ZNaNRes;    // Z is NaN result
   logic [`FLEN-1:0]   InvalidRes; // Invalid result result
   logic [`FLEN-1:0]   UfRes;      // underflowed result result
   logic [`FLEN-1:0]   OfRes;      // overflowed result result
@@ -73,7 +72,6 @@ module specialcase(
       if(`IEEE754) begin
           assign XNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]};
           assign YNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Ym[`NF-2:0]};
-          assign ZNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Zm[`NF-2:0]};
           assign InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
       end else begin
           assign InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
@@ -87,7 +85,6 @@ module specialcase(
       if(`IEEE754) begin
           assign XNaNRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Xm[`NF-2:`NF-`NF1]};
           assign YNaNRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, Ym[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Ym[`NF-2:`NF-`NF1]};
-          assign ZNaNRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, Zm[`NF-2:0]} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Zm[`NF-2:`NF-`NF1]};
           assign InvalidRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
       end else begin 
           assign InvalidRes = OutFmt ? {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}} : {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
@@ -110,7 +107,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]};
                       YNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Ym[`NF-2:0]};
-                      ZNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Zm[`NF-2:0]};
                       InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                   end else begin 
                       InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
@@ -124,7 +120,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Xm[`NF-2:`NF-`NF1]};
                       YNaNRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Ym[`NF-2:`NF-`NF1]};
-                      ZNaNRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, Zm[`NF-2:`NF-`NF1]};
                       InvalidRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
                   end else begin 
                       InvalidRes = {{`FLEN-`LEN1{1'b1}}, 1'b0, {`NE1{1'b1}}, 1'b1, (`NF1-1)'(0)};
@@ -137,7 +132,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, Xm[`NF-2:`NF-`NF2]};
                       YNaNRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, Ym[`NF-2:`NF-`NF2]};
-                      ZNaNRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, Zm[`NF-2:`NF-`NF2]};
                       InvalidRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
                   end else begin 
                       InvalidRes = {{`FLEN-`LEN2{1'b1}}, 1'b0, {`NE2{1'b1}}, 1'b1, (`NF2-1)'(0)};
@@ -151,7 +145,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = (`FLEN)'(0);
                       YNaNRes = (`FLEN)'(0);
-                      ZNaNRes = (`FLEN)'(0);
                       InvalidRes = (`FLEN)'(0);
                   end else begin 
                       InvalidRes = (`FLEN)'(0);
@@ -169,7 +162,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Xm[`NF-2:0]};
                       YNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Ym[`NF-2:0]};
-                      ZNaNRes = {1'b0, {`NE{1'b1}}, 1'b1, Zm[`NF-2:0]};
                       InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
                   end else begin 
                       InvalidRes = {1'b0, {`NE{1'b1}}, 1'b1, {`NF-1{1'b0}}};
@@ -183,7 +175,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, Xm[`NF-2:`NF-`D_NF]};
                       YNaNRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, Ym[`NF-2:`NF-`D_NF]};
-                      ZNaNRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, Zm[`NF-2:`NF-`D_NF]};
                       InvalidRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{`FLEN-`D_LEN{1'b1}}, 1'b0, {`D_NE{1'b1}}, 1'b1, (`D_NF-1)'(0)};
@@ -196,7 +187,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, Xm[`NF-2:`NF-`S_NF]};
                       YNaNRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, Ym[`NF-2:`NF-`S_NF]};
-                      ZNaNRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, Zm[`NF-2:`NF-`S_NF]};
                       InvalidRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{`FLEN-`S_LEN{1'b1}}, 1'b0, {`S_NE{1'b1}}, 1'b1, (`S_NF-1)'(0)};
@@ -210,7 +200,6 @@ module specialcase(
                   if(`IEEE754) begin
                       XNaNRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, Xm[`NF-2:`NF-`H_NF]};
                       YNaNRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, Ym[`NF-2:`NF-`H_NF]};
-                      ZNaNRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, Zm[`NF-2:`NF-`H_NF]};
                       InvalidRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{`FLEN-`H_LEN{1'b1}}, 1'b0, {`H_NE{1'b1}}, 1'b1, (`H_NF-1)'(0)};
