@@ -252,7 +252,7 @@ module testbench;
         $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // force sdc timers
-        force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
         if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
@@ -536,23 +536,15 @@ module testbench;
   if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
-    always @(*) begin
-      if(reset) begin
-        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+    // initialize branch predictor on reset
+    always @(posedge reset) begin
+       for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-          force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
-          #1;
-        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
-        end 
-        for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-          release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
-        end
-      end
-    end
+   end
   end
 
 
