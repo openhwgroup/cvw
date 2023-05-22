@@ -279,12 +279,13 @@ if(sys.argv[1] == '-b'):
                     dct[PredType] = (currSize, currPercent)
         print(dct)
         fig, axes = plt.subplots()
-        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x', 'twobitCModel' : 'x', 'gshareCModel' : '*'}
-        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue', 'twobitCModel' : 'gray', 'gshareCModel' : 'dodgerblue'}
+        marker={'twobit' : '^', 'gshare' : 'o', 'global' : 's', 'gshareBasic' : '*', 'globalBasic' : 'x', 'btb': 'x', 'twobitCModel' : 'x', 'gshareCModel' : '*', 'tenlocal' : '.', 'eightlocal' : ',', 'fourlocal' : 'x', 'tenlocalahead' : '.', 'eightlocalahead' : ',', 'fourlocalahead' : 'x', 'tenlocalrepair' : 'x'}
+        colors={'twobit' : 'black', 'gshare' : 'blue', 'global' : 'dodgerblue', 'gshareBasic' : 'turquoise', 'globalBasic' : 'lightsteelblue', 'btb' : 'blue', 'twobitCModel' : 'gray', 'gshareCModel' : 'dodgerblue', 'tenlocal' : 'lightblue', 'eightlocal' : 'lightblue', 'fourlocal' : 'lightblue', 'tenlocalahead' : 'lightblue', 'eightlocalahead' : 'lightblue', 'fourlocalahead' : 'lightblue', 'tenlocalrepair' : 'lightblue'}
         for cat in dct:
             (x, y) = dct[cat]
             x=[int(2**int(v)) for v in x]
-            print(x, y)
+            #print(x, y)
+            print(cat)
             axes.plot(x,y, color=colors[cat])
             axes.scatter(x,y, label=cat, marker=marker[cat], color=colors[cat])
             #plt.scatter(x, y, label=cat)
