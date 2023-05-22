@@ -2077,8 +2077,8 @@ string arch64zbs[] = '{
 
  string custom[] = '{
     `CUSTOM,
-    "debug",
     "simple",
+    "debug",
     "cacheTest"
  };
   string testsBP64[] = '{

@@ -28,7 +28,7 @@
 
 `include "wally-config.vh"
 
-`define INSTR_CLASS_PRED 1
+`define INSTR_CLASS_PRED 0
 
 module bpred (
   input  logic             clk, reset,
@@ -127,19 +127,21 @@ module bpred (
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   
-  end else if (`BPRED_TYPE == "BPLOCALPAg") begin:Predictor
-    // *** Fix me
-/* -----\/----- EXCLUDED -----\/-----
-    localHistoryPredictor DirPredictor(.clk,
-      .reset, .StallF, .StallE,
-      .LookUpPC(PCNextF),
-      .Prediction(BPDirPredF),
-      // update
-      .UpdatePC(PCE),
-      .UpdateEN(InstrClassE[0] & ~StallE),
-      .PCSrcE,
-      .UpdatePrediction(InstrClassE[0]));
- -----/\----- EXCLUDED -----/\----- */
+  end else if (`BPRED_TYPE == "BP_LOCAL_BASIC") begin:Predictor
+    localbpbasic #(`BPRED_NUM_LHR, `BPRED_SIZE) DirPredictor(.clk, .reset, 
+      .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
+      .BranchE, .BranchM, .PCSrcE);
+  end else if (`BPRED_TYPE == "BP_LOCAL_AHEAD") begin:Predictor
+    localaheadbp #(`BPRED_NUM_LHR, `BPRED_SIZE) DirPredictor(.clk, .reset, 
+      .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
+      .BranchE, .BranchM, .PCSrcE);
+  end else if (`BPRED_TYPE == "BP_LOCAL_REPAIR") begin:Predictor
+    localreapirbp #(`BPRED_NUM_LHR, `BPRED_SIZE) DirPredictor(.clk, .reset, 
+      .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+      .PCNextF, .PCE, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
+      .BranchD, .BranchE, .BranchM, .PCSrcE);
   end 
 
   // Part 2 Branch target address prediction
