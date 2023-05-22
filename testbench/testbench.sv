@@ -320,10 +320,10 @@ module testbench;
             $display("Embench Benchmark: %s is done.", tests[test]);
             if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
             else outputfile = {pathname, tests[test], ".sim.output"};
-            outputFilePointer = $fopen(outputfile);
+            outputFilePointer = $fopen(outputfile, "w");
             i = 0;
             while ($unsigned(i) < $unsigned(5'd5)) begin
-              $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+              $fdisplay("%x %s", outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
               i = i + 1;
             end
             $fclose(outputFilePointer);
@@ -574,7 +574,7 @@ module testbench;
     assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
 
     initial begin
-      LogFile = $psprintf("ICache.log");
+      LogFile = "ICache.log";
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
@@ -617,7 +617,7 @@ module testbench;
                      (AccessTypeString != "NULL");
 
     initial begin
-      LogFile = $psprintf("DCache.log");
+      LogFile = "DCache.log";
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
@@ -643,7 +643,8 @@ module testbench;
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
-        LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
+        LogFile = "branch.log"; // will break some of Ross's research analysis scripts
+        //LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
         file = $fopen(LogFile, "w");
       end
       always @(posedge clk) begin
@@ -742,8 +743,7 @@ module DCacheFlushFSM
     integer i, j, k, l;
 
     always @(posedge clk) begin
-      if (start) begin #1
-        #1
+      if (start) begin 
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
             for(l = 0; l < cachesramwords; l++) begin
