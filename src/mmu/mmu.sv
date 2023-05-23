@@ -128,7 +128,7 @@ module mmu #(parameter TLB_ENTRIES = 8, IMMU = 0) (
   assign StoreAmoAccessFaultM = (PMAStoreAmoAccessFaultM | PMPStoreAmoAccessFaultM) & ~TLBMiss;
 
   // Misaligned faults
-   always_comb
+   always_comb // exclusion-tag: immu-wordaccess
     case(Size[1:0]) 
       2'b00:  DataMisalignedM = 0;                 // lb, sb, lbu
       2'b01:  DataMisalignedM = VAdr[0];           // lh, sh, lhu

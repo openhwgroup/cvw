@@ -93,6 +93,8 @@ module testbench;
         "arch64m":      if (`M_SUPPORTED)        tests = arch64m;
         "arch64f":      if (`F_SUPPORTED)        tests = arch64f;
         "arch64d":      if (`D_SUPPORTED)        tests = arch64d;  
+        "arch64f_fma":      if (`F_SUPPORTED)        tests = arch64f_fma;
+        "arch64d_fma":      if (`D_SUPPORTED)        tests = arch64d_fma;  
         "arch64zi":     if (`ZIFENCEI_SUPPORTED) tests = arch64zi;
         "imperas64i":                            tests = imperas64i;
         "imperas64f":   if (`F_SUPPORTED)        tests = imperas64f;
@@ -124,6 +126,8 @@ module testbench;
         "arch32m":      if (`M_SUPPORTED)        tests = arch32m;
         "arch32f":      if (`F_SUPPORTED)        tests = arch32f;
         "arch32d":      if (`D_SUPPORTED)        tests = arch32d;
+        "arch32f_fma":      if (`F_SUPPORTED)        tests = arch32f_fma;
+        "arch32d_fma":      if (`D_SUPPORTED)        tests = arch32d_fma;
         "arch32zi":     if (`ZIFENCEI_SUPPORTED) tests = arch32zi;
         "imperas32i":                            tests = imperas32i;
         "imperas32f":   if (`F_SUPPORTED)        tests = imperas32f;
@@ -254,7 +258,7 @@ module testbench;
         $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // force sdc timers
-        force dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
         if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
@@ -322,10 +326,10 @@ module testbench;
             $display("Embench Benchmark: %s is done.", tests[test]);
             if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
             else outputfile = {pathname, tests[test], ".sim.output"};
-            outputFilePointer = $fopen(outputfile);
+            outputFilePointer = $fopen(outputfile, "w");
             i = 0;
             while ($unsigned(i) < $unsigned(5'd5)) begin
-              $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+              $fdisplay("%x %s", outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
               i = i + 1;
             end
             $fclose(outputFilePointer);
@@ -538,23 +542,15 @@ module testbench;
   if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
-    always @(*) begin
-      if(reset) begin
-        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+    // initialize branch predictor on reset
+    always @(posedge reset) begin
+       for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-          force dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
-          #1;
-        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          release dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex];
-        end 
-        for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-          release dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex];
-        end
-      end
-    end
+   end
   end
 
 
@@ -576,7 +572,7 @@ module testbench;
     assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
 
     initial begin
-      LogFile = $psprintf("ICache.log");
+      LogFile = "ICache.log";
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
@@ -619,7 +615,7 @@ module testbench;
                      (AccessTypeString != "NULL");
 
     initial begin
-      LogFile = $psprintf("DCache.log");
+      LogFile = "DCache.log";
       file = $fopen(LogFile, "w");
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
@@ -645,7 +641,8 @@ module testbench;
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
-        LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
+        LogFile = "branch.log"; // will break some of Ross's research analysis scripts
+        //LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
         file = $fopen(LogFile, "w");
       end
       always @(posedge clk) begin
@@ -744,8 +741,7 @@ module DCacheFlushFSM
     integer i, j, k, l;
 
     always @(posedge clk) begin
-      if (start) begin #1
-        #1
+      if (start) begin 
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
             for(l = 0; l < cachesramwords; l++) begin

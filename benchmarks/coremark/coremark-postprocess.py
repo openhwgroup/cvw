@@ -37,6 +37,14 @@ for lineNum in range(len(logLines)):
         ICacheAccess = int(contents[-1])
         ICacheLineNum = lineNum + 2
 
+# prevent division by zero
+if (dCacheAccess == 0): 
+    dCacheAccess = 1;
+if (ICacheAccess == 0): 
+    ICacheAccess = 1;
+if (branchesTot == 0): 
+    branchesTot = 1;
+
 # need to add the number of previously added lines to the line number so that they stay in the intedned order.
 logLines.insert(dCacheLineNum, "# D-cache Hits " + str(dCacheAccess - dCacheMisses) + "\n")
 logLines.insert(dCacheLineNum+1, "# D-cache Miss Rate " + str(dCacheMisses / dCacheAccess) + "\n")
