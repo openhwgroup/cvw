@@ -1,13 +1,11 @@
 ///////////////////////////////////////////
-// gsharebasic.sv
+// localaheadbp
 //
 // Written: Ross Thompson
 // Email: ross1728@gmail.com
 // Created: 16 March 2021
-// Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.
-// Modified: 20 February 2023 
 //
-// Purpose: Global History Branch predictor with parameterized global history register
+// Purpose: local history branch predictor with ahead pipelining and SRAM memories.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 

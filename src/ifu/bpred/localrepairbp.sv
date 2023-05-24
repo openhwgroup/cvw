@@ -1,13 +1,11 @@
 ///////////////////////////////////////////
-// gsharebasic.sv
+// localrepairbp
 //
 // Written: Ross Thompson
 // Email: ross1728@gmail.com
-// Created: 16 March 2021
-// Adapted from ssanghai@hmc.edu (Shreya Sanghai) global history predictor implementation.
-// Modified: 20 February 2023 
+// Created: 15 April 2023
 //
-// Purpose: Global History Branch predictor with parameterized global history register
+// Purpose: Local history branch predictor with speculation and repair using CBH.
 // 
 // A component of the CORE-V-WALLY configurable RISC-V project.
 // 
@@ -29,7 +27,7 @@
 
 `include "wally-config.vh"
 
-module localreapirbp #(parameter m = 6, // 2^m = number of local history branches 
+module localrepairbp #(parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
