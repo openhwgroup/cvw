@@ -28,15 +28,15 @@
 
 `include "wally-config.vh"
 
-module vm64check (
-  input  logic [`SVMODE_BITS-1:0] SATP_MODE,
-  input  logic [`XLEN-1:0]        VAdr,
+module vm64check import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.SVMODE_BITS-1:0] SATP_MODE,
+  input  logic [P.XLEN-1:0]        VAdr,
   output logic                    SV39Mode, 
   output logic                    UpperBitsUnequal
 );
 
-  if (`XLEN == 64) begin
-    assign SV39Mode = (SATP_MODE == `SV39);
+  if (P.XLEN == 64) begin
+    assign SV39Mode = (SATP_MODE == P.SV39);
 
     // page fault if upper bits aren't all the same
     logic                           eq_63_47, eq_46_38;

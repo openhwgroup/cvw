@@ -169,7 +169,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
                                ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & (~STATUS_SUM & DTLBWalk));
 
     // Check for page faults
-    vm64check  vm64check(.SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]), .VAdr(TranslationVAdr), 
+    vm64check #(P) vm64check(.SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]), .VAdr(TranslationVAdr), 
       .SV39Mode(), .UpperBitsUnequal);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;

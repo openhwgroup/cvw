@@ -133,6 +133,7 @@ localparam PLIC_GPIO_ID = 32'd3;
 localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = "GSHARE_N"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT;
 localparam BPRED_SIZE = 32'd10;
+localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 
 
