@@ -104,8 +104,8 @@ module csrc #(parameter
     assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                     // instruction class predictor wrong
-    assign CounterEvent[11] = LoadStallM & InstrValidNotFlushedM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM & InstrValidNotFlushedM;                      //  Store Stall
+    assign CounterEvent[11] = LoadStallM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[12] = StoreStallM;                      //  Store Stall
     assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
     assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[15] = DCacheStallM;                                             // d cache miss cycles
