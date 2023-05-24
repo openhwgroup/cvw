@@ -102,13 +102,13 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   // Check physical memory accesses
   ///////////////////////////////////////////
 
-  pmachecker pmachecker(.PhysicalAddress, .Size,
+  pmachecker #(P.PA_BITS) pmachecker(.PhysicalAddress, .Size,
     .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
     .Cacheable, .Idempotent, .SelTIM,
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
   if (P.PMP_ENTRIES > 0) begin : pmp
-    pmpchecker pmpchecker(.PhysicalAddress, .PrivilegeModeW,
+    pmpchecker #(P) pmpchecker(.PhysicalAddress, .PrivilegeModeW,
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
       .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
       .PMPInstrAccessFaultF, .PMPLoadAccessFaultM, .PMPStoreAmoAccessFaultM);
