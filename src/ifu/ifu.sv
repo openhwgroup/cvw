@@ -214,7 +214,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   logic IROMce;
   assign IROMce = ~GatedStallD | reset;
     assign IFURWF = 2'b10;
-    irom irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[P.XLEN-1:0]), .IROMInstrF);
+    irom #(P) irom(.clk, .ce(IROMce), .Adr(PCSpillNextF[P.XLEN-1:0]), .IROMInstrF);
   end else begin
     assign IFURWF = 2'b10;
   end
@@ -232,7 +232,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
-      cache #(.LINELEN(P.ICACHE_LINELENINBITS),
+      cache #(.PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.ICACHE_LINELENINBITS),
               .NUMLINES(P.ICACHE_WAYSIZEINBYTES*8/P.ICACHE_LINELENINBITS),
               .NUMWAYS(P.ICACHE_NUMWAYS), .LOGBWPL(LOGBWPL), .WORDLEN(32), .MUXINTERVAL(16), .READ_ONLY_CACHE(1))
       icache(.clk, .reset, .FlushStage(FlushD), .Stall(GatedStallD),
@@ -249,7 +249,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
              .NextSet(PCSpillNextF[11:0]),
              .PAdr(PCPF),
              .CacheCommitted(CacheCommittedF), .InvalidateCache(InvalidateICacheM));
-      ahbcacheinterface #(WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
+      ahbcacheinterface #(P.AHBW, P.LLEN, P.PA_BITS, WORDSPERLINE, LOGBWPL, LINELEN, LLENPOVERAHBW, 1) 
       ahbcacheinterface(.HCLK(clk), .HRESETn(~reset),
             .HRDATA,
             .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
@@ -269,7 +269,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       assign BusRW = ~ITLBMissF & ~SelIROM ? IFURWF : '0;
       assign IFUHSIZE = 3'b010;
 
-      ahbinterface #(0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
+      ahbinterface #(P.XLEN, 0) ahbinterface(.HCLK(clk), .Flush(FlushD), .HRESETn(~reset), .HREADY(IFUHREADY), 
         .HRDATA(HRDATA), .HTRANS(IFUHTRANS), .HWRITE(IFUHWRITE), .HWDATA(),
         .HWSTRB(), .BusRW, .ByteMask(), .WriteData('0),
         .Stall(GatedStallD), .BusStall, .BusCommitted(BusCommittedF), .FetchBuffer(FetchBuffer));
@@ -351,7 +351,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // expand 16-bit compressed instructions to 32 bits
   if (P.C_SUPPORTED) begin
     logic IllegalCompInstrD;
-    decompress decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
+    decompress #(P.XLEN) decomp(.InstrRawD, .InstrD, .IllegalCompInstrD); 
     assign IllegalIEUInstrD = IllegalBaseInstrD | IllegalCompInstrD; // illegal if bad 32 or 16-bit instr
   end else begin  
     assign InstrD = InstrRawD;

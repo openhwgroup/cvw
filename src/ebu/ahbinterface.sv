@@ -30,6 +30,7 @@
 `include "wally-config.vh"
 
 module ahbinterface #(
+  parameter XLEN,
   parameter LSU = 0                                   // 1: LSU bus width is `XLEN, 0: IFU bus width is 32 bits
 )( 
   input  logic                          HCLK, HRESETn,
