@@ -170,7 +170,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     flopr #(1) StallMReg(.clk, .reset, .d(StallM), .q(StallMQ));
     assign TLBFlush = sfencevmaM & ~StallMQ;
 
-    mmu #(.TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
+    mmu #(.P(P), .TLB_ENTRIES(P.ITLB_ENTRIES), .IMMU(1))
     immu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
          .PrivilegeModeW, .DisableTranslation(1'b0),
          .VAdr(PCFExt),

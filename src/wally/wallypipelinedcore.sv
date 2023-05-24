@@ -208,7 +208,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
      .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD, .PCSrcE,
      .CSRReadM, .CSRWriteM, .PrivilegedM, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD); 
 
-  lsu lsu(
+  lsu #(P) lsu(
     .clk, .reset, .StallM, .FlushM, .StallW, .FlushW,
     // CPU interface
     .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
