@@ -23,8 +23,8 @@
 
 #include "WALLY-TEST-LIB-64.h" 
 
-RVTEST_ISA("RV64I_Zicsr_Zifenci")
-RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",spi)
+RVTEST_ISA("RV64I_Zicsr_Zifencei")
+RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",gpio)
 
 INIT_TESTS
 
@@ -51,6 +51,7 @@ test_cases:
 #   '.8byte [address], [value], [test type]'
 #
 #   The encoding for x30 test type values can be found in the test handler in the framework file
+# 
 # ---------------------------------------------------------------------------------------------
 
 .equ SPI, 0x10040000
@@ -85,3 +86,5 @@ test_cases:
 .8byte rx_mark, 0x00000000, read32_test     # rx_mark reset to 0x0
 .8byte ie, 0x00000000, read32_test          # ie reset to 0x0
 .8byte ip, 0x00000000, read32_test          # ip reset to 0x0
+
+.8byte 0x0, 0x0, terminate_test # terminate tests
