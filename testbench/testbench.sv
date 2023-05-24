@@ -28,7 +28,7 @@
 `include "wally-config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
+`define PrintHPMCounters 1
 `define BPRED_LOGGER 0
 `define I_CACHE_ADDR_LOGGER 0
 `define D_CACHE_ADDR_LOGGER 0
@@ -542,15 +542,27 @@ module testbench;
   if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
-    // initialize branch predictor on reset
-    always @(posedge reset) begin
-       for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+    // local history only
+    if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+      always @(*) begin
+        if(reset) begin
+          for(adrindex = 0; adrindex < 2**`BPRED_NUM_LHR; adrindex++) begin
+            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+          end
+        end
+      end
+    end
+
+    always @(*) begin
+      if(reset) begin
+        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
-   end
+      end
+    end
   end
 
 
