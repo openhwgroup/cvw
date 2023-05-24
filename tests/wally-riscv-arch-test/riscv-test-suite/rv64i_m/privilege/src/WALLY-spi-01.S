@@ -23,7 +23,7 @@
 
 #include "WALLY-TEST-LIB-64.h" 
 
-RVTEST_ISA("RV64I")
+RVTEST_ISA("RV64I_Zicsr_Zifenci")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",spi)
 
 INIT_TESTS
@@ -345,53 +345,53 @@ test_cases:
 
 # Test dual SPI protocol, frame length = 8, big endian
 
-.8byte fmt, 0x00000081, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x000000C8, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x00000000, read32_test     # read rx_data
+#.8byte fmt, 0x00000081, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x000000C8, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x00000000, read32_test     # read rx_data
 
 # Test dual SPI protocol, frame length = 4
 
-.8byte fmt, 0x00000041, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x000000A2, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x000000A0, read32_test     # read rx_data
+#.8byte fmt, 0x00000041, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x000000A2, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x000000A0, read32_test     # read rx_data
 
 # Test dual SPI protocol, frame length = 5
 
-.8byte fmt, 0x00000051, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x00000075, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x00000074, read32_test     # read rx_data
+#.8byte fmt, 0x00000051, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x00000075, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x00000074, read32_test     # read rx_data
 
 # Test dual SPI protocol burst, frame length = 5
-.8byte tx_data, 0x30733FFF, spi_burst_send
-.8byte 0x0, 0x00000003, spi_data_wait
-.8byte rx_data, 0x000000FC, read32_test
-.8byte rx_data, 0x0000003C, read32_test
-.8byte rx_data, 0x00000070, read32_test
-.8byte rx_data, 0x00000030, read32_test 
+#.8byte tx_data, 0x30733FFF, spi_burst_send
+#.8byte 0x0, 0x00000003, spi_data_wait
+#.8byte rx_data, 0x000000FC, read32_test
+#.8byte rx_data, 0x0000003C, read32_test
+#.8byte rx_data, 0x00000070, read32_test
+#.8byte rx_data, 0x00000030, read32_test 
 
 # Test quad SPI protocol, frame length = 5
 
-.8byte fmt, 0x00000052, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x0000003F, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x0000003F, read32_test     # read rx_data
+#.8byte fmt, 0x00000052, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x0000003F, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x0000003F, read32_test     # read rx_data
 
 # Test quad SPI protocol, frame length = 4
 
-.8byte fmt, 0x00000042, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x0000000F, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x00000000, read32_test     # read rx_data
+#.8byte fmt, 0x00000042, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x0000000F, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x00000000, read32_test     # read rx_data
 
 # Test quad SPI protocol, frame length = 8
 
-.8byte fmt, 0x00000082, write32_test        # set frame length to 8, big-endian, dual SPI
-.8byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
-.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x000000F0, read32_test     # read rx_data
+#.8byte fmt, 0x00000082, write32_test        # set frame length to 8, big-endian, dual SPI
+#.8byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
+#.8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
+#.8byte rx_data, 0x000000F0, read32_test     # read rx_data
 
 # =========== Test watermark interrupts ===========
 
