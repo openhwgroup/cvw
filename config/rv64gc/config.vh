@@ -140,7 +140,7 @@ localparam BPRED_TYPE = "GSHARE_N"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BAS
 localparam BPRED_SIZE = 32'd10;
 localparam BTB_SIZE = 32'd10;
 
-localparam SVADU_SUPPORTED = 0;
+localparam SVADU_SUPPORTED = 1;
 localparam ZMMUL_SUPPORTED = 0;
 
 // FPU division architecture
