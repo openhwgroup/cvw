@@ -26,49 +26,47 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtexpcalc(
-  input  logic [`FMTBITS-1:0] Fmt,
-  input  logic [`NE-1:0]      Xe, Ye,
+module fdivsqrtexpcalc import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.FMTBITS-1:0] Fmt,
+  input  logic [P.NE-1:0]      Xe, Ye,
   input  logic                Sqrt,
   input  logic                XZero, 
-  input  logic [`DIVBLEN:0]   ell, m,
-  output logic [`NE+1:0]      Qe
+  input  logic [P.DIVBLEN:0]   ell, m,
+  output logic [P.NE+1:0]      Qe
   );
-  logic [`NE-2:0] Bias;
-  logic [`NE+1:0] SXExp;
-  logic [`NE+1:0] SExp;
-  logic [`NE+1:0] DExp;
+  logic [P.NE-2:0] Bias;
+  logic [P.NE+1:0] SXExp;
+  logic [P.NE+1:0] SExp;
+  logic [P.NE+1:0] DExp;
   
-  if (`FPSIZES == 1) begin
-    assign Bias = (`NE-1)'(`BIAS); 
+  if (P.FPSIZES == 1) begin
+    assign Bias = (P.NE-1)'(P.BIAS); 
 
-  end else if (`FPSIZES == 2) begin
-    assign Bias = Fmt ? (`NE-1)'(`BIAS) : (`NE-1)'(`BIAS1); 
+  end else if (P.FPSIZES == 2) begin
+    assign Bias = Fmt ? (P.NE-1)'(P.BIAS) : (P.NE-1)'(P.BIAS1); 
 
-  end else if (`FPSIZES == 3) begin
+  end else if (P.FPSIZES == 3) begin
     always_comb
       case (Fmt)
-        `FMT: Bias  =  (`NE-1)'(`BIAS);
-        `FMT1: Bias = (`NE-1)'(`BIAS1);
-        `FMT2: Bias = (`NE-1)'(`BIAS2);
+        P.FMT: Bias  =  (P.NE-1)'(P.BIAS);
+        P.FMT1: Bias = (P.NE-1)'(P.BIAS1);
+        P.FMT2: Bias = (P.NE-1)'(P.BIAS2);
         default: Bias = 'x;
       endcase
 
-  end else if (`FPSIZES == 4) begin        
+  end else if (P.FPSIZES == 4) begin        
   always_comb
     case (Fmt)
-      2'h3: Bias =  (`NE-1)'(`Q_BIAS);
-      2'h1: Bias =  (`NE-1)'(`D_BIAS);
-      2'h0: Bias =  (`NE-1)'(`S_BIAS);
-      2'h2: Bias =  (`NE-1)'(`H_BIAS);
+      2'h3: Bias =  (P.NE-1)'(P.Q_BIAS);
+      2'h1: Bias =  (P.NE-1)'(P.D_BIAS);
+      2'h0: Bias =  (P.NE-1)'(P.S_BIAS);
+      2'h2: Bias =  (P.NE-1)'(P.H_BIAS);
     endcase
   end
-  assign SXExp = {2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - (`NE+2)'(`BIAS);
-  assign SExp  = {SXExp[`NE+1], SXExp[`NE+1:1]} + {2'b0, Bias};
+  assign SXExp = {2'b0, Xe} - {{(P.NE+1-P.DIVBLEN){1'b0}}, ell} - (P.NE+2)'(P.BIAS);
+  assign SExp  = {SXExp[P.NE+1], SXExp[P.NE+1:1]} + {2'b0, Bias};
   
   // correct exponent for subnormal input's normalization shifts
-  assign DExp  = ({2'b0, Xe} - {{(`NE+1-`DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(`NE+1-`DIVBLEN){1'b0}}, m} + {3'b0, Bias}); 
+  assign DExp  = ({2'b0, Xe} - {{(P.NE+1-P.DIVBLEN){1'b0}}, ell} - {2'b0, Ye} + {{(P.NE+1-P.DIVBLEN){1'b0}}, m} + {3'b0, Bias}); 
   assign Qe = Sqrt ? SExp : DExp;
 endmodule

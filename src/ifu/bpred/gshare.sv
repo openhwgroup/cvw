@@ -27,9 +27,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
-module gshare #(parameter k = 10,
+module gshare #(parameter XLEN, 
+                parameter k = 10,
                 parameter integer TYPE = 1) (
   input logic             clk,
   input logic             reset,
@@ -38,7 +38,7 @@ module gshare #(parameter k = 10,
   output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
+  input logic [XLEN-1:0] PCNextF, PCF, PCD, PCE, PCM,
   input logic             BPBranchF, BranchD, BranchE, BranchM, BranchW, PCSrcE
 );
 

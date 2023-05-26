@@ -28,17 +28,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module gpio_apb (
+module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic              PCLK, PRESETn,
   input  logic              PSEL,
   input  logic [7:0]        PADDR, 
-  input  logic [`XLEN-1:0]  PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
+  input  logic [P.XLEN-1:0]  PWDATA,
+  input  logic [P.XLEN/8-1:0] PSTRB,
   input  logic              PWRITE,
   input  logic              PENABLE,
-  output logic [`XLEN-1:0]  PRDATA,
+  output logic [P.XLEN-1:0]  PRDATA,
   output logic              PREADY,
   input  logic [31:0]       iof0, iof1,
   input  logic [31:0]       GPIOIN,
@@ -62,7 +60,7 @@ module gpio_apb (
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
   //    (At least that's what I think when FE310 spec says "only naturally aligned 32-bit accesses are supported")
-  if (`XLEN == 64) begin
+  if (P.XLEN == 64) begin
     assign Din =    entry[2] ? PWDATA[63:32] : PWDATA[31:0];
     assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
@@ -138,7 +136,7 @@ module gpio_apb (
 
   // chip i/o
   // connect OUT to IN for loopback testing
-  if (`GPIO_LOOPBACK_TEST) assign input0d = ((output_en & GPIOOUT) | (~output_en & GPIOIN)) & input_en;
+  if (P.GPIO_LOOPBACK_TEST) assign input0d = ((output_en & GPIOOUT) | (~output_en & GPIOIN)) & input_en;
   else                     assign input0d = GPIOIN & input_en;
 
   // synchroninzer for inputs

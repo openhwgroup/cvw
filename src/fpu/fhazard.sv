@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module fhazard(
   input  logic [4:0]  Adr1D, Adr2D, Adr3D,                // read data adresses
   input  logic [4:0]  Adr1E, Adr2E, Adr3E,                // read data adresses

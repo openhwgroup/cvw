@@ -25,9 +25,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module localaheadbp #(parameter m = 6, // 2^m = number of local history branches 
+module localaheadbp #(parameter XLEN,
+                      parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
@@ -36,7 +35,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   output logic [1:0]      BPDirPredD, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic [XLEN-1:0] PCNextF, PCM,
   input logic             BranchE, BranchM, PCSrcE
 );
 
@@ -51,7 +50,7 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   logic                   PCSrcM;
   logic [2**m-1:0][k-1:0] LHRArray;
   logic [m-1:0]           IndexLHRNextF, IndexLHRM;
-  logic [`XLEN-1:0]       PCW;
+  logic [XLEN-1:0]       PCW;
   
   
   logic                    UpdateM;
@@ -110,6 +109,6 @@ module localaheadbp #(parameter m = 6, // 2^m = number of local history branches
   flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
   flopenrc #(k) LHRWReg(clk, reset, FlushW, ~StallW, LHRM, LHRW);
 
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
+  flopenr #(XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
 
 endmodule

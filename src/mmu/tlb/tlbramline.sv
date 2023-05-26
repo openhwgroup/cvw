@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module tlbramline #(parameter WIDTH = 22)
   (input  logic             clk, reset,
    input  logic             re, we,
