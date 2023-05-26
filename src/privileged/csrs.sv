@@ -28,20 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csrs import cvw::*;  #(parameter cvw_t P,
-  // Supervisor CSRs
-  SSTATUS = 12'h100,
-  SIE = 12'h104,
-  STVEC = 12'h105,
-  SCOUNTEREN = 12'h106,
-  SSCRATCH = 12'h140,
-  SEPC = 12'h141,
-  SCAUSE = 12'h142,
-  STVAL = 12'h143,
-  SIP= 12'h144,
-  STIMECMP = 12'h14D,
-  STIMECMPH = 12'h15D,
-  SATP = 12'h180) (
+module csrs import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset, 
   input  logic             CSRSWriteM, STrapM,
   input  logic [11:0]      CSRAdrM,
@@ -62,6 +49,19 @@ module csrs import cvw::*;  #(parameter cvw_t P,
   output logic             STimerInt
 );
 
+  // Supervisor CSRs
+  localparam SSTATUS = 12'h100;
+  localparam SIE = 12'h104;
+  localparam STVEC = 12'h105;
+  localparam SCOUNTEREN = 12'h106;
+  localparam SSCRATCH = 12'h140;
+  localparam SEPC = 12'h141;
+  localparam SCAUSE = 12'h142;
+  localparam STVAL = 12'h143;
+  localparam SIP= 12'h144;
+  localparam STIMECMP = 12'h14D;
+  localparam STIMECMPH = 12'h15D;
+  localparam SATP = 12'h180;
   // Constants
   localparam ZERO = {(P.XLEN){1'b0}};
   localparam SEDELEG_MASK = ~(ZERO | {{P.XLEN-3{1'b0}}, 3'b111} << 9);

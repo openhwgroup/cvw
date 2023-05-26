@@ -27,11 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csri import cvw::*;  #(parameter cvw_t P,
-  MIE = 12'h304,
-  MIP = 12'h344,
-  SIE = 12'h104,
-  SIP = 12'h144) (
+module csri import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset, 
   input  logic              CSRMWriteM, CSRSWriteM,
   input  logic [P.XLEN-1:0]  CSRWriteValM,
@@ -45,6 +41,11 @@ module csri import cvw::*;  #(parameter cvw_t P,
   logic [11:0]              MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic                     WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
   logic                     STIP;
+
+  localparam MIE = 12'h304;
+  localparam MIP = 12'h344;
+  localparam SIE = 12'h104;
+  localparam SIP = 12'h144;
 
   // Interrupt Write Enables
   assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP);

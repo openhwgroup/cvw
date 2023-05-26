@@ -31,45 +31,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csrm import cvw::*;  #(parameter cvw_t P,
-  // Machine CSRs
-  MVENDORID = 12'hF11,
-  MARCHID = 12'hF12,
-  MIMPID = 12'hF13,
-  MHARTID = 12'hF14,
-  MCONFIGPTR = 12'hF15,
-  MSTATUS = 12'h300,
-  MISA_ADR = 12'h301,
-  MEDELEG = 12'h302,
-  MIDELEG = 12'h303,
-  MIE = 12'h304,
-  MTVEC = 12'h305,
-  MCOUNTEREN = 12'h306,
-  MSTATUSH = 12'h310,
-  MCOUNTINHIBIT = 12'h320,
-  MSCRATCH = 12'h340,
-  MEPC = 12'h341,
-  MCAUSE = 12'h342,
-  MTVAL = 12'h343,
-  MIP = 12'h344,
-  MTINST = 12'h34A,
-  PMPCFG0 = 12'h3A0,
-  // .. up to 15 more at consecutive addresses
-  PMPADDR0 = 12'h3B0,
-  // ... up to 63 more at consecutive addresses
-  TSELECT = 12'h7A0,
-  TDATA1 = 12'h7A1,
-  TDATA2 = 12'h7A2,
-  TDATA3 = 12'h7A3,
-  DCSR = 12'h7B0,
-  DPC = 12'h7B1,
-  DSCRATCH0 = 12'h7B2,
-  DSCRATCH1 = 12'h7B3,
-  // Constants
-  ZERO = {(P.XLEN){1'b0}},
-  MEDELEG_MASK = 16'hB3FF,
-  MIDELEG_MASK = 12'h222 // we choose to not make machine interrupts delegable
-) (
+module csrm  import cvw::*;  #(parameter cvw_t P) (
   input  logic                    clk, reset, 
   input  logic                    UngatedCSRMWriteM, CSRMWriteM, MTrapM,
   input  logic [11:0]             CSRAdrM,
@@ -93,6 +55,44 @@ module csrm import cvw::*;  #(parameter cvw_t P,
   logic                           WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
   logic                           WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
   logic                           WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+
+  // Machine CSRs
+  localparam MVENDORID = 12'hF11;
+  localparam MARCHID = 12'hF12;
+  localparam MIMPID = 12'hF13;
+  localparam MHARTID = 12'hF14;
+  localparam MCONFIGPTR = 12'hF15;
+  localparam MSTATUS = 12'h300;
+  localparam MISA_ADR = 12'h301;
+  localparam MEDELEG = 12'h302;
+  localparam MIDELEG = 12'h303;
+  localparam MIE = 12'h304;
+  localparam MTVEC = 12'h305;
+  localparam MCOUNTEREN = 12'h306;
+  localparam MSTATUSH = 12'h310;
+  localparam MCOUNTINHIBIT = 12'h320;
+  localparam MSCRATCH = 12'h340;
+  localparam MEPC = 12'h341;
+  localparam MCAUSE = 12'h342;
+  localparam MTVAL = 12'h343;
+  localparam MIP = 12'h344;
+  localparam MTINST = 12'h34A;
+  localparam PMPCFG0 = 12'h3A0;
+  // .. up to 15 more at consecutive addresses
+  localparam PMPADDR0 = 12'h3B0;
+  // ... up to 63 more at consecutive addresses
+  localparam TSELECT = 12'h7A0;
+  localparam TDATA1 = 12'h7A1;
+  localparam TDATA2 = 12'h7A2;
+  localparam TDATA3 = 12'h7A3;
+  localparam DCSR = 12'h7B0;
+  localparam DPC = 12'h7B1;
+  localparam DSCRATCH0 = 12'h7B2;
+  localparam DSCRATCH1 = 12'h7B3;
+  // Constants
+  localparam ZERO = {(P.XLEN){1'b0}};
+  localparam MEDELEG_MASK = 16'hB3FF;
+  localparam MIDELEG_MASK = 12'h222; // we choose to not make machine interrupts delegable
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
