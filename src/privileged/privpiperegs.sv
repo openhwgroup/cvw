@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module privpiperegs (
   input  logic         clk, reset,  
   input  logic         StallD, StallE, StallM,
