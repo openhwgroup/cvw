@@ -28,17 +28,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module uart_apb (
+module uart_apb import cvw::*; #(parameter cvw_t P) (
   input  logic             PCLK, PRESETn,
   input  logic             PSEL,
   input  logic [2:0]       PADDR, 
-  input  logic [`XLEN-1:0] PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
+  input  logic [P.XLEN-1:0] PWDATA,
+  input  logic [P.XLEN/8-1:0] PSTRB,
   input  logic             PWRITE,
   input  logic             PENABLE,
-  output logic [`XLEN-1:0] PRDATA,
+  output logic [P.XLEN-1:0] PRDATA,
   output logic             PREADY,
   input  logic             SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
   output logic             SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
@@ -56,7 +54,7 @@ module uart_apb (
   assign MEMRb = ~memread;
   assign MEMWb = ~memwrite;
 
-  if (`XLEN == 64) begin:uart
+  if (P.XLEN == 64) begin:uart
     always_comb begin
       PRDATA = {Dout, Dout, Dout, Dout, Dout, Dout, Dout, Dout};
       case (entry)
@@ -84,7 +82,7 @@ module uart_apb (
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
   // *** make sure reads don't occur on UART unless fully selected because they could change state.  This applies to all peripherals
-  uartPC16550D u(  
+  uartPC16550D #(P.UART_PRESCALE, P.QEMU) u(  
     // Processor Interface
     .PCLK, .PRESETn,
     .A(entry), .Din, 
