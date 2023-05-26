@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module endianswap #(parameter LEN) (
   input  logic            BigEndianM,
   input  logic [LEN-1:0]  a,
