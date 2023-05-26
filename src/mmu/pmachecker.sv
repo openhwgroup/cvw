@@ -28,8 +28,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module pmachecker #(parameter PA_BITS) (
-  input  logic [PA_BITS-1:0] PhysicalAddress,
+module pmachecker import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.PA_BITS-1:0] PhysicalAddress,
   input  logic [1:0]          Size,
   input  logic                AtomicAccessM,  // Atomic access
   input  logic                ExecuteAccessF, // Execute access 
@@ -52,7 +52,7 @@ module pmachecker #(parameter PA_BITS) (
   assign AccessRX = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
-  adrdecs adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
+  adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable
   assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];  // exclusion-tag: unused-cachable
