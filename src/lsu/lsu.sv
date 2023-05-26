@@ -229,7 +229,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
-    dtim dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
+    dtim #(P) dtim(.clk, .ce(~GatedStallW), .MemRWM(DTIMMemRWM),
               .DTIMAdr, .FlushW, .WriteDataM(LSUWriteDataM), 
               .ReadDataWordM(DTIMReadDataWordM[P.XLEN-1:0]), .ByteMaskM(ByteMaskM[P.XLEN/8-1:0]));
   end else begin
@@ -321,7 +321,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   // Atomic operations
   /////////////////////////////////////////////////////////////////////////////////////////////
   if (P.A_SUPPORTED) begin:atomic
-    atomic atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, 
+    atomic #(P) atomic(.clk, .reset, .StallW, .ReadDataM(ReadDataM[P.XLEN-1:0]), .IHWriteDataM, .PAdrM, 
       .LSUFunct7M, .LSUFunct3M, .LSUAtomicM, .PreLSURWM, .IgnoreRequest, 
       .IMAWriteDataM, .SquashSCW, .LSURWM);
   end else begin:lrsc

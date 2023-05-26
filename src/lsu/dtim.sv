@@ -29,29 +29,29 @@
 
 `include "wally-config.vh"
 
-module dtim(
+module dtim import cvw::*;  #(parameter cvw_t P) (
   input logic                clk, 
   input logic                FlushW,        
   input logic                ce,            // Chip Enable.  0: Holds ReadDataWordM
   input logic [1:0]          MemRWM,        // Read/Write control
-  input logic [`PA_BITS-1:0] DTIMAdr,       // No stall: Execution stage memory address. Stall: Memory stage memory address
-  input logic [`LLEN-1:0]    WriteDataM,    // Write data from IEU
-  input logic [`LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
-  output logic [`LLEN-1:0]   ReadDataWordM  // Read data before subword selection
+  input logic [P.PA_BITS-1:0] DTIMAdr,       // No stall: Execution stage memory address. Stall: Memory stage memory address
+  input logic [P.LLEN-1:0]    WriteDataM,    // Write data from IEU
+  input logic [P.LLEN/8-1:0]  ByteMaskM,     // Selects which bytes within a word to write
+  output logic [P.LLEN-1:0]   ReadDataWordM  // Read data before subword selection
   );
 
   logic                      we;
  
-  localparam LLENBYTES  = `LLEN/8;
+  localparam LLENBYTES  = P.LLEN/8;
   // verilator  lint_off WIDTH 
-  localparam DEPTH      = `DTIM_RANGE/LLENBYTES;
+  localparam DEPTH      = P.DTIM_RANGE/LLENBYTES;
   // verilator  lint_on WIDTH 
   localparam ADDR_WDITH = $clog2(DEPTH);
   localparam OFFSET     = $clog2(LLENBYTES);
 
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
-  ram1p1rwbe #(.DEPTH(DEPTH), .WIDTH(`LLEN)) 
+  ram1p1rwbe #(.DEPTH(DEPTH), .WIDTH(P.LLEN)) 
     ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(DTIMAdr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   
