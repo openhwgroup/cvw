@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module resultsign(
   input  logic [2:0]  Frm,        // rounding mode
   input  logic        FmaOp,      // is the operation an Fma
