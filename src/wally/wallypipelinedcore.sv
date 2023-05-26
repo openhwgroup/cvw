@@ -270,7 +270,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
 
   // privileged unit
   if (P.ZICSR_SUPPORTED) begin:priv
-    privileged priv(
+    privileged #(P) priv(
       .clk, .reset,
       .FlushD, .FlushE, .FlushM, .FlushW, .StallD, .StallE, .StallM, .StallW,
       .CSRReadM, .CSRWriteM, .SrcAM, .PCM, .PC2NextF,
