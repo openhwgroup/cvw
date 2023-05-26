@@ -52,6 +52,6 @@ module atomic import cvw::*;  #(parameter cvw_t P) (
   mux2 #(P.XLEN) wdmux(IHWriteDataM, AMOResultM, LSUAtomicM[1], IMAWriteDataM);
   assign MemReadM = PreLSURWM[1] & ~IgnoreRequest;
 
-  lrsc lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM, .SquashSCW, .LSURWM);
+  lrsc #(P) lrsc(.clk, .reset, .StallW, .MemReadM, .PreLSURWM, .LSUAtomicM, .PAdrM, .SquashSCW, .LSURWM);
 
 endmodule  
