@@ -27,17 +27,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module amoalu (
-  input  logic [`XLEN-1:0] ReadDataM,    // LSU's ReadData
-  input  logic [`XLEN-1:0] IHWriteDataM, // LSU's WriteData
+module amoalu import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.XLEN-1:0] ReadDataM,    // LSU's ReadData
+  input  logic [P.XLEN-1:0] IHWriteDataM, // LSU's WriteData
   input  logic [6:0]       LSUFunct7M,   // ALU Operation
   input  logic [2:0]       LSUFunct3M,   // Memoy access width
-  output logic [`XLEN-1:0] AMOResultM    // ALU output
+  output logic [P.XLEN-1:0] AMOResultM    // ALU output
 );
 
-  logic [`XLEN-1:0] a, b, y;
+  logic [P.XLEN-1:0] a, b, y;
 
   // *** see how synthesis generates this and optimize more structurally if necessary to share hardware
   // a single carry chain should be shared for + and the four min/max
@@ -53,15 +51,15 @@ module amoalu (
       5'b10100: y = ($signed(a) >= $signed(b)) ? a : b;     // amomax
       5'b11000: y = ($unsigned(a) < $unsigned(b)) ? a : b;  // amominu
       5'b11100: y = ($unsigned(a) >= $unsigned(b)) ? a : b; // amomaxu
-      default:  y = `XLEN'bx;                               // undefined; *** could change to b for efficiency
+      default:  y = 'x;                                     // undefined; *** could change to b for efficiency
     endcase
 
   // sign extend if necessary
-  if (`XLEN == 32) begin:sext
+  if (P.XLEN == 32) begin:sext
     assign a = ReadDataM;
     assign b = IHWriteDataM;
     assign AMOResultM = y;
-  end else begin:sext // `XLEN = 64
+  end else begin:sext // P.XLEN = 64
     always_comb 
       if (LSUFunct3M[1:0] == 2'b10) begin // sign-extend word-length operations
         a = {{32{ReadDataM[31]}}, ReadDataM[31:0]};
