@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module dtim import cvw::*;  #(parameter cvw_t P) (
   input logic                clk, 
   input logic                FlushW,        
