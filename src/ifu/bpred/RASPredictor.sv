@@ -27,9 +27,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module RASPredictor #(parameter int StackSize = 16 )(
+module RASPredictor import cvw::*;  #(parameter cvw_t P, StackSize = 16 )(
   input  logic             clk,
   input  logic             reset, 
   input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,
@@ -37,15 +35,15 @@ module RASPredictor #(parameter int StackSize = 16 )(
   input  logic             ReturnD,
   input  logic             ReturnE, CallE,                  // Instr class
   input  logic             BPReturnF,
-  input  logic [`XLEN-1:0] PCLinkE,                                   // PC of instruction after a call
-  output logic [`XLEN-1:0] RASPCF                                     // Top of the stack
+  input  logic [P.XLEN-1:0] PCLinkE,                                   // PC of instruction after a call
+  output logic [P.XLEN-1:0] RASPCF                                     // Top of the stack
    );
 
   logic                     CounterEn;
   localparam Depth = $clog2(StackSize);
 
   logic [Depth-1:0]         NextPtr, Ptr, P1, M1, IncDecPtr;
-  logic [StackSize-1:0]     [`XLEN-1:0] memory;
+  logic [StackSize-1:0]     [P.XLEN-1:0] memory;
   integer        index;
 
   logic      PopF;
@@ -85,7 +83,7 @@ module RASPredictor #(parameter int StackSize = 16 )(
   always_ff @ (posedge clk) begin
     if(reset) begin
       for(index=0; index<StackSize; index++)
-    memory[index] <= {`XLEN{1'b0}};
+    memory[index] <= {P.XLEN{1'b0}};
     end else if(PushE) begin
       memory[NextPtr] <= #1 PCLinkE;
     end

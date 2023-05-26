@@ -26,19 +26,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtuotfc4(
+module fdivsqrtuotfc4 import cvw::*;  #(parameter cvw_t P) (
   input  logic [3:0]     udigit,
-  input  logic [`DIVb:0] U, UM,
-  input  logic [`DIVb:0] C,
-  output logic [`DIVb:0] UNext, UMNext
+  input  logic [P.DIVb:0] U, UM,
+  input  logic [P.DIVb:0] C,
+  output logic [P.DIVb:0] UNext, UMNext
 );
   //  The on-the-fly converter transfers the square root 
   //  bits to the quotient as they come.
   //  Use this otfc for division and square root.
 
-  logic [`DIVb:0] K1, K2, K3;       
+  logic [P.DIVb:0] K1, K2, K3;       
   assign K1 = (C&~(C << 1));        // K
   assign K2 = ((C << 1)&~(C << 2)); // 2K
   assign K3 = (C & ~(C << 2));      // 3K

@@ -27,20 +27,18 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fmaalign(
-  input  logic [`NE-1:0]      Xe, Ye, Ze,         // biased exponents in B(NE.0) format
-  input  logic [`NF:0]        Zm,                 // significand in U(0.NF) format]
+module fmaalign import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.NE-1:0]      Xe, Ye, Ze,         // biased exponents in B(NE.0) format
+  input  logic [P.NF:0]        Zm,                 // significand in U(0.NF) format]
   input  logic                XZero, YZero, ZZero,// is the input zero
-  output logic [3*`NF+3:0]    Am,                 // addend aligned for addition in U(NF+5.2NF+1)
+  output logic [3*P.NF+3:0]    Am,                 // addend aligned for addition in U(NF+5.2NF+1)
   output logic                ASticky,            // Sticky bit calculated from the aliged addend
   output logic                KillProd            // should the product be set to zero
 );
 
-  logic [`NE+1:0]             ACnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
-  logic [4*`NF+3:0]           ZmShifted;      // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
-  logic [4*`NF+3:0]           ZmPreshifted;   // input to the alignment shifter U(NF+5.3NF+1)
+  logic [P.NE+1:0]             ACnt;           // how far to shift the addend to align with the product in Q(NE+2.0) format
+  logic [4*P.NF+3:0]           ZmShifted;      // output of the alignment shifter including sticky bits U(NF+5.3NF+1)
+  logic [4*P.NF+3:0]           ZmPreshifted;   // input to the alignment shifter U(NF+5.3NF+1)
   logic                       KillZ;          // should the addend be killed
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -51,16 +49,16 @@ module fmaalign(
   //      - negitive means Z is larger, so shift Z left
   //      - positive means the product is larger, so shift Z right
   // This could have been done using Pe, but ACnt is on the critical path so we replicate logic for speed
-  assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (`NE)'(`BIAS)} + (`NE+2)'(`NF+2) - {2'b0, Ze};
+  assign ACnt = {2'b0, Xe} + {2'b0, Ye} - {2'b0, (P.NE)'(P.BIAS)} + (P.NE+2)'(P.NF+2) - {2'b0, Ze};
 
   // Defualt Addition with only inital left shift
   //          |   53'b0    |  106'b(product)  | 1'b0 |
   //          | addnend |
 
-  assign ZmPreshifted = {Zm,(3*`NF+3)'(0)};
+  assign ZmPreshifted = {Zm,(3*P.NF+3)'(0)};
   
-  assign KillProd = (ACnt[`NE+1]&~ZZero)|XZero|YZero;
-  assign KillZ = $signed(ACnt)>$signed((`NE+2)'(3)*(`NE+2)'(`NF)+(`NE+2)'(3));
+  assign KillProd = (ACnt[P.NE+1]&~ZZero)|XZero|YZero;
+  assign KillZ = $signed(ACnt)>$signed((P.NE+2)'(3)*(P.NE+2)'(P.NF)+(P.NE+2)'(3));
 
   always_comb begin
     // If the product is too small to effect the sum, kill the product
@@ -68,7 +66,7 @@ module fmaalign(
     //          |   53'b0    |  106'b(product)  | 1'b0 |
     //  | addnend |
     if (KillProd) begin
-        ZmShifted = {(`NF+2)'(0), Zm, (2*`NF+1)'(0)};
+        ZmShifted = {(P.NF+2)'(0), Zm, (2*P.NF+1)'(0)};
         ASticky = ~(XZero|YZero);
 
     // If the addend is too small to effect the addition        
@@ -86,12 +84,12 @@ module fmaalign(
     //                                    | addnend |
     end else begin
         ZmShifted = ZmPreshifted >> ACnt;
-        ASticky = |(ZmShifted[`NF-1:0]); 
+        ASticky = |(ZmShifted[P.NF-1:0]); 
 
     end
   end
 
-  assign Am = ZmShifted[4*`NF+3:`NF];
+  assign Am = ZmShifted[4*P.NF+3:P.NF];
 
 endmodule
 

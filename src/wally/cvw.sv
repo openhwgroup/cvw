@@ -28,188 +28,240 @@
 // Instead, CORE-V-Wally loads the appropriate configuration one time and places it in a package
 // that is referenced by all Wally modules but not by other subsystems.
 
-// Load configuration-specific information
-`include "wally-config.vh"
+`ifndef CVW_T
 
-// Place configuration in a package
+`define CVW_T 1
+
 package cvw;
-  parameter XLEN = `XLEN;
-  parameter FPGA = `FPGA;
-  parameter QEMU = `QEMU;
-  parameter IEEE754 = `IEEE754;
-  parameter MISA = `MISA;
-  parameter ZICSR_SUPPORTED = `ZICSR_SUPPORTED;
-  parameter ZIFENCEI_SUPPORTED = `ZIFENCEI_SUPPORTED;
-  parameter COUNTERS = `COUNTERS;
-  parameter ZICOUNTERS_SUPPORTED = `ZICOUNTERS_SUPPORTED;
-  parameter ZFH_SUPPORTED = `ZFH_SUPPORTED;
-  parameter BUS_SUPPORTED = `BUS_SUPPORTED;
-  parameter DCACHE_SUPPORTED = `DCACHE_SUPPORTED;
-  parameter ICACHE_SUPPORTED = `ICACHE_SUPPORTED;
-  parameter VIRTMEM_SUPPORTED = `VIRTMEM_SUPPORTED;
-  parameter VECTORED_INTERRUPTS_SUPPORTED = `VECTORED_INTERRUPTS_SUPPORTED;
-  parameter BIGENDIAN_SUPPORTED = `BIGENDIAN_SUPPORTED;
-  parameter ITLB_ENTRIES = `ITLB_ENTRIES;
-  parameter DTLB_ENTRIES = `DTLB_ENTRIES;
-  parameter DCACHE_NUMWAYS = `DCACHE_NUMWAYS;
-  parameter DCACHE_WAYSIZEINBYTES = `DCACHE_WAYSIZEINBYTES;
-  parameter DCACHE_LINELENINBITS = `DCACHE_LINELENINBITS;
-  parameter ICACHE_NUMWAYS = `ICACHE_NUMWAYS;
-  parameter ICACHE_WAYSIZEINBYTES = `ICACHE_WAYSIZEINBYTES;
-  parameter ICACHE_LINELENINBITS = `ICACHE_LINELENINBITS;
-  parameter IDIV_BITSPERCYCLE = `IDIV_BITSPERCYCLE;
-  parameter IDIV_ON_FPU = `IDIV_ON_FPU;
-  parameter PMP_ENTRIES = `PMP_ENTRIES;
-  parameter RESET_VECTOR = `RESET_VECTOR;
-  parameter WFI_TIMEOUT_BIT = `WFI_TIMEOUT_BIT;
-  parameter DTIM_SUPPORTED = `DTIM_SUPPORTED;
-  parameter DTIM_BASE = `DTIM_BASE;
-  parameter DTIM_RANGE = `DTIM_RANGE;
-  parameter IROM_SUPPORTED = `IROM_SUPPORTED;
-  parameter IROM_BASE = `IROM_BASE;
-  parameter IROM_RANGE = `IROM_RANGE;
-  parameter BOOTROM_SUPPORTED = `BOOTROM_SUPPORTED;
-  parameter BOOTROM_BASE = `BOOTROM_BASE;
-  parameter BOOTROM_RANGE = `BOOTROM_RANGE;
-  parameter UNCORE_RAM_SUPPORTED = `UNCORE_RAM_SUPPORTED;
-  parameter UNCORE_RAM_BASE = `UNCORE_RAM_BASE;
-  parameter UNCORE_RAM_RANGE = `UNCORE_RAM_RANGE;
-  parameter EXT_MEM_SUPPORTED = `EXT_MEM_SUPPORTED;
-  parameter EXT_MEM_BASE = `EXT_MEM_BASE;
-  parameter EXT_MEM_RANGE = `EXT_MEM_RANGE;
-  parameter CLINT_SUPPORTED = `CLINT_SUPPORTED;
-  parameter CLINT_BASE = `CLINT_BASE;
-  parameter CLINT_RANGE = `CLINT_RANGE;
-  parameter GPIO_SUPPORTED = `GPIO_SUPPORTED;
-  parameter GPIO_BASE = `GPIO_BASE;
-  parameter GPIO_RANGE = `GPIO_RANGE;
-  parameter UART_SUPPORTED = `UART_SUPPORTED;
-  parameter UART_BASE = `UART_BASE;
-  parameter UART_RANGE = `UART_RANGE;
-  parameter PLIC_SUPPORTED = `PLIC_SUPPORTED;
-  parameter PLIC_BASE = `PLIC_BASE;
-  parameter PLIC_RANGE = `PLIC_RANGE;
-  parameter SDC_SUPPORTED = `SDC_SUPPORTED;
-  parameter SDC_BASE = `SDC_BASE;
-  parameter SDC_RANGE = `SDC_RANGE;
-  parameter AHBW = `AHBW;
-  parameter GPIO_LOOPBACK_TEST = `GPIO_LOOPBACK_TEST;
-  parameter UART_PRESCALE = `UART_PRESCALE;
-  parameter PLIC_NUM_SRC = `PLIC_NUM_SRC;
-  parameter PLIC_GPIO_ID = `PLIC_GPIO_ID;
-  parameter PLIC_UART_ID = `PLIC_UART_ID;
-  parameter BPRED_SUPPORTED = `BPRED_SUPPORTED;
-  parameter BPRED_TYPE = `BPRED_TYPE;
-  parameter BPRED_SIZE = `BPRED_SIZE;
-  parameter SVADU_SUPPORTED = `SVADU_SUPPORTED;
-//  parameter  = `;
+
+  `include "BranchPredictorType.vh"
+
+typedef struct packed {
+  logic         FPGA;     // Modifications to tare
+  logic         QEMU;     // Hacks to agree with QEMU during Linux boot
+  int           XLEN;     // Machine width (32 or 64)
+  logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
+  int           MISA;     // Machine Instruction Set Architecture
+  int           AHBW;     // AHB bus width (usually = XLEN)
+
+  // RISC-V Features
+  logic         ZICSR_SUPPORTED;
+  logic         ZIFENCEI_SUPPORTED;
+  logic [11:0]           COUNTERS;
+  logic         ZICOUNTERS_SUPPORTED;
+  logic         ZFH_SUPPORTED;
+  logic         SSTC_SUPPORTED;
+  logic         VIRTMEM_SUPPORTED;
+  logic         VECTORED_INTERRUPTS_SUPPORTED;
+  logic         BIGENDIAN_SUPPORTED;
+  logic         SVADU_SUPPORTED;
+  logic         ZMMUL_SUPPORTED;
+
+  // Microarchitectural Features
+  logic         BUS_SUPPORTED;
+  logic         DCACHE_SUPPORTED;
+  logic         ICACHE_SUPPORTED;
+
+// TLB configuration.  Entries should be a power of 2
+  int       ITLB_ENTRIES;
+  int       DTLB_ENTRIES;
+
+// Cache configuration.  Sizes should be a power of two
+// typical configuration 4 ways, 4096 ints per way, 256 bit or more lines
+  int       DCACHE_NUMWAYS;
+  int       DCACHE_WAYSIZEINBYTES;
+  int       DCACHE_LINELENINBITS;
+  int       ICACHE_NUMWAYS;
+  int       ICACHE_WAYSIZEINBYTES;
+  int       ICACHE_LINELENINBITS;
+
+// Integer Divider Configuration
+// IDIV_BITSPERCYCLE must be 1, 2, or 4
+  int       IDIV_BITSPERCYCLE;
+  logic         IDIV_ON_FPU;
+
+// Legal number of PMP entries are 0, 16, or 64
+  int          PMP_ENTRIES;
+
+// Address space
+  longint  RESET_VECTOR;
+
+// WFI Timeout Wait
+  int       WFI_TIMEOUT_BIT;
+
+// Peripheral Addresses
+// Peripheral memory space extends from BASE to BASE+RANGE
+// Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
+  logic         DTIM_SUPPORTED;
+  longint  DTIM_BASE;
+  longint  DTIM_RANGE;
+  logic         IROM_SUPPORTED;
+  longint  IROM_BASE;
+  longint  IROM_RANGE;
+  logic         BOOTROM_SUPPORTED;
+  longint  BOOTROM_BASE;
+  longint  BOOTROM_RANGE;
+  logic         UNCORE_RAM_SUPPORTED;
+  longint  UNCORE_RAM_BASE;
+  longint  UNCORE_RAM_RANGE;
+  logic         EXT_MEM_SUPPORTED;
+  longint  EXT_MEM_BASE;
+  longint  EXT_MEM_RANGE;
+  logic         CLINT_SUPPORTED;
+  longint  CLINT_BASE;
+  longint  CLINT_RANGE;
+  logic         GPIO_SUPPORTED;
+  longint  GPIO_BASE;
+  longint  GPIO_RANGE;
+  logic         UART_SUPPORTED;
+  longint  UART_BASE;
+  longint  UART_RANGE;
+  logic         PLIC_SUPPORTED;
+  longint  PLIC_BASE;
+  longint  PLIC_RANGE;
+  logic         SDC_SUPPORTED;
+  longint  SDC_BASE;
+  longint  SDC_RANGE;
+
+// Test modes
+
+// Tie GPIO outputs back to inputs
+  logic         GPIO_LOOPBACK_TEST;
+
+// Hardware configuration
+  int         UART_PRESCALE ;
+
+// Interrupt configuration
+  int       PLIC_NUM_SRC;
+  logic         PLIC_NUM_SRC_LT_32;
+  int       PLIC_GPIO_ID;
+  int       PLIC_UART_ID;
+
+  logic     BPRED_SUPPORTED;
+  BranchPredictorType   BPRED_TYPE;
+  int       BPRED_NUM_LHR;
+  int       BPRED_SIZE;
+  int       BTB_SIZE;
 
 
-  // Shared parameters
+// FPU division architecture
+  int       RADIX;
+  int       DIVCOPIES;
 
-  // constants defining different privilege modes
-  // defined in Table 1.1 of the privileged spec
-  parameter M_MODE = (2'b11);
-  parameter S_MODE = (2'b01);
-  parameter U_MODE = (2'b00);
+// bit manipulation
+  logic         ZBA_SUPPORTED;
+  logic         ZBB_SUPPORTED;
+  logic         ZBC_SUPPORTED;
+  logic         ZBS_SUPPORTED;
 
-  // Virtual Memory Constants
-  parameter VPN_SEGMENT_BITS = (`XLEN == 32 ? 10 : 9);
-  parameter VPN_BITS = (`XLEN==32 ? (2*`VPN_SEGMENT_BITS) : (4*`VPN_SEGMENT_BITS));
-  parameter PPN_BITS = (`XLEN==32 ? 22 : 44);
-  parameter PA_BITS = (`XLEN==32 ? 34 : 56);
-  parameter SVMODE_BITS = (`XLEN==32 ? 1 : 4);
-  parameter ASID_BASE = (`XLEN==32 ? 22 : 44);
-  parameter ASID_BITS = (`XLEN==32 ? 9 : 16);
+// Memory synthesis configuration
+  logic         USE_SRAM;
 
-  // constants to check SATP_MODE against
-  // defined in Table 4.3 of the privileged spec
-  parameter NO_TRANSLATE = 0;
-  parameter SV32 = 1;
-  parameter SV39 = 8;
-  parameter SV48 = 9;
+// constants defining different privilege modes
+// defined in Table 1.1 of the privileged spec
+  logic [1:0] M_MODE ;
+  logic [1:0] S_MODE ;
+  logic [1:0] U_MODE ;
 
-  // macros to define supported modes
-  parameter A_SUPPORTED = ((`MISA >> 0) % 2 == 1);
-  parameter B_SUPPORTED = ((`ZBA_SUPPORTED | `ZBB_SUPPORTED | `ZBC_SUPPORTED | `ZBS_SUPPORTED)); // not based on MISA
-  parameter C_SUPPORTED = ((`MISA >> 2) % 2 == 1);
-  parameter D_SUPPORTED = ((`MISA >> 3) % 2 == 1);
-  parameter E_SUPPORTED = ((`MISA >> 4) % 2 == 1);
-  parameter F_SUPPORTED = ((`MISA >> 5) % 2 == 1);
-  parameter I_SUPPORTED = ((`MISA >> 8) % 2 == 1);
-  parameter M_SUPPORTED = ((`MISA >> 12) % 2 == 1);
-  parameter Q_SUPPORTED = ((`MISA >> 16) % 2 == 1);
-  parameter S_SUPPORTED = ((`MISA >> 18) % 2 == 1);
-  parameter U_SUPPORTED = ((`MISA >> 20) % 2 == 1);
-  // N-mode user-level interrupts are depricated per Andrew Waterman 1/13/21
+// Virtual Memory Constants
+  int VPN_SEGMENT_BITS;
+  int VPN_BITS;
+  int PPN_BITS;
+  int PA_BITS;
+  int SVMODE_BITS;
+  int ASID_BASE;
+  int ASID_BITS;
 
-  // logarithm of XLEN, used for number of index bits to select
-  parameter LOG_XLEN = (`XLEN == 32 ? 5 : 6);
+// constants to check SATP_MODE against
+// defined in Table 4.3 of the privileged spec
+  logic [3:0] NO_TRANSLATE;
+  logic [3:0] SV32; 
+  logic [3:0] SV39;
+  logic [3:0] SV48;
 
-  // Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
-  parameter PMPCFG_ENTRIES = (`PMP_ENTRIES/8);
-
-  // Floating point constants for Quad, Double, Single, and Half precisions
-  parameter Q_LEN = 32'd128;
-  parameter Q_NE = 32'd15;
-  parameter Q_NF = 32'd112;
-  parameter Q_BIAS = 32'd16383;
-  parameter Q_FMT = 2'd3;
-  parameter D_LEN = 32'd64;
-  parameter D_NE = 32'd11;
-  parameter D_NF = 32'd52;
-  parameter D_BIAS = 32'd1023;
-  parameter D_FMT = 2'd1;
-  parameter S_LEN = 32'd32;
-  parameter S_NE = 32'd8;
-  parameter S_NF = 32'd23;
-  parameter S_BIAS = 32'd127;
-  parameter S_FMT = 2'd0;
-  parameter H_LEN = 32'd16;
-  parameter H_NE = 32'd5;
-  parameter H_NF = 32'd10;
-  parameter H_BIAS = 32'd15;
-  parameter H_FMT = 2'd2;
-
-  // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
-  parameter FLEN = (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `S_LEN);
-  parameter NE   = (`Q_SUPPORTED ? `Q_NE   : `D_SUPPORTED ? `D_NE   : `S_NE);
-  parameter NF   = (`Q_SUPPORTED ? `Q_NF   : `D_SUPPORTED ? `D_NF   : `S_NF);
-  parameter FMT  = (`Q_SUPPORTED ? 2'd3    : `D_SUPPORTED ? 2'd1    : 2'd0);
-  parameter BIAS = (`Q_SUPPORTED ? `Q_BIAS : `D_SUPPORTED ? `D_BIAS : `S_BIAS);
+// macros to define supported modes
+  logic A_SUPPORTED;
+  logic B_SUPPORTED;
+  logic C_SUPPORTED;
+  logic D_SUPPORTED;
+  logic E_SUPPORTED;
+  logic F_SUPPORTED;
+  logic I_SUPPORTED;
+  logic M_SUPPORTED;
+  logic Q_SUPPORTED;
+  logic S_SUPPORTED;
+  logic U_SUPPORTED;
   
-  // Floating point constants needed for FPU paramerterization
-  parameter FPSIZES = ((32)'(`Q_SUPPORTED)+(32)'(`D_SUPPORTED)+(32)'(`F_SUPPORTED)+(32)'(`ZFH_SUPPORTED));
-  parameter FMTBITS = ((32)'(`FPSIZES>=3)+1);
-  parameter LEN1  = ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_LEN  : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_LEN  : `H_LEN);
-  parameter NE1   = ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NE   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NE   : `H_NE);
-  parameter NF1   = ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_NF   : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_NF   : `H_NF);
-  parameter FMT1  = ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? 2'd1    : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? 2'd0    : 2'd2);
-  parameter BIAS1 = ((`D_SUPPORTED & (`FLEN != `D_LEN)) ? `D_BIAS : (`F_SUPPORTED & (`FLEN != `S_LEN)) ? `S_BIAS : `H_BIAS);
-  parameter LEN2  = ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_LEN  : `H_LEN);
-  parameter NE2   = ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NE   : `H_NE);
-  parameter NF2   = ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_NF   : `H_NF);
-  parameter FMT2  = ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? 2'd0    : 2'd2);
-  parameter BIAS2 = ((`F_SUPPORTED & (`LEN1 != `S_LEN)) ? `S_BIAS : `H_BIAS);
+// logarithm of XLEN, used for number of index bits to select
+  int LOG_XLEN;
 
-  // largest length in IEU/FPU
-  parameter CVTLEN = ((`NF<`XLEN) ? (`XLEN) : (`NF));
-  parameter LLEN = ((`FLEN<`XLEN) ? (`XLEN) : (`FLEN));
-  parameter LOGCVTLEN = $unsigned($clog2(`CVTLEN+1));
-  parameter NORMSHIFTSZ = (((`CVTLEN+`NF+1)>(`DIVb + 1 +`NF+1) & (`CVTLEN+`NF+1)>(3*`NF+6)) ? (`CVTLEN+`NF+1) : ((`DIVb + 1 +`NF+1) > (3*`NF+6) ? (`DIVb + 1 +`NF+1) : (3*`NF+6)));
-  parameter LOGNORMSHIFTSZ = ($clog2(`NORMSHIFTSZ));
-  parameter CORRSHIFTSZ = (((`CVTLEN+`NF+1)>(`DIVb + 1 +`NF+1) & (`CVTLEN+`NF+1)>(3*`NF+6)) ? (`CVTLEN+`NF+1) : ((`DIVN+1+`NF) > (3*`NF+4) ? (`DIVN+1+`NF) : (3*`NF+4)));
+// Number of 64 bit PMP Configuration Register entries (or pairs of 32 bit entries)
+  int PMPCFG_ENTRIES;
 
-  // division constants
+// Floating point constants for Quad, Double, Single, and Half precisions
+  int Q_LEN;
+  int Q_NE;
+  int Q_NF;
+  int Q_BIAS;
+  logic [1:0] Q_FMT;
+  int D_LEN;
+  int D_NE;
+  int D_NF;
+  int D_BIAS;
+  logic [1:0] D_FMT;
+  int S_LEN;
+  int S_NE;
+  int S_NF;
+  int S_BIAS;
+  logic [1:0] S_FMT;
+  int H_LEN;
+  int H_NE;
+  int H_NF;
+  int H_BIAS;
+  logic [1:0] H_FMT;
 
-  parameter DIVN        = (((`NF<`XLEN) & `IDIV_ON_FPU) ? `XLEN : `NF+2); // standard length of input
-  parameter LOGR        = ($clog2(`RADIX));            // r = log(R)
-  parameter RK          = (`LOGR*`DIVCOPIES);          // r*k used for intdiv preproc
-  parameter LOGRK       = ($clog2(`RK));               // log2(r*k)
-  parameter FPDUR       = ((`DIVN+1+(`LOGR*`DIVCOPIES))/(`LOGR*`DIVCOPIES)+(`RADIX/4));
-  parameter DURLEN      = ($clog2(`FPDUR+1));
-  parameter DIVb        = (`FPDUR*`LOGR*`DIVCOPIES-1); // canonical fdiv size (b)
-  parameter DIVBLEN     = ($clog2(`DIVb+1)-1);
-  parameter DIVa        = (`DIVb+1-`XLEN);             // used for idiv on fpu
+// Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
+  int FLEN;
+  int NE  ;
+  int NF  ;
+  logic [1:0] FMT ;
+  int BIAS;
+
+// Floating point constants needed for FPU paramerterization
+  int FPSIZES;
+  int FMTBITS;
+  int LEN1 ;
+  int NE1  ;
+  int NF1  ;
+  logic [1:0] FMT1 ;
+  int BIAS1;
+  int LEN2 ;
+  int NE2  ;
+  int NF2  ;
+  logic [1:0] FMT2 ;
+  int BIAS2;
+
+// largest length in IEU/FPU
+  int CVTLEN;
+  int LLEN;
+  int LOGCVTLEN;
+  int NORMSHIFTSZ;
+  int LOGNORMSHIFTSZ;
+  int CORRSHIFTSZ;
+
+// division constants
+  int DIVN       ;
+  int LOGR;
+  int RK         ;
+  int LOGRK      ;
+  int FPDUR      ;
+  int DURLEN     ;
+  int DIVb       ;
+  int DIVBLEN    ;
+  int DIVa       ;
+
+} cvw_t;
 
 endpackage
+
+`endif
