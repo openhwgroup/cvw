@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module subwordread #(parameter LLEN) 
   (
    input logic [LLEN-1:0]  ReadDataWordMuxM,
