@@ -34,6 +34,8 @@
 
 package cvw;
 
+  `include "BranchPredictorType.vh"
+
 typedef struct packed {
   logic         FPGA;     // Modifications to tare
   logic         QEMU;     // Hacks to agree with QEMU during Linux boot
@@ -136,7 +138,8 @@ typedef struct packed {
   int       PLIC_UART_ID;
 
   logic     BPRED_SUPPORTED;
-  longint   BPRED_TYPE;
+  BranchPredictorType   BPRED_TYPE;
+  int       BPRED_NUM_LHR;
   int       BPRED_SIZE;
   int       BTB_SIZE;
 

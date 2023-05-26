@@ -74,6 +74,7 @@ parameter cvw_t P = '{
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
   BPRED_TYPE :        BPRED_TYPE,
   BPRED_SIZE :        BPRED_SIZE,
+  BPRED_NUM_LHR : BPRED_NUM_LHR,                       
   BTB_SIZE :        BTB_SIZE,
   RADIX :        RADIX,
   DIVCOPIES :        DIVCOPIES,
