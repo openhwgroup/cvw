@@ -51,7 +51,6 @@ module adrdecs (
   adrdec newsdc(PhysicalAddress, `SDC2_BASE, `SDC2_RANGE, `SDC2_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[11]);
  
   assign SelRegions[0] = ~|(SelRegions[11:1]); // none of the regions are selected
-
 endmodule
 
   // verilator lint_on UNOPTFLAT 

@@ -33,30 +33,31 @@
 // *** and use memread signal to reduce power when reads aren't needed
 module uncore (
   // AHB Bus Interface
-  input  logic             HCLK, HRESETn,
-  input  logic             TIMECLK,
-  input  logic [`PA_BITS-1:0] HADDR,
-  input  logic [`AHBW-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  input  logic             HWRITE,
-  input  logic [2:0]       HSIZE,
-  input  logic [2:0]       HBURST,
-  input  logic [3:0]       HPROT,
-  input  logic [1:0]       HTRANS,
-  input  logic             HMASTLOCK,
-  input  logic [`AHBW-1:0] HRDATAEXT,
-  input  logic             HREADYEXT, HRESPEXT,
-  output logic [`AHBW-1:0] HRDATA,
-  output logic             HREADY, HRESP,
-  output logic             HSELEXT,
+  input logic                HCLK, HRESETn,
+  input logic                TIMECLK,
+  input logic [`PA_BITS-1:0] HADDR,
+  input logic [`AHBW-1:0]    HWDATA,
+  input logic [`XLEN/8-1:0]  HWSTRB,
+  input logic                HWRITE,
+  input logic [2:0]          HSIZE,
+  input logic [2:0]          HBURST,
+  input logic [3:0]          HPROT,
+  input logic [1:0]          HTRANS,
+  input logic                HMASTLOCK,
+  input logic [`AHBW-1:0]    HRDATAEXT,
+  input logic                HREADYEXT, HRESPEXT,
+  output logic [`AHBW-1:0]   HRDATA,
+  output logic               HREADY, HRESP,
+  output logic               HSELEXT,
+  output logic               HSELEXTSDC,
   // peripheral pins
-  output logic             MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
-  output logic             MExtInt, SExtInt,          // External interrupts from PLIC
-  output logic [63:0]      MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]      GPIOPinsIn,                // GPIO pin input value
-  output logic [31:0]      GPIOPinsOut, GPIOPinsEn,   // GPIO pin output value and enable
-  input  logic             UARTSin,                   // UART serial input
-  output logic             UARTSout                  // UART serial output
+  output logic               MTimerInt, MSwInt, // Timer and software interrupts from CLINT
+  output logic               MExtInt, SExtInt, // External interrupts from PLIC
+  output logic [63:0]        MTIME_CLINT, // MTIME, from CLINT
+  input logic [31:0]         GPIOPinsIn, // GPIO pin input value
+  output logic [31:0]        GPIOPinsOut, GPIOPinsEn, // GPIO pin output value and enable
+  input logic                UARTSin, // UART serial input
+  output logic               UARTSout                  // UART serial output
   /*output logic             SDCCmdOut,                 // SD Card command output
   output logic             SDCCmdOE,                  // SD Card command output enable
   input  logic             SDCCmdIn,                  // SD Card command input
@@ -87,13 +88,16 @@ module uncore (
   logic [`XLEN-1:0] HREADBRIDGE;
   logic             HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
+  (* mark_debug = "true" *) logic             HSELEXTSDCD;
+  
+
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
   // Set access types to all 1 as don't cares because the MMU has already done access checking
   adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[10:1];
+  assign {HSELEXTSDC, HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[11:1];
 
   // AHB -> APB bridge
   ahbapbbridge #(4) ahbapbbridge (
@@ -168,19 +172,19 @@ module uncore (
 
   // AHB Read Multiplexer
   assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-		              ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
+		              ({`XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
                   ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({`XLEN{HSELBootRomD}} & HREADBootRom) |
                   ({`XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-		             HSELEXTD & HRESPEXT |
+		             (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
                  HSELSDC & HRESPSDC;		 
 
   assign HREADY = HSELRamD & HREADYRam |
-		              HSELEXTD & HREADYEXT |		  
+		              (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELSDCD & HREADYSDC |		  
@@ -191,7 +195,7 @@ module uncore (
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[10:0], 11'b1, {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[11:0], 11'b1, {HSELEXTSDCD, HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
 

@@ -116,15 +116,17 @@ struct sdc_regs {
 
 #define MAX_BLOCK_CNT 0x1000
 
-static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013000;
+#define SDC 0x00013000;
 
-static int errno __attribute__((section(".bss")));
+// static struct sdc_regs * const regs __attribute__((section(".rodata"))) = (struct sdc_regs *)0x00013000;
+
+// static int errno __attribute__((section(".bss")));
 // static DSTATUS drv_status __attribute__((section(".bss")));
-static BYTE card_type __attribute__((section(".bss")));
-static uint32_t response[4] __attribute__((section(".bss")));
-static int alt_mem __attribute__((section(".bss")));
+// static BYTE card_type __attribute__((section(".bss")));
+// static uint32_t response[4] __attribute__((section(".bss")));
+// static int alt_mem __attribute__((section(".bss")));
 
-static const char * errno_to_str(void) {
+/*static const char * errno_to_str(void) {
     switch (errno) {
     case ERR_EOF: return "Unexpected EOF";
     case ERR_NOT_ELF: return "Not an ELF file";
@@ -139,7 +141,7 @@ static const char * errno_to_str(void) {
     case FR_TIMEOUT: return "Timeout";
     }
     return "Unknown error code";
-}
+    }*/
 
 static void usleep(unsigned us) {
     uintptr_t cycles0;
@@ -151,7 +153,9 @@ static void usleep(unsigned us) {
     }
 }
 
-static int sdc_cmd_finish(unsigned cmd) {
+static int sdc_cmd_finish(unsigned cmd, uint32_t * response) {
+  struct sdc_regs * regs = (struct sdc_regs *)SDC;
+  
     while (1) {
         unsigned status = regs->cmd_int_status;
         if (status) {
@@ -166,10 +170,10 @@ static int sdc_cmd_finish(unsigned cmd) {
                 response[3] = regs->response4;
                 return 0;
             }
-            errno = FR_DISK_ERR;
+            /* errno = FR_DISK_ERR;
             if (status & SDC_CMD_INT_STATUS_CTE) errno = FR_TIMEOUT;
             if (status & SDC_CMD_INT_STATUS_CCRC) errno = ERR_CMD_CRC;
-            if (status & SDC_CMD_INT_STATUS_CIE) errno = ERR_CMD_CHECK;
+            if (status & SDC_CMD_INT_STATUS_CIE) errno = ERR_CMD_CHECK;*/
             break;
         }
     }
@@ -178,21 +182,24 @@ static int sdc_cmd_finish(unsigned cmd) {
 
 static int sdc_data_finish(void) {
     int status;
-
+    struct sdc_regs * regs = (struct sdc_regs *)SDC;
+    
     while ((status = regs->dat_int_status) == 0) {}
     regs->dat_int_status = 0;
     while (regs->software_reset != 0) {}
 
     if (status == SDC_DAT_INT_STATUS_TRS) return 0;
-    errno = FR_DISK_ERR;
+    /* errno = FR_DISK_ERR;
     if (status & SDC_DAT_INT_STATUS_CTE) errno = FR_TIMEOUT;
     if (status & SDC_DAT_INT_STATUS_CRC) errno = ERR_DATA_CRC;
-    if (status & SDC_DAT_INT_STATUS_CFE) errno = ERR_DATA_FIFO;
+    if (status & SDC_DAT_INT_STATUS_CFE) errno = ERR_DATA_FIFO;*/
     return -1;
 }
 
-static int send_data_cmd(unsigned cmd, unsigned arg, void * buf, unsigned blocks) {
-    unsigned command = (cmd & 0x3f) << 8;
+static int send_data_cmd(unsigned cmd, unsigned arg, void * buf, unsigned blocks, uint32_t * response) {
+  struct sdc_regs * regs = (struct sdc_regs *)SDC;
+  
+  unsigned command = (cmd & 0x3f) << 8;
     switch (cmd) {
     case CMD0:
     case CMD4:
@@ -262,29 +269,32 @@ static int send_data_cmd(unsigned cmd, unsigned arg, void * buf, unsigned blocks
     if (blocks) {
         command |= 1 << 5;
         if ((intptr_t)buf & 3) {
-            errno = ERR_BUF_ALIGNMENT;
+          // errno = ERR_BUF_ALIGNMENT;
             return -1;
         }
         regs->dma_addres = (uint64_t)(intptr_t)buf;
         regs->block_size = 511;
         regs->block_count = blocks - 1;
-        regs->data_timeout = 0xFFFFFF;
+        regs->data_timeout = 0x1FFFFFF;
     }
 
     regs->command = command;
     regs->cmd_timeout = 0xFFFFF;
     regs->argument = arg;
 
-    if (sdc_cmd_finish(cmd) < 0) return -1;
+    if (sdc_cmd_finish(cmd, response) < 0) return -1;
     if (blocks) return sdc_data_finish();
 
     return 0;
 }
 
-#define send_cmd(cmd, arg) send_data_cmd(cmd, arg, NULL, 0)
+#define send_cmd(cmd, arg, response) send_data_cmd(cmd, arg, NULL, 0, response)
 
-static int ini_sd(void) {
+static BYTE ini_sd(void) {
+  struct sdc_regs * regs = (struct sdc_regs *)SDC;
     unsigned rca;
+    BYTE card_type;
+    uint32_t response[4];
 
     /* Reset controller */
     regs->software_reset = 1;
@@ -311,12 +321,12 @@ static int ini_sd(void) {
     }
 
     /* Enter Idle state */
-    send_cmd(CMD0, 0);
+    send_cmd(CMD0, 0, response);
 
     card_type = CT_SD1;
-    if (send_cmd(CMD8, 0x1AA) == 0) {
+    if (send_cmd(CMD8, 0x1AA, response) == 0) {
         if ((response[0] & 0xfff) != 0x1AA) {
-            errno = ERR_CMD_CHECK;
+            // errno = ERR_CMD_CHECK;
             return -1;
         }
         card_type = CT_SD2;
@@ -325,7 +335,7 @@ static int ini_sd(void) {
     /* Wait for leaving idle state (ACMD41 with HCS bit) */
     while (1) {
         /* ACMD41, Set Operating Conditions: Host High Capacity & 3.3V */
-        if (send_cmd(CMD55, 0) < 0 || send_cmd(ACMD41, 0x40300000) < 0) return -1;
+      if (send_cmd(CMD55, 0, response) < 0 || send_cmd(ACMD41, 0x40300000, response) < 0) return -1;
         if (response[0] & (1 << 31)) {
             if (response[0] & (1 << 30)) card_type |= CT_BLOCK;
             break;
@@ -333,15 +343,15 @@ static int ini_sd(void) {
     }
 
     /* Enter Identification state */
-    if (send_cmd(CMD2, 0) < 0) return -1;
+    if (send_cmd(CMD2, 0, response) < 0) return -1;
 
     /* Get RCA (Relative Card Address) */
     rca = 0x1234;
-    if (send_cmd(CMD3, rca << 16) < 0) return -1;
+    if (send_cmd(CMD3, rca << 16, response) < 0) return -1;
     rca = response[0] >> 16;
 
     /* Select card */
-    if (send_cmd(CMD7, rca << 16) < 0) return -1;
+    if (send_cmd(CMD7, rca << 16, response) < 0) return -1;
 
     /* Clock 25MHz */
     // 22Mhz/2 = 11Mhz
@@ -350,16 +360,16 @@ static int ini_sd(void) {
 
     /* Bus width 1-bit */
     regs->control = 0;
-    if (send_cmd(CMD55, rca << 16) < 0 || send_cmd(ACMD6, 0) < 0) return -1;
+    if (send_cmd(CMD55, rca << 16, response) < 0 || send_cmd(ACMD6, 0, response) < 0) return -1;
 
     /* Set R/W block length to 512 */
-    if (send_cmd(CMD16, 512) < 0) return -1;
+    if (send_cmd(CMD16, 512, response) < 0) return -1;
 
     // drv_status &= ~STA_NOINIT;
-    return 0;
+    return card_type;
 }
 
-int disk_read(BYTE * buf, LBA_t sector, UINT count) {
+int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) {
 
   /* This is not needed. This has everything to do with the FAT
      filesystem stuff that I'm not including. All I need to do is
@@ -370,13 +380,16 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
   // if (!count) return RES_PARERR;
     /* if (drv_status & STA_NOINIT) return RES_NOTRDY; */
 
+  uint32_t response[4];
+  struct sdc_regs * regs = (struct sdc_regs *)SDC;
+  
     /* Convert LBA to byte address if needed */
     if (!(card_type & CT_BLOCK)) sector *= 512;
     while (count > 0) {
         UINT bcnt = count > MAX_BLOCK_CNT ? MAX_BLOCK_CNT : count;
         unsigned bytes = bcnt * 512;
-        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt) < 0) return 1;
-        if (bcnt > 1 && send_cmd(CMD12, 0) < 0) return 1;
+        if (send_data_cmd(bcnt == 1 ? CMD17 : CMD18, sector, buf, bcnt, response) < 0) return 1;
+        if (bcnt > 1 && send_cmd(CMD12, 0, response) < 0) return 1;
         sector += (card_type & CT_BLOCK) ? bcnt : bytes;
         count -= bcnt;
         buf += bytes;
@@ -386,11 +399,13 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count) {
 }
 
 void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
-    ini_sd();
+  BYTE card_type;
+
+  card_type = ini_sd();
 
     BYTE * buf = (BYTE *)Dst;
     
-    if (disk_read(buf, (LBA_t)address, (UINT)numBlocks) < 0) /* UART Print function?*/;
+    if (disk_read(buf, (LBA_t)address, (UINT)numBlocks, card_type) < 0) /* UART Print function?*/;
 }
 
 /*

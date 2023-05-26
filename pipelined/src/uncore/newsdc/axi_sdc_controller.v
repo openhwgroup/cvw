@@ -162,7 +162,7 @@ wire [31:0] data_in_rx_fifo;
 wire en_tx_fifo;
 wire en_rx_fifo;
 wire sd_data_busy;
-wire data_busy;
+(* mark_debug = "true" *) wire data_busy;
 wire data_crc_ok;
 wire tx_fifo_re;
 wire rx_fifo_we;

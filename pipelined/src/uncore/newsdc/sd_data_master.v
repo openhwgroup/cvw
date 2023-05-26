@@ -42,12 +42,12 @@ module sd_data_master (
     output reg d_write,
     output reg d_read,
     // To fifo filler
-    output reg en_tx_fifo,
+    (* mark_debug = "true" *) output reg en_tx_fifo,
     output reg en_rx_fifo,
-    input fifo_empty,
+    (* mark_debug = "true" *) input fifo_empty,
     input fifo_ready,
     input fifo_full,
-    input bus_cycle,
+    (* mark_debug = "true" *) input bus_cycle,
     // SD-DATA_Host
     input xfr_complete,
     input crc_error,
@@ -63,7 +63,7 @@ localparam START_TX_FIFO = 4'b0010;
 localparam START_RX_FIFO = 4'b0100;
 localparam DATA_TRANSFER = 4'b1000;
 
-reg [`DATA_TIMEOUT_W-1:0] watchdog;
+(* mark_debug = "true" *) reg [`DATA_TIMEOUT_W-1:0] watchdog;
 reg watchdog_enable;
 
 always @(posedge clock) begin

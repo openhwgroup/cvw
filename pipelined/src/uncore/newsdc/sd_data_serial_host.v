@@ -66,7 +66,7 @@ reg [`BLKSIZE_W+4-1:0] data_cycles;
 reg [`BLKSIZE_W+4-1:0] transf_cnt;
 reg [3:0] drt_bit;
 reg [3:0] drt_reg;
-reg [`BLKCNT_W-1:0] blkcnt_reg;
+(* mark_debug = "true" *) reg [`BLKCNT_W-1:0] blkcnt_reg;
 reg [1:0] byte_alignment_reg;
 reg [3:0] crc_bit;
 reg [3:0] last_din;
