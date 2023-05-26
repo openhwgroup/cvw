@@ -30,17 +30,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csrc import cvw::*;  #(parameter cvw_t P,
-  MHPMCOUNTERBASE = 12'hB00,
-  MTIME = 12'hB01,               // this is a memory-mapped register; no such CSR exists, and access should fault
-  MHPMCOUNTERHBASE = 12'hB80,
-  MTIMEH = 12'hB81,               // this is a memory-mapped register; no such CSR exists, and access should fault
-  MHPMEVENTBASE = 12'h320,
-  HPMCOUNTERBASE = 12'hC00,
-  HPMCOUNTERHBASE = 12'hC80,
-  TIME  = 12'hC01,
-  TIMEH = 12'hC81
-) (
+module csrc  import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
   input  logic             StallE, StallM, 
   input  logic             FlushM, 
@@ -72,6 +62,16 @@ module csrc import cvw::*;  #(parameter cvw_t P,
   output logic [P.XLEN-1:0] CSRCReadValM,
   output logic             IllegalCSRCAccessM
 );
+
+  localparam MHPMCOUNTERBASE = 12'hB00;
+  localparam MTIME = 12'hB01;               // this is a memory-mapped register; no such CSR exists, and access should faul;
+  localparam MHPMCOUNTERHBASE = 12'hB80;
+  localparam MTIMEH = 12'hB81;               // this is a memory-mapped register; no such CSR exists, and access should fault
+  localparam MHPMEVENTBASE = 12'h320;
+  localparam HPMCOUNTERBASE = 12'hC00;
+  localparam HPMCOUNTERHBASE = 12'hC80;
+  localparam TIME          = 12'hC01;
+  localparam TIMEH = 12'hC81;
 
   logic [4:0]              CounterNumM;
   logic [P.XLEN-1:0]        HPMCOUNTER_REGW[P.COUNTERS-1:0];

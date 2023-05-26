@@ -26,10 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csru import cvw::*;  #(parameter cvw_t P,
-  FFLAGS = 12'h001,
-  FRM = 12'h002,
-  FCSR = 12'h003) (
+module csru import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset, 
   input  logic             InstrValidNotFlushedM,
   input  logic             CSRUWriteM,
@@ -42,6 +39,10 @@ module csru import cvw::*;  #(parameter cvw_t P,
   output logic             WriteFRMM, WriteFFLAGSM,
   output logic             IllegalCSRUAccessM
 );
+
+  localparam FFLAGS = 12'h001;
+  localparam FRM = 12'h002;
+  localparam FCSR = 12'h003;
 
   logic [4:0]              FFLAGS_REGW;
   logic [2:0]              NextFRMM;
