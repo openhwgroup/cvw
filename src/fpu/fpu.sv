@@ -245,20 +245,20 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .QmM, .FIntDivResultM);
 
   // compare: fmin/fmax, flt/fle/feq
-  fcmp fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
+  fcmp #(P) fcmp (.Fmt(FmtE), .OpCtrl(OpCtrlE), .Xs(XsE), .Ys(YsE), .Xe(XeE), .Ye(YeE), 
     .Xm(XmE), .Ym(YmE), .XZero(XZeroE), .YZero(YZeroE), .XNaN(XNaNE), .YNaN(YNaNE), 
     .XSNaN(XSNaNE), .YSNaN(YSNaNE), .X(XE), .Y(YE), .CmpNV(CmpNVE), 
     .CmpFpRes(CmpFpResE), .CmpIntRes(CmpIntResE));
 
   // sign injection: fsgnj/fsgnjx/fsgnjn
-  fsgninj fsgninj(.OpCtrl(OpCtrlE[1:0]), .Xs(XsE), .Ys(YsE), .X(XPostBoxE), .Fmt(FmtE), .SgnRes(SgnResE));
+  fsgninj #(P) fsgninj(.OpCtrl(OpCtrlE[1:0]), .Xs(XsE), .Ys(YsE), .X(XPostBoxE), .Fmt(FmtE), .SgnRes(SgnResE));
 
   // classify: fclass
-  fclassify fclassify (.Xs(XsE), .XSubnorm(XSubnormE), .XZero(XZeroE), .XNaN(XNaNE), 
+  fclassify #(P) fclassify (.Xs(XsE), .XSubnorm(XSubnormE), .XZero(XZeroE), .XNaN(XNaNE), 
     .XInf(XInfE), .XSNaN(XSNaNE), .ClassRes(ClassResE));
 
   // convert: fcvt.*.*
-  fcvt fcvt (.Xs(XsE), .Xe(XeE), .Xm(XmE), .Int(ForwardedSrcAE), .OpCtrl(OpCtrlE), 
+  fcvt #(P) fcvt (.Xs(XsE), .Xe(XeE), .Xm(XmE), .Int(ForwardedSrcAE), .OpCtrl(OpCtrlE), 
     .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), .ShiftAmt(CvtShiftAmtE), 
     .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), .LzcIn(CvtLzcInE));
 
@@ -325,7 +325,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   // Memory Stage: postprocessor and result muxes
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  postprocess postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
+  postprocess #(P) postprocess(.Xs(XsM), .Ys(YsM), .Xm(XmM), .Ym(YmM), .Zm(ZmM), .Frm(FrmM), .Fmt(FmtM), 
     .FmaASticky(FmaAStickyM), .XZero(XZeroM), .YZero(YZeroM), .XInf(XInfM), .YInf(YInfM), .DivQm(QmM), .FmaSs(SsM),
     .ZInf(ZInfM), .XNaN(XNaNM), .YNaN(YNaNM), .ZNaN(ZNaNM), .XSNaN(XSNaNM), .YSNaN(YSNaNM), .ZSNaN(ZSNaNM), 
     .FmaSm(SmM), .DivQe(QeM), .FmaAs(AsM), .FmaPs(PsM), .OpCtrl(OpCtrlM), .FmaSCnt(SCntM), .FmaSe(SeM),
