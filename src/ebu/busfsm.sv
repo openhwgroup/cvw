@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // HCLK and clk must be the same clock!
 module busfsm (
   input  logic       HCLK,

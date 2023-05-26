@@ -26,14 +26,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtfgen2 (
+module fdivsqrtfgen2 import cvw::*;  #(parameter cvw_t P) (
   input  logic             up, uz,
-  input  logic [`DIVb+3:0] C, U, UM,
-  output logic [`DIVb+3:0] F
+  input  logic [P.DIVb+3:0] C, U, UM,
+  output logic [P.DIVb+3:0] F
 );
-  logic [`DIVb+3:0] FP, FN, FZ;
+  logic [P.DIVb+3:0] FP, FN, FZ;
 
   // Generate for both positive and negative bits
   assign FP = ~(U << 1) & C;

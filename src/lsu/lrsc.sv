@@ -28,9 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module lrsc(
+module lrsc import cvw::*;  #(parameter cvw_t P) (
   input  logic                clk, 
   input  logic                reset,
   input  logic                StallW,
@@ -38,20 +36,20 @@ module lrsc(
   input  logic [1:0]          PreLSURWM,  // Memory operation from the HPTW or IEU [1]: read, [0]: write
   output logic [1:0]          LSURWM,     // Memory operation after potential squash of SC
   input  logic [1:0]          LSUAtomicM, // Atomic memory operaiton
-  input  logic [`PA_BITS-1:0] PAdrM,      // Physical memory address 
+  input  logic [P.PA_BITS-1:0] PAdrM,      // Physical memory address 
   output logic                SquashSCW   // Squash the store conditional by not allowing rf write
 );
 
   // possible bug: *** double check if PreLSURWM needs to be flushed by ignorerequest.
   // Handle atomic load reserved / store conditional
-  logic [`PA_BITS-1:2]        ReservationPAdrW;
+  logic [P.PA_BITS-1:2]        ReservationPAdrW;
   logic                       ReservationValidM, ReservationValidW; 
   logic                       lrM, scM, WriteAdrMatchM;
   logic                       SquashSCM;
 
   assign lrM = MemReadM & LSUAtomicM[0];
   assign scM = PreLSURWM[0] & LSUAtomicM[0]; 
-  assign WriteAdrMatchM = PreLSURWM[0] & (PAdrM[`PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
+  assign WriteAdrMatchM = PreLSURWM[0] & (PAdrM[P.PA_BITS-1:2] == ReservationPAdrW) & ReservationValidW;
   assign SquashSCM = scM & ~WriteAdrMatchM;
   assign LSURWM = SquashSCM ? 2'b00 : PreLSURWM;
   always_comb begin // ReservationValidM (next value of valid reservation)
@@ -61,7 +59,7 @@ module lrsc(
     else ReservationValidM = ReservationValidW; // otherwise don't change valid
   end
   
-  flopenr #(`PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, PAdrM[`PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
+  flopenr #(P.PA_BITS-2) resadrreg(clk, reset, lrM & ~StallW, PAdrM[P.PA_BITS-1:2], ReservationPAdrW); // could drop clear on this one but not valid
   flopenr #(1) resvldreg(clk, reset, ~StallW, ReservationValidM, ReservationValidW);
   flopenr #(1) squashreg(clk, reset, ~StallW, SquashSCM, SquashSCW);
 endmodule
