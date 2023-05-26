@@ -1,0 +1,3 @@
+typedef enum  {BP_TWOBIT, BP_GSHARE, BP_GLOBAL, BP_GSHARE_BASIC, 
+               BP_GLOBAL_BASIC, BP_LOCAL_BASIC, BP_LOCAL_AHEAD, BP_LOCAL_REPAIR} BranchPredictorType;
+

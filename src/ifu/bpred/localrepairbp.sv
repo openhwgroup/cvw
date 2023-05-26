@@ -27,9 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module localreapirbp #(parameter m = 6, // 2^m = number of local history branches 
+module localrepairbp #(parameter XLEN,
+                       parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
@@ -38,7 +37,7 @@ module localreapirbp #(parameter m = 6, // 2^m = number of local history branche
   output logic [1:0]      BPDirPredD, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCE, PCM,
+  input logic [XLEN-1:0] PCNextF, PCE, PCM,
   input logic             BranchD, BranchE, BranchM, PCSrcE
 );
 
@@ -52,7 +51,7 @@ module localreapirbp #(parameter m = 6, // 2^m = number of local history branche
   logic                   PCSrcM;
   logic [2**m-1:0][k-1:0] LHRArray;
   logic [m-1:0]           IndexLHRNextF, IndexLHRM;
-  logic [`XLEN-1:0]       PCW;
+  logic [XLEN-1:0]       PCW;
 
   logic [k-1:0]           LHRCommittedF, LHRSpeculativeF;
   logic [m-1:0]           IndexLHRD;
@@ -133,6 +132,6 @@ module localreapirbp #(parameter m = 6, // 2^m = number of local history branche
   flopenrc #(k) LHRMReg(clk, reset, FlushM, ~StallM, LHRE, LHRM);
   flopenrc #(k) LHRWReg(clk, reset, FlushW, ~StallW, LHRM, LHRW);
 
-  flopenr #(`XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
+  flopenr #(XLEN) PCWReg(clk, reset, ~StallW, PCM, PCW);
 
 endmodule

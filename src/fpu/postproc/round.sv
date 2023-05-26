@@ -26,7 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 module round import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
   input  logic [2:0]              Frm,                // rounding mode
