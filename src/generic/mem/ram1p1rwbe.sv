@@ -34,7 +34,7 @@
 
 `include "wally-config.vh"
 
-module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
+module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256, PRELOAD_ENABLED=0) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -95,6 +95,12 @@ module ram1p1rwbe #(parameter DEPTH=128, WIDTH=256) (
   end else begin: ram
     integer i;
 
+    if (PRELOAD_ENABLED) begin
+      initial begin
+        RAM[0] = 64'h00600100d2e3ca40;
+      end
+    end
+    
     // Read
     always_ff @(posedge clk) 
       if(ce) dout <= #1 RAM[addr];

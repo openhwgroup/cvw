@@ -30,32 +30,33 @@
 `include "wally-config.vh"
 
 module wallypipelinedsoc (
-  input  logic 		            clk, 
-  input  logic                reset_ext,        // external asynchronous reset pin
-  output logic                reset,            // reset synchronized to clk to prevent races on release
+  input logic                 clk, 
+  input logic                 reset_ext, // external asynchronous reset pin
+  output logic                reset, // reset synchronized to clk to prevent races on release
   // AHB Interface
-  input  logic [`AHBW-1:0]     HRDATAEXT,
-  input  logic 		            HREADYEXT, HRESPEXT,
-  output logic 		            HSELEXT,
+  input logic [`AHBW-1:0]     HRDATAEXT,
+  input logic                 HREADYEXT, HRESPEXT,
+  output logic                HSELEXT,
+  output logic                HSELEXTSDC, 
   // outputs to external memory, shared with uncore memory
-  output logic 		            HCLK, HRESETn,
-  output logic [`PA_BITS-1:0]  HADDR,
-  output logic [`AHBW-1:0]     HWDATA,
-  output logic [`XLEN/8-1:0]   HWSTRB,
-  output logic 		            HWRITE,
-  output logic [2:0] 	        HSIZE,
-  output logic [2:0] 	        HBURST,
-  output logic [3:0] 	        HPROT,
-  output logic [1:0] 	        HTRANS,
-  output logic 		            HMASTLOCK,
-  output logic 		            HREADY,
+  output logic                HCLK, HRESETn,
+  output logic [`PA_BITS-1:0] HADDR,
+  output logic [`AHBW-1:0]    HWDATA,
+  output logic [`XLEN/8-1:0]  HWSTRB,
+  output logic                HWRITE,
+  output logic [2:0]          HSIZE,
+  output logic [2:0]          HBURST,
+  output logic [3:0]          HPROT,
+  output logic [1:0]          HTRANS,
+  output logic                HMASTLOCK,
+  output logic                HREADY,
   // I/O Interface
-  input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0] 	      GPIOPinsIn,       // inputs from GPIO
-  output logic [31:0] 	      GPIOPinsOut,      // output values for GPIO
-  output logic [31:0]         GPIOPinsEn,       // output enables for GPIO
-  input  logic 		            UARTSin,          // UART serial data input
-  output logic 		            UARTSout         // UART serial data output
+  input logic                 TIMECLK, // optional for CLINT MTIME counter
+  input logic [31:0]          GPIOPinsIn, // inputs from GPIO
+  output logic [31:0]         GPIOPinsOut, // output values for GPIO
+  output logic [31:0]         GPIOPinsEn, // output enables for GPIO
+  input logic                 UARTSin, // UART serial data input
+  output logic                UARTSout         // UART serial data output
   /*input  logic 		            SDCCmdIn,         // SDC Command input
   output logic 		            SDCCmdOut,        // SDC Command output
   output logic 		            SDCCmdOE,			    // SDC Command output enable
@@ -84,7 +85,7 @@ module wallypipelinedsoc (
   if (`BUS_SUPPORTED) begin : uncore
     uncore uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
-      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,
+      .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT, .HSELEXTSDC,
       .MTimerInt, .MSwInt, .MExtInt, .SExtInt, .GPIOPinsIn, .GPIOPinsOut, .GPIOPinsEn, .UARTSin, 
 	    .UARTSout, .MTIME_CLINT 
 	    /*.SDCCmdOut, .SDCCmdOE, .SDCCmdIn, .SDCDatIn, .SDCCLK*/);

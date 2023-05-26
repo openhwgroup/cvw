@@ -101,6 +101,7 @@ uncore/uartPC16550D.sv: logic   						RXerr
 uncore/uartPC16550D.sv: logic   						THRE
 uncore/uartPC16550D.sv: logic   						rxdataavailintr
 uncore/uartPC16550D.sv: logic    					intrID
+uncore/uncore.sv: logic HSELEXTSDCD
 uncore/plic_apb.sv: logic                    MExtInt
 uncore/plic_apb.sv: logic     Din
 uncore/plic_apb.sv: logic             requests
