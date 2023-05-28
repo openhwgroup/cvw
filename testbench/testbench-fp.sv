@@ -274,6 +274,15 @@ module testbenchfp;
           Fmt = {Fmt, 2'b11};
         end
       end
+      if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+        Tests = {Tests, f128div, f128sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0};
+        for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b11};
+        end
+      end
     end
     if (`D_SUPPORTED) begin // if double precision is supported
       if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
@@ -401,6 +410,15 @@ module testbenchfp;
           Fmt = {Fmt, 2'b01};
         end
       end
+      if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+        Tests = {Tests, f128div, f128sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0};
+        for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b01};
+        end
+      end
     end
     if (`F_SUPPORTED) begin // if single precision being supported
       if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
@@ -512,6 +530,15 @@ module testbenchfp;
           Fmt = {Fmt, 2'b00};
         end
       end
+      if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+        Tests = {Tests, f128div, f128sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0};
+        for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'00};
+        end
+      end
     end
     if (`ZFH_SUPPORTED) begin // if half precision supported
       if (TEST === "cvtint"| TEST === "all") begin // if in conversions are being tested
@@ -605,6 +632,16 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
+      if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+        Tests = {Tests, f128div, f128sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0};
+        for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'10};
+        end
+      end
+
     end
 
     // check if nothing is being tested
@@ -681,16 +718,18 @@ module testbenchfp;
             .ASticky); 
   end
               
-  postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-              .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
-              .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
-              .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
-              .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
-              .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
-              .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-              .FmaASticky(ASticky), .FmaSe(Se),
-              .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+  if (TEST !=== "divremsqrt") begin : fpostprocess
+    postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
+                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+                .FmaASticky(ASticky), .FmaSe(Se),
+                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+  end
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
     fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
@@ -714,6 +753,9 @@ module testbenchfp;
                        .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
                        .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                        .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
+  end
+  if (TEST === "divremsqrt") begin: divremsqrt
+    drsu drsu();
   end
 
   assign CmpFlg[3:0] = 0;
@@ -746,7 +788,7 @@ module testbenchfp;
 
   // Check if the correct answer and result is a NaN
   always_comb begin
-    if(UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
+    if(UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT | (UnitVal === `DIVREMSQRTUNIT && WriteIntVal == 1'b1)) begin
       // an integer output can't be a NaN
       AnsNaN = 1'b0;
       ResNaN = 1'b0;
