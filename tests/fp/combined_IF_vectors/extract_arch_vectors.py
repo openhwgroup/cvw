@@ -180,14 +180,14 @@ def create_vectors(my_config):
                     # print("read false")
                     reading = False
         elif my_config.letter == "M" and my_config.bits == 32:
+            print("REEEEE")
             reading = True
-            #skip first 2 lines bc junk
-            src_file2.readline()
             while reading:
                 # print("trigger 64M")
                 # get answer from Ref...signature
                 # answers span two lines and are reversed
                 answer = src_file2.readline().strip()
+                print(f"Answer: {answer}")
                 #print(answer1,answer2)
                 if not (answer == "6f5ca309"): # if there is still stuff to read
                     # parse through .S file
@@ -291,10 +291,5 @@ Config(64, "M", "remw", "remw-", 8),
 Config(64, "M", "remuw", "remuw-", 9)
 ]
 
-"""
 for c in config_list:
     create_vectors(c)
-"""
-create_vectors(config_list[0])
-#create_vectors(config_list[6])
-#create_vectors(config_list[5])
