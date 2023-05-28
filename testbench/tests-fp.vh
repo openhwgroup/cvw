@@ -52,6 +52,7 @@
 `define CVTINTUNIT     0
 `define CVTFPUNIT      4
 `define CMPUNIT        3
+`define DIVREMSQRTUNIT 5
 
 string f16rv32cvtint[] = '{
 	"ui32_to_f16_rne.tv",
