@@ -411,7 +411,7 @@ module testbenchfp;
         end
       end
       if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
-        Tests = {Tests, f128div, f128sqrt};
+        Tests = {Tests, f64div, f64sqrt};
         OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0, 1'b0};
         for(int i = 0; i<10; i++) begin
@@ -531,12 +531,12 @@ module testbenchfp;
         end
       end
       if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
-        Tests = {Tests, f128div, f128sqrt};
+        Tests = {Tests, f32div, f32sqrt};
         OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0, 1'b0};
         for(int i = 0; i<10; i++) begin
             Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'00};
+            Fmt = {Fmt, 2'b00};
         end
       end
     end
@@ -633,13 +633,29 @@ module testbenchfp;
         end
       end
       if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
-        Tests = {Tests, f128div, f128sqrt};
+        Tests = {Tests, f16div, f16sqrt};
         OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0, 1'b0};
         for(int i = 0; i<10; i++) begin
             Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'10};
+            Fmt = {Fmt, 2'b10};
         end
+      end
+      if (TEST === "divremsqrttest") begin // if unified div sqrt is being tested
+        Tests = {Tests, f16sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        for(int i = 0; i<5; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b10};
+        end
+      end
+      if (TEST === "custom") begin // if unified div sqrt is being tested
+        Tests = {Tests, custom};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `DIVUNIT};
+        Fmt = {Fmt, 2'b10};
       end
 
     end
@@ -718,19 +734,6 @@ module testbenchfp;
             .ASticky); 
   end
               
-  if (TEST !=== "divremsqrt") begin : fpostprocess
-    postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
-                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
-                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
-                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
-                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
-                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-                .FmaASticky(ASticky), .FmaSe(Se),
-                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
-  end
-  
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
     fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
               .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
@@ -742,7 +745,7 @@ module testbenchfp;
                 .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
-  if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
+  if (TEST === "div" | TEST === "sqrt" | TEST === "all" | TEST === "custom") begin: fdivsqrt
      fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                        .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -754,8 +757,30 @@ module testbenchfp;
                        .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
                        .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
   end
-  if (TEST === "divremsqrt") begin: divremsqrt
-    drsu drsu();
+  if (TEST === "divremsqrt" | TEST === "divremsqrttest") begin: divremsqrt
+    drsu drsu(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+           .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
+           .PostProcSel(UnitVal[1:0]),
+		       .XNaNE(XNaN), .YNaNE(YNaN), 
+           .Frm(FrmVal), 
+                       .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
+                       .StallM(1'b0), .FDivBusyE,
+                       .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
+                       .Funct3E(Funct3E), .IntDivE(1'b0), 
+                       .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
+  end
+  else begin: postprocess
+    postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
+                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+                .FmaASticky(ASticky), .FmaSe(Se),
+                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   end
 
   assign CmpFlg[3:0] = 0;
