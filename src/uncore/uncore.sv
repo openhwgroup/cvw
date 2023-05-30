@@ -53,6 +53,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [31:0]         GPIOOUT, GPIOEN,   // GPIO pin output value and enable
   input  logic                UARTSin,                   // UART serial input
   output logic                UARTSout,                  // UART serial output
+  input logic  [3:0]          SPIIn,
+  output logic [3:0]          SPIOut,
+  output logic [3:0]          SPICS,
   output logic                SDCCmdOut,                 // SD Card command output
   output logic                SDCCmdOE,                  // SD Card command output enable
   input  logic                SDCCmdIn,                  // SD Card command input
@@ -70,14 +73,14 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [P.XLEN-1:0]           HREADBootRom; 
   logic                       HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
   logic                       HSELNoneD;
-  logic                       UARTIntr,GPIOIntr;
+  logic                       UARTIntr,GPIOIntr, SPIIntr;
   logic                       SDCIntM;
   
   logic                       PCLK, PRESETn, PWRITE, PENABLE;
   logic [3:0]                 PSEL, PREADY;
   logic [31:0]                PADDR;
   logic [P.XLEN-1:0]           PWDATA;
-  logic [P/XLEN/8-1:0]         PSTRB;
+  logic [P.XLEN/8-1:0]         PSTRB;
   logic [3:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
