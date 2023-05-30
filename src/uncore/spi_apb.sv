@@ -31,7 +31,7 @@
 
 
 
-module spi_apb import cvw:*; #(parameter cvw_t P) (
+module spi_apb import cvw::*; #(parameter cvw_t P) (
     input  logic             PCLK, PRESETn,
     input  logic             PSEL,
     input  logic [7:0]       PADDR,
