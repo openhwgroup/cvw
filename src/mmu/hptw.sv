@@ -69,7 +69,8 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
           L1_ADR, L1_RD, 
           L2_ADR, L2_RD, 
           L3_ADR, L3_RD, 
-          LEAF, IDLE, UPDATE_PTE} statetype;
+          LEAF, IDLE, UPDATE_PTE,
+          FAULT} statetype;
 
   logic                    DTLBWalk; // register TLBs translation miss requests
   logic [P.PPN_BITS-1:0]    BasePageTablePPN;
@@ -258,38 +259,44 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   flopenl #(.TYPE(statetype)) WalkerStateReg(clk, reset | FlushW, 1'b1, NextWalkerState, IDLE, WalkerState); 
   always_comb 
     case (WalkerState)
-      IDLE:       if (TLBMiss & ~DCacheStallM & ~HPTWAccessFaultDelay) NextWalkerState = InitialWalkerState;
+      IDLE:       if (TLBMiss & ~DCacheStallM)                        NextWalkerState = InitialWalkerState;
                   else                                                NextWalkerState = IDLE;
       L3_ADR:                                                         NextWalkerState = L3_RD; // first access in SV48
       L3_RD:      if (DCacheStallM)                                   NextWalkerState = L3_RD;
-                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
+                  else if(LSUAccessFaultM)                            NextWalkerState = FAULT;
                   else                                                NextWalkerState = L2_ADR;
       L2_ADR:     if (InitialWalkerState == L2_ADR | ValidNonLeafPTE) NextWalkerState = L2_RD; // first access in SV39
                   else                                                NextWalkerState = LEAF;
       L2_RD:      if (DCacheStallM)                                   NextWalkerState = L2_RD;
-                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
+                  else if(LSUAccessFaultM)                            NextWalkerState = FAULT;
                   else                                                NextWalkerState = L1_ADR;
       L1_ADR:     if (InitialWalkerState == L1_ADR | ValidNonLeafPTE) NextWalkerState = L1_RD; // first access in SV32
                   else                                                NextWalkerState = LEAF;  
       L1_RD:      if (DCacheStallM)                                   NextWalkerState = L1_RD;
-                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
+                  else if(LSUAccessFaultM)                            NextWalkerState = FAULT;
                   else                                                NextWalkerState = L0_ADR;
       L0_ADR:     if (ValidNonLeafPTE)                                NextWalkerState = L0_RD;
                   else                                                NextWalkerState = LEAF;
       L0_RD:      if (DCacheStallM)                                   NextWalkerState = L0_RD;
-                  else if(LSUAccessFaultM)                            NextWalkerState = IDLE;
+                  else if(LSUAccessFaultM)                            NextWalkerState = FAULT;
                   else                                                NextWalkerState = LEAF;
-      LEAF:       if (P.SVADU_SUPPORTED & HPTWUpdateDA)                NextWalkerState = UPDATE_PTE;
+      LEAF:       if (P.SVADU_SUPPORTED & HPTWUpdateDA)               NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = IDLE;
       UPDATE_PTE: if(DCacheStallM)                                    NextWalkerState = UPDATE_PTE;
                   else                                                NextWalkerState = LEAF;
+      FAULT:                                                          NextWalkerState = IDLE;
       default:                                                        NextWalkerState = IDLE; // should never be reached
     endcase // case (WalkerState)
 
   assign IgnoreRequestTLB = (WalkerState == IDLE & TLBMiss) | (LSUAccessFaultM); // RT : 05 April 2023 if hptw request has pmp/a fault suppress bus access.
   assign SelHPTW = WalkerState != IDLE;
+
+  // RT 30 May 2023: When there is an access fault caused by the hptw itself, the fsm jumps to FAULT, removes
+  // stall and asserts one of HPTWLoadAccessFault, HPTWStoreAmoAccessFault or HPTWInstrAccessFaultDelay.
+  // The FSM directly transistions to IDLE to ready for the next operation when the delayed version will not be high.
+
   assign HPTWAccessFaultDelay = HPTWLoadAccessFaultDelay | HPTWStoreAmoAccessFaultDelay | HPTWInstrAccessFaultDelay;
-  assign HPTWStall = (WalkerState != IDLE) | (WalkerState == IDLE & TLBMiss & ~(HPTWAccessFaultDelay));
+  assign HPTWStall = (WalkerState != IDLE & WalkerState != FAULT) | (WalkerState == IDLE & TLBMiss);
 
   assign ITLBMissOrUpdateDAF = ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF);
   assign DTLBMissOrUpdateDAM = DTLBMissM | (P.SVADU_SUPPORTED & DataUpdateDAM);  
