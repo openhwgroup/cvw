@@ -25,8 +25,6 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
-
 
     // convert shift
     //      fp -> int: |  `XLEN  zeros |     Mantissa      | 0's if nessisary | << CalcExp
@@ -72,10 +70,10 @@
     //      | Nf 0's |      Qm       | << calculated shift amount
     //        .
 
-module normshift(
-  input  logic [`LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
-  input  logic [`NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
-  output logic [`NORMSHIFTSZ-1:0]     Shifted     // shifted result
+module normshift import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.LOGNORMSHIFTSZ-1:0]  ShiftAmt,   // shift amount
+  input  logic [P.NORMSHIFTSZ-1:0]     ShiftIn,    // number to be shifted
+  output logic [P.NORMSHIFTSZ-1:0]     Shifted     // shifted result
 );
    
   assign Shifted = ShiftIn << ShiftAmt;

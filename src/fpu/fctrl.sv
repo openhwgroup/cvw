@@ -25,9 +25,8 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
-module fctrl (
+module fctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic                clk,
   input  logic                reset,
   // input control signals
@@ -49,7 +48,7 @@ module fctrl (
   // opperation mux selections                                    
   output logic                FCvtIntE, FCvtIntW,                 // convert to integer opperation
   output logic [2:0]          FrmM,                               // FP rounding mode
-  output logic [`FMTBITS-1:0] FmtE, FmtM,                         // FP format
+  output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
   output logic [2:0]          OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
   output logic                FpLoadStoreM,                       // FP load or store instruction
   output logic [1:0]          PostProcSelE, PostProcSelM,         // select result in the post processing unit
@@ -74,7 +73,7 @@ module fctrl (
   logic [1:0]                 PostProcSelD;       // select result in the post processing unit
   logic [1:0]                 FResSelD;           // Select one of the results that finish in the memory stage
   logic [2:0]                 FrmD, FrmE;         // FP rounding mode
-  logic [`FMTBITS-1:0]        FmtD;               // FP format
+  logic [P.FMTBITS-1:0]        FmtD;               // FP format
   logic [1:0]                 Fmt, Fmt2;          // format - before possible reduction
   logic                       SupportedFmt;       // is the format supported
   logic                       SupportedFmt2;      // is the source format supported for fp -> fp
@@ -84,10 +83,10 @@ module fctrl (
   assign Fmt = Funct7D[1:0];
   assign Fmt2 = Rs2D[1:0]; // source format for fcvt fp->fp
 
-  assign SupportedFmt = (Fmt == 2'b00 | (Fmt == 2'b01 & `D_SUPPORTED) |
-                         (Fmt == 2'b10 & `ZFH_SUPPORTED) | (Fmt == 2'b11 & `Q_SUPPORTED));
-  assign SupportedFmt2 = (Fmt2 == 2'b00 | (Fmt2 == 2'b01 & `D_SUPPORTED) |
-                         (Fmt2 == 2'b10 & `ZFH_SUPPORTED) | (Fmt2 == 2'b11 & `Q_SUPPORTED));
+  assign SupportedFmt = (Fmt == 2'b00 | (Fmt == 2'b01 & P.D_SUPPORTED) |
+                         (Fmt == 2'b10 & P.ZFH_SUPPORTED) | (Fmt == 2'b11 & P.Q_SUPPORTED));
+  assign SupportedFmt2 = (Fmt2 == 2'b00 | (Fmt2 == 2'b01 & P.D_SUPPORTED) |
+                         (Fmt2 == 2'b10 & P.ZFH_SUPPORTED) | (Fmt2 == 2'b11 & P.Q_SUPPORTED));
 
   // decode the instruction                       
   // FRegWrite_FWriteInt_FResSel_PostProcSel_FOpCtrl_FDivStart_IllegalFPUInstr_FCvtInt
@@ -102,15 +101,15 @@ module fctrl (
       case(OpD)
         7'b0000111: case(Funct3D)
                       3'b010:                      ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flw
-                      3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // fld
-                      3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flq
-                      3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flh
+                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // fld
+                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flq
+                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flh
                     endcase
         7'b0100111: case(Funct3D)
                       3'b010:                      ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsw
-                      3'b011:  if (`D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsd
-                      3'b100:  if (`Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsq
-                      3'b001:  if (`ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsh
+                      3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsd
+                      3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsq
+                      3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsh
                     endcase
         7'b1000011:   ControlsD = `FCTRLW'b1_0_01_10_000_0_0_0; // fmadd
         7'b1000111:   ControlsD = `FCTRLW'b1_0_01_10_001_0_0_0; // fmsub
@@ -227,14 +226,14 @@ module fctrl (
   //    10 - half
   //    11 - quad
   
-    if (`FPSIZES == 1)
+    if (P.FPSIZES == 1)
       assign FmtD = 0;
-    else if (`FPSIZES == 2)begin
+    else if (P.FPSIZES == 2)begin
       logic [1:0] FmtTmp;
       assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : (~OpD[6]&(&OpD[2:0])) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : Funct7D[1:0];
-      assign FmtD = (`FMT == FmtTmp);
+      assign FmtD = (P.FMT == FmtTmp);
     end
-    else if (`FPSIZES == 3|`FPSIZES == 4)
+    else if (P.FPSIZES == 3|P.FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
   // Enables indicate that a source register is used and may need stalls. Also indicate special cases for infinity or NaN.
@@ -313,7 +312,7 @@ module fctrl (
   assign Adr3D = InstrD[31:27];
  
   // D/E pipleine register
-  flopenrc #(13+`FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+  flopenrc #(13+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
               {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD},
               {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
@@ -321,11 +320,11 @@ module fctrl (
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
 
   // Integer division on FPU divider
-  if (`M_SUPPORTED & `IDIV_ON_FPU) assign IDivStartE = IntDivE;
+  if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
   else                             assign IDivStartE = 0; 
 
   // E/M pipleine register
-  flopenrc #(13+int'(`FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
+  flopenrc #(13+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
               {FRegWriteE, FResSelE, PostProcSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE},
               {FRegWriteM, FResSelM, PostProcSelM, FrmM, FmtM, OpCtrlM, FWriteIntM, FCvtIntM});
   

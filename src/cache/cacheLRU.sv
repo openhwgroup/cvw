@@ -113,7 +113,7 @@ module cacheLRU
 
   // The root node of the LRU tree will always be selected in LRUUpdate. No mux needed.
   assign NextLRU[NUMWAYS-2] = ~WayExpanded[NUMWAYS-2];
-  mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
+  if (NUMWAYS > 2) mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
 
   // Compute next victim way.
   for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin

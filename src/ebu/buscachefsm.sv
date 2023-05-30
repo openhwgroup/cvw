@@ -27,7 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 `define BURST_EN 1         // Enables burst mode.  Disable to show the lost performance.
 
 // HCLK and clk must be the same clock!

@@ -26,25 +26,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fmaadd(
-  input  logic [3*`NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
-  input  logic [`NE-1:0]      Ze,         // exponent of Z
+module fmaadd import cvw::*;  #(parameter cvw_t P) (
+  input  logic [3*P.NF+3:0]    Am,         // aligned addend's mantissa for addition in U(NF+5.2NF+1)
+  input  logic [P.NE-1:0]      Ze,         // exponent of Z
   input  logic                Ps,         // the product sign and the alligend addeded's sign (Modified Z sign for other opperations)
-  input  logic [`NE+1:0]      Pe,         // product's exponet
-  input  logic [2*`NF+1:0]    Pm,         // the product's mantissa
+  input  logic [P.NE+1:0]      Pe,         // product's exponet
+  input  logic [2*P.NF+1:0]    Pm,         // the product's mantissa
   input  logic                InvA,       // invert the aligned addend
   input  logic                KillProd,   // should the product be set to 0
   input  logic                ASticky,    // Alighed addend's sticky bit
-  output logic [3*`NF+3:0]    AmInv,      // aligned addend possibly inverted
-  output logic [2*`NF+1:0]    PmKilled,   // the product's mantissa possibly killed
+  output logic [3*P.NF+3:0]    AmInv,      // aligned addend possibly inverted
+  output logic [2*P.NF+1:0]    PmKilled,   // the product's mantissa possibly killed
   output logic                Ss,         // sum's sign    
-  output logic [`NE+1:0]      Se,         // sum's exponent
-  output logic [3*`NF+3:0]    Sm          // the positive sum
+  output logic [P.NE+1:0]      Se,         // sum's exponent
+  output logic [3*P.NF+3:0]    Sm          // the positive sum
 );
 
-  logic [3*`NF+3:0]    PreSum, NegPreSum; // possibly negitive sum
+  logic [3*P.NF+3:0]    PreSum, NegPreSum; // possibly negitive sum
   logic                NegSum;            // was the sum negitive
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -52,9 +50,9 @@ module fmaadd(
   ///////////////////////////////////////////////////////////////////////////////
   
   // Choose an inverted or non-inverted addend.  Put carry into adder/LZA for addition
-  assign AmInv = {3*`NF+4{InvA}}^Am;
+  assign AmInv = {3*P.NF+4{InvA}}^Am;
   // Kill the product if the product is too small to effect the addition (determined in fma1.sv)
-  assign PmKilled = {2*`NF+2{~KillProd}}&Pm;
+  assign PmKilled = {2*P.NF+2{~KillProd}}&Pm;
   // Do the addition
   //      - calculate a positive and negitive sum in parallel
   // if there was a small negitive number killed in the alignment stage one needs to be subtracted from the sum
@@ -63,8 +61,8 @@ module fmaadd(
   //      addend - prod where product is killed (and not exactly zero) then don't add +1 from negation 
   //          ie ~(InvA&ASticky&KillProd)&InvA = (~ASticky|~KillProd)&InvA
   //          in this case this result is only ever selected when InvA=1 so we can remove &InvA
-  assign {NegSum, PreSum} = {{`NF+2{1'b0}}, PmKilled, 1'b0} + {InvA, AmInv} + {{3*`NF+4{1'b0}}, (~ASticky|KillProd)&InvA};
-  assign NegPreSum = Am + {{`NF+1{1'b1}}, ~PmKilled, 1'b0} + {(3*`NF+2)'(0), ~ASticky|~KillProd, 1'b0};
+  assign {NegSum, PreSum} = {{P.NF+2{1'b0}}, PmKilled, 1'b0} + {InvA, AmInv} + {{3*P.NF+4{1'b0}}, (~ASticky|KillProd)&InvA};
+  assign NegPreSum = Am + {{P.NF+1{1'b1}}, ~PmKilled, 1'b0} + {(3*P.NF+2)'(0), ~ASticky|~KillProd, 1'b0};
     
   // Choose the positive sum and accompanying LZA result.
   assign Sm = NegSum ? NegPreSum : PreSum;

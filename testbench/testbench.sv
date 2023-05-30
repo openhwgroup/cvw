@@ -204,7 +204,7 @@ module testbench;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc  dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
@@ -540,15 +540,27 @@ module testbench;
   if (`BPRED_SUPPORTED) begin
     integer adrindex;
 
-    // initialize branch predictor on reset
-    always @(posedge reset) begin
-       for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+    // local history only
+    if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+      always @(*) begin
+        if(reset) begin
+          for(adrindex = 0; adrindex < 2**`BPRED_NUM_LHR; adrindex++) begin
+            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+          end
+        end
+      end
+    end
+
+    always @(*) begin
+      if(reset) begin
+        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
-   end
+      end
+    end
   end
 
 

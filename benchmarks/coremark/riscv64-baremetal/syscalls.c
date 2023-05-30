@@ -84,6 +84,11 @@ void setStats(int enable)
   READ_CTR(mhpmcounter10);
   READ_CTR(mhpmcounter11);
   READ_CTR(mhpmcounter12);  
+  READ_CTR(mhpmcounter13);  
+  READ_CTR(mhpmcounter14);  
+  READ_CTR(mhpmcounter15);  
+  READ_CTR(mhpmcounter16);  
+  READ_CTR(mhpmcounter17);  
 
 #undef READ_CTR
 }
@@ -167,18 +172,21 @@ void _init(int cid, int nc)
   counters[12] = read_csr(mhpmcounter12) - counters[12];
   counters[13] = read_csr(mhpmcounter13) - counters[13];
   counters[14] = read_csr(mhpmcounter14) - counters[14];
+  counters[15] = read_csr(mhpmcounter15) - counters[15];
+  counters[16] = read_csr(mhpmcounter16) - counters[16];
+  counters[17] = read_csr(mhpmcounter17) - counters[17];
 
-  ee_printf("Load Stalls %d\n", counters[3]);
-  ee_printf("D-Cache Accesses %d\n", counters[11]);
-  ee_printf("D-Cache Misses %d\n", counters[12]); 
-  ee_printf("I-Cache Accesses %d\n", counters[13]);
-  ee_printf("I-Cache Misses %d\n", counters[14]);
-  ee_printf("Branches %d\n", counters[5]);
-  ee_printf("Branches Miss Predictions %d\n", counters[4]);
-  ee_printf("BTB Misses %d\n", counters[6]);
-  ee_printf("Jump, JAL, JALR %d\n", counters[7]);
-  ee_printf("RAS Wrong %d\n", counters[8]);
-  ee_printf("Returns %d\n", counters[9]);
+  ee_printf("Load Stalls %d\n", counters[11]);
+  ee_printf("D-Cache Accesses %d\n", counters[13]);
+  ee_printf("D-Cache Misses %d\n", counters[14]); 
+  ee_printf("I-Cache Accesses %d\n", counters[16]);
+  ee_printf("I-Cache Misses %d\n", counters[17]);
+  ee_printf("Branches %d\n", counters[3]);
+  ee_printf("Branches Miss Predictions %d\n", counters[7]);
+  ee_printf("BTB Misses %d\n", counters[8]);
+  ee_printf("Jump and JR %d\n", counters[4]);
+  ee_printf("RAS Wrong %d\n", counters[9]);
+  ee_printf("Returns %d\n", counters[5]);
   ee_printf("BP Class Wrong %d\n", counters[10]);
   ee_printf("Done printing performance counters\n");
 

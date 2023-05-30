@@ -26,14 +26,12 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fsgninj (  
+module fsgninj import cvw::*;  #(parameter cvw_t P) (
   input  logic                Xs, Ys, // X and Y sign bits
-  input  logic [`FLEN-1:0]    X,      // X
-  input  logic [`FMTBITS-1:0] Fmt,    // format
+  input  logic [P.FLEN-1:0]    X,      // X
+  input  logic [P.FMTBITS-1:0] Fmt,    // format
   input  logic [1:0]          OpCtrl, // operation control
-  output logic [`FLEN-1:0]    SgnRes  // result
+  output logic [P.FLEN-1:0]    SgnRes  // result
 );
 
   logic ResSgn;  // result sign
@@ -50,30 +48,30 @@ module fsgninj (
   //    - uses NaN-blocking format
   //        - if there are any unused bits the most significant bits are filled with 1s
   
-  if (`FPSIZES == 1)
-    assign SgnRes = {ResSgn, X[`FLEN-2:0]};
-  else if (`FPSIZES == 2)
-    assign SgnRes = {~Fmt|ResSgn, X[`FLEN-2:`LEN1], Fmt ? X[`LEN1-1] : ResSgn, X[`LEN1-2:0]};
-  else if (`FPSIZES ==  3) begin
+  if (P.FPSIZES == 1)
+    assign SgnRes = {ResSgn, X[P.FLEN-2:0]};
+  else if (P.FPSIZES == 2)
+    assign SgnRes = {~Fmt|ResSgn, X[P.FLEN-2:P.LEN1], Fmt ? X[P.LEN1-1] : ResSgn, X[P.LEN1-2:0]};
+  else if (P.FPSIZES ==  3) begin
     logic [2:0] SgnBits;
     always_comb
       case (Fmt)
-        `FMT:    SgnBits = {ResSgn, X[`LEN1-1], X[`LEN2-1]};
-        `FMT1:   SgnBits = {1'b1, ResSgn, X[`LEN2-1]};
-        `FMT2:   SgnBits = {2'b11, ResSgn};
+        P.FMT:    SgnBits = {ResSgn, X[P.LEN1-1], X[P.LEN2-1]};
+        P.FMT1:   SgnBits = {1'b1, ResSgn, X[P.LEN2-1]};
+        P.FMT2:   SgnBits = {2'b11, ResSgn};
         default: SgnBits = {3{1'bx}};
       endcase
-    assign SgnRes = {SgnBits[2], X[`FLEN-2:`LEN1], SgnBits[1], X[`LEN1-2:`LEN2], SgnBits[0], X[`LEN2-2:0]};
-  end else if (`FPSIZES == 4) begin
+    assign SgnRes = {SgnBits[2], X[P.FLEN-2:P.LEN1], SgnBits[1], X[P.LEN1-2:P.LEN2], SgnBits[0], X[P.LEN2-2:0]};
+  end else if (P.FPSIZES == 4) begin
     logic [3:0] SgnBits;
     always_comb
       case (Fmt)
-        `Q_FMT: SgnBits = {ResSgn, X[`D_LEN-1], X[`S_LEN-1], X[`H_LEN-1]};
-        `D_FMT: SgnBits = {1'b1, ResSgn, X[`S_LEN-1], X[`H_LEN-1]};
-        `S_FMT: SgnBits = {2'b11, ResSgn, X[`H_LEN-1]};
-        `H_FMT: SgnBits = {3'b111, ResSgn};
+        P.Q_FMT: SgnBits = {ResSgn, X[P.D_LEN-1], X[P.S_LEN-1], X[P.H_LEN-1]};
+        P.D_FMT: SgnBits = {1'b1, ResSgn, X[P.S_LEN-1], X[P.H_LEN-1]};
+        P.S_FMT: SgnBits = {2'b11, ResSgn, X[P.H_LEN-1]};
+        P.H_FMT: SgnBits = {3'b111, ResSgn};
       endcase
-    assign SgnRes = {SgnBits[3], X[`Q_LEN-2:`D_LEN], SgnBits[2], X[`D_LEN-2:`S_LEN], SgnBits[1], X[`S_LEN-2:`H_LEN], SgnBits[0], X[`H_LEN-2:0]};
+    assign SgnRes = {SgnBits[3], X[P.Q_LEN-2:P.D_LEN], SgnBits[2], X[P.D_LEN-2:P.S_LEN], SgnBits[1], X[P.S_LEN-2:P.H_LEN], SgnBits[0], X[P.H_LEN-2:0]};
   end
 
 endmodule

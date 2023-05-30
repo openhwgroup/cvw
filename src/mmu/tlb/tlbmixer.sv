@@ -29,24 +29,22 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module tlbmixer (
-    input  logic [`VPN_BITS-1:0]   VPN,
-    input  logic [`PPN_BITS-1:0]   PPN,
+module tlbmixer import cvw::*;  #(parameter cvw_t P) (
+    input  logic [P.VPN_BITS-1:0]   VPN,
+    input  logic [P.PPN_BITS-1:0]   PPN,
     input  logic [1:0]             HitPageType,
     input  logic [11:0]            Offset,
     input  logic                   TLBHit,
-    output logic [`PA_BITS-1:0]    TLBPAdr
+    output logic [P.PA_BITS-1:0]    TLBPAdr
 );
 
-  localparam EXTRA_BITS = `PPN_BITS - `VPN_BITS;
-  logic [`PPN_BITS-1:0] ZeroExtendedVPN;
-  logic [`PPN_BITS-1:0] PageNumberMask;
-  logic [`PPN_BITS-1:0] PPNMixed;
+  localparam EXTRA_BITS = P.PPN_BITS - P.VPN_BITS;
+  logic [P.PPN_BITS-1:0] ZeroExtendedVPN;
+  logic [P.PPN_BITS-1:0] PageNumberMask;
+  logic [P.PPN_BITS-1:0] PPNMixed;
 
   // produce PageNumberMask with 1s where virtual page number bits should be untranslaetd for superpages
-  if (`XLEN == 32)
+  if (P.XLEN == 32)
     // kilopage: 22 bits of PPN, 0 bits of VPN
     // megapage: 12 bits of PPN, 10 bits of VPN
     mux2 #(22) pnm(22'h000000, 22'h0003FF, HitPageType[0], PageNumberMask);
@@ -60,10 +58,10 @@ module tlbmixer (
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
   assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
   assign PPNMixed = PPN | ZeroExtendedVPN & PageNumberMask; // 
-  //mux2 #(1) mixmux[`PPN_BITS-1:0](ZeroExtendedVPN, PPN, PageNumberMask, PPNMixed);
+  //mux2 #(1) mixmux[P.PPN_BITS-1:0](ZeroExtendedVPN, PPN, PageNumberMask, PPNMixed);
   //assign PPNMixed = (ZeroExtendedVPN & ~PageNumberMask) | (PPN & PageNumberMask);
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  mux2 #(`PA_BITS) hitmux('0, {PPNMixed, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
+  mux2 #(P.PA_BITS) hitmux('0, {PPNMixed, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
 
 endmodule
