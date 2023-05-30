@@ -26,9 +26,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module localbpbasic #(parameter m = 6, // 2^m = number of local history branches 
+module localbpbasic #(parameter XLEN,
+                      parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
@@ -37,7 +36,7 @@ module localbpbasic #(parameter m = 6, // 2^m = number of local history branches
   output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic [XLEN-1:0] PCNextF, PCM,
   input logic             BranchE, BranchM, PCSrcE
 );
 

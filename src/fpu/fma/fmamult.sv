@@ -26,11 +26,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fmamult(
-  input  logic [`NF:0]     Xm, Ym, // x and y significand
-  output logic [2*`NF+1:0] Pm      // product's significand
+module fmamult import cvw::*;  #(parameter cvw_t P) (
+  input  logic [P.NF:0]     Xm, Ym, // x and y significand
+  output logic [2*P.NF+1:0] Pm      // product's significand
 );
 
   assign Pm = Xm * Ym;

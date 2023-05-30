@@ -26,51 +26,49 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtpostproc(
+module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
   input  logic              StallM,
-  input  logic [`DIVb+3:0]  WS, WC,
-  input  logic [`DIVb+3:0]  D, 
-  input  logic [`DIVb:0]    FirstU, FirstUM, 
-  input  logic [`DIVb+1:0]  FirstC,
+  input  logic [P.DIVb+3:0]  WS, WC,
+  input  logic [P.DIVb+3:0]  D, 
+  input  logic [P.DIVb:0]    FirstU, FirstUM, 
+  input  logic [P.DIVb+1:0]  FirstC,
   input  logic              SqrtE,
   input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
-  input  logic [`XLEN-1:0]  AM,
+  input  logic [P.XLEN-1:0]  AM,
   input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
-  input  logic [`DIVBLEN:0] nM, mM,
-  output logic [`DIVb:0]    QmM, 
+  input  logic [P.DIVBLEN:0] nM, mM,
+  output logic [P.DIVb:0]    QmM, 
   output logic              WZeroE,
   output logic              DivStickyM,
-  output logic [`XLEN-1:0]  FIntDivResultM
+  output logic [P.XLEN-1:0]  FIntDivResultM
 );
   
-  logic [`DIVb+3:0]         W, Sum;
-  logic [`DIVb:0]           PreQmM;
+  logic [P.DIVb+3:0]         W, Sum;
+  logic [P.DIVb:0]           PreQmM;
   logic                     NegStickyM;
   logic                     weq0E, WZeroM;
-  logic [`XLEN-1:0]         IntDivResultM;
+  logic [P.XLEN-1:0]         IntDivResultM;
 
   //////////////////////////
   // Execute Stage: Detect early termination for an exact result
   //////////////////////////
 
   // check for early termination on an exact result. 
-  aplusbeq0 #(`DIVb+4) wspluswceq0(WS, WC, weq0E);
+  aplusbeq0 #(P.DIVb+4) wspluswceq0(WS, WC, weq0E);
 
-  if (`RADIX == 2) begin: R2EarlyTerm
-    logic [`DIVb+3:0] FZeroE, FZeroSqrtE, FZeroDivE;
-    logic [`DIVb+2:0] FirstK;
+  if (P.RADIX == 2) begin: R2EarlyTerm
+    logic [P.DIVb+3:0] FZeroE, FZeroSqrtE, FZeroDivE;
+    logic [P.DIVb+2:0] FirstK;
     logic wfeq0E;
-    logic [`DIVb+3:0] WCF, WSF;
+    logic [P.DIVb+3:0] WCF, WSF;
 
     assign FirstK = ({1'b1, FirstC} & ~({1'b1, FirstC} << 1));
-    assign FZeroSqrtE = {FirstUM[`DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
+    assign FZeroSqrtE = {FirstUM[P.DIVb], FirstUM, 2'b0} | {FirstK,1'b0};    // F for square root
     assign FZeroDivE =  D << 1;                                    // F for divide
-    mux2 #(`DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
-    csa #(`DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
-    aplusbeq0 #(`DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
+    mux2 #(P.DIVb+4) fzeromux(FZeroDivE, FZeroSqrtE, SqrtE, FZeroE);
+    csa #(P.DIVb+4) fadd(WS, WC, FZeroE, 1'b0, WSF, WCF); // compute {WCF, WSF} = {WS + WC + FZero};
+    aplusbeq0 #(P.DIVb+4) wcfpluswsfeq0(WCF, WSF, wfeq0E);
     assign WZeroE = weq0E|(wfeq0E & Firstun);
   end else begin
     assign WZeroE = weq0E;
@@ -91,27 +89,27 @@ module fdivsqrtpostproc(
 
   // Determine if sticky bit is negative  // *** look for ways to optimize this.  Shift shouldn't be needed.
   assign Sum = WC + WS;
-  assign NegStickyM = Sum[`DIVb+3];
-  mux2 #(`DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
-  mux2 #(`DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
+  assign NegStickyM = Sum[P.DIVb+3];
+  mux2 #(P.DIVb+1) preqmmux(FirstU, FirstUM, NegStickyM, PreQmM); // Select U or U-1 depending on negative sticky bit
+  mux2 #(P.DIVb+1)    qmmux(PreQmM, (PreQmM << 1), SqrtM, QmM);
 
   // Integer quotient or remainder correctoin, normalization, and special cases
-  if (`IDIV_ON_FPU) begin:intpostproc // Int supported
-    logic [`DIVBLEN:0] NormShiftM;
-    logic [`DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
-    logic signed [`DIVb+3:0] PreResultM, PreIntResultM;
+  if (P.IDIV_ON_FPU) begin:intpostproc // Int supported
+    logic [P.DIVBLEN:0] NormShiftM;
+    logic [P.DIVb+3:0] UnsignedQuotM, NormRemM, NormRemDM, NormQuotM;
+    logic signed [P.DIVb+3:0] PreResultM, PreIntResultM;
 
-    assign W = $signed(Sum) >>> `LOGR;
+    assign W = $signed(Sum) >>> P.LOGR;
     assign UnsignedQuotM = {3'b000, PreQmM};
 
     // Integer remainder: sticky and sign correction muxes
-    mux2 #(`DIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
-    mux2 #(`DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
-    mux2 #(`DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
+    mux2 #(P.DIVb+4) normremdmux(W, W+D, NegStickyM, NormRemDM);
+    mux2 #(P.DIVb+4) normremsmux(NormRemDM, -NormRemDM, AsM, NormRemM);
+    mux2 #(P.DIVb+4) quotresmux(UnsignedQuotM, -UnsignedQuotM, NegQuotM, NormQuotM);
 
     // Select quotient or remainder and do normalization shift
-    mux2 #(`DIVBLEN+1) normshiftmux(((`DIVBLEN+1)'(`DIVb) - (nM * (`DIVBLEN+1)'(`LOGR))), (mM + (`DIVBLEN+1)'(`DIVa)), RemOpM, NormShiftM);
-    mux2 #(`DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
+    mux2 #(P.DIVBLEN+1) normshiftmux(((P.DIVBLEN+1)'(P.DIVb) - (nM * (P.DIVBLEN+1)'(P.LOGR))), (mM + (P.DIVBLEN+1)'(P.DIVa)), RemOpM, NormShiftM);
+    mux2 #(P.DIVb+4)    presresultmux(NormQuotM, NormRemM, RemOpM, PreResultM);
     assign PreIntResultM = $signed(PreResultM >>> NormShiftM); 
 
     // special case logic
@@ -119,18 +117,18 @@ module fdivsqrtpostproc(
     always_comb
       if (BZeroM) begin         // Divide by zero
         if (RemOpM) IntDivResultM = AM;  
-        else        IntDivResultM = {(`XLEN){1'b1}};
+        else        IntDivResultM = {(P.XLEN){1'b1}};
      end else if (ALTBM) begin // Numerator is zero
         if (RemOpM) IntDivResultM = AM;
         else        IntDivResultM = '0;
-     end else       IntDivResultM = PreIntResultM[`XLEN-1:0];
+     end else       IntDivResultM = PreIntResultM[P.XLEN-1:0];
 
     // sign extend result for W64
-    if (`XLEN==64) begin
-      mux2 #(64) resmux(IntDivResultM[`XLEN-1:0], 
-        {{(`XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
+    if (P.XLEN==64) begin
+      mux2 #(64) resmux(IntDivResultM[P.XLEN-1:0], 
+        {{(P.XLEN-32){IntDivResultM[31]}}, IntDivResultM[31:0]}, // Sign extending in case of W64
         W64M, FIntDivResultM);
     end else 
-      assign FIntDivResultM = IntDivResultM[`XLEN-1:0];
+      assign FIntDivResultM = IntDivResultM[P.XLEN-1:0];
   end
 endmodule

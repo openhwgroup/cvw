@@ -27,120 +27,116 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module uncore (
+module uncore import cvw::*;  #(parameter cvw_t P)(
   // AHB Bus Interface
   input  logic                HCLK, HRESETn,
   input  logic                TIMECLK,
-  input  logic [`PA_BITS-1:0] HADDR,
-  input  logic [`AHBW-1:0] HWDATA,
-  input  logic [`XLEN/8-1:0] HWSTRB,
-  input  logic             HWRITE,
-  input  logic [2:0]       HSIZE,
-  input  logic [2:0]       HBURST,
-  input  logic [3:0]       HPROT,
-  input  logic [1:0]       HTRANS,
-  input  logic             HMASTLOCK,
-  input  logic [`AHBW-1:0] HRDATAEXT,
-  input  logic             HREADYEXT, HRESPEXT,
-  output logic [`AHBW-1:0] HRDATA,
-  output logic             HREADY, HRESP,
-  output logic             HSELEXT,
-  // peripheral pins
-  output logic             MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
-  output logic             MExtInt, SExtInt,          // External interrupts from PLIC
-  output logic [63:0]      MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]      GPIOIN,                // GPIO pin input value
-  output logic [31:0]      GPIOOUT, GPIOEN,   // GPIO pin output value and enable
-  input  logic             UARTSin,                   // UART serial input
-  output logic             UARTSout,                  // UART serial output
-  output logic             SDCCmdOut,                 // SD Card command output
-  output logic             SDCCmdOE,                  // SD Card command output enable
-  input  logic             SDCCmdIn,                  // SD Card command input
-  input  logic [3:0]       SDCDatIn,                  // SD Card data input
-  output logic             SDCCLK,                    // SD Card clock
-  input logic [3:0]        SPIIn,                     // SPI pins in
-  output logic [3:0]       SPIOut, SPICS              // SPI pins out and SPI chip select out
+  input  logic [P.PA_BITS-1:0] HADDR,
+  input  logic [P.AHBW-1:0]    HWDATA,
+  input  logic [P.XLEN/8-1:0]  HWSTRB,
+  input  logic                HWRITE,
+  input  logic [2:0]          HSIZE,
+  input  logic [2:0]          HBURST,
+  input  logic [3:0]          HPROT,
+  input  logic [1:0]          HTRANS,
+  input  logic                HMASTLOCK,
+  input  logic [P.AHBW-1:0]    HRDATAEXT,
+  input  logic                HREADYEXT, HRESPEXT,
+  output logic [P.AHBW-1:0]    HRDATA,
+  output logic                HREADY, HRESP,
+  output logic                HSELEXT,
+  // peripheral pins          
+  output logic                MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
+  output logic                MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [63:0]         MTIME_CLINT,               // MTIME, from CLINT
+  input  logic [31:0]         GPIOIN,                // GPIO pin input value
+  output logic [31:0]         GPIOOUT, GPIOEN,   // GPIO pin output value and enable
+  input  logic                UARTSin,                   // UART serial input
+  output logic                UARTSout,                  // UART serial output
+  output logic                SDCCmdOut,                 // SD Card command output
+  output logic                SDCCmdOE,                  // SD Card command output enable
+  input  logic                SDCCmdIn,                  // SD Card command input
+  input  logic [3:0]          SDCDatIn,                  // SD Card data input
+  output logic                SDCCLK                     // SD Card clock
 );
   
-  logic [`XLEN-1:0]           HREADRam, HREADSDC;
+  logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]      HSELRegions;
-  logic             HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC, HSELSPI;
-  logic             HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD, HSELSPID;
-  logic             HRESPRam,  HRESPSDC;
-  logic             HREADYRam, HRESPSDCD;
-  logic [`XLEN-1:0] HREADBootRom; 
-  logic             HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
-  logic             HSELNoneD;
-  logic             UARTIntr,GPIOIntr,SPIIntr;
-  logic 	          SDCIntM;
+  logic [10:0]                HSELRegions;
+  logic                       HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
+  logic                       HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic                       HRESPRam,  HRESPSDC;
+  logic                       HREADYRam, HRESPSDCD;
+  logic [P.XLEN-1:0]           HREADBootRom; 
+  logic                       HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
+  logic                       HSELNoneD;
+  logic                       UARTIntr,GPIOIntr;
+  logic                       SDCIntM;
   
-  logic             PCLK, PRESETn, PWRITE, PENABLE;
-  logic [4:0]       PSEL, PREADY;
-  logic [31:0]      PADDR;
-  logic [`XLEN-1:0] PWDATA;
-  logic [`XLEN/8-1:0] PSTRB;
-  logic [4:0][`XLEN-1:0] PRDATA;
-  logic [`XLEN-1:0] HREADBRIDGE;
-  logic             HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+  logic                       PCLK, PRESETn, PWRITE, PENABLE;
+  logic [3:0]                 PSEL, PREADY;
+  logic [31:0]                PADDR;
+  logic [P.XLEN-1:0]           PWDATA;
+  logic [P/XLEN/8-1:0]         PSTRB;
+  logic [3:0][P.XLEN-1:0]      PRDATA;
+  logic [P.XLEN-1:0]           HREADBRIDGE;
+  logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
   // Set access types to all 1 as don't cares because the MMU has already done access checking
-  adrdecs adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
+  adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
   assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC, HSELSPI} = HSELRegions[11:1];
 
   // AHB -> APB bridge
-  ahbapbbridge #(5) ahbapbbridge (
+  ahbapbbridge #(P, 5) ahbapbbridge (
     .HCLK, .HRESETn, .HSEL({HSELSPI, HSELUART, HSELPLIC, HSELCLINT, HSELGPIO}), .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HTRANS, .HREADY, 
     .HRDATA(HREADBRIDGE), .HRESP(HRESPBRIDGE), .HREADYOUT(HREADYBRIDGE),
     .PCLK, .PRESETn, .PSEL, .PWRITE, .PENABLE, .PADDR, .PWDATA, .PSTRB, .PREADY, .PRDATA);
   assign HSELBRIDGE = HSELGPIO | HSELCLINT | HSELPLIC | HSELUART | HSELSPI; // if any of the bridge signals are selected
                 
   // on-chip RAM
-  if (`UNCORE_RAM_SUPPORTED) begin : ram
-    ram_ahb #(.BASE(`UNCORE_RAM_BASE), .RANGE(`UNCORE_RAM_RANGE)) ram (
+  if (P.UNCORE_RAM_SUPPORTED) begin : ram
+    ram_ahb #(.P(P), .BASE(P.UNCORE_RAM_BASE), .RANGE(P.UNCORE_RAM_RANGE)) ram (
       .HCLK, .HRESETn, .HSELRam, .HADDR, .HWRITE, .HREADY, 
       .HTRANS, .HWDATA, .HWSTRB, .HREADRam, .HRESPRam, .HREADYRam);
   end
 
- if (`BOOTROM_SUPPORTED) begin : bootrom
-    rom_ahb #(.BASE(`BOOTROM_BASE), .RANGE(`BOOTROM_RANGE))
+ if (P.BOOTROM_SUPPORTED) begin : bootrom
+    rom_ahb #(.P(P), .BASE(P.BOOTROM_BASE), .RANGE(P.BOOTROM_RANGE))
     bootrom(.HCLK, .HRESETn, .HSELRom(HSELBootRom), .HADDR, .HREADY, .HTRANS, 
       .HREADRom(HREADBootRom), .HRESPRom(HRESPBootRom), .HREADYRom(HREADYBootRom));
   end
 
   // memory-mapped I/O peripherals
-  if (`CLINT_SUPPORTED == 1) begin : clint
-    clint_apb clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+  if (P.CLINT_SUPPORTED == 1) begin : clint
+    clint_apb #(P) clint(.PCLK, .PRESETn, .PSEL(PSEL[1]), .PADDR(PADDR[15:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[1]), .PREADY(PREADY[1]), .MTIME(MTIME_CLINT), .MTimerInt, .MSwInt);
   end else begin : clint
     assign MTIME_CLINT = 0;
     assign MTimerInt = 0; assign MSwInt = 0;
   end
 
-  if (`PLIC_SUPPORTED == 1) begin : plic
-    plic_apb plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SPIIntr, .MExtInt, .SExtInt);
+  if (P.PLIC_SUPPORTED == 1) begin : plic
+    plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;
   end
 
-  if (`GPIO_SUPPORTED == 1) begin : gpio
-    gpio_apb gpio(
+  if (P.GPIO_SUPPORTED == 1) begin : gpio
+    gpio_apb #(P) gpio(
       .PCLK, .PRESETn, .PSEL(PSEL[0]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[0]), .PREADY(PREADY[0]), 
       .iof0(), .iof1(), .GPIOIN, .GPIOOUT, .GPIOEN, .GPIOIntr);
   end else begin : gpio
     assign GPIOOUT = 0; assign GPIOEN = 0; assign GPIOIntr = 0;
   end
-  if (`UART_SUPPORTED == 1) begin : uart
-    uart_apb uart(
+  if (P.UART_SUPPORTED == 1) begin : uart
+    uart_apb #(P) uart(
       .PCLK, .PRESETn, .PSEL(PSEL[3]), .PADDR(PADDR[2:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PRDATA(PRDATA[3]), .PREADY(PREADY[3]), 
       .SIN(UARTSin), .DSRb(1'b1), .DCDb(1'b1), .CTSb(1'b0), .RIb(1'b1), // from E1A driver from RS232 interface
@@ -149,7 +145,7 @@ module uncore (
   end else begin : uart
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
-  if (`SDC_SUPPORTED == 1) begin : sdc
+  if (P.SDC_SUPPORTED == 1) begin : sdc
     SDC SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
       .HWDATA, .HREADSDC, .HRESPSDC, .HREADYSDC,
       // sdc interface
@@ -162,8 +158,8 @@ module uncore (
     assign SDCCmdOut = 0;
     assign SDCCmdOE = 0;
   end
-  if (`SPI_SUPPORTED == 1) begin : spi
-    spi_apb spi (
+  if (P.SPI_SUPPORTED == 1) begin : spi
+    spi_apb  #(P) spi (
       .PCLK, .PRESETn, .PSEL(PSEL[4]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
       .PREADY(PREADY[4]), .PRDATA(PRDATA[4]), 
       .SPIOut, .SPIIn, .SPICS, .SPIIntr);
@@ -172,11 +168,11 @@ module uncore (
   end
 
   // AHB Read Multiplexer
-  assign HRDATA = ({`XLEN{HSELRamD}} & HREADRam) |
-                  ({`XLEN{HSELEXTD}} & HRDATAEXT) |   
-                  ({`XLEN{HSELBRIDGED}} & HREADBRIDGE) |
-                  ({`XLEN{HSELBootRomD}} & HREADBootRom) |
-                  ({`XLEN{HSELSDCD}} & HREADSDC);
+  assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
+                  ({P.XLEN{HSELEXTD}} & HRDATAEXT) |   
+                  ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
+                  ({P.XLEN{HSELBootRomD}} & HREADBootRom) |
+                  ({P.XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
                  HSELEXTD & HRESPEXT |
