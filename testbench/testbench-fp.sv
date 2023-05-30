@@ -24,7 +24,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 `include "wally-config.vh"
+`include "config.vh"
 `include "tests-fp.vh"
+
+import cvw::*;
 
 module testbenchfp;
   parameter TEST="none";
@@ -106,7 +109,10 @@ module testbenchfp;
    logic                       IFDivStartE, FDivDoneE;
    logic [`NE+1:0]             QeM;
    logic [`DIVb:0]             QmM;
-   logic [`XLEN-1:0]           FIntDivResultM;   
+   logic [`XLEN-1:0]           FIntDivResultM;
+
+  `include "parameter-defs.vh"
+  
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -681,7 +687,7 @@ module testbenchfp;
             .ASticky); 
   end
               
-  postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+  postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
               .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
               .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
               .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
@@ -704,7 +710,7 @@ module testbenchfp;
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
-     fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+     fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                        .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
 		       .XNaNE(XNaN), .YNaNE(YNaN), 
@@ -981,6 +987,8 @@ module readvectors (
   output logic [`FLEN-1:0]   X, Y, Z, XPostBox
 );
   logic XEn, YEn, ZEn;
+
+  `include "parameter-defs.vh"
 
   // apply test vectors on rising edge of clk
   // Format of vectors Inputs(1/2/3)_AnsFlg
@@ -1338,7 +1346,8 @@ module readvectors (
   assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
   assign ZEn = (Unit == `FMAUNIT);
   
-  unpack unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
+
+  unpack #(P) unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                 .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                 .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
                 .XEn, .YEn, .ZEn, .XExpMax, .XPostBox);
