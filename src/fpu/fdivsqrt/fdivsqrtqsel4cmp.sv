@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module fdivsqrtqsel4cmp (
   input  logic [2:0] Dmsbs,
   input  logic [4:0] Smsbs,

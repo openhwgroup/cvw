@@ -25,7 +25,6 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
 module roundsign(
   input logic         Xs,     // x sign

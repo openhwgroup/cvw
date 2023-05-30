@@ -26,9 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtfsm(
+module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   input  logic               clk, reset, 
   input  logic               XInfE, YInfE, 
   input  logic               XZeroE, YZeroE, 
@@ -39,7 +37,7 @@ module fdivsqrtfsm(
   input  logic               StallM, FlushE,
   input  logic               IntDivE,
   input  logic               ISpecialCaseE,
-  input  logic [`DURLEN-1:0] CyclesE,
+  input  logic [P.DURLEN-1:0] CyclesE,
   output logic               IFDivStartE,
   output logic               FDivBusyE, FDivDoneE,
   output logic               SpecialCaseM
@@ -49,16 +47,16 @@ module fdivsqrtfsm(
   statetype state;
 
   logic SpecialCaseE, FSpecialCaseE;
-  logic [`DURLEN-1:0] step;
+  logic [P.DURLEN-1:0] step;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
+  assign IFDivStartE = (FDivStartE | (IDivStartE & P.IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
  
   // terminate immediately on special cases
   assign FSpecialCaseE = XZeroE | | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
-  if (`IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
+  if (P.IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
   else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 

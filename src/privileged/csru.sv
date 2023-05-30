@@ -26,24 +26,23 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module csru #(parameter 
-  FFLAGS = 12'h001,
-  FRM = 12'h002,
-  FCSR = 12'h003) (
+module csru import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset, 
   input  logic             InstrValidNotFlushedM,
   input  logic             CSRUWriteM,
   input  logic [11:0]      CSRAdrM,
-  input  logic [`XLEN-1:0] CSRWriteValM,
+  input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [1:0]       STATUS_FS,
-  output logic [`XLEN-1:0] CSRUReadValM,  
+  output logic [P.XLEN-1:0] CSRUReadValM,  
   input  logic [4:0]       SetFflagsM,
   output logic [2:0]       FRM_REGW,
   output logic             WriteFRMM, WriteFFLAGSM,
   output logic             IllegalCSRUAccessM
 );
+
+  localparam FFLAGS = 12'h001;
+  localparam FRM = 12'h002;
+  localparam FCSR = 12'h003;
 
   logic [4:0]              FFLAGS_REGW;
   logic [2:0]              NextFRMM;
@@ -71,9 +70,9 @@ module csru #(parameter
     end else begin
       IllegalCSRUAccessM = 0;
       case (CSRAdrM) 
-        FFLAGS:    CSRUReadValM = {{(`XLEN-5){1'b0}}, FFLAGS_REGW};
-        FRM:       CSRUReadValM = {{(`XLEN-3){1'b0}}, FRM_REGW};
-        FCSR:      CSRUReadValM = {{(`XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
+        FFLAGS:    CSRUReadValM = {{(P.XLEN-5){1'b0}}, FFLAGS_REGW};
+        FRM:       CSRUReadValM = {{(P.XLEN-3){1'b0}}, FRM_REGW};
+        FCSR:      CSRUReadValM = {{(P.XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
         default: begin
                    CSRUReadValM = 0; 
                    IllegalCSRUAccessM = 1;
