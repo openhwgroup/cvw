@@ -59,6 +59,9 @@ examples/C/sum/sum
 examples/C/fir/fir
 examples/fp/softfloat_demo/softfloat_demo
 examples/fp/fpcalc/fpcalc
+examples/C/inline/inline
+examples/C/sum_mixed/sum_mixed
+examples/asm/trap/trap
 src/fma/fma16_testgen
 linux/devicetree/debug/*
 !linux/devicetree/debug/dump-dts.sh
