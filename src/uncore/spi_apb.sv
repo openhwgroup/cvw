@@ -9,42 +9,38 @@
 // 
 // A component of the Wally configurable RISC-V project.
 // 
-// Copyright (C) 2022 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
 //
-// MIT LICENSE
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
-// software and associated documentation files (the "Software"), to deal in the Software 
-// without restriction, including without limitation the rights to use, copy, modify, merge, 
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
-// to whom the Software is furnished to do so, subject to the following conditions:
+// SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
-//   The above copyright notice and this permission notice shall be included in all copies or 
-//   substantial portions of the Software.
+// Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+// except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+// may obtain a copy of the License at
 //
-//   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
-//   INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR 
-//   PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS 
-//   BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-//   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE 
-//   OR OTHER DEALINGS IN THE SOFTWARE.
+// https://solderpad.org/licenses/SHL-2.1/
+//
+// Unless required by applicable law or agreed to in writing, any work distributed under the 
+// License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+// either express or implied. See the License for the specific language governing permissions 
+// and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // CREATE HARDWARE INTERLOCKS FOR MODE CHANGES / CONTROL REGISTER UPDATES
 // last q's about reset values and how to test
 
 
-`include "wally-config.vh"
 
-module spi_apb (
+
+module spi_apb import cvw:*; #(parameter cvw_t P) (
     input  logic             PCLK, PRESETn,
     input  logic             PSEL,
     input  logic [7:0]       PADDR,
-    input  logic [`XLEN-1:0] PWDATA,
-    input  logic [`XLEN/8-1:0] PSTRB,
+    input  logic [P.XLEN-1:0] PWDATA,
+    input  logic [P.XLEN/8-1:0] PSTRB,
     input  logic             PWRITE,
     input  logic             PENABLE,
     output logic             PREADY,
-    output logic [`XLEN-1:0] PRDATA,
+    output logic [P.XLEN-1:0] PRDATA,
     output logic [3:0]          SPIOut,
     input  logic [3:0]          SPIIn,
     output logic [3:0]          SPICS,
@@ -138,7 +134,7 @@ module spi_apb (
     // account for subword read/write circuitry
     // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
     //    (At least that's what I think when FE310 spec says "only naturally aligned 32-bit accesses are supported")
-    if (`XLEN == 64) begin
+    if (P.XLEN == 64) begin
         assign Din =    Entry[2] ? PWDATA[63:32] : PWDATA[31:0];
         assign PRDATA = Entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
     end else begin // 32-bit
@@ -151,18 +147,19 @@ module spi_apb (
     always_ff@(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin 
             SckDiv <= #1 12'd3;
-            SckMode <= #1 0;
+            SckMode <= #1 2'b0;
             ChipSelectID <= #1 2'b0;
             ChipSelectDef <= #1 4'b1;
             ChipSelectMode <= #1 0;
             Delay0 <= #1 {8'b1,8'b1};
             Delay1 <= #1 {8'b0,8'b1};
             Format <= #1 {8'b10000000};
-            TransmitData[7:0] <= #1 8'b0;
-            TransmitWatermark <= #1 0;
-            ReceiveWatermark <= #1 0;
-            InterruptEnable <= #1 0;
-            InterruptPending <= #1 0;
+            TransmitData <= #1 9'b0;
+            ReceiveData <= #1 9'b0;
+            TransmitWatermark <= #1 3'b0;
+            ReceiveWatermark <= #1 3'b0;
+            InterruptEnable <= #1 2'b0;
+            InterruptPending <= #1 2'b0;
         end else begin //writes
             //According to FU540 spec: Once interrupt is pending, it will remain set until number 
             //of entries in tx/rx fifo is strictly more/less than tx/rxmark
@@ -410,7 +407,7 @@ module spi_apb (
         if(~PRESETn)  ReceiveShiftReg <= 8'b0;
         else if (~Active) ReceiveShiftReg <= 8'b0;
         else if (~Format[3]) begin
-            if(`SPI_LOOPBACK_TEST) begin
+            if(P.SPI_LOOPBACK_TEST) begin
                 case(Format[1:0])
                     2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
                     2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIOut[0],SPIOut[1]};

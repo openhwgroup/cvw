@@ -136,6 +136,9 @@ localparam PLIC_RANGE = 34'h03FFFFFF;
 localparam SDC_SUPPORTED = 1'b0;
 localparam SDC_BASE = 34'h00012100;  
 localparam SDC_RANGE = 34'h0000001F; 
+localparam SPI_SUPPORTED = 1'b0;
+localparam SPI_BASE = 34'h10040000;
+localparam SPI_RANGE 34'h00000FFF;
 
 // Bus Interface width
 localparam AHBW = 32;
@@ -144,6 +147,7 @@ localparam AHBW = 32;
 
 // Tie GPIO outputs back to inputs
 localparam GPIO_LOOPBACK_TEST = 1;
+localparam SPI_LOOPBACK_TEST = 0;
 
 // Hardware configuration
 localparam UART_PRESCALE = 1;
@@ -154,6 +158,7 @@ localparam PLIC_NUM_SRC = 10;
 localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
 localparam PLIC_GPIO_ID = 3;
 localparam PLIC_UART_ID = 10;
+localparam PLIC_SPI_ID = 6;
 
 localparam BPRED_SUPPORTED = 0;
 localparam BPRED_TYPE = "BP_GSHARE"; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
