@@ -26,7 +26,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module rom_ahb import cvw::*;  #(parameter cvw_t P, BASE=0, RANGE = 65535) (
+module rom_ahb import cvw::*;  #(parameter cvw_t P, 
+                                 parameter BASE=0, RANGE = 65535) (
   input  logic             HCLK, HRESETn, 
   input  logic             HSELRom,
   input  logic [P.PA_BITS-1:0]  HADDR,
