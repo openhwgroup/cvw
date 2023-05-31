@@ -134,6 +134,19 @@ coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/clintdec -lin
 set line [GetLineNum ../src/mmu/adrdec.sv "& SizeValid"]
 coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uncoreramdec -linerange $line-$line -item e 1 -fecexprrow 5
 
+set line [GetLineNum ../src/mmu/adrdec.sv "& Supported"]
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/gpiodec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/uartdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/plicdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/lsu/dmmu/dmmu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/dtimdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/iromdec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/ddr4dec -linerange $line-$line -item e 1 -fecexprrow 3
+coverage exclude -scope /dut/core/ifu/immu/immu/pmachecker/adrdecs/sdcdec -linerange $line-$line -item e 1 -fecexprrow 3
+
 ####################
 # Unused access types due to sharing IFU and LSU logic
 ####################
