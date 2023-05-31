@@ -76,7 +76,7 @@ parameter cvw_t P = '{
                        // *** definitely need to fix this.
                        // it thinks we are casting from the enum type to BPRED_TYPE.
   BPRED_TYPE :        BPRED_TYPE,
-                       /* verilator lint_off ENUMVALUE */
+                       /* verilator lint_on ENUMVALUE */
   BPRED_SIZE :        BPRED_SIZE,
   BPRED_NUM_LHR : BPRED_NUM_LHR,                       
   BTB_SIZE :        BTB_SIZE,
