@@ -679,7 +679,7 @@ module testbenchfp;
 
   // instantiate devices under test
   if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "sub" | TEST === "all") begin : fma
-    fma fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
+    fma #(P) fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
             .Xe(Xe), .Ye(Ye), .Ze(Ze), 
             .Xm(Xm), .Ym(Ym), .Zm(Zm),
             .XZero, .YZero, .ZZero, .Ss, .Se,
@@ -699,13 +699,13 @@ module testbenchfp;
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
-    fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+    fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
               .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
               .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   end
 
   if (TEST === "cmp" | TEST === "all") begin: fcmp
-    fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+    fcmp #(P) fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
                 .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
