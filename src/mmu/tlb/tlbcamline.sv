@@ -29,7 +29,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module tlbcamline import cvw::*;  #(parameter cvw_t P, KEY_BITS = 20, SEGMENT_BITS = 10) (
+module tlbcamline import cvw::*;  #(parameter cvw_t P, 
+                                    parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
   input  logic [P.VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
   input  logic [P.ASID_BITS-1:0] SATP_ASID,
