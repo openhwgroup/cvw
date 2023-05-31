@@ -28,7 +28,6 @@
 
 `include "config.vh"
 //import cvw::*;  // global CORE-V-Wally parameters
-`include "wally-config.vh"
 
 module wallypipelinedsoc import cvw::*;  (
   input  logic                clk, 
