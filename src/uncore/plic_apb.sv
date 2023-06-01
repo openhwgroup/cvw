@@ -31,9 +31,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-`define N `PLIC_NUM_SRC
+`define N P.PLIC_NUM_SRC
 // number of interrupt sources
 // does not include source 0, which does not connect to anything according to spec
 // up to 63 sources supported; in the future, allow up to 1023 sources
@@ -42,15 +40,15 @@
 // number of conexts
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
-module plic_apb (
+module plic_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic               PCLK, PRESETn,
   input  logic               PSEL,
   input  logic [27:0]        PADDR, 
-  input  logic [`XLEN-1:0]   PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
+  input  logic [P.XLEN-1:0]   PWDATA,
+  input  logic [P.XLEN/8-1:0] PSTRB,
   input  logic               PWRITE,
   input  logic               PENABLE,
-  output logic [`XLEN-1:0]   PRDATA,
+  output logic [P.XLEN-1:0]   PRDATA,
   output logic               PREADY,
   input  logic               UARTIntr,GPIOIntr,
   output logic               MExtInt, SExtInt
@@ -86,13 +84,15 @@ module plic_apb (
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  if (`XLEN == 64) begin
+  if (P.XLEN == 64) begin
     assign Din    = entry[2] ? PWDATA[63:32] : PWDATA[31:0];
     assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
     assign PRDATA = Dout;
     assign Din    = PWDATA[31:0];
   end
+
+  if (P.PLIC_NUM_SRC_LT_32) `define PLIC_NUM_SRC_LT_32
 
   // ==================
   // Register Interface
@@ -101,9 +101,9 @@ module plic_apb (
     // resetting
     if (~PRESETn) begin
       intPriority   <= #1 {`N{3'b0}};
-      intEn         <= #1 {2{`N'b0}};
+      intEn         <= #1 {2*`N{1'b0}};
       intThreshold  <= #1 {2{3'b0}};
-      intInProgress <= #1 `N'b0;
+      intInProgress <= #1 {`N{1'b0}};
     // writing
     end else begin
       if (memwrite)
@@ -120,12 +120,12 @@ module plic_apb (
           24'h002084: intEn[1][`N:32] <= #1 Din[31:0];
           `endif
           24'h200000: intThreshold[0] <= #1 Din[2:0];
-          24'h200004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
           24'h201000: intThreshold[1] <= #1 Din[2:0];
-          24'h201004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h201004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // Read synchronously because a read can have side effect of changing intInProgress
-      if (memread)
+      if (memread) begin
         casez(entry)
           24'h000000: Dout <= #1 32'b0;  // there is no intPriority[0]
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};      
@@ -145,31 +145,27 @@ module plic_apb (
           24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
             Dout <= #1 {26'b0,intClaim[0]};
-            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | ({{`N-1{1'b0}}, 1'b1} << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           24'h201000: Dout <= #1 {29'b0,intThreshold[1]};
           24'h201004: begin
             Dout <= #1 {26'b0,intClaim[1]};
-            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | ({{`N-1{1'b0}}, 1'b1} << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
-      else Dout <= #1 32'h0;
+      end else Dout <= #1 32'h0;
    end
   end
 
   // connect sources to requests
   always_comb begin
-    requests = `N'b0;
-    `ifdef PLIC_GPIO_ID
-      requests[`PLIC_GPIO_ID] = GPIOIntr;
-    `endif
-    `ifdef PLIC_UART_ID
-      requests[`PLIC_UART_ID] = UARTIntr;
-    `endif
+    requests = {`N{1'b0}};
+    if(P.PLIC_GPIO_ID != 0) requests[P.PLIC_GPIO_ID] = GPIOIntr;
+    if(P.PLIC_UART_ID != 0) requests[P.PLIC_UART_ID] = UARTIntr;
   end
 
-  // pending interrupt requests
+  // pending interrupt request
   assign nextIntPending = (intPending | requests) & ~intInProgress; 
   flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 

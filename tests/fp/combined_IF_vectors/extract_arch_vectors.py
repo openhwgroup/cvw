@@ -267,7 +267,7 @@ def create_vectors(my_config):
                 else:
                     # print("read false")
                     reading = False
-        print("out")
+        # print("out")
         dest_file.close()
         src_file1.close()
         src_file2.close()

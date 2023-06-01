@@ -26,10 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-
-module icpred #(parameter INSTR_CLASS_PRED = 1)(
+module icpred import cvw::*;  #(parameter cvw_t P, INSTR_CLASS_PRED = 1)(
   input  logic             clk, reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
@@ -56,10 +53,10 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
     logic     ccall, cj, cjr, ccallr, CJumpF, CBranchF;
     logic     NCJumpF, NCBranchF;
 
-    if(`C_SUPPORTED) begin
+    if(P.C_SUPPORTED) begin
       logic [4:0] CompressedOpcF;
       assign CompressedOpcF = {PostSpillInstrRawF[1:0], PostSpillInstrRawF[15:13]};
-      assign ccall = CompressedOpcF == 5'h09 & `XLEN == 32;
+      assign ccall = CompressedOpcF == 5'h09 & P.XLEN == 32;
       assign cj = CompressedOpcF == 5'h0d;
       assign cjr = CompressedOpcF == 5'h14 & ~PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
       assign ccallr = CompressedOpcF == 5'h14 & PostSpillInstrRawF[12] & PostSpillInstrRawF[6:2] == 5'b0 & PostSpillInstrRawF[11:7] != 5'b0;
@@ -72,13 +69,13 @@ module icpred #(parameter INSTR_CLASS_PRED = 1)(
     assign NCJumpF = PostSpillInstrRawF[6:0] == 7'h67 | PostSpillInstrRawF[6:0] == 7'h6F;
     assign NCBranchF = PostSpillInstrRawF[6:0] == 7'h63;
     
-    assign BPBranchF = NCBranchF | (`C_SUPPORTED & CBranchF);
-    assign BPJumpF = NCJumpF | (`C_SUPPORTED & (CJumpF));
+    assign BPBranchF = NCBranchF | (P.C_SUPPORTED & CBranchF);
+    assign BPJumpF = NCJumpF | (P.C_SUPPORTED & (CJumpF));
     assign BPReturnF = (NCJumpF & (PostSpillInstrRawF[19:15] & 5'h1B) == 5'h01) | // returnurn must returnurn to ra or r5
-        (`C_SUPPORTED & (ccallr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
+        (P.C_SUPPORTED & (ccallr | cjr) & ((PostSpillInstrRawF[11:7] & 5'h1B) == 5'h01));
     
     assign BPCallF = (NCJumpF & (PostSpillInstrRawF[11:07] & 5'h1B) == 5'h01) | // call(r) must link to ra or x5
-        (`C_SUPPORTED & (ccall | (ccallr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
+        (P.C_SUPPORTED & (ccall | (ccallr & (PostSpillInstrRawF[11:7] & 5'h1b) == 5'h01)));
 
   end else begin
     // This section connects the BTB's instruction class prediction.

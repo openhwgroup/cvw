@@ -1066,6 +1066,14 @@ string imperas32f[] = '{
     "rv64i_m/I/src/xori-01.S"
   };
 
+  string arch64f_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv64i_m/F/src/fmadd_b15-01.S",
+    "rv64i_m/F/src/fmsub_b15-01.S"
+    // "rv64i_m/F/src/fnmadd_b15-01.S",
+    // "rv64i_m/F/src/fnmsub_b15-01.S"
+  };
+
   string arch64f[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F/src/fdiv_b1-01.S",
@@ -1088,8 +1096,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsqrt_b7-01.S",
     "rv64i_m/F/src/fsqrt_b8-01.S",
     "rv64i_m/F/src/fsqrt_b9-01.S",
-
-
     "rv64i_m/F/src/fadd_b10-01.S",
     "rv64i_m/F/src/fadd_b1-01.S",
     "rv64i_m/F/src/fadd_b11-01.S",
@@ -1140,7 +1146,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/flw-align-01.S",
     "rv64i_m/F/src/fmadd_b1-01.S",
     "rv64i_m/F/src/fmadd_b14-01.S",
-    //"rv64i_m/F/src/fmadd_b15-01.S",
     "rv64i_m/F/src/fmadd_b16-01.S",
     "rv64i_m/F/src/fmadd_b17-01.S",
     "rv64i_m/F/src/fmadd_b18-01.S",
@@ -1157,7 +1162,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fmin_b19-01.S",
     "rv64i_m/F/src/fmsub_b1-01.S",
     "rv64i_m/F/src/fmsub_b14-01.S",
-    "rv64i_m/F/src/fmsub_b15-01.S",
     "rv64i_m/F/src/fmsub_b16-01.S",
     "rv64i_m/F/src/fmsub_b17-01.S",
     "rv64i_m/F/src/fmsub_b18-01.S",
@@ -1188,7 +1192,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fmv.x.w_b29-01.S",
     "rv64i_m/F/src/fnmadd_b1-01.S",
     "rv64i_m/F/src/fnmadd_b14-01.S",
-    // "rv64i_m/F/src/fnmadd_b15-01.S",
     "rv64i_m/F/src/fnmadd_b16-01.S",
     "rv64i_m/F/src/fnmadd_b17-01.S",
     "rv64i_m/F/src/fnmadd_b18-01.S",
@@ -1201,7 +1204,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fnmadd_b8-01.S",
     "rv64i_m/F/src/fnmsub_b1-01.S",
     "rv64i_m/F/src/fnmsub_b14-01.S",
-    // "rv64i_m/F/src/fnmsub_b15-01.S",
     "rv64i_m/F/src/fnmsub_b16-01.S",
     "rv64i_m/F/src/fnmsub_b17-01.S",
     "rv64i_m/F/src/fnmsub_b18-01.S",
@@ -1238,6 +1240,13 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsw-align-01.S"
     };
 
+  string arch64d_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv64i_m/D/src/fmadd.d_b15-01.S",
+    //"rv64i_m/D/src/fmsub.d_b15-01.S",
+     "rv64i_m/D/src/fnmadd.d_b15-01.S"
+    // "rv64i_m/D/src/fnmsub.d_b15-01.S"
+  };
 
   string arch64d[] = '{
     `RISCVARCHTEST,
@@ -1262,7 +1271,6 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fsqrt.d_b7-01.S",
     "rv64i_m/D/src/fsqrt.d_b8-01.S",
     "rv64i_m/D/src/fsqrt.d_b9-01.S",
-
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
@@ -1526,6 +1534,14 @@ string arch64zbs[] = '{
     "rv32i_m/M/src/mulhu-01.S"
    };
 
+  string arch32f_fma[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/F/src/fmadd_b15-01.S"
+    //"rv32i_m/F/src/fmsub_b15-01.S",
+    // "rv32i_m/F/src/fnmadd_b15-01.S",
+    // "rv32i_m/F/src/fnmsub_b15-01.S"
+  };
+
   string arch32f[] = '{
     `RISCVARCHTEST,
     "rv32i_m/F/src/fdiv_b20-01.S",
@@ -1579,7 +1595,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/flw-align-01.S",
     "rv32i_m/F/src/fmadd_b1-01.S",
     "rv32i_m/F/src/fmadd_b14-01.S",
-    "rv32i_m/F/src/fmadd_b15-01.S",
     "rv32i_m/F/src/fmadd_b16-01.S",
     "rv32i_m/F/src/fmadd_b17-01.S",
     "rv32i_m/F/src/fmadd_b18-01.S",
@@ -1596,7 +1611,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fmin_b19-01.S",
     "rv32i_m/F/src/fmsub_b1-01.S",
     "rv32i_m/F/src/fmsub_b14-01.S",
-    //"rv32i_m/F/src/fmsub_b15-01.S",
     "rv32i_m/F/src/fmsub_b16-01.S",
     "rv32i_m/F/src/fmsub_b17-01.S",
     "rv32i_m/F/src/fmsub_b18-01.S",
@@ -1627,7 +1641,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fmv.x.w_b29-01.S",
     "rv32i_m/F/src/fnmadd_b1-01.S",
     "rv32i_m/F/src/fnmadd_b14-01.S",
-    // "rv32i_m/F/src/fnmadd_b15-01.S",
     "rv32i_m/F/src/fnmadd_b16-01.S",
     "rv32i_m/F/src/fnmadd_b17-01.S",
     "rv32i_m/F/src/fnmadd_b18-01.S",
@@ -1640,7 +1653,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fnmadd_b8-01.S",
     "rv32i_m/F/src/fnmsub_b1-01.S",
     "rv32i_m/F/src/fnmsub_b14-01.S",
-    // "rv32i_m/F/src/fnmsub_b15-01.S",
     "rv32i_m/F/src/fnmsub_b16-01.S",
     "rv32i_m/F/src/fnmsub_b17-01.S",
     "rv32i_m/F/src/fnmsub_b18-01.S",
@@ -1676,6 +1688,14 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fsub_b8-01.S",
     "rv32i_m/F/src/fsw-align-01.S"
     };
+
+  string arch32d_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv32i_m/D/src/fmadd.d_b15-01.S",
+    //"rv32i_m/D/src/fmsub.d_b15-01.S",
+    // "rv32i_m/D/src/fnmadd.d_b15-01.S",
+    "rv32i_m/D/src/fnmsub.d_b15-01.S"
+  };
 
   string arch32d[] = '{
     `RISCVARCHTEST,
@@ -2057,8 +2077,8 @@ string arch64zbs[] = '{
 
  string custom[] = '{
     `CUSTOM,
-    "debug",
     "simple",
+    "debug",
     "cacheTest"
  };
   string testsBP64[] = '{
