@@ -605,6 +605,13 @@ module testbenchfp;
           Fmt = {Fmt, 2'b10};
         end
       end
+      if (TEST === "custom"   | TEST === "all") begin // if fma is being tested
+        Tests = {Tests, custom};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `DIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
     end
 
     // check if nothing is being tested
@@ -703,7 +710,7 @@ module testbenchfp;
                 .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
-  if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
+  if (TEST === "div" | TEST === "sqrt" | TEST === "custom" | TEST === "all") begin: fdivsqrt
      fdivsqrt fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
                        .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
