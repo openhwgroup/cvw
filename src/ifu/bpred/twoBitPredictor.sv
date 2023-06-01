@@ -26,14 +26,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module twoBitPredictor #(parameter k = 10) (
+module twoBitPredictor #(parameter XLEN,
+                         parameter k = 10) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCM,
+  input  logic [XLEN-1:0]  PCNextF, PCM,
   output logic [1:0]       BPDirPredF,
   output logic             BPDirPredWrongE,
   input  logic             BranchE, BranchM,

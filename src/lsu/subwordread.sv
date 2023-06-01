@@ -27,16 +27,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module subwordread 
+module subwordread #(parameter LLEN) 
   (
-   input logic [`LLEN-1:0]  ReadDataWordMuxM,
+   input logic [LLEN-1:0]  ReadDataWordMuxM,
    input logic [2:0]        PAdrM,
    input logic [2:0]        Funct3M,
    input logic              FpLoadStoreM, 
    input logic              BigEndianM, 
-   output logic [`LLEN-1:0] ReadDataM
+   output logic [LLEN-1:0] ReadDataM
 );
 
   logic [7:0]               ByteM; 
@@ -46,7 +44,7 @@ module subwordread
   // Funct3M[1:0] is the size of the memory access.
   assign PAdrSwap = PAdrM ^ {3{BigEndianM}};
 
-  if (`LLEN == 64) begin:swrmux
+  if (LLEN == 64) begin:swrmux
     // ByteMe mux
     always_comb
     case(PAdrSwap[2:0])
@@ -83,14 +81,14 @@ module subwordread
     // sign extension/ NaN boxing
     always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                              // lb
-      3'b001:  ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
-      3'b010:  ReadDataM = {{`LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
-      3'b011:  ReadDataM = {{`LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
-      3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
-    //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{`LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
-      3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
-      3'b110:  ReadDataM = {{`LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
+      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                              // lb
+      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]}; // lh/flh
+      3'b010:  ReadDataM = {{LLEN-32{WordM[31]|FpLoadStoreM}}, WordM[31:0]};         // lw/flw
+      3'b011:  ReadDataM = {{LLEN-64{DblWordM[63]|FpLoadStoreM}}, DblWordM[63:0]};   // ld/fld
+      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                             // lbu
+    //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
+      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
+      3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
       default: ReadDataM = ReadDataWordMuxM;                                          // Shouldn't happen
     endcase
 
@@ -114,12 +112,12 @@ module subwordread
     // sign extension
     always_comb
     case(Funct3M)
-      3'b000:  ReadDataM = {{`LLEN-8{ByteM[7]}}, ByteM};                                            // lb
-      3'b001:  ReadDataM = {{`LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
-      3'b010:  ReadDataM = {{`LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]}; // lw/flw
+      3'b000:  ReadDataM = {{LLEN-8{ByteM[7]}}, ByteM};                                            // lb
+      3'b001:  ReadDataM = {{LLEN-16{HalfwordM[15]|FpLoadStoreM}}, HalfwordM[15:0]};               // lh/flh
+      3'b010:  ReadDataM = {{LLEN-32{ReadDataWordMuxM[31]|FpLoadStoreM}}, ReadDataWordMuxM[31:0]}; // lw/flw
       3'b011:  ReadDataM = ReadDataWordMuxM;                                                        // fld
-      3'b100:  ReadDataM = {{`LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
-      3'b101:  ReadDataM = {{`LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
+      3'b100:  ReadDataM = {{LLEN-8{1'b0}}, ByteM[7:0]};                                           // lbu
+      3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                                     // lhu
       default: ReadDataM = ReadDataWordMuxM;                                                        // Shouldn't happen
     endcase
   end

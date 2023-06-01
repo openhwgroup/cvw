@@ -191,7 +191,8 @@ class spike(pluginTemplate):
       # parallel using the make command set above.
       #make.execute_all(self.work_dir)
       # DH 7/26/22 increase timeout to 1800 seconds so sim will finish on slow machines
-      make.execute_all(self.work_dir, timeout = 1800) 
+      # DH 5/17/23 increase timeout to 3600 seconds
+      make.execute_all(self.work_dir, timeout = 3600) 
 
 
       # if target runs are not required then we simply exit as this point after running all

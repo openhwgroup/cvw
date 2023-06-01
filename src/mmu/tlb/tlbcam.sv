@@ -29,17 +29,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module tlbcam #(parameter TLB_ENTRIES = 8, KEY_BITS = 20, SEGMENT_BITS = 10) (
+module tlbcam  import cvw::*;  #(parameter cvw_t P, TLB_ENTRIES = 8, KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                    clk, reset,
-  input  logic [`VPN_BITS-1:0]    VPN,
+  input  logic [P.VPN_BITS-1:0]    VPN,
   input  logic [1:0]              PageTypeWriteVal,
   input  logic                    SV39Mode,
   input  logic                    TLBFlush,
   input  logic [TLB_ENTRIES-1:0]  WriteEnables,
   input  logic [TLB_ENTRIES-1:0]  PTE_Gs,
-  input  logic [`ASID_BITS-1:0]   SATP_ASID,
+  input  logic [P.ASID_BITS-1:0]   SATP_ASID,
   output logic [TLB_ENTRIES-1:0]  Matches,
   output logic [1:0]              HitPageType,
   output logic                    CAMHit
@@ -53,7 +51,7 @@ module tlbcam #(parameter TLB_ENTRIES = 8, KEY_BITS = 20, SEGMENT_BITS = 10) (
   // of page type. However, matches are determined based on a subset of the
   // page number segments.
 
-  tlbcamline #(KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
+  tlbcamline #(P, KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
     .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PageTypeWriteVal, .TLBFlush,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;

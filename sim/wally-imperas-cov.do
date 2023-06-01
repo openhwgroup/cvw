@@ -42,7 +42,8 @@ vlog +incdir+../config/$1 \
        +define+COVER_RV64M \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/source/host/riscvISACOV/source \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/rvvi/trace2cov.sv  \
-     \
+    \
+    ../src/wally/cvw.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \

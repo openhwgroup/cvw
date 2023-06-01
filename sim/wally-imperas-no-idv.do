@@ -27,6 +27,7 @@ vlib work
 vlog +incdir+../config/$1 \
      +incdir+../config/shared \
      ../../external/ImperasDV-HMC/Imperas/ImpPublic/source/host/rvvi/rvvi-trace.sv \
+     ../src/wally/cvw.sv \
      ../testbench/testbench_imperas.sv \
      ../testbench/common/*.sv   \
      ../src/*/*.sv \
