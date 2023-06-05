@@ -28,20 +28,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fcvt import cvw::*;  #(parameter cvw_t P) (
-  input  logic                    Xs,          // input's sign
-  input  logic [P.NE-1:0]          Xe,          // input's exponent
-  input  logic [P.NF:0]            Xm,          // input's fraction
-  input  logic [P.XLEN-1:0]        Int,         // integer input - from IEU
-  input  logic [2:0]              OpCtrl,      // choose which opperation (look below for values)
-  input  logic                    ToInt,       // is fp->int (since it's writting to the integer register)
-  input  logic                    XZero,       // is the input zero
-  input  logic [P.FMTBITS-1:0]     Fmt,         // the input's precision (11=quad 01=double 00=single 10=half)
-  output logic [P.NE:0]            Ce,          // the calculated expoent
-  output logic [P.LOGCVTLEN-1:0]   ShiftAmt,    // how much to shift by
-  output logic                    ResSubnormUf,// does the result underflow or is subnormal
-  output logic                    Cs,          // the result's sign
-  output logic                    IntZero,     // is the integer zero?
-  output logic [P.CVTLEN-1:0]      LzcIn        // input to the Leading Zero Counter (priority encoder)
+  input  logic                    Xs,           // input's sign
+  input  logic [P.NE-1:0]         Xe,           // input's exponent
+  input  logic [P.NF:0]           Xm,           // input's fraction
+  input  logic [P.XLEN-1:0]       Int,          // integer input - from IEU
+  input  logic [2:0]              OpCtrl,       // choose which opperation (look below for values)
+  input  logic                    ToInt,        // is fp->int (since it's writting to the integer register)
+  input  logic                    XZero,        // is the input zero
+  input  logic [P.FMTBITS-1:0]    Fmt,          // the input's precision (11=quad 01=double 00=single 10=half)
+  output logic [P.NE:0]           Ce,           // the calculated expoent
+  output logic [P.LOGCVTLEN-1:0]  ShiftAmt,     // how much to shift by
+  output logic                    ResSubnormUf, // does the result underflow or is subnormal
+  output logic                    Cs,           // the result's sign
+  output logic                    IntZero,      // is the integer zero?
+  output logic [P.CVTLEN-1:0]     LzcIn         // input to the Leading Zero Counter (priority encoder)
   );
 
   // OpCtrls:
@@ -54,17 +54,16 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //                            bit 2              bit 1                   bit 0
   //      for example: signed long -> single floating point has the OpCode 101
 
-  logic [P.FMTBITS-1:0]    OutFmt;     // format of the output
-  logic [P.XLEN-1:0]       PosInt;     // the positive integer input
-  logic [P.XLEN-1:0]       TrimInt;    // integer trimmed to the correct size
-  logic [P.NE-2:0]         NewBias;    // the bias of the final result
-  logic [P.NE-1:0]         OldExp;     // the old exponent
-  logic                   Signed;     // is the opperation with a signed integer?
-  logic                   Int64;      // is the integer 64 bits?
-  logic                   IntToFp;    // is the opperation an int->fp conversion?
-  logic [P.CVTLEN:0]       LzcInFull;  // input to the Leading Zero Counter (priority encoder)
-  logic [P.LOGCVTLEN-1:0]  LeadingZeros; // output from the LZC
-
+  logic [P.FMTBITS-1:0]           OutFmt;       // format of the output
+  logic [P.XLEN-1:0]              PosInt;       // the positive integer input
+  logic [P.XLEN-1:0]              TrimInt;      // integer trimmed to the correct size
+  logic [P.NE-2:0]                NewBias;      // the bias of the final result
+  logic [P.NE-1:0]                OldExp;       // the old exponent
+  logic                           Signed;       // is the opperation with a signed integer?
+  logic                           Int64;        // is the integer 64 bits?
+  logic                           IntToFp;      // is the opperation an int->fp conversion?
+  logic [P.CVTLEN:0]              LzcInFull;    // input to the Leading Zero Counter (priority encoder)
+  logic [P.LOGCVTLEN-1:0]         LeadingZeros; // output from the LZC
 
   // seperate OpCtrl for code readability
   assign Signed =  OpCtrl[0];
@@ -78,7 +77,6 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
       assign OutFmt = IntToFp ? Fmt : (OpCtrl[1:0] == P.FMT); 
   else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
       assign OutFmt = IntToFp ? Fmt : OpCtrl[1:0]; 
-
 
   ///////////////////////////////////////////////////////////////////////////
   // negation
@@ -143,7 +141,6 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
       assign NewBias = ToInt ? (P.NE-1)'(1) : NewBiasToFp; 
   end
 
-
   // select the old exponent
   //      int -> fp : largest bias + XLEN-1
   //      fp -> ??? : XExp
@@ -185,12 +182,10 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //          oldexp         - biasold         - LeadingZeros                               + newbias
   assign Ce = {1'b0, OldExp} - (P.NE+1)'(P.BIAS) - {{P.NE-P.LOGCVTLEN+1{1'b0}}, (LeadingZeros)} + {2'b0, NewBias};
 
-
   // find if the result is dnormal or underflows
   //      - if Calculated expoenent is 0 or negitive (and the input/result is not exactaly 0)
   //      - can't underflow an integer to Fp conversion
   assign ResSubnormUf = (~|Ce | Ce[P.NE])&~XZero&~IntToFp;
-
 
   ///////////////////////////////////////////////////////////////////////////
   // shifter
@@ -212,7 +207,6 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
       if(ToInt)                       ShiftAmt = Ce[P.LOGCVTLEN-1:0]&{P.LOGCVTLEN{~Ce[P.NE]}};
       else if (ResSubnormUf)  ShiftAmt = (P.LOGCVTLEN)'(P.NF-1)+Ce[P.LOGCVTLEN-1:0];
       else                            ShiftAmt = LeadingZeros;
-
       
   ///////////////////////////////////////////////////////////////////////////
   // sign
@@ -230,4 +224,3 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
       else            Cs = Xs;
 
 endmodule
-
