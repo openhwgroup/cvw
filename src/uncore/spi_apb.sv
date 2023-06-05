@@ -58,6 +58,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     logic [15:0] Delay0, Delay1;
     logic [7:0] Format;
     logic [8:0] ReceiveData;
+    logic [8:0] ReceiveDataPlaceholder;
     logic [2:0] TransmitWatermark, ReceiveWatermark;
     logic [8:0] TransmitData;
     logic [1:0] InterruptEnable, InterruptPending;
@@ -155,7 +156,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             Delay1 <= #1 {8'b0,8'b1};
             Format <= #1 {8'b10000000};
             TransmitData <= #1 9'b0;
-            ReceiveData <= #1 9'b0;
+            //ReceiveData <= #1 9'b100000000;
             TransmitWatermark <= #1 3'b0;
             ReceiveWatermark <= #1 3'b0;
             InterruptEnable <= #1 2'b0;
@@ -196,7 +197,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 8'h2C: Dout[15:0] <= #1 Delay1;
                 8'h40: Dout[7:0] <= #1 Format;
                 8'h48: Dout[8:0] <= #1 {TransmitFIFOWriteFull, 8'b0};
-                8'h4C: Dout[8:0] <= #1 ReceiveData;
+                8'h4C: Dout[8:0] <= #1 {ReceiveFIFOReadEmpty, ReceiveData[7:0]};
                 8'h50: Dout[2:0] <= #1 TransmitWatermark;
                 8'h54: Dout[2:0] <= #1 ReceiveWatermark;
                 8'h70: Dout[1:0] <= #1 InterruptEnable;
@@ -225,12 +226,16 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                     end
             2'b01: begin
                     ReceivePenultimateFrame = 5'b00010;
+                    //add 1 to count if # of bits is odd so doubled # will be correct 
+                    // for ex. 5 bits needs 3 frames, 5*2 = 10 which will be reached in 5 frames not 3*2.
                     FrameCompareProtocol = Format[4] ? FrameCompare + 5'b1 : FrameCompare;
                     end
             2'b10: begin 
                     ReceivePenultimateFrame = 5'b00100;
+                    //if frame len =< 4, need 2 frames (one to send 1-4 bits, one to recieve)
+                    //else, 4 < frame len =<8 8, which by same logic needs 4 frames
                     if (Format[7:4] > 4'b0100) FrameCompareProtocol = 5'b10000;
-                    else FrameCompareProtocol = 5'b001000;
+                    else FrameCompareProtocol = 5'b01000;
                     end
             default: begin
                     ReceivePenultimateFrame = 5'b00001;
@@ -346,9 +351,16 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign ReceiveFIFOWriteIncrement = ReceiveShiftFull;
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) ReceiveFIFOReadIncrement <= 0;
-        else if (~ReceiveFIFOReadIncrement)    ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveData[8] & PSEL);
+        else if (~ReceiveFIFOReadIncrement)    ReceiveFIFOReadIncrement <= ((Entry == 8'h4C) & ~ReceiveFIFOReadEmpty & PSEL);
         else            ReceiveFIFOReadIncrement <= 0;
-    assign ReceiveData[8] = ReceiveFIFOReadEmpty;
+    //replace literal 9th bit of ReceiveData register with concatenation of 1 bit empty signal and 8 bits of data
+    //so that all resets can be handled at the same time
+    /*    
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) <= 1'b 0;
+        else ReceiveData[8] <= ReceiveFIFOReadEmpty;
+    */
+
 
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign TransmitDataEndian =  Format[2] ? {TransmitData[0], TransmitData[1], TransmitData[2], TransmitData[3], TransmitData[4], TransmitData[5], TransmitData[6], TransmitData[7]} : TransmitData[7:0];
@@ -501,6 +513,7 @@ module FIFO_async #(parameter M = 3, N = 8)(
     assign rdata = mem[raddr];
     always_ff @(posedge wclk)
         if(winc & ~wfull) mem[waddr] <= wdata;
+
 
     always_ff @(posedge wclk, negedge PRESETn)
         if (~PRESETn) begin

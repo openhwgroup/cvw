@@ -65,7 +65,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [10:0]                HSELRegions;
+  logic [11:0]                HSELRegions;
   logic                       HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
   logic                       HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic                       HRESPRam,  HRESPSDC;
@@ -77,11 +77,11 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic                       SDCIntM;
   
   logic                       PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0]                 PSEL, PREADY;
+  logic [4:0]                 PSEL, PREADY;
   logic [31:0]                PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
-  logic [3:0][P.XLEN-1:0]      PRDATA;
+  logic [4:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
@@ -124,7 +124,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .MExtInt, .SExtInt);
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;

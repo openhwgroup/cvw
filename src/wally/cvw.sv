@@ -122,11 +122,15 @@ typedef struct packed {
   logic         SDC_SUPPORTED;
   longint  SDC_BASE;
   longint  SDC_RANGE;
+  logic         SPI_SUPPORTED;
+  longint  SPI_BASE;
+  longint  SPI_RANGE;
 
 // Test modes
 
 // Tie GPIO outputs back to inputs
   logic         GPIO_LOOPBACK_TEST;
+  logic         SPI_LOOPBACK_TEST;
 
 // Hardware configuration
   int         UART_PRESCALE ;
@@ -136,6 +140,7 @@ typedef struct packed {
   logic         PLIC_NUM_SRC_LT_32;
   int       PLIC_GPIO_ID;
   int       PLIC_UART_ID;
+  int       PLIC_SPI_ID;
 
   logic     BPRED_SUPPORTED;
   BranchPredictorType   BPRED_TYPE;

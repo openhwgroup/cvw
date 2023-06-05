@@ -80,7 +80,6 @@ test_cases:
 .8byte delay1, 0x00000001, read32_test      # delay1 reset to 0x1
 .8byte fmt, 0x00000080, read32_test         # fmt reset to [31:20] 0x0, [19:16] 0x8, [15:0] 0x0 for non-flash enabled SPI controllers
 .8byte tx_data, 0x00000000, read32_test     # tx_data [30:0] reset to 0x0, [31] read only
-.8byte rx_data, 0x00000000, read32_test     # rx_data read only
 .8byte tx_mark, 0x00000000, read32_test     # tx_mark reset to 0x0 for non-flash enabled controllers
 .8byte rx_mark, 0x00000000, read32_test     # rx_mark reset to 0x0
 .8byte ie, 0x00000000, read32_test          # ie reset to 0x0

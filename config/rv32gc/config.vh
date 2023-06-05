@@ -116,7 +116,7 @@ localparam SDC_BASE   = 64'h00012100;
 localparam SDC_RANGE  = 64'h0000001F;
 localparam SPI_SUPPORTED = 1'b1;
 localparam SPI_BASE = 64'h10040000;
-localparam SPI_RANGE 64'h00000FFF;
+localparam SPI_RANGE = 64'h00000FFF;
 
 // Bus Interface width
 localparam AHBW = 32'd32;
