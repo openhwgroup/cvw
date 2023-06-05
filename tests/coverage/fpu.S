@@ -94,7 +94,10 @@ main:
     fcvt.wu.q a0, ft3
     fcvt.l.q a0, ft3
     fcvt.lu.q a0, ft3
-
+    fcvt.l.s a0, ft0
+    fcvt.lu.s a0, ft0
+    fcvt.s.l ft0, t0
+    fcvt.s.lu ft0, t0
 
     // Tests verfying that half and quad floating point convertion instructions are not supported by rv64gc
     # fcvt.h.d ft3, ft0 // Somehow this instruction is taking the route on line 124
