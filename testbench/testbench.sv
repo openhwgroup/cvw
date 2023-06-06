@@ -554,7 +554,7 @@ module testbench;
     always @(*) begin
       if(reset) begin
         for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
-          force dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;

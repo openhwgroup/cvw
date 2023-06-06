@@ -28,7 +28,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module btb import cvw::*;  #(parameter cvw_t P, Depth = 10 ) (
+module btb import cvw::*;  #(parameter cvw_t P, 
+                             parameter Depth = 10 ) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,

@@ -98,7 +98,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[3] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[4] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
     assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
-  assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                            // branch predictor wrong
+    assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
     assign CounterEvent[7] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
     assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
     assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
