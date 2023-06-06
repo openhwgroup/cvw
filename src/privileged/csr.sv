@@ -28,7 +28,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module csr import cvw::*;  #(parameter cvw_t P, MIP = 12'h344, SIP = 12'h144) (
+module csr import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
   input  logic             FlushM, FlushW,
   input  logic             StallE, StallM, StallW,
@@ -91,6 +91,9 @@ module csr import cvw::*;  #(parameter cvw_t P, MIP = 12'h344, SIP = 12'h144) (
   output logic             BigEndianM                 // memory access is big-endian based on privilege mode and STATUS register endian fields
 );
 
+  localparam MIP = 12'h344;
+  localparam SIP = 12'h144;
+  
   logic [P.XLEN-1:0]        CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
   logic [P.XLEN-1:0]        CSRReadValM;  
   logic [P.XLEN-1:0]        CSRSrcM;

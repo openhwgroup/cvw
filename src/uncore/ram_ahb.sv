@@ -28,7 +28,8 @@
 
 `define RAM_LATENCY 0
 
-module ram_ahb import cvw::*;  #(parameter cvw_t P, BASE=0, RANGE = 65535) (
+module ram_ahb import cvw::*;  #(parameter cvw_t P, 
+                                 parameter BASE=0, RANGE = 65535) (
   input  logic                HCLK, HRESETn, 
   input  logic                HSELRam,
   input  logic [P.PA_BITS-1:0] HADDR,
