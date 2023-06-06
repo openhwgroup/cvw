@@ -27,7 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module RASPredictor import cvw::*;  #(parameter cvw_t P, StackSize = 16 )(
+module RASPredictor import cvw::*;  #(parameter cvw_t P, 
+                                      parameter StackSize = 16 )(
   input  logic             clk,
   input  logic             reset, 
   input  logic             StallF, StallD, StallE, StallM, FlushD, FlushE, FlushM,

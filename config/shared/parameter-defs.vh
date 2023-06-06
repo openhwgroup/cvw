@@ -72,7 +72,11 @@ parameter cvw_t P = '{
   PLIC_GPIO_ID :        PLIC_GPIO_ID,
   PLIC_UART_ID :        PLIC_UART_ID,
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
+                       /* verilator lint_off ENUMVALUE */
+                       // *** definitely need to fix this.
+                       // it thinks we are casting from the enum type to BPRED_TYPE.
   BPRED_TYPE :        BPRED_TYPE,
+                       /* verilator lint_off ENUMVALUE */
   BPRED_SIZE :        BPRED_SIZE,
   BPRED_NUM_LHR : BPRED_NUM_LHR,                       
   BTB_SIZE :        BTB_SIZE,

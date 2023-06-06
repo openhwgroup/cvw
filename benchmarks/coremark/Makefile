@@ -4,7 +4,7 @@
 
 PORT_DIR = $(CURDIR)/riscv64-baremetal
 cmbase=../../addins/coremark
-work_dir= ../benchmarks/coremark/work
+work_dir= work
 XLEN ?=64
 sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
