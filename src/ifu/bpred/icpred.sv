@@ -26,7 +26,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module icpred import cvw::*;  #(parameter cvw_t P, INSTR_CLASS_PRED = 1)(
+module icpred import cvw::*;  #(parameter cvw_t P, 
+                                parameter INSTR_CLASS_PRED = 1)(
   input  logic             clk, reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
