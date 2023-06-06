@@ -25,7 +25,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module ahbapbbridge import cvw::*;  #(parameter cvw_t P, PERIPHS = 2) (
+module ahbapbbridge import cvw::*;  #(parameter cvw_t P, 
+                                      parameter PERIPHS = 2) (
   input  logic                HCLK, HRESETn,
   input  logic [PERIPHS-1:0]  HSEL,  
   input  logic [P.PA_BITS-1:0] HADDR, 
