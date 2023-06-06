@@ -40,6 +40,7 @@ $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 .PHONY: clean
 
 clean:
+	make -C $(cmbase) clean
 	rm -f $(work_dir)/*
 
 
