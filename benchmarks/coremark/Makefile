@@ -3,8 +3,8 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 PORT_DIR = $(CURDIR)/riscv64-baremetal
-cmbase=../../addins/coremark
-work_dir= work
+cmbase= $(WALLY)/addins/coremark
+work_dir= $(WALLY)/benchmarks/coremark/work
 XLEN ?=64
 sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
@@ -23,9 +23,6 @@ all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
 	(cd ../../sim && (time vsim -c -do "do wally-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
-#	cd ../benchmarks/coremark/
-#	KMG: added post processing script to give out branch miss proportion along with other stats to the coremark test
-	python3 coremark-postprocess.py
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
