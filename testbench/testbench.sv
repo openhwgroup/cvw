@@ -326,10 +326,6 @@ module testbench;
             else outputfile = {pathname, tests[test], ".sim.output"};
             outputFilePointer = $fopen(outputfile, "w");
             i = 0;
-            while ($unsigned(i) < $unsigned(5'd5)) begin
-              $fdisplay("%x %s", outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
-              i = i + 1;
-            end
             $fclose(outputFilePointer);
             $display("Embench Benchmark: created output file: %s", outputfile);
           end else if (TEST == "coverage64gc") begin
