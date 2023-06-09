@@ -41,7 +41,8 @@ localparam MISA = (32'h00000104 | 1 << 5 | 1 << 3 | 1 << 16 | 1 << 18 | 1 << 20 
 localparam ZICSR_SUPPORTED = 1;
 localparam ZIFENCEI_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
-localparam ZICOUNTERS_SUPPORTED = 1;
+localparam ZICNTR_SUPPORTED = 1;
+localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 1;
 localparam SSTC_SUPPORTED = 0;
 

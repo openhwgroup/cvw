@@ -191,7 +191,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   if(`INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else  assign NextValidPCE = PCE;
 
-  if(P.ZICOUNTERS_SUPPORTED) begin
+  if(P.ZIHPM_SUPPORTED) begin
     logic [P.XLEN-1:0]       RASPCD, RASPCE;
     logic                   BTAWrongE, RASPredPCWrongE;  
     // performance counters
