@@ -92,9 +92,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   assign CounterEvent[0] = 1'b1;                                                        // MCYCLE always increments
   assign CounterEvent[1] = 1'b0;                                                        // Counter 1 doesn't exist
   assign CounterEvent[2] = InstrValidNotFlushedM;                                       // MINSTRET instructions retired
-  if(P.QEMU) begin: cevent // No other performance counters in QEMU
-    assign CounterEvent[P.COUNTERS-1:3] = 0;
-  end else begin: cevent                                                                // User-defined counters
+  if (P.ZIHPM_SUPPORTED) begin: cevent                                                  // User-defined counters
     assign CounterEvent[3] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
     assign CounterEvent[4] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
     assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
@@ -121,6 +119,8 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
     assign CounterEvent[24] = DivBusyE | FDivBusyE;                                     // division cycles *** RT: might need to be delay until the next cycle
     // coverage on
     assign CounterEvent[P.COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+  end else begin: cevent
+    assign CounterEvent[P.COUNTERS-1:3] = 0;
   end
   
   // Counter update and write logic
@@ -165,7 +165,7 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
             IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
         end
       end else begin // 32-bit counter reads
-        // Veri lator doesn't realize this only occurs for XLEN=32
+        // Veril ator doesn't realize this only occurs for XLEN=32
         /* verilator lint_off WIDTH */  
         if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
         else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];

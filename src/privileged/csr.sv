@@ -266,7 +266,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRUAccessM = 1;
   end
   
-  if (P.ZICOUNTERS_SUPPORTED) begin:counters
+  if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,
