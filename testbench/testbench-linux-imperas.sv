@@ -866,10 +866,12 @@ module testbench;
             "medeleg": `checkCSR(`CSR_BASE.csrm.MEDELEG_REGW)
             "mepc":    `checkCSR(`CSR_BASE.csrm.MEPC_REGW)
             "mtval":   `checkCSR(`CSR_BASE.csrm.MTVAL_REGW)
+            "menvcfg": `checkCSR(`CSR_BASE.csrm.MENVCFG_REGW)
             "sepc":    `checkCSR(`CSR_BASE.csrs.csrs.SEPC_REGW)
             "scause":  `checkCSR(`CSR_BASE.csrs.csrs.SCAUSE_REGW)
             "stvec":   `checkCSR(`CSR_BASE.csrs.csrs.STVEC_REGW)
             "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
+            "senvcfg": `checkCSR(`CSR_BASE.csrs.SENVCFG_REGW)
             "mip": begin
                        `checkCSR(`CSR_BASE.csrm.MIP_REGW)
                        if(!NO_SPOOFING) begin
