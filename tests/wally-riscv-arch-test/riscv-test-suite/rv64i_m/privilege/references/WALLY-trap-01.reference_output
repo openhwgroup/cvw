@@ -1,5 +1,7 @@
 00000aaa # Test 5.3.1.4: readback value from writing mie to enable interrupts
 00000000 # skipping instruction address fault since they're impossible with compressed instrs enabled
+00000000 # menvcfg low bits
+80000000 # menvcfg high bits
 00000001 # mcause from an instruction access fault
 00000000
 00000000 # mtval of faulting instruction address (0x0)
