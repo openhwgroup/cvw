@@ -34,8 +34,8 @@ TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on tr
 
 li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
-WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources // *** commented out until I can get the trap handler (and spike for time interrupts) to work correctly with interrupts
-
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
+WRITE_READ_CSR menvcfgh, 0x80000000 // Enable menvcfg.STCE
 // test 5.3.1.4 Basic trap tests 
 
 // instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.
