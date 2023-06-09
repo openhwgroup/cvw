@@ -84,7 +84,7 @@ typedef struct packed {
   int          PMP_ENTRIES;
 
 // Address space
-  longint  RESET_VECTOR;
+  logic [63:0]  RESET_VECTOR;
 
 // WFI Timeout Wait
   int       WFI_TIMEOUT_BIT;
@@ -93,35 +93,35 @@ typedef struct packed {
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
   logic         DTIM_SUPPORTED;
-  longint  DTIM_BASE;
-  longint  DTIM_RANGE;
+  logic [63:0]  DTIM_BASE;
+  logic [63:0]  DTIM_RANGE;
   logic         IROM_SUPPORTED;
-  longint  IROM_BASE;
-  longint  IROM_RANGE;
+  logic [63:0]  IROM_BASE;
+  logic [63:0]  IROM_RANGE;
   logic         BOOTROM_SUPPORTED;
-  longint  BOOTROM_BASE;
-  longint  BOOTROM_RANGE;
+  logic [63:0]  BOOTROM_BASE;
+  logic [63:0]  BOOTROM_RANGE;
   logic         UNCORE_RAM_SUPPORTED;
-  longint  UNCORE_RAM_BASE;
-  longint  UNCORE_RAM_RANGE;
+  logic [63:0]  UNCORE_RAM_BASE;
+  logic [63:0]  UNCORE_RAM_RANGE;
   logic         EXT_MEM_SUPPORTED;
-  longint  EXT_MEM_BASE;
-  longint  EXT_MEM_RANGE;
+  logic [63:0]  EXT_MEM_BASE;
+  logic [63:0]  EXT_MEM_RANGE;
   logic         CLINT_SUPPORTED;
-  longint  CLINT_BASE;
-  longint  CLINT_RANGE;
+  logic [63:0]  CLINT_BASE;
+  logic [63:0]  CLINT_RANGE;
   logic         GPIO_SUPPORTED;
-  longint  GPIO_BASE;
-  longint  GPIO_RANGE;
+  logic [63:0]  GPIO_BASE;
+  logic [63:0]  GPIO_RANGE;
   logic         UART_SUPPORTED;
-  longint  UART_BASE;
-  longint  UART_RANGE;
+  logic [63:0]  UART_BASE;
+  logic [63:0]  UART_RANGE;
   logic         PLIC_SUPPORTED;
-  longint  PLIC_BASE;
-  longint  PLIC_RANGE;
+  logic [63:0]  PLIC_BASE;
+  logic [63:0]  PLIC_RANGE;
   logic         SDC_SUPPORTED;
-  longint  SDC_BASE;
-  longint  SDC_RANGE;
+  logic [63:0]  SDC_BASE;
+  logic [63:0]  SDC_RANGE;
 
 // Test modes
 
