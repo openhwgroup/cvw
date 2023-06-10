@@ -740,7 +740,7 @@ module testbenchfp;
             .ASticky); 
   end
               
-  postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+  /*postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
               .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
               .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
               .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
@@ -749,7 +749,7 @@ module testbenchfp;
               .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
               .FmaASticky(ASticky), .FmaSe(Se),
               .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+              .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));*/
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
     fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
@@ -788,7 +788,7 @@ module testbenchfp;
                        .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
   end
   else begin: postprocess
-    postprocess postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+    postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
                 .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
                 .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
                 .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
