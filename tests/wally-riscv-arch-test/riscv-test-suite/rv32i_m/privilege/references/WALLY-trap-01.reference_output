@@ -1,5 +1,6 @@
+FFFFFFFF # stimecmp readback
+80000000 # menvcfg readback
 00000aaa # Test 5.3.1.4: readback value from writing mie to enable interrupts # skipping instruction address fault since they're impossible with compressed instrs enabled
-80000000 # readback value from writing menvcfgh
 00000001 # mcause from an instruction access fault
 00000000 # mtval of faulting instruction address (0x0)
 00001880 # masked out mstatus.MPP = 11, mstatus.MPIE = 1, and mstatus.MIE = 0
