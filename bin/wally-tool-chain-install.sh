@@ -45,7 +45,7 @@ sudo mkdir -p $RISCV
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
 sudo apt update -y
 sudo apt upgrade -y
-sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
 # Other python libraries used through the book.
 sudo pip3 install matplotlib scipy scikit-learn adjustText lief
 
@@ -112,6 +112,23 @@ make install
 cd ../arch_test_target/spike/device
 sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
+
+# Wally needs Verilator 5.0 or later.
+# Verilator needs to be built from scratch to get the latest version
+# apt-get install verilator installs version 4.028 as of 6/8/23
+sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlibc zlib1g 
+sudo apt-get install -y libfl2  libfl-dev  # Ubuntu only (ignore if gives error)
+cd $RISCV
+git clone https://github.com/verilator/verilator   # Only first time
+unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
+unset VERILATOR_ROOT  # For bash
+cd verilator
+git pull         # Make sure git repository is up-to-date
+git checkout master      # Use development branch (e.g. recent bug fixes)
+autoconf         # Create ./configure script
+./configure      # Configure and create Makefile
+make -j NUM_THREADS  # Build Verilator itself (if error, try just 'make')
+sudo make install
 
 # Sail (https://github.com/riscv/sail-riscv)
 # Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 

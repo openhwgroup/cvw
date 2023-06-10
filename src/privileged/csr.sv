@@ -94,35 +94,36 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   localparam MIP = 12'h344;
   localparam SIP = 12'h144;
   
-  logic [P.XLEN-1:0]        CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
-  logic [P.XLEN-1:0]        CSRReadValM;  
-  logic [P.XLEN-1:0]        CSRSrcM;
-  logic [P.XLEN-1:0]        CSRRWM, CSRRSM, CSRRCM;  
-  logic [P.XLEN-1:0]        CSRWriteValM;
-  logic [P.XLEN-1:0]        MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
-  logic [P.XLEN-1:0]        STVEC_REGW, MTVEC_REGW;
-  logic [P.XLEN-1:0]        MEPC_REGW, SEPC_REGW;
+  logic [P.XLEN-1:0]       CSRMReadValM, CSRSReadValM, CSRUReadValM, CSRCReadValM;
+  logic [P.XLEN-1:0]       CSRReadValM;  
+  logic [P.XLEN-1:0]       CSRSrcM;
+  logic [P.XLEN-1:0]       CSRRWM, CSRRSM, CSRRCM;  
+  logic [P.XLEN-1:0]       CSRWriteValM;
+  logic [P.XLEN-1:0]       MSTATUS_REGW, SSTATUS_REGW, MSTATUSH_REGW;
+  logic [P.XLEN-1:0]       STVEC_REGW, MTVEC_REGW;
+  logic [P.XLEN-1:0]       MEPC_REGW, SEPC_REGW;
   logic [31:0]             MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW;
   logic                    WriteMSTATUSM, WriteMSTATUSHM, WriteSSTATUSM;
   logic                    CSRMWriteM, CSRSWriteM, CSRUWriteM;
   logic                    UngatedCSRMWriteM;
   logic                    WriteFRMM, WriteFFLAGSM;
-  logic [P.XLEN-1:0]        UnalignedNextEPCM, NextEPCM, NextMtvalM;
+  logic [P.XLEN-1:0]       UnalignedNextEPCM, NextEPCM, NextMtvalM;
   logic [4:0]              NextCauseM;
   logic [11:0]             CSRAdrM;
   logic                    IllegalCSRCAccessM, IllegalCSRMAccessM, IllegalCSRSAccessM, IllegalCSRUAccessM;
   logic                    InsufficientCSRPrivilegeM;
   logic                    IllegalCSRMWriteReadonlyM;
-  logic [P.XLEN-1:0]        CSRReadVal2M;
+  logic [P.XLEN-1:0]       CSRReadVal2M;
   logic [11:0]             MIP_REGW_writeable;
-  logic [P.XLEN-1:0]        TVecM, TrapVectorM, NextFaultMtvalM;
+  logic [P.XLEN-1:0]       TVecM, TrapVectorM, NextFaultMtvalM;
   logic                    MTrapM, STrapM;
-  logic [P.XLEN-1:0]        EPC;
+  logic [P.XLEN-1:0]       EPC;
   logic                    RetM;
   logic                    SelMtvecM;
-  logic [P.XLEN-1:0]        TVecAlignedM;
+  logic [P.XLEN-1:0]       TVecAlignedM;
   logic                    InstrValidNotFlushedM;
   logic                    STimerInt;
+  logic                    MENVCFG_STCE;
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -213,7 +214,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .MIDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+    .MIDELEG_REGW, .MENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
@@ -231,7 +232,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MEPC_REGW, .MCOUNTEREN_REGW, .MCOUNTINHIBIT_REGW, 
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
-    .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM);
+    .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
+    .MENVCFG_STCE);
 
 
   if (P.S_SUPPORTED) begin:csrs
@@ -242,7 +244,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRWriteValM, .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
       .SCOUNTEREN_REGW,
-      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT,
+      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .MENVCFG_STCE,
       .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt);
   end else begin
     assign WriteSSTATUSM = 0;
@@ -266,7 +268,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign IllegalCSRUAccessM = 1;
   end
   
-  if (P.ZICOUNTERS_SUPPORTED) begin:counters
+  if (P.ZICNTR_SUPPORTED) begin:counters
     csrc #(P) counters(.clk, .reset, .StallE, .StallM, .FlushM,
       .InstrValidNotFlushedM, .LoadStallD, .StoreStallD, .CSRWriteM, .CSRMWriteM,
       .BPDirPredWrongM, .BTAWrongM, .RASPredPCWrongM, .IClassWrongM, .BPWrongM,

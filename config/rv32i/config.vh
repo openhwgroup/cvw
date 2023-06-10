@@ -40,10 +40,15 @@ localparam IEEE754 = 0;
 localparam MISA = (32'h00000104);
 localparam ZICSR_SUPPORTED = 0;
 localparam ZIFENCEI_SUPPORTED = 0;
-localparam COUNTERS = 12'd32;
-localparam ZICOUNTERS_SUPPORTED = 0;
+localparam COUNTERS = 0;
+localparam ZICNTR_SUPPORTED = 0;
+localparam ZIHPM_SUPPORTED = 0;
 localparam ZFH_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 0;
+localparam ZICBOM_SUPPORTED = 0;
+localparam ZICBOZ_SUPPORTED = 0;
+localparam ZICBOP_SUPPORTED = 0;
+localparam SVPBMT_SUPPORTED = 0;
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 0;
