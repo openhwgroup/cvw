@@ -23,7 +23,7 @@
 
 #include "WALLY-TEST-LIB-32.h"
 
-RVTEST_ISA("RV32I_Zicsr")
+RVTEST_ISA("RV32I_Sstc_Zicsr")
 RVTEST_CASE(0,"//check ISA:=regex(.*32.*);check ISA:=regex(.*I.*); def Drvtest_mtrap_routine=True;def TEST_CASE_1=True;def NO_SAIL=True;",trap)
 
 INIT_TESTS
@@ -34,8 +34,9 @@ TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on tr
 
 li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
-WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
+WRITE_READ_CSR stimecmp, 0xFFFFFFFF // set timer to high value so it doesn't go off immediately
 WRITE_READ_CSR menvcfgh, 0x80000000 // Enable menvcfg.STCE
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
 // test 5.3.1.4 Basic trap tests 
 
 // instr address misaligned instructions are excluded from this test since they are impossible to cause when compressed instructions are enabled.

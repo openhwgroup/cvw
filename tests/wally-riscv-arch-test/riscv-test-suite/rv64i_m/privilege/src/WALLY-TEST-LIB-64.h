@@ -274,7 +274,6 @@ end_trap_triggers:
     la t4, 0x02004000    // MTIMECMP register in CLINT
     li t5, 0xFFFFFFFF
     sd t5, 0(t4) // set mtimecmp to 0xFFFFFFFF to really make sure time interrupts don't go off immediately after being enabled
-    csrw stimecmp, t5   // also set stimecmp to avoid an immediate supervisor timer interrupt
  
     j trap_handler_end_\MODE\() // skip the trap handler when it is being defined.
 
