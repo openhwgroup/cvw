@@ -250,7 +250,10 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b00100) name = "FSGNJX";
                        else if (funct7[6:2] == 5'b10100) name = "FEQ";
                        else                              name = "ILLEGAL";
+      /* verilator lint_off CASEOVERLAP */
+      // *** RT: definitely take a look at this.  This overlaps with 10'b1010011_000
       10'b1010011_???: if      (funct7[6:2] == 5'b00000) name = "FADD";
+      /* verilator lint_on CASEOVERLAP */
                        else if (funct7[6:2] == 5'b00001) name = "FSUB";
                        else if (funct7[6:2] == 5'b00010) name = "FMUL";
                        else if (funct7[6:2] == 5'b00011) name = "FDIV";
