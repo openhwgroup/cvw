@@ -35,15 +35,15 @@
 
 module fcmp import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]   Fmt,           // format of fp number
-  input  logic [2:0]            OpCtrl,         // see above table
-  input  logic                  Xs, Ys,         // input signs
+  input  logic [2:0]             OpCtrl,        // see above table
+  input  logic                   Xs, Ys,        // input signs
   input  logic [P.NE-1:0]        Xe, Ye,        // input exponents
   input  logic [P.NF:0]          Xm, Ym,        // input mantissa
-  input  logic                  XZero, YZero,   // is zero
-  input  logic                  XNaN, YNaN,     // is NaN
-  input  logic                  XSNaN, YSNaN,   // is signaling NaN
+  input  logic                   XZero, YZero,  // is zero
+  input  logic                   XNaN, YNaN,    // is NaN
+  input  logic                   XSNaN, YSNaN,  // is signaling NaN
   input  logic [P.FLEN-1:0]      X, Y,          // original inputs (before unpacker)
-  output logic                  CmpNV,          // invalid flag
+  output logic                   CmpNV,         // invalid flag
   output logic [P.FLEN-1:0]      CmpFpRes,      // compare floating-point result
   output logic [P.XLEN-1:0]      CmpIntRes      // compare integer result
 );
@@ -151,5 +151,4 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   //    - inf = inf and -inf = -inf
   //    - return 0 if comparison with NaN (unordered)
   assign CmpIntRes = {(P.XLEN-1)'(0), (((EQ|BothZero)&OpCtrl[1])|(LT&OpCtrl[0]&~BothZero))&~EitherNaN};
-  
 endmodule
