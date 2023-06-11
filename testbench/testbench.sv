@@ -26,6 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "config.vh"
 `include "tests.vh"
 
 `define PrintHPMCounters 0
@@ -33,7 +34,12 @@
 `define I_CACHE_ADDR_LOGGER 0
 `define D_CACHE_ADDR_LOGGER 0
 
+import cvw::*;
+
+
 module testbench;
+  /* verilator lint_off WIDTHTRUNC */
+  /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
   parameter TEST="none";
  
@@ -42,7 +48,8 @@ module testbench;
 
   parameter SIGNATURESIZE = 5000000;
 
-  int test, i, errors, totalerrors;
+  int test, errors, totalerrors;
+  logic [`PA_BITS-1:0] i;
   logic [31:0] sig32[0:SIGNATURESIZE];
   logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
   logic [`XLEN-1:0] testadr, testadrNoBase;
@@ -65,6 +72,8 @@ module testbench;
   logic                HMASTLOCK;
   logic                HCLK, HRESETn;
   logic [`XLEN-1:0]    PCW;
+
+  `include "parameter-defs.vh"
 
   string  ProgramAddrMapFile, ProgramLabelMapFile;
   integer ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
@@ -190,7 +199,7 @@ module testbench;
     assign HRDATAEXT = 0;
   end
 
-  if(`FPGA) begin : sdcard
+  if(P.FPGA) begin : sdcard
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -204,7 +213,7 @@ module testbench;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc  dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
@@ -239,9 +248,8 @@ module testbench;
       // not initialized the compare results in an 'x' which propagates through 
       // the design.
       if (TEST == "coremark") 
-        for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
+        for (i=MemStartAddr; i<MemEndAddr; i = i+1)
           dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
-
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
       /* if (tests[0] == `IMPERASTEST)
@@ -249,18 +257,29 @@ module testbench;
        else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`FPGA) begin
+      if (P.FPGA) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
         $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+         */
         // force sdc timers
+        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+         */
       end else begin
+        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+         */
+        // *** replace this with above
+        $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+
+        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         if (`DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+         */
       end
 
       if (riscofTest) begin
@@ -273,7 +292,7 @@ module testbench;
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      if(!`FPGA) begin
+      if(!P.FPGA) begin
         updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
         $display("Read memfile %s", memfilename);
       end
@@ -361,10 +380,15 @@ module testbench;
             errors = (i == SIGNATURESIZE+1); // error if file is empty
             i = 0;
             /* verilator lint_off INFINITELOOP */
+            /* verilator lint_off WIDTHXZEXPAND */            
             while (signature[i] !== 'bx) begin
+              /* verilator lint_on WIDTHXZEXPAND */              
               logic [`XLEN-1:0] sig;
+              /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
               if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
               else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+               */
+              sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
               //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
               if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
                 errors = errors+1;
@@ -395,10 +419,14 @@ module testbench;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+            /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
             if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
             else if (`UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-
+             */
+            // *** replace this with the above
+            $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+            
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
               ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
@@ -417,6 +445,7 @@ module testbench;
     end // always @ (negedge clk)
 
 
+  /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
   if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
@@ -499,7 +528,7 @@ module testbench;
       end
     end
   end
-  
+   */
 
 
   // track the current function or global label
@@ -537,6 +566,7 @@ module testbench;
     integer adrindex;
 
     // local history only
+    /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
     if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
       always @(*) begin
         if(reset) begin
@@ -546,14 +576,22 @@ module testbench;
         end
       end
     end
+     */
 
     always @(*) begin
       if(reset) begin
         for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+          // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
           dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+=======
+          testbench.dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+           */
+>>>>>>> verilator
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+          /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+           */
         end
       end
     end
@@ -643,7 +681,9 @@ module testbench;
       logic  PCSrcM;
       string LogFile;
       logic  resetD, resetEdge;
+    /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
       flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
+     */
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
@@ -682,6 +722,9 @@ module testbench;
 	  end
   end
   
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
+
 endmodule
 
 /* verilator lint_on STMTDLY */
@@ -693,17 +736,25 @@ module DCacheFlushFSM
    input logic start,
    output logic done);
 
+  /* verilator lint_off WIDTHTRUNC */
+  /* verilator lint_off WIDTHEXPAND */
+
   genvar adr;
 
   logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
   
   if(`DCACHE_SUPPORTED) begin
-    localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-    localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-    localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-    localparam linelen        = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-    localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-    localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+    //localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
+    localparam numlines       = DCACHE_WAYSIZEINBYTES*8/DCACHE_LINELENINBITS;
+    //localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
+    localparam numways        = DCACHE_NUMWAYS;
+    //localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
+    localparam linebytelen    = DCACHE_LINELENINBITS/8;
+    localparam linelen        = DCACHE_LINELENINBITS;
+    //localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;
+    localparam sramlen        = 128;
+    //localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
+    localparam cachesramwords = DCACHE_LINELENINBITS/sramlen;
     localparam numwords       = sramlen/`XLEN;
     localparam lognumlines    = $clog2(numlines);
     localparam loglinebytelen = $clog2(linebytelen);
@@ -768,6 +819,8 @@ module DCacheFlushFSM
     end  
   end
   flop #(1) doneReg(.clk, .d(start), .q(done));
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
 endmodule
 
 module copyShadow
@@ -786,6 +839,8 @@ module copyShadow
    output logic                       CacheDirty);
   
 
+  /* verilator lint_off WIDTHTRUNC */
+  /* verilator lint_off WIDTHEXPAND */
   always_ff @(posedge clk) begin
     if(start) begin
       CacheTag = tag;
@@ -796,9 +851,13 @@ module copyShadow
     end
   end
   
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
 endmodule
 
 task automatic updateProgramAddrLabelArray;
+  /* verilator lint_off WIDTHTRUNC */
+  /* verilator lint_off WIDTHEXPAND */
   input string ProgramAddrMapFile, ProgramLabelMapFile;
   inout  integer ProgramAddrLabelArray [string];
   // Gets the memory location of begin_signature
@@ -817,5 +876,7 @@ task automatic updateProgramAddrLabelArray;
   end
   $fclose(ProgramLabelMapFP);
   $fclose(ProgramAddrMapFP);
+  /* verilator lint_on WIDTHTRUNC */
+  /* verilator lint_on WIDTHEXPAND */
 endtask
 
