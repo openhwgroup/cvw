@@ -1,4 +1,3 @@
-
 ///////////////////////////////////////////
 // fcmp.sv
 //
@@ -36,23 +35,23 @@
 
 module fcmp import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]   Fmt,           // format of fp number
-  input  logic [2:0]            OpCtrl,        // see above table
-  input  logic                  Xs, Ys,        // input signs
+  input  logic [2:0]            OpCtrl,         // see above table
+  input  logic                  Xs, Ys,         // input signs
   input  logic [P.NE-1:0]        Xe, Ye,        // input exponents
   input  logic [P.NF:0]          Xm, Ym,        // input mantissa
-  input  logic                  XZero, YZero,  // is zero
-  input  logic                  XNaN, YNaN,    // is NaN
-  input  logic                  XSNaN, YSNaN,  // is signaling NaN
+  input  logic                  XZero, YZero,   // is zero
+  input  logic                  XNaN, YNaN,     // is NaN
+  input  logic                  XSNaN, YSNaN,   // is signaling NaN
   input  logic [P.FLEN-1:0]      X, Y,          // original inputs (before unpacker)
-  output logic                  CmpNV,         // invalid flag
+  output logic                  CmpNV,          // invalid flag
   output logic [P.FLEN-1:0]      CmpFpRes,      // compare floating-point result
   output logic [P.XLEN-1:0]      CmpIntRes      // compare integer result
 );
 
-  logic LTabs, LT, EQ;         // is X < or > or = Y
+  logic LTabs, LT, EQ;          // is X < or > or = Y
   logic [P.FLEN-1:0] NaNRes;    // NaN result
-  logic BothZero;              // are both inputs zero
-  logic EitherNaN, EitherSNaN; // are either input a (signaling) NaN
+  logic BothZero;               // are both inputs zero
+  logic EitherNaN, EitherSNaN;  // are either input a (signaling) NaN
   
   assign LTabs= {1'b0, Xe, Xm} < {1'b0, Ye, Ym}; // unsigned comparison, treating FP as integers
   assign LT = (Xs & ~Ys) | (Xs & Ys & ~LTabs & ~EQ) | (~Xs & ~Ys & LTabs); // signed comparison
@@ -61,7 +60,6 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   assign BothZero = XZero&YZero;
   assign EitherNaN = XNaN|YNaN;
   assign EitherSNaN = XSNaN|YSNaN;
-
 
   // flags
   //    Min/Max - if an input is a signaling NaN set invalid flag
@@ -85,11 +83,11 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
   // select the NaN result
   if (P.FPSIZES == 1)
     if(P.IEEE754) assign NaNRes = {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
-    else         assign NaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
+    else          assign NaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
 
   else if (P.FPSIZES == 2) 
     if(P.IEEE754) assign NaNRes = Fmt ? {Xs, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, Xs, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
-    else         assign NaNRes = Fmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
+    else          assign NaNRes = Fmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
   
   else if (P.FPSIZES == 3)
     always_comb
@@ -122,7 +120,6 @@ module fcmp import cvw::*;  #(parameter cvw_t P) (
                 if(P.IEEE754) NaNRes = {{P.FLEN-P.H_LEN{1'b1}}, Xs, {P.H_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.H_NF]};
                 else         NaNRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, (P.H_NF-1)'(0)};
           endcase
-
 
   // Min/Max
   //    - outputs the min/max of X and Y
