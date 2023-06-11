@@ -221,5 +221,4 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
           if(Int64)   Cs = Int[P.XLEN-1]&Signed;
           else        Cs = Int[31]&Signed;
       else            Cs = Xs;
-
 endmodule
