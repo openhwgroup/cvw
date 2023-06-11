@@ -247,9 +247,12 @@ module testbench;
       // strings, but uses a load double to read them in.  If the last 2 bytes are
       // not initialized the compare results in an 'x' which propagates through 
       // the design.
+/* -----\/----- EXCLUDED -----\/-----
+      // **** Must fix for coremark
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1)
           dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
+ -----/\----- EXCLUDED -----/\----- */
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
       /* if (tests[0] == `IMPERASTEST)
@@ -262,24 +265,20 @@ module testbench;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
         $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
-        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+        // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
-         */
         // force sdc timers
-        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+        // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-         */
       end else begin
-        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+        // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
         else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-         */
         // *** replace this with above
         $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
 
-        /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+        // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
         if (`DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-         */
       end
 
       if (riscofTest) begin
@@ -384,10 +383,9 @@ module testbench;
             while (signature[i] !== 'bx) begin
               /* verilator lint_on WIDTHXZEXPAND */              
               logic [`XLEN-1:0] sig;
-              /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+              // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
               if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
               else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-               */
               sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
               //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
               if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
@@ -419,11 +417,11 @@ module testbench;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+            // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
             if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
             else if (`UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-             */
+             
             // *** replace this with the above
             $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
             
@@ -445,7 +443,7 @@ module testbench;
     end // always @ (negedge clk)
 
 
-  /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+  // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
   if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
@@ -528,7 +526,7 @@ module testbench;
       end
     end
   end
-   */
+  
 
 
   // track the current function or global label
@@ -566,7 +564,7 @@ module testbench;
     integer adrindex;
 
     // local history only
-    /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+    // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
     if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
       always @(*) begin
         if(reset) begin
@@ -576,22 +574,16 @@ module testbench;
         end
       end
     end
-     */
 
     always @(*) begin
       if(reset) begin
         for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
           // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
           dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-=======
-          testbench.dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-           */
->>>>>>> verilator
         end
         for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
-          /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+          // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-           */
         end
       end
     end
@@ -681,9 +673,8 @@ module testbench;
       logic  PCSrcM;
       string LogFile;
       logic  resetD, resetEdge;
-    /* *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
+    // *** EXCLUDE for now: verilator does not like . reference when missing module even when this code not executed. 
       flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
-     */
       flop #(1) ResetDReg(clk, reset, resetD);
       assign resetEdge = ~reset & resetD;
       initial begin
