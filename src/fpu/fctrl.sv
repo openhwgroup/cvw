@@ -48,7 +48,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   // opperation mux selections                                    
   output logic                FCvtIntE, FCvtIntW,                 // convert to integer opperation
   output logic [2:0]          FrmM,                               // FP rounding mode
-  output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
+  output logic [P.FMTBITS-1:0] FmtE, FmtM,                        // FP format
   output logic [2:0]          OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
   output logic                FpLoadStoreM,                       // FP load or store instruction
   output logic [1:0]          PostProcSelE, PostProcSelM,         // select result in the post processing unit
@@ -73,7 +73,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   logic [1:0]                 PostProcSelD;       // select result in the post processing unit
   logic [1:0]                 FResSelD;           // Select one of the results that finish in the memory stage
   logic [2:0]                 FrmD, FrmE;         // FP rounding mode
-  logic [P.FMTBITS-1:0]        FmtD;               // FP format
+  logic [P.FMTBITS-1:0]       FmtD;               // FP format
   logic [1:0]                 Fmt, Fmt2;          // format - before possible reduction
   logic                       SupportedFmt;       // is the format supported
   logic                       SupportedFmt2;      // is the source format supported for fp -> fp
@@ -232,8 +232,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
       logic [1:0] FmtTmp;
       assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : (~OpD[6]&(&OpD[2:0])) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : Funct7D[1:0];
       assign FmtD = (P.FMT == FmtTmp);
-    end
-    else if (P.FPSIZES == 3|P.FPSIZES == 4)
+    end else if (P.FPSIZES == 3|P.FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
   // Enables indicate that a source register is used and may need stalls. Also indicate special cases for infinity or NaN.
@@ -250,11 +249,8 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                   ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int 
                   ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
-
-
   //    Z - fma ops only
   assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub   
-
 
   //  Final Res Sel:
   //        fp      int
@@ -321,7 +317,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Integer division on FPU divider
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
-  else                             assign IDivStartE = 0; 
+  else                               assign IDivStartE = 0; 
 
   // E/M pipleine register
   flopenrc #(13+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
