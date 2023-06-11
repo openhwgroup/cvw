@@ -33,7 +33,7 @@ module fclassify import cvw::*;  #(parameter cvw_t P) (
   input  logic                XSubnorm,   // is Subnormal
   input  logic                XZero,      // is zero
   input  logic                XInf,       // is infinity
-  output logic [P.XLEN-1:0]    ClassRes    // classify result
+  output logic [P.XLEN-1:0]   ClassRes    // classify result
 );
 
   logic PInf, PZero, PNorm, PSubnorm;     // is the input a positive infinity/zero/normal/subnormal
