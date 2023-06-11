@@ -82,7 +82,7 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
               P.FMT:  ResNegNF = -($clog2(P.NF)+1)'(P.NF);
               P.FMT1: ResNegNF = -($clog2(P.NF)+1)'(P.NF1);
               P.FMT2: ResNegNF = -($clog2(P.NF)+1)'(P.NF2);
-              default: ResNegNF = 1'bx;
+              default: ResNegNF = 'x;
           endcase
 
   end else if (P.FPSIZES == 4) begin        
