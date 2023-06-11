@@ -45,14 +45,14 @@ module ahbcacheinterface #(
   output logic [2:0]          HSIZE,                   // AHB transaction width
   output logic [2:0]          HBURST,                  // AHB burst length
   // bus interface buses
-  input  logic [AHBW-1:0]    HRDATA,                  // AHB read data
-  output logic [PA_BITS-1:0] HADDR,                   // AHB address
-  output logic [AHBW-1:0]    HWDATA,                  // AHB write data
-  output logic [AHBW/8-1:0]  HWSTRB,                  // AHB byte mask
+  input  logic [AHBW-1:0]     HRDATA,                  // AHB read data
+  output logic [PA_BITS-1:0]  HADDR,                   // AHB address
+  output logic [AHBW-1:0]     HWDATA,                  // AHB write data
+  output logic [AHBW/8-1:0]   HWSTRB,                  // AHB byte mask
   
   // cache interface
-  input  logic [PA_BITS-1:0] CacheBusAdr,            // Address of cache line
-  input  logic [LLEN-1:0]    CacheReadDataWordM,     // One word of cache line during a writeback
+  input  logic [PA_BITS-1:0]  CacheBusAdr,            // Address of cache line
+  input  logic [LLEN-1:0]     CacheReadDataWordM,     // One word of cache line during a writeback
   input  logic                CacheableOrFlushCacheM, // Memory operation is cacheable or flushing D$
   input  logic                Cacheable,              // Memory operation is cachable
   input  logic [1:0]          CacheBusRW,             // Cache bus operation, 01: writeback, 10: fetch
@@ -62,8 +62,8 @@ module ahbcacheinterface #(
   output logic                SelBusBeat,             // Tells the cache to select the word from ReadData or WriteData from BeatCount rather than PAdr
 
   // uncached interface 
-  input logic [PA_BITS-1:0]  PAdr,                    // Physical address of uncached memory operation
-  input logic [LLEN-1:0]     WriteDataM,              // IEU write data for uncached store
+  input logic [PA_BITS-1:0]   PAdr,                    // Physical address of uncached memory operation
+  input logic [LLEN-1:0]      WriteDataM,              // IEU write data for uncached store
   input logic [1:0]           BusRW,                   // Uncached memory operation read/write control: 10: read, 01: write
   input logic [2:0]           Funct3,                  // Size of uncached memory operation
 
@@ -75,11 +75,11 @@ module ahbcacheinterface #(
   
 
   localparam                  BeatCountThreshold = BEATSPERLINE - 1;  // Largest beat index
-  logic [PA_BITS-1:0]        LocalHADDR;                             // Address after selecting between cached and uncached operation
+  logic [PA_BITS-1:0]         LocalHADDR;                             // Address after selecting between cached and uncached operation
   logic [AHBWLOGBWPL-1:0]     BeatCountDelayed;                       // Beat within the cache line in the second (Data) cache stage
   logic                       CaptureEn;                              // Enable updating the Fetch buffer with valid data from HRDATA
-  logic [AHBW/8-1:0]         BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
-  logic [AHBW-1:0]           PreHWDATA;                              // AHB Address phase write data
+  logic [AHBW/8-1:0]          BusByteMaskM;                           // Byte enables within a word. For cache request all 1s
+  logic [AHBW-1:0]            PreHWDATA;                              // AHB Address phase write data
 
   genvar                      index;
 
