@@ -33,5 +33,3 @@ module adder #(parameter WIDTH=8) (
 
   assign y = a + b;
 endmodule 
-
-
