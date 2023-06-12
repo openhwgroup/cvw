@@ -181,4 +181,3 @@ module decompress #(parameter XLEN)(
       endcase
     end
 endmodule
-    
