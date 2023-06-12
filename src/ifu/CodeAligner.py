@@ -74,7 +74,6 @@ def FindCharRel(Ln):
         if Ln[num] != " ":
             return num 
 
-
 def Mod_Space_at(Ln,loc,diff):
     #loc is the varLoc from mln, diff is varLoc - Ind
     if diff > 0: # to delete
@@ -104,8 +103,7 @@ def root_filehandler(path,overwrite=False):
                 SOV = ID_start(GiantString)
                 ModifiedGS = modified_logNew(GiantString,SOV)
                 Newname = write_to_output(f,ModifiedGS,overwrite)
-                
-                
+                                
 def driver(overwrite=False):
     root_filehandler(os.getcwd())
  
