@@ -32,4 +32,3 @@ module neg #(parameter WIDTH = 8) (
 
   assign y = ~a + 1;
 endmodule
-

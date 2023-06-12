@@ -1,4 +1,3 @@
-
 ///////////////////////////////////////////
 // fcvt.sv
 //
@@ -96,7 +95,7 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
   //             int -> fp : | positive integer | 00000... (if needed) | 
   //             fp  -> fp : | fraction         | 00000... (if needed) | 
   assign LzcInFull = IntToFp ? {TrimInt, {P.CVTLEN-P.XLEN+1{1'b0}}} :
-                            {Xm, {P.CVTLEN-P.NF{1'b0}}};
+                               {Xm, {P.CVTLEN-P.NF{1'b0}}};
 
   // used as shifter input in postprocessor
   assign LzcIn = LzcInFull[P.CVTLEN-1:0];
@@ -222,5 +221,4 @@ module fcvt import cvw::*;  #(parameter cvw_t P) (
           if(Int64)   Cs = Int[P.XLEN-1]&Signed;
           else        Cs = Int[31]&Signed;
       else            Cs = Xs;
-
 endmodule
