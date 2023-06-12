@@ -41,7 +41,7 @@ module shifter (
 
   assign Sign = A[`XLEN-1] & SubArith;  // sign bit for sign extension
   if (`XLEN==32) begin // rv32
-    if (`ZBB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
+    if (`ZBB_SUPPORTED) begin: rotfunnel32 // rv32 shifter with rotates
       always_comb  // funnel mux
         case({Right, Rotate})
           2'b00: Z = {A[31:0], 31'b0};
@@ -84,5 +84,3 @@ module shifter (
   assign ZShift = Z >> Offset;
   assign Y = ZShift[`XLEN-1:0];    
 endmodule
-
-
