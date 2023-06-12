@@ -26,6 +26,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "wally-config.vh"
+`include "config.vh"
 `include "tests.vh"
 
 `define PrintHPMCounters 0
@@ -33,10 +34,14 @@
 `define I_CACHE_ADDR_LOGGER 0
 `define D_CACHE_ADDR_LOGGER 0
 
+import cvw::*;
+
 module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
  
+`include "parameter-defs.vh"
+
   logic        clk;
   logic        reset_ext, reset;
 
@@ -44,19 +49,19 @@ module testbench;
 
   int test, i, errors, totalerrors;
   logic [31:0] sig32[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] testadr, testadrNoBase;
+  logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
+  logic [P.XLEN-1:0] testadr, testadrNoBase;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
 
   string tests[];
   logic [3:0] dummy;
 
-  logic [`AHBW-1:0]    HRDATAEXT;
+  logic [P.AHBW-1:0]    HRDATAEXT;
   logic                HREADYEXT, HRESPEXT;
-  logic [`PA_BITS-1:0] HADDR;
-  logic [`AHBW-1:0]    HWDATA;
-  logic [`XLEN/8-1:0]  HWSTRB;
+  logic [P.PA_BITS-1:0] HADDR;
+  logic [P.AHBW-1:0]    HWDATA;
+  logic [P.XLEN/8-1:0]  HWSTRB;
   logic                HWRITE;
   logic [2:0]          HSIZE;
   logic [2:0]          HBURST;
@@ -64,7 +69,7 @@ module testbench;
   logic [1:0]          HTRANS;
   logic                HMASTLOCK;
   logic                HCLK, HRESETn;
-  logic [`XLEN-1:0]    PCW;
+  logic [P.XLEN-1:0]    PCW;
 
   string  ProgramAddrMapFile, ProgramLabelMapFile;
   integer ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
@@ -73,7 +78,7 @@ module testbench;
   logic riscofTest; 
   logic StartSample, EndSample;
     
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
+  flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
@@ -83,25 +88,25 @@ module testbench;
   initial begin
     $display("TEST is %s", TEST);
     //tests = '{};
-    if (`XLEN == 64) begin // RV64
+    if (P.XLEN == 64) begin // RV64
       case (TEST)
         "arch64i":                               tests = arch64i;
         "arch64priv":                            tests = arch64priv;
-        "arch64c":      if (`C_SUPPORTED) 
-                          if (`ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
+        "arch64c":      if (P.C_SUPPORTED) 
+                          if (P.ZICSR_SUPPORTED)  tests = {arch64c, arch64cpriv};
                           else                   tests = {arch64c};
-        "arch64m":      if (`M_SUPPORTED)        tests = arch64m;
-        "arch64f":      if (`F_SUPPORTED)        tests = arch64f;
-        "arch64d":      if (`D_SUPPORTED)        tests = arch64d;  
-        "arch64f_fma":      if (`F_SUPPORTED)        tests = arch64f_fma;
-        "arch64d_fma":      if (`D_SUPPORTED)        tests = arch64d_fma;  
-        "arch64zi":     if (`ZIFENCEI_SUPPORTED) tests = arch64zi;
+        "arch64m":      if (P.M_SUPPORTED)        tests = arch64m;
+        "arch64f":      if (P.F_SUPPORTED)        tests = arch64f;
+        "arch64d":      if (P.D_SUPPORTED)        tests = arch64d;  
+        "arch64f_fma":      if (P.F_SUPPORTED)        tests = arch64f_fma;
+        "arch64d_fma":      if (P.D_SUPPORTED)        tests = arch64d_fma;  
+        "arch64zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch64zi;
         "imperas64i":                            tests = imperas64i;
-        "imperas64f":   if (`F_SUPPORTED)        tests = imperas64f;
-        "imperas64d":   if (`D_SUPPORTED)        tests = imperas64d;
-        "imperas64m":   if (`M_SUPPORTED)        tests = imperas64m;
-        "wally64a":     if (`A_SUPPORTED)        tests = wally64a;
-        "imperas64c":   if (`C_SUPPORTED)        tests = imperas64c;
+        "imperas64f":   if (P.F_SUPPORTED)        tests = imperas64f;
+        "imperas64d":   if (P.D_SUPPORTED)        tests = imperas64d;
+        "imperas64m":   if (P.M_SUPPORTED)        tests = imperas64m;
+        "wally64a":     if (P.A_SUPPORTED)        tests = wally64a;
+        "imperas64c":   if (P.C_SUPPORTED)        tests = imperas64c;
                         else                     tests = imperas64iNOc;
         "custom":                                tests = custom;
         "wally64i":                              tests = wally64i; 
@@ -111,29 +116,29 @@ module testbench;
         "fpga":                                  tests = fpga;
         "ahb" :                                  tests = ahb;
         "coverage64gc" :                         tests = coverage64gc;
-        "arch64zba":     if (`ZBA_SUPPORTED)     tests = arch64zba;
-        "arch64zbb":     if (`ZBB_SUPPORTED)     tests = arch64zbb;
-        "arch64zbc":     if (`ZBC_SUPPORTED)     tests = arch64zbc;
-        "arch64zbs":     if (`ZBS_SUPPORTED)     tests = arch64zbs;
+        "arch64zba":     if (P.ZBA_SUPPORTED)     tests = arch64zba;
+        "arch64zbb":     if (P.ZBB_SUPPORTED)     tests = arch64zbb;
+        "arch64zbc":     if (P.ZBC_SUPPORTED)     tests = arch64zbc;
+        "arch64zbs":     if (P.ZBS_SUPPORTED)     tests = arch64zbs;
       endcase 
     end else begin // RV32
       case (TEST)
         "arch32i":                               tests = arch32i;
         "arch32priv":                            tests = arch32priv;
-        "arch32c":      if (`C_SUPPORTED) 
-                          if (`ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
+        "arch32c":      if (P.C_SUPPORTED) 
+                          if (P.ZICSR_SUPPORTED)  tests = {arch32c, arch32cpriv};
                           else                   tests = {arch32c};
-        "arch32m":      if (`M_SUPPORTED)        tests = arch32m;
-        "arch32f":      if (`F_SUPPORTED)        tests = arch32f;
-        "arch32d":      if (`D_SUPPORTED)        tests = arch32d;
-        "arch32f_fma":      if (`F_SUPPORTED)        tests = arch32f_fma;
-        "arch32d_fma":      if (`D_SUPPORTED)        tests = arch32d_fma;
-        "arch32zi":     if (`ZIFENCEI_SUPPORTED) tests = arch32zi;
+        "arch32m":      if (P.M_SUPPORTED)        tests = arch32m;
+        "arch32f":      if (P.F_SUPPORTED)        tests = arch32f;
+        "arch32d":      if (P.D_SUPPORTED)        tests = arch32d;
+        "arch32f_fma":      if (P.F_SUPPORTED)        tests = arch32f_fma;
+        "arch32d_fma":      if (P.D_SUPPORTED)        tests = arch32d_fma;
+        "arch32zi":     if (P.ZIFENCEI_SUPPORTED) tests = arch32zi;
         "imperas32i":                            tests = imperas32i;
-        "imperas32f":   if (`F_SUPPORTED)        tests = imperas32f;
-        "imperas32m":   if (`M_SUPPORTED)        tests = imperas32m;
-        "wally32a":     if (`A_SUPPORTED)        tests = wally32a;
-        "imperas32c":   if (`C_SUPPORTED)        tests = imperas32c;
+        "imperas32f":   if (P.F_SUPPORTED)        tests = imperas32f;
+        "imperas32m":   if (P.M_SUPPORTED)        tests = imperas32m;
+        "wally32a":     if (P.A_SUPPORTED)        tests = wally32a;
+        "imperas32c":   if (P.C_SUPPORTED)        tests = imperas32c;
                         else                     tests = imperas32iNOc;
         "wally32i":                              tests = wally32i; 
         "wally32e":                              tests = wally32e; 
@@ -141,10 +146,10 @@ module testbench;
         "wally32periph":                         tests = wally32periph;
         "embench":                               tests = embench;
         "coremark":                              tests = coremark;
-        "arch32zba":     if (`ZBA_SUPPORTED)     tests = arch32zba;
-        "arch32zbb":     if (`ZBB_SUPPORTED)     tests = arch32zbb;
-        "arch32zbc":     if (`ZBC_SUPPORTED)     tests = arch32zbc;
-        "arch32zbs":     if (`ZBS_SUPPORTED)     tests = arch32zbs;
+        "arch32zba":     if (P.ZBA_SUPPORTED)     tests = arch32zba;
+        "arch32zbb":     if (P.ZBB_SUPPORTED)     tests = arch32zbb;
+        "arch32zbc":     if (P.ZBC_SUPPORTED)     tests = arch32zbc;
+        "arch32zbs":     if (P.ZBS_SUPPORTED)     tests = arch32zbs;
       endcase
     end
     if (tests.size() == 0) begin
@@ -179,8 +184,8 @@ module testbench;
   assign GPIOIN = 0;
   assign UARTSin = 1;
 
-  if(`EXT_MEM_SUPPORTED) begin
-    ram_ahb #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 
+  if(P.EXT_MEM_SUPPORTED) begin
+    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
          .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
          .HWSTRB);
@@ -190,7 +195,7 @@ module testbench;
     assign HRDATAEXT = 0;
   end
 
-  if(`FPGA) begin : sdcard
+  if(P.FPGA) begin : sdcard
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -204,7 +209,7 @@ module testbench;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc  dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
@@ -218,7 +223,7 @@ module testbench;
 
   // initialize tests
   localparam 	   MemStartAddr = 0;
-  localparam 	   MemEndAddr = `UNCORE_RAM_RANGE>>1+(`XLEN/32);
+  localparam 	   MemEndAddr = P.UNCORE_RAM_RANGE>>1+(P.XLEN/32);
 
   initial
     begin
@@ -244,12 +249,12 @@ module testbench;
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
-      /* if (tests[0] == `IMPERASTEST)
+      /* if (tests[0] == P.IMPERASTEST)
        pathname = tvpaths[0];
        else pathname = tvpaths[1]; */
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (`FPGA) begin
+      if (P.FPGA) begin
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
@@ -258,9 +263,9 @@ module testbench;
         // force sdc timers
         dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
       end else begin
-        if (`IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-        else if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (`DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+        if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+        else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+        if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       end
 
       if (riscofTest) begin
@@ -273,7 +278,7 @@ module testbench;
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      if(!`FPGA) begin
+      if(!P.FPGA) begin
         updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
         $display("Read memfile %s", memfilename);
       end
@@ -312,8 +317,8 @@ module testbench;
           begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
           if (!begin_signature_addr)
             $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-          testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
-          testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
+          testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+          testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
           #600; // give time for instructions in pipeline to finish
           if (TEST == "embench") begin
             // Writes contents of begin_signature to .sim.output file
@@ -342,7 +347,7 @@ module testbench;
             $readmemh(signame, sig32);
             i = 0;
             while (i < SIGNATURESIZE) begin
-              if (`XLEN == 32) begin
+              if (P.XLEN == 32) begin
                 signature[i] = sig32[i];
                 i = i+1;
               end else begin
@@ -362,14 +367,14 @@ module testbench;
             i = 0;
             /* verilator lint_off INFINITELOOP */
             while (signature[i] !== 'bx) begin
-              logic [`XLEN-1:0] sig;
-              if (`DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-              else if (`UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+              logic [P.XLEN-1:0] sig;
+              if (P.DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+              else if (P.UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
               //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
               if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
                 errors = errors+1;
                 $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-						    tests[test], i, (testadr+i)*(`XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+						    tests[test], i, (testadr+i)*(P.XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
                 $stop; //***debug
               end
               i = i + 1;
@@ -395,9 +400,9 @@ module testbench;
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-            else if (`UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (`DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+            if (P.IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+            else if (P.UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+            if (P.DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
 
             if (riscofTest) begin
               ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
@@ -407,7 +412,7 @@ module testbench;
               ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
             end
             ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
-            if(!`FPGA) begin
+            if(!P.FPGA) begin
               updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
               $display("Read memfile %s", memfilename);
             end
@@ -417,12 +422,12 @@ module testbench;
     end // always @ (negedge clk)
 
 
-  if(`PrintHPMCounters & `ZICOUNTERS_SUPPORTED) begin : HPMCSample
+  if(`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
     logic             EndSampleFirst, EndSampleDelayed;
-    logic [`XLEN-1:0] InitialHPMCOUNTERH[`COUNTERS-1:0];
+    logic [P.XLEN-1:0] InitialHPMCOUNTERH[P.COUNTERS-1:0];
 
     string  HPMCnames[] = '{"Mcycle",
                             "------",
@@ -503,7 +508,7 @@ module testbench;
 
 
   // track the current function or global label
-  if (DEBUG == 1 | (`PrintHPMCounters & `ZICOUNTERS_SUPPORTED)) begin : FunctionName
+  if (DEBUG == 1 | (`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
     FunctionName FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
@@ -516,7 +521,7 @@ module testbench;
   // or sd gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (`ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
+  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
 			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
@@ -526,21 +531,21 @@ module testbench;
            ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
-  DCacheFlushFSM DCacheFlushFSM(.clk(clk),
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
     			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 
 
   // initialize the branch predictor
-  if (`BPRED_SUPPORTED) begin
+  if (P.BPRED_SUPPORTED) begin
     integer adrindex;
 
     // local history only
-    if (`BPRED_TYPE == "BP_LOCAL_AHEAD" | `BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+    if (P.BPRED_TYPE == "BP_LOCAL_AHEAD" | P.BPRED_TYPE == "BP_LOCAL_REPAIR") begin
       always @(*) begin
         if(reset) begin
-          for(adrindex = 0; adrindex < 2**`BPRED_NUM_LHR; adrindex++) begin
+          for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
             dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
           end
         end
@@ -549,10 +554,10 @@ module testbench;
 
     always @(*) begin
       if(reset) begin
-        for(adrindex = 0; adrindex < 2**`BTB_SIZE; adrindex++) begin
+        for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++) begin
           dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         end
-        for(adrindex = 0; adrindex < 2**`BPRED_SIZE; adrindex++) begin
+        for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++) begin
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
         end
       end
@@ -560,7 +565,7 @@ module testbench;
   end
 
 
-  if (`ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
+  if (P.ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
@@ -597,7 +602,7 @@ module testbench;
   end
 
 
-  if (`DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
+  if (P.DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
@@ -636,7 +641,7 @@ module testbench;
     end
   end
 
-  if (`BPRED_SUPPORTED) begin : BranchLogger
+  if (P.BPRED_SUPPORTED) begin : BranchLogger
     if (`BPRED_LOGGER) begin
       string direction;
       int    file;
@@ -648,7 +653,7 @@ module testbench;
       assign resetEdge = ~reset & resetD;
       initial begin
         LogFile = "branch.log"; // will break some of Ross's research analysis scripts
-        //LogFile = $psprintf("branch_%s%0d.log", `BPRED_TYPE, `BPRED_SIZE);
+        //LogFile = $psprintf("branch_%s%0d.log", P.BPRED_TYPE, P.BPRED_SIZE);
         file = $fopen(LogFile, "w");
       end
       always @(posedge clk) begin
@@ -664,7 +669,7 @@ module testbench;
   end
 
   // check for hang up.
-  logic [`XLEN-1:0] OldPCW;
+  logic [P.XLEN-1:0] OldPCW;
   integer           WatchDogTimerCount;
   localparam        WatchDogTimerThreshold = 1000000;
   logic             WatchDogTimeOut;
@@ -687,7 +692,7 @@ endmodule
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
 
-module DCacheFlushFSM
+module DCacheFlushFSM import cvw::*; #(parameter cvw_t P) 
   (input logic clk,
    input logic reset,
    input logic start,
@@ -695,16 +700,16 @@ module DCacheFlushFSM
 
   genvar adr;
 
-  logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
+  logic [P.XLEN-1:0] ShadowRAM[P.UNCORE_RAM_BASE>>(1+P.XLEN/32):(P.UNCORE_RAM_RANGE+P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)];
   
-  if(`DCACHE_SUPPORTED) begin
+  if(P.DCACHE_SUPPORTED) begin
     localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
     localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
     localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
     localparam linelen        = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
     localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
     localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-    localparam numwords       = sramlen/`XLEN;
+    localparam numwords       = sramlen/P.XLEN;
     localparam lognumlines    = $clog2(numlines);
     localparam loglinebytelen = $clog2(linebytelen);
     localparam lognumways     = $clog2(numways);
@@ -715,23 +720,23 @@ module DCacheFlushFSM
     genvar               index, way, cacheWord;
     logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     logic [sramlen-1:0]  cacheline;
-    logic [`XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic [P.XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     logic                CacheValid [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     logic                CacheDirty [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic [`PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
+    logic [P.PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     for(index = 0; index < numlines; index++) begin
       for(way = 0; way < numways; way++) begin
         for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
-          copyShadow #(.tagstart(tagstart),
+          copyShadow #(.P(P), .tagstart(tagstart),
           .loglinebytelen(loglinebytelen), .sramlen(sramlen))
           copyShadow(.clk,
           .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS-1-tagstart:0]),
+          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS-1-tagstart:0]),
           .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
           .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
                            // these dirty bit selections would be needed if dirty is moved inside the tag array.
           //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS+tagstart]),
+          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS+tagstart]),
           .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.RAM[index]),
           .index(index),
           .cacheWord(cacheWord),
@@ -757,8 +762,8 @@ module DCacheFlushFSM
                   // does not work with modelsim
                   // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
                   // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
-                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = cacheline[`XLEN*(k+1)-1:`XLEN*k];
-                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(`XLEN/8)) + k] = CacheData[j][i][l][`XLEN*k +: `XLEN];
+                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(P.XLEN/8)] = cacheline[P.XLEN*(k+1)-1:P.XLEN*k];
+                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + k] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
                 end
               end
             end
@@ -770,18 +775,18 @@ module DCacheFlushFSM
   flop #(1) doneReg(.clk, .d(start), .q(done));
 endmodule
 
-module copyShadow
-  #(parameter tagstart, loglinebytelen, sramlen)
+module copyShadow import cvw::*; #(parameter cvw_t P,
+  parameter tagstart, loglinebytelen, sramlen)
   (input  logic                       clk,
    input  logic                       start,
-   input  logic [`PA_BITS-1:tagstart] tag,
+   input  logic [P.PA_BITS-1:tagstart] tag,
    input  logic                       valid, dirty,
    input  logic [sramlen-1:0]         data,
    input  logic [32-1:0]              index,
    input  logic [32-1:0]              cacheWord,
    output logic [sramlen-1:0]         CacheData,
-   output logic [`PA_BITS-1:0]        CacheAdr,
-   output logic [`XLEN-1:0]           CacheTag,
+   output logic [P.PA_BITS-1:0]        CacheAdr,
+   output logic [P.XLEN-1:0]           CacheTag,
    output logic                       CacheValid,
    output logic                       CacheDirty);
   
