@@ -44,6 +44,7 @@ module testbench;
 
   logic        clk;
   logic        reset_ext, reset;
+  logic        ResetMem;
 
   parameter SIGNATURESIZE = 5000000;
 
@@ -156,10 +157,187 @@ module testbench;
       $display("TEST %s not supported in this configuration", TEST);
       $stop;
     end
-  end
+  end // initial begin
+
+  // Model the testbench as an fsm.
+  // Do this in parts so it easier to verify
+  // part 1: build a version which echos the same behavior as the below code, but does not drive anything
+  // part 2: drive some of the controls
+  // part 3: drive all logic and remove old inital and always @ negedge clk block
+
+  typedef enum logic [3:0]{STATE_INIT_TEST,
+                           STATE_RESET_MEMORIES,
+                           STATE_LOAD_MEMORIES,
+                           STATE_RESET_TEST,
+                           STATE_RUN_TEST,
+                           STATE_CHECK_TEST} statetype;
+  statetype CurrState, NextState;
+  logic        TestBenchReset;
+  logic [2:0]  ResetCount, ResetThreshold;
+  logic        LoadMem;
+  logic        ResetCntEn;
+  logic        ResetCntRst;
+  
 
   string  signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
   integer outputFilePointer;
+  integer begin_signature_addr;
+
+  assign ResetThreshold = 3'd5;
+
+  initial begin
+    TestBenchReset = 1;
+    # 100;
+    TestBenchReset = 0;
+  end
+
+  always_ff @(negedge clk)
+    if (TestBenchReset) CurrState <= #1 STATE_INIT_TEST;
+    else CurrState <= #1 NextState;  
+
+  always_comb begin
+    reset_ext = 0;
+    ResetMem = 0;
+    LoadMem = 0;
+    ResetCntEn = 0;
+    ResetCntRst = 0;
+    case(CurrState) 
+      STATE_INIT_TEST: begin
+        NextState = STATE_RESET_MEMORIES;
+        ResetCntRst = 1;
+        // 4 major steps: select test, reset wally, reset memories, and load memories
+
+        // 1: test selection
+        // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
+        // and tests[0] == "2" refers to WallyRiscvArchTests 
+        riscofTest = tests[0] == "1" | tests[0] == "2"; 
+        // fill memory with defined values to reduce Xs in simulation
+        // Quick note the memory will need to be initialized.  The C library does not
+        // guarantee the  initialized reads.  For example a strcmp can read 6 byte
+        // strings, but uses a load double to read them in.  If the last 2 bytes are
+        // not initialized the compare results in an 'x' which propagates through 
+        // the design.
+
+        // read test vectors into memory
+        pathname = tvpaths[tests[0].atoi()];
+        /* if (tests[0] == `IMPERASTEST)
+         pathname = tvpaths[0];
+         else pathname = tvpaths[1]; */
+        if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+        else            memfilename = {pathname, tests[test], ".elf.memfile"};
+        if (riscofTest) begin
+          ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+          ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+        end else begin
+          ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+          ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+        end
+
+        // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
+        // the addr of each label and fill the array. To expand, add more elements to this array 
+        // and initialize them to zero (also initilaize them to zero at the start of the next test)
+        if(!P.FPGA) begin
+          updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+          $display("Read memfile %s", memfilename);
+        end
+        
+        // 2: reset wally
+        reset_ext = 1;
+        
+      end
+      STATE_RESET_MEMORIES: begin
+        NextState = STATE_LOAD_MEMORIES;
+        reset_ext = 1;
+        ResetMem = 1; 
+      end
+      STATE_LOAD_MEMORIES: begin
+        NextState = STATE_RESET_TEST;
+        reset_ext = 1;
+        LoadMem = 1;
+      end
+      STATE_RESET_TEST: begin
+        reset_ext = 1;
+        ResetCntEn = 1;
+        if(ResetCount < ResetThreshold) begin
+          NextState = STATE_RESET_TEST;
+        end else begin
+          NextState = STATE_RUN_TEST;
+        end
+      end
+      STATE_RUN_TEST:
+        if(DCacheFlushDone) begin 
+          NextState = STATE_CHECK_TEST;
+        end else begin 
+          NextState = STATE_RUN_TEST;
+        end
+      STATE_CHECK_TEST: begin
+        NextState = STATE_INIT_TEST;
+        begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+        if (!begin_signature_addr)
+          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+        else begin
+          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+          if(errors > 0) totalerrors = totalerrors + 1;
+        end
+        
+      end
+      default: NextState = STATE_INIT_TEST;
+    endcase
+  end // always_comb
+
+  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Some memories are not reset, but should be zeros or set to some initial value for simulation
+  ////////////////////////////////////////////////////////////////////////////////
+
+  integer adrindex;
+  if (P.UNCORE_RAM_SUPPORTED)
+    always @(posedge ResetMem)
+      for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
+        dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+
+  // *** add resets for each memory
+
+  if (P.BPRED_SUPPORTED) begin
+    // local history only
+    if (P.BPRED_TYPE == "BP_LOCAL_AHEAD" | P.BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+      always @(posedge ResetMem) begin
+        for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
+          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+        end
+      end
+    end
+
+    always @(posedge ResetMem) begin
+      for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++) begin
+        dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+      end
+      for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++) begin
+        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+      end
+    end
+  end
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // load memories with program image
+  ////////////////////////////////////////////////////////////////////////////////
+  always @(posedge LoadMem) begin
+    if (P.FPGA) begin
+      string romfilename, sdcfilename;
+      romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+      sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
+      $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+      $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+      // shorten sdc timers for simulation
+      dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+    end 
+    else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+    else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+    if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+  end
+  
+  
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
@@ -176,7 +354,7 @@ module testbench;
   logic        HSELEXT;
   
   logic        InitializingMemories;
-  integer      ResetCount, ResetThreshold;
+  integer      ResetCountOld, ResetThresholdOld;
   logic        InReset;
   logic        BeginSample;
   
@@ -227,31 +405,32 @@ module testbench;
 
   initial
     begin
-      ResetCount = 0;
-      ResetThreshold = 2;
+      ResetCountOld = 0;
+      ResetThresholdOld = 2;
       InReset = 1;
       test = 1;
-      totalerrors = 0;
+      //totalerrors = 0;
       testadr = 0;
       testadrNoBase = 0;
       // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
       // and tests[0] == "2" refers to WallyRiscvArchTests 
-      riscofTest = tests[0] == "1" | tests[0] == "2"; 
+      //riscofTest = tests[0] == "1" | tests[0] == "2"; 
       // fill memory with defined values to reduce Xs in simulation
       // Quick note the memory will need to be initialized.  The C library does not
       // guarantee the  initialized reads.  For example a strcmp can read 6 byte
       // strings, but uses a load double to read them in.  If the last 2 bytes are
       // not initialized the compare results in an 'x' which propagates through 
       // the design.
+/* -----\/----- EXCLUDED -----\/-----
       if (TEST == "coremark") 
         for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
 
       // read test vectors into memory
       pathname = tvpaths[tests[0].atoi()];
-      /* if (tests[0] == P.IMPERASTEST)
+      /-* if (tests[0] == P.IMPERASTEST)
        pathname = tvpaths[0];
-       else pathname = tvpaths[1]; */
+       else pathname = tvpaths[1]; *-/
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
       if (P.FPGA) begin
@@ -282,6 +461,7 @@ module testbench;
         updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
         $display("Read memfile %s", memfilename);
       end
+ -----/\----- EXCLUDED -----/\----- */
     end
 
   // generate clock to sequence tests
@@ -292,17 +472,17 @@ module testbench;
     end
    
   // check results
-  assign reset_ext = InReset;
+  //assign reset_ext = InReset;
   
   always @(negedge clk)
     begin    
       InitializingMemories = 0;
       if(InReset == 1) begin
         // once the test inidicates it's done we need to immediately hold reset for a number of cycles.
-        if(ResetCount < ResetThreshold) ResetCount = ResetCount + 1;
+        if(ResetCountOld < ResetThresholdOld) ResetCountOld = ResetCountOld + 1;
         else begin // hit reset threshold so we remove reset.
           InReset = 0; 
-          ResetCount = 0;
+          ResetCountOld = 0;
         end
       end else begin
         if (TEST == "coremark")
@@ -312,9 +492,8 @@ module testbench;
           end
         // Termination condition (i.e. we finished running current test) 
         if (DCacheFlushDone) begin
-          integer begin_signature_addr;
           InReset = 1;
-          begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+          //begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
           if (!begin_signature_addr)
             $display("begin_signature addr not found in %s", ProgramLabelMapFile);
           testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
@@ -338,6 +517,7 @@ module testbench;
           end else begin 
             // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
             // clear signature to prevent contamination from previous tests
+/* -----\/----- EXCLUDED -----\/-----
             for(i=0; i<SIGNATURESIZE; i=i+1) begin
               sig32[i] = 'bx;
             end
@@ -365,7 +545,7 @@ module testbench;
             // Check errors
             errors = (i == SIGNATURESIZE+1); // error if file is empty
             i = 0;
-            /* verilator lint_off INFINITELOOP */
+            /-* verilator lint_off INFINITELOOP *-/
             while (signature[i] !== 'bx) begin
               logic [P.XLEN-1:0] sig;
               if (P.DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
@@ -375,17 +555,18 @@ module testbench;
                 errors = errors+1;
                 $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
 						    tests[test], i, (testadr+i)*(P.XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                $stop; //***debug
+                $stop; //-***debug
               end
               i = i + 1;
             end
-            /* verilator lint_on INFINITELOOP */
+            /-* verilator lint_on INFINITELOOP *-/
             if (errors == 0) begin
               $display("%s succeeded.  Brilliant!!!", tests[test]);
             end else begin
               $display("%s failed with %d errors. :(", tests[test], errors);
-              totalerrors = totalerrors+1;
+              //totalerrors = totalerrors+1;
             end
+ -----/\----- EXCLUDED -----/\----- */
           end
           // move onto the next test, check to see if we're done
           test = test + 1;
@@ -397,6 +578,7 @@ module testbench;
             InitializingMemories = 1;
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
+/* -----\/----- EXCLUDED -----\/-----
             if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
             else memfilename = {pathname, tests[test], ".elf.memfile"};
             //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
@@ -416,6 +598,7 @@ module testbench;
               updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
               $display("Read memfile %s", memfilename);
             end
+ -----/\----- EXCLUDED -----/\----- */
           end
         end // if (DCacheFlushDone)
       end
@@ -824,3 +1007,73 @@ task automatic updateProgramAddrLabelArray;
   $fclose(ProgramAddrMapFP);
 endtask
 
+
+task automatic CheckSignature;
+  
+  input string  pathname;
+  input string  TestName;
+  input logic   riscofTest;
+  input integer begin_signature_addr;
+  output integer errors;
+
+  localparam SIGNATURESIZE = 50000;
+  integer       i;
+  logic [31:0] sig32[0:SIGNATURESIZE];
+  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
+  string  signame, pathname;
+  logic [`XLEN-1:0] testadr, testadrNoBase;
+  
+  // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+  // clear signature to prevent contamination from previous tests
+  for(i=0; i<SIGNATURESIZE; i=i+1) begin
+    sig32[i] = 'bx;
+  end
+  if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
+  else signame = {pathname, TestName, ".signature.output"};
+  // read signature, reformat in 64 bits if necessary
+  $readmemh(signame, sig32);
+  i = 0;
+  while (i < SIGNATURESIZE) begin
+    if (`XLEN == 32) begin
+      signature[i] = sig32[i];
+      i = i+1;
+    end else begin
+      signature[i/2] = {sig32[i+1], sig32[i]};
+      i = i + 2;
+    end
+    if (i >= 4 & sig32[i-4] === 'bx) begin
+      if (i == 4) begin
+        i = SIGNATURESIZE+1; // flag empty file
+        $display("  Error: empty test file");
+      end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+    end
+  end
+
+  // Check errors
+  errors = (i == SIGNATURESIZE+1); // error if file is empty
+  i = 0;
+  testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
+  testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
+  /* verilator lint_off INFINITELOOP */
+  while (signature[i] !== 'bx) begin
+    logic [`XLEN-1:0] sig;
+    if (`DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+    else if (`UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+    //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+    if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+      errors = errors+1;
+      $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+			   TestName, i, (testadr+i)*(`XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+      $stop; //***debug
+    end
+    i = i + 1;
+  end
+  /* verilator lint_on INFINITELOOP */
+  if (errors == 0) begin
+    $display("%s succeeded.  Brilliant!!!", TestName);
+  end else begin
+    $display("%s failed with %d errors. :(", TestName, errors);
+    //totalerrors = totalerrors+1;
+  end
+
+endtask //
