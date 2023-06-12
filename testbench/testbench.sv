@@ -170,7 +170,9 @@ module testbench;
                            STATE_LOAD_MEMORIES,
                            STATE_RESET_TEST,
                            STATE_RUN_TEST,
-                           STATE_CHECK_TEST} statetype;
+                           STATE_CHECK_TEST,
+                           STATE_CHECK_TEST_WAIT,
+                           STATE_VALIDATE} statetype;
   statetype CurrState, NextState;
   logic        TestBenchReset;
   logic [2:0]  ResetCount, ResetThreshold;
@@ -265,27 +267,40 @@ module testbench;
         end
       end
       STATE_RUN_TEST:
-        if(DCacheFlushDone) begin 
+        if(DCacheFlushStart) begin 
           NextState = STATE_CHECK_TEST;
         end else begin 
           NextState = STATE_RUN_TEST;
         end
       STATE_CHECK_TEST: begin
-        NextState = STATE_INIT_TEST;
-        begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
+        if (DCacheFlushDone) begin
+          NextState = STATE_VALIDATE;
+        end else begin
+          NextState = STATE_CHECK_TEST_WAIT;
+        end
+      end
+      STATE_CHECK_TEST_WAIT: begin
+        if(DCacheFlushDone) begin
+          NextState = STATE_VALIDATE;
+        end else begin
+          NextState = STATE_CHECK_TEST_WAIT;
+        end
+      end
+      STATE_VALIDATE: begin
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         else begin
           CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
-          if(errors > 0) totalerrors = totalerrors + 1;
         end
-        
+        NextState = STATE_INIT_TEST;
+        if(errors > 0) totalerrors = totalerrors + 1;
       end
       default: NextState = STATE_INIT_TEST;
     endcase
   end // always_comb
 
   counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
+  assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
 
   ////////////////////////////////////////////////////////////////////////////////
   // Some memories are not reset, but should be zeros or set to some initial value for simulation
@@ -899,7 +914,8 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
     localparam tagstart       = lognumlines + loglinebytelen;
 
 
-
+    logic startD;
+    
     genvar               index, way, cacheWord;
     logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
     logic [sramlen-1:0]  cacheline;
@@ -935,7 +951,7 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
     integer i, j, k, l;
 
     always @(posedge clk) begin
-      if (start) begin 
+      if (startD) begin 
         for(i = 0; i < numlines; i++) begin
           for(j = 0; j < numways; j++) begin
             for(l = 0; l < cachesramwords; l++) begin
@@ -955,7 +971,8 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
       end
     end  
   end
-  flop #(1) doneReg(.clk, .d(start), .q(done));
+  flop #(1) doneReg1(.clk, .d(start), .q(startD));
+  flop #(1) doneReg2(.clk, .d(startD), .q(done));
 endmodule
 
 module copyShadow import cvw::*; #(parameter cvw_t P,
