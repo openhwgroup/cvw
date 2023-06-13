@@ -1,5 +1,3 @@
-
-
 ///////////////////////////////////////////
 // csrc.sv
 //
@@ -31,57 +29,57 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrc  import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk, reset,
-  input  logic             StallE, StallM, 
-  input  logic             FlushM, 
-  input  logic             InstrValidNotFlushedM, LoadStallD, StoreStallD, 
-  input  logic             CSRMWriteM, CSRWriteM,
-  input  logic             BPDirPredWrongM,
-  input  logic             BTAWrongM,
-  input  logic             RASPredPCWrongM,
-  input  logic             IClassWrongM,
-  input  logic             BPWrongM,                              // branch predictor is wrong
-  input  logic [3:0]       InstrClassM,
-  input  logic             DCacheMiss,
-  input  logic             DCacheAccess,
-  input  logic             ICacheMiss,
-  input  logic             ICacheAccess,
-  input  logic             ICacheStallF,
-  input  logic             DCacheStallM,
-  input  logic             sfencevmaM,
-  input  logic             InterruptM,
-  input  logic             ExceptionM,
-  input  logic             InvalidateICacheM,
-  input  logic             DivBusyE,                                  // integer divide busy
-  input  logic             FDivBusyE,                                 // floating point divide busy
-  input  logic [11:0]      CSRAdrM,
-  input  logic [1:0]       PrivilegeModeW,
+  input  logic              clk, reset,
+  input  logic              StallE, StallM, 
+  input  logic              FlushM, 
+  input  logic              InstrValidNotFlushedM, LoadStallD, StoreStallD, 
+  input  logic              CSRMWriteM, CSRWriteM,
+  input  logic              BPDirPredWrongM,
+  input  logic              BTAWrongM,
+  input  logic              RASPredPCWrongM,
+  input  logic              IClassWrongM,
+  input  logic              BPWrongM,                                  // branch predictor is wrong
+  input  logic [3:0]        InstrClassM,
+  input  logic              DCacheMiss,
+  input  logic              DCacheAccess,
+  input  logic              ICacheMiss,
+  input  logic              ICacheAccess,
+  input  logic              ICacheStallF,
+  input  logic              DCacheStallM,
+  input  logic              sfencevmaM,
+  input  logic              InterruptM,
+  input  logic              ExceptionM,
+  input  logic              InvalidateICacheM,
+  input  logic              DivBusyE,                                  // integer divide busy
+  input  logic              FDivBusyE,                                 // floating point divide busy
+  input  logic [11:0]       CSRAdrM,
+  input  logic [1:0]        PrivilegeModeW,
   input  logic [P.XLEN-1:0] CSRWriteValM,
-  input  logic [31:0]      MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
-  input  logic [63:0]      MTIME_CLINT, 
+  input  logic [31:0]       MCOUNTINHIBIT_REGW, MCOUNTEREN_REGW, SCOUNTEREN_REGW,
+  input  logic [63:0]       MTIME_CLINT, 
   output logic [P.XLEN-1:0] CSRCReadValM,
-  output logic             IllegalCSRCAccessM
+  output logic              IllegalCSRCAccessM
 );
 
-  localparam MHPMCOUNTERBASE = 12'hB00;
-  localparam MTIME = 12'hB01;               // this is a memory-mapped register; no such CSR exists, and access should faul;
+  localparam MHPMCOUNTERBASE  = 12'hB00;
+  localparam MTIME            = 12'hB01;               // this is a memory-mapped register; no such CSR exists, and access should faul;
   localparam MHPMCOUNTERHBASE = 12'hB80;
-  localparam MTIMEH = 12'hB81;               // this is a memory-mapped register; no such CSR exists, and access should fault
-  localparam MHPMEVENTBASE = 12'h320;
-  localparam HPMCOUNTERBASE = 12'hC00;
-  localparam HPMCOUNTERHBASE = 12'hC80;
-  localparam TIME          = 12'hC01;
-  localparam TIMEH = 12'hC81;
+  localparam MTIMEH           = 12'hB81;               // this is a memory-mapped register; no such CSR exists, and access should fault
+  localparam MHPMEVENTBASE    = 12'h320;
+  localparam HPMCOUNTERBASE   = 12'hC00;
+  localparam HPMCOUNTERHBASE  = 12'hC80;
+  localparam TIME             = 12'hC01;
+  localparam TIMEH            = 12'hC81;
 
   logic [4:0]              CounterNumM;
-  logic [P.XLEN-1:0]        HPMCOUNTER_REGW[P.COUNTERS-1:0];
-  logic [P.XLEN-1:0]        HPMCOUNTERH_REGW[P.COUNTERS-1:0];
+  logic [P.XLEN-1:0]       HPMCOUNTER_REGW[P.COUNTERS-1:0];
+  logic [P.XLEN-1:0]       HPMCOUNTERH_REGW[P.COUNTERS-1:0];
   logic                    LoadStallE, LoadStallM;
   logic                    StoreStallE, StoreStallM;
-  logic [P.COUNTERS-1:0]    WriteHPMCOUNTERM;
-  logic [P.COUNTERS-1:0]    CounterEvent;
+  logic [P.COUNTERS-1:0]   WriteHPMCOUNTERM;
+  logic [P.COUNTERS-1:0]   CounterEvent;
   logic [63:0]             HPMCOUNTERPlusM[P.COUNTERS-1:0];
-  logic [P.XLEN-1:0]        NextHPMCOUNTERM[P.COUNTERS-1:0];
+  logic [P.XLEN-1:0]       NextHPMCOUNTERM[P.COUNTERS-1:0];
   genvar                   i;
 
   // Interface signals
@@ -95,16 +93,16 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   if(P.QEMU) begin: cevent // No other performance counters in QEMU
     assign CounterEvent[P.COUNTERS-1:3] = 0;
   end else begin: cevent                                                                // User-defined counters
-    assign CounterEvent[3] = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
-    assign CounterEvent[4] = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
-    assign CounterEvent[5] = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
-    assign CounterEvent[6] = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
-    assign CounterEvent[7] = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
-    assign CounterEvent[8] = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
-    assign CounterEvent[9] = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
+    assign CounterEvent[3]  = InstrClassM[0] & InstrValidNotFlushedM;                   // branch instruction
+    assign CounterEvent[4]  = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM; // jump and not return instructions
+    assign CounterEvent[5]  = InstrClassM[2] & InstrValidNotFlushedM;                   // return instructions
+    assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                         // branch predictor wrong
+    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                  // Branch predictor wrong direction
+    assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                        // branch predictor wrong target
+    assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                  // return address stack wrong address
     assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                     // instruction class predictor wrong
-    assign CounterEvent[11] = LoadStallM;                       // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM;                      //  Store Stall
+    assign CounterEvent[11] = LoadStallM;                                               // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[12] = StoreStallM;                                              //  Store Stall
     assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
     assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
     assign CounterEvent[15] = DCacheStallM;                                             // d cache miss cycles
