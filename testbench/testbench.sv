@@ -165,7 +165,8 @@ module testbench;
   // part 2: drive some of the controls
   // part 3: drive all logic and remove old inital and always @ negedge clk block
 
-  typedef enum logic [3:0]{STATE_INIT_TEST,
+  typedef enum logic [3:0]{STATE_TESTBENCH_RESET,
+                           STATE_INIT_TEST,
                            STATE_RESET_MEMORIES,
                            STATE_LOAD_MEMORIES,
                            STATE_RESET_TEST,
@@ -194,8 +195,9 @@ module testbench;
   end
 
   always_ff @(negedge clk)
-    if (TestBenchReset) CurrState <= #1 STATE_INIT_TEST;
+    if (TestBenchReset) CurrState <= #1 STATE_TESTBENCH_RESET;
     else CurrState <= #1 NextState;  
+
 
   always_comb begin
     reset_ext = 0;
@@ -203,16 +205,24 @@ module testbench;
     LoadMem = 0;
     ResetCntEn = 0;
     ResetCntRst = 0;
-    case(CurrState) 
+    // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
+    // and tests[0] == "2" refers to WallyRiscvArchTests 
+    riscofTest = tests[0] == "1" | tests[0] == "2"; 
+    pathname = tvpaths[tests[0].atoi()];
+
+    case(CurrState)
+      STATE_TESTBENCH_RESET: begin
+        NextState = STATE_INIT_TEST;
+        test = 1;
+        ResetMem = 1;     // only need to reset the memories once. Assumes the tests don't write xs to memory.
+        reset_ext = 1;
+      end
       STATE_INIT_TEST: begin
         NextState = STATE_RESET_MEMORIES;
         ResetCntRst = 1;
         // 4 major steps: select test, reset wally, reset memories, and load memories
 
         // 1: test selection
-        // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
-        // and tests[0] == "2" refers to WallyRiscvArchTests 
-        riscofTest = tests[0] == "1" | tests[0] == "2"; 
         // fill memory with defined values to reduce Xs in simulation
         // Quick note the memory will need to be initialized.  The C library does not
         // guarantee the  initialized reads.  For example a strcmp can read 6 byte
@@ -221,7 +231,6 @@ module testbench;
         // the design.
 
         // read test vectors into memory
-        pathname = tvpaths[tests[0].atoi()];
         /* if (tests[0] == `IMPERASTEST)
          pathname = tvpaths[0];
          else pathname = tvpaths[1]; */
@@ -240,7 +249,6 @@ module testbench;
         // and initialize them to zero (also initilaize them to zero at the start of the next test)
         if(!P.FPGA) begin
           updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-          $display("Read memfile %s", memfilename);
         end
         
         // 2: reset wally
@@ -250,7 +258,6 @@ module testbench;
       STATE_RESET_MEMORIES: begin
         NextState = STATE_LOAD_MEMORIES;
         reset_ext = 1;
-        ResetMem = 1; 
       end
       STATE_LOAD_MEMORIES: begin
         NextState = STATE_RESET_TEST;
@@ -287,15 +294,21 @@ module testbench;
         end
       end
       STATE_VALIDATE: begin
+        NextState = STATE_INIT_TEST;
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         else begin
           CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
         end
-        NextState = STATE_INIT_TEST;
         if(errors > 0) totalerrors = totalerrors + 1;
+        test = test + 1;
+        if (test == tests.size()) begin
+          if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+          else $display("FAIL: %d test programs had errors", totalerrors);
+          $stop;
+        end
       end
-      default: NextState = STATE_INIT_TEST;
+      default: NextState = STATE_TESTBENCH_RESET;
     endcase
   end // always_comb
 
@@ -316,7 +329,7 @@ module testbench;
 
   if (P.BPRED_SUPPORTED) begin
     // local history only
-    if (P.BPRED_TYPE == "BP_LOCAL_AHEAD" | P.BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+    if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
       always @(posedge ResetMem) begin
         for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
@@ -350,6 +363,7 @@ module testbench;
     else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
     else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
     if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+    $display("Read memfile %s", memfilename);
   end
   
   
@@ -423,7 +437,7 @@ module testbench;
       ResetCountOld = 0;
       ResetThresholdOld = 2;
       InReset = 1;
-      test = 1;
+      //test = 1;
       //totalerrors = 0;
       testadr = 0;
       testadrNoBase = 0;
@@ -582,8 +596,9 @@ module testbench;
               //totalerrors = totalerrors+1;
             end
  -----/\----- EXCLUDED -----/\----- */
-          end
+//          end
           // move onto the next test, check to see if we're done
+/* -----\/----- EXCLUDED -----\/-----
           test = test + 1;
           if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
@@ -591,6 +606,7 @@ module testbench;
           $stop;
           end else begin
             InitializingMemories = 1;
+ -----/\----- EXCLUDED -----/\----- */
             // If there are still additional tests to run, read in information for the next test
             //pathname = tvpaths[tests[0]];
 /* -----\/----- EXCLUDED -----\/-----
@@ -707,7 +723,7 @@ module testbench;
 
   // track the current function or global label
   if (DEBUG == 1 | (`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
-    FunctionName FunctionName(.reset(reset),
+    FunctionName FunctionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
@@ -740,7 +756,7 @@ module testbench;
     integer adrindex;
 
     // local history only
-    if (P.BPRED_TYPE == "BP_LOCAL_AHEAD" | P.BPRED_TYPE == "BP_LOCAL_REPAIR") begin
+    if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
       always @(*) begin
         if(reset) begin
           for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
@@ -899,6 +915,7 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
   genvar adr;
 
   logic [P.XLEN-1:0] ShadowRAM[P.UNCORE_RAM_BASE>>(1+P.XLEN/32):(P.UNCORE_RAM_RANGE+P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)];
+  logic         startD;
   
   if(P.DCACHE_SUPPORTED) begin
     localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
@@ -914,7 +931,6 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
     localparam tagstart       = lognumlines + loglinebytelen;
 
 
-    logic startD;
     
     genvar               index, way, cacheWord;
     logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
