@@ -27,6 +27,6 @@
 ## and limitations under the License.
 ################################################################################################
 IMPERAS_TOOLS=$(pwd)/imperas.ic \
-OTHERFLAGS="+IDV_TRACE2LOG=1 VERBOSE=1" \
+OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1" \
 TESTDIR=${WALLY}/tests/riscof/work/wally-riscv-arch-test/rv64i_m/privilege/src/Lee.S/  \
 vsim  -do "do wally-imperas.do rv64gc"
