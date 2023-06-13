@@ -73,7 +73,7 @@ module testbench;
   logic [P.XLEN-1:0]    PCW;
 
   string  ProgramAddrMapFile, ProgramLabelMapFile;
-  integer ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
+  integer ProgramAddrLabelArray [string];
 
   logic DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
@@ -558,8 +558,6 @@ module testbench;
     end
   end
   
-
-
   // track the current function or global label
   if (DEBUG == 1 | (`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
     FunctionName FunctionName(.reset(reset_ext | TestBenchReset),
@@ -839,8 +837,12 @@ task automatic updateProgramAddrLabelArray;
   integer ProgramLabelMapFP, ProgramAddrMapFP;
   ProgramLabelMapFP = $fopen(ProgramLabelMapFile, "r");
   ProgramAddrMapFP = $fopen(ProgramAddrMapFile, "r");
-  
+
+
   if (ProgramLabelMapFP & ProgramAddrMapFP) begin // check we found both files
+    // *** RT: I'm a bit confused by the required initialization here.
+    ProgramAddrLabelArray["begin_signature"] = 0;
+    ProgramAddrLabelArray["tohost"] = 0;
     while (!$feof(ProgramLabelMapFP)) begin
       string label, adrstr;
       integer returncode;
