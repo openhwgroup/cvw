@@ -326,10 +326,11 @@ module testbench;
 
   integer adrindex;
   always @(posedge clk) begin
-    if (ResetMem) begin
+    if (ResetMem)  // program memory is sometimes reset
       if (P.UNCORE_RAM_SUPPORTED)
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+    if(reset) begin  // branch predictor must always be reset
       if (P.BPRED_SUPPORTED) begin
         // local history only
         if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR)
@@ -589,32 +590,6 @@ module testbench;
 		    	.done(DCacheFlushDone));
 
 
-  // initialize the branch predictor
-  if (P.BPRED_SUPPORTED) begin
-    integer adrindex;
-
-    // local history only
-    if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
-      always @(*) begin
-        if(reset) begin
-          for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
-            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
-          end
-        end
-      end
-    end
-
-    always @(*) begin
-      if(reset) begin
-        for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++) begin
-          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-        end
-        for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++) begin
-          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
-        end
-      end
-    end
-  end
 
 
   if (P.ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
