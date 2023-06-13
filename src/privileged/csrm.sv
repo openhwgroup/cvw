@@ -32,67 +32,67 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrm  import cvw::*;  #(parameter cvw_t P) (
-  input  logic                    clk, reset, 
-  input  logic                    UngatedCSRMWriteM, CSRMWriteM, MTrapM,
-  input  logic [11:0]             CSRAdrM,
+  input  logic                     clk, reset, 
+  input  logic                     UngatedCSRMWriteM, CSRMWriteM, MTrapM,
+  input  logic [11:0]              CSRAdrM,
   input  logic [P.XLEN-1:0]        NextEPCM, NextMtvalM, MSTATUS_REGW, MSTATUSH_REGW,
-  input  logic [4:0]              NextCauseM,
+  input  logic [4:0]               NextCauseM,
   input  logic [P.XLEN-1:0]        CSRWriteValM,
-  input  logic [11:0]             MIP_REGW, MIE_REGW,
+  input  logic [11:0]              MIP_REGW, MIE_REGW,
   output logic [P.XLEN-1:0]        CSRMReadValM, MTVEC_REGW,
   output logic [P.XLEN-1:0]        MEPC_REGW,    
-  output logic [31:0]             MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
-  output logic [15:0]             MEDELEG_REGW,
-  output logic [11:0]             MIDELEG_REGW,
-  output var logic [7:0]          PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
+  output logic [31:0]              MCOUNTEREN_REGW, MCOUNTINHIBIT_REGW, 
+  output logic [15:0]              MEDELEG_REGW,
+  output logic [11:0]              MIDELEG_REGW,
+  output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
-  output logic                    WriteMSTATUSM, WriteMSTATUSHM,
-  output logic                    IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
+  output logic                     WriteMSTATUSM, WriteMSTATUSHM,
+  output logic                     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM
 );
 
   logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
-  logic                           WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
-  logic                           WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
-  logic                           WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
+  logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
+  logic                            WriteMSCRATCHM, WriteMEPCM, WriteMCAUSEM, WriteMTVALM;
+  logic                            WriteMCOUNTERENM, WriteMCOUNTINHIBITM;
 
   // Machine CSRs
-  localparam MVENDORID = 12'hF11;
-  localparam MARCHID = 12'hF12;
-  localparam MIMPID = 12'hF13;
-  localparam MHARTID = 12'hF14;
-  localparam MCONFIGPTR = 12'hF15;
-  localparam MSTATUS = 12'h300;
-  localparam MISA_ADR = 12'h301;
-  localparam MEDELEG = 12'h302;
-  localparam MIDELEG = 12'h303;
-  localparam MIE = 12'h304;
-  localparam MTVEC = 12'h305;
-  localparam MCOUNTEREN = 12'h306;
-  localparam MSTATUSH = 12'h310;
+  localparam MVENDORID     = 12'hF11;
+  localparam MARCHID       = 12'hF12;
+  localparam MIMPID        = 12'hF13;
+  localparam MHARTID       = 12'hF14;
+  localparam MCONFIGPTR    = 12'hF15;
+  localparam MSTATUS       = 12'h300;
+  localparam MISA_ADR      = 12'h301;
+  localparam MEDELEG       = 12'h302;
+  localparam MIDELEG       = 12'h303;
+  localparam MIE           = 12'h304;
+  localparam MTVEC         = 12'h305;
+  localparam MCOUNTEREN    = 12'h306;
+  localparam MSTATUSH      = 12'h310;
   localparam MCOUNTINHIBIT = 12'h320;
-  localparam MSCRATCH = 12'h340;
-  localparam MEPC = 12'h341;
-  localparam MCAUSE = 12'h342;
-  localparam MTVAL = 12'h343;
-  localparam MIP = 12'h344;
-  localparam MTINST = 12'h34A;
-  localparam PMPCFG0 = 12'h3A0;
+  localparam MSCRATCH      = 12'h340;
+  localparam MEPC          = 12'h341;
+  localparam MCAUSE        = 12'h342;
+  localparam MTVAL         = 12'h343;
+  localparam MIP           = 12'h344;
+  localparam MTINST        = 12'h34A;
+  localparam PMPCFG0       = 12'h3A0;
   // .. up to 15 more at consecutive addresses
-  localparam PMPADDR0 = 12'h3B0;
+  localparam PMPADDR0      = 12'h3B0;
   // ... up to 63 more at consecutive addresses
-  localparam TSELECT = 12'h7A0;
-  localparam TDATA1 = 12'h7A1;
-  localparam TDATA2 = 12'h7A2;
-  localparam TDATA3 = 12'h7A3;
-  localparam DCSR = 12'h7B0;
-  localparam DPC = 12'h7B1;
-  localparam DSCRATCH0 = 12'h7B2;
-  localparam DSCRATCH1 = 12'h7B3;
+  localparam TSELECT       = 12'h7A0;
+  localparam TDATA1        = 12'h7A1;
+  localparam TDATA2        = 12'h7A2;
+  localparam TDATA3        = 12'h7A3;
+  localparam DCSR          = 12'h7B0;
+  localparam DPC           = 12'h7B1;
+  localparam DSCRATCH0     = 12'h7B2;
+  localparam DSCRATCH1     = 12'h7B3;
   // Constants
-  localparam ZERO = {(P.XLEN){1'b0}};
-  localparam MEDELEG_MASK = 16'hB3FF;
-  localparam MIDELEG_MASK = 12'h222; // we choose to not make machine interrupts delegable
+  localparam ZERO          = {(P.XLEN){1'b0}};
+  localparam MEDELEG_MASK  = 16'hB3FF;
+  localparam MIDELEG_MASK  = 12'h222; // we choose to not make machine interrupts delegable
 
  // There are PMP_ENTRIES = 0, 16, or 64 PMPADDR registers, each of which has its own flop
   genvar i;
@@ -130,16 +130,16 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign MHARTID_REGW = 0;
 
   // Write machine Mode CSRs 
-  assign WriteMSTATUSM = CSRMWriteM & (CSRAdrM == MSTATUS);
-  assign WriteMSTATUSHM = CSRMWriteM & (CSRAdrM == MSTATUSH)& (P.XLEN==32);
-  assign WriteMTVECM = CSRMWriteM & (CSRAdrM == MTVEC);
-  assign WriteMEDELEGM = CSRMWriteM & (CSRAdrM == MEDELEG);
-  assign WriteMIDELEGM = CSRMWriteM & (CSRAdrM == MIDELEG);
-  assign WriteMSCRATCHM = CSRMWriteM & (CSRAdrM == MSCRATCH);
-  assign WriteMEPCM = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC));
-  assign WriteMCAUSEM = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE));
-  assign WriteMTVALM = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL));
-  assign WriteMCOUNTERENM = CSRMWriteM & (CSRAdrM == MCOUNTEREN);
+  assign WriteMSTATUSM       = CSRMWriteM & (CSRAdrM == MSTATUS);
+  assign WriteMSTATUSHM      = CSRMWriteM & (CSRAdrM == MSTATUSH)& (P.XLEN==32);
+  assign WriteMTVECM         = CSRMWriteM & (CSRAdrM == MTVEC);
+  assign WriteMEDELEGM       = CSRMWriteM & (CSRAdrM == MEDELEG);
+  assign WriteMIDELEGM       = CSRMWriteM & (CSRAdrM == MIDELEG);
+  assign WriteMSCRATCHM      = CSRMWriteM & (CSRAdrM == MSCRATCH);
+  assign WriteMEPCM          = MTrapM | (CSRMWriteM & (CSRAdrM == MEPC));
+  assign WriteMCAUSEM        = MTrapM | (CSRMWriteM & (CSRAdrM == MCAUSE));
+  assign WriteMTVALM         = MTrapM | (CSRMWriteM & (CSRAdrM == MTVAL));
+  assign WriteMCOUNTERENM    = CSRMWriteM & (CSRAdrM == MCOUNTEREN);
   assign WriteMCOUNTINHIBITM = CSRMWriteM & (CSRAdrM == MCOUNTINHIBIT);
 
   assign IllegalCSRMWriteReadonlyM = UngatedCSRMWriteM & (CSRAdrM == MVENDORID | CSRAdrM == MARCHID | CSRAdrM == MIMPID | CSRAdrM == MHARTID);
@@ -181,26 +181,26 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       end
     end
     else case (CSRAdrM) 
-      MISA_ADR:  CSRMReadValM = MISA_REGW;
-      MVENDORID: CSRMReadValM = 0;
-      MARCHID:   CSRMReadValM = 0;
-      MIMPID:    CSRMReadValM = {{P.XLEN-12{1'b0}}, 12'h100}; // pipelined implementation
-      MHARTID:   CSRMReadValM = MHARTID_REGW; // hardwired to 0 
-      MCONFIGPTR: CSRMReadValM = 0; // hardwired to 0
-      MSTATUS:   CSRMReadValM = MSTATUS_REGW;
-      MSTATUSH:  CSRMReadValM = MSTATUSH_REGW; 
-      MTVEC:     CSRMReadValM = MTVEC_REGW;
-      MEDELEG:   CSRMReadValM = {{(P.XLEN-16){1'b0}}, MEDELEG_REGW};
-      MIDELEG:   CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
-      MIP:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW};
-      MIE:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW};
-      MSCRATCH:  CSRMReadValM = MSCRATCH_REGW;
-      MEPC:      CSRMReadValM = MEPC_REGW;
-      MCAUSE:    CSRMReadValM = MCAUSE_REGW;
-      MTVAL:     CSRMReadValM = MTVAL_REGW;
-      MTINST:    CSRMReadValM = 0; // implemented as trivial zero
-      MCOUNTEREN:CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
-      MCOUNTINHIBIT:CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
+      MISA_ADR:      CSRMReadValM = MISA_REGW;
+      MVENDORID:     CSRMReadValM = 0;
+      MARCHID:       CSRMReadValM = 0;
+      MIMPID:        CSRMReadValM = {{P.XLEN-12{1'b0}}, 12'h100}; // pipelined implementation
+      MHARTID:       CSRMReadValM = MHARTID_REGW; // hardwired to 0 
+      MCONFIGPTR:    CSRMReadValM = 0; // hardwired to 0
+      MSTATUS:       CSRMReadValM = MSTATUS_REGW;
+      MSTATUSH:      CSRMReadValM = MSTATUSH_REGW; 
+      MTVEC:         CSRMReadValM = MTVEC_REGW;
+      MEDELEG:       CSRMReadValM = {{(P.XLEN-16){1'b0}}, MEDELEG_REGW};
+      MIDELEG:       CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIDELEG_REGW};
+      MIP:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIP_REGW};
+      MIE:           CSRMReadValM = {{(P.XLEN-12){1'b0}}, MIE_REGW};
+      MSCRATCH:      CSRMReadValM = MSCRATCH_REGW;
+      MEPC:          CSRMReadValM = MEPC_REGW;
+      MCAUSE:        CSRMReadValM = MCAUSE_REGW;
+      MTVAL:         CSRMReadValM = MTVAL_REGW;
+      MTINST:        CSRMReadValM = 0; // implemented as trivial zero
+      MCOUNTEREN:    CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
+      MCOUNTINHIBIT: CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTINHIBIT_REGW};
 
       default: begin
                  CSRMReadValM = 0;
