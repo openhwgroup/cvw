@@ -326,28 +326,33 @@ module testbench;
 
   integer adrindex;
   if (P.UNCORE_RAM_SUPPORTED)
-    always @(posedge ResetMem)
-      for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
-        dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+    always @(posedge clk)
+      if (ResetMem) 
+        for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
+          dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
 
   // *** add resets for each memory
 
   if (P.BPRED_SUPPORTED) begin
     // local history only
     if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
-      always @(posedge ResetMem) begin
-        for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
-          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+      always @(posedge clk) begin
+        if (ResetMem) begin
+          for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++) begin
+            dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+          end
         end
       end
     end
 
-    always @(posedge ResetMem) begin
-      for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++) begin
-        dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
-      end
-      for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++) begin
-        dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+    always @(posedge clk) begin
+      if(ResetMem) begin
+        for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++) begin
+          dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
+        end
+        for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++) begin
+          dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+        end
       end
     end
   end
