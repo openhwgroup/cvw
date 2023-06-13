@@ -29,16 +29,16 @@
 `include "config.vh"
 `include "tests.vh"
 
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 0
-`define D_CACHE_ADDR_LOGGER 0
-
 import cvw::*;
 
 module testbench;
   parameter DEBUG=0;
   parameter TEST="none";
+  parameter PrintHPMCounters=0;
+  parameter BPRED_LOGGER=0;
+  parameter I_CACHE_ADDR_LOGGER=0;
+  parameter D_CACHE_ADDR_LOGGER=0;
+  
  
 `include "parameter-defs.vh"
 
@@ -46,17 +46,12 @@ module testbench;
   logic        reset_ext, reset;
   logic        ResetMem;
 
-  parameter SIGNATURESIZE = 5000000;
-
   int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:SIGNATURESIZE];
-  logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
-  logic [P.XLEN-1:0] testadr, testadrNoBase;
+
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
 
   string tests[];
-  logic [3:0] dummy;
 
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                HREADYEXT, HRESPEXT;
@@ -168,6 +163,7 @@ module testbench;
   typedef enum logic [3:0]{STATE_TESTBENCH_RESET,
                            STATE_INIT_TEST,
                            STATE_RESET_MEMORIES,
+                           STATE_RESET_MEMORIES2,
                            STATE_LOAD_MEMORIES,
                            STATE_RESET_TEST,
                            STATE_RUN_TEST,
@@ -254,6 +250,12 @@ module testbench;
         
       end
       STATE_RESET_MEMORIES: begin
+        NextState = STATE_RESET_MEMORIES2;
+        reset_ext = 1;
+        // this initialization is very expensive, only do it for coremark.
+        if (TEST == "coremark") ResetMem = 1;
+      end
+      STATE_RESET_MEMORIES2: begin  // Give the reset enough time to ensure the bus is reset before loading the memories.
         NextState = STATE_LOAD_MEMORIES;
         reset_ext = 1;
         // this initialization is very expensive, only do it for coremark.
@@ -296,7 +298,7 @@ module testbench;
       STATE_VALIDATE: begin
         NextState = STATE_INIT_TEST;
         if (TEST == "coremark")
-          if (dut.core.priv.priv.EcallFaultM) begin
+          if (dut.core.EcallFaultM) begin
             $display("Benchmark: coremark is done.");
             $stop;
           end
@@ -475,7 +477,7 @@ module testbench;
  -----/\----- EXCLUDED -----/\----- */
 
 
-  if(`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
+  if(PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
     logic             StartSampleDelayed, BeginDelayed;
@@ -559,7 +561,7 @@ module testbench;
   end
   
   // track the current function or global label
-  if (DEBUG == 1 | (`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
+  if (DEBUG == 1 | (PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
     FunctionName FunctionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
@@ -590,7 +592,7 @@ module testbench;
 
 
 
-  if (P.ICACHE_SUPPORTED && `I_CACHE_ADDR_LOGGER) begin : ICacheLogger
+  if (P.ICACHE_SUPPORTED && I_CACHE_ADDR_LOGGER) begin : ICacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
@@ -627,7 +629,7 @@ module testbench;
   end
 
 
-  if (P.DCACHE_SUPPORTED && `D_CACHE_ADDR_LOGGER) begin : DCacheLogger
+  if (P.DCACHE_SUPPORTED && D_CACHE_ADDR_LOGGER) begin : DCacheLogger
     int    file;
     string LogFile;
     logic  resetD, resetEdge;
@@ -667,7 +669,7 @@ module testbench;
   end
 
   if (P.BPRED_SUPPORTED) begin : BranchLogger
-    if (`BPRED_LOGGER) begin
+    if (BPRED_LOGGER) begin
       string direction;
       int    file;
       logic  PCSrcM;
@@ -864,7 +866,7 @@ task automatic CheckSignature;
   input integer begin_signature_addr;
   output integer errors;
 
-  localparam SIGNATURESIZE = 50000;
+  localparam SIGNATURESIZE = 50000000;
   integer       i;
   logic [31:0] sig32[0:SIGNATURESIZE];
   logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
