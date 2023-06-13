@@ -30,7 +30,7 @@
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
-    `include "idv/idv.svh"
+  `include "rvvi/imperasDV.svh"
 `endif
 
 `define DEBUG_TRACE 0
@@ -302,7 +302,7 @@ module testbench;
       initial begin
         int iter;
         #1;
-        IDV_MAX_ERRS = 3;
+        MAX_ERRS = 3;
 
         // Initialize REF (do this before initializing the DUT)
         if (!rvviVersionCheck(RVVI_API_VERSION)) begin
