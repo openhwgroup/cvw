@@ -8,7 +8,7 @@ mkdir -p results
 ALL=$(find ${WALLY}/external/ImperasDV-HMC/tests/riscof/work/riscv-arch-test/rv64i_m -name "ref" -type d)
 
 export IMPERAS_TOOLS=$(pwd)/imperas.ic
-export OTHERFLAGS="+TRACE2LOG_ENABLE=1 VERBOSE=1"
+export OTHERFLAGS="+IDV_TRACE2LOG=1 VERBOSE=1"
 
 for t in $ALL; do
     export TESTDIR=$(dirname ${t})

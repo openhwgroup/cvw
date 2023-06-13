@@ -1,7 +1,8 @@
 #--mpdconsole
 #--gdbconsole
---showoverrides
---showcommands
+#--showoverrides
+#--showcommands
+#--showcommands
 
 # Core settings
 --override cpu/priv_version=1.12 

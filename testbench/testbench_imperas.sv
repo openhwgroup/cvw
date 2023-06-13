@@ -31,16 +31,16 @@
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
-  `include "rvvi/imperasDV.svh"
+  `include "idv/idv.svh"
 `endif
 
 module testbench;
   parameter DEBUG=0;
 
 `ifdef USE_IMPERAS_DV
-  import rvviPkg::*;
   import rvviApiPkg::*;
   import idvApiPkg::*;
+  import idvPkg::*;
 `endif
 
   logic        clk;
@@ -140,7 +140,7 @@ module testbench;
 
     initial begin 
       
-      MAX_ERRS = 3;
+      IDV_MAX_ERRS = 3;
 
       // Initialize REF (do this before initializing the DUT)
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
