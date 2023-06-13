@@ -182,8 +182,7 @@ module testbench;
   logic        ResetCntRst;
   
 
-  string  signame, memfilename, pathname, objdumpfilename, adrstr, outputfile;
-  integer outputFilePointer;
+  string  signame, memfilename, pathname;
   integer begin_signature_addr;
 
   assign ResetThreshold = 3'd5;
@@ -214,7 +213,6 @@ module testbench;
       STATE_TESTBENCH_RESET: begin
         NextState = STATE_INIT_TEST;
         test = 1;
-        ResetMem = 1;     // only need to reset the memories once. Assumes the tests don't write xs to memory.
         reset_ext = 1;
       end
       STATE_INIT_TEST: begin
@@ -258,6 +256,8 @@ module testbench;
       STATE_RESET_MEMORIES: begin
         NextState = STATE_LOAD_MEMORIES;
         reset_ext = 1;
+        // this initialization is very expensive, only do it for coremark.
+        if (TEST == "coremark") ResetMem = 1;
       end
       STATE_LOAD_MEMORIES: begin
         NextState = STATE_RESET_TEST;
@@ -295,6 +295,11 @@ module testbench;
       end
       STATE_VALIDATE: begin
         NextState = STATE_INIT_TEST;
+        if (TEST == "coremark")
+          if (dut.core.priv.priv.EcallFaultM) begin
+            $display("Benchmark: coremark is done.");
+            $stop;
+          end
         if (!begin_signature_addr)
           $display("begin_signature addr not found in %s", ProgramLabelMapFile);
         else begin
@@ -350,20 +355,22 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
-  always @(posedge LoadMem) begin
-    if (P.FPGA) begin
-      string romfilename, sdcfilename;
-      romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
-      sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-      $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
-      $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
-      // shorten sdc timers for simulation
-      dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-    end 
-    else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-    else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-    if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-    $display("Read memfile %s", memfilename);
+  always @(posedge clk) begin
+    if (LoadMem) begin
+      if (P.FPGA) begin
+        string romfilename, sdcfilename;
+        romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
+        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
+        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
+        $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
+        // shorten sdc timers for simulation
+        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
+      end 
+      else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      $display("Read memfile %s", memfilename);
+    end
   end
   
   
@@ -382,8 +389,6 @@ module testbench;
   logic        HREADY;
   logic        HSELEXT;
   
-  logic        InitializingMemories;
-  integer      ResetCountOld, ResetThresholdOld;
   logic        InReset;
   logic        BeginSample;
   
@@ -428,70 +433,6 @@ module testbench;
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
-  // initialize tests
-  localparam 	   MemStartAddr = 0;
-  localparam 	   MemEndAddr = P.UNCORE_RAM_RANGE>>1+(P.XLEN/32);
-
-  initial
-    begin
-      ResetCountOld = 0;
-      ResetThresholdOld = 2;
-      InReset = 1;
-      //test = 1;
-      //totalerrors = 0;
-      testadr = 0;
-      testadrNoBase = 0;
-      // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
-      // and tests[0] == "2" refers to WallyRiscvArchTests 
-      //riscofTest = tests[0] == "1" | tests[0] == "2"; 
-      // fill memory with defined values to reduce Xs in simulation
-      // Quick note the memory will need to be initialized.  The C library does not
-      // guarantee the  initialized reads.  For example a strcmp can read 6 byte
-      // strings, but uses a load double to read them in.  If the last 2 bytes are
-      // not initialized the compare results in an 'x' which propagates through 
-      // the design.
-/* -----\/----- EXCLUDED -----\/-----
-      if (TEST == "coremark") 
-        for (i=MemStartAddr; i<MemEndAddr; i = i+1) 
-          dut.uncore.uncore.ram.ram.memory.RAM[i] = 64'h0; 
-
-      // read test vectors into memory
-      pathname = tvpaths[tests[0].atoi()];
-      /-* if (tests[0] == P.IMPERASTEST)
-       pathname = tvpaths[0];
-       else pathname = tvpaths[1]; *-/
-      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-      else            memfilename = {pathname, tests[test], ".elf.memfile"};
-      if (P.FPGA) begin
-        string romfilename, sdcfilename;
-        romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
-        sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
-        $readmemh(romfilename, dut.uncore.uncore.bootrom.bootrom.memory.ROM);
-        $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
-        // force sdc timers
-        dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-      end else begin
-        if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-        else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-        if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-      end
-
-      if (riscofTest) begin
-        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-      end else begin
-        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-      end
-      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
-      // the addr of each label and fill the array. To expand, add more elements to this array 
-      // and initialize them to zero (also initilaize them to zero at the start of the next test)
-      if(!P.FPGA) begin
-        updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-        $display("Read memfile %s", memfilename);
-      end
- -----/\----- EXCLUDED -----/\----- */
-    end
 
   // generate clock to sequence tests
   always
@@ -501,24 +442,13 @@ module testbench;
     end
    
   // check results
-  //assign reset_ext = InReset;
-  
+
+  // *** Probably need to take some of this code about embench and transfer to new fsm.
+/* -----\/----- EXCLUDED -----\/-----
   always @(negedge clk)
     begin    
-      InitializingMemories = 0;
       if(InReset == 1) begin
-        // once the test inidicates it's done we need to immediately hold reset for a number of cycles.
-        if(ResetCountOld < ResetThresholdOld) ResetCountOld = ResetCountOld + 1;
-        else begin // hit reset threshold so we remove reset.
-          InReset = 0; 
-          ResetCountOld = 0;
-        end
       end else begin
-        if (TEST == "coremark")
-          if (dut.core.priv.priv.EcallFaultM) begin
-            $display("Benchmark: coremark is done.");
-            $stop;
-          end
         // Termination condition (i.e. we finished running current test) 
         if (DCacheFlushDone) begin
           InReset = 1;
@@ -546,94 +476,11 @@ module testbench;
           end else begin 
             // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
             // clear signature to prevent contamination from previous tests
-/* -----\/----- EXCLUDED -----\/-----
-            for(i=0; i<SIGNATURESIZE; i=i+1) begin
-              sig32[i] = 'bx;
-            end
-            if (riscofTest) signame = {pathname, tests[test], "/ref/Reference-sail_c_simulator.signature"};
-            else signame = {pathname, tests[test], ".signature.output"};
-            // read signature, reformat in 64 bits if necessary
-            $readmemh(signame, sig32);
-            i = 0;
-            while (i < SIGNATURESIZE) begin
-              if (P.XLEN == 32) begin
-                signature[i] = sig32[i];
-                i = i+1;
-              end else begin
-                signature[i/2] = {sig32[i+1], sig32[i]};
-                i = i + 2;
-              end
-              if (i >= 4 & sig32[i-4] === 'bx) begin
-                if (i == 4) begin
-                  i = SIGNATURESIZE+1; // flag empty file
-                  $display("  Error: empty test file");
-                end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
-              end
-            end
-
-            // Check errors
-            errors = (i == SIGNATURESIZE+1); // error if file is empty
-            i = 0;
-            /-* verilator lint_off INFINITELOOP *-/
-            while (signature[i] !== 'bx) begin
-              logic [P.XLEN-1:0] sig;
-              if (P.DTIM_SUPPORTED) sig = dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-              else if (P.UNCORE_RAM_SUPPORTED) sig = dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-              //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-              if (signature[i] !== sig & (signature[i] !== DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
-                errors = errors+1;
-                $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-						    tests[test], i, (testadr+i)*(P.XLEN/8), DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-                $stop; //-***debug
-              end
-              i = i + 1;
-            end
-            /-* verilator lint_on INFINITELOOP *-/
-            if (errors == 0) begin
-              $display("%s succeeded.  Brilliant!!!", tests[test]);
-            end else begin
-              $display("%s failed with %d errors. :(", tests[test], errors);
-              //totalerrors = totalerrors+1;
-            end
- -----/\----- EXCLUDED -----/\----- */
-//          end
-          // move onto the next test, check to see if we're done
-/* -----\/----- EXCLUDED -----\/-----
-          test = test + 1;
-          if (test == tests.size()) begin
-          if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-          else $display("FAIL: %d test programs had errors", totalerrors);
-          $stop;
-          end else begin
-            InitializingMemories = 1;
- -----/\----- EXCLUDED -----/\----- */
-            // If there are still additional tests to run, read in information for the next test
-            //pathname = tvpaths[tests[0]];
-/* -----\/----- EXCLUDED -----\/-----
-            if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-            else memfilename = {pathname, tests[test], ".elf.memfile"};
-            //$readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (P.IROM_SUPPORTED)               $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-            else if (P.UNCORE_RAM_SUPPORTED)    $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-            if (P.DTIM_SUPPORTED)               $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
-
-            if (riscofTest) begin
-              ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-              ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-            end else begin
-              ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-              ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-            end
-            ProgramAddrLabelArray = '{ "begin_signature" : 0, "tohost" : 0 };
-            if(!P.FPGA) begin
-              updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-              $display("Read memfile %s", memfilename);
-            end
- -----/\----- EXCLUDED -----/\----- */
           end
         end // if (DCacheFlushDone)
       end
     end // always @ (negedge clk)
+ -----/\----- EXCLUDED -----/\----- */
 
 
   if(`PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
@@ -695,7 +542,7 @@ module testbench;
     end else begin
       // default start condiction is reset
       // default end condiction is end of test (DCacheFlushDone)
-      assign StartSampleFirst = InReset;
+      assign StartSampleFirst = reset;
       flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
       assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
       assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
