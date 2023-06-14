@@ -87,38 +87,38 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(2) LoadStallMReg(.clk, .reset, .clear(FlushM), .en(~StallM), .d({StoreStallE, LoadStallE}), .q({StoreStallM, LoadStallM}));  
   
   // Determine when to increment each counter
-  assign CounterEvent[0] = 1'b1;                                                        // MCYCLE always increments
-  assign CounterEvent[1] = 1'b0;                                                        // Counter 1 doesn't exist
-  assign CounterEvent[2] = InstrValidNotFlushedM;                                       // MINSTRET instructions retired
-  if(P.QEMU) begin: cevent // No other performance counters in QEMU
-    assign CounterEvent[P.COUNTERS-1:3] = 0;
-  end else begin: cevent                                                                // User-defined counters
-    assign CounterEvent[3]  = InstrClassM[0] & InstrValidNotFlushedM;                   // branch instruction
-    assign CounterEvent[4]  = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM; // jump and not return instructions
-    assign CounterEvent[5]  = InstrClassM[2] & InstrValidNotFlushedM;                   // return instructions
-    assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                         // branch predictor wrong
-    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                  // Branch predictor wrong direction
-    assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                        // branch predictor wrong target
-    assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                  // return address stack wrong address
-    assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                     // instruction class predictor wrong
-    assign CounterEvent[11] = LoadStallM;                                               // Load Stalls. don't want to suppress on flush as this only happens if flushed.
-    assign CounterEvent[12] = StoreStallM;                                              //  Store Stall
-    assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                     // data cache access
-    assign CounterEvent[14] = DCacheMiss;                                               // data cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[15] = DCacheStallM;                                             // d cache miss cycles
-    assign CounterEvent[16] = ICacheAccess & InstrValidNotFlushedM;                     // instruction cache access
-    assign CounterEvent[17] = ICacheMiss;                                               // instruction cache miss. Miss asserted 1 cycle at start of cache miss
-    assign CounterEvent[18] = ICacheStallF;                                             // i cache miss cycles
-    assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                        // CSR writes
-    assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                // fence.i
-    assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                       // sfence.vma
-    assign CounterEvent[22] = InterruptM;                                               // interrupt, InstrValidNotFlushedM will be low
-    assign CounterEvent[23] = ExceptionM;                                               // exceptions, InstrValidNotFlushedM will be low
+  assign CounterEvent[0]    = 1'b1;                                                      // MCYCLE always increments
+  assign CounterEvent[1]    = 1'b0;                                                      // Counter 1 doesn't exist
+  assign CounterEvent[2]    = InstrValidNotFlushedM;                                     // MINSTRET instructions retired
+  if (P.ZIHPM_SUPPORTED) begin: cevent                                                   // User-defined counters
+    assign CounterEvent[3]  = InstrClassM[0] & InstrValidNotFlushedM;                    // branch instruction
+    assign CounterEvent[4]  = InstrClassM[1] & ~InstrClassM[2] & InstrValidNotFlushedM;  // jump and not return instructions
+    assign CounterEvent[5]  = InstrClassM[2] & InstrValidNotFlushedM;                    // return instructions
+    assign CounterEvent[6]  = BPWrongM & InstrValidNotFlushedM;                          // branch predictor wrong
+    assign CounterEvent[7]  = BPDirPredWrongM & InstrValidNotFlushedM;                   // Branch predictor wrong direction
+    assign CounterEvent[8]  = BTAWrongM & InstrValidNotFlushedM;                         // branch predictor wrong target
+    assign CounterEvent[9]  = RASPredPCWrongM & InstrValidNotFlushedM;                   // return address stack wrong address
+    assign CounterEvent[10] = IClassWrongM & InstrValidNotFlushedM;                      // instruction class predictor wrong
+    assign CounterEvent[11] = LoadStallM;                                                // Load Stalls. don't want to suppress on flush as this only happens if flushed.
+    assign CounterEvent[12] = StoreStallM;                                               //  Store Stall
+    assign CounterEvent[13] = DCacheAccess & InstrValidNotFlushedM;                      // data cache access
+    assign CounterEvent[14] = DCacheMiss;                                                // data cache miss. Miss asserted 1 cycle at start of cache miss
+    assign CounterEvent[15] = DCacheStallM;                                              // d cache miss cycles
+    assign CounterEvent[16] = ICacheAccess & InstrValidNotFlushedM;                      // instruction cache access
+    assign CounterEvent[17] = ICacheMiss;                                                // instruction cache miss. Miss asserted 1 cycle at start of cache miss
+    assign CounterEvent[18] = ICacheStallF;                                              // i cache miss cycles
+    assign CounterEvent[19] = CSRWriteM & InstrValidNotFlushedM;                         // CSR writes
+    assign CounterEvent[20] = InvalidateICacheM & InstrValidNotFlushedM;                 // fence.i
+    assign CounterEvent[21] = sfencevmaM & InstrValidNotFlushedM;                        // sfence.vma
+    assign CounterEvent[22] = InterruptM;                                                // interrupt, InstrValidNotFlushedM will be low
+    assign CounterEvent[23] = ExceptionM;                                                // exceptions, InstrValidNotFlushedM will be low
     // coverage off
     // DivBusyE will never be assert high since this configuration uses the FPU to do integer division
-    assign CounterEvent[24] = DivBusyE | FDivBusyE;                                     // division cycles *** RT: might need to be delay until the next cycle
+    assign CounterEvent[24] = DivBusyE | FDivBusyE;                                      // division cycles *** RT: might need to be delay until the next cycle
     // coverage on
     assign CounterEvent[P.COUNTERS-1:25] = 0; // eventually give these sources, including FP instructions, I$/D$ misses, branches and mispredictions
+  end else begin: cevent
+    assign CounterEvent[P.COUNTERS-1:3] = 0;
   end
   
   // Counter update and write logic
@@ -156,14 +156,14 @@ module csrc  import cvw::*;  #(parameter cvw_t P) (
         /* verilator lint_on WIDTH */  
         else if (CSRAdrM >= MHPMCOUNTERBASE & CSRAdrM < MHPMCOUNTERBASE+P.COUNTERS & CSRAdrM != MTIME) 
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
-        else if (CSRAdrM >= HPMCOUNTERBASE & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS)  
+        else if (CSRAdrM >= HPMCOUNTERBASE  & CSRAdrM  < HPMCOUNTERBASE+P.COUNTERS)  
                  CSRCReadValM = HPMCOUNTER_REGW[CounterNumM];
         else begin
             CSRCReadValM = 0;
             IllegalCSRCAccessM = 1;  // requested CSR doesn't exist
         end
       end else begin // 32-bit counter reads
-        // Veri lator doesn't realize this only occurs for XLEN=32
+        // Veril ator doesn't realize this only occurs for XLEN=32
         /* verilator lint_off WIDTH */  
         if      (CSRAdrM == TIME)  CSRCReadValM = MTIME_CLINT[31:0];// TIME register is a shadow of the memory-mapped MTIME from the CLINT
         else if (CSRAdrM == TIMEH) CSRCReadValM = MTIME_CLINT[63:32];
