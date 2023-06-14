@@ -169,7 +169,8 @@ module testbench;
                            STATE_RUN_TEST,
                            STATE_CHECK_TEST,
                            STATE_CHECK_TEST_WAIT,
-                           STATE_VALIDATE} statetype;
+                           STATE_VALIDATE,
+                           STATE_INCR_TEST} statetype;
   statetype CurrState, NextState;
   logic        TestBenchReset;
   logic [2:0]  ResetCount, ResetThreshold;
@@ -296,7 +297,7 @@ module testbench;
         end
       end
       STATE_VALIDATE: begin
-        NextState = STATE_INIT_TEST;
+        NextState = STATE_INCR_TEST;
         if (TEST == "coremark")
           if (dut.core.EcallFaultM) begin
             $display("Benchmark: coremark is done.");
@@ -308,6 +309,9 @@ module testbench;
           CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
         end
         if(errors > 0) totalerrors = totalerrors + 1;
+      end
+      STATE_INCR_TEST: begin
+        NextState = STATE_INIT_TEST;
         test = test + 1;
         if (test == tests.size()) begin
           if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
