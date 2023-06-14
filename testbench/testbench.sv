@@ -25,7 +25,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 `include "config.vh"
 `include "tests.vh"
 
@@ -85,7 +84,6 @@ module testbench;
   string tests[];
   logic DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
-  logic StartSample, EndSample;
   logic Validate;
   logic SelectTest;
 
@@ -396,11 +394,8 @@ module testbench;
       $display("Read memfile %s", memfilename);
     end
   end  
-  
 
-  
-  logic        BeginSample;
-  
+ 
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
@@ -451,89 +446,7 @@ module testbench;
       clk = 1; # 5; clk = 0; # 5;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
-   
-  if(PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
-    integer           HPMCindex;
-    logic             StartSampleFirst;
-    logic             StartSampleDelayed, BeginDelayed;
-    logic             EndSampleFirst, EndSampleDelayed;
-    logic [P.XLEN-1:0] InitialHPMCOUNTERH[P.COUNTERS-1:0];
-
-    string  HPMCnames[] = '{"Mcycle",
-                            "------",
-                            "InstRet",
-                            "Br Count",
-                            "Jump Not Return",
-                            "Return",
-                            "BP Wrong",
-                            "BP Dir Wrong",
-                            "BP Target Wrong",
-                            "RAS Wrong",
-                            "Instr Class Wrong",
-                            "Load Stall",
-                            "Store Stall",
-                            "D Cache Access",
-                            "D Cache Miss",
-                            "D Cache Cycles",
-                            "I Cache Access",
-                            "I Cache Miss",
-                            "I Cache Cycles",
-                            "CSR Write",
-                            "FenceI",
-                            "SFenceVMA",
-                            "Interrupt",
-                            "Exception",
-                            "Divide Cycles"
-                          };
-
-    if(TEST == "embench") begin
-      // embench runs warmup then runs start_trigger
-      // embench end with stop_trigger.
-      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_trigger";
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-
-      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_trigger";
-      flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
-
-    end else if(TEST == "coremark") begin
-      // embench runs warmup then runs start_trigger
-	    // embench end with stop_trigger.
-      assign StartSampleFirst = FunctionName.FunctionName.FunctionName == "start_time";
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-
-      assign EndSampleFirst = FunctionName.FunctionName.FunctionName == "stop_time";
-      flopr #(1) EndSampleReg(clk, reset, EndSampleFirst, EndSampleDelayed);
-      assign EndSample = EndSampleFirst & ~ EndSampleDelayed;
-
-    end else begin
-      // default start condiction is reset
-      // default end condiction is end of test (DCacheFlushDone)
-      assign StartSampleFirst = reset;
-      flopr #(1) StartSampleReg(clk, reset, StartSampleFirst, StartSampleDelayed);
-      assign StartSample = StartSampleFirst & ~ StartSampleDelayed;
-      assign EndSample = DCacheFlushStart & ~DCacheFlushDone;
-
-      flop #(1) BeginReg(clk, StartSampleFirst, BeginDelayed);
-      assign BeginSample = StartSampleFirst & ~BeginDelayed;
-
-    end
-    always @(negedge clk) begin
-      if(StartSample) begin
-        for(HPMCindex = 0; HPMCindex < 32; HPMCindex += 1) begin
-          InitialHPMCOUNTERH[HPMCindex] <= dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex];
-        end
-      end
-      if(EndSample) begin
-        for(HPMCindex = 0; HPMCindex < HPMCnames.size(); HPMCindex += 1) begin
-          // unlikely to have more than 10M in any counter.
-          $display("Cnt[%2d] = %7d %s", HPMCindex, dut.core.priv.priv.csr.counters.counters.HPMCOUNTER_REGW[HPMCindex] - InitialHPMCOUNTERH[HPMCindex], HPMCnames[HPMCindex]);
-        end
-      end
-    end
-  end
+  
   
   // track the current function or global label
   if (DEBUG == 1 | (PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
@@ -564,119 +477,86 @@ module testbench;
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 
-
-
-
-  if (P.ICACHE_SUPPORTED && I_CACHE_ADDR_LOGGER) begin : ICacheLogger
-    int    file;
-    string LogFile;
-    logic  resetD, resetEdge;
-    logic  Enable;
-    logic  InvalDelayed, InvalEdge;
-    
-    assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & 
-                    dut.core.ifu.immu.immu.pmachecker.Cacheable &
-                    ~dut.core.ifu.bus.icache.icache.cachefsm.FlushStage &
-                    ~reset;
-    flop #(1) ResetDReg(clk, reset, resetD);
-    assign resetEdge = ~reset & resetD;
-
-    flop #(1) InvalReg(clk, dut.core.ifu.InvalidateICacheM, InvalDelayed);
-    assign InvalEdge = dut.core.ifu.InvalidateICacheM & ~InvalDelayed;
-
-    initial begin
-      LogFile = "ICache.log";
-      file = $fopen(LogFile, "w");
-      $fwrite(file, "BEGIN %s\n", memfilename);
-    end
-    string AccessTypeString, HitMissString;
-    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
-                           dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
-    always @(posedge clk) begin
-    if(resetEdge) $fwrite(file, "TRAIN\n");
-    if(BeginSample) $fwrite(file, "BEGIN %s\n", memfilename);
-    if(Enable) begin  // only log i cache reads
-      $fwrite(file, "%h R %s\n", dut.core.ifu.PCPF, HitMissString);
-    end
-    if(InvalEdge) $fwrite(file, "0 I X\n");
-    if(EndSample) $fwrite(file, "END %s\n", memfilename);
-    end
-  end
-
-
-  if (P.DCACHE_SUPPORTED && D_CACHE_ADDR_LOGGER) begin : DCacheLogger
-    int    file;
-    string LogFile;
-    logic  resetD, resetEdge;
-    logic  Enabled;
-    string AccessTypeString, HitMissString;
-
-    flop #(1) ResetDReg(clk, reset, resetD);
-    assign resetEdge = ~reset & resetD;
-    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
-                           (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
-                           dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
-    assign AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
-                              dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
-                              dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
-                              dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
-                              "NULL";
-    
-    assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
-                     ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
-                     dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
-                     (AccessTypeString != "NULL");
-
-    initial begin
-      LogFile = "DCache.log";
-      file = $fopen(LogFile, "w");
-      $fwrite(file, "BEGIN %s\n", memfilename);
-    end
-    always @(posedge clk) begin
-      if(resetEdge) $fwrite(file, "TRAIN\n");
-      if(BeginSample) $fwrite(file, "BEGIN %s\n", memfilename);
-      if(Enabled) begin
-        $fwrite(file, "%h %s %s\n", dut.core.lsu.PAdrM, AccessTypeString, HitMissString);
-      end
-      if(dut.core.lsu.bus.dcache.dcache.cachefsm.FlushFlag) $fwrite(file, "0 F X\n");
-      if(EndSample) $fwrite(file, "END %s\n", memfilename);
-    end
-  end
-
-  if (P.BPRED_SUPPORTED) begin : BranchLogger
-    if (BPRED_LOGGER) begin
-      string direction;
-      int    file;
-      logic  PCSrcM;
-      string LogFile;
-      logic  resetD, resetEdge;
-      flopenrc #(1) PCSrcMReg(clk, reset, dut.core.FlushM, ~dut.core.StallM, dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PCSrcE, PCSrcM);
-      flop #(1) ResetDReg(clk, reset, resetD);
-      assign resetEdge = ~reset & resetD;
-      initial begin
-        LogFile = "branch.log"; // will break some of Ross's research analysis scripts
-        //LogFile = $psprintf("branch_%s%0d.log", P.BPRED_TYPE, P.BPRED_SIZE);
-        file = $fopen(LogFile, "w");
-      end
-      always @(posedge clk) begin
-        if(resetEdge) $fwrite(file, "TRAIN\n");
-        if(StartSample) $fwrite(file, "BEGIN %s\n", memfilename);
-        if(dut.core.ifu.InstrClassM[0] & ~dut.core.StallW & ~dut.core.FlushW & dut.core.InstrValidM) begin
-          direction = PCSrcM ? "t" : "n";
-          $fwrite(file, "%h %s\n", dut.core.PCM, direction);
-        end
-        if(EndSample) $fwrite(file, "END %s\n", memfilename);
-      end
-    end
-  end
-
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);
+  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+
+  task automatic CheckSignature;
+    // This task must be declared inside this module as it needs access to parameter P.  There is
+    // no way to pass P to the task unless we convert it to a module.
+    
+    input string  pathname;
+    input string  TestName;
+    input logic   riscofTest;
+    input integer begin_signature_addr;
+    output integer errors;
+
+    localparam SIGNATURESIZE = 5000000;
+    integer        i;
+    logic [31:0]   sig32[0:SIGNATURESIZE];
+    logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
+    string            signame, pathname;
+    logic [P.XLEN-1:0] testadr, testadrNoBase;
+    
+    // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+    // clear signature to prevent contamination from previous tests
+    for(i=0; i<SIGNATURESIZE; i=i+1) begin
+      sig32[i] = 'bx;
+    end
+    if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
+    else signame = {pathname, TestName, ".signature.output"};
+    // read signature, reformat in 64 bits if necessary
+    $readmemh(signame, sig32);
+    i = 0;
+    while (i < SIGNATURESIZE) begin
+      if (P.XLEN == 32) begin
+        signature[i] = sig32[i];
+        i = i+1;
+      end else begin
+        signature[i/2] = {sig32[i+1], sig32[i]};
+        i = i + 2;
+      end
+      if (i >= 4 & sig32[i-4] === 'bx) begin
+        if (i == 4) begin
+          i = SIGNATURESIZE+1; // flag empty file
+          $display("  Error: empty test file");
+        end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
+      end
+    end
+
+    // Check errors
+    errors = (i == SIGNATURESIZE+1); // error if file is empty
+    i = 0;
+    testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+    testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
+    /* verilator lint_off INFINITELOOP */
+    while (signature[i] !== 'bx) begin
+      logic [P.XLEN-1:0] sig;
+      if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+      else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+      if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
+        errors = errors+1;
+        $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
+			     TestName, i, (testadr+i)*(P.XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
+        $stop; //***debug
+      end
+      i = i + 1;
+    end
+    /* verilator lint_on INFINITELOOP */
+    if (errors == 0) begin
+      $display("%s succeeded.  Brilliant!!!", TestName);
+    end else begin
+      $display("%s failed with %d errors. :(", TestName, errors);
+      //totalerrors = totalerrors+1;
+    end
+
+  endtask //
   
 endmodule
 
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
-
 
 task automatic updateProgramAddrLabelArray;
   input string ProgramAddrMapFile, ProgramLabelMapFile;
@@ -703,73 +583,3 @@ task automatic updateProgramAddrLabelArray;
   $fclose(ProgramAddrMapFP);
 endtask
 
-
-task automatic CheckSignature;
-  
-  input string  pathname;
-  input string  TestName;
-  input logic   riscofTest;
-  input integer begin_signature_addr;
-  output integer errors;
-
-  localparam SIGNATURESIZE = 5000000;
-  integer       i;
-  logic [31:0] sig32[0:SIGNATURESIZE];
-  logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
-  string  signame, pathname;
-  logic [`XLEN-1:0] testadr, testadrNoBase;
-  
-  // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-  // clear signature to prevent contamination from previous tests
-  for(i=0; i<SIGNATURESIZE; i=i+1) begin
-    sig32[i] = 'bx;
-  end
-  if (riscofTest) signame = {pathname, TestName, "/ref/Reference-sail_c_simulator.signature"};
-  else signame = {pathname, TestName, ".signature.output"};
-  // read signature, reformat in 64 bits if necessary
-  $readmemh(signame, sig32);
-  i = 0;
-  while (i < SIGNATURESIZE) begin
-    if (`XLEN == 32) begin
-      signature[i] = sig32[i];
-      i = i+1;
-    end else begin
-      signature[i/2] = {sig32[i+1], sig32[i]};
-      i = i + 2;
-    end
-    if (i >= 4 & sig32[i-4] === 'bx) begin
-      if (i == 4) begin
-        i = SIGNATURESIZE+1; // flag empty file
-        $display("  Error: empty test file");
-      end else i = SIGNATURESIZE; // skip over the rest of the x's for efficiency
-    end
-  end
-
-  // Check errors
-  errors = (i == SIGNATURESIZE+1); // error if file is empty
-  i = 0;
-  testadr = ($unsigned(begin_signature_addr))/(`XLEN/8);
-  testadrNoBase = (begin_signature_addr - `UNCORE_RAM_BASE)/(`XLEN/8);
-  /* verilator lint_off INFINITELOOP */
-  while (signature[i] !== 'bx) begin
-    logic [`XLEN-1:0] sig;
-    if (`DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-    else if (`UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
-    //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
-    if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
-      errors = errors+1;
-      $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 
-			   TestName, i, (testadr+i)*(`XLEN/8), testbench.DCacheFlushFSM.ShadowRAM[testadr+i], sig, signature[i]);
-      $stop; //***debug
-    end
-    i = i + 1;
-  end
-  /* verilator lint_on INFINITELOOP */
-  if (errors == 0) begin
-    $display("%s succeeded.  Brilliant!!!", TestName);
-  end else begin
-    $display("%s failed with %d errors. :(", TestName, errors);
-    //totalerrors = totalerrors+1;
-  end
-
-endtask //
