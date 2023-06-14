@@ -1,6 +1,8 @@
 ///////////////////////////////////////////
 // functionName.sv
 //
+// Written: Ross Thompson ross1728@gmail.com
+// 
 // Purpose: decode name of function
 // 
 // A component of the Wally configurable RISC-V project.
@@ -56,7 +58,6 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, FlushD & FlushE & FlushM ? PCF : FlushE & FlushM ? PCE : FlushM ? PCM : PCE, PCM_temp);
   flopenr #(P.XLEN) PCMOldReg(clk, reset, InstrValidM, PCM_temp, PCMOld);
   assign PCM = InstrValidM ? PCM_temp : PCMOld;
-  
 
   task automatic bin_search_min;
     input logic [P.XLEN-1:0] pc;
@@ -169,7 +170,6 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   initial ProgramAddrIndex = '0;
 
   assign FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
-  
 
 endmodule // function_radix
 
