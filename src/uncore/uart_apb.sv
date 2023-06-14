@@ -81,8 +81,7 @@ module uart_apb import cvw::*; #(parameter cvw_t P) (
   end
   
   logic BAUDOUTb;  // loop tx clock BAUDOUTb back to rx clock RCLK
-  // *** make sure reads don't occur on UART unless fully selected because they could change state.  This applies to all peripherals
-  uartPC16550D #(P.UART_PRESCALE, P.QEMU) u(  
+  uartPC16550D #(P.UART_PRESCALE) u(  
     // Processor Interface
     .PCLK, .PRESETn,
     .A(entry), .Din, 
