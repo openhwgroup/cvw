@@ -49,6 +49,9 @@ module testbench;
   int test, i, errors, totalerrors;
 
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  string outputfile;
+  integer outputFilePointer;
+
   logic [31:0] InstrW;
 
   string tests[];
@@ -219,30 +222,12 @@ module testbench;
         NextState = STATE_RESET_MEMORIES;
         ResetCntRst = 1;
         SelectTest = 1;
-        // 4 major steps: select test, reset wally, reset memories, and load memories
-
-        // 1: test selection
-        // fill memory with defined values to reduce Xs in simulation
-        // Quick note the memory will need to be initialized.  The C library does not
-        // guarantee the  initialized reads.  For example a strcmp can read 6 byte
-        // strings, but uses a load double to read them in.  If the last 2 bytes are
-        // not initialized the compare results in an 'x' which propagates through 
-        // the design.
-
-        // read test vectors into memory
-        /* if (tests[0] == `IMPERASTEST)
-         pathname = tvpaths[0];
-         else pathname = tvpaths[1]; */
-        
-        // 2: reset wally
         reset_ext = 1;
-        
       end
       STATE_RESET_MEMORIES: begin
         NextState = STATE_RESET_MEMORIES2;
         reset_ext = 1;
-        // this initialization is very expensive, only do it for coremark.
-        if (TEST == "coremark") ResetMem = 1;
+        if (TEST == "coremark") ResetMem = 1;         // this initialization is very expensive, only do it for coremark.
       end
       STATE_RESET_MEMORIES2: begin  // Give the reset enough time to ensure the bus is reset before loading the memories.
         NextState = STATE_LOAD_MEMORIES;
@@ -307,7 +292,6 @@ module testbench;
         ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
         ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
       end
-
       // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
       // the addr of each label and fill the array. To expand, add more elements to this array 
       // and initialize them to zero (also initilaize them to zero at the start of the next test)
@@ -323,6 +307,26 @@ module testbench;
           $display("Benchmark: coremark is done.");
           $stop;
         end
+      else if (TEST == "embench") begin
+        // Writes contents of begin_signature to .sim.output file
+        // this contains instret and cycles for start and end of test run, used by embench 
+        // python speed script to calculate embench speed score. 
+        // also, begin_signature contains the results of the self checking mechanism, 
+        // which will be read by the python script for error checking
+        $display("Embench Benchmark: %s is done.", tests[test]);
+        if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
+        else outputfile = {pathname, tests[test], ".sim.output"};
+        outputFilePointer = $fopen(outputfile, "w");
+        i = 0;
+        $fclose(outputFilePointer);
+        $display("Embench Benchmark: created output file: %s", outputfile);
+      end else if (TEST == "coverage64gc") begin
+        $display("Coverage tests don't get checked");
+      end else begin 
+        // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
+        // clear signature to prevent contamination from previous tests
+      end
+
       if (!begin_signature_addr)
         $display("begin_signature addr not found in %s", ProgramLabelMapFile);
       else begin
@@ -401,7 +405,6 @@ module testbench;
   logic        HREADY;
   logic        HSELEXT;
   
-  logic        InReset;
   logic        BeginSample;
   
   // instantiate device to be tested
@@ -453,48 +456,6 @@ module testbench;
       // if ($time % 100000 == 0) $display("Time is %0t", $time);
     end
    
-  // check results
-
-  // *** Probably need to take some of this code about embench and transfer to new fsm.
-/* -----\/----- EXCLUDED -----\/-----
-  always @(negedge clk)
-    begin    
-      if(InReset == 1) begin
-      end else begin
-        // Termination condition (i.e. we finished running current test) 
-        if (DCacheFlushDone) begin
-          InReset = 1;
-          //begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
-          if (!begin_signature_addr)
-            $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-          testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
-          testadrNoBase = (begin_signature_addr - P.UNCORE_RAM_BASE)/(P.XLEN/8);
-          #600; // give time for instructions in pipeline to finish
-          if (TEST == "embench") begin
-            // Writes contents of begin_signature to .sim.output file
-            // this contains instret and cycles for start and end of test run, used by embench 
-            // python speed script to calculate embench speed score. 
-            // also, begin_signature contains the results of the self checking mechanism, 
-            // which will be read by the python script for error checking
-            $display("Embench Benchmark: %s is done.", tests[test]);
-            if (riscofTest) outputfile = {pathname, tests[test], "/ref/ref.sim.output"};
-            else outputfile = {pathname, tests[test], ".sim.output"};
-            outputFilePointer = $fopen(outputfile, "w");
-            i = 0;
-            $fclose(outputFilePointer);
-            $display("Embench Benchmark: created output file: %s", outputfile);
-          end else if (TEST == "coverage64gc") begin
-            $display("Coverage tests don't get checked");
-          end else begin 
-            // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
-            // clear signature to prevent contamination from previous tests
-          end
-        end // if (DCacheFlushDone)
-      end
-    end // always @ (negedge clk)
- -----/\----- EXCLUDED -----/\----- */
-
-
   if(PrintHPMCounters & P.ZICOUNTERS_SUPPORTED) begin : HPMCSample
     integer           HPMCindex;
     logic             StartSampleFirst;
