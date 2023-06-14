@@ -21,21 +21,19 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
+module FunctionName import cvw::*; #(parameter cvw_t P) (
+  input logic reset,
+  input logic clk,
+  input string ProgramAddrMapFile,
+  input string ProgramLabelMapFile
+  );
   
-  input logic reset;
-  input logic clk;
-  input string ProgramAddrMapFile;
-  input string ProgramLabelMapFile;
-
-  logic [`XLEN-1:0] ProgramAddrMapMemory [];
+  logic [P.XLEN-1:0] ProgramAddrMapMemory [];
   string 	    ProgramLabelMapMemory [integer];
   string 	    FunctionName;
   
 
-  logic [`XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
+  logic [P.XLEN-1:0] PCF, PCD, PCE, PCM, FunctionAddr, PCM_temp, PCMOld;
   logic 	    StallD, StallE, StallM, FlushD, FlushE, FlushM;
   logic 		InstrValidM;
   integer 	    ProgramAddrIndex, ProgramAddrIndexQ;
@@ -53,21 +51,21 @@ module FunctionName(reset, clk, ProgramAddrMapFile, ProgramLabelMapFile);
   // when the F and D stages are flushed we need to ensure the PCE is held so that the function name does not
   // erroneously change.
   // also need to hold the old value not an erroneously fetched PC.
-  flopenr #(`XLEN) PCDReg(clk, reset, ~StallD, FlushD ? PCE : PCF, PCD);
-  flopenr #(`XLEN) PCEReg(clk, reset, ~StallE, FlushD & FlushE ? PCF : FlushE ? PCE : PCD, PCE);
-  flopenr #(`XLEN) PCMReg(clk, reset, ~StallM, FlushD & FlushE & FlushM ? PCF : FlushE & FlushM ? PCE : FlushM ? PCM : PCE, PCM_temp);
-  flopenr #(`XLEN) PCMOldReg(clk, reset, InstrValidM, PCM_temp, PCMOld);
+  flopenr #(P.XLEN) PCDReg(clk, reset, ~StallD, FlushD ? PCE : PCF, PCD);
+  flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, FlushD & FlushE ? PCF : FlushE ? PCE : PCD, PCE);
+  flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, FlushD & FlushE & FlushM ? PCF : FlushE & FlushM ? PCE : FlushM ? PCM : PCE, PCM_temp);
+  flopenr #(P.XLEN) PCMOldReg(clk, reset, InstrValidM, PCM_temp, PCMOld);
   assign PCM = InstrValidM ? PCM_temp : PCMOld;
   
 
   task automatic bin_search_min;
-    input logic [`XLEN-1:0] pc;
-    input logic [`XLEN-1:0] length;
-    ref logic [`XLEN-1:0]   array [];
-    output logic [`XLEN-1:0] minval;
-    output     logic [`XLEN-1:0] mid;
+    input logic [P.XLEN-1:0] pc;
+    input logic [P.XLEN-1:0] length;
+    ref logic [P.XLEN-1:0]   array [];
+    output logic [P.XLEN-1:0] minval;
+    output     logic [P.XLEN-1:0] mid;
 
-    logic [`XLEN-1:0] 	     left, right;
+    logic [P.XLEN-1:0] 	     left, right;
 
     begin
       if ( pc == 0 ) begin
