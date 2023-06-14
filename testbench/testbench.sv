@@ -73,6 +73,8 @@ module testbench;
   logic DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
   logic StartSample, EndSample;
+  logic Validate;
+  logic SelectTest;
     
   flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
@@ -190,7 +192,7 @@ module testbench;
     TestBenchReset = 0;
   end
 
-  always_ff @(negedge clk)
+  always_ff @(posedge clk)
     if (TestBenchReset) CurrState <= #1 STATE_TESTBENCH_RESET;
     else CurrState <= #1 NextState;  
 
@@ -201,6 +203,8 @@ module testbench;
     LoadMem = 0;
     ResetCntEn = 0;
     ResetCntRst = 0;
+    Validate = 0;
+    SelectTest = 0;
     // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
     // and tests[0] == "2" refers to WallyRiscvArchTests 
     riscofTest = tests[0] == "1" | tests[0] == "2"; 
@@ -209,12 +213,12 @@ module testbench;
     case(CurrState)
       STATE_TESTBENCH_RESET: begin
         NextState = STATE_INIT_TEST;
-        test = 1;
         reset_ext = 1;
       end
       STATE_INIT_TEST: begin
         NextState = STATE_RESET_MEMORIES;
         ResetCntRst = 1;
+        SelectTest = 1;
         // 4 major steps: select test, reset wally, reset memories, and load memories
 
         // 1: test selection
@@ -229,22 +233,6 @@ module testbench;
         /* if (tests[0] == `IMPERASTEST)
          pathname = tvpaths[0];
          else pathname = tvpaths[1]; */
-        if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
-        else            memfilename = {pathname, tests[test], ".elf.memfile"};
-        if (riscofTest) begin
-          ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
-          ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
-        end else begin
-          ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
-          ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
-        end
-
-        // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
-        // the addr of each label and fill the array. To expand, add more elements to this array 
-        // and initialize them to zero (also initilaize them to zero at the start of the next test)
-        if(!P.FPGA) begin
-          updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
-        end
         
         // 2: reset wally
         reset_ext = 1;
@@ -297,31 +285,58 @@ module testbench;
         end
       end
       STATE_VALIDATE: begin
-        NextState = STATE_INCR_TEST;
-        if (TEST == "coremark")
-          if (dut.core.EcallFaultM) begin
-            $display("Benchmark: coremark is done.");
-            $stop;
-          end
-        if (!begin_signature_addr)
-          $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-        else begin
-          CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
-        end
-        if(errors > 0) totalerrors = totalerrors + 1;
+        NextState = STATE_INIT_TEST;
+        Validate = '1;
       end
       STATE_INCR_TEST: begin
         NextState = STATE_INIT_TEST;
-        test = test + 1;
-        if (test == tests.size()) begin
-          if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
-          else $display("FAIL: %d test programs had errors", totalerrors);
-          $stop;
-        end
       end
       default: NextState = STATE_TESTBENCH_RESET;
     endcase
   end // always_comb
+
+  always @(posedge clk) begin
+
+    if(SelectTest) begin
+      if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
+      else            memfilename = {pathname, tests[test], ".elf.memfile"};
+      if (riscofTest) begin
+        ProgramAddrMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], "/ref/ref.elf.objdump.lab"};
+      end else begin
+        ProgramAddrMapFile = {pathname, tests[test], ".elf.objdump.addr"};
+        ProgramLabelMapFile = {pathname, tests[test], ".elf.objdump.lab"};
+      end
+
+      // declare memory labels that interest us, the updateProgramAddrLabelArray task will find 
+      // the addr of each label and fill the array. To expand, add more elements to this array 
+      // and initialize them to zero (also initilaize them to zero at the start of the next test)
+      if(!P.FPGA) begin
+        updateProgramAddrLabelArray(ProgramAddrMapFile, ProgramLabelMapFile, ProgramAddrLabelArray);
+      end
+    end
+    
+    if(TestBenchReset) test = 1;
+    if(Validate) begin
+      if (TEST == "coremark")
+        if (dut.core.EcallFaultM) begin
+          $display("Benchmark: coremark is done.");
+          $stop;
+        end
+      if (!begin_signature_addr)
+        $display("begin_signature addr not found in %s", ProgramLabelMapFile);
+      else begin
+        CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
+      end
+      if(errors > 0) totalerrors = totalerrors + 1;
+      test = test + 1;
+      if (test == tests.size()) begin
+        if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
+        else $display("FAIL: %d test programs had errors", totalerrors);
+        $stop;
+      end
+    end
+  end
 
   counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
   assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
@@ -369,8 +384,7 @@ module testbench;
       if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
       $display("Read memfile %s", memfilename);
     end
-  end
-  
+  end  
   
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
