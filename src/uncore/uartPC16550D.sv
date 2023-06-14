@@ -35,7 +35,7 @@
 
 /* verilator lint_off UNOPTFLAT */
 
-module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
+module uartPC16550D #(parameter UART_PRESCALE) (
   // Processor Interface
   input  logic       PCLK, PRESETn,                  // UART clock and active low reset
   input  logic [2:0] A,                              // address input (8 registers)
@@ -136,7 +136,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
     if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      if (QEMU) LCR <= #1 8'b0; else LCR <= #1 8'b11; // fpga only **** BUG
+      LCR <= #1 8'b11; // spec says to reset to 0, but FPGA needs to reset to 8 data bits
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
@@ -258,9 +258,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
     end
 
-  // ***explain why
-  if(QEMU) assign rxcentered = rxbaudpulse & (rxoversampledcnt[1:0] == 2'b10);  // implies rxstate = UART_ACTIVE
-  else      assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
+  assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
  
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
@@ -388,9 +386,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
     end
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s) - 1
-  // *** explain; is this necessary?
-  if (QEMU) assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
-  else       assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
+  assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
 
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO
@@ -475,7 +471,6 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
                          (txfifohead + 16 - txfifotail);
   // verilator lint_on WIDTH
-  //assign txfifofull = (txfifoentries == 4'b1111);
   assign txfifofull = (txfifohead == txfifotail) & HeadPointerLastMove;
 
   // transmit buffer ready bit
