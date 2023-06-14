@@ -7,11 +7,11 @@
 // Purpose: Universial Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC16550D
 //          https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf
-//          Compatible with UART in Imperas Virtio model ***
+//          Compatible with UART in Imperas Virtio model
 //
 //  Compatible with most of PC16550D with the following known exceptions:
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
-//   Timeout not yet implemented***
+//   Timeout not yet implemented
 // 
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
@@ -204,10 +204,11 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   // consider switching to same fixed-frequency reference clock used for TIME register
   // prescale by factor of 2^UART_PRESCALE to allow for high-frequency reference clock
   // Unlike PC16550D, this unit is hardwired with same rx and tx baud clock
-  // *** add table of scale factors to get 16x uart clk
+  // For example, with PCLK = 320 MHz, UART_PRESCALE = 5, DLM = 0, DLL = 65, 
+  // 320 MHz system clock is divided by 65 x 2^5.  The UART clock 16x oversamples
+  // the data, so the baud rate is 320x10^6 / (65 x 2^5 x 16) = 9615 Hz, which is
+  // close enough to 9600 baud to stay synchronized over the duration of one character.
   ///////////////////////////////////////////
-  // Ross Thompson: Found a bug.  If the baud rate dividers DLM, and DLL are reloaded
-  // the baudcount is not reset to  {DLM, DLL, UART_PRESCALE}
   always_ff @(posedge PCLK, negedge PRESETn) 
     if (~PRESETn) begin
       baudcount <= #1 1;
@@ -255,7 +256,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
       end
       // timeout counting
       if (~MEMRb & A == 3'b000 & ~DLAB) rxtimeoutcnt <= #1 0; // reset timeout on read
-      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
+      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // may not be right
     end
 
   assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
@@ -281,7 +282,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
 
   // ERROR CONDITIONS
   assign rxparity = ^rxdata;
-  assign rxparityerr = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity (*** check if LCR needs to be inverted)
+  assign rxparityerr = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity
   assign rxoverrunerr = fifoenabled ? (rxfifoentries == 15) : rxdataready; // overrun if FIFO or receive buffer register full 
   assign rxframingerr = ~rxstopbit; // framing error if no stop bit
   assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
@@ -324,7 +325,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
                          (rxfifohead + 16 - rxfifotail);
   // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; *** probably not right yet
+  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; probably not right yet
   //assign rxfifotimeout = 0; // disabled pending fix
 
   // detect any errors in rx fifo
@@ -394,7 +395,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
   always_comb begin // compute value for parity and tx holding register
     nexttxdata = fifoenabled ? txfifo[txfifotail] : TXHR; // pick from FIFO or holding register
     case (LCR[1:0]) // compute parity from appropriate number of bits
-      2'b00: txparity = ^nexttxdata[4:0] ^ ~evenparitysel; // *** check polarity
+      2'b00: txparity = ^nexttxdata[4:0] ^ ~evenparitysel; 
       2'b01: txparity = ^nexttxdata[5:0] ^ ~evenparitysel; 
       2'b10: txparity = ^nexttxdata[6:0] ^ ~evenparitysel; 
       2'b11: txparity = ^nexttxdata[7:0] ^ ~evenparitysel; 
