@@ -845,7 +845,7 @@ task automatic CheckSignature;
   input integer begin_signature_addr;
   output integer errors;
 
-  localparam SIGNATURESIZE = 50000000;
+  localparam SIGNATURESIZE = 5000000;
   integer       i;
   logic [31:0] sig32[0:SIGNATURESIZE];
   logic [`XLEN-1:0] signature[0:SIGNATURESIZE];
