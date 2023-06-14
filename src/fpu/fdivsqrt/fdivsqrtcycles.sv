@@ -50,9 +50,10 @@ module fdivsqrtcycles import cvw::*;  #(parameter cvw_t P) (
   else if (P.FPSIZES == 3)
     always_comb
       case (FmtE)
-        P.FMT:  Nf = P.NF;
-        P.FMT1: Nf = P.NF1;
-        P.FMT2: Nf = P.NF2; 
+        P.FMT:   Nf = P.NF;
+        P.FMT1:  Nf = P.NF1;
+        P.FMT2:  Nf = P.NF2; 
+        default: Nf = 'x; // shouldn't happen
       endcase
   else if (P.FPSIZES == 4)  
     always_comb
