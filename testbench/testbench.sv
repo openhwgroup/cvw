@@ -38,7 +38,6 @@ module testbench;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
-  
  
 `include "parameter-defs.vh"
 
@@ -46,41 +45,49 @@ module testbench;
   logic        reset_ext, reset;
   logic        ResetMem;
 
-  int test, i, errors, totalerrors;
-
-  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  string outputfile;
-  integer outputFilePointer;
-
-  logic [31:0] InstrW;
-
-  string tests[];
-
+  // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
-  logic                HREADYEXT, HRESPEXT;
+  logic                 HREADYEXT, HRESPEXT;
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0]    HWDATA;
   logic [P.XLEN/8-1:0]  HWSTRB;
-  logic                HWRITE;
-  logic [2:0]          HSIZE;
-  logic [2:0]          HBURST;
-  logic [3:0]          HPROT;
-  logic [1:0]          HTRANS;
-  logic                HMASTLOCK;
-  logic                HCLK, HRESETn;
-  logic [P.XLEN-1:0]    PCW;
+  logic                 HWRITE;
+  logic [2:0]           HSIZE;
+  logic [2:0]           HBURST;
+  logic [3:0]           HPROT;
+  logic [1:0]           HTRANS;
+  logic                 HMASTLOCK;
+  logic                 HCLK, HRESETn;
 
+  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
+  logic        UARTSin, UARTSout;
+
+  logic        SDCCLK;
+  logic        SDCCmdIn;
+  logic        SDCCmdOut;
+  logic        SDCCmdOE;
+  logic [3:0]  SDCDatIn;
+  tri1  [3:0]  SDCDat;
+  tri1         SDCCmd;
+
+  logic        HREADY;
+  logic        HSELEXT;
+
+  
   string  ProgramAddrMapFile, ProgramLabelMapFile;
   integer ProgramAddrLabelArray [string];
 
+  int test, i, errors, totalerrors;
+
+  string outputfile;
+  integer outputFilePointer;
+
+  string tests[];
   logic DCacheFlushDone, DCacheFlushStart;
   logic riscofTest; 
   logic StartSample, EndSample;
   logic Validate;
   logic SelectTest;
-    
-  flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
-  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
   riscvassertions riscvassertions();
@@ -391,19 +398,6 @@ module testbench;
   end  
   
 
-  logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
-  logic        UARTSin, UARTSout;
-
-  logic        SDCCLK;
-  logic        SDCCmdIn;
-  logic        SDCCmdOut;
-  logic        SDCCmdOE;
-  logic [3:0]  SDCDatIn;
-  tri1  [3:0]  SDCDat;
-  tri1         SDCCmd;
-
-  logic        HREADY;
-  logic        HSELEXT;
   
   logic        BeginSample;
   
@@ -442,12 +436,14 @@ module testbench;
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
 
   // Track names of instructions
+  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  logic [31:0] InstrW;
+  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
   instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
                 dut.core.ifu.InstrRawF[31:0],
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
-
 
   // generate clock to sequence tests
   always
@@ -541,7 +537,7 @@ module testbench;
   
   // track the current function or global label
   if (DEBUG == 1 | (PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
-    FunctionName FunctionName(.reset(reset_ext | TestBenchReset),
+    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
@@ -674,142 +670,13 @@ module testbench;
     end
   end
 
-  // check for hang up.
-  logic [P.XLEN-1:0] OldPCW;
-  integer           WatchDogTimerCount;
-  localparam        WatchDogTimerThreshold = 1000000;
-  logic             WatchDogTimeOut;
-  always_ff @(posedge clk) begin
-    OldPCW <= PCW;
-    if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
-    else WatchDogTimerCount = '0;
-  end
-
-  always_comb begin
-    WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
-    if(WatchDogTimeOut) begin
-      $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
-      $stop;
-	  end
-  end
+  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);
   
 endmodule
 
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
 
-module DCacheFlushFSM import cvw::*; #(parameter cvw_t P) 
-  (input logic clk,
-   input logic reset,
-   input logic start,
-   output logic done);
-
-  genvar adr;
-
-  logic [P.XLEN-1:0] ShadowRAM[P.UNCORE_RAM_BASE>>(1+P.XLEN/32):(P.UNCORE_RAM_RANGE+P.UNCORE_RAM_BASE)>>1+(P.XLEN/32)];
-  logic         startD;
-  
-  if(P.DCACHE_SUPPORTED) begin
-    localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-    localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-    localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-    localparam linelen        = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-    localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-    localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-    localparam numwords       = sramlen/P.XLEN;
-    localparam lognumlines    = $clog2(numlines);
-    localparam loglinebytelen = $clog2(linebytelen);
-    localparam lognumways     = $clog2(numways);
-    localparam tagstart       = lognumlines + loglinebytelen;
-
-
-    
-    genvar               index, way, cacheWord;
-    logic [sramlen-1:0]  CacheData  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic [sramlen-1:0]  cacheline;
-    logic [P.XLEN-1:0]    CacheTag   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic                CacheValid [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic                CacheDirty [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    logic [P.PA_BITS-1:0] CacheAdr   [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    for(index = 0; index < numlines; index++) begin
-      for(way = 0; way < numways; way++) begin
-        for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
-          copyShadow #(.P(P), .tagstart(tagstart),
-          .loglinebytelen(loglinebytelen), .sramlen(sramlen))
-          copyShadow(.clk,
-          .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS-1-tagstart:0]),
-          .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
-          .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
-                           // these dirty bit selections would be needed if dirty is moved inside the tag array.
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][P.PA_BITS+tagstart]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.RAM[index]),
-          .index(index),
-          .cacheWord(cacheWord),
-          .CacheData(CacheData[way][index][cacheWord]),
-          .CacheAdr(CacheAdr[way][index][cacheWord]),
-          .CacheTag(CacheTag[way][index][cacheWord]),
-          .CacheValid(CacheValid[way][index][cacheWord]),
-          .CacheDirty(CacheDirty[way][index][cacheWord]));
-        end
-      end
-    end
-
-    integer i, j, k, l;
-
-    always @(posedge clk) begin
-      if (startD) begin 
-        for(i = 0; i < numlines; i++) begin
-          for(j = 0; j < numways; j++) begin
-            for(l = 0; l < cachesramwords; l++) begin
-              if (CacheValid[j][i][l] & CacheDirty[j][i][l]) begin
-                for(k = 0; k < numwords; k++) begin
-                  //cacheline = CacheData[j][i][0];
-                  // does not work with modelsim
-                  // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
-                  // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
-                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(P.XLEN/8)] = cacheline[P.XLEN*(k+1)-1:P.XLEN*k];
-                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(P.XLEN/8)) + k] = CacheData[j][i][l][P.XLEN*k +: P.XLEN];
-                end
-              end
-            end
-          end
-        end
-      end
-    end  
-  end
-  flop #(1) doneReg1(.clk, .d(start), .q(startD));
-  flop #(1) doneReg2(.clk, .d(startD), .q(done));
-endmodule
-
-module copyShadow import cvw::*; #(parameter cvw_t P,
-  parameter tagstart, loglinebytelen, sramlen)
-  (input  logic                       clk,
-   input  logic                       start,
-   input  logic [P.PA_BITS-1:tagstart] tag,
-   input  logic                       valid, dirty,
-   input  logic [sramlen-1:0]         data,
-   input  logic [32-1:0]              index,
-   input  logic [32-1:0]              cacheWord,
-   output logic [sramlen-1:0]         CacheData,
-   output logic [P.PA_BITS-1:0]        CacheAdr,
-   output logic [P.XLEN-1:0]           CacheTag,
-   output logic                       CacheValid,
-   output logic                       CacheDirty);
-  
-
-  always_ff @(posedge clk) begin
-    if(start) begin
-      CacheTag = tag;
-      CacheValid = valid;
-      CacheDirty = dirty;
-      CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
-    end
-  end
-  
-endmodule
 
 task automatic updateProgramAddrLabelArray;
   input string ProgramAddrMapFile, ProgramLabelMapFile;
