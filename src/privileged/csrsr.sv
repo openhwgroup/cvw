@@ -4,7 +4,7 @@
 // Written: David_Harris@hmc.edu 9 January 2021
 // Modified: 
 //
-// Purpose: Status register
+// Purpose: Status register (and environment configuration register and others shared across modes)
 //          See RISC-V Privileged Mode Specification 20190608 
 // 
 // Documentation: RISC-V System on Chip Design Chapter 5

@@ -42,9 +42,14 @@ localparam MISA = (32'h00000104 | 1 << 20 | 1 << 18 | 1 << 12 | 1 << 0 | 1 <<3 |
 localparam ZICSR_SUPPORTED = 1;
 localparam ZIFENCEI_SUPPORTED = 1;
 localparam COUNTERS = 12'd32;
-localparam ZICOUNTERS_SUPPORTED = 1;
+localparam ZICNTR_SUPPORTED = 1;
+localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
+localparam ZICBOM_SUPPORTED = 0;
+localparam ZICBOZ_SUPPORTED = 0;
+localparam ZICBOP_SUPPORTED = 0;
+localparam SVPBMT_SUPPORTED = 0;
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 1;

@@ -113,8 +113,6 @@ module testbenchfp;
 
   `include "parameter-defs.vh"
   
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////
 
   //     ||||||||| |||||||| ||||||| |||||||||   ||||||| |||||||| |||
@@ -680,11 +678,11 @@ module testbenchfp;
   // instantiate devices under test
   if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "sub" | TEST === "all") begin : fma
     fma #(P) fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
-            .Xe(Xe), .Ye(Ye), .Ze(Ze), 
-            .Xm(Xm), .Ym(Ym), .Zm(Zm),
-            .XZero, .YZero, .ZZero, .Ss, .Se,
-            .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
-            .ASticky); 
+                 .Xe(Xe), .Ye(Ye), .Ze(Ze), 
+                 .Xm(Xm), .Ym(Ym), .Zm(Zm),
+                 .XZero, .YZero, .ZZero, .Ss, .Se,
+                 .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
+                 .ASticky); 
   end
               
   postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
@@ -699,13 +697,13 @@ module testbenchfp;
               .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
   
   if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
-    fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+    fcvt fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
               .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
               .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
   end
 
   if (TEST === "cmp" | TEST === "all") begin: fcmp
-    fcmp #(P) fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
+    fcmp fcmp   (.Fmt(ModFmt), .OpCtrl(OpCtrlVal), .Xs, .Ys, .Xe, .Ye, 
                 .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                 .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
   end
@@ -892,13 +890,13 @@ always @(negedge clk) begin
     // check if result is correct
     //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
    // if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&~((FDivBusyE===1'b1)|DivStart)&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
-    ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
-    FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
-    divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
+    assign ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
+    assign FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
+    assign divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
     assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
     //assign divsqrtop = OpCtrl[TestNum] == `SQRT_OPCTRL | OpCtrl[TestNum] == `DIV_OPCTRL;
-    CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
+    assign CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
     if(~(ResMatch & FlagMatch) & CheckNow) begin
 //    if(~((Res === Ans | NaNGood | NaNGood === 1'bx) & (ResFlg === AnsFlg | AnsFlg === 5'bx))&(DivDone | (TEST != "sqrt" & TEST != "div"))&(UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT)) begin
       errors += 1;
@@ -974,10 +972,10 @@ module readvectors (
   output logic [`FLEN-1:0]   Ans,
   output logic [`XLEN-1:0]   SrcA,
   output logic [4:0]         AnsFlg,
-  output logic               Xs, Ys, Zs, // sign bits of XYZ
-  output logic [`NE-1:0]     Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
-  output logic [`NF:0]       Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
-  output logic               XNaN, YNaN, ZNaN, // is XYZ a NaN
+  output logic               Xs, Ys, Zs,          // sign bits of XYZ
+  output logic [`NE-1:0]     Xe, Ye, Ze,          // exponents of XYZ (converted to largest supported precision)
+  output logic [`NF:0]       Xm, Ym, Zm,          // mantissas of XYZ (converted to largest supported precision)
+  output logic               XNaN, YNaN, ZNaN,    // is XYZ a NaN
   output logic               XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
   output logic               XSubnorm, ZSubnorm,  // is XYZ denormalized
   output logic               XZero, YZero, ZZero, // is XYZ zero
@@ -986,6 +984,7 @@ module readvectors (
   output logic               DivStart,
   output logic [`FLEN-1:0]   X, Y, Z, XPostBox
 );
+   
   logic XEn, YEn, ZEn;
 
   `include "parameter-defs.vh"
@@ -1346,7 +1345,6 @@ module readvectors (
   assign YEn = ~((Unit == `CVTINTUNIT)|(Unit == `CVTFPUNIT)|((Unit == `DIVUNIT)&OpCtrl[0]));
   assign ZEn = (Unit == `FMAUNIT);
   
-
   unpack #(P) unpack(.X, .Y, .Z, .Fmt(ModFmt), .Xs, .Ys, .Zs, .Xe, .Ye, .Ze,
                 .Xm, .Ym, .Zm, .XNaN, .YNaN, .ZNaN, .XSNaN, .YSNaN, .ZSNaN,
                 .XSubnorm, .XZero, .YZero, .ZZero, .XInf, .YInf, .ZInf,
