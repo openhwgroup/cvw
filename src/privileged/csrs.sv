@@ -44,24 +44,26 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] SATP_REGW,
   input  logic [11:0]       MIP_REGW, MIE_REGW, MIDELEG_REGW,
   input  logic [63:0]       MTIME_CLINT,
+  input  logic              MENVCFG_STCE,
   output logic              WriteSSTATUSM,
   output logic              IllegalCSRSAccessM,
   output logic              STimerInt
 );
 
   // Supervisor CSRs
-  localparam SSTATUS      = 12'h100;
-  localparam SIE          = 12'h104;
-  localparam STVEC        = 12'h105;
-  localparam SCOUNTEREN   = 12'h106;
-  localparam SSCRATCH     = 12'h140;
-  localparam SEPC         = 12'h141;
-  localparam SCAUSE       = 12'h142;
-  localparam STVAL        = 12'h143;
-  localparam SIP          = 12'h144;
-  localparam STIMECMP     = 12'h14D;
-  localparam STIMECMPH    = 12'h15D;
-  localparam SATP         = 12'h180;
+  localparam SSTATUS    = 12'h100;
+  localparam SIE        = 12'h104;
+  localparam STVEC      = 12'h105;
+  localparam SCOUNTEREN = 12'h106;
+  localparam SENVCFG    = 12'h10A;
+  localparam SSCRATCH   = 12'h140;
+  localparam SEPC       = 12'h141;
+  localparam SCAUSE     = 12'h142;
+  localparam STVAL      = 12'h143;
+  localparam SIP        = 12'h144;
+  localparam STIMECMP   = 12'h14D;
+  localparam STIMECMPH  = 12'h15D;
+  localparam SATP       = 12'h180;
   // Constants
   localparam ZERO         = {(P.XLEN){1'b0}};
   localparam SEDELEG_MASK = ~(ZERO | {{P.XLEN-3{1'b0}}, 3'b111} << 9);
@@ -70,7 +72,12 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   logic                    WriteSSCRATCHM, WriteSEPCM;
   logic                    WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
   logic                    WriteSTIMECMPM, WriteSTIMECMPHM;
+  logic                    WriteSENVCFGM;
+
   logic [P.XLEN-1:0]       SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
+  logic [P.XLEN-1:0]       SENVCFG_REGW;
+  logic [P.XLEN-1:0]       SENVCFG_WriteValM;
+
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
@@ -82,8 +89,9 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
   assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
-  assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM);
-  assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM) & (P.XLEN == 32);
+  assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
+  assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE));
+  assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE)) & (P.XLEN == 32);
 
   // CSRs
   flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
@@ -95,7 +103,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
     flopenr #(P.XLEN) SATPreg(clk, reset, WriteSATPM, CSRWriteValM, SATP_REGW);
   else
     assign SATP_REGW = 0; // hardwire to zero if virtual memory not supported
-  flopenr #(32)     SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
+  flopenr #(32)   SCOUNTERENreg(clk, reset, WriteSCOUNTERENM, CSRWriteValM[31:0], SCOUNTEREN_REGW);
   if (P.SSTC_SUPPORTED) begin : sstc
     if (P.XLEN == 64) begin : sstc64
       flopenl #(P.XLEN) STIMECMPreg(clk, reset, WriteSTIMECMPM, CSRWriteValM, 64'hFFFFFFFFFFFFFFFF, STIMECMP_REGW);
@@ -108,9 +116,27 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   // Supervisor timer interrupt logic
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
   if (P.SSTC_SUPPORTED)
-    assign STimerInt = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
+   assign STimerInt  = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
   else 
     assign STimerInt = 0;
+
+  assign SENVCFG_WriteValM = {
+    {(P.XLEN-8){1'b0}},
+    CSRWriteValM[7]   & P.ZICBOZ_SUPPORTED,
+    CSRWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
+    3'b0,
+    CSRWriteValM[0]   & P.S_SUPPORTED & P.VIRTMEM_SUPPORTED
+  };
+
+  flopenr #(P.XLEN) SENVCFGreg(clk, reset, WriteSENVCFGM, SENVCFG_WriteValM, SENVCFG_REGW);
+
+  // Extract bit fields
+  // Uncomment these other fields when they are defined
+  // assign SENVCFG_PBMTE = SENVCFG_REGW[62];
+  // assign SENVCFG_CBZE  =  SENVCFG_REGW[7];
+  // assign SENVCFG_CBCFE = SENVCFG_REGW[6];
+  // assign SENVCFG_CBIE  =  SENVCFG_REGW[5:4];
+  // assign SENVCFG_FIOM  =  SENVCFG_REGW[0];
     
   // CSR Reads
   always_comb begin:csrr
@@ -130,20 +156,23 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                    IllegalCSRSAccessM = 1;
                  end
       SCOUNTEREN:CSRSReadValM = {{(P.XLEN-32){1'b0}}, SCOUNTEREN_REGW};
-      STIMECMP:  if (P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM)) CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0]; 
+      SENVCFG:   CSRSReadValM = SENVCFG_REGW;
+      STIMECMP:  if (P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM && MENVCFG_STCE))) 
+                   CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0]; 
                  else begin 
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end
-      STIMECMPH: if (P.SSTC_SUPPORTED & (P.XLEN == 32) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM)) CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
+      STIMECMPH: if (P.SSTC_SUPPORTED & (P.XLEN == 32) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM && MENVCFG_STCE))) 
+                   CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
                  else begin // not supported for RV64
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end
-      default:   begin
-                   CSRSReadValM = 0; 
-                   IllegalCSRSAccessM = 1;  
-                 end       
+      default: begin
+                  CSRSReadValM = 0; 
+                  IllegalCSRSAccessM = 1;  
+               end       
     endcase
   end
 endmodule
