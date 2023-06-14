@@ -80,7 +80,10 @@ module bitmanipalu #(parameter WIDTH=32) (
 
   // ZBC Unit
   if (`ZBC_SUPPORTED) begin: zbc
-    zbc #(WIDTH) ZBC(.A, .RevA, .B, .Funct3, .ZBCResult);
+    logic             ZBCSelect;                      // ZBC instruction
+    assign ZBCSelect = BSelect == 2'b11;
+    //assign ZBCSelect = 1'b0;
+    zbc #(WIDTH) ZBC(.A, .RevA, .B, .ZBCSelect, .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
   // ZBB Unit
