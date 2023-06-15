@@ -24,7 +24,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
+`include "config.vh"
+import cvw::*;
 
 `define DEBUG_TRACE 0
 // Debug Levels
@@ -47,12 +48,7 @@ module testbench;
   parameter NO_SPOOFING = 0;
 
 
-
-
-
-
-
-
+`include "parameter-defs.vh"
 
 
   ////////////////////////////////////////////////////////////////////////////////////
@@ -85,40 +81,40 @@ module testbench;
       integer TokenIndex``STAGE; \
       integer MarkerIndex``STAGE; \
       integer NumCSR``STAGE; \
-      logic [`XLEN-1:0] ExpectedPC``STAGE; \
+      logic [P.XLEN-1:0] ExpectedPC``STAGE; \
       logic [31:0]      ExpectedInstr``STAGE; \
       string            text``STAGE; \
       string            MemOp``STAGE; \
       string            RegWrite``STAGE; \
       integer           ExpectedRegAdr``STAGE; \
-      logic [`XLEN-1:0] ExpectedRegValue``STAGE; \
-      logic [`XLEN-1:0] ExpectedIEUAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
+      logic [P.XLEN-1:0] ExpectedRegValue``STAGE; \
+      logic [P.XLEN-1:0] ExpectedIEUAdr``STAGE, ExpectedMemReadData``STAGE, ExpectedMemWriteData``STAGE; \
       string            ExpectedCSRArray``STAGE[10:0]; \
-      logic [`XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0]; // *** might be redundant?
+      logic [P.XLEN-1:0] ExpectedCSRArrayValue``STAGE[10:0]; // *** might be redundant?
   `DECLARE_TRACE_SCANNER_SIGNALS(E)
   `DECLARE_TRACE_SCANNER_SIGNALS(M)
   //  M-stage expected values
   logic             checkInstrM;
   integer           MIPexpected, SIPexpected;
   string            name;
-  logic [`AHBW-1:0] readDataExpected;
+  logic [P.AHBW-1:0] readDataExpected;
   // W-stage expected values
   logic             checkInstrW;
-  logic [`XLEN-1:0] ExpectedPCW;
+  logic [P.XLEN-1:0] ExpectedPCW;
   logic [31:0]      ExpectedInstrW;
   string            textW;
   string            RegWriteW;
   integer           ExpectedRegAdrW;
-  logic [`XLEN-1:0] ExpectedRegValueW;
+  logic [P.XLEN-1:0] ExpectedRegValueW;
   string            MemOpW;
-  logic [`XLEN-1:0] ExpectedIEUAdrW, ExpectedMemReadDataW, ExpectedMemWriteDataW;
+  logic [P.XLEN-1:0] ExpectedIEUAdrW, ExpectedMemReadDataW, ExpectedMemWriteDataW;
   integer           NumCSRW;
   string            ExpectedCSRArrayW[10:0];
-  logic [`XLEN-1:0] ExpectedCSRArrayValueW[10:0];
-  logic [`XLEN-1:0] ExpectedIntType;
+  logic [P.XLEN-1:0] ExpectedCSRArrayValueW[10:0];
+  logic [P.XLEN-1:0] ExpectedIntType;
   integer           NumCSRWIndex;
   integer           NumCSRPostWIndex;
-  logic [`XLEN-1:0] InstrCountW;
+  logic [P.XLEN-1:0] InstrCountW;
   // ========== Interrupt parsing & spoofing ==========
   string  interrupt;
   string  interruptLine;
@@ -132,7 +128,7 @@ module testbench;
   string  interruptDesc;
   integer           NextMIPexpected, NextSIPexpected;
   integer           NextMepcExpected;
-  logic [`XLEN-1:0] AttemptedInstructionCount;
+  logic [P.XLEN-1:0] AttemptedInstructionCount;
   // ========== Misc Aliases ==========
   `define RF dut.core.ieu.dp.regf.rf
   `define PC dut.core.ifu.pcreg.q
@@ -238,14 +234,14 @@ module testbench;
   initial begin reset_ext <= 1; # 22; reset_ext <= 0; end
   always begin clk <= 1; # 5; clk <= 0; # 5; end
   // Wally Interface
-  logic [`AHBW-1:0] HRDATAEXT;
+  logic [P.AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
   logic             HCLK, HRESETn;
   logic             HREADY;
   logic 	    HSELEXT;
-  logic [`PA_BITS-1:0] HADDR;
-  logic [`AHBW-1:0] HWDATA;
-  logic [`XLEN/8-1:0] HWSTRB;
+  logic [P.PA_BITS-1:0] HADDR;
+  logic [P.AHBW-1:0] HWDATA;
+  logic [P.XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
   logic [2:0]       HSIZE;
   logic [2:0]       HBURST;
@@ -268,7 +264,7 @@ module testbench;
   assign UARTSin = 1;
 
   // Wally
-  wallypipelinedsoc dut(.clk, .reset, .reset_ext,
+  wallypipelinedsoc #(P) dut(.clk, .reset, .reset_ext,
                         .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HWSTRB, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
@@ -278,18 +274,18 @@ module testbench;
 
   // W-stage hardware not needed by Wally itself 
   parameter nop = 'h13;
-  logic [`XLEN-1:0] PCW;
+  logic [P.XLEN-1:0] PCW;
   logic [31:0]      InstrW;
   logic             InstrValidW;
-  logic [`XLEN-1:0] IEUAdrW, WriteDataW;
+  logic [P.XLEN-1:0] IEUAdrW, WriteDataW;
   logic             TrapW;
   `define FLUSHW dut.core.FlushW
   `define STALLW dut.core.StallW
-  flopenrc #(`XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, `PCM, PCW);
+  flopenrc #(P.XLEN)         PCWReg(clk, reset, `FLUSHW, ~`STALLW, `PCM, PCW);
   flopenr #(32)          InstrWReg(clk, reset, ~`STALLW, `FLUSHW ? nop : dut.core.ifu.InstrM, InstrW);
   flopenrc #(1)        controlregW(clk, reset, `FLUSHW, ~`STALLW, dut.core.ieu.c.InstrValidM, InstrValidW);
-  flopenrc #(`XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
-  flopenrc #(`XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
+  flopenrc #(P.XLEN)     IEUAdrWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.IEUAdrM, IEUAdrW);
+  flopenrc #(P.XLEN)  WriteDataWReg(clk, reset, `FLUSHW, ~`STALLW, dut.core.lsu.WriteDataM, WriteDataW);  
   flopenr #(1)            TrapWReg(clk, reset, ~`STALLW, dut.core.hzu.TrapM, TrapW);
 
 
@@ -365,29 +361,29 @@ module testbench;
     end
 
   genvar i;
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [`XLEN-1:0],31,1);
-  `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [`XLEN-1:0],`COUNTERS-1,0);
-  `INIT_CHECKPOINT_VAL(PC,         [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(MEDELEG,    [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(MIDELEG,    [`XLEN-1:0]);
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(RF,         [P.XLEN-1:0],31,1);
+  `INIT_CHECKPOINT_SIMPLE_ARRAY(HPMCOUNTER, [P.XLEN-1:0],P.COUNTERS-1,0);
+  `INIT_CHECKPOINT_VAL(PC,         [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEDELEG,    [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MIDELEG,    [P.XLEN-1:0]);
   if(!NO_SPOOFING) begin
     `INIT_CHECKPOINT_VAL(MIE,        [11:0]);
     `INIT_CHECKPOINT_VAL(MIP,        [11:0]);
     end
-  `INIT_CHECKPOINT_VAL(MCAUSE,     [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(SCAUSE,     [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(MEPC,       [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(SEPC,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MCAUSE,     [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SCAUSE,     [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MEPC,       [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SEPC,       [P.XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(MCOUNTEREN, [31:0]);
   `INIT_CHECKPOINT_VAL(SCOUNTEREN, [31:0]);
-  `INIT_CHECKPOINT_VAL(MSCRATCH,   [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(SSCRATCH,   [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(MTVEC,      [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(STVEC,      [`XLEN-1:0]);
-  `INIT_CHECKPOINT_VAL(SATP,       [`XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MSCRATCH,   [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SSCRATCH,   [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(MTVEC,      [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(STVEC,      [P.XLEN-1:0]);
+  `INIT_CHECKPOINT_VAL(SATP,       [P.XLEN-1:0]);
   `INIT_CHECKPOINT_VAL(PRIV,       [1:0]);
-  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],`PLIC_NUM_SRC,1);
-  `MAKE_CHECKPOINT_INIT_SIGNAL(PLIC_INT_ENABLE, [`PLIC_NUM_SRC:0],1,0);
+  `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_INT_PRIORITY, [2:0],P.PLIC_NUM_SRC,1);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(PLIC_INT_ENABLE, [P.PLIC_NUM_SRC:0],1,0);
   `INIT_CHECKPOINT_PACKED_ARRAY(PLIC_THRESHOLD, [2:0],1,0);
   // UART checkpointing does not cover entire UART state
   //     Many UART registers are difficult to initialize because under the hood
@@ -402,8 +398,8 @@ module testbench;
   `INIT_CHECKPOINT_VAL(UART_SCR,   [7:0]);
   // xSTATUS need to be handled manually because the most upstream signals
   // are made of individual bits, not registers
-  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [`XLEN-1:0],0,0);
-  `MAKE_CHECKPOINT_INIT_SIGNAL(SSTATUS, [`XLEN-1:0],0,0);  
+  `MAKE_CHECKPOINT_INIT_SIGNAL(MSTATUS, [P.XLEN-1:0],0,0);
+  `MAKE_CHECKPOINT_INIT_SIGNAL(SSTATUS, [P.XLEN-1:0],0,0);  
 
   // ========== INITIALIZATION ==========
   initial begin
@@ -458,7 +454,7 @@ module testbench;
       force {`STATUS_SPIE} = initMSTATUS[0][5];
       force {`STATUS_MIE} = initMSTATUS[0][3];
       force {`STATUS_SIE} = initMSTATUS[0][1];
-      force `PLIC_INT_ENABLE = {initPLIC_INT_ENABLE[1][`PLIC_NUM_SRC:1],initPLIC_INT_ENABLE[0][`PLIC_NUM_SRC:1]}; // would need to expand into a generate loop to cover an arbitrary number of contexts
+      force `PLIC_INT_ENABLE = {initPLIC_INT_ENABLE[1][P.PLIC_NUM_SRC:1],initPLIC_INT_ENABLE[0][P.PLIC_NUM_SRC:1]}; // would need to expand into a generate loop to cover an arbitrary number of contexts
       force `INSTRET = CHECKPOINT;
       while (reset!==1) #1;
       while (reset!==0) #1;
@@ -789,7 +785,7 @@ module testbench;
   //////////////////////////////// Extra Features ///////////////////////////////
   ///////////////////////////////////////////////////////////////////////////////
   // Function Tracking
-  FunctionName FunctionName(.reset(reset),
+  FunctionName #(P) FunctionName(.reset(reset),
                             .clk(clk),
                             .ProgramAddrMapFile(ProgramAddrMapFile),
                             .ProgramLabelMapFile(ProgramLabelMapFile));
@@ -814,12 +810,12 @@ module testbench;
    * explanation of the below algorithm.
    */
   logic             SvMode, PTE_R, PTE_X;
-  logic [`XLEN-1:0] SATP, PTE;
+  logic [P.XLEN-1:0] SATP, PTE;
   logic [55:0]      BaseAdr, PAdr;
   logic [8:0]       VPN [2:0];
   logic [11:0]      Offset;
-  function logic [`XLEN-1:0] adrTranslator( 
-    input logic [`XLEN-1:0] adrIn);
+  function logic [P.XLEN-1:0] adrTranslator( 
+    input logic [P.XLEN-1:0] adrIn);
     begin
       int i;
       // Grab the SATP register from privileged unit

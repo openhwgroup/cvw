@@ -30,9 +30,6 @@
 
 import cvw::*;
 
-import cvw::*;
-
-
 module testbench;
   /* verilator lint_off WIDTHTRUNC */
   /* verilator lint_off WIDTHEXPAND */
