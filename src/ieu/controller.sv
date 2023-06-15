@@ -59,6 +59,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal in Execute stage
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
+  output logic        MDUActiveE,              // Mul/Div instruction being executed
 
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
@@ -319,6 +320,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Other execute stage controller signals
   assign MemReadE = MemRWE[1];
   assign SCE = (ResultSrcE == 3'b100);
+  assign MDUActiveE = (ResultSrcE == 3'b011);
   assign RegWriteE = IEURegWriteE | FWriteIntE; // IRF register writes could come from IEU or FPU controllers
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
