@@ -19,7 +19,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
 `define NUM_REGS 32
 `define NUM_CSRS 4096
@@ -29,9 +28,10 @@
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
 
-module wallyTracer(rvviTrace rvvi);
 
-  localparam NUMREGS = `E_SUPPORTED ? 16 : 32;
+module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
+
+  localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;
   
   // wally specific signals
   logic 						 reset;
@@ -39,8 +39,8 @@ module wallyTracer(rvviTrace rvvi);
   logic                          InstrValidD, InstrValidE;
   logic                          StallF, StallD;
   logic                          STATUS_SXL, STATUS_UXL;
-  logic [`XLEN-1:0] 			 PCNextF, PCF, PCD, PCE, PCM, PCW;
-  logic [`XLEN-1:0] 			 InstrRawD, InstrRawE, InstrRawM, InstrRawW;
+  logic [P.XLEN-1:0] 			 PCNextF, PCF, PCD, PCE, PCM, PCW;
+  logic [P.XLEN-1:0] 			 InstrRawD, InstrRawE, InstrRawM, InstrRawW;
   logic 						 InstrValidM, InstrValidW;
   logic 						 StallE, StallM, StallW;
   logic 						 FlushD, FlushE, FlushM, FlushW;
@@ -48,16 +48,16 @@ module wallyTracer(rvviTrace rvvi);
   logic 						 IntrF, IntrD, IntrE, IntrM, IntrW;
   logic 						 HaltM, HaltW;
   logic [1:0] 					 PrivilegeModeW;
-  logic [`XLEN-1:0] 			 rf[NUMREGS];
+  logic [P.XLEN-1:0] 			 rf[NUMREGS];
   logic [NUMREGS-1:0] 			 rf_wb;
   logic [4:0] 					 rf_a3;
   logic 						 rf_we3;
-  logic [`XLEN-1:0] 			 frf[32];
+  logic [P.XLEN-1:0] 			 frf[32];
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
-  logic [`XLEN-1:0]              CSRArray [logic[11:0]];
-  logic [`XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
+  logic [P.XLEN-1:0]              CSRArray [logic[11:0]];
+  logic [P.XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
   logic [`NUM_CSRS-1:0] 		 CSR_W;
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
@@ -102,8 +102,8 @@ module wallyTracer(rvviTrace rvvi);
 	
       // PMPCFG  space is 0-15 3a0 - 3af
 	  int i, i4, i8, csrid;
-      logic [`XLEN-1:0] pmp;
-      for (i=0; i<`PMP_ENTRIES; i+=8) begin
+      logic [P.XLEN-1:0] pmp;
+      for (i=0; i<P.PMP_ENTRIES; i+=8) begin
         i4 = i / 4;
         i8 = (i / 8) * 8;
         pmp = 0;
@@ -121,7 +121,7 @@ module wallyTracer(rvviTrace rvvi);
       end
 
       // PMPADDR space is 0-63 3b0 - 3ef
-      for (i=0; i<`PMP_ENTRIES; i++) begin
+      for (i=0; i<P.PMP_ENTRIES; i++) begin
         pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
         
         csrid = 12'h3B0 + i;
@@ -145,7 +145,7 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
 	  CSRArray[12'hF11] = 0;
 	  CSRArray[12'hF12] = 0;
-	  CSRArray[12'hF13] = `XLEN'h100;
+	  CSRArray[12'hF13] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100;
 	  CSRArray[12'hF15] = 0;
 	  CSRArray[12'h34A] = 0;
 	  // MCYCLE and MINSTRET
@@ -250,10 +250,10 @@ module wallyTracer(rvviTrace rvvi);
   assign CSRWriteM = testbench.dut.core.priv.priv.csr.CSRWriteM;
   
   // pipeline to writeback stage
-  flopenrc #(`XLEN) InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
-  flopenrc #(`XLEN) InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
-  flopenrc #(`XLEN) InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
-  flopenrc #(`XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
+  flopenrc #(P.XLEN) InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
+  flopenrc #(P.XLEN) InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
+  flopenrc #(P.XLEN) InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
+  flopenrc #(P.XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);

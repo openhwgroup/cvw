@@ -25,10 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module localaheadbp #(parameter XLEN,
+module localaheadbp import cvw::*; #(parameter cvw_t P, 
+                                     parameter XLEN,
                       parameter m = 6, // 2^m = number of local history branches 
-                      parameter k = 10,
-                      parameter USE_SRAM = 1) ( // number of past branches stored
+                      parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -59,7 +59,7 @@ module localaheadbp #(parameter XLEN,
   //assign IndexNextF = LHR;
   assign IndexM = LHRW;
   
-  ram2p1r1wbe #(2**k, 2, USE_SRAM) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallD), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
     .rd1(BPDirPredD),
@@ -92,7 +92,7 @@ module localaheadbp #(parameter XLEN,
   assign IndexLHRM = {PCW[m+1] ^ PCW[1], PCW[m:2]};
   assign IndexLHRNextF = {PCNextF[m+1] ^ PCNextF[1], PCNextF[m:2]};
 
-  ram2p1r1wbe #(2**m, k, USE_SRAM) BHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**m, k) BHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexLHRNextF),
     .rd1(LHRF),
