@@ -31,11 +31,11 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic                PCLK, PRESETn,
   input  logic                PSEL,
   input  logic [15:0]         PADDR, 
-  input  logic [P.XLEN-1:0]    PWDATA,
-  input  logic [P.XLEN/8-1:0]  PSTRB,
+  input  logic [P.XLEN-1:0]   PWDATA,
+  input  logic [P.XLEN/8-1:0] PSTRB,
   input  logic                PWRITE,
   input  logic                PENABLE,
-  output logic [P.XLEN-1:0]    PRDATA,
+  output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
   output logic [63:0] MTIME, 
   output logic                MTimerInt, MSwInt
@@ -48,11 +48,11 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
   integer                     i, j;
   
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-  assign PREADY = 1'b1; // CLINT never takes >1 cycle to respond
+  assign PREADY   = 1'b1;                     // CLINT never takes >1 cycle to respond
 
   // word aligned reads
   if (P.XLEN==64) assign #2 entry = {PADDR[15:3], 3'b000};
-  else           assign #2 entry = {PADDR[15:2], 2'b00}; 
+  else            assign #2 entry = {PADDR[15:2], 2'b00}; 
   
   // DH 2/20/21: Eventually allow MTIME to run off a separate clock
   // This will require synchronizing MTIME to the system clock
@@ -150,36 +150,36 @@ module clint_apb import cvw::*;  #(parameter cvw_t P) (
 endmodule
 
 module timeregsync  import cvw::*;  #(parameter cvw_t P) (
-  input  logic clk, resetn, 
-  input  logic             we0, we1,
+  input  logic              clk, resetn, 
+  input  logic              we0, we1,
   input  logic [P.XLEN-1:0] wd,
-  output logic [63:0]      q);
+  output logic [63:0]       q);
 
   if (P.XLEN==64) 
     always_ff @(posedge clk or negedge resetn) 
-      if (~resetn) q <= 0;
+      if (~resetn)  q <= 0;
       else if (we0) q <= wd;
       else          q <= q + 1;
   else
     always_ff @(posedge clk or negedge resetn) 
-      if (~resetn) q <= 0;
+      if (~resetn)  q <= 0;
       else if (we0) q[31:0] <= wd;
       else if (we1) q[63:32] <= wd;
       else          q <= q + 1;
 endmodule
 
 module timereg  import cvw::*;  #(parameter cvw_t P) (
-  input  logic PCLK, PRESETn, TIMECLK,
-  input  logic             we0, we1,
+  input  logic              PCLK, PRESETn, TIMECLK,
+  input  logic              we0, we1,
   input  logic [P.XLEN-1:0] PWDATA,
-  output logic [63:0]      MTIME,
-  output logic             done);
+  output logic [63:0]       MTIME,
+  output logic              done);
 
 //  if (P.TIMEBASE_SYNC) begin:timereg // use PCLK for MTIME
   if (1) begin:timereg // use PCLK for MTIME
     timregsync timeregsync(.clk(PCLK), .resetn(PRESETn), .we0, .we1, .wd(PWDATA), .q(MTIME));
-    assign done = 1; // immediately completes
-  end else begin // use asynchronous TIMECLK 
+    assign done = 1;   // immediately completes
+  end else begin       // use asynchronous TIMECLK 
     // TIME counter runs on TIMECLK but bus interface runs on PCLK
     // Need to synchronize reads and writes
     // This is subtle because synchronizing a binary counter on a per-bit basis could give a mix of old and new bits
