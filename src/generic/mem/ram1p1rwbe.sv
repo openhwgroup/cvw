@@ -30,8 +30,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
 module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=44) (

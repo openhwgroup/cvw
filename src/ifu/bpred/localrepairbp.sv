@@ -25,10 +25,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module localrepairbp #(parameter XLEN,
+module localrepairbp import cvw::*; #(parameter cvw_t P,
+                                      parameter XLEN,
                        parameter m = 6, // 2^m = number of local history branches 
-                       parameter k = 10,
-                       parameter USE_SRAM = 1) ( // number of past branches stored
+                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -58,7 +58,7 @@ module localrepairbp #(parameter XLEN,
   logic                   SpeculativeFlushedF;
   
   
-  ram2p1r1wbe #(2**k, 2, USE_SRAM) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallD), .ce2(~StallW & ~FlushW),
     .ra1(LHRF),
     .rd1(BPDirPredD),
@@ -89,7 +89,7 @@ module localrepairbp #(parameter XLEN,
   assign IndexLHRM = {PCW[m+1] ^ PCW[1], PCW[m:2]};
   assign IndexLHRNextF = {PCNextF[m+1] ^ PCNextF[1], PCNextF[m:2]};
 
-  ram2p1r1wbe #(2**m, k, USE_SRAM) BHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**m, k) BHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexLHRNextF),
     .rd1(LHRCommittedF),
@@ -101,7 +101,7 @@ module localrepairbp #(parameter XLEN,
   assign IndexLHRD = {PCE[m+1] ^ PCE[1], PCE[m:2]};
   assign LHRNextE = BranchD ? {BPDirPredD[1], LHRE[k-1:1]} : LHRE;
   // *** replace with a small CAM
-  ram2p1r1wbe #(2**m, k) SHB(.clk(clk),
+  ram2p1r1wbe #(P, 2**m, k) SHB(.clk(clk),
     .ce1(~StallF), .ce2(~StallE & ~FlushE),
     .ra1(IndexLHRNextF),
     .rd1(LHRSpeculativeF),

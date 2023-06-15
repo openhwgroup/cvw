@@ -26,9 +26,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module twoBitPredictor #(parameter XLEN,
-                         parameter k = 10,
-                         parameter USE_SRAM = 1) (
+module twoBitPredictor import cvw::*; #(parameter cvw_t P, parameter XLEN,
+                         parameter k = 10) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
@@ -54,7 +53,7 @@ module twoBitPredictor #(parameter XLEN,
   assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
 
 
-  ram2p1r1wbe #(2**k, 2, USE_SRAM) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

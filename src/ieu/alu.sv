@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   input  logic [WIDTH-1:0] A, B,        // Operands
   input  logic             W64,         // W64-type instruction
