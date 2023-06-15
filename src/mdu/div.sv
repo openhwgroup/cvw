@@ -105,7 +105,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
   // one copy of divstep for each bit produced per cycle
   genvar i;
   for (i=0; i<P.IDIV_BITSPERCYCLE; i = i+1)
-    divstep divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
+    divstep #(P.XLEN) divstep(W[i], XQ[i], DAbsB, W[i+1], XQ[i+1]);
 
   //////////////////////////////
   // Memory Stage: output sign correction and special cases

@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module vm64check import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.SVMODE_BITS-1:0] SATP_MODE,
   input  logic [P.XLEN-1:0]        VAdr,

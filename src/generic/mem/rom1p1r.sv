@@ -25,8 +25,6 @@
 
 // This model actually works correctly with vivado.
 
-`include "wally-config.vh"
-
 module rom1p1r #(parameter ADDR_WIDTH = 8,
      parameter DATA_WIDTH = 32, 
      parameter PRELOAD_ENABLED = 0)

@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module neg #(parameter WIDTH = 8) (
   input  logic [WIDTH-1:0] a,
   output logic [WIDTH-1:0] y);
