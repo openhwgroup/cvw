@@ -26,7 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-
 module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
   // Decode stage signals
@@ -34,36 +33,36 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              IllegalIEUFPUInstrD,             // Illegal instruction
   output logic              IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
-  input  logic [P.XLEN-1:0]  PCE,                             // PC
-  input  logic [P.XLEN-1:0]  PCLinkE,                         // PC + 4
+  input  logic [P.XLEN-1:0] PCE,                             // PC
+  input  logic [P.XLEN-1:0] PCLinkE,                         // PC + 4
   output logic              PCSrcE,                          // Select next PC (between PC+4 and IEUAdrE)
   input  logic              FWriteIntE, FCvtIntE,            // FPU writes to integer register file, FPU converts float to int
-  output logic [P.XLEN-1:0]  IEUAdrE,                         // Memory address
+  output logic [P.XLEN-1:0] IEUAdrE,                         // Memory address
   output logic              IntDivE, W64E,                   // Integer divide, RV64 W-type instruction 
   output logic [2:0]        Funct3E,                         // Funct3 instruction field
-  output logic [P.XLEN-1:0]  ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
+  output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
   // Memory stage signals
   input  logic              SquashSCW,                       // Squash store conditional, from LSU
   output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
   output logic [1:0]        AtomicM,                         // Atomic control goes to LSU
-  output logic [P.XLEN-1:0]  WriteDataM,                      // Write data to LSU
+  output logic [P.XLEN-1:0] WriteDataM,                      // Write data to LSU
   output logic [2:0]        Funct3M,                         // Funct3 (size and signedness) to LSU
-  output logic [P.XLEN-1:0]  SrcAM,                           // ALU SrcA to Privileged unit and FPU
+  output logic [P.XLEN-1:0] SrcAM,                           // ALU SrcA to Privileged unit and FPU
   output logic [4:0]        RdM,                             // Destination register
-  input  logic [P.XLEN-1:0]  FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
+  input  logic [P.XLEN-1:0] FIntResM,                        // Integer result from FPU (fmv, fclass, fcmp)
   output logic              InvalidateICacheM, FlushDCacheM, // Invalidate I$, flush D$
-  output logic              InstrValidD, InstrValidE, InstrValidM,// Instruction is valid
+  output logic              InstrValidD, InstrValidE, InstrValidM, // Instruction is valid
   output logic              BranchD, BranchE,
   output logic              JumpD, JumpE,
   // Writeback stage signals
-  input  logic [P.XLEN-1:0]  FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
-  input  logic [P.XLEN-1:0]  CSRReadValW,                     // CSR read value, 
-  input  logic [P.XLEN-1:0]  MDUResultW,                      // multiply/divide unit result
-  input  logic [P.XLEN-1:0]  FCvtIntResW,                     // FPU's float to int conversion result
+  input  logic [P.XLEN-1:0] FIntDivResultW,                  // Integer divide result from FPU fdivsqrt)
+  input  logic [P.XLEN-1:0] CSRReadValW,                     // CSR read value, 
+  input  logic [P.XLEN-1:0] MDUResultW,                      // multiply/divide unit result
+  input  logic [P.XLEN-1:0] FCvtIntResW,                     // FPU's float to int conversion result
   input  logic              FCvtIntW,                        // FPU converts float to int
   output logic [4:0]        RdW,                             // Destination register
-  input  logic [P.XLEN-1:0]  ReadDataW,                       // LSU's read data
+  input  logic [P.XLEN-1:0] ReadDataW,                       // LSU's read data
   // Hazard unit signals
   input  logic              StallD, StallE, StallM, StallW,  // Stall signals from hazard unit
   input  logic              FlushD, FlushE, FlushM, FlushW,  // Flush signals
@@ -118,4 +117,3 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .FCvtIntE, .SCE, .ForwardAE, .ForwardBE,
     .FCvtIntStallD, .LoadStallD, .MDUStallD, .CSRRdStallD);
 endmodule
-
