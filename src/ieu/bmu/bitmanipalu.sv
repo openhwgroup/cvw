@@ -54,7 +54,7 @@ module bitmanipalu #(parameter WIDTH=32) (
   logic [WIDTH-1:0] CondZextA;                      // A Conditional Extend Intermediary Signal
   logic [WIDTH-1:0] ABMU, BBMU;                     // Gated data inputs to reduce BMU activity
 
-  // gate data inputs to BMU to only operate when BSelect[1] indicates BMU is in use
+  // gate data inputs to BMU to only operate when BMU is active
   assign ABMU = A & {WIDTH{BMUActiveE}};
   assign BBMU = B & {WIDTH{BMUActiveE}};
 
