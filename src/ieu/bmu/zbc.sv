@@ -29,19 +29,17 @@
 
 module zbc #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,       // Operands
-  input  logic             ZBCSelect,        // ZBC instruction
   input  logic [2:0]       Funct3,           // Indicates operation to perform
   output logic [WIDTH-1:0] ZBCResult);       // ZBC result
 
   logic [WIDTH-1:0] ClmulResult, RevClmulResult;
   logic [WIDTH-1:0] RevB;
-  logic [WIDTH-1:0] X, Y, X1;
+  logic [WIDTH-1:0] X, Y;
 
   bitreverse #(WIDTH) brB(B, RevB);
 
-  mux3 #(WIDTH) xmux1({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X1);
-  mux2 #(WIDTH) xmux(X1, '0, ~ZBCSelect, X);
-  mux3 #(WIDTH) ymux(RevB, B, '0, {~ZBCSelect, ~Funct3[1]}, Y);
+  mux3 #(WIDTH) xmux({RevA[WIDTH-2:0], {1'b0}}, RevA, A, ~Funct3[1:0], X);
+  mux2 #(WIDTH) ymux(RevB, B, ~Funct3[1], Y);
 
   clmul #(WIDTH) clm(.X, .Y, .ClmulResult);
   

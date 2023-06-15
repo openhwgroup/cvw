@@ -59,7 +59,7 @@ if {$argc >= 3} {
 # default to config/rv64ic, but allow this to be overridden at the command line.  For example:
 # do wally-pipelined-batch.do ../config/rv32imc rv32imc
 if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/wally/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench-linux.sv ../testbench/common/*.sv ../src/*/*.sv ../src/*/*/*.sv -suppress 2583
     # start and run simulation
     if { $coverage } {
         echo "wally-batch buildroot coverage"
@@ -88,7 +88,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     exec ./slack-notifier/slack-notifier.py
 
 } elseif {$2 eq "ahb"} {
-    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/wally/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
+    vlog -lint -work wkdir/work_${1}_${2}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286  +define+RAM_LATENCY=$3 +define+BURST_EN=$4
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${2}_${3}_${4}.testbench -work wkdir/work_${1}_${2}_${3}_${4} -G TEST=$2 -o testbenchopt
@@ -112,7 +112,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # **** fix this so we can pass any number of +defines.
     # only allows 3 right now
 
-    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/wally/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
+    vlog -lint -work wkdir/work_${1}_${3}_${4} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286 $5 $6 $7
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     vopt wkdir/work_${1}_${3}_${4}.testbench -work wkdir/work_${1}_${3}_${4} -G TEST=$4 -o testbenchopt
@@ -126,7 +126,7 @@ if {$2 eq "buildroot" || $2 eq "buildroot-checkpoint"} {
     # power off -r /dut/core/*
 
 } else {
-    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/wally/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
+    vlog -lint -work wkdir/work_${1}_${2} +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/testbench.sv ../testbench/common/*.sv   ../src/*/*.sv ../src/*/*/*.sv -suppress 2583 -suppress 7063,2596,13286
     # start and run simulation
     # remove +acc flag for faster sim during regressions if there is no need to access internal signals
     if {$coverage} {
