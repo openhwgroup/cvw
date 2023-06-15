@@ -34,7 +34,7 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
+module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=44) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -49,7 +49,7 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
   // ***************************************************************************
   // TRUE SRAM macro
   // ***************************************************************************
-  if ((`USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
+  if ((P.USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     genvar index;
     // 64 x 128-bit SRAM
     logic [WIDTH-1:0] BitWriteMask;
@@ -59,7 +59,7 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
       .A(addr), .D(din), 
       .BWEB(~BitWriteMask), .Q(dout));
     
-  end else if ((`USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
+  end else if ((P.USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
     genvar index;
     // 64 x 44-bit SRAM
     logic [WIDTH-1:0] BitWriteMask;
@@ -69,7 +69,7 @@ module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
       .A(addr), .D(din), 
       .BWEB(~BitWriteMask), .Q(dout));
 
-  end else if ((`USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
+  end else if ((P.USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
     genvar index;
     // 64 x 22-bit SRAM
     logic [WIDTH-1:0] BitWriteMask;

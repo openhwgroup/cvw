@@ -49,7 +49,7 @@ module dtim import cvw::*;  #(parameter cvw_t P) (
 
   assign we = MemRWM[0]  & ~FlushW;  // have to ignore write if Trap.
 
-  ram1p1rwbe #(.DEPTH(DEPTH), .WIDTH(P.LLEN), .USE_SRAM(P.USE_SRAM)) 
+  ram1p1rwbe #(.P(P), .DEPTH(DEPTH), .WIDTH(P.LLEN)) 
     ram(.clk, .ce, .we, .bwe(ByteMaskM), .addr(DTIMAdr[ADDR_WDITH+OFFSET-1:OFFSET]), .dout(ReadDataWordM), .din(WriteDataM));
 endmodule  
   
