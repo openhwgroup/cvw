@@ -28,7 +28,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN = 26,
-                  OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
+                  OFFSETLEN = 5, INDEXLEN = 9, USE_SRAM = 1, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
@@ -109,7 +109,7 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
+  ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN), .USE_SRAM(USE_SRAM)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag),
     .din(PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
@@ -137,7 +137,7 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
     end
     else begin:wordram // no byte-enable needed for i$.
-      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN), .USE_SRAM(USE_SRAM)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn));

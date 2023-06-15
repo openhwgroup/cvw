@@ -30,11 +30,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-// WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
-
 `include "wally-config.vh"
 
-module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44) (
+// WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
+
+module ram1p1rwbe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,

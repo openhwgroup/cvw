@@ -30,7 +30,8 @@
 
 module gshare #(parameter XLEN, 
                 parameter k = 10,
-                parameter integer TYPE = 1) (
+                parameter integer TYPE = 1,
+                parameter USE_SRAM = 1) (
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -83,7 +84,7 @@ module gshare #(parameter XLEN,
   
   assign BPDirPredF = MatchX ? FwdNewDirPredF : TableBPDirPredF;
 
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2, USE_SRAM) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(TableBPDirPredF),

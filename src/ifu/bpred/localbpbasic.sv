@@ -28,7 +28,8 @@
 
 module localbpbasic #(parameter XLEN,
                       parameter m = 6, // 2^m = number of local history branches 
-                      parameter k = 10) ( // number of past branches stored
+                      parameter k = 10,
+                      parameter USE_SRAM = 1) ( // number of past branches stored
   input logic             clk,
   input logic             reset,
   input logic             StallF, StallD, StallE, StallM, StallW,
@@ -55,7 +56,7 @@ module localbpbasic #(parameter XLEN,
   assign IndexNextF = LHR;
   assign IndexM = LHRM;
   
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(2**k, 2, USE_SRAM) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

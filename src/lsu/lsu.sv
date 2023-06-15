@@ -262,7 +262,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
       cache #(.PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
-              .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
+              .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .USE_SRAM(P.USE_SRAM), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
