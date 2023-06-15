@@ -29,58 +29,58 @@
 
 module uncore import cvw::*;  #(parameter cvw_t P)(
   // AHB Bus Interface
-  input  logic                HCLK, HRESETn,
-  input  logic                TIMECLK,
+  input  logic                 HCLK, HRESETn,
+  input  logic                 TIMECLK,
   input  logic [P.PA_BITS-1:0] HADDR,
   input  logic [P.AHBW-1:0]    HWDATA,
   input  logic [P.XLEN/8-1:0]  HWSTRB,
-  input  logic                HWRITE,
-  input  logic [2:0]          HSIZE,
-  input  logic [2:0]          HBURST,
-  input  logic [3:0]          HPROT,
-  input  logic [1:0]          HTRANS,
-  input  logic                HMASTLOCK,
+  input  logic                 HWRITE,
+  input  logic [2:0]           HSIZE,
+  input  logic [2:0]           HBURST,
+  input  logic [3:0]           HPROT,
+  input  logic [1:0]           HTRANS,
+  input  logic                 HMASTLOCK,
   input  logic [P.AHBW-1:0]    HRDATAEXT,
-  input  logic                HREADYEXT, HRESPEXT,
+  input  logic                 HREADYEXT, HRESPEXT,
   output logic [P.AHBW-1:0]    HRDATA,
-  output logic                HREADY, HRESP,
-  output logic                HSELEXT,
+  output logic                 HREADY, HRESP,
+  output logic                 HSELEXT,
   // peripheral pins          
-  output logic                MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
-  output logic                MExtInt, SExtInt,          // External interrupts from PLIC
-  output logic [63:0]         MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]         GPIOIN,                // GPIO pin input value
-  output logic [31:0]         GPIOOUT, GPIOEN,   // GPIO pin output value and enable
-  input  logic                UARTSin,                   // UART serial input
-  output logic                UARTSout,                  // UART serial output
-  output logic                SDCCmdOut,                 // SD Card command output
-  output logic                SDCCmdOE,                  // SD Card command output enable
-  input  logic                SDCCmdIn,                  // SD Card command input
-  input  logic [3:0]          SDCDatIn,                  // SD Card data input
-  output logic                SDCCLK                     // SD Card clock
+  output logic                 MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
+  output logic                 MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [63:0]          MTIME_CLINT,               // MTIME, from CLINT
+  input  logic [31:0]          GPIOIN,                    // GPIO pin input value
+  output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
+  input  logic                 UARTSin,                   // UART serial input
+  output logic                 UARTSout,                  // UART serial output
+  output logic                 SDCCmdOut,                 // SD Card command output
+  output logic                 SDCCmdOE,                  // SD Card command output enable
+  input  logic                 SDCCmdIn,                  // SD Card command input
+  input  logic [3:0]           SDCDatIn,                  // SD Card data input
+  output logic                 SDCCLK                     // SD Card clock
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [10:0]                HSELRegions;
-  logic                       HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic                       HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
-  logic                       HRESPRam,  HRESPSDC;
-  logic                       HREADYRam, HRESPSDCD;
+  logic [10:0]                 HSELRegions;
+  logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
+  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic                        HRESPRam,  HRESPSDC;
+  logic                        HREADYRam, HRESPSDCD;
   logic [P.XLEN-1:0]           HREADBootRom; 
-  logic                       HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
-  logic                       HSELNoneD;
-  logic                       UARTIntr,GPIOIntr;
-  logic                       SDCIntM;
+  logic                        HSELBootRom, HSELBootRomD, HRESPBootRom, HREADYBootRom, HREADYSDC;
+  logic                        HSELNoneD;
+  logic                        UARTIntr,GPIOIntr;
+  logic                        SDCIntM;
   
-  logic                       PCLK, PRESETn, PWRITE, PENABLE;
-  logic [3:0]                 PSEL, PREADY;
-  logic [31:0]                PADDR;
+  logic                        PCLK, PRESETn, PWRITE, PENABLE;
+  logic [3:0]                  PSEL, PREADY;
+  logic [31:0]                 PADDR;
   logic [P.XLEN-1:0]           PWDATA;
   logic [P.XLEN/8-1:0]         PSTRB;
   logic [3:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
-  logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+  logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -154,9 +154,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .SDCIntM        
       );
   end else begin : sdc
-    assign SDCCLK = 0; 
+    assign SDCCLK    = 0; 
     assign SDCCmdOut = 0;
-    assign SDCCmdOE = 0;
+    assign SDCCmdOE  = 0;
   end
 
   // AHB Read Multiplexer
@@ -189,4 +189,3 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
-

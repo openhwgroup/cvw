@@ -29,78 +29,78 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module gpio_apb import cvw::*;  #(parameter cvw_t P) (
-  input  logic              PCLK, PRESETn,
-  input  logic              PSEL,
-  input  logic [7:0]        PADDR, 
-  input  logic [P.XLEN-1:0]  PWDATA,
+  input  logic                PCLK, PRESETn,
+  input  logic                PSEL,
+  input  logic [7:0]          PADDR, 
+  input  logic [P.XLEN-1:0]   PWDATA,
   input  logic [P.XLEN/8-1:0] PSTRB,
-  input  logic              PWRITE,
-  input  logic              PENABLE,
-  output logic [P.XLEN-1:0]  PRDATA,
-  output logic              PREADY,
-  input  logic [31:0]       iof0, iof1,
-  input  logic [31:0]       GPIOIN,
-  output logic [31:0]       GPIOOUT, GPIOEN,
-  output logic              GPIOIntr
+  input  logic                PWRITE,
+  input  logic                PENABLE,
+  output logic [P.XLEN-1:0]   PRDATA,
+  output logic                PREADY,
+  input  logic [31:0]         iof0, iof1,
+  input  logic [31:0]         GPIOIN,
+  output logic [31:0]         GPIOOUT, GPIOEN,
+  output logic                GPIOIntr
 );
 
-  logic [31:0]              input0d, input1d, input2d, input3d;
-  logic [31:0]              input_val, input_en, output_en, output_val;
-  logic [31:0]              rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
-  logic [31:0]              out_xor, iof_en, iof_sel, iof_out, gpio_out;
-  logic [7:0]               entry;
-  logic [31:0]              Din, Dout;
-  logic                     memwrite;
+  logic [31:0]                input0d, input1d, input2d, input3d;
+  logic [31:0]                input_val, input_en, output_en, output_val;
+  logic [31:0]                rise_ie, rise_ip, fall_ie, fall_ip, high_ie, high_ip, low_ie, low_ip; 
+  logic [31:0]                out_xor, iof_en, iof_sel, iof_out, gpio_out;
+  logic [7:0]                 entry;
+  logic [31:0]                Din, Dout;
+  logic                       memwrite;
   
   // APB I/O
-  assign entry = {PADDR[7:2],2'b00};  // 32-bit word-aligned accesses
+  assign entry    = {PADDR[7:2],2'b00};       // 32-bit word-aligned accesses
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-  assign PREADY = 1'b1; // GPIO never takes >1 cycle to respond
+  assign PREADY   = 1'b1;                     // GPIO never takes >1 cycle to respond
 
   // account for subword read/write circuitry
   // -- Note GPIO registers are 32 bits no matter what; access them with LW SW.
   //    (At least that's what I think when FE310 spec says "only naturally aligned 32-bit accesses are supported")
   if (P.XLEN == 64) begin
-    assign Din =    entry[2] ? PWDATA[63:32] : PWDATA[31:0];
+    assign Din    = entry[2] ? PWDATA[63:32] : PWDATA[31:0];
     assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
-    assign Din = PWDATA[31:0];
+    assign Din    = PWDATA[31:0];
     assign PRDATA = Dout;
   end
 
   // register access
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) begin // asynch reset
-      input_en <= 0;
+      input_en  <= 0;
       output_en <= 0;
       // *** synch reset not yet implemented [DH: can we delete this comment?  Check if a sync reset is required]
       output_val <= #1 0;
-      rise_ie <= #1 0;
-      rise_ip <= #1 0;
-      fall_ie <= #1 0;
-      fall_ip <= #1 0;
-      high_ie <= #1 0;
-      high_ip <= #1 0;
-      low_ie <= #1 0;
-      low_ip <= #1 0;
-      iof_en <= #1 0;
-      iof_sel <= #1 0;
-      out_xor <= #1 0;
+      rise_ie    <= #1 0;
+      rise_ip    <= #1 0;
+      fall_ie    <= #1 0;
+      fall_ip    <= #1 0;
+      high_ie    <= #1 0;
+      high_ip    <= #1 0;
+      low_ie     <= #1 0;
+      low_ip     <= #1 0;
+      iof_en     <= #1 0;
+      iof_sel    <= #1 0;
+      out_xor    <= #1 0;
     end else begin     // writes
         // According to FE310 spec: Once the interrupt is pending, it will remain set until a 1 is written to the *_ip register at that bit.
         /* verilator lint_off CASEINCOMPLETE */
       if (memwrite) 
         case(entry)
-          8'h04: input_en <= #1 Din;
-          8'h08: output_en <= #1 Din;
+          8'h04: input_en   <= #1 Din;
+          8'h08: output_en  <= #1 Din;
           8'h0C: output_val <= #1 Din;
-          8'h18: rise_ie <= #1 Din;
-          8'h20: fall_ie <= #1 Din;
-          8'h28: high_ie <= #1 Din;
-          8'h30: low_ie  <= #1 Din;
-          8'h38: iof_en  <= #1 Din;
-          8'h3C: iof_sel <= #1 Din;
-          8'h40: out_xor <= #1 Din;
+          8'h18: rise_ie    <= #1 Din;
+          8'h20: fall_ie    <= #1 Din;
+          8'h28: high_ie    <= #1 Din;
+          8'h30: low_ie     <= #1 Din;
+          8'h38: iof_en     <= #1 Din;
+          8'h3C: iof_sel    <= #1 Din;
+          8'h40: out_xor    <= #1 Din;
         endcase
         /* verilator lint_on CASEINCOMPLETE */
 
@@ -115,21 +115,21 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
       else                             low_ip  <= low_ip  | ~input3d;
 
       case(entry) // flop to sample inputs
-        8'h00: Dout <= #1 input_val;
-        8'h04: Dout <= #1 input_en;
-        8'h08: Dout <= #1 output_en;
-        8'h0C: Dout <= #1 output_val;
-        8'h18: Dout <= #1 rise_ie;
-        8'h1C: Dout <= #1 rise_ip;
-        8'h20: Dout <= #1 fall_ie;
-        8'h24: Dout <= #1 fall_ip;
-        8'h28: Dout <= #1 high_ie;
-        8'h2C: Dout <= #1 high_ip;
-        8'h30: Dout <= #1 low_ie;
-        8'h34: Dout <= #1 low_ip;
-        8'h38: Dout <= #1 iof_en;
-        8'h3C: Dout <= #1 iof_sel;
-        8'h40: Dout <= #1 out_xor; 
+        8'h00: Dout   <= #1 input_val;
+        8'h04: Dout   <= #1 input_en;
+        8'h08: Dout   <= #1 output_en;
+        8'h0C: Dout   <= #1 output_val;
+        8'h18: Dout   <= #1 rise_ie;
+        8'h1C: Dout   <= #1 rise_ip;
+        8'h20: Dout   <= #1 fall_ie;
+        8'h24: Dout   <= #1 fall_ip;
+        8'h28: Dout   <= #1 high_ie;
+        8'h2C: Dout   <= #1 high_ip;
+        8'h30: Dout   <= #1 low_ie;
+        8'h34: Dout   <= #1 low_ip;
+        8'h38: Dout   <= #1 iof_en;
+        8'h3C: Dout   <= #1 iof_sel;
+        8'h40: Dout   <= #1 out_xor; 
         default: Dout <= #1 0;
       endcase
     end
@@ -137,18 +137,17 @@ module gpio_apb import cvw::*;  #(parameter cvw_t P) (
   // chip i/o
   // connect OUT to IN for loopback testing
   if (P.GPIO_LOOPBACK_TEST) assign input0d = ((output_en & GPIOOUT) | (~output_en & GPIOIN)) & input_en;
-  else                     assign input0d = GPIOIN & input_en;
+  else                      assign input0d = GPIOIN & input_en;
 
   // synchroninzer for inputs
   flop #(32) sync1(PCLK,input0d,input1d);
   flop #(32) sync2(PCLK,input1d,input2d);
   flop #(32) sync3(PCLK,input2d,input3d);
   assign input_val = input3d;
-  assign iof_out = iof_sel & iof1 | ~iof_sel & iof0;         // per-bit mux between iof1 and iof0
-  assign gpio_out = iof_en & iof_out | ~iof_en & output_val; // per-bit mux between IOF and output_val
-  assign GPIOOUT = gpio_out ^ out_xor;                   // per-bit flip output polarity
-  assign GPIOEN = output_en;
+  assign iof_out   = iof_sel & iof1 | ~iof_sel & iof0;        // per-bit mux between iof1 and iof0
+  assign gpio_out  = iof_en & iof_out | ~iof_en & output_val; // per-bit mux between IOF and output_val
+  assign GPIOOUT   = gpio_out ^ out_xor;                      // per-bit flip output polarity
+  assign GPIOEN    = output_en;
 
-  assign GPIOIntr = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};
+  assign GPIOIntr  = |{(rise_ip & rise_ie),(fall_ip & fall_ie),(high_ip & high_ie),(low_ip & low_ie)};
 endmodule
-

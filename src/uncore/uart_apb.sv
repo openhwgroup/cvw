@@ -29,18 +29,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module uart_apb import cvw::*; #(parameter cvw_t P) (
-  input  logic             PCLK, PRESETn,
-  input  logic             PSEL,
-  input  logic [2:0]       PADDR, 
-  input  logic [P.XLEN-1:0] PWDATA,
+  input  logic                PCLK, PRESETn,
+  input  logic                PSEL,
+  input  logic [2:0]          PADDR, 
+  input  logic [P.XLEN-1:0]   PWDATA,
   input  logic [P.XLEN/8-1:0] PSTRB,
-  input  logic             PWRITE,
-  input  logic             PENABLE,
-  output logic [P.XLEN-1:0] PRDATA,
-  output logic             PREADY,
-  input  logic             SIN, DSRb, DCDb, CTSb, RIb,    // from E1A driver from RS232 interface
-  output logic             SOUT, RTSb, DTRb, // to E1A driver to RS232 interface
-  output logic             OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);         // to CPU
+  input  logic                PWRITE,
+  input  logic                PENABLE,
+  output logic [P.XLEN-1:0]   PRDATA,
+  output logic                PREADY,
+  input  logic                SIN, DSRb, DCDb, CTSb, RIb,           // from E1A driver from RS232 interface
+  output logic                SOUT, RTSb, DTRb,                     // to E1A driver to RS232 interface
+  output logic                OUT1b, OUT2b, INTR, TXRDYb, RXRDYb);  // to CPU
 
   // UART interface signals
   logic [2:0]      entry;
@@ -49,10 +49,10 @@ module uart_apb import cvw::*; #(parameter cvw_t P) (
 
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
   assign memread  = ~PWRITE & PENABLE & PSEL;  
-  assign PREADY = 1'b1; // CLINT never takes >1 cycle to respond
-  assign entry = PADDR[2:0];
-  assign MEMRb = ~memread;
-  assign MEMWb = ~memwrite;
+  assign PREADY   = 1'b1; // CLINT never takes >1 cycle to respond
+  assign entry    = PADDR[2:0];
+  assign MEMRb    = ~memread;
+  assign MEMWb    = ~memwrite;
 
   if (P.XLEN == 64) begin:uart
     always_comb begin
@@ -97,4 +97,3 @@ module uart_apb import cvw::*; #(parameter cvw_t P) (
 );
 
 endmodule
-
