@@ -28,55 +28,55 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module datapath import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk, reset,
+  input  logic              clk, reset,
   // Decode stage signals
-  input  logic [2:0]       ImmSrcD,                 // Selects type of immediate extension
-  input  logic [31:0]      InstrD,                  // Instruction in Decode stage
+  input  logic [2:0]        ImmSrcD,                 // Selects type of immediate extension
+  input  logic [31:0]       InstrD,                  // Instruction in Decode stage
   // Execute stage signals
   input  logic [P.XLEN-1:0] PCE,                     // PC in Execute stage  
   input  logic [P.XLEN-1:0] PCLinkE,                 // PC + 4 (of instruction in Execute stage)
-  input  logic [2:0]       Funct3E,                 // Funct3 field of instruction in Execute stage
-  input  logic             StallE, FlushE,          // Stall, flush Execute stage
-  input  logic [1:0]       ForwardAE, ForwardBE,    // Forward ALU operands from later stages
-  input  logic             W64E,                    // W64-type instruction
-  input  logic             SubArithE,               // Subtraction or arithmetic shift
-  input  logic             ALUSrcAE, ALUSrcBE,      // ALU operands
-  input  logic             ALUResultSrcE,           // Selects result to pass on to Memory stage
-  input  logic [2:0]       ALUSelectE,              // ALU mux select signal
-  input  logic             JumpE,                   // Is a jump (j) instruction
-  input  logic             BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
-  input  logic [1:0]       BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
-  input  logic [2:0]       ZBBSelectE,              // ZBB mux select signal
-  input  logic [2:0]       BALUControlE,            // ALU Control signals for B instructions in Execute Stage
-  output logic [1:0]       FlagsE,                  // Comparison flags ({eq, lt})
+  input  logic [2:0]        Funct3E,                 // Funct3 field of instruction in Execute stage
+  input  logic              StallE, FlushE,          // Stall, flush Execute stage
+  input  logic [1:0]        ForwardAE, ForwardBE,    // Forward ALU operands from later stages
+  input  logic              W64E,                    // W64-type instruction
+  input  logic              SubArithE,               // Subtraction or arithmetic shift
+  input  logic              ALUSrcAE, ALUSrcBE,      // ALU operands
+  input  logic              ALUResultSrcE,           // Selects result to pass on to Memory stage
+  input  logic [2:0]        ALUSelectE,              // ALU mux select signal
+  input  logic              JumpE,                   // Is a jump (j) instruction
+  input  logic              BranchSignedE,           // Branch comparison operands are signed (if it's a branch)
+  input  logic [1:0]        BSelectE,                // One hot encoding of ZBA_ZBB_ZBC_ZBS instruction
+  input  logic [2:0]        ZBBSelectE,              // ZBB mux select signal
+  input  logic [2:0]        BALUControlE,            // ALU Control signals for B instructions in Execute Stage
+  output logic [1:0]        FlagsE,                  // Comparison flags ({eq, lt})
   output logic [P.XLEN-1:0] IEUAdrE,                 // Address computed by ALU
   output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // ALU sources before the mux chooses between them and PCE to put in srcA/B
   // Memory stage signals
-  input  logic             StallM, FlushM,          // Stall, flush Memory stage
-  input  logic             FWriteIntM, FCvtIntW,    // FPU writes integer register file, FPU converts float to int
+  input  logic              StallM, FlushM,          // Stall, flush Memory stage
+  input  logic              FWriteIntM, FCvtIntW,    // FPU writes integer register file, FPU converts float to int
   input  logic [P.XLEN-1:0] FIntResM,                // FPU integer result
   output logic [P.XLEN-1:0] SrcAM,                   // ALU's Source A in Memory stage to privilege unit for CSR writes
   output logic [P.XLEN-1:0] WriteDataM,              // Write data in Memory stage
   // Writeback stage signals
-  input  logic             StallW, FlushW,          // Stall, flush Writeback stage
-  input  logic             RegWriteW, IntDivW,      // Write register file, integer divide instruction
-  input  logic             SquashSCW,               // Squash a store conditional when a conflict arose
-  input  logic [2:0]       ResultSrcW,              // Select source of result to write back to register file
+  input  logic              StallW, FlushW,          // Stall, flush Writeback stage
+  input  logic              RegWriteW, IntDivW,      // Write register file, integer divide instruction
+  input  logic              SquashSCW,               // Squash a store conditional when a conflict arose
+  input  logic [2:0]        ResultSrcW,              // Select source of result to write back to register file
   input  logic [P.XLEN-1:0] FCvtIntResW,             // FPU convert fp to integer result
   input  logic [P.XLEN-1:0] ReadDataW,               // Read data from LSU
   input  logic [P.XLEN-1:0] CSRReadValW,             // CSR read result
   input  logic [P.XLEN-1:0] MDUResultW,              // MDU (Multiply/divide unit) result
   input  logic [P.XLEN-1:0] FIntDivResultW,          // FPU's integer divide result
    // Hazard Unit signals 
-  output logic [4:0]       Rs1D, Rs2D, Rs1E, Rs2E,  // Register sources to read in Decode or Execute stage
-  output logic [4:0]       RdE, RdM, RdW            // Register destinations in Execute, Memory, or Writeback stage
+  output logic [4:0]        Rs1D, Rs2D, Rs1E, Rs2E,  // Register sources to read in Decode or Execute stage
+  output logic [4:0]        RdE, RdM, RdW            // Register destinations in Execute, Memory, or Writeback stage
 );
 
   // Fetch stage signals
   // Decode stage signals
   logic [P.XLEN-1:0] R1D, R2D;                       // Read data from Rs1 (RD1), Rs2 (RD2)
   logic [P.XLEN-1:0] ImmExtD;                        // Extended immediate in Decode stage
-  logic [4:0]       RdD;                            // Destination register in Decode stage
+  logic [4:0]        RdD;                            // Destination register in Decode stage
   // Execute stage signals
   logic [P.XLEN-1:0] R1E, R2E;                       // Source operands read from register file
   logic [P.XLEN-1:0] ImmExtE;                        // Extended immediate in Execute stage 
@@ -103,9 +103,9 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(P.XLEN) RD1EReg(clk, reset, FlushE, ~StallE, R1D, R1E);
   flopenrc #(P.XLEN) RD2EReg(clk, reset, FlushE, ~StallE, R2D, R2E);
   flopenrc #(P.XLEN) ImmExtEReg(clk, reset, FlushE, ~StallE, ImmExtD, ImmExtE);
-  flopenrc #(5)     Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
-  flopenrc #(5)     Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
-  flopenrc #(5)     RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
+  flopenrc #(5)      Rs1EReg(clk, reset, FlushE, ~StallE, Rs1D, Rs1E);
+  flopenrc #(5)      Rs2EReg(clk, reset, FlushE, ~StallE, Rs2D, Rs2E);
+  flopenrc #(5)      RdEReg(clk, reset, FlushE, ~StallE, RdD, RdE);
   
   mux3  #(P.XLEN)  faemux(R1E, ResultW, IFResultM, ForwardAE, ForwardedSrcAE);
   mux3  #(P.XLEN)  fbemux(R2E, ResultW, IFResultM, ForwardBE, ForwardedSrcBE);
@@ -144,5 +144,5 @@ module datapath import cvw::*;  #(parameter cvw_t P) (
  
   // handle Store Conditional result if atomic extension supported
   if (P.A_SUPPORTED) assign SCResultW = {{(P.XLEN-1){1'b0}}, SquashSCW};
-  else              assign SCResultW = 0;
+  else               assign SCResultW = 0;
 endmodule

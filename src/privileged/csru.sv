@@ -27,40 +27,40 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csru import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk, reset, 
-  input  logic             InstrValidNotFlushedM,
-  input  logic             CSRUWriteM,
-  input  logic [11:0]      CSRAdrM,
+  input  logic              clk, reset, 
+  input  logic              InstrValidNotFlushedM,
+  input  logic              CSRUWriteM,
+  input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] CSRWriteValM,
-  input  logic [1:0]       STATUS_FS,
+  input  logic [1:0]        STATUS_FS,
   output logic [P.XLEN-1:0] CSRUReadValM,  
-  input  logic [4:0]       SetFflagsM,
-  output logic [2:0]       FRM_REGW,
-  output logic             WriteFRMM, WriteFFLAGSM,
-  output logic             IllegalCSRUAccessM
+  input  logic [4:0]        SetFflagsM,
+  output logic [2:0]        FRM_REGW,
+  output logic              WriteFRMM, WriteFFLAGSM,
+  output logic              IllegalCSRUAccessM
 );
 
   localparam FFLAGS = 12'h001;
-  localparam FRM = 12'h002;
-  localparam FCSR = 12'h003;
+  localparam FRM    = 12'h002;
+  localparam FCSR   = 12'h003;
 
-  logic [4:0]              FFLAGS_REGW;
-  logic [2:0]              NextFRMM;
-  logic [4:0]              NextFFLAGSM;
-  logic                    SetOrWriteFFLAGSM;
+  logic [4:0]               FFLAGS_REGW;
+  logic [2:0]               NextFRMM;
+  logic [4:0]               NextFFLAGSM;
+  logic                     SetOrWriteFFLAGSM;
   
   // Write enables
-  assign WriteFRMM =    CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
+  assign WriteFRMM    = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
   assign WriteFFLAGSM = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR);
 
   // Write Values
-  assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
-  assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
+  assign NextFRMM          = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
+  assign NextFFLAGSM       = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
   assign SetOrWriteFFLAGSM = WriteFFLAGSM | (|SetFflagsM & InstrValidNotFlushedM);
 
   // CSRs
   flopenr #(3) FRMreg(clk, reset, WriteFRMM, NextFRMM, FRM_REGW);
-  flopenr   #(5) FFLAGSreg(clk, reset, SetOrWriteFFLAGSM, NextFFLAGSM, FFLAGS_REGW); 
+  flopenr #(5) FFLAGSreg(clk, reset, SetOrWriteFFLAGSM, NextFFLAGSM, FFLAGS_REGW); 
 
   // CSR Reads
   always_comb begin

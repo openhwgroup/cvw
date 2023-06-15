@@ -28,48 +28,48 @@
 
 module mmu import cvw::*;  #(parameter cvw_t P,
                              parameter TLB_ENTRIES = 8, IMMU = 0) (
-  input  logic                clk, reset,
-  input  logic [P.XLEN-1:0]   SATP_REGW,          // Current value of satp CSR (from privileged unit)
-  input  logic                STATUS_MXR,         // Status CSR: make executable page readable
-  input  logic                STATUS_SUM,         // Status CSR: Supervisor access to user memory
-  input  logic                STATUS_MPRV,        // Status CSR: modify machine privilege
-  input  logic [1:0]          STATUS_MPP,         // Status CSR: previous machine privilege level
-  input  logic [1:0]          PrivilegeModeW,     // Current privilege level of the processeor
-  input  logic                DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
-  input  logic [P.XLEN+1:0]   VAdr,               // virtual/physical address from IEU or physical address from HPTW
-  input  logic [1:0]          Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
-  input  logic [P.XLEN-1:0]   PTE,                // page table entry
-  input  logic [1:0]          PageTypeWriteVal,   // page type
-  input  logic                TLBWrite,           // write TLB entry
-  input  logic                TLBFlush,           // Invalidate all TLB entries
+  input  logic                 clk, reset,
+  input  logic [P.XLEN-1:0]    SATP_REGW,          // Current value of satp CSR (from privileged unit)
+  input  logic                 STATUS_MXR,         // Status CSR: make executable page readable
+  input  logic                 STATUS_SUM,         // Status CSR: Supervisor access to user memory
+  input  logic                 STATUS_MPRV,        // Status CSR: modify machine privilege
+  input  logic [1:0]           STATUS_MPP,         // Status CSR: previous machine privilege level
+  input  logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
+  input  logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
+  input  logic [P.XLEN+1:0]    VAdr,               // virtual/physical address from IEU or physical address from HPTW
+  input  logic [1:0]           Size,               // access size: 00 = 8 bits, 01 = 16 bits, 10 = 32 bits , 11 = 64 bits
+  input  logic [P.XLEN-1:0]    PTE,                // page table entry
+  input  logic [1:0]           PageTypeWriteVal,   // page type
+  input  logic                 TLBWrite,           // write TLB entry
+  input  logic                 TLBFlush,           // Invalidate all TLB entries
   output logic [P.PA_BITS-1:0] PhysicalAddress,    // PAdr when no translation, or translated VAdr (TLBPAdr) when there is translation
-  output logic                TLBMiss,            // Miss TLB
-  output logic                Cacheable,          // PMA indicates memory address is cachable
-  output logic                Idempotent,         // PMA indicates memory address is idempotent
-  output logic                SelTIM,             // Select a tightly integrated memory
+  output logic                 TLBMiss,            // Miss TLB
+  output logic                 Cacheable,          // PMA indicates memory address is cachable
+  output logic                 Idempotent,         // PMA indicates memory address is idempotent
+  output logic                 SelTIM,             // Select a tightly integrated memory
   // Faults
-  output logic                InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM, // access fault sources
-  output logic                InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,       // page fault sources
-  output logic                UpdateDA,                                                  // page fault due to setting dirty or access bit
-  output logic                LoadMisalignedFaultM, StoreAmoMisalignedFaultM,            // misaligned fault sources
+  output logic                 InstrAccessFaultF, LoadAccessFaultM, StoreAmoAccessFaultM, // access fault sources
+  output logic                 InstrPageFaultF, LoadPageFaultM, StoreAmoPageFaultM,       // page fault sources
+  output logic                 UpdateDA,                                                  // page fault due to setting dirty or access bit
+  output logic                 LoadMisalignedFaultM, StoreAmoMisalignedFaultM,            // misaligned fault sources
   // PMA checker signals
-  input  logic                AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
-  input var logic [7:0]       PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],                       // PMP configuration
-  input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0]                    // PMP addresses
+  input  logic                 AtomicAccessM, ExecuteAccessF, WriteAccessM, ReadAccessM,  // access type
+  input var logic [7:0]        PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],                      // PMP configuration
+  input var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0]                   // PMP addresses
 );
 
-  logic [P.PA_BITS-1:0]       TLBPAdr;                  // physical address for TLB                   
-  logic                       PMAInstrAccessFaultF;     // Instruction access fault from PMA
-  logic                       PMPInstrAccessFaultF;     // Instruction access fault from PMP
-  logic                       PMALoadAccessFaultM;      // Load access fault from PMA
-  logic                       PMPLoadAccessFaultM;      // Load access fault from PMP
-  logic                       PMAStoreAmoAccessFaultM;  // Store or AMO access fault from PMA
-  logic                       PMPStoreAmoAccessFaultM;  // Store or AMO access fault from PMP
-  logic                       DataMisalignedM;          // load or store misaligned
-  logic                       Translate;                // Translation occurs when virtual memory is active and DisableTranslation is off
-  logic                       TLBHit;                   // Hit in TLB
-  logic                       TLBPageFault;             // Page fault from TLB
-  logic                       ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
+  logic [P.PA_BITS-1:0]        TLBPAdr;                  // physical address for TLB                   
+  logic                        PMAInstrAccessFaultF;     // Instruction access fault from PMA
+  logic                        PMPInstrAccessFaultF;     // Instruction access fault from PMP
+  logic                        PMALoadAccessFaultM;      // Load access fault from PMA
+  logic                        PMPLoadAccessFaultM;      // Load access fault from PMP
+  logic                        PMAStoreAmoAccessFaultM;  // Store or AMO access fault from PMA
+  logic                        PMPStoreAmoAccessFaultM;  // Store or AMO access fault from PMP
+  logic                        DataMisalignedM;          // load or store misaligned
+  logic                        Translate;                // Translation occurs when virtual memory is active and DisableTranslation is off
+  logic                        TLBHit;                   // Hit in TLB
+  logic                        TLBPageFault;             // Page fault from TLB
+  logic                        ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
   
   // only instantiate TLB if Virtual Memory is supported
   if (P.VIRTMEM_SUPPORTED) begin:tlb
@@ -86,9 +86,9 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
           .Translate, .TLBPageFault, .UpdateDA);
   end else begin:tlb // just pass address through as physical
-    assign Translate = 0;
-    assign TLBMiss = 0;
-    assign TLBHit = 1; // *** is this necessary
+    assign Translate    = 0;
+    assign TLBMiss      = 0;
+    assign TLBHit       = 1; // *** is this necessary
     assign TLBPageFault = 0;
   end
 
