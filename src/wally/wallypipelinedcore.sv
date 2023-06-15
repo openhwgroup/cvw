@@ -77,6 +77,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   logic                          DivBusyE;
   logic                          LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic                          SquashSCW;
+  logic                          MDUActiveE;                      // Mul/Div instruction being executed
 
   // floating point unit signals
   logic [2:0]                    FRM_REGW;
@@ -190,7 +191,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
      .InstrD, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, 
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE,
      // Memory stage interface
      .SquashSCW,  // from LSU
      .MemRWM,     // read/write control goes to LSU
@@ -306,7 +307,7 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   if (P.M_SUPPORTED | P.ZMMUL_SUPPORTED) begin:mdu
     mdu #(P) mdu(.clk, .reset, .StallM, .StallW, .FlushE, .FlushM, .FlushW,
       .ForwardedSrcAE, .ForwardedSrcBE, 
-      .Funct3E, .Funct3M, .IntDivE, .W64E,
+      .Funct3E, .Funct3M, .IntDivE, .W64E, .MDUActiveE,
       .MDUResultW, .DivBusyE); 
   end else begin // no M instructions supported
     assign MDUResultW = 0; 

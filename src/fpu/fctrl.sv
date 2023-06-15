@@ -36,7 +36,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   input  logic [2:0]           FRM_REGW,                           // rounding mode from CSR
   input  logic [1:0]           STATUS_FS,                          // is FPU enabled?
   input  logic                 FDivBusyE,                          // is the divider busy
-  // intruction                                                   
+  // instruction                                                   
   input  logic [31:0]          InstrD,                             // the full instruction
   input  logic [6:0]           Funct7D,                            // bits 31:25 of instruction - may contain percision
   input  logic [6:0]           OpD,                                // bits 6:0 of instruction
@@ -53,6 +53,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   output logic                 FpLoadStoreM,                       // FP load or store instruction
   output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
   output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
+  output logic                 FPUActiveE,                         // FP instruction being executed
   // register control signals
   output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
   output logic                 FWriteIntE, FWriteIntM,             // Write to integer register
@@ -308,9 +309,9 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
   assign Adr3D = InstrD[31:27];
  
   // D/E pipleine register
-  flopenrc #(13+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
-              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD},
-              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE});
+  flopenrc #(14+P.FMTBITS) DECtrlReg3(clk, reset, FlushE, ~StallE, 
+              {FRegWriteD, PostProcSelD, FResSelD, FrmD, FmtD, OpCtrlD, FWriteIntD, FCvtIntD, ~IllegalFPUInstrD},
+              {FRegWriteE, PostProcSelE, FResSelE, FrmE, FmtE, OpCtrlE, FWriteIntE, FCvtIntE, FPUActiveE});
   flopenrc #(15) DEAdrReg(clk, reset, FlushE, ~StallE, {Adr1D, Adr2D, Adr3D}, {Adr1E, Adr2E, Adr3E});
   flopenrc #(1) DEFDivStartReg(clk, reset, FlushE, ~StallE|FDivBusyE, FDivStartD, FDivStartE);
   flopenrc #(3) DEEnReg(clk, reset, FlushE, ~StallE, {XEnD, YEnD, ZEnD}, {XEnE, YEnE, ZEnE});
