@@ -104,8 +104,7 @@ module cacheLRU
     if (node == NUMWAYS-2) begin
       assign LRUUpdate[lchild] = ~WayEncoded[r];
       assign LRUUpdate[rchild] = WayEncoded[r];
-    end
-    else begin
+    end else begin
       assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
       assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
     end

@@ -48,6 +48,3 @@ module prioritythermometer #(parameter N = 8) (
   end
   /* verilator lint_on UNOPTFLAT */
 endmodule
-
-
-

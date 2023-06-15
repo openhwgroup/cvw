@@ -36,5 +36,3 @@ module counter #(parameter WIDTH=8) (
   assign qnext = q + 1;
   flopenr #(WIDTH) cntrflop(clk, reset, en, qnext, q);
 endmodule 
-
-

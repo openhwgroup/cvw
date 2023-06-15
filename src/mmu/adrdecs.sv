@@ -30,12 +30,12 @@
 
 module adrdecs import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
-  input  logic                AccessRW, AccessRX, AccessRWX,
-  input  logic [1:0]          Size,
-  output logic [10:0]         SelRegions
+  input  logic                 AccessRW, AccessRX, AccessRWX,
+  input  logic [1:0]           Size,
+  output logic [10:0]          SelRegions
 );
 
-  localparam logic [3:0]          SUPPORTED_SIZE = (P.LLEN == 32 ? 4'b0111 : 4'b1111);
+  localparam logic [3:0]       SUPPORTED_SIZE = (P.LLEN == 32 ? 4'b0111 : 4'b1111);
  // Determine which region of physical memory (if any) is being accessed
   adrdec #(P.PA_BITS) dtimdec(PhysicalAddress, P.DTIM_BASE[P.PA_BITS-1:0], P.DTIM_RANGE[P.PA_BITS-1:0], P.DTIM_SUPPORTED, AccessRW, Size, SUPPORTED_SIZE, SelRegions[10]);  
   adrdec #(P.PA_BITS) iromdec(PhysicalAddress, P.IROM_BASE[P.PA_BITS-1:0], P.IROM_RANGE[P.PA_BITS-1:0], P.IROM_SUPPORTED, AccessRX, Size, SUPPORTED_SIZE, SelRegions[9]);  

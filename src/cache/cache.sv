@@ -63,7 +63,7 @@ module cache #(parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, W
   localparam                     OFFSETLEN = $clog2(LINEBYTELEN);    // Number of bits in offset field
   localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
-  localparam                     TAGLEN = PA_BITS - SETTOP;         // Number of tag bits
+  localparam                     TAGLEN = PA_BITS - SETTOP;          // Number of tag bits
   localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
   localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
   localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
@@ -182,6 +182,7 @@ module cache #(parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, W
       assign LineWriteData = FetchBuffer;
       assign LineByteMask = '1;
     end
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////

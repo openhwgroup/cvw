@@ -84,8 +84,7 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
     // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
     assign FlushWayEn = FlushWay & SelFlush;
     assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
-  end
-  else begin:flushlogic // no flush operation for read-only caches.
+  end else begin:flushlogic // no flush operation for read-only caches.
     assign SelTag = VictimWay;
     assign SelNonHit = SetValid;
   end
@@ -135,8 +134,7 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
-    end
-    else begin:wordram // no byte-enable needed for i$.
+    end else begin:wordram // no byte-enable needed for i$.
       ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
@@ -154,8 +152,8 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-    ValidWay <= #1 ValidBits[CacheSet];
-    if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
+      ValidWay <= #1 ValidBits[CacheSet];
+      if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end
@@ -175,8 +173,4 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
       end
     end
   end else assign Dirty = 1'b0;
-
-
 endmodule
-
-

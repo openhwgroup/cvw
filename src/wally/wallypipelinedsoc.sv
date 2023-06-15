@@ -48,9 +48,9 @@ module wallypipelinedsoc import cvw::*; #(parameter cvw_t P) (
   output logic                HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0]         GPIOIN,       // inputs from GPIO
-  output logic [31:0]         GPIOOUT,      // output values for GPIO
-  output logic [31:0]         GPIOEN,       // output enables for GPIO
+  input  logic [31:0]         GPIOIN,           // inputs from GPIO
+  output logic [31:0]         GPIOOUT,          // output values for GPIO
+  output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
   input  logic                SDCCmdIn,         // SDC Command input
