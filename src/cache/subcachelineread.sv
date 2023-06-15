@@ -43,9 +43,8 @@ module subcachelineread #(parameter LINELEN, WORDLEN,
   logic [LINELEN+(WORDLEN-MUXINTERVAL)-1:0]   ReadDataLinePad;
   logic [WORDLEN-1:0]                         ReadDataLineSets [(LINELEN/MUXINTERVAL)-1:0];
 
-  if (PADLEN > 0) begin
-    assign ReadDataLinePad = {{PADLEN{1'b0}}, ReadDataLine};    
-  end else assign ReadDataLinePad = ReadDataLine;
+  if (PADLEN > 0) assign ReadDataLinePad = {{PADLEN{1'b0}}, ReadDataLine};    
+  else            assign ReadDataLinePad = ReadDataLine;
 
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux

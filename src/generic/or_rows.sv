@@ -48,5 +48,3 @@ module or_rows #(parameter ROWS = 8, COLS=2) (
     /* verilator lint_on UNOPTFLAT */
   end
 endmodule
-
-

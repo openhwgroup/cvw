@@ -27,57 +27,57 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fctrl import cvw::*;  #(parameter cvw_t P) (
-  input  logic                clk,
-  input  logic                reset,
+  input  logic                 clk,
+  input  logic                 reset,
   // input control signals
-  input  logic                StallE, StallM, StallW,             // stall signals
-  input  logic                FlushE, FlushM, FlushW,             // flush signals
-  input  logic                IntDivE,                            // is inteteger division
-  input  logic [2:0]          FRM_REGW,                           // rounding mode from CSR
-  input  logic [1:0]          STATUS_FS,                          // is FPU enabled?
-  input  logic                FDivBusyE,                          // is the divider busy
+  input  logic                 StallE, StallM, StallW,             // stall signals
+  input  logic                 FlushE, FlushM, FlushW,             // flush signals
+  input  logic                 IntDivE,                            // is inteteger division
+  input  logic [2:0]           FRM_REGW,                           // rounding mode from CSR
+  input  logic [1:0]           STATUS_FS,                          // is FPU enabled?
+  input  logic                 FDivBusyE,                          // is the divider busy
   // intruction                                                   
-  input  logic [31:0]         InstrD,                             // the full instruction
-  input  logic [6:0]          Funct7D,                            // bits 31:25 of instruction - may contain percision
-  input  logic [6:0]          OpD,                                // bits 6:0 of instruction
-  input  logic [4:0]          Rs2D,                               // bits 24:20 of instruction
-  input  logic [2:0]          Funct3D, Funct3E,                   // bits 14:12 of instruction - may contain rounding mode
+  input  logic [31:0]          InstrD,                             // the full instruction
+  input  logic [6:0]           Funct7D,                            // bits 31:25 of instruction - may contain percision
+  input  logic [6:0]           OpD,                                // bits 6:0 of instruction
+  input  logic [4:0]           Rs2D,                               // bits 24:20 of instruction
+  input  logic [2:0]           Funct3D, Funct3E,                   // bits 14:12 of instruction - may contain rounding mode
   // input mux selections                                         
-  output logic                XEnD, YEnD, ZEnD,                   // enable inputs
-  output logic                XEnE, YEnE, ZEnE,                   // enable inputs
+  output logic                 XEnD, YEnD, ZEnD,                   // enable inputs
+  output logic                 XEnE, YEnE, ZEnE,                   // enable inputs
   // opperation mux selections                                    
-  output logic                FCvtIntE, FCvtIntW,                 // convert to integer opperation
-  output logic [2:0]          FrmM,                               // FP rounding mode
+  output logic                 FCvtIntE, FCvtIntW,                 // convert to integer opperation
+  output logic [2:0]           FrmM,                               // FP rounding mode
   output logic [P.FMTBITS-1:0] FmtE, FmtM,                         // FP format
-  output logic [2:0]          OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
-  output logic                FpLoadStoreM,                       // FP load or store instruction
-  output logic [1:0]          PostProcSelE, PostProcSelM,         // select result in the post processing unit
-  output logic [1:0]          FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
+  output logic [2:0]           OpCtrlE, OpCtrlM,                   // Select which opperation to do in each component
+  output logic                 FpLoadStoreM,                       // FP load or store instruction
+  output logic [1:0]           PostProcSelE, PostProcSelM,         // select result in the post processing unit
+  output logic [1:0]           FResSelE, FResSelM, FResSelW,       // Select one of the results that finish in the memory stage
   // register control signals
-  output logic                FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
-  output logic                FWriteIntE, FWriteIntM,             // Write to integer register
-  output logic [4:0]          Adr1D, Adr2D, Adr3D,                // adresses of each input
-  output logic [4:0]          Adr1E, Adr2E, Adr3E,                // adresses of each input
+  output logic                 FRegWriteE, FRegWriteM, FRegWriteW, // FP register write enable
+  output logic                 FWriteIntE, FWriteIntM,             // Write to integer register
+  output logic [4:0]           Adr1D, Adr2D, Adr3D,                // adresses of each input
+  output logic [4:0]           Adr1E, Adr2E, Adr3E,                // adresses of each input
   // other control signals
-  output logic                IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
-  output logic                FDivStartE, IDivStartE              // Start division or squareroot
+  output logic                 IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
+  output logic                 FDivStartE, IDivStartE              // Start division or squareroot
   );
 
   `define FCTRLW 12
 
-  logic [`FCTRLW-1:0]         ControlsD;          // control signals
-  logic                       FRegWriteD;         // FP register write enable
-  logic                       FDivStartD;         // start division/sqrt
-  logic                       FWriteIntD;         // integer register write enable
-  logic [2:0]                 OpCtrlD;            // Select which opperation to do in each component
-  logic [1:0]                 PostProcSelD;       // select result in the post processing unit
-  logic [1:0]                 FResSelD;           // Select one of the results that finish in the memory stage
-  logic [2:0]                 FrmD, FrmE;         // FP rounding mode
-  logic [P.FMTBITS-1:0]        FmtD;               // FP format
-  logic [1:0]                 Fmt, Fmt2;          // format - before possible reduction
-  logic                       SupportedFmt;       // is the format supported
-  logic                       SupportedFmt2;      // is the source format supported for fp -> fp
-  logic                       FCvtIntD, FCvtIntM; // convert to integer opperation
+  logic [`FCTRLW-1:0]          ControlsD;                          // control signals
+  logic                        FRegWriteD;                         // FP register write enable
+  logic                        FDivStartD;                         // start division/sqrt
+  logic                        FWriteIntD;                         // integer register write enable
+  logic [2:0]                  OpCtrlD;                            // Select which opperation to do in each component
+  logic [1:0]                  PostProcSelD;                       // select result in the post processing unit
+  logic [1:0]                  FResSelD;                           // Select one of the results that finish in the memory stage
+  logic [2:0]                  FrmD, FrmE;                         // FP rounding mode
+  logic [P.FMTBITS-1:0]        FmtD;                               // FP format
+  logic [1:0]                  Fmt, Fmt2;                          // format - before possible reduction
+  logic                        SupportedFmt;                       // is the format supported
+  logic                        SupportedFmt2;                      // is the source format supported for fp -> fp
+  logic                        FCvtIntD, FCvtIntM;                 // convert to integer opperation
 
   // FPU Instruction Decoder
   assign Fmt = Funct7D[1:0];
@@ -97,7 +97,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0; // for anything other than loads and stores, check for supported format
     else begin 
       ControlsD = `FCTRLW'b0_0_00_00_000_0_1_0; // default: non-implemented instruction
-      /* verilator lint_off CASEINCOMPLETE */ // default value above has priority so no other default needed
+      /* verilator lint_off CASEINCOMPLETE */   // default value above has priority so no other default needed
       case(OpD)
         7'b0000111: case(Funct3D)
                       3'b010:                      ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flw
@@ -232,8 +232,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
       logic [1:0] FmtTmp;
       assign FmtTmp = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : (~OpD[6]&(&OpD[2:0])) ? {~Funct3D[1], ~(Funct3D[1]^Funct3D[0])} : Funct7D[1:0];
       assign FmtD = (P.FMT == FmtTmp);
-    end
-    else if (P.FPSIZES == 3|P.FPSIZES == 4)
+    end else if (P.FPSIZES == 3|P.FPSIZES == 4)
       assign FmtD = ((Funct7D[6:3] == 4'b0100)&OpD[4]) ? Rs2D[1:0] : Funct7D[1:0];
 
   // Enables indicate that a source register is used and may need stalls. Also indicate special cases for infinity or NaN.
@@ -250,11 +249,8 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
                   ((FResSelD==2'b11)&(PostProcSelD==2'b00))|                                       // mv float to int 
                   ((FResSelD==2'b01)&((PostProcSelD==2'b00)|((PostProcSelD==2'b01)&OpCtrlD[0])))); // cvt both or sqrt
 
-
-
   //    Z - fma ops only
   assign ZEnD = (PostProcSelD==2'b10)&(~OpCtrlD[2]|OpCtrlD[1]);                                    // fma, add, sub   
-
 
   //  Final Res Sel:
   //        fp      int
@@ -321,7 +317,7 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
 
   // Integer division on FPU divider
   if (P.M_SUPPORTED & P.IDIV_ON_FPU) assign IDivStartE = IntDivE;
-  else                             assign IDivStartE = 0; 
+  else                               assign IDivStartE = 0; 
 
   // E/M pipleine register
   flopenrc #(13+int'(P.FMTBITS)) EMCtrlReg (clk, reset, FlushM, ~StallM,
