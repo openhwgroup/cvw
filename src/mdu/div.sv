@@ -27,38 +27,38 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module div import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk,
-  input  logic             reset,
-  input  logic             StallM,
-  input  logic             FlushE,
-  input  logic             IntDivE,                       // integer division/remainder instruction of any type
-  input  logic             DivSignedE,                    // signed division 
-  input  logic             W64E,                          // W-type instructions (divw, divuw, remw, remuw)
-  input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,// Forwarding mux outputs for Source A and B
-  output logic             DivBusyE,                      // Divide is busy - stall pipeline
-  output logic [P.XLEN-1:0] QuotM, RemM                    // Quotient and remainder outputs
+  input  logic              clk,
+  input  logic              reset,
+  input  logic              StallM,
+  input  logic              FlushE,
+  input  logic              IntDivE,                        // integer division/remainder instruction of any type
+  input  logic              DivSignedE,                     // signed division 
+  input  logic              W64E,                           // W-type instructions (divw, divuw, remw, remuw)
+  input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Forwarding mux outputs for Source A and B
+  output logic              DivBusyE,                       // Divide is busy - stall pipeline
+  output logic [P.XLEN-1:0] QuotM, RemM                     // Quotient and remainder outputs
  );
 
   localparam STEPBITS = $clog2(P.XLEN/P.IDIV_BITSPERCYCLE); // Number of steps
 
-  typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;  // division FSM state
+  typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;    // division FSM state
   statetype state;
 
   logic [P.XLEN-1:0]   W[P.IDIV_BITSPERCYCLE:0];            // Residual for each of k steps
   logic [P.XLEN-1:0]   XQ[P.IDIV_BITSPERCYCLE:0];           // dividend/quotient for each of k steps
-  logic [P.XLEN-1:0]   WNext, XQNext;                      // initialized W and XQ going into registers
-  logic [P.XLEN-1:0]   DinE, XinE;                         // divisor & dividend, possibly truncated to 32 bits
-  logic [P.XLEN-1:0]   DnE;                                // DnE = ~DinE
-  logic [P.XLEN-1:0]   DAbsBE;                             // absolute value of D
-  logic [P.XLEN-1:0]   DAbsB;                              // registered absolute value of D, constant during division
-  logic [P.XLEN-1:0]   XnE;                                // DXnE = ~XinE
-  logic [P.XLEN-1:0]   XInitE;                             // |X|, or original X for divide by 0
-  logic [P.XLEN-1:0]   WnM, XQnM;                          // negated residual W and quotient XQ for postprocessing sign correction
-  logic [STEPBITS:0]  step;                               // division step
-  logic               Div0E, Div0M;                       // divide by 0
-  logic               DivStartE;                          // start integer division
-  logic               SignXE, SignDE;                     // sign of dividend and divisor
-  logic               NegQE, NegWM, NegQM;                // negate quotient or residual during postprocessing
+  logic [P.XLEN-1:0]   WNext, XQNext;                       // initialized W and XQ going into registers
+  logic [P.XLEN-1:0]   DinE, XinE;                          // divisor & dividend, possibly truncated to 32 bits
+  logic [P.XLEN-1:0]   DnE;                                 // DnE = ~DinE
+  logic [P.XLEN-1:0]   DAbsBE;                              // absolute value of D
+  logic [P.XLEN-1:0]   DAbsB;                               // registered absolute value of D, constant during division
+  logic [P.XLEN-1:0]   XnE;                                 // DXnE = ~XinE
+  logic [P.XLEN-1:0]   XInitE;                              // |X|, or original X for divide by 0
+  logic [P.XLEN-1:0]   WnM, XQnM;                           // negated residual W and quotient XQ for postprocessing sign correction
+  logic [STEPBITS:0]   step;                                // division step
+  logic                Div0E, Div0M;                        // divide by 0
+  logic                DivStartE;                           // start integer division
+  logic                SignXE, SignDE;                      // sign of dividend and divisor
+  logic                NegQE, NegWM, NegQM;                 // negate quotient or residual during postprocessing
  
   //////////////////////////////
   // Execute Stage: prepare for division calculation with control logic, W logic and absolute values, initialize W and XQ
@@ -131,7 +131,7 @@ module div import cvw::*;  #(parameter cvw_t P) (
         step <= 1;
         if (Div0E) state <= DONE;
         else       state <= BUSY;
-     end else if (state == BUSY) begin // pause one cycle at beginning of signed operations for absolute value
+    end else if (state == BUSY) begin // pause one cycle at beginning of signed operations for absolute value
         if (step[STEPBITS] | (P.XLEN==64) & W64E & step[STEPBITS-1]) begin // complete in half the time for W-type instructions
             state <= DONE;
         end

@@ -51,21 +51,21 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
 );
 
   // Supervisor CSRs
-  localparam SSTATUS = 12'h100;
-  localparam SIE = 12'h104;
-  localparam STVEC = 12'h105;
+  localparam SSTATUS    = 12'h100;
+  localparam SIE        = 12'h104;
+  localparam STVEC      = 12'h105;
   localparam SCOUNTEREN = 12'h106;
-  localparam SENVCFG = 12'h10A;
-  localparam SSCRATCH = 12'h140;
-  localparam SEPC = 12'h141;
-  localparam SCAUSE = 12'h142;
-  localparam STVAL = 12'h143;
-  localparam SIP= 12'h144;
-  localparam STIMECMP = 12'h14D;
-  localparam STIMECMPH = 12'h15D;
-  localparam SATP = 12'h180;
+  localparam SENVCFG    = 12'h10A;
+  localparam SSCRATCH   = 12'h140;
+  localparam SEPC       = 12'h141;
+  localparam SCAUSE     = 12'h142;
+  localparam STVAL      = 12'h143;
+  localparam SIP        = 12'h144;
+  localparam STIMECMP   = 12'h14D;
+  localparam STIMECMPH  = 12'h15D;
+  localparam SATP       = 12'h180;
   // Constants
-  localparam ZERO = {(P.XLEN){1'b0}};
+  localparam ZERO         = {(P.XLEN){1'b0}};
   localparam SEDELEG_MASK = ~(ZERO | {{P.XLEN-3{1'b0}}, 3'b111} << 9);
 
   logic                    WriteSTVECM;
@@ -81,17 +81,17 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
-  assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS);
-  assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC);
-  assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH);
-  assign WriteSEPCM = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
-  assign WriteSCAUSEM = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
-  assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
-  assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
+  assign WriteSSTATUSM    = CSRSWriteM & (CSRAdrM == SSTATUS);
+  assign WriteSTVECM      = CSRSWriteM & (CSRAdrM == STVEC);
+  assign WriteSSCRATCHM   = CSRSWriteM & (CSRAdrM == SSCRATCH);
+  assign WriteSEPCM       = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
+  assign WriteSCAUSEM     = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
+  assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
+  assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
-  assign WriteSENVCFGM = CSRSWriteM & (CSRAdrM == SENVCFG);
-  assign WriteSTIMECMPM = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE));
-  assign WriteSTIMECMPHM = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE)) & (P.XLEN == 32);
+  assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
+  assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE));
+  assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_TM & MENVCFG_STCE)) & (P.XLEN == 32);
 
   // CSRs
   flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
@@ -116,7 +116,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   // Supervisor timer interrupt logic
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
   if (P.SSTC_SUPPORTED)
-   assign STimerInt = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
+   assign STimerInt  = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
   else 
     assign STimerInt = 0;
 
@@ -133,10 +133,10 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   // Extract bit fields
   // Uncomment these other fields when they are defined
   // assign SENVCFG_PBMTE = SENVCFG_REGW[62];
-  // assign SENVCFG_CBZE =  SENVCFG_REGW[7];
+  // assign SENVCFG_CBZE  =  SENVCFG_REGW[7];
   // assign SENVCFG_CBCFE = SENVCFG_REGW[6];
-  // assign SENVCFG_CBIE =  SENVCFG_REGW[5:4];
-  // assign SENVCFG_FIOM =  SENVCFG_REGW[0];
+  // assign SENVCFG_CBIE  =  SENVCFG_REGW[5:4];
+  // assign SENVCFG_FIOM  =  SENVCFG_REGW[0];
     
   // CSR Reads
   always_comb begin:csrr

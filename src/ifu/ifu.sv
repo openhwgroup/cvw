@@ -26,116 +26,115 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module ifu import cvw::*;  #(parameter cvw_t P) (
-  input  logic                clk, reset,
-  input  logic                StallF, StallD, StallE, StallM, StallW,
-  input  logic                FlushD, FlushE, FlushM, FlushW, 
-  output logic                IFUStallF,                                // IFU stalsl pipeline during a multicycle operation
+  input  logic                 clk, reset,
+  input  logic                 StallF, StallD, StallE, StallM, StallW,
+  input  logic                 FlushD, FlushE, FlushM, FlushW, 
+  output logic                 IFUStallF,                                // IFU stalsl pipeline during a multicycle operation
   // Command from CPU
-  input  logic                InvalidateICacheM,                        // Clears all instruction cache valid bits
-  input  logic                CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
-  input  logic                InstrValidD, InstrValidE, InstrValidM,
-  input  logic                BranchD, BranchE,
-  input  logic                JumpD, JumpE,
+  input  logic                 InvalidateICacheM,                        // Clears all instruction cache valid bits
+  input  logic                 CSRWriteFenceM,                           // CSR write or fence instruction, PCNextF = the next valid PC (typically PCE)
+  input  logic                 InstrValidD, InstrValidE, InstrValidM,
+  input  logic                 BranchD, BranchE,
+  input  logic                 JumpD, JumpE,
   // Bus interface
   output logic [P.PA_BITS-1:0] IFUHADDR,                                 // Bus address from IFU to EBU
   input  logic [P.XLEN-1:0]    HRDATA,                                   // Bus read data from IFU to EBU
-  input  logic                IFUHREADY,                                // Bus ready from IFU to EBU
-  output logic                IFUHWRITE,                                // Bus write operation from IFU to EBU
-  output logic [2:0]          IFUHSIZE,                                 // Bus operation size from IFU to EBU
-  output logic [2:0]          IFUHBURST,                                // Bus burst from IFU to EBU
-  output logic [1:0]          IFUHTRANS,                                // Bus transaction type from IFU to EBU
+  input  logic                 IFUHREADY,                                // Bus ready from IFU to EBU
+  output logic                 IFUHWRITE,                                // Bus write operation from IFU to EBU
+  output logic [2:0]           IFUHSIZE,                                 // Bus operation size from IFU to EBU
+  output logic [2:0]           IFUHBURST,                                // Bus burst from IFU to EBU
+  output logic [1:0]           IFUHTRANS,                                // Bus transaction type from IFU to EBU
 
   output logic [P.XLEN-1:0]    PCSpillF,                                 // PCF with possible + 2 to handle spill to HPTW
   // Execute
   output logic [P.XLEN-1:0]    PCLinkE,                                  // The address following the branch instruction. (AKA Fall through address)
-  input  logic                PCSrcE,                                   // Executation stage branch is taken
+  input  logic                 PCSrcE,                                   // Executation stage branch is taken
   input  logic [P.XLEN-1:0]    IEUAdrE,                                  // The branch/jump target address
   input  logic [P.XLEN-1:0]    IEUAdrM,                                  // The branch/jump target address
   output logic [P.XLEN-1:0]    PCE,                                      // Execution stage instruction address
-  output logic                BPWrongE,                                 // Prediction is wrong
-  output logic                BPWrongM,                                 // Prediction is wrong
+  output logic                 BPWrongE,                                 // Prediction is wrong
+  output logic                 BPWrongM,                                 // Prediction is wrong
   // Mem
-  output logic                CommittedF,                               // I$ or bus memory operation started, delay interrupts
+  output logic                 CommittedF,                               // I$ or bus memory operation started, delay interrupts
   input  logic [P.XLEN-1:0]    UnalignedPCNextF,                         // The next PCF, but not aligned to 2 bytes. 
   output logic [P.XLEN-1:0]    PC2NextF,                                 // Selected PC between branch prediction and next valid PC if CSRWriteFence
-  output logic [31:0]         InstrD,                                   // The decoded instruction in Decode stage
-  output logic [31:0]         InstrM,                                   // The decoded instruction in Memory stage
-  output logic [31:0]         InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
+  output logic [31:0]          InstrD,                                   // The decoded instruction in Decode stage
+  output logic [31:0]          InstrM,                                   // The decoded instruction in Memory stage
+  output logic [31:0]          InstrOrigM,                               // Original compressed or uncompressed instruction in Memory stage for Illegal Instruction MTVAL
   output logic [P.XLEN-1:0]    PCM,                                      // Memory stage instruction address
   // branch predictor
-  output logic [3:0]          InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
-  output logic                BPDirPredWrongM,                          // Prediction direction is wrong
-  output logic                BTAWrongM,                                // Prediction target wrong
-  output logic                RASPredPCWrongM,                          // RAS prediction is wrong
-  output logic                IClassWrongM,                             // Class prediction is wrong
-  output logic                ICacheStallF,                             // I$ busy with multicycle operation
+  output logic [3:0]           InstrClassM,                              // The valid instruction class. 1-hot encoded as jalr, ret, jr (not ret), j, br
+  output logic                 BPDirPredWrongM,                          // Prediction direction is wrong
+  output logic                 BTAWrongM,                                // Prediction target wrong
+  output logic                 RASPredPCWrongM,                          // RAS prediction is wrong
+  output logic                 IClassWrongM,                             // Class prediction is wrong
+  output logic                 ICacheStallF,                             // I$ busy with multicycle operation
   // Faults
-  input logic                 IllegalBaseInstrD,                        // Illegal non-compressed instruction
-  input logic                 IllegalFPUInstrD,                         // Illegal FP instruction
-  output logic                InstrPageFaultF,                          // Instruction page fault 
-  output logic                IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
-  output logic                InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
+  input logic                  IllegalBaseInstrD,                        // Illegal non-compressed instruction
+  input logic                  IllegalFPUInstrD,                         // Illegal FP instruction
+  output logic                 InstrPageFaultF,                          // Instruction page fault 
+  output logic                 IllegalIEUFPUInstrD,                      // Illegal instruction including compressed & FP
+  output logic                 InstrMisalignedFaultM,                    // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
   // mmu management
-  input logic [1:0]           PrivilegeModeW,                           // Priviledge mode in Writeback stage
+  input logic [1:0]            PrivilegeModeW,                           // Priviledge mode in Writeback stage
   input logic [P.XLEN-1:0]     PTE,                                      // Hardware page table walker (HPTW) writes Page table entry (PTE) to ITLB
-  input logic [1:0]           PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
-  input logic                 ITLBWriteF,                               // Writes PTE and PageType to ITLB
+  input logic [1:0]            PageType,                                 // Hardware page table walker (HPTW) writes PageType to ITLB
+  input logic                  ITLBWriteF,                               // Writes PTE and PageType to ITLB
   input logic [P.XLEN-1:0]     SATP_REGW,                                // Location of the root page table and page table configuration
-  input logic                 STATUS_MXR,                               // Status CSR: make executable page readable 
-  input logic                 STATUS_SUM,                               // Status CSR: Supervisor access to user memory
-  input logic                 STATUS_MPRV,                              // Status CSR: modify machine privilege
-  input logic [1:0]           STATUS_MPP,                               // Status CSR: previous machine privilege level
-  input logic                 sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
-  output logic                ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
-  output logic                InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
-  input  var logic [7:0]      PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],      // PMP configuration from privileged unit
-  input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0], // PMP address from privileged unit
-  output logic                InstrAccessFaultF,                        // Instruction access fault 
-  output logic                ICacheAccess,                             // Report I$ read to performance counters
-  output logic                ICacheMiss                                // Report I$ miss to performance counters
+  input logic                  STATUS_MXR,                               // Status CSR: make executable page readable 
+  input logic                  STATUS_SUM,                               // Status CSR: Supervisor access to user memory
+  input logic                  STATUS_MPRV,                              // Status CSR: modify machine privilege
+  input logic [1:0]            STATUS_MPP,                               // Status CSR: previous machine privilege level
+  input logic                  sfencevmaM,                               // Virtual memory address fence, invalidate TLB entries
+  output logic                 ITLBMissF,                                // ITLB miss causes HPTW (hardware pagetable walker) walk
+  output logic                 InstrUpdateDAF,                           // ITLB hit needs to update dirty or access bits
+  input  var logic [7:0]       PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],     // PMP configuration from privileged unit
+  input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],// PMP address from privileged unit
+  output logic                 InstrAccessFaultF,                        // Instruction access fault 
+  output logic                 ICacheAccess,                             // Report I$ read to performance counters
+  output logic                 ICacheMiss                                // Report I$ miss to performance counters
 );
 
-  localparam [31:0]           nop = 32'h00000013;                    // instruction for NOP
+  localparam [31:0]            nop = 32'h00000013;                       // instruction for NOP
 
-  logic [P.XLEN-1:0]           PCNextF;                               // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
-  logic                       BranchMisalignedFaultE;                // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
-  logic [P.XLEN-1:0]           PCPlus2or4F;                           // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
-  logic [P.XLEN-1:0]           PCSpillNextF;                          // Next PCF after possible + 2 to handle spill
-  logic [P.XLEN-1:0]           PCLinkD;                               // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
-  logic [P.XLEN-1:2]           PCPlus4F;                              // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
-  logic [P.XLEN-1:0]           PCD;                                   // Decode stage instruction address
-  logic [P.XLEN-1:0]           NextValidPCE;                          // The PC of the next valid instruction in the pipeline after  csr write or fence
-  logic [P.XLEN-1:0]           PCF;                                   // Fetch stage instruction address
-  logic [P.PA_BITS-1:0]        PCPF;                                  // Physical address after address translation
-  logic [P.XLEN+1:0]           PCFExt;                                //
+  logic [P.XLEN-1:0]           PCNextF;                                  // Next PCF, selected from Branch predictor, Privilege, or PC+2/4
+  logic                        BranchMisalignedFaultE;                   // Branch target not aligned to 4 bytes if no compressed allowed (2 bytes if allowed)
+  logic [P.XLEN-1:0]           PCPlus2or4F;                              // PCF + 2 (CompressedF) or PCF + 4 (Non-compressed)
+  logic [P.XLEN-1:0]           PCSpillNextF;                             // Next PCF after possible + 2 to handle spill
+  logic [P.XLEN-1:0]           PCLinkD;                                  // PCF2or4F delayed 1 cycle.  This is next PC after a control flow instruction (br or j)
+  logic [P.XLEN-1:2]           PCPlus4F;                                 // PCPlus4F is always PCF + 4.  Fancy way to compute PCPlus2or4F
+  logic [P.XLEN-1:0]           PCD;                                      // Decode stage instruction address
+  logic [P.XLEN-1:0]           NextValidPCE;                             // The PC of the next valid instruction in the pipeline after  csr write or fence
+  logic [P.XLEN-1:0]           PCF;                                      // Fetch stage instruction address
+  logic [P.PA_BITS-1:0]        PCPF;                                     // Physical address after address translation
+  logic [P.XLEN+1:0]           PCFExt;                                
 
-  logic [31:0]                IROMInstrF;                            // Instruction from the IROM
-  logic [31:0]                ICacheInstrF;                          // Instruction from the I$
-  logic [31:0]                InstrRawF;                             // Instruction from the IROM, I$, or bus
-  logic                       CompressedF;                           // The fetched instruction is compressed
-  logic                       CompressedD;                           // The decoded instruction is compressed
-  logic                       CompressedE;                           // The execution instruction is compressed
-  logic                       CompressedM;                           // The execution instruction is compressed
-  logic [31:0]                PostSpillInstrRawF;                    // Fetch instruction after merge two halves of spill
-  logic [31:0]                InstrRawD;                             // Non-decompressed instruction in the Decode stage
-  logic                       IllegalIEUInstrD;                      // IEU Instruction (regular or compressed) is not good
+  logic [31:0]                 IROMInstrF;                               // Instruction from the IROM
+  logic [31:0]                 ICacheInstrF;                             // Instruction from the I$
+  logic [31:0]                 InstrRawF;                                // Instruction from the IROM, I$, or bus
+  logic                        CompressedF;                              // The fetched instruction is compressed
+  logic                        CompressedD;                              // The decoded instruction is compressed
+  logic                        CompressedE;                              // The execution instruction is compressed
+  logic                        CompressedM;                              // The execution instruction is compressed
+  logic [31:0]                 PostSpillInstrRawF;                       // Fetch instruction after merge two halves of spill
+  logic [31:0]                 InstrRawD;                                // Non-decompressed instruction in the Decode stage
+  logic                        IllegalIEUInstrD;                         // IEU Instruction (regular or compressed) is not good
   
-  logic [1:0]                 IFURWF;                                // IFU alreays read IFURWF = 10
-  logic [31:0]                InstrE;                                // Instruction in the Execution stage
-  logic [31:0]                NextInstrD, NextInstrE;                // Instruction into the next stage after possible stage flush
+  logic [1:0]                  IFURWF;                                   // IFU alreays read IFURWF = 10
+  logic [31:0]                 InstrE;                                   // Instruction in the Execution stage
+  logic [31:0]                 NextInstrD, NextInstrE;                   // Instruction into the next stage after possible stage flush
 
-
-  logic                       CacheableF;                            // PMA indicates instruction address is cacheable
-  logic                       SelSpillNextF;                         // In a spill, stall pipeline and gate local stallF
-  logic                       BusStall;                              // Bus interface busy with multicycle operation
-  logic                       IFUCacheBusStallF;                     // EIther I$ or bus busy with multicycle operation
-  logic                       GatedStallD;                           // StallD gated by selected next spill
+  logic                        CacheableF;                               // PMA indicates instruction address is cacheable
+  logic                        SelSpillNextF;                            // In a spill, stall pipeline and gate local stallF
+  logic                        BusStall;                                 // Bus interface busy with multicycle operation
+  logic                        IFUCacheBusStallF;                        // EIther I$ or bus busy with multicycle operation
+  logic                        GatedStallD;                              // StallD gated by selected next spill
   // branch predictor signal
-  logic [P.XLEN-1:0]           PC1NextF;                              // Branch predictor next PCF
-  logic                       BusCommittedF;                         // Bus memory operation in flight, delay interrupts
-  logic                       CacheCommittedF;                       // I$ memory operation started, delay interrupts
-  logic                       SelIROM;                               // PMA indicates instruction address is in the IROM
-  logic [15:0]                InstrRawE, InstrRawM;
+  logic [P.XLEN-1:0]           PC1NextF;                                 // Branch predictor next PCF
+  logic                        BusCommittedF;                            // Bus memory operation in flight, delay interrupts
+  logic                        CacheCommittedF;                          // I$ memory operation started, delay interrupts
+  logic                        SelIROM;                                  // PMA indicates instruction address is in the IROM
+  logic [15:0]                 InstrRawE, InstrRawM;
   
   assign PCFExt = {2'b00, PCSpillF};
 
@@ -199,6 +198,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Memory 
   ////////////////////////////////////////////////////////////////////////////////////////////////
+  
   // CommittedM tells the CPU's privileged unit the current instruction
   // in the memory stage is a memory operaton and that memory operation is either completed
   // or is partially executed. Partially completed memory operations need to prevent an interrupts.
@@ -206,7 +206,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
   // delay the interrupt until the LSU is in a clean state.
   assign CommittedF = CacheCommittedF | BusCommittedF;
 
-  logic          IgnoreRequest;
+  logic  IgnoreRequest;
   assign IgnoreRequest = ITLBMissF | FlushD;
 
   // The IROM uses untranslated addresses, so it is not compatible with virtual memory.
@@ -223,12 +223,12 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     localparam   WORDSPERLINE = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/P.XLEN : 1;
     localparam   LOGBWPL = P.ICACHE_SUPPORTED ? $clog2(WORDSPERLINE) : 1;
     if(P.ICACHE_SUPPORTED) begin : icache
-      localparam           LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
-      localparam           LLENPOVERAHBW = P.LLEN / P.AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
-      logic [LINELEN-1:0]  FetchBuffer;
+      localparam            LINELEN = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS : P.XLEN;
+      localparam            LLENPOVERAHBW = P.LLEN / P.AHBW; // Number of AHB beats in a LLEN word. AHBW cannot be larger than LLEN. (implementation limitation)
+      logic [LINELEN-1:0]   FetchBuffer;
       logic [P.PA_BITS-1:0] ICacheBusAdr;
-      logic                ICacheBusAck;
-      logic [1:0]          CacheBusRW, BusRW, CacheRWF;
+      logic                 ICacheBusAck;
+      logic [1:0]           CacheBusRW, BusRW, CacheRWF;
       
       assign BusRW = ~ITLBMissF & ~CacheableF & ~SelIROM ? IFURWF : '0;
       assign CacheRWF = ~ITLBMissF & CacheableF & ~SelIROM ? IFURWF : '0;
@@ -255,7 +255,7 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
             .Flush(FlushD), .CacheBusRW, .HSIZE(IFUHSIZE), .HBURST(IFUHBURST), .HTRANS(IFUHTRANS), .HWSTRB(),
             .Funct3(3'b010), .HADDR(IFUHADDR), .HREADY(IFUHREADY), .HWRITE(IFUHWRITE), .CacheBusAdr(ICacheBusAdr),
             .BeatCount(), .Cacheable(CacheableF), .SelBusBeat(), .WriteDataM('0),
-             .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
+            .CacheBusAck(ICacheBusAck), .HWDATA(), .CacheableOrFlushCacheM(1'b0), .CacheReadDataWordM('0),
             .FetchBuffer, .PAdr(PCPF),
             .BusRW, .Stall(GatedStallD),
             .BusStall, .BusCommitted(BusCommittedF));
@@ -321,7 +321,6 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
       else        PCPlus2or4F = {PCF[P.XLEN-1:2], 2'b10};
     else          PCPlus2or4F = {PCPlus4F, PCF[1:0]}; // add 4
 
-
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Branch and Jump Predictor
   ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,10 +340,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
     assign NextValidPCE = PCE;
   end      
 
-
   ////////////////////////////////////////////////////////////////////////////////////////////////
   // Decode stage pipeline register and compressed instruction decoding.
   ////////////////////////////////////////////////////////////////////////////////////////////////
+  
   // Decode stage pipeline register and logic
   flopenrc #(P.XLEN) PCDReg(clk, reset, FlushD, ~StallD, PCF, PCD);
    
@@ -374,10 +373,10 @@ module ifu import cvw::*;  #(parameter cvw_t P) (
 
   // Instruction and PC/PCLink pipeline registers
   // Cannot use flopenrc for Instr(E/M) as it resets to NOP not 0.
-  mux2    #(32)    FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
-  mux2    #(32)    FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
-  flopenr #(32)    InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
-  flopenr #(32)    InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
+  mux2    #(32)     FlushInstrEMux(InstrD, nop, FlushE, NextInstrD);
+  mux2    #(32)     FlushInstrMMux(InstrE, nop, FlushM, NextInstrE);
+  flopenr #(32)     InstrEReg(clk, reset, ~StallE, NextInstrD, InstrE);
+  flopenr #(32)     InstrMReg(clk, reset, ~StallM, NextInstrE, InstrM);
   flopenr #(P.XLEN) PCEReg(clk, reset, ~StallE, PCD, PCE);
   flopenr #(P.XLEN) PCMReg(clk, reset, ~StallM, PCE, PCM);
   //flopenr #(P.XLEN) PCPDReg(clk, reset, ~StallD, PCPlus2or4F, PCLinkD);

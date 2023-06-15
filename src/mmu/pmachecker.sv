@@ -30,26 +30,26 @@
 
 module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.PA_BITS-1:0] PhysicalAddress,
-  input  logic [1:0]          Size,
-  input  logic                AtomicAccessM,  // Atomic access
-  input  logic                ExecuteAccessF, // Execute access 
-  input  logic                WriteAccessM,   // Write access 
-  input  logic                ReadAccessM,    // Read access
-  output logic                Cacheable, Idempotent, SelTIM,
-  output logic                PMAInstrAccessFaultF,
-  output logic                PMALoadAccessFaultM,
-  output logic                PMAStoreAmoAccessFaultM
+  input  logic [1:0]           Size,
+  input  logic                 AtomicAccessM,  // Atomic access
+  input  logic                 ExecuteAccessF, // Execute access 
+  input  logic                 WriteAccessM,   // Write access 
+  input  logic                 ReadAccessM,    // Read access
+  output logic                 Cacheable, Idempotent, SelTIM,
+  output logic                 PMAInstrAccessFaultF,
+  output logic                 PMALoadAccessFaultM,
+  output logic                 PMAStoreAmoAccessFaultM
 );
 
-  logic                       PMAAccessFault;
-  logic                       AccessRW, AccessRWX, AccessRX;
-  logic [10:0]                SelRegions;
-  logic                       AtomicAllowed;
+  logic                        PMAAccessFault;
+  logic                        AccessRW, AccessRWX, AccessRX;
+  logic [10:0]                 SelRegions;
+  logic                        AtomicAllowed;
 
   // Determine what type of access is being made
-  assign AccessRW = ReadAccessM | WriteAccessM;
+  assign AccessRW  = ReadAccessM | WriteAccessM;
   assign AccessRWX = ReadAccessM | WriteAccessM | ExecuteAccessF;
-  assign AccessRX = ReadAccessM | ExecuteAccessF;
+  assign AccessRX  = ReadAccessM | ExecuteAccessF;
 
   // Determine which region of physical memory (if any) is being accessed
   adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
@@ -65,9 +65,8 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   assign SelTIM = SelRegions[10] | SelRegions[9]; // exclusion-tag: unused-tim
 
   // Detect access faults
-  assign PMAAccessFault = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  
-  assign PMAInstrAccessFaultF = ExecuteAccessF & PMAAccessFault;
-  assign PMALoadAccessFaultM  = ReadAccessM    & PMAAccessFault;
+  assign PMAAccessFault          = (SelRegions[0]) & AccessRWX | AtomicAccessM & ~AtomicAllowed;  
+  assign PMAInstrAccessFaultF    = ExecuteAccessF & PMAAccessFault;
+  assign PMALoadAccessFaultM     = ReadAccessM    & PMAAccessFault;
   assign PMAStoreAmoAccessFaultM = WriteAccessM   & PMAAccessFault;
 endmodule
-
