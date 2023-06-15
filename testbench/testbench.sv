@@ -87,8 +87,6 @@ module testbench;
   logic Validate;
   logic SelectTest;
 
-  // check assertions for a legal configuration
-  riscvassertions #(P) riscvassertions();
 
   // pick tests based on modes supported
   initial begin
@@ -204,89 +202,52 @@ module testbench;
     if (TestBenchReset) CurrState <= #1 STATE_TESTBENCH_RESET;
     else CurrState <= #1 NextState;  
 
-
+  // fsm next state logic
   always_comb begin
-    reset_ext = 0;
-    ResetMem = 0;
-    LoadMem = 0;
-    ResetCntEn = 0;
-    ResetCntRst = 0;
-    Validate = 0;
-    SelectTest = 0;
     // riscof tests have a different signature, tests[0] == "1" refers to RiscvArchTests 
     // and tests[0] == "2" refers to WallyRiscvArchTests 
     riscofTest = tests[0] == "1" | tests[0] == "2"; 
     pathname = tvpaths[tests[0].atoi()];
 
     case(CurrState)
-      STATE_TESTBENCH_RESET: begin
-        NextState = STATE_INIT_TEST;
-        reset_ext = 1;
-      end
-      STATE_INIT_TEST: begin
-        NextState = STATE_RESET_MEMORIES;
-        ResetCntRst = 1;
-        SelectTest = 1;
-        reset_ext = 1;
-      end
-      STATE_RESET_MEMORIES: begin
-        NextState = STATE_RESET_MEMORIES2;
-        reset_ext = 1;
-        if (TEST == "coremark") ResetMem = 1;         // this initialization is very expensive, only do it for coremark.
-      end
-      STATE_RESET_MEMORIES2: begin  // Give the reset enough time to ensure the bus is reset before loading the memories.
-        NextState = STATE_LOAD_MEMORIES;
-        reset_ext = 1;
-        // this initialization is very expensive, only do it for coremark.
-        if (TEST == "coremark") ResetMem = 1;
-      end
-      STATE_LOAD_MEMORIES: begin
-        NextState = STATE_RESET_TEST;
-        reset_ext = 1;
-        LoadMem = 1;
-      end
-      STATE_RESET_TEST: begin
-        reset_ext = 1;
-        ResetCntEn = 1;
-        if(ResetCount < ResetThreshold) begin
-          NextState = STATE_RESET_TEST;
-        end else begin
-          NextState = STATE_RUN_TEST;
-        end
-      end
-      STATE_RUN_TEST:
-        if(DCacheFlushStart) begin 
-          NextState = STATE_CHECK_TEST;
-        end else begin 
-          NextState = STATE_RUN_TEST;
-        end
-      STATE_CHECK_TEST: begin
-        if (DCacheFlushDone) begin
-          NextState = STATE_VALIDATE;
-        end else begin
-          NextState = STATE_CHECK_TEST_WAIT;
-        end
-      end
-      STATE_CHECK_TEST_WAIT: begin
-        if(DCacheFlushDone) begin
-          NextState = STATE_VALIDATE;
-        end else begin
-          NextState = STATE_CHECK_TEST_WAIT;
-        end
-      end
-      STATE_VALIDATE: begin
-        NextState = STATE_INIT_TEST;
-        Validate = '1;
-      end
-      STATE_INCR_TEST: begin
-        NextState = STATE_INIT_TEST;
-      end
-      default: NextState = STATE_TESTBENCH_RESET;
+      STATE_TESTBENCH_RESET:                      NextState = STATE_INIT_TEST;
+      STATE_INIT_TEST:                            NextState = STATE_RESET_MEMORIES;
+      STATE_RESET_MEMORIES:                       NextState = STATE_RESET_MEMORIES2;
+      STATE_RESET_MEMORIES2:                      NextState = STATE_LOAD_MEMORIES;  // Give the reset enough time to ensure the bus is reset before loading the memories.
+      STATE_LOAD_MEMORIES:                        NextState = STATE_RESET_TEST;
+      STATE_RESET_TEST:      if(ResetCount < ResetThreshold) NextState = STATE_RESET_TEST;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_RUN_TEST:        if(DCacheFlushStart) NextState = STATE_CHECK_TEST;
+                             else                 NextState = STATE_RUN_TEST;
+      STATE_CHECK_TEST:      if (DCacheFlushDone) NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_CHECK_TEST_WAIT: if(DCacheFlushDone)  NextState = STATE_VALIDATE;
+                             else                 NextState = STATE_CHECK_TEST_WAIT;
+      STATE_VALIDATE:                             NextState = STATE_INIT_TEST;
+      STATE_INCR_TEST:                            NextState = STATE_INIT_TEST;
+      default:                                    NextState = STATE_TESTBENCH_RESET;
     endcase
   end // always_comb
+  // fsm output control logic 
+  assign reset_ext = CurrState == STATE_TESTBENCH_RESET | CurrState == STATE_INIT_TEST | 
+                     CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2 | 
+                     CurrState == STATE_LOAD_MEMORIES | CurrState ==STATE_RESET_TEST;
+  // this initialization is very expensive, only do it for coremark.  
+  assign ResetMem = (CurrState == STATE_RESET_MEMORIES | CurrState == STATE_RESET_MEMORIES2) & TEST == "coremark";
+  assign LoadMem = CurrState == STATE_LOAD_MEMORIES;
+  assign ResetCntRst = CurrState == STATE_INIT_TEST;
+  assign ResetCntEn = CurrState == STATE_RESET_TEST;
+  assign Validate = CurrState == STATE_VALIDATE;
+  assign SelectTest = CurrState == STATE_INIT_TEST;
 
+  // fsm reset counter
+  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Find the test vector files and populate the PC to function label converter
+  ////////////////////////////////////////////////////////////////////////////////
+  assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
   always @(posedge clk) begin
-
     if(SelectTest) begin
       if (riscofTest) memfilename = {pathname, tests[test], "/ref/ref.elf.memfile"};
       else            memfilename = {pathname, tests[test], ".elf.memfile"};
@@ -305,14 +266,17 @@ module testbench;
       end
     end
     
+  ////////////////////////////////////////////////////////////////////////////////
+  // Verify the test ran correctly by checking the memory against a known signature.
+  ////////////////////////////////////////////////////////////////////////////////
     if(TestBenchReset) test = 1;
+    if (TEST == "coremark")
+      if (dut.core.EcallFaultM) begin
+        $display("Benchmark: coremark is done.");
+        $stop;
+      end
     if(Validate) begin
-      if (TEST == "coremark")
-        if (dut.core.EcallFaultM) begin
-          $display("Benchmark: coremark is done.");
-          $stop;
-        end
-      else if (TEST == "embench") begin
+      if (TEST == "embench") begin
         // Writes contents of begin_signature to .sim.output file
         // this contains instret and cycles for start and end of test run, used by embench 
         // python speed script to calculate embench speed score. 
@@ -347,13 +311,10 @@ module testbench;
     end
   end
 
-  counter #(3) RstCounter(clk, ResetCntRst, ResetCntEn, ResetCount);
-  assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
 
   ////////////////////////////////////////////////////////////////////////////////
   // Some memories are not reset, but should be zeros or set to some initial value for simulation
   ////////////////////////////////////////////////////////////////////////////////
-
   integer adrindex;
   always @(posedge clk) begin
     if (ResetMem)  // program memory is sometimes reset
@@ -394,8 +355,11 @@ module testbench;
       $display("Read memfile %s", memfilename);
     end
   end  
-
  
+  ////////////////////////////////////////////////////////////////////////////////
+  // Actual hardware
+  ////////////////////////////////////////////////////////////////////////////////
+
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
@@ -403,12 +367,10 @@ module testbench;
   if(P.EXT_MEM_SUPPORTED) begin
     ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
-         .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
-         .HWSTRB);
+      .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY, .HWSTRB);
   end else begin 
     assign HREADYEXT = 1;
-    assign HRESPEXT = 0;
-    assign HRDATAEXT = 0;
+    assign {HRESPEXT, HRDATAEXT} = '0;
   end
 
   if(P.FPGA) begin : sdcard
@@ -426,9 +388,29 @@ module testbench;
   end
 
   wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
-                        .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
-                        .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+    .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+    .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
+    .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+
+  // generate clock to sequence tests
+  always begin
+    clk = 1; # 5; clk = 0; # 5;
+  end
+
+  ////////////////////////////////////////////////////////////////////////////////
+  // Support logic
+  ////////////////////////////////////////////////////////////////////////////////
+
+  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
+  riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
+  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
+  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+
+  // track the current function or global label
+  if (DEBUG == 1 | (PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
+    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
+			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
+  end
 
   // Track names of instructions
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
@@ -439,22 +421,6 @@ module testbench;
                 dut.core.ifu.InstrD, dut.core.ifu.InstrE,
                 dut.core.ifu.InstrM,  InstrW,
                 InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
-
-  // generate clock to sequence tests
-  always
-    begin
-      clk = 1; # 5; clk = 0; # 5;
-      // if ($time % 100000 == 0) $display("Time is %0t", $time);
-    end
-  
-  
-  // track the current function or global label
-  if (DEBUG == 1 | (PrintHPMCounters & P.ZICOUNTERS_SUPPORTED)) begin : FunctionName
-    FunctionName #(P) FunctionName(.reset(reset_ext | TestBenchReset),
-			      .clk(clk),
-			      .ProgramAddrMapFile(ProgramAddrMapFile),
-			      .ProgramLabelMapFile(ProgramLabelMapFile));
-  end
 
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed
@@ -472,14 +438,7 @@ module testbench;
            ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
-  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
-    			.reset(reset),
-	    		.start(DCacheFlushStart),
-		    	.done(DCacheFlushDone));
-
-  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);
-  loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
-  loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk), .reset(reset), .start(DCacheFlushStart), .done(DCacheFlushDone));
 
   task automatic CheckSignature;
     // This task must be declared inside this module as it needs access to parameter P.  There is
