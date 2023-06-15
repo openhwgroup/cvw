@@ -27,21 +27,19 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module shifter (
-  input  logic [`XLEN-1:0]     A,                             // shift Source
-  input  logic [`LOG_XLEN-1:0] Amt,                           // Shift amount
+module shifter import cvw::*; #(parameter cvw_t P) (
+  input  logic [P.XLEN-1:0]     A,                             // shift Source
+  input  logic [P.LOG_XLEN-1:0] Amt,                           // Shift amount
   input  logic                 Right, Rotate, W64, SubArith,  // Shift right, rotate, W64-type operation, arithmetic shift
-  output logic [`XLEN-1:0]     Y);                            // Shifted result
+  output logic [P.XLEN-1:0]     Y);                            // Shifted result
 
-  logic [2*`XLEN-2:0]          Z, ZShift;                     // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
-  logic [`LOG_XLEN-1:0]        TruncAmt, Offset;              // Shift amount adjusted for RV64, right-shift amount
+  logic [2*P.XLEN-2:0]          Z, ZShift;                     // Input to funnel shifter, shifted amount before truncated to 32 or 64 bits
+  logic [P.LOG_XLEN-1:0]        TruncAmt, Offset;              // Shift amount adjusted for RV64, right-shift amount
   logic                        Sign;                          // Sign bit for sign extension
 
-  assign Sign = A[`XLEN-1] & SubArith;  // sign bit for sign extension
-  if (`XLEN==32) begin // rv32
-    if (`ZBB_SUPPORTED) begin: rotfunnel32 // rv32 shifter with rotates
+  assign Sign = A[P.XLEN-1] & SubArith;  // sign bit for sign extension
+  if (P.XLEN==32) begin // rv32
+    if (P.ZBB_SUPPORTED) begin: rotfunnel32 //rv32 shifter with rotates
       always_comb  // funnel mux
         case({Right, Rotate})
           2'b00: Z = {A[31:0], 31'b0};
@@ -56,12 +54,12 @@ module shifter (
     end
     assign TruncAmt = Amt; // shift amount
   end else begin // rv64
-    logic [`XLEN-1:0]         A64;                            
+    logic [P.XLEN-1:0]         A64;                            
     mux3 #(64) extendmux({{32{1'b0}}, A[31:0]}, {{32{A[31]}}, A[31:0]}, A, {~W64, SubArith}, A64); // bottom 32 bits are always A[31:0], so effectively a 32-bit upper mux
-    if (`ZBB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
+    if (P.ZBB_SUPPORTED) begin: rotfunnel64 // rv64 shifter with rotates
       // shifter rotate source select mux
-      logic [`XLEN-1:0]   RotA;                          // rotate source
-      mux2 #(`XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons
+      logic [P.XLEN-1:0]   RotA;                          // rotate source
+      mux2 #(P.XLEN) rotmux(A, {A[31:0], A[31:0]}, W64, RotA); // W64 rotatons
       always_comb  // funnel mux
         case ({Right, Rotate})
           2'b00: Z = {A64[63:0],{63'b0}};
@@ -82,5 +80,5 @@ module shifter (
   
   // Funnel operation
   assign ZShift = Z >> Offset;
-  assign Y = ZShift[`XLEN-1:0];    
+  assign Y = ZShift[P.XLEN-1:0];    
 endmodule

@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module byteop #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A,             // Operands
   input  logic             ByteSelect,    // LSB of Immediate

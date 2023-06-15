@@ -24,16 +24,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module clockgater (
+module clockgater #(parameter FPGA) (
   input  logic E,
   input  logic SE,
   input  logic CLK,
   output logic ECLK
 );
 
-  if (`FPGA) BUFGCE bufgce_i0 (.I(CLK), .CE(E | SE), .O(ECLK));
+  if (FPGA) BUFGCE bufgce_i0 (.I(CLK), .CE(E | SE), .O(ECLK));
   else begin
     // *** BUG 
     // VERY IMPORTANT.

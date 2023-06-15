@@ -26,7 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module wallypipelinedsoc import cvw::*; #(parameter cvw_t P) (
+module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
