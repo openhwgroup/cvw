@@ -32,12 +32,12 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [P.AHBW-1:0]      HRDATA,
+   input  logic [P.AHBW-1:0]     HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [P.PA_BITS-1:0]   HADDR,
-   output logic [P.AHBW-1:0]      HWDATA,
-   output logic [P.XLEN/8-1:0]    HWSTRB,
+   output logic [P.PA_BITS-1:0]  HADDR,
+   output logic [P.AHBW-1:0]     HWDATA,
+   output logic [P.XLEN/8-1:0]   HWSTRB,
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -55,15 +55,15 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   logic                          IntDivE, W64E;
   logic                          CSRReadM, CSRWriteM, PrivilegedM;
   logic [1:0]                    AtomicM;
-  logic [P.XLEN-1:0]              ForwardedSrcAE, ForwardedSrcBE;
-  logic [P.XLEN-1:0]              SrcAM;
+  logic [P.XLEN-1:0]             ForwardedSrcAE, ForwardedSrcBE;
+  logic [P.XLEN-1:0]             SrcAM;
   logic [2:0]                    Funct3E;
   logic [31:0]                   InstrD;
   logic [31:0]                   InstrM, InstrOrigM;
-  logic [P.XLEN-1:0]              PCSpillF, PCE, PCLinkE;
-  logic [P.XLEN-1:0]              PCM;
-  logic [P.XLEN-1:0]              CSRReadValW, MDUResultW;
-  logic [P.XLEN-1:0]              UnalignedPCNextF, PC2NextF;
+  logic [P.XLEN-1:0]             PCSpillF, PCE, PCLinkE;
+  logic [P.XLEN-1:0]             PCM;
+  logic [P.XLEN-1:0]             CSRReadValW, MDUResultW;
+  logic [P.XLEN-1:0]             UnalignedPCNextF, PC2NextF;
   logic [1:0]                    MemRWM;
   logic                          InstrValidD, InstrValidE, InstrValidM;
   logic                          InstrMisalignedFaultM;
@@ -83,31 +83,31 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   logic [4:0]                    RdE, RdM, RdW;
   logic                          FPUStallD;
   logic                          FWriteIntE;
-  logic [P.FLEN-1:0]              FWriteDataM;
-  logic [P.XLEN-1:0]              FIntResM;  
-  logic [P.XLEN-1:0]              FCvtIntResW; 
+  logic [P.FLEN-1:0]             FWriteDataM;
+  logic [P.XLEN-1:0]             FIntResM;  
+  logic [P.XLEN-1:0]             FCvtIntResW; 
   logic                          FCvtIntW; 
   logic                          FDivBusyE;
   logic                          FRegWriteM;
   logic                          FCvtIntStallD;
   logic                          FpLoadStoreM;
   logic [4:0]                    SetFflagsM;
-  logic [P.XLEN-1:0]              FIntDivResultW;
+  logic [P.XLEN-1:0]             FIntDivResultW;
 
   // memory management unit signals
   logic                          ITLBWriteF;
   logic                          ITLBMissF;
-  logic [P.XLEN-1:0]              SATP_REGW;
+  logic [P.XLEN-1:0]             SATP_REGW;
   logic                          STATUS_MXR, STATUS_SUM, STATUS_MPRV;
   logic [1:0]                    STATUS_MPP, STATUS_FS;
   logic [1:0]                    PrivilegeModeW;
-  logic [P.XLEN-1:0]              PTE;
+  logic [P.XLEN-1:0]             PTE;
   logic [1:0]                    PageType;
   logic                          sfencevmaM;
   logic                          SelHPTW;
 
   // PMA checker signals
-  var logic [P.PA_BITS-3:0]       PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
+  var logic [P.PA_BITS-3:0]      PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0];
   var logic [7:0]                PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0];
 
   // IMem stalls
@@ -116,14 +116,14 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
 
   // cpu lsu interface
   logic [2:0]                    Funct3M;
-  logic [P.XLEN-1:0]              IEUAdrE;
-  logic [P.XLEN-1:0]              WriteDataM;
-  logic [P.XLEN-1:0]              IEUAdrM;  
-  logic [P.LLEN-1:0]              ReadDataW;  
+  logic [P.XLEN-1:0]             IEUAdrE;
+  logic [P.XLEN-1:0]             WriteDataM;
+  logic [P.XLEN-1:0]             IEUAdrM;  
+  logic [P.LLEN-1:0]             ReadDataW;  
   logic                          CommittedM;
 
   // AHB ifu interface
-  logic [P.PA_BITS-1:0]           IFUHADDR;
+  logic [P.PA_BITS-1:0]          IFUHADDR;
   logic [2:0]                    IFUHBURST;
   logic [1:0]                    IFUHTRANS;
   logic [2:0]                    IFUHSIZE;
@@ -131,9 +131,9 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
   logic                          IFUHREADY;
   
   // AHB LSU interface
-  logic [P.PA_BITS-1:0]           LSUHADDR;
-  logic [P.XLEN-1:0]              LSUHWDATA;
-  logic [P.XLEN/8-1:0]            LSUHWSTRB;
+  logic [P.PA_BITS-1:0]          LSUHADDR;
+  logic [P.XLEN-1:0]             LSUHWDATA;
+  logic [P.XLEN/8-1:0]           LSUHWSTRB;
   logic                          LSUHWRITE;
   logic                          LSUHREADY;
   
@@ -192,12 +192,12 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, 
      // Memory stage interface
-     .SquashSCW, // from LSU
-     .MemRWM, // read/write control goes to LSU
-     .AtomicM, // atomic control goes to LSU
+     .SquashSCW,  // from LSU
+     .MemRWM,     // read/write control goes to LSU
+     .AtomicM,    // atomic control goes to LSU
      .WriteDataM, // Write data to LSU
-     .Funct3M, // size and signedness to LSU
-     .SrcAM, // to privilege and fpu
+     .Funct3M,    // size and signedness to LSU
+     .SrcAM,      // to privilege and fpu
      .RdE, .RdM, .FIntResM, .FlushDCacheM,
      .BranchD, .BranchE, .JumpD, .JumpE,
      // Writeback stage
@@ -219,24 +219,24 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
     .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, 
     .LSUHBURST, .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
     // connect to csr or privilege and stay the same.
-    .PrivilegeModeW, .BigEndianM,          // connects to csr
-    .PMPCFG_ARRAY_REGW,     // connects to csr
-    .PMPADDR_ARRAY_REGW,    // connects to csr
+    .PrivilegeModeW, .BigEndianM, // connects to csr
+    .PMPCFG_ARRAY_REGW,           // connects to csr
+    .PMPADDR_ARRAY_REGW,          // connects to csr
     // hptw keep i/o
-    .SATP_REGW, // from csr
-    .STATUS_MXR, // from csr
-    .STATUS_SUM,  // from csr
-    .STATUS_MPRV,  // from csr            
-    .STATUS_MPP,  // from csr      
-    .sfencevmaM,                   // connects to privilege
-    .DCacheStallM,                  // connects to privilege
-    .LoadPageFaultM,   // connects to privilege
-    .StoreAmoPageFaultM, // connects to privilege
-    .LoadMisalignedFaultM, // connects to privilege
-    .LoadAccessFaultM,         // connects to privilege
-    .HPTWInstrAccessFaultF,         // connects to privilege
-    .StoreAmoMisalignedFaultM, // connects to privilege
-    .StoreAmoAccessFaultM,     // connects to privilege
+    .SATP_REGW,                   // from csr
+    .STATUS_MXR,                  // from csr
+    .STATUS_SUM,                  // from csr
+    .STATUS_MPRV,                 // from csr            
+    .STATUS_MPP,                  // from csr      
+    .sfencevmaM,                  // connects to privilege
+    .DCacheStallM,                // connects to privilege
+    .LoadPageFaultM,              // connects to privilege
+    .StoreAmoPageFaultM,          // connects to privilege
+    .LoadMisalignedFaultM,        // connects to privilege
+    .LoadAccessFaultM,            // connects to privilege
+    .HPTWInstrAccessFaultF,       // connects to privilege
+    .StoreAmoMisalignedFaultM,    // connects to privilege
+    .StoreAmoAccessFaultM,        // connects to privilege
     .InstrUpdateDAF,
     .PCSpillF, .ITLBMissF, .PTE, .PageType, .ITLBWriteF, .SelHPTW,
     .LSUStallM);                    
@@ -292,14 +292,14 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
       .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
-    assign CSRReadValW = 0;
+    assign CSRReadValW      = 0;
     assign UnalignedPCNextF = PC2NextF;
-    assign RetM = 0;
-    assign TrapM = 0;
-    assign wfiM = 0;
-    assign IntPendingM = 0;
-    assign sfencevmaM = 0;
-    assign BigEndianM = 0;
+    assign RetM             = 0;
+    assign TrapM            = 0;
+    assign wfiM             = 0;
+    assign IntPendingM      = 0;
+    assign sfencevmaM       = 0;
+    assign BigEndianM       = 0;
   end
 
   // multiply/divide unit
@@ -310,45 +310,45 @@ module wallypipelinedcore import cvw::*;  #(parameter cvw_t P) (
       .MDUResultW, .DivBusyE); 
   end else begin // no M instructions supported
     assign MDUResultW = 0; 
-    assign DivBusyE = 0;
+    assign DivBusyE   = 0;
   end
 
   // floating point unit
   if (P.F_SUPPORTED) begin:fpu
     fpu #(P) fpu(
       .clk, .reset,
-      .FRM_REGW, // Rounding mode from CSR
-      .InstrD, // instruction from IFU
-      .ReadDataW(ReadDataW[P.FLEN-1:0]),// Read data from memory
-      .ForwardedSrcAE, // Integer input being processed (from IEU)
-      .StallE, .StallM, .StallW, // stall signals from HZU
-      .FlushE, .FlushM, .FlushW, // flush signals from HZU
-      .RdE, .RdM, .RdW, // which FP register to write to (from IEU)
-      .STATUS_FS, // is floating-point enabled?
-      .FRegWriteM, // FP register write enable
+      .FRM_REGW,                           // Rounding mode from CSR
+      .InstrD,                             // instruction from IFU
+      .ReadDataW(ReadDataW[P.FLEN-1:0]),   // Read data from memory
+      .ForwardedSrcAE,                     // Integer input being processed (from IEU)
+      .StallE, .StallM, .StallW,           // stall signals from HZU
+      .FlushE, .FlushM, .FlushW,           // flush signals from HZU
+      .RdE, .RdM, .RdW,                    // which FP register to write to (from IEU)
+      .STATUS_FS,                          // is floating-point enabled?
+      .FRegWriteM,                         // FP register write enable
       .FpLoadStoreM,
-      .ForwardedSrcBE, // Integer input for intdiv
+      .ForwardedSrcBE,                     // Integer input for intdiv
       .Funct3E, .Funct3M, .IntDivE, .W64E, // Integer flags and functions
-      .FPUStallD, // Stall the decode stage
-      .FWriteIntE, .FCvtIntE, // integer register write enable, conversion operation
-      .FWriteDataM, // Data to be written to memory
-      .FIntResM, // data to be written to integer register
-      .FCvtIntResW, // fp -> int conversion result to be stored in int register
-      .FCvtIntW,   // fpu result selection
-      .FDivBusyE, // Is the divide/sqrt unit busy (stall execute stage)
-      .IllegalFPUInstrD, // Is the instruction an illegal fpu instruction
-      .SetFflagsM,        // FPU flags (to privileged unit)
+      .FPUStallD,                          // Stall the decode stage
+      .FWriteIntE, .FCvtIntE,              // integer register write enable, conversion operation
+      .FWriteDataM,                        // Data to be written to memory
+      .FIntResM,                           // data to be written to integer register
+      .FCvtIntResW,                        // fp -> int conversion result to be stored in int register
+      .FCvtIntW,                           // fpu result selection
+      .FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage)
+      .IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction
+      .SetFflagsM,                         // FPU flags (to privileged unit)
       .FIntDivResultW); 
-  end else begin // no F_SUPPORTED or D_SUPPORTED; tie outputs low
-    assign FPUStallD = 0;
-    assign FWriteIntE = 0; 
-    assign FCvtIntE = 0;
-    assign FIntResM = 0;
-    assign FCvtIntW = 0;
-    assign FDivBusyE = 0;
+  end else begin                           // no F_SUPPORTED or D_SUPPORTED; tie outputs low
+    assign FPUStallD        = 0;
+    assign FWriteIntE       = 0; 
+    assign FCvtIntE         = 0;
+    assign FIntResM         = 0;
+    assign FCvtIntW         = 0;
+    assign FDivBusyE        = 0;
     assign IllegalFPUInstrD = 1;
-    assign SetFflagsM = 0;
-    assign FpLoadStoreM = 0;
+    assign SetFflagsM       = 0;
+    assign FpLoadStoreM     = 0;
   end
   
 endmodule
