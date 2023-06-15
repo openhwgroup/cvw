@@ -42,6 +42,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]        Funct3E,                         // Funct3 instruction field
   output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
+  output logic              MDUActiveE,                      // Mul/Div instruction being executed
   // Memory stage signals
   input  logic              SquashSCW,                       // Squash store conditional, from LSU
   output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
@@ -93,20 +94,22 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       MemReadE, CSRReadE;                            // Load, CSRRead instruction
   logic       BranchSignedE;                                 // Branch does signed comparison on operands
   logic       MDUE;                                          // Multiply/divide instruction
+  logic       BMUActiveE;                                    // Bit manipulation instruction being executed
            
   controller #(P) c(
     .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
-    .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .StallM, .FlushM, .MemRWM,
-    .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
+    .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
+    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE,
+    .StallM, .FlushM, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);
 
   datapath #(P) dp(
     .clk, .reset, .ImmSrcD, .InstrD, .StallE, .FlushE, .ForwardAE, .ForwardBE, .W64E, .SubArithE,
     .Funct3E, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .JumpE, .BranchSignedE, 
-    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE,
+    .PCE, .PCLinkE, .FlagsE, .IEUAdrE, .ForwardedSrcAE, .ForwardedSrcBE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE,
     .StallM, .FlushM, .FWriteIntM, .FIntResM, .SrcAM, .WriteDataM, .FCvtIntW,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .SquashSCW, .ResultSrcW, .ReadDataW, .FCvtIntResW,
     .CSRReadValW, .MDUResultW, .FIntDivResultW, .Rs1D, .Rs2D, .Rs1E, .Rs2E, .RdE, .RdM, .RdW);             

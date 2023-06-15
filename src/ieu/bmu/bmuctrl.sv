@@ -46,7 +46,8 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   output logic [1:0]  BSelectE,                // Indicates if ZBA_ZBB_ZBC_ZBS instruction in one-hot encoding
   output logic [2:0]  ZBBSelectE,              // ZBB mux select signal
   output logic        BRegWriteE,              // Indicates if it is a R type B instruction in Execute
-  output logic [2:0]  BALUControlE             // ALU Control signals for B instructions in Execute Stage
+  output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
+  output logic        BMUActiveE               // Bit manipulation instruction being executed
 );
 
   logic [6:0] OpD;                             // Opcode in Decode stage
@@ -174,5 +175,5 @@ module bmuctrl import cvw::*;  #(parameter cvw_t P) (
   assign ALUSelectD = BALUOpD ? BALUSelectD : (ALUOpD ? Funct3D : 3'b000);
 
   // BMU Execute stage pipieline control register
-  flopenrc #(9) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BALUControlD}, {BSelectE, ZBBSelectE, BRegWriteE, BALUControlE});
+  flopenrc #(10) controlregBMU(clk, reset, FlushE, ~StallE, {BSelectD, ZBBSelectD, BRegWriteD, BALUControlD, ~IllegalBitmanipInstrD}, {BSelectE, ZBBSelectE, BRegWriteE, BALUControlE, BMUActiveE});
 endmodule

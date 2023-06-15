@@ -38,6 +38,7 @@ module alu #(parameter WIDTH=32) (
   input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
   input  logic [2:0]       Funct3,      // For BMU decoding
   input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
+  input  logic             BMUActiveE,  // Bit manipulation instruction being executed
   output logic [WIDTH-1:0] ALUResult,   // ALU result
   output logic [WIDTH-1:0] Sum);        // Sum of operands
 
@@ -88,7 +89,7 @@ module alu #(parameter WIDTH=32) (
 
   // Final Result B instruction select mux
   if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
+    bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, .BMUActiveE,
       .Funct3, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .ALUResult);
   end else begin

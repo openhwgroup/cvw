@@ -33,6 +33,7 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // inputs A and B from IEU forwarding mux output
   input  logic [2:0]        Funct3E, Funct3M,               // type of MDU operation
   input  logic              IntDivE, W64E,                  // Integer division/remainder, and W-type instrutions
+  input  logic              MDUActiveE,                     // Mul/Div instruction being executed
   output logic [P.XLEN-1:0] MDUResultW,                     // multiply/divide result
   output logic              DivBusyE                        // busy signal to stall pipeline in Execute stage
 );
@@ -42,6 +43,12 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        PrelimResultM;                  // selected result before W truncation
   logic [P.XLEN-1:0]        MDUResultM;                     // result after W truncation
   logic                     W64M;                           // W-type instruction
+
+  logic [P.XLEN-1:0]        AMDU, BMDU;                     // Gated inputs to MDU
+
+  // gate data inputs to MDU to only operate when MDU is active.
+  assign AMDU = ForwardedSrcAE & {P.XLEN{MDUActiveE}};
+  assign BMDU = ForwardedSrcBE & {P.XLEN{MDUActiveE}};
 
   // Multiplier
   mul #(P.XLEN) mul(.clk, .reset, .StallM, .FlushM, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .ProdM);
