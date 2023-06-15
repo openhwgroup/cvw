@@ -41,22 +41,22 @@
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
 module plic_apb import cvw::*;  #(parameter cvw_t P) (
-  input  logic               PCLK, PRESETn,
-  input  logic               PSEL,
-  input  logic [27:0]        PADDR, 
+  input  logic                PCLK, PRESETn,
+  input  logic                PSEL,
+  input  logic [27:0]         PADDR, 
   input  logic [P.XLEN-1:0]   PWDATA,
   input  logic [P.XLEN/8-1:0] PSTRB,
-  input  logic               PWRITE,
-  input  logic               PENABLE,
+  input  logic                PWRITE,
+  input  logic                PENABLE,
   output logic [P.XLEN-1:0]   PRDATA,
-  output logic               PREADY,
-  input  logic               UARTIntr,GPIOIntr,
-  output logic               MExtInt, SExtInt
+  output logic                PREADY,
+  input  logic                UARTIntr,GPIOIntr,
+  output logic                MExtInt, SExtInt
 );
 
-  logic                      memwrite, memread;
-  logic [23:0]               entry;
-  logic [31:0]               Din, Dout;
+  logic                       memwrite, memread;
+  logic [23:0]                entry;
+  logic [31:0]                Din, Dout;
 
   // context-independent signals
   logic [`N:1]               requests;
@@ -78,9 +78,9 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // =======
 
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-  assign memread  = ~PWRITE & PSEL;  // read at start of access phase.  PENABLE hasn't set up before this
-  assign PREADY = 1'b1; // PLIC never takes >1 cycle to respond
-  assign entry = {PADDR[23:2],2'b0};
+  assign memread  = ~PWRITE & PSEL;           // read at start of access phase.  PENABLE hasn't set up before this
+  assign PREADY   = 1'b1;                     // PLIC never takes >1 cycle to respond
+  assign entry    = {PADDR[23:2],2'b0};
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
@@ -97,6 +97,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // ==================
   // Register Interface
   // ==================
+    
   always @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
@@ -110,19 +111,19 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
         casez(entry)
           24'h0000??: intPriority[entry[7:2]] <= #1 Din[2:0];
           `ifdef PLIC_NUM_SRC_LT_32 // eventually switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
-          24'h002000: intEn[0][`N:1] <= #1 Din[`N:1];
-          24'h002080: intEn[1][`N:1] <= #1 Din[`N:1];
+          24'h002000: intEn[0][`N:1]          <= #1 Din[`N:1];
+          24'h002080: intEn[1][`N:1]          <= #1 Din[`N:1];
           `endif
           `ifndef PLIC_NUM_SRC_LT_32
-          24'h002000: intEn[0][31:1] <= #1 Din[31:1];
-          24'h002004: intEn[0][`N:32] <= #1 Din[31:0];
-          24'h002080: intEn[1][31:1] <= #1 Din[31:1];
-          24'h002084: intEn[1][`N:32] <= #1 Din[31:0];
+          24'h002000: intEn[0][31:1]          <= #1 Din[31:1];
+          24'h002004: intEn[0][`N:32]         <= #1 Din[31:0];
+          24'h002080: intEn[1][31:1]          <= #1 Din[31:1];
+          24'h002084: intEn[1][`N:32]         <= #1 Din[31:0];
           `endif
-          24'h200000: intThreshold[0] <= #1 Din[2:0];
-          24'h200004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
-          24'h201000: intThreshold[1] <= #1 Din[2:0];
-          24'h201004: intInProgress <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h200000: intThreshold[0]         <= #1 Din[2:0];
+          24'h200004: intInProgress           <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h201000: intThreshold[1]         <= #1 Din[2:0];
+          24'h201004: intInProgress           <= #1 intInProgress & ~({{`N-1{1'b0}}, 1'b1} << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // Read synchronously because a read can have side effect of changing intInProgress
       if (memread) begin
@@ -245,4 +246,3 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   assign MExtInt = |(threshMask[0] & priorities_with_irqs[0]);
   assign SExtInt = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
-
