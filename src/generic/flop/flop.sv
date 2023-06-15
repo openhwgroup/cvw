@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module flop #(parameter WIDTH = 8) ( 
   input  logic             clk,
   input  logic [WIDTH-1:0] d, 

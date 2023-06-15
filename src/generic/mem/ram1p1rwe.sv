@@ -30,9 +30,7 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-`include "wally-config.vh"
-
-module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
+module ram1p1rwe #(parameter DEPTH=64, WIDTH=44, USE_SRAM=1) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -46,19 +44,19 @@ module ram1p1rwe #(parameter DEPTH=64, WIDTH=44) (
   // ***************************************************************************
   // TRUE SRAM macro
   // ***************************************************************************
-  if ((`USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
+  if ((USE_SRAM == 1) & (WIDTH == 128) & (DEPTH == 64)) begin // Cache data subarray
     // 64 x 128-bit SRAM
     ram1p1rwbe_64x128 sram1A (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
       .BWEB('0), .Q(dout));
     
-  end else if ((`USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
+  end else if ((USE_SRAM == 1) & (WIDTH == 44)  & (DEPTH == 64)) begin // RV64 cache tag
     // 64 x 44-bit SRAM
     ram1p1rwbe_64x44 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 
       .BWEB('0), .Q(dout));
 
-  end else if ((`USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
+  end else if ((USE_SRAM == 1) & (WIDTH == 22)  & (DEPTH == 64)) begin // RV32 cache tag
     // 64 x 22-bit SRAM
     ram1p1rwbe_64x22 sram1B (.CLK(clk), .CEB(~ce), .WEB(~we),
       .A(addr), .D(din), 

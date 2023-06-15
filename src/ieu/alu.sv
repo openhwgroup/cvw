@@ -29,7 +29,7 @@
 
 `include "wally-config.vh"
 
-module alu #(parameter WIDTH=32) (
+module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   input  logic [WIDTH-1:0] A, B,        // Operands
   input  logic             W64,         // W64-type instruction
   input  logic             SubArith,    // Subtraction or arithmetic shift
@@ -56,7 +56,7 @@ module alu #(parameter WIDTH=32) (
   assign {Carry, Sum} = CondShiftA + CondMaskInvB + {{(WIDTH-1){1'b0}}, SubArith};
   
   // Shifts (configurable for rotation)
-  shifter sh(.A, .Amt(B[`LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
+  shifter #(P) sh(.A, .Amt(B[P.LOG_XLEN-1:0]), .Right(Funct3[2]), .W64, .SubArith, .Y(Shift), .Rotate(BALUControl[2]));
 
   // Condition code flags are based on subtraction output Sum = A-B.
   // Overflow occurs when the numbers being subtracted have the opposite sign 
@@ -76,7 +76,7 @@ module alu #(parameter WIDTH=32) (
       3'b010: FullResult = {{(WIDTH-1){1'b0}}, LT};       // slt
       3'b011: FullResult = {{(WIDTH-1){1'b0}}, LTU};      // sltu
       3'b100: FullResult = A ^ CondMaskInvB;              // xor, xnor, binv
-      3'b101: FullResult = (`ZBS_SUPPORTED | `ZBB_SUPPORTED) ? {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
+      3'b101: FullResult = (P.ZBS_SUPPORTED | P.ZBB_SUPPORTED) ? {{(WIDTH-1){1'b0}},{|(A & CondMaskB)}} : Shift; // bext (or IEU shift when BMU not supported)
       3'b110: FullResult = A | CondMaskInvB;              // or, orn, bset
       3'b111: FullResult = A & CondMaskInvB;              // and, bclr
     endcase
@@ -87,8 +87,8 @@ module alu #(parameter WIDTH=32) (
   else              assign PreALUResult = FullResult;
 
   // Final Result B instruction select mux
-  if (`ZBC_SUPPORTED | `ZBS_SUPPORTED | `ZBA_SUPPORTED | `ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
+  if (P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED) begin : bitmanipalu
+    bitmanipalu #(P, WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
       .Funct3, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .ALUResult);
   end else begin

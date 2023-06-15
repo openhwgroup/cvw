@@ -88,7 +88,7 @@ module testbench;
   logic SelectTest;
 
   // check assertions for a legal configuration
-  riscvassertions riscvassertions();
+  riscvassertions #(P) riscvassertions();
 
   // pick tests based on modes supported
   initial begin
