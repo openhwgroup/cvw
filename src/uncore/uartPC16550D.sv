@@ -138,7 +138,7 @@ module uartPC16550D #(parameter UART_PRESCALE) (
     if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      LCR <= #1 8'b11; // spec says to reset to 0, but FPGA needs to reset to 8 data bits
+      LCR <= #1 8'b11; // **** fpga used to require reset to 3, double check this is no longer needed.
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
