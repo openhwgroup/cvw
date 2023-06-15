@@ -36,6 +36,7 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
   input  logic [2:0]       ZBBSelect,   // ZBB mux select signal
   input  logic [2:0]       Funct3,      // For BMU decoding
   input  logic [2:0]       BALUControl, // ALU Control signals for B instructions in Execute Stage
+  input  logic             BMUActiveE,  // Bit manipulation instruction being executed
   output logic [WIDTH-1:0] ALUResult,   // ALU result
   output logic [WIDTH-1:0] Sum);        // Sum of operands
 
@@ -86,7 +87,7 @@ module alu import cvw::*; #(parameter cvw_t P, parameter WIDTH) (
 
   // Final Result B instruction select mux
   if (P.ZBC_SUPPORTED | P.ZBS_SUPPORTED | P.ZBA_SUPPORTED | P.ZBB_SUPPORTED) begin : bitmanipalu
-    bitmanipalu #(P, WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, 
+    bitmanipalu #(P, WIDTH) balu(.A, .B, .W64, .BSelect, .ZBBSelect, .BMUActiveE,
       .Funct3, .LT,.LTU, .BALUControl, .PreALUResult, .FullResult,
       .CondMaskB, .CondShiftA, .ALUResult);
   end else begin

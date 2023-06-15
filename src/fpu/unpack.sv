@@ -30,6 +30,7 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FLEN-1:0]       X, Y, Z,              // inputs from register file
   input  logic [P.FMTBITS-1:0]    Fmt,                  // format signal 00 - single 01 - double 11 - quad 10 - half
   input  logic                    XEn, YEn, ZEn,        // input enables
+  input  logic                    FPUActive,            // Kill inputs when FPU is not active
   output logic                    Xs, Ys, Zs,           // sign bits of XYZ
   output logic [P.NE-1:0]         Xe, Ye, Ze,           // exponents of XYZ (converted to largest supported precision)
   output logic [P.NF:0]           Xm, Ym, Zm,           // mantissas of XYZ (converted to largest supported precision)
@@ -46,17 +47,17 @@ module unpack import cvw::*;  #(parameter cvw_t P) (
   logic XFracZero, YFracZero, ZFracZero;                // is the fraction zero
   logic YExpMax, ZExpMax;                               // is the exponent all 1s
   
-  unpackinput #(P) unpackinputX (.In(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn),
+  unpackinput #(P) unpackinputX (.A(X), .Fmt, .Sgn(Xs), .Exp(Xe), .Man(Xm), .En(XEn), .FPUActive,
                           .NaN(XNaN), .SNaN(XSNaN), .ExpNonZero(XExpNonZero),
                           .Zero(XZero), .Inf(XInf), .ExpMax(XExpMax), .FracZero(XFracZero), 
                           .Subnorm(XSubnorm), .PostBox(XPostBox));
 
-  unpackinput #(P) unpackinputY (.In(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn),
+  unpackinput #(P) unpackinputY (.A(Y), .Fmt, .Sgn(Ys), .Exp(Ye), .Man(Ym), .En(YEn), .FPUActive,
                           .NaN(YNaN), .SNaN(YSNaN), .ExpNonZero(YExpNonZero),
                           .Zero(YZero), .Inf(YInf), .ExpMax(YExpMax), .FracZero(YFracZero), 
                           .Subnorm(), .PostBox());
 
-  unpackinput #(P) unpackinputZ (.In(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn),
+  unpackinput #(P) unpackinputZ (.A(Z), .Fmt, .Sgn(Zs), .Exp(Ze), .Man(Zm), .En(ZEn), .FPUActive,
                           .NaN(ZNaN), .SNaN(ZSNaN), .ExpNonZero(ZExpNonZero),
                           .Zero(ZZero), .Inf(ZInf), .ExpMax(ZExpMax), .FracZero(ZFracZero), 
                           .Subnorm(), .PostBox());
