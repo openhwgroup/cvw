@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,

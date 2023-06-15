@@ -27,9 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module bitmanipalu #(parameter WIDTH=32) (
+module bitmanipalu import cvw::*; #(parameter cvw_t P, 
+                     parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, B,                    // Operands
   input  logic             W64,                     // W64-type instruction
   input  logic [1:0]       BSelect,                 // Binary encoding of if it's a ZBA_ZBB_ZBC_ZBS instruction
@@ -62,13 +61,13 @@ module bitmanipalu #(parameter WIDTH=32) (
   assign {Mask, PreShift} = BALUControl[1:0];
 
   // Mask Generation Mux
-  if (`ZBS_SUPPORTED) begin: zbsdec
+  if (P.ZBS_SUPPORTED) begin: zbsdec
     decoder #($clog2(WIDTH)) maskgen(BBMU[$clog2(WIDTH)-1:0], MaskB);
     mux2 #(WIDTH) maskmux(B, MaskB, Mask, CondMaskB);
   end else assign CondMaskB = B;
  
   // 0-3 bit Pre-Shift Mux
-  if (`ZBA_SUPPORTED) begin: zbapreshift
+  if (P.ZBA_SUPPORTED) begin: zbapreshift
     if (WIDTH == 64) begin
       mux2 #(64) zextmux(A, {{32{1'b0}}, A[31:0]}, W64, CondZextA); 
     end else assign CondZextA = A;
@@ -80,17 +79,17 @@ module bitmanipalu #(parameter WIDTH=32) (
   end
 
   // Bit reverse needed for some ZBB, ZBC instructions
-  if (`ZBC_SUPPORTED | `ZBB_SUPPORTED) begin: bitreverse
+  if (P.ZBC_SUPPORTED | P.ZBB_SUPPORTED) begin: bitreverse
     bitreverse #(WIDTH) brA(.A(ABMU), .RevA);
   end
 
   // ZBC Unit
-  if (`ZBC_SUPPORTED) begin: zbc
+  if (P.ZBC_SUPPORTED) begin: zbc
     zbc #(WIDTH) ZBC(.A(ABMU), .RevA, .B(BBMU), .Funct3, .ZBCResult);
   end else assign ZBCResult = 0;
 
   // ZBB Unit
-  if (`ZBB_SUPPORTED) begin: zbb
+  if (P.ZBB_SUPPORTED) begin: zbb
     zbb #(WIDTH) ZBB(.A(ABMU), .RevA, .B(BBMU), .W64, .LT, .LTU, .BUnsigned(Funct3[0]), .ZBBSelect, .ZBBResult);
   end else assign ZBBResult = 0;
 

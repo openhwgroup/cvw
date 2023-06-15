@@ -1,14 +1,14 @@
 ///////////////////////////////////////////
-// flopenr.sv
+// checksignature.sv
 //
-// Written: David_Harris@hmc.edu 9 January 2021
-// Modified: 
+// Written: David Harris David_Harris@hmc.edu
+// Modified: 14 June 2023
 //
-// Purpose: D flip-flop with enable, synchronous reset
+// Purpose: Verifies the memory signature.
 // 
-// A component of the CORE-V-WALLY configurable RISC-V project.
+// A component of the Wally configurable RISC-V project.
 // 
-// Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+// Copyright (C) 2021 Harvey Mudd College & Oklahoma State University
 //
 // SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 //
@@ -23,14 +23,4 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
-module flopenr #(parameter WIDTH = 8) (
-  input  logic             clk, reset, en,
-  input  logic [WIDTH-1:0] d, 
-  output logic [WIDTH-1:0] q);
-
-  always_ff @(posedge clk)
-    if (reset)   q <= #1 0;
-    else if (en) q <= #1 d;
-endmodule
 

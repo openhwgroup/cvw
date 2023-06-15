@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // perform an OR of all the rows in an array, producing one output for each column
 // equivalent to assign y = a.or
 module or_rows #(parameter ROWS = 8, COLS=2) (
