@@ -29,7 +29,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
 module decompress #(parameter XLEN)(
   input  logic [31:0] InstrRawD,         // 32-bit instruction or raw compressed 16-bit instruction in bottom half
@@ -91,18 +90,18 @@ module decompress #(parameter XLEN)(
                   end
         5'b00001: InstrD = {immCLD, rs1p, 3'b011, rdp, 7'b0000111}; // c.fld
         5'b00010: InstrD = {immCL, rs1p, 3'b010, rdp, 7'b0000011}; // c.lw
-        5'b00011: if (`XLEN==32)
+        5'b00011: if (XLEN==32)
                     InstrD = {immCL, rs1p, 3'b010, rdp, 7'b0000111}; // c.flw
                   else
                     InstrD = {immCLD, rs1p, 3'b011, rdp, 7'b0000011}; // c.ld;
         5'b00101: InstrD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100111}; // c.fsd
         5'b00110: InstrD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100011}; // c.sw
-        5'b00111: if (`XLEN==32)
+        5'b00111: if (XLEN==32)
                     InstrD = {immCS[11:5], rs2p, rs1p, 3'b010, immCS[4:0], 7'b0100111}; // c.fsw
                   else
                     InstrD = {immCSD[11:5], rs2p, rs1p, 3'b011, immCSD[4:0], 7'b0100011}; //c.sd
         5'b01000: InstrD = {immCI, rds1, 3'b000, rds1, 7'b0010011}; // c.addi
-        5'b01001: if (`XLEN==32) 
+        5'b01001: if (XLEN==32) 
                     InstrD = {immCJ, 5'b00001, 7'b1101111}; // c.jal
                   else
                     InstrD = {immCI, rds1, 3'b000, rds1, 7'b0011011}; // c.addiw
@@ -126,7 +125,7 @@ module decompress #(parameter XLEN)(
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b110, rds1p, 7'b0110011}; // c.or
                     else // if (instr16[6:5] == 2'b11) 
                       InstrD = {7'b0000000, rs2p, rds1p, 3'b111, rds1p, 7'b0110011}; // c.and
-                  else if (`XLEN > 32) //if (instr16[12:10] == 3'b111) full truth table no need to check [12:10] 
+                  else if (XLEN > 32) //if (instr16[12:10] == 3'b111) full truth table no need to check [12:10] 
                     if (instr16[6:5] == 2'b00)
                       InstrD = {7'b0100000, rs2p, rds1p, 3'b000, rds1p, 7'b0111011}; // c.subw
                     else if (instr16[6:5] == 2'b01)
@@ -151,7 +150,7 @@ module decompress #(parameter XLEN)(
         5'b10000: InstrD = {6'b000000, immSH, rds1, 3'b001, rds1, 7'b0010011}; // c.slli
         5'b10001: InstrD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000111}; // c.fldsp
         5'b10010: InstrD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000011}; // c.lwsp
-        5'b10011: if (`XLEN == 32)
+        5'b10011: if (XLEN == 32)
                     InstrD = {immCILSP, 5'b00010, 3'b010, rds1, 7'b0000111}; // c.flwsp
                   else 
                     InstrD = {immCILSPD, 5'b00010, 3'b011, rds1, 7'b0000011}; // c.ldsp
@@ -170,7 +169,7 @@ module decompress #(parameter XLEN)(
                       InstrD = {7'b0000000, rs2, rds1, 3'b000, rds1, 7'b0110011}; // c.add
         5'b10101: InstrD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100111}; // c.fsdsp
         5'b10110: InstrD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100011}; // c.swsp
-        5'b10111: if (`XLEN==32)
+        5'b10111: if (XLEN==32)
                     InstrD = {immCSS[11:5], rs2, 5'b00010, 3'b010, immCSS[4:0], 7'b0100111}; // c.fswsp
                   else
                     InstrD = {immCSSD[11:5], rs2, 5'b00010, 3'b011, immCSSD[4:0], 7'b0100011}; // c.sdsp
