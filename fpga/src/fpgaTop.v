@@ -24,8 +24,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "config.vh"
-
 module fpgaTop 
   (input           default_250mhz_clk1_0_n,
    input 		   default_250mhz_clk1_0_p, 
@@ -62,9 +60,6 @@ module fpgaTop
    output [0 : 0]  c0_ddr4_ck_t
    );
 
-`include "parameter-defs.vh"
-  
-
   wire 			   CPUCLK;
   wire 			   c0_ddr4_ui_clk_sync_rst;
   wire 			   bus_struct_reset;
@@ -75,12 +70,12 @@ module fpgaTop
   
   wire 			   HCLKOpen;
   wire 			   HRESETnOpen;
-  wire [P.AHBW-1:0] HRDATAEXT;
+  wire [64-1:0] HRDATAEXT;
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
   wire 			   HSELEXT;
   wire [31:0] 	   HADDR;
-  wire [P.AHBW-1:0] HWDATA;
+  wire [64-1:0] HWDATA;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
@@ -214,7 +209,7 @@ module fpgaTop
   
 
   // wally
-  wallypipelinedsoc #(P) wallypipelinedsoc
+  wallypipelinedsocwrapper wallypipelinedsocwrapper
     (.clk(CPUCLK),
      .reset_ext(bus_struct_reset),
      // bus interface

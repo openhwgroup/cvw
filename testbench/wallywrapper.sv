@@ -26,35 +26,15 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `include "config.vh"
-`include "tests.vh"
-
-`define PrintHPMCounters 0
-`define BPRED_LOGGER 0
-`define I_CACHE_ADDR_LOGGER 0
-`define D_CACHE_ADDR_LOGGER 0
 
 import cvw::*;
 
 module wallywrapper;
-  parameter DEBUG=0;
-  parameter TEST="none";
  
 `include "parameter-defs.vh"
 
   logic        clk;
   logic        reset_ext, reset;
-
-  parameter SIGNATURESIZE = 5000000;
-
-  int test, i, errors, totalerrors;
-  logic [31:0] sig32[0:SIGNATURESIZE];
-  logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
-  logic [P.XLEN-1:0] testadr, testadrNoBase;
-  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
-
-  string tests[];
-  logic [3:0] dummy;
 
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                HREADYEXT, HRESPEXT;
