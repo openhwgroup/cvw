@@ -82,8 +82,9 @@ write_verilog -force -mode funcsim sim/syn-funcsim.v
 if {$board=="ArtyA7"} {
     source ../constraints/small-debug.xdc
 
-} else {    
-    source ../constraints/debug4.xdc
+} else {
+    # *** RT: 16 June 2023 must add back in the debugger 
+    #source ../constraints/debug4.xdc
 }
 
 
