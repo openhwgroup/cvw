@@ -156,6 +156,10 @@ main:
     .word 0x43007053 // illegal fcvt.d.* (bad Rs2D)
     .word 0x42207053 // illegal fcvt.d.* (bad Rs2D[1])
 
+    # Test floating point convert to integer and using result
+    fcvt.w.s t0, f0
+    add t1, t0, t0
+
     j done
 
 .section .data
