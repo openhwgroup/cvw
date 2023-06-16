@@ -1466,7 +1466,7 @@ string arch64zbb[] = '{
     "rv64i_m/B/src/andn-01.S",
     "rv64i_m/B/src/orn-01.S",
     "rv64i_m/B/src/xnor-01.S",
-    "rv64i_m/B/src/zext.h-01.S",
+    "rv64i_m/B/src/zext.h_64-01.S",
     "rv64i_m/B/src/sext.b-01.S",
     "rv64i_m/B/src/sext.h-01.S",
     "rv64i_m/B/src/clz-01.S",
