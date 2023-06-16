@@ -248,6 +248,7 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // Find the test vector files and populate the PC to function label converter
   ////////////////////////////////////////////////////////////////////////////////
+  logic [P.XLEN-1:0] testadr;
   assign begin_signature_addr = ProgramAddrLabelArray["begin_signature"];
   always @(posedge clk) begin
     if(SelectTest) begin
@@ -289,6 +290,11 @@ module testbench;
         else outputfile = {pathname, tests[test], ".sim.output"};
         outputFilePointer = $fopen(outputfile, "w");
         i = 0;
+        testadr = ($unsigned(begin_signature_addr))/(P.XLEN/8);
+        while ($unsigned(i) < $unsigned(5'd5)) begin
+          $fdisplayh(outputFilePointer, DCacheFlushFSM.ShadowRAM[testadr+i]);
+          i = i + 1;
+        end
         $fclose(outputFilePointer);
         $display("Embench Benchmark: created output file: %s", outputfile);
       end else if (TEST == "coverage64gc") begin
