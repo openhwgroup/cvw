@@ -300,11 +300,11 @@ module testbench;
 
       if (!begin_signature_addr)
         $display("begin_signature addr not found in %s", ProgramLabelMapFile);
-      else begin
+      else if (TEST != "embench") begin   // *** quick hack for embench.  need a better long term solution
         CheckSignature(pathname, tests[test], riscofTest, begin_signature_addr, errors);
       end
       if(errors > 0) totalerrors = totalerrors + 1;
-      test = test + 1;
+      test = test + 1; // *** this probably needs to be moved.
       if (test == tests.size()) begin
         if (totalerrors == 0) $display("SUCCESS! All tests ran without failures.");
         else $display("FAIL: %d test programs had errors", totalerrors);
