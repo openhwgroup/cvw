@@ -24,7 +24,7 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
+`include "config.vh"
 
 module fpgaTop 
   (input           default_250mhz_clk1_0_n,
@@ -62,6 +62,9 @@ module fpgaTop
    output [0 : 0]  c0_ddr4_ck_t
    );
 
+`include "parameter-defs.vh"
+  
+
   wire 			   CPUCLK;
   wire 			   c0_ddr4_ui_clk_sync_rst;
   wire 			   bus_struct_reset;
@@ -72,12 +75,12 @@ module fpgaTop
   
   wire 			   HCLKOpen;
   wire 			   HRESETnOpen;
-  wire [`AHBW-1:0] HRDATAEXT;
+  wire [P.AHBW-1:0] HRDATAEXT;
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
   wire 			   HSELEXT;
   wire [31:0] 	   HADDR;
-  wire [`AHBW-1:0] HWDATA;
+  wire [P.AHBW-1:0] HWDATA;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
@@ -211,7 +214,7 @@ module fpgaTop
   
 
   // wally
-  wallypipelinedsoc wallypipelinedsoc
+  wallypipelinedsoc #(P) wallypipelinedsoc
     (.clk(CPUCLK),
      .reset_ext(bus_struct_reset),
      // bus interface
