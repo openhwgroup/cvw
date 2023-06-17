@@ -27,6 +27,18 @@
 #include "WALLY-init-lib.h"
 
 main:
+    # Tests sret in machine mode
+    la t1, sretdone
+    csrw sepc, t1
+    sret
+sretdone:
+    addi t2, x0, 42 
+
+    # switch to user mode
+    li a0, 0   
+    ecall
+    sret #should be treated as illegal instruction
+    mret #mret in user mode and should be illegal
 
     # switch to supervisor mode
     li a0, 1   
