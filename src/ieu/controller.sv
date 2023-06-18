@@ -339,5 +339,6 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
   // the synchronous DTIM cannot read immediately after write
   // a cache cannot read or write immediately after a write
-  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED)) | (|AtomicD));
+  // atomic operations are also detected as MemRWD[1]
+  assign StoreStallD = MemRWE[0] & ((MemRWD[1] | (MemRWD[0] & P.DCACHE_SUPPORTED)));
 endmodule
