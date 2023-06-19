@@ -83,8 +83,7 @@ if {$board=="ArtyA7"} {
     source ../constraints/small-debug.xdc
 
 } else {
-    # *** RT: 16 June 2023 must add back in the debugger 
-    #source ../constraints/debug4.xdc
+    source ../constraints/debug4.xdc
 }
 
 
