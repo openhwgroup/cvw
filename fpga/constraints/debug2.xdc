@@ -1107,7 +1107,7 @@ connect_debug_port u_ila_0/probe215 [get_nets [list {wallypipelinedsocwrapper/wa
 create_debug_port u_ila_0 probe
 set_property port_width 10 [get_debug_ports u_ila_0/probe216]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe216]
-connect_debug_port u_ila_0/probe216 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[2]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[7]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[8]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[9]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1]__0[10]} ]]
+connect_debug_port u_ila_0/probe216 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][2]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][3]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][4]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][5]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][6]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][7]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][8]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][9]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intEn[1][10]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 6 [get_debug_ports u_ila_0/probe217]
@@ -1132,12 +1132,12 @@ connect_debug_port u_ila_0/probe220 [get_nets [list {wallypipelinedsocwrapper/wa
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe221]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe221]
-connect_debug_port u_ila_0/probe221 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0]__0[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0]__0[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0]__0[2]} ]]
+connect_debug_port u_ila_0/probe221 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0][0]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0][1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[0][2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 3 [get_debug_ports u_ila_0/probe222]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe222]
-connect_debug_port u_ila_0/probe222 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1]__0[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1]__0[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1]__0[2]} ]]
+connect_debug_port u_ila_0/probe222 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1][0]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1][1]} {wallypipelinedsocwrapper/wallypipelinedsoc/uncore.uncore/plic.plic/intThreshold[1][2]} ]]
 
 create_debug_port u_ila_0 probe
 set_property port_width 53 [get_debug_ports u_ila_0/probe223]

@@ -35,7 +35,7 @@ module testbench;
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
   parameter TEST="none";
-  parameter PrintHPMCounters=0;
+  parameter PrintHPMCounters=1;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
