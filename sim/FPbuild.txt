@@ -34,18 +34,14 @@ other FP tests given by the great SoftFloat/TestFloat output.
 
 4a.) Each test will test all its vectors - if you want to test a
 subset of the vectors (e.g., only binary16), you should modify the
-cvw/testbench/tests-fp.h and comment out the tests  you do not want to
-test.  The best way to do this is to comment out each item out with
-the // comment option in SV.  For example,
+testfloat.do in the sim directory.  Change the TEST_SIZE="all" to the
+specific test you want to run.  For example, if you want to run only
+binary16, you should set this variable to TEST_SIZE="HP".
 
-string f128div[] = '{
-//	"f128_div_rne.tv",
-//	"f128_div_rz.tv",
-//	"f128_div_ru.tv",
-//	"f128_div_rd.tv",
-//	"f128_div_rnm.tv"
-};
-
+4b.) If you want to turn off the generation of wlf files while running
+sim-testfloat-batch, you can modify testfloat.do in the sim
+directory.  Inside this DO file, modify the WAV file to 0 --> i.e.,
+set "quietly set WAV 0;"
 
 
 
