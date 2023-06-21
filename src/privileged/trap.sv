@@ -63,13 +63,13 @@ module trap import cvw::*;  #(parameter cvw_t P) (
 
   assign MIntGlobalEnM = (PrivilegeModeW != P.M_MODE) | STATUS_MIE; // if M ints enabled or lower priv 3.1.9
   assign SIntGlobalEnM = (PrivilegeModeW == P.U_MODE) | ((PrivilegeModeW == P.S_MODE) & STATUS_SIE); // if in lower priv mode, or if S ints enabled and not in higher priv mode 3.1.9
-  assign PendingIntsM = MIP_REGW & MIE_REGW;
-  assign IntPendingM = |PendingIntsM;
-  assign Committed = CommittedM | CommittedF;
-  assign EnabledIntsM = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
-  assign ValidIntsM = {12{~Committed}} & EnabledIntsM;
-  assign InterruptM = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
-  assign DelegateM = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
+  assign PendingIntsM  = MIP_REGW & MIE_REGW;
+  assign IntPendingM   = |PendingIntsM;
+  assign Committed     = CommittedM | CommittedF;
+  assign EnabledIntsM  = ({12{MIntGlobalEnM}} & PendingIntsM & ~MIDELEG_REGW | {12{SIntGlobalEnM}} & PendingIntsM & MIDELEG_REGW);
+  assign ValidIntsM    = {12{~Committed}} & EnabledIntsM;
+  assign InterruptM    = (|ValidIntsM) & InstrValidM; // suppress interrupt if the memory system has partially processed a request.
+  assign DelegateM     = P.S_SUPPORTED & (InterruptM ? MIDELEG_REGW[CauseM] : MEDELEG_REGW[CauseM]) & 
                      (PrivilegeModeW == P.U_MODE | PrivilegeModeW == P.S_MODE);
 
   ///////////////////////////////////////////
@@ -88,7 +88,7 @@ module trap import cvw::*;  #(parameter cvw_t P) (
                       LoadAccessFaultM | StoreAmoAccessFaultM;
   // coverage on
   assign TrapM = ExceptionM | InterruptM; 
-  assign RetM = mretM | sretM;
+  assign RetM  = mretM | sretM;
 
   ///////////////////////////////////////////
   // Cause priority defined in table 3.7 of 20190608 privileged spec

@@ -16,10 +16,18 @@ buildsize: build_speedopt_size build_sizeopt_size
 # uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for speed and size
 build_speedopt_speed:
 	$(embench_dir)/build_all.py --builddir=bd_speedopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S" --cflags="-O2 -nostartfiles" 
+	# remove files not used in embench1.0  When changing to 2.0, restore these files		
+	#rm -rf $(embench_dir)/bd_speedopt_speed/src/md5sum
+	#rm -rf $(embench_dir)/bd_speedopt_speed/src/tarfind
+	#rm -rf $(embench_dir)/bd_speedopt_speed/src/primecount	
 	find $(embench_dir)/bd_speedopt_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
 
 build_sizeopt_speed:
 	$(embench_dir)/build_all.py --builddir=bd_sizeopt_speed --arch riscv32 --chip generic --board rv32wallyverilog --ldflags="-nostartfiles ../../../config/riscv32/boards/rv32wallyverilog/startup/crt0.S" --cflags="-Os -nostartfiles" 
+	# remove files not used in embench1.0  When changing to 2.0, restore these files		
+	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/md5sum
+	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/tarfind
+	#rm -rf $(embench_dir)/bd_sizeopt_speed/src/primecount	
 	find $(embench_dir)/bd_sizeopt_speed/ -type f ! -name "*.*" | while read f; do cp "$$f" "$$f.elf"; done
 
 # uses the build_all.py python file to build the tests in addins/embench-iot/bd_speed/ optimized for speed and size

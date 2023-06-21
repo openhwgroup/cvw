@@ -26,7 +26,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module localbpbasic #(parameter XLEN,
+module localbpbasic import cvw::*; #(parameter cvw_t P,
+                                     parameter XLEN,
                       parameter m = 6, // 2^m = number of local history branches 
                       parameter k = 10) ( // number of past branches stored
   input logic             clk,
@@ -55,7 +56,7 @@ module localbpbasic #(parameter XLEN,
   assign IndexNextF = LHR;
   assign IndexM = LHRM;
   
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

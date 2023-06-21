@@ -27,7 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN = 26,
+module cacheway import cvw::*; #(parameter cvw_t P, 
+                  parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN = 26,
                   OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
@@ -108,7 +109,7 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
+  ram1p1rwe #(.P(P), .DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag),
     .din(PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
@@ -130,12 +131,12 @@ module cacheway #(parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN =
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwbe #(.P(P), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
     end else begin:wordram // no byte-enable needed for i$.
-      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwe #(.P(P), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn));

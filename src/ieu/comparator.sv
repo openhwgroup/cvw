@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 // This comparator is best
 module comparator #(parameter WIDTH=64) (
   input  logic [WIDTH-1:0] a, b,    // Operands

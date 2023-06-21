@@ -27,9 +27,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module unpackinput import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FLEN-1:0]        In,         // inputs from register file
+  input  logic [P.FLEN-1:0]        A,          // inputs from register file
   input  logic                     En,         // enable the input
   input  logic [P.FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
+  input  logic                     FPUActive,  // Kill inputs when FPU is not active
   output logic                     Sgn,        // sign bits of the number 
   output logic [P.NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
   output logic [P.NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
@@ -46,6 +47,10 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
 
   logic [P.NF-1:0] Frac;        // Fraction of XYZ
   logic            BadNaNBox;   // incorrectly NaN Boxed
+  logic [P.FLEN-1:0] In;
+
+  // Gate input when FPU is not active to save power and simulation
+  assign In = A & {P.FLEN{FPUActive}};
 
   if (P.FPSIZES == 1) begin        // if there is only one floating point format supported
       assign BadNaNBox = 0;

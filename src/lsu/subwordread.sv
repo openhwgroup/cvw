@@ -29,12 +29,12 @@
 
 module subwordread #(parameter LLEN) 
   (
-   input logic [LLEN-1:0]  ReadDataWordMuxM,
+   input logic [LLEN-1:0]   ReadDataWordMuxM,
    input logic [2:0]        PAdrM,
    input logic [2:0]        Funct3M,
    input logic              FpLoadStoreM, 
    input logic              BigEndianM, 
-   output logic [LLEN-1:0] ReadDataM
+   output logic [LLEN-1:0]  ReadDataM
 );
 
   logic [7:0]               ByteM; 
@@ -89,7 +89,7 @@ module subwordread #(parameter LLEN)
     //3'b100:  ReadDataM = FpLoadStoreM ? ReadDataWordMuxM : {{LLEN-8{1'b0}}, ByteM[7:0]}; // lbu/flq   - only needed when LLEN=128
       3'b101:  ReadDataM = {{LLEN-16{1'b0}}, HalfwordM[15:0]};                       // lhu
       3'b110:  ReadDataM = {{LLEN-32{1'b0}}, WordM[31:0]};                           // lwu
-      default: ReadDataM = ReadDataWordMuxM;                                          // Shouldn't happen
+      default: ReadDataM = ReadDataWordMuxM;                                         // Shouldn't happen
     endcase
 
   end else begin:swrmux // 32-bit

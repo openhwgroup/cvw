@@ -30,33 +30,33 @@
 
 module ram_ahb import cvw::*;  #(parameter cvw_t P, 
                                  parameter BASE=0, RANGE = 65535) (
-  input  logic                HCLK, HRESETn, 
-  input  logic                HSELRam,
+  input  logic                 HCLK, HRESETn, 
+  input  logic                 HSELRam,
   input  logic [P.PA_BITS-1:0] HADDR,
-  input  logic                HWRITE,
-  input  logic                HREADY,
-  input  logic [1:0]          HTRANS,
+  input  logic                 HWRITE,
+  input  logic                 HREADY,
+  input  logic [1:0]           HTRANS,
   input  logic [P.XLEN-1:0]    HWDATA,
   input  logic [P.XLEN/8-1:0]  HWSTRB,
   output logic [P.XLEN-1:0]    HREADRam,
-  output logic                HRESPRam, HREADYRam
+  output logic                 HRESPRam, HREADYRam
 );
 
-  localparam               ADDR_WIDTH = $clog2(RANGE/8);
-  localparam               OFFSET = $clog2(P.XLEN/8);   
+  localparam                   ADDR_WIDTH = $clog2(RANGE/8);
+  localparam                   OFFSET = $clog2(P.XLEN/8);   
 
   logic [P.XLEN/8-1:0]         ByteMask;
   logic [P.PA_BITS-1:0]        HADDRD, RamAddr;
-  logic                       initTrans;
-  logic                       memwrite, memwriteD, memread;
-  logic                       nextHREADYRam;
-  logic                       DelayReady;
+  logic                        initTrans;
+  logic                        memwrite, memwriteD, memread;
+  logic                        nextHREADYRam;
+  logic                        DelayReady;
 
   // a new AHB transactions starts when HTRANS requests a transaction, 
   // the peripheral is selected, and the previous transaction is completing
   assign initTrans = HREADY & HSELRam & HTRANS[1] ; 
-  assign memwrite = initTrans & HWRITE;  
-  assign memread = initTrans & ~HWRITE;
+  assign memwrite  = initTrans & HWRITE;  
+  assign memread   = initTrans & ~HWRITE;
  
   flopenr #(1) memwritereg(HCLK, ~HRESETn, HREADY, memwrite, memwriteD); 
   flopenr #(P.PA_BITS)   haddrreg(HCLK, ~HRESETn, HREADY, HADDR, HADDRD);
@@ -71,10 +71,9 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   mux2 #(P.PA_BITS) adrmux(HADDR, HADDRD, memwriteD | ~HREADY, RamAddr);
 
   // single-ported RAM
-  ram1p1rwbe #(.DEPTH(RANGE/8), .WIDTH(P.XLEN)) memory(.clk(HCLK), .ce(1'b1), 
+  ram1p1rwbe #(.P(P), .DEPTH(RANGE/8), .WIDTH(P.XLEN)) memory(.clk(HCLK), .ce(1'b1), 
     .addr(RamAddr[ADDR_WIDTH+OFFSET-1:OFFSET]), .we(memwriteD), .din(HWDATA), .bwe(HWSTRB), .dout(HREADRam));
   
-
   // use this to add arbitrary latency to ram. Helps test AHB controller correctness
   if(`RAM_LATENCY > 0) begin
     logic [7:0]       NextCycle, Cycle;
@@ -89,15 +88,15 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
     
     always_ff @(posedge HCLK)
       if (~HRESETn)    CurrState <= #1 READY;
-      else CurrState <= #1 NextState;  
+      else             CurrState <= #1 NextState;  
 
     always_comb begin
     case(CurrState)
       READY: if(initTrans & ~CycleFlag) NextState = DELAY;
-        else                          NextState = READY;
-        DELAY: if(CycleFlag)                  NextState = READY;
-    else                          NextState = DELAY;
-      default:                                      NextState = READY;
+        else                            NextState = READY;
+        DELAY: if(CycleFlag)            NextState = READY;
+    else                                NextState = DELAY;
+      default:                          NextState = READY;
     endcase
     end
 
@@ -110,4 +109,3 @@ module ram_ahb import cvw::*;  #(parameter cvw_t P,
   end
 
 endmodule
-  

@@ -26,22 +26,19 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "config.vh"
-//import cvw::*;  // global CORE-V-Wally parameters
-
-module wallypipelinedsoc import cvw::*;  (
+module wallypipelinedsoc import cvw::*; #(parameter cvw_t P)  (
   input  logic                clk, 
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
-  input  logic [AHBW-1:0]     HRDATAEXT,
+  input  logic [P.AHBW-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
-  output logic [PA_BITS-1:0]  HADDR,
-  output logic [AHBW-1:0]     HWDATA,
-  output logic [XLEN/8-1:0]   HWSTRB,
+  output logic [P.PA_BITS-1:0]  HADDR,
+  output logic [P.AHBW-1:0]     HWDATA,
+  output logic [P.XLEN/8-1:0]   HWSTRB,
   output logic                HWRITE,
   output logic [2:0]          HSIZE,
   output logic [2:0]          HBURST,
@@ -51,9 +48,9 @@ module wallypipelinedsoc import cvw::*;  (
   output logic                HREADY,
   // I/O Interface
   input  logic                TIMECLK,          // optional for CLINT MTIME counter
-  input  logic [31:0]         GPIOIN,       // inputs from GPIO
-  output logic [31:0]         GPIOOUT,      // output values for GPIO
-  output logic [31:0]         GPIOEN,       // output enables for GPIO
+  input  logic [31:0]         GPIOIN,           // inputs from GPIO
+  output logic [31:0]         GPIOOUT,          // output values for GPIO
+  output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
   input  logic                SDCCmdIn,         // SDC Command input
@@ -64,13 +61,11 @@ module wallypipelinedsoc import cvw::*;  (
 );
 
   // Uncore signals
-  logic [AHBW-1:0]            HRDATA;           // from AHB mux in uncore
+  logic [P.AHBW-1:0]            HRDATA;           // from AHB mux in uncore
   logic                       HRESP;            // response from AHB
   logic                       MTimerInt, MSwInt;// timer and software interrupts from CLINT
   logic [63:0]                MTIME_CLINT;      // from CLINT to CSRs
   logic                       MExtInt,SExtInt;  // from PLIC
-
-  `include "parameter-defs.vh"
 
   // synchronize reset to SOC clock domain
   synchronizer resetsync(.clk, .d(reset_ext), .q(reset)); 
@@ -83,7 +78,7 @@ module wallypipelinedsoc import cvw::*;  (
    );
 
   // instantiate uncore if a bus interface exists
-  if (BUS_SUPPORTED) begin : uncore
+  if (P.BUS_SUPPORTED) begin : uncore
     uncore #(P) uncore(.HCLK, .HRESETn, .TIMECLK,
       .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT, .HTRANS, .HMASTLOCK, .HRDATAEXT,
       .HREADYEXT, .HRESPEXT, .HRDATA, .HREADY, .HRESP, .HSELEXT,

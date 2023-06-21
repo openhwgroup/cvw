@@ -7,11 +7,11 @@
 // Purpose: Universial Asynchronous Receiver/ Transmitter with FIFOs
 //          Emulates interface of Texas Instruments PC16550D
 //          https://media.digikey.com/pdf/Data%20Sheets/Texas%20Instruments%20PDFs/PC16550D.pdf
-//          Compatible with UART in Imperas Virtio model ***
+//          Compatible with UART in Imperas Virtio model
 //
 //  Compatible with most of PC16550D with the following known exceptions:
 //   Generates 2 rather than 1.5 stop bits when 5-bit word length is slected and LCR[2] = 1
-//   Timeout not yet implemented***
+//   Timeout not yet implemented
 // 
 // Documentation: RISC-V System on Chip Design Chapter 15
 //
@@ -35,7 +35,7 @@
 
 /* verilator lint_off UNOPTFLAT */
 
-module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
+module uartPC16550D #(parameter UART_PRESCALE) (
   // Processor Interface
   input  logic       PCLK, PRESETn,                  // UART clock and active low reset
   input  logic [2:0] A,                              // address input (8 registers)
@@ -45,7 +45,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   output logic       INTR, TXRDYb, RXRDYb,           // interrupt and ready lines
   // Clocks
   output logic       BAUDOUTb,                       // active low baud clock
-  input logic         RCLK,                           // usually BAUDOUTb tied to RCLK externally
+  input logic        RCLK,                           // usually BAUDOUTb tied to RCLK externally
   // E1A Driver
   input  logic       SIN, DSRb, DCDb, CTSb, RIb,     // UART external serial and flow-control inputs
   output logic       SOUT, RTSb, DTRb, OUT1b, OUT2b  // UART external serial and flow-control outputs
@@ -71,9 +71,9 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   logic        DLAB; // Divisor Latch Access Bit (LCR bit 7)
 
   // Baud and rx/tx timing
-  logic        baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
-  logic [16+UART_PRESCALE-1:0] baudcount;
-  logic [3:0]                   rxoversampledcnt, txoversampledcnt; // count oversampled-by-16
+  logic                         baudpulse, txbaudpulse, rxbaudpulse; // high one system clk cycle each baud/16 period
+  logic [16+UART_PRESCALE-1:0]  baudcount;
+  logic [3:0]                   rxoversampledcnt, txoversampledcnt;  // count oversampled-by-16
   logic [3:0]                   rxbitsreceived, txbitssent;
   statetype rxstate, txstate;
 
@@ -122,6 +122,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   ///////////////////////////////////////////
   // Input synchronization: 2-stage synchronizer
   ///////////////////////////////////////////
+  
   always_ff @(posedge PCLK) begin
     {SINd, DSRbd, DCDbd, CTSbd, RIbd} <= #1 {SIN, DSRb, DCDb, CTSb, RIb};
     {SINsync, DSRbsync, DCDbsync, CTSbsync, RIbsync} <= #1 loop ? {SOUTbit, ~MCR[0], ~MCR[3], ~MCR[1], ~MCR[2]} : 
@@ -132,11 +133,12 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   ///////////////////////////////////////////
   // Register interface (Table 1, note some are read only and some write only)
   ///////////////////////////////////////////
+  
   always_ff @(posedge PCLK, negedge PRESETn) 
     if (~PRESETn) begin // Table 3 Reset Configuration
       IER <= #1 4'b0;
       FCR <= #1 8'b0;
-      if (QEMU) LCR <= #1 8'b0; else LCR <= #1 8'b11; // fpga only **** BUG
+      LCR <= #1 8'b11; // **** fpga used to require reset to 3, double check this is no longer needed.
       MCR <= #1 5'b0;
       LSR <= #1 8'b01100000;
       MSR <= #1 4'b0;
@@ -162,13 +164,13 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       if (~MEMWb & (A == 3'b101))
         LSR[6:1] <= #1 Din[6:1]; // recommended only for test, see 8.6.3
       else begin
-        LSR[0] <= #1 rxdataready; // Data ready
-        LSR[1] <= #1 (LSR[1] | RXBR[10]) & ~squashRXerrIP;; // overrun error
-        LSR[2] <= #1 (LSR[2] | RXBR[9]) & ~squashRXerrIP; // parity error
-        LSR[3] <= #1 (LSR[3] | RXBR[8]) & ~squashRXerrIP; // framing error
-        LSR[4] <= #1 (LSR[4] | rxbreak) & ~squashRXerrIP; // break indicator
-        LSR[5] <= #1 THRE; // THRE
-        LSR[6] <= #1 ~txsrfull & THRE; //  TEMT
+        LSR[0]   <= #1 rxdataready; // Data ready
+        LSR[1]   <= #1 (LSR[1] | RXBR[10]) & ~squashRXerrIP;; // overrun error
+        LSR[2]   <= #1 (LSR[2] | RXBR[9]) & ~squashRXerrIP; // parity error
+        LSR[3]   <= #1 (LSR[3] | RXBR[8]) & ~squashRXerrIP; // framing error
+        LSR[4]   <= #1 (LSR[4] | rxbreak) & ~squashRXerrIP; // break indicator
+        LSR[5]   <= #1 THRE; // THRE
+        LSR[6]   <= #1 ~txsrfull & THRE; //  TEMT
         if (rxfifohaserr) LSR[7] <= #1 1; // any bits in FIFO have error
       end
 
@@ -204,10 +206,11 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   // consider switching to same fixed-frequency reference clock used for TIME register
   // prescale by factor of 2^UART_PRESCALE to allow for high-frequency reference clock
   // Unlike PC16550D, this unit is hardwired with same rx and tx baud clock
-  // *** add table of scale factors to get 16x uart clk
+  // For example, with PCLK = 320 MHz, UART_PRESCALE = 5, DLM = 0, DLL = 65, 
+  // 320 MHz system clock is divided by 65 x 2^5.  The UART clock 16x oversamples
+  // the data, so the baud rate is 320x10^6 / (65 x 2^5 x 16) = 9615 Hz, which is
+  // close enough to 9600 baud to stay synchronized over the duration of one character.
   ///////////////////////////////////////////
-  // Ross Thompson: Found a bug.  If the baud rate dividers DLM, and DLL are reloaded
-  // the baudcount is not reset to  {DLM, DLL, UART_PRESCALE}
   always_ff @(posedge PCLK, negedge PRESETn) 
     if (~PRESETn) begin
       baudcount <= #1 1;
@@ -233,17 +236,18 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   ///////////////////////////////////////////
   // receive timing and control
   ///////////////////////////////////////////
+  
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) begin
-      rxoversampledcnt <= #1 0;
-      rxstate <= #1 UART_IDLE;
-      rxbitsreceived <= #1 0;
-      rxtimeoutcnt <= #1 0;
+      rxoversampledcnt   <= #1 0;
+      rxstate            <= #1 UART_IDLE;
+      rxbitsreceived     <= #1 0;
+      rxtimeoutcnt       <= #1 0;
     end else begin
       if (rxstate == UART_IDLE & ~SINsync) begin // got start bit
-        rxstate <= #1 UART_ACTIVE;
+        rxstate          <= #1 UART_ACTIVE;
         rxoversampledcnt <= #1 0;
-        rxbitsreceived <= #1 0;
+        rxbitsreceived   <= #1 0;
         if (~rxfifotimeout) rxtimeoutcnt <= #1 0; // reset timeout when new character is arriving. Jacob Pease: Only if the timeout was not already reached. p.16 PC16550D.pdf
       end else if (rxbaudpulse & (rxstate == UART_ACTIVE)) begin
         rxoversampledcnt <= #1 rxoversampledcnt + 1;  // 16x oversampled counter
@@ -255,18 +259,17 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       end
       // timeout counting
       if (~MEMRb & A == 3'b000 & ~DLAB) rxtimeoutcnt <= #1 0; // reset timeout on read
-      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // *** not right
+      else if (fifoenabled & ~rxfifoempty & rxbaudpulse & ~rxfifotimeout) rxtimeoutcnt <= #1 rxtimeoutcnt+1; // may not be right
     end
 
-  // ***explain why
-  if(QEMU) assign rxcentered = rxbaudpulse & (rxoversampledcnt[1:0] == 2'b10);  // implies rxstate = UART_ACTIVE
-  else      assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
+  assign rxcentered = rxbaudpulse & (rxoversampledcnt == 4'b1000);     // implies rxstate = UART_ACTIVE      
  
   assign rxbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1; // start bit + data bits + (parity bit) + stop bit 
   
   ///////////////////////////////////////////
   // receive shift register, buffer register, FIFO
   ///////////////////////////////////////////
+  
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) rxshiftreg <= #1 10'b0000000001; // initialize so that there is a valid stop bit
     else if (rxcentered) rxshiftreg <= #1 {rxshiftreg[8:0], SINsync}; // capture bit
@@ -282,11 +285,11 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   assign rxdata = LCR[3] ? rxdata9[7:0] : rxdata9[8:1]; // discard parity bit
 
   // ERROR CONDITIONS
-  assign rxparity = ^rxdata;
-  assign rxparityerr = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity (*** check if LCR needs to be inverted)
+  assign rxparity     = ^rxdata;
+  assign rxparityerr  = (rxparity ^ rxparitybit ^ ~evenparitysel) & LCR[3]; // Check even/odd parity (*** check if LCR needs to be inverted)
   assign rxoverrunerr = fifoenabled ? (rxfifoentries == 15) : rxdataready; // overrun if FIFO or receive buffer register full 
   assign rxframingerr = ~rxstopbit; // framing error if no stop bit
-  assign rxbreak = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
+  assign rxbreak      = rxframingerr & (rxdata9 == 9'b0); // break when 0 for start + data + parity + stop time
 
   // receive FIFO and register
   always_ff @(posedge PCLK)
@@ -298,7 +301,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       end else if (rxstate == UART_DONE) begin
         RXBR <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata}; // load recevive buffer register
         if (rxoverrunerr) $warning("UART RX Overrun Err\n");
-        if (rxparityerr) $warning("UART RX Parity Err\n");
+        if (rxparityerr)  $warning("UART RX Parity Err\n");
         if (rxframingerr) $warning("UART RX Framing Err\n");
         if (fifoenabled) begin
           rxfifo[rxfifohead] <= #1 {rxoverrunerr, rxparityerr, rxframingerr, rxdata};
@@ -326,7 +329,7 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
                          (rxfifohead + 16 - rxfifotail);
   // verilator lint_on WIDTH
   assign rxfifotriggered = rxfifoentries >= rxfifotriggerlevel;
-  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; *** probably not right yet
+  assign rxfifotimeout = rxtimeoutcnt == {rxbitsexpected, 6'b0}; // time out after 4 character periods; probably not right yet
   //assign rxfifotimeout = 0; // disabled pending fix
 
   // detect any errors in rx fifo
@@ -339,14 +342,14 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
     else        assign rxfullbitunwrapped[i] = ({1'b0,rxfifohead}==i | rxfullbitunwrapped[i-1]) & (rxfifotailunwrapped != i);
   end
   for (i=0; i<16; i++) begin:rx
-    assign RXerrbit[i] = |rxfifo[i][10:8]; // are any of the error conditions set?
+    assign RXerrbit[i]  = |rxfifo[i][10:8]; // are any of the error conditions set?
     assign rxfullbit[i] = rxfullbitunwrapped[i] | rxfullbitunwrapped[i+16];
   /*      if (i > 0)
       assign rxfullbit[i] = ((rxfifohead==i) | rxfullbit[i-1]) & (rxfifotail != i);
       else
       assign rxfullbit[0] = ((rxfifohead==i) | rxfullbit[15]) & (rxfifotail != i);*/
   end
-  assign rxfifohaserr = |(RXerrbit & rxfullbit);
+  assign rxfifohaserr   = |(RXerrbit & rxfullbit);
 
   // receive buffer register and ready bit
   always_ff @(posedge PCLK, negedge PRESETn) // track rxrdy for DMA mode (FCR3 = FCR0 = 1)
@@ -361,22 +364,23 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       if (fifodmamodesel) RXRDYb = ~rxfifodmaready;
       else                RXRDYb = rxfifoempty;
     end else begin
-      RBR = RXBR;
+      RBR    = RXBR;
       RXRDYb = ~rxdataready;
     end
 
   ///////////////////////////////////////////
   // transmit timing and control
   ///////////////////////////////////////////
+  
   always_ff @(posedge PCLK, negedge PRESETn)
     if (~PRESETn) begin
       txoversampledcnt <= #1 0;
-      txstate <= #1 UART_IDLE;
-      txbitssent <= #1 0;
+      txstate          <= #1 UART_IDLE;
+      txbitssent       <= #1 0;
     end else if ((txstate == UART_IDLE) & txsrfull) begin // start transmitting
-      txstate <= #1 UART_ACTIVE;
+      txstate          <= #1 UART_ACTIVE;
       txoversampledcnt <= #1 1;
-      txbitssent <= #1 0;
+      txbitssent       <= #1 0;
     end else if (txbaudpulse & (txstate == UART_ACTIVE)) begin
       txoversampledcnt <= #1 txoversampledcnt + 1; 
       if (txnextbit) begin // transmit at end of phase
@@ -388,17 +392,16 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
     end
 
   assign txbitsexpected = 4'd1 + (4'd5 + {2'b00, LCR[1:0]}) + {3'b000, LCR[3]} + 4'd1 + {3'b000, LCR[2]} - 4'd1; // start bit + data bits + (parity bit) + stop bit(s) - 1
-  // *** explain; is this necessary?
-  if (QEMU) assign txnextbit = txbaudpulse & (txoversampledcnt[1:0] == 2'b00);  // implies txstate = UART_ACTIVE
-  else       assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
+  assign txnextbit = txbaudpulse & (txoversampledcnt == 4'b0000);  // implies txstate = UART_ACTIVE
 
   ///////////////////////////////////////////
   // transmit holding register, shift register, FIFO
   ///////////////////////////////////////////
+  
   always_comb begin // compute value for parity and tx holding register
     nexttxdata = fifoenabled ? txfifo[txfifotail] : TXHR; // pick from FIFO or holding register
     case (LCR[1:0]) // compute parity from appropriate number of bits
-      2'b00: txparity = ^nexttxdata[4:0] ^ ~evenparitysel; // *** check polarity
+      2'b00: txparity = ^nexttxdata[4:0] ^ ~evenparitysel; 
       2'b01: txparity = ^nexttxdata[5:0] ^ ~evenparitysel; 
       2'b10: txparity = ^nexttxdata[6:0] ^ ~evenparitysel; 
       2'b11: txparity = ^nexttxdata[7:0] ^ ~evenparitysel; 
@@ -426,9 +429,9 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       if (~MEMWb & A == 3'b000 & ~DLAB) begin // writing transmit holding register or fifo
         if (fifoenabled) begin
           txfifo[txfifohead] <= #1 Din;
-          txfifohead <= #1 txfifohead + 1;          
+          txfifohead         <= #1 txfifohead + 1;          
         end else begin 
-          TXHR <= #1 Din;
+          TXHR     <= #1 Din;
           txhrfull <= #1 1;
         end
         $write("%c",Din); // for testbench
@@ -436,12 +439,12 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
       if (txstate == UART_IDLE) begin // move data into tx shift register if available
         if (fifoenabled) begin 
           if (~txfifoempty & ~txsrfull) begin
-            txsr <= #1 txdata;
+            txsr       <= #1 txdata;
             txfifotail <= #1 txfifotail+1;
-            txsrfull <= #1 1;
+            txsrfull   <= #1 1;
           end
         end else if (txhrfull) begin
-          txsr <= #1 txdata;
+          txsr     <= #1 txdata;
           txhrfull <= #1 0;
           txsrfull <= #1 1;
         end
@@ -470,12 +473,11 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
     HeadPointerLastMove <= 1'b0;
   end
 
-  assign txfifoempty = (txfifohead == txfifotail) & ~HeadPointerLastMove;
+  assign txfifoempty   = (txfifohead == txfifotail) & ~HeadPointerLastMove;
   // verilator lint_off WIDTH
   assign txfifoentries = (txfifohead >= txfifotail) ? (txfifohead-txfifotail) : 
                          (txfifohead + 16 - txfifotail);
   // verilator lint_on WIDTH
-  //assign txfifofull = (txfifoentries == 4'b1111);
   assign txfifofull = (txfifohead == txfifotail) & HeadPointerLastMove;
 
   // transmit buffer ready bit
@@ -490,11 +492,12 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
 
   // Transmitter pin 
   assign SOUTbit = txsr[11]; // transmit most significant bit
-  assign SOUT = loop ? 1 : (LCR[6] ? 0 : SOUTbit); // tied to 1 during loopback or 0 during break 
+  assign SOUT    = loop ? 1 : (LCR[6] ? 0 : SOUTbit); // tied to 1 during loopback or 0 during break 
 
   ///////////////////////////////////////////
   // interrupts
   ///////////////////////////////////////////
+  
   assign RXerr = |LSR[4:1]; // LS interrupt if any of the flags are true
   assign RXerrIP = RXerr & ~squashRXerrIP; // intr squashed upon reading LSR
   assign rxdataavailintr = fifoenabled ? rxfifotriggered : rxdataready; 
@@ -533,15 +536,15 @@ module uartPC16550D #(parameter UART_PRESCALE, QEMU) (
   // modem control logic
   ///////////////////////////////////////////
 
-  assign loop = MCR[4]; 
+  assign loop  = MCR[4]; 
   assign DTRb  = ~MCR[0] | loop; // disable modem signals in loopback mode
   assign RTSb  = ~MCR[1] | loop;
   assign OUT1b = ~MCR[2] | loop;
   assign OUT2b = ~MCR[3] | loop;
 
   assign DLAB = LCR[7];
-  assign evenparitysel = LCR[4];
-  assign fifoenabled = FCR[0];
+  assign evenparitysel  = LCR[4];
+  assign fifoenabled    = FCR[0];
   assign fifodmamodesel = FCR[3];
   always_comb
     case (FCR[7:6]) 
