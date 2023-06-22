@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
-# author: Alessandro Maiuolo
-# contact: amaiuolo@g.hmc.edu
+# author: Alessandro Maiuolo, Kevin Kim
+# contact: amaiuolo@g.hmc.edu, kekim@hmc.edu
 # date created: 3-29-2023
 
 # extract all arch test vectors
@@ -77,7 +77,7 @@ def create_vectors(my_config):
         rounding_mode = "X"
         flags = "XX"
         # use name to create our new tv
-        dest_file = open("{}cvw_{}_{}.tv".format(dest_dir, my_config.bits, vector1[:-2]), 'a')
+        dest_file = open("{}cvw_{}_{}.tv".format(dest_dir, my_config.bits, vector1[:-2]), 'w')
         # open vectors
         src_file1 = open(source_dir1 + vector1,'r')
         src_file2 = open(source_dir2 + vector2,'r')
@@ -144,7 +144,7 @@ def create_vectors(my_config):
                 answer2 = src_file2.readline().strip()
                 answer1 = src_file2.readline().strip()
                 answer = answer1 + answer2
-                # print(answer1,answer2)
+                #print(answer1,answer2)
                 if not (answer2 == "e7d4b281" and answer1 == "6f5ca309"): # if there is still stuff to read
                     # parse through .S file
                     detected = False
@@ -179,13 +179,56 @@ def create_vectors(my_config):
                 else:
                     # print("read false")
                     reading = False
+        elif my_config.letter == "M" and my_config.bits == 32:
+            reading = True
+            while reading:
+                # print("trigger 64M")
+                # get answer from Ref...signature
+                # answers span two lines and are reversed
+                answer = src_file2.readline().strip()
+                print(f"Answer: {answer}")
+                #print(answer1,answer2)
+                if not (answer == "6f5ca309"): # if there is still stuff to read
+                    # parse through .S file
+                    detected = False
+                    done = False
+                    op1val = "0"
+                    op2val = "0"
+                    while not (detected or done):
+                        # print("det1")
+                        line = src_file1.readline()
+                        # print(line)
+                        if "op1val" in line:
+                            # print("det2")
+                            # parse line
+                            op1val = line.split("op1val")[1].split("x")[1].split(";")[0]
+                            if "-" in line.split("op1val")[1].split("x")[0]: # neg sign handling
+                                op1val = twos_comp(my_config.bits, op1val)
+                            if my_config.op != "fsqrt": # sqrt doesn't have two input vals, unnec here but keeping for later
+                                op2val = line.split("op2val")[1].split("x")[1].strip()
+                                if op2val[-1] == ";": op2val = op2val[:-1] # remove ; if it's there
+                                if "-" in line.split("op2val")[1].split("x")[0]: # neg sign handling
+                                    op2val = twos_comp(my_config.bits, op2val)
+                            # go to next test in vector
+                            detected = True
+                        elif "RVTEST_CODE_END" in line:
+                            done = True
+                    # ints don't have flags
+                    flags = "XX"
+                    # put it all together
+                    if not done:
+                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        dest_file.write(translation + "\n")
+                else:
+                    # print("read false")
+                    reading = False 
         else:
             while reading:
                 # get answer and flags from Ref...signature
                 answer = src_file2.readline()
-                # print(answer)
+                print(answer)
                 packed = src_file2.readline()[6:]
-                # print(packed)
+                print("Packed: ", packed)
                 if len(packed.strip())>0: # if there is still stuff to read
                     # print("packed")
                     # parse through .S file
@@ -229,7 +272,7 @@ def create_vectors(my_config):
         src_file2.close()
 
 config_list = [
-Config(32, "M", "div", "div_", 0),
+Config(32, "M", "div", "div-", 0),
 Config(32, "F", "fdiv", "fdiv", 1),
 Config(32, "F", "fsqrt", "fsqrt", 2),
 Config(32, "M", "rem", "rem-", 3),
