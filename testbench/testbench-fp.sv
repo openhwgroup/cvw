@@ -46,7 +46,7 @@ module testbenchfp;
    logic [31:0] 		errors=0;                   // how many errors
    logic [31:0] 		VectorNum=0;                // index for test vector
    logic [31:0] 		FrmNum=0;                   // index for rounding mode
-   logic [P.FLEN*4+7:0] 		TestVectors[8388609:0];     // list of test vectors
+   logic [P.FLEN*4+7:0] 	TestVectors[8388609:0];     // list of test vectors
 
    logic [1:0] 			FmtVal;                     // value of the current Fmt
    logic [2:0] 			UnitVal, OpCtrlVal, FrmVal; // value of the currnet Unit/OpCtrl/FrmVal
@@ -75,14 +75,16 @@ module testbenchfp;
    logic [P.CVTLEN-1:0] 		CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
    logic                        IntZero;
    logic                        CvtResSgnE;
-   logic [P.NE:0] 		CvtCalcExpE;                // the calculated expoent
+   logic [P.NE:0] 		CvtCalcExpE;                // the calculated exponent
    logic [P.LOGCVTLEN-1:0] 	CvtShiftAmtE;               // how much to shift by
    logic [P.DIVb:0] 		Quot;
    logic                        CvtResSubnormUfE;
-   logic                        DivStart, FDivBusyE, OldFDivBusyE;
+   logic                        DivStart;
+   logic 			FDivBusyE;
+   logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
    logic [$clog2(P.NF+2)-1:0] 	XZeroCnt, YZeroCnt;
-   logic [P.DURLEN-1:0] 		Dur;
+   logic [P.DURLEN-1:0] 	Dur;
 
    // in-between FMA signals
    logic                        Mult;
@@ -91,7 +93,7 @@ module testbenchfp;
    logic [P.NE+1:0] 		Se;
    logic 			ASticky;
    logic 			KillProd; 
-   logic [$clog2(3*P.NF+5)-1:0] 	SCnt;
+   logic [$clog2(3*P.NF+5)-1:0] SCnt;
    logic [3*P.NF+3:0] 		Sm;       
    logic 			InvA;
    logic 			NegSum;
@@ -107,10 +109,14 @@ module testbenchfp;
    logic [2:0] 			Funct3E;
    logic [2:0] 			Funct3M;
    logic 			FlushE;
-   logic 			IFDivStartE, FDivDoneE;
+   logic 			IFDivStartE;
+   logic 			FDivDoneE;
    logic [P.NE+1:0] 		QeM;
    logic [P.DIVb:0] 		QmM;
    logic [P.XLEN-1:0] 		FIntDivResultM;
+   logic 			ResMatch;                   // Check if result matches
+   logic 			FlagMatch;                  // Check if flag matches
+   logic 			CheckNow;                   // Final check
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -804,7 +810,8 @@ module testbenchfp;
            end
 	 endcase
       end
-   end
+   end 
+   
    always_comb begin
       // select the result to check
       case (UnitVal)
@@ -825,10 +832,21 @@ module testbenchfp;
       endcase
    end
 
-   logic ResMatch, FlagMatch, CheckNow;
-
    always @(posedge clk) 
      OldFDivBusyE = FDivDoneE;
+
+   // For FP division this adds extra clock cycles to make sure the
+   // computation completes.  18 clocks cycles are utilize to handle
+   // Quad, but this can be changed for each precision to go faster.
+   always @(posedge clk) begin
+      // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
+      if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
+	 repeat (18)
+	   @(posedge clk);
+	 if (reset != 1'b1)
+	   VectorNum += 1; // increment the vector
+      end
+   end
 
    // check results on falling edge of clk
    always @(negedge clk) begin
@@ -896,15 +914,14 @@ module testbenchfp;
       ///////////////////////////////////////////////////////////////////////////////////////////////
 
       // check if result is correct
-      //  - wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
-      ResMatch = (Res === Ans | NaNGood | NaNGood === 1'bx);
-      FlagMatch = (ResFlg === AnsFlg | AnsFlg === 5'bx);
-      divsqrtop = OpCtrlVal == `SQRT_OPCTRL | OpCtrlVal == `DIV_OPCTRL;
+      //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
+      assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
+      assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
-      //assign divsqrtop = OpCtrl[TestNum] == `SQRT_OPCTRL | OpCtrl[TestNum] == `DIV_OPCTRL;
-      CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT)&(UnitVal !== `CMPUNIT);
-      if(~(ResMatch & FlagMatch) & CheckNow) begin
+      assign CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
+      if (~(ResMatch & FlagMatch) & CheckNow) begin
 	 errors += 1;
 	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
 	 $display("Error in %s", Tests[TestNum]);
@@ -928,14 +945,6 @@ module testbenchfp;
 	 $stop;
       end
 
-      // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
-      if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
-	 repeat (12)
-	   @(posedge clk);
-	 if (reset != 1'b1)
-	   VectorNum += 1; // increment the vector
-      end
-      
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
 	 // increment the test
 	 TestNum += 1;
@@ -964,41 +973,43 @@ endmodule
 
 
 module readvectors (
-		    input logic 	       clk,
+		    input logic 	        clk,
 		    input logic [P.FLEN*4+7:0]  TestVector,
 		    input logic [P.FMTBITS-1:0] ModFmt,
-		    input logic [1:0] 	       Fmt,
-		    input logic [2:0] 	       Unit,
-		    input logic [31:0] 	       VectorNum,
-		    input logic [31:0] 	       TestNum,
-		    input logic [2:0] 	       OpCtrl,
+		    input logic [1:0] 	        Fmt,
+		    input logic [2:0] 	        Unit,
+		    input logic [31:0] 	        VectorNum,
+		    input logic [31:0] 	        TestNum,
+		    input logic [2:0] 	        OpCtrl,
 		    output logic [P.FLEN-1:0]   Ans,
 		    output logic [P.XLEN-1:0]   SrcA,
-		    output logic [4:0] 	       AnsFlg,
-		    output logic 	       Xs, Ys, Zs, // sign bits of XYZ
+		    output logic [4:0] 	        AnsFlg,
+		    output logic 	        Xs, Ys, Zs, // sign bits of XYZ
 		    output logic [P.NE-1:0]     Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
 		    output logic [P.NF:0]       Xm, Ym, Zm, // mantissas of XYZ (converted to largest supported precision)
-		    output logic 	       XNaN, YNaN, ZNaN, // is XYZ a NaN
-		    output logic 	       XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
-		    output logic 	       XSubnorm, ZSubnorm, // is XYZ denormalized
-		    output logic 	       XZero, YZero, ZZero, // is XYZ zero
-		    output logic 	       XInf, YInf, ZInf, // is XYZ infinity
-		    output logic 	       XExpMax,
-		    output logic 	       DivStart,
+		    output logic 	        XNaN, YNaN, ZNaN, // is XYZ a NaN
+		    output logic 	        XSNaN, YSNaN, ZSNaN, // is XYZ a signaling NaN
+		    output logic 	        XSubnorm, ZSubnorm, // is XYZ denormalized
+		    output logic 	        XZero, YZero, ZZero, // is XYZ zero
+		    output logic 	        XInf, YInf, ZInf, // is XYZ infinity
+		    output logic 	        XExpMax,
+		    output logic 	        DivStart,
 		    output logic [P.FLEN-1:0]   X, Y, Z, XPostBox
 		    );
 
    localparam Q_LEN = 32'd128;
   `include "parameter-defs.vh"   
    
-   logic 				       XEn, YEn, ZEn;
-   logic 				       FPUActive;
-   
+   logic 					XEn, YEn, ZEn;
+   logic 					FPUActive;   
 
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
    always @(VectorNum) begin
-      #1;
+      // Initial delay is given to allow vector to work for fdiv
+      // otherwise it will fail on first vector - fix needed (jes)
+      DivStart = 1'b0;      
+      #20;
       AnsFlg = TestVector[4:0];
       DivStart = 1'b0;
       case (Unit)
