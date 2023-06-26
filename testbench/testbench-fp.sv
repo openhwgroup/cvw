@@ -2,7 +2,7 @@
 //
 // Written: me@KatherineParry.com, james.stine@okstate.edu
 //
-// Purpose: Testbench for Testfloat
+// Purpose: Testbench for UCB Testfloat on Wally
 // 
 // A component of the Wally configurable RISC-V project.
 // 
@@ -21,18 +21,21 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-//`include "wally-config.vh"
+
 `include "config.vh"
 `include "tests-fp.vh"
 
 import cvw::*;
 
 module testbenchfp;
+   // Two parameters TEST, TEST_SIZE used with testfloat.do in sim dir
+   // to run specific precisions (e.g., quad or all)
    parameter TEST="none";
    parameter TEST_SIZE="none";
 
   `include "parameter-defs.vh"   
 
+   // FIXME: needs cleaning of unused variables (jes)
    string                       Tests[];                    // list of tests to be run
    logic [2:0] 			OpCtrl[];                   // list of op controls
    logic [2:0] 			Unit[];                     // list of units being tested
@@ -61,7 +64,8 @@ module testbenchfp;
    logic [P.FMTBITS-1:0] 	ModFmt;                     // format - 10 = half, 00 = single, 01 = double, 11 = quad
    logic [P.FLEN-1:0] 		FpRes, FpCmpRes;            // Results from each unit
    logic [P.XLEN-1:0] 		IntRes, CmpRes;             // Results from each unit
-   logic [4:0] 			FmaFlg, CvtFlg, DivFlg, CmpFlg;  // Outputed flags
+   logic [4:0] 			FmaFlg, CvtFlg, DivFlg;     // Outputed flags
+   logic [4:0] 			CmpFlg;                     // Outputed flags
    logic                        AnsNaN, ResNaN, NaNGood;
    logic                        Xs, Ys, Zs;                 // sign of the inputs
    logic [P.NE-1:0] 		Xe, Ye, Ze;                 // exponent of the inputs
@@ -72,7 +76,7 @@ module testbenchfp;
    logic                        XInf, YInf, ZInf;           // is the input infinity
    logic                        XZero, YZero, ZZero;        // is the input zero
    logic                        XExpMax, YExpMax, ZExpMax;  // is the input's exponent all ones  
-   logic [P.CVTLEN-1:0] 		CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
+   logic [P.CVTLEN-1:0] 	CvtLzcInE;                  // input to the Leading Zero Counter (priority encoder)
    logic                        IntZero;
    logic                        CvtResSgnE;
    logic [P.NE:0] 		CvtCalcExpE;                // the calculated exponent
@@ -114,8 +118,8 @@ module testbenchfp;
    logic [P.NE+1:0] 		QeM;
    logic [P.DIVb:0] 		QmM;
    logic [P.XLEN-1:0] 		FIntDivResultM;
-   logic 			ResMatch;                   // Check if result matches
-   logic 			FlagMatch;                  // Check if flag matches
+   logic 			ResMatch;                   // Check if result match
+   logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
 
    ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,6 +143,7 @@ module testbenchfp;
    //    all    - test all of the above
    
    initial begin
+      // Information displayed for user on what is simulating
       $display("\nThe start of simulation...");      
       $display("This simulation for TEST is %s", TEST);
       $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
@@ -168,7 +173,7 @@ module testbenchfp;
 	 end 
 	 // if the floating-point conversions are being tested          
 	 if (TEST === "cvtfp" | TEST === "all") begin  
-            if(P.D_SUPPORTED) begin // if double precision is supported
+            if (P.D_SUPPORTED) begin // if double precision is supported
                // add the 128 <-> 64 bit conversions to the to-be-tested list
                Tests = {Tests, f128f64cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -184,7 +189,7 @@ module testbenchfp;
 		  Fmt = {Fmt, 2'b01};
                end
             end
-            if(P.F_SUPPORTED) begin // if single precision is supported
+            if (P.F_SUPPORTED) begin // if single precision is supported
                // add the 128 <-> 32 bit conversions to the to-be-tested list
                Tests = {Tests, f128f32cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -200,7 +205,7 @@ module testbenchfp;
 		  Fmt = {Fmt, 2'b00};
                end
             end
-            if(P.ZFH_SUPPORTED) begin // if half precision is supported
+            if (P.ZFH_SUPPORTED) begin // if half precision is supported
                // add the 128 <-> 16 bit conversions to the to-be-tested list
                Tests = {Tests, f128f16cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -311,7 +316,7 @@ module testbenchfp;
             end
 	 end
 	 if (TEST === "cvtfp" | TEST === "all") begin // if floating point conversions are being tested
-            if(P.F_SUPPORTED) begin // if single precision is supported
+            if (P.F_SUPPORTED) begin // if single precision is supported
                // add the 64 <-> 32 bit conversions to the to-be-tested list
                Tests = {Tests, f64f32cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -327,7 +332,7 @@ module testbenchfp;
 		  Fmt = {Fmt, 2'b00};
                end
             end
-            if(P.ZFH_SUPPORTED) begin // if half precision is supported
+            if (P.ZFH_SUPPORTED) begin // if half precision is supported
                // add the 64 <-> 16 bit conversions to the to-be-tested list
                Tests = {Tests, f64f16cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -438,7 +443,7 @@ module testbenchfp;
             end
 	 end
 	 if (TEST === "cvtfp" | TEST === "all") begin  // if floating point conversion is being tested
-            if(P.ZFH_SUPPORTED) begin 
+            if (P.ZFH_SUPPORTED) begin 
                // add the 32 <-> 16 bit conversions to the to-be-tested list
                Tests = {Tests, f32f16cvt};
                // add the op-ctrls (i.e. the format of the result)
@@ -618,7 +623,6 @@ module testbenchfp;
             end
 	 end
       end
-
       // check if nothing is being tested
       if (Tests.size() == 0) begin
 	 $display("TEST %s not supported in this configuration", TEST);
@@ -644,7 +648,7 @@ module testbenchfp;
       string tt0;
       tt0 = $psprintf("%s", Tests[TestNum]);
       testname = {p, tt0};
-      //$display("Here you are %s", testname);     
+      $display("Here you are %s", testname);     
       $display("\n\nRunning %s vectors ", Tests[TestNum]);
       $readmemh(testname, TestVectors);
       // set the test index to 0
@@ -662,7 +666,7 @@ module testbenchfp;
    //    - 1 for the larger precision
    //    - 0 for the smaller precision
    always_comb begin
-      if(P.FMTBITS == 1) ModFmt = FmtVal == P.FMT;
+      if (P.FMTBITS == 1) ModFmt = FmtVal == P.FMT;
       else ModFmt = FmtVal;
    end
 
@@ -722,6 +726,7 @@ module testbenchfp;
                    .Xm, .Ym, .XZero, .YZero, .CmpIntRes(CmpRes),
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
+   
    if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 			     .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
@@ -765,7 +770,7 @@ module testbenchfp;
 
    // Check if the correct answer and result is a NaN
    always_comb begin
-      if(UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
+      if (UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
 	 // an integer output can't be a NaN
 	 AnsNaN = 1'b0;
 	 ResNaN = 1'b0;
@@ -818,7 +823,7 @@ module testbenchfp;
 	`FMAUNIT: Res = FpRes;
 	`DIVUNIT: Res = FpRes;
 	`CMPUNIT: Res = CmpRes;
-	`CVTINTUNIT: if(WriteIntVal) Res = IntRes; else Res = FpRes;
+	`CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
 	`CVTFPUNIT: Res = FpRes;
       endcase
 
@@ -836,13 +841,35 @@ module testbenchfp;
      OldFDivBusyE = FDivDoneE;
 
    // For FP division this adds extra clock cycles to make sure the
-   // computation completes.  18 clocks cycles are utilize to handle
-   // Quad, but this can be changed for each precision to go faster.
+   // computation completes.  
    always @(posedge clk) begin
       // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
-      if(~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
-	 repeat (18)
-	   @(posedge clk);
+      if (~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
+	 // This allows specific number of clocks to allow each vector
+	 // to complete for division or square root.  It is an
+	 // arbitrary value and can be changed, if needed.
+	 case (FmtVal)
+	   // QP
+	   4'b11: begin
+	      repeat (20)
+		@(posedge clk);
+	   end
+	   // HP
+	   4'b10: begin
+	      repeat (14)
+		@(posedge clk);
+	   end
+	   // DP
+	   4'b01: begin
+	      repeat (18)
+		@(posedge clk);
+	   end
+	   // SP
+	   4'b00: begin
+	      repeat (16)
+		@(posedge clk);
+	   end
+	 endcase // case (FmtVal)	 
 	 if (reset != 1'b1)
 	   VectorNum += 1; // increment the vector
       end
@@ -850,7 +877,6 @@ module testbenchfp;
 
    // check results on falling edge of clk
    always @(negedge clk) begin
-
       // check if the NaN value is good. IEEE754-2019 sections 6.3 and 6.2.3 specify:
       //    - the sign of the NaN does not matter for the opperations being tested
       //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
@@ -935,10 +961,11 @@ module testbenchfp;
 
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
-      else if ((UnitVal === `CVTINTUNIT) & ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-					      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-					      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-					      (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+      else if ((UnitVal === `CVTINTUNIT) & 
+	       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
+		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
+		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
+		  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
 	 errors += 1;
 	 $display("There is an error in %s", Tests[TestNum]);
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
@@ -955,17 +982,15 @@ module testbenchfp;
 	 // set the vector index back to 0
 	 VectorNum = 0;
 	 // incemet the operation if all the rounding modes have been tested
-	 if(FrmNum === 4) OpCtrlNum += 1;
+	 if (FrmNum === 4) OpCtrlNum += 1;
 	 // increment the rounding mode or loop back to rne 
-	 if(FrmNum < 4) FrmNum += 1;
+	 if (FrmNum < 4) FrmNum += 1;
 	 else FrmNum = 0; 
-
 	 // if no more Tests - finish
-	 if(Tests[TestNum] === "") begin
+	 if (Tests[TestNum] === "") begin
             $display("\nAll Tests completed with %d errors\n", errors);
             $stop;
 	 end 
-
 	 $display("Running %s vectors", Tests[TestNum]);
       end
    end
@@ -1000,105 +1025,108 @@ module readvectors (
    localparam Q_LEN = 32'd128;
   `include "parameter-defs.vh"   
    
-   logic 					XEn, YEn, ZEn;
+   logic 					XEn;
+   logic 					YEn;
+   logic 					ZEn;
    logic 					FPUActive;   
 
    // apply test vectors on rising edge of clk
    // Format of vectors Inputs(1/2/3)_AnsFlg
    always @(VectorNum) begin
-      // Initial delay is given to allow vector to work for fdiv
-      // otherwise it will fail on first vector - fix needed (jes)
       DivStart = 1'b0;      
-      #20;
+      #1;
       AnsFlg = TestVector[4:0];
-      DivStart = 1'b0;
       case (Unit)
 	`FMAUNIT:
           case (Fmt)
-            2'b11: begin       // quad
-               if(OpCtrl === `FMA_OPCTRL) begin
+            2'b11: begin // quad
+               if (OpCtrl === `FMA_OPCTRL) begin
 		  X = TestVector[8+4*(P.Q_LEN)-1:8+3*(P.Q_LEN)];
 		  Y = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		  Z = TestVector[8+2*(P.Q_LEN)-1:8+P.Q_LEN];
                end
                else begin
 		  X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
-		  if(OpCtrl === `MUL_OPCTRL) Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)]; else Y = {2'b0, {P.Q_NE-1{1'b1}}, (P.Q_NF)'(0)};
-		  if(OpCtrl === `MUL_OPCTRL) Z = 0; else Z = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
+		  if (OpCtrl === `MUL_OPCTRL) Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)]; else Y = {2'b0, {P.Q_NE-1{1'b1}}, (P.Q_NF)'(0)};
+		  if (OpCtrl === `MUL_OPCTRL) Z = 0; else Z = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
                end
                Ans = TestVector[8+(P.Q_LEN-1):8];
             end
-            2'b01:	if (P.D_SUPPORTED)begin	  // double
-               if(OpCtrl === `FMA_OPCTRL) begin
+            2'b01: if (P.D_SUPPORTED) begin // double
+               if (OpCtrl === `FMA_OPCTRL) begin
 		  X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+4*(P.D_LEN)-1:8+3*(P.D_LEN)]};
 		  Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		  Z = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+P.D_LEN]};
                end
                else begin
 		  X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
-		  if(OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]}; 
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]}; 
 		  else Y = {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)};
-		  if(OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.D_LEN{1'b1}}, {P.D_LEN{1'b0}}}; 
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.D_LEN{1'b1}}, {P.D_LEN{1'b0}}}; 
 		  else Z = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
                end
                Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
             end
-            2'b00:	if (P.S_SUPPORTED)begin	  // single
-               if(OpCtrl === `FMA_OPCTRL) begin
+            2'b00: if (P.S_SUPPORTED) begin // single
+               if (OpCtrl === `FMA_OPCTRL) begin
 		  X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+4*(P.S_LEN)-1:8+3*(P.S_LEN)]};
 		  Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		  Z = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+P.S_LEN]};
                end
                else begin
 		  X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
-		  if(OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]}; 
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]}; 
 		  else Y = {{P.FLEN-P.S_LEN{1'b1}}, 2'b0, {P.S_NE-1{1'b1}}, (P.S_NF)'(0)};
-		  if(OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.S_LEN{1'b1}}, {P.S_LEN{1'b0}}}; 
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.S_LEN{1'b1}}, {P.S_LEN{1'b0}}}; 
 		  else Z = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+(P.S_LEN)]};
                end
                Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
             end
-            2'b10:	begin	  // half
-               if(OpCtrl === `FMA_OPCTRL) begin
+            2'b10: begin // half
+               if (OpCtrl === `FMA_OPCTRL) begin
 		  X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+4*(P.H_LEN)-1:8+3*(P.H_LEN)]};
 		  Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		  Z = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+P.H_LEN]};
                end
                else begin
 		  X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
-		  if(OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]}; 
+		  if (OpCtrl === `MUL_OPCTRL) Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]}; 
 		  else Y = {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)};
-		  if(OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.H_LEN{1'b1}}, {P.H_LEN{1'b0}}}; 
+		  if (OpCtrl === `MUL_OPCTRL) Z = {{P.FLEN-P.H_LEN{1'b1}}, {P.H_LEN{1'b0}}}; 
 		  else Z = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
                end
                Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
             end
           endcase
 	`DIVUNIT:
-          if(OpCtrl[0])
+          if (OpCtrl[0])
             case (Fmt)
-              2'b11: begin       // quad
+              2'b11: begin // quad
+		 #20;		 
 		 X = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
 		 if (~clk) #5;
 		 DivStart = 1'b1; #10 // one clk cycle
 		   DivStart = 1'b0;
               end
-              2'b01:	if (P.D_SUPPORTED)begin	  // double
+              2'b01: if (P.D_SUPPORTED) begin // double
+		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 if (~clk) #5;
 		 DivStart = 1'b1; #10
 		   DivStart = 1'b0;
               end
-              2'b00:	if (P.S_SUPPORTED)begin	  // single
+              2'b00: if (P.S_SUPPORTED) begin // single
+		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 if (~clk) #5;
 		 DivStart = 1'b1; #10
 		   DivStart = 1'b0;
               end
-              2'b10:	begin	  // half
+              2'b10: begin // half
+		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 if (~clk) #5;
@@ -1108,7 +1136,8 @@ module readvectors (
             endcase
           else
             case (Fmt)
-              2'b11: begin       // quad
+              2'b11: begin // quad
+		 #20;		 
 		 X = TestVector[8+3*(P.Q_LEN)-1:8+2*(P.Q_LEN)];
 		 Y = TestVector[8+2*(P.Q_LEN)-1:8+(P.Q_LEN)];
 		 Ans = TestVector[8+(P.Q_LEN-1):8];
@@ -1116,7 +1145,8 @@ module readvectors (
 		 DivStart = 1'b1; #10 // one clk cycle
 		   DivStart = 1'b0;
               end
-              2'b01:	if (P.D_SUPPORTED)begin	  // double
+              2'b01: if (P.D_SUPPORTED) begin // double
+		 #20;		 
 		 X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+3*(P.D_LEN)-1:8+2*(P.D_LEN)]};
 		 Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+2*(P.D_LEN)-1:8+(P.D_LEN)]};
 		 Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
@@ -1124,7 +1154,8 @@ module readvectors (
 		 DivStart = 1'b1; #10
 		   DivStart = 1'b0;
               end
-              2'b00:	if (P.S_SUPPORTED)begin	  // single
+              2'b00: if (P.S_SUPPORTED) begin // single
+		 #20;		 
 		 X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+3*(P.S_LEN)-1:8+2*(P.S_LEN)]};
 		 Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+2*(P.S_LEN)-1:8+1*(P.S_LEN)]};
 		 Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
@@ -1132,7 +1163,8 @@ module readvectors (
 		 DivStart = 1'b1; #10
 		   DivStart = 1'b0;
               end
-              2'b10:	begin	  // half
+              2'b10: begin // half
+		 #20;		 
 		 X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+3*(P.H_LEN)-1:8+2*(P.H_LEN)]};
 		 Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+2*(P.H_LEN)-1:8+(P.H_LEN)]};
 		 Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
@@ -1143,22 +1175,22 @@ module readvectors (
             endcase
 	`CMPUNIT:
           case (Fmt)        
-            2'b11: begin       // quad
+            2'b11: begin // quad
                X = TestVector[12+2*(P.Q_LEN)-1:12+(P.Q_LEN)];
                Y = TestVector[12+(P.Q_LEN)-1:12];
                Ans = TestVector[8];
             end
-            2'b01:	if (P.D_SUPPORTED)begin	  // double
+            2'b01: if (P.D_SUPPORTED) begin // double
                X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+2*(P.D_LEN)-1:12+(P.D_LEN)]};
                Y = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[12+(P.D_LEN)-1:12]};
                Ans = TestVector[8];
             end
-            2'b00:	if (P.S_SUPPORTED)begin	  // single
+            2'b00: if (P.S_SUPPORTED) begin // single
                X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+2*(P.S_LEN)-1:12+(P.S_LEN)]};
                Y = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[12+(P.S_LEN)-1:12]};
                Ans = TestVector[8];
             end
-            2'b10:	begin	  // half
+            2'b10: begin // half
                X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+2*(P.H_LEN)-1:12+(P.H_LEN)]};
                Y = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[12+(P.H_LEN)-1:12]};
                Ans = TestVector[8];
@@ -1166,188 +1198,187 @@ module readvectors (
           endcase
 	`CVTFPUNIT:
           case (Fmt)
-            2'b11: begin       // quad
+            2'b11: begin // quad
                case (OpCtrl[1:0])
-		 2'b11: begin       // quad
+		 2'b11: begin // quad
 		    X = {TestVector[8+P.Q_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b01:	if (P.D_SUPPORTED)begin	  // double
+		 2'b01:	if (P.D_SUPPORTED) begin // double
 		    X = {TestVector[8+P.Q_LEN+P.D_LEN-1:8+(P.D_LEN)]};
 		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b00:	begin	  // single
+		 2'b00:	begin // single
 		    X = {TestVector[8+P.Q_LEN+P.S_LEN-1:8+(P.S_LEN)]};
 		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // half
+		 2'b10:	begin // half
 		    X = {TestVector[8+P.Q_LEN+P.H_LEN-1:8+(P.H_LEN)]};
 		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
-            2'b01:	if (P.D_SUPPORTED)begin	  // double
+            2'b01: if (P.D_SUPPORTED) begin // double
                case (OpCtrl[1:0])
-		 2'b11: begin       // quad
+		 2'b11: begin // quad
 		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b01:	begin	  // double
+		 2'b01:	begin // double
 		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.D_LEN-1:8+(P.D_LEN)]};
 		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b00:	begin	  // single
+		 2'b00:	begin // single
 		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.S_LEN-1:8+(P.S_LEN)]};
 		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // half
+		 2'b10:	begin // half
 		    X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.D_LEN+P.H_LEN-1:8+(P.H_LEN)]};
 		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
-            2'b00:	if (P.S_SUPPORTED)begin	  // single
+            2'b00: if (P.S_SUPPORTED) begin // single
                case (OpCtrl[1:0])
-		 2'b11: begin       // quad
+		 2'b11: begin // quad
 		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b01:	if (P.D_SUPPORTED)begin	  // double
+		 2'b01:	if (P.D_SUPPORTED) begin // double
 		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.D_LEN-1:8+(P.D_LEN)]};
 		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b00:	begin	  // single
+		 2'b00:	begin // single
 		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.S_LEN-1:8+(P.S_LEN)]};
 		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // half
+		 2'b10:	begin // half
 		    X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.S_LEN+P.H_LEN-1:8+(P.H_LEN)]};
 		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
-            2'b10:	begin	  // half
+            2'b10: begin // half
                case (OpCtrl[1:0])
-		 2'b11: begin       // quad
+		 2'b11: begin // quad
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.Q_LEN-1:8+(P.Q_LEN)]};
 		    Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b01:	if (P.D_SUPPORTED)begin	  // double
+		 2'b01:	if (P.D_SUPPORTED) begin // double
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.D_LEN-1:8+(P.D_LEN)]};
 		    Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b00:	if (P.S_SUPPORTED)begin	  // single
+		 2'b00:	if (P.S_SUPPORTED) begin // single
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.S_LEN-1:8+(P.S_LEN)]};
 		    Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // half
+		 2'b10:	begin // half
 		    X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.H_LEN+P.H_LEN-1:8+(P.H_LEN)]};
 		    Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
                endcase
             end
-          endcase
-        
+          endcase        
 	`CVTINTUNIT:
           case (Fmt)
-            2'b11: begin       // quad
-               //     {is the integer a long,     is the opperation to an integer}
+            2'b11: begin // quad
+               // {is the integer a long, is the opperation to an integer}
                casex ({OpCtrl[2:1]})
-		 2'b11: begin       // long -> quad
+		 2'b11: begin // long -> quad
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.Q_LEN+P.XLEN-1:8+(P.Q_LEN)];
                     Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b10:	begin	  // int -> quad
+		 2'b10:	begin // int -> quad
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
                     X = {P.FLEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.Q_LEN+32-1]}}, TestVector[8+P.Q_LEN+32-1:8+(P.Q_LEN)]};
                     Ans = TestVector[8+(P.Q_LEN-1):8];
 		 end
-		 2'b01:	begin	  // quad -> long
+		 2'b01:	begin // quad -> long
                     X = {TestVector[8+P.XLEN+P.Q_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {TestVector[8+(P.XLEN-1):8]};
 		 end
-		 2'b00:	begin	  // quad -> int
+		 2'b00:	begin // quad -> int
                     X = {TestVector[8+32+P.Q_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
-            2'b01: if (P.D_SUPPORTED) begin	 // double
-               //     {Int->Fp?, is the integer a long}
+            2'b01: if (P.D_SUPPORTED) begin // double
+               // {Int->Fp?, is the integer a long}
                casex ({OpCtrl[2:1]})
-		 2'b11: begin       // long -> double
+		 2'b11: begin // long -> double
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.D_LEN+P.XLEN-1:8+(P.D_LEN)];
                     Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // int -> double
+		 2'b10:	begin // int -> double
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
                     X = {P.FLEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.D_LEN+32-1]}}, TestVector[8+P.D_LEN+32-1:8+(P.D_LEN)]};
                     Ans = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+(P.D_LEN-1):8]};
 		 end
-		 2'b01:	begin	  // double -> long
+		 2'b01:	begin // double -> long
                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+P.XLEN+P.D_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {TestVector[8+(P.XLEN-1):8]};
 		 end
-		 2'b00:	begin	  // double -> int
+		 2'b00:	begin // double -> int
                     X = {{P.FLEN-P.D_LEN{1'b1}}, TestVector[8+32+P.D_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
-            2'b00:	if (P.S_SUPPORTED)begin	  // single
-               //     {is the integer a long,     is the opperation to an integer}
+            2'b00: if (P.S_SUPPORTED) begin // single
+               // {is the integer a long, is the opperation to an integer}
                casex ({OpCtrl[2:1]})
-		 2'b11: begin       // long -> single
+		 2'b11: begin // long -> single
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.S_LEN+P.XLEN-1:8+(P.S_LEN)];
                     Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // int -> single
+		 2'b10:	begin // int -> single
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
                     X = {P.FLEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.S_LEN+32-1]}}, TestVector[8+P.S_LEN+32-1:8+(P.S_LEN)]};
                     Ans = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+(P.S_LEN-1):8]};
 		 end
-		 2'b01:	begin	  // single -> long
+		 2'b01:	begin // single -> long
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+P.XLEN+P.S_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {TestVector[8+(P.XLEN-1):8]};
 		 end
-		 2'b00:	begin	  // single -> int
+		 2'b00:	begin // single -> int
                     X = {{P.FLEN-P.S_LEN{1'b1}}, TestVector[8+32+P.S_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {{P.XLEN-32{TestVector[8+32-1]}},TestVector[8+(32-1):8]};
 		 end
                endcase
             end
-            2'b10:	begin	  // half
-               //     {is the integer a long,     is the opperation to an integer}
+            2'b10: begin // half
+               // {is the integer a long, is the opperation to an integer}
                casex ({OpCtrl[2:1]})
-		 2'b11: begin       // long -> half
+		 2'b11: begin // long -> half
                     X = {P.FLEN{1'bx}};
                     SrcA = TestVector[8+P.H_LEN+P.XLEN-1:8+(P.H_LEN)];
                     Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
-		 2'b10:	begin	  // int -> half
+		 2'b10:	begin // int -> half
                     // correctly sign extend the integer depending on if it's a signed/unsigned test
                     X = {P.FLEN{1'bx}};
                     SrcA = {{P.XLEN-32{TestVector[8+P.H_LEN+32-1]}}, TestVector[8+P.H_LEN+32-1:8+(P.H_LEN)]};
                     Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
 		 end
-		 2'b01:	begin	  // half -> long
+		 2'b01:	begin // half -> long
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+P.XLEN+P.H_LEN-1:8+(P.XLEN)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {TestVector[8+(P.XLEN-1):8]};
 		 end
-		 2'b00:	begin	  // half -> int
+		 2'b00:	begin // half -> int
                     X = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+32+P.H_LEN-1:8+(32)]};
                     SrcA = {P.XLEN{1'bx}};
                     Ans = {{P.XLEN-32{TestVector[8+32-1]}}, TestVector[8+(32-1):8]};
