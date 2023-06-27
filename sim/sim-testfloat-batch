@@ -10,6 +10,4 @@
 # sqrt   - test square root
 # all    - test everything
 
-# nowave for 2nd argument supresses wlf files
-
-vsim -c -do "do testfloat.do rv64fpquad $1 $2"
+vsim -c -do "do testfloat.do rv64fpquad $1"
