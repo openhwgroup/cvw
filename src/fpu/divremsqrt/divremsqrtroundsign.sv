@@ -25,9 +25,8 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
-module divremsqrtroundsign(
+module divremsqrtroundsign import cvw::*;  #(parameter cvw_t P) (
   input logic         Xs,     // x sign
   input logic         Ys,     // y sign
   input logic         Sqrt,   // sqrt oppertion? (when using divsqrt unit)

@@ -26,15 +26,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
-module drsu(
+module drsu import cvw::*;  #(parameter cvw_t P) (
   input  logic                clk, 
   input  logic                reset, 
-  input  logic [`FMTBITS-1:0] FmtE,
+  input  logic [P.FMTBITS-1:0] FmtE,
   input  logic                XsE, YsE,
-  input  logic [`NF:0]        XmE, YmE,
-  input  logic [`NE-1:0]      XeE, YeE,
+  input  logic [P.NF:0]        XmE, YmE,
+  input  logic [P.NE-1:0]      XeE, YeE,
   input  logic                XInfE, YInfE, 
   input  logic                XZeroE, YZeroE, 
   input  logic                XNaNE, YNaNE, 
@@ -43,41 +42,41 @@ module drsu(
   input  logic                StallM,
   input  logic                FlushE,
   input  logic                SqrtE, SqrtM,
-  input  logic [`XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // these are the src outputs before the mux choosing between them and PCE to put in srcA/B
   input  logic [2:0]          Funct3E, Funct3M,
   input  logic                IntDivE, W64E,
   input  logic [2:0]          Frm,
   input  logic [2:0]          OpCtrl,
   input  logic [1:0]          PostProcSel,
   output logic                FDivBusyE, IFDivStartE, FDivDoneE,
-  output logic [`FLEN-1:0]    FResM,
-  output logic [`XLEN-1:0]    FIntDivResultM,
+  output logic [P.FLEN-1:0]    FResM,
+  output logic [P.XLEN-1:0]    FIntDivResultM,
   output logic [4:0]          FlgM
 );
 
   // Floating-point division and square root module, with optional integer division and remainder
   // Computes X/Y, sqrt(X), A/B, or A%B
 
-  logic [`DIVb+3:0]           WS, WC;                       // Partial remainder components
-  logic [`DIVb+3:0]           X;                            // Iterator Initial Value (from dividend)
-  logic [`DIVb+3:0]           D;                            // Iterator Divisor
-  logic [`DIVb:0]             FirstU, FirstUM;              // Intermediate result values
-  logic [`DIVb+1:0]           FirstC;                       // Step tracker
+  logic [P.DIVb+3:0]           WS, WC;                       // Partial remainder components
+  logic [P.DIVb+3:0]           X;                            // Iterator Initial Value (from dividend)
+  logic [P.DIVb+3:0]           D;                            // Iterator Divisor
+  logic [P.DIVb:0]             FirstU, FirstUM;              // Intermediate result values
+  logic [P.DIVb+1:0]           FirstC;                       // Step tracker
   logic                       Firstun;                      // Quotient selection
   logic                       WZeroE;                       // Early termination flag
-  logic [`DURLEN-1:0]         CyclesE;                      // FSM cycles
+  logic [P.DURLEN-1:0]         CyclesE;                      // FSM cycles
   logic                       SpecialCaseM;                 // Divide by zero, square root of negative, etc.
   logic                       DivStartE;                    // Enable signal for flops during stall
                                                             
   // Integer div/rem signals                                
   logic                       BZeroM;                       // Denominator is zero
   logic                       IntDivM;                      // Integer operation
-  logic [`DIVBLEN:0]          nM, mM;                       // Shift amounts
+  logic [P.DIVBLEN:0]          nM, mM;                       // Shift amounts
   logic                       NegQuotM, ALTBM, AsM, W64M;   // Special handling for postprocessor
-  logic [`XLEN-1:0]           AM;                           // Original Numerator for postprocessor
+  logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
-  logic [`DIVb:0]             QmM;
-  logic [`NE+1:0]             QeM;
+  logic [P.DIVb:0]             QmM;
+  logic [P.NE+1:0]             QeM;
   logic                       DivStickyM;
 
   divremsqrt divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 

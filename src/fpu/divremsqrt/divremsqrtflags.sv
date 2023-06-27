@@ -26,18 +26,17 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
-module divremsqrtflags(
+module divremsqrtflags import cvw::*;  #(parameter cvw_t P) (
   input  logic                Xs,                     // X sign
-  input  logic [`FMTBITS-1:0] OutFmt,                 // output format
+  input  logic [P.FMTBITS-1:0] OutFmt,                 // output format
   input  logic                InfIn,                  // is a Inf input being used
   input  logic                XInf, YInf,             // inputs are infinity
   input  logic                NaNIn,                  // is a NaN input being used
   input  logic                XSNaN, YSNaN,           // inputs are signaling NaNs
   input  logic                XZero, YZero,           // inputs are zero
-  input  logic [`NE+1:0]      FullRe,                 // Re with bits to determine sign and overflow
-  input  logic [`NE+1:0]      Me,                     // exponent of the normalized sum
+  input  logic [P.NE+1:0]      FullRe,                 // Re with bits to determine sign and overflow
+  input  logic [P.NE+1:0]      Me,                     // exponent of the normalized sum
   // rounding
   input  logic                Plus1,                  // do you add one for rounding
   input  logic                Round, Guard, Sticky,   // bits used to determine rounding
@@ -78,28 +77,28 @@ module divremsqrtflags(
   //          - any of the bits after the most significan 1 is one
   //          - the most signifcant in 65 or 33 is still a one in the number and
   //            one of the later bits is one
-  if (`FPSIZES == 1) begin
-      assign ResExpGteMax = &FullRe[`NE-1:0] | FullRe[`NE];
+  if (P.FPSIZES == 1) begin
+      assign ResExpGteMax = &FullRe[P.NE-1:0] | FullRe[P.NE];
 
-  end else if (`FPSIZES == 2) begin    
-      assign ResExpGteMax = OutFmt ? &FullRe[`NE-1:0] | FullRe[`NE] : &FullRe[`NE1-1:0] | (|FullRe[`NE:`NE1]);
+  end else if (P.FPSIZES == 2) begin    
+      assign ResExpGteMax = OutFmt ? &FullRe[P.NE-1:0] | FullRe[P.NE] : &FullRe[P.NE1-1:0] | (|FullRe[P.NE:P.NE1]);
 
-  end else if (`FPSIZES == 3) begin
+  end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
-              `FMT: ResExpGteMax = &FullRe[`NE-1:0] | FullRe[`NE];
-              `FMT1: ResExpGteMax = &FullRe[`NE1-1:0] | (|FullRe[`NE:`NE1]);
-              `FMT2: ResExpGteMax = &FullRe[`NE2-1:0] | (|FullRe[`NE:`NE2]);
+              P.FMT: ResExpGteMax = &FullRe[P.NE-1:0] | FullRe[P.NE];
+              P.FMT1: ResExpGteMax = &FullRe[P.NE1-1:0] | (|FullRe[P.NE:P.NE1]);
+              P.FMT2: ResExpGteMax = &FullRe[P.NE2-1:0] | (|FullRe[P.NE:P.NE2]);
               default: ResExpGteMax = 1'bx;
           endcase
 
-  end else if (`FPSIZES == 4) begin        
+  end else if (P.FPSIZES == 4) begin        
       always_comb
           case (OutFmt)
-              `Q_FMT: ResExpGteMax = &FullRe[`Q_NE-1:0] | FullRe[`Q_NE];
-              `D_FMT: ResExpGteMax = &FullRe[`D_NE-1:0] | (|FullRe[`Q_NE:`D_NE]);
-              `S_FMT: ResExpGteMax = &FullRe[`S_NE-1:0] | (|FullRe[`Q_NE:`S_NE]);
-              `H_FMT: ResExpGteMax = &FullRe[`H_NE-1:0] | (|FullRe[`Q_NE:`H_NE]);
+              P.Q_FMT: ResExpGteMax = &FullRe[P.Q_NE-1:0] | FullRe[P.Q_NE];
+              P.D_FMT: ResExpGteMax = &FullRe[P.D_NE-1:0] | (|FullRe[P.Q_NE:P.D_NE]);
+              P.S_FMT: ResExpGteMax = &FullRe[P.S_NE-1:0] | (|FullRe[P.Q_NE:P.S_NE]);
+              P.H_FMT: ResExpGteMax = &FullRe[P.H_NE-1:0] | (|FullRe[P.Q_NE:P.H_NE]);
           endcase
   end
 
@@ -109,7 +108,7 @@ module divremsqrtflags(
   //                 |           and the exponent isn't negitive
   //                 |           |                   if the input isnt infinity or NaN
   //                 |           |                   |            
-  assign Overflow = ResExpGteMax & ~FullRe[`NE+1]&~(InfIn|NaNIn|DivByZero);
+  assign Overflow = ResExpGteMax & ~FullRe[P.NE+1]&~(InfIn|NaNIn|DivByZero);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Underflow
@@ -123,7 +122,7 @@ module divremsqrtflags(
   //                  |                    |                    |                                      |                     and if the result is not exact
   //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
   //                  |                    |                    |                                      |                     |               |
-  assign Underflow = ((FullRe[`NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|Sticky|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
+  assign Underflow = ((FullRe[P.NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|Sticky|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
 
 
   ///////////////////////////////////////////////////////////////////////////////

@@ -26,14 +26,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
-module divremsqrtpostprocess (
+module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   // general signals
   input logic                             Xs, Ys,     // input signs
-  input logic  [`NF:0]                    Xm, Ym,     // input mantissas
+  input logic  [P.NF:0]                    Xm, Ym,     // input mantissas
   input logic  [2:0]                      Frm,        // rounding mode 000 = rount to nearest, ties to even   001 = round twords zero  010 = round down  011 = round up  100 = round to nearest, ties to max magnitude
-  input logic  [`FMTBITS-1:0]             Fmt,        // precision 1 = double 0 = single
+  input logic  [P.FMTBITS-1:0]             Fmt,        // precision 1 = double 0 = single
   input logic  [2:0]                      OpCtrl,     // choose which opperation (look below for values)
   input logic                             XZero, YZero,        // inputs are zero
   input logic                             XInf, YInf,          // inputs are infinity
@@ -43,41 +42,41 @@ module divremsqrtpostprocess (
   //fma signals
   //divide signals
   input logic                             DivSticky,  // divider sticky bit
-  input logic  [`NE+1:0]                  DivQe,      // divsqrt exponent
-  input logic  [`DIVb:0]                  DivQm,      // divsqrt significand
+  input logic  [P.NE+1:0]                  DivQe,      // divsqrt exponent
+  input logic  [P.DIVb:0]                  DivQm,      // divsqrt significand
   // final results
-  output logic [`FLEN-1:0]                PostProcRes,// postprocessor final result
+  output logic [P.FLEN-1:0]                PostProcRes,// postprocessor final result
   output logic [4:0]                      PostProcFlg // postprocesser flags
   );
   
   // general signals
   logic                       Rs;         // result sign
-  logic [`NF-1:0]             Rf;         // Result fraction
-  logic [`NE-1:0]             Re;         // Result exponent
+  logic [P.NF-1:0]             Rf;         // Result fraction
+  logic [P.NE-1:0]             Re;         // Result exponent
   logic                       Ms;         // norMalized sign
-  logic [`CORRSHIFTSZ-1:0]    Mf;         // norMalized fraction
-  logic [`NE+1:0]             Me;         // normalized exponent
-  logic [`NE+1:0]             FullRe;     // Re with bits to determine sign and overflow
+  logic [P.CORRSHIFTSZ-1:0]    Mf;         // norMalized fraction
+  logic [P.NE+1:0]             Me;         // normalized exponent
+  logic [P.NE+1:0]             FullRe;     // Re with bits to determine sign and overflow
   logic                       UfPlus1;    // do you add one (for determining underflow flag)
-  logic [`LOGNORMSHIFTSZ-1:0] ShiftAmt;   // normalization shift amount
-  logic [`NORMSHIFTSZ-1:0]    ShiftIn;    // input to normalization shift
-  logic [`NORMSHIFTSZ-1:0]    Shifted;    // the ouput of the normalized shifter (before shift correction)
+  logic [P.LOGNORMSHIFTSZ-1:0] ShiftAmt;   // normalization shift amount
+  logic [P.NORMSHIFTSZ-1:0]    ShiftIn;    // input to normalization shift
+  logic [P.NORMSHIFTSZ-1:0]    Shifted;    // the ouput of the normalized shifter (before shift correction)
   logic                       Plus1;      // add one to the final result?
   logic                       Overflow;   // overflow flag used to select results
   logic                       Invalid;    // invalid flag used to select results
   logic                       Guard, Round, Sticky; // bits needed to determine rounding
-  logic [`FMTBITS-1:0]        OutFmt;     // output format
+  logic [P.FMTBITS-1:0]        OutFmt;     // output format
   // division singals
-  logic [`LOGNORMSHIFTSZ-1:0] DivShiftAmt;        // divsqrt shif amount
-  logic [`NORMSHIFTSZ-1:0]    DivShiftIn;         // divsqrt shift input
-  logic [`NE+1:0]             Qe;                 // divsqrt corrected exponent after corretion shift
+  logic [P.LOGNORMSHIFTSZ-1:0] DivShiftAmt;        // divsqrt shif amount
+  logic [P.NORMSHIFTSZ-1:0]    DivShiftIn;         // divsqrt shift input
+  logic [P.NE+1:0]             Qe;                 // divsqrt corrected exponent after corretion shift
   logic                       DivByZero;          // divide by zero flag
   logic                       DivResSubnorm;      // is the divsqrt result subnormal
   logic                       DivSubnormShiftPos; // is the divsqrt subnorm shift amout positive (not underflowed)
   // conversion signals
-  logic [`CVTLEN+`NF:0]       CvtShiftIn;         // number to be shifted for converter
+  logic [P.CVTLEN+P.NF:0]       CvtShiftIn;         // number to be shifted for converter
   logic [1:0]                 CvtNegResMsbs;      // most significant bits of possibly negated int result
-  logic [`XLEN+1:0]           CvtNegRes;          // possibly negated integer result
+  logic [P.XLEN+1:0]           CvtNegRes;          // possibly negated integer result
   logic                       CvtResUf;           // did the convert result underflow
   logic                       IntInvalid;         // invalid integer flag
   // readability signals
@@ -108,10 +107,10 @@ module divremsqrtpostprocess (
   // choose the ouptut format depending on the opperation
   //      - fp -> fp: OpCtrl contains the percision of the output
   //      - otherwise: Fmt contains the percision of the output
-  if (`FPSIZES == 2) 
-      //assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == `FMT); 
+  if (P.FPSIZES == 2) 
+      //assign OutFmt = IntToFp|~CvtOp ? Fmt : (OpCtrl[1:0] == P.FMT); 
       assign OutFmt = Fmt;
-  else if (`FPSIZES == 3 | `FPSIZES == 4) 
+  else if (P.FPSIZES == 3 | P.FPSIZES == 4) 
       //assign OutFmt = IntToFp|~CvtOp ? Fmt : OpCtrl[1:0]; 
       assign OutFmt = Fmt;
 
