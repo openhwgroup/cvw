@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module counter #(parameter WIDTH=8) (
   input  logic             clk, reset, en,
   output logic [WIDTH-1:0] q
@@ -36,5 +34,3 @@ module counter #(parameter WIDTH=8) (
   assign qnext = q + 1;
   flopenr #(WIDTH) cntrflop(clk, reset, en, qnext, q);
 endmodule 
-
-

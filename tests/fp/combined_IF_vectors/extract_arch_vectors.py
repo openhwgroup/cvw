@@ -1,7 +1,7 @@
 #! /usr/bin/python3
 
-# author: Alessandro Maiuolo
-# contact: amaiuolo@g.hmc.edu
+# author: Alessandro Maiuolo, Kevin Kim
+# contact: amaiuolo@g.hmc.edu, kekim@hmc.edu
 # date created: 3-29-2023
 
 # extract all arch test vectors
@@ -180,7 +180,6 @@ def create_vectors(my_config):
                     # print("read false")
                     reading = False
         elif my_config.letter == "M" and my_config.bits == 32:
-            print("REEEEE")
             reading = True
             while reading:
                 # print("trigger 64M")

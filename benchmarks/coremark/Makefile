@@ -3,15 +3,19 @@
 # SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 PORT_DIR = $(CURDIR)/riscv64-baremetal
-cmbase=../../addins/coremark
-work_dir= work
+cmbase= $(WALLY)/addins/coremark
+work_dir= $(WALLY)/benchmarks/coremark/work
 XLEN ?=64
 sources=$(cmbase)/core_main.c $(cmbase)/core_list_join.c $(cmbase)/coremark.h  \
 	$(cmbase)/core_matrix.c $(cmbase)/core_state.c $(cmbase)/core_util.c \
 	$(PORT_DIR)/core_portme.h $(PORT_DIR)/core_portme.c $(PORT_DIR)/core_portme.mak \
 	$(PORT_DIR)/crt.S $(PORT_DIR)/encoding.h $(PORT_DIR)/util.h $(PORT_DIR)/syscalls.c
 ABI := $(if $(findstring "64","$(XLEN)"),lp64,ilp32)
-ARCH := rv$(XLEN)gc
+#ARCH := rv$(XLEN)gc_zba_zbb_zbc_zbs
+#ARCH := rv$(XLEN)gc
+ARCH := rv$(XLEN)imc_zicsr
+#ARCH := rv$(XLEN)im_zicsr
+#ARCH := rv$(XLEN)i_zicsr
 PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 	-mbranch-cost=1 -DSKIP_DEFAULT_MEMSET -mtune=sifive-3-series -O3 -finline-functions -falign-jumps=4 \
 	-fno-delete-null-pointer-checks -fno-rename-registers --param=loop-max-datarefs-for-datadeps=0 \
@@ -23,9 +27,6 @@ all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
 	(cd ../../sim && (time vsim -c -do "do wally-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
-#	cd ../benchmarks/coremark/
-#	KMG: added post processing script to give out branch miss proportion along with other stats to the coremark test
-	python3 coremark-postprocess.py
 
 $(work_dir)/coremark.bare.riscv.elf.memfile: $(work_dir)/coremark.bare.riscv
 	riscv64-unknown-elf-objdump -D $< > $<.elf.objdump
@@ -40,6 +41,7 @@ $(work_dir)/coremark.bare.riscv: $(sources) Makefile
 .PHONY: clean
 
 clean:
+	make -C $(cmbase) clean
 	rm -f $(work_dir)/*
 
 

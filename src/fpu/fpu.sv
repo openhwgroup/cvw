@@ -27,40 +27,40 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fpu import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk,
-  input  logic             reset,
+  input  logic                 clk,
+  input  logic                 reset,
   // Hazards
-  input  logic             StallE, StallM, StallW,         // stall signals (from HZU)
-  input  logic             FlushE, FlushM, FlushW,         // flush signals (from HZU)
-  output logic             FPUStallD,                      // Stall the decode stage (To HZU)
-  output logic             FDivBusyE,                      // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
+  input  logic                 StallE, StallM, StallW,             // stall signals (from HZU)
+  input  logic                 FlushE, FlushM, FlushW,             // flush signals (from HZU)
+  output logic                 FPUStallD,                          // Stall the decode stage (To HZU)
+  output logic                 FDivBusyE,                          // Is the divide/sqrt unit busy (stall execute stage) (to HZU)
   // CSRs                                                  
-  input  logic [1:0]       STATUS_FS,                      // Is floating-point enabled? (From privileged unit)
-  input  logic [2:0]       FRM_REGW,                       // Rounding mode (from CSR)
+  input  logic [1:0]           STATUS_FS,                          // Is floating-point enabled? (From privileged unit)
+  input  logic [2:0]           FRM_REGW,                           // Rounding mode (from CSR)
   // Decode stage                                          
-  input  logic [31:0]      InstrD,                         // instruction (from IFU)
+  input  logic [31:0]          InstrD,                             // instruction (from IFU)
   // Execute stage                                         
-  input  logic [2:0]       Funct3E,                        // Funct fields of instruction specify type of operations
-  input  logic             IntDivE, W64E,                  // Integer division on FPU
-  input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // Integer input for convert, move, and int div (from IEU)
-  input  logic [4:0]       RdE,                            // which FP register to write to (from IEU)
-  output logic             FWriteIntE,                     // integer register write enable (to IEU)
-  output logic             FCvtIntE,                       // Convert to int (to IEU)
+  input  logic [2:0]           Funct3E,                            // Funct fields of instruction specify type of operations
+  input  logic                 IntDivE, W64E,                      // Integer division on FPU
+  input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE,     // Integer input for convert, move, and int div (from IEU)
+  input  logic [4:0]           RdE,                                // which FP register to write to (from IEU)
+  output logic                 FWriteIntE,                         // integer register write enable (to IEU)
+  output logic                 FCvtIntE,                           // Convert to int (to IEU)
   // Memory stage                                          
-  input  logic [2:0]       Funct3M,                        // Funct fields of instruction specify type of operations
-  input  logic [4:0]       RdM,                            // which FP register to write to (from IEU)
-  output logic             FRegWriteM,                     // FP register write enable (to privileged unit)
-  output logic             FpLoadStoreM,                   // Fp load instruction? (to LSU)
-  output logic [P.FLEN-1:0] FWriteDataM,                    // Data to be written to memory (to LSU) 
-  output logic [P.XLEN-1:0] FIntResM,                       // data to be written to integer register (to IEU)
-  output logic             IllegalFPUInstrD,               // Is the instruction an illegal fpu instruction (to IFU)
-  output logic [4:0]       SetFflagsM,                     // FPU flags (to privileged unit)
+  input  logic [2:0]           Funct3M,                            // Funct fields of instruction specify type of operations
+  input  logic [4:0]           RdM,                                // which FP register to write to (from IEU)
+  output logic                 FRegWriteM,                         // FP register write enable (to privileged unit)
+  output logic                 FpLoadStoreM,                       // Fp load instruction? (to LSU)
+  output logic [P.FLEN-1:0]    FWriteDataM,                        // Data to be written to memory (to LSU) 
+  output logic [P.XLEN-1:0]    FIntResM,                           // data to be written to integer register (to IEU)
+  output logic                 IllegalFPUInstrD,                   // Is the instruction an illegal fpu instruction (to IFU)
+  output logic [4:0]           SetFflagsM,                         // FPU flags (to privileged unit)
   // Writeback stage                                       
-  input  logic [4:0]       RdW,                            // which FP register to write to (from IEU)
-  input  logic [P.FLEN-1:0] ReadDataW,                      // Read data (from LSU)
-  output logic [P.XLEN-1:0] FCvtIntResW,                    // convert result to to be written to integer register (to IEU)
-  output logic             FCvtIntW,                       // select FCvtIntRes (to IEU)
-  output logic [P.XLEN-1:0] FIntDivResultW                  // Result from integer division (to IEU)
+  input  logic [4:0]           RdW,                                // which FP register to write to (from IEU)
+  input  logic [P.FLEN-1:0]    ReadDataW,                          // Read data (from LSU)
+  output logic [P.XLEN-1:0]    FCvtIntResW,                        // convert result to to be written to integer register (to IEU)
+  output logic                 FCvtIntW,                           // select FCvtIntRes (to IEU)
+  output logic [P.XLEN-1:0]    FIntDivResultW                      // Result from integer division (to IEU)
 );
 
   // RISC-V FPU specifics:
@@ -68,86 +68,87 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   //    - RISC-V detects underflow after rounding
 
   // control signals
-  logic                    FRegWriteW;                        // FP register write enable
-  logic [2:0]              FrmM;                              // FP rounding mode
-  logic [P.FMTBITS-1:0]     FmtE, FmtM;                        // FP precision 0-single 1-double
-  logic                    FDivStartE, IDivStartE;            // Start division or squareroot
-  logic                    FWriteIntM;                        // Write to integer register
-  logic [1:0]              ForwardXE, ForwardYE, ForwardZE;   // forwarding mux control signals
-  logic [2:0]              OpCtrlE, OpCtrlM;                  // Select which opperation to do in each component
-  logic [1:0]              FResSelE, FResSelM, FResSelW;      // Select one of the results that finish in the memory stage
-  logic [1:0]              PostProcSelE, PostProcSelM;        // select result in the post processing unit
-  logic [4:0]              Adr1D, Adr2D, Adr3D;               // register adresses of each input
-  logic [4:0]              Adr1E, Adr2E, Adr3E;               // register adresses of each input
-  logic                    XEnD, YEnD, ZEnD;                  // X, Y, Z inputs used for current operation
-  logic                    XEnE, YEnE, ZEnE;                  // X, Y, Z inputs used for current operation
-  logic                    FRegWriteE;                        // Write floating-point register
+  logic                        FRegWriteW;                         // FP register write enable
+  logic [2:0]                  FrmM;                               // FP rounding mode
+  logic [P.FMTBITS-1:0]        FmtE, FmtM;                         // FP precision 0-single 1-double
+  logic                        FDivStartE, IDivStartE;             // Start division or squareroot
+  logic                        FWriteIntM;                         // Write to integer register
+  logic [1:0]                  ForwardXE, ForwardYE, ForwardZE;    // forwarding mux control signals
+  logic [2:0]                  OpCtrlE, OpCtrlM;                   // Select which opperation to do in each component
+  logic [1:0]                  FResSelE, FResSelM, FResSelW;       // Select one of the results that finish in the memory stage
+  logic [1:0]                  PostProcSelE, PostProcSelM;         // select result in the post processing unit
+  logic [4:0]                  Adr1D, Adr2D, Adr3D;                // register adresses of each input
+  logic [4:0]                  Adr1E, Adr2E, Adr3E;                // register adresses of each input
+  logic                        XEnD, YEnD, ZEnD;                   // X, Y, Z inputs used for current operation
+  logic                        XEnE, YEnE, ZEnE;                   // X, Y, Z inputs used for current operation
+  logic                        FRegWriteE;                         // Write floating-point register
+  logic                        FPUActiveE;                         // FP instruction being executed
 
   // regfile signals
-  logic [P.FLEN-1:0]        FRD1D, FRD2D, FRD3D;                  // Read Data from FP register - decode stage
-  logic [P.FLEN-1:0]        FRD1E, FRD2E, FRD3E;                  // Read Data from FP register - execute stage
-  logic [P.FLEN-1:0]        XE;                                   // Input 1 to the various units (after forwarding)
-  logic [P.XLEN-1:0]        IntSrcXE;                             // Input 1 to the various units (after forwarding)
-  logic [P.FLEN-1:0]        PreYE, YE;                            // Input 2 to the various units (after forwarding)
-  logic [P.FLEN-1:0]        PreZE, ZE;                            // Input 3 to the various units (after forwarding)
+  logic [P.FLEN-1:0]           FRD1D, FRD2D, FRD3D;                // Read Data from FP register - decode stage
+  logic [P.FLEN-1:0]           FRD1E, FRD2E, FRD3E;                // Read Data from FP register - execute stage
+  logic [P.FLEN-1:0]           XE;                                 // Input 1 to the various units (after forwarding)
+  logic [P.XLEN-1:0]           IntSrcXE;                           // Input 1 to the various units (after forwarding)
+  logic [P.FLEN-1:0]           PreYE, YE;                          // Input 2 to the various units (after forwarding)
+  logic [P.FLEN-1:0]           PreZE, ZE;                          // Input 3 to the various units (after forwarding)
 
   // unpacking signals
-  logic                    XsE, YsE, ZsE;                        // input's sign - execute stage
-  logic                    XsM, YsM;                             // input's sign - memory stage
-  logic [P.NE-1:0]          XeE, YeE, ZeE;                        // input's exponent - execute stage
-  logic [P.NE-1:0]          ZeM;                                  // input's exponent - memory stage
-  logic [P.NF:0]            XmE, YmE, ZmE;                        // input's significand - execute stage
-  logic [P.NF:0]            XmM, YmM, ZmM;                        // input's significand - memory stage
-  logic                    XNaNE, YNaNE, ZNaNE;                  // is the input a NaN - execute stage
-  logic                    XNaNM, YNaNM, ZNaNM;                  // is the input a NaN - memory stage
-  logic                    XSNaNE, YSNaNE, ZSNaNE;               // is the input a signaling NaN - execute stage
-  logic                    XSNaNM, YSNaNM, ZSNaNM;               // is the input a signaling NaN - memory stage
-  logic                    XSubnormE;                            // is the input subnormal
-  logic                    XZeroE, YZeroE, ZZeroE;               // is the input zero - execute stage
-  logic                    XZeroM, YZeroM;                       // is the input zero - memory stage
-  logic                    XInfE, YInfE, ZInfE;                  // is the input infinity - execute stage
-  logic                    XInfM, YInfM, ZInfM;                  // is the input infinity - memory stage
-  logic                    XExpMaxE;                             // is the exponent all ones (max value)
-  logic [P.FLEN-1:0]        XPostBoxE;                            // X after fixing bad NaN box.  Needed for 1-input operations
+  logic                        XsE, YsE, ZsE;                      // input's sign - execute stage
+  logic                        XsM, YsM;                           // input's sign - memory stage
+  logic [P.NE-1:0]             XeE, YeE, ZeE;                      // input's exponent - execute stage
+  logic [P.NE-1:0]             ZeM;                                // input's exponent - memory stage
+  logic [P.NF:0]               XmE, YmE, ZmE;                      // input's significand - execute stage
+  logic [P.NF:0]               XmM, YmM, ZmM;                      // input's significand - memory stage
+  logic                        XNaNE, YNaNE, ZNaNE;                // is the input a NaN - execute stage
+  logic                        XNaNM, YNaNM, ZNaNM;                // is the input a NaN - memory stage
+  logic                        XSNaNE, YSNaNE, ZSNaNE;             // is the input a signaling NaN - execute stage
+  logic                        XSNaNM, YSNaNM, ZSNaNM;             // is the input a signaling NaN - memory stage
+  logic                        XSubnormE;                          // is the input subnormal
+  logic                        XZeroE, YZeroE, ZZeroE;             // is the input zero - execute stage
+  logic                        XZeroM, YZeroM;                     // is the input zero - memory stage
+  logic                        XInfE, YInfE, ZInfE;                // is the input infinity - execute stage
+  logic                        XInfM, YInfM, ZInfM;                // is the input infinity - memory stage
+  logic                        XExpMaxE;                           // is the exponent all ones (max value)
+  logic [P.FLEN-1:0]           XPostBoxE;                          // X after fixing bad NaN box.  Needed for 1-input operations
 
   // Fma Signals
-  logic                    FmaAddSubE;                           // Multiply by 1.0 when adding or subtracting
-  logic [1:0]              FmaZSelE;                             // Select Z = Y when adding or subtracting, 0 when multiplying
-  logic [3*P.NF+3:0]        SmE, SmM;                             // Sum significand
-  logic                    FmaAStickyE, FmaAStickyM;             // FMA addend sticky bit output
-  logic [P.NE+1:0]          SeE,SeM;                              // Sum exponent
-  logic                    InvAE, InvAM;                         // Invert addend
-  logic                    AsE, AsM;                             // Addend sign
-  logic                    PsE, PsM;                             // Product sign
-  logic                    SsE, SsM;                             // Sum sign
-  logic [$clog2(3*P.NF+5)-1:0] SCntE, SCntM;                      // LZA sum leading zero count
+  logic                        FmaAddSubE;                         // Multiply by 1.0 when adding or subtracting
+  logic [1:0]                  FmaZSelE;                           // Select Z = Y when adding or subtracting, 0 when multiplying
+  logic [3*P.NF+3:0]           SmE, SmM;                           // Sum significand
+  logic                        FmaAStickyE, FmaAStickyM;           // FMA addend sticky bit output
+  logic [P.NE+1:0]             SeE,SeM;                            // Sum exponent
+  logic                        InvAE, InvAM;                       // Invert addend
+  logic                        AsE, AsM;                           // Addend sign
+  logic                        PsE, PsM;                           // Product sign
+  logic                        SsE, SsM;                           // Sum sign
+  logic [$clog2(3*P.NF+5)-1:0] SCntE, SCntM;                       // LZA sum leading zero count
   
   // Cvt Signals
   logic [P.NE:0]               CeE, CeM;                           // convert intermediate expoent
   logic [P.LOGCVTLEN-1:0]      CvtShiftAmtE, CvtShiftAmtM;         // how much to shift by
-  logic                       CvtResSubnormUfE, CvtResSubnormUfM; // does the result underflow or is subnormal
-  logic                       CsE, CsM;                           // convert result sign
-  logic                       IntZeroE, IntZeroM;                 // is the integer zero?
+  logic                        CvtResSubnormUfE, CvtResSubnormUfM; // does the result underflow or is subnormal
+  logic                        CsE, CsM;                           // convert result sign
+  logic                        IntZeroE, IntZeroM;                 // is the integer zero?
   logic [P.CVTLEN-1:0]         CvtLzcInE, CvtLzcInM;               // input to the Leading Zero Counter (priority encoder)
   logic [P.XLEN-1:0]           FCvtIntResM;                        // fcvt integer result (for IEU)
   
   // divide signals
   logic [P.DIVb:0]             QmM;                                // fdivsqrt signifcand
   logic [P.NE+1:0]             QeM;                                // fdivsqrt exponent
-  logic                       DivStickyM;                         // fdivsqrt sticky bit
-  logic                       FDivDoneE, IFDivStartE;             // fdivsqrt control signals
+  logic                        DivStickyM;                         // fdivsqrt sticky bit
+  logic                        FDivDoneE, IFDivStartE;             // fdivsqrt control signals
   logic [P.XLEN-1:0]           FIntDivResultM;                     // fdivsqrt integer division result (for IEU)
 
   // result and flag signals
   logic [P.XLEN-1:0]           ClassResE;                          // classify result
   logic [P.FLEN-1:0]           CmpFpResE;                          // compare result to FPU (min/max)
   logic [P.XLEN-1:0]           CmpIntResE;                         // compare result to IEU (eq/lt/le)
-  logic                       CmpNVE;                             // compare invalid flag (Not Valid)     
+  logic                        CmpNVE;                             // compare invalid flag (Not Valid)     
   logic [P.FLEN-1:0]           SgnResE;                            // sign injection result
   logic [P.XLEN-1:0]           FIntResE;                           // FPU to IEU E-stage result (classify, compare, move)
   logic [P.FLEN-1:0]           PostProcResM;                       // Postprocessor output
-  logic [4:0]                 PostProcFlgM;                       // Postprocessor flags
-  logic                       PreNVE, PreNVM;                     // selected flag that is ready in the memory stage     
+  logic [4:0]                  PostProcFlgM;                       // Postprocessor flags
+  logic                        PreNVE, PreNVM;                     // selected flag that is ready in the memory stage     
   logic [P.FLEN-1:0]           FpResM, FpResW;                     // FPU preliminary result
   logic [P.FLEN-1:0]           PreFpResE, PreFpResM;               // selected result that is ready in the memory stage
   logic [P.FLEN-1:0]           FResultW;                           // final FP result being written to the FP register   
@@ -156,9 +157,9 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]           AlignedSrcAE;                       // align SrcA from IEU to the floating point format for fmv
   logic [P.FLEN-1:0]           BoxedZeroE;                         // Zero value for Z for multiplication, with NaN boxing if needed
   logic [P.FLEN-1:0]           BoxedOneE;                          // One value for Z for multiplication, with NaN boxing if needed
-  logic                       StallUnpackedM;                     // Stall unpacker outputs during multicycle fdivsqrt
+  logic                        StallUnpackedM;                     // Stall unpacker outputs during multicycle fdivsqrt
   logic [P.FLEN-1:0]           SgnExtXE;                           // Sign-extended X input for move to integer
-  logic                       mvsgn;                              // sign bit for extending move
+  logic                        mvsgn;                              // sign bit for extending move
 
   //////////////////////////////////////////////////////////////////////////////////////////
   // Decode Stage: fctrl decoder, read register file
@@ -171,7 +172,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
               .reset, .clk, .FRegWriteE, .FRegWriteM, .FRegWriteW, .FrmM, .FmtE, .FmtM,
               .FDivStartE, .IDivStartE, .FWriteIntE, .FCvtIntE, .FWriteIntM, .OpCtrlE, .OpCtrlM, .FpLoadStoreM,
               .IllegalFPUInstrD, .XEnD, .YEnD, .ZEnD, .XEnE, .YEnE, .ZEnE,
-              .FResSelE, .FResSelM, .FResSelW, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
+              .FResSelE, .FResSelM, .FResSelW, .FPUActiveE, .PostProcSelE, .PostProcSelM, .FCvtIntW, 
               .Adr1D, .Adr2D, .Adr3D, .Adr1E, .Adr2E, .Adr3E);
 
   // FP register file
@@ -205,15 +206,15 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
       mux2 #(P.FLEN) fonemux ({{P.FLEN-P.LEN1{1'b1}}, 2'b0, {P.NE1-1{1'b1}}, (P.NF1)'(0)}, {2'b0, {P.NE-1{1'b1}}, (P.NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
   else if(P.FPSIZES == 3 | P.FPSIZES == 4) 
       mux4 #(P.FLEN) fonemux ({{P.FLEN-P.S_LEN{1'b1}}, 2'b0, {P.S_NE-1{1'b1}}, (P.S_NF)'(0)}, 
-                          {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)}, 
-                          {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)}, 
-                          {2'b0, {P.NE-1{1'b1}}, (P.NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
+                              {{P.FLEN-P.D_LEN{1'b1}}, 2'b0, {P.D_NE-1{1'b1}}, (P.D_NF)'(0)}, 
+                              {{P.FLEN-P.H_LEN{1'b1}}, 2'b0, {P.H_NE-1{1'b1}}, (P.H_NF)'(0)}, 
+                              {2'b0, {P.NE-1{1'b1}}, (P.NF)'(0)}, FmtE, BoxedOneE); // NaN boxing zeroes
   assign FmaAddSubE = OpCtrlE[2]&OpCtrlE[1]&(FResSelE==2'b01)&(PostProcSelE==2'b10);
   mux2  #(P.FLEN)  fyaddmux (PreYE, BoxedOneE, FmaAddSubE, YE); // Force Y to be 1 for add/subtract
   
   // Select NAN-boxed value of Z = 0.0 in proper format for FMA for multiply X*Y+Z
   // For add and subtract, Z comes from second source operand
- if(P.FPSIZES == 1) assign BoxedZeroE = 0;
+  if(P.FPSIZES == 1) assign BoxedZeroE = 0;
   else if(P.FPSIZES == 2) 
     mux2 #(P.FLEN) fmulzeromux ({{P.FLEN-P.LEN1{1'b1}}, {P.LEN1{1'b0}}}, (P.FLEN)'(0), FmtE, BoxedZeroE); // NaN boxing zeroes
   else if(P.FPSIZES == 3 | P.FPSIZES == 4)
@@ -226,7 +227,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
 
   // unpack unit: splits FP inputs into their parts and classifies SNaN, NaN, Subnorm, Norm, Zero, Infifnity
   unpack #(P) unpack (.X(XE), .Y(YE), .Z(ZE), .Fmt(FmtE), .Xs(XsE), .Ys(YsE), .Zs(ZsE), 
-    .Xe(XeE), .Ye(YeE), .Ze(ZeE), .Xm(XmE), .Ym(YmE), .Zm(ZmE), .YEn(YEnE),
+    .Xe(XeE), .Ye(YeE), .Ze(ZeE), .Xm(XmE), .Ym(YmE), .Zm(ZmE), .YEn(YEnE), .FPUActive(FPUActiveE),
     .XNaN(XNaNE), .YNaN(YNaNE), .ZNaN(ZNaNE), .XSNaN(XSNaNE), .XEn(XEnE), 
     .YSNaN(YSNaNE), .ZSNaN(ZSNaNE), .XSubnorm(XSubnormE), 
     .XZero(XZeroE), .YZero(YZeroE), .ZZero(ZZeroE), .XInf(XInfE), .YInf(YInfE), 
@@ -261,7 +262,6 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
   fcvt #(P) fcvt (.Xs(XsE), .Xe(XeE), .Xm(XmE), .Int(ForwardedSrcAE), .OpCtrl(OpCtrlE), 
     .ToInt(FWriteIntE), .XZero(XZeroE), .Fmt(FmtE), .Ce(CeE), .ShiftAmt(CvtShiftAmtE), 
     .ResSubnormUf(CvtResSubnormUfE), .Cs(CsE), .IntZero(IntZeroE), .LzcIn(CvtLzcInE));
-
 
   // NaN Box SrcA to convert integer to requested FP size
   if(P.FPSIZES == 1) assign AlignedSrcAE = {{P.FLEN-P.XLEN{1'b1}}, ForwardedSrcAE};
@@ -334,7 +334,7 @@ module fpu import cvw::*;  #(parameter cvw_t P) (
     .PostProcSel(PostProcSelM), .PostProcRes(PostProcResM), .PostProcFlg(PostProcFlgM), .FCvtIntRes(FCvtIntResM));
 
   // FPU flag selection - to privileged
-  mux2  #(5)      FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
+  mux2  #(5)       FPUFlgMux({PreNVM&~FResSelM[1], 4'b0}, PostProcFlgM, ~FResSelM[1]&FResSelM[0], SetFflagsM);
   mux2  #(P.FLEN)  FPUResMux(PreFpResM, PostProcResM, FResSelM[0], FpResM);
 
   // M/W pipe registers

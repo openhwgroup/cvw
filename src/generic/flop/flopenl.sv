@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module flopenl #(parameter WIDTH = 8, parameter type TYPE=logic [WIDTH-1:0]) (
   input  logic clk, load, en,
   input  TYPE d,

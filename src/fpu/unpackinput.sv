@@ -27,25 +27,30 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module unpackinput import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FLEN-1:0]        In,         // inputs from register file
-  input  logic                    En,         // enable the input
+  input  logic [P.FLEN-1:0]        A,          // inputs from register file
+  input  logic                     En,         // enable the input
   input  logic [P.FMTBITS-1:0]     Fmt,        // format signal 00 - single 01 - double 11 - quad 10 - half
-  output logic                    Sgn,        // sign bits of the number 
+  input  logic                     FPUActive,  // Kill inputs when FPU is not active
+  output logic                     Sgn,        // sign bits of the number 
   output logic [P.NE-1:0]          Exp,        // exponent of the number  (converted to largest supported precision)
   output logic [P.NF:0]            Man,        // mantissa of the number  (converted to largest supported precision)
-  output logic                    NaN,        // is the number a NaN
-  output logic                    SNaN,       // is the number a signaling NaN
-  output logic                    Zero,       // is the number zero
-  output logic                    Inf,        // is the number infinity
-  output logic                    ExpNonZero, // is the exponent not zero
-  output logic                    FracZero,   // is the fraction zero
-  output logic                    ExpMax,     // does In have the maximum exponent (NaN or Inf)
-  output logic                    Subnorm,    // is the number subnormal
+  output logic                     NaN,        // is the number a NaN
+  output logic                     SNaN,       // is the number a signaling NaN
+  output logic                     Zero,       // is the number zero
+  output logic                     Inf,        // is the number infinity
+  output logic                     ExpNonZero, // is the exponent not zero
+  output logic                     FracZero,   // is the fraction zero
+  output logic                     ExpMax,     // does In have the maximum exponent (NaN or Inf)
+  output logic                     Subnorm,    // is the number subnormal
   output logic [P.FLEN-1:0]        PostBox     // Number reboxed correctly as a NaN
 );
 
-  logic [P.NF-1:0] Frac;       // Fraction of XYZ
-  logic           BadNaNBox;  // incorrectly NaN Boxed
+  logic [P.NF-1:0] Frac;        // Fraction of XYZ
+  logic            BadNaNBox;   // incorrectly NaN Boxed
+  logic [P.FLEN-1:0] In;
+
+  // Gate input when FPU is not active to save power and simulation
+  assign In = A & {P.FLEN{FPUActive}};
 
   if (P.FPSIZES == 1) begin        // if there is only one floating point format supported
       assign BadNaNBox = 0;
@@ -107,7 +112,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
       // is the exponent all 1's
       assign ExpMax = Fmt ? &In[P.FLEN-2:P.NF] : &In[P.LEN1-2:P.NF1];
   
-
   end else if (P.FPSIZES == 3) begin       // three floating point precsions supported
 
       // largest format | larger format  | smallest format
@@ -246,7 +250,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
               2'b00: Sgn = In[P.S_LEN-1];
               2'b10: Sgn = In[P.H_LEN-1];
           endcase
-          
 
       // extract the fraction
       always_comb
@@ -266,7 +269,6 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
               2'b10: ExpNonZero = |In[P.H_LEN-2:P.H_NF]; 
           endcase
 
-
       // example double to single conversion:
       // 1023 = 0011 1111 1111
       // 127  = 0000 0111 1111 (subtract this)
@@ -284,8 +286,7 @@ module unpackinput import cvw::*;  #(parameter cvw_t P) (
               2'b00: Exp = {In[P.S_LEN-2], {P.Q_NE-P.S_NE{~In[P.S_LEN-2]}}, In[P.S_LEN-3:P.S_NF+1], In[P.S_NF]|~ExpNonZero};
               2'b10: Exp = {In[P.H_LEN-2], {P.Q_NE-P.H_NE{~In[P.H_LEN-2]}}, In[P.H_LEN-3:P.H_NF+1], In[P.H_NF]|~ExpNonZero}; 
           endcase
-
-
+  
       // is the exponent all 1's
       always_comb 
           case (Fmt)
