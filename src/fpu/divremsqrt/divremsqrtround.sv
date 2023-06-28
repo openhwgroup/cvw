@@ -107,40 +107,40 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
       //      |    NF     |1|1|
       //                     ^    ^ if floating point result
       //                     ^ if not an FMA result
-      if (P.XLENPOS == 1)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]) |
+      if (XLENPOS == 1)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       //     2: NF > XLEN
-      if (P.XLENPOS == 2)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
+      if (XLENPOS == 2)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
   end else if (P.FPSIZES == 2) begin
       // XLEN is either 64 or 32
       // so half and single are always smaller then XLEN
 
       // 1: XLEN > NF   > NF1
-      if (P.XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&~OutFmt) |
+      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&~OutFmt) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (P.XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&~OutFmt) | 
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&~OutFmt) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (P.XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt)) |
+      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~OutFmt)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
 
   end else if (P.FPSIZES == 3) begin
       // 1: XLEN > NF   > NF1
-      if (P.XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 1) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&~(OutFmt==P.FMT)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       // 2: NF   > XLEN > NF1
-      if (P.XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.NF1-1]&(OutFmt==P.FMT1)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.XLEN-1]&~(OutFmt==P.FMT)) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
       // 3: NF   > NF1  > XLEN
-      if (P.XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&(OutFmt==P.FMT1)) |
+      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF2-2:P.CORRSHIFTSZ-P.XLEN-1]&(OutFmt==P.FMT1)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF1-1]&((OutFmt==P.FMT1))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF1-2:P.CORRSHIFTSZ-P.NF-1]&(~(OutFmt==P.FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.NF-2:0]);
@@ -148,14 +148,14 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
   end else if (P.FPSIZES == 4) begin
       // Quad precision will always be greater than XLEN
       // 2: NF   > XLEN > NF1
-      if (P.XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
+      if (XLENPOS == 2) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.XLEN-1]&~(OutFmt==P.Q_FMT)) | 
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]);
       // 3: NF   > NF1  > XLEN
       // The extra XLEN bit will be ored later when caculating the final sticky bit - the ufplus1 not needed for integer
-      if (P.XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
+      if (XLENPOS == 3) assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.H_NF-2:P.CORRSHIFTSZ-P.S_NF-1]&(OutFmt==P.H_FMT)) |
                                                 (|Mf[P.CORRSHIFTSZ-P.S_NF-2:P.CORRSHIFTSZ-P.XLEN-1]&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.D_NF-1]&((OutFmt==P.S_FMT)|(OutFmt==P.H_FMT))) |
                                                 (|Mf[P.CORRSHIFTSZ-P.D_NF-2:P.CORRSHIFTSZ-P.Q_NF-1]&(~(OutFmt==P.Q_FMT))) |
