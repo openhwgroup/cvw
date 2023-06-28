@@ -73,7 +73,7 @@
   logic [P.XLEN-1:0]           AM;                           // Original Numerator for postprocessor
   logic                       ISpecialCaseE;                // Integer div/remainder special cases
 
-  fdivsqrtpreproc fdivsqrtpreproc(                          // Preprocessor
+  fdivsqrtpreproc #(P) fdivsqrtpreproc(                          // Preprocessor
     .clk, .IFDivStartE, .Xm(XmE), .Ym(YmE), .Xe(XeE), .Ye(YeE),
     .FmtE, .SqrtE, .XZeroE, .Funct3E, .QeM, .X, .D, .CyclesE,
     // Int-specific 
@@ -81,18 +81,18 @@
     .BZeroM, .nM, .mM, .AM, 
     .IntDivM, .W64M, .NegQuotM, .ALTBM, .AsM);
 
-  fdivsqrtfsm fdivsqrtfsm(                                  // FSM
+  fdivsqrtfsm #(P) fdivsqrtfsm(                                  // FSM
     .clk, .reset, .XInfE, .YInfE, .XZeroE, .YZeroE, .XNaNE, .YNaNE, 
     .FDivStartE, .XsE, .SqrtE, .WZeroE, .FlushE, .StallM, 
     .FDivBusyE, .IFDivStartE, .FDivDoneE, .SpecialCaseM, .CyclesE,
     // Int-specific 
     .IDivStartE, .ISpecialCaseE, .IntDivE);
 
-  fdivsqrtiter fdivsqrtiter(                                // CSA Iterator
+  fdivsqrtiter #(P) fdivsqrtiter(                                // CSA Iterator
     .clk, .IFDivStartE, .FDivBusyE, .SqrtE, .X, .D, 
     .FirstU, .FirstUM, .FirstC, .Firstun, .FirstWS(WS), .FirstWC(WC));
 
-  fdivsqrtpostproc fdivsqrtpostproc(                        // Postprocessor
+  fdivsqrtpostproc #(P) fdivsqrtpostproc(                        // Postprocessor
     .clk, .reset, .StallM, .WS, .WC, .D, .FirstU, .FirstUM, .FirstC, 
     .SqrtE, .Firstun, .SqrtM, .SpecialCaseM, 
     .QmM, .WZeroE, .DivStickyM, 

@@ -79,7 +79,7 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             QeM;
   logic                       DivStickyM;
 
-  divremsqrt divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 
+  divremsqrt #(P) divremsqrt(.clk, .reset, .XsE, .FmtE, .XmE, .YmE, 
             .XeE, .YeE, .SqrtE, .SqrtM,
                     .XInfE, .YInfE, .XZeroE, .YZeroE, 
             .XNaNE, .YNaNE, 
@@ -89,7 +89,7 @@ module drsu import cvw::*;  #(parameter cvw_t P) (
                     .FlushE, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3M,
                     .Funct3E, .IntDivE, .FIntDivResultM,
                     .FDivDoneE, .IFDivStartE);
-  divremsqrtpostprocess divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl,
+  divremsqrtpostprocess #(P) divremsqrtpostprocess(.Xs(XsE), .Ys(YsE), .Xm(XmE), .Ym(YmE), .Frm(Frm), .Fmt(FmtE), .OpCtrl,
     .XZero(XZeroE), .YZero(YZeroE), .XInf(XInfE), .YInf(YInfE), .XNaN(XNaNE), .YNaN(YNaNE), .XSNaN(XSNaNE), 
     .YSNaN(YSNaNE), .PostProcSel,.DivSticky(DivStickyM), .DivQe(QeM), .DivQm(QmM), .PostProcRes(FResM), .PostProcFlg(FlgM));
 endmodule

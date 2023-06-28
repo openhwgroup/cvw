@@ -122,16 +122,16 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   /*cvtshiftcalc cvtshiftcalc(.ToInt, .CvtCe, .CvtResSubnormUf, .Xm, .CvtLzcIn,  
       .XZero, .IntToFp, .OutFmt, .CvtResUf, .CvtShiftIn);*/
 
-  divshiftcalc divshiftcalc(.DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
+  divshiftcalc #(P) divshiftcalc(.DivQe, .DivQm, .DivResSubnorm, .DivSubnormShiftPos, .DivShiftAmt, .DivShiftIn);
 
   assign ShiftAmt = DivShiftAmt;
   assign ShiftIn = DivShiftIn;
   
   // main normalization shift
-  normshift normshift (.ShiftIn, .ShiftAmt, .Shifted);
+  normshift #(P) normshift (.ShiftIn, .ShiftAmt, .Shifted);
 
   // correct for LZA/divsqrt error
-  divremsqrtshiftcorrection shiftcorrection(.DivResSubnorm, .DivSubnormShiftPos, .DivOp, .DivQe, .Qe, .Shifted, .Mf);
+  divremsqrtshiftcorrection #(P) shiftcorrection(.DivResSubnorm, .DivSubnormShiftPos, .DivOp, .DivQe, .Qe, .Shifted, .Mf);
 
   ///////////////////////////////////////////////////////////////////////////////
   // Rounding
@@ -144,9 +144,9 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   // round to nearest max magnitude
 
   // calulate result sign used in rounding unit
-  divremsqrtroundsign roundsign( .DivOp, .Sqrt, .Xs, .Ys, .Ms);
+  divremsqrtroundsign #(P) roundsign( .DivOp, .Sqrt, .Xs, .Ys, .Ms);
 
-  divremsqrtround round(.OutFmt, .Frm, .Plus1, .Qe,
+  divremsqrtround #(P) round(.OutFmt, .Frm, .Plus1, .Qe,
       .Ms, .Mf, .DivSticky, .DivOp, .UfPlus1, .FullRe, .Rf, .Re, .Sticky, .Round, .Guard, .Me);
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -161,7 +161,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
   // Flags
   ///////////////////////////////////////////////////////////////////////////////
 
-  divremsqrtflags flags(.XSNaN, .YSNaN, .XInf, .YInf, .InfIn, .XZero, .YZero, 
+  divremsqrtflags #(P) flags(.XSNaN, .YSNaN, .XInf, .YInf, .InfIn, .XZero, .YZero, 
               .Xs, .OutFmt, .Sqrt,
               .NaNIn, .Round, .DivByZero,
               .Guard, .Sticky, .UfPlus1,.DivOp, .FullRe, .Plus1,
@@ -173,7 +173,7 @@ module divremsqrtpostprocess import cvw::*;  #(parameter cvw_t P)  (
 
   //negateintres negateintres(.Xs, .Shifted, .Signed, .Int64, .Plus1, .CvtNegResMsbs, .CvtNegRes);
 
-  divremsqrtspecialcase specialcase(.Xs, .Xm, .Ym, .XZero, 
+  divremsqrtspecialcase #(P) specialcase(.Xs, .Xm, .Ym, .XZero, 
       .Frm, .OutFmt, .XNaN, .YNaN,  
       .NaNIn, .Plus1, .Invalid, .Overflow, .InfIn,
       .XInf, .YInf, .DivOp, .DivByZero, .FullRe, .Rs, .Re, .Rf, .PostProcRes );
