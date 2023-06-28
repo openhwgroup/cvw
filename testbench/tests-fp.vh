@@ -582,7 +582,7 @@ string f128fma[] = '{
 };
 
 string custom[] = '{
-	"f16_div_rne.tv"
+	"f16_sqrt_rne.tv"
 };
 
 

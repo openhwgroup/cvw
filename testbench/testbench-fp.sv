@@ -770,7 +770,7 @@ module testbenchfp;
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
    
-   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
+   if (TEST === "div" | TEST === "sqrt" | TEST === "all"| TEST === "custom") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 			     .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
 			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -995,7 +995,6 @@ module testbenchfp;
 	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
 	 $display("Error in %s", Tests[TestNum]);
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
       end
       
       // TestFloat sets the result to all 1's when there is an invalid result, however in 
