@@ -952,7 +952,6 @@ module testbenchfp;
 	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
 	 $display("Error in %s", Tests[TestNum]);
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
       end
       
       // TestFloat sets the result to all 1's when there is an invalid result, however in 
@@ -969,7 +968,6 @@ module testbenchfp;
 	 errors += 1;
 	 $display("There is an error in %s", Tests[TestNum]);
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
