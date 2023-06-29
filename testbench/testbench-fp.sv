@@ -658,9 +658,9 @@ module testbenchfp;
             Fmt = {Fmt, 2'b10};
         end
       end
-      if (TEST === "custom") begin // if unified div sqrt is being tested
+      if (TEST === "customdiv") begin // if unified div sqrt is being tested
         Tests = {Tests, custom};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `DIVUNIT};
         Fmt = {Fmt, 2'b10};
@@ -782,7 +782,7 @@ module testbenchfp;
 			     .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
 			     .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "divremsqrt" | TEST === "divremsqrttest") begin: divremsqrt
+   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 		       .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
