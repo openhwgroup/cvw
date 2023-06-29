@@ -121,7 +121,8 @@ module testbenchfp;
    logic 			ResMatch;                   // Check if result match
    logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
-
+   logic 			FMAop;                      // Is this a FMA operation?   
+   
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
    //     ||||||||| |||||||| ||||||| |||||||||   ||||||| |||||||| |||
@@ -1014,13 +1015,15 @@ module testbenchfp;
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
       assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
+      assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
-      assign CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
+      // Maybe change OpCtrl but for now just look at TEST for fma test
+      assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
       if (~(ResMatch & FlagMatch) & CheckNow) begin
 	 errors += 1;
-	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
-	 $display("Error in %s", Tests[TestNum]);
+	 $display("\nError in %s", Tests[TestNum]);
+	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
 	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
       end
       
