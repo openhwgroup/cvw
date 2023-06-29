@@ -29,7 +29,8 @@ vlog +incdir+../config/$1 +incdir+../config/shared ../src/cvw.sv ../testbench/te
 
 # Change TEST_SIZE to only test certain FP width
 # values are QP, DP, SP, HP
-vsim -voptargs=+acc work.testbenchfp -GTEST=$2 -GTEST_SIZE="all" 
+# Change TEST_STOP to not stop by changing to "nostop"
+vsim -voptargs=+acc work.testbenchfp -GTEST=$2 -GTEST_SIZE="HP" -GTEST_STOP="stop"
 
 # Set WAV variable to avoid having any output to wave (to limit disk space)
 quietly set WAV 1;
