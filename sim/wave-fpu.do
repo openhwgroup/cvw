@@ -7,6 +7,7 @@ add wave -noupdate /testbenchfp/Y
 add wave -noupdate /testbenchfp/Z
 add wave -noupdate /testbenchfp/Res
 add wave -noupdate /testbenchfp/Ans
+add wave -noupdate /testbenchfp/reset
 add wave -noupdate /testbenchfp/DivStart
 add wave -noupdate /testbenchfp/FDivBusyE
 add wave -noupdate /testbenchfp/CheckNow
