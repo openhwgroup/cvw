@@ -62,8 +62,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
   output logic        MDUActiveE,              // Mul/Div instruction being executed
-  output logic [3:0]  CMOpE,                   // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
-  output logic [2:0]  PrefetchE,               // which prefetch instruction 1: prefetch.i, 2: prefetch.r, 4: prefetch.w
+  output logic [3:0]  CMOpM,                   // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  output logic        IFUPrefetchE,            // instruction prefetch
+  output logic        LSUPrefetchM,            // data prefetch
 
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
@@ -95,6 +96,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // pipelined control signals
   logic        RegWriteD, RegWriteE;           // RegWrite (register will be written)
   logic [2:0]  ResultSrcD, ResultSrcE, ResultSrcM; // Select which result to write back to register file
+  logic [2:0]  PreImmSrcD;                     // Immediate source format (before amending for prefetches)
   logic [1:0]  MemRWD, MemRWE;                 // Store (write to memory)
   logic        ALUOpD;                         // 0 for address generation, 1 for all other operations (must use Funct3)
   logic        BaseW64D;                       // W64 for Base instructions specifically
@@ -142,8 +144,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
-  logic [3:0]  CMOpD;                          // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
-  logic [2:0]  PrefetchD;                      // which prefetch instruction 1: prefetch.i, 2: prefetch.r, 4: prefetch.w
+  logic [3:0]  CMOpD, CMOpE;                   // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  logic        IFUPrefetchD;                   // instruction prefetch
+  logic        LSUPrefetchD, LSUPrefetchE;     // data prefetch
 
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -284,7 +287,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // On RV32E, can't write to upper 16 registers.  Checking reads to upper 16 is more costly so disregard them.
   assign IllegalERegAdrD = P.E_SUPPORTED & P.ZICSR_SUPPORTED & ControlsD[`CTRLW-1] & InstrD[11]; 
   //assign IllegalBaseInstrD = 1'b0;
-  assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
+  assign {BaseRegWriteD, PreImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
           PrivilegedD, FenceXD, MDUD, AtomicD, CMOD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
   
@@ -367,25 +370,28 @@ module controller import cvw::*;  #(parameter cvw_t P) (
 
   // Prefetch Hints
   always_comb begin
-    PrefetchD = 3'b000; // default: not a prefetch hint
+    // default: not a prefetch hint
+    IFUPrefetchD = 1'b0;
+    LSUPrefetchD = 1'b0;
+    ImmSrcD = PreImmSrcD;
     if (P.ZICBOP_SUPPORTED & (InstrD[14:0] == 15'b110_00000_0010011)) begin // ori with destiation x0 is hint for Prefetch
-      case (Rs2D) // which type of prefectch?
-        5'b00000: PrefetchD = 3'b001; // prefetch.i
-        5'b00001: PrefetchD = 3'b010; // prefetch.r
-        5'b00011: PrefetchD = 3'b100; // prefetch.w
+      case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally
+        5'b00000: IFUPrefetchD = 1'b1; // prefetch.i
+        5'b00001: LSUPrefetchD = 1'b1; // prefetch.r
+        5'b00011: LSUPrefetchD = 1'b1; // prefetch.w
         // default: not a prefetch hint
       endcase
+      if (IFUPrefetchD | LSUPrefetchD) ImmSrcD = 3'b001; // use S-type immediate format for prefetches
     end
   end
-  //assign AnyPrefetchD = |PrefetchD;
 
   // Decode stage pipeline control register
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(36) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, PrefetchD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, PrefetchE, InstrValidE});
+  flopenrc #(35) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, IFUPrefetchD, LSUPrefetchD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, IFUPrefetchE, LSUPrefetchE, InstrValidE});
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
@@ -404,9 +410,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign IntDivE = MDUE & Funct3E[2]; // Integer division operation
   
   // Memory stage pipeline control register
-  flopenrc #(20) controlregM(clk, reset, FlushM, ~StallM,
-                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE},
-                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM});
+  flopenrc #(25) controlregM(clk, reset, FlushM, ~StallM,
+                         {RegWriteE, ResultSrcE, MemRWE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, FWriteIntE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE, IntDivE, CMOpE, LSUPrefetchE},
+                         {RegWriteM, ResultSrcM, MemRWM, CSRReadM, CSRWriteM, PrivilegedM, Funct3M, FWriteIntM, AtomicM, InvalidateICacheM, FlushDCacheM, FenceM, InstrValidM, IntDivM, CMOpM, LSUPrefetchM});
   
   // Writeback stage pipeline control register
   flopenrc #(5) controlregW(clk, reset, FlushW, ~StallW,
