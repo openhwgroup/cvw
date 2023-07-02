@@ -46,6 +46,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic [4:0]        RdE,                             // Destination register
   output logic              MDUActiveE,                      // Mul/Div instruction being executed
   output logic [3:0]        CMOpE,                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  output logic [2:0]        PrefetchE,                       // which prefetch instruction 1: prefetch.i, 2: prefetch.r, 4: prefetch.w
   // Memory stage signals
   input  logic              SquashSCW,                       // Squash store conditional, from LSU
   output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
@@ -104,7 +105,7 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
-    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, .CMOpE,
+    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, .CMOpE, .PrefetchE,
     .StallM, .FlushM, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);

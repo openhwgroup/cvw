@@ -79,6 +79,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
   logic [3:0]                    CMOpE;                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  logic [2:0]                    PrefetchE;                       // 1: prefetch.i, 2: prefetch.r, 4: prefetch.w
   logic [3:0]                    ENVCFG_CBE;                      // Cache block operation enables
 
   // floating point unit signals
@@ -193,7 +194,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
      .InstrD, .STATUS_FS, .ENVCFG_CBE, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOpE,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOpE, .PrefetchE,
      // Memory stage interface
      .SquashSCW,  // from LSU
      .MemRWM,     // read/write control goes to LSU
