@@ -62,7 +62,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
   output logic        MDUActiveE,              // Mul/Div instruction being executed
-  output logic        CMOE,                    // Cache Management operation being executed
+  output logic [3:0]  CMOpE,                   // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
 
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
@@ -82,6 +82,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic        CSRWriteFenceM,          // CSR write or fence instruction; needs to flush the following instructions
   output logic        StoreStallD              // Store (memory write) causes stall
 );
+
 
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
@@ -133,13 +134,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FLSFunctD;                      // Detect floating-point loads and stores
   logic        JRFunctD;                       // detect jalr instruction
   logic        FenceFunctD;                    // Detect fence instruction
-  logic        CMOFunctD;
+  logic        CMOFunctD;                      // Detect CMO instruction
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
+  logic [3:0]  CMOpD;                          // which CMO instruction 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
 
   // Extract fields
   assign OpD     = InstrD[6:0];
@@ -349,14 +351,28 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign InvalidateICacheD = 0;
     assign FlushDCacheD = 0;
   end
+
+  // Cache Management instructions
+  if (P.ZICBOM_SUPPORTED | P.ZICBOZ_SUPPORTED) begin:cmo
+    always_comb
+      if (CMOD) begin
+        CMOpD[3] = (InstrD[31:20] == 12'd4); // cbo.zero
+        CMOpD[2] = (InstrD[31:20] == 12'd2); // cbo.clean
+        CMOpD[1] = (InstrD[31:20] == 12'd1) | ((InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b01)); // cbo.flush 
+        CMOpD[0] = (InstrD[31:20] == 12'd0) & (ENVCFG_CBE[1:0] == 2'b11); // cbo.inval
+      end else 
+        CMOpD = 4'b0000; // not a cbo instruction
+  end else begin:cmo
+    assign CMOpD = 4'b0000; // cbo instructions not supported
+  end
  
   // Decode stage pipeline control register
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(30) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOE, InstrValidE});
+  flopenrc #(33) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOpD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOpE, InstrValidE});
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
