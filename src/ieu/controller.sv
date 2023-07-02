@@ -33,6 +33,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
   input  logic [1:0]  STATUS_FS,               // is FPU enabled?
+  input  logic [3:0]  ENVCFG_CBE,              // Cache block operation enables
   output logic [2:0]  ImmSrcD,                 // Type of immediate extension
   input  logic        IllegalIEUFPUInstrD,     // Illegal IEU and FPU instruction
   output logic        IllegalBaseInstrD,       // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
@@ -171,8 +172,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                               (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
     assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) & 
-                              ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4) |
-                               (P.ZICBOM_SUPPORTED & (InstrD[31:20] == 12'd0 | InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2)));
+                              ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4 & ENVCFG_CBE[3]) |
+                               (P.ZICBOM_SUPPORTED & ((InstrD[31:20] == 12'd0 & (ENVCFG_CBE[1:0] != 2'b00))) | 
+                                                      (InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2) & ENVCFG_CBE[2]));
                                // *** need to get with enable bits such as MENVCFG_CBZE
     assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
