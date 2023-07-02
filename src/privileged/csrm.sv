@@ -197,10 +197,10 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   assign MENVCFG_STCE =  MENVCFG_REGW[63];
   // Uncomment these other fields when they are defined
   // assign MENVCFG_PBMTE = MENVCFG_REGW[62];
-  // assign MENVCFG_CBZE  =  MENVCFG_REGW[7];
+  // assign MENVCFG_CBZE  = MENVCFG_REGW[7];
   // assign MENVCFG_CBCFE = MENVCFG_REGW[6];
-  // assign MENVCFG_CBIE  =  MENVCFG_REGW[5:4];
-  // assign MENVCFG_FIOM  =  MENVCFG_REGW[0];
+  // assign MENVCFG_CBIE  = MENVCFG_REGW[5:4];
+  // assign MENVCFG_FIOM  = MENVCFG_REGW[0];
 
   // Read machine mode CSRs
   // verilator lint_off WIDTH
