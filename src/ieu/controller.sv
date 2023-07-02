@@ -83,7 +83,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
-  logic [4:0] Rs1D, Rs2D;                      // Rs1/2 source register in Decode stage
+  logic [4:0] Rs1D, Rs2D, RdD;                 // Rs1/2 source register / dest reg in Decode stage
 
   `define CTRLW 23
 
@@ -127,19 +127,22 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
   logic        FLSFunctD;                      // Detect floating-point loads and stores
-  logic        JFunctD;                        // detect jalr instruction
+  logic        JRFunctD;                       // detect jalr instruction
   logic        FenceFunctD;                    // Detect fence instruction
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
+  logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
+  logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
 
   // Extract fields
-  assign OpD = InstrD[6:0];
+  assign OpD     = InstrD[6:0];
   assign Funct3D = InstrD[14:12];
   assign Funct7D = InstrD[31:25];
-  assign Rs1D = InstrD[19:15];
-  assign Rs2D = InstrD[24:20];
+  assign Rs1D    = InstrD[19:15];
+  assign Rs2D    = InstrD[24:20];
+  assign RdD     = InstrD[11:7];
 
   // Funct 7 checking
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
@@ -163,7 +166,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign FLSFunctD        = (Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
                               (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED);
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
-    assign AFunctD          = (Funct3D == 3'b010);
+    assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
                               (InstrD[31:27] == 5'b00100) |
@@ -173,10 +176,15 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                               (InstrD[31:27] == 5'b10100) |
                               (InstrD[31:27] == 5'b11000) |
                               (InstrD[31:27] == 5'b11100);
+    assign RWFunctD         = ((Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101) & Funct7ZeroD |
+                              (Funct3D == 3'b000 | Funct3D == 3'b101) & Funct7b5D) & (P.XLEN == 64);
+    assign MWFunctD         = MFunctD & (P.XLEN == 64) & ~(Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b011);
     assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011));
-    assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
-    assign JFunctD          = (Funct3D == 3'b000);
+    assign BFunctD          = Funct3D[2:1] != 2'b01; // legal branches
+    assign JRFunctD         = Funct3D == 3'b000;
+    assign PFunctD          = Funct3D == 3'b000 & Rs1D == 5'b0 & RdD == 5'b0;
+    assign CSRFunctD        = Funct3D[1:0] != 2'b00; 
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
     assign IFunctD = 1; // Don't bother to separate out shift decoding
@@ -187,9 +195,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign FenceFunctD = 1; // don't bother to check fields for fences
     assign AFunctD = 1; // don't bother to check fields for atomics
     assign AMOFunctD = 1; // don't bother to check Funct7 for AMO operations
+    assign RWFunctD = 1; // don't bother to check fields for RW instructions
+    assign MWFunctD = 1; // don't bother to check fields for MW instructions
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
-    assign JFunctD = 1; // don't bother to check Funct3 for jumps
+    assign JRFunctD = 1; // don't bother to check Funct3 for jalrs
+    assign PFunctD = 1; // don't bother to check fields for privileged instructions
+    assign CSRFunctD = 1; // don't bother to check Funct3 for CSR operations
     assign IWValidFunct3D = 1;
   end
 
@@ -231,19 +243,19 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                   else if (MFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
       7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
-      7'b0111011: if (RFunctD & (P.XLEN == 64))
+      7'b0111011: if (RWFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
-                  else if (MFunctD & (P.XLEN == 64))
+                  else if (MWFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
       7'b1100011: if (BFunctD)   
                       ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
-      7'b1100111: if (JFunctD)
+      7'b1100111: if (JRFunctD)
                       ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
       7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
       7'b1110011: if (P.ZICSR_SUPPORTED) begin
-                   if (Funct3D == 3'b000)
-                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in priveleged modules
-                   else
+                   if (PFunctD)
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in privdec modules
+                   else if (CSRFunctD)
                       ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0; // csrs
                   end
     endcase
