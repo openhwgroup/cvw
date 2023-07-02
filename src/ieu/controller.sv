@@ -83,7 +83,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [6:0] OpD;                             // Opcode in Decode stage
   logic [2:0] Funct3D;                         // Funct3 field in Decode stage
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
-  logic [4:0] Rs1D;                            // Rs1 source register in Decode stage
+  logic [4:0] Rs1D, Rs2D;                      // Rs1/2 source register in Decode stage
 
   `define CTRLW 23
 
@@ -129,6 +129,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FLSFunctD;                      // Detect floating-point loads and stores
   logic        JFunctD;                        // detect jalr instruction
   logic        FenceFunctD;                    // Detect fence instruction
+  logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
@@ -138,6 +139,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   assign Funct3D = InstrD[14:12];
   assign Funct7D = InstrD[31:25];
   assign Rs1D = InstrD[19:15];
+  assign Rs2D = InstrD[24:20];
 
   // Funct 7 checking
   // Be rigorous about detecting illegal instructions if CSRs or bit manipulation is supported
@@ -161,6 +163,16 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign FLSFunctD        = (Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
                               (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED);
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
+    assign AFunctD          = (Funct3D == 3'b010);
+    assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
+                              (InstrD[31:27] == 5'b00000) |
+                              (InstrD[31:27] == 5'b00100) |
+                              (InstrD[31:27] == 5'b01100) |
+                              (InstrD[31:27] == 5'b01000) |
+                              (InstrD[31:27] == 5'b10000) |
+                              (InstrD[31:27] == 5'b10100) |
+                              (InstrD[31:27] == 5'b11000) |
+                              (InstrD[31:27] == 5'b11100);
     assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
@@ -173,6 +185,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign LFunctD = 1; // don't bother to check Funct3 for loads
     assign FLSFunctD = 1; // don't bother to check Func3 for floating-point loads/stores
     assign FenceFunctD = 1; // don't bother to check fields for fences
+    assign AFunctD = 1; // don't bother to check fields for atomics
+    assign AMOFunctD = 1; // don't bother to check Funct7 for AMO operations
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
     assign JFunctD = 1; // don't bother to check Funct3 for jumps
@@ -202,13 +216,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
                       ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
-      7'b0100111:     ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_1; // fsw - only legal if FP supported
-      7'b0101111: if (P.A_SUPPORTED) begin
-                    if (InstrD[31:27] == 5'b00010)
+      7'b0100111: if (FLSFunctD)
+                      ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_1; // fsw - only legal if FP supported
+      7'b0101111: if (P.A_SUPPORTED & AFunctD) begin
+                    if (InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
                       ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0; // lr
                     else if (InstrD[31:27] == 5'b00011)
                       ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0; // sc
-                    else 
+                    else if (AMOFunctD) 
                       ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
                  end
       7'b0110011: if (RFunctD)
