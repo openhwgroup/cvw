@@ -58,6 +58,9 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZMMUL_SUPPORTED == 0) || (P.M_SUPPORTED ==0)) else $error("At most one of ZMMUL_SUPPORTED and M_SUPPORTED can be enabled");
     assert ((P.ZICNTR_SUPPORTED == 0) || (P.ZICSR_SUPPORTED == 1)) else $error("ZICNTR_SUPPORTED requires ZICSR_SUPPORTED");
     assert ((P.ZIHPM_SUPPORTED == 0) || (P.ZICNTR_SUPPORTED == 1)) else $error("ZIPHM_SUPPORTED requires ZICNTR_SUPPORTED");
+    assert ((P.ZICBOM_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOM required DCACHE_SUPPORTED");
+    assert ((P.ZICBOZ_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOZ required DCACHE_SUPPORTED");
+    assert ((P.ZICBOP_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOP required DCACHE_SUPPORTED");
   end
 
 endmodule
