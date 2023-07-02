@@ -78,6 +78,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
+  logic                          CMOE;                            // Cache management instruction being executed
 
   // floating point unit signals
   logic [2:0]                    FRM_REGW;
@@ -188,10 +189,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
+     .InstrD, .STATUS_FS, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOE,
      // Memory stage interface
      .SquashSCW,  // from LSU
      .MemRWM,     // read/write control goes to LSU

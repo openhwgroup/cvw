@@ -32,6 +32,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Decode stage control signals
   input  logic        StallD, FlushD,          // Stall, flush Decode stage
   input  logic [31:0] InstrD,                  // Instruction in Decode stage
+  input  logic [1:0]  STATUS_FS,               // is FPU enabled?
   output logic [2:0]  ImmSrcD,                 // Type of immediate extension
   input  logic        IllegalIEUFPUInstrD,     // Illegal IEU and FPU instruction
   output logic        IllegalBaseInstrD,       // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
@@ -60,6 +61,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   output logic [2:0]  BALUControlE,            // ALU Control signals for B instructions in Execute Stage
   output logic        BMUActiveE,              // Bit manipulation instruction being executed
   output logic        MDUActiveE,              // Mul/Div instruction being executed
+  output logic        CMOE,                    // Cache Management operation being executed
 
   // Memory stage control signals
   input  logic        StallM, FlushM,          // Stall, flush Memory stage
@@ -85,7 +87,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [6:0] Funct7D;                         // Funct7 field in Decode stage
   logic [4:0] Rs1D, Rs2D, RdD;                 // Rs1/2 source register / dest reg in Decode stage
 
-  `define CTRLW 23
+  `define CTRLW 24
 
   // pipelined control signals
   logic        RegWriteD, RegWriteE;           // RegWrite (register will be written)
@@ -103,6 +105,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        CSRReadD;                       // CSR read instruction
   logic [1:0]  AtomicD;                        // Atomic (AMO) instruction
   logic        FenceXD;                        // Fence instruction
+  logic        CMOD;                           // Cache management instruction
   logic        InvalidateICacheD, FlushDCacheD;// Invalidate I$, flush D$
   logic        CSRWriteD, CSRWriteE;           // CSR write
   logic        PrivilegedD, PrivilegedE;       // Privileged instruction
@@ -129,6 +132,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic        FLSFunctD;                      // Detect floating-point loads and stores
   logic        JRFunctD;                       // detect jalr instruction
   logic        FenceFunctD;                    // Detect fence instruction
+  logic        CMOFunctD;
   logic        AFunctD, AMOFunctD;             // Detect atomic instructions
   logic        RWFunctD, MWFunctD;             // detect RW/MW instructions
   logic        PFunctD, CSRFunctD;             // detect privileged / CSR instruction
@@ -163,9 +167,13 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
-    assign FLSFunctD        = (Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
-                              (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED);
+    assign FLSFunctD        = (STATUS_FS != 2'b00) & ((Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
+                              (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED));
     assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
+    assign CMOFunctD        = (Funct3D == 3'b010 & RdD == 5'b0) & 
+                              ((P.ZICBOZ_SUPPORTED & InstrD[31:20] == 12'd4) |
+                               (P.ZICBOM_SUPPORTED & (InstrD[31:20] == 12'd0 | InstrD[31:20] == 12'd1 | InstrD[31:20] == 12'd2)));
+                               // *** need to get with enable bits such as MENVCFG_CBZE
     assign AFunctD          = (Funct3D == 3'b010) | (P.XLEN == 64 & Funct3D == 3'b011);
     assign AMOFunctD        = (InstrD[31:27] == 5'b00001) |
                               (InstrD[31:27] == 5'b00000) |
@@ -193,6 +201,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign LFunctD = 1; // don't bother to check Funct3 for loads
     assign FLSFunctD = 1; // don't bother to check Func3 for floating-point loads/stores
     assign FenceFunctD = 1; // don't bother to check fields for fences
+    assign CMOFunctD = 1; // don't bother to check fields for CMO instructions
     assign AFunctD = 1; // don't bother to check fields for atomics
     assign AMOFunctD = 1; // don't bother to check Funct7 for AMO operations
     assign RWFunctD = 1; // don't bother to check fields for RW instructions
@@ -208,55 +217,57 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   // Main Instruction Decoder
   /* verilator lint_off CASEINCOMPLETE */
   always_comb begin
-    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // default: Illegal instruction
+    ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0_1; // default: Illegal instruction
     case(OpD)
-    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
+    // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_CMO_Illegal
       7'b0000011: if (LFunctD) 
-                      ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // loads
+                      ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0_0; // loads
       7'b0000111: if (FLSFunctD)  
-                      ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
+                      ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0_1; // flw - only legal if FP supported
       7'b0001111: if (FenceFunctD) begin
                     if (P.ZIFENCEI_SUPPORTED)
-                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0_0; // fence
                     else
-                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0_0; // fence treated as nop
+                  end else if (CMOFunctD) begin
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1_0; // CMO Instruction
                   end
       7'b0010011: if (IFunctD)    
-                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
-      7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // I-type ALU
+      7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0_0; // auipc
       7'b0011011: if (IFunctD & IWValidFunct3D & P.XLEN == 64)
-                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0; // IW-type ALU for RV64i
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_1_0_0_0_0_00_0_0; // IW-type ALU for RV64i
       7'b0100011: if (SFunctD) 
-                      ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0; // stores
+                      ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_0; // stores
       7'b0100111: if (FLSFunctD)
-                      ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_1; // fsw - only legal if FP supported
+                      ControlsD = `CTRLW'b0_001_01_01_000_0_0_0_0_0_0_0_0_0_00_0_1; // fsw - only legal if FP supported
       7'b0101111: if (P.A_SUPPORTED & AFunctD) begin
                     if (InstrD[31:27] == 5'b00010 & Rs2D == 5'b0)
-                      ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0; // lr
+                      ControlsD = `CTRLW'b1_000_00_10_001_0_0_0_0_0_0_0_0_0_01_0_0; // lr
                     else if (InstrD[31:27] == 5'b00011)
-                      ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0; // sc
+                      ControlsD = `CTRLW'b1_101_01_01_100_0_0_0_0_0_0_0_0_0_01_0_0; // sc
                     else if (AMOFunctD) 
-                      ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0; // amo
+                      ControlsD = `CTRLW'b1_101_01_11_001_0_0_0_0_0_0_0_0_0_10_0_0; // amo
                  end
       7'b0110011: if (RFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0; // R-type 
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_0_0_0_0_0_00_0_0; // R-type 
                   else if (MFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0; // Multiply/divide
-      7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0; // lui
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_0_0_0_0_1_00_0_0; // Multiply/divide
+      7'b0110111:     ControlsD = `CTRLW'b1_100_01_00_000_0_0_0_1_0_0_0_0_0_00_0_0; // lui
       7'b0111011: if (RWFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0; // R-type W instructions for RV64i
+                      ControlsD = `CTRLW'b1_000_00_00_000_0_1_0_0_1_0_0_0_0_00_0_0; // R-type W instructions for RV64i
                   else if (MWFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0; // W-type Multiply/Divide
+                      ControlsD = `CTRLW'b1_000_00_00_011_0_0_0_0_1_0_0_0_1_00_0_0; // W-type Multiply/Divide
       7'b1100011: if (BFunctD)   
-                      ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0; // branches
+                      ControlsD = `CTRLW'b0_010_11_00_000_1_0_0_0_0_0_0_0_0_00_0_0; // branches
       7'b1100111: if (JRFunctD)
-                      ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0; // jalr
-      7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0; // jal
+                      ControlsD = `CTRLW'b1_000_01_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jalr
+      7'b1101111:     ControlsD = `CTRLW'b1_011_11_00_000_0_0_1_1_0_0_0_0_0_00_0_0; // jal
       7'b1110011: if (P.ZICSR_SUPPORTED) begin
                    if (PFunctD)
-                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0; // privileged; decoded further in privdec modules
+                      ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_1_0_0_00_0_0; // privileged; decoded further in privdec modules
                    else if (CSRFunctD)
-                      ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0; // csrs
+                      ControlsD = `CTRLW'b1_000_00_00_010_0_0_0_0_0_1_0_0_0_00_0_0; // csrs
                   end
     endcase
   end
@@ -269,7 +280,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   //assign IllegalBaseInstrD = 1'b0;
   assign {BaseRegWriteD, ImmSrcD, ALUSrcAD, BaseALUSrcBD, MemRWD,
           ResultSrcD, BranchD, ALUOpD, JumpD, ALUResultSrcD, BaseW64D, CSRReadD, 
-          PrivilegedD, FenceXD, MDUD, AtomicD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
+          PrivilegedD, FenceXD, MDUD, AtomicD, CMOD, unused} = IllegalIEUFPUInstrD ? `CTRLW'b0 : ControlsD;
   
   assign CSRZeroSrcD = InstrD[14] ? (InstrD[19:15] == 0) : (Rs1D == 0); // Is a CSR instruction using zero as the source?
   assign CSRWriteD = CSRReadD & !(CSRZeroSrcD & InstrD[13]);            // Don't write if setting or clearing zeros
@@ -341,9 +352,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   flopenrc #(1)  controlregD(clk, reset, FlushD, ~StallD, 1'b1, InstrValidD);
 
   // Execute stage pipeline control register and logic
-  flopenrc #(29) controlregE(clk, reset, FlushE, ~StallE,
-                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, InstrValidD},
-                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, InstrValidE});
+  flopenrc #(30) controlregE(clk, reset, FlushE, ~StallE,
+                           {ALUSelectD, RegWriteD, ResultSrcD, MemRWD, JumpD, BranchD, ALUSrcAD, ALUSrcBD, ALUResultSrcD, CSRReadD, CSRWriteD, PrivilegedD, Funct3D, W64D, SubArithD, MDUD, AtomicD, InvalidateICacheD, FlushDCacheD, FenceD, CMOD, InstrValidD},
+                           {ALUSelectE, IEURegWriteE, ResultSrcE, MemRWE, JumpE, BranchE, ALUSrcAE, ALUSrcBE, ALUResultSrcE, CSRReadE, CSRWriteE, PrivilegedE, Funct3E, W64E, SubArithE, MDUE, AtomicE, InvalidateICacheE, FlushDCacheE, FenceE, CMOE, InstrValidE});
 
   // Branch Logic
   //  The comparator handles both signed and unsigned branches using BranchSignedE
