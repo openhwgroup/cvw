@@ -294,17 +294,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   assign ENVCFG_PBMTE = MENVCFG_REGW[62]; // page-based memory types enable
   assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 : 
                         (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] : 
-                                                                       (MSENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
+                                                                       (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
   // FIOM presently doesn't do anything because Wally fences don't do anything
   assign ENVCFG_FIOM =  (PrivilegeModeW == P.M_MODE) ? 1'b1 : 
                         (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[0] : 
                                                                        (MENVCFG_REGW[0] & SENVCFG_REGW[0]);
-
-if (((priv_mode != M) && (menvcfg.CBIE == 00)) ||
-      ((priv_mode == U) && (senvcfg.CBIE == 00)))
-  {
-    <raise illegal instruction exception>
-  }
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM; 
