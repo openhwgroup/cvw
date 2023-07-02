@@ -126,7 +126,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
   logic [2:0]  ZBBSelectD;                     // ZBB Mux Select Signal
   logic        IFunctD, RFunctD, MFunctD;      // Detect I, R, and M-type RV32IM/Rv64IM instructions
   logic        LFunctD, SFunctD, BFunctD;      // Detect load, store, branch instructions
+  logic        FLSFunctD;                      // Detect floating-point loads and stores
   logic        JFunctD;                        // detect jalr instruction
+  logic        FenceFunctD;                    // Detect fence instruction
   logic        FenceM;                         // Fence.I or sfence.VMA instruction in memory stage
   logic [2:0]  ALUSelectD;                     // ALU Output selection mux control
   logic        IWValidFunct3D;                 // Detects if Funct3 is valid for IW instructions
@@ -156,6 +158,9 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign MFunctD          = (Funct7D == 7'b0000001) & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | Funct3D == 3'b100 | Funct3D == 3'b101 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011 | Funct3D == 3'b110));
+    assign FLSFunctD        = (Funct3D == 3'b010 & P.F_SUPPORTED) | (Funct3D == 3'b011 & P.D_SUPPORTED) |
+                              (Funct3D == 3'b100 & P.Q_SUPPORTED) | (Funct3D == 3'b001 & P.ZFH_SUPPORTED);
+    assign FenceFunctD      = (Funct3D == 3'b000) | (P.ZIFENCEI_SUPPORTED & Funct3D == 3'b001);
     assign SFunctD          = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b010 | 
                               ((P.XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = (Funct3D[2:1] != 2'b01); // legal branches
@@ -166,6 +171,8 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     assign RFunctD = ~Funct7D[0]; // Not a multiply
     assign MFunctD = Funct7D[0] & (P.M_SUPPORTED | (P.ZMMUL_SUPPORTED & ~Funct3D[2])); // muldiv
     assign LFunctD = 1; // don't bother to check Funct3 for loads
+    assign FLSFunctD = 1; // don't bother to check Func3 for floating-point loads/stores
+    assign FenceFunctD = 1; // don't bother to check fields for fences
     assign SFunctD = 1; // don't bother to check Funct3 for stores
     assign BFunctD = 1; // don't bother to check Funct3 for branches
     assign JFunctD = 1; // don't bother to check Funct3 for jumps
@@ -178,13 +185,16 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_1; // default: Illegal instruction
     case(OpD)
     // RegWrite_ImmSrc_ALUSrc_MemRW_ResultSrc_Branch_ALUOp_Jump_ALUResultSrc_W64_CSRRead_Privileged_Fence_MDU_Atomic_Illegal
-     7'b0000011: if (LFunctD) 
+      7'b0000011: if (LFunctD) 
                       ControlsD = `CTRLW'b1_000_01_10_001_0_0_0_0_0_0_0_0_0_00_0; // loads
-      7'b0000111:     ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
-      7'b0001111: if (P.ZIFENCEI_SUPPORTED)
+      7'b0000111: if (FLSFunctD)  
+                      ControlsD = `CTRLW'b0_000_01_10_001_0_0_0_0_0_0_0_0_0_00_1; // flw - only legal if FP supported
+      7'b0001111: if (FenceFunctD) begin
+                    if (P.ZIFENCEI_SUPPORTED)
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_1_0_00_0; // fence
-                  else
+                    else
                       ControlsD = `CTRLW'b0_000_00_00_000_0_0_0_0_0_0_0_0_0_00_0; // fence treated as nop
+                  end
       7'b0010011: if (IFunctD)    
                       ControlsD = `CTRLW'b1_000_01_00_000_0_1_0_0_0_0_0_0_0_00_0; // I-type ALU
       7'b0010111:     ControlsD = `CTRLW'b1_100_11_00_000_0_0_0_0_0_0_0_0_0_00_0; // auipc
