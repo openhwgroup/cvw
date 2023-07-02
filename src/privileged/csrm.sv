@@ -48,12 +48,11 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   output logic                     WriteMSTATUSM, WriteMSTATUSHM,
   output logic                     IllegalCSRMAccessM, IllegalCSRMWriteReadonlyM,
-  output logic                     MENVCFG_STCE
+  output logic [63:0]              MENVCFG_REGW
 );
 
   logic [P.XLEN-1:0]               MISA_REGW, MHARTID_REGW;
   logic [P.XLEN-1:0]               MSCRATCH_REGW, MTVAL_REGW, MCAUSE_REGW;
-  logic [63:0]                     MENVCFG_REGW;
   logic [P.XLEN-1:0]               MENVCFGH_REGW;
   logic [63:0]                     MENVCFG_PreWriteValM, MENVCFG_WriteValM;
   logic                            WriteMTVECM, WriteMEDELEGM, WriteMIDELEGM;
@@ -192,15 +191,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
     flopenr #(P.XLEN) MENVCFGHreg(clk, reset, WriteMENVCFGHM, MENVCFG_WriteValM[63:32], MENVCFG_REGW[63:32]);
     assign MENVCFGH_REGW = MENVCFG_REGW[63:32];
   end
-
-  // Extract bit fields
-  assign MENVCFG_STCE =  MENVCFG_REGW[63];
-  // Uncomment these other fields when they are defined
-  // assign MENVCFG_PBMTE = MENVCFG_REGW[62];
-  // assign MENVCFG_CBZE  = MENVCFG_REGW[7];
-  // assign MENVCFG_CBCFE = MENVCFG_REGW[6];
-  // assign MENVCFG_CBIE  = MENVCFG_REGW[5:4];
-  // assign MENVCFG_FIOM  = MENVCFG_REGW[0];
 
   // Read machine mode CSRs
   // verilator lint_off WIDTH

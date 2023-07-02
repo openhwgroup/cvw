@@ -79,6 +79,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
   logic                          CMOE;                            // Cache management instruction being executed
+  logic [3:0]                    ENVCFG_CBE;                      // Cache block operation enables
 
   // floating point unit signals
   logic [2:0]                    FRM_REGW;
@@ -189,7 +190,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .STATUS_FS, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
+     .InstrD, .STATUS_FS, .ENVCFG_CBE, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
      .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOE,
@@ -290,9 +291,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
-      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
+      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW      = 0;
     assign UnalignedPCNextF = PC2NextF;
