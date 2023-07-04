@@ -63,7 +63,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   // Otherwise, the divisor is retained and the residual and result
   // are fed back for the next iteration.
  
-  // Residual WS/SC registers/initializaiton mux
+  // Residual WS/SC registers/initialization mux
   mux2   #(P.DIVb+4) wsmux(WS[P.DIVCOPIES], X, IFDivStartE, WSN);
   mux2   #(P.DIVb+4) wcmux(WC[P.DIVCOPIES], '0, IFDivStartE, WCN);
   flopen #(P.DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
