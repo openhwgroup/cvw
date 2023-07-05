@@ -27,20 +27,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
-  input  logic               clk, reset, 
-  input  logic               XInfE, YInfE, 
-  input  logic               XZeroE, YZeroE, 
-  input  logic               XNaNE, YNaNE, 
-  input  logic               FDivStartE, IDivStartE,
-  input  logic               XsE, WZeroE,
-  input  logic               SqrtE,
-  input  logic               StallM, FlushE,
-  input  logic               IntDivE,
-  input  logic               ISpecialCaseE,
+  input  logic                clk, reset, 
+  input  logic                XInfE, YInfE, 
+  input  logic                XZeroE, YZeroE, 
+  input  logic                XNaNE, YNaNE, 
+  input  logic                FDivStartE, IDivStartE,
+  input  logic                XsE, WZeroE,
+  input  logic                SqrtE,
+  input  logic                StallM, FlushE,
+  input  logic                IntDivE,
+  input  logic                ISpecialCaseE,
   input  logic [P.DURLEN-1:0] CyclesE,
-  output logic               IFDivStartE,
-  output logic               FDivBusyE, FDivDoneE,
-  output logic               SpecialCaseM
+  output logic                IFDivStartE,
+  output logic                FDivBusyE, FDivDoneE,
+  output logic                SpecialCaseM
 );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
