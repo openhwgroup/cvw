@@ -1181,6 +1181,8 @@ spi_data_wait:
     sw t4, 0(t2) // set rx watermark level 
     li t2, 0x10040074
     lw t3, 0(t2) //read ip (interrupt pending register)
+    slli t3, t3, 56
+    srli t3, t3, 56
     li t2, 0x00000002
     bge t3, t2, spi_data_ready //branch to done if transmission complete
     j spi_data_wait //else check again 

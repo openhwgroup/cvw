@@ -267,12 +267,13 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
     
 
-    always_ff @(posedge SCLKDuty, negedge PRESETn)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) begin state <= CS_INACTIVE;
                             FrameCount <= 5'b0;                      
         
         /* verilator lint_off CASEINCOMPLETE */
-        end else case (state)
+        end else if (SCLKDuty) begin
+            case (state)
                 CS_INACTIVE: begin
                         Delay0Count <= 9'b1;
                         Delay1Count <= 9'b10;
@@ -322,9 +323,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                         if (HoldModeDeassert) state <= CS_INACTIVE;
                         else if (InterXFRCompare & ~TransmitFIFOReadEmptyDelay) state <= ACTIVE_0;
                         else if (~|ChipSelectMode[1:0]) state <= CS_INACTIVE;
-                        
                         end
             endcase
+        end
             /* verilator lint_off CASEINCOMPLETE */
     assign ChipSelectInternal = SckMode[0] ? ((state == CS_INACTIVE | state == INTER_CS) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]) : ((state == CS_INACTIVE | state == INTER_CS | (state == ACTIVE_1 & ~|(Delay0[15:8]) & ReceiveShiftFull)) ? ChipSelectDef[3:0] : ~ChipSelectDef[3:0]);
     assign sck = (state == ACTIVE_0) ? ~SckMode[1] : SckMode[1];
@@ -360,6 +361,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         if (~PRESETn) <= 1'b 0;
         else ReceiveData[8] <= ReceiveFIFOReadEmpty;
     */
+    //assign ReceiveData[8] = ReceiveFIFOReadEmpty;
 
 
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
@@ -370,31 +372,46 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     FIFO_async #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
 
     TransmitShiftFSM TransmitShiftFSM_1 (PCLK, PRESETn, TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0, TransmitShiftEmpty);
-    ReceiveShiftFSM ReceiveShiftFSM_1 (SCLKDuty, PRESETn, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
+    ReceiveShiftFSM ReceiveShiftFSM_1 (PCLK, PRESETn, SCLKDuty, ReceivePenultimateFrameBoolean, SampleEdge, SckMode[0], ReceiveShiftFull);
 
-    always_ff @(posedge SCLKDuty, negedge PRESETn)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) TransmitFIFOReadEmptyDelay <= 1;
-        else TransmitFIFOReadEmptyDelay <= TransmitFIFOReadEmpty;
+        else  if (SCLKDuty) TransmitFIFOReadEmptyDelay <= TransmitFIFOReadEmpty;
+    logic SCLKDutyDelay;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) SCLKDutyDelay <= 0;
+        else SCLKDutyDelay <= SCLKDuty;
     
     always_comb
         case(SckMode[1:0])
-            2'b00: sckPhaseSelect = ~sck;
-            2'b01: sckPhaseSelect = (sck & |(FrameCount));
-            2'b10: sckPhaseSelect = sck;
-            2'b11: sckPhaseSelect = (~sck & |(FrameCount));
-            default: sckPhaseSelect = sck;
+            2'b00: sckPhaseSelect = ~sck & SCLKDutyDelay;
+            2'b01: sckPhaseSelect = (sck & |(FrameCount) & SCLKDutyDelay);
+            2'b10: sckPhaseSelect = sck & SCLKDutyDelay;
+            2'b11: sckPhaseSelect = (~sck & |(FrameCount) & SCLKDutyDelay);
+            default: sckPhaseSelect = sck & SCLKDutyDelay;
         endcase
-    
-
+    /*
+    logic TransmitPhaseEnable;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if(~PRESETn) TransmitPhaseEnable <= 0;
+        else if (SCLKDuty) begin
+            case(SckMode[1:0])
+                2'b00: TransmitPhaseEnable <= ~sck;
+                2'b01: TransmitPhaseEnable <= (sck & |(FrameCount));
+                2'b10: TransmitPhaseEnable <= sck;
+                2'b11: TransmitPhaseEnable <= (~sck & |(FrameCount));
+            endcase
+        end
+    */
 
     
     assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active;
-    always_ff @(posedge sckPhaseSelect, negedge PRESETn, posedge TransmitShiftRegLoad)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn) begin 
                 TransmitShiftReg <= 8'b0;
             end
         else if (TransmitShiftRegLoad) TransmitShiftReg <= TransmitFIFOReadData;
-        else begin
+        else if (sckPhaseSelect) begin
             if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & TransmitShiftEmpty) TransmitShiftReg <= TransmitFIFOReadData;
             else if (Active) begin
                 case (Format[1:0])
@@ -415,25 +432,27 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 default: SPIOut = {3'b0, TransmitShiftReg[7]};
             endcase
         end else SPIOut = 4'b0;
-    always_ff @(posedge SampleEdge, negedge PRESETn)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn)  ReceiveShiftReg <= 8'b0;
-        else if (~Active) ReceiveShiftReg <= 8'b0;
-        else if (~Format[3]) begin
-            if(P.SPI_LOOPBACK_TEST) begin
-                case(Format[1:0])
-                    2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
-                    2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIOut[0],SPIOut[1]};
-                    2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIOut[0], SPIOut[1], SPIOut[2], SPIOut[3]};
-                    default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
-                endcase
+        else if (SampleEdge & SCLKDutyDelay) begin
+            if (~Active) ReceiveShiftReg <= 8'b0;
+            else if (~Format[3]) begin
+                if(P.SPI_LOOPBACK_TEST) begin
+                    case(Format[1:0])
+                        2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
+                        2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIOut[0],SPIOut[1]};
+                        2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIOut[0], SPIOut[1], SPIOut[2], SPIOut[3]};
+                        default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIOut[0]};
+                    endcase
 
-            end else begin
-                case(Format[1:0])
-                    2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
-                    2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIIn[0],SPIIn[1]};
-                    2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIIn[0], SPIIn[1], SPIIn[2], SPIIn[3]};
-                    default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
-                endcase
+                end else begin
+                    case(Format[1:0])
+                        2'b00: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
+                        2'b01: ReceiveShiftReg <= { ReceiveShiftReg[5:0], SPIIn[0],SPIIn[1]};
+                        2'b10: ReceiveShiftReg <= { ReceiveShiftReg[3:0], SPIIn[0], SPIIn[1], SPIIn[2], SPIIn[3]};
+                        default: ReceiveShiftReg <= { ReceiveShiftReg[6:0], SPIIn[0]};
+                    endcase
+                end
             end
         end
     always_comb
@@ -603,18 +622,18 @@ module TransmitShiftFSM(
 endmodule
 
 
-
+/*
 module ReceiveShiftFSM(
-    input logic SCLKDuty, PRESETn,
+    input logic PCLK, PRESETn, SCLKDuty,
     input logic ReceivePenultimateFrameBoolean, SampleEdge, SckMode,
     output logic ReceiveShiftFull
 );
     typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} statetype;
     statetype ReceiveState, ReceiveNextState;
-    always_ff @(posedge SCLKDuty, negedge PRESETn)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
         else          ReceiveState <= ReceiveNextState;
-        
+        if ()
         always_comb
             case(ReceiveState)
                 ReceiveShiftFullState: ReceiveNextState = ReceiveShiftNotFullState;
@@ -624,6 +643,27 @@ module ReceiveShiftFSM(
             endcase
 
         assign ReceiveShiftFull = SckMode ? (ReceiveState == ReceiveShiftFullState) : (ReceiveNextState == ReceiveShiftFullState);
+endmodule
+*/
+module ReceiveShiftFSM(
+    input logic PCLK, PRESETn, SCLKDuty,
+    input logic ReceivePenultimateFrameBoolean, SampleEdge, SckMode,
+    output logic ReceiveShiftFull
+);
+    typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} statetype;
+    statetype ReceiveState, ReceiveNextState;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
+        else if (SCLKDuty) begin
+            case (ReceiveState)
+                ReceiveShiftFullState: ReceiveState <= ReceiveShiftNotFullState;
+                ReceiveShiftNotFullState: if (ReceivePenultimateFrameBoolean & (SampleEdge)) ReceiveState <= ReceiveShiftDelayState;
+                                          else ReceiveState <= ReceiveShiftNotFullState;
+                ReceiveShiftDelayState: ReceiveState <= ReceiveShiftFullState;
+            endcase
+        end
+
+        assign ReceiveShiftFull = SckMode ? (ReceiveState == ReceiveShiftFullState) : (ReceiveState == ReceiveShiftDelayState);
 endmodule
 
 

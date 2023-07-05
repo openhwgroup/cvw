@@ -253,6 +253,16 @@ test_cases:
 .8byte rx_data, 0x00000088, read32_test
 .8byte rx_data, 0x00000099, read32_test
 
+# Test inter_xfr delay 0 with phase = 1
+.8byte sck_mode, 0x00000001, write32_test
+.8byte tx_data, 0x99887766, spi_burst_send
+.8byte 0x0, 0x00000003, spi_data_wait
+.8byte rx_data, 0x00000066, read32_test
+.8byte rx_data, 0x00000077, read32_test
+.8byte rx_data, 0x00000088, read32_test
+.8byte rx_data, 0x00000099, read32_test
+
+
 # Test arbitrary inter_xfr delay
 
 .8byte delay1, 0x00000501, write32_test     # set inter_xfr delay to 5
