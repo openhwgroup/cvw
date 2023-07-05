@@ -30,13 +30,14 @@ module instrNameDecTB(
   logic [2:0] funct3;
   logic [6:0] funct7;
   logic [11:0] imm;
-  logic [4:0] rs2;
+  logic [4:0] rs2, rd;
 
   assign op = instr[6:0];
   assign funct3 = instr[14:12];
   assign funct7 = instr[31:25];
   assign imm = instr[31:20];
   assign rs2 = instr[24:20];
+  assign rd = instr[11:7];
 
   // it would be nice to add the operands to the name 
   // create another variable called decoded
@@ -77,7 +78,10 @@ module instrNameDecTB(
                        else if (funct7[6:1] == 6'b010010) name = "BEXTI";
                        else if (funct7 == 7'b0010100 & rs2 == 5'b00111) name = "ORC.B";
                        else                           name = "ILLEGAL"; 
-      10'b0010011_110: name = "ORI";
+      10'b0010011_110: if      (rd == 0 & rs2 == 0) name = "PREFETCH.I";
+                       else if (rd == 0 & rs2 == 1) name = "PREFETCH.R";
+                       else if (rd == 0 & rs2 == 3) name = "PREFETCH.W";
+                       else                         name = "ORI";
       10'b0010011_111: name = "ANDI";
       10'b0010111_???: name = "AUIPC";
       10'b0100011_000: name = "SB";
@@ -215,7 +219,13 @@ module instrNameDecTB(
                        else if (funct7[6:2] == 5'b11000) name = "AMOMINU.D";
                        else if (funct7[6:2] == 5'b11100) name = "AMOMAXU.D";
                        else                              name = "ILLEGAL";
-      10'b0001111_???: name = "FENCE";
+      10'b0001111_000: name = "FENCE";
+      10'b0001111_001: name = "FENCE.I";
+      10'b0001111_010: if      (instr[31:20] == 12'd0) name = "CBO.INVAL";
+                       else if (instr[31:20] == 12'd1) name = "CBO.CLEAN";
+                       else if (instr[31:20] == 12'd2) name = "CBO.FLUSH";
+                       else if (instr[31:20] == 12'd4) name = "CBO.ZERO";    
+                       else                            name = "ILLEGAL";                   
       10'b1000011_???: name = "FMADD";
       10'b1000111_???: name = "FMSUB";
       10'b1001011_???: name = "FNMSUB";
