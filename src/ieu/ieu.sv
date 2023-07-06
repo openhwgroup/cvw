@@ -30,6 +30,8 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset,
   // Decode stage signals
   input  logic [31:0]       InstrD,                          // Instruction
+  input  logic [1:0]        STATUS_FS,                       // is FPU enabled?
+  input  logic [3:0]        ENVCFG_CBE,                      // Cache block operation enables
   input  logic              IllegalIEUFPUInstrD,             // Illegal instruction
   output logic              IllegalBaseInstrD,               // Illegal I-type instruction, or illegal RV32 access to upper 16 registers
   // Execute stage signals
@@ -43,6 +45,9 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   output logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE,  // ALU src inputs before the mux choosing between them and PCE to put in srcA/B
   output logic [4:0]        RdE,                             // Destination register
   output logic              MDUActiveE,                      // Mul/Div instruction being executed
+  output logic [3:0]        CMOpM,                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  output logic              IFUPrefetchE,                    // instruction prefetch
+  output logic              LSUPrefetchM,                    // datata prefetch
   // Memory stage signals
   input  logic              SquashSCW,                       // Squash store conditional, from LSU
   output logic [1:0]        MemRWM,                          // Read/write control goes to LSU
@@ -97,11 +102,11 @@ module ieu import cvw::*;  #(parameter cvw_t P) (
   logic       BMUActiveE;                                    // Bit manipulation instruction being executed
            
   controller #(P) c(
-    .clk, .reset, .StallD, .FlushD, .InstrD, .ImmSrcD,
+    .clk, .reset, .StallD, .FlushD, .InstrD, .STATUS_FS, .ENVCFG_CBE, .ImmSrcD,
     .IllegalIEUFPUInstrD, .IllegalBaseInstrD, .StallE, .FlushE, .FlagsE, .FWriteIntE,
     .PCSrcE, .ALUSrcAE, .ALUSrcBE, .ALUResultSrcE, .ALUSelectE, .MemReadE, .CSRReadE, 
     .Funct3E, .IntDivE, .MDUE, .W64E, .SubArithE, .BranchD, .BranchE, .JumpD, .JumpE, .SCE, 
-    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE,
+    .BranchSignedE, .BSelectE, .ZBBSelectE, .BALUControlE, .BMUActiveE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
     .StallM, .FlushM, .MemRWM, .CSRReadM, .CSRWriteM, .PrivilegedM, .AtomicM, .Funct3M,
     .RegWriteM, .FlushDCacheM, .InstrValidM, .InstrValidE, .InstrValidD, .FWriteIntM,
     .StallW, .FlushW, .RegWriteW, .IntDivW, .ResultSrcW, .CSRWriteFenceM, .InvalidateICacheM, .StoreStallD);

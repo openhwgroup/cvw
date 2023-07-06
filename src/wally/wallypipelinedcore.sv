@@ -78,6 +78,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   logic                          LoadStallD, StoreStallD, MDUStallD, CSRRdStallD;
   logic                          SquashSCW;
   logic                          MDUActiveE;                      // Mul/Div instruction being executed
+  logic [3:0]                    ENVCFG_CBE;                      // Cache Block operation enables
+  logic [3:0]                    CMOpM;                           // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  logic                          IFUPrefetchE, LSUPrefetchM;      // instruction / data prefetch hints
 
   // floating point unit signals
   logic [2:0]                    FRM_REGW;
@@ -188,10 +191,10 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
   // integer execution unit: integer register file, datapath and controller
   ieu #(P) ieu(.clk, .reset,
      // Decode Stage interface
-     .InstrD, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
+     .InstrD, .STATUS_FS, .ENVCFG_CBE, .IllegalIEUFPUInstrD, .IllegalBaseInstrD,
      // Execute Stage interface
      .PCE, .PCLinkE, .FWriteIntE, .FCvtIntE, .IEUAdrE, .IntDivE, .W64E,
-     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE,
+     .Funct3E, .ForwardedSrcAE, .ForwardedSrcBE, .MDUActiveE, .CMOpM, .IFUPrefetchE, .LSUPrefetchM,
      // Memory stage interface
      .SquashSCW,  // from LSU
      .MemRWM,     // read/write control goes to LSU
@@ -215,7 +218,7 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
     .MemRWM, .Funct3M, .Funct7M(InstrM[31:25]), .AtomicM,
     .CommittedM, .DCacheMiss, .DCacheAccess, .SquashSCW,            
     .FpLoadStoreM, .FWriteDataM, .IEUAdrE, .IEUAdrM, .WriteDataM,
-    .ReadDataW, .FlushDCacheM,
+    .ReadDataW, .FlushDCacheM, .CMOpM, .LSUPrefetchM,
     // connected to ahb (all stay the same)
     .LSUHADDR,  .HRDATA, .LSUHWDATA, .LSUHWSTRB, .LSUHSIZE, 
     .LSUHBURST, .LSUHTRANS, .LSUHWRITE, .LSUHREADY,
@@ -289,9 +292,9 @@ module wallypipelinedcore import cvw::*; #(parameter cvw_t P) (
       .MTIME_CLINT, .IEUAdrM, .SetFflagsM,
       .InstrAccessFaultF, .HPTWInstrAccessFaultF, .LoadAccessFaultM, .StoreAmoAccessFaultM, .SelHPTW,
       .PrivilegeModeW, .SATP_REGW,
-      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS,
+      .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .STATUS_FS, 
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW, 
-      .FRM_REGW,.BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
+      .FRM_REGW, .ENVCFG_CBE, .BreakpointFaultM, .EcallFaultM, .wfiM, .IntPendingM, .BigEndianM);
   end else begin
     assign CSRReadValW      = 0;
     assign UnalignedPCNextF = PC2NextF;
