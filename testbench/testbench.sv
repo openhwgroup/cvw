@@ -409,7 +409,20 @@ module testbench;
   // Support logic
   ////////////////////////////////////////////////////////////////////////////////
 
+  // Track names of instructions
+  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
+  logic [31:0] InstrW;
+  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
+  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
+                dut.core.ifu.InstrRawF[31:0],
+                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
+                dut.core.ifu.InstrM,  InstrW,
+                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
+
+  // watch for problems such as lockup, reading unitialized memory, bad configs
   watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
+  ramxdetector #(P.XLEN, P.LLEN) ramxdetector(clk, dut.core.lsu.MemRWM[1], dut.core.lsu.LSULoadAccessFaultM, dut.core.lsu.ReadDataM, 
+                                      dut.core.ifu.PCM, dut.core.ifu.InstrM, dut.core.lsu.IEUAdrM, InstrMName);
   riscvassertions #(P) riscvassertions();  // check assertions for a legal configuration
   loggers #(P, TEST, PrintHPMCounters, I_CACHE_ADDR_LOGGER, D_CACHE_ADDR_LOGGER, BPRED_LOGGER)
   loggers (clk, reset, DCacheFlushStart, DCacheFlushDone, memfilename);
@@ -420,15 +433,6 @@ module testbench;
 			      .clk(clk), .ProgramAddrMapFile(ProgramAddrMapFile), .ProgramLabelMapFile(ProgramLabelMapFile));
   end
 
-  // Track names of instructions
-  string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
-  logic [31:0] InstrW;
-  flopenr #(32)    InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
-  instrTrackerTB it(clk, reset, dut.core.ieu.dp.FlushE,
-                dut.core.ifu.InstrRawF[31:0],
-                dut.core.ifu.InstrD, dut.core.ifu.InstrE,
-                dut.core.ifu.InstrM,  InstrW,
-                InstrFName, InstrDName, InstrEName, InstrMName, InstrWName);
 
   // Termination condition
   // terminate on a specific ECALL after li x3,1 for old Imperas tests,  *** remove this when old imperas tests are removed

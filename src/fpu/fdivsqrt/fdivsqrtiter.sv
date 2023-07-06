@@ -27,14 +27,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk,
-  input  logic             IFDivStartE, 
-  input  logic             FDivBusyE, 
-  input  logic             SqrtE,
+  input  logic              clk,
+  input  logic              IFDivStartE, 
+  input  logic              FDivBusyE, 
+  input  logic              SqrtE,
   input  logic [P.DIVb+3:0] X, D,
   output logic [P.DIVb:0]   FirstU, FirstUM,
   output logic [P.DIVb+1:0] FirstC,
-  output logic             Firstun,
+  output logic              Firstun,
   output logic [P.DIVb+3:0] FirstWS, FirstWC
 );
 
@@ -48,11 +48,11 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.b
   logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.b
   logic [P.DIVb+1:0]      C[P.DIVCOPIES:0];        // Q2.b
-  logic [P.DIVb+1:0]      initC;                  // Q2.b
+  logic [P.DIVb+1:0]      initC;                   // Q2.b
   logic [P.DIVCOPIES-1:0] un; 
 
-  logic [P.DIVb+3:0]      WSN, WCN;               // Q4.b
-  logic [P.DIVb+3:0]      DBar, D2, DBar2;        // Q4.b
+  logic [P.DIVb+3:0]      WSN, WCN;                // Q4.b
+  logic [P.DIVb+3:0]      DBar, D2, DBar2;         // Q4.b
   logic [P.DIVb+1:0]      NextC;
   logic [P.DIVb:0]        UMux, UMMux;
   logic [P.DIVb:0]        initU, initUM;
@@ -63,7 +63,7 @@ module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
   // Otherwise, the divisor is retained and the residual and result
   // are fed back for the next iteration.
  
-  // Residual WS/SC registers/initializaiton mux
+  // Residual WS/SC registers/initialization mux
   mux2   #(P.DIVb+4) wsmux(WS[P.DIVCOPIES], X, IFDivStartE, WSN);
   mux2   #(P.DIVb+4) wcmux(WC[P.DIVCOPIES], '0, IFDivStartE, WCN);
   flopen #(P.DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
