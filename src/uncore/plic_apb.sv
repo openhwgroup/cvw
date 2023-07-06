@@ -104,7 +104,6 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // Register Interface
   // ==================
   localparam PLIC_NUM_SRC_MIN_32 = P.PLIC_NUM_SRC < 32 ? P.PLIC_NUM_SRC : 31;
-  localparam PLIC_NUM_SRC_MIN_64 = P.PLIC_NUM_SRC < 64 ? P.PLIC_NUM_SRC : 63;  
     
   always @(posedge PCLK) begin
     // resetting
