@@ -103,6 +103,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   // ==================
   // Register Interface
   // ==================
+  localparam PLIC_NUM_SRC_MIN_32 = P.PLIC_NUM_SRC < 32 ? P.PLIC_NUM_SRC : 32;
     
   always @(posedge PCLK) begin
     // resetting
@@ -122,6 +123,10 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h002080: begin if (P.PLIC_NUM_SRC < 32) intEn[1][P.PLIC_NUM_SRC:1]          <= #1 Din[P.PLIC_NUM_SRC:1];
                             else                     intEn[1][31:1]          <= #1 Din[31:1];
           end
+/* -----\/----- EXCLUDED -----\/-----
+          24'h002000: intEn[0][PLIC_NUM_SRC_MIN_32-1:1]          <= #1 Din[PLIC_NUM_SRC_MIN_32-1:1];
+          24'h002080: intEn[1][PLIC_NUM_SRC_MIN_32-1:1]          <= #1 Din[PLIC_NUM_SRC_MIN_32-1:1];
+ -----/\----- EXCLUDED -----/\----- */
           24'h002004: if (P.PLIC_NUM_SRC >= 32) intEn[0][P.PLIC_NUM_SRC:32]         <= #1 Din[31:0];
           24'h002084: if (P.PLIC_NUM_SRC >= 32) intEn[1][P.PLIC_NUM_SRC:32]         <= #1 Din[31:0];
           24'h200000: intThreshold[0]         <= #1 Din[2:0];
@@ -135,16 +140,22 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h000000: Dout <= #1 32'b0;  // there is no intPriority[0]
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};      
           24'h001000: begin if (P.PLIC_NUM_SRC < 32) Dout <= #1 {{(31-P.PLIC_NUM_SRC){1'b0}},intPending,1'b0};
-          else Dout <= #1 {intPending[31:1],1'b0};
-          end
+                            else Dout <= #1 {intPending[31:1],1'b0};
+                      end
+//          24'h001000: Dout <= #1 {{(32-PLIC_NUM_SRC_MIN_32){1'b0}},intPending[PLIC_NUM_SRC_MIN_32-1:1],1'b0};
+
+          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intPending[P.PLIC_NUM_SRC:32]};
+
           24'h002000: begin if (P.PLIC_NUM_SRC < 32) Dout <= #1 {{(31-P.PLIC_NUM_SRC){1'b0}},intEn[0],1'b0};
           else Dout <= #1 {intEn[0][31:1],1'b0};
           end
+//          24'h002000: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[0][PLIC_NUM_SRC_MIN_32:1],1'b0};
+          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[0][P.PLIC_NUM_SRC:32]};
+
+
           24'h002080: begin if (P.PLIC_NUM_SRC < 32) Dout <= #1 {{(31-P.PLIC_NUM_SRC){1'b0}},intEn[1],1'b0};
           else  Dout <= #1 {intEn[0][31:1],1'b0};
           end
-          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intPending[P.PLIC_NUM_SRC:32]};
-          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[0][P.PLIC_NUM_SRC:32]};
           24'h002084: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[1][P.PLIC_NUM_SRC:32]};
           24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
