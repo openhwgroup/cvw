@@ -82,7 +82,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
   localparam MCAUSE        = 12'h342;
   localparam MTVAL         = 12'h343;
   localparam MIP           = 12'h344;
-  localparam MTINST        = 12'h34A;
   localparam PMPCFG0       = 12'h3A0;
   // .. up to 15 more at consecutive addresses
   localparam PMPADDR0      = 12'h3B0;
@@ -229,7 +228,6 @@ module csrm  import cvw::*;  #(parameter cvw_t P) (
       MEPC:          CSRMReadValM = MEPC_REGW;
       MCAUSE:        CSRMReadValM = MCAUSE_REGW;
       MTVAL:         CSRMReadValM = MTVAL_REGW;
-      MTINST:        CSRMReadValM = 0; // implemented as trivial zero
       MCOUNTEREN:    CSRMReadValM = {{(P.XLEN-32){1'b0}}, MCOUNTEREN_REGW};
       MENVCFG:       CSRMReadValM = MENVCFG_REGW[P.XLEN-1:0];
       MENVCFGH:      CSRMReadValM = MENVCFGH_REGW;
