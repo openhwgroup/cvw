@@ -93,13 +93,6 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
     assign Din    = PWDATA[31:0];
   end
 
-  // *** RT: 05 July 2023: BUG BUG BUG. PLIC_NUM_SRC_LT_32 is undefined after parameterization
-  // the FPGA does work the following code.  For now I'm leaving the `define undefined but this
-  // means the code is only valid for 33 to 64 interrupt sources.  In general this needs to be
-  // rethought for a more generalized implementation.
-  //if (P.PLIC_NUM_SRC_LT_32) `define PLIC_NUM_SRC_LT_32
-  //`define PLIC_NUM_SRC_LT_32
-
   // ==================
   // Register Interface
   // ==================
@@ -122,6 +115,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
 
           // verilator lint_off SELRANGE  
           // *** RT: Long term we want to factor out these variable number of registers as a generate loop
+          // I think this won't work as a case statement.
           24'h002004: if (P.PLIC_NUM_SRC >= 32) intEn[0][P.PLIC_NUM_SRC:32]         <= #1 Din[P.PLIC_NUM_SRC-32:0];
           24'h002084: if (P.PLIC_NUM_SRC >= 32) intEn[1][P.PLIC_NUM_SRC:32]         <= #1 Din[P.PLIC_NUM_SRC-32:0];
           // verilator lint_on SELRANGE
