@@ -119,8 +119,8 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
 //  initial begin
   always @ (negedge reset) begin
 	// clear out the old mapping between programs.
-	foreach(ProgramAddrMapMemory[i]) ProgramAddrMapMemory.delete(i);	
-	foreach(ProgramLabelMapMemory[i]) ProgramLabelMapMemory.delete(i);
+    ProgramAddrMapMemory.delete();	
+	ProgramLabelMapMemory.delete();
 
     $readmemh(ProgramAddrMapFile, ProgramAddrMapMemory);
     // we need to count the number of lines in the file so we can set FunctionRadixLineCount.
@@ -169,7 +169,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   assign AnyUnknown = (OrReducedAdr === 1'bx) ? 1'b1 : 1'b0;
   initial ProgramAddrIndex = '0;
 
-  assign FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
+  always @(*) FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
 
 endmodule // function_radix
 
