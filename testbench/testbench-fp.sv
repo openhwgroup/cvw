@@ -428,6 +428,15 @@ module testbenchfp;
                Fmt = {Fmt, 2'b01};
             end
 	 end
+   if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+      Tests = {Tests, f64div, f64sqrt};
+      OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+      WriteInt = {WriteInt, 1'b0, 1'b0};
+      for(int i = 0; i<10; i++) begin
+         Unit = {Unit, `DIVUNIT};
+         Fmt = {Fmt, 2'b01};
+      end
+   end
       end
       if (P.F_SUPPORTED & (TEST_SIZE == "SP" | TEST_SIZE == "all")) begin // if single precision being supported
 	 if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
@@ -651,12 +660,12 @@ module testbenchfp;
         end
       end
       if (TEST === "divremsqrttest") begin // if unified div sqrt is being tested
-        Tests = {Tests, f16sqrt};
+        Tests = {Tests, f128sqrt};
         OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         for(int i = 0; i<5; i++) begin
             Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'b10};
+            Fmt = {Fmt, 2'b11};
         end
       end
       if (TEST === "customdiv") begin // if unified div sqrt is being tested
@@ -1030,7 +1039,7 @@ module testbenchfp;
       if (~(ResMatch & FlagMatch) & CheckNow) begin
             integer fd;
             fd = $fopen("fperr.out","a");
-            $fwrite(fd, "%h_%h_%h_%2h\n",X[15:0],Y[15:0],Ans[15:0],AnsFlg);
+            $fwrite(fd, "%h_%h_%h_%2h\n",X,Y,Ans,AnsFlg);
             $fclose(fd);
 	 errors += 1;
 	 $display("\nError in %s", Tests[TestNum]);
