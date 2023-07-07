@@ -659,7 +659,14 @@ module testbenchfp;
         end
       end
       if (TEST === "customdiv") begin // if unified div sqrt is being tested
-        Tests = {Tests, custom};
+        Tests = {Tests, customdiv};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `DIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "customdivcorrect") begin // if unified div sqrt is being tested
+        Tests = {Tests, customdivcorrect};
         OpCtrl = {OpCtrl, `DIV_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `DIVUNIT};
@@ -770,7 +777,7 @@ module testbenchfp;
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
    
-   if (TEST === "div" | TEST === "sqrt" | TEST === "all"| TEST === "custom") begin: fdivsqrt
+   if (TEST === "div" | TEST === "sqrt" | TEST === "all"| TEST === "custom" | TEST ==="customdivcorrect") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
 			     .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
 			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -1018,6 +1025,10 @@ module testbenchfp;
 
       assign CheckNow = (DivDone | ~divsqrtop) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
       if (~(ResMatch & FlagMatch) & CheckNow) begin
+            integer fd;
+            fd = $fopen("fperr.out","a");
+            $fwrite(fd, "%h_%h_%h_%2h\n",X[15:0],Y[15:0],Ans[15:0],AnsFlg);
+            $fclose(fd);
 	 errors += 1;
 	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);
 	 $display("Error in %s", Tests[TestNum]);
