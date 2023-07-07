@@ -93,7 +93,7 @@ localparam FMT2  = ((F_SUPPORTED & (LEN1 != S_LEN)) ? 2'd0    : 2'd2);
 localparam BIAS2 = ((F_SUPPORTED & (LEN1 != S_LEN)) ? S_BIAS : H_BIAS);
 
 // division constants
-localparam DIVN        = (((NF<XLEN) & IDIV_ON_FPU) ? XLEN : NF+2); // standard length of input
+localparam DIVN        = (((NF+2<XLEN) & IDIV_ON_FPU) ? XLEN : NF+2); // standard length of input
 localparam LOGR        = ($clog2(RADIX));           // r = log(R)
 localparam RK          = (LOGR*DIVCOPIES);         // r*k used for intdiv preproc
 localparam LOGRK       = ($clog2(RK));               // log2(r*k)
