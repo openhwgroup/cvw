@@ -84,6 +84,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output logic [2:0]               FRM_REGW, 
+  output logic [3:0]               ENVCFG_CBE,
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic [P.XLEN-1:0]        UnalignedPCNextF,          // Next PC, accounting for traps and returns
@@ -123,7 +124,11 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]       TVecAlignedM;
   logic                    InstrValidNotFlushedM;
   logic                    STimerInt;
-  logic                    MENVCFG_STCE;
+  logic [63:0]             MENVCFG_REGW;
+  logic [P.XLEN-1:0]       SENVCFG_REGW;
+  logic                    ENVCFG_STCE; // supervisor timer counter enable
+  logic                    ENVCFG_PBMTE; // page-based memory types enable
+  logic                    ENVCFG_FIOM; // fence implies io (presently not used)
 
   // only valid unflushed instructions can access CSRs
   assign InstrValidNotFlushedM = InstrValidM & ~StallW & ~FlushW;
@@ -214,7 +219,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   csri #(P) csri(.clk, .reset,  
     .CSRMWriteM, .CSRSWriteM, .CSRWriteValM, .CSRAdrM, 
     .MExtInt, .SExtInt, .MTimerInt, .STimerInt, .MSwInt,
-    .MIDELEG_REGW, .MENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
+    .MIDELEG_REGW, .ENVCFG_STCE, .MIP_REGW, .MIE_REGW, .MIP_REGW_writeable);
 
   csrsr #(P) csrsr(.clk, .reset, .StallW, 
     .WriteMSTATUSM, .WriteMSTATUSHM, .WriteSSTATUSM, 
@@ -233,10 +238,12 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     .MEDELEG_REGW, .MIDELEG_REGW,.PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
     .MIP_REGW, .MIE_REGW, .WriteMSTATUSM, .WriteMSTATUSHM,
     .IllegalCSRMAccessM, .IllegalCSRMWriteReadonlyM,
-    .MENVCFG_STCE);
+    .MENVCFG_REGW);
 
 
   if (P.S_SUPPORTED) begin:csrs
+    logic STCE; 
+    assign STCE = P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | (MCOUNTEREN_REGW[1] & ENVCFG_STCE));
     csrs #(P) csrs(.clk, .reset,
       .CSRSWriteM, .STrapM, .CSRAdrM,
       .NextEPCM, .NextCauseM, .NextMtvalM, .SSTATUS_REGW, 
@@ -244,8 +251,8 @@ module csr import cvw::*;  #(parameter cvw_t P) (
       .CSRWriteValM, .PrivilegeModeW,
       .CSRSReadValM, .STVEC_REGW, .SEPC_REGW,      
       .SCOUNTEREN_REGW,
-      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .MENVCFG_STCE,
-      .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt);
+      .SATP_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW, .MTIME_CLINT, .STCE,
+      .WriteSSTATUSM, .IllegalCSRSAccessM, .STimerInt, .SENVCFG_REGW);
   end else begin
     assign WriteSSTATUSM = 0;
     assign CSRSReadValM = 0;
@@ -281,6 +288,17 @@ module csr import cvw::*;  #(parameter cvw_t P) (
     assign CSRCReadValM = 0;
     assign IllegalCSRCAccessM = 1; // counters aren't enabled
   end
+
+   // Broadcast appropriate environment configuration based on privilege mode
+  assign ENVCFG_STCE =  MENVCFG_REGW[63]; // supervisor timer counter enable
+  assign ENVCFG_PBMTE = MENVCFG_REGW[62]; // page-based memory types enable
+  assign ENVCFG_CBE =   (PrivilegeModeW == P.M_MODE) ? 4'b1111 : 
+                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[7:4] : 
+                                                                       (MENVCFG_REGW[7:4] & SENVCFG_REGW[7:4]);
+  // FIOM presently doesn't do anything because Wally fences don't do anything
+  assign ENVCFG_FIOM =  (PrivilegeModeW == P.M_MODE) ? 1'b1 : 
+                        (PrivilegeModeW == P.S_MODE | !P.S_SUPPORTED) ? MENVCFG_REGW[0] : 
+                                                                       (MENVCFG_REGW[0] & SENVCFG_REGW[0]);
 
   // merge CSR Reads
   assign CSRReadValM = CSRUReadValM | CSRSReadValM | CSRMReadValM | CSRCReadValM; 

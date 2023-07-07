@@ -29,8 +29,8 @@
 module fdivsqrtexpcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0] Fmt,
   input  logic [P.NE-1:0]      Xe, Ye,
-  input  logic                Sqrt,
-  input  logic                XZero, 
+  input  logic                 Sqrt,
+  input  logic                 XZero, 
   input  logic [P.DIVBLEN:0]   ell, m,
   output logic [P.NE+1:0]      Qe
   );

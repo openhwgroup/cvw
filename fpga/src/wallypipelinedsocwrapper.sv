@@ -34,7 +34,7 @@ module wallypipelinedsocwrapper (
   input  logic                reset_ext,        // external asynchronous reset pin
   output logic                reset,            // reset synchronized to clk to prevent races on release
   // AHB Interface
-  input  logic [P.AHBW-1:0]     HRDATAEXT,
+  input  logic [64-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
   // outputs to external memory, shared with uncore memory
