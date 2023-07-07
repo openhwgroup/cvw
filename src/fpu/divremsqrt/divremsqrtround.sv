@@ -167,7 +167,7 @@ module divremsqrtround import cvw::*;  #(parameter cvw_t P)  (
 
   // only add the Addend sticky if doing an FMA opperation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
-  assign Sticky = DivSticky&DivOp;
+  assign Sticky = DivSticky&DivOp | NormSticky;
   
 
 
