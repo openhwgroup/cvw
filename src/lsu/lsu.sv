@@ -39,6 +39,8 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [6:0]              Funct7M,                              // Atomic memory operation function
   input  logic [1:0]              AtomicM,                              // Atomic memory operation
   input  logic                    FlushDCacheM,                         // Flush D cache to next level of memory
+  input  logic [3:0]              CMOpM,                                // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
+  input  logic                    LSUPrefetchM,                         // Prefetch
   output logic                    CommittedM,                           // Delay interrupts while memory operation in flight
   output logic                    SquashSCW,                            // Store conditional failed disable write to GPR
   output logic                    DCacheMiss,                           // D cache miss for performance counters
@@ -224,7 +226,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     logic [1:0]           DTIMMemRWM;
     
     // The DTIM uses untranslated addresses, so it is not compatible with virtual memory.
-  mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
+    mux2 #(P.PA_BITS) DTIMAdrMux(IEUAdrExtE[P.PA_BITS-1:0], IEUAdrExtM[P.PA_BITS-1:0], MemRWM[0], DTIMAdr);
     assign DTIMMemRWM = SelDTIM & ~IgnoreRequestTLB ? LSURWM : '0;
     // **** fix ReadDataWordM to be LLEN. ByteMask is wrong length.
     // **** create config to support DTIM with floating point.
@@ -258,8 +260,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
-    assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
+      assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
       
+      // *** need RT to add support for CMOpM and LSUPrefetchM (DH 7/2/23)
+      // *** prefetch can just act as a read operation
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
         .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),

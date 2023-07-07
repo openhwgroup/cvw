@@ -2031,8 +2031,8 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
-//    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
-    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S",
+    // "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",    // run this if SVADU_SUPPORTED = 0
+    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S", // run this if SVADU_SUPPORTED = 1
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",
