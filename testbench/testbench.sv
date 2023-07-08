@@ -35,7 +35,7 @@ module testbench;
   /* verilator lint_off WIDTHEXPAND */
   parameter DEBUG=0;
   parameter TEST="none";
-  parameter PrintHPMCounters=0;
+  parameter PrintHPMCounters=1;
   parameter BPRED_LOGGER=0;
   parameter I_CACHE_ADDR_LOGGER=0;
   parameter D_CACHE_ADDR_LOGGER=0;
@@ -466,7 +466,7 @@ module testbench;
     integer        i;
     logic [31:0]   sig32[0:SIGNATURESIZE];
     logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
-    string            signame, pathname;
+    string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
     
     // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
