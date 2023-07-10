@@ -48,6 +48,8 @@
 `define INTDIVW_OPCTRL 3'b100
 `define INTDIVU_OPCTRL 3'b101
 `define INTREMW_OPCTRL 3'b110
+`define INTREMUW_OPCTRL 3'b111
+`define INTDIVUW_OPCTRL 3'b000
 `define RNE            3'b000
 `define RZ             3'b001
 `define RU             3'b011

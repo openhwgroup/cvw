@@ -675,14 +675,14 @@ module testbenchfp;
       end
       if (TEST === "customdiv") begin // if unified div sqrt is being tested
         Tests = {Tests, customdiv};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `DIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
       if (TEST === "customdivcorrect") begin // if unified div sqrt is being tested
         Tests = {Tests, customdivcorrect};
-        OpCtrl = {OpCtrl, `DIV_OPCTRL};
+        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `DIVUNIT};
         Fmt = {Fmt, 2'b10};
@@ -722,10 +722,24 @@ module testbenchfp;
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
-      //TODO:REMUWm DIVW, DIVUW
+      //TODO:DIVW, DIVUW
       if (TEST === "intremuw") begin // if unified div sqrt is being tested
-        Tests = {Tests, intremw};
-        OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
+        Tests = {Tests, intremuw};
+        OpCtrl = {OpCtrl, `INTREMUW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivw") begin // if unified div sqrt is being tested
+        Tests = {Tests, intdivw};
+        OpCtrl = {OpCtrl, `INTDIVW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivuw") begin // if unified div sqrt is being tested
+        Tests = {Tests, intdivuw};
+        OpCtrl = {OpCtrl, `INTDIVUW_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
@@ -853,7 +867,7 @@ module testbenchfp;
    end
    if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-           .XeE(Xe), .YeE(Ye), .SqrtE(TEST === "sqrt"), .SqrtM(TEST === "sqrt"),
+           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
            .PostProcSel(UnitVal[1:0]),
            .XNaNE(XNaN), .YNaNE(YNaN), 
@@ -865,6 +879,19 @@ module testbenchfp;
                        .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
                        .Funct3E(Funct3E), .IntDivE(IntDivE), 
                        .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
+    /*drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+           .XeE(Xe), .YeE(Ye), .SqrtE(1'b1), .SqrtM(1'b1),
+           .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
+           .PostProcSel(UnitVal[1:0]),
+           .XNaNE(XNaN), .YNaNE(YNaN), 
+             .OpCtrl(OpCtrlVal),
+             .XSNaNE(XSNaN), .YSNaNE(YSNaN),
+           .Frm(FrmVal), 
+                       .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
+                       .StallM(1'b0), .FDivBusyE,
+                       .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(3'b0),
+                       .Funct3E(3'b0), .IntDivE(1'b0), 
+                       .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));*/
   end
   else begin: postprocess
     postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
@@ -1084,7 +1111,7 @@ module testbenchfp;
       //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMW_OPCTRL);
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMW_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
@@ -1250,7 +1277,13 @@ module readvectors (
                Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
             end
           endcase
-	`DIVUNIT:
+	`DIVUNIT: begin
+    IDivStart=1'b0;
+    IntDivE=1'b0;
+    SrcA={P.XLEN{1'b0}};
+    SrcB={P.XLEN{1'b0}};
+    W64=1'b0;
+    Funct3E=3'b0;
           if (OpCtrl === `SQRT_OPCTRL)
             case (Fmt)
               2'b11: begin // quad
@@ -1325,6 +1358,7 @@ module readvectors (
 		   DivStart = 1'b0;
               end
             endcase
+  end
 	`INTDIVUNIT: begin
 	  #20;
     if (OpCtrl === `INTDIV_OPCTRL) begin
@@ -1400,6 +1434,22 @@ module readvectors (
       if (~clk) #5;
       IDivStart = 1'b1;
       IntDivE = 1'b1;
+      Funct3E = 3'b100;
+      W64 = 1'b1;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+      W64 = 1'b1;
+    end
+    else if (OpCtrl == `INTDIVUW_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
       Funct3E = 3'b101;
       W64 = 1'b1;
       #10 // one clk cycle
@@ -1407,7 +1457,7 @@ module readvectors (
       IntDivE = 1'b0;
       W64 = 1'b1;
     end
-  else if (OpCtrl == `INTREMW_OPCTRL) begin
+   else if (OpCtrl == `INTREMW_OPCTRL) begin
       X = {P.FLEN{1'bx}};
       SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
       SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
@@ -1422,6 +1472,22 @@ module readvectors (
       IDivStart = 1'b0;
       IntDivE = 1'b0;
       W64 = 1'b0;
+   end
+  else if (OpCtrl == `INTREMUW_OPCTRL) begin
+    X = {P.FLEN{1'bx}};
+    SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+    SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+    Ans = TestVector[P.D_LEN-1:0];
+    AnsFlg = 5'bx;
+    if (~clk) #5;
+    IDivStart = 1'b1;
+    IntDivE = 1'b1;
+    Funct3E = 3'b111;
+    W64 = 1'b1;
+    #10 // one clk cycle
+    IDivStart = 1'b0;
+    IntDivE = 1'b0;
+    W64 = 1'b0;
     end
 	end
 	  
