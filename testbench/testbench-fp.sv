@@ -686,9 +686,30 @@ module testbenchfp;
         Unit = {Unit, `DIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
+      if (TEST === "intrem") begin // if unified div sqrt is being tested
+        Tests = {Tests, intrem};
+        OpCtrl = {OpCtrl, `INTREM_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
       if (TEST === "intdiv") begin // if unified div sqrt is being tested
         Tests = {Tests, intdiv};
-        OpCtrl = {OpCtrl, `INTREM_OPCTRL};
+        OpCtrl = {OpCtrl, `INTDIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intremu") begin // if unified div sqrt is being tested
+        Tests = {Tests, intremu};
+        OpCtrl = {OpCtrl, `INTREMU_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivu") begin // if unified div sqrt is being tested
+        Tests = {Tests, intdiv};
+        OpCtrl = {OpCtrl, `INTDIVU_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
@@ -811,7 +832,7 @@ module testbenchfp;
            .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
            .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv") begin: divremsqrt
+   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
            .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -1044,7 +1065,7 @@ module testbenchfp;
       //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL);
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
@@ -1059,6 +1080,7 @@ module testbenchfp;
    $display("\nError in %s", Tests[TestNum]);
    $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
    $display("inputs: %h %h %h\nSrcA: %h\n SrcB: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, SrcB, Res, ResFlg, Ans, AnsFlg);
+   $display("time: $t", $realtime);
       end
       
       // TestFloat sets the result to all 1's when there is an invalid result, however in 
@@ -1284,18 +1306,36 @@ module readvectors (
               end
             endcase
 	`INTDIVUNIT: begin
-		#20;
-	  X = {P.FLEN{1'bx}};
-		SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-		SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-		Ans = TestVector[P.D_LEN-1:0];
-		if (~clk) #5;
-		IDivStart = 1'b1;
-		IntDivE = 1'b1;
-		Funct3E = 3'b110;
-		#10 // one clk cycle
-		IDivStart = 1'b0;
-		IntDivE = 1'b0;
+   //***NOTE: remove redundancies in code. Conditionals toggle the Funct3E variable only, so we can intialize a new funct3 variable and set Funct3 equal to that.
+	  #20;
+    if (OpCtrl === `INTDIV_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b100;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+    end
+    else if (OpCtrl == `INTREM_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b110;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+    end
 	end
 	  
 	`CMPUNIT:
