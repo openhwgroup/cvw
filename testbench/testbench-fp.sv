@@ -715,6 +715,24 @@ module testbenchfp;
         Unit = {Unit, `INTDIVUNIT};
         Fmt = {Fmt, 2'b10};
       end
+      if (TEST === "intremw") begin // if unified div sqrt is being tested
+        Tests = {Tests, intremw};
+        OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      //TODO:REMUWm DIVW, DIVUW
+      if (TEST === "intremuw") begin // if unified div sqrt is being tested
+        Tests = {Tests, intremw};
+        OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+
+
+
       end
       
       // check if nothing is being tested
@@ -833,7 +851,7 @@ module testbenchfp;
            .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
            .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu") begin: divremsqrt
+   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
            .XeE(Xe), .YeE(Ye), .SqrtE(TEST === "sqrt"), .SqrtM(TEST === "sqrt"),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -1066,7 +1084,7 @@ module testbenchfp;
       //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL);
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMW_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
@@ -1383,9 +1401,11 @@ module readvectors (
       IDivStart = 1'b1;
       IntDivE = 1'b1;
       Funct3E = 3'b101;
+      W64 = 1'b1;
       #10 // one clk cycle
       IDivStart = 1'b0;
       IntDivE = 1'b0;
+      W64 = 1'b1;
     end
   else if (OpCtrl == `INTREMW_OPCTRL) begin
       X = {P.FLEN{1'bx}};

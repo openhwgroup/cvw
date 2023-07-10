@@ -612,5 +612,23 @@ string intdivu[] = '{
 	"cvw_64_divu-01.tv"
 };
 
+string intremw[] = '{
+	"cvw_64_remw-01.tv"
+};
+
+string intremuw[] = '{
+	"cvw_64_remuw-01.tv"
+};
+
+string intdivuw[] = '{
+	"cvw_64_divuw-01.tv"
+};
+
+string intdivw[] = '{
+	"cvw_64_divw-01.tv"
+};
+
+
+
 
 
