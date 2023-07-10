@@ -42,10 +42,12 @@
 `define FROM_I_OPCTRL  3'b101
 `define FROM_UL_OPCTRL 3'b110
 `define FROM_L_OPCTRL  3'b111
-`define INTREMU_OPCTRL 3'b111
-`define INTREM_OPCTRL  3'b110
-`define INTDIV_OPCTRL  3'b010
+`define INTREMU_OPCTRL 3'b001
+`define INTREM_OPCTRL  3'b010
+`define INTDIV_OPCTRL  3'b011
+`define INTDIVW_OPCTRL 3'b100
 `define INTDIVU_OPCTRL 3'b101
+`define INTREMW_OPCTRL 3'b110
 `define RNE            3'b000
 `define RZ             3'b001
 `define RU             3'b011
@@ -604,11 +606,11 @@ string intdiv[] = '{
 
 string intremu[] = '{
 	"cvw_64_remu-01.tv"
-}
+};
 
 string intdivu[] = '{
 	"cvw_64_divu-01.tv"
-}
+};
 
 
 

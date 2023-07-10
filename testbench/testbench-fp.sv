@@ -125,6 +125,7 @@ module testbenchfp;
    logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
    logic 			FMAop;                      // Is this a FMA operation?   
+   logic      sqrtop;                     // Is this a SQRT operation?
    
 	 flop #(3) funct3reg(.clk, .d(Funct3E), .q(Funct3M));
    ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -708,7 +709,7 @@ module testbenchfp;
         Fmt = {Fmt, 2'b10};
       end
       if (TEST === "intdivu") begin // if unified div sqrt is being tested
-        Tests = {Tests, intdiv};
+        Tests = {Tests, intdivu};
         OpCtrl = {OpCtrl, `INTDIVU_OPCTRL};
         WriteInt = {WriteInt, 1'b0};
         Unit = {Unit, `INTDIVUNIT};
@@ -767,7 +768,7 @@ module testbenchfp;
    readvectors #(P) readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
                                  .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, .SrcB, 
                                  .Xs, .Ys, .Zs, .Unit(UnitVal),
-                                 .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal), .Funct3E,
+                                 .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal), .Funct3E, .W64,
                                  .Xm, .Ym, .Zm, .DivStart, .IDivStart, .IntDivE,
                                  .XNaN, .YNaN, .ZNaN,
                                  .XSNaN, .YSNaN, .ZSNaN, 
@@ -822,7 +823,7 @@ module testbenchfp;
    
    if (TEST === "div" | TEST === "sqrt" | TEST === "all"| TEST === "custom" | TEST ==="customdivcorrect") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL), .SqrtM(OpCtrlVal===`SQRT_OPCTRL),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
            .XNaNE(XNaN), .YNaNE(YNaN), 
            .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
@@ -832,16 +833,16 @@ module testbenchfp;
            .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
            .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem") begin: divremsqrt
+   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
+           .XeE(Xe), .YeE(Ye), .SqrtE(TEST === "sqrt"), .SqrtM(TEST === "sqrt"),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
            .PostProcSel(UnitVal[1:0]),
            .XNaNE(XNaN), .YNaNE(YNaN), 
              .OpCtrl(OpCtrlVal),
              .XSNaNE(XSNaN), .YSNaNE(YSNaN),
            .Frm(FrmVal), 
-                       .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(1'b0),
+                       .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
                        .StallM(1'b0), .FDivBusyE,
                        .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
                        .Funct3E(Funct3E), .IntDivE(IntDivE), 
@@ -1151,6 +1152,7 @@ module readvectors (
 		    output logic 	        IDivStart,
 				output logic          IntDivE,
 				output logic [2:0]    Funct3E,
+        output logic          W64,
 		    output logic [P.FLEN-1:0]   X, Y, Z, XPostBox
 		    );
 
@@ -1231,7 +1233,7 @@ module readvectors (
             end
           endcase
 	`DIVUNIT:
-          if (OpCtrl[0])
+          if (OpCtrl === `SQRT_OPCTRL)
             case (Fmt)
               2'b11: begin // quad
 		 #20;		 
@@ -1306,7 +1308,6 @@ module readvectors (
               end
             endcase
 	`INTDIVUNIT: begin
-   //***NOTE: remove redundancies in code. Conditionals toggle the Funct3E variable only, so we can intialize a new funct3 variable and set Funct3 equal to that.
 	  #20;
     if (OpCtrl === `INTDIV_OPCTRL) begin
       X = {P.FLEN{1'bx}};
@@ -1318,9 +1319,11 @@ module readvectors (
       IDivStart = 1'b1;
       IntDivE = 1'b1;
       Funct3E = 3'b100;
+      W64 = 1'b0;
       #10 // one clk cycle
       IDivStart = 1'b0;
       IntDivE = 1'b0;
+      W64 = 1'b0;
     end
     else if (OpCtrl == `INTREM_OPCTRL) begin
       X = {P.FLEN{1'bx}};
@@ -1332,9 +1335,73 @@ module readvectors (
       IDivStart = 1'b1;
       IntDivE = 1'b1;
       Funct3E = 3'b110;
+      W64 = 1'b0;
       #10 // one clk cycle
       IDivStart = 1'b0;
       IntDivE = 1'b0;
+      W64 = 1'b0;
+    end
+    else if (OpCtrl == `INTREMU_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b111;
+      W64 = 1'b0;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+      W64 = 1'b0;
+    end
+    else if (OpCtrl == `INTDIVU_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b101;
+      W64 = 1'b0;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+      W64 = 1'b0;
+    end
+    else if (OpCtrl == `INTDIVW_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b101;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+    end
+  else if (OpCtrl == `INTREMW_OPCTRL) begin
+      X = {P.FLEN{1'bx}};
+      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+      Ans = TestVector[P.D_LEN-1:0];
+      AnsFlg = 5'bx;
+      if (~clk) #5;
+      IDivStart = 1'b1;
+      IntDivE = 1'b1;
+      Funct3E = 3'b110;
+      W64 = 1'b1;
+      #10 // one clk cycle
+      IDivStart = 1'b0;
+      IntDivE = 1'b0;
+      W64 = 1'b0;
     end
 	end
 	  
