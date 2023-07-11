@@ -169,7 +169,7 @@ module FunctionName import cvw::*; #(parameter cvw_t P) (
   assign AnyUnknown = (OrReducedAdr === 1'bx) ? 1'b1 : 1'b0;
   initial ProgramAddrIndex = '0;
 
-  assign FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
+  always @(*) FunctionName = AnyUnknown ? "Unknown!" : ProgramLabelMapMemory[ProgramAddrIndex];
 
 endmodule // function_radix
 
