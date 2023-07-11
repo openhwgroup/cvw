@@ -124,7 +124,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
 
   genvar               words;
 
-  localparam           SRAMLEN = 128;
+  localparam           SRAMLEN = 128;             // *** make this a global parameter
   localparam           NUMSRAM = LINELEN/SRAMLEN;
   localparam           SRAMLENINBYTES = SRAMLEN/8;
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
