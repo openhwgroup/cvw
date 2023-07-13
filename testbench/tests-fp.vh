@@ -590,14 +590,6 @@ string f128fma[] = '{
 	"f128_mulAdd_rnm.tv"
 };
 
-string customdiv[] = '{
-	"f16_custom.tv"
-};
-
-string customdivcorrect[] = '{
-	"f16_custom.tv"
-};
-
 string intrem[] = '{
 	"cvw_64_rem-01.tv"
 };

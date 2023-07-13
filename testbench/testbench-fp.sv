@@ -664,29 +664,6 @@ module testbenchfp;
             Fmt = {Fmt, 2'b10};
         end
       end
-      if (TEST === "divremsqrttest") begin // if unified div sqrt is being tested
-        Tests = {Tests, f64sqrt};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        for(int i = 0; i<5; i++) begin
-            Unit = {Unit, `DIVUNIT};
-            Fmt = {Fmt, 2'b01};
-        end
-      end
-      if (TEST === "customdiv") begin // if unified div sqrt is being tested
-        Tests = {Tests, customdiv};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        Unit = {Unit, `DIVUNIT};
-        Fmt = {Fmt, 2'b10};
-      end
-      if (TEST === "customdivcorrect") begin // if unified div sqrt is being tested
-        Tests = {Tests, customdivcorrect};
-        OpCtrl = {OpCtrl, `SQRT_OPCTRL};
-        WriteInt = {WriteInt, 1'b0};
-        Unit = {Unit, `DIVUNIT};
-        Fmt = {Fmt, 2'b10};
-      end
       if (TEST === "intrem" | TEST === "intdivrem" ) begin // if integer remainder is being tested
         Tests = {Tests, intrem};
         OpCtrl = {OpCtrl, `INTREM_OPCTRL};
@@ -850,7 +827,7 @@ module testbenchfp;
                    .XNaN, .YNaN, .XSNaN, .YSNaN, .X, .Y, .CmpNV(CmpFlg[4]), .CmpFpRes(FpCmpRes));
    end
    
-   if (TEST === "div" | TEST === "sqrt" | TEST === "all"| TEST === "custom" | TEST ==="customdivcorrect") begin: fdivsqrt
+   if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
            .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL), .SqrtM(OpCtrlVal===`SQRT_OPCTRL),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
@@ -862,33 +839,16 @@ module testbenchfp;
            .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
            .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "fdivremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
-           .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
-           .PostProcSel(UnitVal[1:0]),
-           .XNaNE(XNaN), .YNaNE(YNaN), 
-             .OpCtrl(OpCtrlVal),
-             .XSNaNE(XSNaN), .YSNaNE(YSNaN),
-           .Frm(FrmVal), 
-                       .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
-                       .StallM(1'b0), .FDivBusyE,
-                       .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
-                       .Funct3E(Funct3E), .IntDivE(IntDivE), 
-                       .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
-    /*drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-           .XeE(Xe), .YeE(Ye), .SqrtE(1'b1), .SqrtM(1'b1),
-           .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
-           .PostProcSel(UnitVal[1:0]),
-           .XNaNE(XNaN), .YNaNE(YNaN), 
-             .OpCtrl(OpCtrlVal),
-             .XSNaNE(XSNaN), .YSNaNE(YSNaN),
-           .Frm(FrmVal), 
-                       .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
-                       .StallM(1'b0), .FDivBusyE,
-                       .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(3'b0),
-                       .Funct3E(3'b0), .IntDivE(1'b0), 
-                       .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));*/
+      .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
+      .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
+      .XNaNE(XNaN), .YNaNE(YNaN), .OpCtrl(OpCtrlVal), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .Frm(FrmVal), 
+      .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
+      .StallM(1'b0), .FDivBusyE,
+      .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
+      .Funct3E(Funct3E), .IntDivE(IntDivE), 
+      .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
   end
   else begin: postprocess
     postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
