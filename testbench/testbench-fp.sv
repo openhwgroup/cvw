@@ -1358,119 +1358,6 @@ module readvectors (
   end
 	`INTDIVUNIT: begin
 	  #20;
-    if (OpCtrl === `INTDIV_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b100;
-      W64 = 1'b0;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b0;
-    end
-    else if (OpCtrl == `INTREM_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b110;
-      W64 = 1'b0;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b0;
-    end
-    else if (OpCtrl == `INTREMU_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b111;
-      W64 = 1'b0;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b0;
-    end
-    else if (OpCtrl == `INTDIVU_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b101;
-      W64 = 1'b0;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b0;
-    end
-    else if (OpCtrl == `INTDIVW_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b100;
-      W64 = 1'b1;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b1;
-    end
-    else if (OpCtrl == `INTDIVUW_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b101;
-      W64 = 1'b1;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b1;
-    end
-   else if (OpCtrl == `INTREMW_OPCTRL) begin
-      X = {P.FLEN{1'bx}};
-      SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
-      SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
-      Ans = TestVector[P.D_LEN-1:0];
-      AnsFlg = 5'bx;
-      if (~clk) #5;
-      IDivStart = 1'b1;
-      IntDivE = 1'b1;
-      Funct3E = 3'b110;
-      W64 = 1'b1;
-      #10 // one clk cycle
-      IDivStart = 1'b0;
-      IntDivE = 1'b0;
-      W64 = 1'b0;
-   end
-  else if (OpCtrl == `INTREMUW_OPCTRL) begin
     X = {P.FLEN{1'bx}};
     SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
     SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
@@ -1479,13 +1366,44 @@ module readvectors (
     if (~clk) #5;
     IDivStart = 1'b1;
     IntDivE = 1'b1;
-    Funct3E = 3'b111;
-    W64 = 1'b1;
-    #10 // one clk cycle
-    IDivStart = 1'b0;
-    IntDivE = 1'b0;
-    W64 = 1'b0;
+    case (OpCtrl)
+      `INTDIV_OPCTRL: begin
+        Funct3E = 3'b100;
+        W64 = 1'b0;
+      end
+      `INTREM_OPCTRL: begin
+        Funct3E = 3'b110;
+        W64 = 1'b0;
+      end
+      `INTREMU_OPCTRL: begin
+        Funct3E = 3'b111;
+        W64 = 1'b0;
+      end
+      `INTDIVU_OPCTRL: begin
+        Funct3E = 3'b101;
+        W64 = 1'b0;
+      end
+      `INTDIVW_OPCTRL: begin
+        Funct3E = 3'b100;
+        W64 = 1'b1;
+      end
+      `INTDIVUW_OPCTRL: begin
+        Funct3E = 3'b101;
+        W64 = 1'b1;
+      end
+    `INTREMW_OPCTRL: begin
+        Funct3E = 3'b110;
+        W64 = 1'b1;
     end
+    `INTREMUW_OPCTRL: begin
+      Funct3E = 3'b111;
+      W64 = 1'b1;
+    end
+   endcase
+   #10 // one clk cycle
+   IDivStart = 1'b0;
+   IntDivE = 1'b0;
+   W64 = 1'b0;
 	end
 	  
 	`CMPUNIT:
