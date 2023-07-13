@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// Written: me@KatherineParry.com, james.stine@okstate.edu
+// Written: me@KatherineParry.com, james.stine@okstate.edu, kekim@hmc.edu
 //
 // Purpose: Testbench for UCB Testfloat on Wally
 // 
