@@ -151,8 +151,10 @@ module loggers import cvw::*; #(parameter cvw_t P,
       $fwrite(file, "BEGIN %s\n", memfilename);
     end
     string AccessTypeString, HitMissString;
-    assign HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
-                           dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
+    always @(*) begin
+      HitMissString = dut.core.ifu.bus.icache.icache.CacheHit ? "H" :
+                      dut.core.ifu.bus.icache.icache.vict.cacheLRU.AllValid ? "E" : "M";
+    end
     always @(posedge clk) begin
     if(resetEdge) $fwrite(file, "TRAIN\n");
     if(BeginSample) $fwrite(file, "BEGIN %s\n", memfilename);
@@ -174,15 +176,17 @@ module loggers import cvw::*; #(parameter cvw_t P,
 
     flop #(1) ResetDReg(clk, reset, resetD);
     assign resetEdge = ~reset & resetD;
-    assign HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
-                           (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
-                           dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
-    assign AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
-                              dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
-                              dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
-                              dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
-                              "NULL";
-    
+    always @(*) begin
+      HitMissString = dut.core.lsu.bus.dcache.dcache.CacheHit ? "H" :
+                      (!dut.core.lsu.bus.dcache.dcache.vict.cacheLRU.AllValid) ? "M" :
+                      dut.core.lsu.bus.dcache.dcache.LineDirty ? "D" : "E";
+      AccessTypeString = dut.core.lsu.bus.dcache.FlushDCache ? "F" :
+                         dut.core.lsu.bus.dcache.CacheAtomicM[1] ? "A" :
+                         dut.core.lsu.bus.dcache.CacheRWM == 2'b10 ? "R" : 
+                         dut.core.lsu.bus.dcache.CacheRWM == 2'b01 ? "W" :
+                         "NULL";
+    end
+
     assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
