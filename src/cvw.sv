@@ -61,6 +61,7 @@ typedef struct packed {
   logic         ZICBOZ_SUPPORTED;
   logic         ZICBOP_SUPPORTED;
   logic         SVPBMT_SUPPORTED;
+  logic         SVINVAL_SUPPORTED;
 
   // Microarchitectural Features
   logic         BUS_SUPPORTED;

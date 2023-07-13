@@ -27,24 +27,24 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
-  input  logic                clk,
-  input  logic                IFDivStartE, 
+  input  logic                 clk,
+  input  logic                 IFDivStartE, 
   input  logic [P.NF:0]        Xm, Ym,
   input  logic [P.NE-1:0]      Xe, Ye,
   input  logic [P.FMTBITS-1:0] FmtE,
-  input  logic                SqrtE,
-  input  logic                XZeroE,
-  input  logic [2:0]          Funct3E,
+  input  logic                 SqrtE,
+  input  logic                 XZeroE,
+  input  logic [2:0]           Funct3E,
   output logic [P.NE+1:0]      QeM,
   output logic [P.DIVb+3:0]    X, D,
   // Int-specific
   input  logic [P.XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // *** these are the src outputs before the mux choosing between them and PCE to put in srcA/B
-  input  logic                IntDivE, W64E,
-  output logic                ISpecialCaseE,
+  input  logic                 IntDivE, W64E,
+  output logic                 ISpecialCaseE,
   output logic [P.DURLEN-1:0]  CyclesE,
   output logic [P.DIVBLEN:0]   nM, mM,
-  output logic                NegQuotM, ALTBM, IntDivM, W64M,
-  output logic                AsM, BZeroM,
+  output logic                 NegQuotM, ALTBM, IntDivM, W64M,
+  output logic                 AsM, BZeroM,
   output logic [P.XLEN-1:0]    AM
 );
 
@@ -54,11 +54,11 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   logic [P.NE+1:0]             QeE;                                 // Quotient Exponent (FP only)
   logic [P.DIVb-1:0]           IFX, IFD;                            // Correctly-sized inputs for iterator, selected from int or fp input
   logic [P.DIVBLEN:0]          mE, nE, ell;                         // Leading zeros of inputs
-  logic                       NumerZeroE;                          // Numerator is zero (X or A)
-  logic                       AZeroE, BZeroE;                      // A or B is Zero for integer division
-  logic                       SignedDivE;                          // signed division
-  logic                       NegQuotE;                            // Integer quotient is negative
-  logic                       AsE, BsE;                            // Signs of integer inputs
+  logic                        NumerZeroE;                          // Numerator is zero (X or A)
+  logic                        AZeroE, BZeroE;                      // A or B is Zero for integer division
+  logic                        SignedDivE;                          // signed division
+  logic                        NegQuotE;                            // Integer quotient is negative
+  logic                        AsE, BsE;                            // Signs of integer inputs
   logic [P.XLEN-1:0]           AE;                                  // input A after W64 adjustment
   logic  ALTBE;
 
@@ -166,7 +166,7 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
 
   // Sqrt is initialized on step one as R(X-1), so depends on Radix
   mux2 #(P.DIVb+1) sqrtxmux({~XZeroE, Xfract}, {1'b0, ~XZeroE, Xfract[P.DIVb-1:1]}, (Xe[0] ^ ell[0]), PreSqrtX);
-  if (P.RADIX == 2)  assign SqrtX = {3'b111, PreSqrtX};
+  if (P.RADIX == 2) assign SqrtX = {3'b111, PreSqrtX};
   else              assign SqrtX = {2'b11, PreSqrtX, 1'b0};
   mux2 #(P.DIVb+4) prexmux(DivX, SqrtX, SqrtE, PreShiftX);
   

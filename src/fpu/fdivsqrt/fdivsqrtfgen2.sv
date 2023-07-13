@@ -27,17 +27,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtfgen2 import cvw::*;  #(parameter cvw_t P) (
-  input  logic             up, uz,
+  input  logic              up, uz,
   input  logic [P.DIVb+3:0] C, U, UM,
   output logic [P.DIVb+3:0] F
 );
-  logic [P.DIVb+3:0] FP, FN, FZ;
+  logic [P.DIVb+3:0]        FP, FN, FZ;
 
   // Generate for both positive and negative bits
   assign FP = ~(U << 1) & C;
   assign FN = (UM << 1) | (C & ~(C << 2));
   assign FZ = '0;
-
 
   always_comb     // Choose which adder input will be used
     if (up)       F = FP;
