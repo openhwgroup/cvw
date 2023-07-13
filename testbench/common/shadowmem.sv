@@ -39,10 +39,10 @@ module DCacheFlushFSM import cvw::*; #(parameter cvw_t P)
   logic         startD;
   
   if(P.DCACHE_SUPPORTED) begin
-    localparam numlines       = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-    localparam numways        = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-    localparam linebytelen    = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-    localparam linelen        = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
+    localparam numlines       = P.DCACHE_WAYSIZEINBYTES*8/P.DCACHE_LINELENINBITS;
+    localparam numways        = P.DCACHE_NUMWAYS;
+    localparam linelen        = P.DCACHE_LINELENINBITS;
+    localparam linebytelen    = linelen/8;
     localparam sramlen        = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
     localparam cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
     localparam numwords       = sramlen/P.XLEN;

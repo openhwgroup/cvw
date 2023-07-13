@@ -146,7 +146,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
   if (P.SDC_SUPPORTED == 1) begin : sdc
-    SDC SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
+    SDC #(P) SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
       .HWDATA, .HREADSDC, .HRESPSDC, .HREADYSDC,
       // sdc interface
       .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,

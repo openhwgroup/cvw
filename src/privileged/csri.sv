@@ -34,7 +34,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
   input  logic [11:0]       MIDELEG_REGW,
-  input  logic              MENVCFG_STCE,
+  input  logic              ENVCFG_STCE,
   output logic [11:0]       MIP_REGW, MIE_REGW,
   output logic [11:0]       MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
 );
@@ -61,7 +61,7 @@ module csri import cvw::*;  #(parameter cvw_t P) (
   if (P.S_SUPPORTED) begin:mask
     if (P.SSTC_SUPPORTED) begin
       assign MIP_WRITE_MASK = 12'h202; // SEIP and SSIP are writable, but STIP is not writable when STIMECMP is implemented (see SSTC spec)
-      assign STIP = MENVCFG_STCE ? STimerInt : MIP_REGW_writeable[5];
+      assign STIP = ENVCFG_STCE ? STimerInt : MIP_REGW_writeable[5];
     end else begin
       assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writeable in MIP (20210108-draft 3.1.9)
       assign STIP = MIP_REGW_writeable[5];

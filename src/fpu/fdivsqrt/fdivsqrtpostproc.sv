@@ -27,27 +27,27 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtpostproc import cvw::*;  #(parameter cvw_t P) (
-  input  logic              clk, reset,
-  input  logic              StallM,
+  input  logic               clk, reset,
+  input  logic               StallM,
   input  logic [P.DIVb+3:0]  WS, WC,
   input  logic [P.DIVb+3:0]  D, 
   input  logic [P.DIVb:0]    FirstU, FirstUM, 
   input  logic [P.DIVb+1:0]  FirstC,
-  input  logic              SqrtE,
-  input  logic              Firstun, SqrtM, SpecialCaseM, NegQuotM,
+  input  logic               SqrtE,
+  input  logic               Firstun, SqrtM, SpecialCaseM, NegQuotM,
   input  logic [P.XLEN-1:0]  AM,
-  input  logic              RemOpM, ALTBM, BZeroM, AsM, W64M,
+  input  logic               RemOpM, ALTBM, BZeroM, AsM, W64M,
   input  logic [P.DIVBLEN:0] nM, mM,
   output logic [P.DIVb:0]    QmM, 
-  output logic              WZeroE,
-  output logic              DivStickyM,
+  output logic               WZeroE,
+  output logic               DivStickyM,
   output logic [P.XLEN-1:0]  FIntDivResultM
 );
   
   logic [P.DIVb+3:0]         W, Sum;
   logic [P.DIVb:0]           PreQmM;
-  logic                     NegStickyM;
-  logic                     weq0E, WZeroM;
+  logic                      NegStickyM;
+  logic                      weq0E, WZeroM;
   logic [P.XLEN-1:0]         IntDivResultM;
 
   //////////////////////////
