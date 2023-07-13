@@ -12,6 +12,17 @@ if {$boardName!="ArtyA7"} {
     set_property board_part $boardName [current_project]
 }
 
+# read package first
+read_verilog -sv  ../src/CopiedFiles_do_not_add_to_repo/cvw.sv
+read_verilog -sv  ../src/wallypipelinedsocwrapper.sv
+# then read top level
+if {$board=="ArtyA7"} {
+    read_verilog  {../src/fpgaTopArtyA7.v}
+} else {
+    read_verilog  {../src/fpgaTop.v}
+}
+
+# read in ip
 read_ip IP/xlnx_proc_sys_reset.srcs/sources_1/ip/xlnx_proc_sys_reset/xlnx_proc_sys_reset.xci
 read_ip IP/xlnx_ahblite_axi_bridge.srcs/sources_1/ip/xlnx_ahblite_axi_bridge/xlnx_ahblite_axi_bridge.xci
 read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter.xci
@@ -23,16 +34,12 @@ if {$board=="ArtyA7"} {
     read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 }
 
-read_verilog -sv [glob -type f ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
-if {$board=="ArtyA7"} {
-    read_verilog  {../src/fpgaTopArtyA7.v}
-} else {
-    read_verilog  {../src/fpgaTop.v}
-}
+# read in all other rtl
+read_verilog -sv [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
+
 read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
 set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
-
 
 if {$board=="ArtyA7"} {
     add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
@@ -44,7 +51,6 @@ if {$board=="ArtyA7"} {
 
 # define top level
 set_property top fpgaTop [current_fileset]
-
 
 update_compile_order -fileset sources_1
 # This is important as the ddr3/4 IP contains the generate clock constraint which the user constraints depend on.
@@ -76,8 +82,8 @@ write_verilog -force -mode funcsim sim/syn-funcsim.v
 if {$board=="ArtyA7"} {
     source ../constraints/small-debug.xdc
 
-} else {    
-    source ../constraints/debug4.xdc
+} else {
+    source ../constraints/vcu-small-debug.xdc
 }
 
 

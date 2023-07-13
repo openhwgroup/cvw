@@ -101,13 +101,13 @@ module fctrl import cvw::*;  #(parameter cvw_t P) (
       /* verilator lint_off CASEINCOMPLETE */   // default value above has priority so no other default needed
       case(OpD)
         7'b0000111: case(Funct3D)
-                      3'b010:                      ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flw
+                      3'b010:                       ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flw
                       3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // fld
                       3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flq
                       3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b1_0_10_00_0xx_0_0_0; // flh
                     endcase
         7'b0100111: case(Funct3D)
-                      3'b010:                      ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsw
+                      3'b010:                       ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsw
                       3'b011:  if (P.D_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsd
                       3'b100:  if (P.Q_SUPPORTED)   ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsq
                       3'b001:  if (P.ZFH_SUPPORTED) ControlsD = `FCTRLW'b0_0_10_00_0xx_0_0_0; // fsh

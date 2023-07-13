@@ -54,7 +54,6 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
   // STATUS REGISTER FIELD
   // See Privileged Spec Section 3.1.6
   // Lower privilege status registers are a subset of the full status register
-  // *** consider adding MBE, SBE, UBE fields, parameterized to be fixed or adjustable
   if (P.XLEN==64) begin: csrsr64 // RV64
     assign MSTATUS_REGW  = {STATUS_SD, 25'b0, STATUS_MBE, STATUS_SBE, STATUS_SXL, STATUS_UXL, 9'b0,
                            STATUS_TSR, STATUS_TW, STATUS_TVM, STATUS_MXR, STATUS_SUM, STATUS_MPRV,

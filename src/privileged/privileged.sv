@@ -82,6 +82,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
   output var logic [7:0]    PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],           // PMP configuration entries to MMU
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],  // PMP address entries to MMU
   output logic [2:0]        FRM_REGW,                                       // FPU rounding mode
+  output logic [3:0]        ENVCFG_CBE,                                     // Cache block operation enables
   // PC logic output in privileged unit                                    
   output logic [P.XLEN-1:0] UnalignedPCNextF,                               // Next PC from trap/return PC logic
   // control outputs                                                       
@@ -117,7 +118,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .STATUS_MPP, .STATUS_SPP, .NextPrivilegeModeM, .PrivilegeModeW);
 
   // decode privileged instructions
-  privdec #(P) pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:20]), 
+  privdec #(P) pmd(.clk, .reset, .StallM, .InstrM(InstrM[31:15]), 
     .PrivilegedM, .IllegalIEUFPUInstrM, .IllegalCSRAccessM, 
     .PrivilegeModeW, .STATUS_TSR, .STATUS_TVM, .STATUS_TW, .IllegalInstrFaultM, 
     .EcallFaultM, .BreakpointFaultM, .sretM, .mretM, .wfiM, .sfencevmaM);
@@ -136,7 +137,7 @@ module privileged import cvw::*;  #(parameter cvw_t P) (
     .STATUS_MIE, .STATUS_SIE, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_TW, .STATUS_FS,
     .MEDELEG_REGW, .MIP_REGW, .MIE_REGW, .MIDELEG_REGW,
     .SATP_REGW, .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW,
-    .SetFflagsM, .FRM_REGW, 
+    .SetFflagsM, .FRM_REGW, .ENVCFG_CBE,
     .CSRReadValW,.UnalignedPCNextF, .IllegalCSRAccessM, .BigEndianM);
 
   // pipeline early-arriving trap sources

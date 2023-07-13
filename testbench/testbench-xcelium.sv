@@ -89,6 +89,7 @@ module testbench;
   logic Validate;
   logic SelectTest;
 
+  
 
   // pick tests based on modes supported
   initial begin
@@ -324,21 +325,35 @@ module testbench;
   // Some memories are not reset, but should be zeros or set to some initial value for simulation
   ////////////////////////////////////////////////////////////////////////////////
   integer adrindex;
+
+  if (P.UNCORE_RAM_SUPPORTED) `define TB_UNCORE_RAM_SUPPORTED;
+  if (P.BPRED_SUPPORTED) `define TB_BPRED_SUPPORTED;
+  if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) `define TB_BHT;
+
   always @(posedge clk) begin
     if (ResetMem)  // program memory is sometimes reset
-      if (P.UNCORE_RAM_SUPPORTED)
+      if (P.UNCORE_RAM_SUPPORTED) begin
+      `ifdef TB_UNCORE_RAM_SUPPORTED
         for (adrindex=0; adrindex<(P.UNCORE_RAM_RANGE>>1+(P.XLEN/32)); adrindex = adrindex+1) 
           dut.uncore.uncore.ram.ram.memory.RAM[adrindex] = '0;
+      `endif
+      end
     if(reset) begin  // branch predictor must always be reset
       if (P.BPRED_SUPPORTED) begin
+      `ifdef TB_BPRED_SUPPORTED
         // local history only
-        if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR)
+        if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
+        `ifdef TB_BHT
           for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
             dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
+        `endif
+        end
+        // these are both always included if there is a bpred
         for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++)
           dut.core.ifu.bpred.bpred.TargetPredictor.memory.mem[adrindex] = 0;
         for(adrindex = 0; adrindex < 2**P.BPRED_SIZE; adrindex++)
           dut.core.ifu.bpred.bpred.Predictor.DirPredictor.PHT.mem[adrindex] = 0;
+      `endif
       end
     end
   end
@@ -346,9 +361,14 @@ module testbench;
   ////////////////////////////////////////////////////////////////////////////////
   // load memories with program image
   ////////////////////////////////////////////////////////////////////////////////
+  if (P.FPGA) `define TB_FPGA  // this is a gross hack for xcelium and verilator
+  if (P.IROM_SUPPORTED) `define TB_IROM_SUPPORTED
+  if (P.DTIM_SUPPORTED) `define TB_DTIM_SUPPORTED
+  if (P.BUS_SUPPORTED) `define TB_BUS_SUPPORTED
   always @(posedge clk) begin
     if (LoadMem) begin
       if (P.FPGA) begin
+      `ifdef TB_FPGA
         string romfilename, sdcfilename;
         romfilename = {"../tests/custom/fpga-test-sdc/bin/fpga-test-sdc.memfile"};
         sdcfilename = {"../testbench/sdc/ramdisk2.hex"};   
@@ -356,14 +376,27 @@ module testbench;
         $readmemh(sdcfilename, sdcard.sdcard.FLASHmem);
         // shorten sdc timers for simulation
         dut.uncore.uncore.sdc.SDC.LimitTimers = 1;
-      end 
-      else if (P.IROM_SUPPORTED)     $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
-      else if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
-      if (P.DTIM_SUPPORTED)     $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      `endif
+      end
+      else if (P.IROM_SUPPORTED) begin
+      `ifdef TB_IROM_SUPPORTED
+        $readmemh(memfilename, dut.core.ifu.irom.irom.rom.ROM);
+      `endif
+      end
+      else if (P.BUS_SUPPORTED) begin
+      `ifdef TB_BUS_SUPPORTED
+        $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      `endif
+      end
+      if (P.DTIM_SUPPORTED) begin
+      `ifdef TB_DTIM_SUPPORTED
+        $readmemh(memfilename, dut.core.lsu.dtim.dtim.ram.RAM);
+      `endif
+      end
       $display("Read memfile %s", memfilename);
     end
   end  
- 
+
   ////////////////////////////////////////////////////////////////////////////////
   // Actual hardware
   ////////////////////////////////////////////////////////////////////////////////
@@ -468,6 +501,8 @@ module testbench;
     logic [P.XLEN-1:0] signature[0:SIGNATURESIZE];
     string            signame;
     logic [P.XLEN-1:0] testadr, testadrNoBase;
+
+    if (P.DTIM_SUPPORTED) `define TB_DTIM_SUPPORTED2
     
     // for tests with no self checking mechanism, read .signature.output file and compare to check for errors
     // clear signature to prevent contamination from previous tests
@@ -503,9 +538,17 @@ module testbench;
     /* verilator lint_off INFINITELOOP */
     while (signature[i] !== 'bx) begin
       logic [P.XLEN-1:0] sig;
-      if (P.DTIM_SUPPORTED) sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
-      else if (P.UNCORE_RAM_SUPPORTED) sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
+      if (P.DTIM_SUPPORTED) begin
+      `ifdef TB_DTIM_SUPPORTED2
+        //sig = testbench.dut.core.lsu.dtim.dtim.ram.RAM[testadrNoBase+i];
+      `endif
+      end
+      else if (P.UNCORE_RAM_SUPPORTED) begin
+      `ifdef TB_UNCORE_RAM_SUPPORTED
+        sig = testbench.dut.uncore.uncore.ram.ram.memory.RAM[testadrNoBase+i];
       //$display("signature[%h] = %h sig = %h", i, signature[i], sig);
+      `endif
+      end
       if (signature[i] !== sig & (signature[i] !== testbench.DCacheFlushFSM.ShadowRAM[testadr+i])) begin  
         errors = errors+1;
         $display("  Error on test %s result %d: adr = %h sim (D$) %h sim (DTIM_SUPPORTED) = %h, signature = %h", 

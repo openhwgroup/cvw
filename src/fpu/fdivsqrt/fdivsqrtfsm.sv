@@ -27,20 +27,20 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
-  input  logic               clk, reset, 
-  input  logic               XInfE, YInfE, 
-  input  logic               XZeroE, YZeroE, 
-  input  logic               XNaNE, YNaNE, 
-  input  logic               FDivStartE, IDivStartE,
-  input  logic               XsE, WZeroE,
-  input  logic               SqrtE,
-  input  logic               StallM, FlushE,
-  input  logic               IntDivE,
-  input  logic               ISpecialCaseE,
+  input  logic                clk, reset, 
+  input  logic                XInfE, YInfE, 
+  input  logic                XZeroE, YZeroE, 
+  input  logic                XNaNE, YNaNE, 
+  input  logic                FDivStartE, IDivStartE,
+  input  logic                XsE, WZeroE,
+  input  logic                SqrtE,
+  input  logic                StallM, FlushE,
+  input  logic                IntDivE,
+  input  logic                ISpecialCaseE,
   input  logic [P.DURLEN-1:0] CyclesE,
-  output logic               IFDivStartE,
-  output logic               FDivBusyE, FDivDoneE,
-  output logic               SpecialCaseM
+  output logic                IFDivStartE,
+  output logic                FDivBusyE, FDivDoneE,
+  output logic                SpecialCaseM
 );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
@@ -55,7 +55,7 @@ module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
  
   // terminate immediately on special cases
-  assign FSpecialCaseE = XZeroE | | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
+  assign FSpecialCaseE = XZeroE | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
   if (P.IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
   else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
