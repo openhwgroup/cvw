@@ -200,7 +200,7 @@ module controller import cvw::*;  #(parameter cvw_t P) (
                               ((P.XLEN == 64) & (Funct3D == 3'b011));
     assign BFunctD          = Funct3D[2:1] != 2'b01; // legal branches
     assign JRFunctD         = Funct3D == 3'b000;
-    assign PFunctD          = Funct3D == 3'b000 & Rs1D == 5'b0 & RdD == 5'b0;
+    assign PFunctD          = Funct3D == 3'b000 & RdD == 5'b0;
     assign CSRFunctD        = Funct3D[1:0] != 2'b00; 
     assign IWValidFunct3D   = Funct3D == 3'b000 | Funct3D == 3'b001 | Funct3D == 3'b101;
   end else begin:legalcheck2
