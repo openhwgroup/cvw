@@ -297,7 +297,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b11};
             end
    end
-   if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
       Tests = {Tests, f128div, f128sqrt};
       OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
       WriteInt = {WriteInt, 1'b0, 1'b0};
@@ -433,7 +433,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b01};
             end
    end
-   if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
       Tests = {Tests, f64div, f64sqrt};
       OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
       WriteInt = {WriteInt, 1'b0, 1'b0};
@@ -553,7 +553,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b00};
             end
    end
-    if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+    if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
          Tests = {Tests, f32div, f32sqrt};
          OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
          WriteInt = {WriteInt, 1'b0, 1'b0};
@@ -655,7 +655,7 @@ module testbenchfp;
                Fmt = {Fmt, 2'b10};
             end
    end
-   if (TEST === "divremsqrt") begin // if unified div sqrt is being tested
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
         Tests = {Tests, f16div, f16sqrt};
         OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
         WriteInt = {WriteInt, 1'b0, 1'b0};
@@ -862,7 +862,7 @@ module testbenchfp;
            .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
            .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
-   if (TEST === "divremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+   if (TEST === "fdivremsqrt" | TEST === "divremsqrttest" | TEST === "customdiv" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
     drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
            .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
            .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
