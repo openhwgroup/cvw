@@ -2077,7 +2077,7 @@ string arch64zbs[] = '{
 
  string custom[] = '{
     `RISCVARCHTEST,
-     "rv64i_m/M/src/rem-01.S"
+     "rv64i_m/M/src/div-01.S"
     /*"simple",
     "debug",
     "cacheTest"*/
