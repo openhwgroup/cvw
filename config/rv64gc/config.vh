@@ -52,6 +52,7 @@ localparam ZICBOM_SUPPORTED = 0;
 localparam ZICBOZ_SUPPORTED = 0;
 localparam ZICBOP_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
+localparam SVINVAL_SUPPORTED = 1;
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 1;
