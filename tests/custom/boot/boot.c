@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include "boot.h"
+#include "gpt.h"
 
 /* Card type flags (card_type) */
 #define CT_MMC          0x01            /* MMC ver 3 */
@@ -400,12 +401,15 @@ int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type) {
 
 void copyFlash(QWORD address, QWORD * Dst, DWORD numBlocks) {
   BYTE card_type;
-
+  int ret = 0;
+  
   card_type = ini_sd();
 
-    BYTE * buf = (BYTE *)Dst;
+  // BYTE * buf = (BYTE *)Dst;
     
-    if (disk_read(buf, (LBA_t)address, (UINT)numBlocks, card_type) < 0) /* UART Print function?*/;
+  // if (disk_read(buf, (LBA_t)address, (UINT)numBlocks, card_type) < 0) /* UART Print function?*/;
+  
+  ret = gpt_load_partitions(card_type);
 }
 
 /*
