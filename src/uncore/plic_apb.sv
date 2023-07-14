@@ -43,17 +43,17 @@
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
 module plic_apb (
-  input  logic             PCLK, PRESETn,
-  input  logic             PSEL,
-  input  logic [27:0]      PADDR, 
-  input  logic [`XLEN-1:0] PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
-  input  logic             PWRITE,
-  input  logic             PENABLE,
-  output logic [`XLEN-1:0] PRDATA,
-  output logic             PREADY,
-  input  logic             UARTIntr,GPIOIntr,
-  output logic             MExtInt, SExtInt
+  input logic               PCLK, PRESETn,
+  input logic               PSEL,
+  input logic [27:0]        PADDR, 
+  input logic [`XLEN-1:0]   PWDATA,
+  input logic [`XLEN/8-1:0] PSTRB,
+  input logic               PWRITE,
+  input logic               PENABLE,
+  output logic [`XLEN-1:0]  PRDATA,
+  output logic              PREADY,
+  input logic               UARTIntr,GPIOIntr,SDCIntr,
+  output logic              MExtInt, SExtInt
 );
 
   logic memwrite, memread;
@@ -166,6 +166,11 @@ module plic_apb (
     `endif
     `ifdef PLIC_UART_ID
       requests[`PLIC_UART_ID] = UARTIntr;
+    `endif
+
+    // Jacob: July 8th 2023
+    `ifdef PLIC_SDC_ID
+      requests[`PLIC_SDC_ID] = SDCIntr;
     `endif
   end
 

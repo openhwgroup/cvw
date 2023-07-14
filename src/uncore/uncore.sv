@@ -57,7 +57,8 @@ module uncore (
   input logic [31:0]         GPIOPinsIn, // GPIO pin input value
   output logic [31:0]        GPIOPinsOut, GPIOPinsEn, // GPIO pin output value and enable
   input logic                UARTSin, // UART serial input
-  output logic               UARTSout                  // UART serial output
+  output logic               UARTSout, // UART serial output
+  input logic                SDCIntr                
   /*output logic             SDCCmdOut,                 // SD Card command output
   output logic             SDCCmdOE,                  // SD Card command output enable
   input  logic             SDCCmdIn,                  // SD Card command input
@@ -130,7 +131,7 @@ module uncore (
 
   if (`PLIC_SUPPORTED == 1) begin : plic
     plic_apb plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .MExtInt, .SExtInt);
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;

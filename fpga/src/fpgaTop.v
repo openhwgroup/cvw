@@ -41,7 +41,7 @@ module fpgaTop
    inout [3:0]     SDCDat,
    output          SDCCLK,
    inout           SDCCmd,
-   input           SDCCD, 
+   input           SDCCD,
 
    output          calib,
    output          cpu_reset,
@@ -415,6 +415,9 @@ module fpgaTop
   wire        sd_cmd_reg_o;
   wire        sd_cmd_reg_t;
 
+  // SD Card Interrupt signal
+  wire        SDCintr;
+
   // New SDC Data IOBUF connections
   wire [3:0] sd_dat_i;
   wire  [3:0] sd_dat_reg_o;
@@ -506,7 +509,8 @@ module fpgaTop
      .GPIOPinsEn(GPIOPinsEn),
      // UART
      .UARTSin(UARTSin),
-     .UARTSout(UARTSout)  
+     .UARTSout(UARTSout),
+     .SDCIntr(SDCIntr)
      // SD Card   
      /*.SDCDatIn(SDCDatIn),
      .SDCCmdIn(SDCCmdIn),     
@@ -864,7 +868,9 @@ module fpgaTop
      .sd_cmd_i(sd_cmd_i),
 
      .sdio_clk(SDCCLK),
-     .sdio_cd(SDCCD)
+     .sdio_cd(SDCCD),
+
+     .interrupt(SDCIntr)
 	 );
 
   xlnx_axi_dwidth_conv_32to64 axi_conv_up
