@@ -225,7 +225,7 @@ module fpgaTop
      .peripheral_aresetn(peripheral_aresetn));
 
   // wally
-  wallypipelinedsoc wallypipelinedsoc
+  wallypipelinedsocwrapper wallypipelinedsocwrapper
     (.clk(CPUCLK),
      .reset_ext(bus_struct_reset),
      // bus interface

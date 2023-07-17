@@ -24,7 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 /* verilator lint_off DECLFILENAME */
 
 module mux2 #(parameter WIDTH = 8) (

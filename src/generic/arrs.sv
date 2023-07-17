@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module arrs(
   input  logic  clk,
   input  logic  areset,

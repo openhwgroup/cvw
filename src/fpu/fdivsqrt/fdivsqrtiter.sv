@@ -26,38 +26,36 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtiter(
-  input  logic             clk,
-  input  logic             IFDivStartE, 
-  input  logic             FDivBusyE, 
-  input  logic             SqrtE,
-  input  logic [`DIVb+3:0] X, D,
-  output logic [`DIVb:0]   FirstU, FirstUM,
-  output logic [`DIVb+1:0] FirstC,
-  output logic             Firstun,
-  output logic [`DIVb+3:0] FirstWS, FirstWC
+module fdivsqrtiter import cvw::*;  #(parameter cvw_t P) (
+  input  logic              clk,
+  input  logic              IFDivStartE, 
+  input  logic              FDivBusyE, 
+  input  logic              SqrtE,
+  input  logic [P.DIVb+3:0] X, D,
+  output logic [P.DIVb:0]   FirstU, FirstUM,
+  output logic [P.DIVb+1:0] FirstC,
+  output logic              Firstun,
+  output logic [P.DIVb+3:0] FirstWS, FirstWC
 );
 
   /* verilator lint_off UNOPTFLAT */
-  logic [`DIVb+3:0]      WSNext[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]      WCNext[`DIVCOPIES-1:0]; // Q4.b
-  logic [`DIVb+3:0]      WS[`DIVCOPIES:0];       // Q4.b
-  logic [`DIVb+3:0]      WC[`DIVCOPIES:0];       // Q4.b
-  logic [`DIVb:0]        U[`DIVCOPIES:0];        // U1.b
-  logic [`DIVb:0]        UM[`DIVCOPIES:0];       // U1.b
-  logic [`DIVb:0]        UNext[`DIVCOPIES-1:0];  // U1.b
-  logic [`DIVb:0]        UMNext[`DIVCOPIES-1:0]; // U1.b
-  logic [`DIVb+1:0]      C[`DIVCOPIES:0];        // Q2.b
-  logic [`DIVb+1:0]      initC;                  // Q2.b
-  logic [`DIVCOPIES-1:0] un; 
+  logic [P.DIVb+3:0]      WSNext[P.DIVCOPIES-1:0]; // Q4.b
+  logic [P.DIVb+3:0]      WCNext[P.DIVCOPIES-1:0]; // Q4.b
+  logic [P.DIVb+3:0]      WS[P.DIVCOPIES:0];       // Q4.b
+  logic [P.DIVb+3:0]      WC[P.DIVCOPIES:0];       // Q4.b
+  logic [P.DIVb:0]        U[P.DIVCOPIES:0];        // U1.b
+  logic [P.DIVb:0]        UM[P.DIVCOPIES:0];       // U1.b
+  logic [P.DIVb:0]        UNext[P.DIVCOPIES-1:0];  // U1.b
+  logic [P.DIVb:0]        UMNext[P.DIVCOPIES-1:0]; // U1.b
+  logic [P.DIVb+1:0]      C[P.DIVCOPIES:0];        // Q2.b
+  logic [P.DIVb+1:0]      initC;                   // Q2.b
+  logic [P.DIVCOPIES-1:0] un; 
 
-  logic [`DIVb+3:0]      WSN, WCN;               // Q4.b
-  logic [`DIVb+3:0]      DBar, D2, DBar2;        // Q4.b
-  logic [`DIVb+1:0]      NextC;
-  logic [`DIVb:0]        UMux, UMMux;
-  logic [`DIVb:0]        initU, initUM;
+  logic [P.DIVb+3:0]      WSN, WCN;                // Q4.b
+  logic [P.DIVb+3:0]      DBar, D2, DBar2;         // Q4.b
+  logic [P.DIVb+1:0]      NextC;
+  logic [P.DIVb:0]        UMux, UMMux;
+  logic [P.DIVb:0]        initU, initUM;
   /* verilator lint_on UNOPTFLAT */
 
   // Top Muxes and Registers
@@ -65,37 +63,37 @@ module fdivsqrtiter(
   // Otherwise, the divisor is retained and the residual and result
   // are fed back for the next iteration.
  
-  // Residual WS/SC registers/initializaiton mux
-  mux2   #(`DIVb+4) wsmux(WS[`DIVCOPIES], X, IFDivStartE, WSN);
-  mux2   #(`DIVb+4) wcmux(WC[`DIVCOPIES], '0, IFDivStartE, WCN);
-  flopen #(`DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
-  flopen #(`DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
+  // Residual WS/SC registers/initialization mux
+  mux2   #(P.DIVb+4) wsmux(WS[P.DIVCOPIES], X, IFDivStartE, WSN);
+  mux2   #(P.DIVb+4) wcmux(WC[P.DIVCOPIES], '0, IFDivStartE, WCN);
+  flopen #(P.DIVb+4) wsreg(clk, FDivBusyE, WSN, WS[0]);
+  flopen #(P.DIVb+4) wcreg(clk, FDivBusyE, WCN, WC[0]);
 
   // UOTFC Result U and UM registers/initialization mux
   // Initialize U to 1.0 and UM to 0 for square root; U to 0 and UM to -1 otherwise
-  assign initU  = {SqrtE, {(`DIVb){1'b0}}};
-  assign initUM = {~SqrtE, {(`DIVb){1'b0}}};
-  mux2   #(`DIVb+1)  Umux(UNext[`DIVCOPIES-1],  initU,  IFDivStartE, UMux);
-  mux2   #(`DIVb+1) UMmux(UMNext[`DIVCOPIES-1], initUM, IFDivStartE, UMMux);
-  flopen #(`DIVb+1)  UReg(clk, FDivBusyE, UMux,  U[0]);
-  flopen #(`DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
+  assign initU  = {SqrtE, {(P.DIVb){1'b0}}};
+  assign initUM = {~SqrtE, {(P.DIVb){1'b0}}};
+  mux2   #(P.DIVb+1)  Umux(UNext[P.DIVCOPIES-1],  initU,  IFDivStartE, UMux);
+  mux2   #(P.DIVb+1) UMmux(UMNext[P.DIVCOPIES-1], initUM, IFDivStartE, UMMux);
+  flopen #(P.DIVb+1)  UReg(clk, FDivBusyE, UMux,  U[0]);
+  flopen #(P.DIVb+1) UMReg(clk, FDivBusyE, UMMux, UM[0]);
 
   // C register/initialization mux
   // Initialize C to -1 for sqrt and -R for division
   logic [1:0] initCUpper;
-  if(`RADIX == 4) begin
+  if(P.RADIX == 4) begin
     mux2 #(2) cuppermux4(2'b00, 2'b11, SqrtE, initCUpper);
   end else begin
     mux2 #(2) cuppermux2(2'b10, 2'b11, SqrtE, initCUpper);
   end
   
-  assign initC = {initCUpper, {`DIVb{1'b0}}};
-  mux2   #(`DIVb+2) cmux(C[`DIVCOPIES], initC, IFDivStartE, NextC); 
-  flopen #(`DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
+  assign initC = {initCUpper, {P.DIVb{1'b0}}};
+  mux2   #(P.DIVb+2) cmux(C[P.DIVCOPIES], initC, IFDivStartE, NextC); 
+  flopen #(P.DIVb+2) creg(clk, FDivBusyE, NextC, C[0]);
 
   // Divisor Selections
   assign DBar    = ~D;        // for -D
-  if(`RADIX == 4) begin : d2
+  if(P.RADIX == 4) begin : d2
     assign D2    = D << 1;    // for 2D,  only used in R4
     assign DBar2 = ~D2;       // for -2D, only used in R4
   end
@@ -103,15 +101,15 @@ module fdivsqrtiter(
   // k=DIVCOPIES of the recurrence logic
   genvar i;
   generate
-    for(i=0; $unsigned(i)<`DIVCOPIES; i++) begin : iterations
-      if (`RADIX == 2) begin: stage
-        fdivsqrtstage2 fdivsqrtstage(.D, .DBar, .SqrtE,
+    for(i=0; $unsigned(i)<P.DIVCOPIES; i++) begin : iterations
+      if (P.RADIX == 2) begin: stage
+        fdivsqrtstage2 #(P) fdivsqrtstage(.D, .DBar, .SqrtE,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]),
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end else begin: stage
         logic j1;
-        assign j1 = (i == 0 & ~C[0][`DIVb-1]);
-        fdivsqrtstage4 fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
+        assign j1 = (i == 0 & ~C[0][P.DIVb-1]);
+        fdivsqrtstage4 #(P) fdivsqrtstage(.D, .DBar, .D2, .DBar2, .SqrtE, .j1,
         .WS(WS[i]), .WC(WC[i]), .WSNext(WSNext[i]), .WCNext(WCNext[i]), 
         .C(C[i]), .U(U[i]), .UM(UM[i]), .CNext(C[i+1]), .UNext(UNext[i]), .UMNext(UMNext[i]), .un(un[i]));
       end

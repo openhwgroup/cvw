@@ -19,7 +19,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
 
 `define NUM_REGS 32
 `define NUM_CSRS 4096
@@ -29,9 +28,10 @@
 `define PRINT_ALL 0
 `define PRINT_CSRS 0
 
-module wallyTracer(rvviTrace rvvi);
 
-  localparam NUMREGS = `E_SUPPORTED ? 16 : 32;
+module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
+
+  localparam NUMREGS = P.E_SUPPORTED ? 16 : 32;
   
   // wally specific signals
   logic 						 reset;
@@ -39,8 +39,8 @@ module wallyTracer(rvviTrace rvvi);
   logic                          InstrValidD, InstrValidE;
   logic                          StallF, StallD;
   logic                          STATUS_SXL, STATUS_UXL;
-  logic [`XLEN-1:0] 			 PCNextF, PCF, PCD, PCE, PCM, PCW;
-  logic [`XLEN-1:0] 			 InstrRawD, InstrRawE, InstrRawM, InstrRawW;
+  logic [P.XLEN-1:0] 			 PCNextF, PCF, PCD, PCE, PCM, PCW;
+  logic [P.XLEN-1:0] 			 InstrRawD, InstrRawE, InstrRawM, InstrRawW;
   logic 						 InstrValidM, InstrValidW;
   logic 						 StallE, StallM, StallW;
   logic 						 FlushD, FlushE, FlushM, FlushW;
@@ -48,20 +48,22 @@ module wallyTracer(rvviTrace rvvi);
   logic 						 IntrF, IntrD, IntrE, IntrM, IntrW;
   logic 						 HaltM, HaltW;
   logic [1:0] 					 PrivilegeModeW;
-  logic [`XLEN-1:0] 			 rf[NUMREGS];
+  logic [P.XLEN-1:0] 			 rf[NUMREGS];
   logic [NUMREGS-1:0] 			 rf_wb;
   logic [4:0] 					 rf_a3;
   logic 						 rf_we3;
-  logic [`XLEN-1:0] 			 frf[32];
+  logic [P.XLEN-1:0] 			 frf[32];
   logic [`NUM_REGS-1:0] 		 frf_wb;
   logic [4:0] 					 frf_a4;
   logic 						 frf_we4;
-  logic [`XLEN-1:0]              CSRArray [logic[11:0]];
-  logic [`XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
+  logic [P.XLEN-1:0]              CSRArray [logic[11:0]];
+  logic [P.XLEN-1:0] 			 CSRArrayOld [logic[11:0]];
   logic [`NUM_CSRS-1:0] 		 CSR_W;
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
-  
+  logic                          wfiM;
+  logic                          InterruptM;
+    
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
   assign InstrValidD    = testbench.dut.core.ieu.c.InstrValidD;
@@ -88,6 +90,9 @@ module wallyTracer(rvviTrace rvvi);
   assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
   assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
+  assign wfiM           = testbench.dut.core.priv.priv.wfiM;
+  assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
+  
 
   logic valid;
   int csrid;
@@ -102,8 +107,8 @@ module wallyTracer(rvviTrace rvvi);
 	
       // PMPCFG  space is 0-15 3a0 - 3af
 	  int i, i4, i8, csrid;
-      logic [`XLEN-1:0] pmp;
-      for (i=0; i<`PMP_ENTRIES; i+=8) begin
+      logic [P.XLEN-1:0] pmp;
+      for (i=0; i<P.PMP_ENTRIES; i+=8) begin
         i4 = i / 4;
         i8 = (i / 8) * 8;
         pmp = 0;
@@ -121,7 +126,7 @@ module wallyTracer(rvviTrace rvvi);
       end
 
       // PMPADDR space is 0-63 3b0 - 3ef
-      for (i=0; i<`PMP_ENTRIES; i++) begin
+      for (i=0; i<P.PMP_ENTRIES; i++) begin
         pmp = testbench.dut.core.priv.priv.csr.csrm.PMPADDR_ARRAY_REGW[i];
         
         csrid = 12'h3B0 + i;
@@ -139,13 +144,14 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h344] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW;
 	  CSRArray[12'h304] = testbench.dut.core.priv.priv.csr.csrm.MIE_REGW;
 	  CSRArray[12'h301] = testbench.dut.core.priv.priv.csr.csrm.MISA_REGW;
+	  CSRArray[12'h30A] = testbench.dut.core.priv.priv.csr.csrm.MENVCFG_REGW;
 	  CSRArray[12'hF14] = testbench.dut.core.priv.priv.csr.csrm.MHARTID_REGW;
 	  CSRArray[12'h340] = testbench.dut.core.priv.priv.csr.csrm.MSCRATCH_REGW;
 	  CSRArray[12'h342] = testbench.dut.core.priv.priv.csr.csrm.MCAUSE_REGW;
 	  CSRArray[12'h343] = testbench.dut.core.priv.priv.csr.csrm.MTVAL_REGW;
 	  CSRArray[12'hF11] = 0;
 	  CSRArray[12'hF12] = 0;
-	  CSRArray[12'hF13] = `XLEN'h100;
+	  CSRArray[12'hF13] = {{P.XLEN-12{1'b0}}, 12'h100}; //P.XLEN'h100;
 	  CSRArray[12'hF15] = 0;
 	  CSRArray[12'h34A] = 0;
 	  // MCYCLE and MINSTRET
@@ -157,11 +163,12 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h105] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVEC_REGW;
 	  CSRArray[12'h141] = testbench.dut.core.priv.priv.csr.csrs.csrs.SEPC_REGW;
 	  CSRArray[12'h106] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCOUNTEREN_REGW;
+	  CSRArray[12'h10A] = testbench.dut.core.priv.priv.csr.csrs.csrs.SENVCFG_REGW;
 	  CSRArray[12'h180] = testbench.dut.core.priv.priv.csr.csrs.csrs.SATP_REGW;
 	  CSRArray[12'h140] = testbench.dut.core.priv.priv.csr.csrs.csrs.SSCRATCH_REGW;
 	  CSRArray[12'h143] = testbench.dut.core.priv.priv.csr.csrs.csrs.STVAL_REGW;
 	  CSRArray[12'h142] = testbench.dut.core.priv.priv.csr.csrs.csrs.SCAUSE_REGW;
-	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
+	  CSRArray[12'h144] = testbench.dut.core.priv.priv.csr.csrm.MIP_REGW & 12'h222 & testbench.dut.core.priv.priv.csr.csrm.MIDELEG_REGW;
 	  CSRArray[12'h14D] = testbench.dut.core.priv.priv.csr.csrs.csrs.STIMECMP_REGW;
 	  // user CSRs
 	  CSRArray[12'h001] = testbench.dut.core.priv.priv.csr.csru.csru.FFLAGS_REGW;
@@ -189,6 +196,7 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h344] = CSRArrayOld[12'h344];
 	  CSRArray[12'h304] = CSRArrayOld[12'h304];
 	  CSRArray[12'h301] = CSRArrayOld[12'h301];
+	  CSRArray[12'h30A] = CSRArrayOld[12'h30A];
 	  CSRArray[12'hF14] = CSRArrayOld[12'hF14];
 	  CSRArray[12'h340] = CSRArrayOld[12'h340];
 	  CSRArray[12'h342] = CSRArrayOld[12'h342];
@@ -207,6 +215,7 @@ module wallyTracer(rvviTrace rvvi);
 	  CSRArray[12'h105] = CSRArrayOld[12'h105];
 	  CSRArray[12'h141] = CSRArrayOld[12'h141];
 	  CSRArray[12'h106] = CSRArrayOld[12'h106];
+	  CSRArray[12'h10A] = CSRArrayOld[12'h10A];
 	  CSRArray[12'h180] = CSRArrayOld[12'h180];
 	  CSRArray[12'h140] = CSRArrayOld[12'h140];
 	  CSRArray[12'h143] = CSRArrayOld[12'h143];
@@ -250,10 +259,10 @@ module wallyTracer(rvviTrace rvvi);
   assign CSRWriteM = testbench.dut.core.priv.priv.csr.CSRWriteM;
   
   // pipeline to writeback stage
-  flopenrc #(`XLEN) InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
-  flopenrc #(`XLEN) InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
-  flopenrc #(`XLEN) InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
-  flopenrc #(`XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
+  flopenrc #(P.XLEN) InstrRawEReg (clk, reset, FlushE, ~StallE, InstrRawD, InstrRawE);
+  flopenrc #(P.XLEN) InstrRawMReg (clk, reset, FlushM, ~StallM, InstrRawE, InstrRawM);
+  flopenrc #(P.XLEN) InstrRawWReg (clk, reset, FlushW, ~StallW, InstrRawM, InstrRawW);
+  flopenrc #(P.XLEN) PCWReg (clk, reset, FlushW, ~StallW, PCM, PCW);
   flopenrc #(1)     InstrValidMReg (clk, reset, FlushW, ~StallW, InstrValidM, InstrValidW);
   flopenrc #(1)     TrapWReg (clk, reset, 1'b0, ~StallW, TrapM, TrapW);
   flopenrc #(1)     HaltWReg (clk, reset, 1'b0, ~StallW, HaltM, HaltW);
@@ -308,6 +317,7 @@ module wallyTracer(rvviTrace rvvi);
     CSRArrayOld[12'h344] = CSRArray[12'h344];
     CSRArrayOld[12'h304] = CSRArray[12'h304];
     CSRArrayOld[12'h301] = CSRArray[12'h301];
+    CSRArrayOld[12'h30A] = CSRArray[12'h30A];
     CSRArrayOld[12'hF14] = CSRArray[12'hF14];
     CSRArrayOld[12'h340] = CSRArray[12'h340];
     CSRArrayOld[12'h342] = CSRArray[12'h342];
@@ -326,6 +336,7 @@ module wallyTracer(rvviTrace rvvi);
     CSRArrayOld[12'h105] = CSRArray[12'h105];
     CSRArrayOld[12'h141] = CSRArray[12'h141];
     CSRArrayOld[12'h106] = CSRArray[12'h106];
+    CSRArrayOld[12'h10A] = CSRArray[12'h10A];
     CSRArrayOld[12'h180] = CSRArray[12'h180];
     CSRArrayOld[12'h140] = CSRArray[12'h140];
     CSRArrayOld[12'h143] = CSRArray[12'h143];
@@ -352,6 +363,7 @@ module wallyTracer(rvviTrace rvvi);
   assign #2 CSR_W[12'h305] = (CSRArrayOld[12'h305] != CSRArray[12'h305]) ? 1 : 0;
   assign #2 CSR_W[12'h341] = (CSRArrayOld[12'h341] != CSRArray[12'h341]) ? 1 : 0;
   assign #2 CSR_W[12'h306] = (CSRArrayOld[12'h306] != CSRArray[12'h306]) ? 1 : 0;
+  assign #2 CSR_W[12'h30A] = (CSRArrayOld[12'h30A] != CSRArray[12'h30A]) ? 1 : 0;
   assign #2 CSR_W[12'h320] = (CSRArrayOld[12'h320] != CSRArray[12'h320]) ? 1 : 0;
   assign #2 CSR_W[12'h302] = (CSRArrayOld[12'h302] != CSRArray[12'h302]) ? 1 : 0;
   assign #2 CSR_W[12'h303] = (CSRArrayOld[12'h303] != CSRArray[12'h303]) ? 1 : 0;
@@ -374,6 +386,7 @@ module wallyTracer(rvviTrace rvvi);
   assign #2 CSR_W[12'h105] = (CSRArrayOld[12'h105] != CSRArray[12'h105]) ? 1 : 0;
   assign #2 CSR_W[12'h141] = (CSRArrayOld[12'h141] != CSRArray[12'h141]) ? 1 : 0;
   assign #2 CSR_W[12'h106] = (CSRArrayOld[12'h106] != CSRArray[12'h106]) ? 1 : 0;
+  assign #2 CSR_W[12'h10A] = (CSRArrayOld[12'h10A] != CSRArray[12'h10A]) ? 1 : 0;
   assign #2 CSR_W[12'h180] = (CSRArrayOld[12'h180] != CSRArray[12'h180]) ? 1 : 0;
   assign #2 CSR_W[12'h140] = (CSRArrayOld[12'h140] != CSRArray[12'h140]) ? 1 : 0;
   assign #2 CSR_W[12'h143] = (CSRArrayOld[12'h143] != CSRArray[12'h143]) ? 1 : 0;
@@ -394,6 +407,7 @@ module wallyTracer(rvviTrace rvvi);
   assign rvvi.csr_wb[0][0][12'h303] = CSR_W[12'h303];
   assign rvvi.csr_wb[0][0][12'h344] = CSR_W[12'h344];
   assign rvvi.csr_wb[0][0][12'h304] = CSR_W[12'h304];
+  assign rvvi.csr_wb[0][0][12'h30A] = CSR_W[12'h30A];
   assign rvvi.csr_wb[0][0][12'h301] = CSR_W[12'h301];
   assign rvvi.csr_wb[0][0][12'hF14] = CSR_W[12'hF14];
   assign rvvi.csr_wb[0][0][12'h340] = CSR_W[12'h340];
@@ -411,6 +425,7 @@ module wallyTracer(rvviTrace rvvi);
   assign rvvi.csr_wb[0][0][12'h105] = CSR_W[12'h105];
   assign rvvi.csr_wb[0][0][12'h141] = CSR_W[12'h141];
   assign rvvi.csr_wb[0][0][12'h106] = CSR_W[12'h106];
+  assign rvvi.csr_wb[0][0][12'h10A] = CSR_W[12'h10A];
   assign rvvi.csr_wb[0][0][12'h180] = CSR_W[12'h180];
   assign rvvi.csr_wb[0][0][12'h140] = CSR_W[12'h140];
   assign rvvi.csr_wb[0][0][12'h143] = CSR_W[12'h143];
@@ -431,6 +446,7 @@ module wallyTracer(rvviTrace rvvi);
   assign rvvi.csr[0][0][12'h303]    = CSRArray[12'h303];
   assign rvvi.csr[0][0][12'h344]    = CSRArray[12'h344];
   assign rvvi.csr[0][0][12'h304]    = CSRArray[12'h304];
+  assign rvvi.csr[0][0][12'h30A]    = CSRArray[12'h30A];
   assign rvvi.csr[0][0][12'h301]    = CSRArray[12'h301];
   assign rvvi.csr[0][0][12'hF14]    = CSRArray[12'hF14];
   assign rvvi.csr[0][0][12'h340]    = CSRArray[12'h340];
@@ -448,6 +464,7 @@ module wallyTracer(rvviTrace rvvi);
   assign rvvi.csr[0][0][12'h105]    = CSRArray[12'h105];
   assign rvvi.csr[0][0][12'h141]    = CSRArray[12'h141];
   assign rvvi.csr[0][0][12'h106]    = CSRArray[12'h106];
+  assign rvvi.csr[0][0][12'h10A]    = CSRArray[12'h10A];
   assign rvvi.csr[0][0][12'h180]    = CSRArray[12'h180];
   assign rvvi.csr[0][0][12'h140]    = CSRArray[12'h140];
   assign rvvi.csr[0][0][12'h143]    = CSRArray[12'h143];

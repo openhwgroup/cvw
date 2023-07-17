@@ -29,7 +29,7 @@
 
 # Use /opt/riscv for installation - may require running script with sudo
 export RISCV="${1:-/opt/riscv}"
-export PATH=$PATH:$RISCV/bin
+export PATH=$PATH:$RISCV/bin:/usr/bin
 
 set -e # break on error
 
@@ -40,25 +40,25 @@ NUM_THREADS=8  # for >= 32GiB
 #NUM_THREADS=16  # for >= 64GiB
 
 sudo mkdir -p $RISCV
+# *** need to update permissions to local user
 
 # Update and Upgrade tools (see https://itsfoss.com/apt-update-vs-upgrade/)
-apt update -y
-apt upgrade -y
-apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev verilator
-
+sudo apt update -y
+sudo apt upgrade -y
+sudo apt install -y git gawk make texinfo bison flex build-essential python3 libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libpixman-1-dev ncurses-base ncurses-bin libncurses5-dev dialog curl wget ftp libgmp-dev libglib2.0-dev python3-pip pkg-config opam z3 zlib1g-dev automake autotools-dev libmpc-dev libmpfr-dev  gperf libtool patchutils bc 
 # Other python libraries used through the book.
-pip3 install matplotlib scipy scikit-learn adjustText lief
+sudo pip3 install matplotlib scipy scikit-learn adjustText lief
 
 # needed for Ubuntu 22.04, gcc cross compiler expects python not python2 or python3.
 if ! command -v python &> /dev/null
 then
     echo "WARNING: python3 was installed as python3 rather than python. Creating symlink."
-    ln -sf /usr/bin/python3 /usr/bin/python
+    sudo ln -sf /usr/bin/python3 /usr/bin/python
 fi
 
 # gcc cross-compiler (https://github.com/riscv-collab/riscv-gnu-toolchain)
 # To install GCC from source can take hours to compile. 
-#This configuration enables multilib to target many flavors of RISC-V.   
+# This configuration enables multilib to target many flavors of RISC-V.   
 # This book is tested with GCC 12.2 (tagged 2023.01.31), but will likely work with newer versions as well. 
 # Note that GCC12.2 has binutils 2.39, which has a known performance bug that causes
 # objdump to run 100x slower than in previous versions, causing riscof to make versy slowly.
@@ -68,10 +68,11 @@ fi
 cd $RISCV
 git clone https://github.com/riscv/riscv-gnu-toolchain
 cd riscv-gnu-toolchain
-git checkout 2023.01.31 
-./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
+# Temporarily use the following commands until gcc-13 is part of riscv-gnu-toolchain (issue #1249)
+git clone https://github.com/gcc-mirror/gcc -b releases/gcc-13 gcc-13
+./configure --prefix=/opt/riscv --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;" --with-gcc-src=`pwd`/gcc-13
+#./configure --prefix=${RISCV} --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
 make -j ${NUM_THREADS}
-make install
 
 # elf2hex (https://github.com/sifive/elf2hex)
 #The elf2hex utility to converts executable files into hexadecimal files for Verilog simulation. 
@@ -112,6 +113,23 @@ cd ../arch_test_target/spike/device
 sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
 sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 
+# Wally needs Verilator 5.0 or later.
+# Verilator needs to be built from scratch to get the latest version
+# apt-get install verilator installs version 4.028 as of 6/8/23
+sudo apt-get install -y perl g++ ccache help2man libgoogle-perftools-dev numactl perl-doc zlibc zlib1g 
+sudo apt-get install -y libfl2  libfl-dev  # Ubuntu only (ignore if gives error)
+cd $RISCV
+git clone https://github.com/verilator/verilator   # Only first time
+unsetenv VERILATOR_ROOT  # For csh; ignore error if on bash
+unset VERILATOR_ROOT  # For bash
+cd verilator
+git pull         # Make sure git repository is up-to-date
+git checkout master      # Use development branch (e.g. recent bug fixes)
+autoconf         # Create ./configure script
+./configure      # Configure and create Makefile
+make -j NUM_THREADS  # Build Verilator itself (if error, try just 'make')
+sudo make install
+
 # Sail (https://github.com/riscv/sail-riscv)
 # Sail is the new golden reference model for RISC-V.  Sail is written in OCaml, which 
 # is an object-oriented extension of ML, which in turn is a functional programming 
@@ -131,22 +149,19 @@ sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include
 #pip3 install chardet==3.0.4
 #pip3 install urllib3==1.22
 
+cd $RISCV
 opam init -y --disable-sandboxing
-opam switch create ocaml-base-compiler.4.06.1
+opam switch create ocaml-base-compiler.4.08.0
 opam install sail -y 
 
 eval $(opam config env)
 git clone https://github.com/riscv/sail-riscv.git
 cd sail-riscv
-# Current bug in Sail - use hash that works for Wally
-#   (may remove later if Sail is ever fixed)
-git checkout 4d05aa1698a0003a4f6f99e1380c743711c32052
 make -j ${NUM_THREADS}
 ARCH=RV32 make -j ${NUM_THREADS}
-ARCH=RV64 make -j ${NUM_THREADS}
-ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
-ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
+sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
+sudo ln -sf $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
 
-pip3 install testresources
-pip3 install riscof --ignore-installed PyYAML
+sudo pip3 install testresources
+pip3 install git+https://github.com/riscv/riscof.git
 

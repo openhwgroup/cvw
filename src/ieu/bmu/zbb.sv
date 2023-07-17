@@ -28,8 +28,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module zbb #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,   // Operands
   input  logic             W64,          // Indicates word operation
@@ -47,7 +45,7 @@ module zbb #(parameter WIDTH=32) (
 
   mux2 #(1) ltmux(LT, LTU, BUnsigned , lt);
   cnt #(WIDTH) cnt(.A, .RevA, .B(B[1:0]), .W64, .CntResult);
-  byteUnit #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
+  byteop #(WIDTH) bu(.A, .ByteSelect(B[0]), .ByteResult);
   ext #(WIDTH) ext(.A, .ExtSelect({~B[2], {B[2] & B[0]}}), .ExtResult);
 
   // ZBBSelect[2] differentiates between min(u) vs max(u) instruction

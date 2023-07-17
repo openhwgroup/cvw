@@ -49,36 +49,35 @@
  *                         RSW(2) -- for OS
  */
 
-`include "wally-config.vh"
-
 // The TLB will have 2**ENTRY_BITS total entries
-module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
-  input logic                     clk, reset,
-  input  logic [`SVMODE_BITS-1:0] SATP_MODE,        // Current address translation mode
-  input  logic [`ASID_BITS-1:0]   SATP_ASID,
-  input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input  logic [1:0]              STATUS_MPP,
-  input  logic [1:0]              PrivilegeModeW,   // Current privilege level of the processeor
-  input  logic                    ReadAccess, 
-  input  logic                    WriteAccess,
-  input  logic                    DisableTranslation,
-  input  logic [`XLEN-1:0]        VAdr,             // address input before translation (could be physical or virtual)
-  input  logic [`XLEN-1:0]        PTE,
-  input  logic [1:0]              PageTypeWriteVal,
-  input  logic                    TLBWrite,
-  input  logic                    TLBFlush,
-  output logic [`PA_BITS-1:0]     TLBPAdr,
-  output logic                    TLBMiss,
-  output logic                    TLBHit,
-  output logic                    Translate,
-  output logic                    TLBPageFault,
-  output logic                    UpdateDA
+module tlb import cvw::*;  #(parameter cvw_t P,
+                             parameter TLB_ENTRIES = 8, ITLB = 0) (
+  input logic                      clk, reset,
+  input  logic [P.SVMODE_BITS-1:0] SATP_MODE,        // Current address translation mode
+  input  logic [P.ASID_BITS-1:0]   SATP_ASID,
+  input  logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input  logic [1:0]               STATUS_MPP,
+  input  logic [1:0]               PrivilegeModeW,   // Current privilege level of the processeor
+  input  logic                     ReadAccess, 
+  input  logic                     WriteAccess,
+  input  logic                     DisableTranslation,
+  input  logic [P.XLEN-1:0]        VAdr,             // address input before translation (could be physical or virtual)
+  input  logic [P.XLEN-1:0]        PTE,
+  input  logic [1:0]               PageTypeWriteVal,
+  input  logic                     TLBWrite,
+  input  logic                     TLBFlush,
+  output logic [P.PA_BITS-1:0]     TLBPAdr,
+  output logic                     TLBMiss,
+  output logic                     TLBHit,
+  output logic                     Translate,
+  output logic                     TLBPageFault,
+  output logic                     UpdateDA
 );
 
   logic [TLB_ENTRIES-1:0]         Matches, WriteEnables, PTE_Gs; // used as the one-hot encoding of WriteIndex
   // Sections of the virtual and physical addresses
-  logic [`VPN_BITS-1:0]           VPN;
-  logic [`PPN_BITS-1:0]           PPN;
+  logic [P.VPN_BITS-1:0]          VPN;
+  logic [P.PPN_BITS-1:0]          PPN;
   // Sections of the page table entry
   logic [7:0]                     PTEAccessBits;
   logic [1:0]                     HitPageType;
@@ -87,7 +86,7 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
   logic                           Misaligned;
   logic                           MegapageMisaligned;
 
-  if(`XLEN == 32) begin
+  if(P.XLEN == 32) begin
     assign MegapageMisaligned = |(PPN[9:0]); // must have zero PPN0
     assign Misaligned = (HitPageType == 2'b01) & MegapageMisaligned;
   end else begin // 64-bit
@@ -100,22 +99,22 @@ module tlb #(parameter TLB_ENTRIES = 8, ITLB = 0) (
               ((HitPageType == 2'b01) & MegapageMisaligned);
   end
 
-  assign VPN = VAdr[`VPN_BITS+11:12];
+  assign VPN = VAdr[P.VPN_BITS+11:12];
 
-  tlbcontrol #(ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+  tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
     .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
     .PTEAccessBits, .CAMHit, .Misaligned, .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate);
 
   tlblru #(TLB_ENTRIES) lru(.clk, .reset, .TLBWrite, .TLBFlush, .Matches, .CAMHit, .WriteEnables);
-  tlbcam #(TLB_ENTRIES, `VPN_BITS + `ASID_BITS, `VPN_SEGMENT_BITS) 
+  tlbcam #(P, TLB_ENTRIES, P.VPN_BITS + P.ASID_BITS, P.VPN_SEGMENT_BITS) 
   tlbcam(.clk, .reset, .VPN, .PageTypeWriteVal, .SV39Mode, .TLBFlush, .WriteEnables, .PTE_Gs, 
            .SATP_ASID, .Matches, .HitPageType, .CAMHit);
-  tlbram #(TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs);
+  tlbram #(P, TLB_ENTRIES) tlbram(.clk, .reset, .PTE, .Matches, .WriteEnables, .PPN, .PTEAccessBits, .PTE_Gs);
 
   // Replace segments of the virtual page number with segments of the physical
   // page number. For 4 KB pages, the entire virtual page number is replaced.
   // For superpages, some segments are considered offsets into a larger page.
-  tlbmixer Mixer(.VPN, .PPN, .HitPageType, .Offset(VAdr[11:0]), .TLBHit, .TLBPAdr);
+  tlbmixer #(P) Mixer(.VPN, .PPN, .HitPageType, .Offset(VAdr[11:0]), .TLBHit, .TLBPAdr);
 
 endmodule

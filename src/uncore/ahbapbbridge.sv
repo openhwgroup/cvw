@@ -25,31 +25,30 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module ahbapbbridge #(PERIPHS = 2) (
-  input  logic                HCLK, HRESETn,
-  input  logic [PERIPHS-1:0]  HSEL,  
-  input  logic [`PA_BITS-1:0] HADDR, 
-  input  logic [`XLEN-1:0]    HWDATA,
-  input  logic [`XLEN/8-1:0]  HWSTRB,
-  input  logic                HWRITE,
-  input  logic [1:0]          HTRANS,
-  input  logic                HREADY,
+module ahbapbbridge import cvw::*;  #(parameter cvw_t P, 
+                                      parameter PERIPHS = 2) (
+  input  logic                 HCLK, HRESETn,
+  input  logic [PERIPHS-1:0]   HSEL,  
+  input  logic [P.PA_BITS-1:0] HADDR, 
+  input  logic [P.XLEN-1:0]    HWDATA,
+  input  logic [P.XLEN/8-1:0]  HWSTRB,
+  input  logic                 HWRITE,
+  input  logic [1:0]           HTRANS,
+  input  logic                 HREADY,
 //  input  logic [3:0]        HPROT, // not used
-  output logic [`XLEN-1:0]    HRDATA,
-  output logic                HRESP, HREADYOUT,
-  output logic                PCLK, PRESETn,
-  output logic [PERIPHS-1:0]  PSEL,
-  output logic                PWRITE,
-  output logic                PENABLE,
-  output logic [31:0]         PADDR,
-  output logic [`XLEN-1:0]    PWDATA,
+  output logic [P.XLEN-1:0]    HRDATA,
+  output logic                 HRESP, HREADYOUT,
+  output logic                 PCLK, PRESETn,
+  output logic [PERIPHS-1:0]   PSEL,
+  output logic                 PWRITE,
+  output logic                 PENABLE,
+  output logic [31:0]          PADDR,
+  output logic [P.XLEN-1:0]    PWDATA,
 //  output logic [2:0]        PPROT, // not used
-  output logic [`XLEN/8-1:0]  PSTRB,
+  output logic [P.XLEN/8-1:0]  PSTRB,
 //  output logic              PWAKEUP // not used
-  input  logic [PERIPHS-1:0]  PREADY,
-  input  var   [PERIPHS-1:0][`XLEN-1:0] PRDATA
+  input  logic [PERIPHS-1:0]   PREADY,
+  input  var   [PERIPHS-1:0][P.XLEN-1:0] PRDATA
 );
 
   logic                       initTrans, initTransSel, initTransSelD;
@@ -57,15 +56,15 @@ module ahbapbbridge #(PERIPHS = 2) (
   logic                       PREADYOUT;
 
   // convert AHB to APB signals
-  assign PCLK = HCLK;
+  assign PCLK    = HCLK;
   assign PRESETn = HRESETn;
 
   // identify start of a transaction
-  assign initTrans = HTRANS[1] & HREADY;  // start a transaction when the bus is ready and an active transaction is requested
+  assign initTrans    = HTRANS[1] & HREADY;  // start a transaction when the bus is ready and an active transaction is requested
   assign initTransSel = initTrans & |HSEL; // capture data and address if any of the peripherals are selected
 
   // delay AHB Address phase signals to align with AHB Data phase because APB expects them at the same time
-  flopen #(32) addrreg(HCLK, HREADY, HADDR[31:0], PADDR);
+  flopen  #(32) addrreg(HCLK, HREADY, HADDR[31:0], PADDR);
   flopenr #(1) writereg(HCLK, ~HRESETn, HREADY, HWRITE, PWRITE); 
   flopenr #(PERIPHS) selreg(HCLK, ~HRESETn, HREADY, HSEL & {PERIPHS{initTrans}}, PSEL); 
   // PPROT[2:0] = {Data/InstrB, Secure, Privileged};
@@ -74,7 +73,7 @@ module ahbapbbridge #(PERIPHS = 2) (
 
   // AHB Data phase signal doesn't need delay.  Note that they are guaranteed to remain stable until READY is asserted
   assign PWDATA = HWDATA;
-  assign PSTRB = HWSTRB;
+  assign PSTRB  = HWSTRB;
 
   // enable logic: goes high a cycle after initTrans, then back low on cycle after desired PREADY is asserted
   // cycle1: AHB puts HADDR, HWRITE, HSEL on bus.  initTrans is 1, and these are captured
@@ -104,4 +103,3 @@ assign HREADYOUT = PREADYOUT & ~initTransSelD; // don't raise HREADYOUT before a
   // resp logic
   assign HRESP = 0; // bridge never indicates errors
 endmodule
-

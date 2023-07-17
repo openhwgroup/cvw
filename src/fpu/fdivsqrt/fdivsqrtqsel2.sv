@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module fdivsqrtqsel2 ( 
   input  logic [3:0] ps, pc, 
   output logic       up, uz, un

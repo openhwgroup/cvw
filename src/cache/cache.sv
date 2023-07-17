@@ -27,9 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
+module cache import cvw::*; #(parameter cvw_t P,
+                              parameter PA_BITS, XLEN, LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTERVAL, READ_ONLY_CACHE) (
   input  logic                   clk,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
@@ -40,7 +39,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
-  input  logic [`PA_BITS-1:0]    PAdr,              // Physical address
+  input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
   input  logic [WORDLEN-1:0]     CacheWriteData,    // Data to write to cache (D$ only)
   output logic                   CacheCommitted,    // Cache has started bus operation that shouldn't be interrupted
@@ -57,7 +56,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   input  logic [LOGBWPL-1:0]     BeatCount,         // Beat in burst
   input  logic [LINELEN-1:0]     FetchBuffer,       // Buffer long enough to hold entire cache line arriving from bus
   output logic [1:0]             CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
-  output logic [`PA_BITS-1:0]    CacheBusAdr        // Address for bus access
+  output logic [PA_BITS-1:0]     CacheBusAdr        // Address for bus access
 );
 
   // Cache parameters
@@ -65,7 +64,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
   localparam                     OFFSETLEN = $clog2(LINEBYTELEN);    // Number of bits in offset field
   localparam                     SETLEN = $clog2(NUMLINES);          // Number of set bits
   localparam                     SETTOP = SETLEN+OFFSETLEN;          // Number of set plus offset bits
-  localparam                     TAGLEN = `PA_BITS - SETTOP;         // Number of tag bits
+  localparam                     TAGLEN = PA_BITS - SETTOP;          // Number of tag bits
   localparam                     CACHEWORDSPERLINE = LINELEN/WORDLEN;// Number of words in cache line
   localparam                     LOGCWPL = $clog2(CACHEWORDSPERLINE);// Log2 of ^
   localparam                     FLUSHADRTHRESHOLD = NUMLINES - 1;   // Used to determine when flush is complete
@@ -114,7 +113,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     AdrSelMuxSel, CacheSet);
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
-  cacheway #(NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
+  cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
     .SetValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
@@ -152,7 +151,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
   // Bus address for fetch, writeback, or flush writeback
-  mux3 #(`PA_BITS) CacheBusAdrMux(.d0({PAdr[`PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
+  mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
     .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
@@ -184,6 +183,7 @@ module cache #(parameter LINELEN,  NUMLINES,  NUMWAYS, LOGBWPL, WORDLEN, MUXINTE
       assign LineWriteData = FetchBuffer;
       assign LineByteMask = '1;
     end
+  
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Flush logic
   /////////////////////////////////////////////////////////////////////////////////////////////

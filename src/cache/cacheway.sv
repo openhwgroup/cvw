@@ -27,16 +27,15 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
+module cacheway import cvw::*; #(parameter cvw_t P, 
+                  parameter PA_BITS, XLEN, NUMLINES=512, LINELEN = 256, TAGLEN = 26,
                   OFFSETLEN = 5, INDEXLEN = 9, READ_ONLY_CACHE = 0) (
   input  logic                        clk,
   input  logic                        reset,
   input  logic                        FlushStage,     // Pipeline flush of second stage (prevent writes and bus operations)
   input  logic                        CacheEn,        // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [$clog2(NUMLINES)-1:0] CacheSet,       // Cache address, the output of the address select mux, NextAdr, PAdr, or FlushAdr
-  input  logic [`PA_BITS-1:0]         PAdr,           // Physical address 
+  input  logic [PA_BITS-1:0]          PAdr,           // Physical address 
   input  logic [LINELEN-1:0]          LineWriteData,  // Final data written to cache (D$ only)
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
@@ -54,11 +53,11 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   output logic                        DirtyWay,       // This way is dirty
   output logic [TAGLEN-1:0]           TagWay);        // This way's tag if valid
 
-  localparam                          WORDSPERLINE = LINELEN/`XLEN;
+  localparam                          WORDSPERLINE = LINELEN/XLEN;
   localparam                          BYTESPERLINE = LINELEN/8;
   localparam                          LOGWPL = $clog2(WORDSPERLINE);
-  localparam                          LOGXLENBYTES = $clog2(`XLEN/8);
-  localparam                          BYTESPERWORD = `XLEN/8;
+  localparam                          LOGXLENBYTES = $clog2(XLEN/8);
+  localparam                          BYTESPERWORD = XLEN/8;
 
   logic [NUMLINES-1:0]                ValidBits;
   logic [NUMLINES-1:0]                DirtyBits;
@@ -82,10 +81,11 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
     mux2 #(1) seltagmux(VictimWay, FlushWay, SelFlush, SelTag);
 
     // FlushWay is part of a one hot way selection. Must clear it if FlushWay not selected.
+    // coverage off -item e 1 -fecexprrow 3
+    // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
     assign FlushWayEn = FlushWay & SelFlush;
     assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
-  end
-  else begin:flushlogic // no flush operation for read-only caches.
+  end else begin:flushlogic // no flush operation for read-only caches.
     assign SelTag = VictimWay;
     assign SelNonHit = SetValid;
   end
@@ -100,7 +100,7 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   assign SetDirtyWay = SetDirty & SelData;                                 // exclusion-tag: icache SetDirtyWay
   assign ClearDirtyWay = ClearDirty & SelData;
   assign SelectedWriteWordEn = (SetValidWay | SetDirtyWay) & ~FlushStage;  // exclusion-tag: icache SelectedWiteWordEn
-  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: icache SetValidEN
+  assign SetValidEN = SetValidWay & ~FlushStage;                           // exclusion-tag: cache SetValidEN
 
   // If writing the whole line set all write enables to 1, else only set the correct word.
   assign FinalByteMask = SetValidWay ? '1 : LineByteMask; // OR
@@ -109,14 +109,14 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   // Tag Array
   /////////////////////////////////////////////////////////////////////////////////////////////
 
-  ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
+  ram1p1rwe #(.P(P), .DEPTH(NUMLINES), .WIDTH(TAGLEN)) CacheTagMem(.clk, .ce(CacheEn),
     .addr(CacheSet), .dout(ReadTag),
-    .din(PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
+    .din(PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]), .we(SetValidEN));
 
   // AND portion of distributed tag multiplexer
   assign TagWay = SelTag ? ReadTag : '0; // AND part of AOMux
   assign DirtyWay = SelTag & Dirty & ValidWay;
-  assign HitWay = ValidWay & (ReadTag == PAdr[`PA_BITS-1:OFFSETLEN+INDEXLEN]);
+  assign HitWay = ValidWay & (ReadTag == PAdr[PA_BITS-1:OFFSETLEN+INDEXLEN]);
 
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Data Array
@@ -124,20 +124,19 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
 
   genvar               words;
 
-  localparam           SRAMLEN = 128;
+  localparam           SRAMLEN = 128;             // *** make this a global parameter
   localparam           NUMSRAM = LINELEN/SRAMLEN;
   localparam           SRAMLENINBYTES = SRAMLEN/8;
   localparam           LOGNUMSRAM = $clog2(NUMSRAM);
   
   for(words = 0; words < NUMSRAM; words++) begin: word
     if (!READ_ONLY_CACHE) begin:wordram
-      ram1p1rwbe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+      ram1p1rwbe #(.P(P), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn), .bwe(FinalByteMask[SRAMLENINBYTES*(words+1)-1:SRAMLENINBYTES*words]));
-    end
-    else begin:wordram // no byte-enable needed for i$.
-      ram1p1rwe #(.DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
+    end else begin:wordram // no byte-enable needed for i$.
+      ram1p1rwe #(.P(P), .DEPTH(NUMLINES), .WIDTH(SRAMLEN)) CacheDataMem(.clk, .ce(CacheEn), .addr(CacheSet),
       .dout(ReadDataLine[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .din(LineWriteData[SRAMLEN*(words+1)-1:SRAMLEN*words]),
       .we(SelectedWriteWordEn));
@@ -154,8 +153,8 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
   always_ff @(posedge clk) begin // Valid bit array, 
     if (reset) ValidBits        <= #1 '0;
     if(CacheEn) begin 
-    ValidWay <= #1 ValidBits[CacheSet];
-    if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
+      ValidWay <= #1 ValidBits[CacheSet];
+      if(InvalidateCache)                    ValidBits <= #1 '0; // exclusion-tag: dcache invalidateway
       else if (SetValidEN) ValidBits[CacheSet] <= #1 SetValidWay;
     end
   end
@@ -175,8 +174,4 @@ module cacheway #(parameter NUMLINES=512, LINELEN = 256, TAGLEN = 26,
       end
     end
   end else assign Dirty = 1'b0;
-
-
 endmodule
-
-

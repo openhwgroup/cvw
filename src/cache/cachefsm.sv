@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,
@@ -94,7 +92,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
   // outputs for the performance counters.
-  assign CacheAccess = (|CacheRW) & CurrState == STATE_READY; // exclusion-tag: icache CacheW
+  assign CacheAccess = (|CacheRW) & ((CurrState == STATE_READY & ~Stall & ~FlushStage) |
+                                     (CurrState == STATE_READ_HOLD & ~Stall & ~FlushStage)); // exclusion-tag: icache CacheW
   assign CacheMiss = CacheAccess & ~CacheHit;
 
   // special case on reset. When the fsm first exists reset the
@@ -159,7 +158,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign SelFlush = (CurrState == STATE_READY & FlushCache) |
           (CurrState == STATE_FLUSH) | 
           (CurrState == STATE_FLUSH_WRITEBACK);
-  // coverage off -item e -fecexprrow 1
+  // coverage off -item e 1 -fecexprrow 1
   // (state is always FLUSH_WRITEBACK when FlushWayFlag & CacheBusAck)
   assign FlushAdrCntEn = (CurrState == STATE_FLUSH_WRITEBACK & FlushWayFlag & CacheBusAck) |
              (CurrState == STATE_FLUSH & FlushWayFlag & ~LineDirty);

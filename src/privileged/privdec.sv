@@ -27,12 +27,10 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module privdec (
+module privdec import cvw::*;  #(parameter cvw_t P) (
   input  logic         clk, reset,
   input  logic         StallM,
-  input  logic [31:20] InstrM,                              // privileged instruction function field
+  input  logic [31:15] InstrM,                              // privileged instruction function field
   input  logic         PrivilegedM,                         // is this a privileged instruction (from IEU controller)
   input  logic         IllegalIEUFPUInstrM,                 // Not a legal IEU instruction
   input  logic         IllegalCSRAccessM,                   // Not a legal CSR access
@@ -41,35 +39,51 @@ module privdec (
   output logic         IllegalInstrFaultM,                  // Illegal instruction
   output logic         EcallFaultM, BreakpointFaultM,       // Ecall or breakpoint; must retire, so don't flush it when the trap occurs
   output logic         sretM, mretM,                        // return instructions
-  output logic         wfiM, sfencevmaM                     // wfi / sfence.fma instructions
+  output logic         wfiM, sfencevmaM                     // wfi / sfence.vma / sinval.vma instructions
 );
 
+  logic                rs1zeroM;                            // rs1 field = 0
   logic                IllegalPrivilegedInstrM;             // privileged instruction isn't a legal one or in legal mode
   logic                WFITimeoutM;                         // WFI reaches timeout threshold
   logic                ebreakM, ecallM;                     // ebreak / ecall instructions
+  logic                sinvalvmaM;                          // sinval.vma
+  logic                sfencewinvalM, sfenceinvalirM;       // sfence.w.inval, sfence.inval.ir
+  logic                invalM;                              // any of the svinval instructions
 
   ///////////////////////////////////////////
   // Decode privileged instructions
   ///////////////////////////////////////////
 
-  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & `S_SUPPORTED & 
-                      (PrivilegeModeW == `M_MODE | PrivilegeModeW == `S_MODE & ~STATUS_TSR); 
-  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & (PrivilegeModeW == `M_MODE);
-  assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000);
-  assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001);
-  assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101);
-  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001) & 
-                      (PrivilegeModeW == `M_MODE | (PrivilegeModeW == `S_MODE & ~STATUS_TVM)); 
+  assign rs1zeroM =    InstrM[19:15] == 5'b0;
+  
+  // svinval instructions
+  // any svinval instruction is treated as sfence.vma on Wally
+  assign sinvalvmaM =     (InstrM[31:25] == 7'b0001001);
+  assign sfencewinvalM  = (InstrM[31:20] == 12'b000110000000) & rs1zeroM;
+  assign sfenceinvalirM = (InstrM[31:20] == 12'b000110000001) & rs1zeroM;
+  assign invalM =         P.SVINVAL_SUPPORTED & (sinvalvmaM | sfencewinvalM | sfenceinvalirM); 
+
+  assign sretM =      PrivilegedM & (InstrM[31:20] == 12'b000100000010) & rs1zeroM & P.S_SUPPORTED & 
+                      (PrivilegeModeW == P.M_MODE | PrivilegeModeW == P.S_MODE & ~STATUS_TSR); 
+  assign mretM =      PrivilegedM & (InstrM[31:20] == 12'b001100000010) & rs1zeroM & (PrivilegeModeW == P.M_MODE);
+  assign ecallM =     PrivilegedM & (InstrM[31:20] == 12'b000000000000) & rs1zeroM;
+  assign ebreakM =    PrivilegedM & (InstrM[31:20] == 12'b000000000001) & rs1zeroM;
+  assign wfiM =       PrivilegedM & (InstrM[31:20] == 12'b000100000101) & rs1zeroM;
+  assign sfencevmaM = PrivilegedM & (InstrM[31:25] ==  7'b0001001 | invalM) & 
+                      (PrivilegeModeW == P.M_MODE | (PrivilegeModeW == P.S_MODE & ~STATUS_TVM)); 
 
   ///////////////////////////////////////////
   // WFI timeout Privileged Spec 3.1.6.5
   ///////////////////////////////////////////
 
-  if (`U_SUPPORTED) begin:wfi
-    logic [`WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
+  if (P.U_SUPPORTED) begin:wfi
+    logic [P.WFI_TIMEOUT_BIT:0] WFICount, WFICountPlus1;
     assign WFICountPlus1 = WFICount + 1;
-    floprc #(`WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
-    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != `M_MODE) | (`S_SUPPORTED & PrivilegeModeW == `U_MODE)) & WFICount[`WFI_TIMEOUT_BIT]; 
+    floprc #(P.WFI_TIMEOUT_BIT+1) wficountreg(clk, reset, ~wfiM, WFICountPlus1, WFICount);  // count while in WFI
+  // coverage off -item e 1 -fecexprrow 1
+  // WFI Timout trap will not occur when STATUS_TW is low while in supervisor mode, so the system gets stuck waiting for an interrupt and triggers a watchdog timeout.
+    assign WFITimeoutM = ((STATUS_TW & PrivilegeModeW != P.M_MODE) | (P.S_SUPPORTED & PrivilegeModeW == P.U_MODE)) & WFICount[P.WFI_TIMEOUT_BIT]; 
+  // coverage on
   end else assign WFITimeoutM = 0;
 
   ///////////////////////////////////////////

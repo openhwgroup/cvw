@@ -29,56 +29,52 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module spill #(
-  parameter CACHE_ENABLED                     // Changes spill threshold to 1 if there is no cache
-)(input logic              clk,               
-  input logic              reset,
-  input logic              StallD, FlushD,
-  input logic [`XLEN-1:0]  PCF,               // 2 byte aligned PC in Fetch stage
-  input logic [`XLEN-1:2]  PCPlus4F,          // PCF + 4
-  input logic [`XLEN-1:0]  PCNextF,           // The next PCF
-  input logic [31:0]       InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
-  input logic              IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
-  input logic              ITLBMissF,         // ITLB miss, ignore memory request
-  input logic              InstrUpdateDAF,    // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
-  output logic [`XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
-  output logic [`XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
-  output logic             SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
-  output logic [31:0]      PostSpillInstrRawF,// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
-  output logic             CompressedF);      // The fetched instruction is compressed
+module spill import cvw::*;  #(parameter cvw_t P) (
+  input logic               clk,               
+  input logic               reset,
+  input logic               StallD, FlushD,
+  input logic [P.XLEN-1:0]  PCF,               // 2 byte aligned PC in Fetch stage
+  input logic [P.XLEN-1:2]  PCPlus4F,          // PCF + 4
+  input logic [P.XLEN-1:0]  PCNextF,           // The next PCF
+  input logic [31:0]        InstrRawF,         // Instruction from the IROM, I$, or bus. Used to check if the instruction if compressed
+  input logic               IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
+  input logic               ITLBMissF,         // ITLB miss, ignore memory request
+  input logic               InstrUpdateDAF,    // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
+  output logic [P.XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
+  output logic [P.XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
+  output logic              SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
+  output logic [31:0]       PostSpillInstrRawF,// The final 32 bit instruction after merging the two spilled fetches into 1 instruction
+  output logic              CompressedF);      // The fetched instruction is compressed
 
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
-  typedef enum logic [1:0]     {STATE_READY, STATE_SPILL} statetype;
-  localparam           SPILLTHRESHOLD = CACHE_ENABLED ? `ICACHE_LINELENINBITS/32 : 1; 
+  typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
+  localparam                SPILLTHRESHOLD = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/32 : 1; 
 
-  statetype         CurrState, NextState;
-  logic [`XLEN-1:0] PCPlus2F;         
-  logic             TakeSpillF;
-  logic             SpillF;
-  logic             SelSpillF;
-  logic             SpillSaveF;
-  logic [15:0]      InstrFirstHalfF;
+  statetype          CurrState, NextState;
+  logic [P.XLEN-1:0] PCPlus2F;         
+  logic              TakeSpillF;
+  logic              SpillF;
+  logic              SelSpillF;
+  logic              SpillSaveF;
+  logic [15:0]       InstrFirstHalfF;
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // PC logic 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   
   // compute PCF+2 from the raw PC+4
-  mux2 #(`XLEN) pcplus2mux(.d0({PCF[`XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
+  mux2 #(P.XLEN) pcplus2mux(.d0({PCF[P.XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
   // select between PCNextF and PCF+2
-  mux2 #(`XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
+  mux2 #(P.XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
   // select between PCF and PCF+2
-  mux2 #(`XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
+  mux2 #(P.XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
 
-  
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   // Detect spill
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
   assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
-  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (`SVADU_SUPPORTED & InstrUpdateDAF));
+  assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
     if (reset | FlushD)    CurrState <= #1 STATE_READY;
