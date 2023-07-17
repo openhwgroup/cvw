@@ -128,7 +128,7 @@ def create_vectors(my_config):
                             done = True
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -174,7 +174,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -217,7 +217,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -261,7 +261,7 @@ def create_vectors(my_config):
                     
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
