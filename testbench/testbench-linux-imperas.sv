@@ -30,7 +30,7 @@
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
-  `include "rvvi/imperasDV.svh"
+    `include "idv/idv.svh"
 `endif
 
 `define DEBUG_TRACE 0
@@ -55,7 +55,7 @@ module testbench;
 
 
   `ifdef USE_IMPERAS_DV
-    import rvviPkg::*;
+    import idvPkg::*;
     import rvviApiPkg::*;
     import idvApiPkg::*;
   `endif
@@ -302,7 +302,7 @@ module testbench;
       initial begin
         int iter;
         #1;
-        MAX_ERRS = 3;
+        IDV_MAX_ERRS = 3;
 
         // Initialize REF (do this before initializing the DUT)
         if (!rvviVersionCheck(RVVI_API_VERSION)) begin
@@ -866,10 +866,12 @@ module testbench;
             "medeleg": `checkCSR(`CSR_BASE.csrm.MEDELEG_REGW)
             "mepc":    `checkCSR(`CSR_BASE.csrm.MEPC_REGW)
             "mtval":   `checkCSR(`CSR_BASE.csrm.MTVAL_REGW)
+            "menvcfg": `checkCSR(`CSR_BASE.csrm.MENVCFG_REGW)
             "sepc":    `checkCSR(`CSR_BASE.csrs.csrs.SEPC_REGW)
             "scause":  `checkCSR(`CSR_BASE.csrs.csrs.SCAUSE_REGW)
             "stvec":   `checkCSR(`CSR_BASE.csrs.csrs.STVEC_REGW)
             "stval":   `checkCSR(`CSR_BASE.csrs.csrs.STVAL_REGW)
+            "senvcfg": `checkCSR(`CSR_BASE.csrs.SENVCFG_REGW)
             "mip": begin
                        `checkCSR(`CSR_BASE.csrm.MIP_REGW)
                        if(!NO_SPOOFING) begin

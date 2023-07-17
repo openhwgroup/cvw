@@ -27,19 +27,17 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module swbytemask #(parameter WORDLEN = `XLEN)(
-  input logic [2:0]              Size,
-  input logic [$clog2(WORDLEN/8)-1:0] Adr,
-  output logic [WORDLEN/8-1:0]   ByteMask
+module swbytemask #(parameter WORDLEN)(
+  input logic  [2:0]                   Size,
+  input logic  [$clog2(WORDLEN/8)-1:0] Adr,
+  output logic [WORDLEN/8-1:0]         ByteMask
 );
   
   assign ByteMask = ((2**(2**Size))-1) << Adr;
 
 /* Equivalent to the following
 
-  if(`XLEN == 64) begin
+  if(WORDLEN == 64) begin
     always_comb begin
       case(Size[1:0])
         2'b00: begin ByteMask = 8'b00000000; ByteMask[Adr[2:0]] = 1; end // sb

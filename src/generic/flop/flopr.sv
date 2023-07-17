@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module flopr #(parameter WIDTH = 8) ( 
   input  logic             clk, reset,
   input  logic [WIDTH-1:0] d, 

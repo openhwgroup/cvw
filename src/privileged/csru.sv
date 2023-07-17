@@ -26,42 +26,41 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module csru #(parameter 
-  FFLAGS = 12'h001,
-  FRM = 12'h002,
-  FCSR = 12'h003) (
-  input  logic             clk, reset, 
-  input  logic             InstrValidNotFlushedM,
-  input  logic             CSRUWriteM,
-  input  logic [11:0]      CSRAdrM,
-  input  logic [`XLEN-1:0] CSRWriteValM,
-  input  logic [1:0]       STATUS_FS,
-  output logic [`XLEN-1:0] CSRUReadValM,  
-  input  logic [4:0]       SetFflagsM,
-  output logic [2:0]       FRM_REGW,
-  output logic             WriteFRMM, WriteFFLAGSM,
-  output logic             IllegalCSRUAccessM
+module csru import cvw::*;  #(parameter cvw_t P) (
+  input  logic              clk, reset, 
+  input  logic              InstrValidNotFlushedM,
+  input  logic              CSRUWriteM,
+  input  logic [11:0]       CSRAdrM,
+  input  logic [P.XLEN-1:0] CSRWriteValM,
+  input  logic [1:0]        STATUS_FS,
+  output logic [P.XLEN-1:0] CSRUReadValM,  
+  input  logic [4:0]        SetFflagsM,
+  output logic [2:0]        FRM_REGW,
+  output logic              WriteFRMM, WriteFFLAGSM,
+  output logic              IllegalCSRUAccessM
 );
 
-  logic [4:0]              FFLAGS_REGW;
-  logic [2:0]              NextFRMM;
-  logic [4:0]              NextFFLAGSM;
-  logic                    SetOrWriteFFLAGSM;
+  localparam FFLAGS = 12'h001;
+  localparam FRM    = 12'h002;
+  localparam FCSR   = 12'h003;
+
+  logic [4:0]               FFLAGS_REGW;
+  logic [2:0]               NextFRMM;
+  logic [4:0]               NextFFLAGSM;
+  logic                     SetOrWriteFFLAGSM;
   
   // Write enables
-  assign WriteFRMM =    CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
+  assign WriteFRMM    = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FRM | CSRAdrM == FCSR);
   assign WriteFFLAGSM = CSRUWriteM & (STATUS_FS != 2'b00) & (CSRAdrM == FFLAGS | CSRAdrM == FCSR);
 
   // Write Values
-  assign NextFRMM = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
-  assign NextFFLAGSM = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
+  assign NextFRMM          = (CSRAdrM == FCSR) ? CSRWriteValM[7:5] : CSRWriteValM[2:0];
+  assign NextFFLAGSM       = WriteFFLAGSM ? CSRWriteValM[4:0] : FFLAGS_REGW | SetFflagsM;
   assign SetOrWriteFFLAGSM = WriteFFLAGSM | (|SetFflagsM & InstrValidNotFlushedM);
 
   // CSRs
   flopenr #(3) FRMreg(clk, reset, WriteFRMM, NextFRMM, FRM_REGW);
-  flopenr   #(5) FFLAGSreg(clk, reset, SetOrWriteFFLAGSM, NextFFLAGSM, FFLAGS_REGW); 
+  flopenr #(5) FFLAGSreg(clk, reset, SetOrWriteFFLAGSM, NextFFLAGSM, FFLAGS_REGW); 
 
   // CSR Reads
   always_comb begin
@@ -71,9 +70,9 @@ module csru #(parameter
     end else begin
       IllegalCSRUAccessM = 0;
       case (CSRAdrM) 
-        FFLAGS:    CSRUReadValM = {{(`XLEN-5){1'b0}}, FFLAGS_REGW};
-        FRM:       CSRUReadValM = {{(`XLEN-3){1'b0}}, FRM_REGW};
-        FCSR:      CSRUReadValM = {{(`XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
+        FFLAGS:    CSRUReadValM = {{(P.XLEN-5){1'b0}}, FFLAGS_REGW};
+        FRM:       CSRUReadValM = {{(P.XLEN-3){1'b0}}, FRM_REGW};
+        FCSR:      CSRUReadValM = {{(P.XLEN-8){1'b0}}, FRM_REGW, FFLAGS_REGW};
         default: begin
                    CSRUReadValM = 0; 
                    IllegalCSRUAccessM = 1;

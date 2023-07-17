@@ -26,8 +26,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module satCounter2
   (input logic        BrDir,
    input logic [1:0]  OldState,

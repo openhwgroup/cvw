@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module zbc #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A, RevA, B,       // Operands
   input  logic [2:0]       Funct3,           // Indicates operation to perform

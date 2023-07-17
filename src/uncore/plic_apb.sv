@@ -31,9 +31,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-`define N `PLIC_NUM_SRC
 // number of interrupt sources
 // does not include source 0, which does not connect to anything according to spec
 // up to 63 sources supported; in the future, allow up to 1023 sources
@@ -42,51 +39,53 @@
 // number of conexts
 // hardcoded to 2 contexts for now; later upgrade to arbitrary (up to 15872) contexts
 
-module plic_apb (
-  input  logic               PCLK, PRESETn,
-  input  logic               PSEL,
-  input  logic [27:0]        PADDR, 
-  input  logic [`XLEN-1:0]   PWDATA,
-  input  logic [`XLEN/8-1:0] PSTRB,
-  input  logic               PWRITE,
-  input  logic               PENABLE,
-  output logic [`XLEN-1:0]   PRDATA,
-  output logic               PREADY,
-  input  logic               UARTIntr,GPIOIntr,
-  output logic               MExtInt, SExtInt
+module plic_apb import cvw::*;  #(parameter cvw_t P) (
+  input  logic                PCLK, PRESETn,
+  input  logic                PSEL,
+  input  logic [27:0]         PADDR, 
+  input  logic [P.XLEN-1:0]   PWDATA,
+  input  logic [P.XLEN/8-1:0] PSTRB,
+  input  logic                PWRITE,
+  input  logic                PENABLE,
+  output logic [P.XLEN-1:0]   PRDATA,
+  output logic                PREADY,
+  input  logic                UARTIntr,GPIOIntr,
+  output logic                MExtInt, SExtInt
 );
 
-  logic                      memwrite, memread;
-  logic [23:0]               entry;
-  logic [31:0]               Din, Dout;
+  logic                       memwrite, memread;
+  logic [23:0]                entry;
+  logic [31:0]                Din, Dout;
 
   // context-independent signals
-  logic [`N:1]               requests;
-  logic [`N:1][2:0]          intPriority;
-  logic [`N:1]               intInProgress, intPending, nextIntPending;
+  logic [P.PLIC_NUM_SRC:1]               requests;
+  logic [P.PLIC_NUM_SRC:1][2:0]          intPriority;
+  logic [P.PLIC_NUM_SRC:1]               intInProgress, intPending, nextIntPending;
   
   // context-dependent signals
   logic [`C-1:0][2:0]        intThreshold;
-  logic [`C-1:0][`N:1]       intEn;
+  logic [`C-1:0][P.PLIC_NUM_SRC:1]       intEn;
   logic [`C-1:0][5:0]        intClaim; // ID's are 6 bits if we stay within 63 sources
-  logic [`C-1:0][7:1][`N:1]  irqMatrix;
+  logic [`C-1:0][7:1][P.PLIC_NUM_SRC:1]  irqMatrix;
   logic [`C-1:0][7:1]        priorities_with_irqs;
   logic [`C-1:0][7:1]        max_priority_with_irqs;
-  logic [`C-1:0][`N:1]       irqs_at_max_priority;
+  logic [`C-1:0][P.PLIC_NUM_SRC:1]       irqs_at_max_priority;
   logic [`C-1:0][7:1]        threshMask;
+  logic [P.PLIC_NUM_SRC-1:0] One;
 
   // =======
   // AHB I/O
   // =======
 
   assign memwrite = PWRITE & PENABLE & PSEL;  // only write in access phase
-  assign memread  = ~PWRITE & PSEL;  // read at start of access phase.  PENABLE hasn't set up before this
-  assign PREADY = 1'b1; // PLIC never takes >1 cycle to respond
-  assign entry = {PADDR[23:2],2'b0};
+  assign memread  = ~PWRITE & PSEL;           // read at start of access phase.  PENABLE hasn't set up before this
+  assign PREADY   = 1'b1;                     // PLIC never takes >1 cycle to respond
+  assign entry    = {PADDR[23:2],2'b0};
+  assign One[P.PLIC_NUM_SRC-1:1] = '0; assign One[0] = 1'b1; // Vivado does not like this as a single assignment.
 
   // account for subword read/write circuitry
   // -- Note PLIC registers are 32 bits no matter what; access them with LW SW.
-  if (`XLEN == 64) begin
+  if (P.XLEN == 64) begin
     assign Din    = entry[2] ? PWDATA[63:32] : PWDATA[31:0];
     assign PRDATA = entry[2] ? {Dout,32'b0}  : {32'b0,Dout};
   end else begin // 32-bit
@@ -97,81 +96,81 @@ module plic_apb (
   // ==================
   // Register Interface
   // ==================
+  localparam PLIC_NUM_SRC_MIN_32 = P.PLIC_NUM_SRC < 32 ? P.PLIC_NUM_SRC : 31;
+    
   always @(posedge PCLK) begin
     // resetting
     if (~PRESETn) begin
-      intPriority   <= #1 {`N{3'b0}};
-      intEn         <= #1 {2{`N'b0}};
-      intThreshold  <= #1 {2{3'b0}};
-      intInProgress <= #1 `N'b0;
+      intPriority   <= #1 '0;
+      intEn         <= #1 '0;
+      intThreshold  <= #1 '0;
+      intInProgress <= #1 '0;
     // writing
     end else begin
       if (memwrite)
         casez(entry)
           24'h0000??: intPriority[entry[7:2]] <= #1 Din[2:0];
-          `ifdef PLIC_NUM_SRC_LT_32 // eventually switch to a generate for loop so as to deprecate PLIC_NUM_SRC_LT_32 and allow up to 1023 sources
-          24'h002000: intEn[0][`N:1] <= #1 Din[`N:1];
-          24'h002080: intEn[1][`N:1] <= #1 Din[`N:1];
-          `endif
-          `ifndef PLIC_NUM_SRC_LT_32
-          24'h002000: intEn[0][31:1] <= #1 Din[31:1];
-          24'h002004: intEn[0][`N:32] <= #1 Din[31:0];
-          24'h002080: intEn[1][31:1] <= #1 Din[31:1];
-          24'h002084: intEn[1][`N:32] <= #1 Din[31:0];
-          `endif
-          24'h200000: intThreshold[0] <= #1 Din[2:0];
-          24'h200004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
-          24'h201000: intThreshold[1] <= #1 Din[2:0];
-          24'h201004: intInProgress <= #1 intInProgress & ~(`N'b1 << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h002000: intEn[0][PLIC_NUM_SRC_MIN_32:1] <= #1 Din[PLIC_NUM_SRC_MIN_32:1];
+          24'h002080: intEn[1][PLIC_NUM_SRC_MIN_32:1] <= #1 Din[PLIC_NUM_SRC_MIN_32:1];
+
+          // verilator lint_off SELRANGE  
+          // *** RT: Long term we want to factor out these variable number of registers as a generate loop
+          // I think this won't work as a case statement.
+          24'h002004: if (P.PLIC_NUM_SRC >= 32) intEn[0][P.PLIC_NUM_SRC:32]         <= #1 Din[P.PLIC_NUM_SRC-32:0];
+          24'h002084: if (P.PLIC_NUM_SRC >= 32) intEn[1][P.PLIC_NUM_SRC:32]         <= #1 Din[P.PLIC_NUM_SRC-32:0];
+          // verilator lint_on SELRANGE
+          24'h200000: intThreshold[0]         <= #1 Din[2:0];
+          24'h200004: intInProgress           <= #1 intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
+          24'h201000: intThreshold[1]         <= #1 Din[2:0];
+          24'h201004: intInProgress           <= #1 intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
         endcase
       // Read synchronously because a read can have side effect of changing intInProgress
-      if (memread)
+      if (memread) begin
         casez(entry)
           24'h000000: Dout <= #1 32'b0;  // there is no intPriority[0]
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};      
-          `ifdef PLIC_NUM_SRC_LT_32
-          24'h001000: Dout <= #1 {{(31-`N){1'b0}},intPending,1'b0};
-          24'h002000: Dout <= #1 {{(31-`N){1'b0}},intEn[0],1'b0};
-          24'h002080: Dout <= #1 {{(31-`N){1'b0}},intEn[1],1'b0};
-          `endif
-          `ifndef PLIC_NUM_SRC_LT_32
-          24'h001000: Dout <= #1 {intPending[31:1],1'b0};
-          24'h001004: Dout <= #1 {{(63-`N){1'b0}},intPending[`N:32]};
-          24'h002000: Dout <= #1 {intEn[0][31:1],1'b0};
-          24'h002004: Dout <= #1 {{(63-`N){1'b0}},intEn[0][`N:32]};
-          24'h002080: Dout <= #1 {intEn[0][31:1],1'b0};
-          24'h002084: Dout <= #1 {{(63-`N){1'b0}},intEn[1][`N:32]};
-          `endif
+          24'h001000: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intPending[PLIC_NUM_SRC_MIN_32:1],1'b0};
+          24'h002000: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[0][PLIC_NUM_SRC_MIN_32:1],1'b0};
+
+          // verilator lint_off SELRANGE
+          // verilator lint_off WIDTHTRUNC 
+          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intPending[P.PLIC_NUM_SRC:32]};
+          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[0][P.PLIC_NUM_SRC:32]};
+          // verilator lint_on SELRANGE 
+          // verilator lint_on WIDTHTRUNC 
+
+          24'h002080: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[1][PLIC_NUM_SRC_MIN_32:1],1'b0};
+          // verilator lint_off SELRANGE
+          // verilator lint_off WIDTHTRUNC 
+          24'h002084: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[1][P.PLIC_NUM_SRC:32]};
+          // verilator lint_on SELRANGE
+          // verilator lint_on WIDTHTRUNC 
           24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
             Dout <= #1 {26'b0,intClaim[0]};
-            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | (One << (intClaim[0]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           24'h201000: Dout <= #1 {29'b0,intThreshold[1]};
           24'h201004: begin
             Dout <= #1 {26'b0,intClaim[1]};
-            intInProgress <= #1 intInProgress | (`N'b1 << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
+            intInProgress <= #1 intInProgress | (One << (intClaim[1]-1)); // claimed requests are currently in progress of being serviced until they are completed
           end
           default: Dout <= #1 32'h0; // invalid access
         endcase
-      else Dout <= #1 32'h0;
+      end else Dout <= #1 32'h0;
    end
   end
 
   // connect sources to requests
   always_comb begin
-    requests = `N'b0;
-    `ifdef PLIC_GPIO_ID
-      requests[`PLIC_GPIO_ID] = GPIOIntr;
-    `endif
-    `ifdef PLIC_UART_ID
-      requests[`PLIC_UART_ID] = UARTIntr;
-    `endif
+    requests = {P.PLIC_NUM_SRC{1'b0}};
+    if(P.PLIC_GPIO_ID != 0) requests[P.PLIC_GPIO_ID] = GPIOIntr;
+    if(P.PLIC_UART_ID != 0) requests[P.PLIC_UART_ID] = UARTIntr;
   end
 
-  // pending interrupt requests
+  // pending interrupt request
   assign nextIntPending = (intPending | requests) & ~intInProgress; 
-  flopr #(`N) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
+  flopr #(P.PLIC_NUM_SRC) intPendingFlop(PCLK,~PRESETn,nextIntPending,intPending);
 
   // context-dependent signals
   genvar ctx;
@@ -184,7 +183,7 @@ module plic_apb (
     //   ("active" meaning it is enabled in context <ctx> and is pending)
     genvar src, pri;
     for (pri=1; pri<=7; pri++) begin
-      for (src=1; src<=`N; src++) begin
+      for (src=1; src<=P.PLIC_NUM_SRC; src++) begin
         assign irqMatrix[ctx][pri][src] = (intPriority[src]==pri) & intPending[src] & intEn[ctx][src];
       end
     end
@@ -213,14 +212,14 @@ module plic_apb (
 
     // of the sources at the highest priority level that has active requests,
     // which sources have active requests?
-    assign irqs_at_max_priority[ctx][`N:1] =
-      ({`N{max_priority_with_irqs[ctx][7]}} & irqMatrix[ctx][7]) |
-      ({`N{max_priority_with_irqs[ctx][6]}} & irqMatrix[ctx][6]) |
-      ({`N{max_priority_with_irqs[ctx][5]}} & irqMatrix[ctx][5]) |
-      ({`N{max_priority_with_irqs[ctx][4]}} & irqMatrix[ctx][4]) |
-      ({`N{max_priority_with_irqs[ctx][3]}} & irqMatrix[ctx][3]) |
-      ({`N{max_priority_with_irqs[ctx][2]}} & irqMatrix[ctx][2]) |
-      ({`N{max_priority_with_irqs[ctx][1]}} & irqMatrix[ctx][1]);
+    assign irqs_at_max_priority[ctx][P.PLIC_NUM_SRC:1] =
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][7]}} & irqMatrix[ctx][7]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][6]}} & irqMatrix[ctx][6]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][5]}} & irqMatrix[ctx][5]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][4]}} & irqMatrix[ctx][4]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][3]}} & irqMatrix[ctx][3]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][2]}} & irqMatrix[ctx][2]) |
+      ({P.PLIC_NUM_SRC{max_priority_with_irqs[ctx][1]}} & irqMatrix[ctx][1]);
 
     // of the sources at the highest priority level that has active requests,
     // choose the source with the lowest source ID to be the most urgent
@@ -228,7 +227,7 @@ module plic_apb (
     integer k;
     always_comb begin
       intClaim[ctx] = 6'b0;
-      for (k=`N; k>0; k--) begin
+      for (k=P.PLIC_NUM_SRC; k>0; k--) begin
         if (irqs_at_max_priority[ctx][k]) intClaim[ctx] = k[5:0];
       end
     end
@@ -249,4 +248,3 @@ module plic_apb (
   assign MExtInt = |(threshMask[0] & priorities_with_irqs[0]);
   assign SExtInt = |(threshMask[1] & priorities_with_irqs[1]);
 endmodule
-

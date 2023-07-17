@@ -24,8 +24,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module floprc #(parameter WIDTH = 8) (
   input  logic clk,
   input  logic reset,

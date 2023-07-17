@@ -52,18 +52,20 @@ string tvpaths[] = '{
     "fpu",
     "lsu",
     "vm64check",
-    "pmp",
+    "tlbASID",
+    "tlbGLB",
+    "tlbMP",
+    "tlbGP",
+    "tlbTP",
+    "ifuCamlineWrite",
     "dcache1",
     "dcache2",
+    "pmp",
     "pmpcfg",
     "pmpcfg1",
     "pmpcfg2",
-    "tlbKP",
-    "tlbMP",
-    "tlbM3",
-    "tlbASID",
-    "tlbGLB",
-    "ifuCamlineWrite"
+    "pmppriority",
+    "pmpadrdecs"
   };
 
   string coremark[] = '{
@@ -73,26 +75,26 @@ string tvpaths[] = '{
 
   string embench[] = '{
     `EMBENCH,
-    "bd_speedopt_speed/src/nsichneu/nsichneu",
-    "bd_speedopt_speed/src/cubic/cubic", // cubic is likely going to removed when embench 2.0 launches
     "bd_speedopt_speed/src/aha-mont64/aha-mont64",
     "bd_speedopt_speed/src/crc32/crc32",
+    "bd_speedopt_speed/src/cubic/cubic", // cubic is likely going to removed when embench 2.0 launches
     "bd_speedopt_speed/src/edn/edn",
     "bd_speedopt_speed/src/huffbench/huffbench",
     "bd_speedopt_speed/src/matmult-int/matmult-int",
-    // "bd_speedopt_speed/src/md5sum/md5sum", //commenting out tests from embench 2.0. When embench 2.0 launches stabilty, add these tests back
+     "bd_speedopt_speed/src/md5sum/md5sum", //commenting out tests from embench 2.0. When embench 2.0 launches stabilty, add these tests back
     "bd_speedopt_speed/src/minver/minver",
     "bd_speedopt_speed/src/nettle-aes/nettle-aes",
     "bd_speedopt_speed/src/nettle-sha256/nettle-sha256",
+    "bd_speedopt_speed/src/nsichneu/nsichneu",
     "bd_speedopt_speed/src/nbody/nbody",
     "bd_speedopt_speed/src/picojpeg/picojpeg",
-    // "bd_speedopt_speed/src/primecount/primecount",
+     "bd_speedopt_speed/src/primecount/primecount",
     "bd_speedopt_speed/src/qrduino/qrduino",
     "bd_speedopt_speed/src/sglib-combined/sglib-combined",
     "bd_speedopt_speed/src/slre/slre",
     "bd_speedopt_speed/src/st/st",
     "bd_speedopt_speed/src/statemate/statemate",
-    // "bd_speedopt_speed/src/tarfind/tarfind",
+     "bd_speedopt_speed/src/tarfind/tarfind",
     "bd_speedopt_speed/src/ud/ud",
     "bd_speedopt_speed/src/wikisort/wikisort",
     "bd_sizeopt_speed/src/aha-mont64/aha-mont64",
@@ -101,20 +103,20 @@ string tvpaths[] = '{
     "bd_sizeopt_speed/src/edn/edn",
     "bd_sizeopt_speed/src/huffbench/huffbench",
     "bd_sizeopt_speed/src/matmult-int/matmult-int",
-    // "bd_sizeopt_speed/src/md5sum/md5sum",
+     "bd_sizeopt_speed/src/md5sum/md5sum",
     "bd_sizeopt_speed/src/minver/minver",
     "bd_sizeopt_speed/src/nbody/nbody",
     "bd_sizeopt_speed/src/nettle-aes/nettle-aes",
     "bd_sizeopt_speed/src/nettle-sha256/nettle-sha256",
     "bd_sizeopt_speed/src/nsichneu/nsichneu",
     "bd_sizeopt_speed/src/picojpeg/picojpeg",
-    // "bd_sizeopt_speed/src/primecount/primecount",
+     "bd_sizeopt_speed/src/primecount/primecount",
     "bd_sizeopt_speed/src/qrduino/qrduino",
     "bd_sizeopt_speed/src/sglib-combined/sglib-combined",
     "bd_sizeopt_speed/src/slre/slre",
     "bd_sizeopt_speed/src/st/st",
     "bd_sizeopt_speed/src/statemate/statemate",
-    // "bd_sizeopt_speed/src/tarfind/tarfind",
+     "bd_sizeopt_speed/src/tarfind/tarfind",
     "bd_sizeopt_speed/src/ud/ud",
     "bd_sizeopt_speed/src/wikisort/wikisort"
   };
@@ -1064,6 +1066,14 @@ string imperas32f[] = '{
     "rv64i_m/I/src/xori-01.S"
   };
 
+  string arch64f_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv64i_m/F/src/fmadd_b15-01.S",
+    "rv64i_m/F/src/fmsub_b15-01.S"
+    // "rv64i_m/F/src/fnmadd_b15-01.S",
+    // "rv64i_m/F/src/fnmsub_b15-01.S"
+  };
+
   string arch64f[] = '{
     `RISCVARCHTEST,
     "rv64i_m/F/src/fdiv_b1-01.S",
@@ -1086,8 +1096,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsqrt_b7-01.S",
     "rv64i_m/F/src/fsqrt_b8-01.S",
     "rv64i_m/F/src/fsqrt_b9-01.S",
-
-
     "rv64i_m/F/src/fadd_b10-01.S",
     "rv64i_m/F/src/fadd_b1-01.S",
     "rv64i_m/F/src/fadd_b11-01.S",
@@ -1138,7 +1146,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/flw-align-01.S",
     "rv64i_m/F/src/fmadd_b1-01.S",
     "rv64i_m/F/src/fmadd_b14-01.S",
-    //"rv64i_m/F/src/fmadd_b15-01.S",
     "rv64i_m/F/src/fmadd_b16-01.S",
     "rv64i_m/F/src/fmadd_b17-01.S",
     "rv64i_m/F/src/fmadd_b18-01.S",
@@ -1155,7 +1162,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fmin_b19-01.S",
     "rv64i_m/F/src/fmsub_b1-01.S",
     "rv64i_m/F/src/fmsub_b14-01.S",
-    "rv64i_m/F/src/fmsub_b15-01.S",
     "rv64i_m/F/src/fmsub_b16-01.S",
     "rv64i_m/F/src/fmsub_b17-01.S",
     "rv64i_m/F/src/fmsub_b18-01.S",
@@ -1186,7 +1192,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fmv.x.w_b29-01.S",
     "rv64i_m/F/src/fnmadd_b1-01.S",
     "rv64i_m/F/src/fnmadd_b14-01.S",
-    // "rv64i_m/F/src/fnmadd_b15-01.S",
     "rv64i_m/F/src/fnmadd_b16-01.S",
     "rv64i_m/F/src/fnmadd_b17-01.S",
     "rv64i_m/F/src/fnmadd_b18-01.S",
@@ -1199,7 +1204,6 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fnmadd_b8-01.S",
     "rv64i_m/F/src/fnmsub_b1-01.S",
     "rv64i_m/F/src/fnmsub_b14-01.S",
-    // "rv64i_m/F/src/fnmsub_b15-01.S",
     "rv64i_m/F/src/fnmsub_b16-01.S",
     "rv64i_m/F/src/fnmsub_b17-01.S",
     "rv64i_m/F/src/fnmsub_b18-01.S",
@@ -1236,6 +1240,13 @@ string imperas32f[] = '{
     "rv64i_m/F/src/fsw-align-01.S"
     };
 
+  string arch64d_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv64i_m/D/src/fmadd.d_b15-01.S",
+    //"rv64i_m/D/src/fmsub.d_b15-01.S",
+     "rv64i_m/D/src/fnmadd.d_b15-01.S"
+    // "rv64i_m/D/src/fnmsub.d_b15-01.S"
+  };
 
   string arch64d[] = '{
     `RISCVARCHTEST,
@@ -1260,7 +1271,6 @@ string imperas32f[] = '{
     "rv64i_m/D/src/fsqrt.d_b7-01.S",
     "rv64i_m/D/src/fsqrt.d_b8-01.S",
     "rv64i_m/D/src/fsqrt.d_b9-01.S",
-
     "rv64i_m/D/src/fadd.d_b10-01.S",
     "rv64i_m/D/src/fadd.d_b1-01.S",
     "rv64i_m/D/src/fadd.d_b11-01.S",
@@ -1456,7 +1466,7 @@ string arch64zbb[] = '{
     "rv64i_m/B/src/andn-01.S",
     "rv64i_m/B/src/orn-01.S",
     "rv64i_m/B/src/xnor-01.S",
-    "rv64i_m/B/src/zext.h-01.S",
+    "rv64i_m/B/src/zext.h_64-01.S",
     "rv64i_m/B/src/sext.b-01.S",
     "rv64i_m/B/src/sext.h-01.S",
     "rv64i_m/B/src/clz-01.S",
@@ -1524,6 +1534,14 @@ string arch64zbs[] = '{
     "rv32i_m/M/src/mulhu-01.S"
    };
 
+  string arch32f_fma[] = '{
+    `RISCVARCHTEST,
+    "rv32i_m/F/src/fmadd_b15-01.S"
+    //"rv32i_m/F/src/fmsub_b15-01.S",
+    // "rv32i_m/F/src/fnmadd_b15-01.S",
+    // "rv32i_m/F/src/fnmsub_b15-01.S"
+  };
+
   string arch32f[] = '{
     `RISCVARCHTEST,
     "rv32i_m/F/src/fdiv_b20-01.S",
@@ -1577,7 +1595,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/flw-align-01.S",
     "rv32i_m/F/src/fmadd_b1-01.S",
     "rv32i_m/F/src/fmadd_b14-01.S",
-    "rv32i_m/F/src/fmadd_b15-01.S",
     "rv32i_m/F/src/fmadd_b16-01.S",
     "rv32i_m/F/src/fmadd_b17-01.S",
     "rv32i_m/F/src/fmadd_b18-01.S",
@@ -1594,7 +1611,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fmin_b19-01.S",
     "rv32i_m/F/src/fmsub_b1-01.S",
     "rv32i_m/F/src/fmsub_b14-01.S",
-    //"rv32i_m/F/src/fmsub_b15-01.S",
     "rv32i_m/F/src/fmsub_b16-01.S",
     "rv32i_m/F/src/fmsub_b17-01.S",
     "rv32i_m/F/src/fmsub_b18-01.S",
@@ -1625,7 +1641,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fmv.x.w_b29-01.S",
     "rv32i_m/F/src/fnmadd_b1-01.S",
     "rv32i_m/F/src/fnmadd_b14-01.S",
-    // "rv32i_m/F/src/fnmadd_b15-01.S",
     "rv32i_m/F/src/fnmadd_b16-01.S",
     "rv32i_m/F/src/fnmadd_b17-01.S",
     "rv32i_m/F/src/fnmadd_b18-01.S",
@@ -1638,7 +1653,6 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fnmadd_b8-01.S",
     "rv32i_m/F/src/fnmsub_b1-01.S",
     "rv32i_m/F/src/fnmsub_b14-01.S",
-    // "rv32i_m/F/src/fnmsub_b15-01.S",
     "rv32i_m/F/src/fnmsub_b16-01.S",
     "rv32i_m/F/src/fnmsub_b17-01.S",
     "rv32i_m/F/src/fnmsub_b18-01.S",
@@ -1674,6 +1688,14 @@ string arch64zbs[] = '{
     "rv32i_m/F/src/fsub_b8-01.S",
     "rv32i_m/F/src/fsw-align-01.S"
     };
+
+  string arch32d_fma[] = '{
+    `RISCVARCHTEST,
+    //"rv32i_m/D/src/fmadd.d_b15-01.S",
+    //"rv32i_m/D/src/fmsub.d_b15-01.S",
+    // "rv32i_m/D/src/fnmadd.d_b15-01.S",
+    "rv32i_m/D/src/fnmsub.d_b15-01.S"
+  };
 
   string arch32d[] = '{
     `RISCVARCHTEST,
@@ -2009,8 +2031,8 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
-//    "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",
-    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S",
+    // "rv32i_m/privilege/src/WALLY-mmu-sv32-01.S",    // run this if SVADU_SUPPORTED = 0
+    "rv32i_m/privilege/src/WALLY-mmu-sv32-svadu-01.S", // run this if SVADU_SUPPORTED = 1
     "rv32i_m/privilege/src/WALLY-mtvec-01.S",
     "rv32i_m/privilege/src/WALLY-pma-01.S",
     "rv32i_m/privilege/src/WALLY-pmp-01.S",
@@ -2055,8 +2077,8 @@ string arch64zbs[] = '{
 
  string custom[] = '{
     `CUSTOM,
-    "debug",
     "simple",
+    "debug",
     "cacheTest"
  };
   string testsBP64[] = '{

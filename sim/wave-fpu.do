@@ -7,8 +7,15 @@ add wave -noupdate /testbenchfp/Y
 add wave -noupdate /testbenchfp/Z
 add wave -noupdate /testbenchfp/Res
 add wave -noupdate /testbenchfp/Ans
+add wave -noupdate /testbenchfp/reset
 add wave -noupdate /testbenchfp/DivStart
 add wave -noupdate /testbenchfp/FDivBusyE
+add wave -noupdate /testbenchfp/CheckNow
+add wave -noupdate /testbenchfp/DivDone
+add wave -noupdate /testbenchfp/ResMatch
+add wave -noupdate /testbenchfp/FlagMatch
+add wave -noupdate /testbenchfp/CheckNow
+add wave -noupdate /testbenchfp/NaNGood
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/specialcase/*
 add wave -group {PostProc} -noupdate /testbenchfp/postprocess/flags/*

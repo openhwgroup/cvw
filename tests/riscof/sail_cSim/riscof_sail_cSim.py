@@ -94,7 +94,8 @@ class sail_cSim(pluginTemplate):
 
             execute = "@cd "+testentry['work_dir']+";"
 
-            cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 1), self.xlen) + ' ' + test + ' -o ' + elf
+#            cmd = self.compile_cmd.format(testentry['isa'].lower().replace('zicsr', ' ', 1), self.xlen) + ' ' + test + ' -o ' + elf
+            cmd = self.compile_cmd.format(testentry['isa'].lower(), self.xlen) + ' ' + test + ' -o ' + elf
             compile_cmd = cmd + ' -D' + " -D".join(testentry['macros'])
             execute+=compile_cmd+";"
 
@@ -129,4 +130,5 @@ class sail_cSim(pluginTemplate):
             make.add_target(execute)
 #        make.execute_all(self.work_dir)
 # DH 7/26/22 increase timeout so sim will finish on slow machines
-        make.execute_all(self.work_dir, timeout = 1800)
+# DH 5/17/23 increase timeout to 3600 seconds
+        make.execute_all(self.work_dir, timeout = 3600)

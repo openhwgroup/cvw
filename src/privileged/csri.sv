@@ -27,19 +27,14 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module csri #(parameter 
-  MIE = 12'h304,
-  MIP = 12'h344,
-  SIE = 12'h104,
-  SIP = 12'h144) (
+module csri import cvw::*;  #(parameter cvw_t P) (
   input  logic              clk, reset, 
   input  logic              CSRMWriteM, CSRSWriteM,
-  input  logic [`XLEN-1:0]  CSRWriteValM,
+  input  logic [P.XLEN-1:0] CSRWriteValM,
   input  logic [11:0]       CSRAdrM,
   input  logic              MExtInt, SExtInt, MTimerInt, STimerInt, MSwInt,
   input  logic [11:0]       MIDELEG_REGW,
+  input  logic              ENVCFG_STCE,
   output logic [11:0]       MIP_REGW, MIE_REGW,
   output logic [11:0]       MIP_REGW_writeable // only SEIP, STIP, SSIP are actually writeable; the rest are hardwired to 0
 );
@@ -47,6 +42,11 @@ module csri #(parameter
   logic [11:0]              MIP_WRITE_MASK, SIP_WRITE_MASK, MIE_WRITE_MASK;
   logic                     WriteMIPM, WriteMIEM, WriteSIPM, WriteSIEM;
   logic                     STIP;
+
+  localparam MIE = 12'h304;
+  localparam MIP = 12'h344;
+  localparam SIE = 12'h104;
+  localparam SIP = 12'h144;
 
   // Interrupt Write Enables
   assign WriteMIPM = CSRMWriteM & (CSRAdrM == MIP);
@@ -58,10 +58,10 @@ module csri #(parameter
   // MEIP, MTIP, MSIP are read-only
   // SEIP, STIP, SSIP is writable in MIP if S mode exists
   // SSIP is writable in SIP if S mode exists
-  if (`S_SUPPORTED) begin:mask
-    if (`SSTC_SUPPORTED) begin
+  if (P.S_SUPPORTED) begin:mask
+    if (P.SSTC_SUPPORTED) begin
       assign MIP_WRITE_MASK = 12'h202; // SEIP and SSIP are writable, but STIP is not writable when STIMECMP is implemented (see SSTC spec)
-      assign STIP = STimerInt;
+      assign STIP = ENVCFG_STCE ? STimerInt : MIP_REGW_writeable[5];
     end else begin
       assign MIP_WRITE_MASK = 12'h222; // SEIP, STIP, SSIP are writeable in MIP (20210108-draft 3.1.9)
       assign STIP = MIP_REGW_writeable[5];
@@ -81,7 +81,6 @@ module csri #(parameter
     if (reset)          MIE_REGW <= 12'b0;
     else if (WriteMIEM) MIE_REGW <= (CSRWriteValM[11:0] & MIE_WRITE_MASK); // MIE controls M and S fields
     else if (WriteSIEM) MIE_REGW <= (CSRWriteValM[11:0] & 12'h222 & MIDELEG_REGW) | (MIE_REGW & 12'h888); // only S fields
-
 
   assign MIP_REGW = {MExtInt,   1'b0, SExtInt|MIP_REGW_writeable[9],  1'b0,
                      MTimerInt, 1'b0, STIP,                           1'b0,

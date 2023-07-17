@@ -27,9 +27,9 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module gsharebasic #(parameter k = 10,
+module gsharebasic import cvw::*; #(parameter cvw_t P,
+                     parameter XLEN,
+                     parameter k = 10,
                      parameter TYPE = 1) (
   input logic             clk,
   input logic             reset,
@@ -38,7 +38,7 @@ module gsharebasic #(parameter k = 10,
   output logic [1:0]      BPDirPredF, 
   output logic            BPDirPredWrongE,
   // update
-  input logic [`XLEN-1:0] PCNextF, PCM,
+  input logic [XLEN-1:0] PCNextF, PCM,
   input logic             BranchE, BranchM, PCSrcE
 );
 
@@ -58,7 +58,7 @@ module gsharebasic #(parameter k = 10,
   assign IndexM = GHRM;
   end
   
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

@@ -29,12 +29,11 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module tlbcamline #(parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
+module tlbcamline import cvw::*;  #(parameter cvw_t P, 
+                                    parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   input  logic                  clk, reset,
-  input  logic [`VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
-  input  logic [`ASID_BITS-1:0] SATP_ASID,
+  input  logic [P.VPN_BITS-1:0]  VPN, // The requested page number to compare against the key
+  input  logic [P.ASID_BITS-1:0] SATP_ASID,
   input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
@@ -56,13 +55,13 @@ module tlbcamline #(parameter KEY_BITS = 20, SEGMENT_BITS = 10) (
   logic [1:0]          PageType;
   
   // Split up key and query into sections for each page table level.
-  logic [`ASID_BITS-1:0] Key_ASID;
+  logic [P.ASID_BITS-1:0] Key_ASID;
   logic [SEGMENT_BITS-1:0] Key0, Key1, Query0, Query1;
   logic MatchASID, Match0, Match1;
 
   assign MatchASID = (SATP_ASID == Key_ASID) | PTE_G; 
 
-  if (`XLEN == 32) begin: match
+  if (P.XLEN == 32) begin: match
 
     assign {Key_ASID, Key1, Key0} = Key;
     assign {Query1, Query0} = VPN;

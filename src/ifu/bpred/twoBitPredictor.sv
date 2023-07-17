@@ -26,14 +26,13 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module twoBitPredictor #(parameter k = 10) (
+module twoBitPredictor import cvw::*; #(parameter cvw_t P, parameter XLEN,
+                         parameter k = 10) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW,
   input  logic             FlushD, FlushE, FlushM, FlushW,
-  input  logic [`XLEN-1:0] PCNextF, PCM,
+  input  logic [XLEN-1:0]  PCNextF, PCM,
   output logic [1:0]       BPDirPredF,
   output logic             BPDirPredWrongE,
   input  logic             BranchE, BranchM,
@@ -54,7 +53,7 @@ module twoBitPredictor #(parameter k = 10) (
   assign IndexM = {PCM[k+1] ^ PCM[1], PCM[k:2]};  
 
 
-  ram2p1r1wbe #(2**k, 2) PHT(.clk(clk),
+  ram2p1r1wbe #(P, 2**k, 2) PHT(.clk(clk),
     .ce1(~StallF), .ce2(~StallW & ~FlushW),
     .ra1(IndexNextF),
     .rd1(BPDirPredF),

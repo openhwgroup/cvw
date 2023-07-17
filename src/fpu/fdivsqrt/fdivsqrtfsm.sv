@@ -26,39 +26,37 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module fdivsqrtfsm(
-  input  logic               clk, reset, 
-  input  logic               XInfE, YInfE, 
-  input  logic               XZeroE, YZeroE, 
-  input  logic               XNaNE, YNaNE, 
-  input  logic               FDivStartE, IDivStartE,
-  input  logic               XsE, WZeroE,
-  input  logic               SqrtE,
-  input  logic               StallM, FlushE,
-  input  logic               IntDivE,
-  input  logic               ISpecialCaseE,
-  input  logic [`DURLEN-1:0] cycles,
-  output logic               IFDivStartE,
-  output logic               FDivBusyE, FDivDoneE,
-  output logic               SpecialCaseM
+module fdivsqrtfsm import cvw::*;  #(parameter cvw_t P) (
+  input  logic                clk, reset, 
+  input  logic                XInfE, YInfE, 
+  input  logic                XZeroE, YZeroE, 
+  input  logic                XNaNE, YNaNE, 
+  input  logic                FDivStartE, IDivStartE,
+  input  logic                XsE, WZeroE,
+  input  logic                SqrtE,
+  input  logic                StallM, FlushE,
+  input  logic                IntDivE,
+  input  logic                ISpecialCaseE,
+  input  logic [P.DURLEN-1:0] CyclesE,
+  output logic                IFDivStartE,
+  output logic                FDivBusyE, FDivDoneE,
+  output logic                SpecialCaseM
 );
   
   typedef enum logic [1:0] {IDLE, BUSY, DONE} statetype;
   statetype state;
 
   logic SpecialCaseE, FSpecialCaseE;
-  logic [`DURLEN-1:0] step;
+  logic [P.DURLEN-1:0] step;
 
   // FDivStartE and IDivStartE come from fctrl, reflecitng the start of floating-point and possibly integer division
-  assign IFDivStartE = (FDivStartE | (IDivStartE & `IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
+  assign IFDivStartE = (FDivStartE | (IDivStartE & P.IDIV_ON_FPU)) & (state == IDLE) & ~StallM;
   assign FDivDoneE = (state == DONE);
   assign FDivBusyE = (state == BUSY) | IFDivStartE; 
  
   // terminate immediately on special cases
-  assign FSpecialCaseE = XZeroE | | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
-  if (`IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
+  assign FSpecialCaseE = XZeroE | XInfE  | XNaNE |  (XsE&SqrtE) | (YZeroE | YInfE | YNaNE)&~SqrtE;
+  if (P.IDIV_ON_FPU) assign SpecialCaseE = IntDivE ? ISpecialCaseE : FSpecialCaseE;
   else              assign SpecialCaseE = FSpecialCaseE;
   flopenr #(1) SpecialCaseReg(clk, reset, IFDivStartE, SpecialCaseE, SpecialCaseM); // save SpecialCase for checking in fdivsqrtpostproc
 
@@ -66,8 +64,7 @@ module fdivsqrtfsm(
       if (reset | FlushE) begin
           state <= #1 IDLE; 
       end else if (IFDivStartE) begin // IFDivStartE implies stat is IDLE
-//       end else if ((state == IDLE) & IFDivStartE) begin // IFDivStartE implies stat is IDLE
-          step <= cycles; 
+          step <= CyclesE; 
           if (SpecialCaseE) state <= #1 DONE;
           else              state <= #1 BUSY;
       end else if (state == BUSY) begin 

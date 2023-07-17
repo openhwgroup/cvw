@@ -98,7 +98,7 @@
 `define FLEN (`Q_SUPPORTED ? `Q_LEN  : `D_SUPPORTED ? `D_LEN  : `F_SUPPORTED ? `S_LEN  : `H_LEN)
 `define NE   (`Q_SUPPORTED ? `Q_NE   : `D_SUPPORTED ? `D_NE   : `F_SUPPORTED ? `S_NE   : `H_NE)
 `define NF   (`Q_SUPPORTED ? `Q_NF   : `D_SUPPORTED ? `D_NF   : `F_SUPPORTED ? `S_NF   : `H_NF) 
-`define FMT  (`Q_SUPPORTED ? 2'd3       : `D_SUPPORTED ? 2'd1       : `F_SUPPORTED ? 2'd0       : 2'd2)
+`define FMT  (`Q_SUPPORTED ? 2'd3    : `D_SUPPORTED ? 2'd1    : `F_SUPPORTED ? 2'd0    : 2'd2)
 `define BIAS (`Q_SUPPORTED ? `Q_BIAS : `D_SUPPORTED ? `D_BIAS : `F_SUPPORTED ? `S_BIAS : `H_BIAS)*/
 
 // Floating point constants needed for FPU paramerterization
@@ -125,7 +125,7 @@
 
 // division constants
 
-`define DIVN        (((`NF<`XLEN) & `IDIV_ON_FPU) ? `XLEN : `NF+2) // standard length of input
+`define DIVN        ((((`NF+2)<`XLEN) & `IDIV_ON_FPU) ? `XLEN : `NF+2) // standard length of input
 `define LOGR        ($clog2(`RADIX))            // r = log(R)
 `define RK          (`LOGR*`DIVCOPIES)          // r*k used for intdiv preproc
 `define LOGRK       ($clog2(`RK))               // log2(r*k)

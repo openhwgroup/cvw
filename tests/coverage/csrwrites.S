@@ -33,5 +33,8 @@ main:
     csrrw t0, satp, zero
     csrrw t0, stvec, zero
     csrrw t0, sscratch, zero
+    li t0, -2
+    csrrw t1, menvcfg, t0
+    csrrw t2, senvcfg, t0
 
     j done

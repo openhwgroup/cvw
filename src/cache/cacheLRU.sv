@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
   input  logic                clk, 
@@ -104,8 +102,7 @@ module cacheLRU
     if (node == NUMWAYS-2) begin
       assign LRUUpdate[lchild] = ~WayEncoded[r];
       assign LRUUpdate[rchild] = WayEncoded[r];
-    end
-    else begin
+    end else begin
       assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
       assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
     end
@@ -113,7 +110,7 @@ module cacheLRU
 
   // The root node of the LRU tree will always be selected in LRUUpdate. No mux needed.
   assign NextLRU[NUMWAYS-2] = ~WayExpanded[NUMWAYS-2];
-  mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
+  if (NUMWAYS > 2) mux2 #(1) LRUMuxes[NUMWAYS-3:0](CurrLRU[NUMWAYS-3:0], ~WayExpanded[NUMWAYS-3:0], LRUUpdate[NUMWAYS-3:0], NextLRU[NUMWAYS-3:0]);
 
   // Compute next victim way.
   for(node = NUMWAYS-2; node >= NUMWAYS/2; node--) begin

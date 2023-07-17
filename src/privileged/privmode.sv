@@ -26,9 +26,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
-module privmode (
+module privmode import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
   input  logic             StallW, 
   input  logic             TrapM,               // Trap 
@@ -40,20 +38,20 @@ module privmode (
   output logic [1:0]       PrivilegeModeW       // current privilege mode
 ); 
   
-  if (`U_SUPPORTED) begin:privmode
+  if (P.U_SUPPORTED) begin:privmode
     // PrivilegeMode FSM
     always_comb begin
       if (TrapM) begin // Change privilege based on DELEG registers (see 3.1.8)
-        if (`S_SUPPORTED & DelegateM) NextPrivilegeModeM = `S_MODE;
-        else                          NextPrivilegeModeM = `M_MODE;
-      end else if (mretM)             NextPrivilegeModeM = STATUS_MPP;
-      else     if (sretM)             NextPrivilegeModeM = {1'b0, STATUS_SPP};
-      else                            NextPrivilegeModeM = PrivilegeModeW;
+        if (P.S_SUPPORTED & DelegateM) NextPrivilegeModeM = P.S_MODE;
+        else                           NextPrivilegeModeM = P.M_MODE;
+      end else if (mretM)              NextPrivilegeModeM = STATUS_MPP;
+      else     if (sretM)              NextPrivilegeModeM = {1'b0, STATUS_SPP};
+      else                             NextPrivilegeModeM = PrivilegeModeW;
     end
 
-    flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, `M_MODE, PrivilegeModeW);
+    flopenl #(2) privmodereg(clk, reset, ~StallW, NextPrivilegeModeM, P.M_MODE, PrivilegeModeW);
   end else begin  // only machine mode supported
-    assign NextPrivilegeModeM = `M_MODE;
-    assign PrivilegeModeW = `M_MODE;
+    assign NextPrivilegeModeM = P.M_MODE;
+    assign PrivilegeModeW = P.M_MODE;
   end
 endmodule
