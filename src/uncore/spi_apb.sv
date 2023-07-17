@@ -403,17 +403,20 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             endcase
         end
     */
+    logic ReceiveShiftFullDelay;
+    always_ff @(posedge PCLK, negedge PRESETn)
+        if (~PRESETn) ReceiveShiftFullDelay <= 0;
+        else if (SCLKDuty) ReceiveShiftFullDelay <= ReceiveShiftFull;
 
-    
-    assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active;
+    assign TransmitShiftRegLoad = ~TransmitShiftEmpty & ~Active | (((ChipSelectMode == 2'b10) & ~|(Delay1[15:8])) & ((ReceiveShiftFullDelay | ReceiveShiftFull) & ~SampleEdge));
     always_ff @(posedge PCLK, negedge PRESETn)
         if(~PRESETn) begin 
                 TransmitShiftReg <= 8'b0;
             end
         else if (TransmitShiftRegLoad) TransmitShiftReg <= TransmitFIFOReadData;
         else if (sckPhaseSelect) begin
-            if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & TransmitShiftEmpty) TransmitShiftReg <= TransmitFIFOReadData;
-            else if (Active) begin
+            //if ((ChipSelectMode[1:0] == 2'b10) & ~|(Delay1[15:8]) & (~TransmitFIFOReadEmpty) & TransmitShiftEmpty) TransmitShiftReg <= TransmitFIFOReadData;
+            if (Active) begin
                 case (Format[1:0])
                     2'b00: TransmitShiftReg <= {TransmitShiftReg[6:0], 1'b0};
                     2'b01: TransmitShiftReg <= {TransmitShiftReg[5:0], 2'b0};
@@ -597,13 +600,13 @@ module FIFO_async #(parameter M = 3, N = 8)(
 endmodule
 
 module TransmitShiftFSM(
-    input logic SCLKDuty, PRESETn,
+    input logic PCLK, PRESETn,
     input logic TransmitFIFOReadEmpty, ReceivePenultimateFrameBoolean, Active0,
     output logic TransmitShiftEmpty);
 
     typedef enum logic [1:0] {TransmitShiftEmptyState, TransmitShiftHoldState, TransmitShiftNotEmptyState} statetype;
     statetype TransmitState, TransmitNextState;
-    always_ff @(posedge SCLKDuty, negedge PRESETn)
+    always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) TransmitState <= TransmitShiftEmptyState;
         else          TransmitState <= TransmitNextState;
 

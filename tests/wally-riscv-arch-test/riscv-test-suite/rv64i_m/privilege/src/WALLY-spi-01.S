@@ -266,6 +266,7 @@ test_cases:
 # Test arbitrary inter_xfr delay
 
 .8byte delay1, 0x00000501, write32_test     # set inter_xfr delay to 5
+.8byte sck_mode, 0x00000001, write32_test
 .8byte tx_data, 0x98877665, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000065, read32_test
