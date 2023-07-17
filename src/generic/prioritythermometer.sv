@@ -29,8 +29,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module prioritythermometer #(parameter N = 8) (
   input  logic  [N-1:0] a,
   output logic  [N-1:0] y
@@ -48,6 +46,3 @@ module prioritythermometer #(parameter N = 8) (
   end
   /* verilator lint_on UNOPTFLAT */
 endmodule
-
-
-

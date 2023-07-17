@@ -28,7 +28,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module btb import cvw::*;  #(parameter cvw_t P, Depth = 10 ) (
+module btb import cvw::*;  #(parameter cvw_t P, 
+                             parameter Depth = 10 ) (
   input  logic             clk,
   input  logic             reset,
   input  logic             StallF, StallD, StallE, StallM, StallW, FlushD, FlushE, FlushM, FlushW,
@@ -91,7 +92,7 @@ module btb import cvw::*;  #(parameter cvw_t P, Depth = 10 ) (
 
 
   // An optimization may be using a PC relative address.
-  ram2p1r1wbe #(2**Depth, P.XLEN+4) memory(
+  ram2p1r1wbe #(P, 2**Depth, P.XLEN+4) memory(
     .clk, .ce1(~StallF | reset), .ra1(PCNextFIndex), .rd1(TableBTBPredF),
      .ce2(~StallW & ~FlushW), .wa2(PCMIndex), .wd2({InstrClassM, IEUAdrM}), .we2(BTBWrongM), .bwe2('1));
 

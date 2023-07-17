@@ -97,45 +97,45 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   
   // Part 1 branch direction prediction
   if (P.BPRED_TYPE == BP_TWOBIT) begin:Predictor
-    twoBitPredictor #(P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
+    twoBitPredictor #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
       .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
   end else if (P.BPRED_TYPE == BP_GSHARE) begin:Predictor
-    gshare #(P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gshare #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW, 
       .PCSrcE);
 
   end else if (P.BPRED_TYPE == BP_GLOBAL) begin:Predictor
-    gshare #(P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gshare #(P, P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW,
       .PCSrcE);
 
   end else if (P.BPRED_TYPE == BP_GSHARE_BASIC) begin:Predictor
-    gsharebasic #(P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gsharebasic #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
   end else if (P.BPRED_TYPE == BP_GLOBAL_BASIC) begin:Predictor
-    gsharebasic #(P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
+    gsharebasic #(P, P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   
   end else if (P.BPRED_TYPE == BP_LOCAL_BASIC) begin:Predictor
-    localbpbasic #(P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
+    localbpbasic #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   end else if (P.BPRED_TYPE == BP_LOCAL_AHEAD) begin:Predictor
-    localaheadbp #(P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
+    localaheadbp #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   end else if (P.BPRED_TYPE == BP_LOCAL_REPAIR) begin:Predictor
-    localrepairbp #(P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
+    localrepairbp #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCE, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
       .BranchD, .BranchE, .BranchM, .PCSrcE);
@@ -191,7 +191,7 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   if(`INSTR_CLASS_PRED) mux2 #(P.XLEN) pcmuxBPWrongInvalidateFlush(PCE, PCF, BPWrongM, NextValidPCE);
   else  assign NextValidPCE = PCE;
 
-  if(P.ZICOUNTERS_SUPPORTED) begin
+  if(P.ZIHPM_SUPPORTED) begin
     logic [P.XLEN-1:0]       RASPCD, RASPCE;
     logic                   BTAWrongE, RASPredPCWrongE;  
     // performance counters

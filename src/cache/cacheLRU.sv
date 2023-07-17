@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
   input  logic                clk, 
@@ -104,8 +102,7 @@ module cacheLRU
     if (node == NUMWAYS-2) begin
       assign LRUUpdate[lchild] = ~WayEncoded[r];
       assign LRUUpdate[rchild] = WayEncoded[r];
-    end
-    else begin
+    end else begin
       assign LRUUpdate[lchild] = LRUUpdate[node] & ~WayEncoded[r];
       assign LRUUpdate[rchild] = LRUUpdate[node] & WayEncoded[r];
     end

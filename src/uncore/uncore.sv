@@ -29,22 +29,22 @@
 
 module uncore import cvw::*;  #(parameter cvw_t P)(
   // AHB Bus Interface
-  input  logic                HCLK, HRESETn,
-  input  logic                TIMECLK,
+  input  logic                 HCLK, HRESETn,
+  input  logic                 TIMECLK,
   input  logic [P.PA_BITS-1:0] HADDR,
   input  logic [P.AHBW-1:0]    HWDATA,
   input  logic [P.XLEN/8-1:0]  HWSTRB,
-  input  logic                HWRITE,
-  input  logic [2:0]          HSIZE,
-  input  logic [2:0]          HBURST,
-  input  logic [3:0]          HPROT,
-  input  logic [1:0]          HTRANS,
-  input  logic                HMASTLOCK,
+  input  logic                 HWRITE,
+  input  logic [2:0]           HSIZE,
+  input  logic [2:0]           HBURST,
+  input  logic [3:0]           HPROT,
+  input  logic [1:0]           HTRANS,
+  input  logic                 HMASTLOCK,
   input  logic [P.AHBW-1:0]    HRDATAEXT,
-  input  logic                HREADYEXT, HRESPEXT,
+  input  logic                 HREADYEXT, HRESPEXT,
   output logic [P.AHBW-1:0]    HRDATA,
-  output logic                HREADY, HRESP,
-  output logic                HSELEXT,
+  output logic                 HREADY, HRESP,
+  output logic                 HSELEXT,
   // peripheral pins          
   output logic                MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
   output logic                MExtInt, SExtInt,          // External interrupts from PLIC
@@ -83,7 +83,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [P.XLEN/8-1:0]         PSTRB;
   logic [4:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
-  logic                       HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+  logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -149,7 +149,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
   if (P.SDC_SUPPORTED == 1) begin : sdc
-    SDC SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
+    SDC #(P) SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
       .HWDATA, .HREADSDC, .HRESPSDC, .HREADYSDC,
       // sdc interface
       .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,
@@ -157,9 +157,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
       .SDCIntM        
       );
   end else begin : sdc
-    assign SDCCLK = 0;
+    assign SDCCLK    = 0; 
     assign SDCCmdOut = 0;
-    assign SDCCmdOE = 0;
+    assign SDCCmdOE  = 0;
   end
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
@@ -200,4 +200,3 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELSPID, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
-

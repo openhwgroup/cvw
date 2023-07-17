@@ -27,21 +27,28 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module mdu import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk, reset,
-  input  logic             StallM, StallW, 
-  input  logic             FlushE, FlushM, FlushW,
+  input  logic              clk, reset,
+  input  logic              StallM, StallW, 
+  input  logic              FlushE, FlushM, FlushW,
   input  logic [P.XLEN-1:0] ForwardedSrcAE, ForwardedSrcBE, // inputs A and B from IEU forwarding mux output
-  input  logic [2:0]       Funct3E, Funct3M,               // type of MDU operation
-  input  logic             IntDivE, W64E,                  // Integer division/remainder, and W-type instrutions
+  input  logic [2:0]        Funct3E, Funct3M,               // type of MDU operation
+  input  logic              IntDivE, W64E,                  // Integer division/remainder, and W-type instrutions
+  input  logic              MDUActiveE,                     // Mul/Div instruction being executed
   output logic [P.XLEN-1:0] MDUResultW,                     // multiply/divide result
-  output logic             DivBusyE                        // busy signal to stall pipeline in Execute stage
+  output logic              DivBusyE                        // busy signal to stall pipeline in Execute stage
 );
 
   logic [P.XLEN*2-1:0]      ProdM;                          // double-width product from mul
   logic [P.XLEN-1:0]        QuotM, RemM;                    // quotient and remainder from intdivrestoring
   logic [P.XLEN-1:0]        PrelimResultM;                  // selected result before W truncation
   logic [P.XLEN-1:0]        MDUResultM;                     // result after W truncation
-  logic                    W64M;                           // W-type instruction
+  logic                     W64M;                           // W-type instruction
+
+  logic [P.XLEN-1:0]        AMDU, BMDU;                     // Gated inputs to MDU
+
+  // gate data inputs to MDU to only operate when MDU is active.
+  assign AMDU = ForwardedSrcAE & {P.XLEN{MDUActiveE}};
+  assign BMDU = ForwardedSrcBE & {P.XLEN{MDUActiveE}};
 
   // Multiplier
   mul #(P.XLEN) mul(.clk, .reset, .StallM, .FlushM, .ForwardedSrcAE, .ForwardedSrcBE, .Funct3E, .ProdM);
@@ -64,13 +71,13 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   always_comb
     case (Funct3M)     
       3'b000: PrelimResultM = ProdM[P.XLEN-1:0];          // mul
-      3'b001: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];    // mulh
-      3'b010: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];    // mulhsu
-      3'b011: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];    // mulhu
-      3'b100: PrelimResultM = QuotM;                     // div
-      3'b101: PrelimResultM = QuotM;                     // divu
-      3'b110: PrelimResultM = RemM;                      // rem
-      3'b111: PrelimResultM = RemM;                      // remu
+      3'b001: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];   // mulh
+      3'b010: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];   // mulhsu
+      3'b011: PrelimResultM = ProdM[P.XLEN*2-1:P.XLEN];   // mulhu
+      3'b100: PrelimResultM = QuotM;                      // div
+      3'b101: PrelimResultM = QuotM;                      // divu
+      3'b110: PrelimResultM = RemM;                       // rem
+      3'b111: PrelimResultM = RemM;                       // remu
     endcase 
 
   // Handle sign extension for W-type instructions
@@ -84,5 +91,3 @@ module mdu import cvw::*;  #(parameter cvw_t P) (
   // Writeback stage pipeline register
   flopenrc #(P.XLEN) MDUResultWReg(clk, reset, FlushW, ~StallW, MDUResultM, MDUResultW);   
 endmodule // mdu
-
-

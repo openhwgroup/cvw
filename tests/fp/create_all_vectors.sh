@@ -5,4 +5,4 @@ mkdir -p vectors
 ./remove_spaces.sh
 
 # to create tvs for evaluation of combined IFdivsqrt
-#./combined_IF_vectors/create_IF_vectors.sh
+cd combined_IF_vectors; ./create_IF_vectors.sh

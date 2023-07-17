@@ -40,7 +40,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   // keyword, the compiler warns us that it's interpreting the signal as a var,
   // which we might not intend.
   input  var logic [7:0]           PMPCFG_ARRAY_REGW[P.PMP_ENTRIES-1:0],
-  input  var logic [P.PA_BITS-3:0]  PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
+  input  var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW [P.PMP_ENTRIES-1:0],
   input  logic                     ExecuteAccessF, WriteAccessM, ReadAccessM,
   output logic                     PMPInstrAccessFaultF,
   output logic                     PMPLoadAccessFaultM,
@@ -48,11 +48,11 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
 );
 
   // Bit i is high when the address falls in PMP region i
-  logic                    EnforcePMP; // should PMP be checked in this privilege level
-  logic [P.PMP_ENTRIES-1:0] Match;      // physical address matches one of the pmp ranges
-  logic [P.PMP_ENTRIES-1:0] FirstMatch; // onehot encoding for the first pmpaddr to match the current address.
-  logic [P.PMP_ENTRIES-1:0] L, X, W, R; // PMP matches and has flag set
-  logic [P.PMP_ENTRIES-1:0] PAgePMPAdr; // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
+  logic                            EnforcePMP; // should PMP be checked in this privilege level
+  logic [P.PMP_ENTRIES-1:0]        Match;      // physical address matches one of the pmp ranges
+  logic [P.PMP_ENTRIES-1:0]        FirstMatch; // onehot encoding for the first pmpaddr to match the current address.
+  logic [P.PMP_ENTRIES-1:0]        L, X, W, R; // PMP matches and has flag set
+  logic [P.PMP_ENTRIES-1:0]        PAgePMPAdr; // for TOR PMP matching, PhysicalAddress > PMPAdr[i]
 
   if (P.PMP_ENTRIES > 0) begin: pmp // prevent complaints about array of no elements when PMP_ENTRIES = 0
     pmpadrdec #(P) pmpadrdecs[P.PMP_ENTRIES-1:0](
@@ -67,7 +67,7 @@ module pmpchecker import cvw::*;  #(parameter cvw_t P) (
   priorityonehot #(P.PMP_ENTRIES) pmppriority(.a(Match), .y(FirstMatch)); // combine the match signal from all the adress decoders to find the first one that matches.
 
   // Only enforce PMP checking for S and U modes or in Machine mode when L bit is set in selected region
-  assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | |(L & FirstMatch); // *** switch to this logic when PMP is initialized for non-machine mode
+  assign EnforcePMP = (PrivilegeModeW != P.M_MODE) | (|(L & FirstMatch)); // *** switch to this logic when PMP is initialized for non-machine mode
 
   assign PMPInstrAccessFaultF     = EnforcePMP & ExecuteAccessF & ~|(X & FirstMatch) ;
   assign PMPStoreAmoAccessFaultM  = EnforcePMP & WriteAccessM   & ~|(W & FirstMatch) ;

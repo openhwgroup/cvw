@@ -25,39 +25,44 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
+`include "config.vh"
+
 
 // This is set from the command line script
 // `define USE_IMPERAS_DV
 
 `ifdef USE_IMPERAS_DV
-  `include "rvvi/imperasDV.svh"
+  `include "idv/idv.svh"
 `endif
+
+import cvw::*;
 
 module testbench;
   parameter DEBUG=0;
 
 `ifdef USE_IMPERAS_DV
-  import rvviPkg::*;
+  import idvPkg::*;
   import rvviApiPkg::*;
   import idvApiPkg::*;
 `endif
+
+  `include "parameter-defs.vh"
 
   logic        clk;
   logic        reset_ext, reset;
 
 
-  logic [`XLEN-1:0] testadr, testadrNoBase;
+  logic [P.XLEN-1:0] testadr, testadrNoBase;
   string InstrFName, InstrDName, InstrEName, InstrMName, InstrWName;
   logic [31:0] InstrW;
 
   logic [3:0]  dummy;
 
-  logic [`AHBW-1:0] HRDATAEXT;
+  logic [P.AHBW-1:0] HRDATAEXT;
   logic             HREADYEXT, HRESPEXT;
-  logic [`PA_BITS-1:0] HADDR;
-  logic [`AHBW-1:0] HWDATA;
-  logic [`XLEN/8-1:0] HWSTRB;
+  logic [P.PA_BITS-1:0] HADDR;
+  logic [P.AHBW-1:0] HWDATA;
+  logic [P.XLEN/8-1:0] HWSTRB;
   logic             HWRITE;
   logic [2:0]       HSIZE;
   logic [2:0]       HBURST;
@@ -65,7 +70,7 @@ module testbench;
   logic [1:0]       HTRANS;
   logic             HMASTLOCK;
   logic             HCLK, HRESETn;
-  logic [`XLEN-1:0] PCW;
+  logic [P.XLEN-1:0] PCW;
 
   string ProgramAddrMapFile, ProgramLabelMapFile;
   integer   	ProgramAddrLabelArray [string] = '{ "begin_signature" : 0, "tohost" : 0 };
@@ -108,7 +113,7 @@ module testbench;
           $error("Must specify test directory using plusarg testDir");
       end
 
-      if (`BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
+      if (P.BUS_SUPPORTED) $readmemh(memfilename, dut.uncore.uncore.ram.ram.memory.RAM);
 	  else $error("Imperas test bench requires BUS.");
 
       ProgramAddrMapFile = {testDir, "/ref/ref.elf.objdump.addr"};
@@ -123,8 +128,8 @@ module testbench;
 
 `ifdef USE_IMPERAS_DV
 
-    rvviTrace #(.XLEN(`XLEN), .FLEN(`FLEN)) rvvi();
-    wallyTracer wallyTracer(rvvi);
+    rvviTrace #(.XLEN(P.XLEN), .FLEN(P.FLEN)) rvvi();
+    wallyTracer #(P) wallyTracer(rvvi);
 
     trace2log idv_trace2log(rvvi);
     trace2cov idv_trace2cov(rvvi);
@@ -140,7 +145,7 @@ module testbench;
 
     initial begin 
       
-      MAX_ERRS = 3;
+      IDV_MAX_ERRS = 3;
 
       // Initialize REF (do this before initializing the DUT)
       if (!rvviVersionCheck(RVVI_API_VERSION)) begin
@@ -171,23 +176,23 @@ module testbench;
       // Privileges for PMA are set in the imperas.ic
       // volatile (IO) regions are defined here
       // only real ROM/RAM areas are BOOTROM and UNCORE_RAM
-      if (`CLINT_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`CLINT_BASE, (`CLINT_BASE + `CLINT_RANGE)));
+      if (P.CLINT_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.CLINT_BASE, (P.CLINT_BASE + P.CLINT_RANGE)));
       end
-      if (`GPIO_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`GPIO_BASE, (`GPIO_BASE + `GPIO_RANGE)));
+      if (P.GPIO_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.GPIO_BASE, (P.GPIO_BASE + P.GPIO_RANGE)));
       end
-      if (`UART_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`UART_BASE, (`UART_BASE + `UART_RANGE)));
+      if (P.UART_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.UART_BASE, (P.UART_BASE + P.UART_RANGE)));
       end
-      if (`PLIC_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`PLIC_BASE, (`PLIC_BASE + `PLIC_RANGE)));
+      if (P.PLIC_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.PLIC_BASE, (P.PLIC_BASE + P.PLIC_RANGE)));
       end
-      if (`SDC_SUPPORTED) begin
-          void'(rvviRefMemorySetVolatile(`SDC_BASE, (`SDC_BASE + `SDC_RANGE)));
+      if (P.SDC_SUPPORTED) begin
+          void'(rvviRefMemorySetVolatile(P.SDC_BASE, (P.SDC_BASE + P.SDC_RANGE)));
       end
 
-      if(`XLEN==32) begin
+      if(P.XLEN==32) begin
           void'(rvviRefCsrSetVolatile(0, 32'hC80));   // CYCLEH
           void'(rvviRefCsrSetVolatile(0, 32'hB80));   // MCYCLEH
           void'(rvviRefCsrSetVolatile(0, 32'hC82));   // INSTRETH
@@ -211,19 +216,19 @@ module testbench;
 
 `endif
 
-  flopenr #(`XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
+  flopenr #(P.XLEN) PCWReg(clk, reset, ~dut.core.ieu.dp.StallW, dut.core.ifu.PCM, PCW);
   flopenr  #(32)   InstrWReg(clk, reset, ~dut.core.ieu.dp.StallW,  dut.core.ifu.InstrM, InstrW);
 
   // check assertions for a legal configuration
-  riscvassertions riscvassertions();
+  riscvassertions #(P) riscvassertions();
 
 
   // instantiate device to be tested
   assign GPIOIN = 0;
   assign UARTSin = 1;
 
-  if(`EXT_MEM_SUPPORTED) begin
-    ram_ahb #(.BASE(`EXT_MEM_BASE), .RANGE(`EXT_MEM_RANGE)) 
+  if(P.EXT_MEM_SUPPORTED) begin
+    ram_ahb #(.BASE(P.EXT_MEM_BASE), .RANGE(P.EXT_MEM_RANGE)) 
     ram (.HCLK, .HRESETn, .HADDR, .HWRITE, .HTRANS, .HWDATA, .HSELRam(HSELEXT), 
          .HREADRam(HRDATAEXT), .HREADYRam(HREADYEXT), .HRESPRam(HRESPEXT), .HREADY,
          .HWSTRB);
@@ -233,7 +238,7 @@ module testbench;
     assign HRDATAEXT = 0;
   end
 
-  if(`FPGA) begin : sdcard
+  if(P.FPGA) begin : sdcard
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -247,7 +252,7 @@ module testbench;
     assign SDCDat = '0;
   end
 
-  wallypipelinedsoc dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
@@ -287,7 +292,7 @@ module testbench;
 
   // track the current function or global label
   if (DEBUG == 1) begin : FunctionName
-    FunctionName FunctionName(.reset(reset),
+    FunctionName #(P) FunctionName(.reset(reset),
 			      .clk(clk),
 			      .ProgramAddrMapFile(ProgramAddrMapFile),
 			      .ProgramLabelMapFile(ProgramLabelMapFile));
@@ -299,7 +304,7 @@ module testbench;
   // or sd gp, -56(t0) 
   // or on a jump to self infinite loop (6f) for RISC-V Arch tests
   logic ecf; // remove this once we don't rely on old Imperas tests with Ecalls
-  if (`ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
+  if (P.ZICSR_SUPPORTED) assign ecf = dut.core.priv.priv.EcallFaultM;
   else                  assign ecf = 0;
   assign DCacheFlushStart = ecf & 
 			    (dut.core.ieu.dp.regf.rf[3] == 1 | 
@@ -309,13 +314,13 @@ module testbench;
            ((dut.core.ifu.InstrM == 32'h6f | dut.core.ifu.InstrM == 32'hfc32a423 | dut.core.ifu.InstrM == 32'hfc32a823) & dut.core.ieu.c.InstrValidM ) |
            ((dut.core.lsu.IEUAdrM == ProgramAddrLabelArray["tohost"]) & InstrMName == "SW" ); 
 
-  DCacheFlushFSM DCacheFlushFSM(.clk(clk),
+  DCacheFlushFSM #(P) DCacheFlushFSM(.clk(clk),
     			.reset(reset),
 	    		.start(DCacheFlushStart),
 		    	.done(DCacheFlushDone));
 
   // initialize the branch predictor
-  if (`BPRED_SUPPORTED == 1)
+  if (P.BPRED_SUPPORTED == 1)
     begin
       genvar adrindex;
       
@@ -331,24 +336,7 @@ module testbench;
       end
     end
 
-  // check for hange up.
-  logic [`XLEN-1:0] OldPCW;
-  integer 			WatchDogTimerCount;
-  localparam WatchDogTimerThreshold = 1000000;
-  logic 			WatchDogTimeOut;
-  always_ff @(posedge clk) begin
-	OldPCW <= PCW;
-	if(OldPCW == PCW) WatchDogTimerCount = WatchDogTimerCount + 1'b1;
-	else WatchDogTimerCount = '0;
-  end
-
-  always_comb begin
-	WatchDogTimeOut = WatchDogTimerCount >= WatchDogTimerThreshold;
-	if(WatchDogTimeOut) begin
-	  $display("FAILURE: Watch Dog Time Out triggered. PCW stuck at %x for more than %d cycles", PCW, WatchDogTimerCount);
-	  $stop;
-	end
-  end
+  watchdog #(P.XLEN, 1000000) watchdog(.clk, .reset);  // check if PCW is stuck
 
 endmodule
 
@@ -356,120 +344,6 @@ endmodule
 /* verilator lint_on STMTDLY */
 /* verilator lint_on WIDTH */
 
-module DCacheFlushFSM
-  (input logic clk,
-   input logic reset,
-   input logic start,
-   output logic done);
-
-  genvar adr;
-
-  logic [`XLEN-1:0] ShadowRAM[`UNCORE_RAM_BASE>>(1+`XLEN/32):(`UNCORE_RAM_RANGE+`UNCORE_RAM_BASE)>>1+(`XLEN/32)];
-  
-	if(`DCACHE_SUPPORTED) begin
-	  localparam integer numlines = testbench.dut.core.lsu.bus.dcache.dcache.NUMLINES;
-	  localparam integer numways = testbench.dut.core.lsu.bus.dcache.dcache.NUMWAYS;
-	  localparam integer linebytelen = testbench.dut.core.lsu.bus.dcache.dcache.LINEBYTELEN;
-	  localparam integer linelen = testbench.dut.core.lsu.bus.dcache.dcache.LINELEN;
-	  localparam integer sramlen = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].SRAMLEN;            
-	  localparam integer cachesramwords = testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[0].NUMSRAM;
-      
-//testbench.dut.core.lsu.bus.dcache.dcache.CacheWays.NUMSRAM;
-	  localparam integer numwords = sramlen/`XLEN;
-      localparam integer lognumlines = $clog2(numlines);
-	  localparam integer loglinebytelen = $clog2(linebytelen);
-	  localparam integer lognumways = $clog2(numways);
-	  localparam integer tagstart = lognumlines + loglinebytelen;
-
-
-
-	  genvar 			 index, way, cacheWord;
-	  logic [sramlen-1:0] CacheData [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-      logic [sramlen-1:0] cacheline;
-	  logic [`XLEN-1:0]  CacheTag [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic 			 CacheValid  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic 			 CacheDirty  [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-	  logic [`PA_BITS-1:0] CacheAdr [numways-1:0] [numlines-1:0] [cachesramwords-1:0];
-    for(index = 0; index < numlines; index++) begin
-		  for(way = 0; way < numways; way++) begin
-		    for(cacheWord = 0; cacheWord < cachesramwords; cacheWord++) begin
-			    copyShadow #(.tagstart(tagstart),
-					.loglinebytelen(loglinebytelen), .sramlen(sramlen))
-			    copyShadow(.clk,
-          .start,
-          .tag(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS-1-tagstart:0]),
-          .valid(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].ValidBits[index]),
-          .dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].DirtyBits[index]),
-                           // these dirty bit selections would be needed if dirty is moved inside the tag array.
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].dirty.DirtyMem.RAM[index]),
-          //.dirty(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].CacheTagMem.RAM[index][`PA_BITS+tagstart]),
-          .data(testbench.dut.core.lsu.bus.dcache.dcache.CacheWays[way].word[cacheWord].wordram.CacheDataMem.RAM[index]),
-          .index(index),
-          .cacheWord(cacheWord),
-          .CacheData(CacheData[way][index][cacheWord]),
-          .CacheAdr(CacheAdr[way][index][cacheWord]),
-          .CacheTag(CacheTag[way][index][cacheWord]),
-          .CacheValid(CacheValid[way][index][cacheWord]),
-          .CacheDirty(CacheDirty[way][index][cacheWord]));
-        end
-      end
-    end
-
-    integer i, j, k, l;
-
-    always @(posedge clk) begin
-      if (start) begin #1
-        #1
-        for(i = 0; i < numlines; i++) begin
-          for(j = 0; j < numways; j++) begin
-            for(l = 0; l < cachesramwords; l++) begin
-              if (CacheValid[j][i][l] & CacheDirty[j][i][l]) begin
-                for(k = 0; k < numwords; k++) begin
-                  //cacheline = CacheData[j][i][0];
-                  // does not work with modelsim
-                  // # ** Error: ../testbench/testbench.sv(483): Range must be bounded by constant expressions.
-                  // see https://verificationacademy.com/forums/systemverilog/range-must-be-bounded-constant-expressions
-                  //ShadowRAM[CacheAdr[j][i][k] >> $clog2(`XLEN/8)] = cacheline[`XLEN*(k+1)-1:`XLEN*k];
-                  ShadowRAM[(CacheAdr[j][i][l] >> $clog2(`XLEN/8)) + k] = CacheData[j][i][l][`XLEN*k +: `XLEN];
-                end
-              end
-            end
-          end
-        end
-      end
-    end  
-  end
-  flop #(1) doneReg(.clk, .d(start), .q(done));
-endmodule
-
-module copyShadow
-  #(parameter tagstart, loglinebytelen, sramlen)
-  (input logic clk,
-   input logic 			     start,
-   input logic [`PA_BITS-1:tagstart] tag,
-   input logic 			     valid, dirty,
-   input logic [sramlen-1:0] 	     data,
-   input logic [32-1:0] 	     index,
-   input logic [32-1:0] 	     cacheWord,
-   output logic [sramlen-1:0] 	     CacheData,
-   output logic [`PA_BITS-1:0] 	     CacheAdr,
-   output logic [`XLEN-1:0] 	     CacheTag,
-   output logic 		     CacheValid,
-   output logic 		     CacheDirty);
-  
-
-  always_ff @(posedge clk) begin
-    if(start) begin
-      CacheTag = tag;
-      CacheValid = valid;
-      CacheDirty = dirty;
-      CacheData = data;
-      CacheAdr = (tag << tagstart) + (index << loglinebytelen) + (cacheWord << $clog2(sramlen/8));
-    end
-  end
-  
-  
-endmodule
 
 task automatic updateProgramAddrLabelArray;
   input string ProgramAddrMapFile, ProgramLabelMapFile;

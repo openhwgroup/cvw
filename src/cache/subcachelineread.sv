@@ -27,8 +27,6 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module subcachelineread #(parameter LINELEN, WORDLEN, 
   parameter MUXINTERVAL )(     // The number of bits between mux. Set to 16 for I$ to support compressed.  Set to `LLEN for D$
   input  logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1 : 0] PAdr,       // Physical address 
@@ -43,9 +41,8 @@ module subcachelineread #(parameter LINELEN, WORDLEN,
   logic [LINELEN+(WORDLEN-MUXINTERVAL)-1:0]   ReadDataLinePad;
   logic [WORDLEN-1:0]                         ReadDataLineSets [(LINELEN/MUXINTERVAL)-1:0];
 
-  if (PADLEN > 0) begin
-    assign ReadDataLinePad = {{PADLEN{1'b0}}, ReadDataLine};    
-  end else assign ReadDataLinePad = ReadDataLine;
+  if (PADLEN > 0) assign ReadDataLinePad = {{PADLEN{1'b0}}, ReadDataLine};    
+  else            assign ReadDataLinePad = ReadDataLine;
 
   genvar index;
   for (index = 0; index < WORDSPERLINE; index++) begin:readdatalinesetsmux

@@ -37,25 +37,25 @@ module ebu #(parameter XLEN, PA_BITS, AHBW)(
   input  logic [1:0]          IFUHTRANS, // IFU AHB transaction request
   input  logic [2:0]          IFUHSIZE,  // IFU AHB transaction size
   input  logic [2:0]          IFUHBURST, // IFU AHB burst length
-  input  logic [PA_BITS-1:0] IFUHADDR,  // IFU AHB address
+  input  logic [PA_BITS-1:0]  IFUHADDR,  // IFU AHB address
   output logic                IFUHREADY, // AHB peripheral ready gated by possible non-grant
   // Signals from LSU
   input  logic [1:0]          LSUHTRANS, // LSU AHB transaction request
   input  logic                LSUHWRITE, // LSU AHB transaction direction. 1: write, 0: read
   input  logic [2:0]          LSUHSIZE,  // LSU AHB size
   input  logic [2:0]          LSUHBURST, // LSU AHB burst length
-  input  logic [PA_BITS-1:0] LSUHADDR,  // LSU AHB address
-  input  logic [XLEN-1:0]    LSUHWDATA, // initially support AHBW = XLEN
-  input  logic [XLEN/8-1:0]  LSUHWSTRB, // AHB byte mask
+  input  logic [PA_BITS-1:0]  LSUHADDR,  // LSU AHB address
+  input  logic [XLEN-1:0]     LSUHWDATA, // initially support AHBW = XLEN
+  input  logic [XLEN/8-1:0]   LSUHWSTRB, // AHB byte mask
   output logic                LSUHREADY, // AHB peripheral. Never gated as LSU always has priority
 
   // AHB-Lite external signals
   output logic                HCLK, HRESETn, 
   input  logic                HREADY,    // AHB peripheral ready
   input  logic                HRESP,     // AHB peripheral response. 0: OK 1: Error
-  output logic [PA_BITS-1:0] HADDR,     // AHB address to peripheral after arbitration
-  output logic [AHBW-1:0]    HWDATA,    // AHB Write data after arbitration
-  output logic [XLEN/8-1:0]  HWSTRB,    // AHB byte write enables after arbitration
+  output logic [PA_BITS-1:0]  HADDR,     // AHB address to peripheral after arbitration
+  output logic [AHBW-1:0]     HWDATA,    // AHB Write data after arbitration
+  output logic [XLEN/8-1:0]   HWSTRB,    // AHB byte write enables after arbitration
   output logic                HWRITE,    // AHB transaction direction after arbitration
   output logic [2:0]          HSIZE,     // AHB transaction size after arbitration
   output logic [2:0]          HBURST,    // AHB burst length after arbitration
@@ -71,13 +71,13 @@ module ebu #(parameter XLEN, PA_BITS, AHBW)(
   logic                       IFUDisable;
   logic                       IFUSelect;
 
-  logic [PA_BITS-1:0]        IFUHADDROut;
+  logic [PA_BITS-1:0]         IFUHADDROut;
   logic [1:0]                 IFUHTRANSOut;
   logic [2:0]                 IFUHBURSTOut;
   logic [2:0]                 IFUHSIZEOut;
   logic                       IFUHWRITEOut;
   
-  logic [PA_BITS-1:0]        LSUHADDROut;
+  logic [PA_BITS-1:0]         LSUHADDROut;
   logic [1:0]                 LSUHTRANSOut;
   logic [2:0]                 LSUHBURSTOut;
   logic [2:0]                 LSUHSIZEOut;

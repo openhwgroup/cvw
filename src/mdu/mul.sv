@@ -29,9 +29,9 @@
 module mul #(parameter XLEN) (
   input  logic                clk, reset,
   input  logic                StallM, FlushM,
-  input  logic [XLEN-1:0]    ForwardedSrcAE, ForwardedSrcBE, // source A and B from after Forwarding mux
+  input  logic [XLEN-1:0]     ForwardedSrcAE, ForwardedSrcBE, // source A and B from after Forwarding mux
   input  logic [2:0]          Funct3E,                        // type of multiply
-  output logic [XLEN*2-1:0]  ProdM                           // double-widthproduct
+  output logic [XLEN*2-1:0]   ProdM                           // double-widthproduct
 );
 
   // Number systems
@@ -48,12 +48,12 @@ module mul #(parameter XLEN) (
   // Signed * Unsigned   = P' + ( PA - PB)*2^(XLEN-1) - PP*2^(2XLEN-2)
   // Unsigned * Unsigned = P' + ( PA + PB)*2^(XLEN-1) + PP*2^(2XLEN-2)
 
-  logic [XLEN-1:0]   Aprime, Bprime;                       // lower bits of source A and B
+  logic [XLEN-1:0]    Aprime, Bprime;                       // lower bits of source A and B
   logic               MULH, MULHSU;                         // type of multiply
-  logic [XLEN-2:0]   PA, PB;                               // product of msb and lsbs
+  logic [XLEN-2:0]    PA, PB;                               // product of msb and lsbs
   logic               PP;                                   // product of msbs
-  logic [XLEN*2-1:0] PP1E, PP2E, PP3E, PP4E;               // partial products
-  logic [XLEN*2-1:0] PP1M, PP2M, PP3M, PP4M;               // registered partial proudcts
+  logic [XLEN*2-1:0]  PP1E, PP2E, PP3E, PP4E;               // partial products
+  logic [XLEN*2-1:0]  PP1M, PP2M, PP3M, PP4M;               // registered partial proudcts
  
   //////////////////////////////
   // Execute Stage: Compute partial products
@@ -90,4 +90,3 @@ module mul #(parameter XLEN) (
   // add up partial products; this multi-input add implies CSAs and a final CPA
   assign ProdM = PP1M + PP2M + PP3M + PP4M; //ForwardedSrcAE * ForwardedSrcBE;
  endmodule
-

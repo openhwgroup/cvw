@@ -22,7 +22,7 @@
 ///////////////////////////////////////////
 
 #include "WALLY-TEST-LIB-64.h"
-RVTEST_ISA("RV64I_Zicsr")
+RVTEST_ISA("RV64I_Sstc_Zicsr")
 RVTEST_CASE(0,"//check ISA:=regex(.*64.*);check ISA:=regex(.*I.*);def TEST_CASE_1=True;def NO_SAIL=True;",trap)
 
 INIT_TESTS
@@ -33,7 +33,9 @@ TRAP_HANDLER m, EXT_SIGNATURE=1 // turn on recording mtval and status bits on tr
 
 li x28, 0x8
 csrs mstatus, x28 // set mstatus.MIE bit to 1
-WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources
+WRITE_READ_CSR stimecmp, 0xFFFFFFFF // set timer to high value so it doesn't go off immediately
+WRITE_READ_CSR menvcfg, 0x8000000000000000 // Enable menvcfg.STCE
+WRITE_READ_CSR mie, 0xFFF // Enable interrupts from all sources 
 
 // test 5.3.1.4 Basic trap tests 
 

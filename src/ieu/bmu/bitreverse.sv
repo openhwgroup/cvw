@@ -27,7 +27,6 @@
 // either express or implied. See the License for the specific language governing permissions 
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
-`include "wally-config.vh"
 
 module bitreverse #(parameter WIDTH=32) (
   input  logic [WIDTH-1:0] A,

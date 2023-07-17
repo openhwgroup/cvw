@@ -27,10 +27,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fsgninj import cvw::*;  #(parameter cvw_t P) (
-  input  logic                Xs, Ys, // X and Y sign bits
+  input  logic                 Xs, Ys, // X and Y sign bits
   input  logic [P.FLEN-1:0]    X,      // X
   input  logic [P.FMTBITS-1:0] Fmt,    // format
-  input  logic [1:0]          OpCtrl, // operation control
+  input  logic [1:0]           OpCtrl, // operation control
   output logic [P.FLEN-1:0]    SgnRes  // result
 );
 
@@ -73,5 +73,4 @@ module fsgninj import cvw::*;  #(parameter cvw_t P) (
       endcase
     assign SgnRes = {SgnBits[3], X[P.Q_LEN-2:P.D_LEN], SgnBits[2], X[P.D_LEN-2:P.S_LEN], SgnBits[1], X[P.S_LEN-2:P.H_LEN], SgnBits[0], X[P.H_LEN-2:0]};
   end
-
 endmodule

@@ -46,14 +46,14 @@ module controllerinput #(
   input  logic                HWRITEIn,  // Manager input. AHB 0: Read operation 1: Write operation 
   input  logic [2:0]          HSIZEIn,   // Manager input. AHB transaction width
   input  logic [2:0]          HBURSTIn,  // Manager input. AHB burst length
-  input  logic [PA_BITS-1:0] HADDRIn,   // Manager input. AHB address
+  input  logic [PA_BITS-1:0]  HADDRIn,   // Manager input. AHB address
   output logic                HREADYOut, // Indicate to manager the peripheral is not busy and another manager does not have priority
   // controller output
   output logic [1:0]          HTRANSOut, // Arbitrated manager transaction. AHB transaction type, 00: IDLE, 10 NON_SEQ, 11 SEQ
   output logic                HWRITEOut, // Arbitrated manager transaction. AHB 0: Read operation 1: Write operation 
   output logic [2:0]          HSIZEOut,  // Arbitrated manager transaction. AHB transaction width
   output logic [2:0]          HBURSTOut, // Arbitrated manager transaction. AHB burst length 
-  output logic [PA_BITS-1:0] HADDROut,  // Arbitrated manager transaction. AHB address
+  output logic [PA_BITS-1:0]  HADDROut,  // Arbitrated manager transaction. AHB address
   input  logic                HREADYIn   // Peripheral ready
 );
 
@@ -61,7 +61,7 @@ module controllerinput #(
   logic [2:0]                 HSIZESave;
   logic [2:0]                 HBURSTSave;
   logic [1:0]                 HTRANSSave;
-  logic [PA_BITS-1:0]        HADDRSave;
+  logic [PA_BITS-1:0]         HADDRSave;
 
   if (SAVE_ENABLED) begin
     flopenr #(1+3+3+2+PA_BITS) SaveReg(HCLK, ~HRESETn, Save,
@@ -83,6 +83,3 @@ module controllerinput #(
   assign HREADYOut = HREADYIn & ~Disable;
 
 endmodule
-  
-  
-   

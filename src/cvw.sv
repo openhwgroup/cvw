@@ -47,8 +47,9 @@ typedef struct packed {
   // RISC-V Features
   logic         ZICSR_SUPPORTED;
   logic         ZIFENCEI_SUPPORTED;
-  logic [11:0]           COUNTERS;
-  logic         ZICOUNTERS_SUPPORTED;
+  logic [11:0]  COUNTERS;
+  logic         ZICNTR_SUPPORTED;
+  logic         ZIHPM_SUPPORTED;
   logic         ZFH_SUPPORTED;
   logic         SSTC_SUPPORTED;
   logic         VIRTMEM_SUPPORTED;
@@ -56,6 +57,11 @@ typedef struct packed {
   logic         BIGENDIAN_SUPPORTED;
   logic         SVADU_SUPPORTED;
   logic         ZMMUL_SUPPORTED;
+  logic         ZICBOM_SUPPORTED;
+  logic         ZICBOZ_SUPPORTED;
+  logic         ZICBOP_SUPPORTED;
+  logic         SVPBMT_SUPPORTED;
+  logic         SVINVAL_SUPPORTED;
 
   // Microarchitectural Features
   logic         BUS_SUPPORTED;
@@ -63,68 +69,70 @@ typedef struct packed {
   logic         ICACHE_SUPPORTED;
 
 // TLB configuration.  Entries should be a power of 2
-  int       ITLB_ENTRIES;
-  int       DTLB_ENTRIES;
+  int           ITLB_ENTRIES;
+  int           DTLB_ENTRIES;
 
 // Cache configuration.  Sizes should be a power of two
 // typical configuration 4 ways, 4096 ints per way, 256 bit or more lines
-  int       DCACHE_NUMWAYS;
-  int       DCACHE_WAYSIZEINBYTES;
-  int       DCACHE_LINELENINBITS;
-  int       ICACHE_NUMWAYS;
-  int       ICACHE_WAYSIZEINBYTES;
-  int       ICACHE_LINELENINBITS;
+  int           DCACHE_NUMWAYS;
+  int           DCACHE_WAYSIZEINBYTES;
+  int           DCACHE_LINELENINBITS;
+  int           ICACHE_NUMWAYS;
+  int           ICACHE_WAYSIZEINBYTES;
+  int           ICACHE_LINELENINBITS;
 
 // Integer Divider Configuration
 // IDIV_BITSPERCYCLE must be 1, 2, or 4
-  int       IDIV_BITSPERCYCLE;
+  int           IDIV_BITSPERCYCLE;
   logic         IDIV_ON_FPU;
 
 // Legal number of PMP entries are 0, 16, or 64
-  int          PMP_ENTRIES;
+  int           PMP_ENTRIES;
 
 // Address space
-  longint  RESET_VECTOR;
+  logic [63:0]  RESET_VECTOR;
 
 // WFI Timeout Wait
-  int       WFI_TIMEOUT_BIT;
+  int           WFI_TIMEOUT_BIT;
 
 // Peripheral Addresses
 // Peripheral memory space extends from BASE to BASE+RANGE
 // Range should be a thermometer code with 0's in the upper bits and 1s in the lower bits
   logic         DTIM_SUPPORTED;
-  longint  DTIM_BASE;
-  longint  DTIM_RANGE;
+  logic [63:0]  DTIM_BASE;
+  logic [63:0]  DTIM_RANGE;
   logic         IROM_SUPPORTED;
-  longint  IROM_BASE;
-  longint  IROM_RANGE;
+  logic [63:0]  IROM_BASE;
+  logic [63:0]  IROM_RANGE;
   logic         BOOTROM_SUPPORTED;
-  longint  BOOTROM_BASE;
-  longint  BOOTROM_RANGE;
+  logic [63:0]  BOOTROM_BASE;
+  logic [63:0]  BOOTROM_RANGE;
   logic         UNCORE_RAM_SUPPORTED;
-  longint  UNCORE_RAM_BASE;
-  longint  UNCORE_RAM_RANGE;
+  logic [63:0]  UNCORE_RAM_BASE;
+  logic [63:0]  UNCORE_RAM_RANGE;
   logic         EXT_MEM_SUPPORTED;
-  longint  EXT_MEM_BASE;
-  longint  EXT_MEM_RANGE;
+  logic [63:0]  EXT_MEM_BASE;
+  logic [63:0]  EXT_MEM_RANGE;
   logic         CLINT_SUPPORTED;
-  longint  CLINT_BASE;
-  longint  CLINT_RANGE;
+  logic [63:0]  CLINT_BASE;
+  logic [63:0]  CLINT_RANGE;
   logic         GPIO_SUPPORTED;
-  longint  GPIO_BASE;
-  longint  GPIO_RANGE;
+  logic [63:0]  GPIO_BASE;
+  logic [63:0]  GPIO_RANGE;
   logic         UART_SUPPORTED;
-  longint  UART_BASE;
-  longint  UART_RANGE;
+  logic [63:0]  UART_BASE;
+  logic [63:0]  UART_RANGE;
   logic         PLIC_SUPPORTED;
-  longint  PLIC_BASE;
-  longint  PLIC_RANGE;
+  logic [63:0]  PLIC_BASE;
+  logic [63:0]  PLIC_RANGE;
   logic         SDC_SUPPORTED;
-  longint  SDC_BASE;
-  longint  SDC_RANGE;
+  logic [63:0]  SDC_BASE;
+  logic [63:0]  SDC_RANGE;
   logic         SPI_SUPPORTED;
-  longint  SPI_BASE;
-  longint  SPI_RANGE;
+  logic [63:0]  SPI_BASE;
+  logic [63:0]  SPI_RANGE;
+  
+
 
 // Test modes
 
@@ -133,25 +141,24 @@ typedef struct packed {
   logic         SPI_LOOPBACK_TEST;
 
 // Hardware configuration
-  int         UART_PRESCALE ;
+  int           UART_PRESCALE ;
 
 // Interrupt configuration
-  int       PLIC_NUM_SRC;
+  int           PLIC_NUM_SRC;
   logic         PLIC_NUM_SRC_LT_32;
-  int       PLIC_GPIO_ID;
-  int       PLIC_UART_ID;
-  int       PLIC_SPI_ID;
+  int           PLIC_GPIO_ID;
+  int           PLIC_UART_ID;
+  int           PLIC_SPI_ID;
 
-  logic     BPRED_SUPPORTED;
-  BranchPredictorType   BPRED_TYPE;
-  int       BPRED_NUM_LHR;
-  int       BPRED_SIZE;
-  int       BTB_SIZE;
-
+  logic                BPRED_SUPPORTED;
+  BranchPredictorType  BPRED_TYPE;
+  int                  BPRED_NUM_LHR;
+  int                  BPRED_SIZE;
+  int                  BTB_SIZE;
 
 // FPU division architecture
-  int       RADIX;
-  int       DIVCOPIES;
+  int           RADIX;
+  int           DIVCOPIES;
 
 // bit manipulation
   logic         ZBA_SUPPORTED;
@@ -204,47 +211,47 @@ typedef struct packed {
   int PMPCFG_ENTRIES;
 
 // Floating point constants for Quad, Double, Single, and Half precisions
-  int Q_LEN;
-  int Q_NE;
-  int Q_NF;
-  int Q_BIAS;
+  int         Q_LEN;
+  int         Q_NE;
+  int         Q_NF;
+  int         Q_BIAS;
   logic [1:0] Q_FMT;
-  int D_LEN;
-  int D_NE;
-  int D_NF;
-  int D_BIAS;
+  int         D_LEN;
+  int         D_NE;
+  int         D_NF;
+  int         D_BIAS;
   logic [1:0] D_FMT;
-  int S_LEN;
-  int S_NE;
-  int S_NF;
-  int S_BIAS;
+  int         S_LEN;
+  int         S_NE;
+  int         S_NF;
+  int         S_BIAS;
   logic [1:0] S_FMT;
-  int H_LEN;
-  int H_NE;
-  int H_NF;
-  int H_BIAS;
+  int         H_LEN;
+  int         H_NE;
+  int         H_NF;
+  int         H_BIAS;
   logic [1:0] H_FMT;
 
 // Floating point length FLEN and number of exponent (NE) and fraction (NF) bits
   int FLEN;
-  int NE  ;
-  int NF  ;
+  int         NE  ;
+  int         NF  ;
   logic [1:0] FMT ;
-  int BIAS;
+  int         BIAS;
 
 // Floating point constants needed for FPU paramerterization
-  int FPSIZES;
-  int FMTBITS;
-  int LEN1 ;
-  int NE1  ;
-  int NF1  ;
+  int         FPSIZES;
+  int         FMTBITS;
+  int         LEN1 ;
+  int         NE1  ;
+  int         NF1  ;
   logic [1:0] FMT1 ;
-  int BIAS1;
-  int LEN2 ;
-  int NE2  ;
-  int NF2  ;
+  int         BIAS1;
+  int         LEN2 ;
+  int         NE2  ;
+  int         NF2  ;
   logic [1:0] FMT2 ;
-  int BIAS2;
+  int         BIAS2;
 
 // largest length in IEU/FPU
   int CVTLEN;
@@ -256,7 +263,7 @@ typedef struct packed {
 
 // division constants
   int DIVN       ;
-  int LOGR;
+  int LOGR       ;
   int RK         ;
   int LOGRK      ;
   int FPDUR      ;

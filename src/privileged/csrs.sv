@@ -29,61 +29,70 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module csrs import cvw::*;  #(parameter cvw_t P) (
-  input  logic             clk, reset, 
-  input  logic             CSRSWriteM, STrapM,
-  input  logic [11:0]      CSRAdrM,
+  input  logic              clk, reset, 
+  input  logic              CSRSWriteM, STrapM,
+  input  logic [11:0]       CSRAdrM,
   input  logic [P.XLEN-1:0] NextEPCM, NextMtvalM, SSTATUS_REGW, 
-  input  logic [4:0]       NextCauseM,
-  input  logic             STATUS_TVM,
-  input  logic             MCOUNTEREN_TM, // TM bit (1) of MCOUNTEREN; cause illegal instruction when trying to access STIMECMP if clear
+  input  logic [4:0]        NextCauseM,
+  input  logic              STATUS_TVM,
+  input  logic              MCOUNTEREN_TM, // TM bit (1) of MCOUNTEREN; cause illegal instruction when trying to access STIMECMP if clear
   input  logic [P.XLEN-1:0] CSRWriteValM,
-  input  logic [1:0]       PrivilegeModeW,
+  input  logic [1:0]        PrivilegeModeW,
   output logic [P.XLEN-1:0] CSRSReadValM, STVEC_REGW,
   output logic [P.XLEN-1:0] SEPC_REGW,      
-  output logic [31:0]      SCOUNTEREN_REGW, 
+  output logic [31:0]       SCOUNTEREN_REGW, 
   output logic [P.XLEN-1:0] SATP_REGW,
-  input  logic [11:0]      MIP_REGW, MIE_REGW, MIDELEG_REGW,
-  input  logic [63:0]      MTIME_CLINT,
-  output logic             WriteSSTATUSM,
-  output logic             IllegalCSRSAccessM,
-  output logic             STimerInt
+  input  logic [11:0]       MIP_REGW, MIE_REGW, MIDELEG_REGW,
+  input  logic [63:0]       MTIME_CLINT,
+  input  logic              STCE,
+  output logic              WriteSSTATUSM,
+  output logic              IllegalCSRSAccessM,
+  output logic              STimerInt,
+  output logic [P.XLEN-1:0] SENVCFG_REGW
+
 );
 
   // Supervisor CSRs
-  localparam SSTATUS = 12'h100;
-  localparam SIE = 12'h104;
-  localparam STVEC = 12'h105;
+  localparam SSTATUS    = 12'h100;
+  localparam SIE        = 12'h104;
+  localparam STVEC      = 12'h105;
   localparam SCOUNTEREN = 12'h106;
-  localparam SSCRATCH = 12'h140;
-  localparam SEPC = 12'h141;
-  localparam SCAUSE = 12'h142;
-  localparam STVAL = 12'h143;
-  localparam SIP= 12'h144;
-  localparam STIMECMP = 12'h14D;
-  localparam STIMECMPH = 12'h15D;
-  localparam SATP = 12'h180;
+  localparam SENVCFG    = 12'h10A;
+  localparam SSCRATCH   = 12'h140;
+  localparam SEPC       = 12'h141;
+  localparam SCAUSE     = 12'h142;
+  localparam STVAL      = 12'h143;
+  localparam SIP        = 12'h144;
+  localparam STIMECMP   = 12'h14D;
+  localparam STIMECMPH  = 12'h15D;
+  localparam SATP       = 12'h180;
   // Constants
-  localparam ZERO = {(P.XLEN){1'b0}};
+  localparam ZERO         = {(P.XLEN){1'b0}};
   localparam SEDELEG_MASK = ~(ZERO | {{P.XLEN-3{1'b0}}, 3'b111} << 9);
 
   logic                    WriteSTVECM;
   logic                    WriteSSCRATCHM, WriteSEPCM;
   logic                    WriteSCAUSEM, WriteSTVALM, WriteSATPM, WriteSCOUNTERENM;
   logic                    WriteSTIMECMPM, WriteSTIMECMPHM;
-  logic [P.XLEN-1:0]        SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
+  logic                    WriteSENVCFGM;
+
+  logic [P.XLEN-1:0]       SSCRATCH_REGW, STVAL_REGW, SCAUSE_REGW;
+  logic [P.XLEN-1:0]       SENVCFG_WriteValM;
+
   logic [63:0]             STIMECMP_REGW;
   
   // write enables
-  assign WriteSSTATUSM = CSRSWriteM & (CSRAdrM == SSTATUS);
-  assign WriteSTVECM = CSRSWriteM & (CSRAdrM == STVEC);
-  assign WriteSSCRATCHM = CSRSWriteM & (CSRAdrM == SSCRATCH);
-  assign WriteSEPCM = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
-  assign WriteSCAUSEM = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
-  assign WriteSTVALM = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
-  assign WriteSATPM = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
+  assign WriteSSTATUSM    = CSRSWriteM & (CSRAdrM == SSTATUS);
+  assign WriteSTVECM      = CSRSWriteM & (CSRAdrM == STVEC);
+  assign WriteSSCRATCHM   = CSRSWriteM & (CSRAdrM == SSCRATCH);
+  assign WriteSEPCM       = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
+  assign WriteSCAUSEM     = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
+  assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
+  assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
-  assign WriteSTIMECMPM = CSRSWriteM & (CSRAdrM == STIMECMP) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM);
-  assign WriteSTIMECMPHM = CSRSWriteM & (CSRAdrM == STIMECMPH) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM) & (P.XLEN == 32);
+  assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
+  assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & STCE;
+  assign WriteSTIMECMPHM  = CSRSWriteM & (CSRAdrM == STIMECMPH) & STCE & (P.XLEN == 32);
 
   // CSRs
   flopenr #(P.XLEN) STVECreg(clk, reset, WriteSTVECM, {CSRWriteValM[P.XLEN-1:2], 1'b0, CSRWriteValM[0]}, STVEC_REGW); 
@@ -108,9 +117,19 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   // Supervisor timer interrupt logic
   // Spec is a bit peculiar - Machine timer interrupts are produced in CLINT, while Supervisor timer interrupts are in CSRs
   if (P.SSTC_SUPPORTED)
-   assign STimerInt = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
+   assign STimerInt  = ({1'b0, MTIME_CLINT} >= {1'b0, STIMECMP_REGW}); // unsigned comparison
   else 
     assign STimerInt = 0;
+
+  assign SENVCFG_WriteValM = {
+    {(P.XLEN-8){1'b0}},
+    CSRWriteValM[7]   & P.ZICBOZ_SUPPORTED,
+    CSRWriteValM[6:4] & {3{P.ZICBOM_SUPPORTED}},
+    3'b0,
+    CSRWriteValM[0]   & P.VIRTMEM_SUPPORTED
+  };
+
+  flopenr #(P.XLEN) SENVCFGreg(clk, reset, WriteSENVCFGM, SENVCFG_WriteValM, SENVCFG_REGW);
     
   // CSR Reads
   always_comb begin:csrr
@@ -130,12 +149,15 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                    IllegalCSRSAccessM = 1;
                  end
       SCOUNTEREN:CSRSReadValM = {{(P.XLEN-32){1'b0}}, SCOUNTEREN_REGW};
-      STIMECMP:  if (P.SSTC_SUPPORTED & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM)) CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0]; 
+      SENVCFG:   CSRSReadValM = SENVCFG_REGW;
+      STIMECMP:  if (STCE) 
+                   CSRSReadValM = STIMECMP_REGW[P.XLEN-1:0]; 
                  else begin 
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
                  end
-      STIMECMPH: if (P.SSTC_SUPPORTED & (P.XLEN == 32) & (PrivilegeModeW == P.M_MODE | MCOUNTEREN_TM)) CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
+      STIMECMPH: if (STCE) 
+                   CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
                  else begin // not supported for RV64
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
