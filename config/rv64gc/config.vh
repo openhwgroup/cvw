@@ -144,7 +144,7 @@ localparam PLIC_GPIO_ID = 32'd3;
 localparam PLIC_UART_ID = 32'd10;
 
 localparam BPRED_SUPPORTED = 1;
-localparam BranchPredictorType BPRED_TYPE = BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
+localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BPRED_SIZE = 32'd10;
 localparam BTB_SIZE = 32'd10;

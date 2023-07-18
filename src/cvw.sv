@@ -144,7 +144,7 @@ typedef struct packed {
   int           PLIC_UART_ID;
 
   logic                BPRED_SUPPORTED;
-  BranchPredictorType  BPRED_TYPE;
+  logic [31:0]         BPRED_TYPE;
   int                  BPRED_NUM_LHR;
   int                  BPRED_SIZE;
   int                  BTB_SIZE;

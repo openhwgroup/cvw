@@ -1,6 +1,8 @@
 
 // Populate parameter structure with values specific to the current configuration
 
+`include "BranchPredictorType.vh"
+
 parameter cvw_t P = '{ 
   FPGA :                 FPGA,  
   QEMU :                 QEMU,  
