@@ -27,6 +27,7 @@
 
 `include "config.vh"
 `include "tests.vh"
+`include "BranchPredictorType.vh"
 
 import cvw::*;
 
@@ -332,7 +333,7 @@ module testbench;
     if(reset) begin  // branch predictor must always be reset
       if (P.BPRED_SUPPORTED) begin
         // local history only
-        if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR)
+        if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR)
           for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
             dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
         for(adrindex = 0; adrindex < 2**P.BTB_SIZE; adrindex++)

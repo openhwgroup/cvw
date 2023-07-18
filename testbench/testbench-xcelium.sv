@@ -328,7 +328,7 @@ module testbench;
 
   if (P.UNCORE_RAM_SUPPORTED) `define TB_UNCORE_RAM_SUPPORTED;
   if (P.BPRED_SUPPORTED) `define TB_BPRED_SUPPORTED;
-  if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) `define TB_BHT;
+  if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR) `define TB_BHT;
 
   always @(posedge clk) begin
     if (ResetMem)  // program memory is sometimes reset
@@ -342,7 +342,7 @@ module testbench;
       if (P.BPRED_SUPPORTED) begin
       `ifdef TB_BPRED_SUPPORTED
         // local history only
-        if (P.BPRED_TYPE == BP_LOCAL_AHEAD | P.BPRED_TYPE == BP_LOCAL_REPAIR) begin
+        if (P.BPRED_TYPE == `BP_LOCAL_AHEAD | P.BPRED_TYPE == `BP_LOCAL_REPAIR) begin
         `ifdef TB_BHT
           for(adrindex = 0; adrindex < 2**P.BPRED_NUM_LHR; adrindex++)
             dut.core.ifu.bpred.bpred.Predictor.DirPredictor.BHT.mem[adrindex] = 0;
