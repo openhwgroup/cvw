@@ -70,8 +70,9 @@ module fpgaTop
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
   wire 			   HSELEXT;
-  wire [31:0] 	   HADDR;
+  wire [55:0] 	   HADDR;
   wire [63:0]      HWDATA;
+  wire [64/8-1:0]  HWSTRB;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
@@ -86,41 +87,41 @@ module fpgaTop
   wire 			   SDCCmdOE;
   wire 			   SDCCmdOut;
 
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_awid;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_awlen;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_awsize;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_awburst;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_awcache;
-(* mark_debug = "true" *)  wire [31:0] 	   m_axi_awaddr;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_awprot;
-(* mark_debug = "true" *)  wire 		   m_axi_awvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_awready;
-(* mark_debug = "true" *)  wire 		   m_axi_awlock;
-(* mark_debug = "true" *)  wire [63:0] 	   m_axi_wdata;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_wstrb;
-(* mark_debug = "true" *)  wire 		   m_axi_wlast;
-(* mark_debug = "true" *)  wire 		   m_axi_wvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_wready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_bid;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_bresp;
-(* mark_debug = "true" *)  wire 		   m_axi_bvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_bready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_arid;
-(* mark_debug = "true" *)  wire [7:0] 	   m_axi_arlen;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_arsize;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_arburst;
-(* mark_debug = "true" *)  wire [2:0] 	   m_axi_arprot;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_arcache;
-(* mark_debug = "true" *)  wire 		   m_axi_arvalid;
-(* mark_debug = "true" *)  wire [31:0] 	   m_axi_araddr;
-(* mark_debug = "true" *)  wire 			   m_axi_arlock;
-(* mark_debug = "true" *)  wire 		   m_axi_arready;
-(* mark_debug = "true" *)  wire [3:0] 	   m_axi_rid;
-(* mark_debug = "true" *)  wire [63:0] 	   m_axi_rdata;
-(* mark_debug = "true" *)  wire [1:0] 	   m_axi_rresp;
-(* mark_debug = "true" *)  wire 		   m_axi_rvalid;
-(* mark_debug = "true" *)  wire 		   m_axi_rlast;
-(* mark_debug = "true" *)  wire 		   m_axi_rready;
+  wire [3:0] 	   m_axi_awid;
+  wire [7:0] 	   m_axi_awlen;
+  wire [2:0] 	   m_axi_awsize;
+  wire [1:0] 	   m_axi_awburst;
+  wire [3:0] 	   m_axi_awcache;
+  wire [31:0] 	   m_axi_awaddr;
+  wire [2:0] 	   m_axi_awprot;
+  wire 		   m_axi_awvalid;
+  wire 		   m_axi_awready;
+  wire 		   m_axi_awlock;
+  wire [63:0] 	   m_axi_wdata;
+  wire [7:0] 	   m_axi_wstrb;
+  wire 		   m_axi_wlast;
+  wire 		   m_axi_wvalid;
+  wire 		   m_axi_wready;
+  wire [3:0] 	   m_axi_bid;
+  wire [1:0] 	   m_axi_bresp;
+  wire 		   m_axi_bvalid;
+  wire 		   m_axi_bready;
+  wire [3:0] 	   m_axi_arid;
+  wire [7:0] 	   m_axi_arlen;
+  wire [2:0] 	   m_axi_arsize;
+  wire [1:0] 	   m_axi_arburst;
+  wire [2:0] 	   m_axi_arprot;
+  wire [3:0] 	   m_axi_arcache;
+  wire 		   m_axi_arvalid;
+  wire [31:0] 	   m_axi_araddr;
+  wire 			   m_axi_arlock;
+  wire 		   m_axi_arready;
+  wire [3:0] 	   m_axi_rid;
+  wire [63:0] 	   m_axi_rdata;
+  wire [1:0] 	   m_axi_rresp;
+  wire 		   m_axi_rvalid;
+  wire 		   m_axi_rlast;
+  wire 		   m_axi_rready;
 
   wire [3:0] 	   BUS_axi_arregion;
   wire [3:0] 	   BUS_axi_arqos;
@@ -134,14 +135,14 @@ module fpgaTop
   wire [3:0] 	   BUS_axi_awcache;
   wire [30:0] 	   BUS_axi_awaddr;
   wire [2:0] 	   BUS_axi_awprot;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_awvalid;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_awready;
+  wire 			   BUS_axi_awvalid;
+  wire 			   BUS_axi_awready;
   wire 			   BUS_axi_awlock;
   wire [63:0] 	   BUS_axi_wdata;
   wire [7:0] 	   BUS_axi_wstrb;
   wire 			   BUS_axi_wlast;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_wvalid;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_wready;
+  wire 			   BUS_axi_wvalid;
+  wire 			   BUS_axi_wready;
   wire [3:0] 	   BUS_axi_bid;
   wire [1:0] 	   BUS_axi_bresp;
   wire 			   BUS_axi_bvalid;
@@ -152,16 +153,16 @@ module fpgaTop
   wire [1:0] 	   BUS_axi_arburst;
   wire [2:0] 	   BUS_axi_arprot;
   wire [3:0] 	   BUS_axi_arcache;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_arvalid;
+  wire 			   BUS_axi_arvalid;
   wire [30:0] 	   BUS_axi_araddr;
   wire 			   BUS_axi_arlock;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_arready;
+  wire 			   BUS_axi_arready;
   wire [3:0] 	   BUS_axi_rid;
   wire [63:0] 	   BUS_axi_rdata;
-  (* mark_debug = "true" *)  wire [1:0] 	   BUS_axi_rresp;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_rvalid;
+  wire [1:0] 	   BUS_axi_rresp;
+  wire 			   BUS_axi_rvalid;
   wire 			   BUS_axi_rlast;
-  (* mark_debug = "true" *)  wire 			   BUS_axi_rready;
+  wire 			   BUS_axi_rready;
   
   wire 			   BUSCLK;
   
@@ -226,6 +227,7 @@ module fpgaTop
   wallypipelinedsocwrapper wallypipelinedsocwrapper
     (.clk(CPUCLK),
      .reset_ext(bus_struct_reset),
+     .reset(),
      // bus interface
      .HRDATAEXT(HRDATAEXT),
      .HREADYEXT(HREADYEXT),
@@ -235,6 +237,7 @@ module fpgaTop
      .HRESETn(HRESETnOpen), // open
      .HADDR(HADDR),
      .HWDATA(HWDATA),
+     .HWSTRB(HWSTRB),
      .HWRITE(HWRITE),
      .HSIZE(HSIZE),
      .HBURST(HBURST),
@@ -242,6 +245,8 @@ module fpgaTop
      .HTRANS(HTRANS),
      .HMASTLOCK(HMASTLOCK),
      .HREADY(HREADY),
+     // MTIME
+     .TIMECLK(1'b0),
      // GPIO
      .GPIOIN(GPIOIN),
      .GPIOOUT(GPIOOUT),
@@ -261,7 +266,7 @@ module fpgaTop
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
      .s_ahb_hsel(HSELEXT),
-     .s_ahb_haddr(HADDR),
+     .s_ahb_haddr(HADDR[31:0]),
      .s_ahb_hprot(HPROT),
      .s_ahb_htrans(HTRANS),
      .s_ahb_hsize(HSIZE),

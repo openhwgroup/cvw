@@ -40,9 +40,9 @@ module wallypipelinedsocwrapper (
   output logic                HSELEXT,
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
-  output logic [64-1:0]  HADDR,
-  output logic [64-1:0]     HWDATA,
-  output logic [64/8-1:0]   HWSTRB,
+  output logic [55:0]         HADDR,
+  output logic [64-1:0]       HWDATA,
+  output logic [64/8-1:0]     HWSTRB,
   output logic                HWRITE,
   output logic [2:0]          HSIZE,
   output logic [2:0]          HBURST,
