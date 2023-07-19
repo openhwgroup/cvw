@@ -27,7 +27,6 @@
 
 // include shared configuration
 `include "BranchPredictorType.vh"
-`include "wally-shared.vh"
 
 localparam FPGA = 1;
 // RV32 or RV64: XLEN = 32 or 64

@@ -829,7 +829,7 @@ module testbench;
       SvMode = SATP[63];
       // Only perform translation if translation is on and the processor is not
       // in machine mode
-      if (SvMode & (dut.core.priv.priv.PrivilegeModeW != `M_MODE)) begin
+      if (SvMode & (dut.core.priv.priv.PrivilegeModeW != P.M_MODE)) begin
         BaseAdr = SATP[43:0] << 12;
         for (i = 2; i >= 0; i--) begin
           PAdr = BaseAdr + (VPN[i] << 3);
