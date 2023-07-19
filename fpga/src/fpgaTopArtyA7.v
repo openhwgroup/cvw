@@ -66,12 +66,12 @@ module fpgaTop
   
   wire 			   HCLKOpen;
   wire 			   HRESETnOpen;
-  wire [31:0]      HRDATAEXT;
+  wire [63:0]      HRDATAEXT;
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
   wire 			   HSELEXT;
   wire [31:0] 	   HADDR;
-  wire [31:0]      HWDATA;
+  wire [63:0]      HWDATA;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
