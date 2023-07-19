@@ -24,8 +24,6 @@
 // OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ///////////////////////////////////////////
 
-`include "wally-config.vh"
-
 module fpgaTop 
   (input           default_100mhz_clk,
 (* mark_debug = "true" *)   input           resetn,
@@ -68,12 +66,12 @@ module fpgaTop
   
   wire 			   HCLKOpen;
   wire 			   HRESETnOpen;
-  wire [`AHBW-1:0] HRDATAEXT;
+  wire [31:0]      HRDATAEXT;
   wire 			   HREADYEXT;
   wire 			   HRESPEXT;
   wire 			   HSELEXT;
   wire [31:0] 	   HADDR;
-  wire [`AHBW-1:0] HWDATA;
+  wire [31:0]      HWDATA;
   wire 			   HWRITE;
   wire [2:0] 	   HSIZE;
   wire [2:0] 	   HBURST;
