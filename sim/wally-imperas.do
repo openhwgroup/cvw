@@ -51,12 +51,12 @@ eval vsim workopt +nowarn3829  -fatal 7 \
      +testDir=$env(TESTDIR) $env(OTHERFLAGS)
 view wave
 #-- display input and output signals as hexidecimal values
-# add log -recursive /*
-# do wave.do
+add log -recursive /*
+do wave.do
 
 run -all
 
 noview ../testbench/testbench_imperas.sv
 view wave
 
-quit -f
+#quit -f

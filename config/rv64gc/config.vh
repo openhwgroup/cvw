@@ -31,7 +31,6 @@
 `include "BranchPredictorType.vh"
 
 localparam FPGA = 0;
-localparam QEMU = 0;
 
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd64;
