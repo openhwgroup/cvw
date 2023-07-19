@@ -5,7 +5,6 @@
 
 parameter cvw_t P = '{ 
   FPGA :                 FPGA,  
-  QEMU :                 QEMU,  
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 
   MISA :                 MISA, 
