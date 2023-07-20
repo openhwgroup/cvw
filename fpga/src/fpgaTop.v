@@ -416,7 +416,7 @@ module fpgaTop
   wire        sd_cmd_reg_t;
 
   // SD Card Interrupt signal
-  wire        SDCintr;
+ (* mark_debug = "true" *)  wire        SDCIntr;
 
   // New SDC Data IOBUF connections
   wire [3:0] sd_dat_i;

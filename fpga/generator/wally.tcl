@@ -68,7 +68,7 @@ report_clock_interaction                                                -file re
 write_verilog -force -mode funcsim sim/syn-funcsim.v
 
 
-source ../constraints/debug2.xdc
+source ../constraints/vcu-small-debug.xdc
 
 
 # set for RuntimeOptimized implementation

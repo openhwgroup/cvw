@@ -15,9 +15,9 @@ typedef QWORD LBA_t;
 // These locations are copied from the generic configuration
 // of OpenSBI. These addresses can be found in:
 // buildroot/output/build/opensbi-0.9/platform/generic/config.mk
-#define FDT_ADDRESS 0x80200000          // FW_JUMP_FDT_ADDR
+#define FDT_ADDRESS 0x87000000          // FW_JUMP_FDT_ADDR
 #define OPENSBI_ADDRESS 0x80000000      // FW_TEXT_START
-#define KERNEL_ADDRESS 0x82200000       // FW_JUMP_ADDR
+#define KERNEL_ADDRESS 0x80200000       // FW_JUMP_ADDR
 
 // Export disk_read
 int disk_read(BYTE * buf, LBA_t sector, UINT count, BYTE card_type);
