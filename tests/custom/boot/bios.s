@@ -87,7 +87,7 @@ delay2:
 	# jump to the copied contents of the sd card.
 
 jumpToLinux:	
-	csrrs	a0, 0xF14, x0   # copy hard ID to a0
+	csrrs	a0, 0xF14, x0   # copy hart ID to a0
 	li	a1, 0x87000000  # end of memory? not 100% sure on this but it's 112MB
 	la	a2, end_of_bios
 	li	t0, 0x80000000  # start of code

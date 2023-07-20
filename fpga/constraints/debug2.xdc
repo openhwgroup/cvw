@@ -1238,3 +1238,8 @@ create_debug_port u_ila_0 probe
 set_property port_width 12 [get_debug_ports u_ila_0/probe242]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe242]
 connect_debug_port u_ila_0/probe242 [get_nets [list {axiSDC/sd_data_serial_host0/blkcnt_reg[0]} {axiSDC/sd_data_serial_host0/blkcnt_reg[1]} {axiSDC/sd_data_serial_host0/blkcnt_reg[2]} {axiSDC/sd_data_serial_host0/blkcnt_reg[3]} {axiSDC/sd_data_serial_host0/blkcnt_reg[4]} {axiSDC/sd_data_serial_host0/blkcnt_reg[5]} {axiSDC/sd_data_serial_host0/blkcnt_reg[6]} {axiSDC/sd_data_serial_host0/blkcnt_reg[7]} {axiSDC/sd_data_serial_host0/blkcnt_reg[8]} {axiSDC/sd_data_serial_host0/blkcnt_reg[9]} {axiSDC/sd_data_serial_host0/blkcnt_reg[10]} {axiSDC/sd_data_serial_host0/blkcnt_reg[11]}]]
+
+create_debug_port u_ila_0 probe
+set_property port_width 1 [get_debug_ports u_ila_0/probe243]
+set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe243]
+connect_debug_port u_ila_0/probe243 [get_nets [list {SDCIntr}]]
