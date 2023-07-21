@@ -50,6 +50,7 @@ module testbench;
   // DUT signals
   logic [P.AHBW-1:0]    HRDATAEXT;
   logic                 HREADYEXT, HRESPEXT;
+  logic                 HSELEXTSDC;
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0]    HWDATA;
   logic [P.XLEN/8-1:0]  HWSTRB;
@@ -64,13 +65,7 @@ module testbench;
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
 
-  logic        SDCCLK;
-  logic        SDCCmdIn;
-  logic        SDCCmdOut;
-  logic        SDCCmdOE;
-  logic [3:0]  SDCDatIn;
-  tri1  [3:0]  SDCDat;
-  tri1         SDCCmd;
+  logic        SDCIntr;
 
   logic        HREADY;
   logic        HSELEXT;
@@ -383,6 +378,8 @@ module testbench;
   end
 
   if(P.FPGA) begin : sdcard
+    // *** fix later
+/* -----\/----- EXCLUDED -----\/-----
     sdModel sdcard
       (.sdClk(SDCCLK),
        .cmd(SDCCmd), 
@@ -391,15 +388,16 @@ module testbench;
     assign SDCCmd = SDCCmdOE ? SDCCmdOut : 1'bz;
     assign SDCCmdIn = SDCCmd;
     assign SDCDatIn = SDCDat;
+ -----/\----- EXCLUDED -----/\----- */
+    assign SDCIntr = '0;
   end else begin
-    assign SDCCmd = '0;
-    assign SDCDat = '0;
+    assign SDCIntr = '0;
   end
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT, .HSELEXTSDC,
     .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+    .UARTSin, .UARTSout, .SDCIntr); 
 
   // generate clock to sequence tests
   always begin
