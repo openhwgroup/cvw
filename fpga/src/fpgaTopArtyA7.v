@@ -35,9 +35,10 @@ module fpgaTop
    input           UARTSin,
    output          UARTSout,
 
-   input [3:0]     SDCDat,
+   inout [3:0]     SDCDat,
    output          SDCCLK,
    inout           SDCCmd,
+   input           SDCCD,
 
    inout [15:0]    ddr3_dq,
    inout [1:0]     ddr3_dqs_n,
@@ -999,7 +1000,7 @@ module fpgaTop
      .s_axi_rready(s00_axi_rready),
 
      .m_axi_aclk(BUSCLK),
-     .m_axi_aresetn(~reset),
+     .m_axi_aresetn(resetn),
      .m_axi_awid(BUS_axi_awid),
      .m_axi_awlen(BUS_axi_awlen),
      .m_axi_awsize(BUS_axi_awsize),
@@ -1040,9 +1041,6 @@ module fpgaTop
      .m_axi_rlast(BUS_axi_rlast),
      .m_axi_rready(BUS_axi_rready));
 
-
-  assign CPUCLK = CLK208;
-  
   xlnx_ddr3 xlnx_ddr3_c0
     (
      // ddr3 I/O
