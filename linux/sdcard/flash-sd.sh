@@ -11,10 +11,10 @@ NAME="$GREEN"${0:2}"$NC"
 
 # File location variables
 RISCV=/opt/riscv
-IMAGES=$RISCV/buildroot/output/images
+IMAGES=/home/ross/repos/buildroot/output/images/
 FW_JUMP=$IMAGES/fw_jump.bin
 LINUX_KERNEL=$IMAGES/Image
-DEVICE_TREE=$IMAGES/wally-vcu108.dtb
+DEVICE_TREE=$IMAGES/wally-artya7.dtb
 
 # Mount Directory
 MNT_DIR=wallyimg
@@ -117,4 +117,4 @@ fi
 
 echo
 echo "GPT Information for $1 ==================================="
-sgdisk -p $1
+sudo sgdisk -p $1

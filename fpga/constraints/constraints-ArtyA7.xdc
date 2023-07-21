@@ -80,6 +80,8 @@ set_property PACKAGE_PIN E2 [get_ports {SDCDat[1]}]
 set_property PACKAGE_PIN F4 [get_ports {SDCDat[0]}]
 set_property PACKAGE_PIN F3 [get_ports SDCCLK]
 set_property PACKAGE_PIN D3 [get_ports {SDCCmd}]
+set_property PACKAGE_PIN H2 [get_ports {SDCCD}]
+
 
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[2]}]
@@ -87,11 +89,13 @@ set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports SDCCLK]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCCmd}]
+set_property IOSTANDARD LVCMOS33 [get_ports {SDCCD}]
 set_property PULLUP true [get_ports {SDCDat[3]}]
 set_property PULLUP true [get_ports {SDCDat[2]}]
 set_property PULLUP true [get_ports {SDCDat[1]}]
 set_property PULLUP true [get_ports {SDCDat[0]}]
 set_property PULLUP true [get_ports {SDCCmd}]
+set_property PULLUP true [get_ports {SDCCD}]
 
 
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
