@@ -258,7 +258,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic                    CacheStall;
       logic [1:0]              CacheBusRWTemp;
       
-      assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
       assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheAtomicM = CacheableM & ~SelDTIM ? LSUAtomicM : '0;
@@ -279,10 +279,10 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
       
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
-      assign CacheBusRW = IgnoreRequestTLB ? 2'b0 : CacheBusRWTemp;
+      assign CacheBusRW = CacheBusRWTemp;
 
       ahbcacheinterface #(.AHBW(P.AHBW), .LLEN(P.LLEN), .PA_BITS(P.PA_BITS), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
-        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
+        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
