@@ -37,101 +37,109 @@ module sdc_controller #(
     parameter voltage_controll_reg = 3300,
     parameter capabilies_reg = 16'b0000_0000_0000_0011
 ) (
-    input wire async_resetn,
+    input wire                     async_resetn,
 
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 clock CLK" *)
     (* X_INTERFACE_PARAMETER = "ASSOCIATED_BUSIF M_AXI:S_AXI_LITE, FREQ_HZ 100000000" *)
-    input wire clock,
+    input wire                     clock,
 
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWADDR" *)
     (* X_INTERFACE_PARAMETER = "CLK_DOMAIN clock, ID_WIDTH 0, PROTOCOL AXI4LITE, DATA_WIDTH 32" *)
-    input wire [15:0] s_axi_awaddr,
+    input wire [15:0]              s_axi_awaddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWVALID" *)
-    input wire s_axi_awvalid,
+    input wire                     s_axi_awvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE AWREADY" *)
-    output wire s_axi_awready,
+    output wire                    s_axi_awready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE WDATA" *)
-    input wire [31:0] s_axi_wdata,
+    input wire [31:0]              s_axi_wdata,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE WVALID" *)
-    input wire s_axi_wvalid,
+    input wire                     s_axi_wvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE WREADY" *)
-    output wire s_axi_wready,
+    output wire                    s_axi_wready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE BRESP" *)
-    output reg [1:0] s_axi_bresp,
+    output reg [1:0]               s_axi_bresp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE BVALID" *)
-    output reg s_axi_bvalid,
+    output reg                     s_axi_bvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE BREADY" *)
-    input wire s_axi_bready,
+    input wire                     s_axi_bready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE ARADDR" *)
-    input wire [15:0] s_axi_araddr,
+    input wire [15:0]              s_axi_araddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE ARVALID" *)
-    input wire s_axi_arvalid,
+    input wire                     s_axi_arvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE ARREADY" *)
-    output wire s_axi_arready,
+    output wire                    s_axi_arready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RDATA" *)
-    output reg [31:0] s_axi_rdata,
+    output reg [31:0]              s_axi_rdata,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RRESP" *)
-    output reg [1:0] s_axi_rresp,
+    output reg [1:0]               s_axi_rresp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RVALID" *)
-    output reg s_axi_rvalid,
+    output reg                     s_axi_rvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 S_AXI_LITE RREADY" *)
-    input wire s_axi_rready,
+    input wire                     s_axi_rready,
 
     (* X_INTERFACE_PARAMETER = "CLK_DOMAIN clock, ID_WIDTH 0, PROTOCOL AXI4, DATA_WIDTH 32" *)
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWADDR" *)
-    output reg  [dma_addr_bits-1:0] m_axi_awaddr,
+    output reg [dma_addr_bits-1:0] m_axi_awaddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWLEN" *)
-    output reg  [7:0] m_axi_awlen,
+    output reg [7:0]               m_axi_awlen,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWVALID" *)
-    output reg  m_axi_awvalid,
+    output reg                     m_axi_awvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI AWREADY" *)
-    input wire m_axi_awready,
+    input wire                     m_axi_awready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI WDATA" *)
-    output wire [31:0] m_axi_wdata,
+    output wire [31:0]             m_axi_wdata,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI WLAST" *)
-    output reg  m_axi_wlast,
+    output reg                     m_axi_wlast,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI WVALID" *)
-    output reg  m_axi_wvalid,
+    output reg                     m_axi_wvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI WREADY" *)
-    input wire m_axi_wready,
+    input wire                     m_axi_wready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BRESP" *)
-    input wire [1:0] m_axi_bresp,
+    input wire [1:0]               m_axi_bresp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BVALID" *)
-    input wire m_axi_bvalid,
+    input wire                     m_axi_bvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI BREADY" *)
-    output wire m_axi_bready,
+    output wire                    m_axi_bready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARADDR" *)
-    output reg  [dma_addr_bits-1:0] m_axi_araddr,
+    output reg [dma_addr_bits-1:0] m_axi_araddr,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARLEN" *)
-    output reg  [7:0] m_axi_arlen,
+    output reg [7:0]               m_axi_arlen,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARVALID" *)
-    output reg  m_axi_arvalid,
+    output reg                     m_axi_arvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI ARREADY" *)
-    input wire m_axi_arready,
+    input wire                     m_axi_arready,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RDATA" *)
-    input wire [31:0] m_axi_rdata,
+    input wire [31:0]              m_axi_rdata,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RLAST" *)
-    input wire m_axi_rlast,
+    input wire                     m_axi_rlast,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RRESP" *)
-    input wire [1:0] m_axi_rresp,
+    input wire [1:0]               m_axi_rresp,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RVALID" *)
-    input wire m_axi_rvalid,
+    input wire                     m_axi_rvalid,
     (* X_INTERFACE_INFO = "xilinx.com:interface:aximm:1.0 M_AXI RREADY" *)
-    output wire m_axi_rready,
+    output wire                    m_axi_rready,
 
     // SD BUS
-    inout wire sdio_cmd,
-    inout wire [3:0] sdio_dat,
+    //inout wire                     sdio_cmd,
+    //inout wire [3:0]               sdio_dat,
     (* X_INTERFACE_INFO = "xilinx.com:signal:clock:1.0 sdio_clk CLK" *)
     (* X_INTERFACE_PARAMETER = "FREQ_HZ 50000000" *)
-    output reg sdio_clk,
+    output reg                     sdio_clk,
     (* X_INTERFACE_INFO = "xilinx.com:signal:reset:1.0 sdio_reset RST" *)
     (* X_INTERFACE_PARAMETER = "POLARITY ACTIVE_HIGH" *)
-    output reg sdio_reset,
-    input wire sdio_cd,
+    output reg                     sdio_reset,
+    input wire                     sdio_cd,
+
+    output reg                     sd_dat_reg_t,
+    output reg [3:0]               sd_dat_reg_o,
+    input wire [3:0]               sd_dat_i,
+
+    output reg                     sd_cmd_reg_t,
+    output reg                     sd_cmd_reg_o,
+    input wire                     sd_cmd_i,
 
     // Interrupts
-    output wire interrupt
+    output wire                    interrupt
 );
 
 `include "sd_defines.h"
@@ -154,7 +162,7 @@ wire [31:0] data_in_rx_fifo;
 wire en_tx_fifo;
 wire en_rx_fifo;
 wire sd_data_busy;
-wire data_busy;
+(* mark_debug = "true" *) wire data_busy;
 wire data_crc_ok;
 wire tx_fifo_re;
 wire rx_fifo_we;
@@ -167,25 +175,25 @@ reg  data_int_rst;
 reg  ctrl_rst;
 
 // AXI accessible registers
-reg  [31:0] argument_reg;
-reg  [`CMD_REG_SIZE-1:0] command_reg;
-reg  [`CMD_TIMEOUT_W-1:0] cmd_timeout_reg;
-reg  [`DATA_TIMEOUT_W-1:0] data_timeout_reg;
-reg  [0:0] software_reset_reg;
-wire [31:0] response_0_reg;
-wire [31:0] response_1_reg;
-wire [31:0] response_2_reg;
-wire [31:0] response_3_reg;
-reg  [`BLKSIZE_W-1:0] block_size_reg;
-reg  [1:0] controller_setting_reg;
-wire [`INT_CMD_SIZE-1:0] cmd_int_status_reg;
-wire [`INT_DATA_SIZE-1:0] data_int_status_reg;
-wire [`INT_DATA_SIZE-1:0] data_int_status;
-reg  [`INT_CMD_SIZE-1:0] cmd_int_enable_reg;
-reg  [`INT_DATA_SIZE-1:0] data_int_enable_reg;
-reg  [`BLKCNT_W-1:0] block_count_reg;
-reg  [dma_addr_bits-1:0] dma_addr_reg;
-reg  [7:0] clock_divider_reg = 124; // 400KHz
+(* mark_debug = "true" *) reg  [31:0] argument_reg;
+(* mark_debug = "true" *) reg  [`CMD_REG_SIZE-1:0] command_reg;
+(* mark_debug = "true" *) reg  [`CMD_TIMEOUT_W-1:0] cmd_timeout_reg;
+(* mark_debug = "true" *) reg  [`DATA_TIMEOUT_W-1:0] data_timeout_reg;
+(* mark_debug = "true" *) reg  [0:0] software_reset_reg;
+(* mark_debug = "true" *) wire [31:0] response_0_reg;
+(* mark_debug = "true" *) wire [31:0] response_1_reg;
+(* mark_debug = "true" *) wire [31:0] response_2_reg;
+(* mark_debug = "true" *) wire [31:0] response_3_reg;
+(* mark_debug = "true" *) reg  [`BLKSIZE_W-1:0] block_size_reg;
+(* mark_debug = "true" *) reg  [1:0] controller_setting_reg;
+(* mark_debug = "true" *) wire [`INT_CMD_SIZE-1:0] cmd_int_status_reg;
+(* mark_debug = "true" *) wire [`INT_DATA_SIZE-1:0] data_int_status_reg;
+(* mark_debug = "true" *) wire [`INT_DATA_SIZE-1:0] data_int_status;
+(* mark_debug = "true" *) reg  [`INT_CMD_SIZE-1:0] cmd_int_enable_reg;
+(* mark_debug = "true" *) reg  [`INT_DATA_SIZE-1:0] data_int_enable_reg;
+(* mark_debug = "true" *) reg  [`BLKCNT_W-1:0] block_count_reg;
+(* mark_debug = "true" *) reg  [dma_addr_bits-1:0] dma_addr_reg;
+(* mark_debug = "true" *) reg  [7:0] clock_divider_reg = 124; // 400KHz
 
 // ------ Clocks and resets
 
@@ -198,7 +206,7 @@ always @(posedge clock)
 
 reg [7:0] clock_cnt;
 reg clock_state;
-reg clock_posedge;
+(* mark_debug = "true" *) reg clock_posedge;
 reg clock_data_in;
 wire fifo_almost_full;
 wire fifo_almost_empty;
@@ -240,22 +248,22 @@ end
 
 // ------ SD IO Buffers
 
-wire sd_cmd_i;
+// wire sd_cmd_i;
 wire sd_cmd_o;
 wire sd_cmd_oe;
-reg  sd_cmd_reg_o;
-reg  sd_cmd_reg_t;
-wire [3:0] sd_dat_i;
+// reg  sd_cmd_reg_o;
+// reg  sd_cmd_reg_t;
+// wire [3:0] sd_dat_i;
 wire [3:0] sd_dat_o;
 wire sd_dat_oe;
-reg  [3:0] sd_dat_reg_o;
-reg  sd_dat_reg_t;
+// reg  [3:0] sd_dat_reg_o;
+// reg  sd_dat_reg_t;
 
-IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(sdio_cmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
-IOBUF IOBUF_dat0 (.O(sd_dat_i[0]), .IO(sdio_dat[0]), .I(sd_dat_reg_o[0]), .T(sd_dat_reg_t));
-IOBUF IOBUF_dat1 (.O(sd_dat_i[1]), .IO(sdio_dat[1]), .I(sd_dat_reg_o[1]), .T(sd_dat_reg_t));
-IOBUF IOBUF_dat2 (.O(sd_dat_i[2]), .IO(sdio_dat[2]), .I(sd_dat_reg_o[2]), .T(sd_dat_reg_t));
-IOBUF IOBUF_dat3 (.O(sd_dat_i[3]), .IO(sdio_dat[3]), .I(sd_dat_reg_o[3]), .T(sd_dat_reg_t));
+// IOBUF IOBUF_cmd (.O(sd_cmd_i), .IO(sdio_cmd), .I(sd_cmd_reg_o), .T(sd_cmd_reg_t));
+// IOBUF IOBUF_dat0 (.O(sd_dat_i[0]), .IO(sdio_dat[0]), .I(sd_dat_reg_o[0]), .T(sd_dat_reg_t));
+// IOBUF IOBUF_dat1 (.O(sd_dat_i[1]), .IO(sdio_dat[1]), .I(sd_dat_reg_o[1]), .T(sd_dat_reg_t));
+// IOBUF IOBUF_dat2 (.O(sd_dat_i[2]), .IO(sdio_dat[2]), .I(sd_dat_reg_o[2]), .T(sd_dat_reg_t));
+// IOBUF IOBUF_dat3 (.O(sd_dat_i[3]), .IO(sdio_dat[3]), .I(sd_dat_reg_o[3]), .T(sd_dat_reg_t));
 
 always @(negedge clock) begin
     // Output data delayed by 1/2 clock cycle (5ns) to ensure

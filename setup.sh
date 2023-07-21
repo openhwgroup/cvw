@@ -2,7 +2,8 @@
 
 # setup.sh
 # David_Harris@hmc.edu and kekim@hmc.edu 1 December 2021
-# Set up tools for riscv-wally
+# Set up tools for rvw
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 echo "Executing Wally setup.sh"
 
@@ -13,16 +14,17 @@ echo \$WALLY set to ${WALLY}
 
 # License servers and commercial CAD tool paths
 # Must edit these based on your local environment.  Ask your sysadmin.
-export MGLS_LICENSE_FILE=1717@solidworks.eng.hmc.edu                # Change this to your Siemens license server
+export MGLS_LICENSE_FILE=27002@zircon.eng.hmc.edu                   # Change this to your Siemens license server
 export SNPSLMD_LICENSE_FILE=27020@zircon.eng.hmc.edu                # Change this to your Synopsys license server
-export PATH=/cad/mentor/questa_sim-2021.2_1/questasim/bin:$PATH     # Change this for your path to Questa
-export PATH=/cad/synopsys/SYN/bin:$PATH                             # Change this for your path to Design Compiler
-
+export QUESTAPATH=/cad/mentor/questa_sim-2022.4_2/questasim/bin     # Change this for your path to Questa
+export SNPSPATH=/cad/synopsys/SYN/bin                               # Change this for your path to Design Compiler
 
 # Path to RISC-V Tools
 export RISCV=/opt/riscv   # change this if you installed the tools in a different location
 
 # Tools
+# Questa and Synopsys
+export PATH=$QUESTAPATH:$SNPSPATH:$PATH
 # GCC
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$RISCV/riscv-gnu-toolchain/lib:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/lib
 export PATH=$PATH:$RISCV/riscv-gnu-toolchain/bin:$RISCV/riscv-gnu-toolchain/riscv64-unknown-elf/bin      # GCC tools

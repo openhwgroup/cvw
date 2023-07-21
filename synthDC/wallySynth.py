@@ -1,29 +1,23 @@
 #!/usr/bin/python3
-# Madeleine Masser-Frye mmasserfrye@hmc.edu 6/22
+# Madeleine Masser-Frye mmasserfrye@hmc.edu 1/2023
 
 import subprocess
 from multiprocessing import Pool
 import argparse
 
-def runSynth(config, tech, freq, maxopt):
+def runSynth(config, mod, tech, freq, maxopt, usesram, usetopo):
     global pool
-    command = "make synth DESIGN=wallypipelinedcore CONFIG={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} MAXCORES=1".format(config, tech, freq, maxopt)
+    command = "make synth DESIGN=wallypipelinedcore CONFIG={} MOD={} TECH={} DRIVE=FLOP FREQ={} MAXOPT={} USESRAM={} USETOPO={} MAXCORES=1".format(config, mod, tech, freq, maxopt, usesram, usetopo)
     pool.map(mask, [command])
 
 def mask(command):
     subprocess.Popen(command, shell=True)
 
-def freshStart():
-    out = subprocess.check_output(['bash','-c', 'make fresh'])
-    for x in out.decode("utf-8").split('\n')[:-1]:
-        print(x)
-    return
-
 
 if __name__ == '__main__':
     
-    techs = ['sky90', 'tsmc28']
-    allConfigs = ['rv32gc', 'rv32ic', 'rv64gc', 'rv64ic', 'rv32e', 'rv32i', 'rv64i']
+    techs = ['sky90', 'tsmc28', 'tsmc28psyn']
+    allConfigs = ['rv32gc', 'rv32imc', 'rv64gc', 'rv64imc', 'rv32e', 'rv32i', 'rv64i']
     freqVaryPct = [-20, -12, -8, -6, -4, -2, 0, 2, 4, 6, 8, 12, 20]
 
     pool = Pool()
@@ -31,34 +25,42 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-s", "--freqsweep", type=int, help = "Synthesize wally with target frequencies at given MHz and +/- 2, 4, 6, 8 %%")
-    parser.add_argument("-c", "--configsweep", action='store_true', help = "Synthesize wally with configurations 32e, 32ic, 64ic, 32gc, and 64gc")
+    parser.add_argument("-c", "--configsweep", action='store_true', help = "Synthesize wally with configurations 32e, 32imc, 64ic, 32gc, and 64gc")
     parser.add_argument("-f", "--featuresweep", action='store_true', help = "Synthesize wally with features turned off progressively to visualize critical path")
 
     parser.add_argument("-v", "--version", choices=allConfigs, help = "Configuration of wally")
     parser.add_argument("-t", "--targetfreq", type=int, help = "Target frequncy")
     parser.add_argument("-e", "--tech", choices=techs, help = "Technology")
     parser.add_argument("-o", "--maxopt", action='store_true', help = "Turn on MAXOPT")
+    parser.add_argument("-r", "--usesram", action='store_true', help = "Use SRAM modules")
+    parser.add_argument("-topo", "--usetopo", action='store_true', help = "Run physical synthesis")	
 
     args = parser.parse_args()
 
-    freq = args.targetfreq if args.targetfreq else 3000
     tech = args.tech if args.tech else 'sky90'
     maxopt = int(args.maxopt)
+    usesram = int(args.usesram)
+    usetopo = int(args.usetopo)	
+    mod = 'orig'
 
     if args.freqsweep:
         sc = args.freqsweep
         config = args.version if args.version else 'rv32e'
-        freshStart()
         for freq in [round(sc+sc*x/100) for x in freqVaryPct]: # rv32e freq sweep
-            runSynth(config, tech, freq, maxopt)
+            runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)
     if args.configsweep:
-        freshStart()
-        for config in ['rv32gc', 'rv32ic', 'rv64gc', 'rv64ic', 'rv32e']: # configs
-            config = config + '_orig' # until memory integrated
-            runSynth(config, tech, freq, maxopt)
+        defaultfreq = 1500 if tech == 'sky90' else 5000
+        freq = args.targetfreq if args.targetfreq else defaultfreq
+        for config in ['rv32i', 'rv64gc', 'rv64i', 'rv32gc', 'rv32imc', 'rv32e']: #configs
+            runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)
     if args.featuresweep:
-        freshStart()
-        v = args.version if args.version else 'rv64gc'
-        for mod in ['FPUoff', 'noMulDiv', 'noPriv', 'PMP0', 'PMP16']: # rv64gc path variations
-            config = v + '_' + mod
-            runSynth(config, tech, freq, maxopt)
+        defaultfreq = 500 if tech == 'sky90' else 1500
+        freq = args.targetfreq if args.targetfreq else defaultfreq
+        config = args.version if args.version else 'rv64gc'
+        for mod in ['noFPU', 'noMulDiv', 'noPriv', 'PMP0', 'orig']: 
+            runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)
+    else:
+        defaultfreq = 500 if tech == 'sky90' else 1500
+        freq = args.targetfreq if args.targetfreq else defaultfreq
+        config = args.version if args.version else 'rv64gc'
+        runSynth(config, mod, tech, freq, maxopt, usesram, usetopo)

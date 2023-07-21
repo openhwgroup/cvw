@@ -14,148 +14,14 @@ installed at base diretory $RISCV.
 
 ** TL;DR Open Source Tool-chain Installation
 
-   The installing details are involved.  The following script assumes installation occurs in RISCV=/opt/riscv
+   The installing details are involved, but can be skipped using the following script.  wally-tool-chain-install.sh installs the open source tools to RISCV=/opt/riscv by default.  Change by supplying an alternate path as an argument, (ie. wally-tool-chain-install.sh /mnt/disk1/riscv).
    This install script does NOT install buildroot or commercial EDA tools; Questa, Design Compiler, or Innovus.
    It must be run as root or with sudo.
-   This script only works for Ubuntu.
+   This script is tested for Ubuntu, 20.04 and 22.04
 
    wally-tool-chain-install.sh
 
-** TL;DR install summery
-
-*** Environement setup
-    1. export RISCV=/opt/riscv
-    2. sudo mkdir $RISCV
-    3. sudo chown cad $RISCV
-    4. sudo su cad  (or root, if you don’t have a cad account)
-    5. export RISCV=/opt/riscv
-    6. chmod 755 $RISCV
-    7. mask 0002
-    8. cd $RISCV
-
-*** Install dependencies
-
-**** Ubuntu
-    1. sudo apt update
-    2. sudo apt upgrade
-    3. sudo apt install git gawk make texinfo bison flex build-essential python libz-dev libexpat-dev autoconf device-tree-compiler ninja-build libglib2.56-dev libpixman-1-dev build-essential ncurses-base ncurses-bin libncurses5-dev dialog 
-
-**** Red Hat / Fedora *** TODO
-
-*** Install RISC-V GCC Cross-Compiler
-    1. git clone https://github.com/riscv/riscv-gnu-toolchain
-    2. cd riscv-gnu-toolchain
-    3. git checkout 2022.09.21
-    4. ./configure --prefix=$RISCV --enable-multilib --with-multilib-generator="rv32e-ilp32e--;rv32i-ilp32--;rv32im-ilp32--;rv32iac-ilp32--;rv32imac-ilp32--;rv32imafc-ilp32f--;rv32imafdc-ilp32d--;rv64i-lp64--;rv64ic-lp64--;rv64iac-lp64--;rv64imac-lp64--;rv64imafdc-lp64d--;rv64im-lp64--;"
-    5. make --jobs
-
-*** Install elf2hex
-    1. cd $RISCV
-    2. export PATH=$RISCV/riscv-gnu-toolchain/bin:$PATH
-    3. git clone https://github.com/sifive/elf2hex.git
-    4. cd elf2hex
-    5. autoreconf -i
-    6. ./configure --target=riscv64-unknown-elf --prefix=$RISCV
-    7. make
-    8. make install 
-
-*** Install RISC-V Spike Simulator
-    1. cd $RISCV
-    2. git clone https://github.com/riscv-software-src/riscv-isa-sim
-    3. mkdir riscv-isa-sim/build
-    4. cd riscv-isa-sim/build
-    5. ../configure --prefix=$RISCV --enable-commitlog
-    6. make --jobs
-    7. make install
-    8. cd ../arch_test_target/spike/device
-    9. sed -i 's/--isa=rv32ic/--isa=rv32iac/' rv32i_m/privilege/Makefile.include
-    10. sed -i 's/--isa=rv64ic/--isa=rv64iac/' rv64i_m/privilege/Makefile.include 
-
-*** Install Sail Simulator
-
-**** Ubuntu
-     1. sudo apt install opam  build-essential libgmp-dev z3 pkg-config zlib1g-dev
-
-**** Red Hat / Fedora
-     # Parallel make (--jobs) will massively speed up installation; however it requires significant system RAM.  Recomemded to have 64GB
-     1. sudo bash -c "sh <(curl -fsSL https://raw.githubusercontent.com/ocaml/opam/master/shell/install.sh)"
-	When prompted, put it in /usr/bin 
-     2. sudo yum groupinstall 'Development Tools'
-     3. sudo yum -y install gmp-devel
-     4. sudo yum -y install zlib-devel
-     5. git clone https://github.com/Z3Prover/z3.git
-     6. cd z3
-     7. python scripts/mk_make.py
-     8. cd build
-     9. make 
-     10. sudo make install
-     11. cd ../..
-     12. sudo pip3 install chardet==3.0.4
-     13. sudo pip3 install urllib3==1.22
-
-**** Complete Sail Install with OCaml
-     # Parallel make (--jobs) will massively speed up installation; however it requires significant system RAM.  Recomemded to have 64GB
-     1. sudo su cad
-     2. opam init -y --disable-sandboxing
-     3. opam switch create ocaml-base-compiler.4.06.1
-     4. opam install sail -y
-     5. eval $(opam config env)
-     6. cd $RISCV
-     7. git clone https://github.com/riscv/sail-riscv.git
-     8. cd sail-riscv
-     9. make
-     10. ARCH=RV32 make
-     11. ARCH=RV64 make
-     12. exit
-     13. sudo su
-     14. export RISCV=/opt/riscv
-     15. ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV64 /usr/bin/riscv_sim_RV64
-     16. ln -s $RISCV/sail-riscv/c_emulator/riscv_sim_RV32 /usr/bin/riscv_sim_RV32
-     17. exit
-
-*** Install riscof
-    1. sudo pip3 install testresources
-    2. sudo pip3 install riscof --ignore-installed PyYAML
-
-*** Install Verilator
-
-**** Ubuntu
-     sudo apt install verilator 
-
-**** Red Hat / Fedora *** TODO
-
-*** Install QEMU Simulator (Only required for linux simulation)
-     1. cd $RISCV
-     2. git clone --recurse-submodules https://github.com/qemu/qemu
-     3. cd qemu
-     4. git checkout v6.2.0    # last version tested; newer versions might be ok
-     5. ./configure --target-list=riscv64-softmmu --prefix=$RISCV
-     6. make --jobs
-     7. make install
-
-*** Cross-Compile Buildroot Linux (Only required for linux simulation)
-#May wish to install in another location
-    1. cd $RISCV
-    2. export WALLY=~/riscv-wally  # make sure you haven’t sourced ~/riscv-wally/setup.sh by now
-    3. git clone https://github.com/buildroot/buildroot.git
-    4. cd buildroot
-    5. git checkout 2021.05 # last tested working version
-    6. cp -r $WALLY/linux/buildroot-config-src/wally ./board
-    7. cp ./board/wally/main.config .config
-    8. make --jobs
-
-**** Generate disassembly files
-     1. source ~/riscv-wally/setup.sh
-     2. cd $WALLY/linux/buildroot-scripts
-     3. make all
-
-*** Download Synthesis Libraries
-    1. cd $RISCV
-    2. mkdir cad
-    3. mkdir cad/lib
-    4. cd cad/lib
-    5. git clone https://foss-eda-tools.googlesource.com/skywater-pdk/libs/sky130_osu_sc_t12
-
+   The step by step instructions include Red Hat 8 / Fedora.
 
 ** Detailed Tool-chain Instal Guide
    Section 2.1 described Wally platform requirements and Section 2.2 describes how a user gets started using Wally on a Linux server.  This appendix describes how the system administrator installs RISC-V tools.  Superuser privileges are necessary for many of the tools. Setting up all of the tools can be time-consuming and fussy, so this appendix also describes a fallback flow with Docker and Podman.  
@@ -405,7 +271,6 @@ If you want to implement your own version of the chip, your tool and license com
 
 Startups can expect to spend more than $1 million on CAD tools to get a chip to market. Commercial CAD tools are not realistically available to individuals without a university or company connection.
 
-
 * Core-v-wally Repo Installation
 ** TL;DR Repo Install
 cd
@@ -463,6 +328,6 @@ source ./setup.sh        # may require some modification for your system. Always
 
   cd <to location of repo clone>
   make
-  cd pipelined/regression
+  cd sim
   ./regression-wally       #(depends on having Questa installed)
 

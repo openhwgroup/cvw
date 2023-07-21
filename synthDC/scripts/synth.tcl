@@ -16,21 +16,17 @@ suppress_message {VER-173}
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
 
-# get outputDir from environment (Makefile)
+# get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
-set cfgName $::env(CONFIG)
-# Config
-set hdl_src "../pipelined/src"
-set cfg "${hdl_src}/../config/${cfgName}/wally-config.vh"
+set cfg $::env(CONFIGDIR)
+set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
-eval file copy -force ${cfg} {$outputDir/hdl/}
-#eval file copy -force ${cfg} $outputDir
-eval file copy -force [glob ${hdl_src}/../config/shared/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*/flop/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -52,6 +48,36 @@ set report_default_significant_digits 6
 # V(HDL) Unconnectoed Pins Output
 set verilogout_show_unconnected_pins "true"
 set vhdlout_show_unconnected_pins "true"
+
+#  Set up MW List
+set MY_LIB_NAME $my_toplevel
+# Create MW
+if { [shell_is_in_topographical_mode] } {
+    echo "In Topographical Mode...processing\n"
+    if {[file isdirectory $MY_LIB_NAME]} {
+	echo "MW directory already here, deleting/readdding."
+	[exec rm -rf $my_toplevel]
+	create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
+	    -mw_reference_library $mw_reference_library $MY_LIB_NAME
+    } else {
+	create_mw_lib  -technology $MW_REFERENCE_LIBRARY/$MW_TECH_FILE.tf \
+	    -mw_reference_library $mw_reference_library $MY_LIB_NAME
+    }
+
+    # Open MW
+    open_mw_lib $MY_LIB_NAME
+    
+    # TLU+
+    set_tlu_plus_files -max_tluplus $MAX_TLU_FILE -min_tluplus $MIN_TLU_FILE \
+	-tech2itf_map $PRS_MAP_FILE
+
+} else {
+    if {[file isdirectory $MY_LIB_NAME]} {
+	[exec rm -rf $my_toplevel]
+	echo "MW directory already here, deleting."
+    }
+    echo "In normal DC mode...processing\n"
+}
 
 # Due to parameterized Verilog must use analyze/elaborate and not 
 # read_verilog/vhdl (change to pull in Verilog and/or VHDL)
@@ -136,8 +162,8 @@ if {$tech == "sky130"} {
 
 # Set input/output delay
 if {$drive == "FLOP"} {
-    set_input_delay 0.1 -max -clock $my_clk $all_in_ex_clk
-    set_output_delay 0.1 -max -clock $my_clk [all_outputs]
+    set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
+    set_output_delay 0.0 -max -clock $my_clk [all_outputs]
 } else {
     set_input_delay 0.0 -max -clock $my_clk $all_in_ex_clk
     set_output_delay 0.0 -max -clock $my_clk [all_outputs]

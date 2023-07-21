@@ -1,17 +1,18 @@
 #  
 # Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
-# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 7/8/2022
+# Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
 NAME := synth
 
 # defaults
 export DESIGN ?= wallypipelinedcore
-export FREQ ?= 3000
-export CONFIG ?= rv32e
+export FREQ ?= 10000
+export CONFIG ?= rv64gc
+export MOD ?= orig
 # title to add a note in the synth's directory name
 TITLE = 
 # tsmc28, sky130, and sky90 presently supported
-export TECH ?= sky90
+export TECH ?= tsmc28
 # MAXCORES allows parallel compilation, which is faster but less CPU-efficient
 # Avoid when doing sweeps of many optimization points in parallel
 export MAXCORES ?= 1
@@ -19,22 +20,16 @@ export MAXCORES ?= 1
 # The output netlist is hard to interpret, but significantly better PPA
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
+export USESRAM ?= 1
+export USETOPO ?= 0
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
-export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
+export OUTPUTDIR := runs/$(DESIGN)_$(CONFIG)_$(MOD)_$(TECH)nm_$(FREQ)_MHz_$(time)_$(TITLE)_$(hash)
 export SAIFPOWER ?= 0
 
-CONFIGDIR ?= ${WALLY}/pipelined/config
-CONFIGFILES	?= $(shell find $(CONFIGDIR) -name rv*_*)
-CONFIGFILESTRIM = $(notdir $(CONFIGFILES))
-# FREQS = 25 50 100 150 200 250 300 350 400
-# k = 3 6 
-
-print:
-	@echo $(FREQS)
-	@echo $(CONFIGFILESTRIM)
-
+OLDCONFIGDIR ?= ${WALLY}/config
+export CONFIGDIR ?= $(OUTPUTDIR)/config
 
 default:
 	@echo "  Basic synthesis procedure for Wally:"
@@ -42,82 +37,114 @@ default:
 	@echo "Use wallySynth.py to run a concurrent sweep "
 
 
-DIRS32 = rv32e rv32gc rv32ic 
-DIRS64 = rv64ic rv64gc
+DIRS32 = rv32e rv32gc rv32imc rv32i
+DIRS64 = rv64i rv64gc
 DIRS = $(DIRS32) $(DIRS64)
 
+# k = 3 6 
 # bpred:
 # 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
 # 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
-copy: 
-	# remove old config files
-	rm -rf $(CONFIGDIR)/*_*
 
-	@$(foreach dir, $(DIRS), rm -rf $(CONFIGDIR)/$(dir)_orig;)
-	@$(foreach dir, $(DIRS), cp -r $(CONFIGDIR)/$(dir) $(CONFIGDIR)/$(dir)_orig;)
-	@$(foreach dir, $(DIRS), sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
-	@$(foreach dir, $(DIRS), sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
-	@$(foreach dir, $(DIRS), sed -i 's/BPRED_SIZE.*/BPRED_SIZE 4/g' $(CONFIGDIR)/$(dir)_orig/wally-config.vh;)
+configs: $(CONFIG)
+$(CONFIG):
+ifeq ($(USETOPO), 0))
+ifeq ($(TECH), tsmc28psyn))
+	@echo "Bad configuration: you cannot use physical synthesis without tsmc28psyn and usetopo (i.e., -topo)"
+	exit 1
+endif
+endif
+ifeq ($(USETOPO), 1))
+ifneq ($(TECH), tsmc28psyn))
+	@echo "Bad configuration: you cannot use usetopo (i.e., -topo) without tsmc28psyn"
+	exit 1
+endif
+endif
+	@echo $(CONFIG)
+	cp -r $(OLDCONFIGDIR)/shared/*.vh $(CONFIGDIR)
+	cp -r $(OLDCONFIGDIR)/$(CONFIG)/* $(CONFIGDIR)
 
-	@$(foreach dir, $(DIRS32), sed -i "s/RAM_RANGE.*/RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
-	@$(foreach dir, $(DIRS64), sed -i "s/RAM_RANGE.*/RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/$(dir)_orig/wally-config.vh ;)
+# adjust DTIM and IROM to reasonable values depending on config	
+ifneq ($(filter $(CONFIG), $(DIRS32)),)
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else ifneq ($(filter $(CONFIG), $(DIRS64)),)
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else 
+    $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
+    @echo "Config not in list, RAM_RANGE will be unmodified"
+endif
 
-configs: $(DIRS)
-$(DIRS):
+# if USESRAM = 1, set that in the config file, otherwise reduce sizes
+ifeq ($(USESRAM), 1)
+	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-config.vh
+else
+	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
+ifneq ($(filter $(CONFIG), $(DIRS32)),)
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+else ifneq ($(filter $(CONFIG), $(DIRS64)),)
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+endif
+endif
 	
-	# turn off FPU 
-	rm -rf $(CONFIGDIR)/$@_FPUoff
-	cp -r $(CONFIGDIR)/$@_orig $(CONFIGDIR)/$@_FPUoff
-	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/$@_FPUoff/wally-config.vh
-	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/$@_FPUoff/wally-config.vh
-
-	# PMP 16 
-	rm -rf $(CONFIGDIR)/$@_PMP16
-	cp -r $(CONFIGDIR)/$@_FPUoff $(CONFIGDIR)/$@_PMP16
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 16/' $(CONFIGDIR)/$@_PMP16/wally-config.vh
-	
+# adjust config if synthesizing with any modifications
+ifneq ($(MOD), orig)
 	# PMP 0
-	rm -rf $(CONFIGDIR)/$@_PMP0
-	cp -r $(CONFIGDIR)/$@_FPUoff $(CONFIGDIR)/$@_PMP0
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/$@_PMP0/wally-config.vh
-	
-	# no muldiv
-	rm -rf $(CONFIGDIR)/$@_noMulDiv
-	cp -r $(CONFIGDIR)/$@_PMP0 $(CONFIGDIR)/$@_noMulDiv
-	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/$@_noMulDiv/wally-config.vh
-
+	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), PMP0)
 	# no priv
-	rm -rf $(CONFIGDIR)/$@_noPriv
-	cp -r $(CONFIGDIR)/$@_noMulDiv $(CONFIGDIR)/$@_noPriv
-	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/$@_noPriv/wally-config.vh
+	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noPriv)
+	# turn off FPU 
+	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/wally-config.vh
+ifneq ($(MOD), noFPU)
+	# no muldiv
+	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+endif
+endif
+endif
+endif
 
-freqs: 
-	@$(foreach freq, $(FREQS), make synth DESIGN=wallypipelinedcore CONFIG=rv32e FREQ=$(freq) MAXCORES=1;)
+ifeq ($(SAIFPOWER), 1)
+	cp -f ../sim/power.saif .
+endif
 
-synth:
+
+mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
 	@mkdir -p $(OUTPUTDIR)/hdl
+	@mkdir -p $(OUTPUTDIR)/config
 	@mkdir -p $(OUTPUTDIR)/reports
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
-ifeq ($(SAIFPOWER), 1)
-	cp -f ../pipelined/regression/power.saif .
-endif
+
+synth: mkdirecs configs rundc clean
+
+rundc:
+ifeq ($(USETOPO), 0)
 	dc_shell-xg-t -64bit -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
-#	rm -rf $(OUTPUTDIR)/hdl
-	rm -rf $(OUTPUTDIR)/WORK
-	rm -rf $(OUTPUTDIR)/alib-52
+else
+	
+	dc_shell-xg-t -64bit -topographical_mode -f scripts/$(NAME).tcl | tee $(OUTPUTDIR)/$(NAME).out
+endif
+
 
 clean:
+	rm -rf $(OUTPUTDIR)/hdl
+	rm -rf $(OUTPUTDIR)/WORK
+	rm -rf $(OUTPUTDIR)/alib-52
 	rm -f default.svf
 	rm -f command.log
 	rm -f filenames*.log
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
-
-fresh: clean copy configs
-	@echo "synth directory cleaned and fresh config files written"
