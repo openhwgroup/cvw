@@ -16,7 +16,7 @@ root:
 	mkdir -p $(work)
 	mkdir -p $(arch_workdir)
 	mkdir -p $(wally_workdir)
-	sed 's,{0},$(current_dir),g;s,{1},32imc,g' config.ini > config32.ini
+	sed 's,{0},$(current_dir),g;s,{1},32gc,g' config.ini > config32.ini
 	sed 's,{0},$(current_dir),g;s,{1},64gc,g' config.ini > config64.ini
 	sed 's,{0},$(current_dir),g;s,{1},32e,g' config.ini > config32e.ini
 

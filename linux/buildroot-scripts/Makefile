@@ -9,6 +9,7 @@ all:
 generate:
 	# generating device tree binary
 	dtc -I dts -O dtb ../devicetree/wally-virt.dts > ${IMAGES}/wally-virt.dtb
+	dtc -I dts -O dtb ../devicetree/wally-vcu108.dts > ${IMAGES}/wally-vcu108.dtb
 
 disassemble:
 	mkdir -p ${DIS}

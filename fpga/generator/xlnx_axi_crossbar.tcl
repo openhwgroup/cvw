@@ -22,7 +22,8 @@ set_property -dict [list CONFIG.NUM_SI {2} \
 						CONFIG.M01_S01_READ_CONNECTIVITY {0} \
 						CONFIG.M01_S01_WRITE_CONNECTIVITY {0} \
 						CONFIG.M00_A00_BASE_ADDR {0x0000000080000000} \
-						CONFIG.M01_A00_BASE_ADDR {0x0000000000013000}] [get_ips $ipName]
+						CONFIG.M01_A00_BASE_ADDR {0x0000000000013000} \
+                        CONFIG.M00_A00_ADDR_WIDTH {31}] [get_ips $ipName]
 
 generate_target {instantiation_template} [get_files ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]
 generate_target all [get_files  ./$ipName.srcs/sources_1/ip/$ipName/$ipName.xci]

@@ -18,12 +18,15 @@ read_ip IP/xlnx_ddr4.srcs/sources_1/ip/xlnx_ddr4/xlnx_ddr4.xci
 read_ip IP/xlnx_axi_crossbar.srcs/sources_1/ip/xlnx_axi_crossbar/xlnx_axi_crossbar.xci
 read_ip IP/xlnx_axi_dwidth_conv_32to64.srcs/sources_1/ip/xlnx_axi_dwidth_conv_32to64/xlnx_axi_dwidth_conv_32to64.xci
 read_ip IP/xlnx_axi_dwidth_conv_64to32.srcs/sources_1/ip/xlnx_axi_dwidth_conv_64to32/xlnx_axi_dwidth_conv_64to32.xci
+read_ip IP/xlnx_axi_prtcl_conv.srcs/sources_1/ip/xlnx_axi_prtcl_conv/xlnx_axi_prtcl_conv.xci
 
-read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
-read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v] 
+# read_verilog -sv [glob -type f ../../pipelined/src/*/*.sv ../../pipelined/src/*/*/*.sv]
+read_verilog -sv [glob -type f ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
+read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v]
 read_verilog  {../src/fpgaTop.v}
+read_verilog -sv  [glob -type f ../src/sdc/*.sv]
 
-set_property include_dirs {../../pipelined/config/fpga ../../pipelined/config/shared} [current_fileset]
+set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
 
 
 add_files -fileset constrs_1 -norecurse ../constraints/constraints-$boardSubName.xdc
@@ -45,6 +48,9 @@ synth_design -rtl -name rtl_1
 
 report_clocks -file reports/clocks.rpt
 
+# Temp
+set_param messaging.defaultLimit 100000
+
 # this does synthesis? wtf?
 launch_runs synth_1 -jobs 4
 
@@ -62,7 +68,7 @@ report_clock_interaction                                                -file re
 write_verilog -force -mode funcsim sim/syn-funcsim.v
 
 
-source ../constraints/debug2.xdc
+source ../constraints/vcu-small-debug.xdc
 
 
 # set for RuntimeOptimized implementation

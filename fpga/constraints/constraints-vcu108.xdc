@@ -3,7 +3,8 @@
 # mmcm_clkout0 is the clock output of the DDR4 memory interface / 4.
 # This clock is not used by wally or the AHBLite Bus. However it is used by the AXI BUS on the DD4 IP.
 
-create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
+# create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
+create_generated_clock -name CLKDiv64_Gen -source [get_pins xlnx_ddr4_c0/addn_ui_clkout1] -multiply_by 1 -divide_by 1 [get_pins axiSDC/clock_posedge_reg/Q]
 
 ##### GPI ####
 set_property PACKAGE_PIN E34 [get_ports {GPI[0]}]
@@ -16,7 +17,7 @@ set_property IOSTANDARD LVCMOS12 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPI[0]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports {GPI[*]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports {GPI[*]}]
-set_max_delay -from [get_ports {GPI[*]}] 10.000
+set_max_delay -from [get_ports {GPI[*]}] 10.000n 
 
 ##### GPO #### 
 set_property PACKAGE_PIN AT32 [get_ports {GPO[0]}]
@@ -92,23 +93,32 @@ set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_port
 
 
 ##### SD Card I/O #####
-set_property PACKAGE_PIN BC14 [get_ports {SDCDat[3]}]
-set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[3]}]
-set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[2]}]
-set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[1]}]
-set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[0]}]
-set_property PACKAGE_PIN BF7 [get_ports {SDCDat[2]}]
-set_property PACKAGE_PIN BC13 [get_ports {SDCDat[1]}]
-set_property PACKAGE_PIN AW16 [get_ports {SDCDat[0]}]
-set_property IOSTANDARD LVCMOS18 [get_ports SDCCLK]
-set_property IOSTANDARD LVCMOS18 [get_ports {SDCCmd}]
-set_property PACKAGE_PIN BB16 [get_ports SDCCLK]
-set_property PACKAGE_PIN BA10 [get_ports {SDCCmd}]
-set_property PULLUP true [get_ports {SDCDat[3]}]
-set_property PULLUP true [get_ports {SDCDat[2]}]
-set_property PULLUP true [get_ports {SDCDat[1]}]
-set_property PULLUP true [get_ports {SDCDat[0]}]
-set_property PULLUP true [get_ports {SDCCmd}]
+
+# set_property PACKAGE_PIN BC14 [get_ports {SDCDat[3]}]
+# set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[3]}]
+# set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[2]}]
+# set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[1]}]
+# set_property IOSTANDARD LVCMOS18 [get_ports {SDCDat[0]}]
+# set_property PACKAGE_PIN BF7 [get_ports {SDCDat[2]}]
+# set_property PACKAGE_PIN BC13 [get_ports {SDCDat[1]}]
+# set_property PACKAGE_PIN AW16 [get_ports {SDCDat[0]}]
+# set_property IOSTANDARD LVCMOS18 [get_ports SDCCLK]
+# set_property IOSTANDARD LVCMOS18 [get_ports {SDCCmd}]
+# set_property PACKAGE_PIN BB16 [get_ports SDCCLK]
+# set_property PACKAGE_PIN BA10 [get_ports {SDCCmd}]
+# set_property PULLUP true [get_ports {SDCDat[3]}]
+# set_property PULLUP true [get_ports {SDCDat[2]}]
+# set_property PULLUP true [get_ports {SDCDat[1]}]
+# set_property PULLUP true [get_ports {SDCDat[0]}]
+# set_property PULLUP true [get_ports {SDCCmd}]
+
+set_property -dict {PACKAGE_PIN BC14 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCDat[3]}]
+set_property -dict {PACKAGE_PIN BF7 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCDat[2]}]
+set_property -dict {PACKAGE_PIN BC13 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCDat[1]}]
+set_property -dict {PACKAGE_PIN AW16 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCDat[0]}]
+set_property -dict {PACKAGE_PIN BA10 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCCmd}]
+set_property -dict {PACKAGE_PIN AW12 IOSTANDARD LVCMOS18 PULLUP true} [get_ports {SDCCD}]
+set_property -dict {PACKAGE_PIN BB16 IOSTANDARD LVCMOS18} [get_ports SDCCLK]
 
 
 set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCDat[*]}]

@@ -1,5 +1,6 @@
 # Wally Coremark Makefile
 # Daniel Torres & David Harris 28 July 2022
+# SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
 
 PORT_DIR = $(CURDIR)/riscv64-baremetal
 cmbase=../../addins/coremark
@@ -21,8 +22,8 @@ PORT_CFLAGS = -g -mabi=$(ABI) -march=$(ARCH) -static -falign-functions=16 \
 all: $(work_dir)/coremark.bare.riscv.elf.memfile
 
 run:
-	(cd ../../pipelined/regression && (time vsim -c -do "do wally-pipelined-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
-	cd ../../benchmarks/coremark/
+	(cd ../../sim && (time vsim -c -do "do wally-batch.do rv$(XLEN)gc coremark" 2>&1 | tee $(work_dir)/coremark.sim.log))
+	cd ../benchmarks/coremark/
 #	KMG: added post processing script to give out branch miss proportion along with other stats to the coremark test
 	python3 coremark-postprocess.py
 
