@@ -107,7 +107,7 @@ localparam logic [63:0] BOOTROM_BASE =   64'h00001000;
 localparam logic [63:0] BOOTROM_RANGE =  64'h00000FFF;
 
 localparam UNCORE_RAM_SUPPORTED = 1'b1;
-localparam logic [63:0] UNCORE_RAM_BASE =       64'h80002000;
+localparam logic [63:0] UNCORE_RAM_BASE =       64'h00002000;
 localparam logic [63:0] UNCORE_RAM_RANGE =      64'h00000FFF;
 
 localparam EXT_MEM_SUPPORTED = 1'b1;
