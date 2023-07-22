@@ -146,6 +146,11 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
 
+  // eventually remove
+  assign HREADSDC = '0;
+  assign HREADYSDC = '1;
+  assign HRESPSDC = '0;
+  
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
                   ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   

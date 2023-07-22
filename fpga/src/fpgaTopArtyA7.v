@@ -135,7 +135,7 @@ module fpgaTop
   wire [2:0] 	   BUS_axi_awsize;
   wire [1:0] 	   BUS_axi_awburst;
   wire [3:0] 	   BUS_axi_awcache;
-  wire [30:0] 	   BUS_axi_awaddr;
+  wire [31:0] 	   BUS_axi_awaddr;
   wire [2:0] 	   BUS_axi_awprot;
   wire 			   BUS_axi_awvalid;
   wire 			   BUS_axi_awready;
@@ -156,7 +156,7 @@ module fpgaTop
   wire [2:0] 	   BUS_axi_arprot;
   wire [3:0] 	   BUS_axi_arcache;
   wire 			   BUS_axi_arvalid;
-  wire [30:0] 	   BUS_axi_araddr;
+  wire [31:0] 	   BUS_axi_araddr;
   wire 			   BUS_axi_arlock;
   wire 			   BUS_axi_arready;
   wire [3:0] 	   BUS_axi_rid;
@@ -167,7 +167,8 @@ module fpgaTop
   wire 			   BUS_axi_rready;
   
   wire 			   BUSCLK;
-
+  wire             sdio_reset_open;
+  
   // Crossbar to Bus ------------------------------------------------
 
   (* mark_debug = "true" *)wire s00_axi_aclk;
@@ -192,6 +193,7 @@ module fpgaTop
   (* mark_debug = "true" *)wire [1:0]s00_axi_bresp;
   (* mark_debug = "true" *)wire s00_axi_bvalid;
   (* mark_debug = "true" *)wire s00_axi_bready;
+  wire [3:0]       s00_axi_arid;
   (* mark_debug = "true" *)wire [31:0]s00_axi_araddr;
   (* mark_debug = "true" *)wire [7:0]s00_axi_arlen;
   (* mark_debug = "true" *)wire [2:0]s00_axi_arsize;
@@ -237,6 +239,7 @@ module fpgaTop
   wire s01_axi_bready;
   wire [31:0]s01_axi_araddr;
   wire [7:0]s01_axi_arlen;
+  wire [3:0] s01_axi_arid;
   wire [2:0]s01_axi_arsize;
   wire [1:0]s01_axi_arburst;
   wire [0:0]s01_axi_arlock;
@@ -525,7 +528,7 @@ module fpgaTop
   xlnx_ahblite_axi_bridge xlnx_ahblite_axi_bridge_0
     (.s_ahb_hclk(CPUCLK),
      .s_ahb_hresetn(peripheral_aresetn),
-     .s_ahb_hsel(HSELEXT),
+     .s_ahb_hsel(HSELEXT | HSELEXTSDC),
      .s_ahb_haddr(HADDR[31:0]),
      .s_ahb_hprot(HPROT),
      .s_ahb_htrans(HTRANS),
@@ -833,6 +836,7 @@ module fpgaTop
 	 .s_axi_rresp(SDCin_axi_rresp),
 	 .s_axi_rvalid(SDCin_axi_rvalid),
 	 .s_axi_rready(SDCin_axi_rready),
+     .sdio_reset(sdio_reset_open),
 	 
 	 // Master Interface
 	 .m_axi_awaddr(SDCout_axi_awaddr),
