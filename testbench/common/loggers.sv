@@ -138,6 +138,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     assign Enable = dut.core.ifu.bus.icache.icache.cachefsm.LRUWriteEn & 
                     dut.core.ifu.immu.immu.pmachecker.Cacheable &
                     ~dut.core.ifu.bus.icache.icache.cachefsm.FlushStage &
+                    dut.core.ifu.bus.icache.icache.cachefsm.CacheEn &
                     ~reset;
     flop #(1) ResetDReg(clk, reset, resetD);
     assign resetEdge = ~reset & resetD;
@@ -190,6 +191,7 @@ module loggers import cvw::*; #(parameter cvw_t P,
     assign Enabled = dut.core.lsu.bus.dcache.dcache.cachefsm.LRUWriteEn &
                      ~dut.core.lsu.bus.dcache.dcache.cachefsm.FlushStage &
                      dut.core.lsu.dmmu.dmmu.pmachecker.Cacheable &
+                     dut.core.lsu.bus.dcache.dcache.cachefsm.CacheEn &
                      (AccessTypeString != "NULL");
 
     initial begin

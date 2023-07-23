@@ -14,7 +14,6 @@ ieu/regfile.sv: logic    rf
 ieu/datapath.sv: logic                 RegWriteW
 hazard/hazard.sv: logic	         BPPredWrongE
 hazard/hazard.sv: logic	         LoadStallD
-hazard/hazard.sv: logic	         LSUStallM
 hazard/hazard.sv: logic          FCvtIntStallD
 hazard/hazard.sv: logic	         DivBusyE
 hazard/hazard.sv: logic	         EcallFaultM
@@ -30,6 +29,7 @@ wally/wallypipelinedcore.sv: logic           MemRWM
 wally/wallypipelinedcore.sv: logic                InstrValidM
 wally/wallypipelinedcore.sv: logic     WriteDataM
 wally/wallypipelinedcore.sv: logic     IEUAdrM
+wally/wallypipelinedcore.sv: logic   HRDATA
 ifu/spill.sv:    statetype CurrState
 ifu/ifu.sv: logic    				IFUStallF
 ifu/ifu.sv: logic     IFUHADDR
@@ -101,6 +101,7 @@ uncore/uartPC16550D.sv: logic   						RXerr
 uncore/uartPC16550D.sv: logic   						THRE
 uncore/uartPC16550D.sv: logic   						rxdataavailintr
 uncore/uartPC16550D.sv: logic    					intrID
+uncore/uncore.sv: logic HSELEXTSDCD
 uncore/plic_apb.sv: logic                    MExtInt
 uncore/plic_apb.sv: logic     Din
 uncore/plic_apb.sv: logic             requests

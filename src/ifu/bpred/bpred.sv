@@ -27,6 +27,8 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 `define INSTR_CLASS_PRED 1
+`include "BranchPredictorType.vh"
+
 
 module bpred import cvw::*;  #(parameter cvw_t P) (
   input  logic             clk, reset,
@@ -96,45 +98,45 @@ module bpred import cvw::*;  #(parameter cvw_t P) (
   logic [P.XLEN-1:0]        BPBTAE;
   
   // Part 1 branch direction prediction
-  if (P.BPRED_TYPE == BP_TWOBIT) begin:Predictor
+  if (P.BPRED_TYPE == `BP_TWOBIT) begin:Predictor
     twoBitPredictor #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, 
       .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
-  end else if (P.BPRED_TYPE == BP_GSHARE) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_GSHARE) begin:Predictor
     gshare #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW, 
       .PCSrcE);
 
-  end else if (P.BPRED_TYPE == BP_GLOBAL) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_GLOBAL) begin:Predictor
     gshare #(P, P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCF, .PCD, .PCE, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BPBranchF, .BranchD, .BranchE, .BranchM, .BranchW,
       .PCSrcE);
 
-  end else if (P.BPRED_TYPE == BP_GSHARE_BASIC) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_GSHARE_BASIC) begin:Predictor
     gsharebasic #(P, P.XLEN, P.BPRED_SIZE) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
 
-  end else if (P.BPRED_TYPE == BP_GLOBAL_BASIC) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_GLOBAL_BASIC) begin:Predictor
     gsharebasic #(P, P.XLEN, P.BPRED_SIZE, 0) DirPredictor(.clk, .reset, .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
   
-  end else if (P.BPRED_TYPE == BP_LOCAL_BASIC) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_LOCAL_BASIC) begin:Predictor
     localbpbasic #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredF, .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
-  end else if (P.BPRED_TYPE == BP_LOCAL_AHEAD) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_LOCAL_AHEAD) begin:Predictor
     localaheadbp #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,
       .BranchE, .BranchM, .PCSrcE);
-  end else if (P.BPRED_TYPE == BP_LOCAL_REPAIR) begin:Predictor
+  end else if (P.BPRED_TYPE == `BP_LOCAL_REPAIR) begin:Predictor
     localrepairbp #(P, P.XLEN, P.BPRED_NUM_LHR, P.BPRED_SIZE) DirPredictor(.clk, .reset, 
       .StallF, .StallD, .StallE, .StallM, .StallW, .FlushD, .FlushE, .FlushM, .FlushW,
       .PCNextF, .PCE, .PCM, .BPDirPredD(BPDirPredF), .BPDirPredWrongE,

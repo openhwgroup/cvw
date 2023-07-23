@@ -45,6 +45,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [P.AHBW-1:0]    HRDATA,
   output logic                 HREADY, HRESP,
   output logic                 HSELEXT,
+  output logic                 HSELEXTSDC,
   // peripheral pins          
   output logic                 MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
   output logic                 MExtInt, SExtInt,          // External interrupts from PLIC
@@ -53,16 +54,12 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
   input  logic                 UARTSin,                   // UART serial input
   output logic                 UARTSout,                  // UART serial output
-  output logic                 SDCCmdOut,                 // SD Card command output
-  output logic                 SDCCmdOE,                  // SD Card command output enable
-  input  logic                 SDCCmdIn,                  // SD Card command input
-  input  logic [3:0]           SDCDatIn,                  // SD Card data input
-  output logic                 SDCCLK                     // SD Card clock
+  input  logic                 SDCIntr                
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [10:0]                 HSELRegions;
+  logic [11:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
   logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
   logic                        HRESPRam,  HRESPSDC;
@@ -82,13 +79,16 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
 
+  (* mark_debug = "true" *) logic             HSELEXTSDCD;
+  
+
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
   // Set access types to all 1 as don't cares because the MMU has already done access checking
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[10:1];
+  assign {HSELEXTSDC, HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[11:1];
 
   // AHB -> APB bridge
   ahbapbbridge #(P, 4) ahbapbbridge (
@@ -121,7 +121,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .MExtInt, .SExtInt);
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;
@@ -145,35 +145,27 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : uart
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
-  if (P.SDC_SUPPORTED == 1) begin : sdc
-    SDC #(P) SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
-      .HWDATA, .HREADSDC, .HRESPSDC, .HREADYSDC,
-      // sdc interface
-      .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,
-      // interrupt to PLIC
-      .SDCIntM        
-      );
-  end else begin : sdc
-    assign SDCCLK    = 0; 
-    assign SDCCmdOut = 0;
-    assign SDCCmdOE  = 0;
-  end
 
+  // eventually remove
+  assign HREADSDC = '0;
+  assign HREADYSDC = '1;
+  assign HRESPSDC = '0;
+  
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
-                  ({P.XLEN{HSELEXTD}} & HRDATAEXT) |   
+                  ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
                   ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
                   ({P.XLEN{HSELBootRomD}} & HREADBootRom) |
                   ({P.XLEN{HSELSDCD}} & HREADSDC);
 
   assign HRESP = HSELRamD & HRESPRam |
-                 HSELEXTD & HRESPEXT |
+                 (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
                  HSELBootRomD & HRESPBootRom |
                  HSELSDC & HRESPSDC;     
 
   assign HREADY = HSELRamD & HREADYRam |
-                  HSELEXTD & HREADYEXT |      
+		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
                   HSELSDCD & HREADYSDC |      
@@ -184,8 +176,6 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, 
-    {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
-    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
+  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[11:0], 12'b1, {HSELEXTSDCD, HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
