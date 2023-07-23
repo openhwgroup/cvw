@@ -109,11 +109,11 @@ module buscachefsm #(
   assign NextBeatCount = BeatCount + 1'b1;
 
   assign FinalBeatCount = BeatCountDelayed == BeatCountThreshold[AHBWLOGBWPL-1:0];
-  assign BeatCntEn = ((NextState == CACHE_WRITEBACK | NextState == CACHE_FETCH) & HREADY & ~Flush) |
-                     (NextState == ADR_PHASE & |CacheBusRW & HREADY);
+  assign BeatCntEn = (((NextState == CACHE_WRITEBACK | NextState == CACHE_FETCH) & HREADY & ~Flush) |
+                     (NextState == ADR_PHASE & |CacheBusRW & HREADY)) & ~Flush;
   assign BeatCntReset = NextState == ADR_PHASE;
 
-  assign CaptureEn = (CurrState == DATA_PHASE & BusRW[1]) | (CurrState == CACHE_FETCH & HREADY);
+  assign CaptureEn = (CurrState == DATA_PHASE & BusRW[1] & ~Flush) | (CurrState == CACHE_FETCH & HREADY);
   assign CacheAccess = CurrState == CACHE_FETCH | CurrState == CACHE_WRITEBACK;
 
   assign BusStall = (CurrState == ADR_PHASE & ((|BusRW) | (|CacheBusRW))) |
@@ -125,11 +125,11 @@ module buscachefsm #(
 
   // AHB bus interface
   assign HTRANS = (CurrState == ADR_PHASE & HREADY & ((|BusRW) | (|CacheBusRW)) & ~Flush) |
-                  (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY) ? AHB_NONSEQ : // if we have a pipelined request
+                  (CacheAccess & FinalBeatCount & |CacheBusRW & HREADY & ~Flush) ? AHB_NONSEQ : // if we have a pipelined request
                   (CacheAccess & |BeatCount) ? (`BURST_EN ? AHB_SEQ : AHB_NONSEQ) : AHB_IDLE;
 
-  assign HWRITE = BusRW[0] | CacheBusRW[0] | (CurrState == CACHE_WRITEBACK & |BeatCount);
-  assign HBURST = `BURST_EN & (|CacheBusRW | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
+  assign HWRITE = (BusRW[0] | CacheBusRW[0] & ~Flush) | (CurrState == CACHE_WRITEBACK & |BeatCount);
+  assign HBURST = `BURST_EN & ((|CacheBusRW & ~Flush) | (CacheAccess & |BeatCount)) ? LocalBurstType : 3'b0;  
   
   always_comb begin
     case(BeatCountThreshold)
