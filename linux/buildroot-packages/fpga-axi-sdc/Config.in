@@ -1,0 +1,6 @@
+config BR2_PACKAGE_FPGA_AXI_SDC
+       bool "FPGA AXI SDC"
+       help
+        The Vivado-RISC-V SDC Drivers.
+
+        https://www.github.com/eugene-tarassov/vivado-risc-v
