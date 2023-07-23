@@ -26,6 +26,11 @@ if {$board=="ArtyA7"} {
 read_ip IP/xlnx_proc_sys_reset.srcs/sources_1/ip/xlnx_proc_sys_reset/xlnx_proc_sys_reset.xci
 read_ip IP/xlnx_ahblite_axi_bridge.srcs/sources_1/ip/xlnx_ahblite_axi_bridge/xlnx_ahblite_axi_bridge.xci
 read_ip IP/xlnx_axi_clock_converter.srcs/sources_1/ip/xlnx_axi_clock_converter/xlnx_axi_clock_converter.xci
+# Added crossbar - Jacob Pease <2023-01-12 Thu>
+read_ip IP/xlnx_axi_crossbar.srcs/sources_1/ip/xlnx_axi_crossbar/xlnx_axi_crossbar.xci
+read_ip IP/xlnx_axi_dwidth_conv_32to64.srcs/sources_1/ip/xlnx_axi_dwidth_conv_32to64/xlnx_axi_dwidth_conv_32to64.xci
+read_ip IP/xlnx_axi_dwidth_conv_64to32.srcs/sources_1/ip/xlnx_axi_dwidth_conv_64to32/xlnx_axi_dwidth_conv_64to32.xci
+read_ip IP/xlnx_axi_prtcl_conv.srcs/sources_1/ip/xlnx_axi_prtcl_conv/xlnx_axi_prtcl_conv.xci
 
 if {$board=="ArtyA7"} {
     read_ip IP/xlnx_ddr3.srcs/sources_1/ip/xlnx_ddr3/xlnx_ddr3.xci
@@ -36,8 +41,7 @@ if {$board=="ArtyA7"} {
 
 # read in all other rtl
 read_verilog -sv [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
-
-read_verilog -sv  [glob -type f ../src/sdc/*.sv]
+read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v]
 
 set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
 
@@ -64,7 +68,11 @@ synth_design -rtl -name rtl_1
 
 report_clocks -file reports/clocks.rpt
 
-# this does synthesis.
+# Temp
+set_param messaging.defaultLimit 100000
+
+# this does synthesis?
+
 launch_runs synth_1 -jobs 4
 
 wait_on_run synth_1

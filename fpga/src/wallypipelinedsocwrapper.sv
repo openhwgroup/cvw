@@ -25,6 +25,7 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+//`include "BranchPredictorType.vh"
 `include "config.vh"
 
 import cvw::*;
@@ -37,11 +38,12 @@ module wallypipelinedsocwrapper (
   input  logic [64-1:0]     HRDATAEXT,
   input  logic                HREADYEXT, HRESPEXT,
   output logic                HSELEXT,
+  output logic                HSELEXTSDC,
   // outputs to external memory, shared with uncore memory
   output logic                HCLK, HRESETn,
-  output logic [64-1:0]  HADDR,
-  output logic [64-1:0]     HWDATA,
-  output logic [64/8-1:0]   HWSTRB,
+  output logic [55:0]         HADDR,
+  output logic [64-1:0]       HWDATA,
+  output logic [64/8-1:0]     HWSTRB,
   output logic                HWRITE,
   output logic [2:0]          HSIZE,
   output logic [2:0]          HBURST,
@@ -56,17 +58,13 @@ module wallypipelinedsocwrapper (
   output logic [31:0]         GPIOEN,           // output enables for GPIO
   input  logic                UARTSin,          // UART serial data input
   output logic                UARTSout,         // UART serial data output
-  input  logic                SDCCmdIn,         // SDC Command input
-  output logic                SDCCmdOut,        // SDC Command output
-  output logic                SDCCmdOE,         // SDC Command output enable
-  input  logic [3:0]          SDCDatIn,         // SDC data input
-  output logic                SDCCLK            // SDC clock
+  input logic                 SDCIntr
 );
   `include "parameter-defs.vh"
 
-  wallypipelinedsoc  #(P) wallypipelinedsoc(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
-    .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
+  wallypipelinedsoc  #(P) wallypipelinedsoc(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT, .HSELEXT,
+    .HSELEXTSDC, .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
     .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-    .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+    .UARTSin, .UARTSout, .SDCIntr); 
 
 endmodule

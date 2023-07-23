@@ -38,7 +38,6 @@ package cvw;
 
 typedef struct packed {
   logic         FPGA;     // Modifications to tare
-  logic         QEMU;     // Hacks to agree with QEMU during Linux boot
   int           XLEN;     // Machine width (32 or 64)
   logic         IEEE754;  // IEEE754 NaN handling (0 = use RISC-V NaN propagation instead)
   int           MISA;     // Machine Instruction Set Architecture
@@ -128,6 +127,9 @@ typedef struct packed {
   logic         SDC_SUPPORTED;
   logic [63:0]  SDC_BASE;
   logic [63:0]  SDC_RANGE;
+  logic         SDC2_SUPPORTED;
+  logic [63:0]  SDC2_BASE;
+  logic [63:0]  SDC2_RANGE;
 
 // Test modes
 
@@ -142,9 +144,10 @@ typedef struct packed {
   logic         PLIC_NUM_SRC_LT_32;
   int           PLIC_GPIO_ID;
   int           PLIC_UART_ID;
+  int           PLIC_SDC_ID;
 
   logic                BPRED_SUPPORTED;
-  BranchPredictorType  BPRED_TYPE;
+  logic [31:0]         BPRED_TYPE;
   int                  BPRED_NUM_LHR;
   int                  BPRED_SIZE;
   int                  BTB_SIZE;

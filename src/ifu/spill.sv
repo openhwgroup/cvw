@@ -51,7 +51,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   localparam                SPILLTHRESHOLD = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/32 : 1; 
 
   statetype          CurrState, NextState;
-  logic [P.XLEN-1:0] PCPlus2F;         
+  logic [P.XLEN-1:0] PCPlus2NextF, PCPlus2F;         
   logic              TakeSpillF;
   logic              SpillF;
   logic              SelSpillF;
@@ -63,10 +63,13 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   ////////////////////////////////////////////////////////////////////////////////////////////////////
   
   // compute PCF+2 from the raw PC+4
-  mux2 #(P.XLEN) pcplus2mux(.d0({PCF[P.XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2F));
+  mux2 #(P.XLEN) pcplus2mux(.d0({PCF[P.XLEN-1:2], 2'b10}), .d1({PCPlus4F, 2'b00}), .s(PCF[1]), .y(PCPlus2NextF));
   // select between PCNextF and PCF+2
-  mux2 #(P.XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2F), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
+  mux2 #(P.XLEN) pcnextspillmux(.d0(PCNextF), .d1(PCPlus2NextF), .s(SelSpillNextF & ~FlushD), .y(PCSpillNextF));
   // select between PCF and PCF+2
+  // not required for functional correctness, but improves critical path.  pcspillf ends up on the hptw's ihadr 
+  // and into the dmmu.  Cutting the path here removes the PC+4 adder.
+  flopr #(P.XLEN) pcplus2reg(clk, reset, PCPlus2NextF, PCPlus2F);
   mux2 #(P.XLEN) pcspillmux(.d0(PCF), .d1(PCPlus2F), .s(SelSpillF), .y(PCSpillF));
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////
