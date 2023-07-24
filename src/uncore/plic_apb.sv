@@ -49,7 +49,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   input  logic                PENABLE,
   output logic [P.XLEN-1:0]   PRDATA,
   output logic                PREADY,
-  input  logic                UARTIntr,GPIOIntr,
+  input  logic                UARTIntr,GPIOIntr,SDCIntr,
   output logic                MExtInt, SExtInt
 );
 
@@ -166,6 +166,7 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
     requests = {P.PLIC_NUM_SRC{1'b0}};
     if(P.PLIC_GPIO_ID != 0) requests[P.PLIC_GPIO_ID] = GPIOIntr;
     if(P.PLIC_UART_ID != 0) requests[P.PLIC_UART_ID] = UARTIntr;
+    if(P.PLIC_SDC_ID !=0)   requests[P.PLIC_SDC_ID]  = SDCIntr;
   end
 
   // pending interrupt request

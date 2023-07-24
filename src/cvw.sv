@@ -127,6 +127,9 @@ typedef struct packed {
   logic         SDC_SUPPORTED;
   logic [63:0]  SDC_BASE;
   logic [63:0]  SDC_RANGE;
+  logic         SDC2_SUPPORTED;
+  logic [63:0]  SDC2_BASE;
+  logic [63:0]  SDC2_RANGE;
 
 // Test modes
 
@@ -141,6 +144,7 @@ typedef struct packed {
   logic         PLIC_NUM_SRC_LT_32;
   int           PLIC_GPIO_ID;
   int           PLIC_UART_ID;
+  int           PLIC_SDC_ID;
 
   logic                BPRED_SUPPORTED;
   logic [31:0]         BPRED_TYPE;

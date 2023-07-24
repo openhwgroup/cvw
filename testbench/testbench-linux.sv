@@ -239,6 +239,7 @@ module testbench;
   logic             HCLK, HRESETn;
   logic             HREADY;
   logic 	    HSELEXT;
+  logic 	    HSELEXTSDC;
   logic [P.PA_BITS-1:0] HADDR;
   logic [P.AHBW-1:0] HWDATA;
   logic [P.XLEN/8-1:0] HWSTRB;
@@ -253,24 +254,21 @@ module testbench;
   logic             UARTSin, UARTSout;
 
   // FPGA-specific Stuff
-  logic SDCCLK;
-  logic SDCCmdIn;
-  logic SDCCmdOut;
-  logic SDCCmdOE;
-  logic [3:0] SDCDatIn;
+  logic             SDCIntr;
 
   // Hardwire UART, GPIO pins
   assign GPIOIN = 0;
   assign UARTSin = 1;
+  assign SDCIntr = 0;
 
   // Wally
   wallypipelinedsoc #(P) dut(.clk, .reset, .reset_ext,
-                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HRESPEXT, .HCLK, 
+                        .HRDATAEXT, .HREADYEXT, .HREADY, .HSELEXT, .HSELEXTSDC, .HRESPEXT, .HCLK, 
 			.HRESETn, .HADDR, .HWDATA, .HWRITE, .HWSTRB, .HSIZE, .HBURST, .HPROT, 
 			.HTRANS, .HMASTLOCK, 
 			.TIMECLK('0), .GPIOIN, .GPIOOUT, .GPIOEN,
                         .UARTSin, .UARTSout,
-			.SDCCLK, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn);
+			.SDCIntr);
 
   // W-stage hardware not needed by Wally itself 
   parameter nop = 'h13;
