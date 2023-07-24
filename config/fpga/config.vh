@@ -130,14 +130,9 @@ localparam PLIC_SUPPORTED = 1'b1;
 localparam logic [63:0] PLIC_BASE =   64'h0C000000;
 localparam logic [63:0] PLIC_RANGE =  64'h03FFFFFF;
 
-localparam SDC_SUPPORTED = 1'b0;
-localparam logic [63:0] SDC_BASE =   64'h00012100;
-localparam logic [63:0] SDC_RANGE =  64'h0000001F;
-
-// Temporary Boot Process Stuff
-localparam  SDC2_SUPPORTED = 1'b1;
-localparam logic [63:0] SDC2_BASE =  64'h00013000;
-localparam logic [63:0] SDC2_RANGE = 64'h0000007F;
+localparam  SDC_SUPPORTED = 1'b1;
+localparam logic [63:0] SDC_BASE =  64'h00013000;
+localparam logic [63:0] SDC_RANGE = 64'h0000007F;
 
 // Test modes
 
