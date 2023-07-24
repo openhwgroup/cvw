@@ -20,7 +20,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPI[0]}]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPI[*]}]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPI[*]}]
-set_max_delay -from [get_ports {GPI[*]}] 10.000
+set_max_delay -from [get_ports {GPI[*]}] 20.000
 
 ##### GPO ####
 set_property PACKAGE_PIN G6 [get_ports {GPO[0]}]
@@ -33,17 +33,17 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPO[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[0]}]
-set_max_delay -to [get_ports {GPO[*]}] 10.000
-set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay -5.000 [get_ports {GPO[*]}]
-set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay -5.000 [get_ports {GPO[*]}]
+set_max_delay -to [get_ports {GPO[*]}] 20.000
+set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPO[*]}]
+set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPO[*]}]
 
 
 ##### UART #####
 # *** IOSTANDARD is probably wrong
 set_property PACKAGE_PIN A9 [get_ports UARTSin]
 set_property PACKAGE_PIN D10 [get_ports UARTSout]
-set_max_delay -from [get_ports UARTSin] 14.000
-set_max_delay -to [get_ports UARTSout] 14.000
+set_max_delay -from [get_ports UARTSin] 20.000
+set_max_delay -to [get_ports UARTSout] 20.000
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSout]
 set_property DRIVE 4 [get_ports UARTSout]
@@ -57,7 +57,7 @@ set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [g
 #************** reset is inverted
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports resetn]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports resetn]
-set_max_delay -from [get_ports resetn] 15.000
+set_max_delay -from [get_ports resetn] 20.000
 set_false_path -from [get_ports resetn]
 set_property PACKAGE_PIN C2 [get_ports {resetn}]
 set_property IOSTANDARD LVCMOS33 [get_ports {resetn}]
@@ -65,7 +65,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {resetn}]
 
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports south_reset]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports south_reset]
-set_max_delay -from [get_ports south_reset] 15.000
+set_max_delay -from [get_ports south_reset] 20.000
 set_false_path -from [get_ports south_reset]
 set_property PACKAGE_PIN D9 [get_ports {south_reset}]
 set_property IOSTANDARD LVCMOS33 [get_ports {south_reset}]
