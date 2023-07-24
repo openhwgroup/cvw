@@ -106,9 +106,9 @@ localparam BOOTROM_SUPPORTED = 1'b1;
 localparam logic [63:0] BOOTROM_BASE =   64'h00001000;
 localparam logic [63:0] BOOTROM_RANGE =  64'h00000FFF;
 
-localparam UNCORE_RAM_SUPPORTED = 1'b0;
-localparam logic [63:0] UNCORE_RAM_BASE =       64'h80000000;
-localparam logic [63:0] UNCORE_RAM_RANGE =      64'h7FFFFFFF;
+localparam UNCORE_RAM_SUPPORTED = 1'b1;
+localparam logic [63:0] UNCORE_RAM_BASE =       64'h00002000;
+localparam logic [63:0] UNCORE_RAM_RANGE =      64'h00000FFF;
 
 localparam EXT_MEM_SUPPORTED = 1'b1;
 localparam logic [63:0] EXT_MEM_BASE =       64'h80000000;
@@ -130,9 +130,14 @@ localparam PLIC_SUPPORTED = 1'b1;
 localparam logic [63:0] PLIC_BASE =   64'h0C000000;
 localparam logic [63:0] PLIC_RANGE =  64'h03FFFFFF;
 
-localparam SDC_SUPPORTED = 1'b1;
+localparam SDC_SUPPORTED = 1'b0;
 localparam logic [63:0] SDC_BASE =   64'h00012100;
 localparam logic [63:0] SDC_RANGE =  64'h0000001F;
+
+// Temporary Boot Process Stuff
+localparam  SDC2_SUPPORTED = 1'b1;
+localparam logic [63:0] SDC2_BASE =  64'h00013000;
+localparam logic [63:0] SDC2_RANGE = 64'h0000007F;
 
 // Test modes
 
@@ -148,6 +153,7 @@ localparam PLIC_NUM_SRC = 32'd53;
 localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
 localparam PLIC_GPIO_ID = 32'd3;
 localparam PLIC_UART_ID = 32'd10;
+localparam PLIC_SDC_ID = 32'd20;
 
 localparam BPRED_SUPPORTED = 1;
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
