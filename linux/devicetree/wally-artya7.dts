@@ -74,7 +74,7 @@
 			fifo-depth = <256>;
 			bus-width = <4>;
 			interrupt-parent = <0x03>;
-			clock = <0x1036640>;
+			clock = <0x1312D00>;
 			max-frequency = <0xA7D8C0>;
 			cap-sd-highspeed;
 			cap-mmc-highspeed;
