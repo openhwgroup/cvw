@@ -15,7 +15,7 @@
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x00 0x80000000 0x00 0x08000000>;
+		reg = <0x00 0x80000000 0x00 0x10000000>;
 	};
 
 	cpus {
@@ -75,10 +75,10 @@
 			bus-width = <4>;
 			interrupt-parent = <0x03>;
 			clock = <0x1312D00>;
-			max-frequency = <0xA7D8C0>;
+			max-frequency = <0x1312D00>;
 			cap-sd-highspeed;
 			cap-mmc-highspeed;
-			no-sdio;
+			sdio;
 		};
 
 		clint@2000000 {
