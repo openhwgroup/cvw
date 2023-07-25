@@ -112,7 +112,7 @@ localparam logic [63:0] UNCORE_RAM_RANGE =      64'h00000FFF;
 
 localparam EXT_MEM_SUPPORTED = 1'b1;
 localparam logic [63:0] EXT_MEM_BASE =       64'h80000000;
-localparam logic [63:0] EXT_MEM_RANGE =      64'h07FFFFFF;
+localparam logic [63:0] EXT_MEM_RANGE =      64'h0FFFFFFF;
 
 localparam CLINT_SUPPORTED = 1'b1;
 localparam logic [63:0] CLINT_BASE =  64'h02000000;
