@@ -81,9 +81,9 @@ module fdivsqrtqsel4cmp (
  
   // Compare residual W to selection constants to choose digit
   always_comb 
-    if ($signed(Wmsbs) >= $signed(mk2)) udigit = 4'b1000; // choose 2
-    else if ($signed(Wmsbs) >= $signed(mk1)) udigit = 4'b0100; // choose 1
-    else if ($signed(Wmsbs) >= $signed(mk0)) udigit = 4'b0000; // choose 0
+    if      ($signed(Wmsbs) >= $signed(mk2))  udigit = 4'b1000; // choose 2
+    else if ($signed(Wmsbs) >= $signed(mk1))  udigit = 4'b0100; // choose 1
+    else if ($signed(Wmsbs) >= $signed(mk0))  udigit = 4'b0000; // choose 0
     else if ($signed(Wmsbs) >= $signed(mkm1)) udigit = 4'b0010; // choose -1
-    else udigit = 4'b0001; // choose -2  
+    else                                      udigit = 4'b0001; // choose -2  
 endmodule
