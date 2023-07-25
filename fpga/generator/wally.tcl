@@ -41,9 +41,14 @@ if {$board=="ArtyA7"} {
 
 # read in all other rtl
 read_verilog -sv [glob -type f  ../src/CopiedFiles_do_not_add_to_repo/*/*.sv ../src/CopiedFiles_do_not_add_to_repo/*/*/*.sv]
-read_verilog [glob -type f ../../pipelined/src/uncore/newsdc/*.v]
+# *** Once the sdc is updated to use ahb changes these to system verilog.
+read_verilog [glob -type f ../src/axi_sdc_controller.v]
+read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_cmd_master.v]
+read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_cmd_serial_host.v]
+read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_data_master.v]
+read_verilog [glob -type f ../../addins/vivado-risc-v/sdc/sd_data_serial_host.v]
 
-set_property include_dirs {../../config/fpga ../../config/shared} [current_fileset]
+set_property include_dirs {../../config/fpga ../../config/shared ../../addins/vivado-risc-v/sdc} [current_fileset]
 
 if {$board=="ArtyA7"} {
     add_files -fileset constrs_1 -norecurse ../constraints/constraints-$board.xdc
