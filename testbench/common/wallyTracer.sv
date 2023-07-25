@@ -61,7 +61,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   logic [`NUM_CSRS-1:0] 		 CSR_W;
   logic 						 CSRWriteM, CSRWriteW;
   logic [11:0] 					 CSRAdrM, CSRAdrW;
-  
+  logic                          wfiM;
+  logic                          InterruptM;
+    
   assign clk = testbench.dut.clk;
   //  assign InstrValidF = testbench.dut.core.ieu.InstrValidF;  // not needed yet
   assign InstrValidD    = testbench.dut.core.ieu.c.InstrValidD;
@@ -88,6 +90,9 @@ module wallyTracer import cvw::*; #(parameter cvw_t P) (rvviTrace rvvi);
   assign PrivilegeModeW = testbench.dut.core.priv.priv.privmode.PrivilegeModeW;
   assign STATUS_SXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_SXL;
   assign STATUS_UXL     = testbench.dut.core.priv.priv.csr.csrsr.STATUS_UXL;
+  assign wfiM           = testbench.dut.core.priv.priv.wfiM;
+  assign InterruptM     = testbench.dut.core.priv.priv.InterruptM;
+  
 
   logic valid;
   int csrid;

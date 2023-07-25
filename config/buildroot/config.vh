@@ -26,11 +26,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 // include shared configuration
-`include "wally-shared.vh"
 `include "BranchPredictorType.vh"
 
 localparam FPGA = 1;
-localparam QEMU = 0;
 // RV32 or RV64: XLEN = 32 or 64
 localparam XLEN = 32'd64;
 
@@ -49,7 +47,7 @@ localparam ZICBOM_SUPPORTED = 0;
 localparam ZICBOZ_SUPPORTED = 0;
 localparam ZICBOP_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
-
+localparam SVINVAL_SUPPORTED = 1;
 
 // LSU microarchitectural Features
 localparam BUS_SUPPORTED = 1;
@@ -119,6 +117,9 @@ localparam logic [63:0] PLIC_RANGE =  64'h03FFFFFF;
 localparam SDC_SUPPORTED = 1'b0;
 localparam logic [63:0] SDC_BASE =   64'h00012100;
 localparam logic [63:0] SDC_RANGE =  64'h0000001F;
+localparam  SDC2_SUPPORTED = 1'b0;
+localparam logic [63:0] SDC2_BASE =  64'h00013000;
+localparam logic [63:0] SDC2_RANGE = 64'h0000007F;
 
 // Bus Interface width
 localparam AHBW = 32'd64;
@@ -136,9 +137,10 @@ localparam PLIC_NUM_SRC = 32'd53;
 localparam PLIC_NUM_SRC_LT_32 = (PLIC_NUM_SRC < 32);
 localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_GPIO_ID = 32'd3;
+localparam PLIC_SDC_ID = 32'd20;
 
 localparam BPRED_SUPPORTED = 1;
-localparam BranchPredictorType BPRED_TYPE = BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
+localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
 localparam BPRED_SIZE = 32'd10;
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;

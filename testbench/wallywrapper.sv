@@ -51,17 +51,12 @@ module wallywrapper;
 
   logic [31:0] GPIOIN, GPIOOUT, GPIOEN;
   logic        UARTSin, UARTSout;
-
-  logic        SDCCLK;
-  logic        SDCCmdIn;
-  logic        SDCCmdOut;
-  logic        SDCCmdOE;
-  logic [3:0]  SDCDatIn;
-  tri1  [3:0]  SDCDat;
-  tri1         SDCCmd;
+  logic        SDCIntr;
 
   logic        HREADY;
   logic        HSELEXT;
+  logic        HSELEXTSDC;
+  
   
   // instantiate device to be tested
   assign GPIOIN = 0;
@@ -71,12 +66,10 @@ module wallywrapper;
     assign HRESPEXT = 0;
     assign HRDATAEXT = 0;
 
-    assign SDCCmd = '0;
-    assign SDCDat = '0;
 
-  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT,
+  wallypipelinedsoc  #(P) dut(.clk, .reset_ext, .reset, .HRDATAEXT,.HREADYEXT, .HRESPEXT,.HSELEXT, .HSELEXTSDC,
                         .HCLK, .HRESETn, .HADDR, .HWDATA, .HWSTRB, .HWRITE, .HSIZE, .HBURST, .HPROT,
                         .HTRANS, .HMASTLOCK, .HREADY, .TIMECLK(1'b0), .GPIOIN, .GPIOOUT, .GPIOEN,
-                        .UARTSin, .UARTSout, .SDCCmdIn, .SDCCmdOut, .SDCCmdOE, .SDCDatIn, .SDCCLK); 
+                        .UARTSin, .UARTSout, .SDCIntr); 
 
 endmodule

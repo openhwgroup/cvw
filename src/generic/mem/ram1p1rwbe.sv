@@ -32,7 +32,8 @@
 
 // WIDTH is number of bits in one "word" of the memory, DEPTH is number of such words
 
-module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=44) (
+module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=44, 
+                                   parameter PRELOAD_ENABLED=0) (
   input logic                     clk,
   input logic                     ce,
   input logic [$clog2(DEPTH)-1:0] addr,
@@ -83,6 +84,12 @@ module ram1p1rwbe import cvw::*; #(parameter cvw_t P, parameter DEPTH=64, WIDTH=
   end else begin: ram
     integer i;
 
+    if (PRELOAD_ENABLED) begin
+      initial begin
+        RAM[0] = 64'h00600100d2e3ca40;
+      end
+    end
+    
     // Read
     logic [$clog2(DEPTH)-1:0] addrd;
     flopen #($clog2(DEPTH)) adrreg(clk, ce, addr, addrd);

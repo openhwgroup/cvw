@@ -255,29 +255,34 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       logic [1:0]              CacheRWM;                                         // Cache read (10), write (01), AMO (11)
       logic [1:0]              CacheAtomicM;                                     // Cache AMO
       logic                    FlushDCache;                                      // Suppress d cache flush if there is an ITLB miss.
+      logic                    CacheStall;
+      logic [1:0]              CacheBusRWTemp;
       
-      assign BusRW = ~CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
+      assign BusRW = ~CacheableM & ~SelDTIM ? LSURWM : '0;
       assign CacheableOrFlushCacheM = CacheableM | FlushDCacheM;
-      assign CacheRWM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSURWM : '0;
-      assign CacheAtomicM = CacheableM & ~IgnoreRequestTLB & ~SelDTIM ? LSUAtomicM : '0;
-      assign FlushDCache = FlushDCacheM & ~(IgnoreRequestTLB | SelHPTW);
+      assign CacheRWM = CacheableM & ~SelDTIM ? LSURWM : '0;
+      assign CacheAtomicM = CacheableM & ~SelDTIM ? LSUAtomicM : '0;
+      assign FlushDCache = FlushDCacheM & ~(SelHPTW);
       
       // *** need RT to add support for CMOpM and LSUPrefetchM (DH 7/2/23)
       // *** prefetch can just act as a read operation
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .IgnoreRequestTLB, .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
-        .CacheStall(DCacheStallM), .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
+        .CacheStall, .CacheMiss(DCacheMiss), .CacheAccess(DCacheAccess),
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
-        .FetchBuffer, .CacheBusRW, 
+        .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
         .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+      
+      assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
+      assign CacheBusRW = CacheBusRWTemp;
 
       ahbcacheinterface #(.AHBW(P.AHBW), .LLEN(P.LLEN), .PA_BITS(P.PA_BITS), .BEATSPERLINE(BEATSPERLINE), .AHBWLOGBWPL(AHBWLOGBWPL), .LINELEN(LINELEN),  .LLENPOVERAHBW(LLENPOVERAHBW), .READ_ONLY_CACHE(0)) ahbcacheinterface(
-        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW),
+        .HCLK(clk), .HRESETn(~reset), .Flush(FlushW | IgnoreRequestTLB),
         .HRDATA, .HWDATA(LSUHWDATA), .HWSTRB(LSUHWSTRB),
         .HSIZE(LSUHSIZE), .HBURST(LSUHBURST), .HTRANS(LSUHTRANS), .HWRITE(LSUHWRITE), .HREADY(LSUHREADY),
         .BeatCount, .SelBusBeat, .CacheReadDataWordM(DCacheReadDataWordM), .WriteDataM(LSUWriteDataM),
