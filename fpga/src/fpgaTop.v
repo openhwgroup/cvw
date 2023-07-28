@@ -421,8 +421,8 @@ module fpgaTop
   wire  [3:0] sd_dat_reg_o;
   wire        sd_dat_reg_t;
   
-  assign GPIOPinsIn = {28'b0, GPI};
-  assign GPO = GPIOPinsOut[4:0];
+  assign GPIOIN = {28'b0, GPI};
+  assign GPO = GPIOOUT[4:0];
   assign ahblite_resetn = peripheral_aresetn;
   assign cpu_reset = bus_struct_reset;
   assign calib = c0_init_calib_complete;

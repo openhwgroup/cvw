@@ -24,7 +24,7 @@ all: FPGA_Arty
 FPGA_Arty: PreProcessFiles IP_Arty
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
-FPGA_VCU: PreProcessFiles IP_VCU SDC
+FPGA_VCU: PreProcessFiles IP_VCU
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
 
 IP_VCU: $(dst)/xlnx_proc_sys_reset.log \
