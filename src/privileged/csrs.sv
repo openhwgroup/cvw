@@ -157,7 +157,7 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
                    IllegalCSRSAccessM = 1;
                  end
       STIMECMPH: if (STCE) 
-                   CSRSReadValM[31:0] = STIMECMP_REGW[63:32];
+                   CSRSReadValM = {{(P.XLEN-32){1'b0}}, STIMECMP_REGW[63:32]};
                  else begin // not supported for RV64
                    CSRSReadValM = 0;
                    IllegalCSRSAccessM = 1;
