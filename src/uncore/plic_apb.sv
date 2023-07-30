@@ -80,7 +80,8 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
   localparam PLIC_SRC_TOP = (P.PLIC_NUM_SRC >= 32) ? P.PLIC_NUM_SRC : 1;
   localparam PLIC_SRC_BOT = (P.PLIC_NUM_SRC >= 32) ? 32 : 1;
   localparam PLIC_SRC_DINTOP = (P.PLIC_NUM_SRC >= 32) ? P.PLIC_NUM_SRC -32 : 0;
-
+  localparam PLIC_SRC_EXT = (P.PLIC_NUM_SRC >= 32) ? 63-P.PLIC_NUM_SRC : 31;
+ 
   // =======
   // AHB I/O
   // =======
@@ -120,13 +121,8 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h0000??: intPriority[entry[7:2]] <= #1 Din[2:0];
           24'h002000: intEn[0][PLIC_NUM_SRC_MIN_32:1] <= #1 Din[PLIC_NUM_SRC_MIN_32:1];
           24'h002080: intEn[1][PLIC_NUM_SRC_MIN_32:1] <= #1 Din[PLIC_NUM_SRC_MIN_32:1];
-
-          // verilator lint_off SELRANGE  
-          // *** RT: Long term we want to factor out these variable number of registers as a generate loop
-          // I think this won't work as a case statement.
           24'h002004: if (P.PLIC_NUM_SRC >= 32) intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= #1 Din[PLIC_SRC_DINTOP:0];
           24'h002084: if (P.PLIC_NUM_SRC >= 32) intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]         <= #1 Din[PLIC_SRC_DINTOP:0];
-          // verilator lint_on SELRANGE
           24'h200000: intThreshold[0]         <= #1 Din[2:0];
           24'h200004: intInProgress           <= #1 intInProgress & ~(One << (Din[5:0]-1)); // lower "InProgress" to signify completion 
           24'h201000: intThreshold[1]         <= #1 Din[2:0];
@@ -139,20 +135,10 @@ module plic_apb import cvw::*;  #(parameter cvw_t P) (
           24'h0000??: Dout <= #1 {29'b0,intPriority[entry[7:2]]};      
           24'h001000: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intPending[PLIC_NUM_SRC_MIN_32:1],1'b0};
           24'h002000: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[0][PLIC_NUM_SRC_MIN_32:1],1'b0};
-
-          // verilator lint_off SELRANGE
-          // verilator lint_off WIDTHTRUNC 
-          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intPending[PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          // verilator lint_on SELRANGE 
-          // verilator lint_on WIDTHTRUNC 
-
+          24'h001004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(PLIC_SRC_EXT){1'b0}},intPending[PLIC_SRC_TOP:PLIC_SRC_BOT]};
+          24'h002004: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(PLIC_SRC_EXT){1'b0}},intEn[0][PLIC_SRC_TOP:PLIC_SRC_BOT]};
           24'h002080: Dout <= #1 {{(31-PLIC_NUM_SRC_MIN_32){1'b0}},intEn[1][PLIC_NUM_SRC_MIN_32:1],1'b0};
-          // verilator lint_off SELRANGE
-          // verilator lint_off WIDTHTRUNC 
-          24'h002084: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(63-P.PLIC_NUM_SRC){1'b0}},intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]};
-          // verilator lint_on SELRANGE
-          // verilator lint_on WIDTHTRUNC 
+          24'h002084: if (P.PLIC_NUM_SRC >= 32) Dout <= #1 {{(PLIC_SRC_EXT){1'b0}},intEn[1][PLIC_SRC_TOP:PLIC_SRC_BOT]};
           24'h200000: Dout <= #1 {29'b0,intThreshold[0]};
           24'h200004: begin
             Dout <= #1 {26'b0,intClaim[0]};
