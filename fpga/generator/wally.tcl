@@ -69,7 +69,7 @@ exec rm -rf reports/*
 report_compile_order -constraints > reports/compile_order.rpt
 
 # this is elaboration not synthesis.
-synth_design -rtl -name rtl_1
+synth_design -rtl -name rtl_1  -flatten_hierarchy full
 
 report_clocks -file reports/clocks.rpt
 
