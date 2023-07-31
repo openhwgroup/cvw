@@ -28,46 +28,46 @@
 
 module round import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
-  input  logic [2:0]              Frm,                // rounding mode
-  input  logic [1:0]              PostProcSel,        // select the postprocessor output
-  input  logic                    Ms,                 // normalized sign
+  input  logic [2:0]               Frm,                // rounding mode
+  input  logic [1:0]               PostProcSel,        // select the postprocessor output
+  input  logic                     Ms,                 // normalized sign
   input  logic [P.CORRSHIFTSZ-1:0] Mf,                 // normalized fraction
   // fma
-  input  logic                    FmaOp,              // is an fma opperation being done?
+  input  logic                     FmaOp,              // is an fma opperation being done?
   input  logic [P.NE+1:0]          FmaMe,              // exponent of the normalized sum for fma
-  input  logic                    FmaASticky,         // addend's sticky bit
+  input  logic                     FmaASticky,         // addend's sticky bit
   // divsqrt
-  input  logic                    DivOp,              // is a division opperation being done
-  input  logic                    DivSticky,          // divsqrt sticky bit
+  input  logic                     DivOp,              // is a division opperation being done
+  input  logic                     DivSticky,          // divsqrt sticky bit
   input  logic [P.NE+1:0]          Qe,                 // the divsqrt calculated expoent
   // cvt
-  input  logic                    CvtOp,              // is a convert opperation being done
-  input  logic                    ToInt,              // is the cvt op a cvt to integer
-  input  logic                    CvtResSubnormUf,    // is the cvt result subnormal or underflow
-  input  logic                    CvtResUf,           // does the cvt result underflow
+  input  logic                     CvtOp,              // is a convert opperation being done
+  input  logic                     ToInt,              // is the cvt op a cvt to integer
+  input  logic                     CvtResSubnormUf,    // is the cvt result subnormal or underflow
+  input  logic                     CvtResUf,           // does the cvt result underflow
   input  logic [P.NE:0]            CvtCe,              // the cvt calculated expoent
   // outputs
   output logic [P.NE+1:0]          Me,                 // normalied fraction
-  output logic                    UfPlus1,            // do you add one to the result if given an unbounded exponent
+  output logic                     UfPlus1,            // do you add one to the result if given an unbounded exponent
   output logic [P.NE+1:0]          FullRe,             // Re with bits to determine sign and overflow
   output logic [P.NE-1:0]          Re,                 // Result exponent
   output logic [P.NF-1:0]          Rf,                 // Result fractionNormS
-  output logic                    Sticky,             // sticky bit
-  output logic                    Plus1,              // do you add one to the final result
-  output logic                    Round, Guard        // bits needed to calculate rounding
+  output logic                     Sticky,             // sticky bit
+  output logic                     Plus1,              // do you add one to the final result
+  output logic                     Round, Guard        // bits needed to calculate rounding
 );
 
-  logic           UfCalcPlus1;        // calculated plus one for unbounded exponent
-  logic           NormSticky;         // normalized sum's sticky bit
-  logic [P.NF-1:0] RoundFrac;          // rounded fraction
-  logic           FpRes;              // is the result a floating point
-  logic           IntRes;             // is the result an integer
-  logic           FpGuard, FpRound;   // floating point round/guard bits
-  logic           FpLsbRes;           // least significant bit of floating point result
-  logic           LsbRes;             // lsb of result
-  logic           CalcPlus1;          // calculated plus1
-  logic           FpPlus1;            // do you add one to the fp result 
-  logic [P.FLEN:0] RoundAdd;           // how much to add to the result
+  logic                            UfCalcPlus1;        // calculated plus one for unbounded exponent
+  logic                            NormSticky;         // normalized sum's sticky bit
+  logic [P.NF-1:0]                 RoundFrac;          // rounded fraction
+  logic                            FpRes;              // is the result a floating point
+  logic                            IntRes;             // is the result an integer
+  logic                            FpGuard, FpRound;   // floating point round/guard bits
+  logic                            FpLsbRes;           // least significant bit of floating point result
+  logic                            LsbRes;             // lsb of result
+  logic                            CalcPlus1;          // calculated plus1
+  logic                            FpPlus1;            // do you add one to the fp result 
+  logic [P.FLEN:0]                 RoundAdd;           // how much to add to the result
 
 // what position is XLEN in?
 //  options: 
@@ -86,7 +86,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
   //      {Round, Sticky}
   //      0x - do nothing
   //      10 - tie - Plus1 if result is odd  (LSBNormSum = 1)
-  //          - don't add 1 if a small number was supposed to be subtracted
+  //         - don't add 1 if a small number was supposed to be subtracted
   //      11 - do nothing if a small number was supposed to subtracted (the sticky bit was set by the small number)
   //         - plus 1 otherwise
 
@@ -104,14 +104,13 @@ module round import cvw::*;  #(parameter cvw_t P) (
   //      {Guard, Round, Sticky}
   //      0x - do nothing
   //      10 - tie - Plus1
-  //          - don't add 1 if a small number was supposed to be subtracted
+  //         - don't add 1 if a small number was supposed to be subtracted
   //      11 - do nothing if a small number was supposed to subtracted (the sticky bit was set by the small number)
   //         - Plus 1 otherwise
 
-
   // determine what format the final result is in: int or fp
   assign IntRes = ToInt;
-  assign FpRes = ~IntRes;
+  assign FpRes  = ~IntRes;
 
   // sticky bit calculation
   if (P.FPSIZES == 1) begin
@@ -121,7 +120,7 @@ module round import cvw::*;  #(parameter cvw_t P) (
       //      |    NF     |1|1|
       //                     ^    ^ if floating point result
       //                     ^ if not an FMA result
-      if (XLENPOS == 1)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes) |
+      if (XLENPOS == 1)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.NF-2:P.CORRSHIFTSZ-P.XLEN-1]&FpRes)  |
                                                 (|Mf[P.CORRSHIFTSZ-P.XLEN-2:0]);
       //     2: NF > XLEN
       if (XLENPOS == 2)assign NormSticky = (|Mf[P.CORRSHIFTSZ-P.XLEN-2:P.CORRSHIFTSZ-P.NF-1]&IntRes) |
@@ -178,112 +177,103 @@ module round import cvw::*;  #(parameter cvw_t P) (
                                                 (|Mf[P.CORRSHIFTSZ-P.Q_NF-2:0]);
 
   end
-  
-
 
   // only add the Addend sticky if doing an FMA opperation
   //      - the shifter shifts too far left when there's an underflow (shifting out all possible sticky bits)
   assign Sticky = FmaASticky&FmaOp | NormSticky | CvtResUf&CvtOp | FmaMe[P.NE+1]&FmaOp | DivSticky&DivOp;
   
-
-
-
   // determine round and LSB of the rounded value
   //      - underflow round bit is used to determint the underflow flag
   if (P.FPSIZES == 1) begin
-      assign FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
+      assign FpGuard  = Mf[P.CORRSHIFTSZ-P.NF-1];
       assign FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
-      assign FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
+      assign FpRound  = Mf[P.CORRSHIFTSZ-P.NF-2];
 
   end else if (P.FPSIZES == 2) begin
-      assign FpGuard = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-1] : Mf[P.CORRSHIFTSZ-P.NF1-1];
+      assign FpGuard  = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-1] : Mf[P.CORRSHIFTSZ-P.NF1-1];
       assign FpLsbRes = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF] : Mf[P.CORRSHIFTSZ-P.NF1];
-      assign FpRound = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-2] : Mf[P.CORRSHIFTSZ-P.NF1-2];
+      assign FpRound  = OutFmt ? Mf[P.CORRSHIFTSZ-P.NF-2] : Mf[P.CORRSHIFTSZ-P.NF1-2];
 
   end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
               P.FMT: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.NF-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.NF-2];
               end
               P.FMT1: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF1-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.NF1-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF1];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF1-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.NF1-2];
               end
               P.FMT2: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.NF2-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.NF2-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.NF2];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.NF2-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.NF2-2];
               end
               default: begin
-                  FpGuard = 1'bx;
+                  FpGuard  = 1'bx;
                   FpLsbRes = 1'bx;
-                  FpRound = 1'bx;
+                  FpRound  = 1'bx;
               end
           endcase
   end else if (P.FPSIZES == 4) begin
       always_comb
           case (OutFmt)
               2'h3: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.Q_NF-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.Q_NF-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.Q_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.Q_NF-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.Q_NF-2];
               end
               2'h1: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.D_NF-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.D_NF-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.D_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.D_NF-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.D_NF-2];
               end
               2'h0: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.S_NF-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.S_NF-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.S_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.S_NF-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.S_NF-2];
               end
               2'h2: begin
-                  FpGuard = Mf[P.CORRSHIFTSZ-P.H_NF-1];
+                  FpGuard  = Mf[P.CORRSHIFTSZ-P.H_NF-1];
                   FpLsbRes = Mf[P.CORRSHIFTSZ-P.H_NF];
-                  FpRound = Mf[P.CORRSHIFTSZ-P.H_NF-2];
+                  FpRound  = Mf[P.CORRSHIFTSZ-P.H_NF-2];
               end
           endcase
   end
 
-  assign Guard = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
+  assign Guard  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-1] : FpGuard;
   assign LsbRes = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN] : FpLsbRes;
-  assign Round = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
-
+  assign Round  = ToInt&CvtOp ? Mf[P.CORRSHIFTSZ-P.XLEN-2] : FpRound;
 
   always_comb begin
       // Determine if you add 1
       case (Frm)
-          3'b000: CalcPlus1 = Guard & (Round|Sticky|LsbRes);//round to nearest even
-          3'b001: CalcPlus1 = 0;//round to zero
-          3'b010: CalcPlus1 = Ms;//round down
-          3'b011: CalcPlus1 = ~Ms;//round up
-          3'b100: CalcPlus1 = Guard;//round to nearest max magnitude
+          3'b000: CalcPlus1  = Guard & (Round|Sticky|LsbRes);//round to nearest even
+          3'b001: CalcPlus1  = 0;//round to zero
+          3'b010: CalcPlus1  = Ms;//round down
+          3'b011: CalcPlus1  = ~Ms;//round up
+          3'b100: CalcPlus1  = Guard;//round to nearest max magnitude
           default: CalcPlus1 = 1'bx;
       endcase
       // Determine if you add 1 (for underflow flag)
       case (Frm)
-          3'b000: UfCalcPlus1 = Round & (Sticky|Guard);//round to nearest even
-          3'b001: UfCalcPlus1 = 0;//round to zero
-          3'b010: UfCalcPlus1 = Ms;//round down
-          3'b011: UfCalcPlus1 = ~Ms;//round up
-          3'b100: UfCalcPlus1 = Round;//round to nearest max magnitude
+          3'b000: UfCalcPlus1  = Round & (Sticky|Guard);//round to nearest even
+          3'b001: UfCalcPlus1  = 0;//round to zero
+          3'b010: UfCalcPlus1  = Ms;//round down
+          3'b011: UfCalcPlus1  = ~Ms;//round up
+          3'b100: UfCalcPlus1  = Round;//round to nearest max magnitude
           default: UfCalcPlus1 = 1'bx;
       endcase
   
   end
 
   // If an answer is exact don't round
-  assign Plus1 = CalcPlus1 & (Sticky|Round|Guard);
+  assign Plus1   = CalcPlus1 & (Sticky|Round|Guard);
   assign FpPlus1 = Plus1&~(ToInt&CvtOp);
   assign UfPlus1 = UfCalcPlus1 & (Sticky|Round);
-
-
-
 
   // place Plus1 into the proper position for the format
   if (P.FPSIZES == 1) begin
@@ -302,21 +292,17 @@ module round import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 4)      
       assign RoundAdd = {(P.Q_NE+1+P.H_NF)'(0), FpPlus1&(OutFmt==P.H_FMT), (P.S_NF-P.H_NF-1)'(0), FpPlus1&(OutFmt==P.S_FMT), (P.D_NF-P.S_NF-1)'(0), FpPlus1&(OutFmt==P.D_FMT), (P.Q_NF-P.D_NF-1)'(0), FpPlus1&(OutFmt==P.Q_FMT)};
 
-
-
   // trim unneeded bits from fraction
   assign RoundFrac = Mf[P.CORRSHIFTSZ-1:P.CORRSHIFTSZ-P.NF];
   
-
-
   // select the exponent
   always_comb
       case(PostProcSel)
-          2'b10: Me = FmaMe; // fma
-          2'b00: Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
+          2'b10:    Me = FmaMe; // fma
+          2'b00:    Me = {CvtCe[P.NE], CvtCe}&{P.NE+2{~CvtResSubnormUf|CvtResUf}}; // cvt
           // 2'b01: Me = DivDone ? Qe : '0; // divide
-          2'b01: Me = Qe; // divide
-          default: Me = '0; 
+          2'b01:    Me = Qe; // divide
+          default:  Me = '0; 
       endcase
 
 
@@ -324,7 +310,6 @@ module round import cvw::*;  #(parameter cvw_t P) (
   // round the result
   //      - if the fraction overflows one should be added to the exponent
   assign {FullRe, Rf} = {Me, RoundFrac} + RoundAdd;
-  assign Re = FullRe[P.NE-1:0];
-
+  assign Re           = FullRe[P.NE-1:0];
 
 endmodule
