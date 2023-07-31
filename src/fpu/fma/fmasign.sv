@@ -34,7 +34,7 @@ module fmasign(
   output logic        InvA        // Effective subtraction: invert addend
 );
 
-  assign Ps = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]); // product sign.  Negate for FMNADD or FNMSUB
-  assign As = Zs^OpCtrl[0];                     // flip addend sign for subtraction
-  assign InvA = As ^ Ps;                        // Effective subtraction when product and addend have opposite signs
+  assign Ps   = Xs ^ Ys ^ (OpCtrl[1]&~OpCtrl[2]); // product sign.  Negate for FMNADD or FNMSUB
+  assign As   = Zs^OpCtrl[0];                     // flip addend sign for subtraction
+  assign InvA = As ^ Ps;                          // Effective subtraction when product and addend have opposite signs
 endmodule
