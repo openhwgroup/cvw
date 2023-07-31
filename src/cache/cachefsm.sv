@@ -67,7 +67,6 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 );
   
   logic              resetDelay;
-  logic              StoreAMO;
   logic              AnyUpdateHit, AnyHit;
   logic              AnyMiss;
   logic              FlushFlag;
@@ -84,10 +83,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
 
   statetype CurrState, NextState;
 
-  assign StoreAMO = CacheRW[0]; // AMO operations assert CacheRW[0]
-
-  assign AnyMiss = (StoreAMO | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
-  assign AnyUpdateHit = (StoreAMO) & CacheHit;                             // exclusion-tag: icache storeAMO1
+  assign AnyMiss = (CacheRW[0] | CacheRW[1]) & ~CacheHit & ~InvalidateCache; // exclusion-tag: cache AnyMiss
+  assign AnyUpdateHit = (CacheRW[0]) & CacheHit;                             // exclusion-tag: icache storeAMO1
   assign AnyHit = AnyUpdateHit | (CacheRW[1] & CacheHit);                  // exclusion-tag: icache AnyUpdateHit
   assign FlushFlag = FlushAdrFlag & FlushWayFlag;
 
@@ -148,8 +145,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
   // exclusion-tag-start: icache flushdirtycontrols
   assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |         // exclusion-tag: icache SetDirty
-                    (CurrState == STATE_WRITE_LINE & (StoreAMO));
-  assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(StoreAMO)) |   // exclusion-tag: icache ClearDirty
+                    (CurrState == STATE_WRITE_LINE & (CacheRW[0]));
+  assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
                       (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
@@ -175,7 +172,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                           (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                      (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck);
 
-  assign SelAdr = (CurrState == STATE_READY & (StoreAMO | AnyMiss)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdr = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
