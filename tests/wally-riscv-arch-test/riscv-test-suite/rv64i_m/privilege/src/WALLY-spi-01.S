@@ -152,7 +152,7 @@ test_cases:
 # Test cs-sck delay of 0 with sck phase = 0 (implicit half cycle delay)
 
 .8byte cs_mode, 0x00000000, write32_test    # reset cs_mode to auto, all cs and sck mode settings should be defualt
-.8byte delay0, 0x00000100, write32_test     # set cs-sck delay to 0
+.8byte delay0, 0x0000100, write32_test     # set cs-sck delay to 0
 .8byte tx_data, 0x00000020, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000020, read32_test     # read rx_data
@@ -204,7 +204,7 @@ test_cases:
 # Test arbitrary sck-cs delay (sck phase 0)
 
 .8byte sck_mode, 0x00000000, write32_test   # set sck phase to 0
-.8byte delay0, 0x0000A501, write32_test     # set cs-sck delay to 5 cycles
+.8byte delay0, 0x00000501, write32_test     # set cs-sck delay to 5 cycles
 .8byte tx_data, 0x00000015, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
 .8byte rx_data, 0x00000015, read32_test     # read rx_data
@@ -212,7 +212,7 @@ test_cases:
 # =========== Test delay1 register ===========
 
 # Test inter cs delay 
-# need to come up with test situation w/minimal cs_inactive time
+
 
 .8byte delay0, 0x00000101, write32_test     # reset delay0 register
 .8byte delay1, 0x00000005, write32_test     # set inter_cs delay to 5
@@ -307,6 +307,7 @@ test_cases:
 
 .8byte delay1, 0x00000001, write32_test     # reset delay1 register
 .8byte delay0, 0x00000101, write32_test     # reset delay0 register
+.8byte sck_mode, 0x00000000, write32_test   #reset sckmode register
 .8byte cs_mode, 0x00000000, write32_test    # set cs_mode to AUTO 
 .8byte fmt, 0x00000040, write32_test        # set frame length to 4
 .8byte tx_data, 0x000000F0, write32_test   # place 8'h11 into tx_data
