@@ -379,15 +379,11 @@ static irqreturn_t sdc_isr(int irq, void * dev_id) {
 
 /*---------------------------------------------------------------------*/
 
-// JACOB: Had to modify this to resemble the older version of Linux
-//        Used to be called hw_reset in older versions. Now it's
-//        called .card_hw_reset to make it unambiguous what it's
-//        resetting. When I update Linux, this will be changed back.
 static const struct mmc_host_ops axi_sdc_ops = {
     .request = sdc_request,
     .set_ios = sdc_set_ios,
     .get_cd = sdc_get_cd,
-    .hw_reset = sdc_card_reset,
+    .card_hw_reset = sdc_card_reset,
 };
 
 static int axi_sdc_probe(struct platform_device * pdev) {
