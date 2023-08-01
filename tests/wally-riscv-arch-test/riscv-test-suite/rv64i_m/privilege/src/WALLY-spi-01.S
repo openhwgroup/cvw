@@ -343,16 +343,16 @@ test_cases:
 .8byte fmt, 0x00000054, write32_test        # set frame length to 5, little-endian
 .8byte tx_data, 0x000000A8, write32_test   # place 8'h11 into tx_data
 .8byte 0x0, 0x00000000, spi_data_wait           # wait for transmission to end
-.8byte rx_data, 0x00000002, read32_test     # read rx_data
+.8byte rx_data, 0x00000008, read32_test     # read rx_data -> 08
 
 #test little endian burst with frame length = 5
 
 .8byte tx_data, 0xFF4F7703, spi_burst_send
 .8byte 0x0, 0x00000003, spi_data_wait
-.8byte rx_data, 0x00000018, read32_test
-.8byte rx_data, 0x0000001D, read32_test
-.8byte rx_data, 0x0000001E, read32_test
-.8byte rx_data, 0x0000001F, read32_test
+.8byte rx_data, 0x00000003, read32_test     #03
+.8byte rx_data, 0x00000017, read32_test     #17
+.8byte rx_data, 0x0000000F, read32_test     #0F
+.8byte rx_data, 0x0000001F, read32_test     #1F
 
 # Test dual SPI protocol, frame length = 8, big endian
 

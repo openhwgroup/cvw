@@ -458,30 +458,33 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 end
             end
         end
+    logic [7:0] ReceiveShiftRegInvert;
+    assign ReceiveShiftRegInvert = (Format[2]) ? {ReceiveShiftReg[0], ReceiveShiftReg[1], ReceiveShiftReg[2], ReceiveShiftReg[3], ReceiveShiftReg[4], ReceiveShiftReg[5], ReceiveShiftReg[6], ReceiveShiftReg[7]} : ReceiveShiftReg[7:0];
+
     always_comb
         if (Format[2]) begin 
             case(Format[7:4])
-                4'b0001: ReceiveShiftRegEndian = {7'b0, ReceiveShiftReg[0]};
-                4'b0010: ReceiveShiftRegEndian = {6'b0, ReceiveShiftReg[1:0]};
-                4'b0011: ReceiveShiftRegEndian = {5'b0, ReceiveShiftReg[2:0]};
-                4'b0100: ReceiveShiftRegEndian = {4'b0, ReceiveShiftReg[3:0]};
-                4'b0101: ReceiveShiftRegEndian = {3'b0, ReceiveShiftReg[4:0]};
-                4'b0110: ReceiveShiftRegEndian = {2'b0, ReceiveShiftReg[5:0]};
-                4'b0111: ReceiveShiftRegEndian = {1'b0, ReceiveShiftReg[6:0]};
-                4'b1000: ReceiveShiftRegEndian = ReceiveShiftReg;
-                default: ReceiveShiftRegEndian = ReceiveShiftReg;
+                4'b0001: ReceiveShiftRegEndian = {7'b0, ReceiveShiftRegInvert[7]};
+                4'b0010: ReceiveShiftRegEndian = {6'b0, ReceiveShiftRegInvert[7:6]};
+                4'b0011: ReceiveShiftRegEndian = {5'b0, ReceiveShiftRegInvert[7:5]};
+                4'b0100: ReceiveShiftRegEndian = {4'b0, ReceiveShiftRegInvert[7:4]};
+                4'b0101: ReceiveShiftRegEndian = {3'b0, ReceiveShiftRegInvert[7:3]};
+                4'b0110: ReceiveShiftRegEndian = {2'b0, ReceiveShiftRegInvert[7:2]};
+                4'b0111: ReceiveShiftRegEndian = {1'b0, ReceiveShiftRegInvert[7:1]};
+                4'b1000: ReceiveShiftRegEndian = ReceiveShiftRegInvert;
+                default: ReceiveShiftRegEndian = ReceiveShiftRegInvert;
             endcase
         end else begin
             case(Format[7:4])
-                4'b0001: ReceiveShiftRegEndian = {ReceiveShiftReg[0], 7'b0};
-                4'b0010: ReceiveShiftRegEndian = {ReceiveShiftReg[1:0], 6'b0};
-                4'b0011: ReceiveShiftRegEndian = {ReceiveShiftReg[2:0], 5'b0};
-                4'b0100: ReceiveShiftRegEndian = {ReceiveShiftReg[3:0], 4'b0};
-                4'b0101: ReceiveShiftRegEndian = {ReceiveShiftReg[4:0], 3'b0};
-                4'b0110: ReceiveShiftRegEndian = {ReceiveShiftReg[5:0], 2'b0};
-                4'b0111: ReceiveShiftRegEndian = {ReceiveShiftReg[6:0], 1'b0};
-                4'b1000: ReceiveShiftRegEndian = ReceiveShiftReg;
-                default: ReceiveShiftRegEndian = ReceiveShiftReg;
+                4'b0001: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[0], 7'b0};
+                4'b0010: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[1:0], 6'b0};
+                4'b0011: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[2:0], 5'b0};
+                4'b0100: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[3:0], 4'b0};
+                4'b0101: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[4:0], 3'b0};
+                4'b0110: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[5:0], 2'b0};
+                4'b0111: ReceiveShiftRegEndian = {ReceiveShiftRegInvert[6:0], 1'b0};
+                4'b1000: ReceiveShiftRegEndian = ReceiveShiftRegInvert;
+                default: ReceiveShiftRegEndian = ReceiveShiftRegInvert;
             endcase
         end
 
