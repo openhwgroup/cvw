@@ -16,7 +16,7 @@ set_property IOSTANDARD LVCMOS18 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS18 [get_ports {GPI[0]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports {GPI[*]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports {GPI[*]}]
-set_max_delay -from [get_ports {GPI[*]}] 10.000
+set_max_delay -from [get_ports {GPI[*]}] 20.000
 
 ##### GPO ####
 set_property PACKAGE_PIN AT32 [get_ports {GPO[0]}]
@@ -29,7 +29,7 @@ set_property IOSTANDARD LVCMOS12 [get_ports {GPO[3]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[2]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[1]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[0]}]
-set_max_delay -to [get_ports {GPO[*]}] 10.000
+set_max_delay -to [get_ports {GPO[*]}] 20.000
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports {GPO[*]}]
 set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports {GPO[*]}]
 
@@ -39,8 +39,8 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_por
 set_property PACKAGE_PIN L31 [get_ports UARTSin]
 #set_property PACKAGE_PIN BB21 [get_ports UARTSout]
 set_property PACKAGE_PIN P29 [get_ports UARTSout]
-set_max_delay -from [get_ports UARTSin] 10.000
-set_max_delay -to [get_ports UARTSout] 10.000
+set_max_delay -from [get_ports UARTSin] 20.000
+set_max_delay -to [get_ports UARTSout] 20.000
 set_property IOSTANDARD LVCMOS12 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS12 [get_ports UARTSout]
 set_property DRIVE 6 [get_ports UARTSout]
@@ -57,7 +57,7 @@ set_input_delay -clock [get_clocks mmcm_clkout0] -min -add_delay 0.000 [get_port
 set_input_delay -clock [get_clocks mmcm_clkout0] -max -add_delay 0.000 [get_ports reset]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports reset]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports reset]
-set_max_delay -from [get_ports reset] 15.000
+set_max_delay -from [get_ports reset] 20.000
 set_false_path -from [get_ports reset]
 set_property PACKAGE_PIN L19 [get_ports {reset}]
 set_property IOSTANDARD LVCMOS12 [get_ports {reset}]
@@ -253,7 +253,7 @@ set_property PACKAGE_PIN G22 [get_ports {c0_ddr4_dm_dbi_n[7]}]
 
 
 
-set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
+set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 20.000
 
 
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports c0_ddr4_reset_n]
