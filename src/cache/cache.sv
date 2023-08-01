@@ -33,6 +33,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
+  input  logic                   IgnoreRequestTLB,  //
   // cpu side
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic [1:0]             CacheAtomic,       // Atomic operation
@@ -210,7 +211,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
-
+  
   cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 

@@ -1,0 +1,78 @@
+#!/usr/bin/python3
+
+import sys
+
+def usage():
+  print("Usage: ./probes list_of_probes outfile")
+
+def header():
+  return """create_debug_core u_ila_0 ila
+
+set_property C_DATA_DEPTH 16384 [get_debug_cores u_ila_0]
+set_property C_TRIGIN_EN false [get_debug_cores u_ila_0]
+set_property C_TRIGOUT_EN false [get_debug_cores u_ila_0]
+set_property C_ADV_TRIGGER false [get_debug_cores u_ila_0]
+set_property C_INPUT_PIPE_STAGES 0 [get_debug_cores u_ila_0]
+set_property C_EN_STRG_QUAL false [get_debug_cores u_ila_0]
+set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0]
+set_property ALL_PROBE_SAME_MU_CNT 1 [get_debug_cores u_ila_0]
+startgroup 
+set_property C_EN_STRG_QUAL true [get_debug_cores u_ila_0 ]
+set_property C_ADV_TRIGGER true [get_debug_cores u_ila_0 ]
+set_property ALL_PROBE_SAME_MU true [get_debug_cores u_ila_0 ]
+set_property ALL_PROBE_SAME_MU_CNT 4 [get_debug_cores u_ila_0 ]
+endgroup
+connect_debug_port u_ila_0/clk [get_nets [list xlnx_ddr4_c0/inst/u_ddr4_infrastructure/addn_ui_clkout1 ]]"""
+
+def convertLine(x):
+  temp = x.split()
+  temp[1] = int(temp[1])
+  temp[2] = int(temp[2])
+  return tuple(temp)
+
+def probeBits( probe ):
+  str = ''
+
+  if (probe[1] > 1):
+    for i in range(probe[1]):
+      if i != (probe[1]-1):
+        str = str + f"{{{probe[0]}[{i}]}} "
+      else:
+        str = str + f"{{{probe[0]}[{i}]}} "
+
+  else:
+    str = f'{{{probe[0]}}}'
+
+  return str
+
+def printProbe( probe,):
+  bits = probeBits(probe)
+
+  return (
+    f'create_debug_port u_ila_0 probe\n'
+    f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{probe[2]}]\n'
+    f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{probe[2]}]\n'
+    f'connect_debug_port u_ila_0/probe{probe[2]} [get_nets [list {bits}]]\n\n'
+  )
+
+def main(args):
+  if (len(args) != 2):
+    usage()
+    exit()
+
+  probeList = []
+
+  with open(args[0]) as probeListFile:
+    probeList = list(map(convertLine, probeListFile.readlines()))
+
+  with open(args[1], 'w') as outfile:
+    # outfile.write(header())
+    # outfile.write("\n\n")
+    for i in range(len(probeList)):
+      outfile.write(printProbe(probeList[i]))
+
+if __name__ == '__main__':
+  main(sys.argv[1:])
+
+
+  

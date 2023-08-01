@@ -45,22 +45,19 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   output logic [P.AHBW-1:0]    HRDATA,
   output logic                 HREADY, HRESP,
   output logic                 HSELEXT,
+  output logic                 HSELEXTSDC,
   // peripheral pins          
-  output logic                MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
-  output logic                MExtInt, SExtInt,          // External interrupts from PLIC
-  output logic [63:0]         MTIME_CLINT,               // MTIME, from CLINT
-  input  logic [31:0]         GPIOIN,                // GPIO pin input value
-  output logic [31:0]         GPIOOUT, GPIOEN,   // GPIO pin output value and enable
-  input  logic                UARTSin,                   // UART serial input
-  output logic                UARTSout,                  // UART serial output
+  output logic                 MTimerInt, MSwInt,         // Timer and software interrupts from CLINT
+  output logic                 MExtInt, SExtInt,          // External interrupts from PLIC
+  output logic [63:0]          MTIME_CLINT,               // MTIME, from CLINT
+  input  logic [31:0]          GPIOIN,                    // GPIO pin input value
+  output logic [31:0]          GPIOOUT, GPIOEN,           // GPIO pin output value and enable
+  input  logic                 UARTSin,                   // UART serial input
+  output logic                 UARTSout,                  // UART serial output
+  input  logic                 SDCIntr,
   input logic  [3:0]          SPIIn,
   output logic [3:0]          SPIOut,
-  output logic [3:0]          SPICS,
-  output logic                SDCCmdOut,                 // SD Card command output
-  output logic                SDCCmdOE,                  // SD Card command output enable
-  input  logic                SDCCmdIn,                  // SD Card command input
-  input  logic [3:0]          SDCDatIn,                  // SD Card data input
-  output logic                SDCCLK                     // SD Card clock
+  output logic [3:0]          SPICS,                
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
@@ -84,6 +81,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   logic [4:0][P.XLEN-1:0]      PRDATA;
   logic [P.XLEN-1:0]           HREADBRIDGE;
   logic                        HRESPBRIDGE, HREADYBRIDGE, HSELBRIDGE, HSELBRIDGED;
+
+  (* mark_debug = "true" *) logic             HSELEXTSDCD;
+  
 
   // Determine which region of physical memory (if any) is being accessed
   // Use a trimmed down portion of the PMA checker - only the address decoders
@@ -124,7 +124,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
 
   if (P.PLIC_SUPPORTED == 1) begin : plic
     plic_apb #(P) plic(.PCLK, .PRESETn, .PSEL(PSEL[2]), .PADDR(PADDR[27:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
-      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SPIIntr, .MExtInt, .SExtInt);
+      .PRDATA(PRDATA[2]), .PREADY(PREADY[2]), .UARTIntr, .GPIOIntr, .SDCIntr, .SPIIntr, .MExtInt, .SExtInt);
   end else begin : plic
     assign MExtInt = 0;
     assign SExtInt = 0;
@@ -148,19 +148,6 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : uart
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
-  if (P.SDC_SUPPORTED == 1) begin : sdc
-    SDC #(P) SDC(.HCLK, .HRESETn, .HSELSDC, .HADDR(HADDR[4:0]), .HWRITE, .HREADY, .HTRANS,
-      .HWDATA, .HREADSDC, .HRESPSDC, .HREADYSDC,
-      // sdc interface
-      .SDCCmdOut, .SDCCmdIn, .SDCCmdOE, .SDCDatIn, .SDCCLK,
-      // interrupt to PLIC
-      .SDCIntM        
-      );
-  end else begin : sdc
-    assign SDCCLK    = 0; 
-    assign SDCCmdOut = 0;
-    assign SDCCmdOE  = 0;
-  end
   if (P.SPI_SUPPORTED == 1) begin : spi
     spi_apb  #(P) spi (
       .PCLK, .PRESETn, .PSEL(PSEL[4]), .PADDR(PADDR[7:0]), .PWDATA, .PSTRB, .PWRITE, .PENABLE, 
@@ -169,25 +156,21 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   end else begin : spi
     assign SPIOut = 0; assign SPICS = 0; assign SPIIntr = 0;
   end
-
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
-                  ({P.XLEN{HSELEXTD}} & HRDATAEXT) |   
+                  ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
                   ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
-                  ({P.XLEN{HSELBootRomD}} & HREADBootRom) |
-                  ({P.XLEN{HSELSDCD}} & HREADSDC);
+                  ({P.XLEN{HSELBootRomD}} & HREADBootRom);
 
   assign HRESP = HSELRamD & HRESPRam |
-                 HSELEXTD & HRESPEXT |
+                 (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
-                 HSELBootRomD & HRESPBootRom |
-                 HSELSDC & HRESPSDC;     
-
+                 HSELBootRomD & HRESPBootRom;
+  
   assign HREADY = HSELRamD & HREADYRam |
-                  HSELEXTD & HREADYEXT |      
+		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-                  HSELSDCD & HREADYSDC |      
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
@@ -197,6 +180,6 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // However on reset None must be seleted.
   flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 12'b1, 
     {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, 
-    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELSPID, HSELNoneD});
+    HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELEXTSDCD, HSELSPID, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule

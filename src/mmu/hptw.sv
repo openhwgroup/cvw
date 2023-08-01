@@ -142,7 +142,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
   if(P.SVADU_SUPPORTED) begin : hptwwrites
     logic                 ReadAccess, WriteAccess;
     logic                 InvalidRead, InvalidWrite, InvalidOp;
-    logic                 UpperBitsUnequal; 
+    logic                 UpperBitsUnequal, UpperBitsUnequalD; 
     logic                 OtherPageFault;
     logic [1:0]           EffectivePrivilegeMode;
     logic                 ImproperPrivilege;
@@ -172,10 +172,12 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     // Check for page faults
     vm64check #(P) vm64check(.SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]), .VAdr(TranslationVAdr), 
       .SV39Mode(), .UpperBitsUnequal);
+    // This register is not functionally necessary, but improves the critical path.
+    flopr #(1) upperbitsunequalreg(clk, reset, UpperBitsUnequal, UpperBitsUnequalD);
     assign InvalidRead = ReadAccess & ~Readable & (~STATUS_MXR | ~Executable);
     assign InvalidWrite = WriteAccess & ~Writable;
     assign InvalidOp = DTLBWalk ? (InvalidRead | InvalidWrite) : ~Executable;
-    assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequal | Misaligned | ~Valid;
+    assign OtherPageFault = ImproperPrivilege | InvalidOp | UpperBitsUnequalD | Misaligned | ~Valid;
 
     // hptw needs to know if there is a Dirty or Access fault occuring on this
     // memory access.  If there is the PTE needs to be updated seting Access

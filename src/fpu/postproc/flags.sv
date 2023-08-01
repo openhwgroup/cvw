@@ -27,50 +27,50 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module flags import cvw::*;  #(parameter cvw_t P) (
-  input  logic                Xs,                     // X sign
+  input  logic                 Xs,                     // X sign
   input  logic [P.FMTBITS-1:0] OutFmt,                 // output format
-  input  logic                InfIn,                  // is a Inf input being used
-  input  logic                XInf, YInf, ZInf,       // inputs are infinity
-  input  logic                NaNIn,                  // is a NaN input being used
-  input  logic                XSNaN, YSNaN, ZSNaN,    // inputs are signaling NaNs
-  input  logic                XZero, YZero,           // inputs are zero
+  input  logic                 InfIn,                  // is a Inf input being used
+  input  logic                 XInf, YInf, ZInf,       // inputs are infinity
+  input  logic                 NaNIn,                  // is a NaN input being used
+  input  logic                 XSNaN, YSNaN, ZSNaN,    // inputs are signaling NaNs
+  input  logic                 XZero, YZero,           // inputs are zero
   input  logic [P.NE+1:0]      FullRe,                 // Re with bits to determine sign and overflow
   input  logic [P.NE+1:0]      Me,                     // exponent of the normalized sum
   // rounding
-  input  logic                Plus1,                  // do you add one for rounding
-  input  logic                Round, Guard, Sticky,   // bits used to determine rounding
-  input  logic                UfPlus1,                // do you add one for rounding for the unbounded exponent result
+  input  logic                 Plus1,                  // do you add one for rounding
+  input  logic                 Round, Guard, Sticky,   // bits used to determine rounding
+  input  logic                 UfPlus1,                // do you add one for rounding for the unbounded exponent result
   // convert
-  input  logic                CvtOp,                  // conversion opperation?
-  input  logic                ToInt,                  // convert to integer
-  input  logic                IntToFp,                // convert integer to floating point
-  input  logic                Int64,                  // convert to 64 bit integer
-  input  logic                Signed,                 // convert to a signed integer
+  input  logic                 CvtOp,                  // conversion opperation?
+  input  logic                 ToInt,                  // convert to integer
+  input  logic                 IntToFp,                // convert integer to floating point
+  input  logic                 Int64,                  // convert to 64 bit integer
+  input  logic                 Signed,                 // convert to a signed integer
   input  logic [P.NE:0]        CvtCe,                  // the calculated expoent - Cvt
-  input  logic [1:0]          CvtNegResMsbs,          // the negitive integer result's most significant bits
+  input  logic [1:0]           CvtNegResMsbs,          // the negitive integer result's most significant bits
   // divsqrt
-  input  logic                DivOp,                  // conversion opperation?
-  input  logic                Sqrt,                   // Sqrt?
+  input  logic                 DivOp,                  // conversion opperation?
+  input  logic                 Sqrt,                   // Sqrt?
   // fma
-  input  logic                FmaOp,                  // Fma opperation?
-  input  logic                FmaAs, FmaPs,           // the product and modified Z signs
+  input  logic                 FmaOp,                  // Fma opperation?
+  input  logic                 FmaAs, FmaPs,           // the product and modified Z signs
   // flags
-  output logic                DivByZero,              // divide by zero flag
-  output logic                Overflow,               // overflow flag to select result
-  output logic                Invalid,                // invalid flag to select the result
-  output logic                IntInvalid,             // invalid integer result to select
-  output logic [4:0]          PostProcFlg             // flags
+  output logic                 DivByZero,              // divide by zero flag
+  output logic                 Overflow,               // overflow flag to select result
+  output logic                 Invalid,                // invalid flag to select the result
+  output logic                 IntInvalid,             // invalid integer result to select
+  output logic [4:0]           PostProcFlg             // flags
 );
 
-  logic               SigNaN;         // is an input a signaling NaN
-  logic               Inexact;        // final inexact flag
-  logic               FpInexact;      // floating point inexact flag
-  logic               IntInexact;     // integer inexact flag
-  logic               FmaInvalid;     // integer invalid flag
-  logic               DivInvalid;     // integer invalid flag
-  logic               Underflow;      // Underflow flag
-  logic               ResExpGteMax;   // is the result greater than or equal to the maximum floating point expoent
-  logic               ShiftGtIntSz;   // is the shift greater than the the integer size (use Re to account for possible roundning "shift")
+  logic                        SigNaN;                 // is an input a signaling NaN
+  logic                        Inexact;                // final inexact flag
+  logic                        FpInexact;              // floating point inexact flag
+  logic                        IntInexact;             // integer inexact flag
+  logic                        FmaInvalid;             // integer invalid flag
+  logic                        DivInvalid;             // integer invalid flag
+  logic                        Underflow;              // Underflow flag
+  logic                        ResExpGteMax;           // is the result greater than or equal to the maximum floating point expoent
+  logic                        ShiftGtIntSz;           // is the shift greater than the the integer size (use Re to account for possible roundning "shift")
 
   ///////////////////////////////////////////////////////////////////////////////
   // Overflow
@@ -86,7 +86,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   //      65 = ...0 0 0 0   0 1 0 0   0 0 0 1
   //          |     or      | |     or      |
   //      33 = ...0 0 0 0   0 0 1 0   0 0 0 1
-  //          |     or        | |     or    |
+  //          |     or      | |     or      |
   //      larger or equal if:
   //          - any of the bits after the most significan 1 is one
   //          - the most signifcant in 65 or 33 is still a one in the number and
@@ -102,9 +102,9 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
-              P.FMT: ResExpGteMax = &FullRe[P.NE-1:0] | FullRe[P.NE];
-              P.FMT1: ResExpGteMax = &FullRe[P.NE1-1:0] | (|FullRe[P.NE:P.NE1]);
-              P.FMT2: ResExpGteMax = &FullRe[P.NE2-1:0] | (|FullRe[P.NE:P.NE2]);
+              P.FMT: ResExpGteMax   = &FullRe[P.NE-1:0]  | FullRe[P.NE];
+              P.FMT1: ResExpGteMax  = &FullRe[P.NE1-1:0] | (|FullRe[P.NE:P.NE1]);
+              P.FMT2: ResExpGteMax  = &FullRe[P.NE2-1:0] | (|FullRe[P.NE:P.NE2]);
               default: ResExpGteMax = 1'bx;
           endcase
           assign ShiftGtIntSz = (|FullRe[P.NE:7]|(FullRe[6]&~Int64)) | ((|FullRe[4:0]|(FullRe[5]&Int64))&((FullRe[5]&~Int64) | FullRe[6]&Int64));
@@ -119,8 +119,7 @@ module flags import cvw::*;  #(parameter cvw_t P) (
           endcase
           assign ShiftGtIntSz = (|FullRe[P.Q_NE:7]|(FullRe[6]&~Int64)) | ((|FullRe[4:0]|(FullRe[5]&Int64))&((FullRe[5]&~Int64) | FullRe[6]&Int64));
   end
-
-
+  
   // calulate overflow flag:
   //                 if the result is greater than or equal to the max exponent(not taking into account sign)
   //                 |           and the exponent isn't negitive
@@ -141,7 +140,6 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   //                  |                    |                    |                                      |                     |               and if the input isnt infinity or NaN
   //                  |                    |                    |                                      |                     |               |
   assign Underflow = ((FullRe[P.NE+1] | (FullRe == 0) | ((FullRe == 1) & (Me == 0) & ~(UfPlus1&Guard)))&(Round|Sticky|Guard))&~(InfIn|NaNIn|DivByZero|Invalid);
-
 
   ///////////////////////////////////////////////////////////////////////////////
   // Inexact
@@ -199,7 +197,6 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   //  - don't set flag if an input is NaN or Inf(IEEE says has to be a finite numerator)
   assign DivByZero = YZero&DivOp&~Sqrt&~(XZero|NaNIn|InfIn);  
 
-
   ///////////////////////////////////////////////////////////////////////////////
   // final flags
   ///////////////////////////////////////////////////////////////////////////////
@@ -209,7 +206,3 @@ module flags import cvw::*;  #(parameter cvw_t P) (
   assign PostProcFlg = {Invalid|(IntInvalid&CvtOp&ToInt), DivByZero, Overflow&~(ToInt&CvtOp), Underflow&~(ToInt&CvtOp), Inexact};
 
 endmodule
-
-
-
-

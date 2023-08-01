@@ -27,18 +27,18 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
-  input  logic [P.FMTBITS-1:0]         Fmt,            // precision 1 = double 0 = single
-  input  logic [P.NE+1:0]              FmaSe,          // sum's exponent
-  input  logic [3*P.NF+3:0]            FmaSm,          // the positive sum
-  input  logic [$clog2(3*P.NF+5)-1:0]  FmaSCnt,        // normalization shift count
-  output logic [P.NE+1:0]              NormSumExp,     // exponent of the normalized sum not taking into account Subnormal or zero results
-  output logic                        FmaSZero,       // is the result subnormal - calculated before LZA corection
-  output logic                        FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
-  output logic [$clog2(3*P.NF+5)-1:0]  FmaShiftAmt,    // normalization shift count
-  output logic [3*P.NF+5:0]            FmaShiftIn      // is the sum zero
+  input  logic [P.FMTBITS-1:0]         Fmt,                 // precision 1 = double 0 = single
+  input  logic [P.NE+1:0]              FmaSe,               // sum's exponent
+  input  logic [3*P.NF+3:0]            FmaSm,               // the positive sum
+  input  logic [$clog2(3*P.NF+5)-1:0]  FmaSCnt,             // normalization shift count
+  output logic [P.NE+1:0]              NormSumExp,          // exponent of the normalized sum not taking into account Subnormal or zero results
+  output logic                         FmaSZero,            // is the result subnormal - calculated before LZA corection
+  output logic                         FmaPreResultSubnorm, // is the result subnormal - calculated before LZA corection
+  output logic [$clog2(3*P.NF+5)-1:0]  FmaShiftAmt,         // normalization shift count
+  output logic [3*P.NF+5:0]            FmaShiftIn           // is the sum zero
 );
-  logic [P.NE+1:0] PreNormSumExp;  // the exponent of the normalized sum with the P.FLEN bias
-  logic [P.NE+1:0] BiasCorr;       // correction for bias
+  logic [P.NE+1:0]                     PreNormSumExp;       // the exponent of the normalized sum with the P.FLEN bias
+  logic [P.NE+1:0]                     BiasCorr;            // correction for bias
 
   ///////////////////////////////////////////////////////////////////////////////
   // Normalization
@@ -59,9 +59,9 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
     always_comb begin
         case (Fmt)
-            P.FMT: BiasCorr =  '0;
-            P.FMT1: BiasCorr = (P.NE+2)'(P.BIAS1-P.BIAS);
-            P.FMT2: BiasCorr = (P.NE+2)'(P.BIAS2-P.BIAS);
+            P.FMT:   BiasCorr =  '0;
+            P.FMT1:  BiasCorr = (P.NE+2)'(P.BIAS1-P.BIAS);
+            P.FMT2:  BiasCorr = (P.NE+2)'(P.BIAS2-P.BIAS);
             default: BiasCorr = 'x;
         endcase
     end
@@ -101,9 +101,9 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
     assign Sum2GEFL = $signed(PreNormSumExp) >= $signed((P.NE+2)'(-P.NF2-2+P.BIAS-P.BIAS2)) | ~|PreNormSumExp;
     always_comb begin
       case (Fmt)
-        P.FMT: FmaPreResultSubnorm = Sum0LEZ & Sum0GEFL & ~FmaSZero;
-        P.FMT1: FmaPreResultSubnorm = Sum1LEZ & Sum1GEFL & ~FmaSZero;
-        P.FMT2: FmaPreResultSubnorm = Sum2LEZ & Sum2GEFL & ~FmaSZero;
+        P.FMT: FmaPreResultSubnorm   = Sum0LEZ & Sum0GEFL & ~FmaSZero;
+        P.FMT1: FmaPreResultSubnorm  = Sum1LEZ & Sum1GEFL & ~FmaSZero;
+        P.FMT2: FmaPreResultSubnorm  = Sum2LEZ & Sum2GEFL & ~FmaSZero;
         default: FmaPreResultSubnorm = 1'bx;
       endcase
     end
@@ -131,5 +131,5 @@ module fmashiftcalc import cvw::*;  #(parameter cvw_t P) (
   //  - shift once if killing a product and the result is subnormal
   assign FmaShiftIn = {2'b0, FmaSm};
   if (P.FPSIZES == 1) assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*P.NF+5)-1:0]+($clog2(3*P.NF+5))'(P.NF+2): FmaSCnt+1;
-  else               assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*P.NF+5)-1:0]+($clog2(3*P.NF+5))'(P.NF+2)+BiasCorr[$clog2(3*P.NF+5)-1:0]: FmaSCnt+1;
+  else                assign FmaShiftAmt = FmaPreResultSubnorm ? FmaSe[$clog2(3*P.NF+5)-1:0]+($clog2(3*P.NF+5))'(P.NF+2)+BiasCorr[$clog2(3*P.NF+5)-1:0]: FmaSCnt+1;
 endmodule

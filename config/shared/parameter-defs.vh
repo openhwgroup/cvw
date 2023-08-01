@@ -1,9 +1,10 @@
 
 // Populate parameter structure with values specific to the current configuration
 
+`include "BranchPredictorType.vh"
+
 parameter cvw_t P = '{ 
   FPGA :                 FPGA,  
-  QEMU :                 QEMU,  
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 
   MISA :                 MISA, 
@@ -82,6 +83,7 @@ parameter cvw_t P = '{
   PLIC_GPIO_ID :        PLIC_GPIO_ID,
   PLIC_UART_ID :        PLIC_UART_ID,
   PLIC_SPI_ID :        PLIC_SPI_ID,
+  PLIC_SDC_ID :        PLIC_SDC_ID,
   BPRED_SUPPORTED :        BPRED_SUPPORTED,
                        /* verilator lint_off ENUMVALUE */
                        // *** definitely need to fix this.

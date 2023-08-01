@@ -60,7 +60,7 @@ module csrsr import cvw::*;  #(parameter cvw_t P) (
                            STATUS_XS, STATUS_FS, STATUS_MPP, 2'b0,
                            STATUS_SPP, STATUS_MPIE, STATUS_UBE, STATUS_SPIE, 1'b0,
                            STATUS_MIE, 1'b0, STATUS_SIE, 1'b0};
-    assign SSTATUS_REGW  = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ {P.QEMU ? 2'b0 : STATUS_UXL}, /*9'b0, */ 12'b0,
+    assign SSTATUS_REGW  = {STATUS_SD, /*27'b0, */ 29'b0, /*STATUS_SXL, */ {STATUS_UXL}, /*9'b0, */ 12'b0,
                           /*STATUS_TSR, STATUS_TW, STATUS_TVM, */STATUS_MXR, STATUS_SUM, /* STATUS_MPRV, */ 1'b0,
                            STATUS_XS, STATUS_FS, /*STATUS_MPP, 2'b0*/ 4'b0,
                            STATUS_SPP, /*STATUS_MPIE*/ 1'b0, STATUS_UBE, STATUS_SPIE,

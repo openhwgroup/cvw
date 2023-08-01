@@ -3,7 +3,7 @@
 # mmcm_clkout0 is the clock output of the DDR3 memory interface / 4.
 # This clock is not used by wally or the AHB Bus. However it is used by the AXI BUS on the DD3 IP.
 
-create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
+#create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 1 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
 
 ##### clock #####
 set_property PACKAGE_PIN E3 [get_ports {default_100mhz_clk}]
@@ -20,7 +20,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPI[0]}]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPI[*]}]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPI[*]}]
-set_max_delay -from [get_ports {GPI[*]}] 10.000
+set_max_delay -from [get_ports {GPI[*]}] 20.000
 
 ##### GPO ####
 set_property PACKAGE_PIN G6 [get_ports {GPO[0]}]
@@ -33,7 +33,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {GPO[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {GPO[0]}]
-set_max_delay -to [get_ports {GPO[*]}] 10.000
+set_max_delay -to [get_ports {GPO[*]}] 20.000
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 0.000 [get_ports {GPO[*]}]
 set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [get_ports {GPO[*]}]
 
@@ -42,8 +42,8 @@ set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [g
 # *** IOSTANDARD is probably wrong
 set_property PACKAGE_PIN A9 [get_ports UARTSin]
 set_property PACKAGE_PIN D10 [get_ports UARTSout]
-set_max_delay -from [get_ports UARTSin] 14.000
-set_max_delay -to [get_ports UARTSout] 14.000
+set_max_delay -from [get_ports UARTSin] 20.000
+set_max_delay -to [get_ports UARTSout] 20.000
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS33 [get_ports UARTSout]
 set_property DRIVE 4 [get_ports UARTSout]
@@ -57,7 +57,7 @@ set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 0.000 [g
 #************** reset is inverted
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports resetn]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports resetn]
-set_max_delay -from [get_ports resetn] 15.000
+set_max_delay -from [get_ports resetn] 20.000
 set_false_path -from [get_ports resetn]
 set_property PACKAGE_PIN C2 [get_ports {resetn}]
 set_property IOSTANDARD LVCMOS33 [get_ports {resetn}]
@@ -65,7 +65,7 @@ set_property IOSTANDARD LVCMOS33 [get_ports {resetn}]
 
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports south_reset]
 set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 2.000 [get_ports south_reset]
-set_max_delay -from [get_ports south_reset] 15.000
+set_max_delay -from [get_ports south_reset] 20.000
 set_false_path -from [get_ports south_reset]
 set_property PACKAGE_PIN D9 [get_ports {south_reset}]
 set_property IOSTANDARD LVCMOS33 [get_ports {south_reset}]
@@ -80,6 +80,8 @@ set_property PACKAGE_PIN E2 [get_ports {SDCDat[1]}]
 set_property PACKAGE_PIN F4 [get_ports {SDCDat[0]}]
 set_property PACKAGE_PIN F3 [get_ports SDCCLK]
 set_property PACKAGE_PIN D3 [get_ports {SDCCmd}]
+set_property PACKAGE_PIN H2 [get_ports {SDCCD}]
+
 
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[2]}]
@@ -87,24 +89,30 @@ set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[1]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCDat[0]}]
 set_property IOSTANDARD LVCMOS33 [get_ports SDCCLK]
 set_property IOSTANDARD LVCMOS33 [get_ports {SDCCmd}]
+set_property IOSTANDARD LVCMOS33 [get_ports {SDCCD}]
 set_property PULLUP true [get_ports {SDCDat[3]}]
 set_property PULLUP true [get_ports {SDCDat[2]}]
 set_property PULLUP true [get_ports {SDCDat[1]}]
 set_property PULLUP true [get_ports {SDCDat[0]}]
 set_property PULLUP true [get_ports {SDCCmd}]
+set_property PULLUP true [get_ports {SDCCD}]
 
 
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
 
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCCmd}]
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 14.000 [get_ports {SDCCmd}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.500 [get_ports {SDCCmd}]
+set_input_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 14.000 [get_ports {SDCCmd}]
 
 
-set_output_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.000 [get_ports {SDCCmd}]
-set_output_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 6.000 [get_ports {SDCCmd}]
+set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -min -add_delay 2.000 [get_ports {SDCCmd}]
+set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] -max -add_delay 6.000 [get_ports {SDCCmd}]
 
-set_output_delay -clock [get_clocks CLKDiv64_Gen] 0.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks clk_out3_xlnx_mmcm] 0.000 [get_ports SDCCLK]
+
+#set_multicycle_path -from [get_pins xlnx_ddr3_c0/u_xlnx_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/init_calib_complete_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10
+
+set_max_delay -datapath_only -from [get_pins xlnx_ddr3_c0/u_xlnx_ddr3_mig/u_memc_ui_top_axi/mem_intfc0/ddr_phy_top0/u_ddr_calib_top/init_calib_complete_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 20.000
 
 # *********************************
 #set_property DCI_CASCADE {64} [get_iobanks 65]
@@ -211,9 +219,3 @@ set_properity PACKAGE_PIN N5 [get_ports ddr3_cke[0]]
 set_properity PACKAGE_PIN R5 [get_ports ddr3_odt[0]]
 set_properity PACKAGE_PIN U8 [get_ports ddr3_cs_n[0]]
 
-
-# **** may have to bring this one back 
-#set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 20.000
-
-
-set_property CLOCK_DEDICATED_ROUTE ANY_CMT_COLUMN [get_nets wallypipelinedsoc/uncore.uncore/sdc.SDC/clockgater/CLK]

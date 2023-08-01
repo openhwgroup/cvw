@@ -15,7 +15,7 @@
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x00 0x80000000 0x00 0x08000000>;
+		reg = <0x00 0x80000000 0x00 0x10000000>;
 	};
 
 	cpus {
@@ -65,6 +65,20 @@
 			compatible = "sifive,plic-1.0.0\0riscv,plic0";
 			#interrupt-cells = <0x01>;
 			#address-cells = <0x00>;
+		};
+
+		mmc@13000 {
+			interrupts = <0x14>;
+			compatible = "riscv,axi-sd-card-1.0";
+			reg = <0x00 0x13000 0x00 0x7F>;
+			fifo-depth = <256>;
+			bus-width = <4>;
+			interrupt-parent = <0x03>;
+			clock = <0x14FB180>;
+			max-frequency = <0xA7D8C0>;
+			cap-sd-highspeed;
+			cap-mmc-highspeed;
+			no-sdio;
 		};
 
 		clint@2000000 {
