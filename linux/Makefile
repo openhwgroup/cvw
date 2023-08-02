@@ -8,7 +8,7 @@ FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 .PHONY: all clean patch
 
 all:
-	sed -i 's|FPGA_AXI_SDC_SITE = __site__|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(FPGA_AXI_SDC)/fpga-axi-sdc.mk
+	
 
 patch: $(BUILDROOT) 
 	@ echo "${WALLYLINUX}"
