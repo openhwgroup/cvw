@@ -12,8 +12,7 @@ DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 all: $(IMAGES)
 
 patch: $(BUILDROOT) $(DRIVER)
-	@ echo "${WALLYLINUX}"
-	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $(DRIVER)
+	@ echo "Patching buildroot directory at: $<"
 	cp -r $(WALLYLINUX)/buildroot-config-src/wally $</board
 	cp -r $(WALLYLINUX)/buildroot-packages/fpga-axi-sdc $</package
 	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
@@ -28,5 +27,6 @@ $(BUILDROOT):
 
 $(DRIVER):
 	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
+	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
 
 clean:
