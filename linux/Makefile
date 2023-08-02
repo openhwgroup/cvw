@@ -7,10 +7,12 @@ PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
 FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 
-.PHONY: all clean patch
+.PHONY: generate clean patch
 
-all: $(IMAGES)
+generate: $(IMAGES)
+	
 
+# This directive should be run as: make patch BUILDROOT=path/to/buildroot
 patch: $(BUILDROOT) $(DRIVER)
 	@ echo "Patching buildroot directory at: $<"
 	cp -r $(WALLYLINUX)/buildroot-config-src/wally $</board
@@ -29,4 +31,9 @@ $(DRIVER):
 	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
 	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
 
+$(IMAGES):
+	@ echo "No output/images directory in buildroot."
+	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."
+
 clean:
+	rm -f $(DRIVER)
