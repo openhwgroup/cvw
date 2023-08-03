@@ -7,15 +7,29 @@ PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
 FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 
-.PHONY: generate clean patch
+DTS ?= $(shell  find -type f -regex ".*\.dts" | sort)
 
-generate: $(IMAGES)
-	
+.PHONY: generate cleanDriver patch
+
+# Generate device tree binaries from device tree source files
+# Currently supported fpga device tree binaries are also generated
+generate: $(DTS) $(IMAGES)
+	dtc -I dts -O dtb devicetree/wally-virt.dts > ${IMAGES}/wally-virt.dtb
+	dtc -I dts -O dtb devicetree/wally-vcu108.dts > ${IMAGES}/wally-vcu108.dtb
+	dtc -I dts -O dtb devicetree/wally-vcu118.dts > ${IMAGES}/wally-vcu118.dtb
+	dtc -I dts -O dtb devicetree/wally-vcu118.dts > ${IMAGES}/wally-artya7.dtb
+
+disassemble:
+
+# Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make patch BUILDROOT=path/to/buildroot
 patch: $(BUILDROOT) $(DRIVER)
 	@ echo "Patching buildroot directory at: $<"
+	@ echo "Copying wally configuration files and rootfs_overlay to buildroot."
 	cp -r $(WALLYLINUX)/buildroot-config-src/wally $</board
+
+	@ echo
 	cp -r $(WALLYLINUX)/buildroot-packages/fpga-axi-sdc $</package
 	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
 	cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/linux.config $</board/wally/linux.config
@@ -33,7 +47,9 @@ $(DRIVER):
 
 $(IMAGES):
 	@ echo "No output/images directory in buildroot."
-	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."
+	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."; exit 1
 
-clean:
+# ---------------------------------------------------------------------
+
+cleanDriver:
 	rm -f $(DRIVER)
