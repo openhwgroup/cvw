@@ -8,6 +8,11 @@
 import os
 wally = os.popen('echo $WALLY').read().strip()
 
+if "wally" not in os.environ:
+  print("Error: the environmental variable wally is not set");
+  print("Did you run the setup.sh script?");
+  quit()
+
 def ext_bits(my_string):
     target_len = 32 # we want 128 bits, div by 4 bc hex notation
     zeroes_to_add = target_len - len(my_string)
