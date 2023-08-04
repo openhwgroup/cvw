@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Exit on any error (return code != 0)
-set -e
+# set -e
 
 # Output colors
 GREEN='\033[1;32m'
@@ -11,10 +11,10 @@ NAME="$GREEN"${0:2}"$NC"
 
 # File location variables
 RISCV=/opt/riscv
-IMAGES=/home/ross/repos/buildroot/output/images/
+IMAGES=$RISCV/buildroot/output/images/
 FW_JUMP=$IMAGES/fw_jump.bin
 LINUX_KERNEL=$IMAGES/Image
-DEVICE_TREE=$IMAGES/wally-artya7.dtb
+DEVICE_TREE=$IMAGES/wally-vcu108.dtb
 
 # Mount Directory
 MNT_DIR=wallyimg
@@ -61,12 +61,19 @@ echo -e "$NAME: Device tree block size:     $DST_SIZE"
 echo -e "$NAME: OpenSBI FW_JUMP block size: $FW_JUMP_SIZE"
 echo -e "$NAME: Kernel block size:          $KERNEL_SIZE"
 
-read -p "Warning:  " -n 1 -r
+read -p "Warning: Doing this will replace all data on this card.\nContinue? y/n: " -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
-    # Make empty image
-    #echo -e "$NAME: Creating blank image"
-    #sudo dd if=/dev/zero of=$1 bs=4k conv=noerror status=progress && sync
+    DEVBASENAME=$(basename $1)
+    CHECKMOUNT=$(lsblk | grep "sdb4" | tr -s ' ' | cut -d' ' -f 7)
+    
+    if [ ! -z $CHECKMOUNT ] ; then
+        sudo umount -v $CHECKMOUNT
+    fi
+    
+    #Make empty image
+    echo -e "$NAME: Creating blank image"
+    sudo dd if=/dev/zero of=$1 bs=64k status=progress && sync
 
     # GUID Partition Tables (GPT)
     # ===============================================
@@ -76,12 +83,10 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
     # to 1 sector boundaries I think? This would normally be set to 2048
     # apparently.
 
-    # sudo sgdisk -g --clear --set-alignment=1 \
-    #      --new=1:34:+$FW_JUMP_SIZE: --change-name=1:'opensbi' --typecode=1:2E54B353-1271-4842-806F-E436D6AF6985 \
-    #      --new=2:$KERNEL_START:+$KERNEL_SIZE --change-name=2:'kernel' --typecode=2:3000 \
-    #      --new=3:$FS_START:-0 --change-name=3:'filesystem' \
-    #      $1
+    sudo sgdisk -z $1
 
+    sleep 1
+    
     echo -e "$NAME: Creating GUID Partition Table"
     sudo sgdisk -g --clear --set-alignment=1 \
          --new=1:34:+$DST_SIZE: --change-name=1:'fdt' \
@@ -91,6 +96,8 @@ if [[ $REPLY =~ ^[Yy]$ ]] ; then
          $1
 
     sudo partprobe $1
+
+    sleep 3
 
     echo -e "$NAME: Copying binaries into their partitions."
     DD_FLAGS="bs=4k iflag=fullblock oflag=direct conv=fsync status=progress"
