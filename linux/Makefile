@@ -7,17 +7,20 @@ PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
 FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
 
-DTS ?= $(shell  find -type f -regex ".*\.dts" | sort)
+# Device tree file 
+DTS ?= $(shell find -type f -regex ".*\.dts" | sort)
+DTB := $(DTS:%.dts=%.dtb)
+DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
 
-.PHONY: generate cleanDriver patch
+.PHONY: generate cleanDriver patch clean
 
-# Generate device tree binaries from device tree source files
-# Currently supported fpga device tree binaries are also generated
-generate: $(DTS) $(IMAGES)
-	dtc -I dts -O dtb devicetree/wally-virt.dts > ${IMAGES}/wally-virt.dtb
-	dtc -I dts -O dtb devicetree/wally-vcu108.dts > ${IMAGES}/wally-vcu108.dtb
-	dtc -I dts -O dtb devicetree/wally-vcu118.dts > ${IMAGES}/wally-vcu118.dtb
-	dtc -I dts -O dtb devicetree/wally-vcu118.dts > ${IMAGES}/wally-artya7.dtb
+# Generate all device trees
+# TODO: Add configuration for only generating device tree for specified
+#       supported FPGA.
+generate: $(DTB)
+
+$(DTB): $(DTS)
+	dtc -I dts -O dtb $< > $@ 
 
 disassemble:
 
@@ -29,12 +32,20 @@ patch: $(BUILDROOT) $(DRIVER)
 	@ echo "Copying wally configuration files and rootfs_overlay to buildroot."
 	cp -r $(WALLYLINUX)/buildroot-config-src/wally $</board
 
-	@ echo
+	@ echo "Moving fpga-axi-sdc driver package to buildroot"
 	cp -r $(WALLYLINUX)/buildroot-packages/fpga-axi-sdc $</package
+
+	@ echo "Package variable FPGA_AXI_SDC_SITE set to: $(PACKAGE_SOURCE)"
 	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
+
+	@ echo "Copying configurations to buildroot."
 	cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/linux.config $</board/wally/linux.config
 	cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/main.config $</board/wally/main.config
+
+	@ echo "Patching buildroot directory."
 	cd $<; git apply $(WALLYLINUX)/buildroot-packages/package-2023.05.1.patch
+
+	@ echo "Copying main buildroot configuration as .config"
 	cd $<; cp $(BUILDROOT)/board/wally/main.config $(BUILDROOT)/.config
 
 $(BUILDROOT):
@@ -53,3 +64,8 @@ $(IMAGES):
 
 cleanDriver:
 	rm -f $(DRIVER)
+
+clean:
+	ls $(IMAGES)
+	rm -rf $(IMAGES)/*.dtb
+	ls $(IMAGES)
