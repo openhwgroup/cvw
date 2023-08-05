@@ -3,31 +3,53 @@ BUILDROOT := ${RISCV}/buildroot
 IMAGES := ${BUILDROOT}/output/images
 WALLY := $(shell dirname $(shell pwd))
 WALLYLINUX := $(shell pwd)
+DIS := ${IMAGES}/disassembly
+BRPACKAGES := $(WALLYLINUX)/buildroot-packages
+
+# Buildroot Config Stuff
+WALLYBOARDSRC := $(WALLYLINUX)/buildroot-config-src/wally
+WALLYBOARD := $(BUILDROOT)/board/wally
+
+# Buildroot Package Stuff
 PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
 FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
+PATCHFILE := $(BRPACKAGES)/package.patch
 
-# Device tree file 
+# Device tree files 
 DTS ?= $(shell find -type f -regex ".*\.dts" | sort)
 DTB := $(DTS:%.dts=%.dtb)
 DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
+
+# Disassembly stuff
+BINARIES := fw_jump.elf vmlinux busybox
+BINARIES := $(foreach name, $(BINARIES), $(shell find -type f -regex ".*$(name)"))
+OBJDUMPS := fw_jump.objdump vmlinux.objdump busybox.objdump
+OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name))
 
 .PHONY: generate cleanDriver patch clean
 
 # Generate all device trees
 # TODO: Add configuration for only generating device tree for specified
 #       supported FPGA.
+test:
+
 generate: $(DTB)
 
 $(DTB): $(DTS)
 	dtc -I dts -O dtb $< > $@ 
 
 disassemble:
+	mkdir -p $(DIS)
+	make -j $(OBJDUMPS)
+
+$(OBJDUMPS): $(BINARIES) 
+	riscv64-unknown-elf-objdump -DS $< >> $@
 
 # Generating new Buildroot directories --------------------------------
 
-# This directive should be run as: make patch BUILDROOT=path/to/buildroot
-patch: $(BUILDROOT) $(DRIVER)
+# This directive should be run as: make newbr BUILDROOT=path/to/buildroot
+newbr: $(BUILDROOT) $(DRIVER)
 	@ echo "Patching buildroot directory at: $<"
 	@ echo "Copying wally configuration files and rootfs_overlay to buildroot."
 	cp -r $(WALLYLINUX)/buildroot-config-src/wally $</board
@@ -39,22 +61,47 @@ patch: $(BUILDROOT) $(DRIVER)
 	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
 
 	@ echo "Copying configurations to buildroot."
-	cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/linux.config $</board/wally/linux.config
-	cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/main.config $</board/wally/main.config
+	# cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/linux.config $</board/wally/linux.config
+	# cp $(WALLYLINUX)/buildroot-config-src/buildroot-2023.05.1/main.config $</board/wally/main.config
+
+	cp $(BRPACKAGES)/linux.config $</board/wally/linux.config
+	cp $(BRPACKAGES)/wally.config $</board/wally/main.config
 
 	@ echo "Patching buildroot directory."
-	cd $<; git apply $(WALLYLINUX)/buildroot-packages/package-2023.05.1.patch
+	# cd $<; git apply $(WALLYLINUX)/buildroot-packages/package-2023.05.1.patch
+	cd $<; git apply $(WALLYLINUX)/buildroot-packages/package.patch
 
 	@ echo "Copying main buildroot configuration as .config"
 	cd $<; cp $(BUILDROOT)/board/wally/main.config $(BUILDROOT)/.config
 
+patch: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)/main.config $(WALLYBOARD)/linux.config
+
+# CONFIG DEPENDENCIES 2021.05 -----------------------------------------
+$(WALLYBOARD)/main.config: $(WALLYBOARD) $(BRPACKAGES)/wally.config
+	cp $(BRPACKAGES)/wally.config $@
+
+$(WALLYBOARD)/linux.config: $(WALLYBOARD) $(BRPACKAGES)/linux.config
+	cp $(BRPACKAGES)/linux.config $@
+
+$(WALLYBOARD): $(BUILDROOT)
+	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
+
+# Buildroot Package ---------------------------------------------------
+$(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
+	cp -r $(BRPACKAGES)/fpga-axi-sdc $(BUILDROOT)/package
+	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
+	cd $(BUILDROOT); git apply $(PATCHFILE)
+
 $(BUILDROOT):
 	git clone https://github.com/buildroot/buildroot.git $@
-	cd $@; git checkout 2023.05.x
+	# cd $@; git checkout 2023.05.x
+	cd $@; git checkout 2021.05
 
 $(DRIVER):
 	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
 	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
+	# For 2021.05
+	sed "s|card_hw_reset|hw_reset|1" ../addins/vivado-riscv/patches/fpga-axi-sdc.c
 
 $(IMAGES):
 	@ echo "No output/images directory in buildroot."
@@ -68,4 +115,5 @@ cleanDriver:
 clean:
 	ls $(IMAGES)
 	rm -rf $(IMAGES)/*.dtb
+	rm -rf $(DIS)
 	ls $(IMAGES)
