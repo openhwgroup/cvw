@@ -70,7 +70,7 @@ $(WALLYBOARD): $(BUILDROOT)
 $(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
 	cp -r $(BRPACKAGES)/fpga-axi-sdc $(BUILDROOT)/package
 	sed -i 's|FPGA_AXI_SDC_SITE =|FPGA_AXI_SDC_SITE = $(PACKAGE_SOURCE)|1' $(BUILDROOT)/package/fpga-axi-sdc/fpga-axi-sdc.mk
-	cd $(BUILDROOT); git apply $(PATCHFILE)
+	cd $(BUILDROOT); if git apply --check $(PATCHFILE) > /dev/null ; then git apply $(PATCHFILE); fi
 
 $(PATCHFILE):
 	cd $(BUILDROOT); git apply $(PATCHFILE)
