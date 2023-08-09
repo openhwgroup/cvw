@@ -23,37 +23,48 @@ DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
 
 # Disassembly stuff
 BINARIES := fw_jump.elf vmlinux busybox
-BINARIES := $(foreach name, $(BINARIES), $(shell find -type f -regex ".*$(name)"))
+BINARIES := $(foreach name, $(BINARIES), $(IMAGES)/$(name))
+#BINARIES := $(foreach name, $(BINARIES), $(shell find -type f -regex ".*$(name)"))
 OBJDUMPS := fw_jump.objdump vmlinux.objdump busybox.objdump
 OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name))
 
-.PHONY: generate cleanDriver patch clean
+.PHONY: generate disassemble install clean cleanDTB cleanDriver
 
-# Generate all device trees
+# Generate all device trees -------------------------------------------
 # TODO: Add configuration for only generating device tree for specified
 #       supported FPGA.
-test:
 
-generate: $(DTB)
+generate: $(DTB) $(IMAGES)
 
-$(DTB): $(DTS) $(IMAGES)
+$(IMAGES)/%.dtb: ./devicetree/%.dts
 	dtc -I dts -O dtb $< > $@
 
 $(IMAGES):
 	@ echo "No output/images directory in buildroot."
 	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."; exit 1
 
+# Disassembly rules ---------------------------------------------------
+
 disassemble:
 	mkdir -p $(DIS)
 	make -j $(OBJDUMPS)
 
-$(OBJDUMPS): $(BINARIES) 
+$(DIS)/%.objdump: $(IMAGES)/%.elf
 	riscv64-unknown-elf-objdump -DS $< >> $@
+
+$(DIS)/%.objdump: $(IMAGES)/%
+	riscv64-unknown-elf-objdump -S $< >> $@
+
+$(IMAGES)/vmlinux: $(BUILDROOT)/output/build/linux-5.10.7/vmlinux
+	cp $< $@
+
+$(IMAGES)/busybox: $(BUILDROOT)/output/build/busybox-1.33.0/busybox
+	cp $< $@
 
 # Generating new Buildroot directories --------------------------------
 
-# This directive should be run as: make patch BUILDROOT=path/to/buildroot
-patch: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)/main.config $(WALLYBOARD)/linux.config $(DRIVER)
+# This directive should be run as: make install BUILDROOT=path/to/buildroot
+install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)/main.config $(WALLYBOARD)/linux.config $(DRIVER)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2021.05 -----------------------------------------
@@ -90,6 +101,9 @@ $(DRIVER):
 
 cleanDriver:
 	rm -f $(DRIVER)
+
+cleanDTB:
+	rm -f $(IMAGES)/*.dtb
 
 clean:
 	ls $(IMAGES)
