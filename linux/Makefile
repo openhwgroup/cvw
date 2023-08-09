@@ -23,16 +23,24 @@ DTB := $(foreach name, $(DTB), $(IMAGES)/$(shell basename $(name)))
 
 # Disassembly stuff
 BINARIES := fw_jump.elf vmlinux busybox
-BINARIES := $(foreach name, $(BINARIES), $(IMAGES)/$(name))
-#BINARIES := $(foreach name, $(BINARIES), $(shell find -type f -regex ".*$(name)"))
-OBJDUMPS := fw_jump.objdump vmlinux.objdump busybox.objdump
-OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name))
+OBJDUMPS := $(foreach name, $(BINARIES), $(basename $(name) .elf))
+OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 
-.PHONY: generate disassemble install clean cleanDTB cleanDriver
+.PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
 # Generate all device trees -------------------------------------------
 # TODO: Add configuration for only generating device tree for specified
 #       supported FPGA.
+
+all:
+	$(MAKE) install
+	make -C $(BUILDROOT) --jobs
+	$(MAKE) generate
+	# TODO: Need to find a way to set the PATH for child processes.
+	# source ../setup.sh; $(MAKE) disassemble
+
+test:
+	@echo $(OBJDUMPS)
 
 generate: $(DTB) $(IMAGES)
 
@@ -42,6 +50,10 @@ $(IMAGES)/%.dtb: ./devicetree/%.dts
 $(IMAGES):
 	@ echo "No output/images directory in buildroot."
 	@ echo "Run make --jobs in buildroot directory before generating device tree binaries."; exit 1
+
+$(RISCV):
+	@ echo "ERROR: No $(RISCV) directory. Make sure you have installed the Wally Toolchain."
+	@ echo "this can be done with <WALLY>/bin/wally-tool-chain-install.sh"
 
 # Disassembly rules ---------------------------------------------------
 
@@ -64,18 +76,20 @@ $(IMAGES)/busybox: $(BUILDROOT)/output/build/busybox-1.33.0/busybox
 # Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make install BUILDROOT=path/to/buildroot
-install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)/main.config $(WALLYBOARD)/linux.config $(DRIVER)
+install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD) $(DRIVER)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2021.05 -----------------------------------------
-$(WALLYBOARD)/main.config: $(WALLYBOARD) $(BRPACKAGES)/wally.config
-	cp $(BRPACKAGES)/wally.config $@
+# $(WALLYBOARD)/main.config: $(WALLYBOARD) $(BRPACKAGES)/wally.config
+# 	cp $(BRPACKAGES)/wally.config $@
 
-$(WALLYBOARD)/linux.config: $(WALLYBOARD) $(BRPACKAGES)/linux.config
-	cp $(BRPACKAGES)/linux.config $@
+# $(WALLYBOARD)/linux.config: $(BRPACKAGES)/linux.config $(WALLYBOARD)
+# 	cp $(BRPACKAGES)/linux.config $@
 
 $(WALLYBOARD): $(BUILDROOT)
 	cp -r $(WALLYBOARDSRC) $(BUILDROOT)/board
+	cp $(BRPACKAGES)/wally.config $(WALLYBOARD)/main.config
+	cp $(BRPACKAGES)/linux.config $(WALLYBOARD)/linux.config
 
 # Buildroot Package ---------------------------------------------------
 $(BUILDROOT)/package/fpga-axi-sdc: $(BUILDROOT) $(PATCHFILE) $(BRPACKAGES)/fpga-axi-sdc
