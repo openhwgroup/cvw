@@ -39,6 +39,7 @@ all:
 	# TODO: Need to find a way to set the PATH for child processes.
 	# source ../setup.sh; $(MAKE) disassemble
 
+# Temp rule for debugging
 test:
 	@echo $(OBJDUMPS)
 
@@ -120,7 +121,4 @@ cleanDTB:
 	rm -f $(IMAGES)/*.dtb
 
 clean:
-	ls $(IMAGES)
-	rm -rf $(IMAGES)/*.dtb
 	rm -rf $(DIS)
-	ls $(IMAGES)
