@@ -27,6 +27,18 @@ The device tree files for the various FPGA's Wally supports, as well as QEMU's d
     Or for the default buildroot location:
     
     $ make generate 
+    
+The .dts files will end up in the `<BUILDROOT>/output/images` folder of your chosen buildroot directory.
+
+## Disassembling the Binaries for Debugging
+
+By using the `riscv64-unknown-elf-objdump` utility, we can disassemble the binaries in `<BUILDROOT>/output/images` so that we can explore the resulting machine code instructions and see what assembly or C code the instructions came from, along with the corresponding addresses. This is useful during debugging in order to trace how code is being executed.
+
+To create the disassembled binaries, run:
+
+    $ make disassemble BUILDROOT=path/to/buildroot
+    
+You'll find the resulting disassembled files in `<BUILDROOT>/output/images/disassembly`.
 
 ## Creating a Bootable SD Card
 
