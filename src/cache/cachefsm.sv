@@ -40,6 +40,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic [1:0] CacheAtomic,       // Atomic operation
   input  logic       FlushCache,        // Flush all dirty lines back to memory
   input  logic       InvalidateCache,   // Clear all valid bits
+  input  logic [3:0] CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   // Bus controls
   input  logic       CacheBusAck,       // Bus operation completed
   output logic [1:0] CacheBusRW,        // [1] Read (cache line fetch) or [0] write bus (cache line writeback)
@@ -54,8 +55,9 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   input  logic       FlushWayFlag,      // On the last way for any set of a cache flush
   output logic       SelAdr,            // [0] SRAM reads from NextAdr, [1] SRAM reads from PAdr
   output logic       SetValid,          // Set the valid bit in the selected way and set
-  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
+  output logic       ClearValid,        // Clear the valid bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
+  output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
@@ -140,6 +142,13 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE;
+
+  // *** fix param later
+  //if (P.ZICBOM_SUPPORTED)
+  assign ClearValid = (CurrState == STATE_READY & CMOp[0]) |
+                      (CurrState == STATE_WRITEBACK & CMOp[1]);
+  // *** end of fix me
+
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
@@ -147,8 +156,9 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |         // exclusion-tag: icache SetDirty
                     (CurrState == STATE_WRITE_LINE & (CacheRW[0]));
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
-                      (CurrState == STATE_FLUSH & LineDirty); // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
+                      (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
+                      (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | CMOp[3])); // *** fix me param
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
 

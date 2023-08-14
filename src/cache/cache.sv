@@ -38,6 +38,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic [1:0]             CacheAtomic,       // Atomic operation
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
+  input  logic [3:0]             CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
@@ -75,7 +76,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [1:0]                    AdrSelMuxSel;
   logic [SETLEN-1:0]             CacheSet;
   logic [LINELEN-1:0]            LineWriteData;
-  logic                          ClearDirty, SetDirty, SetValid;
+  logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
   logic                          CacheHit;
@@ -215,8 +216,8 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, 
-    .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-    .InvalidateCache, .CacheEn, .LRUWriteEn);
+    .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
 endmodule 
