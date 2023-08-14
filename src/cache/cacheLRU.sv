@@ -31,6 +31,7 @@ module cacheLRU
   #(parameter NUMWAYS = 4, SETLEN = 9, OFFSETLEN = 5, NUMLINES = 128) (
   input  logic                clk, 
   input  logic                reset,
+  input  logic                FlushStage,
   input  logic                CacheEn,         // Enable the cache memory arrays.  Disable hold read data constant
   input  logic [NUMWAYS-1:0]  HitWay,          // Which way is valid and matches PAdr's tag
   input  logic [NUMWAYS-1:0]  ValidWay,        // Which ways for a particular set are valid, ignores tag
@@ -38,6 +39,7 @@ module cacheLRU
   input  logic [SETLEN-1:0]   PAdr,            // Physical address 
   input  logic                LRUWriteEn,      // Update the LRU state
   input  logic                SetValid,        // Set the dirty bit in the selected way and set
+  input  logic                ClearValid,      // Clear the dirty bit in the selected way and set
   input  logic                InvalidateCache, // Clear all valid bits
   input  logic                FlushCache,      // Flush all dirty lines back to memory
   output logic [NUMWAYS-1:0]  VictimWay        // LRU selects a victim to evict
@@ -138,9 +140,11 @@ module cacheLRU
   // This is a two port memory.
   // Every cycle must read from CacheSet and each load/store must write the new LRU.
   always_ff @(posedge clk) begin
-    if (reset) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
+    if (reset | (InvalidateCache & ~FlushStage)) for (int set = 0; set < NUMLINES; set++) LRUMemory[set] <= '0;
     if(CacheEn) begin
-      if(LRUWriteEn)
+      if(ClearValid & ~FlushStage)
+        LRUMemory[PAdr] <= '0;
+      else if(LRUWriteEn)
         LRUMemory[PAdr] <= NextLRU;
       if(LRUWriteEn & (PAdr == CacheSet))
         CurrLRU <= #1 NextLRU;
