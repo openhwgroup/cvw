@@ -276,7 +276,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
-        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOp(CMOpM));
       
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
