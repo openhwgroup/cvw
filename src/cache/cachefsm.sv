@@ -27,7 +27,8 @@
 // and limitations under the License.
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
-module cachefsm #(parameter READ_ONLY_CACHE = 0) (
+module cachefsm import cvw::*; #(parameter cvw_t P,
+                                 parameter READ_ONLY_CACHE = 0) (
   input  logic       clk,
   input  logic       reset,
   // hazard and privilege unit
@@ -110,9 +111,10 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss) /* & LineDirty */                NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if(AnyMiss | CMOp[2] | CMOp[3]) /* & LineDirty */NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
-      STATE_FETCH:           if(CacheBusAck)                                   NextState = STATE_WRITE_LINE;
+      STATE_FETCH:           if(CacheBusAck & ~(CMOp[2] | CMOp[3])))           NextState = STATE_WRITE_LINE;
+                             else (CacheBusAck) /* CMOp[2] | CMOp[3] */        NextState = STATE_READY;
                              else                                              NextState = STATE_FETCH;
       STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
@@ -142,13 +144,8 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE;
-
-  // *** fix param later
-  //if (P.ZICBOM_SUPPORTED)
-  assign ClearValid = (CurrState == STATE_READY & CMOp[0]) |
-                      (CurrState == STATE_WRITEBACK & CMOp[1]);
-  // *** end of fix me
-
+  assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0]) |
+                      (CurrState == STATE_WRITEBACK & CMOp[1]));
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
@@ -158,7 +155,7 @@ module cachefsm #(parameter READ_ONLY_CACHE = 0) (
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
-                      (CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | CMOp[3])); // *** fix me param
+                      (P.ZICBOM_SUPPORTED & CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | CMOp[3])); 
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
 
