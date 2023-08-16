@@ -40,19 +40,21 @@ def probeBits( probe ):
             else:
                 str = str + f"{{{probe[0]}[{i}]}} "
 
-        else:
-            str = f'{{{probe[0]}}}'
+    else:
+        str = f'{{{probe[0]}}}'
 
     return str
 
 def printProbe( probe, i ):
     bits = probeBits(probe)
 
+    print(bits)
+
     return (
-            f'create_debug_port u_ila_0 probe\n'
-            f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{i}]\n'
-            f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{i}]\n'
-            f'connect_debug_port u_ila_0/probe{i} [get_nets [list {bits}]]\n\n'
+        f'create_debug_port u_ila_0 probe\n'
+        f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{i}]\n'
+        f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{i}]\n'
+        f'connect_debug_port u_ila_0/probe{i} [get_nets [list {bits}]]\n\n'
     )
 
 def main(args):
