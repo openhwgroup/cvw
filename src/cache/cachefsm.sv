@@ -120,7 +120,8 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
-      STATE_WRITEBACK:       if(CacheBusAck)                                   NextState = STATE_FETCH;
+      STATE_WRITEBACK:       if(CacheBusAck & (CMop[2] | CMOp[3]))             NextState = STATE_READY;
+                             else if(CacheBusAck)                              NextState = STATE_FETCH;
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
       STATE_FLUSH:           if(LineDirty)                                     NextState = STATE_FLUSH_WRITEBACK;
