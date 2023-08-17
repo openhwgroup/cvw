@@ -98,7 +98,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          CacheEn;
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
-
+  logic                                                   ZeroCacheLine;
+  logic [LINELEN-1:0]                                     PreLineWriteData;
   genvar                         index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -116,7 +117,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
     .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .ZeroCacheLine, .SelWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
@@ -160,6 +161,11 @@ module cache import cvw::*; #(parameter cvw_t P,
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
+  if(P.ZICBOZ_SUPPORTED) begin : cboz_supported
+    mux2 #(LINELEN) WriteDataMux(FetchBuffer, '0, ZeroCacheLine, PreLineWriteData);
+  end else begin
+    assign PreLineWriteData = FetchBuffer;
+  end
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
@@ -174,14 +180,14 @@ module cache import cvw::*; #(parameter cvw_t P,
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+        .d1(PreLineWriteData[8*index+7:8*index]), .s(FetchBufferByteSel[index] | ZeroCacheLine), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
   else
     begin:WriteSelLogic
       // No need for this mux if the cache does not handle writes.
-      assign LineWriteData = FetchBuffer;
+      assign LineWriteData = PreLineWriteData;
       assign LineByteMask = '1;
     end
   
@@ -216,7 +222,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, 
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);

@@ -59,6 +59,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   output logic       ClearValid,        // Clear the valid bit in the selected way and set
   output logic       SetDirty,          // Set the dirty bit in the selected way and set
   output logic       ClearDirty,        // Clear the dirty bit in the selected way and set
+  output logic       ZeroCacheLine,     // Write zeros to all bytes of cacheline
   output logic       SelWriteback,      // Overrides cached tag check to select a specific way and set for writeback
   output logic       LRUWriteEn,        // Update the LRU state
   output logic       SelFlush,          // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
@@ -113,14 +114,14 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
                              else if(AnyMiss | CMOp[2] | CMOp[3]) /* & LineDirty */NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
-      STATE_FETCH:           if(CacheBusAck & ~(CMOp[2] | CMOp[3])))           NextState = STATE_WRITE_LINE;
-                             else (CacheBusAck) /* CMOp[2] | CMOp[3] */        NextState = STATE_READY;
+      STATE_FETCH:           if(CacheBusAck & ~(CMOp[2] | CMOp[3]))            NextState = STATE_WRITE_LINE;
+                             else if(CacheBusAck) /* CMOp[2] | CMOp[3] */      NextState = STATE_READY;
                              else                                              NextState = STATE_FETCH;
       STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
-      STATE_WRITEBACK:       if(CacheBusAck & (CMop[2] | CMOp[3]))             NextState = STATE_READY;
+      STATE_WRITEBACK:       if(CacheBusAck & (CMOp[2] | CMOp[3]))             NextState = STATE_READY;
                              else if(CacheBusAck)                              NextState = STATE_FETCH;
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
@@ -144,19 +145,20 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                       (CurrState == STATE_FLUSH) |
                       (CurrState == STATE_FLUSH_WRITEBACK);
   // write enables internal to cache
-  assign SetValid = CurrState == STATE_WRITE_LINE;
+  assign SetValid = CurrState == STATE_WRITE_LINE | (CurrState == STATE_READY & CMOp[3]);
   assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0]) |
                       (CurrState == STATE_WRITEBACK & CMOp[1]));
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
   // exclusion-tag-start: icache flushdirtycontrols
-  assign SetDirty = (CurrState == STATE_READY & AnyUpdateHit) |         // exclusion-tag: icache SetDirty
+  assign SetDirty = (CurrState == STATE_READY & (AnyUpdateHit | CMOp[3])) |         // exclusion-tag: icache SetDirty
                     (CurrState == STATE_WRITE_LINE & (CacheRW[0]));
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
-                      (P.ZICBOM_SUPPORTED & CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | CMOp[3])); 
+                      (P.ZICBOM_SUPPORTED & CurrState == STATE_WRITEBACK & (CMOp[1] | CMOp[2] | CMOp[3]));
+  assign ZeroCacheLine = CurrState == STATE_READY & CMOp[3];
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);
 
