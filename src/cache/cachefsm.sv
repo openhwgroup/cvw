@@ -182,7 +182,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
                           (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                      (CurrState == STATE_FLUSH_WRITEBACK & ~CacheBusAck);
 
-  assign SelAdr = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss)) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
+  assign SelAdr = (CurrState == STATE_READY & (CacheRW[0] | AnyMiss | (|CMOp))) | // exclusion-tag: icache SelAdrCauses // changes if store delay hazard removed
                   (CurrState == STATE_FETCH) |
                   (CurrState == STATE_WRITEBACK) |
                   (CurrState == STATE_WRITE_LINE) |
