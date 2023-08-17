@@ -40,6 +40,7 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
+  input  logic                        ZeroCacheLine,  // Write zeros to all bytes of a cache line
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
   input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
   input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
@@ -75,7 +76,13 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               ClearDirtyWay;
   logic                               SelNonHit;
   logic                               SelData;
-
+  logic                               SelNotHit2;
+  
+  if (P.ZICBOM_SUPPORTED) begin : cbologic
+    assign SelNotHit2 = SetValid & ~(ZeroCacheLine & HitWay);
+  end else begin : cbologic
+    assign SelNotHit2 = SetValid;
+  end
 
   if (!READ_ONLY_CACHE) begin:flushlogic
     logic                               FlushWayEn;
@@ -86,10 +93,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
     // coverage off -item e 1 -fecexprrow 3
     // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
     assign FlushWayEn = FlushWay & SelFlush;
-    assign SelNonHit = FlushWayEn | SetValid | SelWriteback;
+    assign SelNonHit = FlushWayEn | SelNotHit2 | SelWriteback;
   end else begin:flushlogic // no flush operation for read-only caches.
     assign SelTag = VictimWay;
-    assign SelNonHit = SetValid;
+    assign SelNonHit = SelNotHit2;
   end
 
   mux2 #(1) selectedwaymux(HitWay, SelTag, SelNonHit , SelData);
