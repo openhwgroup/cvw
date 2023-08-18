@@ -185,7 +185,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
   if(P.ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
+    logic WriteAccessM;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
+    assign WriteAccessM = PreLSURWM[0] | (|CMOpM);
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
@@ -197,7 +199,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .UpdateDA(DataUpdateDAM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
-      .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
+      .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin  // No MMU, so no PMA/page faults and no address translation
