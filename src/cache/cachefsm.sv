@@ -157,7 +157,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign SetValid = CurrState == STATE_WRITE_LINE | 
                     (CurrState == STATE_READY & CMOp[3]); // *** RT: NOT completely right has to be a hit
   assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0]) |
-                      (CurrState == STATE_CMO_DONE & CMOp[2]));
+                      (CurrState == STATE_CMO_WRITEBACK & CMOp[2] & CacheBusAck));
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
                       (CurrState == STATE_WRITE_LINE) & ~FlushStage;
@@ -167,7 +167,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   assign ClearDirty = (CurrState == STATE_WRITE_LINE & ~(CacheRW[0])) |   // exclusion-tag: icache ClearDirty
                       (CurrState == STATE_FLUSH & LineDirty) | // This is wrong in a multicore snoop cache protocal.  Dirty must be cleared concurrently and atomically with writeback.  For single core cannot clear after writeback on bus ack and change flushadr.  Clears the wrong set.
   // Flush and eviction controls
-                      (P.ZICBOM_SUPPORTED & CurrState == STATE_CMO_DONE & (CMOp[1] | CMOp[2]));
+                      (P.ZICBOM_SUPPORTED & CurrState == STATE_CMO_WRITEBACK & (CMOp[1] | CMOp[2]) & CacheBusAck);
   assign ZeroCacheLine = CurrState == STATE_READY & CMOp[3];  // *** RT: NOT completely right
   assign SelWriteback = (CurrState == STATE_WRITEBACK & ~CacheBusAck) |
                     (CurrState == STATE_READY & AnyMiss & LineDirty);

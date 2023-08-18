@@ -264,6 +264,77 @@ CBOMTest_clean_step9_check_all:
         sd a0, 0(s0)     # should be -1
         addi s0, s0, 8
 
+        ################################################################################
+        # Flush D$ line
+        ################################################################################
+
+        # theory of operation
+        # 1. Read several cachelines of data from memory into the d cache and copy to a second region of memory
+        # 2. Then verify the second region has the same data
+        # 3. For flush there is no way to create a negative control. We will flush 1 cache line
+        # 4. Verify whole region
+        # 5. Flush the remaining lines
+        # 6. Verify whole region
+
+        # step 1
+CBOMTest_flush_step1: 
+        la a0, SourceData
+        la a1, Destination3
+        li a2, 64
+        jal ra, memcpy8
+
+        # step 2 All should be valid
+CBOMTest_flush_step2_verify:
+        la a0, SourceData
+        la a1, Destination3
+        li a2, 64
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+
+        # step 3 # flush 1 line
+CBOMTest_flush_step3:
+        la a1, Destination3
+        cbo.flush (a1)
+
+        # step 4 
+CBOMTest_flush_step4_verify:
+        la a0, SourceData
+        la a1, Destination3
+        li a2, 64
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+
+        # step 5
+CBOMTest_flush_step5_flush_all:
+        la a1, Destination3
+        cbo.flush (a1)
+        la a1, Destination3+64
+        cbo.flush (a1)
+        la a1, Destination3+128
+        cbo.flush (a1)
+        la a1, Destination3+192
+        cbo.flush (a1)
+        la a1, Destination3+256
+        cbo.flush (a1)
+        la a1, Destination3+320
+        cbo.flush (a1)
+        la a1, Destination3+384
+        cbo.flush (a1)
+        la a1, Destination3+448
+        cbo.flush (a1)
+	
+        # step 6
+CBOMTest_flush_step6_verify:
+        la a0, SourceData
+        la a1, Destination3
+        li a2, 64
+        jal ra, memcmp8
+        sd a0, 0(s0)     # should be -1
+        addi s0, s0, 8
+        
+
         ld s0, 0(sp)
         ld ra, 8(sp)
         addi sp, sp, 16
@@ -349,3 +420,8 @@ Destination4:
 signature:
         .fill 16, 8, 0x0bad0bad0bad0bad
 
+
+ExceptedSignature:
+        .fill 13, 8, 0xFFFFFFFFFFFFFFFF
+        .fill 3,  8, 0x0bad0bad0bad0bad
+        
