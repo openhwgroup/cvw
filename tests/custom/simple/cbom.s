@@ -156,6 +156,15 @@ CBOMTest_clean_step3:
         cbo.inval (a1)
         la a1, Destination2+448
         cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
+        cbo.inval (a1)
 
         # step 4 All should be invalid
 CBOMTest_clean_step4:
@@ -234,6 +243,14 @@ CBOMTest_clean_step6_clean_all:
         la a1, Destination2+384
         cbo.clean (a1)
         la a1, Destination2+448
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
+        cbo.clean (a1)
         cbo.clean (a1)
 	
         # step 8 # invalidate all remaining
@@ -323,6 +340,11 @@ CBOMTest_flush_step5_flush_all:
         la a1, Destination3+384
         cbo.flush (a1)
         la a1, Destination3+448
+        cbo.flush (a1)
+        cbo.flush (a1)
+        cbo.flush (a1)
+        cbo.flush (a1)
+        cbo.flush (a1)
         cbo.flush (a1)
 	
         # step 6
