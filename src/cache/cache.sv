@@ -90,6 +90,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [NUMWAYS-1:0]            FlushWay, NextFlushWay;
   logic                          FlushWayCntEn;
   logic                          SelWriteback;
+  logic                          SelCMOWriteback;
+  logic                          SelBothWriteback;
   logic                          LRUWriteEn;
   logic                          SelFlush;
   logic                          ResetOrFlushCntRst;
@@ -116,8 +118,8 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .ZeroCacheLine, .SelWriteback, .VictimWay,
+    .clk, .reset, .CacheEn, .CMOp, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .ZeroCacheLine, .SelWriteback, .SelCMOWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
@@ -153,10 +155,11 @@ module cache import cvw::*; #(parameter cvw_t P,
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
   // Bus address for fetch, writeback, or flush writeback
+  assign SelBothWriteback = SelWriteback | SelCMOWriteback;
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .s({SelFlush, SelBothWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
@@ -222,7 +225,7 @@ module cache import cvw::*; #(parameter cvw_t P,
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, 
-    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelCMOWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
     .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
