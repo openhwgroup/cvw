@@ -146,7 +146,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & (CurrState == STATE_READ_HOLD | CurrState == STATE_CMO_DONE));
-  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | CMOp[1] | CMOp[2])) | // exclusion-tag: icache StallStates
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | ((CMOp[1] | CMOp[2]) & CacheHit))) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
                       (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
