@@ -112,16 +112,16 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
       STATE_READY:           if(InvalidateCache)                               NextState = STATE_READY;     // exclusion-tag: dcache InvalidateCheck
                              else if(FlushCache & ~READ_ONLY_CACHE)            NextState = STATE_FLUSH;
                              else if(AnyMiss & (READ_ONLY_CACHE | ~LineDirty)) NextState = STATE_FETCH;     // exclusion-tag: icache FETCHStatement
-                             else if(AnyMiss | CMOp[2] | CMOp[3]) /* & LineDirty */NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
+                             else if(AnyMiss | CMOp[1] | CMOp[2]) /* & LineDirty */NextState = STATE_WRITEBACK; // exclusion-tag: icache WRITEBACKStatement
                              else                                              NextState = STATE_READY;
-      STATE_FETCH:           if(CacheBusAck & ~(CMOp[2] | CMOp[3]))            NextState = STATE_WRITE_LINE;
-                             else if(CacheBusAck) /* CMOp[2] | CMOp[3] */      NextState = STATE_READY;
+      STATE_FETCH:           if(CacheBusAck & ~(CMOp[1] | CMOp[2]))            NextState = STATE_WRITE_LINE;
+                             else if(CacheBusAck) /* CMOp[1] | CMOp[2] */      NextState = STATE_READY;
                              else                                              NextState = STATE_FETCH;
       STATE_WRITE_LINE:                                                        NextState = STATE_READ_HOLD;
       STATE_READ_HOLD:       if(Stall)                                         NextState = STATE_READ_HOLD;
                              else                                              NextState = STATE_READY;
       // exclusion-tag-start: icache case
-      STATE_WRITEBACK:       if(CacheBusAck & (CMOp[2] | CMOp[3]))             NextState = STATE_READY;
+      STATE_WRITEBACK:       if(CacheBusAck & (CMOp[1] | CMOp[2]))             NextState = STATE_READ_HOLD;
                              else if(CacheBusAck)                              NextState = STATE_FETCH;
                              else                                              NextState = STATE_WRITEBACK;
       // eviction needs a delay as the bus fsm does not correctly handle sending the write command at the same time as getting back the bus ack.
@@ -138,7 +138,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
 
   // com back to CPU
   assign CacheCommitted = (CurrState != STATE_READY) & ~(READ_ONLY_CACHE & CurrState == STATE_READ_HOLD);
-  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss)) | // exclusion-tag: icache StallStates
+  assign CacheStall = (CurrState == STATE_READY & (FlushCache | AnyMiss | CMOp[1] | CMOp[2])) | // exclusion-tag: icache StallStates
                       (CurrState == STATE_FETCH) |
                       (CurrState == STATE_WRITEBACK) |
                       (CurrState == STATE_WRITE_LINE) |  // this cycle writes the sram, must keep stalling so the next cycle can read the next hit/miss unless its a write.
