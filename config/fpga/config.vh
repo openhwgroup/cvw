@@ -112,7 +112,7 @@ localparam logic [63:0] UNCORE_RAM_RANGE =      64'h00000FFF;
 
 localparam EXT_MEM_SUPPORTED = 1'b1;
 localparam logic [63:0] EXT_MEM_BASE =       64'h80000000;
-localparam logic [63:0] EXT_MEM_RANGE =      64'h07FFFFFF;
+localparam logic [63:0] EXT_MEM_RANGE =      64'h0FFFFFFF;
 
 localparam CLINT_SUPPORTED = 1'b1;
 localparam logic [63:0] CLINT_BASE =  64'h02000000;
@@ -130,14 +130,9 @@ localparam PLIC_SUPPORTED = 1'b1;
 localparam logic [63:0] PLIC_BASE =   64'h0C000000;
 localparam logic [63:0] PLIC_RANGE =  64'h03FFFFFF;
 
-localparam SDC_SUPPORTED = 1'b0;
-localparam logic [63:0] SDC_BASE =   64'h00012100;
-localparam logic [63:0] SDC_RANGE =  64'h0000001F;
-
-// Temporary Boot Process Stuff
-localparam  SDC2_SUPPORTED = 1'b1;
-localparam logic [63:0] SDC2_BASE =  64'h00013000;
-localparam logic [63:0] SDC2_RANGE = 64'h0000007F;
+localparam  SDC_SUPPORTED = 1'b1;
+localparam logic [63:0] SDC_BASE =  64'h00013000;
+localparam logic [63:0] SDC_RANGE = 64'h0000007F;
 
 // Test modes
 
@@ -177,4 +172,4 @@ localparam ZBS_SUPPORTED = 1;
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
-`include "test-shared.vh"
+`include "config-shared.vh"

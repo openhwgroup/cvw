@@ -44,7 +44,7 @@ DIRS = $(DIRS32) $(DIRS64)
 # bpred:
 # 	@$(foreach kval, $(k), rm -rf $(CONFIGDIR)/rv64gc_bpred_$(kval);)
 # 	@$(foreach kval, $(k), cp -r $(CONFIGDIR)/rv64gc $(CONFIGDIR)/rv64gc_bpred_$(kval);)
-# 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/wally-config.vh;)
+# 	@$(foreach kval, $(k), sed -i 's/BPRED_SIZE.*/BPRED_SIZE $(kval)/g' $(CONFIGDIR)/rv64gc_bpred_$(kval)/config.vh;)
 # 	@$(foreach kval, $(k), make synth DESIGN=wallypipelinedcore CONFIG=rv64gc_bpred_$(kval) TECH=sky90 FREQ=500 MAXCORES=4 --jobs;)
 
 configs: $(CONFIG)
@@ -55,11 +55,11 @@ $(CONFIG):
 
 # adjust DTIM and IROM to reasonable values depending on config	
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/config.vh
 else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/DTIM_RANGE.*/DTIM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/config.vh
+	sed -i "s/IROM_RANGE.*/IROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/config.vh
 else 
     $(info $(CONFIG) does not exist in $(DIRS32) or $(DIRS64))
     @echo "Config not in list, RAM_RANGE will be unmodified"
@@ -67,18 +67,18 @@ endif
 
 # if USESRAM = 1, set that in the config file, otherwise reduce sizes
 ifeq ($(USESRAM), 1)
-	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/USE_SRAM.*/USE_SRAM 1/g' $(CONFIGDIR)/config.vh
 else
-	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/wally-config.vh
-	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/wally-config.vh
-	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
-	sed -i 's/BTB_SIZE.*/BTB_SIZE 5/g' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES 512/g' $(CONFIGDIR)/config.vh
+	sed -i 's/NUMWAYS.*/NUMWAYS 1/g' $(CONFIGDIR)/config.vh
+	sed -i 's/BPRED_SIZE.*/BPRED_SIZE 5/g' $(CONFIGDIR)/config.vh
+	sed -i 's/BTB_SIZE.*/BTB_SIZE 5/g' $(CONFIGDIR)/config.vh
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 34\'h01FF/g" $(CONFIGDIR)/config.vh
 else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
-	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/wally-config.vh
+	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/config.vh
+	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	 56\'h01FF/g" $(CONFIGDIR)/config.vh
 endif
 endif
 	
@@ -94,20 +94,20 @@ endif
 
 ifneq ($(MOD), orig)
 	# PMP 0
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), PMP0)
 	# no priv
-	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), noPriv)
 	# turn off FPU 
-	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/wally-config.vh
-	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/config.vh
+	sed -i 's/1 *<< *5/0 << 5/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), noFPU)
 	# no muldiv
-	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/1 *<< *12/0 << 12/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), noMulDiv)
 	# no atomic
-	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/wally-config.vh
+	sed -i 's/1 *<< *0/0 << 0/' $(CONFIGDIR)/config.vh
 endif
 endif
 endif

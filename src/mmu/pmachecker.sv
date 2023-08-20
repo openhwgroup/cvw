@@ -43,7 +43,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
 
   logic                        PMAAccessFault;
   logic                        AccessRW, AccessRWX, AccessRX;
-  logic [11:0]                 SelRegions;
+  logic [10:0]                 SelRegions;
   logic                        AtomicAllowed;
 
   // Determine what type of access is being made
