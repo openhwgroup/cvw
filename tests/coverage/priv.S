@@ -92,6 +92,9 @@ sretdone:
 
     # writes to FCSR
     li t0, 1
+    slli t0, t0, 13
+    csrs mstatus, t0
+    li t0, 1
     csrw fcsr, t0
 
     # switch to supervisor mode
