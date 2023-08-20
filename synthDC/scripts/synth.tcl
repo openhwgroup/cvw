@@ -25,6 +25,7 @@ set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 
@@ -37,7 +38,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
-set my_verilog_files [glob $outputDir/hdl/*]
+set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
 set my_toplevel $::env(DESIGN)

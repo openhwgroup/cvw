@@ -59,9 +59,9 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
 
-  logic [11:0]                 HSELRegions;
+  logic [10:0]                 HSELRegions;
   logic                        HSELDTIM, HSELIROM, HSELRam, HSELCLINT, HSELPLIC, HSELGPIO, HSELUART, HSELSDC;
-  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD, HSELSDCD;
+  logic                        HSELDTIMD, HSELIROMD, HSELEXTD, HSELRamD, HSELCLINTD, HSELPLICD, HSELGPIOD, HSELUARTD;
   logic                        HRESPRam,  HRESPSDC;
   logic                        HREADYRam, HRESPSDCD;
   logic [P.XLEN-1:0]           HREADBootRom; 
@@ -88,7 +88,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   adrdecs #(P) adrdecs(HADDR, 1'b1, 1'b1, 1'b1, HSIZE[1:0], HSELRegions);
 
   // unswizzle HSEL signals
-  assign {HSELEXTSDC, HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELSDC} = HSELRegions[11:1];
+  assign {HSELDTIM, HSELIROM, HSELEXT, HSELBootRom, HSELRam, HSELCLINT, HSELGPIO, HSELUART, HSELPLIC, HSELEXTSDC} = HSELRegions[10:1];
 
   // AHB -> APB bridge
   ahbapbbridge #(P, 4) ahbapbbridge (
@@ -146,29 +146,21 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
     assign UARTSout = 0; assign UARTIntr = 0; 
   end
 
-  // eventually remove
-  assign HREADSDC = '0;
-  assign HREADYSDC = '1;
-  assign HRESPSDC = '0;
-  
   // AHB Read Multiplexer
   assign HRDATA = ({P.XLEN{HSELRamD}} & HREADRam) |
                   ({P.XLEN{HSELEXTD | HSELEXTSDCD}} & HRDATAEXT) |   
                   ({P.XLEN{HSELBRIDGED}} & HREADBRIDGE) |
-                  ({P.XLEN{HSELBootRomD}} & HREADBootRom) |
-                  ({P.XLEN{HSELSDCD}} & HREADSDC);
+                  ({P.XLEN{HSELBootRomD}} & HREADBootRom);
 
   assign HRESP = HSELRamD & HRESPRam |
                  (HSELEXTD | HSELEXTSDCD) & HRESPEXT |
                  HSELBRIDGE & HRESPBRIDGE |
-                 HSELBootRomD & HRESPBootRom |
-                 HSELSDC & HRESPSDC;     
-
+                 HSELBootRomD & HRESPBootRom;
+  
   assign HREADY = HSELRamD & HREADYRam |
 		          (HSELEXTD | HSELEXTSDCD) & HREADYEXT |		  
                   HSELBRIDGED & HREADYBRIDGE |
                   HSELBootRomD & HREADYBootRom |
-                  HSELSDCD & HREADYSDC |      
                   HSELNoneD; // don't lock up the bus if no region is being accessed
 
   // Address Decoder Delay (figure 4-2 in spec)
@@ -176,6 +168,6 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   // takes more than 1 cycle to repsond it needs to hold on to the old select until the
   // device is ready.  Hense this register must be selectively enabled by HREADY.
   // However on reset None must be seleted.
-  flopenl #(12) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions[11:0], 12'b1, {HSELEXTSDCD, HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELSDCD, HSELNoneD});
+  flopenl #(11) hseldelayreg(HCLK, ~HRESETn, HREADY, HSELRegions, 11'b1, {HSELDTIMD, HSELIROMD, HSELEXTD, HSELBootRomD, HSELRamD, HSELCLINTD, HSELGPIOD, HSELUARTD, HSELPLICD, HSELEXTSDCD, HSELNoneD});
   flopenr #(1) hselbridgedelayreg(HCLK, ~HRESETn, HREADY, HSELBRIDGE, HSELBRIDGED);
 endmodule
