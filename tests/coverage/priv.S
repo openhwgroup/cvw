@@ -90,6 +90,9 @@ sretdone:
     li a0, 3
     ecall  # machine mode again
 
+    # writes to FCSR
+    li t0, 1
+    csrw fcsr, t0
 
     # switch to supervisor mode
     li a0, 1   
