@@ -465,9 +465,6 @@ Destination2:
         .fill 128, 4, 0xdeadbeef
 Destination3:
         .fill 128, 4, 0xdeadbeef
-Destination4:
-        .fill 128, 4, 0xdeadbeef
-	
 signature:
         .fill 32, 4, 0x0bad0bad
 	
