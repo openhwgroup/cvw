@@ -12,4 +12,5 @@ void global_hist_3_space_test();
 void global_hist_4_space_test();
 void global_hist_6_space_test();
 void oneLoopTest();
+void CBOMTest();
 #endif
