@@ -444,7 +444,7 @@ SourceData:
         .int 48, 49, 50, 51, 52, 53, 54, 55
         .int 56, 57, 58, 59, 60, 61, 62, 63
         .int 64, 65, 66, 67, 68, 69, 70, 71
-        .int 72, 73, 74, 75, 76, 77, 79, 79
+        .int 72, 73, 74, 75, 76, 77, 78, 79
         .int 80, 81, 82, 83, 84, 85, 86, 87
         .int 88, 89, 90, 91, 92, 93, 94, 95
         .int 96, 97, 98, 99, 100, 101, 102, 103
@@ -458,7 +458,7 @@ RVMODEL_DATA_BEGIN
         .fill 28, 4, 0xdeadbeef   # this is annoying, but RVMODEL_DATA_END and BEGIN insert
         # 4 bytes.  This needs to be aligned to a cacheline
 
-.align 6
+        .align 6
 Destination1:
         .fill 128, 4, 0xdeadbeef
 Destination2:   
@@ -469,7 +469,7 @@ Destination4:
         .fill 128, 4, 0xdeadbeef
 	
 signature:
-        .fill 128, 4, 0xdeadbeef
+        .fill 32, 4, 0x0bad0bad
 	
 RVMODEL_DATA_END
 
