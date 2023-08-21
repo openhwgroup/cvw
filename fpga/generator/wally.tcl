@@ -69,7 +69,7 @@ exec rm -rf reports/*
 report_compile_order -constraints > reports/compile_order.rpt
 
 # this is elaboration not synthesis.
-synth_design -rtl -name rtl_1
+synth_design -rtl -name rtl_1  -flatten_hierarchy none
 
 report_clocks -file reports/clocks.rpt
 
@@ -78,7 +78,7 @@ set_param messaging.defaultLimit 100000
 
 # this does synthesis?
 
-launch_runs synth_1 -jobs 4
+launch_runs synth_1 -jobs 16
 
 wait_on_run synth_1
 open_run synth_1
@@ -96,7 +96,8 @@ if {$board=="ArtyA7"} {
     source ../constraints/small-debug.xdc
 
 } else {
-    source ../constraints/vcu-small-debug.xdc
+    #source ../constraints/vcu-small-debug.xdc
+    source ../constraints/debug4.xdc
 }
 
 
@@ -104,7 +105,7 @@ if {$board=="ArtyA7"} {
 #set_property "steps.place_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
 #set_property "steps.route_design.args.directive" "RuntimeOptimized" [get_runs impl_1]
 
-launch_runs impl_1
+launch_runs impl_1 -jobs 16
 wait_on_run impl_1
 launch_runs impl_1 -to_step write_bitstream
 wait_on_run impl_1

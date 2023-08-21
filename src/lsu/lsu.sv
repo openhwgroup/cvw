@@ -185,7 +185,9 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   /////////////////////////////////////////////////////////////////////////////////////////////
   if(P.ZICSR_SUPPORTED == 1) begin : dmmu
     logic DisableTranslation;                             // During HPTW walk or D$ flush disable virtual memory address translation
+    logic WriteAccessM;
     assign DisableTranslation = SelHPTW | FlushDCacheM;
+    assign WriteAccessM = PreLSURWM[0] | (|CMOpM);
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
     dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
@@ -197,7 +199,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       .LoadMisalignedFaultM, .StoreAmoMisalignedFaultM,   // *** these faults need to be supressed during hptw.
       .UpdateDA(DataUpdateDAM),
       .AtomicAccessM(|LSUAtomicM), .ExecuteAccessF(1'b0), 
-      .WriteAccessM(PreLSURWM[0]), .ReadAccessM(PreLSURWM[1]),
+      .WriteAccessM, .ReadAccessM(PreLSURWM[1]),
       .PMPCFG_ARRAY_REGW, .PMPADDR_ARRAY_REGW);
 
   end else begin  // No MMU, so no PMA/page faults and no address translation
@@ -268,7 +270,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
       // *** prefetch can just act as a read operation
       cache #(.P(P), .PA_BITS(P.PA_BITS), .XLEN(P.XLEN), .LINELEN(P.DCACHE_LINELENINBITS), .NUMLINES(P.DCACHE_WAYSIZEINBYTES*8/LINELEN),
               .NUMWAYS(P.DCACHE_NUMWAYS), .LOGBWPL(LLENLOGBWPL), .WORDLEN(P.LLEN), .MUXINTERVAL(P.LLEN), .READ_ONLY_CACHE(0)) dcache(
-        .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .IgnoreRequestTLB, .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
+        .clk, .reset, .Stall(GatedStallW), .SelBusBeat, .FlushStage(FlushW | IgnoreRequestTLB), .CacheRW(CacheRWM), .CacheAtomic(CacheAtomicM),
         .FlushCache(FlushDCache), .NextSet(IEUAdrE[11:0]), .PAdr(PAdrM), 
         .ByteMask(ByteMaskM), .BeatCount(BeatCount[AHBWLOGBWPL-1:AHBWLOGBWPL-LLENLOGBWPL]),
         .CacheWriteData(LSUWriteDataM), .SelHPTW,
@@ -276,7 +278,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
         .CacheCommitted(DCacheCommittedM), 
         .CacheBusAdr(DCacheBusAdr), .ReadDataWord(DCacheReadDataWordM), 
         .FetchBuffer, .CacheBusRW(CacheBusRWTemp), 
-        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0));
+        .CacheBusAck(DCacheBusAck), .InvalidateCache(1'b0), .CMOp(CMOpM));
       
       assign DCacheStallM = CacheStall & ~IgnoreRequestTLB;
       assign CacheBusRW = CacheBusRWTemp;
