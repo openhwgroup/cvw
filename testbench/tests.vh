@@ -2076,10 +2076,11 @@ string arch64zbs[] = '{
  };
 
  string custom[] = '{
-    `CUSTOM,
-    "simple",
+    `RISCVARCHTEST,
+     "rv64i_m/M/src/div-01.S"
+    /*"simple",
     "debug",
-    "cacheTest"
+    "cacheTest"*/
  };
   string testsBP64[] = '{
     `IMPERASTEST,

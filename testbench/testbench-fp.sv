@@ -1,6 +1,6 @@
 ///////////////////////////////////////////
 //
-// Written: me@KatherineParry.com, james.stine@okstate.edu
+// Written: me@KatherineParry.com, james.stine@okstate.edu, kekim@hmc.edu
 //
 // Purpose: Testbench for UCB Testfloat on Wally
 // 
@@ -56,7 +56,8 @@ module testbenchfp;
    logic                        WriteIntVal;                // value of the current WriteInt
    logic [P.FLEN-1:0] 		X, Y, Z;                    // inputs read from TestFloat
    logic [P.FLEN-1:0] 		XPostBox;                   // inputs read from TestFloat
-   logic [P.XLEN-1:0] 		SrcA;                       // integer input
+   logic [P.XLEN-1:0] 		SrcA, SrcB;                       // integer input
+   logic                   W64;                              // is W64 instruction
    logic [P.FLEN-1:0] 		Ans;                        // correct answer from TestFloat
    logic [P.FLEN-1:0] 		Res;                        // result from other units
    logic [4:0] 			AnsFlg;                     // correct flags read from testfloat
@@ -84,6 +85,7 @@ module testbenchfp;
    logic [P.DIVb:0] 		Quot;
    logic                        CvtResSubnormUfE;
    logic                        DivStart;
+   logic                        IDivStart;
    logic 			FDivBusyE;
    logic 			OldFDivBusyE;
    logic                        reset = 1'b0;
@@ -118,11 +120,14 @@ module testbenchfp;
    logic [P.NE+1:0] 		QeM;
    logic [P.DIVb:0] 		QmM;
    logic [P.XLEN-1:0] 		FIntDivResultM;
+   logic  		IntDivE;
    logic 			ResMatch;                   // Check if result match
    logic 			FlagMatch;                  // Check if IEEE flags match
    logic 			CheckNow;                   // Final check
    logic 			FMAop;                      // Is this a FMA operation?   
+   logic      sqrtop;                     // Is this a SQRT operation?
    
+	 flopen #(3) funct3reg(.clk, .en(IFDivStartE), .d(Funct3E), .q(Funct3M));
    ///////////////////////////////////////////////////////////////////////////////////////////////
 
    //     ||||||||| |||||||| ||||||| |||||||||   ||||||| |||||||| |||
@@ -149,7 +154,7 @@ module testbenchfp;
       $display("This simulation for TEST is %s", TEST);
       $display("This simulation for TEST is of the operand size of %s", TEST_SIZE);      
       if (P.Q_SUPPORTED & (TEST_SIZE == "QP" | TEST_SIZE == "all")) begin // if Quad percision is supported
-	 if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
+   if (TEST === "cvtint" | TEST === "all") begin  // if testing integer conversion
             // add the 128-bit cvtint tests to the to-be-tested list
             Tests = {Tests, f128rv32cvtint};
             // add the op-codes for these tests to the op-code list
@@ -167,13 +172,13 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                // add what unit is used and the fmt to their lists (one for each test)
                for(int i = 0; i<20; i++) begin
-		  Unit = {Unit, `CVTINTUNIT};
-		  Fmt = {Fmt, 2'b11};
+      Unit = {Unit, `CVTINTUNIT};
+      Fmt = {Fmt, 2'b11};
                end
             end
-	 end 
-	 // if the floating-point conversions are being tested          
-	 if (TEST === "cvtfp" | TEST === "all") begin  
+   end 
+   // if the floating-point conversions are being tested          
+   if (TEST === "cvtfp" | TEST === "all") begin  
             if (P.D_SUPPORTED) begin // if double precision is supported
                // add the 128 <-> 64 bit conversions to the to-be-tested list
                Tests = {Tests, f128f64cvt};
@@ -182,12 +187,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b11};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b11};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b01};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b01};
                end
             end
             if (P.F_SUPPORTED) begin // if single precision is supported
@@ -198,12 +203,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b11};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b11};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b00};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b00};
                end
             end
             if (P.ZFH_SUPPORTED) begin // if half precision is supported
@@ -214,16 +219,16 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b11};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b11};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b10};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b10};
                end
             end
-	 end
-	 if (TEST === "cmp" | TEST === "all") begin// if comparisons are being tested
+   end
+   if (TEST === "cmp" | TEST === "all") begin// if comparisons are being tested
             // add the compare tests/op-ctrls/unit/fmt
             Tests = {Tests, f128cmp};
             OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -232,8 +237,8 @@ module testbenchfp;
                Unit = {Unit, `CMPUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "add" | TEST === "all") begin // if addition is being tested
+   end
+   if (TEST === "add" | TEST === "all") begin // if addition is being tested
             // add the addition tests/op-ctrls/unit/fmt
             Tests = {Tests, f128add};
             OpCtrl = {OpCtrl, `ADD_OPCTRL};
@@ -242,8 +247,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "sub" | TEST === "all") begin // if subtraction is being tested
+   end
+   if (TEST === "sub" | TEST === "all") begin // if subtraction is being tested
             // add the subtraction tests/op-ctrls/unit/fmt
             Tests = {Tests, f128sub};
             OpCtrl = {OpCtrl, `SUB_OPCTRL};
@@ -252,8 +257,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
+   end
+   if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
             // add the multiply tests/op-ctrls/unit/fmt
             Tests = {Tests, f128mul};
             OpCtrl = {OpCtrl, `MUL_OPCTRL};
@@ -262,8 +267,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "div" | TEST === "all") begin // if division is being tested
+   end
+   if (TEST === "div" | TEST === "all") begin // if division is being tested
             // add the divide tests/op-ctrls/unit/fmt
             Tests = {Tests, f128div};
             OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -272,8 +277,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "sqrt" | TEST === "all") begin // if square-root is being tested
+   end
+   if (TEST === "sqrt" | TEST === "all") begin // if square-root is being tested
             // add the square-root tests/op-ctrls/unit/fmt
             Tests = {Tests, f128sqrt};
             OpCtrl = {OpCtrl, `SQRT_OPCTRL};
@@ -282,8 +287,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
-	 if (TEST === "fma" | TEST === "all") begin  // if fused-mutliply-add is being tested
+   end
+   if (TEST === "fma" | TEST === "all") begin  // if fused-mutliply-add is being tested
             Tests = {Tests, f128fma};
             OpCtrl = {OpCtrl, `FMA_OPCTRL};
             WriteInt = {WriteInt, 1'b0};
@@ -291,10 +296,19 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b11};
             end
-	 end
+   end
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
+      Tests = {Tests, f128div, f128sqrt};
+      OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+      WriteInt = {WriteInt, 1'b0, 1'b0};
+      for(int i = 0; i<10; i++) begin
+         Unit = {Unit, `DIVUNIT};
+         Fmt = {Fmt, 2'b11};
+      end
+   end
       end
       if (P.D_SUPPORTED & (TEST_SIZE == "DP" | TEST_SIZE == "all")) begin // if double precision is supported
-	 if (TEST === "cvtint" | TEST === "all") begin // if integer conversion is being tested
+   if (TEST === "cvtint" | TEST === "all") begin // if integer conversion is being tested
             Tests = {Tests, f64rv32cvtint};
             // add the op-codes for these tests to the op-code list
             OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
@@ -311,12 +325,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                // add what unit is used and the fmt to their lists (one for each test)
                for(int i = 0; i<20; i++) begin
-		  Unit = {Unit, `CVTINTUNIT};
-		  Fmt = {Fmt, 2'b01};
+      Unit = {Unit, `CVTINTUNIT};
+      Fmt = {Fmt, 2'b01};
                end
             end
-	 end
-	 if (TEST === "cvtfp" | TEST === "all") begin // if floating point conversions are being tested
+   end
+   if (TEST === "cvtfp" | TEST === "all") begin // if floating point conversions are being tested
             if (P.F_SUPPORTED) begin // if single precision is supported
                // add the 64 <-> 32 bit conversions to the to-be-tested list
                Tests = {Tests, f64f32cvt};
@@ -325,12 +339,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b01};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b01};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b00};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b00};
                end
             end
             if (P.ZFH_SUPPORTED) begin // if half precision is supported
@@ -341,16 +355,16 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b01};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b01};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b10};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b10};
                end
             end
-	 end
-	 if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
+   end
+   if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64cmp};
             OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -359,8 +373,8 @@ module testbenchfp;
                Unit = {Unit, `CMPUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "add" | TEST === "all") begin // if addition is being tested
+   end
+   if (TEST === "add" | TEST === "all") begin // if addition is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64add};
             OpCtrl = {OpCtrl, `ADD_OPCTRL};
@@ -369,8 +383,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "sub" | TEST === "all") begin // if subtration is being tested
+   end
+   if (TEST === "sub" | TEST === "all") begin // if subtration is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64sub};
             OpCtrl = {OpCtrl, `SUB_OPCTRL};
@@ -379,8 +393,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
+   end
+   if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64mul};
             OpCtrl = {OpCtrl, `MUL_OPCTRL};
@@ -389,8 +403,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "div" | TEST === "all") begin // if division is being tested
+   end
+   if (TEST === "div" | TEST === "all") begin // if division is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64div};
             OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -399,8 +413,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "sqrt" | TEST === "all") begin // if square-root is being tessted
+   end
+   if (TEST === "sqrt" | TEST === "all") begin // if square-root is being tessted
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f64sqrt};
             OpCtrl = {OpCtrl, `SQRT_OPCTRL};
@@ -409,8 +423,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
-	 if (TEST === "fma" | TEST === "all") begin // if the fused multiply add is being tested
+   end
+   if (TEST === "fma" | TEST === "all") begin // if the fused multiply add is being tested
             Tests = {Tests, f64fma};
             OpCtrl = {OpCtrl, `FMA_OPCTRL};
             WriteInt = {WriteInt, 1'b0};
@@ -418,10 +432,19 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b01};
             end
-	 end
+   end
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
+      Tests = {Tests, f64div, f64sqrt};
+      OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+      WriteInt = {WriteInt, 1'b0, 1'b0};
+      for(int i = 0; i<10; i++) begin
+         Unit = {Unit, `DIVUNIT};
+         Fmt = {Fmt, 2'b01};
+      end
+   end
       end
       if (P.F_SUPPORTED & (TEST_SIZE == "SP" | TEST_SIZE == "all")) begin // if single precision being supported
-	 if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
+   if (TEST === "cvtint"| TEST === "all") begin // if integer conversion is being tested
             Tests = {Tests, f32rv32cvtint};
             // add the op-codes for these tests to the op-code list
             OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
@@ -438,12 +461,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                // add what unit is used and the fmt to their lists (one for each test)
                for(int i = 0; i<20; i++) begin
-		  Unit = {Unit, `CVTINTUNIT};
-		  Fmt = {Fmt, 2'b00};
+      Unit = {Unit, `CVTINTUNIT};
+      Fmt = {Fmt, 2'b00};
                end
             end
-	 end
-	 if (TEST === "cvtfp" | TEST === "all") begin  // if floating point conversion is being tested
+   end
+   if (TEST === "cvtfp" | TEST === "all") begin  // if floating point conversion is being tested
             if (P.ZFH_SUPPORTED) begin 
                // add the 32 <-> 16 bit conversions to the to-be-tested list
                Tests = {Tests, f32f16cvt};
@@ -452,16 +475,16 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0};
                // add the unit being tested and fmt (input format)
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b00};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b00};
                end
                for(int i = 0; i<5; i++) begin
-		  Unit = {Unit, `CVTFPUNIT};
-		  Fmt = {Fmt, 2'b10};
+      Unit = {Unit, `CVTFPUNIT};
+      Fmt = {Fmt, 2'b10};
                end
             end
-	 end
-	 if (TEST === "cmp" | TEST === "all") begin // if comparision is being tested
+   end
+   if (TEST === "cmp" | TEST === "all") begin // if comparision is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32cmp};
             OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -470,8 +493,8 @@ module testbenchfp;
                Unit = {Unit, `CMPUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "add" | TEST === "all") begin // if addition is being tested
+   end
+   if (TEST === "add" | TEST === "all") begin // if addition is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32add};
             OpCtrl = {OpCtrl, `ADD_OPCTRL};
@@ -480,8 +503,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "sub" | TEST === "all") begin // if subtration is being tested
+   end
+   if (TEST === "sub" | TEST === "all") begin // if subtration is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32sub};
             OpCtrl = {OpCtrl, `SUB_OPCTRL};
@@ -490,8 +513,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "mul" | TEST === "all") begin // if multiply is being tested
+   end
+   if (TEST === "mul" | TEST === "all") begin // if multiply is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32mul};
             OpCtrl = {OpCtrl, `MUL_OPCTRL};
@@ -500,8 +523,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "div" | TEST === "all") begin // if division is being tested
+   end
+   if (TEST === "div" | TEST === "all") begin // if division is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32div};
             OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -510,8 +533,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "sqrt" | TEST === "all") begin // if sqrt is being tested
+   end
+   if (TEST === "sqrt" | TEST === "all") begin // if sqrt is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f32sqrt};
             OpCtrl = {OpCtrl, `SQRT_OPCTRL};
@@ -520,8 +543,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
-	 if (TEST === "fma" | TEST === "all")  begin // if fma is being tested
+   end
+   if (TEST === "fma" | TEST === "all")  begin // if fma is being tested
             Tests = {Tests, f32fma};
             OpCtrl = {OpCtrl, `FMA_OPCTRL};
             WriteInt = {WriteInt, 1'b0};
@@ -529,10 +552,19 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b00};
             end
-	 end
+   end
+    if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
+         Tests = {Tests, f32div, f32sqrt};
+         OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+         WriteInt = {WriteInt, 1'b0, 1'b0};
+         for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b00};
+         end
+      end
       end
       if (P.ZFH_SUPPORTED & (TEST_SIZE == "HP" | TEST_SIZE == "all")) begin // if half precision supported
-	 if (TEST === "cvtint" | TEST === "all") begin // if in conversions are being tested
+   if (TEST === "cvtint" | TEST === "all") begin // if in conversions are being tested
             Tests = {Tests, f16rv32cvtint};
             // add the op-codes for these tests to the op-code list
             OpCtrl = {OpCtrl, `FROM_UI_OPCTRL, `FROM_I_OPCTRL, `TO_UI_OPCTRL, `TO_I_OPCTRL};
@@ -549,12 +581,12 @@ module testbenchfp;
                WriteInt = {WriteInt, 1'b0, 1'b0, 1'b1, 1'b1};
                // add what unit is used and the fmt to their lists (one for each test)
                for(int i = 0; i<20; i++) begin
-		  Unit = {Unit, `CVTINTUNIT};
-		  Fmt = {Fmt, 2'b10};
+      Unit = {Unit, `CVTINTUNIT};
+      Fmt = {Fmt, 2'b10};
                end
             end
-	 end
-	 if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
+   end
+   if (TEST === "cmp" | TEST === "all") begin // if comparisions are being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16cmp};
             OpCtrl = {OpCtrl, `EQ_OPCTRL, `LE_OPCTRL, `LT_OPCTRL};
@@ -563,8 +595,8 @@ module testbenchfp;
                Unit = {Unit, `CMPUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
-	 if (TEST === "add" | TEST === "all") begin //  if addition is being tested
+   end
+   if (TEST === "add" | TEST === "all") begin //  if addition is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16add};
             OpCtrl = {OpCtrl, `ADD_OPCTRL};
@@ -573,8 +605,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
-	 if (TEST === "sub" | TEST === "all") begin // if subtraction is being tested
+   end
+   if (TEST === "sub" | TEST === "all") begin // if subtraction is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16sub};
             OpCtrl = {OpCtrl, `SUB_OPCTRL};
@@ -583,8 +615,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
-	 if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
+   end
+   if (TEST === "mul" | TEST === "all") begin // if multiplication is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16mul};
             OpCtrl = {OpCtrl, `MUL_OPCTRL};
@@ -593,8 +625,8 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
-	 if (TEST === "div" | TEST === "all") begin // if division is being tested
+   end
+   if (TEST === "div" | TEST === "all") begin // if division is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16div};
             OpCtrl = {OpCtrl, `DIV_OPCTRL};
@@ -603,8 +635,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
-	 if (TEST === "sqrt" | TEST === "all") begin // if sqrt is being tested
+   end
+   if (TEST === "sqrt" | TEST === "all") begin // if sqrt is being tested
             // add the correct tests/op-ctrls/unit/fmt to their lists
             Tests = {Tests, f16sqrt};
             OpCtrl = {OpCtrl, `SQRT_OPCTRL};
@@ -613,8 +645,8 @@ module testbenchfp;
                Unit = {Unit, `DIVUNIT};
                Fmt = {Fmt, 2'b10};
             end 
-	 end
-	 if (TEST === "fma" | TEST === "all") begin // if fma is being tested
+   end
+   if (TEST === "fma" | TEST === "all") begin // if fma is being tested
             Tests = {Tests, f16fma};
             OpCtrl = {OpCtrl, `FMA_OPCTRL};
             WriteInt = {WriteInt, 1'b0};
@@ -622,12 +654,79 @@ module testbenchfp;
                Unit = {Unit, `FMAUNIT};
                Fmt = {Fmt, 2'b10};
             end
-	 end
+   end
+   if (TEST === "fdivremsqrt") begin // if unified div sqrt is being tested
+        Tests = {Tests, f16div, f16sqrt};
+        OpCtrl = {OpCtrl, `DIV_OPCTRL, `SQRT_OPCTRL};
+        WriteInt = {WriteInt, 1'b0, 1'b0};
+        for(int i = 0; i<10; i++) begin
+            Unit = {Unit, `DIVUNIT};
+            Fmt = {Fmt, 2'b10};
+        end
       end
+      if (TEST === "intrem" | TEST === "intdivrem" ) begin // if integer remainder is being tested
+        Tests = {Tests, intrem};
+        OpCtrl = {OpCtrl, `INTREM_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdiv" | TEST ==="intdivrem") begin // if integer division is being tested
+        Tests = {Tests, intdiv};
+        OpCtrl = {OpCtrl, `INTDIV_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intremu"| TEST ==="intdivrem") begin // if unsigned integer remainder is being tested
+        Tests = {Tests, intremu};
+        OpCtrl = {OpCtrl, `INTREMU_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivu"| TEST ==="intdivrem") begin // if unsigned integer division is being tested
+        Tests = {Tests, intdivu};
+        OpCtrl = {OpCtrl, `INTDIVU_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intremw"| TEST ==="intdivrem") begin // if w-type integer remainder is being tested
+        Tests = {Tests, intremw};
+        OpCtrl = {OpCtrl, `INTREMW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intremuw"| TEST ==="intdivrem") begin // if unsigned w-type integer remainder is being tested
+        Tests = {Tests, intremuw};
+        OpCtrl = {OpCtrl, `INTREMUW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivw"| TEST ==="intdivrem") begin // if w-type integer division is being tested
+        Tests = {Tests, intdivw};
+        OpCtrl = {OpCtrl, `INTDIVW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+      if (TEST === "intdivuw"| TEST ==="intdivrem") begin // if unsigned w-type integer divison is being tested
+        Tests = {Tests, intdivuw};
+        OpCtrl = {OpCtrl, `INTDIVUW_OPCTRL};
+        WriteInt = {WriteInt, 1'b0};
+        Unit = {Unit, `INTDIVUNIT};
+        Fmt = {Fmt, 2'b10};
+      end
+
+      end
+      
       // check if nothing is being tested
       if (Tests.size() == 0) begin
-	 $display("TEST %s not supported in this configuration", TEST);
-	 $stop;
+   $display("TEST %s not supported in this configuration", TEST);
+   $stop;
       end
    end
 
@@ -673,10 +772,10 @@ module testbenchfp;
 
    // extract the inputs (X, Y, Z, SrcA) and the output (Ans, AnsFlg) from the current test vector
    readvectors #(P) readvectors (.clk, .Fmt(FmtVal), .ModFmt, .TestVector(TestVectors[VectorNum]), 
-                                 .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, 
+                                 .VectorNum, .Ans(Ans), .AnsFlg(AnsFlg), .SrcA, .SrcB, 
                                  .Xs, .Ys, .Zs, .Unit(UnitVal),
-                                 .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal),
-                                 .Xm, .Ym, .Zm, .DivStart,
+                                 .Xe, .Ye, .Ze, .TestNum, .OpCtrl(OpCtrlVal), .Funct3E, .W64,
+                                 .Xm, .Ym, .Zm, .DivStart, .IDivStart, .IntDivE,
                                  .XNaN, .YNaN, .ZNaN,
                                  .XSNaN, .YSNaN, .ZSNaN, 
                                  .XSubnorm, .ZSubnorm, 
@@ -697,29 +796,29 @@ module testbenchfp;
    // instantiate devices under test
    if (TEST === "fma"| TEST === "mul" | TEST === "add" | TEST === "sub" | TEST === "all") begin : fma
       fma #(P) fma(.Xs(Xs), .Ys(Ys), .Zs(Zs), 
-		   .Xe(Xe), .Ye(Ye), .Ze(Ze), 
-		   .Xm(Xm), .Ym(Ym), .Zm(Zm),
-		   .XZero, .YZero, .ZZero, .Ss, .Se,
-		   .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
-		   .ASticky); 
+       .Xe(Xe), .Ye(Ye), .Ze(Ze), 
+       .Xm(Xm), .Ym(Ym), .Zm(Zm),
+       .XZero, .YZero, .ZZero, .Ss, .Se,
+       .OpCtrl(OpCtrlVal), .Sm, .InvA, .SCnt, .As, .Ps,
+       .ASticky); 
    end
    
-   postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
-				.OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
-				.Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
-				.XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
-				.XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
-				.XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
-				.XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
-				.FmaASticky(ASticky), .FmaSe(Se),
-				.FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
-				.PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+   /*postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+        .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+        .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+        .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+        .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
+        .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+        .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+        .FmaASticky(ASticky), .FmaSe(Se),
+        .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+        .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));*/
    
    if (TEST === "cvtfp" | TEST === "cvtint" | TEST === "all") begin : fcvt
-      fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
-		      .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
-		      .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), 
-		      .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
+ 			fcvt #(P) fcvt (.Xs(Xs), .Xe(Xe), .Xm(Xm), .Int(SrcA), .ToInt(WriteIntVal), 
+          .XZero(XZero), .OpCtrl(OpCtrlVal), .IntZero,
+          .Fmt(ModFmt), .Ce(CvtCalcExpE), .ShiftAmt(CvtShiftAmtE), 
+          .ResSubnormUf(CvtResSubnormUfE), .Cs(CvtResSgnE), .LzcIn(CvtLzcInE));
    end
 
    if (TEST === "cmp" | TEST === "all") begin: fcmp
@@ -730,16 +829,39 @@ module testbenchfp;
    
    if (TEST === "div" | TEST === "sqrt" | TEST === "all") begin: fdivsqrt
       fdivsqrt #(P) fdivsqrt(.clk, .reset, .XsE(Xs), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
-			     .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal[0]), .SqrtM(OpCtrlVal[0]),
-			     .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
-			     .XNaNE(XNaN), .YNaNE(YNaN), 
-			     .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
-			     .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
-			     .QmM(Quot),
-			     .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
-			     .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
-			     .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
+           .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL), .SqrtM(OpCtrlVal===`SQRT_OPCTRL),
+           .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), 
+           .XNaNE(XNaN), .YNaNE(YNaN), 
+           .FDivStartE(DivStart), .IDivStartE(1'b0), .W64E(1'b0),
+           .StallM(1'b0), .DivStickyM(DivSticky), .FDivBusyE, .QeM(DivCalcExp),
+           .QmM(Quot),
+           .FlushE(1'b0), .ForwardedSrcAE('0), .ForwardedSrcBE('0), .Funct3M(Funct3M),
+           .Funct3E(Funct3E), .IntDivE(1'b0), .FIntDivResultM(FIntDivResultM),
+           .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE));
    end
+   if (TEST === "fdivremsqrt" | TEST === "intdiv" | TEST === "intrem" | TEST === "intdivu" | TEST ==="intremu" | TEST ==="intremw" | TEST ==="intremuw" | TEST ==="intdivw" | TEST ==="intdivuw" | TEST ==="intdivrem") begin: divremsqrt
+    drsu #(P) drsu(.clk, .reset, .XsE(Xs), .YsE(Ys), .FmtE(ModFmt), .XmE(Xm), .YmE(Ym), 
+      .XeE(Xe), .YeE(Ye), .SqrtE(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT), .SqrtM(OpCtrlVal===`SQRT_OPCTRL&UnitVal===`DIVUNIT),
+      .XInfE(XInf), .YInfE(YInf), .XZeroE(XZero), .YZeroE(YZero), .PostProcSel(UnitVal[1:0]),
+      .XNaNE(XNaN), .YNaNE(YNaN), .OpCtrl(OpCtrlVal), .XSNaNE(XSNaN), .YSNaNE(YSNaN), .Frm(FrmVal), 
+      .FDivStartE(DivStart), .IDivStartE(IDivStart), .W64E(W64),
+      .StallM(1'b0), .FDivBusyE,
+      .FlushE(1'b0), .ForwardedSrcAE(SrcA), .ForwardedSrcBE(SrcB), .Funct3M(Funct3M),
+      .Funct3E(Funct3E), .IntDivE(IntDivE), 
+      .FDivDoneE(FDivDoneE), .IFDivStartE(IFDivStartE), .FResM(FpRes), .FIntDivResultM(IntRes), .FlgM(Flg));
+  end
+  else begin: postprocess
+    postprocess #(P) postprocess(.Xs(Xs), .Ys(Ys), .PostProcSel(UnitVal[1:0]),
+                .OpCtrl(OpCtrlVal), .DivQm(Quot), .DivQe(DivCalcExp),
+                .Xm(Xm), .Ym(Ym), .Zm(Zm), .CvtCe(CvtCalcExpE), .DivSticky(DivSticky), .FmaSs(Ss),
+                .XNaN(XNaN), .YNaN(YNaN), .ZNaN(ZNaN), .CvtResSubnormUf(CvtResSubnormUfE),
+                .XZero(XZero), .YZero(YZero), .CvtShiftAmt(CvtShiftAmtE),
+                .XInf(XInf), .YInf(YInf), .ZInf(ZInf), .CvtCs(CvtResSgnE), .ToInt(WriteIntVal),
+                .XSNaN(XSNaN), .YSNaN(YSNaN), .ZSNaN(ZSNaN), .CvtLzcIn(CvtLzcInE), .IntZero,
+                .FmaASticky(ASticky), .FmaSe(Se),
+                .FmaSm(Sm), .FmaSCnt(SCnt), .FmaAs(As), .FmaPs(Ps), .Fmt(ModFmt), .Frm(FrmVal), 
+                .PostProcFlg(Flg), .PostProcRes(FpRes), .FCvtIntRes(IntRes));
+  end
 
    assign CmpFlg[3:0] = 0;
 
@@ -754,8 +876,8 @@ module testbenchfp;
    // the IDLE state.
    initial
      begin
-	#0 reset = 1'b1;
-	#25 reset = 1'b0;     
+  #0 reset = 1'b1;
+  #25 reset = 1'b0;     
      end  
    
    ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -771,13 +893,13 @@ module testbenchfp;
 
    // Check if the correct answer and result is a NaN
    always_comb begin
-      if (UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT) begin
-	 // an integer output can't be a NaN
-	 AnsNaN = 1'b0;
-	 ResNaN = 1'b0;
+      if (UnitVal === `CVTINTUNIT | UnitVal === `CMPUNIT | (UnitVal === `DIVREMSQRTUNIT && WriteIntVal == 1'b1)) begin
+   // an integer output can't be a NaN
+   AnsNaN = 1'b0;
+   ResNaN = 1'b0;
       end
       else if (UnitVal === `CVTFPUNIT) begin
-	 case (OpCtrlVal[1:0])
+   case (OpCtrlVal[1:0])
            4'b11: begin // quad             
               AnsNaN = &Ans[P.Q_LEN-2:P.NF]&(|Ans[P.Q_NF-1:0]);
               ResNaN = &Res[P.Q_LEN-2:P.NF]&(|Res[P.Q_NF-1:0]);
@@ -794,10 +916,10 @@ module testbenchfp;
               AnsNaN = &Ans[P.H_LEN-2:P.H_NF]&(|Ans[P.H_NF-1:0]);
               ResNaN = &Res[P.H_LEN-2:P.H_NF]&(|Res[P.H_NF-1:0]);
            end
-	 endcase
+   endcase
       end
       else begin
-	 case (FmtVal)
+   case (FmtVal)
            4'b11: begin // quad             
               AnsNaN = &Ans[P.Q_LEN-2:P.Q_NF]&(|Ans[P.Q_NF-1:0]);
               ResNaN = &Res[P.Q_LEN-2:P.Q_NF]&(|Res[P.Q_NF-1:0]);
@@ -814,27 +936,29 @@ module testbenchfp;
               AnsNaN = &Ans[P.H_LEN-2:P.H_NF]&(|Ans[P.H_NF-1:0]);
               ResNaN = &Res[P.H_LEN-2:P.H_NF]&(|Res[P.H_NF-1:0]);
            end
-	 endcase
+   endcase
       end
    end 
    
    always_comb begin
       // select the result to check
       case (UnitVal)
-	`FMAUNIT: Res = FpRes;
-	`DIVUNIT: Res = FpRes;
-	`CMPUNIT: Res = CmpRes;
-	`CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
-	`CVTFPUNIT: Res = FpRes;
+  `FMAUNIT: Res = FpRes;
+  `DIVUNIT: Res = FpRes;
+  `CMPUNIT: Res = CmpRes;
+  `CVTINTUNIT: if (WriteIntVal) Res = IntRes; else Res = FpRes;
+  `CVTFPUNIT: Res = FpRes;
+	`INTDIVUNIT: Res = IntRes;
       endcase
 
       // select the flag to check
       case (UnitVal)
-	`FMAUNIT: ResFlg = Flg;
-	`DIVUNIT: ResFlg = Flg;
-	`CMPUNIT: ResFlg = CmpFlg;
-	`CVTINTUNIT: ResFlg = Flg;
-	`CVTFPUNIT: ResFlg = Flg;
+  `FMAUNIT: ResFlg = Flg;
+  `DIVUNIT: ResFlg = Flg;
+  `CMPUNIT: ResFlg = CmpFlg;
+  `CVTINTUNIT: ResFlg = Flg;
+  `CVTFPUNIT: ResFlg = Flg;
+  `INTDIVUNIT: ResFlg = Flg;
       endcase
    end
 
@@ -846,33 +970,33 @@ module testbenchfp;
    always @(posedge clk) begin
       // Add extra clock cycles in beginning for fdivsqrt to adequate reset state
       if (~(FDivBusyE|DivStart)|(UnitVal != `DIVUNIT)) begin
-	 // This allows specific number of clocks to allow each vector
-	 // to complete for division or square root.  It is an
-	 // arbitrary value and can be changed, if needed.
-	 case (FmtVal)
-	   // QP
-	   4'b11: begin
-	      repeat (20)
-		@(posedge clk);
-	   end
-	   // HP
-	   4'b10: begin
-	      repeat (14)
-		@(posedge clk);
-	   end
-	   // DP
-	   4'b01: begin
-	      repeat (18)
-		@(posedge clk);
-	   end
-	   // SP
-	   4'b00: begin
-	      repeat (16)
-		@(posedge clk);
-	   end
-	 endcase // case (FmtVal)	 
-	 if (reset != 1'b1)
-	   VectorNum += 1; // increment the vector
+   // This allows specific number of clocks to allow each vector
+   // to complete for division or square root.  It is an
+   // arbitrary value and can be changed, if needed.
+   case (FmtVal)
+     // QP
+     4'b11: begin
+        repeat (20)
+    @(posedge clk);
+     end
+     // HP
+     4'b10: begin
+        repeat (14)
+    @(posedge clk);
+     end
+     // DP
+     4'b01: begin
+        repeat (18)
+    @(posedge clk);
+     end
+     // SP
+     4'b00: begin
+        repeat (16)
+    @(posedge clk);
+     end
+   endcase // case (FmtVal)	 
+   if (reset != 1'b1)
+     VectorNum += 1; // increment the vector
       end
    end
 
@@ -882,7 +1006,7 @@ module testbenchfp;
       //    - the sign of the NaN does not matter for the opperations being tested
       //    - when 2 or more NaNs are inputed the NaN that is propigated doesn't matter
       if (UnitVal !== `CVTFPUNIT & UnitVal !== `CVTINTUNIT)
-	case (FmtVal)
+  case (FmtVal)
           4'b11: NaNGood =  (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                              (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                              (XNaN&(Res[P.Q_LEN-2:0] === {X[P.Q_LEN-2:P.Q_NF],1'b1,X[P.Q_NF-2:0]})) | 
@@ -903,9 +1027,9 @@ module testbenchfp;
                              (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
                              (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})) |
                              (ZNaN&(Res[P.H_LEN-2:0] === {Z[P.H_LEN-2:P.H_NF],1'b1,Z[P.H_NF-2:0]})));
-	endcase
+  endcase
       else if (UnitVal === `CVTFPUNIT) // if converting from floating point to floating point OpCtrl contains the final FP format
-	case (OpCtrlVal[1:0]) 
+  case (OpCtrlVal[1:0]) 
           2'b11: NaNGood = (((P.IEEE754==0)&AnsNaN&(Res === {1'b0, {P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                             (AnsFlg[4]&(Res[P.Q_LEN-2:0] === {{P.Q_NE+1{1'b1}}, {P.Q_NF-1{1'b0}}})) |
                             (AnsNaN&(Res[P.Q_LEN-2:0] === Ans[P.Q_LEN-2:0])) | 
@@ -926,7 +1050,7 @@ module testbenchfp;
                             (AnsNaN&(Res[P.H_LEN-2:0] === Ans[P.H_LEN-2:0])) | 
                             (XNaN&(Res[P.H_LEN-2:0] === {X[P.H_LEN-2:P.H_NF],1'b1,X[P.H_NF-2:0]})) | 
                             (YNaN&(Res[P.H_LEN-2:0] === {Y[P.H_LEN-2:P.H_NF],1'b1,Y[P.H_NF-2:0]})));
-	endcase
+  endcase
       else NaNGood = 1'b0; // integers can't be NaNs
 
       
@@ -944,18 +1068,22 @@ module testbenchfp;
       //  wait till the division result is done or one extra cylcle for early termination (to simulate the EM pipline stage)
       assign ResMatch = ((Res === Ans) | NaNGood | (NaNGood === 1'bx));
       assign FlagMatch = ((ResFlg === AnsFlg) | (AnsFlg === 5'bx));
-      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL);
+      assign divsqrtop = (OpCtrlVal == `SQRT_OPCTRL) | (OpCtrlVal == `DIV_OPCTRL) | (OpCtrlVal == `INTREM_OPCTRL) | (OpCtrlVal == `INTDIV_OPCTRL) | (OpCtrlVal == `INTDIVU_OPCTRL) | (OpCtrlVal ==`INTREMU_OPCTRL) | (OpCtrlVal ==`INTREMW_OPCTRL) | (OpCtrlVal ==`INTREMUW_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVW_OPCTRL) | (OpCtrlVal == `INTDIVUW_OPCTRL);
       assign FMAop = (OpCtrlVal == `FMAUNIT);  
       assign DivDone = OldFDivBusyE & ~FDivBusyE;
 
       // Maybe change OpCtrl but for now just look at TEST for fma test
       assign CheckNow = ((DivDone | ~divsqrtop) | (TEST == "add" | TEST == "fma" | TEST == "sub")) & (UnitVal !== `CVTINTUNIT) & (UnitVal !== `CMPUNIT);
       if (~(ResMatch & FlagMatch) & CheckNow) begin
-	 errors += 1;
-	 $display("\nError in %s", Tests[TestNum]);
-	 $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
-	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
+            integer fd;
+            fd = $fopen("fperr.out","a");
+            $fwrite(fd, "%h_%h_%h_%2h\n",X,Y,Ans,AnsFlg);
+            $fclose(fd);
+   errors += 1;
+   $display("\nError in %s", Tests[TestNum]);
+   $display("TestNum %d OpCtrl %d", TestNum, OpCtrl[TestNum]);	 
+   $display("inputs: %h %h %h\nSrcA: %h\n SrcB: %h\n Res: %h %h\n Expected: %h %h", X, Y, Z, SrcA, SrcB, Res, ResFlg, Ans, AnsFlg);
+   $display("time: $t", $realtime);
       end
       
       // TestFloat sets the result to all 1's when there is an invalid result, however in 
@@ -965,36 +1093,36 @@ module testbenchfp;
       // Testfloat outputs 800... for both the largest integer values for both positive and negitive numbers but 
       // the riscv spec specifies 2^31-1 for positive values out of range and NaNs ie 7fff...
       else if ((UnitVal === `CVTINTUNIT) & 
-	       ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
-		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
-		  (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
-		  (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
-	 errors += 1;
-	 $display("There is an error in %s", Tests[TestNum]);
-	 $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
-	 $stop;
+         ~(((WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&(Res[P.XLEN-1:0] === (P.XLEN)'(0))) | 
+      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&OpCtrlVal[1]&(Res[P.XLEN-1:0] === {1'b0, {P.XLEN-1{1'b1}}})) | 
+      (WriteIntVal&OpCtrlVal[0]&AnsFlg[4]&(~Xs|XNaN)&~OpCtrlVal[1]&(Res[P.XLEN-1:0] === {{P.XLEN-32{1'b0}}, 1'b0, {31{1'b1}}})) | 
+      (~(WriteIntVal&~OpCtrlVal[0]&AnsFlg[4]&Xs&~XNaN)&(Res === Ans | NaNGood | NaNGood === 1'bx))) & (ResFlg === AnsFlg | AnsFlg === 5'bx))) begin
+   errors += 1;
+   $display("There is an error in %s", Tests[TestNum]);
+   $display("inputs: %h %h %h\nSrcA: %h\n Res: %h %h\n Ans: %h %h", X, Y, Z, SrcA, Res, ResFlg, Ans, AnsFlg);
+   $stop;
       end
 
       if (TestVectors[VectorNum][0] === 1'bx & Tests[TestNum] !== "") begin // if reached the eof
-	 // increment the test
-	 TestNum += 1;
-	 // clear the vectors
-	 for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
-	 // read next files
-	 $readmemh({`PATH, Tests[TestNum]}, TestVectors);
-	 // set the vector index back to 0
-	 VectorNum = 0;
-	 // incemet the operation if all the rounding modes have been tested
-	 if (FrmNum === 4) OpCtrlNum += 1;
-	 // increment the rounding mode or loop back to rne 
-	 if (FrmNum < 4) FrmNum += 1;
-	 else FrmNum = 0; 
-	 // if no more Tests - finish
-	 if (Tests[TestNum] === "") begin
+   // increment the test
+   TestNum += 1;
+   // clear the vectors
+   for(int i=0; i<6133248; i++) TestVectors[i] = {P.FLEN*4+8{1'bx}};
+   // read next files
+   $readmemh({`PATH, Tests[TestNum]}, TestVectors);
+   // set the vector index back to 0
+   VectorNum = 0;
+   // incemet the operation if all the rounding modes have been tested
+   if (FrmNum === 4 | TEST === "intdivrem") OpCtrlNum += 1;
+   // increment the rounding mode or loop back to rne 
+   if (FrmNum < 4) FrmNum += 1;
+   else FrmNum = 0; 
+   // if no more Tests - finish
+   if (Tests[TestNum] === "") begin
             $display("\nAll Tests completed with %d errors\n", errors);
             $stop;
-	 end 
-	 $display("Running %s vectors", Tests[TestNum]);
+   end 
+   $display("Running %s vectors", Tests[TestNum]);
       end
    end
 endmodule
@@ -1011,6 +1139,7 @@ module readvectors (
 		    input logic [2:0] 	        OpCtrl,
 		    output logic [P.FLEN-1:0]   Ans,
 		    output logic [P.XLEN-1:0]   SrcA,
+		    output logic [P.XLEN-1:0]   SrcB,
 		    output logic [4:0] 	        AnsFlg,
 		    output logic 	        Xs, Ys, Zs, // sign bits of XYZ
 		    output logic [P.NE-1:0]     Xe, Ye, Ze, // exponents of XYZ (converted to largest supported precision)
@@ -1022,6 +1151,10 @@ module readvectors (
 		    output logic 	        XInf, YInf, ZInf, // is XYZ infinity
 		    output logic 	        XExpMax,
 		    output logic 	        DivStart,
+		    output logic 	        IDivStart,
+				output logic          IntDivE,
+				output logic [2:0]    Funct3E,
+        output logic          W64,
 		    output logic [P.FLEN-1:0]   X, Y, Z, XPostBox
 		    );
 
@@ -1101,8 +1234,14 @@ module readvectors (
                Ans = {{P.FLEN-P.H_LEN{1'b1}}, TestVector[8+(P.H_LEN-1):8]};
             end
           endcase
-	`DIVUNIT:
-          if (OpCtrl[0])
+	`DIVUNIT: begin
+    IDivStart=1'b0;
+    IntDivE=1'b0;
+    SrcA={P.XLEN{1'b0}};
+    SrcB={P.XLEN{1'b0}};
+    W64=1'b0;
+    Funct3E=3'b0;
+          if (OpCtrl === `SQRT_OPCTRL)
             case (Fmt)
               2'b11: begin // quad
 		 #20;		 
@@ -1176,6 +1315,57 @@ module readvectors (
 		   DivStart = 1'b0;
               end
             endcase
+  end
+	`INTDIVUNIT: begin
+	  #20;
+    X = {P.FLEN{1'bx}};
+    SrcA = TestVector[2*(P.Q_LEN)+P.D_LEN-1:2*(P.Q_LEN)];
+    SrcB = TestVector[(P.Q_LEN)+P.D_LEN-1:P.Q_LEN];
+    Ans = TestVector[P.D_LEN-1:0];
+    AnsFlg = 5'bx;
+    if (~clk) #5;
+    IDivStart = 1'b1;
+    IntDivE = 1'b1;
+    case (OpCtrl)
+      `INTDIV_OPCTRL: begin
+        Funct3E = 3'b100;
+        W64 = 1'b0;
+      end
+      `INTREM_OPCTRL: begin
+        Funct3E = 3'b110;
+        W64 = 1'b0;
+      end
+      `INTREMU_OPCTRL: begin
+        Funct3E = 3'b111;
+        W64 = 1'b0;
+      end
+      `INTDIVU_OPCTRL: begin
+        Funct3E = 3'b101;
+        W64 = 1'b0;
+      end
+      `INTDIVW_OPCTRL: begin
+        Funct3E = 3'b100;
+        W64 = 1'b1;
+      end
+      `INTDIVUW_OPCTRL: begin
+        Funct3E = 3'b101;
+        W64 = 1'b1;
+      end
+    `INTREMW_OPCTRL: begin
+        Funct3E = 3'b110;
+        W64 = 1'b1;
+    end
+    `INTREMUW_OPCTRL: begin
+      Funct3E = 3'b111;
+      W64 = 1'b1;
+    end
+   endcase
+   #10 // one clk cycle
+   IDivStart = 1'b0;
+   IntDivE = 1'b0;
+   W64 = 1'b0;
+	end
+	  
 	`CMPUNIT:
           case (Fmt)        
             2'b11: begin // quad

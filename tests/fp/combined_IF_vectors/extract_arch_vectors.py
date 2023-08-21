@@ -128,7 +128,7 @@ def create_vectors(my_config):
                             done = True
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -174,7 +174,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -217,7 +217,7 @@ def create_vectors(my_config):
                     flags = "XX"
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags.strip(), rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -261,7 +261,7 @@ def create_vectors(my_config):
                     
                     # put it all together
                     if not done:
-                        translation = "{}_{}_{}_{}_{}_{}".format(operation, ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()), flags, rounding_mode)
+                        translation = "{}_{}_{}".format(ext_bits(op1val), ext_bits(op2val), ext_bits(answer.strip()))
                         dest_file.write(translation + "\n")
                 else:
                     # print("read false")
@@ -272,22 +272,22 @@ def create_vectors(my_config):
         src_file2.close()
 
 config_list = [
-Config(32, "M", "div", "div-", 0),
+Config(32, "M", "div", "div-", 4),
 Config(32, "F", "fdiv", "fdiv", 1),
 Config(32, "F", "fsqrt", "fsqrt", 2),
-Config(32, "M", "rem", "rem-", 3),
-Config(32, "M", "divu", "divu-", 4),
-Config(32, "M", "remu", "remu-", 5),
-Config(64, "M", "div", "div-", 0),
+Config(32, "M", "rem", "rem-", 6),
+Config(32, "M", "divu", "divu-", 5),
+Config(32, "M", "remu", "remu-", 7),
+Config(64, "M", "div", "div-", 4),
 Config(64, "F", "fdiv", "fdiv", 1),
 Config(64, "F", "fsqrt", "fsqrt", 2),
-Config(64, "M", "rem", "rem-", 3),
-Config(64, "M", "divu", "divu-", 4),
-Config(64, "M", "remu", "remu-", 5),
-Config(64, "M", "divw", "divw-", 6),
-Config(64, "M", "divuw", "divuw-", 7),
-Config(64, "M", "remw", "remw-", 8),
-Config(64, "M", "remuw", "remuw-", 9)
+Config(64, "M", "rem", "rem-", 6),
+Config(64, "M", "divu", "divu-", 5),
+Config(64, "M", "remu", "remu-", 7),
+Config(64, "M", "divw", "divw-", 4),
+Config(64, "M", "divuw", "divuw-", 5),
+Config(64, "M", "remw", "remw-", 6),
+Config(64, "M", "remuw", "remuw-", 7)
 ]
 
 for c in config_list:
