@@ -30,6 +30,7 @@ help() {
     echo "Usage: $0 [OPTIONS] <device>"
     echo "  -z                          wipes card with zeros"
     echo "  -b <path/to/buildroot>      get images from given buildroot"
+    echo "  -d <device tree name>       specify device tree to use"
     exit 0;
 }
 
@@ -38,13 +39,15 @@ help() {
 # parameters list.
 ARGS=()
 while [ $OPTIND -le "$#" ] ; do
-    if getopts "hzb:" arg ; then
+    if getopts "hzb:d:" arg ; then
         case "${arg}" in
             h) help
                ;;
             z) WIPECARD=y
                ;;
             b) BUILDROOT=${OPTARG}
+               ;;
+            d) DEVICE_TREE=$IMAGES/${OPTARG}
                ;;
         esac
     else
@@ -83,7 +86,8 @@ fi
 
 # Ensure device tree binaries exist
 if [ ! -e $DEVICE_TREE ] ; then
-    echo -e '$ERRORTEXT Missing device tree files'
+    echo -e "$NAME $ERRORTEXT Missing device tree files"
+    echo -e "$NAME generating all device tree files into buildroot"
     make -C ../ generate BUILDROOT=$BUILDROOT
 fi
 
