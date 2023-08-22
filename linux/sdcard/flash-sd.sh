@@ -3,27 +3,6 @@
 # Exit on any error (return code != 0)
 # set -e
 
-# Output colors
-GREEN="\e[32m"
-RED="\e[31m"
-BOLDRED="\e[1;91m"
-BOLDGREEN="\e[1;32m"
-NC="\e[0m"
-NAME="$BOLDGREEN"${0:2}:"$NC"
-ERRORTEXT="$BOLDRED"ERROR:"$NC"
-
-# File location variables
-RISCV=/opt/riscv
-BUILDROOT=$RISCV/buildroot
-IMAGES=$BUILDROOT/output/images
-FW_JUMP=$IMAGES/fw_jump.bin
-LINUX_KERNEL=$IMAGES/Image
-DEVICE_TREE=$IMAGES/wally-vcu108.dtb
-
-# Mount Directory
-MNT_DIR=wallyimg
-
-# Usage function
 usage() { echo "Usage: $0 [-zh] [-b <path/to/buildroot>] <device>" 1>&2; exit 1; }
 
 help() {
@@ -33,6 +12,22 @@ help() {
     echo "  -d <device tree name>       specify device tree to use"
     exit 0;
 }
+
+# Output colors
+GREEN="\e[32m"
+RED="\e[31m"
+BOLDRED="\e[1;91m"
+BOLDGREEN="\e[1;32m"
+BOLDYELLOW="\e[1;33m"
+NC="\e[0m"
+NAME="$BOLDGREEN"${0:2}:"$NC"
+ERRORTEXT="$BOLDRED"ERROR:"$NC"
+
+# Default values for buildroot and device tree
+RISCV=/opt/riscv
+BUILDROOT=$RISCV/buildroot
+DEVICE_TREE=wally-vcu108.dtb
+MNT_DIR=wallyimg
 
 # Process options and arguments. The following code grabs the single
 # sdcard device argument no matter where it is in the positional
@@ -47,7 +42,7 @@ while [ $OPTIND -le "$#" ] ; do
                ;;
             b) BUILDROOT=${OPTARG}
                ;;
-            d) DEVICE_TREE=$IMAGES/${OPTARG}
+            d) DEVICE_TREE=${OPTARG}
                ;;
         esac
     else
@@ -56,14 +51,21 @@ while [ $OPTIND -le "$#" ] ; do
     fi
 done
 
+# File location variables
+IMAGES=$BUILDROOT/output/images
+FW_JUMP=$IMAGES/fw_jump.bin
+LINUX_KERNEL=$IMAGES/Image
+DEVICE_TREE=$IMAGES/$DEVICE_TREE
+
 SDCARD=${ARGS[0]}
+
+# User Error Checks ===================================================
 
 if [ "$#" -eq "0" ] ; then
     usage
 fi
 
 # Check to make sure sd card device exists
-
 if [ ! -e "$SDCARD" ] ; then
     echo -e "$NAME $ERRORTEXT SD card device does not exist."
     exit 1
@@ -90,6 +92,8 @@ if [ ! -e $DEVICE_TREE ] ; then
     echo -e "$NAME generating all device tree files into buildroot"
     make -C ../ generate BUILDROOT=$BUILDROOT
 fi
+
+# Calculate partition information =====================================
 
 # Size of OpenSBI and the Kernel in 512B blocks
 DST_SIZE=$(ls -la --block-size=512 $DEVICE_TREE | cut -d' ' -f 5 ) 
