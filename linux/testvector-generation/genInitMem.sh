@@ -1,6 +1,6 @@
 #!/bin/bash
 tcpPort=1235
-imageDir=/home/ross/repos/buildroot/output/images
+imageDir=/home/jpease/repos/buildroot3/output/images
 tvDir=linux-testvectors
 rawRamFile="$tvDir/ramGDB.bin"
 ramFile="$tvDir/ram.bin"
@@ -36,7 +36,7 @@ then
 
     echo "Launching QEMU in replay mode!"
     (qemu-system-riscv64 \
-    -M virt -dtb /home/ross/repos/buildroot/output/images/wally-artya7.dtb \
+    -M virt -dtb /home/jpease/repos/buildroot3/output/images/wally-artya7.dtb \
     -nographic \
     -bios $imageDir/fw_jump.elf -kernel $imageDir/Image -append "root=/dev/vda ro" -initrd $imageDir/rootfs.cpio \
     -gdb tcp::$tcpPort -S) \
