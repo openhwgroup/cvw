@@ -24,7 +24,14 @@ DEVICE_TREE=$IMAGES/wally-vcu108.dtb
 MNT_DIR=wallyimg
 
 # Usage function
-usage() { echo "Usage: $0 [-z] [-b <path/to/buildroot>] <device>" 1>&2; exit 1; }
+usage() { echo "Usage: $0 [-zh] [-b <path/to/buildroot>] <device>" 1>&2; exit 1; }
+
+help() {
+    echo "Usage: $0 [OPTIONS] <device>"
+    echo "  -z                          wipes card with zeros"
+    echo "  -b <path/to/buildroot>      get images from given buildroot"
+    exit 0;
+}
 
 # Process options and arguments. The following code grabs the single
 # sdcard device argument no matter where it is in the positional
@@ -33,7 +40,7 @@ ARGS=()
 while [ $OPTIND -le "$#" ] ; do
     if getopts "hzb:" arg ; then
         case "${arg}" in
-            h) usage
+            h) help
                ;;
             z) WIPECARD=y
                ;;
