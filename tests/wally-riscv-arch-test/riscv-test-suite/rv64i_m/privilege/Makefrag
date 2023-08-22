@@ -60,6 +60,8 @@ target_tests_nosim = \
     WALLY-uart-01 \
     WALLY-spi-02 \
     WALLY-spi-03 \
+    WALLY-wfi-01 \
+    WALLY-cbom-01 \
 
 # unclear why status-fp-enabled and wfi aren't simulating ok
 
