@@ -96,7 +96,7 @@ if {$board=="ArtyA7"} {
     source ../constraints/small-debug.xdc
 
 } else {
-    #source ../constraints/vcu-small-debug.xdc
+    # source ../constraints/vcu-small-debug.xdc
     source ../constraints/debug4.xdc
 }
 
