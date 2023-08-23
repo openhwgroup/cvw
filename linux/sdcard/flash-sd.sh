@@ -111,7 +111,7 @@ echo -e "$NAME Device tree block size:     $DST_SIZE"
 echo -e "$NAME OpenSBI FW_JUMP block size: $FW_JUMP_SIZE"
 echo -e "$NAME Kernel block size:          $KERNEL_SIZE"
 
-read -p "Warning: Doing this will replace all data on this card. Continue? y/n: " -n 1 -r
+read -p $'\e[1;33mWarning:\e[0m Doing this will replace all data on this card. Continue? y/n: ' -n 1 -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
     DEVBASENAME=$(basename $SDCARD)
