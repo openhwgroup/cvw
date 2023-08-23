@@ -57,7 +57,7 @@ module uncore import cvw::*;  #(parameter cvw_t P)(
   input  logic                 SDCIntr,
   input logic  [3:0]          SPIIn,
   output logic [3:0]          SPIOut,
-  output logic [3:0]          SPICS,                
+  output logic [3:0]          SPICS                
 );
   
   logic [P.XLEN-1:0]           HREADRam, HREADSDC;
