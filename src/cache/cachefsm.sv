@@ -156,7 +156,7 @@ module cachefsm import cvw::*; #(parameter cvw_t P,
   // write enables internal to cache
   assign SetValid = CurrState == STATE_WRITE_LINE | 
                     (CurrState == STATE_READY & CMOp[3]); // *** RT: NOT completely right has to be a hit
-  assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0]) |
+  assign ClearValid = P.ZICBOM_SUPPORTED & ((CurrState == STATE_READY & CMOp[0] & CacheHit) |
                       (CurrState == STATE_CMO_WRITEBACK & CMOp[2] & CacheBusAck));
   // coverage off -item e 1 -fecexprrow 8
   assign LRUWriteEn = (CurrState == STATE_READY & AnyHit) |
