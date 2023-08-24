@@ -24,8 +24,7 @@ set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
-eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
-eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${cfg}/*.vh] {$outputDir/config/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
