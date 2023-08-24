@@ -59,10 +59,22 @@ sretdone:
     # 1st is when MENVCFG_STCE is cleared
     li a0, 3
     ecall # starts in M-mode
+    li t1, -3
+    csrw stimecmp, t1 # sets stimecmp to large value to prevent it from interrupting immediately
+    li t0, 2 
+    csrs mstatus, t0 # enables sie
+    li t0, 32
+    csrs sie, t0 # enables sie.stie
     csrw menvcfg, x0
     li a0, 1
     ecall   # enter S-mode
     csrw stimecmp, zero
+    li a0, 3
+    ecall # in M-mode
+    li t0, 32
+    csrs sip, t0
+    li a0, 1
+    ecall # in S-mode and expects stimer interrupt to occur
     li a0, 3
     ecall   # return to M-mode
     csrsi mcounteren, 2 # mcounteren_tm = 1
