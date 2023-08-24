@@ -107,9 +107,9 @@ connect_debug_port u_ila_0/probe19 [get_nets [list {wallypipelinedsocwrapper/wal
 
 
 create_debug_port u_ila_0 probe
-set_property port_width 63 [get_debug_ports u_ila_0/probe20]
+set_property port_width 64 [get_debug_ports u_ila_0/probe20]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe20]
-connect_debug_port u_ila_0/probe20 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[2]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[7]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[8]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[9]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[10]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[11]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[12]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[13]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[14]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[15]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[16]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[17]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[18]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[19]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[20]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[21]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[22]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[23]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[24]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[25]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[26]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[27]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[28]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[29]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[30]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[31]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[32]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[33]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[34]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[35]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[36]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[37]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[38]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[39]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[40]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[41]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[42]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[43]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[44]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[45]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[46]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[47]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[48]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[49]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[50]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[51]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[52]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[53]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[54]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[55]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[56]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[57]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[58]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[59]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[60]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[61]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[62]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[63]} ]]
+connect_debug_port u_ila_0/probe20 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[2]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[7]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[8]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[9]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[10]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[11]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[12]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[13]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[14]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[15]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[16]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[17]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[18]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[19]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[20]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[21]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[22]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[23]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[24]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[25]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[26]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[27]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[28]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[29]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[30]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[31]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[32]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[33]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[34]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[35]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[36]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[37]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[38]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[39]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[40]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[41]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[42]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[43]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[44]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[45]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[46]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[47]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[48]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[49]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[50]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[51]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[52]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[53]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[54]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[55]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[56]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[57]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[58]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[59]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[60]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[61]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[62]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/priv.priv/csr/csrs.csrs/STVEC_REGW[63]} ]]
 
 
 create_debug_port u_ila_0 probe
@@ -717,178 +717,33 @@ set_property port_width 64 [get_debug_ports u_ila_0/probe138]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe138]
 connect_debug_port u_ila_0/probe138 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[2]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[7]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[8]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[9]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[10]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[11]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[12]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[13]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[14]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[15]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[16]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[17]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[18]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[19]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[20]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[21]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[22]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[23]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[24]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[25]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[26]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[27]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[28]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[29]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[30]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[31]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[32]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[33]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[34]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[35]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[36]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[37]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[38]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[39]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[40]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[41]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[42]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[43]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[44]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[45]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[46]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[47]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[48]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[49]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[50]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[51]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[52]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[53]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[54]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[55]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[56]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[57]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[58]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[59]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[60]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[61]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[62]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/ieu/dp/regf/rf[10]__0[63]} ]]
 
-
 create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe139]
+set_property port_width 49 [get_debug_ports u_ila_0/probe139]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe139]
-connect_debug_port u_ila_0/probe139 [get_nets [list {m_axi_awid[0]} {m_axi_awid[1]} {m_axi_awid[2]} {m_axi_awid[3]} ]]
+connect_debug_port u_ila_0/probe139 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[0]}  {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[10]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[11]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[12]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[13]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[14]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[15]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[16]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[17]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[18]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[19]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[20]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[21]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[22]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[23]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[24]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[25]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[26]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[27]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[28]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[29]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[30]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[31]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[32]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[33]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[34]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[35]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[36]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[37]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[38]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[39]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[40]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[41]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[42]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[43]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[44]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[45]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[46]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[47]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[48]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[49]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[50]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[51]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[52]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/PTE[53]} ]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe140]
+set_property port_width 1 [get_debug_ports u_ila_0/probe140]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe140]
-connect_debug_port u_ila_0/probe140 [get_nets [list {m_axi_awlen[0]} {m_axi_awlen[1]} {m_axi_awlen[2]} {m_axi_awlen[3]} {m_axi_awlen[4]} {m_axi_awlen[5]} {m_axi_awlen[6]} {m_axi_awlen[7]} ]]
+connect_debug_port u_ila_0/probe140 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/ValidNonLeafPTE}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe141]
+set_property port_width 1 [get_debug_ports u_ila_0/probe141]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe141]
-connect_debug_port u_ila_0/probe141 [get_nets [list {m_axi_awsize[0]} {m_axi_awsize[1]} {m_axi_awsize[2]} ]]
+connect_debug_port u_ila_0/probe141 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/ValidLeafPTE}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe142]
+set_property port_width 1 [get_debug_ports u_ila_0/probe142]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe142]
-connect_debug_port u_ila_0/probe142 [get_nets [list {m_axi_awburst[0]} {m_axi_awburst[1]} ]]
+connect_debug_port u_ila_0/probe142 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/ValidPTE}]]
 
 create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe143]
+set_property port_width 1 [get_debug_ports u_ila_0/probe143]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe143]
-connect_debug_port u_ila_0/probe143 [get_nets [list {m_axi_awcache[0]} {m_axi_awcache[1]} {m_axi_awcache[2]} {m_axi_awcache[3]} ]]
+connect_debug_port u_ila_0/probe143 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/LeafPTE}]]
+
 
 create_debug_port u_ila_0 probe
-set_property port_width 31 [get_debug_ports u_ila_0/probe144]
+set_property port_width 48 [get_debug_ports u_ila_0/probe144]
 set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe144]
-connect_debug_port u_ila_0/probe144 [get_nets [list {m_axi_awaddr[0]} {m_axi_awaddr[1]} {m_axi_awaddr[2]} {m_axi_awaddr[3]} {m_axi_awaddr[4]} {m_axi_awaddr[5]} {m_axi_awaddr[6]} {m_axi_awaddr[7]} {m_axi_awaddr[8]} {m_axi_awaddr[9]} {m_axi_awaddr[10]} {m_axi_awaddr[11]} {m_axi_awaddr[12]} {m_axi_awaddr[13]} {m_axi_awaddr[14]} {m_axi_awaddr[15]} {m_axi_awaddr[16]} {m_axi_awaddr[17]} {m_axi_awaddr[18]} {m_axi_awaddr[19]} {m_axi_awaddr[20]} {m_axi_awaddr[21]} {m_axi_awaddr[22]} {m_axi_awaddr[23]} {m_axi_awaddr[24]} {m_axi_awaddr[25]} {m_axi_awaddr[26]} {m_axi_awaddr[27]} {m_axi_awaddr[28]} {m_axi_awaddr[29]} {m_axi_awaddr[30]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe145]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe145]
-connect_debug_port u_ila_0/probe145 [get_nets [list {m_axi_awprot[0]} {m_axi_awprot[1]} {m_axi_awprot[2]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe146]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe146]
-connect_debug_port u_ila_0/probe146 [get_nets [list {m_axi_awvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe147]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe147]
-connect_debug_port u_ila_0/probe147 [get_nets [list {m_axi_awready}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe148]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe148]
-connect_debug_port u_ila_0/probe148 [get_nets [list {m_axi_awlock}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe149]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe149]
-connect_debug_port u_ila_0/probe149 [get_nets [list {m_axi_wdata[0]} {m_axi_wdata[1]} {m_axi_wdata[2]} {m_axi_wdata[3]} {m_axi_wdata[4]} {m_axi_wdata[5]} {m_axi_wdata[6]} {m_axi_wdata[7]} {m_axi_wdata[8]} {m_axi_wdata[9]} {m_axi_wdata[10]} {m_axi_wdata[11]} {m_axi_wdata[12]} {m_axi_wdata[13]} {m_axi_wdata[14]} {m_axi_wdata[15]} {m_axi_wdata[16]} {m_axi_wdata[17]} {m_axi_wdata[18]} {m_axi_wdata[19]} {m_axi_wdata[20]} {m_axi_wdata[21]} {m_axi_wdata[22]} {m_axi_wdata[23]} {m_axi_wdata[24]} {m_axi_wdata[25]} {m_axi_wdata[26]} {m_axi_wdata[27]} {m_axi_wdata[28]} {m_axi_wdata[29]} {m_axi_wdata[30]} {m_axi_wdata[31]} {m_axi_wdata[32]} {m_axi_wdata[33]} {m_axi_wdata[34]} {m_axi_wdata[35]} {m_axi_wdata[36]} {m_axi_wdata[37]} {m_axi_wdata[38]} {m_axi_wdata[39]} {m_axi_wdata[40]} {m_axi_wdata[41]} {m_axi_wdata[42]} {m_axi_wdata[43]} {m_axi_wdata[44]} {m_axi_wdata[45]} {m_axi_wdata[46]} {m_axi_wdata[47]} {m_axi_wdata[48]} {m_axi_wdata[49]} {m_axi_wdata[50]} {m_axi_wdata[51]} {m_axi_wdata[52]} {m_axi_wdata[53]} {m_axi_wdata[54]} {m_axi_wdata[55]} {m_axi_wdata[56]} {m_axi_wdata[57]} {m_axi_wdata[58]} {m_axi_wdata[59]} {m_axi_wdata[60]} {m_axi_wdata[61]} {m_axi_wdata[62]} {m_axi_wdata[63]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe150]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe150]
-connect_debug_port u_ila_0/probe150 [get_nets [list {m_axi_wstrb[0]} {m_axi_wstrb[1]} {m_axi_wstrb[2]} {m_axi_wstrb[3]} {m_axi_wstrb[4]} {m_axi_wstrb[5]} {m_axi_wstrb[6]} {m_axi_wstrb[7]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe151]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe151]
-connect_debug_port u_ila_0/probe151 [get_nets [list {m_axi_wlast}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe152]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe152]
-connect_debug_port u_ila_0/probe152 [get_nets [list {m_axi_wvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe153]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe153]
-connect_debug_port u_ila_0/probe153 [get_nets [list {m_axi_wready}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe154]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe154]
-connect_debug_port u_ila_0/probe154 [get_nets [list {m_axi_bid[0]} {m_axi_bid[1]} {m_axi_bid[2]} {m_axi_bid[3]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe155]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe155]
-connect_debug_port u_ila_0/probe155 [get_nets [list {m_axi_bresp[0]} {m_axi_bresp[1]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe156]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe156]
-connect_debug_port u_ila_0/probe156 [get_nets [list {m_axi_bvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe157]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe157]
-connect_debug_port u_ila_0/probe157 [get_nets [list {m_axi_bready}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe158]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe158]
-connect_debug_port u_ila_0/probe158 [get_nets [list {m_axi_arid[0]} {m_axi_arid[1]} {m_axi_arid[2]} {m_axi_arid[3]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 8 [get_debug_ports u_ila_0/probe159]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe159]
-connect_debug_port u_ila_0/probe159 [get_nets [list {m_axi_arlen[0]} {m_axi_arlen[1]} {m_axi_arlen[2]} {m_axi_arlen[3]} {m_axi_arlen[4]} {m_axi_arlen[5]} {m_axi_arlen[6]} {m_axi_arlen[7]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe160]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe160]
-connect_debug_port u_ila_0/probe160 [get_nets [list {m_axi_arsize[0]} {m_axi_arsize[1]} {m_axi_arsize[2]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe161]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe161]
-connect_debug_port u_ila_0/probe161 [get_nets [list {m_axi_arburst[0]} {m_axi_arburst[1]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 3 [get_debug_ports u_ila_0/probe162]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe162]
-connect_debug_port u_ila_0/probe162 [get_nets [list {m_axi_arprot[0]} {m_axi_arprot[1]} {m_axi_arprot[2]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe163]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe163]
-connect_debug_port u_ila_0/probe163 [get_nets [list {m_axi_arcache[0]} {m_axi_arcache[1]} {m_axi_arcache[2]} {m_axi_arcache[3]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe164]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe164]
-connect_debug_port u_ila_0/probe164 [get_nets [list {m_axi_arvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 31 [get_debug_ports u_ila_0/probe165]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe165]
-connect_debug_port u_ila_0/probe165 [get_nets [list {m_axi_araddr[0]} {m_axi_araddr[1]} {m_axi_araddr[2]} {m_axi_araddr[3]} {m_axi_araddr[4]} {m_axi_araddr[5]} {m_axi_araddr[6]} {m_axi_araddr[7]} {m_axi_araddr[8]} {m_axi_araddr[9]} {m_axi_araddr[10]} {m_axi_araddr[11]} {m_axi_araddr[12]} {m_axi_araddr[13]} {m_axi_araddr[14]} {m_axi_araddr[15]} {m_axi_araddr[16]} {m_axi_araddr[17]} {m_axi_araddr[18]} {m_axi_araddr[19]} {m_axi_araddr[20]} {m_axi_araddr[21]} {m_axi_araddr[22]} {m_axi_araddr[23]} {m_axi_araddr[24]} {m_axi_araddr[25]} {m_axi_araddr[26]} {m_axi_araddr[27]} {m_axi_araddr[28]} {m_axi_araddr[29]} {m_axi_araddr[30]}  ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe166]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe166]
-connect_debug_port u_ila_0/probe166 [get_nets [list {m_axi_arlock}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe167]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe167]
-connect_debug_port u_ila_0/probe167 [get_nets [list {m_axi_arready}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 4 [get_debug_ports u_ila_0/probe168]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe168]
-connect_debug_port u_ila_0/probe168 [get_nets [list {m_axi_rid[0]} {m_axi_rid[1]} {m_axi_rid[2]} {m_axi_rid[3]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 64 [get_debug_ports u_ila_0/probe169]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe169]
-connect_debug_port u_ila_0/probe169 [get_nets [list {m_axi_rdata[0]} {m_axi_rdata[1]} {m_axi_rdata[2]} {m_axi_rdata[3]} {m_axi_rdata[4]} {m_axi_rdata[5]} {m_axi_rdata[6]} {m_axi_rdata[7]} {m_axi_rdata[8]} {m_axi_rdata[9]} {m_axi_rdata[10]} {m_axi_rdata[11]} {m_axi_rdata[12]} {m_axi_rdata[13]} {m_axi_rdata[14]} {m_axi_rdata[15]} {m_axi_rdata[16]} {m_axi_rdata[17]} {m_axi_rdata[18]} {m_axi_rdata[19]} {m_axi_rdata[20]} {m_axi_rdata[21]} {m_axi_rdata[22]} {m_axi_rdata[23]} {m_axi_rdata[24]} {m_axi_rdata[25]} {m_axi_rdata[26]} {m_axi_rdata[27]} {m_axi_rdata[28]} {m_axi_rdata[29]} {m_axi_rdata[30]} {m_axi_rdata[31]} {m_axi_rdata[32]} {m_axi_rdata[33]} {m_axi_rdata[34]} {m_axi_rdata[35]} {m_axi_rdata[36]} {m_axi_rdata[37]} {m_axi_rdata[38]} {m_axi_rdata[39]} {m_axi_rdata[40]} {m_axi_rdata[41]} {m_axi_rdata[42]} {m_axi_rdata[43]} {m_axi_rdata[44]} {m_axi_rdata[45]} {m_axi_rdata[46]} {m_axi_rdata[47]} {m_axi_rdata[48]} {m_axi_rdata[49]} {m_axi_rdata[50]} {m_axi_rdata[51]} {m_axi_rdata[52]} {m_axi_rdata[53]} {m_axi_rdata[54]} {m_axi_rdata[55]} {m_axi_rdata[56]} {m_axi_rdata[57]} {m_axi_rdata[58]} {m_axi_rdata[59]} {m_axi_rdata[60]} {m_axi_rdata[61]} {m_axi_rdata[62]} {m_axi_rdata[63]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 2 [get_debug_ports u_ila_0/probe170]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe170]
-connect_debug_port u_ila_0/probe170 [get_nets [list {m_axi_rresp[0]} {m_axi_rresp[1]} ]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe171]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe171]
-connect_debug_port u_ila_0/probe171 [get_nets [list {m_axi_rvalid}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe172]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe172]
-connect_debug_port u_ila_0/probe172 [get_nets [list {m_axi_rlast}]]
-
-create_debug_port u_ila_0 probe
-set_property port_width 1 [get_debug_ports u_ila_0/probe173]
-set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe173]
-connect_debug_port u_ila_0/probe173 [get_nets [list {m_axi_rready}]]
+connect_debug_port u_ila_0/probe144 [get_nets [list {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[0]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[1]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[2]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[3]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[4]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[5]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[6]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[7]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[8]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[9]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[10]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[11]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[12]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[13]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[14]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[15]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[16]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[17]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[18]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[19]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[20]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[21]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[22]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[23]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[24]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[25]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[26]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[27]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[28]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[29]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[30]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[31]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[32]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[33]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[34]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[35]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[36]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[37]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[38]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[39]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[40]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[41]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[42]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[43]}  {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[60]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[61]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[62]} {wallypipelinedsocwrapper/wallypipelinedsoc/core/lsu/hptw.hptw/SATP_REGW[63]}]]
