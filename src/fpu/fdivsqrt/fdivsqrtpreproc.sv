@@ -112,8 +112,6 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
   assign Xfract = (IFX << ell) << 1;
   assign Dfract = (IFD << mE)  << 1; 
 
-  // *** CT: move to fdivsqrtintpreshift
-
   //////////////////////////////////////////////////////
   // Integer Right Shift to digit boundary
   //  Determine DivXShifted (X shifted to digit boundary)
@@ -141,8 +139,8 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
       assign IntTrunc = TotalIntBits % P.RK;                       // Truncation check for ceiling operator
       assign IntSteps = (TotalIntBits >> P.LOGRK) + |IntTrunc;     // Number of steps for int div
       assign nE = (IntSteps * P.DIVCOPIES) - 1;                    // Fractional digits
-      assign RightShiftX = P.RK - 1 - ((TotalIntBits - 1) % P.RK);  // Right shift amount
-      assign DivXShifted = DivX >> RightShiftX;                   // shift X by up to R*K-1 to complete in nE steps
+      assign RightShiftX = P.RK - 1 - ((TotalIntBits - 1) % P.RK); // Right shift amount
+      assign DivXShifted = DivX >> RightShiftX;                    // shift X by up to R*K-1 to complete in nE steps
       /* verilator lint_on WIDTH */
     end else begin // radix 2 1 copy doesn't require shifting
       assign nE = p; 
@@ -152,14 +150,14 @@ module fdivsqrtpreproc import cvw::*;  #(parameter cvw_t P) (
     assign ISpecialCaseE = 0;
   end
 
-  // CT *** fdivsqrtfplead1
-
   //////////////////////////////////////////////////////
   // Floating-Point Preprocessing
   // append leading 1 (for nonzero inputs)
   // shift square root to be in range [1/4, 1)
   // Normalized numbers are shifted right by 1 if the exponent is odd
-  // Denormalized numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
+  // Subnormal numbers have Xe = 0 and an unbiased exponent of 1-BIAS.  They are shifted right if the number of leading zeros is odd.
+  // NOTE: there might be a discrepancy that X is never right shifted by 2.  However
+  //  it comes out in the wash and gives the right answer.  Investigate later if possible.
   //////////////////////////////////////////////////////
 
   assign DivX = {3'b000, ~NumerZeroE, Xfract};

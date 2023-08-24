@@ -68,12 +68,19 @@ if [ ! -e $1 ] ; then
     #      --new=3:$FS_START:-0 --change-name=3:'filesystem' \
     #      $1
 
+    # echo -e "$NAME: Creating GUID Partition Table"
+    # sudo sgdisk -g --clear --set-alignment=1 \
+    #      --new=1:34:+$DST_SIZE: --change-name=1:'fdt' \
+    #      --new=2:$FW_JUMP_START:+$FW_JUMP_SIZE --change-name=2:'opensbi' --typecode=1:2E54B353-1271-4842-806F-E436D6AF6985 \
+    #      --new=3:$KERNEL_START:+$KERNEL_SIZE --change-name=3:'kernel' \
+    #      --new=4:$FS_START:-0 --change-name=4:'filesystem' \
+    #      $1
+
     echo -e "$NAME: Creating GUID Partition Table"
     sudo sgdisk -g --clear --set-alignment=1 \
          --new=1:34:+$DST_SIZE: --change-name=1:'fdt' \
          --new=2:$FW_JUMP_START:+$FW_JUMP_SIZE --change-name=2:'opensbi' --typecode=1:2E54B353-1271-4842-806F-E436D6AF6985 \
          --new=3:$KERNEL_START:+$KERNEL_SIZE --change-name=3:'kernel' \
-         --new=4:$FS_START:-0 --change-name=4:'filesystem' \
          $1
 
     LOOPDEVICE=$(sudo losetup -f)
@@ -94,14 +101,14 @@ if [ ! -e $1 ] ; then
     echo -e "$NAME: Copying Kernel"
     sudo dd if=$LINUX_KERNEL of="$LOOPDEVICE"p3 $DD_FLAGS
 
-    sudo mkfs.ext4 "$LOOPDEVICE"p4
-    sudo mkdir /mnt/$MNT_DIR
+    # sudo mkfs.ext4 "$LOOPDEVICE"p4
+    # sudo mkdir /mnt/$MNT_DIR
 
-    sudo mount -v "$LOOPDEVICE"p4 /mnt/$MNT_DIR 
+    # sudo mount -v "$LOOPDEVICE"p4 /mnt/$MNT_DIR 
 
-    sudo umount -v /mnt/$MNT_DIR
+    # sudo umount -v /mnt/$MNT_DIR
 
-    sudo rmdir /mnt/$MNT_DIR
+    # sudo rmdir /mnt/$MNT_DIR
     sudo losetup -d $LOOPDEVICE
 fi
 

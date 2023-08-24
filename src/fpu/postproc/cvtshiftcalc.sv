@@ -27,16 +27,16 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
-  input  logic                    XZero,              // is the input zero?
-  input  logic                    ToInt,              // to integer conversion?
-  input  logic                    IntToFp,            // interger to floating point conversion?
+  input  logic                     XZero,              // is the input zero?
+  input  logic                     ToInt,              // to integer conversion?
+  input  logic                     IntToFp,            // interger to floating point conversion?
   input  logic [P.FMTBITS-1:0]     OutFmt,             // output format
   input  logic [P.NE:0]            CvtCe,              // the calculated expoent
   input  logic [P.NF:0]            Xm,                 // input mantissas
   input  logic [P.CVTLEN-1:0]      CvtLzcIn,           // input to the Leading Zero Counter (without msb)
-  input  logic                    CvtResSubnormUf,    // is the conversion result subnormal or underlows
-  output logic                    CvtResUf,           // does the cvt result unerflow
-  output logic [P.CVTLEN+P.NF:0]    CvtShiftIn          // number to be shifted
+  input  logic                     CvtResSubnormUf,    // is the conversion result subnormal or underlows
+  output logic                     CvtResUf,           // does the cvt result unerflow
+  output logic [P.CVTLEN+P.NF:0]   CvtShiftIn          // number to be shifted
 );
 
   logic [$clog2(P.NF):0]           ResNegNF;           // the result's fraction length negated (-NF)
@@ -47,7 +47,7 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
 
   // seclect the input to the shifter
   //      fp  -> int:
-  //          |  P.XLEN  zeros |     mantissa      | 0's if nessisary |
+  //          |  P.XLEN  zeros |     mantissa      | 0's if necessary |
   //                          .
   //          Other problems:
   //              - if shifting to the right (neg CalcExp) then don't a 1 in the round bit (to prevent an incorrect plus 1 later durring rounding)
@@ -58,16 +58,16 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   //              |  P.NF-1  zeros   |     mantissa      | 0's if nessisary | 
   //              .
   //          - otherwise:
-  //              |     LzcInM      | 0's if nessisary | 
+  //              |      LzcInM      |  0's if necessary | 
   //              .
   // change to int shift to the left one
   always_comb 
   //                                                        get rid of round bit if needed
   //                                                        |                    add sticky bit if needed
   //                                                        |                    |
-      if (ToInt)               CvtShiftIn = {{P.XLEN{1'b0}}, Xm[P.NF]&~CvtCe[P.NE], Xm[P.NF-1]|(CvtCe[P.NE]&Xm[P.NF]), Xm[P.NF-2:0], {P.CVTLEN-P.XLEN{1'b0}}};
+      if (ToInt)                CvtShiftIn = {{P.XLEN{1'b0}}, Xm[P.NF]&~CvtCe[P.NE], Xm[P.NF-1]|(CvtCe[P.NE]&Xm[P.NF]), Xm[P.NF-2:0], {P.CVTLEN-P.XLEN{1'b0}}};
       else if (CvtResSubnormUf) CvtShiftIn = {{P.NF-1{1'b0}}, Xm, {P.CVTLEN-P.NF+1{1'b0}}};
-      else                     CvtShiftIn = {CvtLzcIn, {P.NF+1{1'b0}}};
+      else                      CvtShiftIn = {CvtLzcIn, {P.NF+1{1'b0}}};
   
   // choose the negative of the fraction size
   if (P.FPSIZES == 1) begin
@@ -79,9 +79,9 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
   end else if (P.FPSIZES == 3) begin
       always_comb
           case (OutFmt)
-              P.FMT:  ResNegNF = -($clog2(P.NF)+1)'(P.NF);
-              P.FMT1: ResNegNF = -($clog2(P.NF)+1)'(P.NF1);
-              P.FMT2: ResNegNF = -($clog2(P.NF)+1)'(P.NF2);
+              P.FMT:  ResNegNF  = -($clog2(P.NF)+1)'(P.NF);
+              P.FMT1: ResNegNF  = -($clog2(P.NF)+1)'(P.NF1);
+              P.FMT2: ResNegNF  = -($clog2(P.NF)+1)'(P.NF2);
               default: ResNegNF = 'x;
           endcase
 
@@ -95,8 +95,6 @@ module cvtshiftcalc import cvw::*;  #(parameter cvw_t P) (
           endcase
   end
 
-
-  
   // determine if the result underflows ??? -> fp
   //      - if the first 1 is shifted out of the result then the result underflows
   //      - can't underflow an integer to fp conversions

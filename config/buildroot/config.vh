@@ -159,4 +159,4 @@ localparam ZBS_SUPPORTED = 0;
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
-`include "test-shared.vh"
+`include "config-shared.vh"

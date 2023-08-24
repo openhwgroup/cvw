@@ -31,8 +31,8 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.NE+1:0]              DivQe,              // divsqrt exponent
   output logic [P.LOGNORMSHIFTSZ-1:0]  DivShiftAmt,        // divsqrt shift amount
   output logic [P.NORMSHIFTSZ-1:0]     DivShiftIn,         // divsqrt shift input
-  output logic                        DivResSubnorm,      // is the divsqrt result subnormal
-  output logic                        DivSubnormShiftPos  // is the subnormal shift amount positive
+  output logic                         DivResSubnorm,      // is the divsqrt result subnormal
+  output logic                         DivSubnormShiftPos  // is the subnormal shift amount positive
 );
 
   logic [P.LOGNORMSHIFTSZ-1:0]         NormShift;          // normalized result shift amount
@@ -46,10 +46,10 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   // if the result is subnormal
   //  00000000x.xxxxxx...                     Exp = DivQe
   //  .00000000xxxxxxx... >> NF+1             Exp = DivQe+NF+1
-  //  .00xxxxxxxxxxxxx... << DivQe+NF+1  Exp = +1
+  //  .00xxxxxxxxxxxxx... << DivQe+NF+1       Exp = +1
   //  .0000xxxxxxxxxxx... >> 1                Exp = 1
-  // Left shift amount  = DivQe+NF+1-1
-  assign DivSubnormShift = (P.NE+2)'(P.NF)+DivQe;
+  // Left shift amount      = DivQe+NF+1-1
+  assign DivSubnormShift    = (P.NE+2)'(P.NF)+DivQe;
   assign DivSubnormShiftPos = ~DivSubnormShift[P.NE+1];
 
   // if the result is normalized
@@ -65,7 +65,7 @@ module divshiftcalc import cvw::*;  #(parameter cvw_t P) (
   // if the shift amount is negitive then don't shift (keep sticky bit)
   // need to multiply the early termination shift by LOGR*DIVCOPIES =  left shift of log2(LOGR*DIVCOPIES)
   assign DivSubnormShiftAmt = DivSubnormShiftPos ? DivSubnormShift[P.LOGNORMSHIFTSZ-1:0] : '0;
-  assign DivShiftAmt = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
+  assign DivShiftAmt        = DivResSubnorm ? DivSubnormShiftAmt : NormShift;
 
   // pre-shift the divider result for normalization
   assign DivShiftIn = {{P.NF{1'b0}}, DivQm, {P.NORMSHIFTSZ-P.DIVb-1-P.NF{1'b0}}};

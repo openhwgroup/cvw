@@ -1,0 +1,81 @@
+#!/usr/bin/python3
+###########################################
+## probe.sh
+##
+## Written: Jacob Pease jacobpease@protonmail.com
+## Created: 16 August 2023
+## Modified: 16 August 2023
+##
+## A component of the CORE-V-WALLY configurable RISC-V project.
+##
+## Copyright (C) 2021-23 Harvey Mudd College & Oklahoma State University
+##
+## SPDX-License-Identifier: Apache-2.0 WITH SHL-2.1
+##
+## Licensed under the Solderpad Hardware License v 2.1 (the “License”); you may not use this file 
+## except in compliance with the License, or, at your option, the Apache License version 2.0. You 
+## may obtain a copy of the License at
+##
+## https:##solderpad.org#licenses#SHL-2.1#
+##
+## Unless required by applicable law or agreed to in writing, any work distributed under the 
+## License is distributed on an “AS IS” BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, 
+## either express or implied. See the License for the specific language governing permissions 
+## and limitations under the License.
+################################################################################################
+
+import sys
+
+def usage():
+    print("Usage: ./probes name width probenum")
+    exit(1)
+
+def convertLine(x):
+    temp = x.split()
+    temp[1] = int(temp[1])
+    return tuple(temp)
+
+def probeBits( probe ):
+    str = ''
+
+    if (probe[1] > 1):
+        for i in range(probe[1]):
+            if i != (probe[1]-1):
+                str = str + f"{{{probe[0]}[{i}]}} "
+            else:
+                str = str + f"{{{probe[0]}[{i}]}} "
+
+    else:
+        str = f'{{{probe[0]}}}'
+
+    return str
+
+def printProbe( probe, i ):
+    bits = probeBits(probe)
+
+    print(bits)
+
+    return (
+        f'create_debug_port u_ila_0 probe\n'
+        f'set_property port_width {probe[1]} [get_debug_ports u_ila_0/probe{i}]\n'
+        f'set_property PROBE_TYPE DATA_AND_TRIGGER [get_debug_ports u_ila_0/probe{i}]\n'
+        f'connect_debug_port u_ila_0/probe{i} [get_nets [list {bits}]]\n\n'
+    )
+
+def main(args):
+    if (len(args) != 3):
+        usage()
+
+    name = args[0]
+    width = int(args[1])
+    probeNum = int(args[2])
+
+
+    probe = (name, width)
+
+    print(printProbe(probe, probeNum))
+
+if __name__ == '__main__':
+    main(sys.argv[1:])
+
+        

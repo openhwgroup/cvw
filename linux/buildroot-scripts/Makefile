@@ -1,4 +1,4 @@
-BUILDROOT := ${RISCV}/buildroot
+BUILDROOT := ${RISCV}/buildroot2023
 IMAGES := ${BUILDROOT}/output/images
 DIS := ${IMAGES}/disassembly
 

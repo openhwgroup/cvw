@@ -47,7 +47,7 @@ localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
 localparam SSTC_SUPPORTED = 1;
-localparam ZICBOM_SUPPORTED = 0;
+localparam ZICBOM_SUPPORTED = 1;
 localparam ZICBOZ_SUPPORTED = 0;
 localparam ZICBOP_SUPPORTED = 0;
 localparam SVPBMT_SUPPORTED = 0;
@@ -165,4 +165,4 @@ localparam ZBS_SUPPORTED = 1;
 // Memory synthesis configuration
 localparam USE_SRAM = 0;
 
-`include "test-shared.vh"
+`include "config-shared.vh"

@@ -3,8 +3,6 @@
 # mmcm_clkout0 is the clock output of the DDR4 memory interface / 4.
 # This clock is not used by wally or the AHBLite Bus. However it is used by the AXI BUS on the DD4 IP.
 
-create_generated_clock -name CLKDiv64_Gen -source [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/I0] -multiply_by 1 -divide_by 2 [get_pins wallypipelinedsoc/uncore.uncore/sdc.SDC/sd_top/slow_clk_divider/clkMux/O]
-
 ##### GPI ####
 set_property PACKAGE_PIN BB24 [get_ports {GPI[0]}]
 set_property PACKAGE_PIN BF22 [get_ports {GPI[1]}]
@@ -16,7 +14,7 @@ set_property IOSTANDARD LVCMOS18 [get_ports {GPI[1]}]
 set_property IOSTANDARD LVCMOS18 [get_ports {GPI[0]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports {GPI[*]}]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 2.000 [get_ports {GPI[*]}]
-set_max_delay -from [get_ports {GPI[*]}] 10.000
+set_max_delay -from [get_ports {GPI[*]}] 20.000
 
 ##### GPO ####
 set_property PACKAGE_PIN AT32 [get_ports {GPO[0]}]
@@ -29,7 +27,7 @@ set_property IOSTANDARD LVCMOS12 [get_ports {GPO[3]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[2]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[1]}]
 set_property IOSTANDARD LVCMOS12 [get_ports {GPO[0]}]
-set_max_delay -to [get_ports {GPO[*]}] 10.000
+set_max_delay -to [get_ports {GPO[*]}] 20.000
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports {GPO[*]}]
 set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports {GPO[*]}]
 
@@ -39,8 +37,8 @@ set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_por
 set_property PACKAGE_PIN L31 [get_ports UARTSin]
 #set_property PACKAGE_PIN BB21 [get_ports UARTSout]
 set_property PACKAGE_PIN P29 [get_ports UARTSout]
-set_max_delay -from [get_ports UARTSin] 10.000
-set_max_delay -to [get_ports UARTSout] 10.000
+set_max_delay -from [get_ports UARTSin] 20.000
+set_max_delay -to [get_ports UARTSout] 20.000
 set_property IOSTANDARD LVCMOS12 [get_ports UARTSin]
 set_property IOSTANDARD LVCMOS12 [get_ports UARTSout]
 set_property DRIVE 6 [get_ports UARTSout]
@@ -57,7 +55,7 @@ set_input_delay -clock [get_clocks mmcm_clkout0] -min -add_delay 0.000 [get_port
 set_input_delay -clock [get_clocks mmcm_clkout0] -max -add_delay 0.000 [get_ports reset]
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports reset]
 set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 0.000 [get_ports reset]
-set_max_delay -from [get_ports reset] 15.000
+set_max_delay -from [get_ports reset] 20.000
 set_false_path -from [get_ports reset]
 set_property PACKAGE_PIN L19 [get_ports {reset}]
 set_property IOSTANDARD LVCMOS12 [get_ports {reset}]
@@ -106,6 +104,11 @@ set_property IOSTANDARD LVCMOS18 [get_ports SDCCLK]
 set_property IOSTANDARD LVCMOS18 [get_ports {SDCCmd}]
 set_property PACKAGE_PIN AV15 [get_ports SDCCLK]
 set_property PACKAGE_PIN AY15 [get_ports {SDCCmd}]
+
+set_property PACKAGE_PIN AT15 [get_ports {SDCCD}]
+set_property IOSTANDARD LVCMOS18 [get_ports {SDCCD}]
+set_property PULLUP true [get_ports {SDCCD}]
+
 set_property PULLUP true [get_ports {SDCDat[3]}]
 set_property PULLUP true [get_ports {SDCDat[2]}]
 set_property PULLUP true [get_ports {SDCDat[1]}]
@@ -113,17 +116,17 @@ set_property PULLUP true [get_ports {SDCDat[0]}]
 set_property PULLUP true [get_ports {SDCCmd}]
 
 
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
 
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.500 [get_ports {SDCCmd}]
-set_input_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 14.000 [get_ports {SDCCmd}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.500 [get_ports {SDCCmd}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 14.000 [get_ports {SDCCmd}]
 
 
-set_output_delay -clock [get_clocks CLKDiv64_Gen] -min -add_delay 2.000 [get_ports {SDCCmd}]
-set_output_delay -clock [get_clocks CLKDiv64_Gen] -max -add_delay 6.000 [get_ports {SDCCmd}]
+set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports {SDCCmd}]
+set_output_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 6.000 [get_ports {SDCCmd}]
 
-set_output_delay -clock [get_clocks CLKDiv64_Gen] 0.000 [get_ports SDCCLK]
+set_output_delay -clock [get_clocks mmcm_clkout1] 0.000 [get_ports SDCCLK]
 
 
 
@@ -253,7 +256,7 @@ set_property PACKAGE_PIN G22 [get_ports {c0_ddr4_dm_dbi_n[7]}]
 
 
 
-set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 10.000
+set_max_delay -datapath_only -from [get_pins xlnx_ddr4_c0/inst/u_ddr4_mem_intfc/u_ddr_cal_top/calDone_gated_reg/C] -to [get_pins xlnx_proc_sys_reset_0/U0/EXT_LPF/lpf_int_reg/D] 20.000
 
 
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 0.000 [get_ports c0_ddr4_reset_n]
