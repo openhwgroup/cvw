@@ -153,7 +153,7 @@ module testbench;
   `define SSCRATCH    `CSR_BASE.csrs.csrs.SSCRATCHreg.q
   `define MTVEC       `CSR_BASE.csrm.MTVECreg.q
   `define STVEC       `CSR_BASE.csrs.csrs.STVECreg.q
-  `define SATP        `CSR_BASE.csrs.csrs.genblk1.SATPreg.q
+  `define SATP        `CSR_BASE.csrs.csrs.genblk2.SATPreg.q
   `define INSTRET     `CSR_BASE.counters.counters.HPMCOUNTER_REGW[2]
   `define MSTATUS     `CSR_BASE.csrsr.MSTATUS_REGW
   `define SSTATUS     `CSR_BASE.csrsr.SSTATUS_REGW  
