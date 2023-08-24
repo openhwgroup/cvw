@@ -30,18 +30,19 @@
 
 import cvw::*;
 
+`include "parameter-defs.vh"
 module wallypipelinedcorewrapper (
    input  logic                  clk, reset,
    // Privileged
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [AHBW-1:0]     HRDATA,
+   input  logic [32-1:0]     HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [PA_BITS-1:0]  HADDR,
-   output logic [AHBW-1:0]     HWDATA,
-   output logic [XLEN/8-1:0]   HWSTRB,
+   output logic [34-1:0]  HADDR,
+   output logic [32-1:0]     HWDATA,
+   output logic [32/8-1:0]   HWSTRB,
    output logic                  HWRITE,
    output logic [2:0]            HSIZE,
    output logic [2:0]            HBURST,
@@ -49,7 +50,6 @@ module wallypipelinedcorewrapper (
    output logic [1:0]            HTRANS,
    output logic                  HMASTLOCK
 );
-  `include "parameter-defs.vh"
 
   wallypipelinedcore  #(P) core(.*); 
 
