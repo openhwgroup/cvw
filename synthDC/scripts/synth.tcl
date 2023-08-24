@@ -25,7 +25,9 @@ set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
 
@@ -74,7 +76,7 @@ if { [shell_is_in_topographical_mode] } {
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
-elaborate $my_toplevel -lib WORK 
+elaborate $my_toplevel -parameter P -lib WORK 
 
 # Set the current_design 
 current_design $my_toplevel
