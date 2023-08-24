@@ -27,39 +27,39 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module specialcase import cvw::*;  #(parameter cvw_t P) (
-  input  logic                Xs,         // X sign
-  input  logic [P.NF:0]        Xm, Ym, Zm, // input significand's
-  input  logic                XNaN, YNaN, ZNaN, // are the inputs NaN
-  input  logic [2:0]          Frm,        // rounding mode
-  input  logic [P.FMTBITS-1:0] OutFmt,     // output format
-  input  logic                InfIn,      // are any inputs infinity
-  input  logic                NaNIn,      // are any input NaNs
-  input  logic                XInf, YInf, // are X or Y inifnity
-  input  logic                XZero,      // is X zero
-  input  logic                Plus1,      // do you add one for rounding
-  input  logic                Rs,         // the result's sign
-  input  logic                Invalid, Overflow,  // flags to choose the result
-  input  logic [P.NE-1:0]      Re,         // Result exponent
-  input  logic [P.NE+1:0]      FullRe,     // Result full exponent
-  input  logic [P.NF-1:0]      Rf,         // Result fraction
+  input  logic                 Xs,                // X sign
+  input  logic [P.NF:0]        Xm, Ym, Zm,        // input significand's
+  input  logic                 XNaN, YNaN, ZNaN,  // are the inputs NaN
+  input  logic [2:0]           Frm,               // rounding mode
+  input  logic [P.FMTBITS-1:0] OutFmt,            // output format
+  input  logic                 InfIn,             // are any inputs infinity
+  input  logic                 NaNIn,             // are any input NaNs
+  input  logic                 XInf, YInf,        // are X or Y inifnity
+  input  logic                 XZero,             // is X zero
+  input  logic                 Plus1,             // do you add one for rounding
+  input  logic                 Rs,                // the result's sign
+  input  logic                 Invalid, Overflow, // flags to choose the result
+  input  logic [P.NE-1:0]      Re,                // Result exponent
+  input  logic [P.NE+1:0]      FullRe,            // Result full exponent
+  input  logic [P.NF-1:0]      Rf,                // Result fraction
   // fma
-  input  logic                FmaOp,      // is it a fma opperation
+  input  logic                 FmaOp,             // is it a fma opperation
   // divsqrt
-  input  logic                DivOp,      // is it a divsqrt opperation
-  input  logic                DivByZero,  // divide by zero flag
+  input  logic                 DivOp,             // is it a divsqrt opperation
+  input  logic                 DivByZero,         // divide by zero flag
   // cvt
-  input  logic                CvtOp,      // is it a conversion opperation
-  input  logic                IntZero,    // is the integer input zero
-  input  logic                IntToFp,    // is cvt int -> fp opperation
-  input  logic                Int64,      // is the integer 64 bits
-  input  logic                Signed,     // is the integer signed
-  input  logic [P.NE:0]        CvtCe,      // the calculated expoent for cvt
-  input  logic                IntInvalid, // integer invalid flag to choose the result
-  input  logic                CvtResUf,   // does the convert result underflow
-  input  logic [P.XLEN+1:0]    CvtNegRes,  // the possibly negated of the integer result
+  input  logic                 CvtOp,             // is it a conversion opperation
+  input  logic                 IntZero,           // is the integer input zero
+  input  logic                 IntToFp,           // is cvt int -> fp opperation
+  input  logic                 Int64,             // is the integer 64 bits
+  input  logic                 Signed,            // is the integer signed
+  input  logic [P.NE:0]        CvtCe,             // the calculated expoent for cvt
+  input  logic                 IntInvalid,        // integer invalid flag to choose the result
+  input  logic                 CvtResUf,          // does the convert result underflow
+  input  logic [P.XLEN+1:0]    CvtNegRes,         // the possibly negated of the integer result
   // outputs
-  output logic [P.FLEN-1:0]    PostProcRes,// final result
-  output logic [P.XLEN-1:0]    FCvtIntRes  // final integer result
+  output logic [P.FLEN-1:0]    PostProcRes,       // final result
+  output logic [P.XLEN-1:0]    FCvtIntRes         // final integer result
 );
 
   logic [P.FLEN-1:0]   XNaNRes;    // X is NaN result
@@ -70,9 +70,9 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   logic [P.FLEN-1:0]   OfRes;      // overflowed result result
   logic [P.FLEN-1:0]   NormRes;    // normal result
   logic [P.XLEN-1:0]   OfIntRes;   // the overflow result for integer output
-  logic               OfResMax;   // does the of result output maximum norm fp number
-  logic               KillRes;    // kill the result for underflow
-  logic               SelOfRes;   // should the overflow result be selected
+  logic                OfResMax;   // does the of result output maximum norm fp number
+  logic                KillRes;    // kill the result for underflow
+  logic                SelOfRes;   // should the overflow result be selected
 
 
   // does the overflow result output the maximum normalized floating point number
@@ -83,23 +83,23 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
   if (P.FPSIZES == 1) begin
       //NaN res selection depending on standard
       if(P.IEEE754) begin
-          assign XNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
-          assign YNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
-          assign ZNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
+          assign XNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
+          assign YNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
+          assign ZNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
           assign InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
       end else begin
           assign InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
       end
 
-      assign OfRes =  OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
-      assign UfRes = {Rs, {P.FLEN-2{1'b0}}, Plus1&Frm[1]&~(DivOp&YInf)};
+      assign OfRes   =  OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
+      assign UfRes   = {Rs, {P.FLEN-2{1'b0}}, Plus1&Frm[1]&~(DivOp&YInf)};
       assign NormRes = {Rs, Re, Rf};
 
   end else if (P.FPSIZES == 2) begin
       if(P.IEEE754) begin
-          assign XNaNRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
-          assign YNaNRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
-          assign ZNaNRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
+          assign XNaNRes    = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
+          assign YNaNRes    = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
+          assign ZNaNRes    = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
           assign InvalidRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
       end else begin 
           assign InvalidRes = OutFmt ? {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}} : {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
@@ -120,57 +120,57 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
           case (OutFmt)
               P.FMT: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
-                      YNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
-                      ZNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
+                      XNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
+                      YNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
+                      ZNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end else begin 
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end
                   
-                  OfRes = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
-                  UfRes = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  OfRes   = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
+                  UfRes   = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {Rs, Re, Rf};
               end
               P.FMT1: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
-                      YNaNRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
-                      ZNaNRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
+                      XNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF1]};
+                      YNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF1]};
+                      ZNaNRes    = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF1]};
                       InvalidRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
                   end else begin 
                       InvalidRes = {{P.FLEN-P.LEN1{1'b1}}, 1'b0, {P.NE1{1'b1}}, 1'b1, (P.NF1-1)'(0)};
                   end
-                  OfRes = OfResMax ? {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1-1{1'b1}}, 1'b0, {P.NF1{1'b1}}} : {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1{1'b1}}, (P.NF1)'(0)};
-                  UfRes = {{P.FLEN-P.LEN1{1'b1}}, Rs, (P.LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
-                  NormRes = {{P.FLEN-P.LEN1{1'b1}}, Rs, Re[P.NE1-1:0], Rf[P.NF-1:P.NF-P.NF1]};
+                  OfRes          = OfResMax ? {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1-1{1'b1}}, 1'b0, {P.NF1{1'b1}}} : {{P.FLEN-P.LEN1{1'b1}}, Rs, {P.NE1{1'b1}}, (P.NF1)'(0)};
+                  UfRes          = {{P.FLEN-P.LEN1{1'b1}}, Rs, (P.LEN1-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  NormRes        = {{P.FLEN-P.LEN1{1'b1}}, Rs, Re[P.NE1-1:0], Rf[P.NF-1:P.NF-P.NF1]};
               end
               P.FMT2: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF2]};
-                      YNaNRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF2]};
-                      ZNaNRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF2]};
+                      XNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.NF2]};
+                      YNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.NF2]};
+                      ZNaNRes    = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.NF2]};
                       InvalidRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, (P.NF2-1)'(0)};
                   end else begin 
                       InvalidRes = {{P.FLEN-P.LEN2{1'b1}}, 1'b0, {P.NE2{1'b1}}, 1'b1, (P.NF2-1)'(0)};
                   end
                   
-                  OfRes = OfResMax ? {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2-1{1'b1}}, 1'b0, {P.NF2{1'b1}}} : {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2{1'b1}}, (P.NF2)'(0)};
-                  UfRes = {{P.FLEN-P.LEN2{1'b1}}, Rs, (P.LEN2-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  OfRes   = OfResMax ? {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2-1{1'b1}}, 1'b0, {P.NF2{1'b1}}} : {{P.FLEN-P.LEN2{1'b1}}, Rs, {P.NE2{1'b1}}, (P.NF2)'(0)};
+                  UfRes   = {{P.FLEN-P.LEN2{1'b1}}, Rs, (P.LEN2-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.LEN2{1'b1}}, Rs, Re[P.NE2-1:0], Rf[P.NF-1:P.NF-P.NF2]};
               end
               default: begin
                   if(P.IEEE754) begin
-                      XNaNRes = (P.FLEN)'(0);
-                      YNaNRes = (P.FLEN)'(0);
-                      ZNaNRes = (P.FLEN)'(0);
+                      XNaNRes    = (P.FLEN)'(0);
+                      YNaNRes    = (P.FLEN)'(0);
+                      ZNaNRes    = (P.FLEN)'(0);
                       InvalidRes = (P.FLEN)'(0);
                   end else begin 
                       InvalidRes = (P.FLEN)'(0);
                   end
-                  OfRes = (P.FLEN)'(0);
-                  UfRes = (P.FLEN)'(0);
-                  NormRes = (P.FLEN)'(0);
+                  OfRes          = (P.FLEN)'(0);
+                  UfRes          = (P.FLEN)'(0);
+                  NormRes        = (P.FLEN)'(0);
               end
           endcase
 
@@ -179,58 +179,58 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
           case (OutFmt)
               2'h3: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
-                      YNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
-                      ZNaNRes = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
+                      XNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Xm[P.NF-2:0]};
+                      YNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Ym[P.NF-2:0]};
+                      ZNaNRes    = {1'b0, {P.NE{1'b1}}, 1'b1, Zm[P.NF-2:0]};
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end else begin 
                       InvalidRes = {1'b0, {P.NE{1'b1}}, 1'b1, {P.NF-1{1'b0}}};
                   end
                   
-                  OfRes = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
-                  UfRes = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  OfRes   = OfResMax ? {Rs, {P.NE-1{1'b1}}, 1'b0, {P.NF{1'b1}}} : {Rs, {P.NE{1'b1}}, {P.NF{1'b0}}};
+                  UfRes   = {Rs, (P.FLEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {Rs, Re, Rf};
               end
               2'h1: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.D_NF]};
-                      YNaNRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.D_NF]};
-                      ZNaNRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.D_NF]};
+                      XNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.D_NF]};
+                      YNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.D_NF]};
+                      ZNaNRes    = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.D_NF]};
                       InvalidRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, (P.D_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{P.FLEN-P.D_LEN{1'b1}}, 1'b0, {P.D_NE{1'b1}}, 1'b1, (P.D_NF-1)'(0)};
                   end
-                  OfRes = OfResMax ? {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE-1{1'b1}}, 1'b0, {P.D_NF{1'b1}}} : {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE{1'b1}}, (P.D_NF)'(0)};
-                  UfRes = {{P.FLEN-P.D_LEN{1'b1}}, Rs, (P.D_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  OfRes   = OfResMax ? {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE-1{1'b1}}, 1'b0, {P.D_NF{1'b1}}} : {{P.FLEN-P.D_LEN{1'b1}}, Rs, {P.D_NE{1'b1}}, (P.D_NF)'(0)};
+                  UfRes   = {{P.FLEN-P.D_LEN{1'b1}}, Rs, (P.D_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.D_LEN{1'b1}}, Rs, Re[P.D_NE-1:0], Rf[P.NF-1:P.NF-P.D_NF]};
               end
               2'h0: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.S_NF]};
-                      YNaNRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.S_NF]};
-                      ZNaNRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.S_NF]};
+                      XNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.S_NF]};
+                      YNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.S_NF]};
+                      ZNaNRes    = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.S_NF]};
                       InvalidRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, (P.S_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{P.FLEN-P.S_LEN{1'b1}}, 1'b0, {P.S_NE{1'b1}}, 1'b1, (P.S_NF-1)'(0)};
                   end
                   
-                  OfRes = OfResMax ? {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE-1{1'b1}}, 1'b0, {P.S_NF{1'b1}}} : {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE{1'b1}}, (P.S_NF)'(0)};
-                  UfRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  OfRes   = OfResMax ? {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE-1{1'b1}}, 1'b0, {P.S_NF{1'b1}}} : {{P.FLEN-P.S_LEN{1'b1}}, Rs, {P.S_NE{1'b1}}, (P.S_NF)'(0)};
+                  UfRes   = {{P.FLEN-P.S_LEN{1'b1}}, Rs, (P.S_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.S_LEN{1'b1}}, Rs, Re[P.S_NE-1:0], Rf[P.NF-1:P.NF-P.S_NF]};
               end
               2'h2: begin  
                   if(P.IEEE754) begin
-                      XNaNRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.H_NF]};
-                      YNaNRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.H_NF]};
-                      ZNaNRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.H_NF]};
+                      XNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Xm[P.NF-2:P.NF-P.H_NF]};
+                      YNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Ym[P.NF-2:P.NF-P.H_NF]};
+                      ZNaNRes    = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, Zm[P.NF-2:P.NF-P.H_NF]};
                       InvalidRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, (P.H_NF-1)'(0)};
                   end else begin 
                       InvalidRes = {{P.FLEN-P.H_LEN{1'b1}}, 1'b0, {P.H_NE{1'b1}}, 1'b1, (P.H_NF-1)'(0)};
                   end
                   
-                  OfRes = OfResMax ? {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE-1{1'b1}}, 1'b0, {P.H_NF{1'b1}}} : {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE{1'b1}}, (P.H_NF)'(0)};      
+                  OfRes   = OfResMax ? {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE-1{1'b1}}, 1'b0, {P.H_NF{1'b1}}} : {{P.FLEN-P.H_LEN{1'b1}}, Rs, {P.H_NE{1'b1}}, (P.H_NF)'(0)};      
                 // zero is exact if dividing by infinity so don't add 1
-                  UfRes = {{P.FLEN-P.H_LEN{1'b1}}, Rs, (P.H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
+                  UfRes   = {{P.FLEN-P.H_LEN{1'b1}}, Rs, (P.H_LEN-2)'(0), Plus1&Frm[1]&~(DivOp&YInf)};
                   NormRes = {{P.FLEN-P.H_LEN{1'b1}}, Rs, Re[P.H_NE-1:0], Rf[P.NF-1:P.NF-P.H_NF]};
               end
           endcase
@@ -289,7 +289,6 @@ module specialcase import cvw::*;  #(parameter cvw_t P) (
     else
       if(Xs&~NaNIn) OfIntRes = {P.XLEN{1'b0}}; // unsigned negitive
       else          OfIntRes = {P.XLEN{1'b1}}; // unsigned positive
-
 
   // select the integer output
   //      - if the input is invalid (out of bounds NaN or Inf) then output overflow res

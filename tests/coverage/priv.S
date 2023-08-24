@@ -27,6 +27,18 @@
 #include "WALLY-init-lib.h"
 
 main:
+    # Tests sret in machine mode
+    la t1, sretdone
+    csrw sepc, t1
+    sret
+sretdone:
+    addi t2, x0, 42 
+
+    # switch to user mode
+    li a0, 0   
+    ecall
+    sret #should be treated as illegal instruction
+    mret #mret in user mode and should be illegal
 
     # switch to supervisor mode
     li a0, 1   
@@ -44,18 +56,46 @@ main:
     csrw satp, zero
 
     # STIMECMP from S mode
-    li t0, 1
+    # 1st is when MENVCFG_STCE is cleared
+    li a0, 3
+    ecall # starts in M-mode
+    csrw menvcfg, x0
+    li a0, 1
     ecall   # enter S-mode
     csrw stimecmp, zero
-    li t0, 3
+    li a0, 3
     ecall   # return to M-mode
     csrsi mcounteren, 2 # mcounteren_tm = 1
-    li t0, 1
+    li a0, 1
     ecall   # supervisor mode again
     csrw stimecmp, zero
-    li t0, 3
+    li a0, 3
     ecall  # machine mode again
 
+    # STIMECMP from S mode
+    # 2nd is when MENVCFG_STCE is set
+    csrci mcounteren, 2 # mcounteren_tm = 0
+    li t0, 1
+    slli t0, t0, 63
+    csrw menvcfg, t0
+    li a0, 1
+    ecall   # enter S-mode
+    csrw stimecmp, zero
+    li a0, 3
+    ecall   # return to M-mode
+    csrsi mcounteren, 2 # mcounteren_tm = 1
+    li a0, 1
+    ecall   # supervisor mode again
+    csrw stimecmp, zero
+    li a0, 3
+    ecall  # machine mode again
+
+    # writes to FCSR
+    li t0, 1
+    slli t0, t0, 13
+    csrs mstatus, t0
+    li t0, 1
+    csrw fcsr, t0
 
     # switch to supervisor mode
     li a0, 1   

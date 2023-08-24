@@ -33,4 +33,3 @@ module fmamult import cvw::*;  #(parameter cvw_t P) (
 
   assign Pm = Xm * Ym;
 endmodule
-

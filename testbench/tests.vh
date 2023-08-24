@@ -44,10 +44,10 @@ string tvpaths[] = '{
 
   string coverage64gc[] = '{
     `COVERAGE,
+    "priv",
     "ieu",
     "ebu",
     "csrwrites",
-    "priv",
     "ifu",
     "fpu",
     "lsu",
