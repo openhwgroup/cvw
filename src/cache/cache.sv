@@ -33,12 +33,12 @@ module cache import cvw::*; #(parameter cvw_t P,
   input  logic                   reset,
   input  logic                   Stall,             // Stall the cache, preventing new accesses. In-flight access finished but does not return to READY
   input  logic                   FlushStage,        // Pipeline flush of second stage (prevent writes and bus operations)
-  input  logic                   IgnoreRequestTLB,  //
   // cpu side
   input  logic [1:0]             CacheRW,           // [1] Read, [0] Write 
   input  logic [1:0]             CacheAtomic,       // Atomic operation
   input  logic                   FlushCache,        // Flush all dirty lines back to memory
   input  logic                   InvalidateCache,   // Clear all valid bits
+  input  logic [3:0]             CMOp,              // 1: cbo.inval; 2: cbo.flush; 4: cbo.clean; 8: cbo.zero
   input  logic [11:0]            NextSet,           // Virtual address, but we only use the lower 12 bits.
   input  logic [PA_BITS-1:0]     PAdr,              // Physical address
   input  logic [(WORDLEN-1)/8:0] ByteMask,          // Which bytes to write (D$ only)
@@ -76,7 +76,7 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [1:0]                    AdrSelMuxSel;
   logic [SETLEN-1:0]             CacheSet;
   logic [LINELEN-1:0]            LineWriteData;
-  logic                          ClearDirty, SetDirty, SetValid;
+  logic                          ClearDirty, SetDirty, SetValid, ClearValid;
   logic [LINELEN-1:0]            ReadDataLineWay [NUMWAYS-1:0];
   logic [NUMWAYS-1:0]            HitWay, ValidWay;
   logic                          CacheHit;
@@ -90,6 +90,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic [NUMWAYS-1:0]            FlushWay, NextFlushWay;
   logic                          FlushWayCntEn;
   logic                          SelWriteback;
+  logic                          SelCMOWriteback;
+  logic                          SelBothWriteback;
   logic                          LRUWriteEn;
   logic                          SelFlush;
   logic                          ResetOrFlushCntRst;
@@ -98,7 +100,8 @@ module cache import cvw::*; #(parameter cvw_t P,
   logic                          CacheEn;
   logic [LINELEN/8-1:0]          LineByteMask;
   logic [$clog2(LINELEN/8) - $clog2(MUXINTERVAL/8) - 1:0] WordOffsetAddr;
-
+  logic                                                   ZeroCacheLine;
+  logic [LINELEN-1:0]                                     PreLineWriteData;
   genvar                         index;
   
   /////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,15 +118,15 @@ module cache import cvw::*; #(parameter cvw_t P,
 
   // Array of cache ways, along with victim, hit, dirty, and read merging logic
   cacheway #(P, PA_BITS, XLEN, NUMLINES, LINELEN, TAGLEN, OFFSETLEN, SETLEN, READ_ONLY_CACHE) CacheWays[NUMWAYS-1:0](
-    .clk, .reset, .CacheEn, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
-    .SetValid, .SetDirty, .ClearDirty, .SelWriteback, .VictimWay,
+    .clk, .reset, .CacheEn, .CMOp, .CacheSet, .PAdr, .LineWriteData, .LineByteMask,
+    .SetValid, .ClearValid, .SetDirty, .ClearDirty, .ZeroCacheLine, .SelWriteback, .SelCMOWriteback, .VictimWay,
     .FlushWay, .SelFlush, .ReadDataLineWay, .HitWay, .ValidWay, .DirtyWay, .TagWay, .FlushStage, .InvalidateCache);
 
   // Select victim way for associative caches
   if(NUMWAYS > 1) begin:vict
     cacheLRU #(NUMWAYS, SETLEN, OFFSETLEN, NUMLINES) cacheLRU(
-      .clk, .reset, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
-      .SetValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
+      .clk, .reset, .FlushStage, .CacheEn, .HitWay, .ValidWay, .VictimWay, .CacheSet, .LRUWriteEn,
+      .SetValid, .ClearValid, .PAdr(PAdr[SETTOP-1:OFFSETLEN]), .InvalidateCache, .FlushCache);
   end else 
     assign VictimWay = 1'b1; // one hot.
 
@@ -152,14 +155,20 @@ module cache import cvw::*; #(parameter cvw_t P,
     .PAdr(WordOffsetAddr), .ReadDataLine, .ReadDataWord);
   
   // Bus address for fetch, writeback, or flush writeback
+  assign SelBothWriteback = SelWriteback | SelCMOWriteback;
   mux3 #(PA_BITS) CacheBusAdrMux(.d0({PAdr[PA_BITS-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d1({Tag, PAdr[SETTOP-1:OFFSETLEN], {OFFSETLEN{1'b0}}}),
     .d2({Tag, FlushAdr, {OFFSETLEN{1'b0}}}),
-    .s({SelFlush, SelWriteback}), .y(CacheBusAdr));
+    .s({SelFlush, SelBothWriteback}), .y(CacheBusAdr));
   
   /////////////////////////////////////////////////////////////////////////////////////////////
   // Write Path
   /////////////////////////////////////////////////////////////////////////////////////////////
+  if(P.ZICBOZ_SUPPORTED) begin : cboz_supported
+    mux2 #(LINELEN) WriteDataMux(FetchBuffer, '0, ZeroCacheLine, PreLineWriteData);
+  end else begin
+    assign PreLineWriteData = FetchBuffer;
+  end
   if(!READ_ONLY_CACHE) begin:WriteSelLogic
     logic [CACHEWORDSPERLINE-1:0]  MemPAdrDecoded;
     logic [LINELEN/8-1:0]          DemuxedByteMask, FetchBufferByteSel;
@@ -174,14 +183,14 @@ module cache import cvw::*; #(parameter cvw_t P,
     // Merge write data into fetched cache line for store miss
     for(index = 0; index < LINELEN/8; index++) begin
       mux2 #(8) WriteDataMux(.d0(CacheWriteData[(8*index)%WORDLEN+7:(8*index)%WORDLEN]),
-        .d1(FetchBuffer[8*index+7:8*index]), .s(FetchBufferByteSel[index]), .y(LineWriteData[8*index+7:8*index]));
+        .d1(PreLineWriteData[8*index+7:8*index]), .s(FetchBufferByteSel[index] | ZeroCacheLine), .y(LineWriteData[8*index+7:8*index]));
     end
     assign LineByteMask = SetValid ? '1 : SetDirty ? DemuxedByteMask : '0;
   end
   else
     begin:WriteSelLogic
       // No need for this mux if the cache does not handle writes.
-      assign LineWriteData = FetchBuffer;
+      assign LineWriteData = PreLineWriteData;
       assign LineByteMask = '1;
     end
   
@@ -212,12 +221,12 @@ module cache import cvw::*; #(parameter cvw_t P,
   // Cache FSM
   /////////////////////////////////////////////////////////////////////////////////////////////
   
-  cachefsm #(READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
+  cachefsm #(P, READ_ONLY_CACHE) cachefsm(.clk, .reset, .CacheBusRW, .CacheBusAck, 
     .FlushStage, .CacheRW, .CacheAtomic, .Stall,
     .CacheHit, .LineDirty, .CacheStall, .CacheCommitted, 
     .CacheMiss, .CacheAccess, .SelAdr, 
-    .ClearDirty, .SetDirty, .SetValid, .SelWriteback, .SelFlush,
+    .ClearDirty, .SetDirty, .SetValid, .ClearValid, .ZeroCacheLine, .SelWriteback, .SelCMOWriteback, .SelFlush,
     .FlushAdrCntEn, .FlushWayCntEn, .FlushCntRst,
     .FlushAdrFlag, .FlushWayFlag, .FlushCache, .SelFetchBuffer,
-    .InvalidateCache, .CacheEn, .LRUWriteEn);
+    .InvalidateCache, .CMOp, .CacheEn, .LRUWriteEn);
 endmodule 
