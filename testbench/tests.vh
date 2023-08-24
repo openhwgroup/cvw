@@ -1936,6 +1936,7 @@ string arch64zbs[] = '{
  string wally64priv[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
+    "rv64i_m/privilege/src/WALLY-cboz-01.S",
     "rv64i_m/privilege/src/WALLY-cbom-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv64i_m/privilege/src/WALLY-mie-01.S",
@@ -2030,6 +2031,7 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv32i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv32i_m/privilege/src/WALLY-cbom-01.S",
+    "rv32i_m/privilege/src/WALLY-cboz-01.S",
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",
