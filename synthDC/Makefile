@@ -69,26 +69,15 @@ endif
 ifeq ($(USESRAM), 1)
 	sed -i 's/USE_SRAM.*/USE_SRAM = 1;/g' $(CONFIGDIR)/config.vh
 else
-<<<<<<< HEAD
-	sed -i 's/WAYSIZEINBYTES.*/WAYSIZEINBYTES = 512;/g' $(CONFIGDIR)/config.vh
-	sed -i 's/NUMWAYS.*/NUMWAYS = 1;/g' $(CONFIGDIR)/config.vh
-	sed -i 's/BPRED_SIZE.*/BPRED_SIZE = 5;/g' $(CONFIGDIR)/config.vh
-	sed -i 's/BTB_SIZE.*/BTB_SIZE = 5;/g' $(CONFIGDIR)/config.vh
-=======
 	sed -i "s/WAYSIZEINBYTES.*/WAYSIZEINBYTES = 32\'d512;/g" $(CONFIGDIR)/config.vh
 	sed -i "s/NUMWAYS.*/NUMWAYS =32\'d1;/g" $(CONFIGDIR)/config.vh
 	sed -i "s/BPRED_SIZE.*/BPRED_SIZE =32\'d5;/g" $(CONFIGDIR)/config.vh
 	sed -i "s/BTB_SIZE.*/BTB_SIZE = 32\'d5;/g" $(CONFIGDIR)/config.vh
->>>>>>> dcef4cc9cee704ec78c6c5118bb769405cedc499
 ifneq ($(filter $(CONFIG), $(DIRS32)),)
 	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 = 34\'h01FF;/g" $(CONFIGDIR)/config.vh
 	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	= 34\'h01FF;/g" $(CONFIGDIR)/config.vh
 else ifneq ($(filter $(CONFIG), $(DIRS64)),)
-<<<<<<< HEAD
-	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
-=======
 	sed -i "s/BOOTROM_RANGE.*/BOOTROM_RANGE	 = 56\'h01FF;/g" $(CONFIGDIR)/config.vh
->>>>>>> dcef4cc9cee704ec78c6c5118bb769405cedc499
 	sed -i "s/UNCORE_RAM_RANGE.*/UNCORE_RAM_RANGE	= 56\'h01FF;/g" $(CONFIGDIR)/config.vh
 endif
 endif
