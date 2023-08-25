@@ -79,7 +79,7 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [P.VPN_BITS-1:0]          VPN;
   logic [P.PPN_BITS-1:0]          PPN;
   // Sections of the page table entry
-  logic [7:0]                     PTEAccessBits;
+  logic [10:0]                    PTEAccessBits;
   logic [1:0]                     HitPageType;
   logic                           CAMHit;
   logic                           SV39Mode;
