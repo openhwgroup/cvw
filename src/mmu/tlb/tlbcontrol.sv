@@ -29,27 +29,28 @@
 module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic [P.SVMODE_BITS-1:0] SATP_MODE,
   input  logic [P.XLEN-1:0]        VAdr,
-  input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,
-  input  logic [1:0]              STATUS_MPP,
-  input  logic [1:0]              PrivilegeModeW, // Current privilege level of the processeor
-  input  logic                    ReadAccess, WriteAccess,
-  input  logic                    DisableTranslation,
-  input  logic                    TLBFlush, // Invalidate all TLB entries
-  input  logic [7:0]              PTEAccessBits,
-  input  logic                    CAMHit,
-  input  logic                    Misaligned,
-  output logic                    TLBMiss,
-  output logic                    TLBHit,
-  output logic                    TLBPageFault,
-  output logic                    UpdateDA,
-  output logic                    SV39Mode,
-  output logic                    Translate
+  input  logic                     STATUS_MXR, STATUS_SUM, STATUS_MPRV,
+  input  logic [1:0]               STATUS_MPP,
+  input  logic [1:0]               PrivilegeModeW, // Current privilege level of the processeor
+  input  logic                     ReadAccess, WriteAccess,
+  input  logic                     DisableTranslation,
+  input  logic                     TLBFlush, // Invalidate all TLB entries
+  input  logic [10:0]              PTEAccessBits,
+  input  logic                     CAMHit,
+  input  logic                     Misaligned,
+  output logic                     TLBMiss,
+  output logic                     TLBHit,
+  output logic                     TLBPageFault,
+  output logic                     UpdateDA,
+  output logic                     SV39Mode,
+  output logic                     Translate
 );
 
   // Sections of the page table entry
   logic [1:0]                     EffectivePrivilegeMode;
 
-  logic                           PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
+  logic                           PTE_N, PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
+  logic [1:0]                     PTE_PBMT;
   logic                           UpperBitsUnequal;
   logic                           TLBAccess;
   logic                           ImproperPrivilege;
@@ -65,6 +66,8 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
 
   // unswizzle useful PTE bits
+  assign PTE_N = PTEAccessBits[10] & P.SVNAPOT_SUPPORTED;
+  assign PTE_PBMT = PTEAccessBits[9:8] & {2{P.SVPBMT_SUPPORTED}};
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
   assign {PTE_U, PTE_X, PTE_W, PTE_R, PTE_V} = PTEAccessBits[4:0];
  
