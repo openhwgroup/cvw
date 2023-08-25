@@ -72,7 +72,7 @@ sretdone:
     li a0, 3
     ecall # in M-mode
     li t0, 32
-    csrs sip, t0
+    csrs mip, t0
     li a0, 1
     ecall # in S-mode and expects stimer interrupt to occur
     li a0, 3
