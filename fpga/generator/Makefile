@@ -6,20 +6,20 @@ dst := IP
 #export board := vcu118
 
 # vcu108
-#export XILINX_PART := xcvu095-ffva2104-2-e
-#export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
-#export board := vcu108
+export XILINX_PART := xcvu095-ffva2104-2-e
+export XILINX_BOARD := xilinx.com:vcu108:part0:1.2
+export board := vcu108
 
 # Arty A7
-export XILINX_PART := xc7a100tcsg324-1
-export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
-export board := ArtyA7
+# export XILINX_PART := xc7a100tcsg324-1
+# export XILINX_BOARD := digilentinc.com:arty-a7-100:part0:1.1
+# export board := ArtyA7
 
 # for Arty A7 and S7 boards
-all: FPGA_Arty
+# all: FPGA_Arty
 
 # VCU 108 and VCU 118 boards
-#all: FPGA_VCU
+all: FPGA_VCU
 
 FPGA_Arty: PreProcessFiles IP_Arty
 	vivado -mode tcl -source wally.tcl 2>&1 | tee wally.log
