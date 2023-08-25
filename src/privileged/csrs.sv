@@ -88,7 +88,8 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   assign WriteSEPCM       = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
   assign WriteSCAUSEM     = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
   assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
-  assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
+  if(P.XLEN == 64) assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & (CSRWriteValM[63:60] != 4'hA);
+  else assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
   assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
   assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & STCE;
