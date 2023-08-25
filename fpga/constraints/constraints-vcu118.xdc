@@ -117,10 +117,10 @@ set_property PULLUP true [get_ports {SDCCmd}]
 
 
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.500 [get_ports {SDCDat[*]}]
-set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 21.000 [get_ports {SDCDat[*]}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 10.000 [get_ports {SDCDat[*]}]
 
 set_input_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.500 [get_ports {SDCCmd}]
-set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 14.000 [get_ports {SDCCmd}]
+set_input_delay -clock [get_clocks mmcm_clkout1] -max -add_delay 10.000 [get_ports {SDCCmd}]
 
 
 set_output_delay -clock [get_clocks mmcm_clkout1] -min -add_delay 2.000 [get_ports {SDCCmd}]
