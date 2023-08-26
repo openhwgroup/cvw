@@ -30,18 +30,19 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 module tlbmixer import cvw::*;  #(parameter cvw_t P) (
-    input  logic [P.VPN_BITS-1:0]   VPN,
-    input  logic [P.PPN_BITS-1:0]   PPN,
-    input  logic [1:0]             HitPageType,
-    input  logic [11:0]            Offset,
-    input  logic                   TLBHit,
-    output logic [P.PA_BITS-1:0]    TLBPAdr
+  input  logic [P.VPN_BITS-1:0] VPN,
+  input  logic [P.PPN_BITS-1:0] PPN,
+  input  logic [1:0]            HitPageType,
+  input  logic [11:0]           Offset,
+  input  logic                  TLBHit,
+  input  logic                  PTE_N,         // NAPOT page table entry
+  output logic [P.PA_BITS-1:0]  TLBPAdr
 );
 
   localparam EXTRA_BITS = P.PPN_BITS - P.VPN_BITS;
   logic [P.PPN_BITS-1:0] ZeroExtendedVPN;
   logic [P.PPN_BITS-1:0] PageNumberMask;
-  logic [P.PPN_BITS-1:0] PPNMixed;
+  logic [P.PPN_BITS-1:0] PPNMixed, PPNMixed2;
 
   // produce PageNumberMask with 1s where virtual page number bits should be untranslaetd for superpages
   if (P.XLEN == 32)
@@ -57,11 +58,45 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
  
   // merge low segments of VPN with high segments of PPN decided by the pagetype.
   assign ZeroExtendedVPN = {{EXTRA_BITS{1'b0}}, VPN}; // forces the VPN to be the same width as PPN.
-  assign PPNMixed = PPN | ZeroExtendedVPN & PageNumberMask; // 
-  //mux2 #(1) mixmux[P.PPN_BITS-1:0](ZeroExtendedVPN, PPN, PageNumberMask, PPNMixed);
-  //assign PPNMixed = (ZeroExtendedVPN & ~PageNumberMask) | (PPN & PageNumberMask);
+  assign PPNMixed = PPN | ZeroExtendedVPN & PageNumberMask; // low bits of PPN are already zero
+
+  // In Svnapot, when N=1, use bottom bits of VPN for contiugous translations
+  if (P.SVNAPOT_SUPPORTED) begin
+    // 64 KiB contiguous NAPOT translations suported
+    logic [3:0] PPNMixedBot;
+    mux2 #(4) napotmux(PPNMixed[3:0], VPN, PTE_N, PPNMixedBot);
+    assign PPNMixed2 = {PPNMixed[P.PPN_BITS-1:4], PPNMixedBot};
+
+    /* // Generalized NAPOT implementation supporting various sized contiguous regions
+    // This would also require a priority encoder in the tlbcam
+    // Not yet tested
+    logic [8:0] NAPOTMask, NAPOTPN, PPNMixedBot;
+    always_comb begin
+      casez(PPN[8:0]) 
+        9'b100000000: NAPOTMask = 9'b111111111;
+        9'b?10000000: NAPOTMask = 9'b011111111;
+        9'b??1000000: NAPOTMask = 9'b001111111;
+        9'b???100000: NAPOTMask = 9'b000111111;
+        9'b????10000: NAPOTMask = 9'b000011111;
+        9'b?????1000: NAPOTMask = 9'b000001111;
+        9'b??????100: NAPOTMask = 9'b000000111;
+        9'b???????10: NAPOTMask = 9'b000000011;
+        9'b????????1: NAPOTMask = 9'b000000001;
+        default:      NAPOTMask = 9'b000000000;
+      endcase
+    end
+    // check malformed NAPOT PPN, which should cause page fault
+    // Replace PPN with VPN in lower bits of page number based on mask
+    assign NAPOTPN = VPN & NAPOTMask | PPN & ~NAPOTMask;
+    mux2 #(9) napotmux(PPNMixed[8:0], NAPOTPN, PTE_N, PPNMixedBot);
+    assign PPNMixed2 = {PPNMixed[PPN_BITS-1:9], PPNMixedBot}; */
+    
+  end else begin // no Svnapot
+    assign PPNMixed2 = PPNMixed;
+  end
+
   // Output the hit physical address if translation is currently on.
   // Provide physical address of zero if not TLBHits, to cause segmentation error if miss somehow percolated through signal
-  mux2 #(P.PA_BITS) hitmux('0, {PPNMixed, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
+  mux2 #(P.PA_BITS) hitmux('0, {PPNMixed2, Offset}, TLBHit, TLBPAdr); // set PA to 0 if TLB misses, to cause segementation error if this miss somehow passes through system
 
 endmodule
