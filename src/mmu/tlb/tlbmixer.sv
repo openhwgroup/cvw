@@ -64,7 +64,7 @@ module tlbmixer import cvw::*;  #(parameter cvw_t P) (
   if (P.SVNAPOT_SUPPORTED) begin
     // 64 KiB contiguous NAPOT translations suported
     logic [3:0] PPNMixedBot;
-    mux2 #(4) napotmux(PPNMixed[3:0], VPN, PTE_N, PPNMixedBot);
+    mux2 #(4) napotmux(PPNMixed[3:0], VPN[3:0], PTE_N, PPNMixedBot);
     assign PPNMixed2 = {PPNMixed[P.PPN_BITS-1:4], PPNMixedBot};
 
     /* // Generalized NAPOT implementation supporting various sized contiguous regions
