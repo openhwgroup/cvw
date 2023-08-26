@@ -44,12 +44,12 @@ localparam COUNTERS = 12'd32;
 localparam ZICNTR_SUPPORTED = 1;
 localparam ZIHPM_SUPPORTED = 1;
 localparam ZFH_SUPPORTED = 0;
-localparam SSTC_SUPPORTED = 0;
-localparam ZICBOM_SUPPORTED = 0;
-localparam ZICBOZ_SUPPORTED = 0;
-localparam ZICBOP_SUPPORTED = 0;
-localparam SVPBMT_SUPPORTED = 0;
-localparam SVNAPOT_SUPPORTED = 0;
+localparam SSTC_SUPPORTED = 1;
+localparam ZICBOM_SUPPORTED = 1;
+localparam ZICBOZ_SUPPORTED = 1;
+localparam ZICBOP_SUPPORTED = 1;
+localparam SVPBMT_SUPPORTED = 1;
+localparam SVNAPOT_SUPPORTED = 1;
 localparam SVINVAL_SUPPORTED = 1;
 
 // LSU microarchitectural Features
