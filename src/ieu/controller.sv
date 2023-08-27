@@ -375,12 +375,14 @@ module controller import cvw::*;  #(parameter cvw_t P) (
     LSUPrefetchD = 1'b0;
     ImmSrcD = PreImmSrcD;
     if (P.ZICBOP_SUPPORTED & (InstrD[14:0] == 15'b110_00000_0010011)) begin // ori with destiation x0 is hint for Prefetch
-      case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally
+      /* verilator lint_off CASEINCOMPLETE */
+      case (Rs2D) // which type of prefectch?  Note: prefetch.r and .w are handled the same in Wally 
         5'b00000: IFUPrefetchD = 1'b1; // prefetch.i
         5'b00001: LSUPrefetchD = 1'b1; // prefetch.r
         5'b00011: LSUPrefetchD = 1'b1; // prefetch.w
         // default: not a prefetch hint
       endcase
+      /* verilator lint_on CASEINCOMPLETE */
       if (IFUPrefetchD | LSUPrefetchD) ImmSrcD = 3'b001; // use S-type immediate format for prefetches
     end
   end
