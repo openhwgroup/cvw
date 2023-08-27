@@ -58,9 +58,11 @@ module riscvassertions import cvw::*; #(parameter cvw_t P);
     assert ((P.ZMMUL_SUPPORTED == 0) || (P.M_SUPPORTED ==0)) else $error("At most one of ZMMUL_SUPPORTED and M_SUPPORTED can be enabled");
     assert ((P.ZICNTR_SUPPORTED == 0) || (P.ZICSR_SUPPORTED == 1)) else $error("ZICNTR_SUPPORTED requires ZICSR_SUPPORTED");
     assert ((P.ZIHPM_SUPPORTED == 0) || (P.ZICNTR_SUPPORTED == 1)) else $error("ZIPHM_SUPPORTED requires ZICNTR_SUPPORTED");
-    assert ((P.ZICBOM_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOM required DCACHE_SUPPORTED");
-    assert ((P.ZICBOZ_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOZ required DCACHE_SUPPORTED");
-    assert ((P.ZICBOP_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOP required DCACHE_SUPPORTED");
+    assert ((P.ZICBOM_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOM requires DCACHE_SUPPORTED");
+    assert ((P.ZICBOZ_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOZ requires DCACHE_SUPPORTED");
+    assert ((P.ZICBOP_SUPPORTED == 0) || (P.DCACHE_SUPPORTED == 1)) else $error("ZICBOP requires DCACHE_SUPPORTED");
+    assert ((P.SVPBMT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $error("SVPBMT requires VIRTMEM_SUPPORTED and RV64");
+    assert ((P.SVNAPOT_SUPPORTED == 0) || (P.VIRTMEM_SUPPORTED == 1 && P.XLEN==64)) else $error("SVNAPOT requires VIRTMEM_SUPPORTED and RV64");
   end
 
 endmodule

@@ -101,10 +101,10 @@ localparam FPDUR       = ((DIVN+1+(LOGR*DIVCOPIES))/(LOGR*DIVCOPIES)+(RADIX/4));
 localparam DURLEN      = ($clog2(FPDUR+1));
 localparam DIVb        = (FPDUR*LOGR*DIVCOPIES-1); // canonical fdiv size (b)
 localparam DIVBLEN     = ($clog2(DIVb+1)-1);
-localparam DIVa        = (DIVb+1-XLEN); // used for idiv on fpu
+localparam DIVa        = (DIVb+1-XLEN); // used for idiv on fpu: Shift residual right by b - (XLEN-1) to put remainder in lsbs of integer result
 
 // largest length in IEU/FPU
-localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));
+localparam CVTLEN = ((NF<XLEN) ? (XLEN) : (NF));  // max(XLEN, NF)
 localparam LLEN = (($unsigned(FLEN)<$unsigned(XLEN)) ? ($unsigned(XLEN)) : ($unsigned(FLEN)));
 localparam LOGCVTLEN = $unsigned($clog2(CVTLEN+1));
 localparam NORMSHIFTSZ = (((CVTLEN+NF+1)>(DIVb + 1 +NF+1) & (CVTLEN+NF+1)>(3*NF+6)) ? (CVTLEN+NF+1) : ((DIVb + 1 +NF+1) > (3*NF+6) ? (DIVb + 1 +NF+1) : (3*NF+6)));

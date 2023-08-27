@@ -85,6 +85,7 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   output var logic [P.PA_BITS-3:0] PMPADDR_ARRAY_REGW[P.PMP_ENTRIES-1:0],
   output logic [2:0]               FRM_REGW, 
   output logic [3:0]               ENVCFG_CBE,
+  output logic                     ENVCFG_PBMTE,              // Page-based memory type enable
   //
   output logic [P.XLEN-1:0]        CSRReadValW,               // value read from CSR
   output logic [P.XLEN-1:0]        UnalignedPCNextF,          // Next PC, accounting for traps and returns
@@ -127,7 +128,6 @@ module csr import cvw::*;  #(parameter cvw_t P) (
   logic [63:0]             MENVCFG_REGW;
   logic [P.XLEN-1:0]       SENVCFG_REGW;
   logic                    ENVCFG_STCE; // supervisor timer counter enable
-  logic                    ENVCFG_PBMTE; // page-based memory types enable
   logic                    ENVCFG_FIOM; // fence implies io (presently not used)
 
   // only valid unflushed instructions can access CSRs
