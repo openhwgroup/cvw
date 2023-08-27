@@ -37,6 +37,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   input  logic                  SV39Mode,
   input  logic                  WriteEnable,  // Write a new entry to this line
   input  logic                  PTE_G,
+  input  logic                  PTE_NAPOT,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
   input  logic [1:0]            PageTypeWriteVal,
   input  logic                  TLBFlush,   // Flush this line (set valid to 0)
   output logic [1:0]            PageTypeRead,  // *** should this be the stored version or the always updated one?
@@ -76,7 +77,7 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
   end else begin: match
 
     logic [SEGMENT_BITS-1:0] Key2, Key3, Query2, Query3;
-    logic Match2, Match3;
+    logic Match2, Match3, MatchNAPOT;
 
     assign {Query3, Query2, Query1, Query0} = VPN;
     assign {Key_ASID, Key3, Key2, Key1, Key0} = Key;
@@ -84,7 +85,9 @@ module tlbcamline import cvw::*;  #(parameter cvw_t P,
     // Calculate the actual match value based on the input vpn and the page type.
     // For example, a gigapage in SV39 only cares about VPN[2], so VPN[0] and VPN[1]
     // should automatically match.
-    assign Match0 = (Query0 == Key0) | (PageType > 2'd0); // least signifcant section
+    // In Svnapot, if N bit is set and bottom 4 bits of PPN = 1000, then these bits don't need to match
+    assign MatchNAPOT = P.SVNAPOT_SUPPORTED & PTE_NAPOT & (Query0[SEGMENT_BITS-1:4] == Key0[SEGMENT_BITS-1:4]);
+    assign Match0 = (Query0 == Key0) | (PageType > 2'd0) | MatchNAPOT; // least significant section
     assign Match1 = (Query1 == Key1) | (PageType > 2'd1);
     assign Match2 = (Query2 == Key2) | (PageType > 2'd2);
     assign Match3 = (Query3 == Key3) | SV39Mode; // this should always match in sv39 because they aren't used
