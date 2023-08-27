@@ -30,7 +30,7 @@ lineModuleEnd = 0
 moduleName = ""
 
 # string that will keep track of the running module header
-buf = "`include \"config.vh\"\n`include \"parameter-defs.vh\"\nimport cvw::*;\n"
+buf = "import cvw::*;\n`include \"config.vh\"\n`include \"parameter-defs.vh\"\n"
 
 # are we writing into the buffer
 writeBuf=False
@@ -54,6 +54,20 @@ for l in lines:
 
 # post-processing buffer: add DUT and endmodule lines
 buf += f"\t{moduleName} #(P) dut(.*);\nendmodule"
+
+
+# path to wrapper
+wrapperPath = f"{os.getenv('WALLY')}/src/wrappers/{moduleName}wrapper.sv"
+
+# clear wrappers directory 
+os.system(f"rm {os.getenv('WALLY')}/src/wrappers/*")
+
+fout = open(wrapperPath, "w")
+
+fout.write(buf)
+
+fin.close()
+fout.close()
 
 
 
