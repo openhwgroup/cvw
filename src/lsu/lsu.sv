@@ -80,6 +80,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
   input  logic [P.XLEN-1:0]       SATP_REGW,                            // SATP (supervisor address translation and protection) CSR
   input  logic                    STATUS_MXR, STATUS_SUM, STATUS_MPRV,  // STATUS CSR bits: make executable readable, supervisor user memory, machine privilege
   input  logic [1:0]              STATUS_MPP,                           // Machine previous privilege mode
+  input  logic                    ENVCFG_PBMTE,                         // Page-based memory types enabled
   input  logic [P.XLEN-1:0]       PCSpillF,                             // Fetch PC 
   input  logic                    ITLBMissF,                            // ITLB miss causes HPTW (hardware pagetable walker) walk
   input  logic                    InstrUpdateDAF,                       // ITLB hit needs to update dirty or access bits
@@ -189,7 +190,7 @@ module lsu import cvw::*;  #(parameter cvw_t P) (
     assign DisableTranslation = SelHPTW | FlushDCacheM;
     assign WriteAccessM = PreLSURWM[0] | (|CMOpM);
     mmu #(.P(P), .TLB_ENTRIES(P.DTLB_ENTRIES), .IMMU(0))
-    dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+    dmmu(.clk, .reset, .SATP_REGW, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE,
       .PrivilegeModeW, .DisableTranslation, .VAdr(IHAdrM), .Size(LSUFunct3M[1:0]),
       .PTE, .PageTypeWriteVal(PageType), .TLBWrite(DTLBWriteM), .TLBFlush(sfencevmaM),
       .PhysicalAddress(PAdrM), .TLBMiss(DTLBMissM), .Cacheable(CacheableM), .Idempotent(), .SelTIM(SelDTIM), 
