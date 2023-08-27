@@ -25,13 +25,11 @@ set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/config/}
+eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
+#eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
-
-# Only for FMA class project; comment out when done
-# eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
 
 # Enables name mapping
 if { $saifpower == 1 } {
@@ -39,6 +37,7 @@ if { $saifpower == 1 } {
 }
 
 # Verilog files
+#set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv $outputDir/config/*.vh]
 set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
@@ -75,7 +74,7 @@ if { [shell_is_in_topographical_mode] } {
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
-elaborate $my_toplevel -parameter P -lib WORK 
+elaborate $my_toplevel -lib WORK 
 
 # Set the current_design 
 current_design $my_toplevel

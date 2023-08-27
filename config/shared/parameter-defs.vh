@@ -3,7 +3,7 @@
 
 `include "BranchPredictorType.vh"
 
-parameter cvw_t P = '{ 
+localparam cvw_t P = '{ 
   FPGA :                 FPGA,  
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 

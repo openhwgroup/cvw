@@ -37,10 +37,10 @@ module wallypipelinedcorewrapper (
    input  logic                  MTimerInt, MExtInt, SExtInt, MSwInt,
    input  logic [63:0]           MTIME_CLINT, 
    // Bus Interface
-   input  logic [32-1:0]     HRDATA,
+   input  logic [P.XLEN-1:0]     HRDATA,
    input  logic                  HREADY, HRESP,
    output logic                  HCLK, HRESETn,
-   output logic [34-1:0]  HADDR,
+   output logic [P.PA_BITS-1:0]  HADDR,
    output logic [32-1:0]     HWDATA,
    output logic [32/8-1:0]   HWSTRB,
    output logic                  HWRITE,
