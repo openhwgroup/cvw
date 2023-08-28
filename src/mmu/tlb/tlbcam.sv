@@ -38,7 +38,8 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   input  logic                    TLBFlush,
   input  logic [TLB_ENTRIES-1:0]  WriteEnables,
   input  logic [TLB_ENTRIES-1:0]  PTE_Gs,
-  input  logic [P.ASID_BITS-1:0]   SATP_ASID,
+  input  logic [TLB_ENTRIES-1:0]  PTE_NAPOTs,  // entry is in NAPOT mode (N bit set and PPN[3:0] = 1000)
+  input  logic [P.ASID_BITS-1:0]  SATP_ASID,
   output logic [TLB_ENTRIES-1:0]  Matches,
   output logic [1:0]              HitPageType,
   output logic                    CAMHit
@@ -53,7 +54,7 @@ module tlbcam  import cvw::*;  #(parameter cvw_t P,
   // page number segments.
 
   tlbcamline #(P, KEY_BITS, SEGMENT_BITS) camlines[TLB_ENTRIES-1:0](
-    .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PageTypeWriteVal, .TLBFlush,
+    .clk, .reset, .VPN, .SATP_ASID, .SV39Mode, .PTE_G(PTE_Gs), .PTE_NAPOT(PTE_NAPOTs), .PageTypeWriteVal, .TLBFlush,
     .WriteEnable(WriteEnables), .PageTypeRead, .Match(Matches));
   assign CAMHit = |Matches & ~TLBFlush;
   or_rows #(TLB_ENTRIES,2) PageTypeOr(PageTypeRead, HitPageType);

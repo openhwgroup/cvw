@@ -34,6 +34,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   input  logic                 STATUS_SUM,         // Status CSR: Supervisor access to user memory
   input  logic                 STATUS_MPRV,        // Status CSR: modify machine privilege
   input  logic [1:0]           STATUS_MPP,         // Status CSR: previous machine privilege level
+  input  logic                 ENVCFG_PBMTE,       // Page-based memory types enabled
   input  logic [1:0]           PrivilegeModeW,     // Current privilege level of the processeor
   input  logic                 DisableTranslation, // virtual address translation disabled during D$ flush and HPTW walk that use physical addresses
   input  logic [P.XLEN+1:0]    VAdr,               // virtual/physical address from IEU or physical address from HPTW
@@ -70,6 +71,7 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   logic                        TLBHit;                   // Hit in TLB
   logic                        TLBPageFault;             // Page fault from TLB
   logic                        ReadNoAmoAccessM;         // Read that is not part of atomic operation causes Load faults.  Otherwise StoreAmo faults
+  logic [1:0]                  PBMemoryType;             // PBMT field of PTE during TLB hit, or 00 otherwise
   
   // only instantiate TLB if Virtual Memory is supported
   if (P.VIRTMEM_SUPPORTED) begin:tlb
@@ -80,16 +82,17 @@ module mmu import cvw::*;  #(parameter cvw_t P,
           .clk, .reset,
           .SATP_MODE(SATP_REGW[P.XLEN-1:P.XLEN-P.SVMODE_BITS]),
           .SATP_ASID(SATP_REGW[P.ASID_BASE+P.ASID_BITS-1:P.ASID_BASE]),
-          .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP,
+          .VAdr(VAdr[P.XLEN-1:0]), .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE,
           .PrivilegeModeW, .ReadAccess, .WriteAccess,
           .DisableTranslation, .PTE, .PageTypeWriteVal,
           .TLBWrite, .TLBFlush, .TLBPAdr, .TLBMiss, .TLBHit, 
-          .Translate, .TLBPageFault, .UpdateDA);
+          .Translate, .TLBPageFault, .UpdateDA, .PBMemoryType);
   end else begin:tlb // just pass address through as physical
     assign Translate    = 0;
     assign TLBMiss      = 0;
     assign TLBHit       = 1; // *** is this necessary
     assign TLBPageFault = 0;
+    assign PBMemoryType = 2'b00;
   end
 
   // If translation is occuring, select translated physical address from TLB
@@ -103,8 +106,8 @@ module mmu import cvw::*;  #(parameter cvw_t P,
   ///////////////////////////////////////////
 
   pmachecker #(P) pmachecker(.PhysicalAddress, .Size,
-    .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM,
-    .Cacheable, .Idempotent, .SelTIM,
+    .AtomicAccessM, .ExecuteAccessF, .WriteAccessM, .ReadAccessM, .PBMemoryType,
+    .Cacheable, .Idempotent, .SelTIM, 
     .PMAInstrAccessFaultF, .PMALoadAccessFaultM, .PMAStoreAmoAccessFaultM);
  
   if (P.PMP_ENTRIES > 0) begin : pmp
