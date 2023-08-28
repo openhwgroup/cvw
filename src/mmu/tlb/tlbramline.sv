@@ -39,11 +39,13 @@ module tlbramline import cvw::*;  #(parameter cvw_t P)
 
   if (P.XLEN == 64) begin // save 7 reserved bits
     // could optimize out N and PBMT from d[63:61] if they aren't supported
-    logic [56:0] ptereg;
-    flopenr #(57) pteflop(clk, reset, we, {d[63:61], d[53:0]}, ptereg);
-    assign line = {ptereg[56:54], 7'b0, ptereg[53:0]};
-   end else // rv32
-     flopenr #(P.XLEN) pteflop(clk, reset, we, d, line);
+    logic [57:0] ptereg;
+    logic reserved;
+    assign reserved = |d[60:54]; // are any of the reserved bits nonzero?
+    flopenr #(58) pteflop(clk, reset, we, {d[63:61], reserved, d[53:0]}, ptereg);
+    assign line = {ptereg[57:54], 6'b0, ptereg[53:0]};
+  end else // rv32
+    flopenr #(P.XLEN) pteflop(clk, reset, we, d, line);
 
    assign q = re ? line : 0;
    assign PTE_G = line[5]; // send global bit to CAM as part of ASID matching
