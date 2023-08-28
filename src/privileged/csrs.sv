@@ -88,8 +88,12 @@ module csrs import cvw::*;  #(parameter cvw_t P) (
   assign WriteSEPCM       = STrapM | (CSRSWriteM & (CSRAdrM == SEPC));
   assign WriteSCAUSEM     = STrapM | (CSRSWriteM & (CSRAdrM == SCAUSE));
   assign WriteSTVALM      = STrapM | (CSRSWriteM & (CSRAdrM == STVAL));
-  if(P.XLEN == 64) assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & (CSRWriteValM[63:60] != 4'hA);
-  else assign WriteSATPM       = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM);
+  if(P.XLEN == 64) begin
+    logic LegalSatpModeM;
+    assign LegalSatpModeM = P.VIRTMEM_SUPPORTED & (CSRWriteValM[63:60] == 0 | CSRWriteValM[63:60] == P.SV39 | CSRWriteValM[63:60] == P.SV48); // supports SV39 and 48
+    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & LegalSatpModeM;
+  end else  // RV32
+    assign WriteSATPM     = CSRSWriteM & (CSRAdrM == SATP) & (PrivilegeModeW == P.M_MODE | ~STATUS_TVM) & P.VIRTMEM_SUPPORTED;
   assign WriteSCOUNTERENM = CSRSWriteM & (CSRAdrM == SCOUNTEREN);
   assign WriteSENVCFGM    = CSRSWriteM & (CSRAdrM == SENVCFG);
   assign WriteSTIMECMPM   = CSRSWriteM & (CSRAdrM == STIMECMP) & STCE;
