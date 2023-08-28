@@ -1936,6 +1936,7 @@ string arch64zbs[] = '{
  string wally64priv[] = '{
     `WALLYTEST,
     "rv64i_m/privilege/src/WALLY-csr-permission-s-01.S",
+    "rv64i_m/privilege/src/WALLY-cboz-01.S",
     "rv64i_m/privilege/src/WALLY-cbom-01.S",
     "rv64i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv64i_m/privilege/src/WALLY-mie-01.S",
@@ -1943,7 +1944,7 @@ string arch64zbs[] = '{
     "rv64i_m/privilege/src/WALLY-misa-01.S",
 //    "rv64i_m/privilege/src/WALLY-mmu-sv39-01.S",  // run this if SVADU_SUPPORTED = 0
 //    "rv64i_m/privilege/src/WALLY-mmu-sv48-01.S",  // run this if SVADU_SUPPORTED = 0
-    "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
+    "rv64i_m/privilege/src/WALLY-mmu-sv39-svadu-svnapot-svpbmt-01.S",  // run this if SVADU_SUPPORTED = 1
     "rv64i_m/privilege/src/WALLY-mmu-sv48-svadu-01.S",  // run this if SVADU_SUPPORTED = 1
     "rv64i_m/privilege/src/WALLY-mtvec-01.S",
     "rv64i_m/privilege/src/WALLY-pma-01.S",
@@ -2031,6 +2032,7 @@ string arch64zbs[] = '{
     "rv32i_m/privilege/src/WALLY-csr-permission-s-01.S",
     "rv32i_m/privilege/src/WALLY-csr-permission-u-01.S",
     "rv32i_m/privilege/src/WALLY-cbom-01.S",
+    "rv32i_m/privilege/src/WALLY-cboz-01.S",
     "rv32i_m/privilege/src/WALLY-mie-01.S",
     "rv32i_m/privilege/src/WALLY-minfo-01.S",
     "rv32i_m/privilege/src/WALLY-misa-01.S",

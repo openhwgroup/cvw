@@ -41,10 +41,10 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   input  logic                        SetValid,       // Set the valid bit in the selected way and set
   input  logic                        ClearValid,     // Clear the valid bit in the selected way and set
   input  logic                        SetDirty,       // Set the dirty bit in the selected way and set
-  input  logic                        ZeroCacheLine,  // Write zeros to all bytes of a cache line
+  input  logic                        CMOZeroHit,  // Write zeros to all bytes of a cache line
   input  logic                        ClearDirty,     // Clear the dirty bit in the selected way and set
   input  logic                        SelWriteback,   // Overrides cached tag check to select a specific way and set for writeback
-  input  logic                        SelCMOWriteback,   // Overrides cached tag check to select a specific way and set for writeback for both data and tag
+  input  logic                        SelCMOWriteback,// Overrides cached tag check to select a specific way and set for writeback for both data and tag
   input  logic                        SelFlush,       // [0] Use SelAdr, [1] SRAM reads/writes from FlushAdr
   input  logic                        VictimWay,      // LRU selected this way as victim to evict
   input  logic                        FlushWay,       // This way is selected for flush and possible writeback if dirty
@@ -81,7 +81,9 @@ module cacheway import cvw::*; #(parameter cvw_t P,
   logic                               SelNotHit2;
   
   if (P.ZICBOZ_SUPPORTED) begin : cbologic
-    assign SelNotHit2 = SetValid & ~(ZeroCacheLine & HitWay);
+    assign SelNotHit2 = SetValid & ~CMOZeroHit;
+    //assign SelNotHit2 = SetValid;
+    
   end else begin : cbologic
     assign SelNotHit2 = SetValid;
   end
@@ -96,7 +98,8 @@ module cacheway import cvw::*; #(parameter cvw_t P,
     // nonzero ways will never see SelFlush=0 while FlushWay=1 since FlushWay only advances on a subset of SelFlush assertion cases.
     assign FlushWayEn = FlushWay & SelFlush;
     // *** RT: This is slopy. I should refactor to have the fsm issue two types of writeback commands
-    assign SelNonHit = FlushWayEn | SelNotHit2 | SelWriteback;
+    assign SelNonHit = FlushWayEn | SelNotHit2 | SelWriteback; // *** this is not correct
+
     //assign SelNonHit = FlushWayEn | SelNotHit2 | SelWriteback;
   end else begin:flushlogic // no flush operation for read-only caches.
     assign SelTag = VictimWay;

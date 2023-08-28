@@ -94,10 +94,10 @@ endif
 
 ifneq ($(MOD), orig)
 	# PMP 0
-	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES 0/' $(CONFIGDIR)/config.vh
+	sed -i 's/PMP_ENTRIES \(64\|16\|0\)/PMP_ENTRIES = 0;/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), PMP0)
 	# no priv
-	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED 0/' $(CONFIGDIR)/config.vh
+	sed -i 's/ZICSR_SUPPORTED *1/ZICSR_SUPPORTED = 0;/' $(CONFIGDIR)/config.vh
 ifneq ($(MOD), noPriv)
 	# turn off FPU 
 	sed -i 's/1 *<< *3/0 << 3/' $(CONFIGDIR)/config.vh
@@ -119,6 +119,8 @@ ifeq ($(SAIFPOWER), 1)
 endif
 
 
+mkwrapper:
+	python3 $(WALLY)/synthDC/scripts/wrapperGen.py $(DESIGN)
 mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
@@ -128,7 +130,7 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-synth: mkdirecs configs rundc clean
+synth: mkwrapper mkdirecs configs rundc # clean
 
 rundc:
 ifeq ($(TECH), tsmc28psyn)
@@ -148,3 +150,4 @@ clean:
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
+	rm $(WALLY)/synthDC/wrappers/*

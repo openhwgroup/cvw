@@ -3,7 +3,7 @@
 
 `include "BranchPredictorType.vh"
 
-parameter cvw_t P = '{ 
+localparam cvw_t P = '{ 
   FPGA :                 FPGA,  
   XLEN :                 XLEN,  
   IEEE754 :              IEEE754, 
@@ -25,6 +25,7 @@ parameter cvw_t P = '{
   ZICBOZ_SUPPORTED :     ZICBOZ_SUPPORTED,
   ZICBOP_SUPPORTED :     ZICBOP_SUPPORTED,
   SVPBMT_SUPPORTED :     SVPBMT_SUPPORTED,
+  SVNAPOT_SUPPORTED :    SVNAPOT_SUPPORTED,
   SVINVAL_SUPPORTED :    SVINVAL_SUPPORTED,
   BUS_SUPPORTED :        BUS_SUPPORTED,
   DCACHE_SUPPORTED :     DCACHE_SUPPORTED,
