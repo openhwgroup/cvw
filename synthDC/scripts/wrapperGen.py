@@ -63,7 +63,7 @@ buf += f"\t{moduleName} #(P) dut(.*);\nendmodule"
 wrapperPath = f"{os.getenv('WALLY')}/synthDC/wrappers/{moduleName}wrapper.sv"
 
 # clear wrappers directory 
-os.system(f"rm {os.getenv('WALLY')}/src/wrappers/*")
+os.system(f"rm {os.getenv('WALLY')}/synthDC/wrappers/*")
 
 fout = open(wrapperPath, "w")
 

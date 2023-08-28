@@ -24,7 +24,6 @@ export USESRAM ?= 0
 export WRAPPER ?= 0
 
 ifeq ($(WRAPPER),1)
-	rm $(WALLY)/synthDC/wrappers/*
 	NAME := synthWrapper
 else 
 	NAME := synth
