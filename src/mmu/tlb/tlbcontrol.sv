@@ -36,10 +36,9 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   input  logic                     ReadAccess, WriteAccess,
   input  logic                     DisableTranslation,
   input  logic                     TLBFlush, // Invalidate all TLB entries
-  input  logic [10:0]              PTEAccessBits,
+  input  logic [11:0]              PTEAccessBits,
   input  logic                     CAMHit,
   input  logic                     Misaligned,
-  input  logic                     BadPTEWrite,       // trying to write malformed PTE
   output logic                     TLBMiss,
   output logic                     TLBHit,
   output logic                     TLBPageFault,
@@ -53,13 +52,14 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   // Sections of the page table entry
   logic [1:0]                     EffectivePrivilegeMode;
 
-  logic                           PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
   logic [1:0]                     PTE_PBMT;
+  logic                           PTE_RESERVED, PTE_D, PTE_A, PTE_U, PTE_X, PTE_W, PTE_R, PTE_V; // Useful PTE Control Bits
   logic                           UpperBitsUnequal;
   logic                           TLBAccess;
   logic                           ImproperPrivilege;
-  logic                           BadPBMT;
-  logic                           CausePageFault;
+  logic                           BadPBMT, BadNAPOT, BadReserved;
+  logic                           InvalidAccess;
+  logic                           PreUpdateDA, PrePageFault;
 
   // Grab the sv mode from SATP and determine whether translation should occur
   assign EffectivePrivilegeMode = (ITLB == 1) ? PrivilegeModeW : (STATUS_MPRV ? STATUS_MPP : PrivilegeModeW); // DTLB uses MPP mode when MPRV is 1
@@ -72,16 +72,20 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
   vm64check #(P) vm64check(.SATP_MODE, .VAdr, .SV39Mode, .UpperBitsUnequal);
 
   // unswizzle useful PTE bits
-  assign PTE_N = PTEAccessBits[10];
-  assign PTE_PBMT = PTEAccessBits[9:8];
+  assign PTE_N = PTEAccessBits[11];
+  assign PTE_PBMT = PTEAccessBits[10:9];
+  assign PTE_RESERVED = PTEAccessBits[8];
   assign {PTE_D, PTE_A} = PTEAccessBits[7:6];
   assign {PTE_U, PTE_X, PTE_W, PTE_R, PTE_V} = PTEAccessBits[4:0];
 
-  // Page fault if PBMT is nonzero when SVPBMT is not supported and enabled
-  assign BadPBMT = PTE_PBMT != 0 & ~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE);
-
   // Send PMA a 2-bit MemoryType that is PBMT during leaf page table accesses and 0 otherwise
   assign PBMemoryType = PTE_PBMT & {2{Translate & TLBHit & P.SVPBMT_SUPPORTED}};
+ 
+  // check if reserved, N, or PBMT bits are malformed w in RV64
+  assign BadPBMT = PTE_PBMT != 0 & (~(P.SVPBMT_SUPPORTED & ENVCFG_PBMTE) | 
+                   {PTE_X, PTE_W, PTE_R} == 3'b000) | PTE_PBMT == 3;                                  // PBMT must be zero if not supported or for non-leaf PTEs;
+  assign BadNAPOT = PTE_N & ~P.SVNAPOT_SUPPORTED;                                        // N must be be 0 if CVNAPOT is not supported
+  assign BadReserved = PTE_RESERVED;                                                     // Reserved bits must be zero
  
   // Check whether the access is allowed, page faulting if not.
   if (ITLB == 1) begin:itlb // Instruction TLB fault checking
@@ -89,7 +93,42 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     // only execute non-user mode pages.
     assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
       ((EffectivePrivilegeMode == P.S_MODE) & PTE_U);
-    assign CausePageFault = ImproperPrivilege | ~PTE_X | UpperBitsUnequal | BadPTEWrite | BadPBMT | Misaligned | ~PTE_V | (~PTE_A & P.SVADU_SUPPORTED);
+    assign PreUpdateDA = ~PTE_A;
+    assign InvalidAccess = ~PTE_X;
+ end else begin:dtlb // Data TLB fault checking
+    logic InvalidRead, InvalidWrite;
+
+    // User mode may only load/store from user mode pages, and supervisor mode
+    // may only access user mode pages when STATUS_SUM is low.
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U & ~STATUS_SUM);
+    // Check for read error. Reads are invalid when the page is not readable
+    // (and executable pages are not readable) or when the page is neither
+    // readable nor executable (and executable pages are readable).
+    assign InvalidRead = ReadAccess & ~PTE_R & (~STATUS_MXR | ~PTE_X);
+    // Check for write error. Writes are invalid when the page's write bit is
+    // low.
+    assign InvalidWrite = WriteAccess & ~PTE_W;
+    assign InvalidAccess = InvalidRead | InvalidWrite;
+    assign PreUpdateDA = ~PTE_A | WriteAccess & ~PTE_D;
+  end
+
+  // Determine wheter to update DA bits.  With SVADU, it is done in hardware
+  if (P.SVADU_SUPPORTED) assign UpdateDA = PreUpdateDA & Translate & TLBHit & ~TLBPageFault;
+  else                   assign UpdateDA = PreUpdateDA;
+
+  // Determine whether page fault occurs
+  assign PrePageFault = UpperBitsUnequal | Misaligned | ~PTE_V | ImproperPrivilege | (P.XLEN == 64 & (BadPBMT | BadNAPOT | BadReserved)) | (PreUpdateDA & ~P.SVADU_SUPPORTED);
+  assign TLBPageFault = Translate & TLBHit & (PrePageFault | InvalidAccess);
+
+/*
+  // Check whether the access is allowed, page faulting if not.
+  if (ITLB == 1) begin:itlb // Instruction TLB fault checking
+    // User mode may only execute user mode pages, and supervisor mode may
+    // only execute non-user mode pages.
+    assign ImproperPrivilege = ((EffectivePrivilegeMode == P.U_MODE) & ~PTE_U) |
+      ((EffectivePrivilegeMode == P.S_MODE) & PTE_U);
+    assign CausePageFault = ImproperPrivilege | ~PTE_X | UpperBitsUnequal | BadPTE | BadPBMT | Misaligned | ~PTE_V | (~PTE_A & P.SVADU_SUPPORTED);
     assign TLBPageFault = Translate  & TLBHit & CausePageFault;
     // Determine wheter to update DA bits
     if(P.SVADU_SUPPORTED) assign UpdateDA = Translate & TLBHit & ~PTE_A & ~TLBPageFault;
@@ -110,13 +149,14 @@ module tlbcontrol import cvw::*;  #(parameter cvw_t P, ITLB = 0) (
     assign InvalidWrite = WriteAccess & ~PTE_W;
     if(P.SVADU_SUPPORTED) begin : hptwwrites
       assign UpdateDA = Translate & TLBHit & (~PTE_A | WriteAccess & ~PTE_D) & ~TLBPageFault; 
-      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequal | Misaligned | ~PTE_V));
+      assign TLBPageFault =  (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpperBitsUnequal | Misaligned | ~PTE_V)); // *** update to match
     end else begin
       // Fault for software handling if access bit is off or writing a page with dirty bit off
       assign UpdateDA = ~PTE_A | WriteAccess & ~PTE_D; 
       assign TLBPageFault = (Translate & TLBHit & (ImproperPrivilege | InvalidRead | InvalidWrite | UpdateDA | UpperBitsUnequal | Misaligned | ~PTE_V));
     end
   end
+*/
 
   assign TLBHit = CAMHit & TLBAccess;
   assign TLBMiss = ~CAMHit & TLBAccess & Translate ;
