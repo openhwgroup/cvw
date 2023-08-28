@@ -81,12 +81,11 @@ module tlb import cvw::*;  #(parameter cvw_t P,
   logic [P.VPN_BITS-1:0]          VPN;
   logic [P.PPN_BITS-1:0]          PPN;
   // Sections of the page table entry
-  logic [10:0]                    PTEAccessBits;
+  logic [11:0]                    PTEAccessBits;
   logic [1:0]                     HitPageType;
   logic                           CAMHit;
   logic                           SV39Mode;
   logic                           Misaligned;
-  logic                           BadPTEWrite;      // trying to write malformed PTE
   logic                           MegapageMisaligned;
   logic                           PTE_N;         // NAPOT page table entry
 
@@ -105,16 +104,9 @@ module tlb import cvw::*;  #(parameter cvw_t P,
 
   assign VPN = VAdr[P.VPN_BITS+11:12];
 
-  // check if reserved, N, or PBMT bits are malformed when PTE is written in RV64
-  assign BadPTEWrite = (P.XLEN == 64) & TLBWrite & (
-    PTE[P.XLEN-1] & ~P.SVNAPOT_SUPPORTED |              // N must be 0 if SVNAPOT is not supported
-    PTE[P.XLEN-2:P.XLEN-3] != 0 & ~P.SVPBMT_SUPPORTED | // PBMT must be 0 if SVBPMT is not supported
-    PTE[P.XLEN-2:P.XLEN-3] == 3                       | // PBMT of 3 is reserved and never legal
-    PTE[P.XLEN-4:P.XLEN-10] != 0 );                       // Reserved bits must be 0
-
   tlbcontrol #(P, ITLB) tlbcontrol(.SATP_MODE, .VAdr, .STATUS_MXR, .STATUS_SUM, .STATUS_MPRV, .STATUS_MPP, .ENVCFG_PBMTE,
     .PrivilegeModeW, .ReadAccess, .WriteAccess, .DisableTranslation, .TLBFlush,
-    .PTEAccessBits, .CAMHit, .Misaligned, .BadPTEWrite,
+    .PTEAccessBits, .CAMHit, .Misaligned, 
     .TLBMiss, .TLBHit, .TLBPageFault, 
     .UpdateDA, .SV39Mode, .Translate, .PTE_N, .PBMemoryType);
 
