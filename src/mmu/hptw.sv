@@ -155,7 +155,7 @@ module hptw import cvw::*;  #(parameter cvw_t P) (
     assign AccessedPTE = {PTE[P.XLEN-1:8], (SetDirty | PTE[7]), 1'b1, PTE[5:0]}; // set accessed bit, conditionally set dirty bit
     mux2 #(P.XLEN) NextPTEMux(ReadDataM, AccessedPTE, UpdatePTE, NextPTE);
     flopenr #(P.PA_BITS) HPTWAdrWriteReg(clk, reset, SaveHPTWAdr, HPTWReadAdr, HPTWWriteAdr);
-  
+    
     assign SaveHPTWAdr = WalkerState == L0_ADR;
     assign SelHPTWWriteAdr = UpdatePTE | HPTWRW[0];
     mux2 #(P.PA_BITS) HPTWWriteAdrMux(HPTWReadAdr, HPTWWriteAdr, SelHPTWWriteAdr, HPTWAdr); 
