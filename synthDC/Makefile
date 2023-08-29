@@ -119,6 +119,8 @@ ifeq ($(SAIFPOWER), 1)
 endif
 
 
+mkwrapper:
+	python3 $(WALLY)/synthDC/scripts/wrapperGen.py $(DESIGN)
 mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
@@ -128,7 +130,7 @@ mkdirecs:
 	@mkdir -p $(OUTPUTDIR)/mapped
 	@mkdir -p $(OUTPUTDIR)/unmapped
 
-synth: mkdirecs configs rundc # clean
+synth: mkwrapper mkdirecs configs rundc # clean
 
 rundc:
 ifeq ($(TECH), tsmc28psyn)
@@ -148,3 +150,4 @@ clean:
 	rm -f power.saif
 	rm -f Synopsys_stack_trace_*.txt
 	rm -f crte_*.txt
+	rm $(WALLY)/synthDC/wrappers/*

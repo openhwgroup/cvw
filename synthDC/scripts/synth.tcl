@@ -29,6 +29,7 @@ eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
 #eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
+eval file copy -force [glob ${hdl_src}/../synthDC/wrappers/$::env(DESIGN)wrapper.sv] {$outputDir/hdl/}
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -42,7 +43,7 @@ if { $saifpower == 1 } {
 set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
-set my_toplevel $::env(DESIGN)
+set my_toplevel $::env(DESIGN)wrapper
 
 # Set number of significant digits
 set report_default_significant_digits 6
