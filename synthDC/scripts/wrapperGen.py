@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 """
 wrapperGen.py
 
@@ -7,16 +8,19 @@ script that generates top-level wrappers for verilog modules to synthesize
 """
 
 import argparse
+import glob
 import os
 
 #create argument parser
 parser = argparse.ArgumentParser()
 
-parser.add_argument("fin")
+parser.add_argument("DESIGN")
 
 args=parser.parse_args()
 
-fin = open(args.fin, "r")
+fin_path = glob.glob(f"{os.getenv('WALLY')}/src/**/{args.DESIGN}.sv",recursive=True)[0]
+
+fin = open(fin_path, "r")
 
 lines = fin.readlines()
 
@@ -55,12 +59,11 @@ for l in lines:
 # post-processing buffer: add DUT and endmodule lines
 buf += f"\t{moduleName} #(P) dut(.*);\nendmodule"
 
-
 # path to wrapper
-wrapperPath = f"{os.getenv('WALLY')}/src/wrappers/{moduleName}wrapper.sv"
+wrapperPath = f"{os.getenv('WALLY')}/synthDC/wrappers/{moduleName}wrapper.sv"
 
 # clear wrappers directory 
-os.system(f"rm {os.getenv('WALLY')}/src/wrappers/*")
+os.system(f"rm {os.getenv('WALLY')}/synthDC/wrappers/*")
 
 fout = open(wrapperPath, "w")
 
