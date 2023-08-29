@@ -35,6 +35,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   input  logic                 ExecuteAccessF, // Execute access 
   input  logic                 WriteAccessM,   // Write access 
   input  logic                 ReadAccessM,    // Read access
+  input  logic [1:0]           PBMemoryType,     // PBMT field of PTE during TLB hit, or 00 otherwise
   output logic                 Cacheable, Idempotent, SelTIM,
   output logic                 PMAInstrAccessFaultF,
   output logic                 PMALoadAccessFaultM,
@@ -45,6 +46,7 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   logic                        AccessRW, AccessRWX, AccessRX;
   logic [10:0]                 SelRegions;
   logic                        AtomicAllowed;
+  logic                        CacheableRegion, IdempotentRegion;
 
   // Determine what type of access is being made
   assign AccessRW  = ReadAccessM | WriteAccessM;
@@ -54,11 +56,15 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   // Determine which region of physical memory (if any) is being accessed
   adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
-  // Only non-core RAM/ROM memory regions are cacheable
-  assign Cacheable = SelRegions[8] | SelRegions[7] | SelRegions[6];  // exclusion-tag: unused-cachable
+  // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
+  assign CacheableRegion = SelRegions[8] | SelRegions[7] | SelRegions[6];  
+  assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 0;  // exclusion-tag: unused-cachable
+
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
-  // I/O is nonidempotent.  
-  assign Idempotent = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[7] | SelRegions[6]; // exclusion-tag: unused-idempotent
+  // I/O is nonidempotent.  PBMT can override PMA; NC is idempotent and IO is non-idempotent
+  assign IdempotentRegion = SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[7] | SelRegions[6]; 
+  assign Idempotent = (PBMemoryType == 2'b00) ? IdempotentRegion : (PBMemoryType == 2'b01);  // exclusion-tag: unused-idempotent
+ 
   // Atomic operations are only allowed on RAM
   assign AtomicAllowed = SelRegions[10] | SelRegions[8] | SelRegions[6]; // exclusion-tag: unused-atomic
   // Check if tightly integrated memories are selected
