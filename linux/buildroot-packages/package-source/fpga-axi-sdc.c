@@ -272,6 +272,8 @@ static void sdc_reset(struct mmc_host * mmc) {
     struct sdc_host * host = mmc_priv(mmc);
     uint32_t card_detect = 0;
 
+    spin_lock_init(&host->lock);
+
     spin_lock_irq(&host->lock);
 
     sdc_set_clock(host, 400000);
@@ -462,7 +464,7 @@ static int axi_sdc_probe(struct platform_device * pdev) {
         return ret;
     }
 
-    spin_lock_init(&host->lock);
+    //spin_lock_init(&host->lock);
 
     platform_set_drvdata(pdev, host);
     return 0;
