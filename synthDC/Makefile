@@ -2,7 +2,7 @@
 # Makefile for synthesis
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
 # Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
-
+NAME := synth
 # defaults
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 10000
@@ -23,11 +23,6 @@ export DRIVE ?= FLOP
 export USESRAM ?= 0
 export WRAPPER ?= 0
 
-ifeq ($(WRAPPER),1)
-	NAME := synthWrapper
-else 
-	NAME := synth
-endif
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
