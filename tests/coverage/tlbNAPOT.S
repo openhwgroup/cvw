@@ -41,6 +41,7 @@ main:
     li a0, 1   
     ecall
 
+    li t4, 0x200000   # address step size
     li t0, 0x80215240 # Test NAPOT pages
     jal a1, looptest
     li t0, 0x80215240 # Test NAPOT pages
@@ -52,13 +53,15 @@ main:
     li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
     jal a1, looptest
     li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
+    jal a1, looptest
+    li t4, 0x1000     # address step size
+    li t0, 0x80216000 # Test NAPOT pages
     jal a1, looptest
     j done
 
 looptest:
     li t2, 0             # i = 0
-    li t3, 33     # Max amount of Loops = 32
-    li t4, 0x200000
+    li t3, 35     # Max amount of Loops = 34
     li t5, 0x8082 # return instruction opcode
 
 loop: bge t2, t3, finished   # exit loop if i >= loops
@@ -88,8 +91,11 @@ pagetable:
     .8byte 0x00000000200050C1 # gigapage at 0xC0000000 mapped to ill-formed NAPOT with wrong PPN
     
 
-# Next page table at 0x80012000
+# Next page table at 0x80012000 for gigapage at 0x80000000
 .align 12
+    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004CC1
+    .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
@@ -197,8 +203,11 @@ pagetable:
     .8byte 0x800000002000E0CF
     .8byte 0x800000002000E0CF
 
-# Next page table at 0x80014000: mega-sized, pointing to malformed NAPOT
+# Next page table at 0x80014000: mega-sized, pointing to malformed NAPOT  for gigapage at 0xC9000000
 .align 12
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
     .8byte 0x00000000200054C1
     .8byte 0x00000000200054C1
     .8byte 0x00000000200054C1
@@ -284,8 +293,10 @@ pagetable:
     .8byte 0x80000000200000CF
 
 
-# Next page table at 0x80016000: mega-sized, pointing to properly formed PTE with 1 in PPN bit 3
+# Next page table at 0x80016000: mega-sized, pointing to properly formed PTE with 1 in PPN bit 3  for gigapage at 0x40000000
 .align 12
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
     .8byte 0x0000000020005CC1
     .8byte 0x0000000020005CC1
     .8byte 0x0000000020005CC1
@@ -326,48 +337,47 @@ pagetable:
 .align 12
     #80000000
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
     .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
-    .8byte 0x00000000200020CF
+    .8byte 0x00000000200060CF
+    .8byte 0x000000002000A0CF
+    .8byte 0x000000002000E0CF
 
- 
