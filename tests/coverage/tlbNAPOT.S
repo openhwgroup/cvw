@@ -41,8 +41,21 @@ main:
     li a0, 1   
     ecall
 
-    li t0, 0x80215240
+    li t0, 0x80215240 # Test NAPOT pages
+    jal a1, looptest
+    li t0, 0x80215240 # Test NAPOT pages
+    jal a1, looptest
+    li t0, 0xC0215240  # Test ill-formed NAPOT pages
+    jal a1, looptest
+    li t0, 0xC0215240  # Test ill-formed NAPOT pages
+    jal a1, looptest
+    li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
+    jal a1, looptest
+    li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
+    jal a1, looptest
+    j done
 
+looptest:
     li t2, 0             # i = 0
     li t3, 33     # Max amount of Loops = 32
     li t4, 0x200000
@@ -58,7 +71,7 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     j loop
 
 finished:
-    j done
+    jr a1
 
 .data
 
@@ -69,9 +82,10 @@ pagetable:
 
 # next page table at 0x80011000
 .align 12
-    .8byte 0x0000000000000000
-    .8byte 0x00000000200048C1
-    .8byte 0x00000000200048C1
+    .8byte 0x0000000000000000 # gigapage at 0x00000000
+    .8byte 0x00000000200058C1 # gigapage at 0x40000000 used for non-NAPOT with PPN bit 3 set
+    .8byte 0x00000000200048C1 # gigapage at 0x80000000 used for testing NAPOT huge pages
+    .8byte 0x00000000200050C1 # gigapage at 0xC0000000 mapped to ill-formed NAPOT with wrong PPN
     
 
 # Next page table at 0x80012000
@@ -112,7 +126,7 @@ pagetable:
     .8byte 0x0000000020004CC1
     .8byte 0x0000000020004CC1
 
-# Leaf page table at 0x80013000
+# Leaf page table at 0x80013000 with NAPOT pages
 .align 12
     #80000000
     .8byte 0x80000000200020CF
@@ -182,3 +196,178 @@ pagetable:
 
     .8byte 0x800000002000E0CF
     .8byte 0x800000002000E0CF
+
+# Next page table at 0x80014000: mega-sized, pointing to malformed NAPOT
+.align 12
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+    .8byte 0x00000000200054C1
+
+# Leaf page table at 0x80015000 with malformed NAPOT pages (wrong PPN) starting at 0xC0000000
+.align 12
+    #80000000
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+    .8byte 0x80000000200000CF
+
+
+# Next page table at 0x80016000: mega-sized, pointing to properly formed PTE with 1 in PPN bit 3
+.align 12
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+    .8byte 0x0000000020005CC1
+
+# Leaf page table at 0x80017000 with properly formed PTE with bit 4 of PPN set but no NAPOT
+.align 12
+    #80000000
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+    .8byte 0x00000000200020CF
+
+ 
