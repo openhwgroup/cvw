@@ -31,6 +31,9 @@
 
 # run-elf.bash find this in project description
 main:
+    li t5, 0x1
+    slli t5, t5, 62
+    csrs menvcfg, t5
     # Page table root address at 0x80010000; SV48
     li t5, 0x9000000000080010  
     csrw satp, t5
@@ -42,29 +45,24 @@ main:
     ecall
 
     li t4, 0x200000   # address step size
-    li t0, 0x80215240 # Test NAPOT pages
+    li a2, 0x80215240 # Test NAPOT pages
     jal a1, looptest
-    li t0, 0x80215240 # Test NAPOT pages
+    li a2, 0xC0215240  # Test ill-formed NAPOT pages
     jal a1, looptest
-    li t0, 0xC0215240  # Test ill-formed NAPOT pages
+    li a2, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
     jal a1, looptest
-    li t0, 0xC0215240  # Test ill-formed NAPOT pages
-    jal a1, looptest
-    li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
-    jal a1, looptest
-    li t0, 0x40215240  # Test properly formed pages with 1 in PPN[3] that are not NAPOT
-    jal a1, looptest
-    li t4, 0x1000     # address step size
-    li t0, 0x80216000 # Test NAPOT pages
-    jal a1, looptest
+#    li t4, 0x1000     # address step size
+#    li a2, 0x80216000 # Test NAPOT pages
+#    jal a1, looptest
     j done
 
 looptest:
+    mv t0, a2       # base address
     li t2, 0             # i = 0
     li t3, 35     # Max amount of Loops = 34
     li t5, 0x8082 # return instruction opcode
 
-loop: bge t2, t3, finished   # exit loop if i >= loops
+loop: bge t2, t3, looptesti   # exit loop if i >= loops
     sw t5, 0(t0)   # store a return at this address to exercise DTLB
     lw t1, 0(t0)   # read it back
     fence.i    # synchronize with I$
@@ -72,6 +70,18 @@ loop: bge t2, t3, finished   # exit loop if i >= loops
     add t0, t0, t4
     addi t2, t2, 1
     j loop
+
+looptesti:
+    mv t0, a2       # base address
+    li t2, 0             # i = 0
+    fence.i    # synchronize with I$
+ 
+# Exercise itlb by jumping to each of the return statements
+loopi: bge t2, t3, finished   # exit loop if i >= loops
+    jalr ra, t0 # jump to the return statement to exercise the ITLB
+    add t0, t0, t4
+    addi t2, t2, 1
+    j loopi
 
 finished:
     jr a1
@@ -135,25 +145,25 @@ pagetable:
 # Leaf page table at 0x80013000 with NAPOT pages
 .align 12
     #80000000
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
 
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
 
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
 
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
-    .8byte 0x80000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
+    .8byte 0xA0000000200020CF
 
     .8byte 0x80000000200060CF
     .8byte 0x80000000200060CF
