@@ -65,14 +65,20 @@ add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/PCE
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ifu/InstrE
 add wave -noupdate -group {Execution Stage} /testbench/InstrEName
 add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/c/InstrValidE
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcAE
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/SrcBE
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ALUResultE
 add wave -noupdate -expand -group {Memory Stage} /testbench/FunctionName/FunctionName/FunctionName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrValidM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/PCM
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/InstrM
 add wave -noupdate -expand -group {Memory Stage} /testbench/InstrMName
 add wave -noupdate -expand -group {Memory Stage} /testbench/dut/core/lsu/IEUAdrM
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/ReadDataM
+add wave -noupdate -expand -group lsu /testbench/dut/core/lsu/WriteDataM
 add wave -noupdate -group {WriteBack stage} /testbench/InstrW
 add wave -noupdate -group {WriteBack stage} /testbench/InstrWName
+add wave -noupdate -group {Execution Stage} /testbench/dut/core/ieu/dp/ResultW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/csrm/MCAUSE_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTEREN_REGW
 add wave -noupdate -group CSRs /testbench/dut/core/priv/priv/csr/MCOUNTINHIBIT_REGW

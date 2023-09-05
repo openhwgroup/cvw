@@ -3,7 +3,6 @@
 # Shreya Sanghai (ssanghai@hmc.edu) 2/28/2022
 # Madeleine Masser-Frye (mmasserfrye@hmc.edu) 1/27/2023
 NAME := synth
-
 # defaults
 export DESIGN ?= wallypipelinedcore
 export FREQ ?= 10000
@@ -18,9 +17,12 @@ export TECH ?= sky90
 export MAXCORES ?= 1
 # MAXOPT turns on flattening, boundary optimization, and retiming
 # The output netlist is hard to interpret, but significantly better PPA
+# WRAPPER turns on wrapper generation
 export MAXOPT ?= 0
 export DRIVE ?= FLOP
 export USESRAM ?= 0
+export WRAPPER ?= 0
+
 
 time := $(shell date +%F-%H-%M)
 hash := $(shell git rev-parse --short HEAD)
@@ -120,7 +122,9 @@ endif
 
 
 mkwrapper:
+ifeq ($(WRAPPER),1)
 	python3 $(WALLY)/synthDC/scripts/wrapperGen.py $(DESIGN)
+endif
 mkdirecs:
 	@echo "DC Synthesis"
 	@mkdir -p $(OUTPUTDIR)
