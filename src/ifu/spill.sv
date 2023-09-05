@@ -40,6 +40,7 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   input logic               IFUCacheBusStallF, // I$ or bus are stalled. Transition to second fetch of spill after the first is fetched
   input logic               ITLBMissF,         // ITLB miss, ignore memory request
   input logic               InstrUpdateDAF,    // Ignore memory request if the hptw support write and a DA page fault occurs (hptw is still active)
+  input logic               CacheableF,        // Is the instruction from the cache?
   output logic [P.XLEN-1:0] PCSpillNextF,      // The next PCF for one of the two memory addresses of the spill
   output logic [P.XLEN-1:0] PCSpillF,          // PCF for one of the two memory addresses of the spill
   output logic              SelSpillNextF,     // During the transition between the two spill operations, the IFU should stall the pipeline
@@ -48,7 +49,6 @@ module spill import cvw::*;  #(parameter cvw_t P) (
 
   // Spill threshold occurs when all the cache offset PC bits are 1 (except [0]).  Without a cache this is just PCF[1]
   typedef enum logic [1:0]  {STATE_READY, STATE_SPILL} statetype;
-  localparam                SPILLTHRESHOLD = P.ICACHE_SUPPORTED ? P.ICACHE_LINELENINBITS/32 : 1; 
 
   statetype          CurrState, NextState;
   logic [P.XLEN-1:0] PCPlus2NextF, PCPlus2F;         
@@ -76,7 +76,13 @@ module spill import cvw::*;  #(parameter cvw_t P) (
   // Detect spill
   ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  assign SpillF = &PCF[$clog2(SPILLTHRESHOLD)+1:1];
+  if (P.ICACHE_SUPPORTED) begin
+    logic  SpillCachedF, SpillUncachedF;
+    assign SpillCachedF = &PCF[$clog2(P.ICACHE_LINELENINBITS/32)+1:1];
+    assign SpillUncachedF = PCF[1]; // *** try to optimize this based on whether the next instruction is 16 bits and by fetching 64 bits in RV64
+    assign SpillF = CacheableF ? SpillCachedF : SpillUncachedF;
+  end else
+    assign SpillF = PCF[1]; // *** might relax - only spill if next instruction is uncompressed
   assign TakeSpillF = SpillF & ~IFUCacheBusStallF & ~(ITLBMissF | (P.SVADU_SUPPORTED & InstrUpdateDAF));
   
   always_ff @(posedge clk)
