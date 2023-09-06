@@ -92,7 +92,10 @@ changeprivilege:
 
 trap_return:            # return from trap handler
     csrr t0, mepc  # get address of instruction that caused exception
+    li t1, 0x20000  
+    csrs mstatus, t1    # set mprv bit to fetch instruction with permission of code that trapped
     lh t0, 0(t0)   # get instruction that caused exception
+    csrc mstatus, t1    # clear mprv bit to restore normal operation
     li t1, 3
     and t0, t0, t1  # mask off upper bits
     beq t0, t1, instr32  # if lower 2 bits are 11, instruction is uncompresssed

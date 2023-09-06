@@ -47,6 +47,13 @@ main:
     sc.w t0, a1, 0(a0)
     addi t0, t0, 1
 
+    # test prefetch Hints (ori with destination x0)
+    ori x0, x0, 0
+    ori x0, x0, 1
+    ori x0, x0, 2
+    ori x0, x0, 3
+    
+
     # Test illegal instructions are detected
     .word 0x80000033 // illegal R-type instruction
     .word 0x00007003 // illegal Load instruction
@@ -66,6 +73,34 @@ main:
     .word 0x60F0101B  // Illegal BMU similar to count word
     .word 0x6080101B  // Illegal BMU similar to count word
     .word 0x6030101B  // Illegal BMU similar to count word
+    .word 0x0000202F  // Illegal similar to LR
+    .word 0x1010202F  // Illegal similar to LR
+    .word 0x00402003  // illegal similar to CMO
+    .word 0x00202003  // illegal similar to CMO
+    .word 0xFF00302F  // illegal Atomic instruction
+    .word 0xFF00402F  // illegal Atomic instruction
+    .word 0x00000873  // illegal CSR instruction
+
+    # Illegal CMO instructions because envcfg is 0 and system is in user Mode
+    li a0, 0
+    ecall # switch to user mode
+    cbo.inval (x1)
+    cbo.clean (x1)
+    cbo.flush (x1)
+    cbo.zero  (x1)
+
+    li a0, 3
+    ecall # switch back to machine mode
+    li x1, 0x50
+    csrw menvcfg, x1
+    csrw senvcfg, x1
+    li a0, 0
+    ecall # swtich to user mode
+    cbo.inval (x2)
+    cbo.clean (x3)
+    cbo.flush (x1)
+ 
+
 
 
     j done
