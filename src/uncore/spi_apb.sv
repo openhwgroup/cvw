@@ -46,7 +46,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     output logic [3:0]          SPICS,
     output logic                SPIIntr
 
-    );
+);
 
     //SPI registers
 
