@@ -64,6 +64,7 @@ wrapperPath = f"{os.getenv('WALLY')}/synthDC/wrappers/{moduleName}wrapper.sv"
 
 # clear wrappers directory 
 os.system(f"rm {os.getenv('WALLY')}/synthDC/wrappers/*")
+os.system(f"mkdir {os.getenv('WALLY')}/synthDC/wrappers")
 
 fout = open(wrapperPath, "w")
 
