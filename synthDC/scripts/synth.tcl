@@ -16,6 +16,7 @@ suppress_message {VER-173}
 # Enable Multicore
 set_host_options -max_cores $::env(MAXCORES)
 
+
 # get outputDir and configDir from environment (Makefile)
 set outputDir $::env(OUTPUTDIR)
 set cfg $::env(CONFIGDIR)
@@ -23,13 +24,17 @@ set hdl_src "../src"
 set saifpower $::env(SAIFPOWER)
 set maxopt $::env(MAXOPT)
 set drive $::env(DRIVE)
+set wrapper $::env(WRAPPER)
 
 eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
-eval file copy -force [glob ${cfg}/*.vh] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/cvw.sv] {$outputDir/hdl/}
-eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
+#eval file copy -force [glob ${hdl_src}/../fpga/src/wallypipelinedsocwrapper.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*.sv] {$outputDir/hdl/}
 eval file copy -force [glob ${hdl_src}/*/*/*.sv] {$outputDir/hdl/}
+if {$wrapper ==1 } {
+    eval file copy -force [glob ${hdl_src}/../synthDC/wrappers/$::env(DESIGN)wrapper.sv] {$outputDir/hdl/}
+}
+
 
 # Only for FMA class project; comment out when done
 # eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
@@ -43,7 +48,11 @@ if { $saifpower == 1 } {
 set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
-set my_toplevel $::env(DESIGN)
+if { $wrapper == 1 } {
+    set my_toplevel $::env(DESIGN)wrapper
+} else {
+    set my_toplevel $::env(DESIGN)
+}
 
 # Set number of significant digits
 set report_default_significant_digits 6
@@ -76,7 +85,7 @@ if { [shell_is_in_topographical_mode] } {
 #set alib_library_analysis_path ./$outputDir
 define_design_lib WORK -path ./$outputDir/WORK
 analyze -f sverilog -lib WORK $my_verilog_files
-elaborate $my_toplevel -parameter P -lib WORK 
+elaborate $my_toplevel -lib WORK 
 
 # Set the current_design 
 current_design $my_toplevel
