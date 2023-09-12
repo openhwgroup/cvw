@@ -9,20 +9,20 @@
 	chosen {
 		linux,initrd-end = <0x85c43a00>;
 		linux,initrd-start = <0x84200000>;
-		bootargs = "root=/dev/vda ro";
+		bootargs = "root=/dev/vda ro console=ttyS0,115200";
 		stdout-path = "/soc/uart@10000000";
 	};
 
 	memory@80000000 {
 		device_type = "memory";
-		reg = <0x00 0x80000000 0x00 0x08000000>;
+		reg = <0x00 0x80000000 0x00 0x10000000>;
 	};
 
 	cpus {
 		#address-cells = <0x01>;
 		#size-cells = <0x00>;
-		clock-frequency = <0x2FAF080>;
-		timebase-frequency = <0x2FAF080>;
+		clock-frequency = <0x43B5FC0>;
+		timebase-frequency = <0x43B5FC0>;
 
 		cpu@0 {
 			phandle = <0x01>;
@@ -51,7 +51,7 @@
 		uart@10000000 {
 			interrupts = <0x0a>;
 			interrupt-parent = <0x03>;
-			clock-frequency = <0x2FAF080>;
+			clock-frequency = <0x43B5FC0>;
 			reg = <0x00 0x10000000 0x00 0x100>;
 			compatible = "ns16550a";
 		};
@@ -74,10 +74,8 @@
 			fifo-depth = <256>;
 			bus-width = <4>;
 			interrupt-parent = <0x03>;
-			clock = <0x2FAF080>;
-			max-frequency = <0x989680>;
-			cap-sd-highspeed;
-			cap-mmc-highspeed;
+			clock = <0x43B5FC0>;
+			max-frequency = <0xF4240>;
 			no-sdio;
 		};
 
