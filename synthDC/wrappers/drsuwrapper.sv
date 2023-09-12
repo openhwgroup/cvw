@@ -1,5 +1,5 @@
 ///////////////////////////////////////////
-// drsu.sv
+// drsuwrapper.sv
 //
 // Written: kekim@hmc.edu
 // Modified:19 May 2023
@@ -29,7 +29,8 @@
 
 import cvw::*;
 
-module drsuwrapper(
+`include "parameter-defs.vh"
+module drsuwrapper (
   input  logic                clk, 
   input  logic                reset, 
   input  logic [1:0]          FmtE,
@@ -57,7 +58,7 @@ module drsuwrapper(
 );
 //`include "parameter-defs.vh"
 
-drsu #(P) d(.*);
+  drsu #(P) drsucore(.*);
 
 
 endmodule

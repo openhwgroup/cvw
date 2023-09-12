@@ -36,15 +36,13 @@ if {$wrapper ==1 } {
 }
 
 
-# Only for FMA class project; comment out when done
-# eval file copy -force [glob ${hdl_src}/fma/fma16.v] {hdl/}
-
 # Enables name mapping
 if { $saifpower == 1 } {
     saif_map -start
 }
 
 # Verilog files
+#set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv $outputDir/config/*.vh]
 set my_verilog_files [glob $outputDir/hdl/cvw.sv $outputDir/hdl/*.sv]
 
 # Set toplevel
