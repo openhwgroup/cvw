@@ -74,7 +74,7 @@ test_cases:
 .8byte sck_div, 0x00000003, read32_test     # sck_div reset to 0x3
 .8byte sck_mode, 0x00000000, read32_test    # sck_mode reset to 0x0
 .8byte cs_id, 0x00000000, read32_test       # cs_id reset to 0x0
-.8byte cs_def, 0x00000001, read32_test      # cs_def reset to 0x1
+.8byte cs_def, 0x0000000F, read32_test      # cs_def reset to 0x1
 .8byte cs_mode, 0x00000000, read32_test     # cs_mode reset to 0x0
 .8byte delay0, 0x00000101, read32_test      # delay0 reset to [31:24] 0x0, [23:16] 0x1, [15:8] 0x0, [7:0] 0x1
 .8byte delay1, 0x00000001, read32_test      # delay1 reset to 0x1
@@ -242,7 +242,7 @@ test_cases:
 .8byte rx_data, 0x00000054, read32_test
 
 
-# Test inter_xfr delay of 0
+# Test inter_xfr delay of 0 (maybe change behavior to half-period instead of period)
 
 .8byte delay1, 0x00000001, write32_test     # reset inter_cs delay to 1
 .8byte cs_mode, 0x00000002, write32_test    # set cs_mode to HOLD 
@@ -321,6 +321,16 @@ test_cases:
 #.8byte 0x0, 0x0101, spi_data_wait           # wait for transmission to end
 #.8byte rx_data, 0x00000077, read32_test     # read rx_data
 
+# test frame length 1 burst
+.8byte fmt, 0x00000010, write32_test
+.8byte tx_data, 0x80008000, spi_burst_send
+.8byte 0x0, 0x00000003, spi_data_wait
+.8byte rx_data, 0x00000000, read32_test
+.8byte rx_data, 0x00000080, read32_test
+.8byte rx_data, 0x00000000, read32_test
+.8byte rx_data, 0x00000080, read32_test
+
+
 # Test big endian with frame length = 5
 
 .8byte fmt, 0x00000050, write32_test        # set frame length to 5, big endian
@@ -336,6 +346,8 @@ test_cases:
 .8byte rx_data, 0x00000048, read32_test
 .8byte rx_data, 0x00000070, read32_test
 .8byte rx_data, 0x00000000, read32_test
+
+
 
 
 # Test little endian with frame length = 5
