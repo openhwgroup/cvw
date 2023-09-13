@@ -57,12 +57,12 @@ module pmachecker import cvw::*;  #(parameter cvw_t P) (
   adrdecs #(P) adrdecs(PhysicalAddress, AccessRW, AccessRX, AccessRWX, Size, SelRegions);
 
   // Only non-core RAM/ROM memory regions are cacheable. PBMT can override cachable; NC and IO are uncachable
-  assign CacheableRegion = SelRegions[8] | SelRegions[7] | SelRegions[6];  // exclusion-tag: unused-cachable
+  assign CacheableRegion = SelRegions[9] | SelRegions[8] | SelRegions[7];  // exclusion-tag: unused-cachable
   assign Cacheable = (PBMemoryType == 2'b00) ? CacheableRegion : 0;  
 
   // Nonidemdempotent means access could have side effect and must not be done speculatively or redundantly
   // I/O is nonidempotent.  PBMT can override PMA; NC is idempotent and IO is non-idempotent
-  assign IdempotentRegion = SelRegions[11] | SelRegions[9] | SelRegions[8] | SelRegions[7] | SelRegions[6]; 
+  assign IdempotentRegion = SelRegions[11] | SelRegions[10] | SelRegions[9] | SelRegions[8] | SelRegions[7]; 
   assign Idempotent = (PBMemoryType == 2'b00) ? IdempotentRegion : (PBMemoryType == 2'b01);  // exclusion-tag: unused-idempotent
  
   // Atomic operations are only allowed on RAM
