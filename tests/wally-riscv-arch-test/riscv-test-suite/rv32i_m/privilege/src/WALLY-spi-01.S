@@ -449,6 +449,7 @@ test_cases:
 # =========== Test watermark interrupts ===========
 
 # Test transmit watermark interrupt (triggers when entries in tx FIFO < tx watermark) without external enables
+# rx fifo > rx mark
 
 SETUP_PLIC
 
@@ -481,9 +482,11 @@ SETUP_PLIC
 .4byte ie, 0x00000001, write32_test         # enable transmit interrupt
 .4byte ip, 0x00000001, read32_test          # tx watermark interupt should be pending
 .4byte 0x0, 0x00000800, readmip_test
-.4byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
-.4byte tx_mark, 0x00000001, write32_test
+.4byte ie, 0x00000000, write32_test         #turn off tx mark
 .4byte 0x0, 0x00000000, claim_m_plic_interrupts
+.4byte tx_data, 0x55443322, spi_burst_send    # place 4 entries in transmit fifo
+.4byte ie, 0x00000001, write32_test            #turn tx mark back on
+.4byte tx_mark, 0x00000001, write32_test
 .4byte ip, 0x00000000, read32_test          # tx watermark interupt should be off
 .4byte 0x0, 0x00000000, readmip_test
 .4byte ie, 0x00000000, write32_test      # disable tx intr
