@@ -170,26 +170,26 @@
 
 00000001 #read tx ip
 
-00000800 #read mip
+00000800 #read mip 11 
 
-00000000 #read tx wm
+00000000 #read tx wm 10 
 
-00000000 #read mip 91
+00000000 #read mip 91 9
 
-00000022 #clear frame
+00000022 #clear frame 8
 
-00000000 #read rx ip
+00000000 #read rx ip 7 
 
-00000000 #read mip 94
+00000000 #read mip 94 6
 
-00000002 #read rx ip
+00000002 #read rx ip 5
 
-00000800 #read mip
+00000800 #read mip 4
 
-00000033 #clear frame
+00000033 #clear frame 3 
 
-00000000 #read rx wm
+00000000 #read rx wm 2
 
-00000000 #read mip 99
+00000000 #read mip 99 1
 
 

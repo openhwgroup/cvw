@@ -334,8 +334,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
     assign busy = (state == DELAY_0 | state == ACTIVE_0 | ((state == ACTIVE_1) & ~((|(Delay1[15:8]) & (ChipSelectMode[1:0]) == 2'b10) & ((FrameCount << Format[1:0]) >= FrameCompare))) | state == DELAY_1);
     assign Active = (state == ACTIVE_0 | state == ACTIVE_1);
 
-    
-
     assign Active0 = (state == ACTIVE_0);
     assign Inactive = (state == CS_INACTIVE);
     
@@ -358,19 +356,9 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
         else            ReceiveFIFOReadIncrement <= 0;
     //replace literal 9th bit of ReceiveData register with concatenation of 1 bit empty signal and 8 bits of data
     //so that all resets can be handled at the same time
-    /*    
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) <= 1'b 0;
-        else ReceiveData[8] <= ReceiveFIFOReadEmpty;
-    */
-    //assign ReceiveData[8] = ReceiveFIFOReadEmpty;
-
 
     assign SampleEdge = SckMode[0] ? (state == ACTIVE_1) : (state == ACTIVE_0);
     assign TransmitDataEndian =  Format[2] ? {TransmitData[0], TransmitData[1], TransmitData[2], TransmitData[3], TransmitData[4], TransmitData[5], TransmitData[6], TransmitData[7]} : TransmitData[7:0];
-
-
-    
 
     TransmitFIFO #(3,8) txFIFO(PCLK, SCLKDuty, PRESETn, TransmitFIFOWriteIncrementDelay, TransmitFIFOReadIncrement, TransmitDataEndian,TransmitWriteWatermarkLevel, TransmitWatermark[2:0], TransmitFIFOReadData[7:0], TransmitFIFOWriteFull, TransmitFIFOReadEmpty, TransmitWriteMark, TransmitReadMark);
     ReceiveFIFO #(3,8) rxFIFO(SCLKDuty, PCLK, PRESETn, ReceiveFIFOWriteIncrement, ReceiveFIFOReadIncrement, ReceiveShiftRegEndian, ReceiveWatermark[2:0], ReceiveReadWatermarkLevel, ReceiveData[7:0], ReceiveFIFOWriteFull, ReceiveFIFOReadEmpty, RecieveWriteMark, RecieveReadMark);
@@ -491,15 +479,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
                 default: ReceiveShiftRegEndian = ReceiveShiftRegInvert;
             endcase
         end
-
-
-    
-
-
-
-
-                
-
 
     assign SPIIntr = ((InterruptPending[0] & InterruptEnable[0]) | (InterruptPending[1] & InterruptEnable[1]));
     
@@ -807,30 +786,6 @@ module TransmitShiftFSM(
         assign TransmitShiftEmpty = (TransmitNextState == TransmitShiftEmptyState);
 endmodule
 
-
-/*
-module ReceiveShiftFSM(
-    input logic PCLK, PRESETn, SCLKDuty,
-    input logic ReceivePenultimateFrameBoolean, SampleEdge, SckMode,
-    output logic ReceiveShiftFull
-);
-    typedef enum logic [1:0] {ReceiveShiftFullState, ReceiveShiftNotFullState, ReceiveShiftDelayState} statetype;
-    statetype ReceiveState, ReceiveNextState;
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if (~PRESETn) ReceiveState <= ReceiveShiftNotFullState;
-        else          ReceiveState <= ReceiveNextState;
-        if ()
-        always_comb
-            case(ReceiveState)
-                ReceiveShiftFullState: ReceiveNextState = ReceiveShiftNotFullState;
-                ReceiveShiftNotFullState: if (ReceivePenultimateFrameBoolean & (SampleEdge)) ReceiveNextState = ReceiveShiftDelayState;
-                                          else ReceiveNextState = ReceiveShiftNotFullState;
-                ReceiveShiftDelayState: ReceiveNextState = ReceiveShiftFullState;
-            endcase
-
-        assign ReceiveShiftFull = SckMode ? (ReceiveState == ReceiveShiftFullState) : (ReceiveNextState == ReceiveShiftFullState);
-endmodule
-*/
 module ReceiveShiftFSM(
     input logic PCLK, PRESETn, SCLKDuty,
     input logic ReceivePenultimateFrameBoolean, SampleEdge, SckMode,
