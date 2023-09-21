@@ -302,11 +302,12 @@ module testbench;
       initial begin
         int iter;
         #1;
-        IDV_MAX_ERRS = 3;
+        IDV_MAX_ERRORS = 3;
 
         // Initialize REF (do this before initializing the DUT)
         if (!rvviVersionCheck(RVVI_API_VERSION)) begin
-          msgfatal($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+          $display($sformatf("%m @ t=%0t: Expecting RVVI API version %0d.", $time, RVVI_API_VERSION));
+          $fatal;
         end
       
         void'(rvviRefConfigSetString(IDV_CONFIG_MODEL_VENDOR,            "riscv.ovpworld.org"));
@@ -316,7 +317,8 @@ module testbench;
         void'(rvviRefConfigSetInt(IDV_CONFIG_MAX_NET_LATENCY_RETIREMENTS, 6));
 
         if (!rvviRefInit("")) begin
-          msgfatal($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+          $display($sformatf("%m @ t=%0t: rvviRefInit failed", $time));
+          $fatal;
         end
 
         // Volatile CSRs

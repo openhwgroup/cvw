@@ -32,6 +32,7 @@ vlog +incdir+../config/$1 \
      +incdir+$env(IMPERAS_HOME)/ImpProprietary/include/host \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviApiPkg.sv    \
      $env(IMPERAS_HOME)/ImpPublic/source/host/rvvi/rvviTrace.sv      \
+     $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv  \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvPkg.sv   \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/idvApiPkg.sv \
      $env(IMPERAS_HOME)/ImpProprietary/source/host/idv/trace2api.sv  \
