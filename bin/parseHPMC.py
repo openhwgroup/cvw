@@ -36,10 +36,15 @@ import re
 #                           [14.5859173702079, 12.3634674403619, 10.5806018170154, 8.38831266973592, 6.37097544620762, 3.52638362703015])
 #}
 
-RefData = [('twobitCModel6', 11.0501534891674), ('twobitCModel8', 8.51829052266352), ('twobitCModel10', 7.56775222626483),
-           ('twobitCModel12', 6.31366834586515), ('twobitCModel14', 5.72699936834177), ('twobitCModel16', 5.72699936834177),
-           ('gshareCModel6', 14.5731555979574), ('gshareCModel8', 12.3155658100497), ('gshareCModel10', 10.4589596630561),
-           ('gshareCModel12', 8.25796055444401), ('gshareCModel14', 6.23093702707613), ('gshareCModel16', 3.34001125650374)]
+#RefData = [('twobitCModel6', 11.0501534891674), ('twobitCModel8', 8.51829052266352), ('twobitCModel10', 7.56775222626483),
+#           ('twobitCModel12', 6.31366834586515), ('twobitCModel14', 5.72699936834177), ('twobitCModel16', 5.72699936834177),
+#           ('gshareCModel6', 14.5731555979574), ('gshareCModel8', 12.3155658100497), ('gshareCModel10', 10.4589596630561),
+#           ('gshareCModel12', 8.25796055444401), ('gshareCModel14', 6.23093702707613), ('gshareCModel16', 3.34001125650374)]
+
+RefData = [('twobitCModel6', 9.65280765420711), ('twobitCModel8', 8.75120245829945), ('twobitCModel10', 8.1318382397263),
+           ('twobitCModel12', 7.53026646633342), ('twobitCModel14', 6.07679338544009), ('twobitCModel16', 6.07679338544009),
+           ('gshareCModel6', 10.6602835418646), ('gshareCModel8', 8.38384710559667), ('gshareCModel10', 6.36847432155534),
+           ('gshareCModel12', 3.91108491151983), ('gshareCModel14', 2.83926519215395), ('gshareCModel16', .60213659066941)]
 
 
 def ComputeCPI(benchmark):
@@ -255,7 +260,7 @@ if(sys.argv[1] == '-b'):
     else:
         combined = benchmarkDict['All_']
         # merge the reference data into rtl data
-        combined.extend(RefData)
+        # combined.extend(RefData)
         (name, value) = FormatToPlot(combined)
         lst = []
         dct = {}

@@ -141,8 +141,14 @@ localparam PLIC_UART_ID = 32'd10;
 localparam PLIC_SDC_ID = 32'd9;
 
 localparam BPRED_SUPPORTED = 1;
+// this is an annoying hack for the branch predictor parameterization override.
+`ifdef BPRED_OVERRIDE
+localparam BPRED_TYPE = `BPRED_TYPE;
+localparam BPRED_SIZE = `BPRED_SIZE;
+`else
 localparam BPRED_TYPE = `BP_GSHARE; // BP_GSHARE_BASIC, BP_GLOBAL, BP_GLOBAL_BASIC, BP_TWOBIT
-localparam BPRED_SIZE = 32'd16;
+localparam BPRED_SIZE = 32'd10;
+`endif
 localparam BPRED_NUM_LHR = 32'd6;
 localparam BTB_SIZE = 32'd10;
 
