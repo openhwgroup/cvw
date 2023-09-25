@@ -382,19 +382,7 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
             2'b11: sckPhaseSelect = (~sck & |(FrameCount) & SCLKDuty);
             default: sckPhaseSelect = sck & SCLKDuty;
         endcase
-    /*
-    logic TransmitPhaseEnable;
-    always_ff @(posedge PCLK, negedge PRESETn)
-        if(~PRESETn) TransmitPhaseEnable <= 0;
-        else if (SCLKDuty) begin
-            case(SckMode[1:0])
-                2'b00: TransmitPhaseEnable <= ~sck;
-                2'b01: TransmitPhaseEnable <= (sck & |(FrameCount));
-                2'b10: TransmitPhaseEnable <= sck;
-                2'b11: TransmitPhaseEnable <= (~sck & |(FrameCount));
-            endcase
-        end
-    */
+
 
     always_ff @(posedge PCLK, negedge PRESETn)
         if (~PRESETn) ReceiveShiftFullDelay <= 0;
@@ -497,94 +485,6 @@ module spi_apb import cvw::*; #(parameter cvw_t P) (
 
 
 endmodule
-/*
-module FIFO_async #(parameter M = 3, N = 8)(
-    input logic wclk, rclk, PRESETn,
-    input logic winc,rinc,
-    input logic [N-1:0] wdata,
-    input logic [M-1:0] wwatermarklevel, rwatermarklevel,
-    output logic [N-1:0] rdata,
-    output logic wfull, rempty,
-    output logic wwatermark, rwatermark);
-
-    logic [N-1:0] mem[2**M];
-    logic [M:0] wq1_rptr, wq2_rptr, rptr;
-    logic [M:0] rq1_wptr, rq2_wptr, wptr;
-    logic [M:0] rbin, rgraynext, rbinnext;
-    logic [M:0] wbin, wgraynext, wbinnext;
-    logic rempty_val;
-    logic wfull_val;
-    logic [M:0]  wq2_rptr_bin, rq2_wptr_bin;
-    logic [M-1:0] raddr;
-    logic [M-1:0] waddr;
-
-    assign rdata = mem[raddr];
-    always_ff @(posedge wclk)
-        if(winc & ~wfull) mem[waddr] <= wdata;
-
-
-    always_ff @(posedge wclk, negedge PRESETn)
-        if (~PRESETn) begin
-            wq2_rptr <= 0;
-            wq1_rptr <= 0;
-        end
-        else begin
-            wq2_rptr <= wq1_rptr;
-            wq1_rptr <= rptr;
-        end
-    
-    always_ff @(posedge rclk, negedge PRESETn)
-        if (~PRESETn) begin
-            rq2_wptr <= 0;
-            rq1_wptr <= 0;
-        end
-        else begin
-            rq2_wptr <= rq1_wptr;
-            rq1_wptr <= wptr;
-        end
-
-    always_ff @(posedge rclk, negedge PRESETn)
-        if(~PRESETn) begin
-            rbin <= 0;
-            rptr <= 0;
-        end
-        else begin
-            rbin <= rbinnext;
-            rptr <= rgraynext;
-        end
-    assign rq2_wptr_bin = {rq2_wptr[3], (rq2_wptr[3]^rq2_wptr[2]),(rq2_wptr[3]^rq2_wptr[2]^rq2_wptr[1]), (rq2_wptr[3]^rq2_wptr[2]^rq2_wptr[1]^rq2_wptr[0]) };
-    assign rwatermark = ((rbin[M-1:0] - rq2_wptr_bin[M-1:0]) < rwatermarklevel);
-    assign raddr = rbin[M-1:0];
-    assign rbinnext = rbin + {3'b0, (rinc & ~rempty)};
-    assign rgraynext = (rbinnext >> 1) ^ rbinnext;
-    assign rempty_val = (rgraynext == rq2_wptr);
-
-    always_ff @(posedge rclk, negedge PRESETn)
-        if (~PRESETn) rempty <= 1'b1;
-        else          rempty <= rempty_val;
-    
-    always_ff @(posedge wclk, negedge PRESETn)
-        if (~PRESETn) begin 
-            wbin <= 0;
-            wptr <= 0;
-        end else begin               
-            wbin <= wbinnext;
-            wptr <= wgraynext;
-        end
-    assign waddr = wbin[M-1:0];
-    assign wq2_rptr_bin = {wq2_rptr[3], (wq2_rptr[3]^wq2_rptr[2]),(wq2_rptr[3]^wq2_rptr[2]^wq2_rptr[1]), (wq2_rptr[3]^wq2_rptr[2]^wq2_rptr[1]^wq2_rptr[0]) };
-    assign wwatermark = ((wbin[M-1:0] - wq2_rptr_bin[M-1:0]) > wwatermarklevel);
-    assign wbinnext = wbin + {3'b0, (winc & ~wfull)};
-    assign wgraynext = (wbinnext >> 1) ^ wbinnext;
-
-    assign wfull_val = (wgraynext == {(~wq2_rptr[M:M-1]),wq2_rptr[M-2:0]});
-
-    always_ff @(posedge wclk, negedge PRESETn)
-        if (~PRESETn) wfull <= 1'b0;
-        else          wfull <= wfull_val;
-    
-endmodule
-*/
 
 module TransmitFIFO #(parameter M = 3, N = 8)(
     input logic wclk, rclk, PRESETn,
