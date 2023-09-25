@@ -230,6 +230,40 @@ def ReportAsText(benchmarkDict):
             for (name, type, size, val) in benchmarkDict[benchmark]:
                 sys.stdout.write('%s %s %0.2f\n' % (name, size, val if not args.invert else 100 - val))
 
+def Inversion(lst):
+    return [x if not args.invert else 100 - x for x in lst]
+
+def BarGraph(seriesDict, xlabelList, BenchPerRow, FileName):
+    index = 0
+    NumberInGroup = len(seriesDict)
+    # Figure out width of bars.  NumberInGroup bars + want 2 bar space
+    # the space between groups is 1
+    EffectiveNumInGroup = NumberInGroup + 2
+    barWidth = 1 / EffectiveNumInGroup
+    fig = plt.subplots(figsize = (EffectiveNumInGroup*BenchPerRow/8, 4))
+    colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
+    for name in seriesDict:
+        xpos = np.arange(BenchPerRow)
+        xpos = [x + index*barWidth for x in xpos]
+        values = seriesDict[name]
+        plt.bar(xpos, Inversion(values), width=barWidth, edgecolor='grey', label=name, color=colors[index%len(colors)])
+        index += 1
+    plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, BenchPerRow)], xlabelList)
+    plt.xlabel('Benchmark')
+    if(not args.invert): plt.ylabel('Misprediction Rate (%)')
+    else:  plt.ylabel('Prediction Accuracy (%)') 
+    plt.legend(loc='upper left', ncol=2)
+    plt.savefig(FileName)
+
+def SelectPartition(xlabelListBig, seriesDictBig, group, BenchPerRow):
+    seriesDictTrunk = {}
+    for benchmarkName in seriesDictBig:
+        lst = seriesDictBig[benchmarkName]
+        seriesDictTrunk[benchmarkName] = lst[group*BenchPerRow:(group+1)*BenchPerRow]
+    xlabelListTrunk = xlabelListBig[group*BenchPerRow:(group+1)*BenchPerRow]
+    return(xlabelListTrunk, seriesDictTrunk)
+
+
 def ReportAsGraph(benchmarkDict, bar):
     def FormatToPlot(currBenchmark):
         names = []
@@ -284,6 +318,8 @@ def ReportAsGraph(benchmarkDict, bar):
         axes.set_xticks(xdata)
         axes.set_xticklabels(xdata)
         axes.grid(color='b', alpha=0.5, linestyle='dashed', linewidth=0.5)
+        plt.show()
+        
 
     # if(not args.summary):
     #     size = len(benchmarkDict)
@@ -311,17 +347,11 @@ def ReportAsGraph(benchmarkDict, bar):
         numCol = math.floor(sizeSqrt)
         numRow = numCol + (0 if isSquare else 1)
         index = 1
-        fig = plt.subplots()
-        testLimit = 7
+        BenchPerRow = 7
 
         xlabelList = []
         seriesDict = {}
-        NumberInGroup = len(benchmarkDict['Mean'])
-        # Figure out width of bars.  NumberInGroup bars + want 2 bar space
-        # the space between groups is 1
-        EffectiveNumInGroup = NumberInGroup + 2
-        barWidth = 1 / EffectiveNumInGroup
-        colors = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue', 'black', 'black', 'black', 'black', 'black', 'black']
+
         for benchmarkName in benchmarkDict:
             currBenchmark = benchmarkDict[benchmarkName]
             xlabelList.append(benchmarkName)
@@ -330,29 +360,27 @@ def ReportAsGraph(benchmarkDict, bar):
                     seriesDict[name] = [value]
                 else:
                     seriesDict[name].append(value)
-            #print(currBenchmark)
-            #(names, typs, sizes, values) = FormatToPlot(currBenchmark)
-            #xpos = np.arange(testLimit + index*barWidth)
-            #print(f'xpos = {xpos}, values={values}')
-            #plt.bar(xpos, values, wdith=barWidth, edgecolor='grey', label=names)
-            if(index >= testLimit): break
+            if(index >= BenchPerRow): break
             index += 1
-        print(f'xlabelList = {xlabelList}')
-        print(f'seriesDict = {seriesDict}')
-        index = 0
-        for name in seriesDict:
-            xpos = np.arange(testLimit)
-            xpos = [x + index*barWidth for x in xpos]
-            values = seriesDict[name]
-            print(f'xpos = {xpos}, values={values}')
-            plt.bar(xpos, values, width=barWidth, edgecolor='grey', label=name, color=colors[index%len(colors)])
-            index += 1
-        plt.xticks([r + barWidth*(NumberInGroup/2-0.5) for r in range(0, testLimit)], xlabelList)
-        plt.xlabel('Benchmark')
-        if(not args.invert): plt.ylabel('Misprediction Rate Accuracy (%)')
-        else:  plt.ylabel('Prediction Accuracy (%)') 
-        plt.legend(loc='upper left', ncol=2)
-    plt.show()
+
+        xlabelListBig = []
+        seriesDictBig = {}
+        for benchmarkName in benchmarkDict:
+            currBenchmark = benchmarkDict[benchmarkName]
+            xlabelListBig.append(benchmarkName)
+            for (name, typ, size, value) in currBenchmark:
+                if(name not in seriesDictBig):
+                    seriesDictBig[name] = [value]
+                else:
+                    seriesDictBig[name].append(value)
+
+        #The next step will be to split the benchmarkDict into length BenchPerRow pieces then repeat the following code
+        # on each piece.
+        for row in range(0, math.ceil(39 / BenchPerRow)):
+            (xlabelListTrunk, seriesDictTrunk) = SelectPartition(xlabelListBig, seriesDictBig, row, BenchPerRow)
+            FileName = 'barSegment%d.png' % row
+            groupLen = len(xlabelListTrunk)
+            BarGraph(seriesDictTrunk, xlabelListTrunk, groupLen, FileName)
 
 
 # main
