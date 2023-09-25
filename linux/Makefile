@@ -15,7 +15,7 @@ WALLYBOARD := $(BUILDROOT)/board/wally
 PACKAGE_SOURCE := ${WALLYLINUX}/buildroot-packages/package-source
 FPGA_AXI_SDC := ${WALLYLINUX}/buildroot-packages/fpga-axi-sdc
 DRIVER := ${PACKAGE_SOURCE}/fpga-axi-sdc.c
-PATCHFILE := $(BRPACKAGES)/package.patch
+PATCHFILE := $(BRPACKAGES)/package-2023.05.1.patch
 
 # Device tree files 
 DTS ?= $(shell find -type f -regex ".*\.dts" | sort)
@@ -32,8 +32,17 @@ OBJDUMPS := $(foreach name, $(OBJDUMPS), $(DIS)/$(name).objdump)
 # BUSYBOXDIR := $(shell ls $(BUILDROOT)/output/build | grep -e '^linux-[0-9]\+\.[0-9]\+\.[0-9]\+$$' )
 # BUSYBOXDIR := $(BUILDROOT)/output/build/$(BUSYBOXDIR)
 
-LINUXDIR := $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
-BUSYBOXDIR := $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
+# Gets Linux and Busybox output folders for objedect dumps
+# LINUXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
+# BUSYBOXDIR ?= $(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
+
+define linuxDir =
+$(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/linux-[0-9]+\.[0-9]+\.[0-9]+$$")
+endef
+
+define busyboxDir =
+$(shell find $(BUILDROOT)/output/build -maxdepth 2 -type d -regex ".*/busybox-[0-9]+\.[0-9]+\.[0-9]+$$")
+endef
 
 .PHONY: all generate disassemble install clean cleanDTB cleanDriver test
 
@@ -50,8 +59,8 @@ all:
 
 # Temp rule for debugging
 test:
-	@echo $(LINUXDIR)
-	@echo $(BUSYBOXDIR)
+	@echo $(linuxDir)
+	@echo $(busyboxDir)
 
 generate: $(DTB) $(IMAGES)
 
@@ -78,16 +87,16 @@ $(DIS)/%.objdump: $(IMAGES)/%.elf
 $(DIS)/%.objdump: $(IMAGES)/%
 	riscv64-unknown-elf-objdump -S $< >> $@
 
-$(IMAGES)/vmlinux: $(LINUXDIR)/vmlinux
+$(IMAGES)/vmlinux: $(call linuxDir)/vmlinux
 	cp $< $@
 
-$(IMAGES)/busybox: $(BUSYBOXDIR)/busybox
+$(IMAGES)/busybox: $(call busyboxDir)/busybox
 	cp $< $@
 
 # Generating new Buildroot directories --------------------------------
 
 # This directive should be run as: make install BUILDROOT=path/to/buildroot
-install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD) $(DRIVER)
+install: $(BUILDROOT)/package/fpga-axi-sdc $(WALLYBOARD)
 	cp $(WALLYBOARD)/main.config $(BUILDROOT)/.config
 
 # CONFIG DEPENDENCIES 2021.05 -----------------------------------------
@@ -122,9 +131,9 @@ $(BUILDROOT):
 	cd $@; git checkout 2023.05.x
 	#cd $@; git checkout 2021.05
 
-$(DRIVER):
-	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
-	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
+#$(DRIVER):
+#	@ if [ -d "$(WALLY)/addins/vivado-risc-v" ] ; then git submodule update --init $(WALLY)/addins/vivado-risc-v; fi
+#	cp ../addins/vivado-risc-v/patches/fpga-axi-sdc.c $@
 	# For 2021.05
 	#sed -i "s|card_hw_reset|hw_reset|1" $@
 
